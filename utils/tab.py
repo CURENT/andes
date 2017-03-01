@@ -1,7 +1,7 @@
 from texttable import Texttable
 
 
-class tab(Texttable):
+class Tab(Texttable):
     """
     Use package texttable to create fine-formatted tables for setting helps and device helps.
     Avoid using this class for static report formatting as it may be rather slow.
