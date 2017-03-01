@@ -7,7 +7,7 @@ class DevMan(object):
         self.device = []
         self.group = {}
 
-    def add_device(self, dev_name):
+    def register_device(self, dev_name):
         """register a device to the device list"""
         if dev_name not in self.device:
             self.device.append(dev_name)
@@ -15,7 +15,7 @@ class DevMan(object):
         if group_name not in self.group.keys():
             self.group[group_name] = {}
 
-    def add_element(self, dev_name, idx=None):
+    def register_element(self, dev_name, idx=None):
         """register a device element to the group list
         Args:
             dev_name: model name
