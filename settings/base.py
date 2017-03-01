@@ -1,5 +1,5 @@
 from ..utils.cached import cached
-from ..utils.tab import tab
+from ..utils.tab import Tab
 
 
 class SettingsBase(object):
@@ -22,7 +22,7 @@ class SettingsBase(object):
         """dump help document for setting classes"""
         rows = []
         title = 'Setting class <{:s}>'.format(self.__class__.__name__)
-        table = tab(export=export, title=title)
+        table = Tab(export=export, title=title)
 
         for opt in sorted(self.doc_help):
             if hasattr(self, opt):
