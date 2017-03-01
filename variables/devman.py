@@ -4,13 +4,13 @@ class DevMan(object):
     def __init__(self, system=None):
         """constructor for DevMan class"""
         self.system = system
-        self.device = []
+        self.devices = []
         self.group = {}
 
     def register_device(self, dev_name):
         """register a device to the device list"""
-        if dev_name not in self.device:
-            self.device.append(dev_name)
+        if dev_name not in self.devices:
+            self.devices.append(dev_name)
         group_name = self.system.__dict__[dev_name]._group
         if group_name not in self.group.keys():
             self.group[group_name] = {}
@@ -24,7 +24,7 @@ class DevMan(object):
         Returns:
             idx: assigned element index
             """
-        if dev_name not in self.device:
+        if dev_name not in self.devices:
             self.system.Log.error('Device {} missing. Call add_device before adding elements'.format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group

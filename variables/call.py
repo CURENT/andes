@@ -22,7 +22,7 @@ all_calls = ['gcall',
              'obj']
 
 
-class Calls(object):
+class Call(object):
     """ Equation call mamager class for andes routines"""
     def __init__(self, system):
         self.system = system
@@ -38,7 +38,7 @@ class Calls(object):
 
     def setup(self):
         """setup the call list after case file is parsed and jit models are loaded"""
-        self.devices = self.system.Devices
+        self.devices = self.system.DevMan.devices
         self.ndevice = len(self.devices)
 
         self.gcalls = [''] * self.ndevice
