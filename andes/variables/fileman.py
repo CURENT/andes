@@ -3,8 +3,8 @@ import os
 
 class FileMan(object):
     """Define a File Manager class for PowerSystem"""
-    def __init__(self, case, input_format=None, addfile=None, settings=None, no_output=False,
-                 log=None, dump=None, output_format=None, output=None, gis=None, **kwargs ):
+    def __init__(self, case, input_format=None, addfile=None, settings=None, no_output=False, dynfile=False,
+                 log=None, dump_raw=None, output_format=None, output=None, gis=None, **kwargs ):
         """initialize the output file names
 
         case: must be full path to case
@@ -33,6 +33,7 @@ class FileMan(object):
             self.path = path
 
         self.addfile = self.get_fullpath(addfile)
+        self.dynfile = self.get_fullpath(dynfile)
         self.settings = self.get_fullpath(settings)
         self.gis = self.get_fullpath(gis)
 
@@ -42,7 +43,7 @@ class FileMan(object):
             self.output = None
             self.lst = None
             self.dat = None
-            self.dump = None
+            self.dump_raw = None
             self.prof = None
         else:
             self.no_output = False
@@ -50,15 +51,15 @@ class FileMan(object):
                 log = add_suffix(self.name, 'log')
             if not output:
                 output = add_suffix(self.name, 'out')
-            if not dump:
-                dump = add_suffix(self.name, 'dump')
+            if not dump_raw:
+                dump_raw = add_suffix(self.name, 'raw')
             prof = add_suffix(self.name, 'prof')
 
             self.lst = add_ext(output, 'lst')
             self.dat = add_ext(output, 'dat')
             self.log = add_ext(log, 'txt')
             self.output = add_ext(output, 'txt')
-            self.dump = add_ext(dump, 'and')
+            self.dump_raw = add_ext(dump_raw, 'and')
             self.prof = add_ext(prof, 'txt')
 
     def get_fullpath(self, fullname=None):

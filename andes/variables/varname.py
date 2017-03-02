@@ -25,28 +25,20 @@ class VarName(object):
             self.unamex.extend([''] * xext)
             self.fnamex.extend([''] * xext)
 
-    def append(self, vartype, xy_idx, var_name, element_name):
+    def append(self, listname, xy_idx, var_name, element_name):
         """append variable names to the name lists"""
-        u = []
-        f = []
-        if vartype not in ['x', 'y']:
-            self.system.Log.Error('Variable type must be ''x'' or ''y'' ')
-            return
-        elif vartype == 'x':
-            u = 'unamex'
-            f = 'fnamex'
-        elif vartype == 'y':
-            u = 'umamey'
-            f = 'fnamey'
-
         self.resize()
+        string = '{0}_{1}'
+        if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
+            self.system.Log.error('Wrong list name for VarName.')
+            return
+        elif listname in ['fnamex', 'fnamey']:
+            string = '{0}_{{{1}}}'
 
         if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
             for i, j in zip(xy_idx, element_name):
-                self.__dict__[u][i] = '{0}_{1}'.format(var_name, j)
-                self.__dict__[f][i] = '#{0}_{{{1}}}#'.format(var_name, j)
+                self.__dict__[listname][i] = string.format(var_name, j)
         elif isinstance(element_name, int):
-            self.__dict__[u][xy_idx] = '{0}_{1}'.format(var_name, element_name)
-            self.__dict__[f][xy_idx] = '#{0}_{{{1}}}#'.format(var_name, element_name)
+            self.__dict__[listname][xy_idx] = string.format(var_name, element_name)
         else:
-            self.system.Log.Warning('Unknown element_name type while building VarName')
+            self.system.Log.warning('Unknown element_name type while building VarName')

@@ -4,12 +4,11 @@ import copy
 import sys
 
 
-class base(object):
+class ModelBase(object):
     """base class for power system device models"""
 
-    def __init__(self, system):
-        """class initialization of base device models
-        define meta-data and default values"""
+    def __init__(self, system, name):
+        """meta-data to be overloaded by subclasses"""
         self.system = system
         self.n = 0    # device count
         self.u = []   # device status
@@ -18,7 +17,7 @@ class base(object):
         self.names = []  # element name list
 
         # identifications
-        self._name = None
+        self._name = name
         self._group = None
         self._category = None
 
@@ -82,7 +81,7 @@ class base(object):
 
         # property functions this device has
 
-        self.calls = dict(addr0=False, addr1=False,
+        self.calls = dict(pflow=False, addr1=False,
                           init0=False, init1=False,
                           jac0=False, windup=False,
                           gcall=False, fcall=False,
@@ -90,6 +89,7 @@ class base(object):
                           series=False, shunt=False,
                           flows=False, dcseries=False,
                           )
+        self.addr = False
 
     def _inst_meta(self):
         """instantiate meta-data defined in __init__().
@@ -115,8 +115,7 @@ class base(object):
             self.__dict__[var] = []
 
     def _alloc(self):
-        """allocate memory for DAE variable indices
-        called after finishing adding components
+        """Allocate memory for DAE variable indices. Called after finishing adding components
         """
         zeros = [0] * self.n
         for var in self._states:
@@ -157,14 +156,12 @@ class base(object):
             else:
                 pass
 
-
     def add(self, idx=None, name=None, **kwargs):
+        """add an element of this model"""
+        idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
+        self.int[idx] = self.n
+        self.idx.append(idx)
         self.n += 1
-        if idx is None:
-            idx = self._group + '_' + str(self.n)
-        self.int[idx] = self.n - 1
-        self.idx.append(self.n)
-        self.system.Groups[self._group].append(self._name)
 
         if name is None:
             self.names.append(self._name + '_' + str(self.n))
@@ -207,7 +204,7 @@ class base(object):
                 key = idx
                 item = self.int[idx]
             else:
-                self.system.Log.error('The item <{:s}> does not exist.'.format(idx))
+                self.message('The item <{:s}> does not exist.'.format(idx), ERROR)
                 return None
         else:
             # nothing to remove
@@ -309,6 +306,22 @@ class base(object):
                 self.system.DAE.m += 1
         self.addr = True
 
+    def _varname(self):
+        """ Set up xvars and yvars names in Varname"""
+        if not self.addr:
+            self.message('Unable to assign Varname before allocating address', ERROR)
+            return
+        for idx, item in enumerate(self._states):
+            self.system.Varname.append(listname='unamex', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamex[idx], element_name=self.names)
+            self.system.Varname.append(listname='fnamex', xy_idx=self.__dict__[item][:],
+                                       var_name=self._fnamex[idx], element_name=self.names)
+        for idx, item in enumerate(self._algebs):
+            self.system.Varname.append(listname='unamey', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamey[idx], element_name=self.names)
+            self.system.Varname.append(listname='fnamey', xy_idx=self.__dict__[item][:],
+                                       var_name=self._fnamey[idx], element_name=self.names)
+
     def _list2matrix(self):
         for item in self._params:
             self.__dict__[item] = matrix(self.__dict__[item])
@@ -317,12 +330,12 @@ class base(object):
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
 
-    def message(self, msg, level):
+    def message(self, msg, level=INFO):
         """keep a line of message"""
         if level not in (DEBUG, INFO, WARNING, ERROR, CRITICAL):
-            print('Message logging level does not exist.')
+            self.system.Log.error('Message logging level does not exist.')
             return
-            # todo: record the message to logging
+        self.system.Log.message(msg, level)
 
     def limit_check(self, data, min=None, max=None):
         """ check if data is within limits. reset if violates"""
