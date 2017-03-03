@@ -50,7 +50,7 @@ class VarOut(object):
             line = '{:>6s}, {:>25s}, {:>25s}\n'.format('0', 'Time [s]', '# Time [s]#')
             lst.write(line)
 
-            varname = self.system.Varname
+            varname = self.system.VarName
             for i in range(self.system.DAE.n):
                 line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1, varname.unamex[i], varname.fnamex[i])
                 lst.write(line)
