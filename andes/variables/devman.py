@@ -35,4 +35,17 @@ class DevMan(object):
 
     def sort_device(self):
         """sort device to meet device prerequisites (initialize devices before controllers)"""
-        pass
+        self.devices.sort()
+        if 'Bus' in self.devices:
+            k = self.devices.index('Bus')
+            self.devices[k] = self.devices[0]
+            self.devices[0] = 'Bus'
+        if 'Node' in self.devices:
+            k = self.devices.index('Node')
+            self.devices[k] = self.devices[1]
+            self.devices[1] = 'Node'
+        if 'Ground' in self.devices:
+            k = self.devices.index('Ground')
+            self.devices[k] = self.devices[2]
+            self.devices[2] = 'Ground'
+
