@@ -4,6 +4,7 @@ import importlib
 from cvxopt.base import mul
 from ..formats import all_formats
 from time import strftime
+# from .. import __revision__ as revision
 
 revision = '2017.03.01'
 this_year = revision[:4]
@@ -19,8 +20,7 @@ def preamble(disable=False):
     message += 'Use this software AT YOUR OWN RISK\n\n'
     message += 'Platform:    ' + platform.system() + '\n'
     message += 'Interpreter: ' + 'Python ' + platform.python_version() + '\n'
-    message += 'Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n'
-
+    message += 'Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n'
     return message
 
 
@@ -69,7 +69,7 @@ class Report(object):
 
     def update_extended(self):
         system = self.system
-        Sloss = sum(system.Line.Sfr + system.Line.Sto)
+        Sloss = sum(system.Line.S1 + system.Line.S2)
         self.extended.update({'Ptot': sum(system.PV.pmax) + sum(system.SW.pmax),  # + sum(system.SW.pmax)
                               'Pon': sum( mul(system.PV.u, system.PV.pmax) ),
                               'Pg': sum(system.Bus.Pg),
@@ -85,7 +85,7 @@ class Report(object):
                               'Ploss': round(Sloss.real, 5),
                               'Qloss': round(Sloss.imag, 5),
                               'Pch': 0.0,
-                              'Qch': round(sum(system.Line.chgfr.real() + system.Line.chgto.real()), 5) ,
+                              'Qch': round(sum(system.Line.chg1.real() + system.Line.chg2.real()), 5) ,
                               })
 
     def write_summary(self):
@@ -106,8 +106,8 @@ class Report(object):
         info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui' + '\n\n')
         info.append('Case file: ' + system.Files.case + '\n')
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        info.append('Power flow method: ' + system.PF.solver.upper() + '\n')
-        info.append('Flat-start: ' + ('Yes' if system.PF.flatstart else 'No') + '\n')
+        info.append('Power flow method: ' + system.SPF.solver.upper() + '\n')
+        info.append('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
         text.append(info)
         header.append(None)
@@ -141,8 +141,8 @@ class Report(object):
         info.append('Copyright (C) 2015-2017 Hantao Cui' + '\n\n')
         info.append('Case file: ' + system.Files.case + '\n')
         info.append('Session: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        info.append('Power flow method: ' + system.PF.solver.upper() + '\n')
-        info.append('Flat-start: ' + ('True' if system.PF.flatstart else 'False') + '\n')
+        info.append('Power flow method: ' + system.SPF.solver.upper() + '\n')
+        info.append('Flat-start: ' + ('True' if system.SPF.flatstart else 'False') + '\n')
 
         text.append(info)
         header.append(None)
@@ -178,14 +178,14 @@ class Report(object):
         # Bus data
         idx, name, Vm, Va, Pg, Qg, Pl, Ql = system.get_busdata()
         text.append(['BUS DATA:\n'])
-        Va_unit = 'deg' if system.PF.usedegree else 'rad'
+        Va_unit = 'deg' if system.SPF.usedegree else 'rad'
         header.append(['Vm(pu)', 'Va({:s})'.format(Va_unit), 'Pg (pu)', 'Qg (pu)', 'Pl (pu)', 'Ql (pu)'])
         name = ['<' + str(i) + '>' + j for i, j in zip(idx, name)]
         rowname.append(name)
         data.append([Vm, Va, Pg, Qg, Pl, Ql])
 
         # Node data
-        if system.Node.n:
+        if hasattr(system, 'Node') and system.Node.n:
             idx, name, V = system.get_nodedata()
             text.append(['NODE DATA:\n'])
             header.append(['V(pu)'])
@@ -202,14 +202,14 @@ class Report(object):
         # Additional Algebraic data
         text.append(['OTHER ALGEBRAIC VARIABLES:\n'])
         header.append([''])
-        rowname.append(system.Varname.unamey[2*system.Bus.n:])
+        rowname.append(system.VarName.unamey[2*system.Bus.n:])
         data.append([round(i, 5) for i in system.DAE.y[2*system.Bus.n:]])
 
         # Additional State variable data
         if system.DAE.n:
             text.append(['OTHER STATE VARIABLES:\n'])
             header.append([''])
-            rowname.append(system.Varname.unamex[:])
+            rowname.append(system.VarName.unamex[:])
             data.append([round(i, 5) for i in system.DAE.x[:]])
 
         dump_data(text, header, rowname, data, file)
