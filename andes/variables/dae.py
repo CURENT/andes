@@ -1,4 +1,4 @@
-from cvxopt import matrix, spmatrix, sparse
+from cvxopt import matrix, spmatrix, sparse, spdiag
 
 
 class DAE(object):
@@ -99,3 +99,8 @@ class DAE(object):
             xfill = matrix(0.0, (xext, 1), 'd')
             self.x = matrix([self.x, xfill], (self.n, 1), 'd')
             self.f = matrix([self.f, xfill], (self.n, 1), 'd')
+
+    def algeb_windup(self, idx):
+        H = spmatrix(1.0, idx, idx, (self.m, self.m))
+        I = spdiag([1.0] * self.m) - H
+        self.Gy = I * (self.Gy * I) + H
