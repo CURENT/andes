@@ -1,5 +1,6 @@
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+from cvxopt import mul, div
 import copy
 import sys
 
@@ -90,6 +91,7 @@ class ModelBase(object):
                           flows=False, dcseries=False,
                           )
         self.addr = False
+        self.ispu = False
 
     def _inst_meta(self):
         """instantiate meta-data defined in __init__().
@@ -123,38 +125,71 @@ class ModelBase(object):
         for var in self._algebs:
             self.__dict__[var] = zeros[:]
 
-    def get_param(self, model, src, dest=None, fkey=None, astype=None):
+    def copy_param(self, model, src, dest=None, fkey=None, astype=None):
         """get a copy of the system.model.src as self.dest"""
+
         # input check
-        if not hasattr(self.system, model):
-            self.message('Model {} is trying to copy {} which does not exist.'.format(self._name, model), ERROR)
+        dev_type = None
+        val = list()
+        if model in self.system.DevMan.devices:
+            dev_type = 'model'
+        elif model in self.system.DevMan.group.keys():
+            dev_type = 'group'
+        if not dev_type:
+            self.message('Model or group <{0}> does not exist.'.format(model), ERROR)
             return
-        if not hasattr(self.system.__dict__[model], src):
-            self.message('Model {} is trying to Model {}.{} which does not exist.'.format(self._name, model, src), ERROR)
-            return
-        if fkey and type(fkey) not in (list, matrix):
-            self.message('Order type is not list or matrix', ERROR)
-            return
+
+        # use default destination
         if not dest:
             dest = src
-        if hasattr(self, dest) and self.__dict__[dest] is not None:
-            self.message('Model {} already has member {}.'.format(self._name, dest), WARNING)
-        if astype and astype not in ('list', 'matrix'):
-            self.message('Only converting to list or matrix is supported.', WARNING)
-            astype = None
 
-        if not fkey:  # copy full
-            self.__dict__[dest] = copy.deepcopy(self.system.__dict__[model].__dict__[src])
-        else:  # copy based on the order of fkey
-            idx = self.system.__dict__[model].int[fkey]
-            self.__dict__[dest] = copy.deepcopy(self.system.__dict__[model].__dict__[src][idx])
-        if astype:
-            if astype == 'list':
-                self.__dict__[dest] = list(self.__dict__[dest])
-            elif astype == 'matrix':
-                self.__dict__[dest] = matrix(self.__dict__[dest])
+        # check destination type
+        if astype and astype not in [list, matrix]:
+            self.message('Wrong destination type <{0}>.'.format(astype), ERROR)
+            if hasattr(self, dest):
+                astype = type(self.__dict__[dest])
             else:
-                pass
+                astype = None
+
+        # do param copy
+        if dev_type == 'model':
+            self.__dict__[dest] = self.system.__dict__[model]._slice(src, fkey)
+        elif dev_type == 'group':
+            if not fkey:
+                fkey = self.system.DevMan.group.keys()
+                if not fkey:
+                    self.message('Group <{0}> does not have any element.'.format(model))
+                    return
+            for item in fkey:
+                dev_name = self.system.DevMan.group[item]
+                pos = self.system.__dict__[dev_name].int[item]
+                val.append(self.system.__dict__[dev_name].__dict__[src][pos])
+                if not astype:
+                    astype = type(self.system.__dict__[dev_name].__dict__[src])
+            self.__dict__[dest] = val
+
+        # do conversion if needed
+        if astype:
+            self.__dict__[dest] = astype(self.__dict__[dest])
+
+    def _slice(self, param, idx=None):
+        """slice list or matrix with idx and return (type, sliced)"""
+        ty = type(self.__dict__[param])
+        if ty not in [list, matrix]:
+            self.message('Unsupported type <{0}>to slice.'.format(ty))
+            return None
+
+        if not idx:
+            idx = list(range(self.n))
+        if type(idx) != list:
+            idx = list(idx)
+
+        if ty == list:
+            return [self.__dict__[param][self.int[i]] for i in idx]
+        elif ty == matrix:
+            return self.__dict__[param][self.int[idx]]
+        else:
+            raise NotImplemented
 
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
@@ -258,6 +293,71 @@ class ModelBase(object):
         if convert and self.n:
             self._list2matrix()
 
+    def base(self):
+        """Per-unitize parameters. Store a copy."""
+        if (not self.n) or self.ispu:
+            return
+        if 'bus' in self._ac.keys():
+            bus_idx = self.__dict__[self._ac['bus'][0]]
+        elif 'bus1' in self._ac.keys():
+            bus_idx = self.__dict__[self._ac['bus1'][0]]
+        else:
+            bus_idx = []
+        Sb = self.system.Settings.mva
+        Vb = self.system.Bus.Vn[bus_idx]
+        for var in self._voltages:
+            self.__dict__[var] = mul(self.__dict__[var], self.Vn)
+            self.__dict__[var] = div(self.__dict__[var], Vb)
+        for var in self._powers:
+            self.__dict__[var] = mul(self.__dict__[var], self.Sn)
+            self.__dict__[var] /= Sb
+        for var in self._currents:
+            self.__dict__[var] = mul(self.__dict__[var], self.Sn)
+            self.__dict__[var] = div(self.__dict__[var], self.Vn)
+            self.__dict__[var] = mul(self.__dict__[var], Vb)
+            self.__dict__[var] /= Sb
+        if len(self._z) or len(self._y):
+            Zn = div(self.Vn ** 2, self.Sn)
+            Zb = (Vb ** 2) / Sb
+            for var in self._z:
+                self.__dict__[var] = mul(self.__dict__[var], Zn)
+                self.__dict__[var] = div(self.__dict__[var], Zb)
+            for var in self._y:
+                if self.__dict__[var].typecode == 'd':
+                    self.__dict__[var] = div(self.__dict__[var], Zn)
+                    self.__dict__[var] = mul(self.__dict__[var], Zb)
+                elif self.__dict__[var].typecode == 'z':
+                    self.__dict__[var] = div(self.__dict__[var], Zn + 0j)
+                    self.__dict__[var] = mul(self.__dict__[var], Zb + 0j)
+        if len(self._dcvoltages) or len(self._dccurrents) or len(self._r) or len(self._g):
+            Vdc = self.system.Node.Vdcn
+            if Vdc is None:
+                Vdc = matrix(self.Vdcn)
+            else:
+                Vbdc = matrix(0.0, (self.n, 1), 'd')
+                temp = sorted(self._dc.keys())
+                for item in range(self.n):
+                    idx = self.__dict__[temp[0]][item]
+                    Vbdc[item] = Vdc[self.system.Node.int[idx]]
+            Ib = div(Sb, Vbdc)
+            Rb = div(Vbdc, Ib)
+
+        for var in self._dcvoltages:
+            self.__dict__[var] = mul(self.__dict__[var], self.Vdcn)
+            self.__dict__[var] = div(self.__dict__[var], Vbdc)
+
+        for var in self._dccurrents:
+            self.__dict__[var] = mul(self.__dict__[var], self.Idcn)
+            self.__dict__[var] = div(self.__dict__[var], Ib)
+
+        for var in self._r:
+            self.__dict__[var] = div(self.__dict__[var], Rb)
+
+        for var in self._g:
+            self.__dict__[var] = mul(self.__dict__[var], Rb)
+
+        self.ispu = True
+
     def setup(self):
         """
         Set up device parameters and variable addresses
@@ -276,14 +376,14 @@ class ModelBase(object):
     def _ac_interface(self):
         """retrieve ac bus a and v addresses"""
         for key, val in self._ac.items():
-            for item in val:
-                self.get_param('Bus', src=item, dest=item, fkey=self.__dict__[key])
+            self.copy_param(model='Bus', src='a', dest=val[0], fkey=self.__dict__[key])
+            self.copy_param(model='Bus', src='v', dest=val[1], fkey=self.__dict__[key])
 
     def _dc_interface(self):
         """retrieve v addresses of dc buses"""
         for key, val in self._dc.items():
             for item in val:
-                self.get_param('Node', src=item, dest=item, fkey=self.__dict__[key])
+                self.copy_param(model='Node', src='v', dest=item, fkey=self.__dict__[key])
 
     def _ctrl_interface(self):
         pass
@@ -312,21 +412,23 @@ class ModelBase(object):
             self.message('Unable to assign Varname before allocating address', ERROR)
             return
         for idx, item in enumerate(self._states):
-            self.system.Varname.append(listname='unamex', xy_idx=self.__dict__[item][:],
+            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
                                        var_name=self._unamex[idx], element_name=self.names)
-            self.system.Varname.append(listname='fnamex', xy_idx=self.__dict__[item][:],
+            self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
                                        var_name=self._fnamex[idx], element_name=self.names)
         for idx, item in enumerate(self._algebs):
-            self.system.Varname.append(listname='unamey', xy_idx=self.__dict__[item][:],
+            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
                                        var_name=self._unamey[idx], element_name=self.names)
-            self.system.Varname.append(listname='fnamey', xy_idx=self.__dict__[item][:],
+            self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
                                        var_name=self._fnamey[idx], element_name=self.names)
 
     def _list2matrix(self):
+        """convert _params from list to matrix"""
         for item in self._params:
             self.__dict__[item] = matrix(self.__dict__[item])
 
     def _matrix2list(self):
+        """convert _param from matrix to list"""
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
 
@@ -340,3 +442,29 @@ class ModelBase(object):
     def limit_check(self, data, min=None, max=None):
         """ check if data is within limits. reset if violates"""
         pass
+
+    def add_jac(self, m, val, row, col):
+        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+
+        size = self.system.DAE.__dict__[m].size
+        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def set_jac(self, m, val, row, col):
+        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+
+        size = self.system.DAE.__dict__[m].size
+        oldval = []
+        if type(row) is int:
+            row = [row]
+        if type(col) is int:
+            col = [col]
+        if type(row) is range:
+            row = list(row)
+        if type(col) is range:
+            col = list(col)
+        for i, j in zip(row, col):
+            oldval.append(self.system.DAE.__dict__[m][i, j])
+        self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
+        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
