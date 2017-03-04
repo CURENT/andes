@@ -80,7 +80,7 @@ class Logger(object):
     def __init__(self, system=None):
         self.show_loc = False
         self.show_fcn = False
-        # For use with ANDES powersystem class
+        # For use with ANDES PowerSystem class
         if system:
             self.pid = system.pid
             lvl = system.Settings.verbose
@@ -145,11 +145,16 @@ class Logger(object):
         self._raw_log(logging.critical, message, exc_info)
 
     def message(self, message, level=None):
-        if not level:
-            return
-        func = self.__dict__[mapping[level]]()
-        func(message)
-
+        if level == INFO:
+            self.info(message)
+        elif level == DEBUG:
+            self.debug(message)
+        elif level == WARNING:
+            self.warning(message)
+        elif level == ERROR:
+            self.error(message)
+        elif level == CRITICAL:
+            self.always(message)
     @staticmethod
     def basicConfig(level=DEBUG):
         """
