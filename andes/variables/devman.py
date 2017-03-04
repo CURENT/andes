@@ -28,7 +28,7 @@ class DevMan(object):
             self.system.Log.error('Device {} missing. Call add_device before adding elements'.format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group
-        if not idx:
+        if idx is None:  # "if not idx" will fail for idx==0.0
             idx = len(self.group[group_name].keys())
         self.group[group_name][idx] = dev_name
         return idx
