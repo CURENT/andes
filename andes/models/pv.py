@@ -1,4 +1,4 @@
-from cvxopt.base import matrix, spdiag, mul, div, log, exp, spmatrix
+from cvxopt import matrix, spmatrix
 from .base import ModelBase
 from ..consts import *
 from ..utils.math import *

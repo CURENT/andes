@@ -1,5 +1,4 @@
-from cvxopt import matrix, mul, spmatrix, div
-from cvxopt import cos, sin
+from cvxopt import matrix, mul, spmatrix, div, sin, cos
 from .dcbase import DCBase
 from ..utils.math import *
 from ..consts import *
@@ -77,14 +76,14 @@ class VSC(DCBase):
         self.Ysh = div(1, self.Zsh)
 
     def init0(self, dae):
+        # behind-transformer AC theta_sh and V_sh - must assign first
+        dae.y[self.ash] = dae.y[self.a] + 1e-2
+        dae.y[self.vsh] = mul(self.v0, 1 - self.V) + mul(self.vc, self.V) + 1e-6
+
         Vm = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)  # Initial value for Vsh
         IshC = conj(div(Vm - Vsh, self.Zsh))
         Ssh = mul(Vsh, IshC)
-
-        # AC bus thetashm and Vshm initials
-        dae.y[self.ash] = dae.y[self.a] + 1e-10
-        dae.y[self.vsh] = mul(self.v0, 1 - self.V) + mul(self.vc, self.V)
 
         # PQ PV and V control initials on converters
         dae.y[self.psh] = mul(self.pshc, self.PQ + self.PV)
@@ -121,15 +120,15 @@ class VSC(DCBase):
                     if vupper[i] > 0:
                         if 'vmax' not in self.vio[i]:
                             self.vio[i].append('vmax')
-                            self.system.Log.debug(' * Vmax reached for VSC_{}'.format(i))
+                            self.system.Log.debug(' * Vmax reached for VSC_{0}'.format(i))
                     elif vlower[i] < 0:
                         if 'vmin' not in self.vio[i]:
                             self.vio[i].append('vmin')
-                            self.system.Log.debug(' * Vmin reached for VSC_{}'.format(i))
+                            self.system.Log.debug(' * Vmin reached for VSC_{0}'.format(i))
                     if iupper[i] > 0:
                         if 'Imax' not in self.vio[i]:
                             self.vio[i].append('Imax')
-                            self.system.Log.debug(' * Imax reached for VSC_{}'.format(i))
+                            self.system.Log.debug(' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power
         dae.g[self.a] += dae.y[self.psh]  # active power load
@@ -164,7 +163,7 @@ class VSC(DCBase):
                     yidx = self.Ish[comp]
                     ylim = self.Ishmax[comp]
                 else:
-                    raise NameError('Unknown limit variable name.')
+                    raise NameError('Unknown limit variable name <{0}>.'.format(item))
 
                 if count == 0:
                     idx = self.qsh[comp]
@@ -235,20 +234,20 @@ class VSC(DCBase):
             self.set_jac('Gy', 1e-6, [gidx], [gidx])
 
     def jac0(self, dae):
-        self.set_jac(Gy0, -self.u, self.ash, self.psh)
-        self.set_jac(Gy0, -self.u, self.vsh, self.qsh)
+        self.add_jac(Gy0, -self.u, self.ash, self.psh)
+        self.add_jac(Gy0, -self.u, self.vsh, self.qsh)
 
-        self.set_jac(Gy0, mul(self.u, self.PQ + self.PV) + 1e-6, self.psh, self.psh)
-        self.set_jac(Gy0, mul(self.u, self.V), self.psh, self.v1)
-        self.set_jac(Gy0, -mul(self.u, self.V), self.psh, self.v2)
+        self.add_jac(Gy0, mul(self.u, self.PQ + self.PV) + 1e-6, self.psh, self.psh)
+        self.add_jac(Gy0, mul(self.u, self.V), self.psh, self.v1)
+        self.add_jac(Gy0, -mul(self.u, self.V), self.psh, self.v2)
 
-        self.set_jac(Gy0, mul(self.u, self.PQ) + 1e-6, self.qsh, self.qsh)
-        self.set_jac(Gy0, mul(self.u, self.PV + self.V), self.qsh, self.v)
+        self.add_jac(Gy0, mul(self.u, self.PQ) + 1e-6, self.qsh, self.qsh)
+        self.add_jac(Gy0, mul(self.u, self.PV + self.V), self.qsh, self.v)
 
         self.add_jac(Gy0, self.u, self.a, self.psh)
         self.add_jac(Gy0, self.u, self.v, self.qsh)
 
-        self.set_jac(Gy0, -self.u + 1e-6, self.Ish, self.Ish)
+        self.add_jac(Gy0, -self.u + 1e-6, self.Ish, self.Ish)
 
-        self.set_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
-        self.set_jac(Gy0, -self.k1, self.pdc, self.Ish)
+        self.add_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
+        self.add_jac(Gy0, -self.k1, self.pdc, self.Ish)

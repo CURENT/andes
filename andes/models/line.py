@@ -1,4 +1,4 @@
-from cvxopt.base import matrix, spdiag, mul, div, spmatrix, sparse
+from cvxopt import matrix, spdiag, mul, div, spmatrix, sparse
 from .base import ModelBase
 from ..consts import *
 from ..utils.math import *
@@ -213,7 +213,7 @@ class Line(ModelBase):
         self.incidence()
 
     def gcall(self, dae):
-        vc = mul(dae.y[self.v], exp(1j*dae.y[self.a]))
+        vc = polar(dae.y[self.v], dae.y[self.a])
         Ic = self.Y*vc
         S = mul(vc, conj(Ic))
         dae.g[self.a] += S.real()
@@ -227,11 +227,11 @@ class Line(ModelBase):
         """Build line Jacobian matrix"""
         if not self.n:
             idx = range(dae.m)
-            self.add_jac('Gy', 1e-6, idx, idx)
+            self.set_jac('Gy', 1e-6, idx, idx)
             return
 
-        Vn = mul(1.0, exp(dae.y[self.a]*1j))
-        Vc = mul(dae.y[self.v] + 0j, Vn)
+        Vn = polar(1.0, dae.y[self.a])
+        Vc = mul(dae.y[self.v], Vn)
         Ic = self.Y * Vc
 
         diagVn = spdiag(Vn)
@@ -268,6 +268,3 @@ class Line(ModelBase):
 
         self.chg1 = mul(self.b1, div(V1 ** 2, m2))
         self.chg2 = mul(self.b2, V2 ** 2)
-
-
-

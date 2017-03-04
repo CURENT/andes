@@ -1,4 +1,4 @@
-from cvxopt.base import matrix, mul, spmatrix
+from cvxopt import matrix, mul, spmatrix
 from .base import ModelBase
 
 

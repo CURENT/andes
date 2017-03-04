@@ -1,4 +1,4 @@
-from cvxopt.base import matrix, spmatrix, spdiag, mul, div
+from cvxopt import matrix, spmatrix, spdiag, mul, div
 from .base import ModelBase
 from ..consts import *
 
@@ -49,7 +49,7 @@ class Node(ModelBase):
     def jac0(self, dae):
         if self.n is 0:
             return
-        self.set_jac(Gy0, 1e-6, self.v, self.v)
+        self.add_jac(Gy0, 1e-6, self.v, self.v)
 
 
 class DCBase(ModelBase):
@@ -98,9 +98,9 @@ class RLine(DCBase):
     def jac0(self, dae):
         self.add_jac(Gy0, -self.u, self.v1, self.I)
         self.add_jac(Gy0, self.u, self.v2, self.I)
-        self.set_jac(Gy0, div(self.u, self.R), self.I, self.v1)
-        self.set_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
-        self.set_jac(Gy0, self.u + 1e-6, self.I, self.I)
+        self.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
+        self.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
+        self.add_jac(Gy0, self.u + 1e-6, self.I, self.I)
 
 
 class Ground(DCBase):
@@ -139,5 +139,5 @@ class Ground(DCBase):
 
     def jac0(self, dae):
         self.add_jac(Gy0, -self.u, self.v, self.I)
-        self.set_jac(Gy0, self.u - 1 + 1e-6, self.I, self.I)
-        self.set_jac(Gy0, -self.u, self.I, self.v)
+        self.add_jac(Gy0, self.u - 1 + 1e-6, self.I, self.I)
+        self.add_jac(Gy0, -self.u, self.I, self.v)
