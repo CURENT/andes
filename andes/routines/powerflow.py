@@ -73,18 +73,20 @@ def calcInc(system):
 def fdpf(system):
     """Fast Decoupled power flow solver routine"""
 
-    # Sparse library set up
+    # sparse library set up
     sparselib = system.Settings.sparselib.lower()
 
-    # General settings
+    # general settings
     iteration = 1
     iter_max = system.SPF.maxit
     convergence = True
     tol = system.Settings.tol
     system.Settings.error = tol + 1
     err_vec = []
+    if (not system.Line.Bp) or (not system.Line.Bpp):
+        system.Line.build_b()
 
-    # Initialization indexing and Jacobian
+    # initialize indexing and Jacobian
     ngen = system.SW.n + system.PV.n
     sw = system.SW.a
     sw.sort(reverse=True)
@@ -110,7 +112,7 @@ def fdpf(system):
     Npp = lib.numeric(Bpp, Fpp)
     exec(system.Call.fdpf)
 
-    # Main loop
+    # main loop
     while system.Settings.error > tol:
         # P-theta
         da = matrix(div(system.DAE.g[no_sw], system.DAE.y[no_swv]))

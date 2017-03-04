@@ -46,7 +46,9 @@ class Report(object):
     def info(self):
         info = list()
         info.append('ANDES' + ' ' + revision + '\n')
-        info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui' + '\n\n')
+        info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui\n\n')
+        info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
+        info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
         info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')

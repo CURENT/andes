@@ -208,9 +208,9 @@ class Line(ModelBase):
     def init0(self, dae):
         solver = self.system.SPF.solver.lower()
         self.build_y()
+        self.incidence()
         if solver in ('fdpf', 'fdbx', 'fdxb'):
             self.build_b()
-        self.incidence()
 
     def gcall(self, dae):
         vc = polar(dae.y[self.v], dae.y[self.a])
