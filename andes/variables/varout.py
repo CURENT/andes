@@ -1,4 +1,4 @@
-from cvxopt.base import matrix
+from cvxopt import matrix
 from numpy import array
 
 

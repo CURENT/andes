@@ -1,7 +1,7 @@
 import platform
 from operator import itemgetter
 import importlib
-from cvxopt.base import mul
+from cvxopt import mul
 from ..formats import all_formats
 from time import strftime
 # from .. import __revision__ as revision

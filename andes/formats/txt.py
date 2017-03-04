@@ -1,5 +1,5 @@
 from andes.utils.tab import simpletab
-from cvxopt.base import matrix
+from cvxopt import matrix
 
 def format_newline():
     return '\n'

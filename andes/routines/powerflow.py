@@ -1,7 +1,9 @@
-from cvxopt.base import matrix, sparse, div
+from cvxopt import matrix, sparse, div
 from ..utils.jactools import diag0
 from ..consts import DEBUG
 import importlib
+import math
+
 klu = importlib.import_module('cvxopt.klu')
 umfpack = importlib.import_module('cvxopt.umfpack')
 lib = umfpack
@@ -59,9 +61,12 @@ def calcInc(system):
             lib.solve(A, F, N, inc)
         elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
-    except:
-        system.Log.warning('Unexpected symbolic factorization')
+    except ValueError:
+        system.Log.warning('Unexpected symbolic factorization. Refactorizing...')
         system.DAE.factorize = True
+    except ArithmeticError:
+        system.Log.error('Jacobian matrix is singular.')
+
     return -inc
 
 
@@ -153,7 +158,7 @@ def newton(system):
     """newton power flow routine"""
     iteration = 1
     iter_max = system.SPF.maxit
-    convergence = True
+    convergence = False
     tol = system.Settings.tol
     system.Settings.error = tol + 1
     err_vec = []
@@ -172,13 +177,14 @@ def newton(system):
 
         if iteration > 4 and err_vec[-1] > 1000 * err_vec[0]:
             system.Log.info('Blown up in {0} iterations.'.format(iteration))
-            convergence = False
             break
 
         if iteration > iter_max:
             system.Log.info('Reached maximum number of iterations.')
-            convergence = False
             break
+
+    if err_vec[-1] < tol:
+        convergence = True
 
     return convergence, iteration
 

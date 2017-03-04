@@ -1,4 +1,4 @@
-from cvxopt.base import matrix, spmatrix, sparse
+from cvxopt import matrix, spmatrix, sparse
 from cvxopt.klu import numeric, symbolic, solve, linsolve
 
 
