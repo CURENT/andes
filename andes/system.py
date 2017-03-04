@@ -5,6 +5,7 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .settings import Settings, SPF, TDS, CPF, SSSA
 from .utils import Logger
 from .models import non_jits, jits, JIT
+from .consts import *
 
 
 class PowerSystem(object):
@@ -55,6 +56,7 @@ class PowerSystem(object):
 
     def setup(self):
         """set up everything after receiving the inputs"""
+        self.DevMan.sort_device()
         self.Call.setup()
         self.dev_setup()
         self.xy_addr0()
@@ -82,7 +84,8 @@ class PowerSystem(object):
     def dev_setup(self):
         """set up models after data input"""
         for device in self.DevMan.devices:
-            self.__dict__[device].setup()
+            if self.__dict__[device].n:
+                self.__dict__[device].setup()
 
     def xy_addr0(self):
         """assign x y indicies for power flow"""
@@ -148,6 +151,50 @@ class PowerSystem(object):
             return
         self.Line.connectivity(self.Bus)
 
+    def get_busdata(self, dec=5):
+        """get ac bus data from solved power flow"""
+        if not self.Settings.pfsolved:
+            self.Log.error('Power flow not solved when getting bus data.')
+            return tuple([False] * 7)
+        idx = self.Bus.idx
+        names = self.Bus.names
+        Vm = [round(self.DAE.y[x], dec) for x in self.Bus.v]
+        if self.SPF.usedegree:
+            Va = [round(self.DAE.y[x] * rad2deg, dec) for x in self.Bus.a]
+        else:
+            Va = [round(self.DAE.y[x], dec) for x in self.Bus.a]
 
+        Pg = [round(self.Bus.Pg[x], dec) for x in range(self.Bus.n)]
+        Qg = [round(self.Bus.Qg[x], dec) for x in range(self.Bus.n)]
+        Pl = [round(self.Bus.Pl[x], dec) for x in range(self.Bus.n)]
+        Ql = [round(self.Bus.Ql[x], dec) for x in range(self.Bus.n)]
+        return (list(x) for x in zip(*sorted(zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
+    def get_nodedata(self, dec=5):
+        """get dc node data from solved power flow"""
+        if not self.Node.n:
+            return
+        if not self.Settings.pfsolved:
+            self.Log.error('Power flow not solved when getting bus data.')
+            return tuple([False] * 7)
+        idx = self.Node.idx
+        names = self.Node.names
+        V = [round(self.DAE.y[x], dec) for x in self.Node.v]
+        return (list(x) for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
+
+    def get_linedata(self, dec=5):
+        """get line data from solved power flow"""
+        if not self.Settings.pfsolved:
+            self.Log.error('Power flow not solved when getting line data.')
+            return tuple([False] * 7)
+        idx = self.Line.idx
+        fr = self.Line.bus1
+        to = self.Line.bus2
+        Pfr = [round(self.Line.S1[x].real, dec) for x in range(self.Line.n)]
+        Qfr = [round(self.Line.S1[x].imag, dec) for x in range(self.Line.n)]
+        Pto = [round(self.Line.S2[x].real, dec) for x in range(self.Line.n)]
+        Qto = [round(self.Line.S2[x].imag, dec) for x in range(self.Line.n)]
+        Ploss = [i + j for i, j in zip(Pfr, Pto)]
+        Qloss = [i + j for i, j in zip(Qfr, Qto)]
+        return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
 

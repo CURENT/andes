@@ -102,9 +102,6 @@ def cli_parse(writehelp=False, helpfile=None):
 
 def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_variables=None,
              quick_help=None, help_option=None, help_settings=None, **kwargs):
-    if not (usage or group or category or dev_list or dev_format or dev_variables
-            or quick_help or help_option or help_settings):
-        return
     if usage:
         cli_parse(writehelp=True, helpfile='cli_help.txt')
     if category:
@@ -123,7 +120,6 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         pass
     if help_settings:
         pass
-    return
 
 
 def cleanup(clean=False, cleanall=False):
@@ -238,8 +234,7 @@ def run(case, **kwargs):
     # print summary only
     if summary:
         t2, s = elapsed(t1)
-        system.Report.update_summary()
-        system.Report.write_summary()
+        system.Report.writey(content='summary')
         system.Log.info('Summary of written in {:s}'.format(s))
         return
 
@@ -284,15 +279,14 @@ def run(case, **kwargs):
         system.Log.info('Power flow failed to converge in {:s}.'.format(s))
     else:
         system.Log.info('Power flow converged in {:s}.'.format(s))
-        system.td_init()  # initialize variables for output even if not running TD
+        system.td_init()  # initialize variables for output even if not running TDS
         t4, s = elapsed(t3)
         if system.DAE.n:
             system.Log.info('Dynamic models initialized in {:s}.'.format(s))
         else:
             system.Log.info('No dynamic model loaded.')
         if not system.Files.no_output:
-            system.Report.update_pf()
-            system.Report.write_pf()
+            system.Report.write(content='powerflow')
             t5, s = elapsed(t4)
             system.Log.info('Static report written in {:s}.'.format(s))
 
@@ -311,7 +305,7 @@ def run(case, **kwargs):
         t1, s = elapsed(t0)
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
-        system.Log.info('Integration Method: {}'.format(system.TDS.method))
+        system.Log.info('Integration Method: {0}'.format(system.TDS.method))
         timedomain(system)
         t2, s = elapsed(t1)
         system.Log.info('Time domain simulation finished in {:s}.'.format(s))
