@@ -53,6 +53,28 @@ class VSC(DCBase):
                            'vhigh': 9999,
                            'vlow': 0.0,
                            })
+        self._units.update({'rsh': 'pu',
+                            'xsh': 'pu',
+                            'vshmax': 'pu',
+                            'vshmin': 'pu',
+                            'Ishmax': 'pu',
+                            'bus': 'na',
+                            'v0': 'pu',
+                            'pshc': 'pu',
+                            'qshc': 'pu',
+                            'vc': 'pu',
+                            'vdc0': 'pu',
+                            'PQ': 'na',
+                            'PV': 'na',
+                            'V': 'na',
+                            'k0': 'na',
+                            'k1': 'na',
+                            'k2': 'na',
+                            'droop': 'na',
+                            'K': 'na',
+                            'vhigh': 'pu',
+                            'vlow': 'pu',
+                            })
         self._algebs.extend(['ash', 'vsh', 'psh', 'qsh', 'pdc', 'Ish'])
         self._unamey.extend(['ash', 'vsh', 'psh', 'qsh', 'pdc', 'Ish'])
         self._fnamey.extend(['\\theta_{{sh}}', 'V_{{sh}}', 'P_{{sh}}', 'Q_{{sh}}', 'P_{{dc}}', 'I_{{sh}}'])
