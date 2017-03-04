@@ -108,9 +108,9 @@ Line, Vn = 13.8, Vn2 = 13.8, bus1 = 13, bus2 = 14, idx = "Line_20",
 #BusLine, line = "Line_19", busf = 12
 #BusLine, line = "Line_20", busf = 13
 
-PQ, Vn = 69.0, bus = 2, idx = "PQ load_1", name = "PQ Bus 2", p = 0.217,
+PQ, Vn = 69.0, bus = 2, idx = "PQ load_1", name = "PQ_Bus_2", p = 0.217,
     q = 0.127
-PQ, Vn = 69.0, bus = 3, idx = "PQ load_2", name = "PQ Bus 3", p = 0.942,
+PQ, Vn = 69.0, bus = 3, idx = "PQ load_2", name = "PQ_Bus_3", p = 0.942,
     q = 0.19
 PQ, Vn = 69.0, bus = 4, idx = "PQ load_3", name = "PQ Bus 4", p = 0.478,
     q = -0.039
@@ -131,11 +131,6 @@ PQ, Vn = 13.8, bus = 13, idx = "PQ load_10", name = "PQ Bus 13", p = 0.135,
 PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
-Fault, bus = 4, tf = 2.0, tc = 2.01, rf = 0.0, xf = 0.01
-
-#Breaker, Vn = 69.0, bus = 2, fn = 60.0, idx = 1, line = "Line_4",
-#         name = "Breaker 1", t1 = 1.0, t2 = 200.0, u1 = 1, u2 = 1
-
 PV, Vn = 69.0, bus = 2, busr = 2, idx = 2, name = "PV Bus 2",
     pg = 0.4, pmax = 1.0, pmin = 0, qmax = 0.4, qmin = -0.4,
     v0 = 1.045
@@ -146,65 +141,39 @@ PV, Vn = 13.8, bus = 6, busr = 6, idx = 6, name = "PV Bus 6",
 PV, Vn = 18.0, bus = 8, busr = 8, idx = 8, name = "PV Bus 8",
     pg = 0, pmax = 1.0, pmin = 0, qmax = 0.24, qmin = -0.06, v0 = 1.09
 
-Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt Bus 9"
+Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt_Bus_9"
 
-SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1",
+SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     pmax = 999.9, pmin = -999.9, qmax = 9.9, qmin = -9.9,
-    v0 = 1.06
-
-#Syn2, D = 3.01, M = 6.02, Sn = 500, Vn = 69, xd1 = 0.302,
-#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-#Syn2, D = 3.01, M = 6.02, Sn = 500, Vn = 69, xd1 = 0.302,
-#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-#Syn2, D = 3.01, M = 6.02, Sn = 500, Vn = 69, xd1 = 0.302,
-#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-#Syn2, D = 3.01, M = 6.02, Sn = 500, Vn = 13.8, xd1 = 0.302,
-#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+    v0 = 1.06, ref = True
 
 
-#Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 1, fn = 60.0,
-#       gen = 1, idx = 1, name = "Syn 1", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+Node, idx = 0, name = "Node 0", Vdcn = 100.0
+Node, idx = 1, name = "Node 1", Vdcn = 100.0
+Node, idx = 2, name = "Node 2", Vdcn = 100.0
+Node, idx = 3, name = "Node 3", Vdcn = 100.0
+Node, idx = 4, name = "Node 4", Vdcn = 100.0
 
-#Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 2, fn = 60.0,
-#       gen = 2, idx = 2, name = "Syn 2", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
-#Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 3, fn = 60.0,
-#       gen = 3, idx = 3, name = "Syn 3", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.01, xsh = 0.1,
+     vshmax = 1.1, vshmin = 0.95, Ishmax = 1, pshc = 0.5, qshc = 0.01, PQ = 1,
+     droop = 1, K = -0.5, vhigh = 1.01, vlow = 0.99,
+     Vdcn = 100, k0 = 0.0, k1 = 0.0, k2 = 0.0
+VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01,
+     vshmax = 1.08, vshmin = 0.9, Ishmax = 1, pshc = 0.2, qshc = 0.01, PQ = 1,
+     droop = 1, K = -0.5, vhigh = 1.01, vlow = 0.99,
+     Vdcn = 100, k0 = 0.0, k1 = 0.0, k2 = 0.0
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 12, name = "VSC 3", rsh = 0.01, xsh = 0.1,
+     vshmax = 1.1, vshmin = 0.9, Ishmax = 1, pshc = -0.3, vc = 1.00, PV = 1,
+     droop = 1, K = -0.5, vhigh = 1.01, vlow = 0.99,
+     Vdcn = 100, k0 = 0.0, k1 = 0.0, k2 = 0.0
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
+     vshmax = 1.1, vshmin = 0.9, Ishmax = 1, V = 1, vc = 1.03, vdc0 = 1.0,
+     Vdcn = 100, k0 = 0.0, k1 = 0.0, k2 = 0.0
 
-#Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 6, fn = 60.0,
-#       gen = 6, idx = 6, name = "Syn 6", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-
-#Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 8, fn = 60.0,
-#       gen = 8, idx = 8, name = "Syn 8", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-
-#Syn8a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 3, fn = 60.0,
-#       gen = 3, idx = 3, name = "Syn 3", ra = 0.0031, xd = 1.05,
-#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-
-#Avr1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-#      bus = 1, idx = 1, name = "AVR 1", syn = 1, vmax = 9.99,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      bus = 2, idx = 2, name = "AVR 2", syn = 2, vmax = 2.05,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      bus = 3, idx = 3, name = "AVR 3", syn = 3, vmax = 1.7,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      bus = 6, idx = 4, name = "AVR 4", syn = 4, vmax = 2.2,
-#      vmin = 1.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      bus = 8, idx = 5, name = "AVR 5", syn = 5, vmax = 2.2,
-#      vmin = 1.0
-
+RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
+RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
+RLine, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100, R = 5
+RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
+#RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 1
