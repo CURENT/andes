@@ -21,6 +21,17 @@ class Stagen(ModelBase):
                            'vmax': 1.4,
                            'vmin': 0.6,
                            })
+        self._units.update({'bus': 'na',
+                            'busr': 'na',
+                            'pg': 'pu',
+                            'qg': 'pu',
+                            'pmax': 'pu',
+                            'pmin': 'pu',
+                            'qmax': 'pu',
+                            'v0': 'pu',
+                            'vmax': 'pu',
+                            'vmin': 'pu',
+                            })
         self._params.extend(['v0',
                              'pg',
                              'qg',
