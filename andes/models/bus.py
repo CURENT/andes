@@ -8,8 +8,7 @@ class Bus(ModelBase):
         super().__init__(system, name)
         self._group = 'Topology'
         self._data.pop('Sn')
-        self._data.update({'Vn': 110.0,
-                           'voltage': 1.0,
+        self._data.update({'voltage': 1.0,
                            'angle': 0.0,
                            'vmax': 1.1,
                            'vmin': 0.9,
@@ -19,6 +18,16 @@ class Bus(ModelBase):
                            'xcoord': None,
                            'ycoord': None,
                            })
+        self._units.update({'voltage': 'pu',
+                            'angle': 'rad',
+                            'vmax': 'pu',
+                            'vmin': 'pu',
+                            'area': 'na',
+                            'region': 'na',
+                            'owner': 'na',
+                            'xcoord': 'deg',
+                            'ycoord': 'deg',
+                            })
         self._params = ['u',
                         'Vn',
                         'voltage',
@@ -51,20 +60,14 @@ class Bus(ModelBase):
         self.island_sets = list()
 
     def setup(self):
-        """set up bus class after data parsing - manually assign angle and voltage indices"""
-        if not self.n:
-            self.system.Log.error('Powersystem instance contains no <Bus> element.')
-            return
+        """Set up bus class after data parsing - manually assign angle and voltage indices"""
         self.a = list(range(0, self.n))
         self.v = list(range(self.n, 2*self.n))
         self.system.DAE.m = 2*self.n
-        self._list2matrix()
+        self._param2matrix()
 
     def _varname(self):
-        """customize varname for bus class"""
-        if not self.addr:
-            self.system.Log.error('Unable to assign Varname before allocating address')
-            return
+        """Customize varname for bus class"""
         self.system.VarName.append(listname='unamey', xy_idx=self.a, var_name='theta', element_name=self.a)
         self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='vm', element_name=self.a)
         self.system.VarName.append(listname='fnamey', xy_idx=self.a, var_name='\\theta', element_name=self.a)

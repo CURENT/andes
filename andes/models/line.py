@@ -71,7 +71,7 @@ class Line(ModelBase):
         self._inst_meta()
 
     def setup(self):
-        self._list2matrix()
+        self._param2matrix()
         self.a = self.system.Bus.a
         self.v = self.system.Bus.v
         self.a1 = self.system.Bus._slice('a', self.bus1)
@@ -227,7 +227,7 @@ class Line(ModelBase):
         """Build line Jacobian matrix"""
         if not self.n:
             idx = range(dae.m)
-            self.set_jac('Gy', 1e-6, idx, idx)
+            self.add_jac('Gy', 1e-6, idx, idx)
             return
 
         Vn = mul(1.0, exp(dae.y[self.a]*1j))

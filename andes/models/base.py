@@ -125,6 +125,21 @@ class ModelBase(object):
         for var in self._algebs:
             self.__dict__[var] = zeros[:]
 
+    def remove_param(self, param):
+        """Remove a param from this class"""
+        if param in self._data.keys():
+            self._data.pop(param)
+        if param in self._descr.keys():
+            self._descr.pop(param)
+        if param in self._units:
+            self._units.pop(param)
+        if param in self._params:
+            self._params.remove(param)
+        if param in self._zeros:
+            self._zeros.remove(param)
+        if param in self._mandatory:
+            self._mandatory.remove(param)
+
     def copy_param(self, model, src, dest=None, fkey=None, astype=None):
         """get a copy of the system.model.src as self.dest"""
 
@@ -247,7 +262,7 @@ class ModelBase(object):
 
         convert = False
         if isinstance(self.__dict__[self._params[0]], matrix):
-            self._matrix2list()
+            self._param2list()
             convert = True
 
         self.n -= 1
@@ -291,7 +306,7 @@ class ModelBase(object):
 
         self.names.pop(item)
         if convert and self.n:
-            self._list2matrix()
+            self._param2matrix()
 
     def base(self):
         """Per-unitize parameters. Store a copy."""
@@ -364,7 +379,7 @@ class ModelBase(object):
         Called AFTER parsing the input file
         """
         self._interface()
-        self._list2matrix()
+        self._param2matrix()
         self._alloc()
 
     def _interface(self):
@@ -382,8 +397,11 @@ class ModelBase(object):
     def _dc_interface(self):
         """retrieve v addresses of dc buses"""
         for key, val in self._dc.items():
-            for item in val:
-                self.copy_param(model='Node', src='v', dest=item, fkey=self.__dict__[key])
+            if type(val) == list:
+                for item in val:
+                    self.copy_param(model='Node', src='v', dest=item, fkey=self.__dict__[key])
+            else:
+                self.copy_param(model='Node', src='v', dest=val, fkey=self.__dict__[key])
 
     def _ctrl_interface(self):
         pass
@@ -411,23 +429,28 @@ class ModelBase(object):
         if not self.addr:
             self.message('Unable to assign Varname before allocating address', ERROR)
             return
-        for idx, item in enumerate(self._states):
-            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamex[idx], element_name=self.names)
-            self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
-                                       var_name=self._fnamex[idx], element_name=self.names)
-        for idx, item in enumerate(self._algebs):
-            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamey[idx], element_name=self.names)
-            self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
-                                       var_name=self._fnamey[idx], element_name=self.names)
+        if not self.n:
+            return
+        try:
+            for idx, item in enumerate(self._states):
+                self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
+                                           var_name=self._unamex[idx], element_name=self.names)
+                self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
+                                           var_name=self._fnamex[idx], element_name=self.names)
+            for idx, item in enumerate(self._algebs):
+                self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
+                                           var_name=self._unamey[idx], element_name=self.names)
+                self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
+                                           var_name=self._fnamey[idx], element_name=self.names)
+        except IndexError:
+            self.message('Variable names missing in class <{0}>definition.'.format(self._name))
 
-    def _list2matrix(self):
+    def _param2matrix(self):
         """convert _params from list to matrix"""
         for item in self._params:
             self.__dict__[item] = matrix(self.__dict__[item])
 
-    def _matrix2list(self):
+    def _param2list(self):
         """convert _param from matrix to list"""
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
