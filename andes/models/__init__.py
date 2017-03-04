@@ -14,8 +14,13 @@ non_jits = {'bus': {'Bus': 'Bus'},
             'zone': {'Zone': 'Zone',
                      'Area': 'Area',
                      'Region': 'Region',
-                     }
-
+                     },
+            'dcbase': {'Node': 'Node',
+                       'RLine': 'RLine',
+                       'Ground': 'Ground',
+                       },
+            'vsc': {'VSC': 'VSC',
+                    }
            }
 
 jits = {}
