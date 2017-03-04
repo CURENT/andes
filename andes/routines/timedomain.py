@@ -4,7 +4,7 @@ from cvxopt.klu import numeric, symbolic, solve, linsolve
 
 def first_time_step(system):
     """compute first time step"""
-    settings = system.TD
+    settings = system.TDS
     # estimate minimum time step
     if not system.DAE.n:
         freq = 1.0
@@ -45,7 +45,7 @@ def first_time_step(system):
 def timedomain(system):
 
     dae = system.DAE
-    settings = system.TD
+    settings = system.TDS
     # check settings
     maxit = settings.maxit
     tol = settings.tol
@@ -65,7 +65,7 @@ def timedomain(system):
     h = first_time_step(system)
 
     # time vector for faults and breaker events
-    fixed_times = system.Calls.get_times()  # todo: to implement
+    fixed_times = system.Call.get_times()  # todo: to implement
     # fixed_times = [] # hardcoded, todo: implement the line above
     # compute max rotor angle difference
     diff_max = anglediff()
@@ -110,7 +110,7 @@ def timedomain(system):
             switch = False
 
         if settings.disturbance:
-            system.Calls.disturbance(actual_time)
+            system.Call.disturbance(actual_time)
 
         # main loop of Newton iteration
         settings.error = tol + 1 # force at least one iteration
@@ -118,7 +118,7 @@ def timedomain(system):
             # note: dae.x, dae.y, dae.f, dae.g are updated in each iteration
 
             # DAE equations
-            exec(system.Calls.int)
+            exec(system.Call.int)
 
             # complete Jacobian matrix DAE.Ac
             if settings.method == 'euler':
@@ -131,7 +131,7 @@ def timedomain(system):
                 dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
             # anti-windup limiters
-            #     exec(system.Calls.windup)
+            #     exec(system.Call.windup)
 
             if dae.factorize:
                 F = symbolic(dae.Ac)
@@ -192,7 +192,7 @@ def time_step(system, convergence, niter, t):
         convergence: 1 - last step computation converged
                      0 - last step not converged
         niter:  number of iterations """
-    settings = system.TD
+    settings = system.TDS
     if convergence:
         if niter >= 15:
             settings.deltat = max(settings.deltat*0.9, settings.deltatmin)

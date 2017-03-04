@@ -1,53 +1,63 @@
+from cvxopt.base import matrix, sparse, div
+from ..utils.jactools import diag0
+from ..consts import DEBUG
 import importlib
-from cvxopt.base import matrix, spmatrix, sparse, div
-
 klu = importlib.import_module('cvxopt.klu')
 umfpack = importlib.import_module('cvxopt.umfpack')
+lib = umfpack
 F = None
 
-all_solvers = {'nr': 'newton',
-               'newton': 'newton',
-               'fdpf': 'fdpf',
-               'fdbx': 'fdpf',
-               'fdxb': 'fdpf',
-              }
+solvers = {'nr': 'newton',
+           'newton': 'newton',
+           'fdpf': 'fdpf',
+           'fdbx': 'fdpf',
+           'fdxb': 'fdpf',
+           }
 
 
 def run(system):
-    if system.PF.solver.lower() not in all_solvers.keys():
-        system.PF.solver = 'NR'
-    func_name = all_solvers.get(system.PF.solver.lower())
-    run_pf = func_name + '(system)'
-    eval(run_pf)
+    """Entry function of power flow routine"""
+
+    # default sparselib setup
+    if system.Settings.sparselib not in system.Settings.sparselib_alt:
+        system.Settings.sparselib = 'umfpack'
+        globals()['lib'] = umfpack
+    elif system.Settings.sparselib == 'klu':
+        globals()['lib'] = klu
+
+    # default solver setup
+    if system.SPF.solver.lower() not in solvers.keys():
+        system.SPF.solver = 'NR'
+
+    func_name = solvers.get(system.SPF.solver.lower())
+    run_powerflow = importlib.import_module('andes.routines.powerflow')
+    run_powerflow = getattr(run_powerflow, func_name)
+
+    convergence, iteration = run_powerflow(system)
+    if convergence:
+        post_processing(system, convergence)
 
 
 def calcInc(system):
     global F
-    exec(system.Calls.newton)
+    exec(system.Call.newton)
 
     A = sparse([[system.DAE.Fx, system.DAE.Gx], [system.DAE.Fy, system.DAE.Gy]])
     inc = matrix([system.DAE.f, system.DAE.g])
-    sparselib = system.Settings.sparselib.lower()
-    if sparselib == 'umfpack':
-        lib = umfpack
-    elif sparselib == 'klu':
-        lib = klu
-    else:
-        # use UMFPACK as default for official CVXOPT compatibility
-        sparselib = 'umfpack'
-        lib = umfpack
 
     if system.DAE.factorize:
         F = lib.symbolic(A)
         system.DAE.factorize = False
 
     # matrix2mat('PF_Gy.mat', [system.DAE.Gy], ['Gy'])
+    if system.Settings.verbose <= DEBUG:
+        diag0(system.DAE.Gy, 'unamey', system)
 
     try:
         N = lib.numeric(A, F)
-        if sparselib == 'klu':
+        if system.Settings.sparselib.lower() == 'klu':
             lib.solve(A, F, N, inc)
-        elif sparselib == 'umfpack':
+        elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
     except:
         system.Log.warning('Unexpected symbolic factorization')
@@ -60,17 +70,10 @@ def fdpf(system):
 
     # Sparse library set up
     sparselib = system.Settings.sparselib.lower()
-    if sparselib == 'umfpack':
-        lib = umfpack
-    elif sparselib == 'klu':
-        lib = klu
-    else:
-        sparselib = 'klu'
-        lib = klu
 
     # General settings
     iteration = 1
-    iter_max = system.PF.maxit
+    iter_max = system.SPF.maxit
     convergence = True
     tol = system.Settings.tol
     system.Settings.error = tol + 1
@@ -78,20 +81,20 @@ def fdpf(system):
 
     # Initialization indexing and Jacobian
     ngen = system.SW.n + system.PV.n
-    sw = system.SW._geta()
+    sw = system.SW.a
     sw.sort(reverse=True)
     no_sw = system.Bus.a[:]
     no_swv = system.Bus.v[:]
     for item in sw:
         no_sw.pop(item)
         no_swv.pop(item)
-    gen = system.SW._geta() + system.PV._geta()
+    gen = system.SW.a + system.PV.a
     gen.sort(reverse=True)
     no_g = system.Bus.a[:]
     no_gv = system.Bus.v[:]
     for item in gen:
-            no_g.pop(item)
-            no_gv.pop(item)
+        no_g.pop(item)
+        no_gv.pop(item)
     Bp = system.Line.Bp[no_sw, no_sw]
     Bpp = system.Line.Bpp[no_g, no_g]
 
@@ -100,7 +103,7 @@ def fdpf(system):
     Fpp = lib.symbolic(Bpp)
     Np = lib.numeric(Bp, Fp)
     Npp = lib.numeric(Bpp, Fpp)
-    exec(system.Calls.fdpf)
+    exec(system.Call.fdpf)
 
     # Main loop
     while system.Settings.error > tol:
@@ -111,7 +114,7 @@ def fdpf(system):
         elif sparselib == 'klu':
             lib.solve(Bp, Fp, Np, da)
         system.DAE.y[no_sw] += da
-        exec(system.Calls.fdpf)
+        exec(system.Call.fdpf)
         normP = max(abs(system.DAE.g[no_sw]))
 
         # Q-V
@@ -121,7 +124,7 @@ def fdpf(system):
         elif sparselib == 'klu':
             lib.solve(Bpp, Fpp, Npp, dV)
         system.DAE.y[no_gv] += dV
-        exec(system.Calls.fdpf)
+        exec(system.Call.fdpf)
         normQ = max(abs(system.DAE.g[no_gv]))
 
         err = max([normP, normQ])
@@ -131,23 +134,17 @@ def fdpf(system):
         msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(iteration, err_vec[-1])
         system.Log.info(msg)
         iteration += 1
-        system.PF.iter = iteration
+        system.SPF.iter = iteration
 
-        # Stop if error increases too much
-        if iteration > 4 and err_vec[-1] > 1000*err_vec[0]:
-            # stop if the error increases too much
-            system.Log.info('The error is increasing too much.')
-            system.Log.info('Convergence is likely not reachable.')
+        if iteration > 4 and err_vec[-1] > 1000 * err_vec[0]:
+            system.Log.info('Blown up in {0} iterations.'.format(iteration))
             convergence = False
             break
-        # Or maximum iterations reached
+
         if iteration > iter_max:
             system.Log.info('Reached maximum number of iterations.')
             convergence = False
             break
-
-    if convergence:
-        post_processing(system, convergence)
 
     return convergence, iteration
 
@@ -155,7 +152,7 @@ def fdpf(system):
 def newton(system):
     """newton power flow routine"""
     iteration = 1
-    iter_max = system.PF.maxit
+    iter_max = system.SPF.maxit
     convergence = True
     tol = system.Settings.tol
     system.Settings.error = tol + 1
@@ -171,12 +168,10 @@ def newton(system):
         msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(iteration, system.Settings.error)
         system.Log.info(msg)
         iteration += 1
-        system.PF.iter = iteration
+        system.SPF.iter = iteration
 
-        if iteration > 4 and err_vec[-1] > 1000*err_vec[0]:
-            # stop if the error increases too much
-            system.Log.info('The error is increasing too much.')
-            system.Log.info('Convergence is likely not reachable.')
+        if iteration > 4 and err_vec[-1] > 1000 * err_vec[0]:
+            system.Log.info('Blown up in {0} iterations.'.format(iteration))
             convergence = False
             break
 
@@ -185,28 +180,24 @@ def newton(system):
             convergence = False
             break
 
-    if convergence:
-        post_processing(system, convergence)
-
     return convergence, iteration
 
 
 def post_processing(system, convergence):
     if convergence:
-        exec(system.Calls.pfload)
+        exec(system.Call.pfload)
         system.Bus.Pl = system.DAE.g[system.Bus.a]
         system.Bus.Ql = system.DAE.g[system.Bus.v]
 
-        exec(system.Calls.pfgen)
+        exec(system.Call.pfgen)
         system.Bus.Pg = system.DAE.g[system.Bus.a]
         system.Bus.Qg = system.DAE.g[system.Bus.v]
 
-        system.PV.qg = system.DAE.y[system.PV.q]
-        system.SW.pg = system.DAE.y[system.SW.p]
-        system.SW.qg = system.DAE.y[system.SW.q]
+        if system.PV.n:
+            system.PV.qg = system.DAE.y[system.PV.q]
+        if system.SW.n:
+            system.SW.pg = system.DAE.y[system.SW.p]
+            system.SW.qg = system.DAE.y[system.SW.q]
 
-        # todo: update algebraic variables, including PV/SW generations, bus voltage and angle
-        # todo: set qg, a for PV, set pg, qg, a for SW!!
-
-        exec(system.Calls.seriesflow)
+        exec(system.Call.seriesflow)
         system.Settings.pfsolved = True
