@@ -23,6 +23,14 @@ class Node(ModelBase):
                            'xcoord': None,
                            'ycoord': None,
                            })
+        self.units.update({'Vdcn': 'kV',
+                           'Idcn': 'kA',
+                           'area': 'na',
+                           'region': 'na',
+                           'voltage': 'pu',
+                           'xcoord': 'deg',
+                           'ycoord': 'deg',
+                           })
         self.calls.update({'init0': True, 'pflow': True,
                            'jac0': True,
                            })
