@@ -53,7 +53,7 @@ class Report(object):
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
         if self.system.SPF.solved:
             info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
-            info.append('Number of iterations: ' + str(self.system.SPF.niter) + '\n')
+            info.append('Number of iterations: ' + str(self.system.SPF.iter) + '\n')
             info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
 
         return info
