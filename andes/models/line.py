@@ -221,13 +221,13 @@ class Line(ModelBase):
 
     def gycall(self, dae):
         gy = self.build_gy(dae)
-        self.add_jac(Gy, gy.V, gy.I, gy.J)
+        dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
         """Build line Jacobian matrix"""
         if not self.n:
             idx = range(dae.m)
-            self.set_jac('Gy', 1e-6, idx, idx)
+            dae.set_jac(Gy, 1e-6, idx, idx)
             return
 
         Vn = polar(1.0, dae.y[self.a])

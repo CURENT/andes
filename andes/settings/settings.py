@@ -24,6 +24,10 @@ class Settings(SettingsBase):
         self.forcez = False
         self.base = True
 
+    @property
+    def wb(self):
+        return 2 * pi * self.freq
+
     @cached
     def doc_help(self):
         descriptions = {'verbose': 'program logging level',
