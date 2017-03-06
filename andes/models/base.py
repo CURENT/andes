@@ -132,6 +132,10 @@ class ModelBase(object):
             self.__dict__[var] = []
         for var in self._service:
             self.__dict__[var] = []
+        if not self._unamey:
+            self._unamey = self._algebs
+        if not self._unamex:
+            self._unamex = self._states
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
