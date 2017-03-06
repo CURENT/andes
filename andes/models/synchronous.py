@@ -44,8 +44,8 @@ class SynBase(ModelBase):
         self._units.update({'M': 'MWs/MVA',
                             'D': 'pu',
                             'fn': 'Hz',
-                            'ra': 'pu',
-                            'xd': 'pu',
+                            'ra': 'omh',
+                            'xd': 'omh',
                             'gammap': 'pu',
                             'gammaq': 'pu',
                             })
@@ -57,18 +57,13 @@ class SynBase(ModelBase):
         self._ac = {'bus': ['a', 'v']}
         self._states = ['delta', 'omega']
         self._fnamex = ['\\delta', '\\omega']
-        self._algebs = ['p', 'q',
-                        'pm', 'vf',
-                        'Id', 'Iq',
-                        'vd', 'vq',
-                        ]
-
+        self._algebs = ['p', 'q', 'pm', 'vf', 'Id', 'Iq', 'vd', 'vq']
+        self._fnamey = ['P', 'Q', 'P_m', 'V_f', 'I_d', 'I_q', 'V_d', 'V_q']
         self._powers = ['M', 'D']
         self._z = ['ra', 'xl', 'xq']
         self._zeros = ['M']
         self._mandatory = ['bus', 'gen']
-        self._service = ['pm0', 'vf0', 'c1', 'c2', 'c3', 'ss', 'cc',
-                         'im']
+        self._service = ['pm0', 'vf0', 'c1', 'c2', 'c3', 'ss', 'cc', 'iM']
 
     def build_service(self):
         """Build service variables"""
@@ -121,8 +116,8 @@ class SynBase(ModelBase):
 
         dae.g -= spmatrix(dae.y[self.p], self.a, nzeros, (dae.m, 1), 'd')
         dae.g -= spmatrix(dae.y[self.q], self.v, nzeros, (dae.m, 1), 'd')
-        dae.g -= spmatrix(vd - mul(v, self.ss), self.vd, nzeros, (dae.m, 1), 'd')
-        dae.g -= spmatrix(vq - mul(v, self.cc), self.vq, nzeros, (dae.m, 1), 'd')
+        dae.g -= spmatrix(vd - mul(v, self.ss), self.vd, nzeros, (dae.m, 1), 'd')  # note d(vd)/d(delta)
+        dae.g -= spmatrix(vq - mul(v, self.cc), self.vq, nzeros, (dae.m, 1), 'd')  # note d(vq)/d(delta)
         dae.g += spmatrix(mul(vd, Id) + mul(vq, Iq) - dae.y[self.p], self.p, nzeros, (dae.m, 1), 'd')
         dae.g += spmatrix(mul(vq, Id) - mul(vd, Iq) - dae.y[self.q], self.q, nzeros, (dae.m, 1), 'd')
         dae.g += spmatrix(dae.y[self.pm] - self.pm0, self.pm, nzeros, (dae.m, 1), 'd')
@@ -132,11 +127,111 @@ class SynBase(ModelBase):
         """Saturation characteristic function"""
         return e1q
 
+    def fcall(self, dae):
+        dae.f[self.delta] = mul(self.u, self.system.Settings.wb, dae.x[self.omega] - 1)
+
+    def jac0(self, dae):
+        dae.add_jac(Gya, -self.u, self.a, self.p)
+        dae.add_jac(Gya, -self.u, self.v, self.q)
+        dae.add_jac(Gya, -1.0, self.vd, self.vd)
+        dae.add_jac(Gya, -1.0, self.vq, self.vq)
+        dae.add_jac(Gya, -1.0, self.p, self.p)
+        dae.add_jac(Gya, -1.0, self.q, self.q)
+        dae.add_jac(Gya, 1.0, self.pm, self.pm)
+        dae.add_jac(Gya, 1.0, self.vf, self.vf)
+
+        dae.add_jac(Fxa, self.u - 1 + 1e-6, self.delta, self.delta)
+        dae.add_jac(Fxa, wn, self.delta, self.omega)
+
+    def gycall(self, dae):
+        dae.add_jac(Gy, dae.y[self.Id], self.p, self.vd)
+        dae.add_jac(Gy, dae.y[self.Iq], self.p, self.vq)
+        dae.add_jac(Gy, dae.y[self.vd], self.p, self.Id)
+        dae.add_jac(Gy, dae.y[self.vq], self.p, self.Iq)
+
+        dae.add_jac(Gy, -dae.y[self.Iq], self.q, self.vd)
+        dae.add_jac(Gy, dae.y[self.Id], self.q, self.vq)
+        dae.add_jac(Gy, dae.y[self.vq], self.q, self.Id)
+        dae.add_jac(Gy, -dae.y[self.vd], self.q, self.Iq)
+
+        dae.add_jac(Gy, -mul(dae.y[self.v], self.cc), self.vd, self.a)
+        dae.add_jac(Gy, self.ss, self.vd, self.v)
+
+        dae.add_jac(Gy,  mul(dae.y[self.v], self.ss), self.vq, self.a)
+        dae.add_jac(Gy, self.cc, self.vq, self.v)
+
+    def fxcall(self, dae):
+        dae.add_jac(Gx,  mul(vh, self.cc), self.vd, self.delta)
+        dae.add_jac(Gx, -mul(vh, self.ss), self.vq, self.delta)
 
 
+class Ord2(SynBase):
+    """2nd order classical model"""
+    def __init__(self, system, name):
+        super().__init__(system, name)
+        self._name = 'Syn2'
+        self._data.update({'xd1': 1.9})
+        self._params.extend(['xd1'])
+        self._descr.update({'xd1': 'synchronous reactance'})
+        self._units.update({'xd1': 'omh'})
+        self._z.extend(['xd1'])
 
+    def init1(self, dae):
+        super().init1(dae)
+        self.vf0 = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id])
 
+    def gcall(self, dae):
+        super().gcall(dae)
+        dae.g[self.Id] = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id]) - dae.y[self.vf]
+        dae.g[self.Iq] = dae.y[self.vd] + mul(self.ra, dae.y[self.Id]) - mul(self.xd1, dae.y[self.Iq])
 
+    def jac0(self, dae):
+        super().jac0(dae)
+        dae.add_jac(Gya, -self.xd1, self.Iq, self.Iq)
+        dae.add_jac(Gya, self.ra, self.Iq, self.Id)
+        dae.add_jac(Gya, 1.0, self.Iq, self.vd)
 
+        dae.add_jac(Gya, self.xd1, self.Id, self.Id)
+        dae.add_jac(Gya, self.ra, self.Id, self.Iq)
+        dae.add_jac(Gya, 1.0, self.Id, self.vq)
+        dae.add_jac(Gya, -1.0, self.Id, self.vf)
 
+class Flux0(object):
+    """The simplified flux model as an appendix to generator models.
+         0 = ra*id + psiq + vd
+         0 = ra*iq - psid + vq
+    """
+    def __init__(self):
+        self._algebs.extend(['psid', 'psiq'])
 
+    def init1(self, dae):
+        dae.y[self.psiq] = -mul(self.ra, dae.y[self.Id]) - dae.y[self.vd]
+        dae.y[self.psid] =  mul(self.ra, dae.y[self.Iq]) + dae.y[self.vq]
+
+    def gcall(self, dae):
+        dae.g[self.psiq] = mul(self.ra, dae.y[self.Id]) + dae.y[self.psiq] + dae.y[self.vd]
+        dae.g[self.psid] = mul(self.ra, dae.y[self.Iq]) - dae.y[self.psid] + dae.y[self.vq]
+
+    def gycall(self, dae):
+        dae.add_jac(Gy, self.ra, self.psiq, self.Id)
+        dae.add_jac(Gy, self.ra, self.psid, self.Iq)
+
+    def fcall(self, dae):
+        dae.f[self.omega] = mul(self.iM, dae.y[self.pm] - mul(dae.y[self.psid], dae.y[self.Iq])
+                                + mul(dae.y[self.psiq], dae.y[self.Id]) - mul(self.D, dae.x[self.omega] - 1))
+
+    def fxcall(self, dae):
+        dae.add_jac(Fy,  mul(dae.y[self.Id], self.iM), self.omega, self.psiq)
+        dae.add_jac(Fy,  mul(dae.y[self.psiq], self.iM), self.omega, self.Id)
+        dae.add_jac(Fy, -mul(dae.y[self.Iq], self.iM), self.omega, self.psid)
+        dae.add_jac(Fy, -mul(dae.y[self.psid], self.iM), self.omega, self.Iq)
+
+    def jac0(self, dae):
+        dae.add_jac(Gy0, 1.0, self.psiq, self.psiq)
+        dae.add_jac(Gy0, 1.0, self.psiq, self.vd)
+
+        dae.add_jac(Gy0, -1.0, self.psid, self.psid)
+        dae.add_jac(Gy0, 1.0, self.psid, self.vq)
+
+        dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
+        dae.add_jac(Fy0, self.iM, self.omega, self.pm)
