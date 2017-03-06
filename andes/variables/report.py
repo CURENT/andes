@@ -51,8 +51,11 @@ class Report(object):
         info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
-        info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
+        if self.system.SPF.solved:
+            info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
+            info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
+            info.append('Number of iterations: ' + str(self.system.SPF.niter) + '\n')
+
         return info
 
     def _update_summary(self, system):
@@ -69,7 +72,7 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if not self.system.Settings.pfsolved:
+        if not self.system.SPF.solved:
             self.system.Log.warning('Cannot update extended summary. Power flow not solved.')
             return
 
