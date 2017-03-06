@@ -35,8 +35,9 @@ def run(system):
     run_powerflow = importlib.import_module('andes.routines.powerflow')
     run_powerflow = getattr(run_powerflow, func_name)
 
-    convergence, iteration = run_powerflow(system)
+    convergence, niter = run_powerflow(system)
     if convergence:
+        system.SPF.solved = True
         post_processing(system, convergence)
 
 
@@ -77,7 +78,7 @@ def fdpf(system):
     sparselib = system.Settings.sparselib.lower()
 
     # general settings
-    iteration = 1
+    niter = 1
     iter_max = system.SPF.maxit
     convergence = True
     tol = system.Settings.tol
@@ -138,27 +139,27 @@ def fdpf(system):
         err_vec.append(err)
         system.Settings.error = err
 
-        msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(iteration, err_vec[-1])
+        msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(niter, err_vec[-1])
         system.Log.info(msg)
-        iteration += 1
-        system.SPF.iter = iteration
+        niter += 1
+        system.SPF.iter = niter
 
-        if iteration > 4 and err_vec[-1] > 1000 * err_vec[0]:
-            system.Log.info('Blown up in {0} iterations.'.format(iteration))
+        if niter > 4 and err_vec[-1] > 1000 * err_vec[0]:
+            system.Log.info('Blown up in {0} iterations.'.format(niter))
             convergence = False
             break
 
-        if iteration > iter_max:
+        if niter > iter_max:
             system.Log.info('Reached maximum number of iterations.')
             convergence = False
             break
 
-    return convergence, iteration
+    return convergence, niter
 
 
 def newton(system):
     """newton power flow routine"""
-    iteration = 1
+    niter = 0
     iter_max = system.SPF.maxit
     convergence = False
     tol = system.Settings.tol
@@ -169,26 +170,25 @@ def newton(system):
         inc = calcInc(system)
         system.DAE.y += inc
 
+        niter += 1
+        system.SPF.iter = niter
         system.Settings.error = max(abs(inc))
         err_vec.append(system.Settings.error)
 
-        msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(iteration, system.Settings.error)
+        msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(niter, system.Settings.error)
         system.Log.info(msg)
-        iteration += 1
-        system.SPF.iter = iteration
 
-        if iteration > 4 and err_vec[-1] > 1000 * err_vec[0]:
-            system.Log.info('Blown up in {0} iterations.'.format(iteration))
+        if niter > 4 and err_vec[-1] > 1000 * err_vec[0]:
+            system.Log.info('Blown up in {0} iterations.'.format(niter))
             break
-
-        if iteration > iter_max:
+        if niter > iter_max:
             system.Log.info('Reached maximum number of iterations.')
             break
 
     if err_vec[-1] < tol:
         convergence = True
 
-    return convergence, iteration
+    return convergence, niter
 
 
 def post_processing(system, convergence):
@@ -208,4 +208,3 @@ def post_processing(system, convergence):
             system.SW.qg = system.DAE.y[system.SW.q]
 
         exec(system.Call.seriesflow)
-        system.Settings.pfsolved = True

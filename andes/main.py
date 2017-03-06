@@ -283,7 +283,7 @@ def run(case, **kwargs):
 
     powerflow.run(system)
     t3, s = elapsed(t2)
-    if not system.Settings.pfsolved:
+    if not system.SPF.solved:
         system.Log.info('Power flow failed to converge in {:s}.'.format(s))
     else:
         system.Log.info('Power flow converged in {:s}.'.format(s))

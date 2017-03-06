@@ -21,6 +21,7 @@ class SPF(SettingsBase):
         self.units = 'pu'
         self.units_alt = ['pu', 'nominal']
         self.usedegree = False
+        self.solved = False
 
     @cached
     def doc_help(self):

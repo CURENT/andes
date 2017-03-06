@@ -170,7 +170,7 @@ class PowerSystem(object):
 
     def get_busdata(self, dec=5):
         """get ac bus data from solved power flow"""
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Bus.idx
@@ -191,7 +191,7 @@ class PowerSystem(object):
         """get dc node data from solved power flow"""
         if not self.Node.n:
             return
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
@@ -201,7 +201,7 @@ class PowerSystem(object):
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx

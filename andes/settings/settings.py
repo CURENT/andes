@@ -20,7 +20,6 @@ class Settings(SettingsBase):
         self.tol = 1e-8
         self.static = 0
         self.nseries = 0
-        self.pfsolved = False
         self.forcepq = False
         self.forcez = False
         self.base = True
