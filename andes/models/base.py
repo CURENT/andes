@@ -452,19 +452,21 @@ class ModelBase(object):
             return
         if not self.n:
             return
+        for idx, item in enumerate(self._states):
+            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamex[idx], element_name=self.names)
+        for idx, item in enumerate(self._algebs):
+            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamey[idx], element_name=self.names)
         try:
             for idx, item in enumerate(self._states):
-                self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamex[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamex[idx], element_name=self.names)
             for idx, item in enumerate(self._algebs):
-                self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamey[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamey[idx], element_name=self.names)
         except IndexError:
-            self.message('Variable names missing in class <{0}>definition.'.format(self._name))
+            self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
 
     def _param2matrix(self):
         """convert _params from list to matrix"""

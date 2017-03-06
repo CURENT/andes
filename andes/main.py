@@ -314,7 +314,7 @@ def run(case, **kwargs):
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method))
-        timedomain(system)
+        timedomain.run(system)
         t2, s = elapsed(t1)
         system.Log.info('Time domain simulation finished in {:s}.'.format(s))
 

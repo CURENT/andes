@@ -26,7 +26,7 @@ class SynBase(ModelBase):
                            'kp': 0,
                            'kw': 0,
                            })
-        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'coi', 'gen', 'kp', 'kw'])
+        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'gen', 'kp', 'kw'])
         self._descr.update({'fn': 'rated frequency',
                             'bus': 'interface bus id',
                             'D': 'rotor damping',
@@ -83,7 +83,7 @@ class SynBase(ModelBase):
         v = polar(v0, theta0)
         S = p0 - q0*1j
         I = div(S, conj(v))
-        E = v + mul(self.ra + self.xq*1j, I)
+        E = v + mul(self.ra + self.xd1*1j, I)
 
         dae.y[self.p] = p0
         dae.y[self.q] = q0
@@ -103,6 +103,7 @@ class SynBase(ModelBase):
         # electro-mechanical torques / powers
         self.pm0 = mul(vq + mul(self.ra, Iq), Iq) + mul(vd + mul(self.ra, Id), Id)
         dae.y[self.pm] = self.pm0
+
 
     def gcall(self, dae):
         nzeros = [0] * self.n
@@ -131,17 +132,17 @@ class SynBase(ModelBase):
         dae.f[self.delta] = mul(self.u, self.system.Settings.wb, dae.x[self.omega] - 1)
 
     def jac0(self, dae):
-        dae.add_jac(Gya, -self.u, self.a, self.p)
-        dae.add_jac(Gya, -self.u, self.v, self.q)
-        dae.add_jac(Gya, -1.0, self.vd, self.vd)
-        dae.add_jac(Gya, -1.0, self.vq, self.vq)
-        dae.add_jac(Gya, -1.0, self.p, self.p)
-        dae.add_jac(Gya, -1.0, self.q, self.q)
-        dae.add_jac(Gya, 1.0, self.pm, self.pm)
-        dae.add_jac(Gya, 1.0, self.vf, self.vf)
+        dae.add_jac(Gy0, -self.u, self.a, self.p)
+        dae.add_jac(Gy0, -self.u, self.v, self.q)
+        dae.add_jac(Gy0, -1.0, self.vd, self.vd)
+        dae.add_jac(Gy0, -1.0, self.vq, self.vq)
+        dae.add_jac(Gy0, -1.0, self.p, self.p)
+        dae.add_jac(Gy0, -1.0, self.q, self.q)
+        dae.add_jac(Gy0, 1.0, self.pm, self.pm)
+        dae.add_jac(Gy0, 1.0, self.vf, self.vf)
 
-        dae.add_jac(Fxa, self.u - 1 + 1e-6, self.delta, self.delta)
-        dae.add_jac(Fxa, wn, self.delta, self.omega)
+        dae.add_jac(Fx0, self.u - 1 + 1e-6, self.delta, self.delta)
+        dae.add_jac(Fx0, mul(self.u, self.system.Settings.wb), self.delta, self.omega)
 
     def gycall(self, dae):
         dae.add_jac(Gy, dae.y[self.Id], self.p, self.vd)
@@ -161,8 +162,8 @@ class SynBase(ModelBase):
         dae.add_jac(Gy, self.cc, self.vq, self.v)
 
     def fxcall(self, dae):
-        dae.add_jac(Gx,  mul(vh, self.cc), self.vd, self.delta)
-        dae.add_jac(Gx, -mul(vh, self.ss), self.vq, self.delta)
+        dae.add_jac(Gx,  mul(dae.y[self.v], self.cc), self.vd, self.delta)
+        dae.add_jac(Gx, -mul(dae.y[self.v], self.ss), self.vq, self.delta)
 
 
 class Ord2(SynBase):
@@ -179,6 +180,7 @@ class Ord2(SynBase):
     def init1(self, dae):
         super().init1(dae)
         self.vf0 = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id])
+        dae.y[self.vf] = self.vf0
 
     def gcall(self, dae):
         super().gcall(dae)
@@ -187,14 +189,14 @@ class Ord2(SynBase):
 
     def jac0(self, dae):
         super().jac0(dae)
-        dae.add_jac(Gya, -self.xd1, self.Iq, self.Iq)
-        dae.add_jac(Gya, self.ra, self.Iq, self.Id)
-        dae.add_jac(Gya, 1.0, self.Iq, self.vd)
+        dae.add_jac(Gy0, -self.xd1, self.Iq, self.Iq)
+        dae.add_jac(Gy0, self.ra, self.Iq, self.Id)
+        dae.add_jac(Gy0, 1.0, self.Iq, self.vd)
 
-        dae.add_jac(Gya, self.xd1, self.Id, self.Id)
-        dae.add_jac(Gya, self.ra, self.Id, self.Iq)
-        dae.add_jac(Gya, 1.0, self.Id, self.vq)
-        dae.add_jac(Gya, -1.0, self.Id, self.vf)
+        dae.add_jac(Gy0, self.xd1, self.Id, self.Id)
+        dae.add_jac(Gy0, self.ra, self.Id, self.Iq)
+        dae.add_jac(Gy0, 1.0, self.Id, self.vq)
+        dae.add_jac(Gy0, -1.0, self.Id, self.vf)
 
 class Flux0(object):
     """The simplified flux model as an appendix to generator models.
@@ -203,6 +205,7 @@ class Flux0(object):
     """
     def __init__(self):
         self._algebs.extend(['psid', 'psiq'])
+        self._inst_meta()
 
     def init1(self, dae):
         dae.y[self.psiq] = -mul(self.ra, dae.y[self.Id]) - dae.y[self.vd]
@@ -235,3 +238,34 @@ class Flux0(object):
 
         dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
         dae.add_jac(Fy0, self.iM, self.omega, self.pm)
+
+
+class Syn2(Ord2, Flux0):
+    """2nd-order generator model. Inherited from (Ord2, Flux0)  """
+    def __init__(self, system, name):
+        Ord2.__init__(self, system, name)
+        Flux0.__init__(self)
+
+    def init1(self, dae):
+        Ord2.init1(self, dae)
+        Flux0.init1(self, dae)
+
+    def gcall(self, dae):
+        Ord2.gcall(self, dae)
+        Flux0.gcall(self, dae)
+
+    def fcall(self, dae):
+        Ord2.fcall(self, dae)
+        Flux0.fcall(self, dae)
+
+    def jac0(self, dae):
+        Ord2.jac0(self, dae)
+        Flux0.jac0(self, dae)
+
+    def gycall(self, dae):
+        Ord2.gycall(self, dae)
+        Flux0.gycall(self, dae)
+
+    def fxcall(self, dae):
+        Ord2.fxcall(self, dae)
+        Flux0.fxcall(self, dae)
