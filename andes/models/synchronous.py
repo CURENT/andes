@@ -69,12 +69,9 @@ class SynBase(ModelBase):
         """Build service variables"""
         self.iM = div(1, self.M)
 
-    def setup(self):
-        super().setup()
-        self.build_service()
-
     def init1(self, dae):
         self.system.rmgen(self.gen)
+        self.build_service()
 
         p0 = mul(self.u, self.system.Bus.Pg[self.a], self.gammap)
         q0 = mul(self.u, self.system.Bus.Qg[self.a], self.gammaq)
