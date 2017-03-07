@@ -182,21 +182,6 @@ class Ord2(SynBase):
         self.vf0 = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id])
         dae.y[self.vf] = self.vf0
 
-    def gcall(self, dae):
-        super().gcall(dae)
-        dae.g[self.Id] = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id]) - dae.y[self.vf]
-        dae.g[self.Iq] = dae.y[self.vd] + mul(self.ra, dae.y[self.Id]) - mul(self.xd1, dae.y[self.Iq])
-
-    def jac0(self, dae):
-        super().jac0(dae)
-        dae.add_jac(Gy0, -self.xd1, self.Iq, self.Iq)
-        dae.add_jac(Gy0, self.ra, self.Iq, self.Id)
-        dae.add_jac(Gy0, 1.0, self.Iq, self.vd)
-
-        dae.add_jac(Gy0, self.xd1, self.Id, self.Id)
-        dae.add_jac(Gy0, self.ra, self.Id, self.Iq)
-        dae.add_jac(Gy0, 1.0, self.Id, self.vq)
-        dae.add_jac(Gy0, -1.0, self.Id, self.vf)
 
 class Flux0(object):
     """The simplified flux model as an appendix to generator models.
@@ -205,6 +190,7 @@ class Flux0(object):
     """
     def __init__(self):
         self._algebs.extend(['psid', 'psiq'])
+        self._fnamey.extend(['\\psi_d', '\\psi_q'])
         self._inst_meta()
 
     def init1(self, dae):
@@ -214,6 +200,8 @@ class Flux0(object):
     def gcall(self, dae):
         dae.g[self.psiq] = mul(self.ra, dae.y[self.Id]) + dae.y[self.psiq] + dae.y[self.vd]
         dae.g[self.psid] = mul(self.ra, dae.y[self.Iq]) - dae.y[self.psid] + dae.y[self.vq]
+        dae.g[self.Id] = dae.y[self.psid] + mul(self.xd1, dae.y[self.Id]) - dae.y[self.vf]
+        dae.g[self.Iq] = dae.y[self.psiq] + mul(self.xd1, dae.y[self.Iq])
 
     def gycall(self, dae):
         dae.add_jac(Gy, self.ra, self.psiq, self.Id)
@@ -235,6 +223,13 @@ class Flux0(object):
 
         dae.add_jac(Gy0, -1.0, self.psid, self.psid)
         dae.add_jac(Gy0, 1.0, self.psid, self.vq)
+
+        dae.add_jac(Gy0, 1.0, self.Id, self.psid)
+        dae.add_jac(Gy0, self.xd1, self.Id, self.Id)
+        dae.add_jac(Gy0, -1.0, self.Id, self.vf)
+
+        dae.add_jac(Gy0, self.xd1, self.Iq, self.Iq)
+        dae.add_jac(Gy0, 1.0, self.Iq, self.psiq)
 
         dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
         dae.add_jac(Fy0, self.iM, self.omega, self.pm)

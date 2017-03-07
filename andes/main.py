@@ -317,6 +317,10 @@ def run(case, **kwargs):
         timedomain.run(system)
         t2, s = elapsed(t1)
         system.Log.info('Time domain simulation finished in {:s}.'.format(s))
+        if not system.Files.no_output:
+            system.VarOut.dump()
+            t3, s = elapsed(t2)
+            system.Log.info('Simulation data dumped in {:s}.'.format(s))
 
     # Disable profiler and output results
     if profile:
