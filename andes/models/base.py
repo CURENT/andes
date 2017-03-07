@@ -1,3 +1,20 @@
+"""
+ANDES, a power system simulation tool for research.
+
+Copyright 2015-2017 Hantao Cui
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import mul, div
@@ -115,6 +132,10 @@ class ModelBase(object):
             self.__dict__[var] = []
         for var in self._service:
             self.__dict__[var] = []
+        if not self._unamey:
+            self._unamey = self._algebs
+        if not self._unamex:
+            self._unamex = self._states
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -431,19 +452,21 @@ class ModelBase(object):
             return
         if not self.n:
             return
+        for idx, item in enumerate(self._states):
+            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamex[idx], element_name=self.names)
+        for idx, item in enumerate(self._algebs):
+            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamey[idx], element_name=self.names)
         try:
             for idx, item in enumerate(self._states):
-                self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamex[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamex[idx], element_name=self.names)
             for idx, item in enumerate(self._algebs):
-                self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamey[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamey[idx], element_name=self.names)
         except IndexError:
-            self.message('Variable names missing in class <{0}>definition.'.format(self._name))
+            self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
 
     def _param2matrix(self):
         """convert _params from list to matrix"""

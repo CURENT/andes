@@ -1,3 +1,20 @@
+"""
+ANDES, a power system simulation tool for research.
+
+Copyright 2015-2017 Hantao Cui
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 import importlib
 from operator import itemgetter
 from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
@@ -153,7 +170,7 @@ class PowerSystem(object):
 
     def get_busdata(self, dec=5):
         """get ac bus data from solved power flow"""
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Bus.idx
@@ -174,7 +191,7 @@ class PowerSystem(object):
         """get dc node data from solved power flow"""
         if not self.Node.n:
             return
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
@@ -184,7 +201,7 @@ class PowerSystem(object):
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.Settings.pfsolved:
+        if not self.SPF.solved:
             self.Log.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx

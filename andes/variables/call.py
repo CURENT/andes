@@ -79,10 +79,10 @@ class Call(object):
     def get_times(self):
         """return event times of Fault and Breaker"""
         times = []
-        if self.system.Fault.n:
-            times = self.system.Fault.get_times()
-        if times:
-            times = sorted(list(set(times)))
+        # if self.system.Fault.n:
+        #     times = self.system.Fault.get_times()
+        # if times:
+        #     times = sorted(list(set(times)))
 
         return times
 

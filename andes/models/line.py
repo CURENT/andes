@@ -227,9 +227,9 @@ class Line(ModelBase):
     def init0(self, dae):
         solver = self.system.SPF.solver.lower()
         self.build_y()
+        self.incidence()
         if solver in ('fdpf', 'fdbx', 'fdxb'):
             self.build_b()
-        self.incidence()
 
     def gcall(self, dae):
         vc = polar(dae.y[self.v], dae.y[self.a])
@@ -240,13 +240,13 @@ class Line(ModelBase):
 
     def gycall(self, dae):
         gy = self.build_gy(dae)
-        self.add_jac(Gy, gy.V, gy.I, gy.J)
+        dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
         """Build line Jacobian matrix"""
         if not self.n:
             idx = range(dae.m)
-            self.set_jac('Gy', 1e-6, idx, idx)
+            dae.set_jac(Gy, 1e-6, idx, idx)
             return
 
         Vn = polar(1.0, dae.y[self.a])

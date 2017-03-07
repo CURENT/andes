@@ -4,6 +4,7 @@ from cvxopt import matrix, spmatrix, sparse, spdiag
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (DAE)"""
     def __init__(self, system):
+        self.system = system
         self._data = {'x': [],
                       'y': [],
                       'f': [],
@@ -101,6 +102,35 @@ class DAE(object):
             self.f = matrix([self.f, xfill], (self.n, 1), 'd')
 
     def algeb_windup(self, idx):
+        """Reset Jacobian elements related to windup algebs"""
         H = spmatrix(1.0, idx, idx, (self.m, self.m))
         I = spdiag([1.0] * self.m) - H
         self.Gy = I * (self.Gy * I) + H
+
+    def add_jac(self, m, val, row, col):
+        """Add values (val, row, col) to Jacobian m"""
+        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+
+        size = self.system.DAE.__dict__[m].size
+        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def set_jac(self, m, val, row, col):
+        """Add values (val, row, col) to Jacobian m """
+        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+
+        size = self.system.DAE.__dict__[m].size
+        oldval = []
+        if type(row) is int:
+            row = [row]
+        if type(col) is int:
+            col = [col]
+        if type(row) is range:
+            row = list(row)
+        if type(col) is range:
+            col = list(col)
+        for i, j in zip(row, col):
+            oldval.append(self.system.DAE.__dict__[m][i, j])
+        self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
+        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')

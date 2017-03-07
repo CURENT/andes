@@ -46,11 +46,16 @@ class Report(object):
     def info(self):
         info = list()
         info.append('ANDES' + ' ' + revision + '\n')
-        info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui' + '\n\n')
+        info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui\n\n')
+        info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
+        info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
-        info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
+        if self.system.SPF.solved:
+            info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
+            info.append('Number of iterations: ' + str(self.system.SPF.iter) + '\n')
+            info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
+
         return info
 
     def _update_summary(self, system):
@@ -67,7 +72,7 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if not self.system.Settings.pfsolved:
+        if not self.system.SPF.solved:
             self.system.Log.warning('Cannot update extended summary. Power flow not solved.')
             return
 

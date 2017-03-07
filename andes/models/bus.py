@@ -1,5 +1,7 @@
 from .base import ModelBase
 from cvxopt import matrix, spmatrix, uniform
+from ..consts import *
+
 
 class Bus(ModelBase):
     """AC bus model"""
@@ -106,5 +108,5 @@ class Bus(ModelBase):
         if self.system.Bus.islanded_buses:
             a = self.system.Bus.islanded_buses
             v = [self.system.Bus.n + item for item in a]
-            self.set_jac('Gy', 1e-6, a, a)
-            self.set_jac('Gy', 1e-6, v, v)
+            dae.set_jac(Gy, 1e-6, a, a)
+            dae.set_jac(Gy, 1e-6, v, v)

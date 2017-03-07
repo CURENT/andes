@@ -42,7 +42,7 @@ def first_time_step(system):
     return settings.deltat
 
 
-def timedomain(system):
+def run(system):
 
     dae = system.DAE
     settings = system.TDS
@@ -70,7 +70,7 @@ def timedomain(system):
     # compute max rotor angle difference
     diff_max = anglediff()
 
-    system.Varout.init()
+    system.VarOut.store(t)  # store the initial value
 
     # main loop
     while t <= settings.tf and t + h > t and not diff_max:
@@ -172,7 +172,7 @@ def timedomain(system):
         t = actual_time
         step += 1
 
-        system.Varout.store(t)
+        system.VarOut.store(t)
 
         h = time_step(system, True, niter, t)
 

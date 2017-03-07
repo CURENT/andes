@@ -20,7 +20,9 @@ non_jits = {'bus': {'Bus': 'Bus'},
                        'Ground': 'Ground',
                        },
             'vsc': {'VSC': 'VSC',
-                    }
+                    },
+            'synchronous': {'Syn2': 'Syn2',
+                            },
            }
 
 jits = {}

@@ -20,10 +20,13 @@ class Settings(SettingsBase):
         self.tol = 1e-8
         self.static = 0
         self.nseries = 0
-        self.pfsolved = False
         self.forcepq = False
         self.forcez = False
         self.base = True
+
+    @property
+    def wb(self):
+        return 2 * pi * self.freq
 
     @cached
     def doc_help(self):

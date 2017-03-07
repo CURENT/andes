@@ -89,5 +89,5 @@ class PQ(ModelBase):
             k += mul(self.above, div(2 * dae.y[self.v], self.vmax ** 2))
         k = mul(self.u, k)
 
-        self.add_jac(Gy, mul(self.p, k), self.a, self.v)
-        self.add_jac(Gy, mul(self.q, k), self.v, self.v)
+        dae.add_jac(Gy, mul(self.p, k), self.a, self.v)
+        dae.add_jac(Gy, mul(self.q, k), self.v, self.v)

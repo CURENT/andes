@@ -145,7 +145,7 @@ Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt_Bus_9"
 
 SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     pmax = 999.9, pmin = -999.9, qmax = 9.9, qmin = -9.9,
-    v0 = 1.06, ref = True
+    v0 = 1.06
 
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0

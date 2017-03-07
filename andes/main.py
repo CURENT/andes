@@ -4,9 +4,17 @@ ANDES, a power system simulation tool for research.
 
 Copyright 2015-2017 Hantao Cui
 
-ANDES is distributed in the hope that it will be useful,
-but ABSOLUTELY WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 import os
@@ -275,7 +283,7 @@ def run(case, **kwargs):
 
     powerflow.run(system)
     t3, s = elapsed(t2)
-    if not system.Settings.pfsolved:
+    if not system.SPF.solved:
         system.Log.info('Power flow failed to converge in {:s}.'.format(s))
     else:
         system.Log.info('Power flow converged in {:s}.'.format(s))
@@ -306,7 +314,7 @@ def run(case, **kwargs):
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method))
-        timedomain(system)
+        timedomain.run(system)
         t2, s = elapsed(t1)
         system.Log.info('Time domain simulation finished in {:s}.'.format(s))
 
