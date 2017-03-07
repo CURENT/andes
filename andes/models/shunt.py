@@ -13,6 +13,11 @@ class Shunt(ModelBase):
                            'b': 0,
                            'fn': 60.0,
                            })
+        self._units.update({'bus': 'na',
+                            'g': 'pu',
+                            'b': 'pu',
+                            'fn': 'Hz',
+                            })
         self._params.extend(['g',
                              'b',
                              'fn',

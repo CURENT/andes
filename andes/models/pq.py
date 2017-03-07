@@ -18,6 +18,12 @@ class PQ(ModelBase):
                            'vmax': 1.1,
                            'vmin': 0.9,
                            })
+        self._units.update({'bus': 'na',
+                            'p': 'pu',
+                            'owner': 'na',
+                            'vmax': 'pu',
+                            'vmin': 'pu',
+                            })
         self._params.extend(['p', 'q', 'vmax', 'vmin'])
         self._descr.update({'bus': 'bus number',
                             'p': 'constant p value',
