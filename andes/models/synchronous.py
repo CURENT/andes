@@ -388,6 +388,42 @@ class Flux0(object):
         dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 
+class Flux2(object):
+    """Full electromagnetic transient of flux linkage
+       d(psid) = wb * (ra * id + omega * psiq + vd)
+       d(psiq) = wb * (ra * iq - omega * psid + vq)
+       """
+    def __init__(self):
+        self._states.extend(['psid', 'psiq'])
+        self._fnamex.extend(['\\psi_d', '\\psi_q'])
+        self._inst_meta()
+
+    def init1(self, dae):
+        dae.x[self.psiq] = -mul(self.ra, dae.y[self.Id]) - dae.y[self.vd]
+        dae.x[self.psid] =  mul(self.ra, dae.y[self.Iq]) + dae.y[self.vq]
+
+    def fcall(self, dae):
+        wn = mul(self.system.Settings.wb, self.u)
+        dae.f[self.psid] = mul(wn, mul(self.ra, dae.y[self.Id]) + mul(dae.x[self.omega], dae.x[self.psiq]) + dae.y[self.vd])
+        dae.f[self.psiq] = mul(wn, mul(self.ra, dae.y[self.Iq]) - mul(dae.x[self.omega], dae.x[self.psid]) + dae.y[self.vq])
+
+    def fxcall(self, dae):
+        wn = mul(self.system.Settings.wb, self.u)
+        dae.add_jac(Fy, mul(wn, self.ra), self.psid, self.Id)
+        dae.add_jac(Fx, mul(wn, dae.x[self.omega]), self.psid, self.psiq)
+        dae.add_jac(Fx, mul(wn, dae.x[self.psiq]), self.psid, self.omega)
+
+        dae.add_jac(Fy, mul(wn, self.ra), self.psiq, self.Iq)
+        dae.add_jac(Fx, -mul(wn, dae.x[self.omega]), self.psiq, self.psid)
+        dae.add_jac(Fx, -mul(wn, dae.x[self.psid]), self.psiq, self.omega)
+
+    def jac0(self, dae):
+        wn = mul(self.system.Settings.wb, self.u)
+        dae.add_jac(Fy0, wn, self.psid, self.vd)
+
+        dae.add_jac(Fy0, wn, self.psiq, self.vq)
+
+
 class Syn2(Ord2, Flux0):
     """2nd-order generator model. Inherited from (Ord2, Flux0)  """
     def __init__(self, system, name):
