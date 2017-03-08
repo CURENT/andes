@@ -62,3 +62,11 @@ def sort_idx(m, reverse=False):
     """Return the indices of m in sorted order (default: ascending order)"""
     return sorted(range(len(m)), key=lambda k: m[k], reverse=reverse)
 
+
+def findall(m, val):
+    """Return the indices of all (val) in m"""
+    m = list(m)
+    idx = []
+    if m.count(val) > 1:
+        idx = [i for i, j in enumerate(m) if j == val]
+    return idx

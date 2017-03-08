@@ -18,6 +18,7 @@ limitations under the License.
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import mul, div
+from ..utils.math import agtb, altb, nota, findall
 import copy
 import sys
 
@@ -425,7 +426,12 @@ class ModelBase(object):
                 self.copy_param(model='Node', src='v', dest=val, fkey=self.__dict__[key])
 
     def _ctrl_interface(self):
-        pass
+        """Retrieve parameters of controlled model"""
+        for key, val in self._ctrl.items():
+            if type(val) != list:
+                val = [val]
+            for item in val:
+                self.copy_param(**item)
 
     def _addr(self):
         """
@@ -485,9 +491,21 @@ class ModelBase(object):
             return
         self.system.Log.message(msg, level)
 
-    def limit_check(self, data, min=None, max=None):
+    def limit_check(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
-        pass
+        above = agtb(self.__dict__[key], upper)
+        idx = findall(above, 1.0)
+        for item in idx:
+            self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
+            if limit:
+                self.__dict__[key][idx] = upper[idx]
+
+        below = altb(self.__dict__[key], lower)
+        idx = findall(below, 1.0)
+        for item in idx:
+            self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
+            if limit:
+                self.__dict__[key][idx] = lower[idx]
 
     def add_jac(self, m, val, row, col):
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
