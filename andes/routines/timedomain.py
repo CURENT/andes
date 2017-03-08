@@ -119,7 +119,6 @@ def run(system):
 
             # DAE equations
             exec(system.Call.int)
-            # diag0(dae.Gy, 'unamey', system)
 
             # complete Jacobian matrix DAE.Ac
             if settings.method == 'euler':
@@ -147,6 +146,8 @@ def run(system):
             except ArithmeticError:
                 system.Log.error('Singular matrix')
                 niter = maxit + 1  # force quit
+                diag0(dae.Gy, 'unamey', system)
+                diag0(dae.Fx, 'unamex', system)
             except ValueError:
                 system.Log.warning('Unexpected symbolic factorization')
                 F = symbolic(dae.Ac)
