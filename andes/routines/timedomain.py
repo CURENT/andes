@@ -1,6 +1,7 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
 from ..utils.jactools import *
+import progressbar
 F = []
 
 
@@ -41,6 +42,9 @@ def first_time_step(system):
 def run(system):
     """Entry function of Time Domain Simulation"""
     global F
+    bar = progressbar.ProgressBar(redirect_stdout=True,
+                                  widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
+                                           progressbar.AdaptiveETA(), '] '])
     dae = system.DAE
     settings = system.TDS
 
@@ -70,6 +74,7 @@ def run(system):
     system.VarOut.store(t)
 
     # main loop
+    bar.start()
     while t <= settings.tf and t + h > t and not diff_max:
 
         # last time step length
@@ -165,8 +170,8 @@ def run(system):
                     except ArithmeticError:
                         system.Log.error('Singular matrix')
                         niter = maxit + 1
-                dae.x += inc[:n]
-                dae.y += inc[n: m+n]
+                dae.x += inc[:dae.n]
+                dae.y += inc[dae.n: dae.m+dae.n]
                 settings.error = max(abs(inc))
                 niter += 1
 
@@ -185,15 +190,13 @@ def run(system):
         h = time_step(system, True, niter, t)
 
         # plot variables and display iteration status
-        perc = (t - settings.t0) / (settings.tf - settings.t0)
-        if perc > nextpc:
-            system.Log.info(' * Simulation time = {:.4f}s, {:.1f}%'.format(dae.t, perc * 100))
-            system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f}, niter = {}'.format(t, step, settings.error, niter))
-            nextpc += 0.1
+        perc = (t - settings.t0) / (settings.tf - settings.t0) * 100
+        bar.update(perc)
 
         # compute max rotor angle difference
         diff_max = anglediff()
 
+    bar.finish()
 
 def time_step(system, convergence, niter, t):
     """determine the time step during time domain simulations

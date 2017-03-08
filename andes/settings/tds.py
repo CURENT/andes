@@ -8,6 +8,9 @@ class TDS(SettingsBase):
         self.tstep = 1/120
         self.method = 'trapezoidal'
         self.method_alt = ['euler', 'trapezoidal']
+        self.method_desc = {'euler': 'Implicit Euler',
+                            'trapezoidal': 'Implicit Trapezoidal',
+                            'fwdeuler': 'Explicit Euler'}
         self.t0 = 0.0
         self.tf = 20.0
         self.deltat = 0.01
