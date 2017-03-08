@@ -52,6 +52,9 @@ class Fault(ModelBase):
         t = matrix(list(self.tf) + list(self.tc))
         return list(t) + list(t - 1e-6)
 
+    def istime(self, t):
+        return t in self.get_times()
+
     def checktime(self, actual_time):
         """Check time and apply faults"""
         if self.time != actual_time:
