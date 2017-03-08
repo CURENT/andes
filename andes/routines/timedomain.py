@@ -1,12 +1,12 @@
-from cvxopt import matrix, spmatrix, sparse
+from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
 from ..utils.jactools import *
+F = []
 
 
 def first_time_step(system):
-    """compute first time step"""
+    """Compute the first time step"""
     settings = system.TDS
-    # estimate minimum time step
     if not system.DAE.n:
         freq = 1.0
     elif system.DAE.n == 1:
@@ -20,16 +20,11 @@ def first_time_step(system):
     if freq > system.Settings.freq:
         freq = float(system.Settings.freq)
 
-    if not freq:
-        freq = 20.0
-
-    # set the minimum time step
-
-    Tspan = abs(settings.tf - settings.t0)
-    Tcycle = 1/freq
-    settings.deltatmax = min(5*Tcycle, Tspan/100.0)
-    settings.deltat = min(Tcycle, Tspan/100.0)
-    settings.deltatmin = min(Tcycle/64, settings.deltatmax/20)
+    tspan = abs(settings.tf - settings.t0)
+    tcycle = 1 / freq
+    settings.deltatmax = min(5 * tcycle, tspan / 100.0)
+    settings.deltat = min(tcycle, tspan / 100.0)
+    settings.deltatmin = min(tcycle / 64, settings.deltatmax / 20)
 
     if settings.fixt:
         if settings.tstep <= 0:
@@ -44,20 +39,20 @@ def first_time_step(system):
 
 
 def run(system):
-
+    """Entry function of Time Domain Simulation"""
+    global F
     dae = system.DAE
     settings = system.TDS
+
     # check settings
     maxit = settings.maxit
     tol = settings.tol
-    n = system.DAE.n  # state var
-    m = system.DAE.m  # algebraic var
-    In = spmatrix(1, range(n), range(n), (n, n), 'd')
+    In = spdiag([1] * dae.n)
 
     # initialization
     t = settings.t0
     step = 0
-    inc = matrix(0, (n+m, 1), 'd' )
+    inc = matrix(0, (dae.m + dae.n, 1), 'd' )
     dae.factorize = True
     dae.mu = 1.0
     dae.kg = 0.0
@@ -66,11 +61,13 @@ def run(system):
     h = first_time_step(system)
 
     # time vector for faults and breaker events
-    fixed_times = system.Call.get_times()  # todo: to implement
+    fixed_times = system.Call.get_times()
+
     # compute max rotor angle difference
     diff_max = anglediff()
 
-    system.VarOut.store(t)  # store the initial value
+    # store the initial value
+    system.VarOut.store(t)
 
     # main loop
     while t <= settings.tf and t + h > t and not diff_max:
@@ -78,15 +75,16 @@ def run(system):
         # last time step length
         if t + h > settings.tf:
             h = settings.tf - t
-        # avoid freezing at t == settings.tf
 
-        if h == 0:  # does not converge and reached minimum time step
+        # unable to converge and
+        if h == 0.0:
             break
+
         actual_time = t + h
 
-        #check for the occurrence of a disturbance
+        # check for the occurrence of a disturbance
         for item in fixed_times:
-            if item > t and item < t+h:  # not to skip events
+            if (item > t) and (item < t+h):
                 actual_time = item
                 h = actual_time - t
                 switch = True
@@ -98,9 +96,6 @@ def run(system):
         # backup actual variables
         xa = matrix(dae.x)
         ya = matrix(dae.y)
-
-        # initialize NR loop
-        niter = 0
         fn = matrix(dae.f)
 
         # apply fixed_time interventions and perturbations
@@ -112,55 +107,68 @@ def run(system):
         if settings.disturbance:
             system.Call.disturbance(actual_time)
 
-        # main loop of Newton iteration
-        settings.error = tol + 1 # force at least one iteration
+        niter = 0
+        settings.error = tol + 1
+
         while settings.error > tol and niter < maxit:
-            # note: dae.x, dae.y, dae.f, dae.g are updated in each iteration
+            if settings.method == 'fwdeuler':
+                # predictor of x
+                exec(system.Call.int_f)
+                f0 = dae.f
+                dae.x = xa + h * f0
+                dae.y += calcInc(system)
 
-            # DAE equations
-            exec(system.Call.int)
+                # corrector step
+                exec(system.Call.int_f)
+                dae.x = xa + 0.5 * h * (f0 + dae.f)
+                inc = calcInc(system)
+                dae.y += inc
 
-            # complete Jacobian matrix DAE.Ac
-            if settings.method == 'euler':
-                dae.Ac = sparse([[In - h*dae.Fx, dae.Gx],
-                                 [   - h*dae.Fy, dae.Gy]], 'd')
-                dae.q = dae.x - xa - h*dae.f
-            elif settings.method == 'trapezoidal':  # use implicit trapezoidal method by default
-                dae.Ac = sparse([[In - h*0.5*dae.Fx, dae.Gx],
-                                 [   - h*0.5*dae.Fy, dae.Gy]], 'd')
-                dae.q = dae.x - xa - h*0.5*(dae.f + fn)
+                settings.error = abs(max(inc))
+                niter += 1
 
-            # anti-windup limiters
-            #     exec(system.Call.windup)
+            elif settings.method in ['euler', 'trapezoidal']:
+                exec(system.Call.int)
 
-            if dae.factorize:
-                F = symbolic(dae.Ac)
-                dae.factorize = False
-            inc = -matrix([dae.q, dae.g])
+                # complete Jacobian matrix DAE.Ac
+                if settings.method == 'euler':
+                    dae.Ac = sparse([[In - h*dae.Fx, dae.Gx],
+                                     [   - h*dae.Fy, dae.Gy]], 'd')
+                    dae.q = dae.x - xa - h*dae.f
+                elif settings.method == 'trapezoidal':  # use implicit trapezoidal method by default
+                    dae.Ac = sparse([[In - h*0.5*dae.Fx, dae.Gx],
+                                     [   - h*0.5*dae.Fy, dae.Gy]], 'd')
+                    dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
-            # write_mat('TDS_Gy.mat', [dae.Ac, inc], ['TDS_Ac', 'mis'])
+                # anti-windup limiters
+                #     exec(system.Call.windup)
 
-            try:
-                N = numeric(dae.Ac, F)
-                solve(dae.Ac, F, N, inc)
-            except ArithmeticError:
-                system.Log.error('Singular matrix')
-                niter = maxit + 1  # force quit
-                diag0(dae.Gy, 'unamey', system)
-                diag0(dae.Fx, 'unamex', system)
-            except ValueError:
-                system.Log.warning('Unexpected symbolic factorization')
-                F = symbolic(dae.Ac)
+                if dae.factorize:
+                    F = symbolic(dae.Ac)
+                    dae.factorize = False
+                inc = -matrix([dae.q, dae.g])
+
                 try:
                     N = numeric(dae.Ac, F)
                     solve(dae.Ac, F, N, inc)
                 except ArithmeticError:
                     system.Log.error('Singular matrix')
-                    niter = maxit + 1
-            dae.x += inc[:n]
-            dae.y += inc[n: m+n]
-            settings.error = max(abs(inc))
-            niter += 1
+                    niter = maxit + 1  # force quit
+                    diag0(dae.Gy, 'unamey', system)
+                    diag0(dae.Fx, 'unamex', system)
+                except ValueError:
+                    system.Log.warning('Unexpected symbolic factorization')
+                    F = symbolic(dae.Ac)
+                    try:
+                        N = numeric(dae.Ac, F)
+                        solve(dae.Ac, F, N, inc)
+                    except ArithmeticError:
+                        system.Log.error('Singular matrix')
+                        niter = maxit + 1
+                dae.x += inc[:n]
+                dae.y += inc[n: m+n]
+                settings.error = max(abs(inc))
+                niter += 1
 
         if niter >= maxit:
             h = time_step(system, False, niter, t)
@@ -173,15 +181,13 @@ def run(system):
         # update output variables and time step
         t = actual_time
         step += 1
-
         system.VarOut.store(t)
-
         h = time_step(system, True, niter, t)
 
         # plot variables and display iteration status
         perc = (t - settings.t0) / (settings.tf - settings.t0)
         if perc > nextpc:
-            system.Log.info(' * Simulation time = {:.4f}s, {:.1f}%'.format(dae.t, perc*100))
+            system.Log.info(' * Simulation time = {:.4f}s, {:.1f}%'.format(dae.t, perc * 100))
             system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f}, niter = {}'.format(t, step, settings.error, niter))
             nextpc += 0.1
 
@@ -212,10 +218,42 @@ def time_step(system, convergence, niter, t):
 
     if system.Fault.istime(t):
         settings.deltat = min(settings.deltat, 0.002778)
+    if settings.method == 'fwdeuler':
+        settings.deltat = min(settings.deltat, settings.tstep)
 
     return settings.deltat
 
 
 def anglediff():
-    """compute angle difference"""
+    """Compute angle difference"""
     return False
+
+
+def calcInc(system):
+    """Calculate algebraic variable increment"""
+    global F
+    exec(system.Call.int_g)
+
+    A = system.DAE.Gy
+    inc = system.DAE.g
+
+    if system.DAE.factorize:
+        F = symbolic(A)
+        system.DAE.factorize = False
+
+    try:
+        N = numeric(A, F)
+        solve(A, F, N, inc)
+    except ValueError:
+        system.Log.warning('Unexpected symbolic factorization. Refactorizing...')
+        F = symbolic(dae.Ac)
+        try:
+            N = numeric(dae.Ac, F)
+            solve(dae.Ac, F, N, inc)
+        except ArithmeticError:
+            system.Log.error('Singular matrix')
+            niter = maxit + 1
+    except ArithmeticError:
+        system.Log.error('Jacobian matrix is singular.')
+        diag0(system.DAE.Gy, 'unamey', system)
+    return -inc

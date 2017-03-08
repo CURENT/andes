@@ -55,6 +55,8 @@ class Call(object):
         self._compile_pfgen()
         self._compile_seriesflow()
         self._compile_int()
+        self._compile_int_f()
+        self._compile_int_g()
 
     def build_vec(self):
         """build call validity vector for each device"""
@@ -216,3 +218,48 @@ class Call(object):
 
         string += '"""'
         self.int = compile(eval(string), '', 'exec')
+
+    def _compile_int_f(self):
+        """Time Domain Simulation - update differential equations"""
+        string = '"""\n'
+        string += 'system.DAE.init_f()\n'
+
+        # evaluate differential equations f
+        for fcall, call in zip(self.fcall, self.fcalls):
+            if fcall:
+                string += call
+
+        string += '"""'
+        self.int_f = compile(eval(string), '', 'exec')
+
+    def _compile_int_g(self):
+        """Time Domain Simulation - update algebraic equations and Jacobian"""
+        string = '"""\n'
+
+        # evaluate the algebraic equations g
+        string += 'system.DAE.init_g()\n'
+        for gcall, call in zip(self.gcall, self.gcalls):
+            if gcall:
+                string += call
+        string += '\n'
+
+        # handle islands
+        string += self.gisland
+
+        # rebuild constant Jacobian elements if needed
+        string += 'if system.DAE.factorize:\n'
+        string += '    system.DAE.init_jac0()\n'
+        for jac0, call in zip(self.jac0, self.jac0s):
+            if jac0:
+                string += '    ' + call
+
+        # evaluate Jacobians Gy
+        string += 'system.DAE.setup_Gy()\n'
+        for gycall, call in zip(self.gycall, self.gycalls):
+            if gycall:
+                string += call
+        string += '\n'
+        string += self.gyisland
+
+        string += '"""'
+        self.int_g = compile(eval(string), '', 'exec')
