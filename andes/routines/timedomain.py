@@ -1,6 +1,6 @@
 from cvxopt import matrix, spmatrix, sparse
 from cvxopt.klu import numeric, symbolic, solve, linsolve
-
+from ..utils.jactools import *
 
 def first_time_step(system):
     """compute first time step"""
@@ -119,6 +119,7 @@ def run(system):
 
             # DAE equations
             exec(system.Call.int)
+            diag0(dae.Gy, 'unamey', system)
 
             # complete Jacobian matrix DAE.Ac
             if settings.method == 'euler':

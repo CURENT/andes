@@ -70,3 +70,15 @@ def findall(m, val):
     if m.count(val) > 1:
         idx = [i for i, j in enumerate(m) if j == val]
     return idx
+
+
+def algeb_limiter(m, upper, lower):
+    above = agtb(m, upper)
+    idx = findall(above, 1.0)
+    m[idx] = upper[idx]
+
+    below = altb(m, lower)
+    idx = findall(below, 1.0)
+    m[idx] = lower[idx]
+
+    return m

@@ -198,7 +198,7 @@ class ModelBase(object):
                     self.message('Group <{0}> does not have any element.'.format(model))
                     return
             for item in fkey:
-                dev_name = self.system.DevMan.group[item]
+                dev_name = self.system.DevMan.group[model][item]
                 pos = self.system.__dict__[dev_name].int[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
                 if not astype:
@@ -498,14 +498,14 @@ class ModelBase(object):
         for item in idx:
             self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
-                self.__dict__[key][idx] = upper[idx]
+                self.__dict__[key][item] = upper[item]
 
         below = altb(self.__dict__[key], lower)
         idx = findall(below, 1.0)
         for item in idx:
             self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
-                self.__dict__[key][idx] = lower[idx]
+                self.__dict__[key][item] = lower[item]
 
     def add_jac(self, m, val, row, col):
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:

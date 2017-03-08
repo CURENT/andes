@@ -25,6 +25,7 @@ non_jits = {'bus': {'Bus': 'Bus'},
                             'Syn6a': 'Syn6a',
                             },
             'fault': {'Fault': 'Fault'},
+            'governor': {'TG2': 'TG2'}
 
            }
 
