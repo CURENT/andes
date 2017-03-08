@@ -23,6 +23,14 @@ class Node(ModelBase):
                            'xcoord': None,
                            'ycoord': None,
                            })
+        self._units.update({'Vdcn': 'kV',
+                            'Idcn': 'kA',
+                            'area': 'na',
+                            'region': 'na',
+                            'voltage': 'pu',
+                            'xcoord': 'deg',
+                            'ycoord': 'deg',
+                            })
         self.calls.update({'init0': True, 'pflow': True,
                            'jac0': True,
                            })
@@ -49,7 +57,7 @@ class Node(ModelBase):
     def jac0(self, dae):
         if self.n is 0:
             return
-        self.add_jac(Gy0, 1e-6, self.v, self.v)
+        dae.add_jac(Gy0, 1e-6, self.v, self.v)
 
 
 class DCBase(ModelBase):
@@ -96,11 +104,11 @@ class RLine(DCBase):
         dae.g += spmatrix(dae.y[self.I], self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def jac0(self, dae):
-        self.add_jac(Gy0, -self.u, self.v1, self.I)
-        self.add_jac(Gy0, self.u, self.v2, self.I)
-        self.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
-        self.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
-        self.add_jac(Gy0, self.u + 1e-6, self.I, self.I)
+        dae.add_jac(Gy0, -self.u, self.v1, self.I)
+        dae.add_jac(Gy0, self.u, self.v2, self.I)
+        dae.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
+        dae.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
+        dae.add_jac(Gy0, self.u + 1e-6, self.I, self.I)
 
 
 class Ground(DCBase):
@@ -138,6 +146,6 @@ class Ground(DCBase):
         dae.g[self.I] = self.voltage - dae.y[self.v]
 
     def jac0(self, dae):
-        self.add_jac(Gy0, -self.u, self.v, self.I)
-        self.add_jac(Gy0, self.u - 1 + 1e-6, self.I, self.I)
-        self.add_jac(Gy0, -self.u, self.I, self.v)
+        dae.add_jac(Gy0, -self.u, self.v, self.I)
+        dae.add_jac(Gy0, self.u - 1 + 1e-6, self.I, self.I)
+        dae.add_jac(Gy0, -self.u, self.I, self.v)

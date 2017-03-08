@@ -63,11 +63,11 @@ class VarOut(object):
         except IOError:
             self.system.Log.error('I/O Error when writing the lst file.')
 
-    def _write_vars(self, t, dae):
+    def _write_vars(self, t, vars):
         """helper function to write one line of simulation results"""
-        nvars = dae.m + dae.n
+        nvars = vars.size[0]
 
         line = ['{:<8g}'] + ['{:0.10f}'] * nvars
         line = ' '.join(line)
-        values = [t] + list(dae.x) + list(dae.y)
+        values = [t] + list(vars)
         self.dat.write(line.format(*values) + '\n')

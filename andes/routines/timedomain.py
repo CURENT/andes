@@ -1,5 +1,6 @@
 from cvxopt import matrix, spmatrix, sparse
 from cvxopt.klu import numeric, symbolic, solve, linsolve
+from ..utils.jactools import *
 
 
 def first_time_step(system):
@@ -42,7 +43,7 @@ def first_time_step(system):
     return settings.deltat
 
 
-def timedomain(system):
+def run(system):
 
     dae = system.DAE
     settings = system.TDS
@@ -66,11 +67,10 @@ def timedomain(system):
 
     # time vector for faults and breaker events
     fixed_times = system.Call.get_times()  # todo: to implement
-    # fixed_times = [] # hardcoded, todo: implement the line above
     # compute max rotor angle difference
     diff_max = anglediff()
 
-    system.Varout.init()
+    system.VarOut.store(t)  # store the initial value
 
     # main loop
     while t <= settings.tf and t + h > t and not diff_max:
@@ -119,6 +119,7 @@ def timedomain(system):
 
             # DAE equations
             exec(system.Call.int)
+            # diag0(dae.Gy, 'unamey', system)
 
             # complete Jacobian matrix DAE.Ac
             if settings.method == 'euler':
@@ -172,7 +173,7 @@ def timedomain(system):
         t = actual_time
         step += 1
 
-        system.Varout.store(t)
+        system.VarOut.store(t)
 
         h = time_step(system, True, niter, t)
 
@@ -194,10 +195,12 @@ def time_step(system, convergence, niter, t):
         niter:  number of iterations """
     settings = system.TDS
     if convergence:
-        if niter >= 15:
-            settings.deltat = max(settings.deltat*0.9, settings.deltatmin)
-        elif niter <= 10:
-            settings.deltat = min(settings.deltat*1.2, settings.deltatmax)
+        if niter >= 8:
+            settings.deltat = max(settings.deltat * 0.5, settings.deltatmin)
+        elif niter <= 3:
+            settings.deltat = min(settings.deltat * 1.1, settings.deltatmax)
+        else:
+            settings.deltat = max(settings.deltat * 0.9, settings.deltatmin)
 
         if settings.fixt:  # adjust fixed time step if niter is high
             settings.deltat = min(settings.tstep, settings.deltat)
@@ -206,8 +209,8 @@ def time_step(system, convergence, niter, t):
         if settings.deltat < settings.deltatmin:
             settings.deltat = 0
 
-    # if istime(Fault, t):
-    #     settings.deltat = min(settings.deltat, 0.0025);
+    if system.Fault.istime(t):
+        settings.deltat = min(settings.deltat, 0.002778)
 
     return settings.deltat
 

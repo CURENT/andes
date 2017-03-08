@@ -1,6 +1,24 @@
+"""
+ANDES, a power system simulation tool for research.
+
+Copyright 2015-2017 Hantao Cui
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import mul, div
+from ..utils.math import agtb, altb, nota, findall
 import copy
 import sys
 
@@ -115,6 +133,10 @@ class ModelBase(object):
             self.__dict__[var] = []
         for var in self._service:
             self.__dict__[var] = []
+        if not self._unamey:
+            self._unamey = self._algebs
+        if not self._unamex:
+            self._unamex = self._states
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -176,7 +198,7 @@ class ModelBase(object):
                     self.message('Group <{0}> does not have any element.'.format(model))
                     return
             for item in fkey:
-                dev_name = self.system.DevMan.group[item]
+                dev_name = self.system.DevMan.group[model][item]
                 pos = self.system.__dict__[dev_name].int[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
                 if not astype:
@@ -404,7 +426,12 @@ class ModelBase(object):
                 self.copy_param(model='Node', src='v', dest=val, fkey=self.__dict__[key])
 
     def _ctrl_interface(self):
-        pass
+        """Retrieve parameters of controlled model"""
+        for key, val in self._ctrl.items():
+            if type(val) != list:
+                val = [val]
+            for item in val:
+                self.copy_param(**item)
 
     def _addr(self):
         """
@@ -431,19 +458,21 @@ class ModelBase(object):
             return
         if not self.n:
             return
+        for idx, item in enumerate(self._states):
+            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamex[idx], element_name=self.names)
+        for idx, item in enumerate(self._algebs):
+            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
+                                       var_name=self._unamey[idx], element_name=self.names)
         try:
             for idx, item in enumerate(self._states):
-                self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamex[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamex[idx], element_name=self.names)
             for idx, item in enumerate(self._algebs):
-                self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                           var_name=self._unamey[idx], element_name=self.names)
                 self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
                                            var_name=self._fnamey[idx], element_name=self.names)
         except IndexError:
-            self.message('Variable names missing in class <{0}>definition.'.format(self._name))
+            self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
 
     def _param2matrix(self):
         """convert _params from list to matrix"""
@@ -462,9 +491,21 @@ class ModelBase(object):
             return
         self.system.Log.message(msg, level)
 
-    def limit_check(self, data, min=None, max=None):
+    def limit_check(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
-        pass
+        above = agtb(self.__dict__[key], upper)
+        idx = findall(above, 1.0)
+        for item in idx:
+            self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
+            if limit:
+                self.__dict__[key][item] = upper[item]
+
+        below = altb(self.__dict__[key], lower)
+        idx = findall(below, 1.0)
+        for item in idx:
+            self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
+            if limit:
+                self.__dict__[key][item] = lower[item]
 
     def add_jac(self, m, val, row, col):
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:

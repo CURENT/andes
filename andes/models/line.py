@@ -29,6 +29,25 @@ class Line(ModelBase):
                            'fn': 60,
                            'owner': 0,
                            })
+        self._units.update({'r': 'pu',
+                            'x': 'pu',
+                            'b': 'pu',
+                            'g': 'pu',
+                            'b1': 'pu',
+                            'g1': 'pu',
+                            'b2': 'pu',
+                            'g2': 'pu',
+                            'bus1': 'na',
+                            'bus2': 'na',
+                            'Vn2': 'kV',
+                            'xcoord': 'deg',
+                            'ycoord': 'deg',
+                            'transf': 'na',
+                            'tap': 'na',
+                            'phi': 'deg',
+                            'fn': 'Hz',
+                            'owner': 'na',
+                            })
         self._descr.update({'r': 'connection line resistance',
                             'x': 'connection line reactance',
                             'g': 'shared shunt conductance',
@@ -208,9 +227,9 @@ class Line(ModelBase):
     def init0(self, dae):
         solver = self.system.SPF.solver.lower()
         self.build_y()
+        self.incidence()
         if solver in ('fdpf', 'fdbx', 'fdxb'):
             self.build_b()
-        self.incidence()
 
     def gcall(self, dae):
         vc = polar(dae.y[self.v], dae.y[self.a])
@@ -221,13 +240,13 @@ class Line(ModelBase):
 
     def gycall(self, dae):
         gy = self.build_gy(dae)
-        self.add_jac(Gy, gy.V, gy.I, gy.J)
+        dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
         """Build line Jacobian matrix"""
         if not self.n:
             idx = range(dae.m)
-            self.set_jac('Gy', 1e-6, idx, idx)
+            dae.set_jac(Gy, 1e-6, idx, idx)
             return
 
         Vn = polar(1.0, dae.y[self.a])

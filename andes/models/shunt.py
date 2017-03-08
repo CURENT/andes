@@ -1,6 +1,6 @@
 from cvxopt import matrix, mul, spmatrix
 from .base import ModelBase
-
+from ..consts import *
 
 class Shunt(ModelBase):
     """Static shunt device"""
@@ -13,6 +13,11 @@ class Shunt(ModelBase):
                            'b': 0,
                            'fn': 60.0,
                            })
+        self._units.update({'bus': 'na',
+                            'g': 'pu',
+                            'b': 'pu',
+                            'fn': 'Hz',
+                            })
         self._params.extend(['g',
                              'b',
                              'fn',
@@ -48,6 +53,6 @@ class Shunt(ModelBase):
         dPdV = mul(dV2, matrix(self.g, (self.n, 1), 'd'))
         dQdV = -mul(dV2, matrix(self.b, (self.n, 1), 'd'))
 
-        self.add_jac('Gy', dPdV, self.a, self.v)
-        self.add_jac('Gy', dQdV, self.v, self.v)
+        dae.add_jac(Gy, dPdV, self.a, self.v)
+        dae.add_jac(Gy, dQdV, self.v, self.v)
 

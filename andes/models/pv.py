@@ -21,6 +21,17 @@ class Stagen(ModelBase):
                            'vmax': 1.4,
                            'vmin': 0.6,
                            })
+        self._units.update({'bus': 'na',
+                            'busr': 'na',
+                            'pg': 'pu',
+                            'qg': 'pu',
+                            'pmax': 'pu',
+                            'pmin': 'pu',
+                            'qmax': 'pu',
+                            'v0': 'pu',
+                            'vmax': 'pu',
+                            'vmin': 'pu',
+                            })
         self._params.extend(['v0',
                              'pg',
                              'qg',
@@ -101,10 +112,10 @@ class PV(Stagen):
             dae.algeb_windup(self.qlim)
 
     def jac0(self, dae):
-        self.set_jac('Gy0', 1e-6, self.v, self.v)
-        self.set_jac('Gy0', -self.u, self.v, self.q)
-        self.set_jac('Gy0', self.u, self.q, self.v)
-        self.set_jac('Gy0', self.u - 1 + 1e-6, self.q, self.q)
+        dae.set_jac('Gy0', 1e-6, self.v, self.v)
+        dae.set_jac('Gy0', -self.u, self.v, self.q)
+        dae.set_jac('Gy0', self.u, self.q, self.v)
+        dae.set_jac('Gy0', self.u - 1 + 1e-6, self.q, self.q)
 
     def disable_gen(self, idx):
         """Disable a PV element for TDS"""
@@ -138,6 +149,6 @@ class Slack(PV):
 
     def jac0(self, dae):
         super().jac0(dae)
-        self.set_jac('Gy0', -self.u, self.a, self.p)
-        self.set_jac('Gy0', self.u, self.p, self.a)
-        self.set_jac('Gy0', self.u - 1 + 1e-6, self.p, self.p)
+        dae.set_jac('Gy0', -self.u, self.a, self.p)
+        dae.set_jac('Gy0', self.u, self.p, self.a)
+        dae.set_jac('Gy0', self.u - 1 + 1e-6, self.p, self.p)
