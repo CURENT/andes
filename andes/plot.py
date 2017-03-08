@@ -164,6 +164,8 @@ def do_plot(x, y, xl, yl):
     ax.set_xlabel(xl[0])
     ax.ticklabel_format(useOffset=False)
     ax.set_xlim(xmin=x[0]-1e-6)
+    ax.set_xlim(xmax=x[-1]+1e-6)
+
 
     legend = ax.legend(loc='upper right', shadow=True)
 
