@@ -53,11 +53,11 @@ class GovernorBase(ModelBase):
         pin0 = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega])
         pin = algeb_limiter(pin0, self.pmin, self.pmax)
 
-        dae.g[self.pm] += mul(self.u, dae.y[self.pout]) - self.pm0
+        dae.g[self.pm] += self.pm0 - mul(self.u, dae.y[self.pout])  # update the Syn.pm equations
         dae.g[self.wref] += dae.y[self.wref] - self.wref0
 
     def jac0(self, dae):
-        dae.add_jac(Gy0, self.u, self.pm, self.pout)
+        dae.add_jac(Gy0, -self.u, self.pm, self.pout)
 
         dae.add_jac(Gy0, 1.0, self.wref, self.wref)
 
