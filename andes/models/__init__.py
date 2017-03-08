@@ -22,6 +22,7 @@ non_jits = {'bus': {'Bus': 'Bus'},
             'vsc': {'VSC': 'VSC',
                     },
             'synchronous': {'Syn2': 'Syn2',
+                            'Syn6a': 'Syn6a',
                             },
             'fault': {'Fault': 'Fault'},
 

@@ -69,6 +69,11 @@ class SynBase(ModelBase):
         """Build service variables"""
         self.iM = div(1, self.M)
 
+    def set_vf0(self, vf):
+        """set value for self.vf0 and dae.y[self.vf]"""
+        self.vf0 = vf
+        self.system.DAE.y[self.vf] = matrix(vf)
+
     def init1(self, dae):
         self.system.rmgen(self.gen)
         self.build_service()
@@ -176,8 +181,160 @@ class Ord2(SynBase):
 
     def init1(self, dae):
         super().init1(dae)
-        self.vf0 = dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id])
-        dae.y[self.vf] = self.vf0
+        self.set_vf0(dae.y[self.vq] + mul(self.ra, dae.y[self.Iq]) + mul(self.xd1, dae.y[self.Id]))
+
+    def gcall(self, dae):
+        super(Ord2, self).gcall(dae)
+        nzeros = [0] * self.n
+        dae.g += spmatrix(mul(self.xd1, dae.y[self.Id]) - dae.y[self.vf], self.Id, nzeros, (dae.m, 1), 'd')
+        dae.g += spmatrix(mul(self.xd1, dae.y[self.Iq]), self.Iq, nzeros, (dae.m, 1), 'd')
+
+    def jac0(self, dae):
+        super(Ord2, self).jac0(dae)
+        dae.add_jac(Gy0, self.xd1, self.Id, self.Id)
+        dae.add_jac(Gy0, -1.0, self.Id, self.vf)
+        
+        dae.add_jac(Gy0, self.xd1, self.Iq, self.Iq)
+
+
+class Ord6a(SynBase):
+    """6th order the Marconato's Model"""
+    def __init__(self, system, name):
+        super(Ord6a, self).__init__(system, name)
+        self._name = 'Syn6a'
+        self._data.update({'xd': 1.9,
+                           'xd1': 0.302,
+                           'xq1': 0.5,
+                           'xd2': 0.204,
+                           'xq2': 0.3,
+                           'Td10': 8.0,
+                           'Tq10': 0.8,
+                           'Td20': 0.04,
+                           'Tq20': 0.02,
+                           'Taa': 0.0,
+                           'S10': 0,
+                           'S12': 0})
+        self._params.extend(['xd',
+                             'xd1',
+                             'xq1',
+                             'xd2',
+                             'xq2',
+                             'Td10',
+                             'Tq10',
+                             'Td20',
+                             'Tq20',
+                             'Taa',
+                             'S10',
+                             'S12'
+                             ])
+        self._descr.update({'xd': 'd-axis synchronous reactance',
+                            'xd1': 'd-axis transient reactance',
+                            'xq1': 'q-axis transient reactance',
+                            'xd2': 'd-axis sub-transient reactance',
+                            'xq2': 'q-axis sub-transient reactance',
+                            'Td10': 'd-axis transient time constant',
+                            'Tq10': 'q-axis transient time constant',
+                            'Td20': 'd-axis sub-transient time constant',
+                            'Tq20': 'q-axis sub-transient time constant',
+                            'Taa': 'Taa time constant',
+                            'S10': 'first saturation factor',
+                            'S12': 'second saturation factor'
+                            })
+        self._units.update({'xd': 'omh',
+                            'xd1': 'omh',
+                            'xd2': 'omh',
+                            'xq1': 'omh',
+                            'xq2': 'omh',
+                            'Td10': 's',
+                            'Tq10': 's',
+                            'Td20': 's',
+                            'Tq20': 's',
+                            'Taa': 's',
+                            'S10': 'n/a',
+                            'S12': 'n/a'
+                            })
+        self._mandatory.extend(['xd', 'xq', 'xd1', 'xq1', 'xd2', 'xq2', 'Td10', 'Tq10', 'Td20', 'Tq20'])
+        self._service.extend(['c1', 'c2', 'c3', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'b1', 'b2', 'b3', 'b4'])
+        self._states.extend(['e1d', 'e1q', 'e2d', 'e2q'])
+        self._z.extend(['xd', 'xd1', 'xq1', 'xd2', 'xq2'])
+        self._times.extend(['Td10', 'Tq10', 'Td20', 'Tq20', 'Taa'])
+
+    def build_service(self):
+        super(Ord6a, self).build_service()
+        K = div(1, mul(self.ra, self.ra) + mul(self.xq2, self.xd2))
+        self.gd = mul(div(self.xd2, self.xd1), div(self.Td20, self.Td10), self.xd - self.xd1)
+        self.gq = mul(div(self.xq2, self.xq1), div(self.Tq20, self.Tq10), self.xq - self.xq1)
+        self.c1 = mul(self.ra, K)
+        self.c2 = mul(self.xd2, K)
+        self.c3 = mul(self.xq2, K)
+        self.a1 = div(self.u, self.Td20)
+        self.a2 = mul(self.a1, self.xd1 - self.xd2 + self.gd)
+        self.a3 = mul(self.u, div(self.Taa, mul(self.Td10, self.Td20)))
+        self.a4 = div(self.u, self.Td10)
+        self.a5 = mul(self.a4, self.xd - self.xd1 - self.gd)
+        self.a6 = mul(self.a4, 1 - div(self.Taa, self.Td10))
+        self.b1 = div(self.u, self.Tq20)
+        self.b2 = mul(self.b1, self.xq1 - self.xq2 + self.gq)
+        self.b3 = div(self.u, self.Tq10)
+        self.b4 = mul(self.b3, self.xq - self.xq1 - self.gq)
+        self.Wn = self.system.Settings.freq * 2 * pi * self.u
+
+    def init1(self, dae):
+        super(Ord6a, self).init1(dae)
+        vd = dae.y[self.vd]
+        vq = dae.y[self.vq]
+        Id = dae.y[self.Id]
+        Iq = dae.y[self.Iq]
+
+        k1 = self.xd - self.xd1 - self.gd
+        k2 = self.xd1 - self.xd2 + self.gd
+        kq = self.xq - self.xq1 - self.gq
+        kt = div(self.Taa, self.Td10)
+
+        dae.x[self.e2q] = vq + mul(self.ra, Iq) + mul(self.xd2, Id)
+        dae.x[self.e2d] = vd + mul(self.ra, Id) - mul(self.xq2, Iq)
+        dae.x[self.e1d] = mul(Iq, kq)
+        dae.x[self.e1q] = dae.x[self.e2q] + mul(k2, Id) - mul(kt, mul(k1+k2, Id) + dae.x[self.e2q])
+        self.set_vf0(div(mul(k1, Id) + self.saturation(dae.x[self.e1q]), 1 - kt))
+
+    def gcall(self, dae):
+        super(Ord6a, self).gcall(dae)
+        dae.g[self.Id] += mul(self.u, self.xd2, dae.y[self.Id]) - dae.x[self.e2q]
+        dae.g[self.Iq] += mul(self.u, self.xq2, dae.y[self.Iq]) + dae.x[self.e2d]
+
+    def fcall(self, dae):
+        super(Ord6a, self).fcall(dae)
+        Id = dae.y[self.Id]
+        Iq = dae.y[self.Iq]
+        dae.f[self.e1d] = - mul(self.b3, dae.x[self.e1d]) + mul(self.b4, Iq)
+        dae.f[self.e1q] = - mul(self.saturation(dae.x[self.e1q]), self.a4) - mul(self.a5, Id) + mul(self.a6, dae.y[self.vf])
+        dae.f[self.e2d] = - mul(self.b1, dae.x[self.e2d]) + mul(self.b1, dae.x[self.e1d]) + mul(self.b2, Iq)
+        dae.f[self.e2q] = - mul(self.a1, dae.x[self.e2q]) + mul(self.a1, dae.x[self.e1q]) - mul(self.a2, Id) + mul(self.a3, dae.y[self.vf])
+    
+    def jac0(self, dae):
+        super(Ord6a, self).jac0(dae)
+        self.add_jac(Gy0, mul(self.u, self.xd2), self.Id, self.Id)
+        self.add_jac(Gx0, -self.u, self.Id, self.e2q)
+
+        self.add_jac(Gy0, mul(self.u, self.xq2), self.Iq, self.Iq)
+        self.add_jac(Gx0, self.u, self.Iq, self.e2d)
+        
+        self.add_jac(Fx0, -self.b3, self.e1d, self.e1d)
+        self.add_jac(Fy0, self.b4, self.e1d, self.Iq)
+
+        self.add_jac(Fx0, -self.a4, self.e1q, self.e1q)
+        self.add_jac(Fy0, self.a6, self.e1q, self.vf)
+        self.add_jac(Fy0, -self.a5, self.e1q, self.Id)
+
+        self.add_jac(Fx0, -self.b1, self.e2d, self.e2d)
+        self.add_jac(Fx0, self.b1, self.e2d, self.e1d)
+        self.add_jac(Fy0, self.b2, self.e2d, self.Iq)
+
+        self.add_jac(Fx0, -self.a1, self.e2q, self.e2q)
+        self.add_jac(Fx0, self.a1, self.e2q, self.e1q)
+        self.add_jac(Fy0, self.a3, self.e2q, self.vf)
+        self.add_jac(Fy0, -self.a2, self.e2q, self.Id)
+
 
 
 class Flux0(object):
@@ -197,8 +354,8 @@ class Flux0(object):
     def gcall(self, dae):
         dae.g[self.psiq] = mul(self.ra, dae.y[self.Id]) + dae.y[self.psiq] + dae.y[self.vd]
         dae.g[self.psid] = mul(self.ra, dae.y[self.Iq]) - dae.y[self.psid] + dae.y[self.vq]
-        dae.g[self.Id] = dae.y[self.psid] + mul(self.xd1, dae.y[self.Id]) - dae.y[self.vf]
-        dae.g[self.Iq] = dae.y[self.psiq] + mul(self.xd1, dae.y[self.Iq])
+        dae.g[self.Id] += dae.y[self.psid]
+        dae.g[self.Iq] += dae.y[self.psiq]
 
     def gycall(self, dae):
         dae.add_jac(Gy, self.ra, self.psiq, self.Id)
@@ -216,20 +373,17 @@ class Flux0(object):
 
     def jac0(self, dae):
         dae.add_jac(Gy0, 1.0, self.psiq, self.psiq)
-        dae.add_jac(Gy0, 1.0, self.psiq, self.vd)
+        dae.add_jac(Gy0, self.u, self.psiq, self.vd)
 
         dae.add_jac(Gy0, -1.0, self.psid, self.psid)
-        dae.add_jac(Gy0, 1.0, self.psid, self.vq)
+        dae.add_jac(Gy0, self.u, self.psid, self.vq)
 
-        dae.add_jac(Gy0, 1.0, self.Id, self.psid)
-        dae.add_jac(Gy0, self.xd1, self.Id, self.Id)
-        dae.add_jac(Gy0, -1.0, self.Id, self.vf)
+        dae.add_jac(Gy0, self.u, self.Id, self.psid)
 
-        dae.add_jac(Gy0, self.xd1, self.Iq, self.Iq)
-        dae.add_jac(Gy0, 1.0, self.Iq, self.psiq)
+        dae.add_jac(Gy0, self.u, self.Iq, self.psiq)
 
         dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
-        dae.add_jac(Fy0, self.iM, self.omega, self.pm)
+        dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 
 class Syn2(Ord2, Flux0):
@@ -256,6 +410,37 @@ class Syn2(Ord2, Flux0):
 
     def gycall(self, dae):
         Ord2.gycall(self, dae)
+        Flux0.gycall(self, dae)
+
+    def fxcall(self, dae):
+        Ord2.fxcall(self, dae)
+        Flux0.fxcall(self, dae)
+
+
+class Syn6a(Ord6a, Flux0):
+    """6nd-order generator model. Inherited from (Ord6, Flux0)  """
+    def __init__(self, system, name):
+        Ord6a.__init__(self, system, name)
+        Flux0.__init__(self)
+
+    def init1(self, dae):
+        Ord6a.init1(self, dae)
+        Flux0.init1(self, dae)
+
+    def gcall(self, dae):
+        Ord6a.gcall(self, dae)
+        Flux0.gcall(self, dae)
+
+    def fcall(self, dae):
+        Ord6a.fcall(self, dae)
+        Flux0.fcall(self, dae)
+
+    def jac0(self, dae):
+        Ord6a.jac0(self, dae)
+        Flux0.jac0(self, dae)
+
+    def gycall(self, dae):
+        Ord6a.gycall(self, dae)
         Flux0.gycall(self, dae)
 
     def fxcall(self, dae):
