@@ -131,7 +131,7 @@ PQ, Vn = 13.8, bus = 13, idx = "PQ load_10", name = "PQ Bus 13", p = 0.135,
 PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
-Fault, bus = 4, tf = 2.0, tc = 2.01, rf = 0.0, xf = 0.1
+Fault, bus = 4, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.01
 
 #Breaker, Vn = 69.0, bus = 2, fn = 60.0, idx = 1, line = "Line_4",
 #         name = "Breaker 1", t1 = 1.0, t2 = 200.0, u1 = 1, u2 = 1
@@ -152,38 +152,38 @@ SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1",
     pmax = 999.9, pmin = -999.9, qmax = 9.9, qmin = -9.9,
     v0 = 1.06, ref = True
 
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
-#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
-#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
-#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 13.8, xd1 = 0.302,
-#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 18, xd1 = 0.302,
-#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
+      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
+      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
+      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 13.8, xd1 = 0.302,
+      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 18, xd1 = 0.302,
+      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
 
 
-Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 1, fn = 60.0,
-       gen = 1, idx = 1, name = "Syn 1", ra = 0.0031, xd = 1.05,
-       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 2, fn = 60.0,
-       gen = 2, idx = 2, name = "Syn 2", ra = 0.0031, xd = 1.05,
-       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 3, fn = 60.0,
-       gen = 3, idx = 3, name = "Syn 3", ra = 0.0031, xd = 1.05,
-       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 6, fn = 60.0,
-       gen = 6, idx = 6, name = "Syn 6", ra = 0.0031, xd = 1.05,
-       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
-Syn6a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
-       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 8, fn = 60.0,
-       gen = 8, idx = 8, name = "Syn 8", ra = 0.0031, xd = 1.05,
-       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+#Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
+#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 1, fn = 60.0,
+#       gen = 1, idx = 1, name = "Syn 1", ra = 0.0031, xd = 1.05,
+#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+#Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
+#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 2, fn = 60.0,
+#       gen = 2, idx = 2, name = "Syn 2", ra = 0.0031, xd = 1.05,
+#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+#Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
+#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 3, fn = 60.0,
+#       gen = 3, idx = 3, name = "Syn 3", ra = 0.0031, xd = 1.05,
+#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+#Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
+#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 6, fn = 60.0,
+#       gen = 6, idx = 6, name = "Syn 6", ra = 0.0031, xd = 1.05,
+#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
+#Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
+#       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 8, fn = 60.0,
+#       gen = 8, idx = 8, name = "Syn 8", ra = 0.0031, xd = 1.05,
+#       xd1 = 0.185, xd2 = 0.13, xq = 0.98, xq1 = 0.36, xq2 = 0.13
 
 #Syn8a, D = 2.0, M = 13.08, Sn = 60.0, Td10 = 6.1, Td20 = 0.04,
 #       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 3, fn = 60.0,

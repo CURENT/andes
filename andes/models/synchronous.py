@@ -85,7 +85,7 @@ class SynBase(ModelBase):
         v = polar(v0, theta0)
         S = p0 - q0*1j
         I = div(S, conj(v))
-        E = v + mul(self.ra + self.xd1*1j, I)
+        E = v + mul(self.ra + self.xq*1j, I)
 
         dae.y[self.p] = p0
         dae.y[self.q] = q0
@@ -105,7 +105,6 @@ class SynBase(ModelBase):
         # electro-mechanical torques / powers
         self.pm0 = mul(vq + mul(self.ra, Iq), Iq) + mul(vd + mul(self.ra, Id), Id)
         dae.y[self.pm] = self.pm0
-
 
     def gcall(self, dae):
         nzeros = [0] * self.n
@@ -178,6 +177,10 @@ class Ord2(SynBase):
         self._descr.update({'xd1': 'synchronous reactance'})
         self._units.update({'xd1': 'omh'})
         self._z.extend(['xd1'])
+
+    def build_service(self):
+        super(Ord2, self).build_service()
+        self.xq = self.xd1
 
     def init1(self, dae):
         super().init1(dae)
@@ -261,7 +264,7 @@ class Ord6a(SynBase):
 
     def build_service(self):
         super(Ord6a, self).build_service()
-        K = div(1, mul(self.ra, self.ra) + mul(self.xq2, self.xd2))
+        K = div(1, self.ra ** 2 + self.xd2 ** 2)
         self.gd = mul(div(self.xd2, self.xd1), div(self.Td20, self.Td10), self.xd - self.xd1)
         self.gq = mul(div(self.xq2, self.xq1), div(self.Tq20, self.Tq10), self.xq - self.xq1)
         self.c1 = mul(self.ra, K)
@@ -277,7 +280,6 @@ class Ord6a(SynBase):
         self.b2 = mul(self.b1, self.xq1 - self.xq2 + self.gq)
         self.b3 = div(self.u, self.Tq10)
         self.b4 = mul(self.b3, self.xq - self.xq1 - self.gq)
-        self.Wn = self.system.Settings.freq * 2 * pi * self.u
 
     def init1(self, dae):
         super(Ord6a, self).init1(dae)
