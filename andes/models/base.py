@@ -545,11 +545,13 @@ class ModelBase(object):
 
     def insight(self, idx=None):
         """Print the parameter values as a list"""
+        if not self.n:
+            print('Model <{:s}> has no element'.format(self._name))
         if not idx:
             idx = sorted(self.int.keys())
         count = 2
-        header_fmt = '{:^6s}{:^3s}'
-        header = ['idx', 'u']
+        header_fmt = '{:^8s}{:^6s}{:^3s}'
+        header = ['idx', 'names', 'u']
         if 'Sn' in self._data:
             count += 1
             header_fmt += '{:^6}'
@@ -587,8 +589,12 @@ class ModelBase(object):
                 except IndexError:
                     value = None
                 if value is not None:
-                    value = round(value, 6)
+                    if type(value) in [int, float]:
+                        value = round(value, 6)
                 else:
                     value = '/'
                 data.append(str(value))
             print(header_fmt.format(*data))
+
+    def __str__(self):
+        self.insight()
