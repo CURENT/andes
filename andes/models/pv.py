@@ -85,7 +85,7 @@ class PV(Stagen):
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)
-            idx_desc = sort_idx(d_max)
+            idx_desc = sort_idx(d_max, reverse=True)
 
             nabove = nbelow = self.system.SPF.npv2pq
             nconv = min(self.system.SPF.npv2pq, self.n)
@@ -99,7 +99,9 @@ class PV(Stagen):
             self.below = idx_asc[0:nbelow] if nbelow else []
             self.above = idx_desc[0:nabove] if nabove else []
             mq = matrix(self.q)
-            self.qlim = list(set(mq[self.below] + mq[self.above]))
+            dae.y[mq[self.below]] = self.qmin[self.below]
+            dae.y[mq[self.above]] = self.qmax[self.above]
+            self.qlim = list(set(list(mq[self.below]) + list(mq[self.above])))
 
         dae.g -= spmatrix(mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
         dae.g -= spmatrix(mul(self.u, dae.y[self.q]), self.v, [0] * self.n, (dae.m, 1), 'd')
@@ -109,8 +111,11 @@ class PV(Stagen):
             dae.g[self.qlim] = 0
 
     def gycall(self, dae):
-        if self.qlim:
-            dae.algeb_windup(self.qlim)
+        for q in self.qlim:
+            v = self.v[self.q.index(q)]
+            self.set_jac('Gy0', 0.0, q, v)
+            self.set_jac('Gy0', 0.0, v, q)
+            self.set_jac('Gy0', 1.0, q, q)
 
     def jac0(self, dae):
         dae.set_jac('Gy0', 1e-6, self.v, self.v)
