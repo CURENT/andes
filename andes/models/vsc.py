@@ -276,7 +276,7 @@ class VSC(DCBase):
         dae.add_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
         dae.add_jac(Gy0, -self.k1, self.pdc, self.Ish)
 
-class VSCDyn(DCBase):
+class VSCBase(DCBase):
     """Shunt-connected dynamic VSC model for transient simulation"""
     def __init__(self, system, name):
         self._group = 'AC/DC'
@@ -291,16 +291,12 @@ class VSCDyn(DCBase):
                            'Ki3': 0.1,
                            'Kp4': 0.1,
                            'Ki4': 0.1,
-                           'Kp': 0.1,
-                           'Ki': 0.1,
+                           'Kpdc': 0.1,
+                           'Kidc': 0.1,
                            'Tt': 0.05,
-                           'uref0': 1.0,
-                           'qref0': 0.1,
-                           'pref0': 1.0,
-                           'udcref0': 1.0,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kp', 'Ki',
-                             'Tt', 'Tdc', 'uref', 'qref', 'pref', 'udcref'])
+                             'Tt'])
         self._descr.update({'vsc': 'static vsc idx',
                             'Kp1': 'current controller proportional gain',
                             'Ki1': 'current controller integrator gain',
@@ -310,17 +306,13 @@ class VSCDyn(DCBase):
                             'Ki3': 'ac voltage controller integrator gain',
                             'Kp4': 'P controller proportional gain',
                             'Ki4': 'P controller integrator gain',
-                            'Kp': 'dc voltage controller proportional gain',
-                            'Ki': 'dc voltage controller integrator gain',
+                            'Kpdc': 'dc voltage controller proportional gain',
+                            'Kidc': 'dc voltage controller integrator gain',
                             'Tt': 'ac voltage measurement delay time constant',
-                            'uref0': 'ac voltage control reference',
-                            'qref0': 'ac reactive power control reference',
-                            'pref0': 'ac active power control reference',
-                            'udcref0': 'dc active power control reference'
                             })
-        self._algebs.extend(['Idref', 'Iqref'])
+        self._algebs.extend(['Idref', 'Iqref', 'uref', 'qref', 'pref', 'udcref'])
         self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', ])
-        self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'PQ', 'PV', 'V', 'VQ'])
+        self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'PQ', 'PV', 'V', 'VQ', 'adq'])
         self._mandatory.extend(['vsc'])
         self._fnamey.extend(['I_d^{ref}', 'I_q^{ref}'])
         self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q'])
@@ -352,9 +344,40 @@ class VSCDyn(DCBase):
         self.iTt = div(1.0, self.Tt)
 
     def gcall(self):
-        pass
+        dae.g[self.uref] = dae.y[self.uref] - self.uref0
+        dae.g[self.pref] = dae.y[self.pref] - self.pcref0
+        dae.g[self.qref] = dae.y[self.qref] - self.qcref0
+        dae.g[self.udcref] = dae.y[self.udcref] - self.udcref0
 
+        dae.g[self.Idref] = mul(self.PQ + self.VQ, )
 
+    def jac0(self):
+        dae.add_jac(Gy0, 1.0, self.uref, self.uref)
+        dae.add_jac(Gy0, 1.0, self.pref, self.pref)
+        dae.add_jac(Gy0, 1.0, self.qref, self.qref)
+        dae.add_jac(Gy0, 1.0, self.udcref, self.udcref)
 
+    def fcall(self):
+        self.adq = dae.y[self.a]
+        self.usd = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
+        self.usq = mul(dae.y[self.v], sin(dae.y[self.a] - self.adq))
 
+        dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
+        dae.f[self.Iq] = - mul(self.rsh, self.ishL, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
 
+        dae.f[self.Md] = mul(self.Ki1, dae.y[self.Idref] - dae.x[self.Id])
+        dae.f[self.Mq] = mul(self.Ki1, dae.y[self.Iqref] - dae.x[self.Iq])
+
+        dae.f[self.ucd] = -mul(self.Kp1, self.iTt, dae.x[self.Id]) - mul(self.xsh, self.iTt, dae.x[self.Iq]) \
+                          - mul(self.iTt, dae.x[self.ucd]) + mul(self.iTt, dae.x[self.Md]) \
+                          + mul(self.Kp1, self.iTt, dae.y[self.Idref]) + mul(self.iTt, self.usd)
+
+        dae.f[self.ucq] = -mul(self.Kp1, self.iTt, dae.x[self.Iq]) + mul(self.xsh, self.iTt, dae.x[self.Id]) \
+                          - mul(self.iTt, dae.x[self.ucq]) + mul(self.iTt, dae.x[self.Mq]) \
+                          + mul(self.Kp1, self.iTt, dae.y[self.Iqref]) + mul(self.iTt, self.usq)
+
+        dae.f[self.Nd] = mul(self.Ki2, dae.y[self.qref] - mul(self.usq, dae.x[self.Id]), self.PQ + self.VQ) \
+                         + mul(self.Ki3, dae.y[self.uref] - self.usq, self.PV + self.V)  # Q or Vac control
+
+        dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) \
+                         + mul(self.Kidc, dae.y[self.udcref] - (dae.y[self.v1] - dae.y[self.v2]), self.VV + self.VQ)
