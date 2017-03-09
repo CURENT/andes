@@ -259,7 +259,7 @@ def run(case, **kwargs):
         system.base()
 
     # initialize power flow study
-        system.init_pf()
+    system.init_pf()
     t2, s = elapsed(t1)
     system.Log.info('System models initialized in {:s}.\n'.format(s))
 

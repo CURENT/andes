@@ -107,7 +107,6 @@ class SynBase(ModelBase):
         dae.y[self.pm] = self.pm0
 
     def gcall(self, dae):
-        self.insight()
         nzeros = [0] * self.n
         v = mul(self.u, dae.y[self.v])
         vd = dae.y[self.vd]
