@@ -98,7 +98,8 @@ class PV(Stagen):
 
             self.below = idx_asc[0:nbelow] if nbelow else []
             self.above = idx_desc[0:nabove] if nabove else []
-            self.qlim = list(set(self.q[self.below] + self.q[self.above]))
+            mq = matrix(self.q)
+            self.qlim = list(set(mq[self.below] + mq[self.above]))
 
         dae.g -= spmatrix(mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
         dae.g -= spmatrix(mul(self.u, dae.y[self.q]), self.v, [0] * self.n, (dae.m, 1), 'd')
