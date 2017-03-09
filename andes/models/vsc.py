@@ -344,12 +344,23 @@ class VSCBase(DCBase):
         self.iTt = div(1.0, self.Tt)
 
     def gcall(self):
+        self.adq = dae.y[self.a]
+        self.usq = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
+        self.usd = mul(dae.y[self.v], sin(dae.y[self.a] - self.adq))
+
         dae.g[self.uref] = dae.y[self.uref] - self.uref0
         dae.g[self.pref] = dae.y[self.pref] - self.pcref0
         dae.g[self.qref] = dae.y[self.qref] - self.qcref0
         dae.g[self.udcref] = dae.y[self.udcref] - self.udcref0
 
-        dae.g[self.Idref] = mul(self.PQ + self.VQ, )
+        dae.g[self.Idref] = mul(self.PQ + self.VQ, div(dae.y[self.qref], self.usq) + dae.x[self.Nd]
+                                                   + mul(self.Kp2, dae.y[self.qref] - mul(self.usq, dae.x[self.Id]))) \
+                            + mul(self.PV + self.V, dae.x[self.Nd] + mul(self.Kp3, dae.y[self.uref] - self.usq)) \
+                            - dae.y[self.Idref]
+
+        dae.g[self.Iqref] = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq]
+                                                   + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]))) \
+                            - dae.y[self.Iqref]
 
     def jac0(self):
         dae.add_jac(Gy0, 1.0, self.uref, self.uref)
@@ -358,9 +369,6 @@ class VSCBase(DCBase):
         dae.add_jac(Gy0, 1.0, self.udcref, self.udcref)
 
     def fcall(self):
-        self.adq = dae.y[self.a]
-        self.usd = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
-        self.usq = mul(dae.y[self.v], sin(dae.y[self.a] - self.adq))
 
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
         dae.f[self.Iq] = - mul(self.rsh, self.ishL, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
@@ -381,3 +389,5 @@ class VSCBase(DCBase):
 
         dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) \
                          + mul(self.Kidc, dae.y[self.udcref] - (dae.y[self.v1] - dae.y[self.v2]), self.VV + self.VQ)
+
+    def
