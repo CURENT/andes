@@ -83,6 +83,7 @@ class ModelBase(object):
 
         # service/temporary variables
         self._service = []
+        self._store = {}
 
         # parameters to be per-unitized
         self._powers = []      # powers, inertia and damping
@@ -343,12 +344,15 @@ class ModelBase(object):
         Sb = self.system.Settings.mva
         Vb = self.system.Bus.Vn[bus_idx]
         for var in self._voltages:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Vn)
             self.__dict__[var] = div(self.__dict__[var], Vb)
         for var in self._powers:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Sn)
             self.__dict__[var] /= Sb
         for var in self._currents:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Sn)
             self.__dict__[var] = div(self.__dict__[var], self.Vn)
             self.__dict__[var] = mul(self.__dict__[var], Vb)
@@ -357,9 +361,11 @@ class ModelBase(object):
             Zn = div(self.Vn ** 2, self.Sn)
             Zb = (Vb ** 2) / Sb
             for var in self._z:
+                self._store[var] = self.__dict__[var]
                 self.__dict__[var] = mul(self.__dict__[var], Zn)
                 self.__dict__[var] = div(self.__dict__[var], Zb)
             for var in self._y:
+                self._store[var] = self.__dict__[var]
                 if self.__dict__[var].typecode == 'd':
                     self.__dict__[var] = div(self.__dict__[var], Zn)
                     self.__dict__[var] = mul(self.__dict__[var], Zb)
@@ -380,17 +386,21 @@ class ModelBase(object):
             Rb = div(Vbdc, Ib)
 
         for var in self._dcvoltages:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Vdcn)
             self.__dict__[var] = div(self.__dict__[var], Vbdc)
 
         for var in self._dccurrents:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Idcn)
             self.__dict__[var] = div(self.__dict__[var], Ib)
 
         for var in self._r:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = div(self.__dict__[var], Rb)
 
         for var in self._g:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], Rb)
 
         self.ispu = True
@@ -532,3 +542,43 @@ class ModelBase(object):
             oldval.append(self.system.DAE.__dict__[m][i, j])
         self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def insight(self, idx=None):
+        if not idx:
+            idx = sorted(self.int.keys())
+        count = 2
+        header_fmt = '{:6s}{:3s}'
+        header = ['idx', 'u']
+        if 'Sn' in self._data:
+            count += 1
+            header_fmt += '{:6}'
+            header.append('Sn')
+        if 'Vn' in self._data:
+            count += 1
+            header_fmt += '{:6}'
+            header.append('Vn')
+
+        keys = list(self._data.keys())
+        for item in header:
+            if item in keys:
+                keys.remove(item)
+        keys = sorted(keys)
+
+        header_fmt += '{:10s}' * len(keys)
+        header += keys
+        print(' ')
+        print('Model <{:s}> parameter view: per-unit values'.format(self._name))
+        print(header_fmt.format(*header))
+
+        header.remove('idx')
+        for i in idx:
+            data = list()
+            data.append(str(i))
+            for item in header:
+                value = self.__dict__[item][self.int[i]]
+                if value is not None:
+                    value = round(value, 6)
+                else:
+                    value = '/'
+                data.append(str(value))
+            print(header_fmt.format(*data))
