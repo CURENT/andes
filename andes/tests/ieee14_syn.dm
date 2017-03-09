@@ -160,11 +160,11 @@ Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 69, xd1 = 0.302,
       bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
 Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 13.8, xd1 = 0.302,
       bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-#Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 18, xd1 = 0.302,
-#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+Syn2, D = 3.01, M = 6.02, Sn = 300, Vn = 18, xd1 = 0.302,
+      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
 
-TG2, gen = 1, pmax = 5, pmin = 0.5, R = 0.01, wref0 = 1.0,
-     T1 = 0.2, T2 = 10.0
+#TG2, gen = 1, pmax = 5, pmin = 0.5, R = 0.01, wref0 = 1.0,
+#     T1 = 0.2, T2 = 10.0
 
 #Syn6a, D = 2.0, M = 13.08, Sn = 500.0, Td10 = 6.1, Td20 = 0.04,
 #       Tq10 = 0.3, Tq20 = 0.099, Vn = 69.0, bus = 1, fn = 60.0,
