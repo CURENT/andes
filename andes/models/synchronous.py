@@ -107,6 +107,7 @@ class SynBase(ModelBase):
         dae.y[self.pm] = self.pm0
 
     def gcall(self, dae):
+        self.insight()
         nzeros = [0] * self.n
         v = mul(self.u, dae.y[self.v])
         vd = dae.y[self.vd]
@@ -336,7 +337,6 @@ class Ord6a(SynBase):
         self.add_jac(Fx0, self.a1, self.e2q, self.e1q)
         self.add_jac(Fy0, self.a3, self.e2q, self.vf)
         self.add_jac(Fy0, -self.a2, self.e2q, self.Id)
-
 
 
 class Flux0(object):

@@ -42,7 +42,7 @@ def first_time_step(system):
 def run(system):
     """Entry function of Time Domain Simulation"""
     global F
-    bar = progressbar.ProgressBar(redirect_stdout=True,
+    bar = progressbar.ProgressBar(
                                   widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
                                            progressbar.AdaptiveETA(), '] '])
     dae = system.DAE

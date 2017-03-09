@@ -544,18 +544,19 @@ class ModelBase(object):
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def insight(self, idx=None):
+        """Print the parameter values as a list"""
         if not idx:
             idx = sorted(self.int.keys())
         count = 2
-        header_fmt = '{:6s}{:3s}'
+        header_fmt = '{:^6s}{:^3s}'
         header = ['idx', 'u']
         if 'Sn' in self._data:
             count += 1
-            header_fmt += '{:6}'
+            header_fmt += '{:^6}'
             header.append('Sn')
         if 'Vn' in self._data:
             count += 1
-            header_fmt += '{:6}'
+            header_fmt += '{:^6}'
             header.append('Vn')
 
         keys = list(self._data.keys())
@@ -564,8 +565,14 @@ class ModelBase(object):
                 keys.remove(item)
         keys = sorted(keys)
 
-        header_fmt += '{:10s}' * len(keys)
+        header_fmt += '|' + '{:^10s}' * len(keys)
         header += keys
+
+        svckeys = sorted(self._service)
+        keys += svckeys
+        header_fmt += '|' + '{:^10s}' * len(svckeys)
+        header += svckeys
+
         print(' ')
         print('Model <{:s}> parameter view: per-unit values'.format(self._name))
         print(header_fmt.format(*header))
@@ -575,7 +582,10 @@ class ModelBase(object):
             data = list()
             data.append(str(i))
             for item in header:
-                value = self.__dict__[item][self.int[i]]
+                try:
+                    value = self.__dict__[item][self.int[i]]
+                except IndexError:
+                    value = None
                 if value is not None:
                     value = round(value, 6)
                 else:
