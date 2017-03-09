@@ -72,20 +72,20 @@ Line, Vn = 13.8, Vn2 = 13.8, bus1 = 12, bus2 = 13, idx = "Line_19",
 Line, Vn = 13.8, Vn2 = 13.8, bus1 = 13, bus2 = 14, idx = "Line_20",
       name = "Line 20", r = 0.17093, x = 0.34802, xcoord = [7.5; 7.5; 6.45; 6.45], ycoord = [5.625; 5.325; 5.925; 6.075]
 
-#BusFreq, idx = 1, bus = 1
-#BusFreq, idx = 2, bus = 2
-#BusFreq, idx = 3, bus = 3
-#BusFreq, idx = 4, bus = 4
-#BusFreq, idx = 5, bus = 5
-#BusFreq, idx = 6, bus = 6
-#BusFreq, idx = 7, bus = 7
-#BusFreq, idx = 8, bus = 8
-#BusFreq, idx = 9, bus = 9
-#BusFreq, idx = 10, bus = 10
-#BusFreq, idx = 11, bus = 11
-#BusFreq, idx = 12, bus = 12
-#BusFreq, idx = 13, bus = 13
-#BusFreq, idx = 14, bus = 14
+BusFreq, idx = 1, bus = 1
+BusFreq, idx = 2, bus = 2
+BusFreq, idx = 3, bus = 3
+BusFreq, idx = 4, bus = 4
+BusFreq, idx = 5, bus = 5
+BusFreq, idx = 6, bus = 6
+BusFreq, idx = 7, bus = 7
+BusFreq, idx = 8, bus = 8
+BusFreq, idx = 9, bus = 9
+BusFreq, idx = 10, bus = 10
+BusFreq, idx = 11, bus = 11
+BusFreq, idx = 12, bus = 12
+BusFreq, idx = 13, bus = 13
+BusFreq, idx = 14, bus = 14
 
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
