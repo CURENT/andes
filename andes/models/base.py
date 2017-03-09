@@ -18,7 +18,7 @@ limitations under the License.
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import mul, div
-from ..utils.math import agtb, altb, nota, findall
+from ..utils.math import agtb, altb, nota, findeq
 import copy
 import sys
 
@@ -504,20 +504,21 @@ class ModelBase(object):
     def limit_check(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
         above = agtb(self.__dict__[key], upper)
-        idx = findall(above, 1.0)
+        idx = findeq(above, 1.0)
         for item in idx:
             self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
                 self.__dict__[key][item] = upper[item]
 
         below = altb(self.__dict__[key], lower)
-        idx = findall(below, 1.0)
+        idx = findeq(below, 1.0)
         for item in idx:
             self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
                 self.__dict__[key][item] = lower[item]
 
     def add_jac(self, m, val, row, col):
+        """Add spmatrix(m, val, row) to DAE.(m)"""
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
@@ -525,6 +526,7 @@ class ModelBase(object):
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def set_jac(self, m, val, row, col):
+        """Set spmatrix(m, val, row) on DAE.(m)"""
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 

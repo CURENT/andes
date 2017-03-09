@@ -15,7 +15,7 @@ class VarName(object):
         self.fnamey = []  # formatted algeb variable names
 
     def resize(self):
-        """resize (extend) the list for variable names"""
+        """Resize (extend) the list for variable names"""
         yext = self.system.DAE.m - len(self.unamey)
         xext = self.system.DAE.n - len(self.unamex)
         if yext > 0:
@@ -26,7 +26,7 @@ class VarName(object):
             self.fnamex.extend([''] * xext)
 
     def append(self, listname, xy_idx, var_name, element_name):
-        """append variable names to the name lists"""
+        """Append variable names to the name lists"""
         self.resize()
         string = '{0}_{1}'
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
