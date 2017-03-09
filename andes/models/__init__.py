@@ -27,6 +27,7 @@ non_jits = {'bus': {'Bus': 'Bus'},
             'fault': {'Fault': 'Fault'},
             'governor': {'TG2': 'TG2'},
             'measurement':{'BusFreq': 'BusFreq',
+                           'PMU': 'PMU',
                            }
 
            }

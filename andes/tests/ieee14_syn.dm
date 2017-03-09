@@ -87,6 +87,9 @@ BusFreq, idx = 12, bus = 12
 BusFreq, idx = 13, bus = 13
 BusFreq, idx = 14, bus = 14
 
+PMU, idx = 1, bus = 1
+PMU, idx = 1, bus = 2
+
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
 #BusLine, line = "Line_3", busf = 2
