@@ -22,6 +22,7 @@ class VSC(DCBase):
                              'PQ',
                              'PV',
                              'V',
+                             'VQ',
                              'v0',
                              'vdc0',
                              'k0',
@@ -45,6 +46,7 @@ class VSC(DCBase):
                            'PQ': 0,
                            'PV': 0,
                            'V': 0,
+                           'VQ':0,
                            'k0': 0,
                            'k1': 0,
                            'k2': 0,
@@ -273,3 +275,86 @@ class VSC(DCBase):
 
         dae.add_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
         dae.add_jac(Gy0, -self.k1, self.pdc, self.Ish)
+
+class VSCDyn(DCBase):
+    """Shunt-connected dynamic VSC model for transient simulation"""
+    def __init__(self, system, name):
+        self._group = 'AC/DC'
+        self._name = 'VSCDyn'
+        self._ac = {'bus': ['a', 'v']}
+        self._data.update({'vsc': None,
+                           'Kp1': 0.1,
+                           'Ki1': 0.1,
+                           'Kp2': 0.1,
+                           'Ki2': 0.1,
+                           'Kp3': 0.1,
+                           'Ki3': 0.1,
+                           'Kp4': 0.1,
+                           'Ki4': 0.1,
+                           'Kp': 0.1,
+                           'Ki': 0.1,
+                           'Tt': 0.05,
+                           'uref0': 1.0,
+                           'qref0': 0.1,
+                           'pref0': 1.0,
+                           'udcref0': 1.0,
+                           })
+        self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kp', 'Ki',
+                             'Tt', 'Tdc', 'uref', 'qref', 'pref', 'udcref'])
+        self._descr.update({'vsc': 'static vsc idx',
+                            'Kp1': 'current controller proportional gain',
+                            'Ki1': 'current controller integrator gain',
+                            'Kp2': 'Q controller proportional gain',
+                            'Ki2': 'Q controller integrator gain',
+                            'Kp3': 'ac voltage controller proportional gain',
+                            'Ki3': 'ac voltage controller integrator gain',
+                            'Kp4': 'P controller proportional gain',
+                            'Ki4': 'P controller integrator gain',
+                            'Kp': 'dc voltage controller proportional gain',
+                            'Ki': 'dc voltage controller integrator gain',
+                            'Tt': 'ac voltage measurement delay time constant',
+                            'uref0': 'ac voltage control reference',
+                            'qref0': 'ac reactive power control reference',
+                            'pref0': 'ac active power control reference',
+                            'udcref0': 'dc active power control reference'
+                            })
+        self._algebs.extend(['Idref', 'Iqref'])
+        self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', ])
+        self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'PQ', 'PV', 'V', 'VQ'])
+        self._mandatory.extend(['vsc'])
+        self._fnamey.extend(['I_d^{ref}', 'I_q^{ref}'])
+        self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q'])
+        self.calls.update({'init1': True, 'gcall': True,
+                           'gycall': True, 'fxcall': True,
+                           'jac0': True,
+                           })
+
+    def init1(self, dae):
+        self.copy_param('VSC', src='rsh', fkey=self.vsc)
+        self.copy_param('VSC', src='xsh', fkey=self.vsc)
+        self.copy_param('VSC', src='PQ', fkey=self.vsc)
+        self.copy_param('VSC', src='PV', fkey=self.vsc)
+        self.copy_param('VSC', src='V', fkey=self.vsc)
+        self.copy_param('VSC', src='VQ', fkey=self.vsc)
+        # self.copy_param('VSC', src='bus', fkey=self.vsc)
+        self.copy_param('VSC', src='a', fkey=self.vsc)
+        self.copy_param('VSC', src='v', fkey=self.vsc)
+        self.copy_param('VSC', src='ash', fkey=self.vsc)
+        self.copy_param('VSC', src='vsh', fkey=self.vsc)
+        self.copy_param('VSC', src='v1', fkey=self.vsc)
+        self.copy_param('VSC', src='v2', fkey=self.vsc)
+
+
+        self.wn = ones(self.n, 1)  # in per unit
+        self.iLsh = div(1.0, self.xsh)
+        self.usd = ones(self.n, 1)  # need initialize
+        self.usq = ones(self.n, 1)  # need initialize
+        self.iTt = div(1.0, self.Tt)
+
+    def gcall(self):
+        pass
+
+
+
+
+
