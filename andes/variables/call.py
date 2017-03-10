@@ -129,6 +129,7 @@ class Call(object):
         string += self.gyisland
 
         string += '"""'
+        # print(string)
         self.newton = compile(eval(string), '', 'exec')
 
     def _compile_fdpf(self):

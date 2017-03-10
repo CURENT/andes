@@ -16,11 +16,11 @@ class VSC(DCBase):
                              'vshmax',
                              'vshmin',
                              'Ishmax',
-                             'pshc',
-                             'qshc',
-                             'vc',
+                             'pref0',
+                             'qref0',
+                             'vref0',
                              'v0',
-                             'vdc0',
+                             'vdcref0',
                              'k0',
                              'k1',
                              'k2',
@@ -36,10 +36,10 @@ class VSC(DCBase):
                            'bus': None,
                            'control': None,
                            'v0': 1.0,
-                           'pshc': 0,
-                           'qshc': 0,
-                           'vc': 1.0,
-                           'vdc0': 1.0,
+                           'pref0': 0,
+                           'qref0': 0,
+                           'vref0': 1.0,
+                           'vdcref0': 1.0,
                            'k0': 0,
                            'k1': 0,
                            'k2': 0,
@@ -74,7 +74,6 @@ class VSC(DCBase):
         self._mandatory.extend(['bus', 'control'])
         self._service.extend(['Zsh', 'Ysh', 'glim', 'ylim', 'vio', 'vdcref', 'R',
                               'PQ', 'PV', 'VV', 'VQ'])
-        self._dcvoltages.extend(['vdc0'])
         self.calls.update({'init0': True, 'pflow': True,
                            'gcall': True, 'gycall': True,
                            'jac0': True, 'shunt': True,
@@ -103,7 +102,7 @@ class VSC(DCBase):
     def init0(self, dae):
         # behind-transformer AC theta_sh and V_sh - must assign first
         dae.y[self.ash] = dae.y[self.a] + 1e-2
-        dae.y[self.vsh] = mul(self.v0, 1 - self.VV) + mul(self.vc, self.VV) + 1e-6
+        dae.y[self.vsh] = mul(self.v0, 1 - self.VV) + mul(self.vref0, self.VV) + 1e-6
 
         Vm = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)  # Initial value for Vsh
@@ -111,12 +110,12 @@ class VSC(DCBase):
         Ssh = mul(Vsh, IshC)
 
         # PQ PV and V control initials on converters
-        dae.y[self.psh] = mul(self.pshc, self.PQ + self.PV)
-        dae.y[self.qsh] = mul(self.qshc, self.PQ)
-        dae.y[self.v1] = dae.y[self.v2] + mul(dae.y[self.v1], 1 - self.VV) + mul(self.vdc0, self.VV)
+        dae.y[self.psh] = mul(self.pref0, self.PQ + self.PV)
+        dae.y[self.qsh] = mul(self.qref0, self.PQ)
+        dae.y[self.v1] = dae.y[self.v2] + mul(dae.y[self.v1], 1 - self.VV) + mul(self.vdcref0, self.VV)
 
         # PV and V control on AC buses
-        dae.y[self.v] = mul(dae.y[self.v], 1 - self.PV - self.VV) + mul(self.vc, self.PV + self.VV)
+        dae.y[self.v] = mul(dae.y[self.v], 1 - self.PV - self.VV) + mul(self.vref0, self.PV + self.VV)
 
         # Converter current initial
         dae.y[self.Ish] = abs(IshC)
@@ -173,8 +172,8 @@ class VSC(DCBase):
         dae.g[self.vsh] = Ssh.imag() - dae.y[self.qsh]  # (3)
 
         # PQ, PV or V control
-        dae.g[self.psh] = mul(dae.y[self.psh] - self.pshc, self.PQ + self.PV) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdc0, self.VV)  # (12), (15)
-        dae.g[self.qsh] = mul(dae.y[self.qsh] - self.qshc, self.PQ + self.VQ) + mul(dae.y[self.v] - self.vc, (self.PV + self.VV))  # (13), (16)
+        dae.g[self.psh] = mul(dae.y[self.psh] - self.pref0, self.PQ + self.PV) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdcref0, self.VV)  # (12), (15)
+        dae.g[self.qsh] = mul(dae.y[self.qsh] - self.qref0, self.PQ + self.VQ) + mul(dae.y[self.v] - self.vref0, (self.PV + self.VV))  # (13), (16)
 
         for comp, var in self.vio.items():
             for count, item in enumerate(var):
