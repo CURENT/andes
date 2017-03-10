@@ -362,13 +362,28 @@ class VSCBase(DCBase):
                                                    + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]))) \
                             - dae.y[self.Iqref]
 
-    def jac0(self):
+    def jac0(self, dae):
         dae.add_jac(Gy0, 1.0, self.uref, self.uref)
         dae.add_jac(Gy0, 1.0, self.pref, self.pref)
         dae.add_jac(Gy0, 1.0, self.qref, self.qref)
         dae.add_jac(Gy0, 1.0, self.udcref, self.udcref)
 
-    def fcall(self):
+        dae.add_jac(Gy0, -1.0, self.Idref, self.Idref)
+        dae.add_jac(Gy0, -1.0, self.Iqref, self.Iqref)
+
+        dae.add_jac(Gx0, 1.0, self.Idref, self.Nd)
+
+        dae.add_jac(Gy0, mul(self.V + self.VQ, self.Kp3), self.Idref, self.uref)
+        dae.add_jac(Gy0, -mul(self.V + self.VQ, self.Kp3), self.Idref, self.v)
+
+    def gycall(self, dae):
+        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idcref, self.qref)
+        dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp2, self.usq), self.Idref, self.Id)
+        dae.add_jac(Gy, mul(self.PQ + self.PV,
+                             -div(dae.y[self.qref], self.usq ** 2) - mul(self.Kp2, dae.x[self.Id])), self.Idref, self.v)
+
+
+    def fcall(self, dae):
 
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
         dae.f[self.Iq] = - mul(self.rsh, self.ishL, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
@@ -390,4 +405,3 @@ class VSCBase(DCBase):
         dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) \
                          + mul(self.Kidc, dae.y[self.udcref] - (dae.y[self.v1] - dae.y[self.v2]), self.VV + self.VQ)
 
-    def
