@@ -336,7 +336,6 @@ class VSCBase(DCBase):
         self.copy_param('VSC', src='v1', fkey=self.vsc)
         self.copy_param('VSC', src='v2', fkey=self.vsc)
 
-
         self.wn = ones(self.n, 1)  # in per unit
         self.iLsh = div(1.0, self.xsh)
         self.usd = ones(self.n, 1)  # need initialize
@@ -348,10 +347,10 @@ class VSCBase(DCBase):
         self.usq = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
         self.usd = mul(dae.y[self.v], sin(dae.y[self.a] - self.adq))
 
-        dae.g[self.uref] = dae.y[self.uref] - self.uref0
-        dae.g[self.pref] = dae.y[self.pref] - self.pcref0
-        dae.g[self.qref] = dae.y[self.qref] - self.qcref0
-        dae.g[self.udcref] = dae.y[self.udcref] - self.udcref0
+        dae.g[self.uref] = mul(self.PV + self.V, dae.y[self.uref] - self.uref0)
+        dae.g[self.pref] = mul(self.PV + self.PQ, dae.y[self.pref] - self.pcref0)
+        dae.g[self.qref] = mul(self.PQ + self.VQ, dae.y[self.qref] - self.qcref0)
+        dae.g[self.udcref] = mul(self.V + self.VQ, dae.y[self.udcref] - self.udcref0)
 
         dae.g[self.Idref] = mul(self.PQ + self.VQ, div(dae.y[self.qref], self.usq) + dae.x[self.Nd]
                                                    + mul(self.Kp2, dae.y[self.qref] - mul(self.usq, dae.x[self.Id]))) \
@@ -363,18 +362,19 @@ class VSCBase(DCBase):
                             - dae.y[self.Iqref]
 
     def jac0(self, dae):
-        dae.add_jac(Gy0, 1.0, self.uref, self.uref)
-        dae.add_jac(Gy0, 1.0, self.pref, self.pref)
-        dae.add_jac(Gy0, 1.0, self.qref, self.qref)
-        dae.add_jac(Gy0, 1.0, self.udcref, self.udcref)
+        dae.add_jac(Gy0, self.PV + self.V, self.uref, self.uref)
+        dae.add_jac(Gy0, self.PQ + self.PV, self.pref, self.pref)
+        dae.add_jac(Gy0, self.PQ + self.VQ, self.qref, self.qref)
+        dae.add_jac(Gy0, self.V + self.VQ, self.udcref, self.udcref)
 
         dae.add_jac(Gy0, -1.0, self.Idref, self.Idref)
-        dae.add_jac(Gy0, -1.0, self.Iqref, self.Iqref)
-
         dae.add_jac(Gx0, 1.0, self.Idref, self.Nd)
-
         dae.add_jac(Gy0, mul(self.V + self.VQ, self.Kp3), self.Idref, self.uref)
         dae.add_jac(Gy0, -mul(self.V + self.VQ, self.Kp3), self.Idref, self.v)
+
+        dae.add_jac(Gy0, -1.0, self.Iqref, self.Iqref)
+        dae.add_jac(Gy0, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4, self.Iqref, self.pref))
+        dae.add_jac(Gx0, self.PQ + self.PV, self.Iqref, self.Nq)
 
     def gycall(self, dae):
         dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idcref, self.qref)
@@ -382,9 +382,10 @@ class VSCBase(DCBase):
         dae.add_jac(Gy, mul(self.PQ + self.PV,
                              -div(dae.y[self.qref], self.usq ** 2) - mul(self.Kp2, dae.x[self.Id])), self.Idref, self.v)
 
+        dae.add_jac(Gy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Iq]))
+        dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp4, dae.y[self.v]))
 
     def fcall(self, dae):
-
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
         dae.f[self.Iq] = - mul(self.rsh, self.ishL, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
 
@@ -405,3 +406,65 @@ class VSCBase(DCBase):
         dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) \
                          + mul(self.Kidc, dae.y[self.udcref] - (dae.y[self.v1] - dae.y[self.v2]), self.VV + self.VQ)
 
+    def fcall_jac(self, dae):
+        dae.add_jac(Fx0, -mul(self.rsh, self.iLsh), self.Id, self.Id)
+        dae.add_jac(Fx0, 1.0, self.Id, self.Iq)
+
+
+class VSCSlack(VSCBase):
+    """DC slack VSC class as an addon to VSCBase"""
+    def __init__(self, system, name):
+        super(VSCSlack, self).__init__(system, name)
+        self._states.extend(['Idc'])
+        self._fnamex.extend(['I_{dc}'])
+        self._data.update({'Tdc': 0.01})
+        self._params.extend(['Tdc'])
+        self._descr.update({'Tdc': 'dc current delay time constant'})
+        self._service.extend(['iTdc'])
+        self._inst_meta()
+
+    def init1(self, dae):
+        super(VSCSlack, self).init1(dae)
+        self.iTdc = div(1, self.Tdc)
+
+    def gcall(self, dae):
+        super(VSCSlack, self).gcall(dae)
+        iucq = div(1, dae.x[self.ucq])
+        dae.g[self.Iqref] += mul(self.V + self.VQ, mul(2 * dae.x[self.Idc], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
+
+    def gcall(self, dae):
+        super(VSCSlack, self).gcall(dae)
+        iucq = div(1, dae.x[self.ucq])
+        dae.add_jac(Gx, mul(self.V + self.VQ, 2 * (dae.y[self.v1] - dae.y[self.v2]), iucq), self.Iqref, self.Idc)
+        dae.add_jac(Gy, mul(self.V + self.VQ, 2 * dae.x[self.Idc], iucq), self.Iqref, self.v1)
+        dae.add_jac(Gx, mul(self.V + self.VQ, -dae.x[self.ucd], iucq), self.Iqref, self.Id)
+        dae.add_jac(Gx, mul(self.V + self.QV, -dae.x[self.Iq], iucq,), self.Iqref, self.ucd)
+        dae.add_jac(Gx, mul(self.V + self.QV, mul(2 * dae.x[self.Idc], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), - iucq ** 2))
+
+    def fcall(self, dae):
+        super(VSCSlack, self).fcall(dae)
+        dae.f[self.Idc] = mul(self.iTdc, -dae.x[self.Idc] + mul(self.Kpdc, dae.y[self.udcref] - (dae.y[self.v1] - dae.y[self.v2])) + dae.x[self.Nq])
+
+    def jac0(self, dae):
+        super(VSCSlack, self).jac0(dae)
+        dae.add_jac(Fx0, -self.iTdc, self.Idc, self.Idc)
+        dae.add_jac(Fy0, mul(self.iTdc, self.Kpdc), self.Idc, self.udcref)
+        dae.add_jac(Fy0, -mul(self.iTdc, self.Kpdc), self.Idc, self.v1)
+        dae.add_jac(Fx0, self.iTdc, self.Idc, self.Nq)
+
+
+class VSCNonSlack(VSCBase):
+    """Non-slack VSC class (PV or PQ control)"""
+    def __init__(self, system, name):
+        super(VSCNonSlack, self).__init__(system, name)
+        self._algebs.extend(['Idc'])
+        self._fnamey.extend(['Idc'])
+        self._inst_meta()
+
+    def gcall(self, dae):
+        super(VSCNonSlack, self).gcall(dae)
+        iudc = dae.y[self.v1] - dae.y[self.v2]
+        dae.g[self.Idc] = mul(mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5)
+
+    def gycall(self, dae):
+        super(VSCNonSlack, self).gycall(dae)

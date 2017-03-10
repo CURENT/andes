@@ -118,6 +118,10 @@ class ModelBase(object):
         """
         if not self._name:
             self._name = self._group
+        if not self._unamey:
+            self._unamey = self._algebs
+        if not self._unamex:
+            self._unamex = self._states
 
         for item in self._data.keys():
             self.__dict__[item] = []
@@ -128,16 +132,8 @@ class ModelBase(object):
             for var in self._dc[node]:
                 self.__dict__[var] = []
 
-        for var in self._states:
+        for var in self._states + self._algebs + self._service:
             self.__dict__[var] = []
-        for var in self._algebs:
-            self.__dict__[var] = []
-        for var in self._service:
-            self.__dict__[var] = []
-        if not self._unamey:
-            self._unamey = self._algebs
-        if not self._unamex:
-            self._unamex = self._states
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
