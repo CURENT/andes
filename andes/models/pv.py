@@ -20,6 +20,8 @@ class Stagen(ModelBase):
                            'v0': 1.0,
                            'vmax': 1.4,
                            'vmin': 0.6,
+                           'ra': 0.01,
+                           'xs': 0.3,
                            })
         self._units.update({'bus': 'na',
                             'busr': 'na',
@@ -41,6 +43,8 @@ class Stagen(ModelBase):
                              'qmin',
                              'vmax',
                              'vmin',
+                             'ra',
+                             'xs',
                              ])
         self._descr.update({'bus': 'the idx of the installed bus',
                             'busr': 'the idx of remotely controlled bus',
@@ -57,7 +61,7 @@ class Stagen(ModelBase):
         self._ac = {'bus': ['a', 'v']}
         self._powers = ['pg', 'qg', 'pmax', 'pmin', 'qmax', 'qmin']
         self._voltages = ['v0', 'vmax', 'vmin']
-        self._service = ['Xs', 'Ra']
+        self._service = []
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'jac0': True, 'stagen': True,
@@ -134,10 +138,14 @@ class Slack(PV):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'SW'
+        self._data.update({'a0': 0.0})
+        self._params.extend(['a0'])
+        self._units.update({'a0': 'rad'})
+        self._descr.update({'a0': 'reference angle'})
         self._algebs.extend(['p'])
         self._unamey.extend(['P'])
         self._fnamey.extend(['P'])
-        self._service.extend(['a0'])
+        # self._service.extend(['a0'])
         self.calls.update({'gycall': False
                            })
         self._inst_meta()
