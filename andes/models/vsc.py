@@ -373,6 +373,7 @@ class VSCDyn(DCBase):
         self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}'])
         self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}'])
         self.calls.update({'init1': True, 'gcall': True,
+                           'fcall': True,
                            'gycall': True, 'fxcall': True,
                            'jac0': True,
                            })
@@ -557,23 +558,23 @@ class VSCDyn(DCBase):
         iucq = div(1, dae.x[self.ucq])
 
         # 5 [qref], [v]
-        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
+        # dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
         dae.add_jac(Gy, mul(self.PQ + self.PV,
                              -div(dae.y[self.qref], self.usq ** 2) - mul(self.Kp2, dae.x[self.Id])), self.Idref, self.v)
 
         # 6 [pref], [v], [v1]
-        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4), self.Iqref, self.pref)
+        # dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4), self.Iqref, self.pref)
         dae.add_jac(Gy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Iq]), self.Iqref, self.v)
         dae.add_jac(Gy, mul(self.vV + self.vQ, 2 * dae.x[self.Idcx], iucq), self.Iqref, self.v1)
 
         # 7 [v1]
-        dae.add_jac(Gy, mul(self.PQ + self.PV, -0.5 * iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
+        # dae.add_jac(Gy, mul(self.PQ + self.PV, -0.5 * iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
 
         # 8 [v]
-        dae.add_jac(Gy, dae.x[self.Id], self.a, self.v)
+        dae.add_jac(Gy, dae.x[self.Id], self.a, self.v)  # check
 
         # 9 [v]
-        dae.add_jac(Gy, dae.x[self.Iq], self.v, self.v)
+        dae.add_jac(Gy, dae.x[self.Iq], self.v, self.v)  # check
 
 
     def fcall(self, dae):
@@ -581,7 +582,7 @@ class VSCDyn(DCBase):
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
 
         # 13 - Iq(3): x0[Iq], x0[Id], x0[ucq]
-        dae.f[self.Iq] = - mul(self.rsh, self.ishL, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
+        dae.f[self.Iq] = - mul(self.rsh, self.iLsh, dae.x[self.Iq]) - dae.x[self.Id] + mul(self.iLsh, dae.x[self.ucq] - self.usq)
 
         # 14 - Md(2): y0[Idref], x0[Id]
         dae.f[self.Md] = mul(self.Ki1, dae.y[self.Idref] - dae.x[self.Id])
