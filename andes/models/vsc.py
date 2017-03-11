@@ -251,7 +251,7 @@ class VSC(DCBase):
         iZsh = div(1, abs(Zsh))
         Vh = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)
-        Ish = div(Vh - Vsh, Zsh)
+        Ish = div(Vh - Vsh + 1e-6, Zsh)
         iIsh = div(self.u, Ish)
 
         gsh = div(self.u, Zsh).real()
@@ -489,16 +489,16 @@ class VSCDyn(DCBase):
 
         # interface equations
         # 8 - a(2): y[v], x[Id]
-        dae.y[self.a] += mul(self.usq, dae.x[self.Id])
+        dae.g[self.a] += mul(self.usq, dae.x[self.Iq])
 
         # 9 - v(2): y[v], x[Iq]
-        dae.y[self.v] += mul(self.usq, dae.x[self.Iq])
+        dae.g[self.v] += mul(self.usq, dae.x[self.Id])
 
         # 10 - v1: x0[Idcx]  |  y0[Idcy]
-        dae.y[self.v1] += mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
+        dae.g[self.v1] += mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
 
         # 11 - v2: x0[Idcx]  |  y0[Idcy]
-        dae.y[self.v2] -= mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
+        dae.g[self.v2] -= mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
 
     def jac0(self, dae):
         # 1 [1], 2[1], 3[1], 4[1]
@@ -584,17 +584,17 @@ class VSCDyn(DCBase):
         iucq = div(1, dae.x[self.ucq])
 
         # 5 [qref], [v]
-        # dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
+        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
         dae.add_jac(Gy, mul(self.PQ + self.PV,
                              -div(dae.y[self.qref], self.usq ** 2) - mul(self.Kp2, dae.x[self.Id])), self.Idref, self.v)
 
         # 6 [pref], [v], [v1]
-        # dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4), self.Iqref, self.pref)
+        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4), self.Iqref, self.pref)
         dae.add_jac(Gy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Iq]), self.Iqref, self.v)
         dae.add_jac(Gy, mul(self.vV + self.vQ, 2 * dae.x[self.Idcx], iucq), self.Iqref, self.v1)
 
         # 7 [v1]
-        # dae.add_jac(Gy, mul(self.PQ + self.PV, -0.5 * iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
+        dae.add_jac(Gy, mul(self.PQ + self.PV, -0.5 * iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
 
         # 8 [v]
         dae.add_jac(Gy, dae.x[self.Id], self.a, self.v)  # check
@@ -604,6 +604,7 @@ class VSCDyn(DCBase):
 
 
     def fcall(self, dae):
+        pass
         # 12 - Id(3): x0[Id], x0[Iq], x0[ucd]
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
 
