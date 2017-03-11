@@ -324,10 +324,10 @@ class VSC(DCBase):
             self.message('Element index {0} does not exist.'.format(idx))
             return
         self.u[self.int[idx]] = 0
-        self.system.DAE.y[self.psh] = 0
-        self.system.DAE.y[self.qsh] = 0
-        self.system.DAE.y[self.pdc] = 0
-        self.system.DAE.y[self.Ish] = 0
+        # self.system.DAE.y[self.psh] = 0
+        # self.system.DAE.y[self.qsh] = 0
+        # self.system.DAE.y[self.pdc] = 0
+        # self.system.DAE.y[self.Ish] = 0
 
 
 class VSCDyn(DCBase):
@@ -403,6 +403,7 @@ class VSCDyn(DCBase):
 
         self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)  # copy indices
         self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
+        self.copy_param('VSC', src='pdc', dest='pdc', fkey=self.vsc)
         self.pref0 = dae.y[self.pref0]
         self.qref0 = dae.y[self.qref0]
         self.vref0 = dae.y[self.v]
@@ -412,15 +413,40 @@ class VSCDyn(DCBase):
         self.iLsh = div(1.0, self.xsh)
         self.iTt = div(1.0, self.Tt)
         self.iTdc = div(1.0, self.Tdc)
-
         self.usd = zeros(self.n, 1)
         self.usq = dae.y[self.v]
-        dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash]))
-        dae.x[self.ucq] = mul(dae.y[self.vsh], cos(dae.y[self.ash]))
+        k1 = div(self.rsh, self.xsh) ** 2
+        k2 = div(self.rsh, self.xsh ** 2)
+
+        # dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))
+        # dae.x[self.ucq] = mul(dae.y[self.vsh], cos(dae.y[self.ash] - dae.y[self.a]))
+
         dae.y[self.pref] = mul(self.PV + self. PQ, self.pref0)
         dae.y[self.qref] = mul(self.PQ + self.vQ, self.qref0)
         dae.y[self.vref] = mul(self.PV + self.vV, self.vref0)
         dae.y[self.vdcref] = mul(self.vV + self.vQ, self.vdcref0)
+
+        dae.y[self.Idcy] = -div(mul(self.PQ + self.PV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
+
+        dae.x[self.Md] = zeros(self.n, 1)
+        dae.x[self.Mq] = zeros(self.n, 1)
+        dae.x[self.Nd] = zeros(self.n, 1)
+
+        dae.x[self.Idcx] = -div(mul(self.vQ + self.vV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
+        dae.x[self.Nq] = mul(self.vQ + self.vV, dae.x[self.Idcx])
+
+        dae.y[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq))
+        dae.x[self.Id] = dae.y[self.Idref]
+
+        dae.x[self.ucq] = self.usq - mul(self.xsh, dae.x[self.Id])
+        dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))  # todo: correct
+        iucq = div(1, dae.x[self.ucq])
+
+        dae.y[self.Iqref] = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq)) \
+                            + mul(self.vQ + self.vV,
+                                  mul(2* dae.x[self.Idcx], dae.y[self.v1]) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)  # check
+        dae.x[self.Iq] = dae.y[self.Iqref]
+
 
         for idx in self.vsc:
             self.system.VSC.disable(idx)
@@ -451,11 +477,11 @@ class VSCDyn(DCBase):
                             + dae.x[self.Nd] - dae.y[self.Idref]
 
         # 6 - Iqref(10): y[pref], y[v], x0[Nq], x[Iq]  |  x[Idcx], y[v1], x[Id], x[ucd], x[ucq] | y0[Iqref]
-        dae.g[self.Iqref] = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq]
-                                                   + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]))) \
-                            + mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2]))
-                                                    - mul(dae.x[self.Id], dae.x[self.ucd]), iucq) \
-                            - dae.y[self.Iqref]
+        Iqref1 = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq]
+                                                   + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq])))
+        Iqref2 = mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2]))
+                                                    - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
+        dae.g[self.Iqref] = Iqref1 + Iqref2 - dae.y[self.Iqref]
 
         # 7 - Idcy(6): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y0[Idcy]
         dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5) \
