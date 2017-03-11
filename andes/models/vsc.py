@@ -138,7 +138,7 @@ class VSC(DCBase):
         # check for Vsh and Ish limit violations
         if self.system.SPF.iter >= self.system.SPF.ipv2pq:
             for i in range(self.n):
-                if vupper[i] > 0 or vlower[i] <0 or iupper[i] > 0:
+                if self.u[i] and (vupper[i] > 0 or vlower[i] <0 or iupper[i] > 0):
                     if i not in self.vio.keys():
                         self.vio[i] = list()
                     if vupper[i] > 0:
@@ -155,8 +155,8 @@ class VSC(DCBase):
                             self.system.Log.debug(' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power
-        dae.g[self.a] += dae.y[self.psh]  # active power load
-        dae.g[self.v] += dae.y[self.qsh]  # reactive power load
+        dae.g[self.a] += mul(self.u, dae.y[self.psh])  # active power load
+        dae.g[self.v] += mul(self.u, dae.y[self.qsh])  # reactive power load
 
         # DC interfaces - current
         above = list(dae.y[self.v1] - self.vhigh)
@@ -165,15 +165,15 @@ class VSC(DCBase):
         below = matrix([1 if i < 0 else 0 for i in below])
         self.R = mul(above or below, self.K)
         self.vdcref = mul(self.droop, above, self.vhigh) + mul(self.droop, below, self.vlow)
-        dae.g[self.v1] -= div(dae.y[self.pdc], dae.y[self.v1] - dae.y[self.v2])  # current injection
-        dae.g += spmatrix(div(dae.y[self.pdc], dae.y[self.v1] - dae.y[self.v2]), self.v2, [0]*self.n, (dae.m, 1), 'd')  # negative current injection
+        dae.g[self.v1] -= div(mul(self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])  # current injection
+        dae.g += spmatrix(div(mul(self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2]), self.v2, [0]*self.n, (dae.m, 1), 'd')  # negative current injection
 
-        dae.g[self.ash] = Ssh.real() - dae.y[self.psh]  # (2)
-        dae.g[self.vsh] = Ssh.imag() - dae.y[self.qsh]  # (3)
+        dae.g[self.ash] = mul(self.u, Ssh.real() - dae.y[self.psh])  # (2)
+        dae.g[self.vsh] = mul(self.u, Ssh.imag() - dae.y[self.qsh])  # (3)
 
         # PQ, PV or V control
-        dae.g[self.psh] = mul(dae.y[self.psh] - self.pref0, self.PQ + self.PV) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdcref0, self.vV)  # (12), (15)
-        dae.g[self.qsh] = mul(dae.y[self.qsh] - self.qref0, self.PQ + self.vQ) + mul(dae.y[self.v] - self.vref0, (self.PV + self.vV))  # (13), (16)
+        dae.g[self.psh] = mul(dae.y[self.psh] - self.pref0, self.PQ + self.PV, self.u) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdcref0, self.vV + self.vQ, self.u)  # (12), (15)
+        dae.g[self.qsh] = mul(dae.y[self.qsh] - self.qref0, self.PQ + self.vQ, self.u) + mul(dae.y[self.v] - self.vref0, self.PV + self.vV, self.u)  # (13), (16)
 
         for comp, var in self.vio.items():
             for count, item in enumerate(var):
@@ -203,10 +203,12 @@ class VSC(DCBase):
                 if yidx not in self.ylim:
                     self.ylim.append(yidx)
 
-        dae.g[self.Ish] = abs(IshC) - dae.y[self.Ish]  # (10)
+        dae.g[self.Ish] = mul(self.u, abs(IshC) - dae.y[self.Ish])  # (10)
 
-        dae.g[self.pdc] = mul(Vsh, IshC).real() - mul(self.R, dae.y[self.v1] - self.vdcref) + dae.y[self.pdc] - \
-                          (self.k0 + mul(self.k1, dae.y[self.Ish]) + mul(self.k2, mul(dae.y[self.Ish], dae.y[self.Ish])))
+        dae.g[self.pdc] = mul(self.u,
+                              mul(Vsh, IshC).real() - mul(self.R, dae.y[self.v1] - self.vdcref) + dae.y[self.pdc] - \
+                              (self.k0 + mul(self.k1, dae.y[self.Ish]) + mul(self.k2, mul(dae.y[self.Ish], dae.y[self.Ish])))
+                              )
 
     def switch(self, idx, control):
         """Switch a single control of <idx>"""
@@ -247,22 +249,23 @@ class VSC(DCBase):
     def gycall(self, dae):
         Zsh = self.rsh + 1j * self.xsh
         iZsh = div(1, abs(Zsh))
-        V = polar(dae.y[self.v], dae.y[self.a] * 1j)
+        Vh = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)
-        Ish = div(V - Vsh, Zsh)
-        iIsh = div(1, Ish)
+        Ish = div(Vh - Vsh, Zsh)
+        iIsh = div(self.u, Ish)
 
-        gsh = div(1, Zsh).real()
-        bsh = div(1, Zsh).imag()
+        gsh = div(self.u, Zsh).real()
+        bsh = div(self.u, Zsh).imag()
         V = dae.y[self.v]
         theta = dae.y[self.a]
         Vsh = dae.y[self.vsh]
         thetash = dae.y[self.ash]
         Vdc = dae.y[self.v1] - dae.y[self.v2]
+        iVdc2 = div(self.u, Vdc ** 2)
 
-        dae.add_jac(Gy, -div(1, Vdc), self.v1, self.pdc)
-        dae.add_jac(Gy, div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v1, self.v1)
-        dae.add_jac(Gy, -div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v1, self.v2)
+        dae.add_jac(Gy, -div(self.u, Vdc), self.v1, self.pdc)
+        dae.add_jac(Gy, mul(dae.y[self.pdc], iVdc2) + 1e-6, self.v1, self.v1)
+        dae.add_jac(Gy, -mul(dae.y[self.pdc], iVdc2), self.v1, self.v2)
 
         dae.add_jac(Gy, div(1, Vdc), self.v2, self.pdc)
         dae.add_jac(Gy, -div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v1)
@@ -274,14 +277,14 @@ class VSC(DCBase):
         dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)) + 1e-6, self.ash, self.ash)
 
         dae.add_jac(Gy, -2*mul(bsh, V) - mul(gsh, Vsh, sin(theta - thetash)) + mul(bsh, Vsh, cos(theta - thetash)), self.vsh, self.v)
-        dae.add_jac(Gy, -mul(gsh, V, sin(theta - thetash)) + mul(bsh, V, cos(theta - thetash)), self.vsh, self.vsh)
+        dae.add_jac(Gy, -mul(gsh, V, sin(theta - thetash)) + mul(bsh, V, cos(theta - thetash)) + 1e-6, self.vsh, self.vsh)
         dae.add_jac(Gy, -mul(gsh, V, Vsh, cos(theta - thetash)) - mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.a)
         dae.add_jac(Gy, mul(gsh, V, Vsh, cos(theta - thetash)) + mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.ash)
 
-        dae.add_jac(Gy, 0.5 * mul(2*V - 2*mul(Vsh, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.v)
-        dae.add_jac(Gy, 0.5 * mul(2*Vsh - 2*mul(V, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.vsh)
-        dae.add_jac(Gy, 0.5 * mul(2*V, Vsh, sin(theta-thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.a)
-        dae.add_jac(Gy, 0.5 * mul(2*V, Vsh, - sin(theta - thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.ash)
+        dae.add_jac(Gy, 0.5 * mul(self.u, 2*V - 2*mul(Vsh, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.v)
+        dae.add_jac(Gy, 0.5 * mul(self.u, 2*Vsh - 2*mul(V, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.vsh)
+        dae.add_jac(Gy, 0.5 * mul(self.u, 2*V, Vsh, sin(theta-thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.a)
+        dae.add_jac(Gy, 0.5 * mul(self.u, 2*V, Vsh, - sin(theta - thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.ash)
 
         dae.add_jac(Gy, -2 * mul(self.k2, dae.y[self.Ish]), self.pdc, self.Ish)
 
