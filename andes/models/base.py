@@ -221,7 +221,7 @@ class ModelBase(object):
         if ty == list:
             return [self.__dict__[param][self.int[i]] for i in idx]
         elif ty == matrix:
-            return self.__dict__[param][self.int[idx]]
+            return matrix([self.__dict__[param][self.int[i]] for i in idx])
         else:
             raise NotImplemented
 
