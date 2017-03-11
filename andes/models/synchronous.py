@@ -383,7 +383,7 @@ class Flux0(object):
 
         dae.add_jac(Gy0, self.u, self.Iq, self.psiq)
 
-        dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
+        dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u + 1e-6, self.omega, self.omega)
         dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 
