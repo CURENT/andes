@@ -318,6 +318,18 @@ class VSC(DCBase):
         dae.add_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
         dae.add_jac(Gy0, -self.k1, self.pdc, self.Ish)
 
+    def disable(self, idx):
+        """Disable an element and reset the outputs"""
+        if idx not in self.int.keys():
+            self.message('Element index {0} does not exist.'.format(idx))
+            return
+        self.u[self.int[idx]] = 0
+        self.system.DAE.y[self.psh] = 0
+        self.system.DAE.y[self.qsh] = 0
+        self.system.DAE.y[self.pdc] = 0
+        self.system.DAE.y[self.Ish] = 0
+
+
 class VSCDyn(DCBase):
     """Shunt-connected dynamic VSC model for transient simulation"""
     def __init__(self, system, name):
@@ -409,6 +421,9 @@ class VSCDyn(DCBase):
         dae.y[self.vref] = mul(self.PV + self.vV, self.vref0)
         dae.y[self.vdcref] = mul(self.vV + self.vQ, self.vdcref0)
 
+        for idx in self.vsc:
+            self.system.VSC.disable(idx)
+
     def gcall(self, dae):
         self.adq = dae.y[self.a]
         self.usq = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
@@ -416,6 +431,7 @@ class VSCDyn(DCBase):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
         iucq = div(1, dae.x[self.ucq])
 
+        # 1 - vref(1): [y0]vref
         dae.g[self.vref] = mul(self.PV + self.vV, dae.y[self.vref] - self.vref0)
         dae.g[self.pref] = mul(self.PV + self.PQ, dae.y[self.pref] - self.pref0)
         dae.g[self.qref] = mul(self.PQ + self.vQ, dae.y[self.qref] - self.qref0)
