@@ -190,3 +190,16 @@ class DAE(object):
             oldval.append(self.system.DAE.__dict__[m][i, j])
         self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def show(self, eq):
+        """Show equation or variable array along with the names"""
+        str = ''
+        if eq in ['f', 'x']:
+            key = 'unamex'
+        elif eq in ['g', 'y']:
+            key = 'unamey'
+
+        value = list(self.__dict__[eq])
+        for name, val in zip(self.system.VarName.__dict__[key], value):
+            str += '{:12s} [{:>12.4f}]\n'.format(name, val)
+        return str
