@@ -455,7 +455,7 @@ class VSCDyn(DCBase):
         dae.x[self.Md] = mul(self.rsh, dae.x[self.Id])
         dae.x[self.Mq] = mul(self.rsh, dae.x[self.Iq])
 
-        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc)
+        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5)
 
         for idx in self.vsc:
             self.system.VSC.disable(idx)
@@ -493,7 +493,7 @@ class VSCDyn(DCBase):
         dae.g[self.Iqref] = Iqref1 + Iqref2 - dae.y[self.Iqref]
 
         # 7 - Idcy(6): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y0[Idcy]
-        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc) \
+        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5) \
                            - dae.y[self.Idcy]
 
         # interface equations
