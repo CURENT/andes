@@ -368,7 +368,8 @@ class VSCDyn(DCBase):
                             })
         self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy'])
         self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx'])
-        self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq'])
+        self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq',
+                              'pref0', 'qref0', 'vref0', 'vdcref0'])
         self._mandatory.extend(['vsc'])
         self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}'])
         self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}'])
@@ -428,8 +429,8 @@ class VSCDyn(DCBase):
 
         # dae.y[self.Idcy] = -div(mul(self.PQ + self.PV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
 
-        dae.x[self.Md] = zeros(self.n, 1)
-        dae.x[self.Mq] = zeros(self.n, 1)
+        # dae.x[self.Md] = zeros(self.n, 1)
+        # dae.x[self.Mq] = zeros(self.n, 1)
         dae.x[self.Nd] = zeros(self.n, 1)
 
         dae.x[self.Idcx] = -div(mul(self.vQ + self.vV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
@@ -438,8 +439,10 @@ class VSCDyn(DCBase):
         dae.y[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq))
         dae.x[self.Id] = dae.y[self.Idref]
 
-        dae.x[self.ucq] = self.usq - mul(self.xsh, dae.x[self.Id])
+        dae.x[self.ucq] = self.usq - mul(self.xsh, dae.x[self.Id])  # for vV and vQ use
         dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))  # todo: correct
+        # dae.x[self.ucd] = self.usd + mul(self.xsh, dae.x[self.Iq]) + mul(self.rsh, dae.x[self.Iq])
+
         iucq = div(1, dae.x[self.ucq])
         iudc = div(1, dae.y[self.v1])
 
@@ -447,8 +450,12 @@ class VSCDyn(DCBase):
                             + mul(self.vQ + self.vV,
                                   mul(2* dae.x[self.Idcx], dae.y[self.v1]) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)  # check
         dae.x[self.Iq] = dae.y[self.Iqref]
+        dae.x[self.ucq] = self.usq + mul(self.xsh, dae.x[self.Id]) + mul(self.rsh, dae.x[self.Iq])
 
-        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5)
+        dae.x[self.Md] = mul(self.rsh, dae.x[self.Id])
+        dae.x[self.Mq] = mul(self.rsh, dae.x[self.Iq])
+
+        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc)
 
         for idx in self.vsc:
             self.system.VSC.disable(idx)
@@ -486,7 +493,7 @@ class VSCDyn(DCBase):
         dae.g[self.Iqref] = Iqref1 + Iqref2 - dae.y[self.Iqref]
 
         # 7 - Idcy(6): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y0[Idcy]
-        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5) \
+        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc) \
                            - dae.y[self.Idcy]
 
         # interface equations
