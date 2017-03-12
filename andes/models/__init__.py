@@ -20,12 +20,16 @@ non_jits = {'bus': {'Bus': 'Bus'},
                        'Ground': 'Ground',
                        },
             'vsc': {'VSC': 'VSC',
+                    'VSCDyn': 'VSCDyn',
                     },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',
                             },
             'fault': {'Fault': 'Fault'},
-            'governor': {'TG2': 'TG2'}
+            'governor': {'TG2': 'TG2'},
+            'measurement':{'BusFreq': 'BusFreq',
+                           'PMU': 'PMU',
+                           }
 
            }
 

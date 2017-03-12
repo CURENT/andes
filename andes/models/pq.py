@@ -48,7 +48,7 @@ class PQ(ModelBase):
 
     def init1(self, dae):
         """Set initial voltage for time domain simulation"""
-        self.v0 = matrix(dae.g[self.v])
+        self.v0 = matrix(dae.y[self.v])
 
     def gcall(self, dae):
         k = ones(self.n, 1)

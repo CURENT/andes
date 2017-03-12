@@ -338,7 +338,6 @@ class Ord6a(SynBase):
         self.add_jac(Fy0, -self.a2, self.e2q, self.Id)
 
 
-
 class Flux0(object):
     """The simplified flux model as an appendix to generator models.
          0 = ra*id + psiq + vd
@@ -384,7 +383,7 @@ class Flux0(object):
 
         dae.add_jac(Gy0, self.u, self.Iq, self.psiq)
 
-        dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u, self.omega, self.omega)
+        dae.add_jac(Fy0, -mul(self.iM, self.D) + 1 - self.u + 1e-6, self.omega, self.omega)
         dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 

@@ -16,6 +16,10 @@ def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(list(map(lambda x, y: x or y, a, b)), a.size)
 
+def aandb(a, b):
+    """Return a matrix of logic comparison of A or B"""
+    return matrix(list(map(lambda x, y: x and y, a, b)), a.size)
+
 
 def nota(a):
     """Return a matrix of logic negative of A"""
@@ -63,22 +67,22 @@ def sort_idx(m, reverse=False):
     return sorted(range(len(m)), key=lambda k: m[k], reverse=reverse)
 
 
-def findall(m, val):
+def findeq(m, val):
     """Return the indices of all (val) in m"""
     m = list(m)
     idx = []
-    if m.count(val) > 1:
+    if m.count(val) > 0:
         idx = [i for i, j in enumerate(m) if j == val]
     return idx
 
 
 def algeb_limiter(m, upper, lower):
     above = agtb(m, upper)
-    idx = findall(above, 1.0)
+    idx = findeq(above, 1.0)
     m[idx] = upper[idx]
 
     below = altb(m, lower)
-    idx = findall(below, 1.0)
+    idx = findeq(below, 1.0)
     m[idx] = lower[idx]
 
     return m

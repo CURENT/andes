@@ -5,14 +5,14 @@ from numpy import array
 class VarOut(object):
     """Output variable value recorder"""
     def __init__(self, system):
-        """constructor of empty Varout object"""
+        """Constructor of empty Varout object"""
         self.system = system
         self.t = []
         self.vars = []
         self.dat = None
 
     def store(self, t):
-        """record the state/algeb values at time t to self.vars"""
+        """Record the state/algeb values at time t to self.vars"""
         self.t.append(t)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
 
@@ -27,7 +27,7 @@ class VarOut(object):
         return array(self.vars, (nvar, nstep), 'd')
 
     def dump(self):
-        """dump the TDS results to files after the simulation """
+        """Dump the TDS results to files after the simulation """
         if self.system.Files.no_output:
             return
         self._write_lst()
@@ -44,7 +44,7 @@ class VarOut(object):
             self.system.Log.error('I/O Error when dumping the dat file.')
 
     def _write_lst(self):
-        """dump the variable name lst file"""
+        """Dump the variable name lst file"""
         try:
             lst = open(self.system.Files.lst, 'w')
             line = '{:>6s}, {:>25s}, {:>25s}\n'.format('0', 'Time [s]', '# Time [s]#')
@@ -64,7 +64,7 @@ class VarOut(object):
             self.system.Log.error('I/O Error when writing the lst file.')
 
     def _write_vars(self, t, vars):
-        """helper function to write one line of simulation results"""
+        """Helper function to write one line of simulation results"""
         nvars = vars.size[0]
 
         line = ['{:<8g}'] + ['{:0.10f}'] * nvars

@@ -18,7 +18,7 @@ limitations under the License.
 from cvxopt import matrix, sparse, spmatrix
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import mul, div
-from ..utils.math import agtb, altb, nota, findall
+from ..utils.math import agtb, altb, nota, findeq
 import copy
 import sys
 
@@ -83,6 +83,7 @@ class ModelBase(object):
 
         # service/temporary variables
         self._service = []
+        self._store = {}
 
         # parameters to be per-unitized
         self._powers = []      # powers, inertia and damping
@@ -117,6 +118,10 @@ class ModelBase(object):
         """
         if not self._name:
             self._name = self._group
+        if not self._unamey:
+            self._unamey = self._algebs
+        if not self._unamex:
+            self._unamex = self._states
 
         for item in self._data.keys():
             self.__dict__[item] = []
@@ -127,16 +132,8 @@ class ModelBase(object):
             for var in self._dc[node]:
                 self.__dict__[var] = []
 
-        for var in self._states:
+        for var in self._states + self._algebs + self._service:
             self.__dict__[var] = []
-        for var in self._algebs:
-            self.__dict__[var] = []
-        for var in self._service:
-            self.__dict__[var] = []
-        if not self._unamey:
-            self._unamey = self._algebs
-        if not self._unamex:
-            self._unamex = self._states
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -224,7 +221,7 @@ class ModelBase(object):
         if ty == list:
             return [self.__dict__[param][self.int[i]] for i in idx]
         elif ty == matrix:
-            return self.__dict__[param][self.int[idx]]
+            return matrix([self.__dict__[param][self.int[i]] for i in idx])
         else:
             raise NotImplemented
 
@@ -343,12 +340,15 @@ class ModelBase(object):
         Sb = self.system.Settings.mva
         Vb = self.system.Bus.Vn[bus_idx]
         for var in self._voltages:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Vn)
             self.__dict__[var] = div(self.__dict__[var], Vb)
         for var in self._powers:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Sn)
             self.__dict__[var] /= Sb
         for var in self._currents:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Sn)
             self.__dict__[var] = div(self.__dict__[var], self.Vn)
             self.__dict__[var] = mul(self.__dict__[var], Vb)
@@ -357,9 +357,11 @@ class ModelBase(object):
             Zn = div(self.Vn ** 2, self.Sn)
             Zb = (Vb ** 2) / Sb
             for var in self._z:
+                self._store[var] = self.__dict__[var]
                 self.__dict__[var] = mul(self.__dict__[var], Zn)
                 self.__dict__[var] = div(self.__dict__[var], Zb)
             for var in self._y:
+                self._store[var] = self.__dict__[var]
                 if self.__dict__[var].typecode == 'd':
                     self.__dict__[var] = div(self.__dict__[var], Zn)
                     self.__dict__[var] = mul(self.__dict__[var], Zb)
@@ -380,17 +382,21 @@ class ModelBase(object):
             Rb = div(Vbdc, Ib)
 
         for var in self._dcvoltages:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Vdcn)
             self.__dict__[var] = div(self.__dict__[var], Vbdc)
 
         for var in self._dccurrents:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Idcn)
             self.__dict__[var] = div(self.__dict__[var], Ib)
 
         for var in self._r:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = div(self.__dict__[var], Rb)
 
         for var in self._g:
+            self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], Rb)
 
         self.ispu = True
@@ -494,20 +500,21 @@ class ModelBase(object):
     def limit_check(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
         above = agtb(self.__dict__[key], upper)
-        idx = findall(above, 1.0)
+        idx = findeq(above, 1.0)
         for item in idx:
             self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
                 self.__dict__[key][item] = upper[item]
 
         below = altb(self.__dict__[key], lower)
-        idx = findall(below, 1.0)
+        idx = findeq(below, 1.0)
         for item in idx:
             self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
             if limit:
                 self.__dict__[key][item] = lower[item]
 
     def add_jac(self, m, val, row, col):
+        """Add spmatrix(m, val, row) to DAE.(m)"""
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
@@ -515,6 +522,7 @@ class ModelBase(object):
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def set_jac(self, m, val, row, col):
+        """Set spmatrix(m, val, row) on DAE.(m)"""
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
@@ -532,3 +540,59 @@ class ModelBase(object):
             oldval.append(self.system.DAE.__dict__[m][i, j])
         self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def insight(self, idx=None):
+        """Print the parameter values as a list"""
+        if not self.n:
+            print('Model <{:s}> has no element'.format(self._name))
+        if not idx:
+            idx = sorted(self.int.keys())
+        count = 2
+        header_fmt = '{:^8s}{:^6s}{:^3s}'
+        header = ['idx', 'names', 'u']
+        if 'Sn' in self._data:
+            count += 1
+            header_fmt += '{:^6}'
+            header.append('Sn')
+        if 'Vn' in self._data:
+            count += 1
+            header_fmt += '{:^6}'
+            header.append('Vn')
+
+        keys = list(self._data.keys())
+        for item in header:
+            if item in keys:
+                keys.remove(item)
+        keys = sorted(keys)
+
+        header_fmt += '|' + '{:^10s}' * len(keys)
+        header += keys
+
+        svckeys = sorted(self._service)
+        keys += svckeys
+        header_fmt += '|' + '{:^10s}' * len(svckeys)
+        header += svckeys
+
+        print(' ')
+        print('Model <{:s}> parameter view: per-unit values'.format(self._name))
+        print(header_fmt.format(*header))
+
+        header.remove('idx')
+        for i in idx:
+            data = list()
+            data.append(str(i))
+            for item in header:
+                try:
+                    value = self.__dict__[item][self.int[i]]
+                except IndexError:
+                    value = None
+                if value is not None:
+                    if type(value) in [int, float]:
+                        value = round(value, 6)
+                else:
+                    value = '/'
+                data.append(str(value))
+            print(header_fmt.format(*data))
+
+    def __str__(self):
+        self.insight()

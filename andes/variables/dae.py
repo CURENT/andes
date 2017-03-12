@@ -1,4 +1,5 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
+from ..utils.math import *
 
 
 class DAE(object):
@@ -19,6 +20,10 @@ class DAE(object):
                       'Gy0': [],
                       'Ac': [],
                       'tn': [],
+                      'xu': [],
+                      'yu': [],
+                      'xz': [],
+                      'yz': [],
                       }
 
         self._scalars = {'m': 0,
@@ -38,10 +43,15 @@ class DAE(object):
         self.init_y()
 
     def init_x(self):
-        self.x = matrix(0.0, (self.n, 1), 'd')
+        self.x = zeros(self.n, 1)
+        self.xz = zeros(self.n, 1)
+        self.xu = ones(self.n, 1)
+
 
     def init_y(self):
-        self.y = matrix(0.0, (self.m, 1), 'd')
+        self.y = zeros(self.m, 1)
+        self.yz = zeros(self.m, 1)
+        self.yu = ones(self.m, 1)
 
     def init_fg(self):
         self.init_f()
@@ -107,6 +117,52 @@ class DAE(object):
         I = spdiag([1.0] * self.m) - H
         self.Gy = I * (self.Gy * I) + H
 
+    def ylimiter(self, yidx, ymin, ymax):
+        """Limit algebraic variables and set the Jacobians"""
+        yidx = matrix(yidx)
+        above = agtb(self.y[yidx], ymax)
+        above_idx = findeq(above, 1)
+        self.y[yidx[above_idx]] = ymax[above_idx]
+
+        below = altb(self.y[yidx], ymin)
+        below_idx = findeq(below, 1)
+        self.y[yidx[below_idx]] = ymin[below_idx]
+
+        idx = list(above_idx) + list(below_idx)
+        self.g[yidx[idx]] = 0
+        self.yz[yidx[idx]] = 1
+
+        if len(idx) > 0:
+            self.factorize = True
+
+    def xwindup(self, xidx, xmin, xmax):
+        """State variable windup limiter"""
+        xidx = matrix(xidx)
+        above = agtb(self.x[xidx], xmax)
+        above_idx = findeq(above, 1.0)
+        self.x[xidx[above_idx]] = xmax[above_idx]
+
+        below = altb(self.x[xidx], xmin)
+        below_idx = findeq(below, 1.0)
+        self.x[xidx[below_idx]] = xmin[below_idx]
+
+        idx = list(above_idx) + list(below_idx)
+        self.f[xidx[idx]] = 0
+        self.xz[xidx[idx]] = 1
+
+        if len(idx) > 0:
+            self.factorize = True
+
+    def set_Ac(self):
+        """Reset Jacobian elements for limited algebraic variables"""
+        # Todo: replace algeb_windup()
+        idx = matrix(findeq(aandb(self.yu, self.yz), 1.0))
+        H = spmatrix(1.0, idx, idx, (self.m, self.m))
+        I = spdiag([1.0] * self.m) - H
+        self.Gy = I * (self.Gy * I) + H
+        self.Fy = self.Fy * I
+        self.Gx = I * self.Gx
+
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
@@ -134,3 +190,16 @@ class DAE(object):
             oldval.append(self.system.DAE.__dict__[m][i, j])
         self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+
+    def show(self, eq):
+        """Show equation or variable array along with the names"""
+        str = ''
+        if eq in ['f', 'x']:
+            key = 'unamex'
+        elif eq in ['g', 'y']:
+            key = 'unamey'
+
+        value = list(self.__dict__[eq])
+        for name, val in zip(self.system.VarName.__dict__[key], value):
+            str += '{:12s} [{:>12.4f}]\n'.format(name, val)
+        return str

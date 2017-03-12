@@ -30,6 +30,7 @@ class GovernorBase(ModelBase):
         self._states.extend(['xg'])
         self._fnamex.extend(['x_g'])
         self._service.extend(['pm0', 'gain'])
+        self._mandatory.extend(['gen'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True, 'jac0': True,
                            })

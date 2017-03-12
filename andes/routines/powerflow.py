@@ -53,8 +53,6 @@ def calcInc(system):
         system.DAE.factorize = False
 
     # matrix2mat('PF_Gy.mat', [system.DAE.Gy], ['Gy'])
-    if system.Settings.verbose <= DEBUG:
-        diag0(system.DAE.Gy, 'unamey', system)
 
     try:
         N = lib.numeric(A, F)
@@ -67,6 +65,7 @@ def calcInc(system):
         system.DAE.factorize = True
     except ArithmeticError:
         system.Log.error('Jacobian matrix is singular.')
+        diag0(system.DAE.Gy, 'unamey', system)
 
     return -inc
 

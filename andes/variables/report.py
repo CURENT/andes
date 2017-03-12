@@ -1,9 +1,9 @@
 import platform
-from operator import itemgetter
 import importlib
+from time import strftime
+from operator import itemgetter
 from cvxopt import mul
 from ..formats import all_formats
-from time import strftime
 # from .. import __revision__ as revision
 
 revision = '2017.03.01'
@@ -11,6 +11,7 @@ this_year = revision[:4]
 
 
 def preamble(disable=False):
+    """Return preamble string for command line use"""
     if disable:
         return
     message = '\n'
@@ -160,7 +161,7 @@ class Report(object):
             text.append(['BUS DATA:\n'])
             # todo: consider system.SPF.units
             header.append(['Vm(pu)', 'Va({:s})'.format(Va_unit), 'Pg (pu)', 'Qg (pu)', 'Pl (pu)', 'Ql (pu)'])
-            name = ['<' + str(i) + '>' + j for i, j in zip(idx, name)]
+            name = [str(i) + '-' + j[:11] for i, j in zip(idx, name)]
             rowname.append(name)
             data.append([Vm, Va, Pg, Qg, Pl, Ql])
 
