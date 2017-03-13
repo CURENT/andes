@@ -440,7 +440,7 @@ class VSCDyn(DCBase):
         dae.x[self.Id] = dae.y[self.Idref]
 
         dae.x[self.ucq] = self.usq - mul(self.xsh, dae.x[self.Id])  # for vV and vQ use
-        dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))  # todo: correct
+        dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))
         # dae.x[self.ucd] = self.usd + mul(self.xsh, dae.x[self.Iq]) + mul(self.rsh, dae.x[self.Iq])
 
         iucq = div(1, dae.x[self.ucq])
@@ -498,10 +498,10 @@ class VSCDyn(DCBase):
 
         # interface equations
         # 8 - a(2): y[v], x[Id]
-        dae.g[self.a] += mul(self.usq, dae.x[self.Iq])
+        dae.g[self.a] -= mul(self.usq, dae.x[self.Iq])
 
         # 9 - v(2): y[v], x[Iq]
-        dae.g[self.v] += mul(self.usq, dae.x[self.Id])
+        dae.g[self.v] -= mul(self.usq, dae.x[self.Id])
 
         # 10 - v1: x0[Idcx]  |  y0[Idcy]
         dae.g[self.v1] += mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
@@ -587,7 +587,6 @@ class VSCDyn(DCBase):
         dae.add_jac(Fx0, mul(self.vV + self.vQ, self.iTdc), self.Idcx, self.Nq)
         dae.add_jac(Fx0, mul(self.PQ + self.PV, self.u + 1e-6), self.Idcx, self.Idcx)
 
-
     def gycall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
         iucq = div(1, dae.x[self.ucq])
@@ -611,9 +610,7 @@ class VSCDyn(DCBase):
         # 9 [v]
         dae.add_jac(Gy, dae.x[self.Iq], self.v, self.v)  # check
 
-
     def fcall(self, dae):
-        pass
         # 12 - Id(3): x0[Id], x0[Iq], x0[ucd]
         dae.f[self.Id] = - mul(self.rsh, self.iLsh, dae.x[self.Id]) + dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ucd] - self.usd)
 
