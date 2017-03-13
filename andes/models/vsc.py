@@ -106,7 +106,7 @@ class VSC(DCBase):
 
         Vm = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)  # Initial value for Vsh
-        IshC = conj(div(Vm - Vsh, self.Zsh))
+        IshC = conj(div(Vsh - Vm, self.Zsh))
         Ssh = mul(Vsh, IshC)
 
         # PQ PV and V control initials on converters
@@ -127,7 +127,7 @@ class VSC(DCBase):
     def gcall(self, dae):
         Vm = polar(dae.y[self.v], dae.y[self.a])
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash])
-        Ish = mul(self.Ysh, Vm - Vsh)
+        Ish = mul(self.Ysh, Vsh - Vm)
         IshC = conj(Ish)
         Ssh = mul(Vm, IshC)
 
@@ -251,7 +251,7 @@ class VSC(DCBase):
         iZsh = div(1, abs(Zsh))
         Vh = polar(dae.y[self.v], dae.y[self.a] * 1j)
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)
-        Ish = div(Vh - Vsh + 1e-6, Zsh)
+        Ish = div(Vsh - Vh + 1e-6, Zsh)
         iIsh = div(self.u, Ish)
 
         gsh = div(self.u, Zsh).real()
@@ -271,15 +271,15 @@ class VSC(DCBase):
         dae.add_jac(Gy, -div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v1)
         dae.add_jac(Gy, div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v2)
 
-        dae.add_jac(Gy, 2*mul(gsh, V) - mul(gsh, Vsh, cos(theta - thetash)) - mul(bsh, Vsh, sin(theta - thetash)), self.ash, self.v)
-        dae.add_jac(Gy, -mul(gsh, V, cos(theta - thetash)) - mul(bsh, V, sin(theta - thetash)), self.ash, self.vsh)
-        dae.add_jac(Gy, mul(gsh, V, Vsh, sin(theta - thetash)) - mul(bsh, V, Vsh, cos(theta - thetash)), self.ash, self.a)
-        dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)) + 1e-6, self.ash, self.ash)
+        dae.add_jac(Gy, -2*mul(gsh, V) + mul(gsh, Vsh, cos(theta - thetash)) + mul(bsh, Vsh, sin(theta - thetash)), self.ash, self.v)
+        dae.add_jac(Gy, mul(gsh, V, cos(theta - thetash)) + mul(bsh, V, sin(theta - thetash)), self.ash, self.vsh)
+        dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)), self.ash, self.a)
+        dae.add_jac(Gy, mul(gsh, V, Vsh, sin(theta - thetash)) - mul(bsh, V, Vsh, cos(theta - thetash)) + 1e-6, self.ash, self.ash)
 
-        dae.add_jac(Gy, -2*mul(bsh, V) - mul(gsh, Vsh, sin(theta - thetash)) + mul(bsh, Vsh, cos(theta - thetash)), self.vsh, self.v)
-        dae.add_jac(Gy, -mul(gsh, V, sin(theta - thetash)) + mul(bsh, V, cos(theta - thetash)) + 1e-6, self.vsh, self.vsh)
-        dae.add_jac(Gy, -mul(gsh, V, Vsh, cos(theta - thetash)) - mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.a)
-        dae.add_jac(Gy, mul(gsh, V, Vsh, cos(theta - thetash)) + mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.ash)
+        dae.add_jac(Gy, 2*mul(bsh, V) + mul(gsh, Vsh, sin(theta - thetash)) - mul(bsh, Vsh, cos(theta - thetash)), self.vsh, self.v)
+        dae.add_jac(Gy, mul(gsh, V, sin(theta - thetash)) - mul(bsh, V, cos(theta - thetash)) + 1e-6, self.vsh, self.vsh)
+        dae.add_jac(Gy, mul(gsh, V, Vsh, cos(theta - thetash)) + mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.a)
+        dae.add_jac(Gy, -mul(gsh, V, Vsh, cos(theta - thetash)) - mul(bsh, V, Vsh, sin(theta - thetash)), self.vsh, self.ash)
 
         dae.add_jac(Gy, 0.5 * mul(self.u, 2*V - 2*mul(Vsh, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.v)
         dae.add_jac(Gy, 0.5 * mul(self.u, 2*Vsh - 2*mul(V, cos(theta - thetash)), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.vsh)
@@ -288,10 +288,10 @@ class VSC(DCBase):
 
         dae.add_jac(Gy, -2 * mul(self.k2, dae.y[self.Ish]), self.pdc, self.Ish)
 
-        dae.add_jac(Gy, -mul(2 * gsh, Vsh) + mul(gsh, V, cos(theta - thetash)) - mul(bsh, V, sin(theta - thetash)), self.pdc, self.vsh)
-        dae.add_jac(Gy, mul(gsh, Vsh, cos(theta - thetash)) - mul(bsh, Vsh, sin(theta - thetash)), self.pdc, self.v)
-        dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) - mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.a)
-        dae.add_jac(Gy, mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.ash)
+        dae.add_jac(Gy, mul(2 * gsh, Vsh) - mul(gsh, V, cos(theta - thetash)) + mul(bsh, V, sin(theta - thetash)), self.pdc, self.vsh)
+        dae.add_jac(Gy, -mul(gsh, Vsh, cos(theta - thetash)) + mul(bsh, Vsh, sin(theta - thetash)), self.pdc, self.v)
+        dae.add_jac(Gy, mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.a)
+        dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) - mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.ash)
         dae.add_jac(Gy, -self.R, self.pdc, self.v1)
 
         for gidx, yidx in zip(self.glim, self.ylim):
