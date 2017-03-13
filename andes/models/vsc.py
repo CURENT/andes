@@ -206,8 +206,7 @@ class VSC(DCBase):
         dae.g[self.Ish] = mul(self.u, abs(IshC) - dae.y[self.Ish])  # (10)
 
         dae.g[self.pdc] = mul(self.u,
-                              mul(Vsh, IshC).real() - mul(self.R, dae.y[self.v1] - self.vdcref) + dae.y[self.pdc] - \
-                              (self.k0 + mul(self.k1, dae.y[self.Ish]) + mul(self.k2, mul(dae.y[self.Ish], dae.y[self.Ish])))
+                              mul(Vsh, IshC).real() + dae.y[self.pdc] - (self.k0 + mul(self.k1, dae.y[self.Ish]) + mul(self.k2, dae.y[self.Ish] ** 2))
                               )
 
     def switch(self, idx, control):
@@ -292,7 +291,7 @@ class VSC(DCBase):
         dae.add_jac(Gy, -mul(gsh, Vsh, cos(theta - thetash)) + mul(bsh, Vsh, sin(theta - thetash)), self.pdc, self.v)
         dae.add_jac(Gy, mul(gsh, V, Vsh, sin(theta - thetash)) + mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.a)
         dae.add_jac(Gy, -mul(gsh, V, Vsh, sin(theta - thetash)) - mul(bsh, V, Vsh, cos(theta - thetash)), self.pdc, self.ash)
-        dae.add_jac(Gy, -self.R, self.pdc, self.v1)
+        # dae.add_jac(Gy, -self.R, self.pdc, self.v1)
 
         for gidx, yidx in zip(self.glim, self.ylim):
             dae.set_jac(Gy, 0.0, [gidx] * dae.m, range(dae.m))
@@ -419,8 +418,19 @@ class VSCDyn(DCBase):
         k1 = div(self.rsh, self.xsh) ** 2
         k2 = div(self.rsh, self.xsh ** 2)
 
-        # dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))
-        # dae.x[self.ucq] = mul(dae.y[self.vsh], cos(dae.y[self.ash] - dae.y[self.a]))
+        # -------debugging
+        self.Zsh = self.rsh + 1j * self.xsh
+        self.Ysh = div(1, self.Zsh)
+
+        Vm = polar(dae.y[self.v], dae.y[self.a])
+        Vsh = polar(dae.y[self.vsh], dae.y[self.ash])
+        Ish = mul(self.Ysh, Vsh - Vm)
+        IshC = conj(Ish)
+        Ssh = mul(Vsh, IshC)
+
+        # -----
+        dae.x[self.ucd] = mul(dae.y[self.vsh], -sin(dae.y[self.ash] - dae.y[self.a]))
+        dae.x[self.ucq] = mul(dae.y[self.vsh], cos(dae.y[self.ash] - dae.y[self.a]))
 
         dae.y[self.pref] = mul(self.PV + self. PQ, self.pref0)
         dae.y[self.qref] = mul(self.PQ + self.vQ, self.qref0)
@@ -439,10 +449,6 @@ class VSCDyn(DCBase):
         dae.y[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq))
         dae.x[self.Id] = dae.y[self.Idref]
 
-        dae.x[self.ucq] = self.usq - mul(self.xsh, dae.x[self.Id])  # for vV and vQ use
-        dae.x[self.ucd] = mul(dae.y[self.vsh], sin(dae.y[self.ash] - dae.y[self.a]))
-        # dae.x[self.ucd] = self.usd + mul(self.xsh, dae.x[self.Iq]) + mul(self.rsh, dae.x[self.Iq])
-
         iucq = div(1, dae.x[self.ucq])
         iudc = div(1, dae.y[self.v1])
 
@@ -455,7 +461,7 @@ class VSCDyn(DCBase):
         dae.x[self.Md] = mul(self.rsh, dae.x[self.Id])
         dae.x[self.Mq] = mul(self.rsh, dae.x[self.Iq])
 
-        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5)
+        dae.y[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc)
 
         for idx in self.vsc:
             self.system.VSC.disable(idx)
@@ -480,21 +486,17 @@ class VSCDyn(DCBase):
         dae.g[self.vdcref] = mul(self.vV + self.vQ, dae.y[self.vdcref] - self.vdcref0)
 
         # 5 - Idref(8): y[qref], y[v], x[Id]  |  y0[vref], y0[v]  |  x0[Nd], y0[Idref]
-        dae.g[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq)
-                                                   + mul(self.Kp2, dae.y[self.qref] - mul(self.usq, dae.x[self.Id]))) \
+        dae.g[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq) + mul(self.Kp2, dae.y[self.qref] - mul(self.usq, dae.x[self.Id]))) \
                             + mul(self.PV + self.vV, mul(self.Kp3, dae.y[self.vref] - self.usq)) \
                             + dae.x[self.Nd] - dae.y[self.Idref]
 
         # 6 - Iqref(10): y[pref], y[v], x0[Nq], x[Iq]  |  x[Idcx], y[v1], x[Id], x[ucd], x[ucq] | y0[Iqref]
-        Iqref1 = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq]
-                                                   + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq])))
-        Iqref2 = mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2]))
-                                                    - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
+        Iqref1 = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq] + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq])))
+        Iqref2 = mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
         dae.g[self.Iqref] = Iqref1 + Iqref2 - dae.y[self.Iqref]
 
         # 7 - Idcy(6): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y0[Idcy]
-        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc, 0.5) \
-                           - dae.y[self.Idcy]
+        dae.g[self.Idcy] = mul(self.PQ + self.PV, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]), iudc) - dae.y[self.Idcy]
 
         # interface equations
         # 8 - a(2): y[v], x[Id]
