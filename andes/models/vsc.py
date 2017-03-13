@@ -172,7 +172,7 @@ class VSC(DCBase):
         dae.g[self.vsh] = mul(self.u, Ssh.imag() - dae.y[self.qsh])  # (3)
 
         # PQ, PV or V control
-        dae.g[self.psh] = mul(dae.y[self.psh] - self.pref0, self.PQ + self.PV, self.u) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdcref0, self.vV + self.vQ, self.u)  # (12), (15)
+        dae.g[self.psh] = mul(dae.y[self.psh] + mul(self.R, dae.y[self.v1] - self.vdcref) - self.pref0, self.PQ + self.PV, self.u) + mul((dae.y[self.v1] - dae.y[self.v2]) - self.vdcref0, self.vV + self.vQ, self.u)  # (12), (15)
         dae.g[self.qsh] = mul(dae.y[self.qsh] - self.qref0, self.PQ + self.vQ, self.u) + mul(dae.y[self.v] - self.vref0, self.PV + self.vV, self.u)  # (13), (16)
 
         for comp, var in self.vio.items():
@@ -305,6 +305,7 @@ class VSC(DCBase):
         dae.add_jac(Gy0, mul(self.u, self.PQ + self.PV) + 1e-6, self.psh, self.psh)
         dae.add_jac(Gy0, mul(self.u, self.vV), self.psh, self.v1)
         dae.add_jac(Gy0, -mul(self.u, self.vV), self.psh, self.v2)
+        dae.add_jac(Gy0, mul(self.PV + self.PQ, self.u, self.R), self.psh, self.v1)
 
         dae.add_jac(Gy0, mul(self.u, self.PQ) + 1e-6, self.qsh, self.qsh)
         dae.add_jac(Gy0, mul(self.u, self.PV + self.vV), self.qsh, self.v)
@@ -404,10 +405,10 @@ class VSCDyn(DCBase):
         self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)  # copy indices
         self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
         self.copy_param('VSC', src='pdc', dest='pdc', fkey=self.vsc)
-        self.pref0 = dae.y[self.pref0]
-        self.qref0 = dae.y[self.qref0]
-        self.vref0 = dae.y[self.v]
-        self.vdcref0 = dae.y[self.v1]
+        self.pref0 = mul(self.PQ + self.PV, dae.y[self.pref0])
+        self.qref0 = mul(self.PQ + self.vQ, dae.y[self.qref0])
+        self.vref0 = mul(self.PV + self.vV, dae.y[self.v])
+        self.vdcref0 = mul(self.vV + self.vQ, dae.y[self.v1])
 
         self.wn = ones(self.n, 1)  # in pu
         self.iLsh = div(1.0, self.xsh)
@@ -418,17 +419,6 @@ class VSCDyn(DCBase):
         k1 = div(self.rsh, self.xsh) ** 2
         k2 = div(self.rsh, self.xsh ** 2)
 
-        # -------debugging
-        self.Zsh = self.rsh + 1j * self.xsh
-        self.Ysh = div(1, self.Zsh)
-
-        Vm = polar(dae.y[self.v], dae.y[self.a])
-        Vsh = polar(dae.y[self.vsh], dae.y[self.ash])
-        Ish = mul(self.Ysh, Vsh - Vm)
-        IshC = conj(Ish)
-        Ssh = mul(Vsh, IshC)
-
-        # -----
         dae.x[self.ucd] = mul(dae.y[self.vsh], -sin(dae.y[self.ash] - dae.y[self.a]))
         dae.x[self.ucq] = mul(dae.y[self.vsh], cos(dae.y[self.ash] - dae.y[self.a]))
 
@@ -439,8 +429,6 @@ class VSCDyn(DCBase):
 
         # dae.y[self.Idcy] = -div(mul(self.PQ + self.PV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
 
-        # dae.x[self.Md] = zeros(self.n, 1)
-        # dae.x[self.Mq] = zeros(self.n, 1)
         dae.x[self.Nd] = zeros(self.n, 1)
 
         dae.x[self.Idcx] = -div(mul(self.vQ + self.vV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
