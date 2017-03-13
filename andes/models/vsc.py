@@ -155,8 +155,8 @@ class VSC(DCBase):
                             self.system.Log.debug(' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power
-        dae.g[self.a] += mul(self.u, dae.y[self.psh])  # active power load
-        dae.g[self.v] += mul(self.u, dae.y[self.qsh])  # reactive power load
+        dae.g[self.a] -= mul(self.u, dae.y[self.psh])  # active power load
+        dae.g[self.v] -= mul(self.u, dae.y[self.qsh])  # reactive power load
 
         # DC interfaces - current
         above = list(dae.y[self.v1] - self.vhigh)
@@ -310,8 +310,8 @@ class VSC(DCBase):
         dae.add_jac(Gy0, mul(self.u, self.PQ) + 1e-6, self.qsh, self.qsh)
         dae.add_jac(Gy0, mul(self.u, self.PV + self.vV), self.qsh, self.v)
 
-        dae.add_jac(Gy0, self.u, self.a, self.psh)
-        dae.add_jac(Gy0, self.u, self.v, self.qsh)
+        dae.add_jac(Gy0, -self.u, self.a, self.psh)
+        dae.add_jac(Gy0, -self.u, self.v, self.qsh)
 
         dae.add_jac(Gy0, -self.u + 1e-6, self.Ish, self.Ish)
 
