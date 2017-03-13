@@ -181,9 +181,9 @@ VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.03, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
 
-VSCDyn, vsc = 2, name = "VSC_2"
-VSCDyn, vsc = 3, name = "VSC_3"
-#VSCDyn, vsc = 4, name = "VSC_4"
+#VSCDyn, vsc = 2, name = "VSC_2"
+#VSCDyn, vsc = 3, name = "VSC_3"
+VSCDyn, vsc = 4, name = "VSC_4"
 
 #Fault, bus = 4, tf = 52.0, tc = 52.1, rf = 0.0, xf = 0.01
 

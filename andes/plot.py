@@ -37,6 +37,7 @@ def cli_parse():
     parser.add_argument('datfile', nargs=1, default=[], help='dat file name.')
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
+    parser.add_argument('--xmax', type=float, help='x axis maximum value')
     args = parser.parse_args()
     return args
 
@@ -153,9 +154,14 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl):
+def do_plot(x, y, xl, yl, xmin=None, xmax=None):
     # Configurate matplotlib
     mpl.rc('font', family='Arial')
+
+    if not xmin:
+        xmin = x[0] - 1e-6
+    if not xmax:
+        xmax = x[-1] + 1e-6
 
     fig, ax = pyplot.subplots()
     for idx in range(len(y)):
@@ -163,8 +169,8 @@ def do_plot(x, y, xl, yl):
 
     ax.set_xlabel(xl[0])
     ax.ticklabel_format(useOffset=False)
-    ax.set_xlim(xmin=x[0]-1e-6)
-    ax.set_xlim(xmax=x[-1]+1e-6)
+    ax.set_xlim(xmin=xmin)
+    ax.set_xlim(xmax=xmax)
 
 
     legend = ax.legend(loc='upper right', shadow=True)
@@ -198,7 +204,7 @@ def main():
     xval, yval = read_dat(dat, args.x, y)
     xl, yl = read_label(lst, args.x, y)
 
-    do_plot(xval, yval, xl, yl)
+    do_plot(xval, yval, xl, yl, xmax=args.xmax)
 
     pass
 
