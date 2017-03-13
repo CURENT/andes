@@ -405,8 +405,8 @@ class VSCDyn(DCBase):
         self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)  # copy indices
         self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
         self.copy_param('VSC', src='pdc', dest='pdc', fkey=self.vsc)
-        self.pref0 = mul(self.PQ + self.PV, dae.y[self.pref0])
-        self.qref0 = mul(self.PQ + self.vQ, dae.y[self.qref0])
+        self.pref0 = dae.y[self.pref0]
+        self.qref0 = dae.y[self.qref0]
         self.vref0 = mul(self.PV + self.vV, dae.y[self.v])
         self.vdcref0 = mul(self.vV + self.vQ, dae.y[self.v1])
 
@@ -427,22 +427,20 @@ class VSCDyn(DCBase):
         dae.y[self.vref] = mul(self.PV + self.vV, self.vref0)
         dae.y[self.vdcref] = mul(self.vV + self.vQ, self.vdcref0)
 
-        # dae.y[self.Idcy] = -div(mul(self.PQ + self.PV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
-
-        dae.x[self.Nd] = zeros(self.n, 1)
+        dae.x[self.Nd] = mul(self.PV + self.vV, div(self.qref0, self.usq))
 
         dae.x[self.Idcx] = -div(mul(self.vQ + self.vV, self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])
         dae.x[self.Nq] = mul(self.vQ + self.vV, dae.x[self.Idcx])
 
-        dae.y[self.Idref] = mul(self.PQ + self.vQ, div(dae.y[self.qref], self.usq))
+        dae.y[self.Idref] = div(self.qref0, self.usq)
         dae.x[self.Id] = dae.y[self.Idref]
 
         iucq = div(1, dae.x[self.ucq])
         iudc = div(1, dae.y[self.v1])
 
-        dae.y[self.Iqref] = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq)) \
-                            + mul(self.vQ + self.vV,
-                                  mul(2* dae.x[self.Idcx], dae.y[self.v1]) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)  # check
+        # dae.y[self.Iqref] = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq)) \
+        #                     + mul(self.vQ + self.vV, mul(2* dae.x[self.Idcx], dae.y[self.v1]) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)  # check
+        dae.y[self.Iqref] = div(self.pref0, self.usq)
         dae.x[self.Iq] = dae.y[self.Iqref]
         dae.x[self.ucq] = self.usq + mul(self.xsh, dae.x[self.Id]) + mul(self.rsh, dae.x[self.Iq])
 
@@ -480,7 +478,7 @@ class VSCDyn(DCBase):
 
         # 6 - Iqref(10): y[pref], y[v], x0[Nq], x[Iq]  |  x[Idcx], y[v1], x[Id], x[ucd], x[ucq] | y0[Iqref]
         Iqref1 = mul(self.PQ + self.PV, div(dae.y[self.pref], self.usq) + dae.x[self.Nq] + mul(self.Kp4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq])))
-        Iqref2 = mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
+        Iqref2 = mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), iucq)
         dae.g[self.Iqref] = Iqref1 + Iqref2 - dae.y[self.Iqref]
 
         # 7 - Idcy(6): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y0[Idcy]
@@ -566,7 +564,7 @@ class VSCDyn(DCBase):
         dae.add_jac(Fy0, -mul(self.PV + self.vV, self.Ki3), self.Nd, self.v)
 
         # 19 - [pref], [vdcref], [v1]
-        dae.add_jac(Fy0, mul(self.PQ + self.PV, self.Kp4), self.Nq, self.pref)
+        dae.add_jac(Fy0, mul(self.PQ + self.PV, self.Ki4), self.Nq, self.pref)
         dae.add_jac(Fy0, mul(self.vV + self.vQ, self.Kidc), self.Nq, self.vdcref)
         dae.add_jac(Fy0, -mul(self.vV + self.vQ, self.Kidc), self.Nq, self.v1)
 
@@ -589,10 +587,10 @@ class VSCDyn(DCBase):
         # 6 [pref], [v], [v1]
         dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp4), self.Iqref, self.pref)
         dae.add_jac(Gy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Iq]), self.Iqref, self.v)
-        dae.add_jac(Gy, mul(self.vV + self.vQ, 2 * dae.x[self.Idcx], iucq), self.Iqref, self.v1)
+        dae.add_jac(Gy, mul(self.vV + self.vQ, dae.x[self.Idcx], iucq), self.Iqref, self.v1)
 
         # 7 [v1]
-        dae.add_jac(Gy, mul(self.PQ + self.PV, -0.5 * iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
+        dae.add_jac(Gy, mul(self.PQ + self.PV, -iudc **2, mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq])), self.Idcy, self.v1)
 
         # 8 [v]
         dae.add_jac(Gy, dae.x[self.Id], self.a, self.v)  # check
@@ -628,8 +626,7 @@ class VSCDyn(DCBase):
                          + mul(self.Ki3, dae.y[self.vref] - self.usq, self.PV + self.vV)  # Q or Vac control
 
         # 19 - Nq(5): y0[pref], x[Iq], y[v]  |  y0[vdcref], y0[v1]
-        dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) \
-                         + mul(self.Kidc, dae.y[self.vdcref] - (dae.y[self.v1] - dae.y[self.v2]), self.vV + self.vQ)
+        dae.f[self.Nq] = mul(self.Ki4, dae.y[self.pref] - mul(self.usq, dae.x[self.Iq]), self.PQ + self.PV) + mul(self.Kidc, dae.y[self.vdcref] - (dae.y[self.v1] - dae.y[self.v2]), self.vV + self.vQ)
 
         # 20 - Idcx(5): x0[Idcx], y0[vdcref], y0[v1], x0[Nq]  |  x0[Idcx]
         dae.f[self.Idcx] = mul(self.vV + self.vQ, self.iTdc, -dae.x[self.Idcx] + mul(self.Kpdc, dae.y[self.vdcref] - (dae.y[self.v1] - dae.y[self.v2])) + dae.x[self.Nq]) \
@@ -644,16 +641,16 @@ class VSCDyn(DCBase):
 
         # 6 - [Iq], [Idcx], [Id], [ucd], [ucq]
         dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp4, dae.y[self.v]), self.Iqref, self.Iq)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, 2 * (dae.y[self.v1] - dae.y[self.v2]), iucq), self.Iqref, self.Idcx)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, (dae.y[self.v1] - dae.y[self.v2]), iucq), self.Iqref, self.Idcx)
         dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.ucd], iucq), self.Iqref, self.Id)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.Iq], iucq,), self.Iqref, self.ucd)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, mul(2 * dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), - iucq ** 2), self.Iqref, self.ucq)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.Id], iucq), self.Iqref, self.ucd)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Id], dae.x[self.ucd]), - iucq ** 2), self.Iqref, self.ucq)
 
         # 7 [ucd], [Id], [ucq], [Iq]
-        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.Id], 0.5 * iudc), self.Idcy, self.ucd)
-        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.ucd], 0.5* iudc), self.Idcy, self.Id)
-        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.Iq], 0.5 * iudc), self.Idcy, self.ucq)
-        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.ucq], 0.5* iudc), self.Idcy, self.Iq)
+        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.Id], iudc), self.Idcy, self.ucd)
+        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.ucd], iudc), self.Idcy, self.Id)
+        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.Iq], iudc), self.Idcy, self.ucq)
+        dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.ucq], iudc), self.Idcy, self.Iq)
 
         # 8 [Iq]
         dae.add_jac(Gx, self.usq, self.a, self.Iq)
@@ -666,5 +663,5 @@ class VSCDyn(DCBase):
         dae.add_jac(Fy, -mul(self.PQ + self.vQ, self.Ki2, dae.x[self.Id]), self.Nd, self.v)
 
         # 19 [Iq], [v]
-        dae.add_jac(Fx, -mul(self.PQ + self.PV, self.Kp4, self.usq), self.Nq, self.Iq)
-        dae.add_jac(Fy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Iq]), self.Nq, self.v)
+        dae.add_jac(Fx, -mul(self.PQ + self.PV, self.Ki4, self.usq), self.Nq, self.Iq)
+        dae.add_jac(Fy, -mul(self.PQ + self.PV, self.Ki4, dae.x[self.Iq]), self.Nq, self.v)

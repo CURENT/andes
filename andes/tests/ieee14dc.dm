@@ -174,16 +174,16 @@ Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-#VSC, idx = 3, node1 = 3, node2 = 0, bus = 12, name = "VSC 3", rsh = 0.01, xsh = 0.1,
-#     vshmax = 1.2, vshmin = 0.9, Ishmax = 10, pref0 = -0.3, vref0 = 1.00, control = "PV",
-#     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 12, name = "VSC 3", rsh = 0.01, xsh = 0.1,
+     vshmax = 1.2, vshmin = 0.9, Ishmax = 10, pref0 = -0.3, vref0 = 1.00, control = "PV",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.03, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
 
 VSCDyn, vsc = 2, name = "VSC_2"
-
-#VSCDyn, vsc = 4, name = "VSC_2"
+VSCDyn, vsc = 3, name = "VSC_3"
+#VSCDyn, vsc = 4, name = "VSC_4"
 
 #Fault, bus = 4, tf = 52.0, tc = 52.1, rf = 0.0, xf = 0.01
 
