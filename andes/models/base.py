@@ -276,7 +276,6 @@ class ModelBase(object):
                 self.message('The item <{:s}> does not exist.'.format(idx), ERROR)
                 return None
         else:
-            # nothing to remove
             return None
 
         convert = False
