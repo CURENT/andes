@@ -122,7 +122,8 @@ def run(system):
                 exec(system.Call.int_f)
                 f0 = dae.f
                 dae.x = xa + h * f0
-                dae.y += calcInc(system)
+                inc = calcInc(system)
+                dae.y += inc
 
                 # corrector step
                 exec(system.Call.int_f)
@@ -197,6 +198,9 @@ def run(system):
         perc = (t - settings.t0) / (settings.tf - settings.t0) * 100
         bar.update(perc)
 
+        if perc > nextpc:
+            system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f}, niter = {}'.format(t, step, settings.error, niter))
+            nextpc += 10
         # compute max rotor angle difference
         diff_max = anglediff()
 

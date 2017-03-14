@@ -21,7 +21,7 @@ class Settings(SettingsBase):
         self.static = 0
         self.nseries = 0
         self.forcepq = False
-        self.forcez = False
+        self.forcez = True
         self.base = True
 
     @property
