@@ -359,6 +359,8 @@ class VSCDyn(DCBase):
                            'Kidc': 5,
                            'Tt': 0.02,
                            'Tdc': 0.02,
+                           'Cdc': 0.1,
+                           'Ldc': 0.02,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
                              'Tt', 'Tdc'])
@@ -374,14 +376,17 @@ class VSCDyn(DCBase):
                             'Kpdc': 'dc voltage controller proportional gain',
                             'Kidc': 'dc voltage controller integrator gain',
                             'Tt': 'ac voltage measurement delay time constant',
+                            'Tdc': 'dc voltage time constant',
+                            'Cdc': 'dc interface shunt capacitor',
+                            'Ldc': 'dc interface series inductance'
                             })
-        self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy'])
-        self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx'])
+        self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy', 'vdc'])
+        self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx', 'vCdc', 'ILdc'])
         self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq',
                               'pref0', 'qref0', 'vref0', 'vdcref0'])
         self._mandatory.extend(['vsc'])
-        self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}'])
-        self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}'])
+        self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}', 'U_dc'])
+        self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}', 'U^C_{dc}', 'I^L_{dc}'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True,
                            'gycall': True, 'fxcall': True,
@@ -451,6 +456,8 @@ class VSCDyn(DCBase):
 
         dae.x[self.Nd] = mul(self.PV + self.vV, div(self.qref0, self.usq))
         dae.x[self.Nq] = mul(self.vQ + self.vV, dae.x[self.Idcx])
+
+        dae.y[self.vdc] = dae.y[self.v1] - dae.y[self.v2]
 
         for idx in self.vsc:
             self.system.VSC.disable(idx)
@@ -584,13 +591,15 @@ class VSCDyn(DCBase):
         dae.add_jac(Fx0, mul(self.vV + self.vQ, self.iTdc), self.Idcx, self.Nq)
         dae.add_jac(Fx0, mul(self.PQ + self.PV, self.u + 1e-6), self.Idcx, self.Idcx)
 
+        dae.add_jac(Gy0, 1e-6, self.vdc, self.vdc)
+
     def gycall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
         iucq = div(1, dae.x[self.ucq])
 
         # 5 [qref], [v]
-        dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
-        dae.add_jac(Gy, mul(self.PQ + self.PV,
+        dae.add_jac(Gy, mul(self.PQ + self.vQ, div(1.0, self.usq) + self.Kp2), self.Idref, self.qref)
+        dae.add_jac(Gy, mul(self.PQ + self.vQ,
                              -div(dae.y[self.qref], self.usq ** 2) - mul(self.Kp2, dae.x[self.Id])), self.Idref, self.v)
 
         # 6 [pref], [v], [v1] [v2]
@@ -643,12 +652,15 @@ class VSCDyn(DCBase):
         dae.f[self.Idcx] = mul(self.vV + self.vQ, self.iTdc, dae.x[self.Nq] - dae.x[self.Idcx] + mul(self.Kpdc, dae.y[self.vdcref] - (dae.y[self.v1] - dae.y[self.v2])) ) \
                            + mul(self.PQ + self.PV, dae.x[self.Idcx])
 
+        # dae.f[self.uCdc] = div(vdc0, self.Cdc)
+        # dae.f[self.ILdc] = div()
+
     def fxcall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
         iucq = div(1, dae.x[self.ucq])
 
         # 5 - [Id]
-        dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp2, self.usq), self.Idref, self.Id)
+        dae.add_jac(Gx, -mul(self.PQ + self.vQ, self.Kp2, self.usq), self.Idref, self.Id)
 
         # 6 - [Iq], [Idcx], [Id], [ucd], [ucq]
         dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp4, dae.y[self.v]), self.Iqref, self.Iq)
