@@ -19,9 +19,6 @@ non_jits = {'bus': {'Bus': 'Bus'},
                        'RLine': 'RLine',
                        'Ground': 'Ground',
                        },
-            'vsc': {'VSC': 'VSC',
-                    'VSCDyn': 'VSCDyn',
-                    },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',
                             },
@@ -33,5 +30,8 @@ non_jits = {'bus': {'Bus': 'Bus'},
 
            }
 
-jits = {}
+jits = {'vsc': {'VSC': 'VSC',
+                'VSCDyn': 'VSCDyn',
+                },
+        }
 
