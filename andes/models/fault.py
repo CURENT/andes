@@ -68,14 +68,14 @@ class Fault(ModelBase):
                 self.u[i] = 1
                 self.active += 1
                 self.angle0 = self.system.DAE.y[self.system.Bus.a]
-                self.volt0 = self.system.DAE.y[self.system.Bus.n:2*self.system.Bus.n]
+                self.volt0 = self.system.DAE.y[self.system.Bus.n:]
                 self.system.DAE.factorize = True
 
             elif self.tc[i] == self.time:
                 self.system.Log.info('\n <Fault> Clearing fault on Bus <{}> at t={}.'.format(self.bus[i], self.tc[i]))
                 self.u[i] = 0
                 self.active -= 1
-                self.system.DAE.y[self.system.Bus.n:2*self.system.Bus.n] = self.volt0
+                self.system.DAE.y[self.system.Bus.n:] = self.volt0
                 # self.system.DAE.y[self.a] = self.anglepre
                 self.system.DAE.factorize = True
 
