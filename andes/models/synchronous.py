@@ -259,6 +259,7 @@ class Ord6a(SynBase):
         self._mandatory.extend(['xd', 'xq', 'xd1', 'xq1', 'xd2', 'xq2', 'Td10', 'Tq10', 'Td20', 'Tq20'])
         self._service.extend(['c1', 'c2', 'c3', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'b1', 'b2', 'b3', 'b4'])
         self._states.extend(['e1d', 'e1q', 'e2d', 'e2q'])
+        self._fnamex.extend(['e\\\'_d', 'e\\\'_q', 'e\\\'\\\'d', 'e\\\'\\\'q'])
         self._z.extend(['xd', 'xd1', 'xq1', 'xd2', 'xq2'])
         self._times.extend(['Td10', 'Tq10', 'Td20', 'Tq20', 'Taa'])
 
