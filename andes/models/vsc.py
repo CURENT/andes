@@ -263,12 +263,12 @@ class VSC(DCBase):
         iVdc2 = div(self.u, Vdc ** 2)
 
         dae.add_jac(Gy, -div(self.u, Vdc), self.v1, self.pdc)
-        dae.add_jac(Gy, mul(dae.y[self.pdc], iVdc2) + 1e-6, self.v1, self.v1)
-        dae.add_jac(Gy, -mul(dae.y[self.pdc], iVdc2), self.v1, self.v2)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.pdc], iVdc2) + 1e-6, self.v1, self.v1)
+        dae.add_jac(Gy, -mul(self.u, dae.y[self.pdc], iVdc2), self.v1, self.v2)
 
-        dae.add_jac(Gy, div(1, Vdc), self.v2, self.pdc)
-        dae.add_jac(Gy, -div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v1)
-        dae.add_jac(Gy, div(dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v2)
+        dae.add_jac(Gy, div(self.u, Vdc), self.v2, self.pdc)
+        dae.add_jac(Gy, -div(self.u, dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v1)
+        dae.add_jac(Gy, div(self.u + 1e-6, dae.y[self.pdc], mul(Vdc, Vdc)), self.v2, self.v2)
 
         dae.add_jac(Gy, -2*mul(gsh, V) + mul(gsh, Vsh, cos(theta - thetash)) + mul(bsh, Vsh, sin(theta - thetash)), self.ash, self.v)
         dae.add_jac(Gy, mul(gsh, V, cos(theta - thetash)) + mul(bsh, V, sin(theta - thetash)), self.ash, self.vsh)
@@ -285,7 +285,7 @@ class VSC(DCBase):
         dae.add_jac(Gy, 0.5 * mul(self.u, 2*V, Vsh, sin(theta-thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.a)
         dae.add_jac(Gy, 0.5 * mul(self.u, 2*V, Vsh, - sin(theta - thetash), abs(iIsh), abs(iZsh), abs(iZsh)), self.Ish, self.ash)
 
-        dae.add_jac(Gy, -2 * mul(self.k2, dae.y[self.Ish]), self.pdc, self.Ish)
+        dae.add_jac(Gy, -2 * mul(self.u, self.k2, dae.y[self.Ish]), self.pdc, self.Ish)
 
         dae.add_jac(Gy, mul(2 * gsh, Vsh) - mul(gsh, V, cos(theta - thetash)) + mul(bsh, V, sin(theta - thetash)), self.pdc, self.vsh)
         dae.add_jac(Gy, -mul(gsh, Vsh, cos(theta - thetash)) + mul(bsh, Vsh, sin(theta - thetash)), self.pdc, self.v)
@@ -316,7 +316,7 @@ class VSC(DCBase):
         dae.add_jac(Gy0, -self.u + 1e-6, self.Ish, self.Ish)
 
         dae.add_jac(Gy0, self.u + 1e-6, self.pdc, self.pdc)
-        dae.add_jac(Gy0, -self.k1, self.pdc, self.Ish)
+        dae.add_jac(Gy0, mul(self.u, -self.k1), self.pdc, self.Ish)
 
     def disable(self, idx):
         """Disable an element and reset the outputs"""
@@ -346,8 +346,8 @@ class VSCDyn(DCBase):
                            'Ki3': 0.1,
                            'Kp4': 0.1,
                            'Ki4': 0.1,
-                           'Kpdc': 0.1,
-                           'Kidc': 0.5,
+                           'Kpdc': 0,
+                           'Kidc': 0,
                            'Tt': 0.02,
                            'Tdc': 0.02,
                            })
@@ -516,8 +516,8 @@ class VSCDyn(DCBase):
         dae.add_jac(Gy0, mul(self.u, self.PQ + self.PV), self.v1, self.Idcy)
 
         # 11 - [Idcx], [Idcy]
-        dae.add_jac(Gx0, -mul(self.u, self.vV + self.vQ), self.v1, self.Idcx)
-        dae.add_jac(Gy0, -mul(self.u, self.PQ + self.PV), self.v1, self.Idcy)
+        dae.add_jac(Gx0, -mul(self.u, self.vV + self.vQ), self.v2, self.Idcx)
+        dae.add_jac(Gy0, -mul(self.u, self.PQ + self.PV), self.v2, self.Idcy)
 
         # 12 - [Id], [Iq], [ucd]
         dae.add_jac(Fx0, -mul(self.rsh, self.iLsh, self.u) + 1e-6, self.Id, self.Id)
