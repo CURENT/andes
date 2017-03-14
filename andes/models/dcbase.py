@@ -44,7 +44,7 @@ class Node(ModelBase):
 
     def _varname(self):
         self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='Vdc', element_name=self.names)
-        self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V_{{dc}}', element_name=self.names)
+        self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V_{dc}', element_name=self.names)
 
     def setup(self):
         self.v = list(range(self.system.DAE.m, self.system.DAE.m + self.n))

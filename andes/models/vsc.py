@@ -70,7 +70,7 @@ class VSC(DCBase):
                             })
         self._algebs.extend(['ash', 'vsh', 'psh', 'qsh', 'pdc', 'Ish'])
         self._unamey.extend(['ash', 'vsh', 'psh', 'qsh', 'pdc', 'Ish'])
-        self._fnamey.extend(['\\theta_{{sh}}', 'V_{{sh}}', 'P_{{sh}}', 'Q_{{sh}}', 'P_{{dc}}', 'I_{{sh}}'])
+        self._fnamey.extend(['\\theta_{sh}', 'V_{sh}', 'P_{sh}', 'Q_{sh}', 'P_{dc}', 'I_{sh}'])
         self._mandatory.extend(['bus', 'control'])
         self._service.extend(['Zsh', 'Ysh', 'glim', 'ylim', 'vdcref', 'R',
                               'PQ', 'PV', 'vV', 'vQ'])
