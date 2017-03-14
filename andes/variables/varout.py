@@ -16,7 +16,7 @@ class VarOut(object):
         self.t.append(t)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
 
-    def __repr__(self):
+    def show(self):
         """
         The representation of an Varout object
         :rtype: array
@@ -24,7 +24,10 @@ class VarOut(object):
         """
         nvar = self.system.DAE.m + self.system.DAE.n
         nstep = len(self.t)
-        return array(self.vars, (nvar, nstep), 'd')
+        out = []
+        for item in self.vars:
+            out.append(list(item))
+        return array(out)
 
     def dump(self):
         """Dump the TDS results to files after the simulation """

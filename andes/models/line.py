@@ -240,6 +240,9 @@ class Line(ModelBase):
 
     def gycall(self, dae):
         gy = self.build_gy(dae)
+        # for item in range(self.nb):
+        #     if gy[item, item] == 0:
+        #         gy[item, item] = 1e-6
         dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):

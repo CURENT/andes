@@ -338,16 +338,16 @@ class VSCDyn(DCBase):
         self._name = 'VSCDyn'
         self._ac = {'bus': ['a', 'v']}
         self._data.update({'vsc': None,
-                           'Kp1': 0.1,
-                           'Ki1': 0.1,
-                           'Kp2': 0.1,
-                           'Ki2': 0.1,
-                           'Kp3': 0.1,
-                           'Ki3': 0.1,
-                           'Kp4': 0.1,
-                           'Ki4': 0.1,
-                           'Kpdc': 0.2,
-                           'Kidc': 0.2,
+                           'Kp1': 0.2,
+                           'Ki1': 0.5,
+                           'Kp2': 2,
+                           'Ki2': 1,
+                           'Kp3': 2,
+                           'Ki3': 1,
+                           'Kp4': 2,
+                           'Ki4': 1,
+                           'Kpdc': 20,
+                           'Kidc': 5,
                            'Tt': 0.02,
                            'Tdc': 0.02,
                            })
@@ -532,10 +532,12 @@ class VSCDyn(DCBase):
         # 14 - [Idref], [Id]
         dae.add_jac(Fy0, self.Ki1, self.Md, self.Idref)
         dae.add_jac(Fx0, -self.Ki1, self.Md, self.Id)
+        dae.add_jac(Fx0, 1e-6, self.Md, self.Md)
 
         # 15 - [Iqref], [Iq]
         dae.add_jac(Fy0, self.Ki1, self.Mq, self.Iqref)
         dae.add_jac(Fx0, -self.Ki1, self.Mq, self.Iq)
+        dae.add_jac(Fx0, 1e-6, self.Mq, self.Mq)
 
         # 16 - [Id], [Iq], [ucd], [Md], [Idref]
         dae.add_jac(Fx0, -mul(self.Kp1, self.iTt), self.ucd, self.Id)
@@ -556,12 +558,14 @@ class VSCDyn(DCBase):
         dae.add_jac(Fy0, mul(self.PQ + self.vQ, self.Ki2), self.Nd, self.qref)
         dae.add_jac(Fy0, mul(self.PV + self.vV, self.Ki3), self.Nd, self.vref)
         dae.add_jac(Fy0, -mul(self.PV + self.vV, self.Ki3), self.Nd, self.v)
+        dae.add_jac(Fx0, 1e-6, self.Nd, self.Nd)
 
         # 19 - [pref], [vdcref], [v1], [v2]
         dae.add_jac(Fy0, mul(self.PQ + self.PV, self.Ki4), self.Nq, self.pref)
         dae.add_jac(Fy0, mul(self.vV + self.vQ, self.Kidc), self.Nq, self.vdcref)
         dae.add_jac(Fy0, -mul(self.vV + self.vQ, self.Kidc), self.Nq, self.v1)
         dae.add_jac(Fy0, mul(self.vV + self.vQ, self.Kidc), self.Nq, self.v2)
+        dae.add_jac(Fx0, 1e-6, self.Nq, self.Nq)
 
         # 20 - [Idcx], [vdcref], [v1], [Nq], [Idcx]
         dae.add_jac(Fx0, -mul(self.vV + self.vQ, self.iTdc), self.Idcx, self.Idcx)

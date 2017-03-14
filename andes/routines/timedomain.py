@@ -1,5 +1,6 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
+from numpy import array
 from ..utils.jactools import *
 import progressbar
 F = []
@@ -148,6 +149,9 @@ def run(system):
                 # anti-windup limiters
                 #     exec(system.Call.windup)
 
+                # Ac = matrix(dae.Ac)
+                # Ac = array(Ac)
+
                 if dae.factorize:
                     F = symbolic(dae.Ac)
                     dae.factorize = False
@@ -197,6 +201,7 @@ def run(system):
         diff_max = anglediff()
 
     bar.finish()
+
 
 def time_step(system, convergence, niter, t):
     """determine the time step during time domain simulations
