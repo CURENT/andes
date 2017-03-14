@@ -29,7 +29,7 @@ class DevMan(object):
             return
         group_name = self.system.__dict__[dev_name]._group
         if idx is None:  # "if not idx" will fail for idx==0.0
-            idx = len(self.group[group_name].keys())
+            idx = dev_name + '_' + str(len(self.group[group_name].keys()))
         self.group[group_name][idx] = dev_name
         return idx
 
