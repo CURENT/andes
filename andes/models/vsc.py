@@ -125,6 +125,9 @@ class VSC(DCBase):
                           (self.k0 + mul(self.k1, dae.y[self.Ish]) + mul(self.k2, mul(dae.y[self.Ish], dae.y[self.Ish])))
 
     def gcall(self, dae):
+        if sum(self.u) == 0:
+            return
+
         Vm = polar(dae.y[self.v], dae.y[self.a])
         Vsh = polar(dae.y[self.vsh], dae.y[self.ash])
         Ish = mul(self.Ysh, Vsh - Vm)
