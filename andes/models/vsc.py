@@ -349,18 +349,18 @@ class VSCDyn(DCBase):
         self._data.update({'vsc': None,
                            'Kp1': 0.2,
                            'Ki1': 0.5,
-                           'Kp2': 2,
-                           'Ki2': 1,
-                           'Kp3': 2,
-                           'Ki3': 1,
-                           'Kp4': 2,
-                           'Ki4': 1,
-                           'Kpdc': 20,
-                           'Kidc': 5,
+                           'Kp2': 0.2,
+                           'Ki2': 0.5,
+                           'Kp3': 1,
+                           'Ki3': 0.5,
+                           'Kp4': 1,
+                           'Ki4': 0.5,
+                           'Kpdc': 0.2,
+                           'Kidc': 0.2,
                            'Tt': 0.02,
                            'Tdc': 0.02,
-                           'Cdc': 10.1,
-                           'Ldc': 0.1,
+                           'Cdc': 0.00001,
+                           'Ldc': 0.00001,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
                              'Tt', 'Tdc', 'Cdc', 'Ldc'])
@@ -453,7 +453,7 @@ class VSCDyn(DCBase):
         Idc = div(mul(dae.x[self.ucd], dae.x[self.Id]) + mul(dae.x[self.ucq], dae.x[self.Iq]),  dae.y[self.v1] - dae.y[self.v2])
         dae.y[self.Idcy] = mul(self.PQ + self.PV, Idc)
         dae.x[self.Idcx] = mul(self.vQ + self.vV, Idc)
-        dae.x[self.ILdc] = -Idc
+        dae.x[self.ILdc] = Idc
 
         dae.x[self.Nd] = mul(self.PV + self.vV, div(self.qref0, self.usq))
         dae.x[self.Nq] = mul(self.vQ + self.vV, dae.x[self.Idcx])
@@ -504,14 +504,14 @@ class VSCDyn(DCBase):
         dae.g[self.v] -= mul(self.usq, dae.x[self.Id])
 
         # 10 - v1(1): x0[Idcx]
-        dae.g[self.v1] -= dae.x[self.ILdc]
+        dae.g[self.v1] += dae.x[self.ILdc]
 
         # 11 - v2(3): x0[Idcx]  |  y0[Idcy]  |   y0[ICdc]
         dae.g -= spmatrix(mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy]), self.v2, [0] * self.n, (dae.m, 1), 'd')
         dae.g += spmatrix(dae.y[self.ICdc], self.v2, [0] * self.n, (dae.m, 1), 'd')
 
         # 11.1 - ICdc: x0[Idcx],  y0[Idcy], x0[ILdc], y0[ICdc]
-        dae.g[self.ICdc] = mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy]) + dae.x[self.ILdc] + dae.y[self.ICdc]
+        dae.g[self.ICdc] = mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy]) - dae.x[self.ILdc] - dae.y[self.ICdc]
 
     def jac0(self, dae):
         # 1 [1], 2[1], 3[1], 4[1]
@@ -534,7 +534,7 @@ class VSCDyn(DCBase):
         dae.add_jac(Gy0, -self.u + 1e-6, self.Idcy, self.Idcy)
 
         # 10 -
-        dae.add_jac(Gx0, -self.u, self.v1, self.ILdc)
+        dae.add_jac(Gx0, self.u, self.v1, self.ILdc)
 
         # 11 - [Idcx], [Idcy], [ICdc]
         dae.add_jac(Gx0, -mul(self.u, self.vV + self.vQ), self.v2, self.Idcx)
@@ -544,8 +544,8 @@ class VSCDyn(DCBase):
         # 11.1 [Idcx], [Idcy], [ILdc], [ICdc]
         dae.add_jac(Gx0, mul(self.u, self.vV + self.vQ), self.ICdc, self.Idcx)
         dae.add_jac(Gy0, mul(self.u, self.PQ + self.PV), self.ICdc, self.Idcy)
-        dae.add_jac(Gx0, self.u, self.ICdc, self.ILdc)
-        dae.add_jac(Gy0, self.u + 1e-6, self.ICdc, self.ICdc)
+        dae.add_jac(Gx0, -self.u, self.ICdc, self.ILdc)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.ICdc, self.ICdc)
 
         # 12 - [Id], [Iq], [ucd]
         dae.add_jac(Fx0, -mul(self.rsh, self.iLsh, self.u) + 1e-6, self.Id, self.Id)
@@ -604,7 +604,7 @@ class VSCDyn(DCBase):
         dae.add_jac(Fx0, mul(self.PQ + self.PV, self.u + 1e-6), self.Idcx, self.Idcx)
 
         # 20 and 21
-        dae.add_jac(Fy0, -div(self.u, self.Cdc), self.vCdc, self.ICdc)
+        dae.add_jac(Fy0, div(self.u, self.Cdc), self.vCdc, self.ICdc)
         dae.add_jac(Fy0, div(self.u, self.Ldc), self.ILdc, self.v1)
         dae.add_jac(Fx0, -div(self.u, self.Ldc), self.ILdc, self.vCdc)
 
@@ -671,7 +671,7 @@ class VSCDyn(DCBase):
         iLdc = div(self.u, self.Ldc)
 
         # 21 - vCdc(1): y0[ICdc]
-        dae.f[self.vCdc] = mul(-dae.y[self.ICdc], iCdc)
+        dae.f[self.vCdc] = mul(dae.y[self.ICdc], iCdc)
 
         # 22 - ILdc(2): y0[v1], x0[vCdc]
         dae.f[self.ILdc] = mul(dae.y[self.v1] - dae.x[self.vCdc], iLdc)
