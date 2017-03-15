@@ -148,16 +148,16 @@ SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     v0 = 1.06
 
 
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
-#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
-#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
+Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
+Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
+Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
+      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
+      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
 
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0

@@ -9,7 +9,7 @@ class TDS(SettingsBase):
         self.method = 'trapezoidal'
         self.method_alt = ['euler', 'trapezoidal','fwdeuler']
         self.t0 = 0.0
-        self.tf = 300.0
+        self.tf = 20
         self.deltat = 0.01
         self.deltatmax = 1
         self.deltatmin = 0.0002

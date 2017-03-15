@@ -378,12 +378,14 @@ class VSCDyn(DCBase):
                             'Tt': 'ac voltage measurement delay time constant',
                             'Tdc': 'dc voltage time constant',
                             'Cdc': 'dc interface shunt capacitor',
+                            'Rc': 'resistor on the capacitor link',
                             })
         self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy', 'ICdc'])
-        self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx' , 'vCdc'])
+        self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx', 'vCdc'])
         self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq',
                               'pref0', 'qref0', 'vref0', 'vdcref0'])
         self._mandatory.extend(['vsc'])
+        self._zeros.extend(['Tt', 'Tdc', 'Cdc'])
         self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}', 'I^C_{dc}'])
         self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}', 'U^C_{dc}'])
         self.calls.update({'init1': True, 'gcall': True,
@@ -503,7 +505,7 @@ class VSCDyn(DCBase):
 
         # 10 - v1: x0[Idcx]  |  y0[Idcy]
         Idc = mul(self.vV + self.vQ, dae.x[self.Idcx]) + mul(self.PQ + self.PV, dae.y[self.Idcy])
-        dae.g[self.v1] += -Idc - dae.y[self.ICdc]
+        dae.g[self.v1] -= Idc + dae.y[self.ICdc]
 
         # 11 - v2: x0[Idcx]  |  y0[Idcy]
         dae.g += spmatrix(Idc, self.v2, [0] * self.n, (dae.m, 1), 'd')
@@ -511,7 +513,6 @@ class VSCDyn(DCBase):
 
         # 11.1
         dae.g[self.ICdc] = dae.y[self.v1] - dae.x[self.vCdc]
-        # 11.2
 
     def jac0(self, dae):
         # 1 [1], 2[1], 3[1], 4[1]
@@ -604,7 +605,6 @@ class VSCDyn(DCBase):
 
         # 21.1
         dae.add_jac(Fy0, -div(self.u, self.Cdc), self.vCdc, self.ICdc)
-
 
     def gycall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
