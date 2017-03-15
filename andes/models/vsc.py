@@ -359,12 +359,11 @@ class VSCDyn(DCBase):
                            'Kidc': 2,
                            'Tt': 0.02,
                            'Tdc': 0.02,
-                           'Cdc': 5,
-                           'Ldc': 0.02,  # 0.02
-                           'RC': 0.2,
+                           'Cdc': 0.1,
+                           'RC': 0,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
-                             'Tt', 'Tdc', 'Cdc', 'Ldc', 'RC'])
+                             'Tt', 'Tdc', 'Cdc', 'RC'])
         self._descr.update({'vsc': 'static vsc idx',
                             'Kp1': 'current controller proportional gain',
                             'Ki1': 'current controller integrator gain',
@@ -379,15 +378,14 @@ class VSCDyn(DCBase):
                             'Tt': 'ac voltage measurement delay time constant',
                             'Tdc': 'dc voltage time constant',
                             'Cdc': 'dc interface shunt capacitor',
-                            'Ldc': 'dc interface series inductance'
                             })
         self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy', 'ICdc'])
         self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx' , 'vCdc'])
         self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq',
                               'pref0', 'qref0', 'vref0', 'vdcref0'])
         self._mandatory.extend(['vsc'])
-        self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}', 'I^C_{dc}', 'v^L_{dc}'])
-        self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}', 'U^C_{dc}', 'I^L_{dc}'])
+        self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}', 'I^C_{dc}'])
+        self._fnamex.extend(['I_d', 'I_q', 'M_d', 'M_q', 'u_c^d', 'u_c^q', 'N_d', 'N_q', 'I_{dcx}', 'U^C_{dc}'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True,
                            'gycall': True, 'fxcall': True,
