@@ -148,16 +148,16 @@ SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     v0 = 1.06
 
 
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
-      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
-      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
+#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
+#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
 
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0
@@ -170,21 +170,21 @@ Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
 VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.5, qref0 = 0.01, control = "PQ",
-     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 0
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, qref0 = 0.01, control = "PQ",
-     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 0
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
 VSC, idx = 3, node1 = 3, node2 = 0, bus = 12, name = "VSC 3", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.3, vref0 = 1.00, control = "PV",
-     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 0
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.03, vdcref0 = 1.0, control = "vV",
-     Vdcn = 100, u = 0
+     Vdcn = 100, u = 1
 
-#VSCDyn, vsc = 1, name = "VSC_1"
-#VSCDyn, vsc = 2, name = "VSC_2"
-#VSCDyn, vsc = 3, name = "VSC_3"
-#VSCDyn, vsc = 4, name = "VSC_4"
+VSCDyn, vsc = 1, name = "VSC_1"
+VSCDyn, vsc = 2, name = "VSC_2"
+VSCDyn, vsc = 3, name = "VSC_3"
+VSCDyn, vsc = 4, name = "VSC_4"
 
 Fault, bus = 4, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.02
 
