@@ -361,11 +361,10 @@ class VSCDyn(DCBase):
                            'Tdc': 0.02,
                            'Cdc': 1e-100,
                            'Ldc': 0.02,  # 0.02
-                           'RC': 0,
-                           'RL': 0,
+                           'RC': 0.2,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
-                             'Tt', 'Tdc', 'Cdc', 'Ldc', 'RC', 'RL'])
+                             'Tt', 'Tdc', 'Cdc', 'Ldc', 'RC'])
         self._descr.update({'vsc': 'static vsc idx',
                             'Kp1': 'current controller proportional gain',
                             'Ki1': 'current controller integrator gain',
@@ -520,6 +519,7 @@ class VSCDyn(DCBase):
         # 11.2
         dae.g[self.vLdc] = mul(self.RC, dae.y[self.ICdc]) + dae.x[self.vCdc] - dae.y[self.vLdc]
 
+
     def jac0(self, dae):
         # 1 [1], 2[1], 3[1], 4[1]
         dae.add_jac(Gy0, self.PV + self.vV + 1e-6, self.vref, self.vref)
@@ -619,7 +619,6 @@ class VSCDyn(DCBase):
 
         # 21.2
         dae.add_jac(Fy0, -div(self.u, self.Ldc), self.ILdc, self.vLdc)
-        dae.add_jac(Fx0, div(self.RL, self.Ldc), self.ILdc, self.ILdc)
         dae.add_jac(Fy0, div(self.u, self.Ldc), self.ILdc, self.v1)
 
     def gycall(self, dae):
@@ -685,7 +684,7 @@ class VSCDyn(DCBase):
         dae.f[self.vCdc] = -div(dae.y[self.ICdc], self.Cdc)
 
         # 21.2
-        dae.f[self.ILdc] = -div(dae.y[self.vLdc] - mul(self.RL, dae.x[self.ILdc]) - dae.y[self.v1], self.Ldc)
+        dae.f[self.ILdc] = -div(dae.y[self.vLdc] - dae.y[self.v1], self.Ldc)
 
     def fxcall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
