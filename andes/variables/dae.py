@@ -103,13 +103,19 @@ class DAE(object):
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
         if yext:
-            yfill = matrix(0.0, (yext, 1), 'd')
-            self.y = matrix([self.y, yfill], (self.m, 1), 'd')
-            self.g = matrix([self.g, yfill], (self.m, 1), 'd')
+            yzeros = matrix(0.0, (yext, 1), 'd')
+            yones = matrix(1.0, (yext, 1), 'd')
+            self.y = matrix([self.y, yzeros], (self.m, 1), 'd')
+            self.g = matrix([self.g, yzeros], (self.m, 1), 'd')
+            self.yu = matrix([self.yu, yones], (self.m, 1), 'd')
+            self.yz = matrix([self.yz, yzeros], (self.m, 1), 'd')
         if xext:
-            xfill = matrix(0.0, (xext, 1), 'd')
-            self.x = matrix([self.x, xfill], (self.n, 1), 'd')
-            self.f = matrix([self.f, xfill], (self.n, 1), 'd')
+            xzeros = matrix(0.0, (xext, 1), 'd')
+            xones = matrix(1.0, (xext, 1), 'd')
+            self.x = matrix([self.x, xzeros], (self.n, 1), 'd')
+            self.f = matrix([self.f, xzeros], (self.n, 1), 'd')
+            self.xu = matrix([self.xu, xones], (self.n, 1), 'd')
+            self.xz = matrix([self.xz, xzeros], (self.n, 1), 'd')
 
     def algeb_windup(self, idx):
         """Reset Jacobian elements related to windup algebs"""

@@ -540,6 +540,17 @@ class ModelBase(object):
         self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
+    def reset_offline(self):
+        """Reset mismatch and differential for disabled elements"""
+        for idx in range(self.n):
+            if self.u[idx] == 0:
+                for item in self._states:
+                    self.system.DAE.f[self.__dict__[item][idx]] = 0
+                    self.system.DAE.xu[self.__dict__[item][idx]] = 0
+                for item in self._algebs:
+                    self.system.DAE.g[self.__dict__[item][idx]] = 0
+                    self.system.DAE.yu[self.__dict__[item][idx]] = 0
+
     def insight(self, idx=None):
         """Print the parameter values as a list"""
         if not self.n:
