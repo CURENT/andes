@@ -153,6 +153,9 @@ def run(system):
                 # Ac = matrix(dae.Ac)
                 # Ac = array(Ac)
 
+                if t >= 60:
+                    dd = 99
+
                 if dae.factorize:
                     F = symbolic(dae.Ac)
                     dae.factorize = False
