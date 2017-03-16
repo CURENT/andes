@@ -360,10 +360,9 @@ class VSCDyn(DCBase):
                            'Tt': 0.02,
                            'Tdc': 0.02,
                            'Cdc': 0.1,
-                           'RC': 0,
                            })
         self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
-                             'Tt', 'Tdc', 'Cdc', 'RC'])
+                             'Tt', 'Tdc', 'Cdc'])
         self._descr.update({'vsc': 'static vsc idx',
                             'Kp1': 'current controller proportional gain',
                             'Ki1': 'current controller integrator gain',
@@ -378,7 +377,6 @@ class VSCDyn(DCBase):
                             'Tt': 'ac voltage measurement delay time constant',
                             'Tdc': 'dc voltage time constant',
                             'Cdc': 'dc interface shunt capacitor',
-                            'Rc': 'resistor on the capacitor link',
                             })
         self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy', 'ICdc'])
         self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx', 'vCdc'])
