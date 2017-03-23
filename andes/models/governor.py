@@ -27,7 +27,7 @@ class GovernorBase(ModelBase):
         self._params.extend(['pmax', 'pmin', 'R', 'wref0'])
         self._algebs.extend(['wref', 'pout'])
         self._fnamey.extend(['\\omega_{ref}', 'P_{out}'])
-        self._service.extend(['pm0', 'gain', 'pin'])
+        self._service.extend(['pm0', 'gain'])
         self._mandatory.extend(['gen', 'R'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True, 'jac0': True,
@@ -49,9 +49,6 @@ class GovernorBase(ModelBase):
         dae.y[self.pout] = self.pm0
 
     def gcall(self, dae):
-        pin0 = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega])
-        self.pin = algeb_limiter(pin0, self.pmin, self.pmax)
-
         dae.g[self.pm] += self.pm0 - mul(self.u, dae.y[self.pout])  # update the Syn.pm equations
         dae.g[self.wref] = dae.y[self.wref] - self.wref0
 
@@ -73,10 +70,12 @@ class TG1(GovernorBase):
                            'Ts': 0.1,
                            })
         self._params.extend(['T3', 'T4', 'T5', 'Tc', 'Ts'])
-        self._mandatory.extend(['T5', 'Tc', 'Ts'])
+        # self._mandatory.extend(['T5', 'Tc', 'Ts'])
         self._service.extend(['iTs', 'iTc', 'iT5', 'k1', 'k2', 'k3', 'k4'])
         self._states.extend(['xg1', 'xg2', 'xg3'])
         self._fnamex.extend(['x_{g1}', 'x_{g2}', 'x_{g3}'])
+        self._algebs.extend(['pin'])
+        self._fnamey.extend(['P_{in}'])
         self._inst_meta()
 
     def init1(self, dae):
@@ -92,21 +91,42 @@ class TG1(GovernorBase):
         dae.x[self.xg1] = mul(self.u, self.pm0)
         dae.x[self.xg2] = mul(self.u, self.k2, self.pm0)
         dae.x[self.xg3] = mul(self.u, self.k4, self.pm0)
+        dae.y[self.pin] = self.pm0
 
     def fcall(self, dae):
         super(TG1, self).fcall(dae)
         dae.f[self.xg1] = mul(self.u, dae.y[self.pin] - dae.x[self.xg1], self.iTs)
-        dae.f[self.xg2] = mul(self.u, mul(1 - self.k1, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
-        dae.f[self.xg3] = mul(self.u, mul(1 - self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
+        dae.f[self.xg2] = mul(self.u, mul(self.k2, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
+        dae.f[self.xg3] = mul(self.u, mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
 
     def gcall(self, dae):
         super(TG1, self).gcall(dae)
+        dae.g[self.pin] = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega])
+        dae.ylimiter(self.pin, self.pmin, self.pmax)
+
         dae.g[self.pout] = dae.x[self.xg3] + mul(self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.y[self.pout]
+
+        # check syn for pm input
 
     def jac0(self, dae):
         super(TG1, self).jac0(dae)
-        # dae.add_jac(Fx0, -self.iTs, )
-        # todo: continue from here
+        dae.add_jac(Gx0, -mul(self.u, self.gain), self.pin, self.omega)
+
+        dae.add_jac(Fx0, -mul(self.u, self.iTs) + 1e-6, self.xg1, self.xg1)
+        dae.add_jac(Fy0, mul(self.u, self.iTs), self.xg1, self.pin)
+
+        dae.add_jac(Fx0, mul(self.u, k2, self.iTc), self.xg2, self.xg1)
+        dae.add_jac(Fx0, -mul(self.u, self.iTc), self.xg2, self.xg2)
+
+        dae.add_jac(Fx0, mul(self.u, self.k4, self.iT5), self.xg3, self.xg2)
+        dae.add_jac(Fx0, mul(self.u, self.k4, self.k1, self.iT5), self.xg3, self.xg1)
+        dae.add_jac(Fx0, -mul(self.u, self.iT5, self.xg3, self.xg3))
+
+        dae.add_jac(Gx0, self.u, self.pout, self.xg3)
+        dae.add_jac(Gx0, mul(self.u, self.k3), self.pout, self.xg2)
+        dae.add_jac(Gx0, mul(self.u, self.k3, self.k1), self.pout, self.xg1)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.pout, self.pout)
+
 
 class TG2(GovernorBase):
     """Simplified governor model"""
@@ -134,9 +154,10 @@ class TG2(GovernorBase):
         dae.f[self.xg] = mul(self.iT2, mul(self.gain, 1 - self.T12, self.wref0 - dae.x[self.omega]) - dae.x[self.xg])
 
     def gcall(self, dae):
-        super(TG2, self).gcall(dae)
         pm = dae.x[self.xg] + self.pm0 + mul(self.gain, self.T12, self.wref0 - dae.x[self.omega])
-        dae.g[self.pout] = algeb_limiter(pm, self.pmin, self.pmax) - dae.y[self.pout]
+        dae.g[self.pout] = pm - dae.y[self.pout]
+        dae.ylimiter(self.pout, self.pmin, self.pmax)
+        super(TG2, self).gcall(dae)
 
     def jac0(self, dae):
         super(TG2, self).jac0(dae)
