@@ -161,7 +161,8 @@ class ModelBase(object):
 
     def copy_param(self, model, src, dest=None, fkey=None, astype=None):
         """get a copy of the system.model.src as self.dest"""
-
+        if not self.n:
+            return
         # input check
         dev_type = None
         val = list()

@@ -11,16 +11,15 @@ class GovernorBase(ModelBase):
         super(GovernorBase, self).__init__(system, name)
         self._group = 'Governor'
         self.remove_param('Vn')
-        self.remove_param('Sn')
         self._data.update({'gen': None,
-                           'pmax': 1.0,
+                           'pmax': 999.0,
                            'pmin': 0.0,
                            'R': 0.05,
                            'wref0': 1.0,
                            })
         self._descr.update({'gen': 'generator index',
-                            'pmax': 'maximum turbine output',
-                            'pmin': 'minimum turbine output',
+                            'pmax': 'maximum turbine output in Syn Sn',
+                            'pmin': 'minimum turbine output in Syn Sn',
                             'R': 'speed regulation droop',
                             'wref0': 'initial reference speed',
                             })
@@ -29,15 +28,22 @@ class GovernorBase(ModelBase):
         self._fnamey.extend(['\\omega_{ref}', 'P_{out}'])
         self._service.extend(['pm0', 'gain'])
         self._mandatory.extend(['gen', 'R'])
+        self._powers.extend(['pmax', 'pmin'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True, 'jac0': True,
                            })
+
+    def base(self):
+        if not self.n:
+            return
+        self.copy_param(model='Synchronous', src='Sn', dest='Sn', fkey=self.gen)
+        super(GovernorBase, self).base()
+        self.R = self.system.Settings.mva * div(self.R, self.Sn)
 
     def init1(self, dae):
         self.gain = div(1.0, self.R)
 
         # values
-        self.copy_param(model='Synchronous', src='Sn', dest='Sn', fkey=self.gen)
         self.copy_param(model='Synchronous', src='pm0', dest='pm0', fkey=self.gen)
 
         # indices
@@ -70,7 +76,7 @@ class TG1(GovernorBase):
                            'Ts': 0.1,
                            })
         self._params.extend(['T3', 'T4', 'T5', 'Tc', 'Ts'])
-        # self._mandatory.extend(['T5', 'Tc', 'Ts'])
+        self._mandatory.extend(['T5', 'Tc', 'Ts'])
         self._service.extend(['iTs', 'iTc', 'iT5', 'k1', 'k2', 'k3', 'k4'])
         self._states.extend(['xg1', 'xg2', 'xg3'])
         self._fnamex.extend(['x_{g1}', 'x_{g2}', 'x_{g3}'])
@@ -94,33 +100,32 @@ class TG1(GovernorBase):
         dae.y[self.pin] = self.pm0
 
     def fcall(self, dae):
-        super(TG1, self).fcall(dae)
         dae.f[self.xg1] = mul(self.u, dae.y[self.pin] - dae.x[self.xg1], self.iTs)
         dae.f[self.xg2] = mul(self.u, mul(self.k2, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
         dae.f[self.xg3] = mul(self.u, mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
 
     def gcall(self, dae):
-        super(TG1, self).gcall(dae)
-        dae.g[self.pin] = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega])
+        dae.g[self.pin] = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega]) - dae.y[self.pin]
         dae.ylimiter(self.pin, self.pmin, self.pmax)
 
         dae.g[self.pout] = dae.x[self.xg3] + mul(self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.y[self.pout]
-
-        # check syn for pm input
+        super(TG1, self).gcall(dae)
 
     def jac0(self, dae):
         super(TG1, self).jac0(dae)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.pin, self.pin)
+
         dae.add_jac(Gx0, -mul(self.u, self.gain), self.pin, self.omega)
 
         dae.add_jac(Fx0, -mul(self.u, self.iTs) + 1e-6, self.xg1, self.xg1)
         dae.add_jac(Fy0, mul(self.u, self.iTs), self.xg1, self.pin)
 
-        dae.add_jac(Fx0, mul(self.u, k2, self.iTc), self.xg2, self.xg1)
+        dae.add_jac(Fx0, mul(self.u, self.k2, self.iTc), self.xg2, self.xg1)
         dae.add_jac(Fx0, -mul(self.u, self.iTc), self.xg2, self.xg2)
 
         dae.add_jac(Fx0, mul(self.u, self.k4, self.iT5), self.xg3, self.xg2)
         dae.add_jac(Fx0, mul(self.u, self.k4, self.k1, self.iT5), self.xg3, self.xg1)
-        dae.add_jac(Fx0, -mul(self.u, self.iT5, self.xg3, self.xg3))
+        dae.add_jac(Fx0, -mul(self.u, self.iT5), self.xg3, self.xg3)
 
         dae.add_jac(Gx0, self.u, self.pout, self.xg3)
         dae.add_jac(Gx0, mul(self.u, self.k3), self.pout, self.xg2)
