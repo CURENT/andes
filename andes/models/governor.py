@@ -50,7 +50,7 @@ class GovernorBase(ModelBase):
         self.copy_param(model='Synchronous', src='omega', dest='omega', fkey=self.gen)
         self.copy_param(model='Synchronous', src='pm', dest='pm', fkey=self.gen)
 
-        self.limit_check(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
+        self.init_limit(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
         dae.y[self.wref] = self.wref0
         dae.y[self.pout] = self.pm0
 

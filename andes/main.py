@@ -342,7 +342,7 @@ def run(case, **kwargs):
 
     if pid >= 0:
         t3, s = elapsed(t0)
-        system.Log.always('Process {:d} finished in {:s}.'.format(pid, s))
+        system.Log.info('Process {:d} finished in {:s}.'.format(pid, s))
 
 
 if __name__ == '__main__':

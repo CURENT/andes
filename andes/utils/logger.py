@@ -128,21 +128,21 @@ class Logger(object):
         Log a warning-level message. If exc_info is True, if an exception
         was caught, show the exception information (message and stack trace).
         """
-        self._raw_log(logging.warning, message, exc_info)
+        self._raw_log(logging.warning, '* Warning: ' + message, exc_info)
 
     def error(self, message, exc_info=False):
         """
         Log an error-level message. If exc_info is True, if an exception
         was caught, show the exception information (message and stack trace).
         """
-        self._raw_log(logging.error, message, exc_info)
+        self._raw_log(logging.error, '* Error: ' + message, exc_info)
 
     def always(self, message, exc_info=False):
         """
         Log a always shown message. If exc_info is True, if an exception
         was caught, show the exception information (message and stack trace).
         """
-        self._raw_log(logging.critical, message, exc_info)
+        self._raw_log(logging.critical, '* Critical: ' + message, exc_info)
 
     def message(self, message, level=None):
         if level == INFO:

@@ -15,12 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cvxopt import matrix, sparse, spmatrix
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
-from cvxopt import mul, div
-from ..utils.math import agtb, altb, nota, findeq
-import copy
 import sys
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+from cvxopt import matrix, spmatrix
+from cvxopt import mul, div
+
+from ..utils.math import agtb, altb, findeq
 
 
 class ModelBase(object):
@@ -497,21 +498,23 @@ class ModelBase(object):
             return
         self.system.Log.message(msg, level)
 
-    def limit_check(self, key, lower=None, upper=None, limit=False):
+    def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
         above = agtb(self.__dict__[key], upper)
         idx = findeq(above, 1.0)
         for item in idx:
-            self.message('{0} <{1}.{2}> above the maximum.'.format(self.names[item], self._name, key), WARNING)
+            maxval = upper[item]
+            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.names[item], self._name, key, maxval), ERROR)
             if limit:
-                self.__dict__[key][item] = upper[item]
+                self.__dict__[key][item] = maxval
 
         below = altb(self.__dict__[key], lower)
         idx = findeq(below, 1.0)
         for item in idx:
-            self.message('{0} <{1}.{2}> below the minimum.'.format(self.names[item], self._name, key), WARNING)
+            minval = lower[item]
+            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.names[item], self._name, key, minval), ERROR)
             if limit:
-                self.__dict__[key][item] = lower[item]
+                self.__dict__[key][item] = minval
 
     def add_jac(self, m, val, row, col):
         """Add spmatrix(m, val, row) to DAE.(m)"""
