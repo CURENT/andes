@@ -147,8 +147,8 @@ def run(system):
                                      [   - h*0.5*dae.Fy, dae.Gy]], 'd')
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
-                # anti-windup limiters
-                #     exec(system.Call.windup)
+                # windup limiters
+                dae.set_Ac()
 
                 # Ac = matrix(dae.Ac)
                 # Ac = array(Ac)

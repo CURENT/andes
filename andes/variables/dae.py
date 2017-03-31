@@ -117,11 +117,11 @@ class DAE(object):
             self.xu = matrix([self.xu, xones], (self.n, 1), 'd')
             self.xz = matrix([self.xz, xzeros], (self.n, 1), 'd')
 
-    def algeb_windup(self, idx):
-        """Reset Jacobian elements related to windup algebs"""
-        H = spmatrix(1.0, idx, idx, (self.m, self.m))
-        I = spdiag([1.0] * self.m) - H
-        self.Gy = I * (self.Gy * I) + H
+    # def algeb_windup(self, idx):
+    #     """Reset Jacobian elements related to windup algebs"""
+    #     H = spmatrix(1.0, idx, idx, (self.m, self.m))
+    #     I = spdiag([1.0] * self.m) - H
+    #     self.Gy = I * (self.Gy * I) + H
 
     def ylimiter(self, yidx, ymin, ymax):
         """Limit algebraic variables and set the Jacobians"""
@@ -135,7 +135,7 @@ class DAE(object):
         self.y[yidx[below_idx]] = ymin[below_idx]
 
         idx = list(above_idx) + list(below_idx)
-        self.g[yidx[idx]] = 0
+        # self.g[yidx[idx]] = 0
         self.yz[yidx[idx]] = 1
 
         if len(idx) > 0:
@@ -162,7 +162,11 @@ class DAE(object):
     def set_Ac(self):
         """Reset Jacobian elements for limited algebraic variables"""
         # Todo: replace algeb_windup()
-        idx = matrix(findeq(aandb(self.yu, self.yz), 1.0))
+        if sum(self.yz) == 0:
+            return
+        if sum(self.yu) == self.m:
+            return
+        idx = matrix(findeq(aandb(1 - self.yu, self.yz), 1.0))
         H = spmatrix(1.0, idx, idx, (self.m, self.m))
         I = spdiag([1.0] * self.m) - H
         self.Gy = I * (self.Gy * I) + H

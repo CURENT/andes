@@ -11,47 +11,50 @@ class GovernorBase(ModelBase):
         super(GovernorBase, self).__init__(system, name)
         self._group = 'Governor'
         self.remove_param('Vn')
-        self.remove_param('Sn')
         self._data.update({'gen': None,
-                           'pmax': 1.0,
+                           'pmax': 999.0,
                            'pmin': 0.0,
                            'R': 0.05,
                            'wref0': 1.0,
                            })
         self._descr.update({'gen': 'generator index',
-                            'pmax': 'maximum turbine output',
-                            'pmin': 'minimum turbine output',
+                            'pmax': 'maximum turbine output in Syn Sn',
+                            'pmin': 'minimum turbine output in Syn Sn',
                             'R': 'speed regulation droop',
                             'wref0': 'initial reference speed',
                             })
         self._params.extend(['pmax', 'pmin', 'R', 'wref0'])
         self._algebs.extend(['wref', 'pout'])
         self._fnamey.extend(['\\omega_{ref}', 'P_{out}'])
-        self._service.extend(['pm0', 'gain', 'pin'])
+        self._service.extend(['pm0', 'gain'])
         self._mandatory.extend(['gen', 'R'])
+        self._powers.extend(['pmax', 'pmin'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True, 'jac0': True,
                            })
+
+    def base(self):
+        if not self.n:
+            return
+        self.copy_param(model='Synchronous', src='Sn', dest='Sn', fkey=self.gen)
+        super(GovernorBase, self).base()
+        self.R = self.system.Settings.mva * div(self.R, self.Sn)
 
     def init1(self, dae):
         self.gain = div(1.0, self.R)
 
         # values
-        self.copy_param(model='Synchronous', src='Sn', dest='Sn', fkey=self.gen)
         self.copy_param(model='Synchronous', src='pm0', dest='pm0', fkey=self.gen)
 
         # indices
         self.copy_param(model='Synchronous', src='omega', dest='omega', fkey=self.gen)
         self.copy_param(model='Synchronous', src='pm', dest='pm', fkey=self.gen)
 
-        self.limit_check(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
+        self.init_limit(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
         dae.y[self.wref] = self.wref0
         dae.y[self.pout] = self.pm0
 
     def gcall(self, dae):
-        pin0 = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega])
-        self.pin = algeb_limiter(pin0, self.pmin, self.pmax)
-
         dae.g[self.pm] += self.pm0 - mul(self.u, dae.y[self.pout])  # update the Syn.pm equations
         dae.g[self.wref] = dae.y[self.wref] - self.wref0
 
@@ -77,6 +80,8 @@ class TG1(GovernorBase):
         self._service.extend(['iTs', 'iTc', 'iT5', 'k1', 'k2', 'k3', 'k4'])
         self._states.extend(['xg1', 'xg2', 'xg3'])
         self._fnamex.extend(['x_{g1}', 'x_{g2}', 'x_{g3}'])
+        self._algebs.extend(['pin'])
+        self._fnamey.extend(['P_{in}'])
         self._inst_meta()
 
     def init1(self, dae):
@@ -92,21 +97,41 @@ class TG1(GovernorBase):
         dae.x[self.xg1] = mul(self.u, self.pm0)
         dae.x[self.xg2] = mul(self.u, self.k2, self.pm0)
         dae.x[self.xg3] = mul(self.u, self.k4, self.pm0)
+        dae.y[self.pin] = self.pm0
 
     def fcall(self, dae):
-        super(TG1, self).fcall(dae)
         dae.f[self.xg1] = mul(self.u, dae.y[self.pin] - dae.x[self.xg1], self.iTs)
-        dae.f[self.xg2] = mul(self.u, mul(1 - self.k1, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
-        dae.f[self.xg3] = mul(self.u, mul(1 - self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
+        dae.f[self.xg2] = mul(self.u, mul(self.k2, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
+        dae.f[self.xg3] = mul(self.u, mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
 
     def gcall(self, dae):
-        super(TG1, self).gcall(dae)
+        dae.g[self.pin] = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega]) - dae.y[self.pin]
+        dae.ylimiter(self.pin, self.pmin, self.pmax)
+
         dae.g[self.pout] = dae.x[self.xg3] + mul(self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.y[self.pout]
+        super(TG1, self).gcall(dae)
 
     def jac0(self, dae):
         super(TG1, self).jac0(dae)
-        # dae.add_jac(Fx0, -self.iTs, )
-        # todo: continue from here
+        dae.add_jac(Gy0, -self.u + 1e-6, self.pin, self.pin)
+
+        dae.add_jac(Gx0, -mul(self.u, self.gain), self.pin, self.omega)
+
+        dae.add_jac(Fx0, -mul(self.u, self.iTs) + 1e-6, self.xg1, self.xg1)
+        dae.add_jac(Fy0, mul(self.u, self.iTs), self.xg1, self.pin)
+
+        dae.add_jac(Fx0, mul(self.u, self.k2, self.iTc), self.xg2, self.xg1)
+        dae.add_jac(Fx0, -mul(self.u, self.iTc), self.xg2, self.xg2)
+
+        dae.add_jac(Fx0, mul(self.u, self.k4, self.iT5), self.xg3, self.xg2)
+        dae.add_jac(Fx0, mul(self.u, self.k4, self.k1, self.iT5), self.xg3, self.xg1)
+        dae.add_jac(Fx0, -mul(self.u, self.iT5), self.xg3, self.xg3)
+
+        dae.add_jac(Gx0, self.u, self.pout, self.xg3)
+        dae.add_jac(Gx0, mul(self.u, self.k3), self.pout, self.xg2)
+        dae.add_jac(Gx0, mul(self.u, self.k3, self.k1), self.pout, self.xg1)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.pout, self.pout)
+
 
 class TG2(GovernorBase):
     """Simplified governor model"""
@@ -134,9 +159,10 @@ class TG2(GovernorBase):
         dae.f[self.xg] = mul(self.iT2, mul(self.gain, 1 - self.T12, self.wref0 - dae.x[self.omega]) - dae.x[self.xg])
 
     def gcall(self, dae):
-        super(TG2, self).gcall(dae)
         pm = dae.x[self.xg] + self.pm0 + mul(self.gain, self.T12, self.wref0 - dae.x[self.omega])
-        dae.g[self.pout] = algeb_limiter(pm, self.pmin, self.pmax) - dae.y[self.pout]
+        dae.g[self.pout] = pm - dae.y[self.pout]
+        dae.ylimiter(self.pout, self.pmin, self.pmax)
+        super(TG2, self).gcall(dae)
 
     def jac0(self, dae):
         super(TG2, self).jac0(dae)
