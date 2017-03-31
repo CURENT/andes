@@ -1,6 +1,7 @@
 from andes.utils.tab import simpletab
 from cvxopt import matrix
 
+
 def format_newline():
     return '\n'
 
@@ -67,9 +68,3 @@ def dump_data(text, header, rowname, data, file):
         fid.write('\n')
 
     fid.close()
-
-
-
-
-
-
