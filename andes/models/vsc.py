@@ -348,20 +348,21 @@ class VSCDyn(DCBase):
         self._ac = {'bus': ['a', 'v']}
         self._data.update({'vsc': None,
                            'Kp1': 0.2,
-                           'Ki1': 0.5,
-                           'Kp2': 2,
+                           'Ki1': 0.2,
+                           'Kp2': 1,
                            'Ki2': 1,
-                           'Kp3': 2,
+                           'Kp3': 1,
                            'Ki3': 1,
-                           'Kp4': 2,
+                           'Kp4': 1,
                            'Ki4': 1,
                            'Kpdc': 1,
-                           'Kidc': 2,
-                           'Tt': 0.02,
-                           'Tdc': 0.02,
+                           'Kidc': 1,
+                           'Kf': 100,
+                           'Tt': 0.01,
+                           'Tdc': 0.01,
                            'Cdc': 0.1,
                            })
-        self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc',
+        self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'Kpdc', 'Kidc', 'Kf',
                              'Tt', 'Tdc', 'Cdc'])
         self._descr.update({'vsc': 'static vsc idx',
                             'Kp1': 'current controller proportional gain',
@@ -381,7 +382,7 @@ class VSCDyn(DCBase):
         self._algebs.extend(['vref', 'qref', 'pref', 'vdcref', 'Idref', 'Iqref', 'Idcy', 'ICdc'])
         self._states.extend(['Id', 'Iq', 'Md', 'Mq', 'ucd', 'ucq', 'Nd', 'Nq', 'Idcx', 'vCdc'])
         self._service.extend(['rsh', 'xsh', 'iLsh', 'wn', 'usd', 'usq', 'iTt', 'iTdc', 'PQ', 'PV', 'vV', 'vQ', 'adq',
-                              'pref0', 'qref0', 'vref0', 'vdcref0'])
+                              'pref0', 'qref0', 'vref0', 'vdcref0', 'w', 'bus'])
         self._mandatory.extend(['vsc'])
         self._zeros.extend(['Tt', 'Tdc', 'Cdc'])
         self._fnamey.extend(['U^{ref}', 'Q^{ref}', 'P^{ref}', 'U_{dc}^{ref}', 'I_d^{ref}', 'I_q^{ref}', 'I_{dcy}', 'I^C_{dc}'])
@@ -419,6 +420,9 @@ class VSCDyn(DCBase):
         self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)  # copy indices
         self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
         self.copy_param('VSC', src='pdc', dest='pdc', fkey=self.vsc)
+        # try:
+        self.copy_param('VSC', src='bus', fkey=self.vsc)
+        self.copy_param('BusFreq', src='w', fkey=self.bus)
 
         self.u = aandb(self.u, self.u0)
         self.PQ = mul(self.u, self.PQ)
@@ -481,7 +485,7 @@ class VSCDyn(DCBase):
         dae.g[self.vref] = mul(self.PV + self.vV, dae.y[self.vref] - self.vref0)
 
         # 2 - pref(1): y0[pref]
-        dae.g[self.pref] = mul(self.PV + self.PQ, dae.y[self.pref] - self.pref0)
+        dae.g[self.pref] = mul(self.PV + self.PQ, dae.y[self.pref] - (self.pref0 + mul(self.Kf, 1 - dae.x[self.w])))
 
         # 3 - qref(1): y0[qref]
         dae.g[self.qref] = mul(self.PQ + self.vQ, dae.y[self.qref] - self.qref0)
@@ -524,6 +528,8 @@ class VSCDyn(DCBase):
         # 1 [1], 2[1], 3[1], 4[1]
         dae.add_jac(Gy0, self.PV + self.vV + 1e-6, self.vref, self.vref)
         dae.add_jac(Gy0, self.PQ + self.PV + 1e-6, self.pref, self.pref)
+        dae.add_jac(Gx0, mul(self.PV + self.PQ, self.Kf), self.pref, self.w)
+
         dae.add_jac(Gy0, self.PQ + self.vQ + 1e-6, self.qref, self.qref)
         dae.add_jac(Gy0, self.vV + self.vQ + 1e-6, self.vdcref, self.vdcref)
 
