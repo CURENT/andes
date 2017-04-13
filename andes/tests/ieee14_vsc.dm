@@ -181,10 +181,10 @@ VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSCDyn, vsc = 1, name = "VSC_1", Kf = 110
-VSCDyn, vsc = 2, name = "VSC_2", Kf = 110
-VSCDyn, vsc = 3, name = "VSC_3", Kf = 110
-VSCDyn, vsc = 4, name = "VSC_4", Kf = 110
+VSC1, vsc = 1, name = "VSC_1", Kf = 110
+VSC1, vsc = 2, name = "VSC_2", Kf = 110
+VSC1, vsc = 3, name = "VSC_3", Kf = 110
+VSC1, vsc = 4, name = "VSC_4", Kf = 110
 
 Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
