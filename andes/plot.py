@@ -78,10 +78,13 @@ def parse_y(y, nvars):
 
 
 def get_nvars(dat):
-    with open(dat, 'r') as f:
-        line1 = f.readline()
-    line1 = line1.strip('\n').split()
-    return int(line1[0])
+    try:
+        with open(dat, 'r') as f:
+            line1 = f.readline()
+        line1 = line1.strip('\n').split()
+        return int(line1[0])
+    except IOError:
+        print('* Error while opening the dat or lst files')
 
 
 def read_dat(dat, x, y):
@@ -127,6 +130,7 @@ def read_label(lst, x, y):
         lfile = open(lst)
     except IOError:
         print('* Error while opening the dat or lst files')
+        return None, None
 
     xidx = sorted(range(len(x)), key=lambda i: x[i])
     xsorted = sorted(x)
@@ -172,8 +176,7 @@ def do_plot(x, y, xl, yl, xmin=None, xmax=None):
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
 
-
-    legend = ax.legend(loc='upper right', shadow=True)
+    legend = ax.legend(loc='upper right')
 
     pyplot.show()
 
