@@ -191,7 +191,7 @@ VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01, xsh = 0
 VSC2, vsc = 1
 VSC2, vsc = 2
 
-#Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
 RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
 #RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5

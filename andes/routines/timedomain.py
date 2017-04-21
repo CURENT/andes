@@ -153,7 +153,7 @@ def run(system):
                 # Ac = matrix(dae.Ac)
                 # Ac = array(Ac)
 
-                if t >= 60:
+                if t >= 80:
                     dd = 99
 
                 if dae.factorize:

@@ -38,6 +38,7 @@ def cli_parse():
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
+    parser.add_argument('--xmin', type=float, help='x axis minimum value')
     args = parser.parse_args()
     return args
 
@@ -207,7 +208,7 @@ def main():
     xval, yval = read_dat(dat, args.x, y)
     xl, yl = read_label(lst, args.x, y)
 
-    do_plot(xval, yval, xl, yl, xmax=args.xmax)
+    do_plot(xval, yval, xl, yl, xmin=args.xmin, xmax=args.xmax)
 
     pass
 
