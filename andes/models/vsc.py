@@ -487,7 +487,7 @@ class VSC1(DCBase):
         self.vd = mul(dae.y[self.v], cos(dae.y[self.a] - self.adq))
         self.vq = mul(dae.y[self.v], sin(dae.y[self.a] - self.adq))
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
-        iucq = div(1, dae.x[self.ud])
+        iud = div(1, dae.x[self.ud])
 
         # 1 - vref(1): y0[vref]
         dae.g[self.vref] = mul(self.PV + self.vV, dae.y[self.vref] - self.vref0)
@@ -508,7 +508,7 @@ class VSC1(DCBase):
 
         # 6 - Iqref(11): y[pref], y[v], x0[Nq], x[Iq]  |  x[Idcx], y[v1], y[v2], x[Id], x[ucd], x[ucq] | y0[Iqref]
         Iqref1 = mul(self.PQ + self.PV, div(dae.y[self.pref], self.vd) + dae.x[self.Nd] + mul(self.Kp4, dae.y[self.pref] - mul(self.vd, dae.x[self.Id])))
-        Iqref2 = mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Iq], dae.x[self.uq]), iucq)
+        Iqref2 = mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Iq], dae.x[self.uq]), iud)
         dae.g[self.Idref] = Iqref1 + Iqref2 - dae.y[self.Idref]
 
         # 7 - Idcy(7): x[ucd], x[Id], x[ucq], x[Iq], y[v1], y[v2], y0[Idcy]
@@ -630,7 +630,7 @@ class VSC1(DCBase):
 
     def gycall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
-        iucq = div(1, dae.x[self.ud])
+        iud = div(1, dae.x[self.ud])
 
         # 5 [qref], [v]
         dae.add_jac(Gy, mul(self.PQ + self.vQ, div(1.0, self.vd) + self.Kp2), self.Iqref, self.qref)
@@ -640,8 +640,8 @@ class VSC1(DCBase):
         # 6 [pref], [v], [v1] [v2]
         dae.add_jac(Gy, mul(self.PQ + self.PV, div(1.0, self.vd) + self.Kp4), self.Idref, self.pref)
         dae.add_jac(Gy, -mul(self.PQ + self.PV, self.Kp4, dae.x[self.Id]), self.Idref, self.v)
-        dae.add_jac(Gy, mul(self.vV + self.vQ, dae.x[self.Idcx], iucq), self.Idref, self.v1)
-        dae.add_jac(Gy, -mul(self.vV + self.vQ, dae.x[self.Idcx], iucq), self.Idref, self.v2)
+        dae.add_jac(Gy, mul(self.vV + self.vQ, dae.x[self.Idcx], iud), self.Idref, self.v1)
+        dae.add_jac(Gy, -mul(self.vV + self.vQ, dae.x[self.Idcx], iud), self.Idref, self.v2)
 
         # 7 [v1], [v2]
         dae.add_jac(Gy, mul(self.PQ + self.PV, -iudc **2, mul(dae.x[self.uq], dae.x[self.Iq]) + mul(dae.x[self.ud], dae.x[self.Id])), self.Idcy, self.v1)
@@ -695,17 +695,17 @@ class VSC1(DCBase):
 
     def fxcall(self, dae):
         iudc = div(1, dae.y[self.v1] - dae.y[self.v2])
-        iucq = div(1, dae.x[self.ud])
+        iud = div(1, dae.x[self.ud])
 
         # 5 - [Id]
         dae.add_jac(Gx, -mul(self.PQ + self.vQ, self.Kp2, self.vd), self.Iqref, self.Iq)
 
         # 6 - [Iq], [Idcx], [Id], [ucd], [ucq]
         dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp4, dae.y[self.v]), self.Idref, self.Id)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, (dae.y[self.v1] - dae.y[self.v2]), iucq), self.Idref, self.Idcx)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.uq], iucq), self.Idref, self.Iq)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.Iq], iucq), self.Idref, self.uq)
-        dae.add_jac(Gx, mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Iq], dae.x[self.uq]), - iucq ** 2), self.Idref, self.ud)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, (dae.y[self.v1] - dae.y[self.v2]), iud), self.Idref, self.Idcx)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.uq], iud), self.Idref, self.Iq)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.Iq], iud), self.Idref, self.uq)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Iq], dae.x[self.uq]), - iud ** 2), self.Idref, self.ud)
 
         # 7 [ucd], [Id], [ucq], [Iq]
         dae.add_jac(Gx, mul(self.PQ + self.PV, dae.x[self.Iq], iudc), self.Idcy, self.uq)
@@ -726,7 +726,6 @@ class VSC1(DCBase):
         # 19 [Iq], [v]
         dae.add_jac(Fx, -mul(self.PQ + self.PV, self.Ki4, self.vd), self.Nd, self.Id)
         dae.add_jac(Fy, -mul(self.PQ + self.PV, self.Ki4, dae.x[self.Id]), self.Nd, self.v)
-
 
 
 class VSC2(DCBase):
