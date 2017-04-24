@@ -1128,7 +1128,7 @@ class VSC3(DCBase):
                            'Ki3': 0,
                            'Kp4': 0.2,
                            'Ki4': 0,
-                           'KQ': 0,
+                           'KQ': 0.1,
                            'M': 6,
                            'D': 3,
                            'Tt': 0.01,
@@ -1284,7 +1284,7 @@ class VSC3(DCBase):
         dae.f[self.Mq] = mul(self.Ki2, -dae.x[self.Iq] + dae.y[self.Iqref])
         dae.f[self.Nd] = mul(self.Ki3, -dae.y[self.vd] + dae.y[self.vref])
         dae.f[self.Nq] = -mul(self.Ki4, dae.y[self.vq])
-        dae.f[self.adq] = -mul(self.system.Settings.wb, dae.x[self.xw])
+        dae.f[self.adq] = mul(self.system.Settings.wb, dae.x[self.xw])
         dae.f[self.xw] = mul(self.iM, self.pref0 - dae.y[self.P] - mul(self.D, dae.x[self.xw]))
 
     def gycall(self, dae):
@@ -1365,7 +1365,7 @@ class VSC3(DCBase):
         dae.add_jac(Fx0, -self.iTt, self.uq, self.uq)
         dae.add_jac(Fx0, -self.Ki1, self.Md, self.Id)
         dae.add_jac(Fx0, -self.Ki2, self.Mq, self.Iq)
-        dae.add_jac(Fx0, -self.system.Settings.wb, self.adq, self.xw)
+        dae.add_jac(Fx0, self.system.Settings.wb, self.adq, self.xw)
         dae.add_jac(Fx0, -mul(self.D, self.iM), self.xw, self.xw)
 
         dae.add_jac(Fy0, -self.iLsh, self.Id, self.vd)

@@ -72,20 +72,20 @@ Line, Vn = 13.8, Vn2 = 13.8, bus1 = 12, bus2 = 13, idx = "Line_19",
 Line, Vn = 13.8, Vn2 = 13.8, bus1 = 13, bus2 = 14, idx = "Line_20",
       name = "Line 20", r = 0.17093, x = 0.34802, xcoord = [7.5; 7.5; 6.45; 6.45], ycoord = [5.625; 5.325; 5.925; 6.075]
 
-BusFreq, idx = 1, bus = 1
-BusFreq, idx = 2, bus = 2
-BusFreq, idx = 3, bus = 3
-BusFreq, idx = 4, bus = 4
-BusFreq, idx = 5, bus = 5
-BusFreq, idx = 6, bus = 6
-BusFreq, idx = 7, bus = 7
-BusFreq, idx = 8, bus = 8
-BusFreq, idx = 9, bus = 9
-BusFreq, idx = 10, bus = 10
-BusFreq, idx = 11, bus = 11
-BusFreq, idx = 12, bus = 12
-BusFreq, idx = 13, bus = 13
-BusFreq, idx = 14, bus = 14
+#BusFreq, idx = 1, bus = 1
+#BusFreq, idx = 2, bus = 2
+#BusFreq, idx = 3, bus = 3
+#BusFreq, idx = 4, bus = 4
+#BusFreq, idx = 5, bus = 5
+#BusFreq, idx = 6, bus = 6
+#BusFreq, idx = 7, bus = 7
+#BusFreq, idx = 8, bus = 8
+#BusFreq, idx = 9, bus = 9
+#BusFreq, idx = 10, bus = 10
+#BusFreq, idx = 11, bus = 11
+#BusFreq, idx = 12, bus = 12
+#BusFreq, idx = 13, bus = 13
+#BusFreq, idx = 14, bus = 14
 
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
@@ -148,16 +148,16 @@ SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     v0 = 1.06
 
 
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
-      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
-      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
+#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
+#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
+#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
 
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0
@@ -184,7 +184,7 @@ VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
 VSC1, vsc = 1, name = "VSCDyn 1", Kf = 110
 VSC3, vsc = 2, name = "VSCDyn 2"
 VSC1, vsc = 3, name = "VSCDyn 3"
-#VSC1, vsc = 4, name = "VSCDyn 4", Kf = 110
+#VSC1, vsc = 4, name = "VSCDyn 4"
 
 Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
