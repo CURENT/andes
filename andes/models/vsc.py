@@ -715,8 +715,8 @@ class VSC1(DCBase):
         # 6 - [Iq], [Idcx], [Id], [ucd], [ucq]
         dae.add_jac(Gx, -mul(self.PQ + self.PV, self.Kp4, dae.y[self.v]), self.Idref, self.Id)
         dae.add_jac(Gx, -mul(self.vV + self.vQ, dae.y[self.v1] - dae.y[self.v2], iud), self.Idref, self.Idcx)
-        dae.add_jac(Gx, -mul(self.vV + self.vQ, dae.x[self.uq], iud), self.Idref, self.Iq)
-        dae.add_jac(Gx, -mul(self.vV + self.vQ, dae.x[self.Iq], iud), self.Idref, self.uq)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.uq], iud), self.Idref, self.Iq)
+        dae.add_jac(Gx, mul(self.vV + self.vQ, -dae.x[self.Iq], iud), self.Idref, self.uq)
         dae.add_jac(Gx, mul(self.vV + self.vQ, mul(dae.x[self.Idcx], (dae.y[self.v1] - dae.y[self.v2])) - mul(dae.x[self.Iq], dae.x[self.uq]), - iud ** 2), self.Idref, self.ud)
 
         # 7 [ucd], [Id], [ucq], [Iq]
@@ -1121,9 +1121,9 @@ class VSC3(DCBase):
         self._ac = {'bus': ['a', 'v']}
         self._data.update({'vsc': None,
                            'Kp1': 0.2,
-                           'Ki1': 0.1,
+                           'Ki1': 1,
                            'Kp2': 0.2,
-                           'Ki2': 0.1,
+                           'Ki2': 1,
                            'Kp3': 0.2,
                            'Ki3': 0,
                            'Kp4': 0.2,
@@ -1253,7 +1253,7 @@ class VSC3(DCBase):
             self.system.VSC.disable(idx)
 
     def gcall(self, dae):
-        dae.g[self.wref] = dae.y[self.wref] - self.wref0 - dae.x[self.xw]
+        dae.g[self.wref] = dae.y[self.wref] - self.wref0 + dae.x[self.xw]
         dae.g[self.vref] = -mul(self.KQ, (-dae.y[self.Q] + self.qref0)) + dae.y[self.vref] - self.vref0
         dae.g[self.P] = mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq]) - dae.y[self.P]
         dae.g[self.Q] = mul(dae.x[self.Id], dae.y[self.vq]) - mul(dae.x[self.Iq], dae.y[self.vd]) - dae.y[self.Q]
@@ -1347,7 +1347,7 @@ class VSC3(DCBase):
         dae.add_jac(Gy0, -1, self.a, self.P)  # suspect
         dae.add_jac(Gy0, -1, self.v, self.Q)
 
-        dae.add_jac(Gx0, -1, self.wref, self.xw)
+        dae.add_jac(Gx0, 1, self.wref, self.xw)
         dae.add_jac(Gx0, 1, self.Idref, self.Nd)
         dae.add_jac(Gx0, 1, self.Iqref, self.Nq)
         dae.add_jac(Gx0, 1, self.udref, self.Md)
