@@ -57,7 +57,7 @@ class Node(ModelBase):
     def jac0(self, dae):
         if self.n is 0:
             return
-        dae.add_jac(Gy0, 1e-6, self.v, self.v)
+        dae.add_jac(Gy0, -1e-6, self.v, self.v)
 
 
 class DCBase(ModelBase):
@@ -108,7 +108,7 @@ class RLine(DCBase):
         dae.add_jac(Gy0, self.u, self.v2, self.I)
         dae.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
         dae.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
-        dae.add_jac(Gy0, self.u + 1e-6, self.I, self.I)
+        dae.add_jac(Gy0, self.u - 1e-6, self.I, self.I)
 
 
 class Ground(DCBase):
@@ -147,5 +147,5 @@ class Ground(DCBase):
 
     def jac0(self, dae):
         dae.add_jac(Gy0, -self.u, self.v, self.I)
-        dae.add_jac(Gy0, self.u - 1 + 1e-6, self.I, self.I)
+        dae.add_jac(Gy0, self.u - 1 - 1e-6, self.I, self.I)
         dae.add_jac(Gy0, -self.u, self.I, self.v)

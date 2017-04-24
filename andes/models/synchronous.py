@@ -142,7 +142,7 @@ class SynBase(ModelBase):
         dae.add_jac(Gy0, 1.0, self.pm, self.pm)
         dae.add_jac(Gy0, 1.0, self.vf, self.vf)
 
-        dae.add_jac(Fx0, self.u - 1 + 1e-6, self.delta, self.delta)
+        dae.add_jac(Fx0, self.u - 1 - 1e-6, self.delta, self.delta)
         dae.add_jac(Fx0, mul(self.u, self.system.Settings.wb), self.delta, self.omega)
 
     def gycall(self, dae):
@@ -384,7 +384,7 @@ class Flux0(object):
 
         dae.add_jac(Gy0, self.u, self.Iq, self.psiq)
 
-        dae.add_jac(Fx0, -mul(self.iM, self.D) + 1 - self.u + 1e-6, self.omega, self.omega)
+        dae.add_jac(Fx0, -mul(self.iM, self.D) + 1 - self.u - 1e-6, self.omega, self.omega)
         dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 

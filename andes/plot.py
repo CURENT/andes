@@ -39,6 +39,8 @@ def cli_parse():
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
+    parser.add_argument('--checkinit', action='store_true', help='check initialization value')
+
     args = parser.parse_args()
     return args
 
@@ -208,9 +210,24 @@ def main():
     xval, yval = read_dat(dat, args.x, y)
     xl, yl = read_label(lst, args.x, y)
 
+    if args.checkinit:
+        check_init(yval, yl[0])
+        return
+
     do_plot(xval, yval, xl, yl, xmin=args.xmin, xmax=args.xmax)
 
-    pass
+
+def check_init(yval, yl):
+    """"Check initialization by comparing t=0 and t=end values"""
+    suspect = []
+    for var, label in zip(yval, yl):
+        if abs(var[0] - var[-1]) >= 1e-6:
+            suspect.append(label)
+    if suspect:
+        print('Initialization failure:')
+        print(', '.join(suspect))
+    else:
+        print('Initialization is correct.')
 
 
 if __name__ == "__main__":
