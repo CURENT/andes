@@ -54,11 +54,13 @@ def dump_results(system, mu, partfact):
 
     numeral = []
     for idx, item in enumerate(range(neig)):
-        if mu.real[idx] >=0:
-            mark = '*'
+        if mu.real[idx] == 0:
+            marker = '*'
+        elif mu.real[idx] > 0:
+            marker = '**'
         else:
-            mark = ''
-        numeral.append('#' + str(idx+1) + mark)
+            marker = ''
+        numeral.append('#' + str(idx+1) + marker)
 
     pf = []
     for prow in range(neig):

@@ -42,6 +42,7 @@ class FileMan(object):
             self.log = None
             self.output = None
             self.lst = None
+            self.eig = None
             self.dat = None
             self.dump_raw = None
             self.prof = None
@@ -54,8 +55,10 @@ class FileMan(object):
             if not dump_raw:
                 dump_raw = add_suffix(self.name, 'raw')
             prof = add_suffix(self.name, 'prof')
+            eig = add_suffix(self.name, 'eig')
 
             self.lst = add_ext(output, 'lst')
+            self.eig = add_ext(eig, 'txt')
             self.dat = add_ext(output, 'dat')
             self.log = add_ext(log, 'txt')
             self.output = add_ext(output, 'txt')
