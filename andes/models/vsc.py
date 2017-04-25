@@ -1112,6 +1112,7 @@ class VSC2(DCBase):
         dae.add_jac(Fx0, -mul(self.D, self.iM), self.xw, self.xw)
         dae.add_jac(Fy0, -self.iM, self.xw, self.P)
 
+
 class VSC3(DCBase):
     """The voltage-source type power-synchronizatino controlled VSC"""
     def __init__(self, system, name):
@@ -1218,6 +1219,7 @@ class VSC3(DCBase):
         self.iLsh = div(1.0, self.xsh)
         self.iTt = div(1.0, self.Tt)
         self.iM = div(self.u, self.M)
+        self.iD = div(self.u, self.D)
 
         # start initialization
         dae.x[self.adq] = dae.y[self.a]
@@ -1253,7 +1255,8 @@ class VSC3(DCBase):
             self.system.VSC.disable(idx)
 
     def gcall(self, dae):
-        dae.g[self.wref] = dae.y[self.wref] - self.wref0 + dae.x[self.xw]
+        # dae.g[self.wref] = dae.y[self.wref] - self.wref0 + dae.x[self.xw]
+        dae.g[self.wref] = dae.y[self.wref] - self.wref0 + mul(self.iD, dae.y[self.P] - self.pref0)
         dae.g[self.vref] = -mul(self.KQ, (-dae.y[self.Q] + self.qref0)) + dae.y[self.vref] - self.vref0
         dae.g[self.P] = mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq]) - dae.y[self.P]
         dae.g[self.Q] = mul(dae.x[self.Id], dae.y[self.vq]) - mul(dae.x[self.Iq], dae.y[self.vd]) - dae.y[self.Q]
@@ -1284,8 +1287,9 @@ class VSC3(DCBase):
         dae.f[self.Mq] = mul(self.Ki2, -dae.x[self.Iq] + dae.y[self.Iqref])
         dae.f[self.Nd] = mul(self.Ki3, -dae.y[self.vd] + dae.y[self.vref])
         dae.f[self.Nq] = -mul(self.Ki4, dae.y[self.vq])
-        dae.f[self.adq] = mul(self.system.Settings.wb, dae.x[self.xw])
-        dae.f[self.xw] = mul(self.iM, self.pref0 - dae.y[self.P] - mul(self.D, dae.x[self.xw]))
+        # dae.f[self.adq] = mul(self.system.Settings.wb, dae.x[self.xw])
+        # dae.f[self.xw] = mul(self.iM, self.pref0 - dae.y[self.P] - mul(self.D, dae.x[self.xw]))
+        dae.f[self.adq] = mul(self.system.Settings.wb, dae.y[self.wref] - 1)
 
     def gycall(self, dae):
         dae.add_jac(Gy, dae.x[self.Id], self.P, self.vd)
@@ -1334,6 +1338,7 @@ class VSC3(DCBase):
         dae.add_jac(Gy0, -1, self.Iqref, self.Iqref)
         dae.add_jac(Gy0, -1, self.udref, self.udref)
         dae.add_jac(Gy0, -1, self.uqref, self.uqref)
+        dae.add_jac(Gy0, self.iD, self.wref, self.P)  # wref
         dae.add_jac(Gy0, self.KQ, self.vref, self.Q)
         dae.add_jac(Gy0, self.Kp3, self.Idref, self.vref)
         dae.add_jac(Gy0, -self.Kp3, self.Idref, self.vd)
@@ -1347,7 +1352,7 @@ class VSC3(DCBase):
         dae.add_jac(Gy0, -1, self.a, self.P)  # suspect
         dae.add_jac(Gy0, -1, self.v, self.Q)
 
-        dae.add_jac(Gx0, 1, self.wref, self.xw)
+        # dae.add_jac(Gx0, 1, self.wref, self.xw)
         dae.add_jac(Gx0, 1, self.Idref, self.Nd)
         dae.add_jac(Gx0, 1, self.Iqref, self.Nq)
         dae.add_jac(Gx0, 1, self.udref, self.Md)
@@ -1365,8 +1370,8 @@ class VSC3(DCBase):
         dae.add_jac(Fx0, -self.iTt, self.uq, self.uq)
         dae.add_jac(Fx0, -self.Ki1, self.Md, self.Id)
         dae.add_jac(Fx0, -self.Ki2, self.Mq, self.Iq)
-        dae.add_jac(Fx0, self.system.Settings.wb, self.adq, self.xw)
-        dae.add_jac(Fx0, -mul(self.D, self.iM), self.xw, self.xw)
+        # dae.add_jac(Fx0, self.system.Settings.wb, self.adq, self.xw)
+        # dae.add_jac(Fx0, -mul(self.D, self.iM), self.xw, self.xw)
 
         dae.add_jac(Fy0, -self.iLsh, self.Id, self.vd)
         dae.add_jac(Fy0, -self.iLsh, self.Iq, self.vq)
@@ -1377,4 +1382,5 @@ class VSC3(DCBase):
         dae.add_jac(Fy0, self.Ki3, self.Nd, self.vref)
         dae.add_jac(Fy0, -self.Ki3, self.Nd, self.vd)
         dae.add_jac(Fy0, -self.Ki4, self.Nq, self.vq)
-        dae.add_jac(Fy0, -self.iM, self.xw, self.P)
+        # dae.add_jac(Fy0, -self.iM, self.xw, self.P)
+        dae.add_jac(Fy0, self.system.Settings.wb, self.adq, self.wref)
