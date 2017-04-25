@@ -1,4 +1,4 @@
-from sympy import Symbol, diff, sin, cos, Integer
+from sympy import Symbol, diff, sin, cos, exp, Integer
 
 # --- INPUT ---
 outfile = 'eq_out.txt'
@@ -107,7 +107,7 @@ def stringfy(expr, sym_const, sym_states, sym_algebs):
             expr_str = 'dae.y[self.{}]'.format(expr)
         elif expr.is_Number:
             if expr.is_negative:
-                expr_str = '({})'.format(expr)
+                expr_str = '{}'.format(expr)
             else:
                 expr_str = str(expr)
         else:
@@ -119,21 +119,46 @@ def stringfy(expr, sym_const, sym_states, sym_algebs):
             arg_str.append(stringfy(arg, sym_const, sym_states, sym_algebs))
 
         if expr.is_Add:
-            expr_str = ' + '.join(arg_str)
+            expr_str = ''
+            for idx, item in enumerate(arg_str):
+                if idx == 0:
+                    if item[1] == ' ':
+                        item = item[0] + item[2:]
+                if idx > 0:
+                    if item[0] == '-':
+                        item = ' ' + item
+                    elif item[1] == '-':
+                        pass
+                    else:
+                        item = ' + ' + item
+                expr_str += item
+
         elif expr.is_Mul:
-            expr_str = ', '.join(arg_str)
-            expr_str = 'mul(' + expr_str + ')'
+            if nargs == 2 and expr.args[0].is_Integer:  # number * matrix
+                if expr.args[0].is_positive:
+                    expr_str = '{}*{}'.format(*arg_str)
+                elif expr.args[0] == Integer('-1'):
+                    expr_str = '- {}'.format(arg_str[1])
+                else:  # negative but not -1
+                    expr_str = '{}*{}'.format(*arg_str)
+            else:  # matrix dot multiplication
+                if expr.args[0] == Integer('-1'):
+                    # bring '-' out of mul()
+                    expr_str = ', '.join(arg_str[1:])
+                    expr_str = '- mul(' + expr_str + ')'
+                else:
+                    expr_str = ', '.join(arg_str)
+                    expr_str = 'mul(' + expr_str + ')'
         elif expr.is_Function:
             expr_str = ', '.join(arg_str)
             expr_str = str(expr.func) + '(' + expr_str + ')'
         elif expr.is_Pow:
-            expr_str = '({}) ** {}'.format(*arg_str)
+            expr_str = '({})**{}'.format(*arg_str)
         elif expr.is_Div:
             expr_str = ', '.join(arg_str)
             expr_str = 'div(' + expr_str + ')'
         else:
             raise NotImplemented
-
     return expr_str
 
 
