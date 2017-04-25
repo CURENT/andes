@@ -116,7 +116,7 @@ def read_dat(dat, x, y):
             yv[idx].append(float(thisline[item]))
 
     if errid:
-        print('*Error: Something happened')
+        raise IndexError('x or y index out of bound')
 
     return xv, yv
 
@@ -207,7 +207,12 @@ def main():
     lst = os.path.join(os.getcwd(), name + '.lst')
 
     y = parse_y(args.y, get_nvars(dat))
-    xval, yval = read_dat(dat, args.x, y)
+    try:
+        xval, yval = read_dat(dat, args.x, y)
+    except IndexError:
+        print('* Error: X or Y index out of bound')
+        return
+
     xl, yl = read_label(lst, args.x, y)
 
     if args.checkinit:

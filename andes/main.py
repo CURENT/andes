@@ -31,7 +31,7 @@ from .consts import *
 from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
-from .routines import powerflow, timedomain
+from .routines import powerflow, timedomain, eigenanalysis
 
 
 def cli_parse(writehelp=False, helpfile=None):
@@ -321,6 +321,13 @@ def run(case, **kwargs):
             system.VarOut.dump()
             t3, s = elapsed(t2)
             system.Log.info('Simulation data dumped in {:s}.'.format(s))
+    elif routine == 'sssa':
+        t1, s = elapsed(t0)
+        system.Log.info('')
+        system.Log.info('Eigenvalue Analysis:')
+        eigenanalysis.run(system)
+        t2, s = elapsed(t1)
+        system.Log.info('Analysis finished in {:s}.'.format(s))
 
     # Disable profiler and output results
     if profile:
