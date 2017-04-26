@@ -137,8 +137,6 @@ class Ground(DCBase):
         self._inst_meta()
 
     def init0(self, dae):
-        if self.n > 1:
-            self.message('Multiple DC Ground defined!', ERROR)
         dae.y[self.v] = self.voltage
 
     def gcall(self, dae):

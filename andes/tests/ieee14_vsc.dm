@@ -148,16 +148,21 @@ SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     v0 = 1.06
 
 
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
-#      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 13.8, xd1 = 0.302,
-#      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
-#Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 18, xd1 = 0.302,
-#      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+Syn2, D = 3.01, M = 6.02, Sn = 615, Vn = 69, xd1 = 0.302,
+      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
+Syn2, D = 3.01, M = 6.02, Sn = 60, Vn = 69, xd1 = 0.302,
+      bus = 2, fn = 60.0, gen = 2, idx = 2, name = "Syn_2"
+Syn2, D = 3.01, M = 6.02, Sn = 60, Vn = 69, xd1 = 0.302,
+      bus = 3, fn = 60.0, gen = 3, idx = 3, name = "Syn_3"
+Syn2, D = 3.01, M = 6.02, Sn = 25, Vn = 13.8, xd1 = 0.302,
+      bus = 6, fn = 60.0, gen = 6, idx = 4, name = "Syn_6"
+Syn2, D = 3.01, M = 6.02, Sn = 25, Vn = 18, xd1 = 0.302,
+      bus = 8, fn = 60.0, gen = 8, idx = 5, name = "Syn_8"
+
+TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
+     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
+TG1, gen = 2, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
+     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0
@@ -174,22 +179,22 @@ VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.01, xsh = 0
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
-     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
+#VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
+#     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
+#     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
 #VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
 #     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
 #     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSCDyn 1", Kf = 110
-VSC3, vsc = 2, name = "VSCDyn 2"
-VSC1, vsc = 3, name = "VSCDyn 3"
-#VSC1, vsc = 4, name = "VSCDyn 4"
+VSC1, vsc = 1, name = "VSCD 1", Kf = 10, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 1
+VSC2, vsc = 2, name = "VSCD 2", Ki3 = 1, Ki4 = 1
+#VSC2, vsc = 3, name = "VSCD 3", Ki3 = 0, Ki4 = 0
+#VSC2, vsc = 4, name = "VSCDyn 4", Ki3 = 0, Ki4 = 0
 
-Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.1
 
 RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
 RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
 RLine, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100, R = 5
-RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
+#RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
 #RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 1

@@ -2,6 +2,7 @@ import numpy.linalg
 from cvxopt.klu import linsolve
 from cvxopt.lapack import gesv
 from cvxopt import matrix, spmatrix, mul
+from math import ceil
 from ..formats.txt import dump_data
 
 
@@ -75,7 +76,7 @@ def dump_results(system, mu, partfact):
     data.append([list(mu.real), list(mu.imag)])
 
     cpb = 7 # columns per block
-    nblock = round(neig / cpb)
+    nblock = ceil(neig / cpb)
 
     for idx in range(nblock):
         start = cpb*idx
