@@ -1,10 +1,10 @@
 import numpy.linalg
 from cvxopt.klu import linsolve
 from cvxopt.lapack import gesv
-from cvxopt import matrix, spmatrix, mul
+from cvxopt import matrix, spmatrix, mul, div
 from math import ceil
 from ..formats.txt import dump_data
-
+from ..consts import *
 
 def state_matrix(system):
     """Return state matrix"""
@@ -36,7 +36,7 @@ def part_factor(As):
     for item in idx:
         mu_real = mu[item].real
         mu_imag = mu[item].imag
-        mu[item] = complex(round(mu_real, 5), round(mu_imag, 5))
+        mu[item] = complex(round(mu_real, 4), round(mu_imag, 4))
         partfact[item, :] /= WN[item]
 
     return mu, partfact
@@ -51,7 +51,11 @@ def dump_results(system, mu, partfact):
     header = []
     rowname = []
     data = []
+
     neig = len(mu)
+    npositive = sum(1 for x in mu.real if x > 0)
+    nzero = sum(1 for x in mu.real if x == 0)
+    nnegative = sum(1 for x in mu.real if x < 0)
 
     numeral = []
     for idx, item in enumerate(range(neig)):
@@ -63,6 +67,20 @@ def dump_results(system, mu, partfact):
             marker = ''
         numeral.append('#' + str(idx+1) + marker)
 
+    # compute frequency, undamped frequency and damping
+    freq = [0] * neig
+    ufreq = [0] * neig
+    damping = [0] * neig
+    for idx, item in enumerate(mu):
+        if item.imag == 0:
+            freq[idx] = 0
+            ufreq[idx] = 0
+            damping[idx] = 0
+        else:
+            freq[idx] = abs(item)/2/pi
+            ufreq[idx] = abs(item.imag/2/pi)
+            damping[idx] = - div(item.real, abs(item)) * 100
+
     pf = []
     for prow in range(neig):
         temp_row = []
@@ -70,10 +88,20 @@ def dump_results(system, mu, partfact):
             temp_row.append(round(partfact[prow, pcol], 5))
         pf.append(temp_row)
 
-    text.append('EIGENVALUES\n')
-    header.append(['Real', 'Imag'])
+    text.append(system.Report.info)
+    header.append([''])
+    rowname.append(['EIGENVALUE ANALYSIS REPORT'])
+    data.append([''])
+
+    text.append('STATISTICS\n')
+    header.append([''])
+    rowname.append(['Positives', 'Zeros', 'Negatives'])
+    data.append([npositive, nzero, nnegative])
+
+    text.append('EIGENVALUE DATA\n')
+    header.append(['Real', 'Imag', 'Damped Freq.', 'Frequency', 'Damping [%]'])
     rowname.append(numeral)
-    data.append([list(mu.real), list(mu.imag)])
+    data.append([list(mu.real), list(mu.imag), ufreq, freq, damping])
 
     cpb = 7 # columns per block
     nblock = ceil(neig / cpb)

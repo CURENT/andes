@@ -179,16 +179,16 @@ VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.01, xsh = 0
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01, xsh = 0.1,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-#VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
-#     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
-#     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
 #VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
 #     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
 #     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSCD 1", Kf = 10, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 1
-VSC2, vsc = 2, name = "VSCD 2", Ki3 = 1, Ki4 = 1
-#VSC2, vsc = 3, name = "VSCD 3", Ki3 = 0, Ki4 = 0
+VSC1, vsc = 1, name = "VSCD 1", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 0
+VSC2, vsc = 2, name = "VSCD 2", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1
+VSC2, vsc = 3, name = "VSCD 3", Ki1 = 2, Ki2 = 2, Ki3 = 0, Ki4 = 0
 #VSC2, vsc = 4, name = "VSCDyn 4", Ki3 = 0, Ki4 = 0
 
 Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.1

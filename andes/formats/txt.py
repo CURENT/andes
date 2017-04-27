@@ -25,7 +25,7 @@ def format_table(header, data, title=None):
 
 def dump_data(text, header, rowname, data, file):
     width = 14
-    precision = 5
+    precision = 4
     s = ''
     out = ''
     fid = open(file, 'w')
