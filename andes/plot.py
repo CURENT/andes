@@ -40,7 +40,7 @@ def cli_parse():
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
-
+    parser.add_argument('--ylabel', type=str, help='y-axis text label')
     args = parser.parse_args()
     return args
 
@@ -161,9 +161,10 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, xmin=None, xmax=None):
+def do_plot(x, y, xl, yl, xmin=None, xmax=None, ylabel=None):
     # Configurate matplotlib
     mpl.rc('font', family='Arial')
+    style = ['-', '--', '-.', ':'] * len(y)
 
     if not xmin:
         xmin = x[0] - 1e-6
@@ -172,9 +173,12 @@ def do_plot(x, y, xl, yl, xmin=None, xmax=None):
 
     fig, ax = pyplot.subplots()
     for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl[0][idx])
+        ax.plot(x, y[idx], label=yl[0][idx], ls=style[idx])
 
     ax.set_xlabel(xl[0])
+    if ylabel:
+        ax.set_ylabel(ylabel)
+
     ax.ticklabel_format(useOffset=False)
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
@@ -219,7 +223,7 @@ def main():
         check_init(yval, yl[0])
         return
 
-    do_plot(xval, yval, xl, yl, xmin=args.xmin, xmax=args.xmax)
+    do_plot(xval, yval, xl, yl, xmin=args.xmin, xmax=args.xmax, ylabel=args.ylabel)
 
 
 def check_init(yval, yl):
