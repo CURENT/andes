@@ -11,3 +11,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+This project is inspired by the book "Power system modelling and scripting"
+by Dr. Federico Milano. Part of the code from the book [1] is used in ANDES.
+The source code from Power System Analysis Toolbox (PSAT) by Dr. Milano [2]
+is also referenced.
+
+[1]. Milano, F. (2010). Power system modelling and scripting.
+     Springer Science & Business Media.
+
+[2]. Milano, F. (2005). An open source power system analysis toolbox.
+     IEEE Transactions on Power systems, 20(3), 1199-1206.
