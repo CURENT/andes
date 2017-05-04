@@ -91,7 +91,7 @@ def dump_results(system, mu, partfact):
     text.append(system.Report.info)
     header.append([''])
     rowname.append(['EIGENVALUE ANALYSIS REPORT'])
-    data.append([''])
+    data.append('')
 
     text.append('STATISTICS\n')
     header.append([''])
@@ -104,7 +104,7 @@ def dump_results(system, mu, partfact):
     data.append([list(mu.real), list(mu.imag), ufreq, freq, damping])
 
     cpb = 7 # columns per block
-    nblock = ceil(neig / cpb)
+    nblock = int(ceil(neig / cpb))
 
     for idx in range(nblock):
         start = cpb*idx

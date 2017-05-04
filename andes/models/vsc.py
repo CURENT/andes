@@ -411,6 +411,11 @@ class VSC1(DCBase):
     def setup(self):
         super(VSC1, self).setup()
 
+    def servcall(self):
+        self.iTdc = (self.Tdc) ** -1
+        self.iLsh = (self.xsh) ** -1
+        self.iTt = (self.Tt) ** -1
+
     def init1(self, dae):
         self.copy_param('VSC', src='rsh', fkey=self.vsc)
         self.copy_param('VSC', src='xsh', fkey=self.vsc)
@@ -424,52 +429,37 @@ class VSC1(DCBase):
         self.copy_param('VSC', src='vsh', fkey=self.vsc)
         self.copy_param('VSC', src='v1', fkey=self.vsc)
         self.copy_param('VSC', src='v2', fkey=self.vsc)
-
         self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)  # copy indices
         self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
         self.copy_param('VSC', src='pdc', dest='pdc', fkey=self.vsc)
+
         self.pref0 = dae.y[self.pref0]
         self.qref0 = dae.y[self.qref0]
         self.vref0 = mul(self.PV + self.vV, dae.y[self.v])
         self.vdcref0 = mul(self.vV + self.vQ, dae.y[self.v1] - dae.y[self.v2])
 
-        self.wn = ones(self.n, 1)  # in pu
-        self.iLsh = div(1.0, self.xsh)
-        self.iTt = div(1.0, self.Tt)
-        self.iTdc = div(1.0, self.Tdc)
-        k1 = div(self.rsh, self.xsh) ** 2
-        k2 = div(self.rsh, self.xsh ** 2)
+        self.servcall()
 
         dae.y[self.vd] = dae.y[self.v]
-        dae.y[self.vq] = zeros(self.n, 1)
-        Id = div(self.pref0, dae.y[self.vd])
-        Iq = div(self.qref0, dae.y[self.vd])
-
-        ud = dae.y[self.vd] + mul(self.xsh, Iq) + mul(self.rsh, Id)
-        uq = dae.y[self.vq] - mul(self.xsh, Id) + mul(self.rsh, Iq)
-
-        dae.x[self.ud] = ud
-        dae.x[self.uq] = uq
-        dae.y[self.udref] = ud
-        dae.y[self.uqref] = uq
-
-        Idc = -div(mul(dae.x[self.ud], Id) + mul(dae.x[self.uq], Iq),  dae.y[self.v1] - dae.y[self.v2])
-
-        dae.y[self.Idref] = Id
-        dae.x[self.Id] = Id
-        dae.y[self.Iqref] = Iq
-        dae.x[self.Iq] = Iq
-        dae.y[self.Idcy] = mul(self.PQ + self.PV, Idc)
-        dae.x[self.Idcx] = mul(self.vQ + self.vV, Idc)
-
-        dae.x[self.Md] = mul(self.rsh, dae.x[self.Id])
-        dae.x[self.Mq] = mul(self.rsh, dae.x[self.Iq])
-
-        dae.x[self.Nd] = mul(self.vQ + self.vV, dae.x[self.Idcx]) # + mul(self.PQ + self.PV, Id)
-        dae.x[self.Nq] = mul(self.PV + self.vV, Iq)
-
+        dae.y[self.vq] = 0
         dae.y[self.p] = self.pref0
         dae.y[self.q] = self.qref0
+        dae.y[self.Idref] = mul(self.pref0, (dae.y[self.vd]) ** -1)
+        dae.y[self.Iqref] = mul(self.qref0, (dae.y[self.vd]) ** -1)
+        dae.x[self.Id] = dae.y[self.Idref]
+        dae.x[self.Iq] = dae.y[self.Iqref]
+        dae.y[self.udref] = dae.y[self.vd] + mul(dae.x[self.Id], self.rsh) + mul(dae.x[self.Iq], self.xsh)
+        dae.y[self.uqref] = dae.y[self.vq] + mul(dae.x[self.Iq], self.rsh) - mul(dae.x[self.Id], self.xsh)
+        dae.x[self.ud] = dae.y[self.udref]
+        dae.x[self.uq] = dae.y[self.uqref]
+        dae.y[self.Idcy] = - mul(dae.x[self.Id], dae.x[self.ud], (dae.y[self.v1] - dae.y[self.v2]) ** -1,
+                                 self.PQ + self.PV)
+        dae.x[self.Idcx] = - mul(dae.x[self.Id], dae.x[self.ud], (dae.y[self.v1] - dae.y[self.v2]) ** -1,
+                                 self.vQ + self.vV)
+        dae.x[self.Md] = mul(dae.x[self.Id], self.rsh)
+        dae.x[self.Mq] = mul(dae.x[self.Iq], self.rsh)
+        dae.x[self.Nd] = mul(dae.x[self.Idcx], self.vQ + self.vV)
+        dae.x[self.Nq] = mul(dae.x[self.Iq], self.PV + self.vV)
 
         # dae.y[self.ICdc] = zeros(self.n, 1)
         # dae.x[self.vCdc] = dae.y[self.v1]
@@ -642,7 +632,7 @@ class VSC2(DCBase):
                            'Ki3': 0,
                            'Kp4': 0.2,
                            'Ki4': 0,
-                           'KQ': 0,
+                           'KQ': 0.05,
                            'M': 6,
                            'D': 3,
                            'Tt': 0.01,
@@ -769,7 +759,7 @@ class VSC2(DCBase):
 
     def gcall(self, dae):
         dae.g[self.wref] = dae.y[self.wref] - self.wref0 - dae.x[self.xw]
-        dae.g[self.vref] = dae.y[self.vref] - self.vref0 + mul(self.KQ, self.qref0 - dae.y[self.q])
+        dae.g[self.vref] = dae.y[self.vref] - self.vref0 + mul(self.KQ, dae.y[self.q] - self.qref0)
         dae.g[self.p] = -dae.y[self.p] + mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
         dae.g[self.q] = -dae.y[self.q] + mul(dae.x[self.Iq], dae.y[self.vd]) - mul(dae.x[self.Id], dae.y[self.vq])
         dae.g[self.vd] = -dae.y[self.vd] + mul(dae.y[self.v], cos(dae.y[self.a] - dae.x[self.adq]))
@@ -807,64 +797,64 @@ class VSC2(DCBase):
         dae.f[self.xw] = mul(self.iM, self.pref0 - dae.y[self.p] - mul(self.D, dae.x[self.xw]))
 
     def gycall(self, dae):
-        dae.add_jac(Gy, dae.x[self.Iq], self.p, self.vq)
         dae.add_jac(Gy, dae.x[self.Id], self.p, self.vd)
-        dae.add_jac(Gy, - dae.x[self.Id], self.q, self.vq)
+        dae.add_jac(Gy, dae.x[self.Iq], self.p, self.vq)
         dae.add_jac(Gy, dae.x[self.Iq], self.q, self.vd)
+        dae.add_jac(Gy, - dae.x[self.Id], self.q, self.vq)
         dae.add_jac(Gy, - mul(dae.y[self.v], sin(dae.y[self.a] - dae.x[self.adq])), self.vd, self.a)
         dae.add_jac(Gy, cos(dae.y[self.a] - dae.x[self.adq]), self.vd, self.v)
         dae.add_jac(Gy, - mul(dae.y[self.v], cos(dae.y[self.a] - dae.x[self.adq])), self.vq, self.a)
         dae.add_jac(Gy, - sin(dae.y[self.a] - dae.x[self.adq]), self.vq, self.v)
-        dae.add_jac(Gy, mul((dae.y[self.v1] - dae.y[self.v2]) ** -2,
-                            mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1,
-                    self.v2)
         dae.add_jac(Gy, - mul((dae.y[self.v1] - dae.y[self.v2]) ** -2,
                               mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1,
                     self.v1)
         dae.add_jac(Gy, mul((dae.y[self.v1] - dae.y[self.v2]) ** -2,
-                            -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq])), self.v2,
+                            mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1,
                     self.v2)
         dae.add_jac(Gy, - mul((dae.y[self.v1] - dae.y[self.v2]) ** -2,
                               -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq])), self.v2,
                     self.v1)
+        dae.add_jac(Gy, mul((dae.y[self.v1] - dae.y[self.v2]) ** -2,
+                            -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq])), self.v2,
+                    self.v2)
 
     def fxcall(self, dae):
-        dae.add_jac(Gx, dae.y[self.vq], self.p, self.Iq)
         dae.add_jac(Gx, dae.y[self.vd], self.p, self.Id)
+        dae.add_jac(Gx, dae.y[self.vq], self.p, self.Iq)
         dae.add_jac(Gx, dae.y[self.vd], self.q, self.Iq)
         dae.add_jac(Gx, - dae.y[self.vq], self.q, self.Id)
         dae.add_jac(Gx, mul(dae.y[self.v], sin(dae.y[self.a] - dae.x[self.adq])), self.vd, self.adq)
         dae.add_jac(Gx, mul(dae.y[self.v], cos(dae.y[self.a] - dae.x[self.adq])), self.vq, self.adq)
-        dae.add_jac(Gx, mul(dae.x[self.Iq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v1, self.uq)
         dae.add_jac(Gx, mul(dae.x[self.uq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v1, self.Iq)
+        dae.add_jac(Gx, mul(dae.x[self.Iq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v1, self.uq)
         dae.add_jac(Gx, mul(dae.x[self.ud], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v1, self.Id)
         dae.add_jac(Gx, mul(dae.x[self.Id], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v1, self.ud)
-        dae.add_jac(Gx, - mul(dae.x[self.Iq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v2, self.uq)
         dae.add_jac(Gx, - mul(dae.x[self.uq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v2, self.Iq)
+        dae.add_jac(Gx, - mul(dae.x[self.Iq], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v2, self.uq)
         dae.add_jac(Gx, - mul(dae.x[self.ud], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v2, self.Id)
         dae.add_jac(Gx, - mul(dae.x[self.Id], (dae.y[self.v1] - dae.y[self.v2]) ** -1), self.v2, self.ud)
 
     def jac0(self, dae):
         dae.add_jac(Gy0, 1, self.wref, self.wref)
+        dae.add_jac(Gy0, self.KQ, self.vref, self.q)
         dae.add_jac(Gy0, 1, self.vref, self.vref)
-        dae.add_jac(Gy0, - self.KQ, self.vref, self.q)
         dae.add_jac(Gy0, -1, self.p, self.p)
         dae.add_jac(Gy0, -1, self.q, self.q)
         dae.add_jac(Gy0, -1, self.vd, self.vd)
         dae.add_jac(Gy0, -1, self.vq, self.vq)
-        dae.add_jac(Gy0, -1, self.Idref, self.Idref)
-        dae.add_jac(Gy0, self.Kp3, self.Idref, self.vref)
         dae.add_jac(Gy0, - self.Kp3, self.Idref, self.vd)
+        dae.add_jac(Gy0, self.Kp3, self.Idref, self.vref)
+        dae.add_jac(Gy0, -1, self.Idref, self.Idref)
         dae.add_jac(Gy0, - self.Kp4, self.Iqref, self.vq)
         dae.add_jac(Gy0, -1, self.Iqref, self.Iqref)
-        dae.add_jac(Gy0, -1, self.udref, self.udref)
-        dae.add_jac(Gy0, self.Kp1, self.udref, self.Idref)
         dae.add_jac(Gy0, self.xsh, self.udref, self.Iqref)
         dae.add_jac(Gy0, 1, self.udref, self.vd)
-        dae.add_jac(Gy0, - self.xsh, self.uqref, self.Idref)
-        dae.add_jac(Gy0, self.Kp2, self.uqref, self.Iqref)
-        dae.add_jac(Gy0, 1, self.uqref, self.vq)
+        dae.add_jac(Gy0, -1, self.udref, self.udref)
+        dae.add_jac(Gy0, self.Kp1, self.udref, self.Idref)
         dae.add_jac(Gy0, -1, self.uqref, self.uqref)
+        dae.add_jac(Gy0, self.Kp2, self.uqref, self.Iqref)
+        dae.add_jac(Gy0, - self.xsh, self.uqref, self.Idref)
+        dae.add_jac(Gy0, 1, self.uqref, self.vq)
         dae.add_jac(Gy0, -1, self.a, self.p)
         dae.add_jac(Gy0, -1, self.v, self.q)
         dae.add_jac(Gx0, -1, self.wref, self.xw)
@@ -872,13 +862,13 @@ class VSC2(DCBase):
         dae.add_jac(Gx0, 1, self.Iqref, self.Nq)
         dae.add_jac(Gx0, 1, self.udref, self.Md)
         dae.add_jac(Gx0, - self.Kp1, self.udref, self.Id)
-        dae.add_jac(Gx0, 1, self.uqref, self.Mq)
         dae.add_jac(Gx0, - self.Kp2, self.uqref, self.Iq)
+        dae.add_jac(Gx0, 1, self.uqref, self.Mq)
         dae.add_jac(Fx0, -1, self.Id, self.Iq)
-        dae.add_jac(Fx0, self.iLsh, self.Id, self.ud)
         dae.add_jac(Fx0, - mul(self.iLsh, self.rsh), self.Id, self.Id)
-        dae.add_jac(Fx0, self.iLsh, self.Iq, self.uq)
+        dae.add_jac(Fx0, self.iLsh, self.Id, self.ud)
         dae.add_jac(Fx0, - mul(self.iLsh, self.rsh), self.Iq, self.Iq)
+        dae.add_jac(Fx0, self.iLsh, self.Iq, self.uq)
         dae.add_jac(Fx0, 1, self.Iq, self.Id)
         dae.add_jac(Fx0, - self.iTt, self.ud, self.ud)
         dae.add_jac(Fx0, - self.iTt, self.uq, self.uq)
@@ -891,8 +881,8 @@ class VSC2(DCBase):
         dae.add_jac(Fy0, self.iTt, self.uq, self.uqref)
         dae.add_jac(Fy0, self.Ki1, self.Md, self.Idref)
         dae.add_jac(Fy0, self.Ki2, self.Mq, self.Iqref)
-        dae.add_jac(Fy0, self.Ki3, self.Nd, self.vref)
         dae.add_jac(Fy0, - self.Ki3, self.Nd, self.vd)
+        dae.add_jac(Fy0, self.Ki3, self.Nd, self.vref)
         dae.add_jac(Fy0, - self.Ki4, self.Nq, self.vq)
         dae.add_jac(Fy0, 1, self.adq, self.wref)
         dae.add_jac(Fy0, - self.iM, self.xw, self.p)

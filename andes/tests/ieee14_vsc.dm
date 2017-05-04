@@ -72,20 +72,20 @@ Line, Vn = 13.8, Vn2 = 13.8, bus1 = 12, bus2 = 13, idx = "Line_19",
 Line, Vn = 13.8, Vn2 = 13.8, bus1 = 13, bus2 = 14, idx = "Line_20",
       name = "Line 20", r = 0.17093, x = 0.34802, xcoord = [7.5; 7.5; 6.45; 6.45], ycoord = [5.625; 5.325; 5.925; 6.075]
 
-#BusFreq, idx = 1, bus = 1
-#BusFreq, idx = 2, bus = 2
-#BusFreq, idx = 3, bus = 3
-#BusFreq, idx = 4, bus = 4
-#BusFreq, idx = 5, bus = 5
-#BusFreq, idx = 6, bus = 6
-#BusFreq, idx = 7, bus = 7
-#BusFreq, idx = 8, bus = 8
-#BusFreq, idx = 9, bus = 9
-#BusFreq, idx = 10, bus = 10
-#BusFreq, idx = 11, bus = 11
-#BusFreq, idx = 12, bus = 12
-#BusFreq, idx = 13, bus = 13
-#BusFreq, idx = 14, bus = 14
+BusFreq, idx = 1, bus = 1
+BusFreq, idx = 2, bus = 2
+BusFreq, idx = 3, bus = 3
+BusFreq, idx = 4, bus = 4
+BusFreq, idx = 5, bus = 5
+BusFreq, idx = 6, bus = 6
+BusFreq, idx = 7, bus = 7
+BusFreq, idx = 8, bus = 8
+BusFreq, idx = 9, bus = 9
+BusFreq, idx = 10, bus = 10
+BusFreq, idx = 11, bus = 11
+BusFreq, idx = 12, bus = 12
+BusFreq, idx = 13, bus = 13
+BusFreq, idx = 14, bus = 14
 
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
@@ -182,16 +182,16 @@ VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01, xsh = 0
 VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-#VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
-#     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
-#     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
 VSC1, vsc = 1, name = "VSCD 1", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 2, name = "VSCD 2", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1
-VSC2, vsc = 3, name = "VSCD 3", Ki1 = 2, Ki2 = 2, Ki3 = 0, Ki4 = 0
-#VSC2, vsc = 4, name = "VSCDyn 4", Ki3 = 0, Ki4 = 0
+VSC1, vsc = 2, name = "VSCD 2", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1
+VSC1, vsc = 3, name = "VSCD 3", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1
+VSC1, vsc = 4, name = "VSCD 4", Ki1 = 2, Ki2 = 2, Ki3 = 1, Ki4 = 1
 
-Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.1
+Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
 
 RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
 RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
