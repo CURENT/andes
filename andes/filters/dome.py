@@ -49,9 +49,9 @@ def alter(data, system):
 
 
 def read(file, system, header=True):
-    fid = open(file, 'r')
     """Read a dm format file and add to system"""
-    # useful regular expressions and constants
+    retval = True
+    fid = open(file, 'r')
     sep = re.compile(r'\s*,\s*')
     comment = re.compile(r'^#\s*')
     equal = re.compile(r'\s*=\s*')
@@ -128,4 +128,4 @@ def read(file, system, header=True):
             system.Log.debug('  Check if you have new jit models added to models.__init__.py')
 
     fid.close()
-    return True
+    return retval

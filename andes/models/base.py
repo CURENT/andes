@@ -235,7 +235,7 @@ class ModelBase(object):
         self.n += 1
 
         if name is None:
-            self.names.append(self._name + '_' + str(self.n))
+            self.names.append(self._name + ' ' + str(self.n))
         else:
             self.names.append(name)
 
