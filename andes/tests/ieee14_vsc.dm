@@ -187,8 +187,8 @@ VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
 VSC1, vsc = 1, name = "VSCD 1", Ki1 = 3, Ki2 = 3, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 2, name = "VSCD 2", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.2, Ki4 = 0
-VSC2, vsc = 3, name = "VSCD 3", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.01, Ki4 = 0
+VSC2, vsc = 2, name = "VSCD 2", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0, Ki4 = 0
+VSC1, vsc = 3, name = "VSCD 3", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.2, Ki4 = 0.2
 VSC2, vsc = 4, name = "VSCD 4", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.2, Ki4 = 0.2
 
 Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
