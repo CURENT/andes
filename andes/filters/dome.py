@@ -137,12 +137,15 @@ def write(file, system):
     out.append('# DOME format version 1.0')
     ppl = 7  # parameter per line
     retval = True
+    dev_list = sorted(system.DevMan.devices)
+    for dev in dev_list:
+        model = system.__dict__[dev]
+        if not model.n:
+            continue
 
-    for dev in system.DevMan.devices:
         out.append('')
         header = dev + ', '
         space = ' ' * (len(dev) + 2)
-        model = system.__dict__[dev]
         keys = list(model._data.keys())
         keys.extend(['name', 'idx'])
         keys = sorted(keys)
@@ -165,11 +168,13 @@ def write(file, system):
                     val = model.__dict__[key][elem]
 
                 if type(val) == float:
-                    val = round(val, 4)
+                    val = round(val, 5)
                 elif type(val) == str:
                     val = '"{}"'.format(val)
                 elif type(val) == map:
                     val = list(val)
+                    val = '; '.join(str(i) for i in val)
+                    val = '[{}]'.format(val)
                 elif val is None:
                     val = 0
                 vals[idx] = val
