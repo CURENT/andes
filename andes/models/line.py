@@ -28,6 +28,7 @@ class Line(ModelBase):
                            'phi': 0,
                            'fn': 60,
                            'owner': 0,
+                           'rate_a': 0,
                            })
         self._units.update({'r': 'pu',
                             'x': 'pu',
@@ -47,6 +48,7 @@ class Line(ModelBase):
                             'phi': 'deg',
                             'fn': 'Hz',
                             'owner': 'na',
+                            'rate_a': 'pu',
                             })
         self._descr.update({'r': 'connection line resistance',
                             'x': 'connection line reactance',
@@ -66,6 +68,7 @@ class Line(ModelBase):
                             'phi': 'transformer branch phase shift in rad',
                             'fn': 'rated frequency',
                             'owner': 'owner code',
+                            'rate_a': 'phase a power flow limit',
                             })
         self._params.extend(['r',
                              'x',
@@ -78,6 +81,7 @@ class Line(ModelBase):
                              'tap',
                              'phi',
                              'fn',
+                             'rate_a'
                              ])
         self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2'])
         self.calls.update({'gcall': True, 'gycall': True,

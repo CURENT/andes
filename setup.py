@@ -15,7 +15,8 @@ setup(name='andes',
           'texttable',
           'blist',
           'matplotlib',
-          'progressbar2'
+          'progressbar2',
+          'python_utils',
       ],
       packages=[
           'andes',

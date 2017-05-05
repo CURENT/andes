@@ -610,3 +610,29 @@ class ModelBase(object):
 
     def __str__(self):
         self.insight()
+
+    def get_by_idx(self, field, idx):
+        """Get values of a field by idx"""
+        ret = []
+        int_idx = idx
+        if type(idx) == int:
+            int_idx = self.int[idx]
+        elif type(idx) == list or matrix:
+            int_idx = [self.int[item] for item in idx]
+        else:
+            raise TypeError
+        if not field in self.__dict__:
+            raise KeyError('<{}> is not a field of model <{}>'.format(field, self._name))
+
+        if type(self.__dict__[field]) == matrix:
+            ret = self.__dict__[field][int_idx]
+        elif type(self.__dict__[field]) == list:
+            if type(int_idx) == int:
+                ret = self.__dict__[field][int_idx]
+            else:
+                ret = [self.__dict__[field][item] for item in int_idx]
+
+        return ret
+
+
+

@@ -3,6 +3,7 @@
 import re
 from ..consts import *
 
+
 def testlines(fid):
     return True  # hard coded
 
@@ -10,7 +11,6 @@ def testlines(fid):
 def read(file, system):
     """Read a MATPOWER data file into mpc and build andes device elements"""
     func = re.compile('function\\s')
-    descr = re.compile('case', re.IGNORECASE)
     mva = re.compile('\\s*mpc.baseMVA\\s*=\\s*')
     bus = re.compile('\\s*mpc.bus\\s*=\\s*\\[')
     gen = re.compile('\\s*mpc.gen\\s*=\\s*\\[')
@@ -38,19 +38,20 @@ def read(file, system):
     fid = open(file, 'r')
 
     for line in fid:
-        line = line.strip().rstrip(';').rstrip('\n')
+        line = line.strip().rstrip(';')
         if not line:
             continue
         elif func.search(line):  # skip function declaration
             continue
         elif comment.search(line):  # for comment lines
-            if info and descr.search(line):
-                system.Log.info(line[1:])
+            if info:
+                system.Log.info(line[1:72])
                 info = False
             else:
                 continue
         elif mva.search(line):
             basemva = float(line.split('=')[1])
+
         if not field:
             if bus.search(line):
                 field = 'bus'
@@ -129,11 +130,13 @@ def read(file, system):
             system.Log.error('Error adding <Bus> to powersystem object.')
             retval = False
 
+    gen_idx = 0
     for data in mpc['gen']:
         """bus  pg  qg  qmax  qmin  vg  mbase  status  pmax  pmin  pc1  pc2  qc1min  qc1max  qc2min  qc2max  ramp_agc  ramp_10  ramp_30  ramp_q  apf
             0   1   2    3     4     5    6      7       8    9    10    11   12      13       14      15      16        17       18      19      20
         """
         bus_idx = int(data[0])
+        gen_idx += 1
         vg = data[5]
         status = int(data[7])
         mbase = basemva
@@ -147,11 +150,11 @@ def read(file, system):
         try:
             vn = system.Bus.Vn[system.Bus.int[bus_idx]]
             if bus_idx in sw:
-                system.SW.add(bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg, pg=pg, qg=qg,
-                              pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
+                system.SW.add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg,
+                              pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
             else:
-                system.PV.add(bus=bus_idx, busr=bus_idx, name='PV ' + str(bus_idx), u=status, Vn=vn, v0=vg, pg=pg, qg=qg,
-                              pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin)
+                system.PV.add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='PV ' + str(bus_idx), u=status, Vn=vn, v0=vg,
+                              pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin)
         except:
             system.Log.error('Error adding <SW> or <PV> to powersystem object.')
             retval = False
