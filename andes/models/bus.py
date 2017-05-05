@@ -70,10 +70,10 @@ class Bus(ModelBase):
 
     def _varname(self):
         """Customize varname for bus class"""
-        self.system.VarName.append(listname='unamey', xy_idx=self.a, var_name='theta', element_name=self.names)
-        self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='vm', element_name=self.names)
-        self.system.VarName.append(listname='fnamey', xy_idx=self.a, var_name='\\theta', element_name=self.names)
-        self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V', element_name=self.names)
+        self.system.VarName.append(listname='unamey', xy_idx=self.a, var_name='theta', element_name=self.name)
+        self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='vm', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=self.a, var_name='\\theta', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V', element_name=self.name)
 
     def init0(self, dae):
         """Set bus Va and Vm initial values"""

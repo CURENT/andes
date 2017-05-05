@@ -1,4 +1,5 @@
 import importlib
+import os
 
 # input formats is a dictionary of supported format names and the accepted file extensions
 #   The first file will be parsed by read() function and the addfile will be parsed by readadd()
@@ -47,12 +48,25 @@ def guess(system):
         system.Log.debug('Input format guessed as {:s}.'.format(true_format))
 
     files.input_format = true_format
+
+    # guess addfile format
+    if files.addfile:
+        _, add_ext = os.path.splitext(files.addfile)
+        for key, val in input_formats.items():
+            if type(val) == list:
+                if add_ext[1:] in val:
+                    files.add_format = key
+            else:
+                if add_ext[1:] == val:
+                    files.add_format = key
+
     return true_format
 
 
 def parse(system):
     """Parse input file with the given format in system.Files.input_format"""
     input_format = system.Files.input_format
+    add_format = system.Files.add_format
     # exit when no input format is given
     if not input_format:
         system.Log.error('No input format found. Specify or guess a format before parsing.')
@@ -62,6 +76,8 @@ def parse(system):
     try:
         parser = importlib.import_module('.' + input_format, __name__)
         dmparser = importlib.import_module('.' + 'dome', __name__)
+        if add_format:
+            addparser = importlib.import_module('.' + add_format, __name__)
     except ImportError:
         system.Log.error('Parser for {:s} format not found. Program will exit.'.format(input_format))
         return False
@@ -76,8 +92,11 @@ def parse(system):
 
     # Try parsing the addfile
     if system.Files.addfile:
-        system.Log.info('Parsing input file {:s}.'.format(system.Files.addfile))
-        if not parser.readadd(system.Files.addfile, system):
+        if not system.Files.add_format:
+            system.Log.error('Unknown addfile format.')
+            return
+        system.Log.info('Parsing additional file {:s}.'.format(system.Files.addfile))
+        if not addparser.readadd(system.Files.addfile, system):
             system.Log.error('Error parsing addfile {:s} with {:s} format parser.'.format(system.Files.addfile,
                                                                                           input_format))
             return False
@@ -93,8 +112,10 @@ def parse(system):
 
 
 def dump_raw(system):
-    output_format = system.Files.output_format
-    if output_format.lower() not in output_formats:
-        system.Log.warning('Dump output format \'{:s}\'not recognized'.format(output_format))
-        return False
-    raise NotImplemented
+    # output_format = system.Files.output_format
+    # if output_format.lower() not in output_formats:
+    #     system.Log.warning('Dump output format \'{:s}\'not recognized'.format(output_format))
+    #     return False
+    outfile = system.Files.dump_raw
+    dmparser = importlib.import_module('.' + 'dome', __name__)
+    return dmparser.write(outfile, system)

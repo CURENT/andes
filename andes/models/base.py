@@ -34,7 +34,7 @@ class ModelBase(object):
         self.u = []   # device status
         self.idx = []    # internal index list
         self.int = {}    # external index to internal
-        self.names = []  # element name list
+        self.name = []  # element name list
 
         # identifications
         self._name = name
@@ -225,7 +225,7 @@ class ModelBase(object):
         elif ty == matrix:
             return matrix([self.__dict__[param][self.int[i]] for i in idx])
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
@@ -235,14 +235,14 @@ class ModelBase(object):
         self.n += 1
 
         if name is None:
-            self.names.append(self._name + ' ' + str(self.n))
+            self.name.append(self._name + ' ' + str(self.n))
         else:
-            self.names.append(name)
+            self.name.append(name)
 
         # check mandatory parameters
         for key in self._mandatory:
             if key not in kwargs.keys():
-                self.message('Mandatory parameter <{:s}.{:s}> missing'.format(self.names[-1], key), ERROR)
+                self.message('Mandatory parameter <{:s}.{:s}> missing'.format(self.name[-1], key), ERROR)
                 sys.exit(1)
 
         # set default values
@@ -252,7 +252,7 @@ class ModelBase(object):
         # overwrite custom values
         for key, value in kwargs.items():
             if key not in self._data:
-                self.message('Parameter <{:s}.{:s}> is undefined'.format(self.names[-1], key), WARNING)
+                self.message('Parameter <{:s}.{:s}> is undefined'.format(self.name[-1], key), WARNING)
                 continue
             self.__dict__[key][-1] = value
 
@@ -324,7 +324,7 @@ class ModelBase(object):
         for key, param in self._dc.items():
             self.__dict__[param].pop(item)
 
-        self.names.pop(item)
+        self.name.pop(item)
         if convert and self.n:
             self._param2matrix()
 
@@ -467,17 +467,17 @@ class ModelBase(object):
             return
         for idx, item in enumerate(self._states):
             self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamex[idx], element_name=self.names)
+                                       var_name=self._unamex[idx], element_name=self.name)
         for idx, item in enumerate(self._algebs):
             self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamey[idx], element_name=self.names)
+                                       var_name=self._unamey[idx], element_name=self.name)
         try:
             for idx, item in enumerate(self._states):
                 self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
-                                           var_name=self._fnamex[idx], element_name=self.names)
+                                           var_name=self._fnamex[idx], element_name=self.name)
             for idx, item in enumerate(self._algebs):
                 self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
-                                           var_name=self._fnamey[idx], element_name=self.names)
+                                           var_name=self._fnamey[idx], element_name=self.name)
         except IndexError:
             self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
 
@@ -504,7 +504,7 @@ class ModelBase(object):
         idx = findeq(above, 1.0)
         for item in idx:
             maxval = upper[item]
-            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.names[item], self._name, key, maxval), ERROR)
+            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[item], self._name, key, maxval), ERROR)
             if limit:
                 self.__dict__[key][item] = maxval
 
@@ -512,7 +512,7 @@ class ModelBase(object):
         idx = findeq(below, 1.0)
         for item in idx:
             minval = lower[item]
-            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.names[item], self._name, key, minval), ERROR)
+            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[item], self._name, key, minval), ERROR)
             if limit:
                 self.__dict__[key][item] = minval
 
@@ -562,8 +562,8 @@ class ModelBase(object):
         if not idx:
             idx = sorted(self.int.keys())
         count = 2
-        header_fmt = '{:^8s}{:^6s}{:^3s}'
-        header = ['idx', 'names', 'u']
+        header_fmt = '{:^8s}{:^10s}{:^3s}'
+        header = ['idx', 'name', 'u']
         if 'Sn' in self._data:
             count += 1
             header_fmt += '{:^6}'

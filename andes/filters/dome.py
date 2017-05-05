@@ -3,7 +3,7 @@ Parser for DOME RAW format 0.1
 From Book "Power System Modeling and Scripting" by Dr. Federico Milano
 """
 import re
-
+from math import ceil
 
 def testlines(fid):
     return True  # hard coded yet
@@ -126,6 +126,72 @@ def read(file, system, header=True):
         except KeyError:
             system.Log.error('Error adding device {:s} to powersystem object.'.format(device))
             system.Log.debug('  Check if you have new jit models added to models.__init__.py')
+
+    fid.close()
+    return retval
+
+
+def write(file, system):
+    """Write data in system to a dm file"""
+    out = list()
+    out.append('# DOME format version 1.0')
+    ppl = 7  # parameter per line
+    retval = True
+
+    for dev in system.DevMan.devices:
+        out.append('')
+        header = dev + ', '
+        space = ' ' * (len(dev) + 2)
+        model = system.__dict__[dev]
+        keys = list(model._data.keys())
+        keys.extend(['name', 'idx'])
+        keys = sorted(keys)
+
+        # remove non-existent keys
+        for key in keys:
+            if key not in model.__dict__.keys():
+                keys.pop(key)
+
+        nline = int(ceil(len(keys) / ppl))
+        nelement = model.n
+        vals = [''] * len(keys)
+
+        # for each element, read values
+        for elem in range(nelement):
+            for idx, key in enumerate(keys):
+                if model.ispu and key in model._store.keys():
+                    val = model._store[key][elem]
+                else:
+                    val = model.__dict__[key][elem]
+
+                if type(val) == float:
+                    val = round(val, 4)
+                elif type(val) == str:
+                    val = '"{}"'.format(val)
+                elif type(val) == map:
+                    val = list(val)
+                elif val is None:
+                    val = 0
+                vals[idx] = val
+
+            pair = []
+            for key, val in zip(keys, vals):
+                pair.append('{} = {}'.format(key, val))
+
+            for line in range(nline):
+                string = ', '.join(pair[ppl*line:ppl*(line+1)])
+                if line == 0:  # append header or space
+                    string = header + string
+                else:
+                    string = space + string
+                if not line == nline - 1: # add comma except for last line
+                    string += ','
+
+                out.append(string)
+
+    fid = open(file, 'w')
+    for line in out:
+        fid.write(line + '\n')
 
     fid.close()
     return retval

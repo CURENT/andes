@@ -96,7 +96,7 @@ class VSC(DCBase):
         self.vQ = zeros(self.n, 1)
         for idx, cc in enumerate(self.control):
             if cc not in ['PQ', 'PV', 'vV', 'vQ']:
-                raise KeyError('VSC {0} control parameter {1} is invalid.'.format(self.names[idx], cc))
+                raise KeyError('VSC {0} control parameter {1} is invalid.'.format(self.name[idx], cc))
             self.__dict__[cc][idx] = 1
 
     def init0(self, dae):

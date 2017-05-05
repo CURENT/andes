@@ -200,7 +200,7 @@ def main():
 def run(case, **kwargs):
     """Run a single case study"""
     profile = kwargs.pop('profile', False)
-    dump_raw = kwargs.pop('dump_raw', False)
+    dump_raw = kwargs.get('dump_raw', False)
     summary = kwargs.pop('summary', False)
     exitnow = kwargs.pop('exit', False)
     no_preamble = kwargs.pop('no_preamble', False)
@@ -235,14 +235,14 @@ def run(case, **kwargs):
     if dump_raw:
         if filters.dump_raw(system):
             t2, s = elapsed(t1)
-            system.Log.info('Raw dump {:s} written in {:s}.'.format(system.Files.dump_raw, s))
+            system.Log.info('Raw file dump {:s} written in {:s}.'.format(system.Files.dump_raw, s))
         else:
             system.Log.error('Dump raw file failed.')
 
     # print summary only
     if summary:
         t2, s = elapsed(t1)
-        system.Report.writey(content='summary')
+        system.Report.write(content='summary')
         system.Log.info('Summary of written in {:s}'.format(s))
         return
 
@@ -297,6 +297,8 @@ def run(case, **kwargs):
             system.Report.write(content='powerflow')
             t5, s = elapsed(t4)
             system.Log.info('Static report written in {:s}.'.format(s))
+
+    # filters.dome.write('sss.dm', system)
 
     # run more studies
     t0, s = elapsed()

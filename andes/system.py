@@ -28,7 +28,7 @@ from .consts import *
 class PowerSystem(object):
     """everything in a power system class including models, settings,
      file and call managers"""
-    def __init__(self, case='', pid=0, verbose=INFO, no_output=False, log=None, dump=None, output=None,
+    def __init__(self, case='', pid=0, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
                  addfile=None, settings=None, input_format=None, output_format=None, gis=None, **kwargs):
         """
         Initialize an empty power system object with defaults
@@ -50,8 +50,8 @@ class PowerSystem(object):
         Returns: None
         """
         self.pid = pid
-        self.Files = FileMan(case, input_format, addfile, settings, no_output,
-                             log, dump, output_format, output, gis, **kwargs)
+        self.Files = FileMan(case, input_format, addfile, settings, no_output, dynfile,
+                             log, dump_raw, output_format, output, gis, **kwargs)
         self.Settings = Settings()
         self.SPF = SPF()
         self.CPF = CPF()
@@ -159,7 +159,7 @@ class PowerSystem(object):
     def load_settings(self, Files):
         """load settings from file"""
         self.Log.debug('Loaded specified settings file.')
-        raise NotImplemented
+        raise NotImplementedError
 
     def check_islands(self):
         """check connectivity for the ac system"""
@@ -174,7 +174,7 @@ class PowerSystem(object):
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Bus.idx
-        names = self.Bus.names
+        names = self.Bus.name
         Vm = [round(self.DAE.y[x], dec) for x in self.Bus.v]
         if self.SPF.usedegree:
             Va = [round(self.DAE.y[x] * rad2deg, dec) for x in self.Bus.a]
@@ -195,7 +195,7 @@ class PowerSystem(object):
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
-        names = self.Node.names
+        names = self.Node.name
         V = [round(self.DAE.y[x], dec) for x in self.Node.v]
         return (list(x) for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
 

@@ -3,7 +3,7 @@ import os
 
 class FileMan(object):
     """Define a File Manager class for PowerSystem"""
-    def __init__(self, case, input_format=None, addfile=None, settings=None, no_output=False, dynfile=False,
+    def __init__(self, case, input_format=None, addfile=None, settings=None, no_output=False, dynfile=None,
                  log=None, dump_raw=None, output_format=None, output=None, gis=None, **kwargs ):
         """initialize the output file names
 
@@ -36,6 +36,7 @@ class FileMan(object):
         self.dynfile = self.get_fullpath(dynfile)
         self.settings = self.get_fullpath(settings)
         self.gis = self.get_fullpath(gis)
+        self.add_format = None
 
         if no_output:
             self.no_output = True
@@ -53,7 +54,7 @@ class FileMan(object):
             if not output:
                 output = add_suffix(self.name, 'out')
             if not dump_raw:
-                dump_raw = add_suffix(self.name, 'raw')
+                dump_raw = add_suffix(self.name, 'dm')
             prof = add_suffix(self.name, 'prof')
             eig = add_suffix(self.name, 'eig')
 
@@ -62,7 +63,7 @@ class FileMan(object):
             self.dat = add_ext(output, 'dat')
             self.log = add_ext(log, 'txt')
             self.output = add_ext(output, 'txt')
-            self.dump_raw = add_ext(dump_raw, 'and')
+            self.dump_raw = add_ext(dump_raw, 'dm')
             self.prof = add_ext(prof, 'txt')
 
     def get_fullpath(self, fullname=None):

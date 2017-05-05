@@ -65,7 +65,7 @@ def read(file, system):
         elif num == 2:
             continue
         elif num >= 3:
-            if line[0:2] == '0 ':  # end of block
+            if line[0:2] == '0 ' or line[0:3] == ' 0 ':  # end of block
                 b += 1
                 continue
             elif line[0] is 'Q':  # end of file
@@ -186,6 +186,12 @@ def read(file, system):
         WINDV1,NOMV1,ANG1,RATA1,RATB1,RATC1,COD1,CONT1,RMA1,RMI1,VMA1,VMI1,NTP1,TAB1,CR1,CX1
         WINDV2,NOMV2
         """
+        if len(data[1]) < 5:
+            ty = 2
+        else:
+            ty = 3
+        if ty == 3:
+            raise NotImplementedError('Three-winding transformer not implemented')
         param = {'trasf': True,
                  'bus1': data[0][0],
                  'bus2': data[0][1],
@@ -213,9 +219,13 @@ def readadd(file, system):
         if line.find('/') >= 0:
             line = line.split('/')[0]
             end = 1
-        sep = ',' if line.find(',') >= 0 else ''  # mixed comma and space splitter not allowed
-
-        line = [to_number(item.strip()) for item in line.split(sep)]
+        if line.find(',') >= 0:  # mixed comma and space splitter not allowed
+            line = [to_number(item.strip()) for item in line.split(sep)]
+        else:
+            line = [to_number(item.strip()) for item in line.split()]
+        if not line:
+            end = 0
+            continue
         data.extend(line)
         if end == 1:
             field = data[1]
@@ -227,7 +237,16 @@ def readadd(file, system):
     fid.close()
 
     # add device elements to system
-    for data in dyr['GENCLS']:
+    for model in dyr.keys():
+        for data in dyr[model]:
+            add_dyn(system, model, data)
+
+    return retval
+
+
+def add_dyn(system, model, data):
+    """helper function to add a device element to system"""
+    if model == 'GENCLS':
         bus = data[0]
         data = data[3:]
         if bus in system.PV.bus:
@@ -249,7 +268,38 @@ def readadd(file, system):
                  }
         system.Syn2.add(**param)
 
-    return retval
+    elif model == 'GENROU':
+        bus = data[0]
+        data = data[3:]
+        if bus in system.PV.bus:
+            dev = 'PV'
+            gen_idx = system.PV.idx[system.PV.bus.index(bus)]
+        elif bus in system.SW.bus:
+            dev = 'SW'
+            gen_idx = system.SW.idx[system.SW.bus.index(bus)]
+        else:
+            raise KeyError
+        param = {'bus': bus,
+                 'gen': gen_idx,
+                 'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
+                 'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
+                 # 'xd1': system.__dict__[dev].get_by_idx('xs', gen_idx),
+                 'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
+                 'Td10': data[0],
+                 'Td20': data[1],
+                 'Tq10': data[3],
+                 'Tq20': data[4],
+                 'M': 2 * data[4],
+                 'D': data[5],
+                 'xd': data[6],
+                 'xq': data[7],
+                 'xd1': data[8],
+                 'xq1': data[9],
+                 'xd2': data[10],
+                 'xq2': data[10],
+                 'xl': data[11],
+                 }
+        system.Syn6a.add(**param)
 
 
 def to_number(s):

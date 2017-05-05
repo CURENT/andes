@@ -188,6 +188,6 @@ def read(file, system):
             system.Log.error('Error adding <Line> to powersystem object.')
             retval = False
 
-    system.Bus.names[:] = mpc['bus_name']
+    system.Bus.name[:] = mpc['bus_name']
 
     return retval
