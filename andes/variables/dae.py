@@ -6,37 +6,16 @@ class DAE(object):
     """Class for numerical Differential Algebraic Equations (DAE)"""
     def __init__(self, system):
         self.system = system
-        self._data = {'x': [],
-                      'y': [],
-                      'f': [],
-                      'g': [],
-                      'Fx': [],
-                      'Fy': [],
-                      'Gx': [],
-                      'Gy': [],
-                      'Fx0': [],
-                      'Fy0': [],
-                      'Gx0': [],
-                      'Gy0': [],
-                      'Ac': [],
-                      'tn': [],
-                      'xu': [],
-                      'yu': [],
-                      'xz': [],
-                      'yz': [],
-                      }
+        self._data = dict(x=[], y=[], f=[], g=[], Fx=[], Fy=[], Gx=[], Gy=[], Fx0=[], Fy0=[], Gx0=[], Gy0=[], Ac=[],
+                          tn=[])
 
-        self._scalars = {'m': 0,
-                         'n': 0,
-                         'lamda': 0,
-                         'npf': 0,
-                         'kg': 0,
-                         't': -1,
-                         'factorize': True,
-                         }
+        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True)
+
+        self._flags = dict(zxmax=[], zxmin=[], zymax=[], zymin=[], ux=[], uy=[])
 
         self.__dict__.update(self._data)
         self.__dict__.update(self._scalars)
+        self.__dict__.update(self._flags)
 
     def init_xy(self):
         self.init_x()
@@ -44,14 +23,16 @@ class DAE(object):
 
     def init_x(self):
         self.x = zeros(self.n, 1)
-        self.xz = zeros(self.n, 1)
-        self.xu = ones(self.n, 1)
+        self.zxmax = ones(self.n, 1)
+        self.zxmin = ones(self.n, 1)
+        self.ux = ones(self.n, 1)
 
 
     def init_y(self):
         self.y = zeros(self.m, 1)
-        self.yz = zeros(self.m, 1)
-        self.yu = ones(self.m, 1)
+        self.zymax = ones(self.m, 1)
+        self.zymin = ones(self.m, 1)
+        self.uy = ones(self.m, 1)
 
     def init_fg(self):
         self.init_f()
@@ -103,19 +84,21 @@ class DAE(object):
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
         if yext:
-            yzeros = matrix(0.0, (yext, 1), 'd')
-            yones = matrix(1.0, (yext, 1), 'd')
+            yzeros = zeros(yext, 1)
+            yones = ones(yext, 1)
             self.y = matrix([self.y, yzeros], (self.m, 1), 'd')
             self.g = matrix([self.g, yzeros], (self.m, 1), 'd')
-            self.yu = matrix([self.yu, yones], (self.m, 1), 'd')
-            self.yz = matrix([self.yz, yzeros], (self.m, 1), 'd')
+            self.uy = matrix([self.uy, yones], (self.m, 1), 'd')
+            self.zymin = matrix([self.zymin, yones], (self.m, 1), 'd')
+            self.zymax = matrix([self.zymax, yones], (self.m, 1), 'd')
         if xext:
-            xzeros = matrix(0.0, (xext, 1), 'd')
-            xones = matrix(1.0, (xext, 1), 'd')
+            xzeros = zeros(xext, 1)
+            xones = ones(xext, 1)
             self.x = matrix([self.x, xzeros], (self.n, 1), 'd')
             self.f = matrix([self.f, xzeros], (self.n, 1), 'd')
-            self.xu = matrix([self.xu, xones], (self.n, 1), 'd')
-            self.xz = matrix([self.xz, xzeros], (self.n, 1), 'd')
+            self.ux = matrix([self.ux, xones], (self.n, 1), 'd')
+            self.zxmin = matrix([self.zxmin, xones], (self.n, 1), 'd')
+            self.zxmax = matrix([self.zxmax, xones], (self.n, 1), 'd')
 
     # def algeb_windup(self, idx):
     #     """Reset Jacobian elements related to windup algebs"""
@@ -127,51 +110,56 @@ class DAE(object):
         """Limit algebraic variables and set the Jacobians"""
         yidx = matrix(yidx)
         above = agtb(self.y[yidx], ymax)
-        above_idx = findeq(above, 1)
+        above_idx = findeq(above, 1.0)
         self.y[yidx[above_idx]] = ymax[above_idx]
+        self.zymax[yidx[above_idx]] = 0
 
         below = altb(self.y[yidx], ymin)
-        below_idx = findeq(below, 1)
+        below_idx = findeq(below, 1.0)
         self.y[yidx[below_idx]] = ymin[below_idx]
+        self.zymin[yidx[below_idx]] = 0
 
-        idx = list(above_idx) + list(below_idx)
-        # self.g[yidx[idx]] = 0
-        self.yz[yidx[idx]] = 1
-
-        if len(idx) > 0:
+        if len(above_idx) + len(below_idx) > 0:
             self.factorize = True
 
-    def xwindup(self, xidx, xmin, xmax):
-        """State variable windup limiter"""
+    def anti_windup(self, xidx, xmin, xmax):
+        """State variable anti-windup limiter"""
         xidx = matrix(xidx)
-        above = agtb(self.x[xidx], xmax)
+
+        x_above = agtb(self.x[xidx], xmax)
+        f_above = agtb(self.f[xidx], 0.0)
+        above = aandb(x_above, f_above)
         above_idx = findeq(above, 1.0)
         self.x[xidx[above_idx]] = xmax[above_idx]
+        self.zxmax[xidx[above_idx]] = 0
 
-        below = altb(self.x[xidx], xmin)
+        x_below = altb(self.x[xidx], xmin)
+        f_below = altb(self.f[xidx], 0.0)
+        below = aandb(x_below, f_below)
         below_idx = findeq(below, 1.0)
         self.x[xidx[below_idx]] = xmin[below_idx]
+        self.zxmin[xidx[below_idx]] = 0
 
         idx = list(above_idx) + list(below_idx)
         self.f[xidx[idx]] = 0
-        self.xz[xidx[idx]] = 1
 
-        if len(idx) > 0:
+        if idx > 0:
             self.factorize = True
 
     def set_Ac(self):
-        """Reset Jacobian elements for limited algebraic variables"""
+        """Reset Jacobian elements for limited state variables"""
         # Todo: replace algeb_windup()
-        if sum(self.yz) == 0:
-            return
-        if sum(self.yu) == self.m:
-            return
-        idx = matrix(findeq(aandb(1 - self.yu, self.yz), 1.0))
-        H = spmatrix(1.0, idx, idx, (self.m, self.m))
-        I = spdiag([1.0] * self.m) - H
-        self.Gy = I * (self.Gy * I) + H
-        self.Fy = self.Fy * I
-        self.Gx = I * self.Gx
+        # if sum(self.yz) == 0:
+        #     return
+        # if sum(self.yu) == self.m:
+        #     return
+        # idx = matrix(findeq(aandb(1 - self.yu, self.yz), 1.0))
+        # H = spmatrix(1.0, idx, idx, (self.m, self.m))
+        # I = spdiag([1.0] * self.m) - H
+        # self.Gy = I * (self.Gy * I) + H
+        # self.Fy = self.Fy * I
+        # self.Gx = I * self.Gx
+        pass
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""
@@ -187,7 +175,7 @@ class DAE(object):
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
         size = self.system.DAE.__dict__[m].size
-        oldval = []
+        old_val = []
         if type(row) is int:
             row = [row]
         if type(col) is int:
@@ -197,8 +185,8 @@ class DAE(object):
         if type(col) is range:
             col = list(col)
         for i, j in zip(row, col):
-            oldval.append(self.system.DAE.__dict__[m][i, j])
-        self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
+            old_val.append(self.system.DAE.__dict__[m][i, j])
+        self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def show(self, eq):
