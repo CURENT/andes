@@ -28,8 +28,8 @@ class VSC(DCBase):
                              'K',
                              'vhigh',
                              'vlow'])
-        self._data.update({'rsh': 0.01,
-                           'xsh': 0.1,
+        self._data.update({'rsh': 0.0025,
+                           'xsh': 0.06,
                            'vshmax': 1.1,
                            'vshmin': 0.9,
                            'Ishmax': 2,
@@ -352,17 +352,17 @@ class VSC1(DCBase):
         self._name = 'VSC1'
         self._ac = {'bus': ['a', 'v']}
         self._data.update({'vsc': None,
-                           'Kp1': 0.2,
+                           'Kp1': 0.1,
                            'Ki1': 1,
-                           'Kp2': 0.2,
+                           'Kp2': 0.1,
                            'Ki2': 1,
-                           'Kp3': 0.2,
-                           'Ki3': 0,
-                           'Kp4': 0.2,
-                           'Ki4': 0,
-                           'Kp5': 0.2,
-                           'Ki5': 0,
-                           'Kpdc': 0.1,
+                           'Kp3': 1,
+                           'Ki3': 1,
+                           'Kp4': 1,
+                           'Ki4': 1,
+                           'Kp5': 1,
+                           'Ki5': 1,
+                           'Kpdc': 1,
                            'Kidc': 0,
                            'Tt': 0.01,
                            'Tdc': 0.01,
@@ -624,14 +624,14 @@ class VSC2(DCBase):
         self._name = 'VSC2'
         self._ac = {'bus': ['a', 'v']}
         self._data.update({'vsc': None,
-                           'Kp1': 0.2,
+                           'Kp1': 0.1,
                            'Ki1': 1,
-                           'Kp2': 0.2,
+                           'Kp2': 0.1,
                            'Ki2': 1,
-                           'Kp3': 0.2,
-                           'Ki3': 0,
-                           'Kp4': 0.2,
-                           'Ki4': 0,
+                           'Kp3': 1,
+                           'Ki3': 1,
+                           'Kp4': 1,
+                           'Ki4': 1,
                            'KQ': 0.05,
                            'M': 6,
                            'D': 3,
@@ -886,3 +886,125 @@ class VSC2(DCBase):
         dae.add_jac(Fy0, - self.Ki4, self.Nq, self.vq)
         dae.add_jac(Fy0, 1, self.adq, self.wref)
         dae.add_jac(Fy0, - self.iM, self.xw, self.p)
+
+
+class VSC3(DCBase):
+    """Simplified voltage-source type power synchronizing control VSC """
+    def __init__(self, system, name):
+        super(VSC3, self).__init__(system, name)
+        self._group = 'AC/DC'
+        self._name = 'VSC3'
+        self._data.update({'vsc': None,
+                           'Kp1': 0.2,
+                           'Ki1': 1,
+                           'Kp2': 0.2,
+                           'Ki2': 1,
+                           'KQ': 0.05,
+                           'M': 6,
+                           'D': 3,
+                           'Tt': 0.01,
+                           'wref0': 1,
+                           })
+
+        self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'KQ', 'M', 'D', 'Tt', 'wref0'])
+        self._descr.update({'Kp1': 'proportional gain of Id',
+                            'Ki1': 'integral gain of Id',
+                            'Kp2': 'proportional gain of Iq',
+                            'Ki2': 'integral gain of Iq',
+                            'KQ': 'reactive power droop',
+                            'M': 'startup time constant of emulated mass',
+                            'D': 'emulated damping',
+                            'Tt': 'ac voltage measurement delay',
+                            'wref0': 'frequency reference',
+                            })
+        self._algebs.extend(['wref', 'vref', 'p', 'q', 'vd', 'vq',
+                             'Idref', 'Iqref', 'udref', 'uqref',
+                             ])
+        self._states.extend(['Id', 'Iq', 'ud', 'uq',
+                             'Md', 'Mq', 'Nd', 'Nq',
+                             'adq', 'xw',
+                             ])
+        self._fnamey.extend(['\\omega^{ref}', 'V^{ref}', 'P', 'Q', 'U_d^s', 'U_q^s',
+                             'I_d^{ref}', 'I_q^{ref}', 'U_d^{ref}', 'U_q^{ref}',
+                             ])
+        self._fnamex.extend(['I_d', 'I_q', 'u_c^d', 'u_^q', '\\theta_{dq}',
+                             'M_d', 'M_q', 'Nd', 'Nq', 'x_\\omega',
+                             ])
+        self._zeros.extend(['Tt'])
+        self._service.extend(['wn', 'iTt', 'iLsh', ])
+        self.calls.update({'init1': True, 'gcall': True,
+                           'fcall': True, 'jac0': True,
+                           'gycall': True, 'fxcall': True,
+                           })
+        self._mandatory.extend(['vsc'])
+        self._mandatory.remove('node1')
+        self._mandatory.remove('node2')
+        self._mandatory.remove('Vdcn')
+        self._ac = {}
+        self._dc = {}
+        self._inst_meta()
+
+    def setup(self):
+        super(VSC3, self).setup()
+
+    def init1(self, dae):
+        self.copy_param('VSC', src='u', dest='u0', fkey=self.vsc)
+        self.copy_param('VSC', src='rsh', fkey=self.vsc)
+        self.copy_param('VSC', src='xsh', fkey=self.vsc)
+        self.copy_param('VSC', src='ash', fkey=self.vsc)
+        self.copy_param('VSC', src='vsh', fkey=self.vsc)
+        self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)
+        self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
+
+        self.copy_param('VSC', src='pdc', fkey=self.vsc)
+        self.copy_param('VSC', src='bus', fkey=self.vsc)
+        self.copy_param('VSC', src='a', fkey=self.vsc)
+        self.copy_param('VSC', src='v', fkey=self.vsc)
+        self.copy_param('VSC', src='v1', fkey=self.vsc)
+        self.copy_param('VSC', src='v2', fkey=self.vsc)
+
+        self.u = aandb(self.u, self.u0)
+
+        self.pref0 = dae.y[self.pref0]
+        self.qref0 = dae.y[self.qref0]
+        self.vref0 = dae.y[self.v]
+        self.vdcref0 = dae.y[self.v1] - dae.y[self.v2]
+
+        self.iLsh = div(1.0, self.xsh)
+        self.iTt = div(1.0, self.Tt)
+        self.iM = div(self.u, self.M)
+        self.iD = div(self.u, self.D)
+
+        # start initialization
+        dae.x[self.adq] = dae.y[self.a]
+        dae.y[self.vd] = dae.y[self.v]
+        dae.y[self.vq] = zeros(self.n, 1)
+
+        Id = div(self.pref0, dae.y[self.vd])
+        Iq = div(self.qref0, dae.y[self.vd])
+        dae.y[self.Idref] = Id
+        dae.y[self.Iqref] = Iq
+        dae.x[self.Md] = mul(self.rsh, Id)
+        dae.x[self.Mq] = mul(self.rsh, Iq)
+        dae.x[self.Id] = Id
+        dae.x[self.Iq] = Iq
+
+        ud = dae.y[self.vd] + mul(self.xsh, Iq) + mul(self.rsh, Id)
+        uq = dae.y[self.vq] - mul(self.xsh, Id) + mul(self.rsh, Iq)
+
+        dae.y[self.udref] = ud
+        dae.y[self.uqref] = uq
+        dae.x[self.ud] = ud
+        dae.x[self.uq] = uq
+
+        dae.x[self.Nd] = Id
+        dae.x[self.Nq] = Iq
+
+        dae.y[self.p] = self.pref0
+        dae.y[self.q] = self.qref0
+        dae.y[self.vref] = self.vref0 - mul(self.KQ, self.qref0 - dae.y[self.q])
+        dae.y[self.wref] = self.wref0
+
+        for idx in self.vsc:
+            self.system.VSC.disable(idx)
+

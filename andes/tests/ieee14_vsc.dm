@@ -173,23 +173,27 @@ Node, idx = 4, name = "Node 4", Vdcn = 100.0
 
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
-VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.01, xsh = 0.1,
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
-VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.01, xsh = 0.1,
+VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.01,
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.01, xsh = 0.1,
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSCD 1", Ki1 = 3, Ki2 = 3, Ki3 = 1, Ki4 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 2, name = "VSCD 2", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0, Ki4 = 0
-VSC1, vsc = 3, name = "VSCD 3", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.2, Ki4 = 0.2
-VSC2, vsc = 4, name = "VSCD 4", Ki1 = 0.5, Ki2 = 0.5, Ki3 = 0.2, Ki4 = 0.2
+VSC1, vsc = 1, name = "VSCD 1", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
+VSC2, vsc = 2, name = "VSCD 2", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 0.2, Ki3 = 0.2, Kp4 = 0.2, Ki4 = 0
+VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
+VSC2, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 01, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0.1
 
 Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
 
