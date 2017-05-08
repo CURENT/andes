@@ -128,7 +128,10 @@ def read(file, system):
         0,    1,      2,      3,      4
         Bus, name, Status, g (MW), b (Mvar)
         """
-        param = {'bus': data[0],
+        bus = data[0]
+        vn = system.Bus.get_by_idx('Vn', bus)
+        param = {'bus': bus,
+                 'Vn': vn,
                  'u': data[2],
                  'Sn': mva,
                  'g': data[3] / mva,
@@ -142,22 +145,25 @@ def read(file, system):
          0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
          I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
         """
+        bus = data[0]
+        vn = system.Bus.get_by_idx('Vn', bus)
         gen_mva = data[8]  # unused yet
         gen_idx += 1
+        status = data[14]
         param = {'Sn': gen_mva,
-                 'Vn': system.Bus.get_by_idx('Vn', data[0]),
-                 'u': data[14],
+                 'Vn': vn,
+                 'u': status,
                  'idx': gen_idx,
-                 'bus': data[0],
-                 'pg': data[2] / gen_mva,
-                 'qg': data[3] / gen_mva,
-                 'qmax': data[4] / gen_mva,
-                 'qmin': data[5] / gen_mva,
+                 'bus': bus,
+                 'pg': status*data[2]/mva,
+                 'qg': status*data[3]/mva,
+                 'qmax': data[4] / mva,
+                 'qmin': data[5] / mva,
                  'v0': data[6],
                  'ra': data[9],  # ra  armature resistance
                  'xs': data[10],  # xs synchronous reactance
-                 'pmax': data[16] / gen_mva,
-                 'pmin': data[17] / gen_mva,
+                 'pmax': data[16] / mva,
+                 'pmin': data[17] / mva,
                  }
         if data[0] in sw.keys():
             param.update({'a0': sw[data[0]],
@@ -176,6 +182,8 @@ def read(file, system):
                  'x': data[4],
                  'b': data[5],
                  'rate_a': data[6],
+                 'Vn': system.Bus.get_by_idx('Vn', data[0]),
+                 'Vn2': system.Bus.get_by_idx('Vn', data[1]),
                  }
         system.Line.add(**param)
 
@@ -192,16 +200,26 @@ def read(file, system):
             ty = 3
         if ty == 3:
             raise NotImplementedError('Three-winding transformer not implemented')
-        param = {'trasf': True,
+
+        tap = data[2][0]
+        phi = data[2][2]
+
+        if tap == 1 and phi == 0:
+            trasf = False
+        else:
+            trasf = True
+        param = {'trasf': trasf,
                  'bus1': data[0][0],
                  'bus2': data[0][1],
                  'u': data[0][11],
                  'b': data[0][8],
                  'r': data[1][0],
                  'x': data[1][1],
-                 'tap': data[2][0],
-                 'phi': data[2][2],
+                 'tap': tap,
+                 'phi': phi,
                  'rate_a': data[2][3],
+                 'Vn': system.Bus.get_by_idx('Vn', data[0][0]),
+                 'Vn2': system.Bus.get_by_idx('Vn', data[0][1]),
                  }
         system.Line.add(**param)
     return retval

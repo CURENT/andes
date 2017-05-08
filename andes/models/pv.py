@@ -59,7 +59,7 @@ class Stagen(ModelBase):
                             'vmin': 'minimum allowed voltage',
                             })
         self._ac = {'bus': ['a', 'v']}
-        self._powers = ['pg', 'qg', 'pmax', 'pmin', 'qmax', 'qmin']
+        # self._powers = ['pg', 'qg', 'pmax', 'pmin', 'qmax', 'qmin']
         self._voltages = ['v0', 'vmax', 'vmin']
         self._service = []
         self.calls.update({'gcall': True, 'gycall': True,

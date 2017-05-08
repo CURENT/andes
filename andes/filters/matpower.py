@@ -160,6 +160,10 @@ def read(file, system):
             retval = False
 
     for data in mpc['branch']:
+        """
+        fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle	status	angmin	angmax	Pf	Qf	Pt	Qt
+          0       1     2   3   4     5       6       7       8      9        10     11       12    13  14  15  16
+        """
         fbus = data[0]
         tbus = data[1]
         r = data[2]
@@ -174,7 +178,7 @@ def read(file, system):
         elif data[8] == 1.0 and data[9] == 0.0:  # not a transformer
             tf = False
             ratio = 1
-            angle = 1
+            angle = 0
         else:
             tf = True
             ratio = data[8]

@@ -43,7 +43,7 @@ class Line(ModelBase):
                             'Vn2': 'kV',
                             'xcoord': 'deg',
                             'ycoord': 'deg',
-                            'transf': 'na',
+                            'trasf': 'na',
                             'tap': 'na',
                             'phi': 'deg',
                             'fn': 'Hz',
