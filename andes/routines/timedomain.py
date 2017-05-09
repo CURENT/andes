@@ -1,8 +1,12 @@
+import progressbar
+from numpy import array
+from time import monotonic as time, sleep
+
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
-from numpy import array
+
 from ..utils.jactools import *
-import progressbar
+
 F = []
 
 
@@ -51,6 +55,7 @@ def run(system):
 
     # check settings
     maxit = settings.maxit
+    qrt = settings.qrt
     tol = settings.tol
     In = spdiag([1] * dae.n)
 
@@ -76,6 +81,8 @@ def run(system):
 
     # main loop
     bar.start()
+    actual_time = 0
+    settings.qrtstart = time()
     while t <= settings.tf and t + h > t and not diff_max:
 
         # last time step length
@@ -203,6 +210,20 @@ def run(system):
             nextpc += 10
         # compute max rotor angle difference
         diff_max = anglediff()
+
+        # quasi-real-time check and wait
+        rt_end = settings.qrtstart + (actual_time - settings.t0) * settings.kqrt
+        if settings.qrt:
+            if time() - rt_end > 0:  # the ending time has passed
+                if time() - rt_end > settings.kqrt:  # simulation is too slow
+                    if settings.qrtsoft:
+                        system.Log.warning('Simulation over-run at simulation time {} s.'.format(str(actual_time)))
+                        settings.deltat *= 2
+                    else:
+                        raise RuntimeError('Simulation time is too slow for the speed factor {}.'.format(settings.kqrt))
+            else:  # wait to finish
+                while time() - rt_end < 0:
+                    sleep(1/1000)
 
     bar.finish()
 
