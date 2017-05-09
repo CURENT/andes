@@ -19,7 +19,6 @@ class TDS(SettingsBase):
         self.error = 1
         self.qrt = 1
         self.kqrt = 1
-        self.qrtsoft = 1
         self.qrtstart = 0
         self.method_desc = {'euler': 'Implicit Euler',
                             'trapezoidal': 'Implicit Trapezoidal',
@@ -36,6 +35,5 @@ class TDS(SettingsBase):
                         'tol': 'iteration error tolerance',
                         'qrt': 'quasi-real-time simulation speed',
                         'kqrt': 'quasi-rt runs at kqrt seconds per simulated second',
-                        'qrtsoft': 'soft qrt time restriction'
                         }
         return descriptions

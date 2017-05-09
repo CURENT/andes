@@ -82,6 +82,7 @@ def run(system):
     # main loop
     bar.start()
     actual_time = 0
+    rt_headroom = 0
     settings.qrtstart = time()
     while t <= settings.tf and t + h > t and not diff_max:
 
@@ -212,20 +213,18 @@ def run(system):
         diff_max = anglediff()
 
         # quasi-real-time check and wait
-        rt_end = settings.qrtstart + (actual_time - settings.t0) * settings.kqrt
+        rt_end = settings.qrtstart + (t - settings.t0) * settings.kqrt
         if settings.qrt:
             if time() - rt_end > 0:  # the ending time has passed
                 if time() - rt_end > settings.kqrt:  # simulation is too slow
-                    if settings.qrtsoft:
-                        system.Log.warning('Simulation over-run at simulation time {} s.'.format(str(actual_time)))
-                        settings.deltat *= 2
-                    else:
-                        raise RuntimeError('Simulation time is too slow for the speed factor {}.'.format(settings.kqrt))
+                    system.Log.warning('Simulation over-run at simulation time {} s.'.format(str(t)))
             else:  # wait to finish
+                rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:
-                    sleep(1/1000)
-
+                    sleep(1e-4)
     bar.finish()
+    if settings.qrt:
+        system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
 
 
 def time_step(system, convergence, niter, t):
