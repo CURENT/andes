@@ -275,6 +275,7 @@ def add_dyn(system, model, data):
             gen_idx = system.SW.idx[system.SW.bus.index(bus)]
         else:
             raise KeyError
+        # todo: check xl
         param = {'bus': bus,
                  'gen': gen_idx,
                  'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
@@ -301,7 +302,6 @@ def add_dyn(system, model, data):
                  'gen': gen_idx,
                  'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
                  'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
-                 # 'xd1': system.__dict__[dev].get_by_idx('xs', gen_idx),
                  'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
                  'Td10': data[0],
                  'Td20': data[1],
@@ -314,10 +314,13 @@ def add_dyn(system, model, data):
                  'xd1': data[8],
                  'xq1': data[9],
                  'xd2': data[10],
-                 'xq2': data[10],
+                 'xq2': data[10],  # xd2 = xq2
                  'xl': data[11],
                  }
         system.Syn6a.add(**param)
+
+    else:
+        system.Log.warning('Skipping unsupported mode <{}> on bus {}'.format(model, data[0]))
 
 
 def to_number(s):
