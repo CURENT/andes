@@ -204,6 +204,7 @@ class Ord2(SynBase):
 
 class Ord6a(SynBase):
     """6th order the Marconato's Model"""
+    # todo: check e1d
     def __init__(self, system, name):
         super(Ord6a, self).__init__(system, name)
         self._name = 'Syn6a'

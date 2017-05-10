@@ -269,8 +269,27 @@ def run(case, **kwargs):
     if len(system.Bus.islanded_buses) == 0 and len(system.Bus.island_sets) == 0:
         system.Log.info('System is interconnected.\n')
     else:
-        system.Log.info('System contains {:d} islands and {:d} islanded buses.\n'.format
+        system.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
                         (len(system.Bus.island_sets), len(system.Bus.islanded_buses)))
+
+    nosw_island = []  # no slack bus island
+    nsw_island = []  # multiple slack bus island
+    for idx, island in enumerate(system.Bus.island_sets):
+        nosw = 1
+        for item in system.SW.bus:
+            if system.Bus.int[item] in island:
+                nosw -= 1
+        if nosw == 1:
+            nosw_island.append(idx)
+        elif nosw < 0:
+            nsw_island.append(idx)
+
+    if nosw_island:
+        system.Log.error('Slack bus is not defined for {:g} island(s).\n'.format(len(nosw_island)))
+    if nsw_island:
+        system.Log.error('Multiple slack buses are defined for {:g} island(s).\n'.format(len(nosw_island)))
+    else:
+        system.Log.info('Each island has a slack bus correctly defined.\n'.format(nosw_island))
 
     # Choose PF solver and run_pf
     if system.SPF.solver.lower() not in powerflow.solvers.keys():
@@ -297,8 +316,6 @@ def run(case, **kwargs):
             system.Report.write(content='powerflow')
             t5, s = elapsed(t4)
             system.Log.info('Static report written in {:s}.'.format(s))
-
-    # filters.dome.write('sss.dm', system)
 
     # run more studies
     t0, s = elapsed()

@@ -86,22 +86,26 @@ class Bus(ModelBase):
 
     def gisland(self,dae):
         """Reset g(x) for islanded buses and areas"""
-        if not self.islanded_buses:
+        if not (self.islanded_buses and self.island_sets):
             return
 
-        # for islanded buses
+        a, v = list(), list()
+
+        # for islanded areas without a slack bus
+        for island in self.island_sets:
+            nosw = 1
+            for item in self.system.SW.bus:
+                if self.int[item] in island:
+                    nosw = 0
+                    break
+            if nosw:
+                self.islanded_buses += island
+                self.island_sets.remove(island)
+
         a = self.islanded_buses
         v = [self.n + item for item in a]
         dae.g[a] = 0
         dae.g[v] = 0
-
-        # for islanded areas without a slack bus
-        for island in self.island_sets:
-            if self.system.refbus not in island:
-                a = island
-                v = [self.n + item for item in a]
-                # dae.g[a] = 0
-                # dae.g[v] = 0
 
     def gyisland(self,dae):
         """Reset gy(x) for islanded buses and areas"""
