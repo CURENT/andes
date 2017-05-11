@@ -55,7 +55,7 @@ conda install python=3.4
 pip3 install numpy blist matplotlib texttable progressbar2 --user
 ~~~~
 
-Run the following commands to install the enhanced CVXOPT:
+Run the following commands in the PowerShell to install the enhanced CVXOPT:
 ~~~~
 wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.4.tar.gz
 7z x SuiteSparse-4.5.4.tar.gz
@@ -69,7 +69,7 @@ mkdir openblas
 pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
 
 git clone https://github.com/sanurielf/cvxopt.git
-copy openblas\amd64\lib\libopenblaspy.a cvxopt\
+cp openblas\amd64\lib\libopenblaspy.a cvxopt
 cd cvxopt
 set CVXOPT_BLAS_LIB=openblaspy
 set CVXOPT_LAPACK_LIB=openblaspy
@@ -86,3 +86,11 @@ Clone the andes repository and install the development version:
 git clone https://github.com/cuihantao/andes.git
 python3 setup.py develop --user
 ~~~~
+
+FAQ:
+1. Why do I have the error "DLL not loaded" while importing CVXOPT?
+
+~~~
+Try installing CVXOPT from a PowerShell with elevated privilege. 
+Some links are not set correctly from Git Bash or cmd.
+~~~
