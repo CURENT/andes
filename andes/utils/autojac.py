@@ -3,91 +3,172 @@ from andes.main import elapsed
 
 # --- INPUT ---
 outfile = 'VSC1.txt'
-consts = ['Kp1', 'Ki1',
-          'Kp2', 'Ki2',
-          'Kp3', 'Ki3',
-          'Kp4', 'Ki4',
-          'Kp5', 'Ki5',
-          'Kpdc', 'Kidc',
-          'Tt', 'Tdc',
-          'Cdc', 'RC',
-          'rsh', 'xsh',
-          'iLsh',
-          'iTt', 'iTdc',
-          'PQ', 'PV',
-          'vQ', 'vV',
-          'adq', 'pref0', 'qref0', 'vref0', 'vdcref0',
-          'M', 'iM'
-          ]
-algebs = ['vd', 'vq',
+name = 'VSC1'
+group = 'AC/DC'
+
+data = {'rsh': 0.00025,
+        'xsh': 0.006,
+        }
+descr = {'rsh': 'ac interface resistance',
+         'xsh': 'ac interface reactance',
+         }
+units = {}
+
+params = ['rsh', 'xsh']
+
+fnamex = []
+fnamey = []
+
+service = []
+mandatory = []
+zeros = []
+
+powers = []
+voltages = []
+currents = []
+z = []
+y = []
+dccurrents = []
+dcvoltages = []
+r = []
+g = []
+times = []
+
+ac = {}
+dc = {}
+ctrl = {}
+
+calls = ['gcall']
+
+algebs = ['wref', 'vref',
           'p', 'q',
+          'vd', 'vq',
           'Idref', 'Iqref',
           'udref', 'uqref',
-          'Idcy',
-          'a', 'v', 'v1', 'v2',
+          'a', 'v',
+          'v1', 'v2',
           ]
-states = ['Id', 'Iq',
-          'ud', 'uq',
-          'Md', 'Mq',
-          'Nd', 'Nq',
-          'Idcx',
+states = ['Id', 'Iq', 'ud', 'uq',
+          'Md', 'Mq', 'Nd', 'Nq',
+          'adq', 'xw',
+          ]
+
+
+def declarations(name=None, group=None, data=None, descr=None, units=None, params=None, fnamex=None, fnamey=None,
+                 service=None, mandatory=None, zeros=None, powers=None, voltages=None, currents=None, z=None,
+                 y=None, dcvoltages=None, dccurrents=None, r=None, g=None, times=None, ac=None, dc=None, ctrl=None):
+    out = []
+    space4, space8 = '    ', '        '
+    out.append('class {}(ModelBase):'.format(name))
+    out.append(space4 + 'def __init__(self, system, name):')
+    out.append(space8 + 'super().__init__(system, name)')
+    if not group:
+        print('*Error: Group name is not defined!')
+
+    out.append(space8 + 'self._group = {}'.format(group))
+
+    list_extend = space8 + 'self._{}.extend({})'
+    dict_update = space8 + 'self._{}.update({})'
+
+    if name:
+        out.append(space8 + 'self._name = {}'.format(name))
+    if data:
+        out.append(dict_update.format('data', data))
+    if units:
+        out.append(dict_update.format('unit', units))
+
+    if params:
+        out.append(list_extend.format('params', params))
+    if descr:
+        out.append(list_extend.format('deacr', descr))
+
+    if algebs:
+        out.append(list_extend.format('algebs', algebs))
+    if states:
+        out.append(list_extend.format('states', states))
+    if service:
+        out.append(list_extend.format('services', service))
+    if mandatory:
+        out.append(list_extend.format('mandatory', mandatory))
+    if zeros:
+        out.append(list_extend.format('zeros', zeros))
+
+    perunits = {'powers': powers,
+                'voltages': voltages,
+                'currents': currents,
+                'z': z,
+                'y': y,
+                'dccurrents': dccurrents,
+                'dcvoltages': dcvoltages,
+                'r': r,
+                'g': g,
+                'times': times,
+                }
+    interfaces = {'ac': ac,
+                  'dc': dc,
+                  'ctrl': ctrl,
+                  }
+
+    for key, val in perunits.items():
+        if val:
+            out.append(list_extend.format(key, val))
+
+    for key, val in interfaces.items():
+        if val:
+            out.append(dict_update.format(key, val))
+
+
+    fid = open(outfile, 'w')
+    for line in out:
+        fid.write(line + '\n')
+
+    fid.close()
+
+
+
+
+
+
+consts = ['rsh', 'xsh', 'iLsh',
+          'pref0', 'qref0', 'wref0', 'vref0',
+          'iM', 'D', 'iTt',
+          'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'KQ',
           ]
 interfaces = ['a', 'v', 'v1', 'v2']
 
-serv = {'iTt': '1/Tt',
-        'iTdc': '1/Tdc',
-        'iLsh': '1/xsh',
-        }
-
-# init equations are ordered
-init = [['vd', 'v'],
-        ['vq', '0'],
-        ['p', 'pref0'],
-        ['q', 'qref0'],
-        ['Idref', 'pref0 / vd'],
-        ['Iqref', 'qref0 / vd'],
-        ['Id', 'Idref'],
-        ['Iq', 'Iqref'],
-        ['udref', 'vd + xsh*Iq + rsh*Id'],
-        ['uqref', 'vq - xsh*Id + rsh*Iq'],
-        ['ud', 'udref'],
-        ['uq', 'uqref'],
-        ['Idcy', '(PQ + PV) * (-ud*Id /(v1-v2))'],
-        ['Idcx', '(vV+ vQ) * (-ud*Id /(v1-v2))'],
-        ['Md', 'rsh * Id'],
-        ['Mq', 'rsh * Iq'],
-        ['Nd', '(vV + vQ) * Idcx'],
-        ['Nq', '(PV + vV) * Iq'],
-        ]
-
-algeb_eq = ['v*cos(adq - a) - vd',
-            'v*sin(adq - a) - vq',
-            'vd*Id + vq*Iq - p',
-            'vd*Iq - vq*Id - q',
-            '(PQ + PV)*(pref0/vd + Kp3*(pref0 - p) + Nd) + (vQ + vV) * (-Idcx*(v1-v2) - (uq*Iq))/ud - Idref',  # Idref
-            '(PQ + vQ)*(qref0/vd + Kp4*(qref0 - q)) + (PV + vV)*(Kp5 * (vref0 - vd)) + Nq - Iqref',  # Iqref
+algeb_eq = ['wref - wref0 - xw',  # wref
+            'vref - vref0 + KQ*(q - qref0)',  # vref
+            'vd * Id + vq * Iq - p',  # P
+            'vd * Iq - vq* Id - q',  # Q
+            'v * cos(adq - a) - vd',  # vd
+            'v * sin(adq - a) - vq',  # vq
+            'Kp3 * (vref - vd) + Nd - Idref',  # Idref
+            '- Kp4 * vq + Nq - Iqref',  # Iqref
             'vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref',  # udref
-            'vq - xsh*Idref + Kp2*(Iqref - Iq) + Mq - uqref',   # uqref
-            '(PQ + PV)* (-ud*Id - uq*Iq)/(v1 - v2) - Idcy',   # Idcy
+            'vq - xsh*Idref + Kp2*(Iqref - Iq) + Mq - uqref',  # uqref
             '-p',  # a
             '-q',  # v
-            '-(PQ + PV)*Idcy - (vV + vQ)*Idcx',  #v1
-            '+(PQ + PV)*Idcy + (vV + vQ)*Idcx',  # v2
+            '(ud * Id + uq * Iq) / (v1 - v2)',  # v1
+            '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
             ]
+
 diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
            '-rsh*iLsh*Iq + Id + iLsh*(uq - vq)',  # Iq
            'iTt*(udref - ud)',  # ud
            'iTt*(uqref - uq)',  # uq
-           'Ki1*(Idref - Id) ',  # Md
+           'Ki1*(Idref - Id)',  # Md
            'Ki2*(Iqref - Iq)',  # Mq
-           '(PQ + PV)*(Ki3*(pref0 - p)) + (vQ + vV)*(Kidc*(vdcref0 - v1))',  # Nd
-           '(PQ + vQ)*(Ki4*(qref0 - q)) + (PV + vV)*(Ki5*(vref0 - vd))',  #'Nq'
-           '(vV + vQ)*iTdc*(-Idcx + Kidc*(vdcref0 - v1) + Nd)', # Idcx
-           ]
+           'Ki3*(vref - vd)',  # Nd
+           'Ki4*(-vq)',  # Nq
+           'wref - wref0',  # adq
+           'iM * (pref0 - p - D*xw)'
+           ]  # xw
+init = []
+serv = {}
 # --- INPUT ENDS ---
 
 
-def symbolify(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, init=None):
+def equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, init=None):
     sym_consts = []
     sym_algebs = []
     sym_states = []
@@ -150,7 +231,185 @@ def symbolify(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, 
         expr = eval('{}'.format(item))
         sym_f.append(expr)
 
-    return sym_consts, sym_algebs, sym_states, sym_interfaces, sym_f, sym_g, sym_init, sym_serv
+    """Derive the jacobians of equation f and g.
+    Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]"""
+
+    Fx = []
+    Fy = []
+    Gx = []
+    Gy = []
+
+    for eq_idx, expr in enumerate(sym_g):
+        try:
+            free_syms = expr.free_symbols
+        except AttributeError:
+            free_syms = []
+
+        for sym in free_syms:
+            if sym in sym_algebs:
+                # take the derivative and go to Gy
+                sym_idx = sym_algebs.index(sym)
+                Gy.append([eq_idx, sym_idx, expr.diff(sym)])
+            elif sym in sym_states:
+                # take the derivative and go to Gx
+                sym_idx = sym_states.index(sym)
+                Gx.append([eq_idx, sym_idx, expr.diff(sym)])
+            else:
+                pass  # skip constants
+
+    for eq_idx, expr in enumerate(sym_f):
+        try:
+            free_syms = expr.free_symbols
+        except AttributeError:
+            free_syms = []
+
+        for sym in free_syms:
+            if sym in sym_algebs:
+                sym_idx = sym_algebs.index(sym)
+                Fy.append([eq_idx, sym_idx, expr.diff(sym)])
+            elif sym in sym_states:
+                sym_idx = sym_states.index(sym)
+                Fx.append([eq_idx, sym_idx, expr.diff(sym)])
+
+    """Save equations into Python functions"""
+
+    jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
+
+    fcall = []
+    gcall = []
+    gycall = []
+    fxcall = []
+    jac0 = []
+
+    jac0_line = 'dae.add_jac({}0, {}, self.{}, self.{})'
+    call_line = 'dae.add_jac({}, {}, self.{}, self.{})'
+
+    mapping = {'F': sym_states,
+               'G': sym_algebs,
+               'y': sym_algebs,
+               'x': sym_states}
+
+    # format f and g equations
+    for sym, eq in zip(sym_states, sym_f):
+        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
+        template = 'dae.f[self.{}] = {}'
+        fcall.append(template.format(sym, string_eq))
+
+    for sym, eq in zip(sym_algebs, sym_g):
+        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
+        if sym in sym_interfaces:
+            template = 'dae.g += spmatrix({1}, self.{0}, [0]*self.n, (dae.m, 1), \'d\')'
+        else:
+            template = 'dae.g[self.{0}] = {1}'
+        gcall.append(template.format(sym, string_eq))
+
+    # format Jacobians
+    for jac in jacobians:
+        for item in eval(jac):
+            eqname = mapping[jac[0]][item[0]]
+            varname = mapping[jac[1]][item[1]]
+            equation = item[2]
+            try:
+                free_syms = equation.free_symbols
+            except AttributeError:
+                free_syms = []
+
+            string_eq = stringfy(equation, sym_consts, sym_states, sym_algebs)
+
+            isjac0 = 1
+            for sym in free_syms:
+                if sym in sym_consts:
+                    continue
+                elif sym in sym_algebs + sym_states:
+                    isjac0 = 0
+                    break
+                else:
+                    raise KeyError
+
+            if isjac0:
+                jac0.append(jac0_line.format(jac, string_eq, eqname, varname))
+            else:
+                if jac == 'Gy':
+                    gycall.append(call_line.format(jac, string_eq, eqname, varname))
+                else:
+                    fxcall.append(call_line.format(jac, string_eq, eqname, varname))
+
+    """Format initialization and service calls"""
+    initcall = []
+    for item in sym_init:
+        rhs = stringfy(item[1], sym_const, sym_state, sym_algeb)
+        if item[0] in sym_algeb:
+            xy = 'y'
+        elif item[0] in sym_state:
+            xy = 'x'
+        else:
+            raise KeyError
+        out = 'dae.{}[self.{}] = {}'.format(xy, item[0], rhs)
+        initcall.append(out)
+
+    servcall = []
+    for item in sym_serv:
+        rhs = stringfy(item[1], sym_const)
+        out = 'self.{} = {}'.format(item[0], rhs)
+        servcall.append(out)
+
+    fid = open(outfile, 'a')
+
+    if servcall:
+
+        fid.write('def servcall(self):\n')
+        for item in servcall:
+            fid.writelines('    ' + item + '\n')
+        fid.write('\n')
+
+    if initcall:
+        fid.write('def init1(self, dae):\n')
+        fid.writelines('    self.servcall()\n')
+        for item in initcall:
+            fid.writelines('    ' + item + '\n')
+        fid.write('\n')
+
+    # write f and g equation into fcall and gcall
+    space4 = '    '
+    space8 = space4 * 2
+    fid.write(space4 + 'def gcall(self, dae):\n')
+    for item in gcall:
+        fid.writelines(space8 + item + '\n')
+    fid.write('\n')
+
+    fid.write(space4 + 'def fcall(self, dae):\n')
+    for item in fcall:
+        fid.writelines(space8 + item + '\n')
+    fid.write('\n')
+
+    fid.write(space4 + 'def gycall(self, dae):\n')
+    for item in gycall:
+        fid.writelines(space8 + item + '\n')
+    fid.writelines('\n')
+
+    fid.write(space4 + 'def fxcall(self, dae):\n')
+    for item in fxcall:
+        fid.writelines(space8 + item + '\n')
+    fid.writelines('\n')
+
+    fid.write(space4 + 'def jac0(self, dae):\n')
+    for item in jac0:
+        fid.writelines(space8 + item + '\n')
+
+    fid.close()
+
+    print('Statistics:')
+    print('')
+    print('constants: {}'.format(len(sym_consts)))
+    print('algebraics: {}'.format(len(sym_algebs)))
+    print('states: {}'.format(len(sym_states)))
+    print('')
+    print('differential equations: {}'.format(len(fcall)))
+    print('constants: {}'.format(len(gcall)))
+    print('')
+    print('fxcall lines: {}'.format(len(fxcall)))
+    print('gycall lines: {}'.format(len(gycall)))
+    print('jac0 lines: {}'.format(len(jac0)))
 
 
 def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
@@ -224,209 +483,12 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
             expr_str = ', '.join(arg_str)
             expr_str = 'div(' + expr_str + ')'
         else:
-            raise NotImplemented
+            raise NotImplementedError
     return expr_str
-
-
-def derive(sym_algebs, sym_states, sym_f, sym_g):
-    """Derive the jacobians of equation f and g.
-    Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]"""
-    Fx = []
-    Fy = []
-    Gx = []
-    Gy = []
-
-    for eq_idx, expr in enumerate(sym_g):
-        try:
-            free_syms = expr.free_symbols
-        except AttributeError:
-            free_syms = []
-
-        for sym in free_syms:
-            if sym in sym_algebs:
-                # take the derivative and go to Gy
-                sym_idx = sym_algebs.index(sym)
-                Gy.append([eq_idx, sym_idx, expr.diff(sym)])
-            elif sym in sym_states:
-                # take the derivative and go to Gx
-                sym_idx = sym_states.index(sym)
-                Gx.append([eq_idx, sym_idx, expr.diff(sym)])
-            else:
-                pass  # skip constants
-
-    for eq_idx, expr in enumerate(sym_f):
-        try:
-            free_syms = expr.free_symbols
-        except AttributeError:
-            free_syms = []
-
-        for sym in free_syms:
-            if sym in sym_algebs:
-                sym_idx = sym_algebs.index(sym)
-                Fy.append([eq_idx, sym_idx, expr.diff(sym)])
-            elif sym in sym_states:
-                sym_idx = sym_states.index(sym)
-                Fx.append([eq_idx, sym_idx, expr.diff(sym)])
-
-    return Fx, Fy, Gx, Gy
-
-
-def reformat_eq(sym_consts, sym_algebs, sym_states, sym_interfaces, sym_f, sym_g, Fx, Fy, Gx, Gy):
-    """Save equations into Python functions"""
-    jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
-
-    fcall = []
-    gcall = []
-    gycall = []
-    fxcall = []
-    jac0 = []
-
-    jac0_line = 'dae.add_jac({}0, {}, self.{}, self.{})'
-    call_line = 'dae.add_jac({}, {}, self.{}, self.{})'
-
-    mapping = {'F': sym_states,
-               'G': sym_algebs,
-               'y': sym_algebs,
-               'x': sym_states}
-
-    # format f and g equations
-    for sym, eq in zip(sym_states, sym_f):
-        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
-        template = 'dae.f[self.{}] = {}'
-        fcall.append(template.format(sym, string_eq))
-
-    for sym, eq in zip(sym_algebs, sym_g):
-        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
-        if sym in sym_interfaces:
-            template = 'dae.g += spmatrix({1}, self.{0}, [0]*self.n, (dae.m, 1), \'d\')'
-        else:
-            template = 'dae.g[self.{0}] = {1}'
-        gcall.append(template.format(sym, string_eq))
-
-    # format Jacobians
-    for jac in jacobians:
-        for item in eval(jac):
-            eqname = mapping[jac[0]][item[0]]
-            varname = mapping[jac[1]][item[1]]
-            equation = item[2]
-            try:
-                free_syms = equation.free_symbols
-            except AttributeError:
-                free_syms = []
-
-            string_eq = stringfy(equation, sym_consts, sym_states, sym_algebs)
-
-            isjac0 = 1
-            for sym in free_syms:
-                if sym in sym_consts:
-                    continue
-                elif sym in sym_algebs + sym_states:
-                    isjac0 = 0
-                    break
-                else:
-                    raise KeyError
-
-            if isjac0:
-                jac0.append(jac0_line.format(jac, string_eq, eqname, varname))
-            else:
-                if jac == 'Gy':
-                    gycall.append(call_line.format(jac, string_eq, eqname, varname))
-                else:
-                    fxcall.append(call_line.format(jac, string_eq, eqname, varname))
-
-    return fcall, gcall, fxcall, gycall, jac0
-
-
-def write(fcall, gcall, fxcall, gycall, jac0, initcall, servcall):
-    fid = open(outfile, 'w')
-
-    fid.write('def servcall(self):\n')
-    for item in servcall:
-        fid.writelines('    ' + item + '\n')
-    fid.write('\n')
-
-    fid.write('def init1(self):\n')
-    fid.writelines('    self.servcall()\n')
-    for item in initcall:
-        fid.writelines('    ' + item + '\n')
-    fid.write('\n')
-
-    # write f and g equation into fcall and gcall
-    fid.write('def gcall(self, dae):\n')
-    for item in gcall:
-        fid.writelines('    ' + item + '\n')
-    fid.write('\n')
-
-    fid.write('def fcall(self, dae):\n')
-    for item in fcall:
-        fid.writelines('    ' + item + '\n')
-    fid.write('\n')
-
-    fid.write('def gycall(self, dae):\n')
-    for item in gycall:
-        fid.writelines('    ' + item + '\n')
-    fid.writelines('\n')
-
-    fid.write('def fxcall(self, dae):\n')
-    for item in fxcall:
-        fid.writelines('    ' + item + '\n')
-    fid.writelines('\n')
-
-    fid.write('def jac0(self, dae):\n')
-    for item in jac0:
-        fid.writelines('    ' + item + '\n')
-
-    fid.close()
-
-
-def reformat_serv(sym_serv, sym_const):
-    """Format service variable expressions"""
-    service = []
-    for item in sym_serv:
-        rhs = stringfy(item[1], sym_const)
-        out = 'self.{} = {}'.format(item[0], rhs)
-        service.append(out)
-    return service
-
-
-def reformat_init(sym_init, sym_const, sym_algeb, sym_state):
-    init = []
-    for item in sym_init:
-        rhs = stringfy(item[1], sym_const, sym_state, sym_algeb)
-        if item[0] in sym_algeb:
-            xy = 'y'
-        elif item[0] in sym_state:
-            xy = 'x'
-        else:
-            raise KeyError
-        out = 'dae.{}[self.{}] = {}'.format(xy, item[0], rhs)
-        init.append(out)
-    return init
-
-
-def stats(sym_consts, sym_algebs, sym_states, fcall, gcall, fxcall, gycall, jac0):
-    print('Statistics:')
-    print('')
-    print('constants: {}'.format(len(sym_consts)))
-    print('algebraics: {}'.format(len(sym_algebs)))
-    print('states: {}'.format(len(sym_states)))
-    print('')
-    print('differential equations: {}'.format(len(fcall)))
-    print('constants: {}'.format(len(gcall)))
-    print('')
-    print('fxcall lines: {}'.format(len(fxcall)))
-    print('gycall lines: {}'.format(len(gycall)))
-    print('jac0 lines: {}'.format(len(jac0)))
-
 
 if __name__ == "__main__":
     t, s = elapsed()
-    s_const, s_algebs, s_states, s_interfaces, s_f, s_g, s_init, s_serv = symbolify(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv, init)
-    Fx, Fy, Gx, Gy = derive(s_algebs, s_states, s_f, s_g)
-    fcall, gcall, fxcall, gycall, jac0 = reformat_eq(s_const, s_algebs, s_states, s_interfaces, s_f, s_g, Fx, Fy, Gx, Gy)
-    servcall = reformat_serv(s_serv, s_const)
-    initcall = reformat_init(s_init, s_const, s_algebs, s_states)
-    write(fcall, gcall, fxcall, gycall, jac0, initcall, servcall)
-    stats(s_const, s_algebs, s_states, fcall, gcall, fxcall, gycall, jac0)
+    declarations()
+    equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv, init)
     _, s = elapsed(t)
     print('Elapsed time: {}'.format(s))

@@ -433,12 +433,12 @@ class ModelBase(object):
                 self.copy_param(model='Node', src='v', dest=val, fkey=self.__dict__[key])
 
     def _ctrl_interface(self):
-        """Retrieve parameters of controlled model"""
+        """Retrieve parameters of controlled model
+        model: {param, as, fkey}
+        """
         for key, val in self._ctrl.items():
-            if type(val) != list:
-                val = [val]
-            for item in val:
-                self.copy_param(**item)
+            val.update({'model': key})
+            self.copy_param(**val)
 
     def _addr(self):
         """
