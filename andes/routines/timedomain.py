@@ -174,7 +174,7 @@ def run(system):
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
                 # windup limiters
-                dae.set_Ac()
+                dae.anti_windup_jac()
 
                 # Ac = matrix(dae.Ac)
                 # Ac = array(Ac)
