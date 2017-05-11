@@ -63,8 +63,9 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-c', '--clean', help='Clean output files and exit.', action='store_true')
     parser.add_argument('-K', '--cleanall', help='Clean all output and auxillary files.', action='store_true')
     parser.add_argument('-p', '--path', help='Path to case files', default='')
+    parser.add_argument('-P', '--pert', help='Path to perturbation file', default='')
     parser.add_argument('-s', '--settings', help='Specify a setting file. This will take precedence of .andesrc '
-                                           'file in the home directory.')
+                                                 'file in the home directory.')
     parser.add_argument('-i', '--input_format', help='Specify input case file format.')
     parser.add_argument('-o', '--output_format', help='Specify output case file format. For example txt, latex.')
     parser.add_argument('-O', '--output', help='Specify the output file name. For different routines the same name'

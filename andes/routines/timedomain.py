@@ -1,3 +1,6 @@
+import sys
+import importlib
+
 import progressbar
 from numpy import array
 from time import monotonic as time, sleep
@@ -79,6 +82,18 @@ def run(system):
     # store the initial value
     system.VarOut.store(t)
 
+    # perturbation file
+    PERT = 0  # 0 - not loaded, 1 - loaded, -1 - error
+    callpert = None
+    if system.Files.pert:
+        try:
+            sys.path.append(system.Files.path)
+            module = importlib.import_module(system.Files.pert[:-3])
+            callpert = getattr(module, 'pert')
+            PERT = 1
+        except:
+            PERT = -1
+
     # main loop
     bar.start()
     actual_time = 0
@@ -118,8 +133,11 @@ def run(system):
             # system.Breaker.get_times(actual_time)
             switch = False
 
-        if settings.disturbance:
-            system.Call.disturbance(actual_time)
+        if PERT == 1:  # pert file loaded
+            callpert(actual_time, system)
+        elif PERT == -1:
+            system.Log.warning('Pert file is discarded due to import errors.')
+            PERT = 0
 
         niter = 0
         settings.error = tol + 1
