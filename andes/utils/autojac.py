@@ -38,104 +38,36 @@ ac = {}
 dc = {}
 ctrl = {}
 
-calls = ['gcall']
-
-algebs = ['wref', 'vref',
-          'p', 'q',
-          'vd', 'vq',
-          'Idref', 'Iqref',
-          'udref', 'uqref',
-          'a', 'v',
-          'v1', 'v2',
-          ]
-states = ['Id', 'Iq', 'ud', 'uq',
-          'Md', 'Mq', 'Nd', 'Nq',
-          'adq', 'xw',
-          ]
-
-
-def declarations(name=None, group=None, data=None, descr=None, units=None, params=None, fnamex=None, fnamey=None,
-                 service=None, mandatory=None, zeros=None, powers=None, voltages=None, currents=None, z=None,
-                 y=None, dcvoltages=None, dccurrents=None, r=None, g=None, times=None, ac=None, dc=None, ctrl=None):
-    out = []
-    space4, space8 = '    ', '        '
-    out.append('class {}(ModelBase):'.format(name))
-    out.append(space4 + 'def __init__(self, system, name):')
-    out.append(space8 + 'super().__init__(system, name)')
-    if not group:
-        print('*Error: Group name is not defined!')
-
-    out.append(space8 + 'self._group = {}'.format(group))
-
-    list_extend = space8 + 'self._{}.extend({})'
-    dict_update = space8 + 'self._{}.update({})'
-
-    if name:
-        out.append(space8 + 'self._name = {}'.format(name))
-    if data:
-        out.append(dict_update.format('data', data))
-    if units:
-        out.append(dict_update.format('unit', units))
-
-    if params:
-        out.append(list_extend.format('params', params))
-    if descr:
-        out.append(list_extend.format('deacr', descr))
-
-    if algebs:
-        out.append(list_extend.format('algebs', algebs))
-    if states:
-        out.append(list_extend.format('states', states))
-    if service:
-        out.append(list_extend.format('services', service))
-    if mandatory:
-        out.append(list_extend.format('mandatory', mandatory))
-    if zeros:
-        out.append(list_extend.format('zeros', zeros))
-
-    perunits = {'powers': powers,
-                'voltages': voltages,
-                'currents': currents,
-                'z': z,
-                'y': y,
-                'dccurrents': dccurrents,
-                'dcvoltages': dcvoltages,
-                'r': r,
-                'g': g,
-                'times': times,
-                }
-    interfaces = {'ac': ac,
-                  'dc': dc,
-                  'ctrl': ctrl,
-                  }
-
-    for key, val in perunits.items():
-        if val:
-            out.append(list_extend.format(key, val))
-
-    for key, val in interfaces.items():
-        if val:
-            out.append(dict_update.format(key, val))
-
-
-    fid = open(outfile, 'w')
-    for line in out:
-        fid.write(line + '\n')
-
-    fid.close()
-
-
-
-
-
+# calls = ['gcall']
 
 consts = ['rsh', 'xsh', 'iLsh',
           'pref0', 'qref0', 'wref0', 'vref0',
           'iM', 'D', 'iTt',
           'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'KQ',
           ]
+
+# consts = list(data.keys()) + service
+
+algebs = ['wref', 'vref', 'p', 'q', 'vd', 'vq',
+          'Idref', 'Iqref', 'udref', 'uqref',
+          'a', 'v','v1', 'v2',
+          ]
 interfaces = ['a', 'v', 'v1', 'v2']
 
+states = ['Id', 'Iq', 'ud', 'uq',
+          'Md', 'Mq', 'Nd', 'Nq',
+          'adq', 'xw',
+          ]
+
+# --- equation section ---
+# initialization equations
+init = []
+
+# service variable declaration
+serv = {}
+
+# algebraic equations in g(x, y) = 0 form
+#   defined in the order of the algeb variables
 algeb_eq = ['wref - wref0 - xw',  # wref
             'vref - vref0 + KQ*(q - qref0)',  # vref
             'vd * Id + vq * Iq - p',  # P
@@ -152,6 +84,8 @@ algeb_eq = ['wref - wref0 - xw',  # wref
             '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
             ]
 
+# differential equations in f(x, y) = derivative(x) form
+#   defined in the order of the state variables
 diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
            '-rsh*iLsh*Iq + Id + iLsh*(uq - vq)',  # Iq
            'iTt*(udref - ud)',  # ud
@@ -163,12 +97,11 @@ diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
            'wref - wref0',  # adq
            'iM * (pref0 - p - D*xw)'
            ]  # xw
-init = []
-serv = {}
 # --- INPUT ENDS ---
 
 
 def equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, init=None):
+    """Set up sympy symbols for variables, constants and equations"""
     sym_consts = []
     sym_algebs = []
     sym_states = []
@@ -271,7 +204,7 @@ def equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, 
                 sym_idx = sym_states.index(sym)
                 Fx.append([eq_idx, sym_idx, expr.diff(sym)])
 
-    """Save equations into Python functions"""
+    """Save equations into callable CVXOPT functions"""
 
     jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
 
@@ -337,10 +270,10 @@ def equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, 
     """Format initialization and service calls"""
     initcall = []
     for item in sym_init:
-        rhs = stringfy(item[1], sym_const, sym_state, sym_algeb)
-        if item[0] in sym_algeb:
+        rhs = stringfy(item[1], sym_consts, sym_states, sym_algebs)
+        if item[0] in sym_algebs:
             xy = 'y'
-        elif item[0] in sym_state:
+        elif item[0] in sym_states:
             xy = 'x'
         else:
             raise KeyError
@@ -349,54 +282,133 @@ def equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv=None, 
 
     servcall = []
     for item in sym_serv:
-        rhs = stringfy(item[1], sym_const)
+        rhs = stringfy(item[1], sym_consts)
         out = 'self.{} = {}'.format(item[0], rhs)
         servcall.append(out)
 
-    fid = open(outfile, 'a')
+    calls = {'gcall': not not gcall,
+             'fcall': not not fcall,
+             'gycall': not not gycall,
+             'fxcall': not not fxcall,
+             'jac0': not not jac0,
+             'init1': not not initcall,
+             }
 
-    if servcall:
-
-        fid.write('def servcall(self):\n')
-        for item in servcall:
-            fid.writelines('    ' + item + '\n')
-        fid.write('\n')
-
-    if initcall:
-        fid.write('def init1(self, dae):\n')
-        fid.writelines('    self.servcall()\n')
-        for item in initcall:
-            fid.writelines('    ' + item + '\n')
-        fid.write('\n')
-
-    # write f and g equation into fcall and gcall
     space4 = '    '
     space8 = space4 * 2
-    fid.write(space4 + 'def gcall(self, dae):\n')
+
+    """Build call all the function strings"""
+    out_calls = []
+    if servcall:
+        out_calls.append(space4 + 'def servcall(self):')
+        for item in servcall:
+            out_calls.append(space8 + item)
+        out_calls.append('')
+
+    if initcall:
+        out_calls.append(space4 + 'def init1(self, dae):')
+        out_calls.append(space8 + 'self.servcall()')
+        for item in initcall:
+            out_calls.append(space8 + item)
+
+    # write f and g equation into fcall and gcall
+    out_calls.append(space4 + 'def gcall(self, dae):')
     for item in gcall:
-        fid.writelines(space8 + item + '\n')
-    fid.write('\n')
+        out_calls.append(space8 + item)
+    out_calls.append('')
 
-    fid.write(space4 + 'def fcall(self, dae):\n')
+    out_calls.append(space4 + 'def fcall(self, dae):')
     for item in fcall:
-        fid.writelines(space8 + item + '\n')
-    fid.write('\n')
+        out_calls.append(space8 + item)
+    out_calls.append('')
 
-    fid.write(space4 + 'def gycall(self, dae):\n')
+    out_calls.append(space4 + 'def gycall(self, dae):')
     for item in gycall:
-        fid.writelines(space8 + item + '\n')
-    fid.writelines('\n')
+        out_calls.append(space8 + item)
+    out_calls.append('')
 
-    fid.write(space4 + 'def fxcall(self, dae):\n')
+    out_calls.append(space4 + 'def fxcall(self, dae):')
     for item in fxcall:
-        fid.writelines(space8 + item + '\n')
-    fid.writelines('\n')
+        out_calls.append(space8 + item)
+    out_calls.append('')
 
-    fid.write(space4 + 'def jac0(self, dae):\n')
+    out_calls.append(space4 + 'def jac0(self, dae):')
     for item in jac0:
-        fid.writelines(space8 + item + '\n')
+        out_calls.append(space8 + item)
 
+    """Class definitions in out_init"""
+
+    out_init = list()
+    out_init.append('class {}(ModelBase):'.format(name))
+    out_init.append(space4 + 'def __init__(self, system, name):')
+    out_init.append(space8 + 'super().__init__(system, name)')
+    if not group:
+        print('*Error: Group name is not defined!')
+
+    out_init.append(space8 + 'self._group = {}'.format(group))
+
+    list_extend = space8 + 'self._{}.extend({})'
+    dict_update = space8 + 'self._{}.update({})'
+
+    if name:
+        out_init.append(space8 + 'self._name = {}'.format(name))
+    if data:
+        out_init.append(dict_update.format('data', data))
+    if units:
+        out_init.append(dict_update.format('unit', units))
+
+    if params:
+        out_init.append(list_extend.format('params', params))
+    if descr:
+        out_init.append(list_extend.format('descr', descr))
+
+    if algebs:
+        out_init.append(list_extend.format('algebs', algebs))
+    if states:
+        out_init.append(list_extend.format('states', states))
+    if service:
+        out_init.append(list_extend.format('services', service))
+    if mandatory:
+        out_init.append(list_extend.format('mandatory', mandatory))
+    if zeros:
+        out_init.append(list_extend.format('zeros', zeros))
+
+    perunits = {'powers': powers,
+                'voltages': voltages,
+                'currents': currents,
+                'z': z,
+                'y': y,
+                'dccurrents': dccurrents,
+                'dcvoltages': dcvoltages,
+                'r': r,
+                'g': g,
+                'times': times,
+                }
+    interfaces = {'ac': ac,
+                  'dc': dc,
+                  'ctrl': ctrl,
+                  }
+
+    for key, val in perunits.items():
+        if val:
+            out_init.append(list_extend.format(key, val))
+
+    for key, val in interfaces.items():
+        if val:
+            out_init.append(dict_update.format(key, val))
+
+    out_init.append(dict_update.format('calls', calls))
+
+    out_init.append(space8 + 'self._inst_meta()')
+    out_init.append('')
+
+    fid = open(outfile, 'w')
+    for line in out_init:
+        fid.write(line + '\n')
+    for line in out_calls:
+        fid.write(line + '\n')
     fid.close()
+
 
     print('Statistics:')
     print('')
@@ -488,7 +500,6 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
 
 if __name__ == "__main__":
     t, s = elapsed()
-    declarations()
     equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, serv, init)
     _, s = elapsed(t)
     print('Elapsed time: {}'.format(s))
