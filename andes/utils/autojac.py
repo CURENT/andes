@@ -82,7 +82,8 @@ algeb_eq = ['wref - wref0 - xw',  # wref
             '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
             ]
 windup = {}
-hard_limit = {}
+hard_limit = {'Idref': ['Idmin', 'Idmax'],
+              }
 
 # differential equations in f(x, y) = derivative(x) form
 #   defined in the order of the state variables
@@ -98,12 +99,14 @@ diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
            'iM * (pref0 - p - D*xw)'
            ]  # xw
 
-anti_windup = {'Nd': ['Ta', 'Ndmax', 'Ndmin'],
+anti_windup = {'Nd': ['Ta', 'Ndmin', 'Ndmax'],
                } # [time_constant, min, max]
 # --- INPUT ENDS ---
 
 
-def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_eq=None, init1_eq=None):
+def run(**kwargs):
+    space4 = '    '
+    space8 = space4 * 2
     """Input data consistency check"""
     to_check = {'param': params,
                 'mandatory': mandatory,
@@ -124,6 +127,25 @@ def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_
             if item not in data.keys():
                 print('* Warning: {} <{}> is not in data.'.format(key, item))
 
+    for key, val in hard_limit.items():
+        if key not in algebs:
+            print('* Warning: variable <{}> in hard_limit not defined.'.format(key))
+        for item in val:
+            if item not in consts:
+                print('* Warning: const <{}> in hard_limit not defined.'.format(item))
+    for key, val in windup.items():
+        if key not in algebs:
+            print('* Warning: variable <{}> in windup not defined.'.format(key))
+        for item in val:
+            if item not in consts:
+                print('* Warning: const <{}> in windup not defined.'.format(item))
+    for key, val in anti_windup.items():
+        if key not in states:
+            print('* Warning: variable <{}> in anti_windup not defined.'.format(key))
+        for item in val:
+            if item not in consts:
+                print('* Warning: const <{}> in anti_windup not defined.'.format(item))
+
     """Equation and variable number check"""
     nalgebs, nalgeb_eq, nstates, ndiff_eq = len(algebs), len(algeb_eq), len(states), len(diff_eq)
     if nalgebs != nalgeb_eq:
@@ -139,12 +161,20 @@ def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_
     """Set up sympy symbols for variables, constants and equations"""
     sym_consts, sym_algebs, sym_states, sym_interfaces = [], [], [], []
     sym_f, sym_g, sym_serv, sym_init1 = [], [], [], []
+    sym_hard_limit, sym_windup, sym_anti_windup = [], [], []
+
+    states_anti_windup = list(anti_windup.keys())
+    algebs_windup = list(windup.keys())
+    algebs_hard_limit = list(hard_limit.keys())
 
     # convert consts and variables into sympy.Symbol
     sym_maping = {'consts': sym_consts,
                   'algebs': sym_algebs,
                   'states': sym_states,
                   'interfaces': sym_interfaces,
+                  'states_anti_windup': sym_anti_windup,
+                  'algebs_windup': sym_windup,
+                  'algebs_hard_limit': sym_hard_limit,
                   }
     for key, val in sym_maping.items():
         for item in eval(key):
@@ -222,10 +252,24 @@ def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_
     call_line = 'dae.add_jac({}, {}, self.{}, self.{})'
 
     # format f and g equations
+    fcall_anti_windup_1 = 'dae.f[self.{0}] = div({0} - dae.x[self.{0}], self.{1})'
+    fcall_anti_windup_2 = 'dae.anti_windup(self.{0}, self.{1}, self.{2})'
+
     for sym, eq in zip(sym_states, sym_f):
         string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
-        template = 'dae.f[self.{0}] = {0}'
+        # handling anti_windup
+        if sym in sym_anti_windup:
+            template = '{0} = {1}'
+        else:
+            template = 'dae.f[self.{0}] = {1}'
         fcall.append(template.format(sym, string_eq))
+        if sym in sym_anti_windup:
+            val = eval('anti_windup[\'{}\']'.format(sym))
+            fcall.append(fcall_anti_windup_1.format(sym, val[0]))
+            fcall.append(fcall_anti_windup_2.format(sym, val[1], val[2]))
+
+    gcall_windup = 'dae.windup(self.{0}, self.{1}, self.{2})'
+    gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
 
     for sym, eq in zip(sym_algebs, sym_g):
         string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
@@ -234,6 +278,13 @@ def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_
         else:
             template = 'dae.g[self.{0}] = {1}'
         gcall.append(template.format(sym, string_eq))
+
+        if sym in sym_windup:
+            val = eval('windup[\'{}\']'.format(sym))
+            gcall.append(gcall_windup.format(sym, val[0], val[1]))
+        elif sym in sym_hard_limit:
+            val = eval('hard_limit[\'{}\']'.format(sym))
+            gcall.append(gcall_hard_limit.format(sym, val[0], val[1]))
 
     # format Jacobians
     jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
@@ -295,9 +346,6 @@ def equations(consts, algebs, states, intf_dict_upd, diff_eq, algeb_eq, service_
              'jac0': not not jac0,
              'init1': not not init1call,
              }
-
-    space4 = '    '
-    space8 = space4 * 2
 
     """Build function call strings"""
     out_calls = []
@@ -494,6 +542,6 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
 
 if __name__ == "__main__":
     t, s = elapsed()
-    equations(consts, algebs, states, interfaces, diff_eq, algeb_eq, service_eq, init1_eq)
+    run()
     _, s = elapsed(t)
     print('Elapsed time: {}'.format(s))
