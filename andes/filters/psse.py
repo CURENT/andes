@@ -2,11 +2,11 @@
 
 import re
 from python_utils import converters
-from cvxopt.base import matrix
+from cvxopt import matrix
 from operator import itemgetter
 
 from ..consts import *
-
+from ..utils.math import to_number
 
 def testlines(fid):
     """Check the raw file for frequency base"""
@@ -321,19 +321,3 @@ def add_dyn(system, model, data):
 
     else:
         system.Log.warning('Skipping unsupported mode <{}> on bus {}'.format(model, data[0]))
-
-
-def to_number(s):
-    """Convert a string to a number. If not successful, return the string without blanks"""
-    ret = s
-    try:
-        ret = float(s)
-    except ValueError:
-        ret = ret.strip('\'').strip()
-        return ret
-
-    try:
-        ret = int(s)
-    except ValueError:
-        pass
-    return ret

@@ -86,3 +86,18 @@ def algeb_limiter(m, upper, lower):
     m[idx] = lower[idx]
 
     return m
+
+def to_number(s):
+    """Convert a string to a number. If not successful, return the string without blanks"""
+    ret = s
+    try:
+        ret = float(s)
+    except ValueError:
+        ret = ret.strip('\'').strip()
+        return ret
+
+    try:
+        ret = int(s)
+    except ValueError:
+        pass
+    return ret
