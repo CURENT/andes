@@ -104,6 +104,11 @@ anti_windup = {'Nd': ['Ta', 'Ndmin', 'Ndmax'],
 # --- INPUT ENDS ---
 
 
+def card_parser(file):
+    """Parse an ANDES card file into internal variables"""
+
+
+
 def run(**kwargs):
     space4 = '    '
     space8 = space4 * 2

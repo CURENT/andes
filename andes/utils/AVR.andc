@@ -1,0 +1,34 @@
+# ANDES card file, 1.0
+
+# field = elements
+# an element can be a dictionary denoted with colon
+# multiple elements: separate with semi-colon
+# multiple lines supported
+
+name = AVR1
+doc_string =Automatic Voltage Regulator Type I
+group = AVR
+data =
+
+
+mandatory = syn
+
+ac = bus: a, v
+
+ctrl = Synchronous: vf, vf, syn
+
+algebs =
+
+states =
+
+interfaces =
+
+service_eq =
+
+init1_eq =
+
+algeb_eq =
+
+state_eq =
+
+anti_wintup =
