@@ -1,115 +1,191 @@
 from sympy import Symbol, diff, sin, cos, exp, Integer
 from andes.main import elapsed
-
+from andes.utils.math import to_number
 # --- INPUT ---
-outfile = 'VSC1.txt'
-name = 'VSC1'
-doc_string = "VSC Type 1"
-group = 'AC/DC'
-
-data = {'rsh': 0.00025,
-        'xsh': 0.006,
-        }
-descr = {'rsh': 'ac interface resistance',
-         'xsh': 'ac interface reactance',
-         }
-units = {}
-
-params = ['rsh', 'xsh']
-
-fnamex = []
-fnamey = []
-
-mandatory = []
-zeros = []
-
-powers = []
-voltages = []
-currents = []
-z = []
-y = []
-dccurrents = []
-dcvoltages = []
-r = []
-g = []
-times = []
-
-ac = {}
-dc = {}
-ctrl = {}
-
-consts = ['rsh', 'xsh', 'iLsh',
-          'pref0', 'qref0', 'wref0', 'vref0',
-          'iM', 'D', 'iTt',
-          'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'KQ',
-          ]
-
-# consts = list(data.keys()) + list(service_eq.keys())
-
-algebs = ['wref', 'vref', 'p', 'q', 'vd', 'vq',
-          'Idref', 'Iqref', 'udref', 'uqref',
-          'a', 'v','v1', 'v2',
-          ]
-interfaces = ['a', 'v', 'v1', 'v2']
-
-states = ['Id', 'Iq', 'ud', 'uq',
-          'Md', 'Mq', 'Nd', 'Nq',
-          'adq', 'xw',
-          ]
-
-# --- equation section ---
-# initialization equations
-init1_eq = []
-
-# service variable and equation declaration
-service_eq = {}
-
-# algebraic equations in g(x, y) = 0 form
-#   defined in the order of the algeb variables
-algeb_eq = ['wref - wref0 - xw',  # wref
-            'vref - vref0 + KQ*(q - qref0)',  # vref
-            'vd * Id + vq * Iq - p',  # P
-            'vd * Iq - vq* Id - q',  # Q
-            'v * cos(adq - a) - vd',  # vd
-            'v * sin(adq - a) - vq',  # vq
-            'Kp3 * (vref - vd) + Nd - Idref',  # Idref
-            '- Kp4 * vq + Nq - Iqref',  # Iqref
-            'vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref',  # udref
-            'vq - xsh*Idref + Kp2*(Iqref - Iq) + Mq - uqref',  # uqref
-            '-p',  # a
-            '-q',  # v
-            '(ud * Id + uq * Iq) / (v1 - v2)',  # v1
-            '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
-            ]
-windup = {}
-hard_limit = {'Idref': ['Idmin', 'Idmax'],
-              }
-
-# differential equations in f(x, y) = derivative(x) form
-#   defined in the order of the state variables
-diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
-           '-rsh*iLsh*Iq + Id + iLsh*(uq - vq)',  # Iq
-           'iTt*(udref - ud)',  # ud
-           'iTt*(uqref - uq)',  # uq
-           'Ki1*(Idref - Id)',  # Md
-           'Ki2*(Iqref - Iq)',  # Mq
-           'Ki3*(vref - vd)',  # Nd
-           'Ki4*(-vq)',  # Nq
-           'wref - wref0',  # adq
-           'iM * (pref0 - p - D*xw)'
-           ]  # xw
-
-anti_windup = {'Nd': ['Ta', 'Ndmin', 'Ndmax'],
-               } # [time_constant, min, max]
+# outfile = 'VSC1.txt'
+# name = 'VSC1'
+# doc_string = "VSC Type 1"
+# group = 'AC/DC'
+#
+# data = {'rsh': 0.00025,
+#         'xsh': 0.006,
+#         }
+# descr = {'rsh': 'ac interface resistance',
+#          'xsh': 'ac interface reactance',
+#          }
+# units = {}
+#
+# params = ['rsh', 'xsh']
+#
+# fnamex = []
+# fnamey = []
+#
+# mandatory = []
+# zeros = []
+#
+# powers = []
+# voltages = []
+# currents = []
+# z = []
+# y = []
+# dccurrents = []
+# dcvoltages = []
+# r = []
+# g = []
+# times = []
+#
+# ac = {}
+# dc = {}
+# ctrl = {}
+#
+# consts = ['rsh', 'xsh', 'iLsh',
+#           'pref0', 'qref0', 'wref0', 'vref0',
+#           'iM', 'D', 'iTt',
+#           'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'KQ',
+#           ]
+#
+# # consts = list(data.keys()) + list(service_eq.keys())
+#
+# algebs = ['wref', 'vref', 'p', 'q', 'vd', 'vq',
+#           'Idref', 'Iqref', 'udref', 'uqref',
+#           'a', 'v','v1', 'v2',
+#           ]
+# interfaces = ['a', 'v', 'v1', 'v2']
+#
+# states = ['Id', 'Iq', 'ud', 'uq',
+#           'Md', 'Mq', 'Nd', 'Nq',
+#           'adq', 'xw',
+#           ]
+#
+# # --- equation section ---
+# # initialization equations
+# init1_eq = []
+#
+# # service variable and equation declaration
+# service_eq = {}
+#
+# # algebraic equations in g(x, y) = 0 form
+# #   defined in the order of the algeb variables
+# algeb_eq = ['wref - wref0 - xw',  # wref
+#             'vref - vref0 + KQ*(q - qref0)',  # vref
+#             'vd * Id + vq * Iq - p',  # P
+#             'vd * Iq - vq* Id - q',  # Q
+#             'v * cos(adq - a) - vd',  # vd
+#             'v * sin(adq - a) - vq',  # vq
+#             'Kp3 * (vref - vd) + Nd - Idref',  # Idref
+#             '- Kp4 * vq + Nq - Iqref',  # Iqref
+#             'vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref',  # udref
+#             'vq - xsh*Idref + Kp2*(Iqref - Iq) + Mq - uqref',  # uqref
+#             '-p',  # a
+#             '-q',  # v
+#             '(ud * Id + uq * Iq) / (v1 - v2)',  # v1
+#             '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
+#             ]
+# windup = {}
+# hard_limit = {'Idref': ['Idmin', 'Idmax'],
+#               }
+#
+# # differential equations in f(x, y) = derivative(x) form
+# #   defined in the order of the state variables
+# diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
+#            '-rsh*iLsh*Iq + Id + iLsh*(uq - vq)',  # Iq
+#            'iTt*(udref - ud)',  # ud
+#            'iTt*(uqref - uq)',  # uq
+#            'Ki1*(Idref - Id)',  # Md
+#            'Ki2*(Iqref - Iq)',  # Mq
+#            'Ki3*(vref - vd)',  # Nd
+#            'Ki4*(-vq)',  # Nq
+#            'wref - wref0',  # adq
+#            'iM * (pref0 - p - D*xw)'
+#            ]  # xw
+#
+# anti_windup = {'Nd': ['Ta', 'Ndmin', 'Ndmax'],
+#                } # [time_constant, min, max]
 # --- INPUT ENDS ---
 
 
 def card_parser(file):
     """Parse an ANDES card file into internal variables"""
+    try:
+        fid = open(file, 'r')
+        raw_file = fid.readlines()
+    except IOError:
+        print('* IOError while reading input card file.')
+        return
 
+    ret_dict = {}
+    ret_dict['outfile'] = file.split('.')[0] + '.py'
+    key, val = None, None
+    for lineno, line in enumerate(raw_file):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('#'):
+            continue
+        if '=' in line:  # defining a field
+            key, val = line.split('=')
+            key, val = key.strip(), val.strip()
+            val = [] if val == '' else val
+            ret_dict.update({key: val})
+            if val:
+                val = val.split(';')
+        else:
+            val.extend(line.split(';'))
+        if val:
+            val = de_blank(val)
+            ret_dict[key] = val
 
+    for key, val in ret_dict.items():
+        if not val:
+            continue
+        if type(val) == list:
+            if ':' in val[0]:
+                new_val = {}
+                for item in val:
+                    m, n = item.split(':')
+                    m, n = m.strip(), n.strip()
+                    if ',' in n:
+                        n = n.split(',')
+                        n = de_blank(n)
+                        n = [to_number(i) for i in n]
+                    else:
+                        n = to_number(n)
+                    new_val.update({m.strip(): n})
+                ret_dict[key] = new_val
 
-def run(**kwargs):
+    ret_dict['name'] = ret_dict['name'][0]
+    ret_dict['doc_string'] = ret_dict['doc_string'][0]
+    ret_dict['group'] = ret_dict['group'][0]
+    if ret_dict['service_eq'] == []:
+        ret_dict['service_eq'] = {}
+    return ret_dict
+
+def add_quotes(string):
+    return '\'{}\''.format(string)
+
+def de_blank(val):
+    """Remove blank elements in `val` and return `ret`"""
+    ret = list(val)
+    if type(val) == list:
+        for idx, item in enumerate(val):
+            if item.strip() == '':
+                ret.remove(item)
+            else:
+                ret[idx] = item.strip()
+    return ret
+
+def to_list(string):
+    if ';' not in string:
+        if ':' in string:
+            key, val = string.split(':')
+            return dict(key=val)
+
+def run(outfile='', name='', doc_string='', group='', data={}, descr={},
+        units={}, params=[], fnamex=[], fnamey=[], mandatory=[], zeros=[],
+        powers=[], currents=[], voltages=[], z=[], y=[], dccurrents=[],
+        dcvoltages=[], r=[], g=[], times=[], ac={}, dc={}, ctrl={},
+        consts=[], algebs=[], interfaces=[], states=[], init1_eq=[], service_eq={},
+        algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, **kwargs):
     space4 = '    '
     space8 = space4 * 2
     """Input data consistency check"""
@@ -127,7 +203,13 @@ def run(**kwargs):
                 'g': g,
                 'times': times,
                 }
+    if not data:
+        print('* Error: <data> dictionary is not defined.')
+        return
+
     for key, val in to_check.items():
+        if not val:
+            continue
         for item in val:
             if item not in data.keys():
                 print('* Warning: {} <{}> is not in data.'.format(key, item))
@@ -400,17 +482,20 @@ def run(**kwargs):
     dict_update = space8 + 'self._{}.update({})'
 
     out_init = list()  # def __init__ call strings
+    out_init.append('from cvxopt import matrix, spmatrix')
+    out_init.append('from ..consts import *')
+    out_init.append('from .base import ModelBase\n\n')
     out_init.append('class {}(ModelBase):'.format(name))
     if doc_string:
-        out_init.append(space4 + "\"\"\"{}\"\"\"".format(doc_string))
+        out_init.append(space4 + "\"\"\"{}\"\"\"".format(add_quotes(doc_string)))
     out_init.append(space4 + 'def __init__(self, system, name):')
     out_init.append(space8 + 'super().__init__(system, name)')
     if not group:
         print('*Error: Group name is not defined!')
     else:
-        out_init.append(param_assign.format('group', group))
+        out_init.append(param_assign.format('group', add_quotes(group)))
     if name:
-        out_init.append(param_assign.format('name', name))
+        out_init.append(param_assign.format('name', add_quotes(name)))
 
     meta_dict_upd = {'data': data,
                      'units': units,
@@ -547,6 +632,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
 
 if __name__ == "__main__":
     t, s = elapsed()
-    run()
+    inputs_dict = card_parser('AVR.andc')
+    run(**inputs_dict)
     _, s = elapsed(t)
     print('Elapsed time: {}'.format(s))
