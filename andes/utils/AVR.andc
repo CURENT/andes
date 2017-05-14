@@ -6,16 +6,17 @@
 # multiple lines supported
 
 name = AVR1
-doc_string =Automatic Voltage Regulator Type I
+doc_string = Automatic Voltage Regulator Type I
 group = AVR
-data =
-
+data = Ts: 0.01; Tr: 0.5; syn: 0
+params =
 
 mandatory = syn
 
 ac = bus: a, v
 
-ctrl = Synchronous: vf, vf, syn
+ctrl = Synchronous: vf, vf, syn;
+Synchronous: omega, omega, syn
 
 algebs =
 

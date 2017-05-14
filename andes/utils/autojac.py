@@ -114,7 +114,7 @@ def card_parser(file):
         return
 
     ret_dict = {}
-    ret_dict['outfile'] = file.split('.')[0] + '.py'
+    ret_dict['outfile'] = file.split('.')[0].lower() + '.py'
     key, val = None, None
     for lineno, line in enumerate(raw_file):
         line = line.strip()
