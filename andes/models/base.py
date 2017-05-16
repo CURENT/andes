@@ -207,6 +207,7 @@ class ModelBase(object):
         # do conversion if needed
         if astype:
             self.__dict__[dest] = astype(self.__dict__[dest])
+        return self.__dict__[dest]
 
     def _slice(self, param, idx=None):
         """slice list or matrix with idx and return (type, sliced)"""
@@ -434,11 +435,13 @@ class ModelBase(object):
 
     def _ctrl_interface(self):
         """Retrieve parameters of controlled model
-        model: {param, as, fkey}
+        as: {model, param, fkey}
         """
         for key, val in self._ctrl.items():
-            val.update({'model': key})
-            self.copy_param(**val)
+            args = {'dest': key,
+                    'fkey': self.__dict__[val[2]],
+                    }
+            self.copy_param(val[0], val[1], **args)
 
     def _addr(self):
         """

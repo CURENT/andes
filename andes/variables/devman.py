@@ -48,4 +48,15 @@ class DevMan(object):
             k = self.devices.index('Ground')
             self.devices[k] = self.devices[2]
             self.devices[2] = 'Ground'
+        if 'AVR3' in self.devices:
+            k = self.devices.index('AVR3')
+            self.devices[k] = self.devices[-1]
+            self.devices[-1] = 'AVR3'
 
+    def swap_device(self, front, back):
+        if front in self.devices and back in self.devices:
+            m = self.devices.index(front)
+            n = self.devices.index(back)
+            if m > n:
+                self.devices[n] = front
+                self.devices[m] = back

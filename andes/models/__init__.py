@@ -27,7 +27,9 @@ non_jits = {'bus': {'Bus': 'Bus'},
                          'TG1': 'TG1'},
             'measurement':{'BusFreq': 'BusFreq',
                            'PMU': 'PMU',
-                           }
+                           },
+            'avr': {'AVR3': 'AVR3',
+                    }
 
            }
 

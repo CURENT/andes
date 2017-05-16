@@ -143,7 +143,7 @@ class DAE(object):
         idx = list(above_idx) + list(below_idx)
         self.f[xidx[idx]] = 0
 
-        if idx > 0:
+        if len(idx) > 0:
             self.factorize = True
 
     def anti_windup_jac(self):

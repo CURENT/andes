@@ -156,6 +156,18 @@ def card_parser(file):
     ret_dict['name'] = ret_dict['name'][0]
     ret_dict['doc_string'] = ret_dict['doc_string'][0]
     ret_dict['group'] = ret_dict['group'][0]
+    ret_dict['consts'] = list(ret_dict['data'].keys()) + list(ret_dict['service_eq'].keys())
+
+    copy_algebs = []
+    copy_states = []
+    for item in ret_dict['ctrl']:
+        if ret_dict['ctrl'][item][3] == 'y':
+            copy_algebs.append(item)
+        elif ret_dict['ctrl'][item][3] == 'x':
+            copy_states.append(item)
+    ret_dict['copy_algebs'] = copy_algebs
+    ret_dict['copy_states'] = copy_states
+
     if ret_dict['service_eq'] == []:
         ret_dict['service_eq'] = {}
     return ret_dict
@@ -185,7 +197,8 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
         powers=[], currents=[], voltages=[], z=[], y=[], dccurrents=[],
         dcvoltages=[], r=[], g=[], times=[], ac={}, dc={}, ctrl={},
         consts=[], algebs=[], interfaces=[], states=[], init1_eq=[], service_eq={},
-        algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, **kwargs):
+        algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, copy_algebs=[],
+        copy_states=[], **kwargs):
     space4 = '    '
     space8 = space4 * 2
     """Input data consistency check"""
@@ -253,6 +266,8 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     states_anti_windup = list(anti_windup.keys())
     algebs_windup = list(windup.keys())
     algebs_hard_limit = list(hard_limit.keys())
+    algebs = algebs + copy_algebs
+    staes = states + copy_algebs
 
     # convert consts and variables into sympy.Symbol
     sym_maping = {'consts': sym_consts,
@@ -278,15 +293,16 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
         expr = eval('{}'.format(eq))
         sym_serv.append([eval(var), expr])
 
-    for item in init1_eq:
-        var = item[0]
-        eq = item[1]
-        if var not in states + algebs:
-            print('* Warning: initializing undefined variable <{}>'.format(var))
-        call = '{} = Symbol(var)'.format(var)
-        exec(call)
-        expr = eval('{}'.format(eq))
-        sym_init1.append([eval(var), expr])
+    if init1_eq:
+        for var, eq in init1_eq.items():
+            # var = item[0]
+            # eq = item[1]
+            if var not in states + algebs:
+                print('* Warning: initializing undefined variable <{}>'.format(var))
+            call = '{} = Symbol(var)'.format(var)
+            exec(call)
+            expr = eval('{}'.format(eq))
+            sym_init1.append([eval(var), expr])
 
     # convert equations into symbolic expression
     for item in algeb_eq:
@@ -357,6 +373,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     gcall_windup = 'dae.windup(self.{0}, self.{1}, self.{2})'
     gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
+    gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
 
     for sym, eq in zip(sym_algebs, sym_g):
         string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
@@ -412,17 +429,18 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     for item in sym_init1:
         rhs = stringfy(item[1], sym_consts, sym_states, sym_algebs)
         if item[0] in sym_algebs:
-            xy = 'y'
+            out = 'dae.y[self.{}] = {}'.format(item[0], rhs)
         elif item[0] in sym_states:
-            xy = 'x'
+            out = 'dae.x[self.{}] = {}'.format(item[0], rhs)
+        # elif item[0] in sym_serv:
+        #     out = 'self.{} = {}'.format(item[0], rhs)
         else:
             raise KeyError
-        out = 'dae.{}[self.{}] = {}'.format(xy, item[0], rhs)
         init1call.append(out)
 
     servcall = []
     for item in sym_serv:
-        rhs = stringfy(item[1], sym_consts)
+        rhs = stringfy(item[1], sym_consts, sym_states, sym_algebs)
         out = 'self.{} = {}'.format(item[0], rhs)
         servcall.append(out)
 
@@ -431,22 +449,23 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
              'gycall': not not gycall,
              'fxcall': not not fxcall,
              'jac0': not not jac0,
-             'init1': not not init1call,
+             'init1': (not not init1call) or (not not servcall),
              }
 
     """Build function call strings"""
     out_calls = []
     if servcall:
-        out_calls.append(space4 + 'def servcall(self):')
+        out_calls.append(space4 + 'def servcall(self, dae):')
         for item in servcall:
             out_calls.append(space8 + item)
         out_calls.append('')
 
-    if init1call:
+    if init1call or servcall:
         out_calls.append(space4 + 'def init1(self, dae):')
-        out_calls.append(space8 + 'self.servcall()')
+        out_calls.append(space8 + 'self.servcall(dae)')
         for item in init1call:
             out_calls.append(space8 + item)
+        out_calls.append('')
 
     if gcall:
         out_calls.append(space4 + 'def gcall(self, dae):')
@@ -483,6 +502,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     out_init = list()  # def __init__ call strings
     out_init.append('from cvxopt import matrix, spmatrix')
+    out_init.append('from cvxopt import mul, div')
     out_init.append('from ..consts import *')
     out_init.append('from .base import ModelBase\n\n')
     out_init.append('class {}(ModelBase):'.format(name))
@@ -507,7 +527,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     meta_list_ext = {'params': params,
                      'algebs': algebs,
                      'states': states,
-                     'services': list(service_eq.keys()),
+                     'service': list(service_eq.keys()),
                      'mandatory': mandatory,
                      'zeros': zeros,
                      'powers': powers,
@@ -529,7 +549,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
         if val:
             out_init.append(dict_update.format(key, val))
 
-    out_init.append(dict_update.format('calls', calls))
+    out_init.append(space8 + 'self.calls.update({})'.format(calls))
 
     out_init.append(space8 + 'self._inst_meta()')
     out_init.append('')
@@ -580,7 +600,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
             else:
                 expr_str = str(expr)
         else:
-            raise AttributeError('Unknown free symbol')
+            raise AttributeError('Unknown free symbol <{}>'.format(expr))
     else:
         nargs = len(expr.args)
         arg_str = []
@@ -591,13 +611,11 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
             expr_str = ''
             for idx, item in enumerate(arg_str):
                 if idx == 0:
-                    if item[1] == ' ':
+                    if len(item) > 1 and item[1] == ' ':
                         item = item[0] + item[2:]
                 if idx > 0:
                     if item[0] == '-':
                         item = ' ' + item
-                    elif item[1] == '-':
-                        pass
                     else:
                         item = ' + ' + item
                 expr_str += item
@@ -622,7 +640,10 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
             expr_str = ', '.join(arg_str)
             expr_str = str(expr.func) + '(' + expr_str + ')'
         elif expr.is_Pow:
-            expr_str = '({})**{}'.format(*arg_str)
+            if arg_str[1] == '-1':
+                expr_str = 'div(1, {})'.format(arg_str[0])
+            else:
+                expr_str = '({})**{}'.format(*arg_str)
         elif expr.is_Div:
             expr_str = ', '.join(arg_str)
             expr_str = 'div(' + expr_str + ')'
@@ -632,7 +653,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
 
 if __name__ == "__main__":
     t, s = elapsed()
-    inputs_dict = card_parser('AVR.andc')
+    inputs_dict = card_parser('AVR3.andc')
     run(**inputs_dict)
     _, s = elapsed(t)
     print('Elapsed time: {}'.format(s))
