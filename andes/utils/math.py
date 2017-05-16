@@ -94,14 +94,19 @@ def algeb_limiter(m, upper, lower):
 def to_number(s):
     """Convert a string to a number. If not successful, return the string without blanks"""
     ret = s
+    # try converting to float
     try:
         ret = float(s)
     except ValueError:
         ret = ret.strip('\'').strip()
-        return ret
-
+    # try converting to int
     try:
         ret = int(s)
     except ValueError:
         pass
+    # try converting to boolean
+    if ret == 'True':
+        ret = True
+    elif ret == 'False':
+        ret = False
     return ret

@@ -637,5 +637,7 @@ class ModelBase(object):
 
         return ret
 
+    def help_doc(self):
+        """Build help document into a Texttable table"""
 
 
