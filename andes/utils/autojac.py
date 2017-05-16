@@ -1,107 +1,6 @@
 from sympy import Symbol, diff, sin, cos, exp, Integer
 from andes.main import elapsed
 from andes.utils.math import to_number
-# --- INPUT ---
-# outfile = 'VSC1.txt'
-# name = 'VSC1'
-# doc_string = "VSC Type 1"
-# group = 'AC/DC'
-#
-# data = {'rsh': 0.00025,
-#         'xsh': 0.006,
-#         }
-# descr = {'rsh': 'ac interface resistance',
-#          'xsh': 'ac interface reactance',
-#          }
-# units = {}
-#
-# params = ['rsh', 'xsh']
-#
-# fnamex = []
-# fnamey = []
-#
-# mandatory = []
-# zeros = []
-#
-# powers = []
-# voltages = []
-# currents = []
-# z = []
-# y = []
-# dccurrents = []
-# dcvoltages = []
-# r = []
-# g = []
-# times = []
-#
-# ac = {}
-# dc = {}
-# ctrl = {}
-#
-# consts = ['rsh', 'xsh', 'iLsh',
-#           'pref0', 'qref0', 'wref0', 'vref0',
-#           'iM', 'D', 'iTt',
-#           'Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'Kp4', 'Ki4', 'KQ',
-#           ]
-#
-# # consts = list(data.keys()) + list(service_eq.keys())
-#
-# algebs = ['wref', 'vref', 'p', 'q', 'vd', 'vq',
-#           'Idref', 'Iqref', 'udref', 'uqref',
-#           'a', 'v','v1', 'v2',
-#           ]
-# interfaces = ['a', 'v', 'v1', 'v2']
-#
-# states = ['Id', 'Iq', 'ud', 'uq',
-#           'Md', 'Mq', 'Nd', 'Nq',
-#           'adq', 'xw',
-#           ]
-#
-# # --- equation section ---
-# # initialization equations
-# init1_eq = []
-#
-# # service variable and equation declaration
-# service_eq = {}
-#
-# # algebraic equations in g(x, y) = 0 form
-# #   defined in the order of the algeb variables
-# algeb_eq = ['wref - wref0 - xw',  # wref
-#             'vref - vref0 + KQ*(q - qref0)',  # vref
-#             'vd * Id + vq * Iq - p',  # P
-#             'vd * Iq - vq* Id - q',  # Q
-#             'v * cos(adq - a) - vd',  # vd
-#             'v * sin(adq - a) - vq',  # vq
-#             'Kp3 * (vref - vd) + Nd - Idref',  # Idref
-#             '- Kp4 * vq + Nq - Iqref',  # Iqref
-#             'vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref',  # udref
-#             'vq - xsh*Idref + Kp2*(Iqref - Iq) + Mq - uqref',  # uqref
-#             '-p',  # a
-#             '-q',  # v
-#             '(ud * Id + uq * Iq) / (v1 - v2)',  # v1
-#             '-(ud * Id + uq * Iq) / (v1 - v2)',  # v2
-#             ]
-# windup = {}
-# hard_limit = {'Idref': ['Idmin', 'Idmax'],
-#               }
-#
-# # differential equations in f(x, y) = derivative(x) form
-# #   defined in the order of the state variables
-# diff_eq = ['-rsh*iLsh*Id - Iq + iLsh*(ud - vd)',  # Id
-#            '-rsh*iLsh*Iq + Id + iLsh*(uq - vq)',  # Iq
-#            'iTt*(udref - ud)',  # ud
-#            'iTt*(uqref - uq)',  # uq
-#            'Ki1*(Idref - Id)',  # Md
-#            'Ki2*(Iqref - Iq)',  # Mq
-#            'Ki3*(vref - vd)',  # Nd
-#            'Ki4*(-vq)',  # Nq
-#            'wref - wref0',  # adq
-#            'iM * (pref0 - p - D*xw)'
-#            ]  # xw
-#
-# anti_windup = {'Nd': ['Ta', 'Ndmin', 'Ndmax'],
-#                } # [time_constant, min, max]
-# --- INPUT ENDS ---
 
 
 def card_parser(file):
@@ -160,11 +59,13 @@ def card_parser(file):
 
     copy_algebs = []
     copy_states = []
-    for item in ret_dict['ctrl']:
-        if ret_dict['ctrl'][item][3] == 'y':
-            copy_algebs.append(item)
-        elif ret_dict['ctrl'][item][3] == 'x':
-            copy_states.append(item)
+    for key, val in ret_dict['ctrl'].items():
+        if val[3] == 'y':
+            copy_algebs.append(key)
+        elif val[3] == 'x':
+            copy_states.append(key)
+        elif val[3] == 'c':
+            ret_dict['consts'].append(key)
     ret_dict['copy_algebs'] = copy_algebs
     ret_dict['copy_states'] = copy_states
 
@@ -227,6 +128,10 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
             if item not in data.keys():
                 print('* Warning: {} <{}> is not in data.'.format(key, item))
 
+    for item in interfaces:
+        if item not in algebs + copy_algebs:
+            print('* Warning: interface <{}> is not defined'.format(item))
+
     for key, val in hard_limit.items():
         if key not in algebs:
             print('* Warning: variable <{}> in hard_limit not defined.'.format(key))
@@ -247,8 +152,8 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
                 print('* Warning: const <{}> in anti_windup not defined.'.format(item))
 
     """Equation and variable number check"""
-    nalgebs, nalgeb_eq, nstates, ndiff_eq = len(algebs), len(algeb_eq), len(states), len(diff_eq)
-    if nalgebs != nalgeb_eq:
+    nalgebs, nalgeb_eq, nstates, ndiff_eq, ninterfaces = len(algebs), len(algeb_eq), len(states), len(diff_eq), len(interfaces)
+    if nalgebs + ninterfaces != nalgeb_eq:
         print('* Warning: there are {} algebs and {} algeb equations.'.format(nalgebs, nalgeb_eq))
     if nstates != ndiff_eq:
         print('* Warning: there are {} states and {} differential equations.'.format(nstates, ndiff_eq))
@@ -260,19 +165,22 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     """Set up sympy symbols for variables, constants and equations"""
     sym_consts, sym_algebs, sym_states, sym_interfaces = [], [], [], []
+    sym_algebs_ext, sym_states_ext = [], []
     sym_f, sym_g, sym_serv, sym_init1 = [], [], [], []
     sym_hard_limit, sym_windup, sym_anti_windup = [], [], []
 
     states_anti_windup = list(anti_windup.keys())
     algebs_windup = list(windup.keys())
     algebs_hard_limit = list(hard_limit.keys())
-    algebs = algebs + copy_algebs
-    staes = states + copy_algebs
+    algebs_ext = algebs + copy_algebs + interfaces
+    states_ext = states + copy_states
 
     # convert consts and variables into sympy.Symbol
     sym_maping = {'consts': sym_consts,
                   'algebs': sym_algebs,
                   'states': sym_states,
+                  'algebs_ext': sym_algebs_ext,
+                  'states_ext': sym_states_ext,
                   'interfaces': sym_interfaces,
                   'states_anti_windup': sym_anti_windup,
                   'algebs_windup': sym_windup,
@@ -323,11 +231,11 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
             free_syms = []
 
         for sym in free_syms:
-            if sym in sym_algebs:
+            if sym in sym_algebs_ext:
                 # take the derivative and go to Gy
-                sym_idx = sym_algebs.index(sym)
+                sym_idx = sym_algebs_ext.index(sym)
                 Gy.append([eq_idx, sym_idx, expr.diff(sym)])
-            elif sym in sym_states:
+            elif sym in sym_states_ext:
                 # take the derivative and go to Gx
                 sym_idx = sym_states.index(sym)
                 Gx.append([eq_idx, sym_idx, expr.diff(sym)])
@@ -341,11 +249,11 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
             free_syms = []
 
         for sym in free_syms:
-            if sym in sym_algebs:
-                sym_idx = sym_algebs.index(sym)
+            if sym in sym_algebs_ext:
+                sym_idx = sym_algebs_ext.index(sym)
                 Fy.append([eq_idx, sym_idx, expr.diff(sym)])
-            elif sym in sym_states:
-                sym_idx = sym_states.index(sym)
+            elif sym in sym_states_ext:
+                sym_idx = sym_states_ext.index(sym)
                 Fx.append([eq_idx, sym_idx, expr.diff(sym)])
 
     """Save equations into callable CVXOPT functions"""
@@ -359,7 +267,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     fcall_anti_windup_2 = 'dae.anti_windup(self.{0}, self.{1}, self.{2})'
 
     for sym, eq in zip(sym_states, sym_f):
-        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
+        string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
         # handling anti_windup
         if sym in sym_anti_windup:
             template = '{0} = {1}'
@@ -376,7 +284,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
 
     for sym, eq in zip(sym_algebs, sym_g):
-        string_eq = stringfy(eq, sym_consts, sym_states, sym_algebs)
+        string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
         if sym in sym_interfaces:
             template = 'dae.g += spmatrix({1}, self.{0}, [0]*self.n, (dae.m, 1), \'d\')'
         else:
@@ -392,7 +300,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     # format Jacobians
     jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
-    mapping = dict(F=sym_states, G=sym_algebs, y=sym_algebs, x=sym_states)
+    mapping = dict(F=sym_states_ext, G=sym_algebs_ext, y=sym_algebs_ext, x=sym_states_ext)
 
     for jac in jacobians:
         for item in eval(jac):
@@ -404,13 +312,13 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
             except AttributeError:
                 free_syms = []
 
-            string_eq = stringfy(equation, sym_consts, sym_states, sym_algebs)
+            string_eq = stringfy(equation, sym_consts, sym_states_ext, sym_algebs_ext)
 
             isjac0 = 1
             for sym in free_syms:
                 if sym in sym_consts:
                     continue
-                elif sym in sym_algebs + sym_states:
+                elif sym in sym_algebs_ext + sym_states_ext:
                     isjac0 = 0
                     break
                 else:
@@ -427,20 +335,21 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     """Format initialization and service calls"""
     init1call = []
     for item in sym_init1:
-        rhs = stringfy(item[1], sym_consts, sym_states, sym_algebs)
-        if item[0] in sym_algebs:
+        rhs = stringfy(item[1], sym_consts, sym_states_ext, sym_algebs_ext)
+        if item[0] in sym_algebs_ext:
             out = 'dae.y[self.{}] = {}'.format(item[0], rhs)
-        elif item[0] in sym_states:
+        elif item[0] in sym_states_ext:
             out = 'dae.x[self.{}] = {}'.format(item[0], rhs)
-        # elif item[0] in sym_serv:
-        #     out = 'self.{} = {}'.format(item[0], rhs)
         else:
             raise KeyError
         init1call.append(out)
 
     servcall = []
+    for key, val in ctrl.items():
+        out = 'self.copy_param(\'{}\', \'{}\', \'{}\', self.{})'.format(val[0], val[1], key, val[2])
+        servcall.append(out)
     for item in sym_serv:
-        rhs = stringfy(item[1], sym_consts, sym_states, sym_algebs)
+        rhs = stringfy(item[1], sym_consts, sym_states_ext, sym_algebs_ext)
         out = 'self.{} = {}'.format(item[0], rhs)
         servcall.append(out)
 
@@ -522,7 +431,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
                      'descr': descr,
                      'ac': ac,
                      'dc': dc,
-                     'ctrl': ctrl,
+                     # 'ctrl': ctrl,
                      }
     meta_list_ext = {'params': params,
                      'algebs': algebs,
