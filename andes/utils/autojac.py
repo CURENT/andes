@@ -12,10 +12,10 @@ def card_parser(file):
         print('* IOError while reading input card file.')
         return
 
-    ret_dict = {}
+    ret_dict = dict()
     ret_dict['outfile'] = file.split('.')[0].lower() + '.py'
     key, val = None, None
-    for lineno, line in enumerate(raw_file):
+    for idx, line in enumerate(raw_file):
         line = line.strip()
         if not line:
             continue
@@ -73,8 +73,10 @@ def card_parser(file):
         ret_dict['service_eq'] = {}
     return ret_dict
 
+
 def add_quotes(string):
     return '\'{}\''.format(string)
+
 
 def de_blank(val):
     """Remove blank elements in `val` and return `ret`"""
@@ -87,11 +89,6 @@ def de_blank(val):
                 ret[idx] = item.strip()
     return ret
 
-def to_list(string):
-    if ';' not in string:
-        if ':' in string:
-            key, val = string.split(':')
-            return dict(key=val)
 
 def run(outfile='', name='', doc_string='', group='', data={}, descr={},
         units={}, params=[], fnamex=[], fnamey=[], mandatory=[], zeros=[],
@@ -117,6 +114,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
                 'g': g,
                 'times': times,
                 }
+
     if not data:
         print('* Error: <data> dictionary is not defined.')
         return
@@ -138,12 +136,14 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
         for item in val:
             if item not in consts:
                 print('* Warning: const <{}> in hard_limit not defined.'.format(item))
+
     for key, val in windup.items():
         if key not in algebs:
             print('* Warning: variable <{}> in windup not defined.'.format(key))
         for item in val:
             if item not in consts:
                 print('* Warning: const <{}> in windup not defined.'.format(item))
+
     for key, val in anti_windup.items():
         if key not in states:
             print('* Warning: variable <{}> in anti_windup not defined.'.format(key))
@@ -153,13 +153,15 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     """Equation and variable number check"""
     nalgebs, nalgeb_eq, nstates, ndiff_eq, ninterfaces = len(algebs), len(algeb_eq), len(states), len(diff_eq), len(interfaces)
+
     if nalgebs + ninterfaces != nalgeb_eq:
         print('* Warning: there are {} algebs and {} algeb equations.'.format(nalgebs, nalgeb_eq))
+
     if nstates != ndiff_eq:
         print('* Warning: there are {} states and {} differential equations.'.format(nstates, ndiff_eq))
 
     # check for duplicate names
-    var_names = consts + algebs + states
+    var_names = consts + algebs + states + copy_algebs + copy_states
     if len(set(var_names)) != len(var_names):
         raise NameError('Duplicated names are declared!')
 
@@ -172,7 +174,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     states_anti_windup = list(anti_windup.keys())
     algebs_windup = list(windup.keys())
     algebs_hard_limit = list(hard_limit.keys())
-    algebs_ext = algebs + copy_algebs + interfaces
+    algebs_ext = algebs + copy_algebs
     states_ext = states + copy_states
 
     # convert consts and variables into sympy.Symbol
@@ -283,7 +285,7 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
     gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
 
-    for sym, eq in zip(sym_algebs, sym_g):
+    for sym, eq in zip(sym_algebs + sym_interfaces, sym_g):
         string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
         if sym in sym_interfaces:
             template = 'dae.g += spmatrix({1}, self.{0}, [0]*self.n, (dae.m, 1), \'d\')'
@@ -473,16 +475,10 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
 
     print('Statistics:')
     print('')
-    print('constants: {}'.format(len(sym_consts)))
-    print('algebraics: {}'.format(len(sym_algebs)))
-    print('states: {}'.format(len(sym_states)))
+    print('* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(len(sym_consts), len(sym_algebs), len(interfaces), len(sym_states)))
+    print('* diff equations: {}, algeb equations: {}'.format(len(fcall), len(gcall)))
+    print('* fxcall: {}, gycall: {}, jac0: {}'.format(len(fxcall), len(gycall), len(jac0)))
     print('')
-    print('differential equations: {}'.format(len(fcall)))
-    print('algebraic equations: {}'.format(len(gcall)))
-    print('')
-    print('fxcall lines: {}'.format(len(fxcall)))
-    print('gycall lines: {}'.format(len(gycall)))
-    print('jac0 lines: {}'.format(len(jac0)))
 
 
 def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
