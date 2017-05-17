@@ -87,7 +87,7 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-C', '--category', help='Dump device names belonging to the specified category.')
     parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
     parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified device.')
-    parser.add_argument('-W', '--dev_variables', help='Dump the variables of a specified device.')
+    parser.add_argument('-W', '--dev_variables', help='Dump the variables of specified devices separated with comma.')
     parser.add_argument('-G', '--group', help='Dump all the devices in the specified group.')
     parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
     parser.add_argument('--help_option', help='Print a quick help of a setting parameter')

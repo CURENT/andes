@@ -16,7 +16,7 @@ class SettingsBase(object):
         alt = option + '_alt'
         if not hasattr(self, alt):
             return ''
-        return self.__dict__[alt]
+        return ', '.join(self.__dict__[alt])
 
     def dump_help(self, export='plain', save=None, writemode='w'):
         """dump help document for setting classes"""
@@ -26,12 +26,16 @@ class SettingsBase(object):
 
         for opt in sorted(self.doc_help):
             if hasattr(self, opt):
-                descr = self.doc_help[opt]
-                rows.append([opt, descr, self.get_value(opt)])
+                c1 = opt
+                c2 = self.doc_help[opt]
+                c3 = self.__dict__.get(opt, '')
+                c4 = self.get_alt(opt)
+                rows.append([c1, c2, c3, c4])
             else:
                 warn_msg = 'Setting object {:s} has no \'{:s}\' option. Correct in doc_help.'.format(self.__class__.__name__, opt)
                 print(warn_msg)
-        table.add_rows(rows, header=False)  # use guess_header()
+        table.add_rows(rows, header=False)  # first row is not header
+        table.header(['Option', 'Description', 'Value', 'Alternatives'])
 
         ext = 'txt'
         if export == 'latex':
