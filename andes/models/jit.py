@@ -43,3 +43,9 @@ class JIT(object):
         self.jit_load()
         if self.loaded:
             self.system.__dict__[self.name].add(idx, name, **kwargs)
+
+    def help_doc(self, **kwargs):
+        self.jit_load()
+        if self.loaded:
+            self.system.__dict__[self.name].help_doc(**kwargs)
+

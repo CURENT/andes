@@ -14,8 +14,8 @@ class Fault(ModelBase):
                            'fn': 60.0,
                            'tf': None,
                            'tc': None,
-                           'rf': 1e8,
-                           'xf': 1e8,
+                           'rf': 0,
+                           'xf': 1e-6,
                            })
         self._params.extend(['bus',
                              'fn',

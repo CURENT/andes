@@ -22,6 +22,7 @@ from cvxopt import matrix, spmatrix
 from cvxopt import mul, div
 
 from ..utils.math import agtb, altb, findeq
+from ..utils.tab import Tab
 
 
 class ModelBase(object):
@@ -637,7 +638,44 @@ class ModelBase(object):
 
         return ret
 
-    def help_doc(self):
+    def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table"""
+        title = '<{}.{}>'.format(self._group, self._name)
+        table = Tab(export=export, title=title)
+        rows = []
+        keys = sorted(self._data.keys())
+        for key in keys:
+            val = self._data[key]
+            suf = ''
+            if key in self._mandatory:
+                suf = ' *'
+            elif key in self._powers + self._voltages + self._currents + self._z + self._y +\
+                        self._dccurrents + self._dcvoltages + self._r + self._g + self._times:
+                suf = ' #'
 
+            c1 = key + suf
+            c2 = self._descr.get(key, '')
+            c3 = val
+            c4 = self._units.get(key, '')
+            rows.append([c1, c2, c3, c4])
+        table.add_rows(rows)
+        table.header(['Parameter', 'Description', 'Default', 'Unit'])
 
+        if export == 'plain':
+            ext = '.txt'
+        elif export == 'latex':
+            ext = '.tex'
+        else:
+            ext = '.txt'
+        outfile = 'help_model' + ext
+
+        if not save:
+            print(table.draw())
+            return True
+
+        try:
+            fid = open(outfile, writemode)
+            fid.write(table.draw())
+            fid.close()
+        except IOError:
+            raise IOError('Error writing model help file.')

@@ -63,6 +63,7 @@ class PMU(ModelBase):
     """Phasor measurement unit described by low-pass filters"""
     def __init__(self, system, name):
         super(PMU, self).__init__(system, name)
+        self._group = 'Measurement'
         self._data.update({'Tv': 0.1,
                            'Ta': 0.1,
                            'bus': None,
