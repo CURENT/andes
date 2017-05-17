@@ -20,13 +20,14 @@ class Tab(Texttable):
         if data is not None:
             self.add_rows(data, header=False)
 
-    def header(self,array):
+    def header(self, array):
         Texttable.header(self,array)
         self.auto_style()
 
     def guess_header(self):
         if self._header:
             return
+        header = ''
         if self._row_size == 3:
             header = ['Option', 'Description', 'Value']
         elif self._row_size == 4:
@@ -65,8 +66,8 @@ class Tab(Texttable):
         self.guess_header()
         self.add_left_space()  # for Texttable, add a column of whitespace on the left for better visual effect
         title = self._title + '\n\n' if self._title else ''
-        empty_line = '\n' if self._title else ''
-        return title + Texttable.draw(self) + empty_line
+        empty_line = '\n\n'
+        return title + str(Texttable.draw(self)) + empty_line
 
 
 class simpletab(object):

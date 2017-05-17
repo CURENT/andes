@@ -83,6 +83,7 @@ def cli_parse(writehelp=False, helpfile=None):
 
     # helps and documentations
     parser.add_argument('-u', '--usage', help='Write command line usage', action='store_true')
+    parser.add_argument('-E', '--export', help='Export file format')
     parser.add_argument('-C', '--category', help='Dump device names belonging to the specified category.')
     parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
     parser.add_argument('-f', '--dev_format', help='Dump the format definition of all devices.', action='store_true')
@@ -110,7 +111,7 @@ def cli_parse(writehelp=False, helpfile=None):
 
 
 def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_variables=None,
-             quick_help=None, help_option=None, help_settings=None, **kwargs):
+             quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
     if usage:
         cli_parse(writehelp=True, helpfile='cli_help.txt')
     if category:
@@ -128,7 +129,26 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
     if help_option:
         pass
     if help_settings:
-        pass
+        help_settings = [help_settings]
+        ps = PowerSystem()
+
+        if 'ALL' in help_settings:
+            help_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
+        for item in help_settings:
+            if item not in ps.__dict__.keys():
+                ps.Log.warning('Setting <{}> does not exist.'.format(item))
+                help_settings.remove(item)
+        t, s = elapsed()
+        if len(help_settings) > 0:
+            for idx, item in enumerate(help_settings):
+                writemode = 'w' if idx == 0 else 'a'
+                ps.__dict__[item].dump_help(export=export, save=True, writemode=writemode)
+            _, s = elapsed(t)
+            print('Settings help saved to file in {}.'.format(s))
+
+        return True
+
+
 
 
 def cleanup(clean=False, cleanall=False):

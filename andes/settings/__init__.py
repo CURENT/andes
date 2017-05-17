@@ -1,4 +1,4 @@
-__all__ = ['settings,'
+__all__ = ['settings',
            'spf',
            'tds',
            'sssa',

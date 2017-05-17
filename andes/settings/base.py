@@ -18,7 +18,7 @@ class SettingsBase(object):
             return ''
         return self.__dict__[alt]
 
-    def dump_help(self, export='plain', save=False):
+    def dump_help(self, export='plain', save=None, writemode='w'):
         """dump help document for setting classes"""
         rows = []
         title = 'Setting class <{:s}>'.format(self.__class__.__name__)
@@ -29,7 +29,7 @@ class SettingsBase(object):
                 descr = self.doc_help[opt]
                 rows.append([opt, descr, self.get_value(opt)])
             else:
-                warn_msg = 'Setting object {:s} has no \'{:s}\' option. Correct in doc_help.'.format(self.__name__, opt)
+                warn_msg = 'Setting object {:s} has no \'{:s}\' option. Correct in doc_help.'.format(self.__class__.__name__, opt)
                 print(warn_msg)
         table.add_rows(rows, header=False)  # use guess_header()
 
@@ -39,13 +39,13 @@ class SettingsBase(object):
 
         results = table.draw()
 
-        if save is False:
+        if not save:
             print(results)
         else:
             filename = 'settings_help' + '.' + ext
             try:
-                f=open(filename, 'w')
-                f.write(table)
+                f=open(filename, writemode)
+                f.write(results)
                 f.close()
             except IOError:
                 print(results)
