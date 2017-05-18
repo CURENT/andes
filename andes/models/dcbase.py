@@ -15,6 +15,14 @@ class Node(ModelBase):
                              'Idcn',
                              'voltage',
                              ])
+        self._descr.update({'Vdcn': 'DC voltage rating',
+                            'Idcn': 'DC current rating',
+                            'voltage': 'Initial nodal voltage guess',
+                            'area': 'Area code',
+                            'region': 'Region code',
+                            'xcoord': 'x coordinate',
+                            'ycoord': 'y coordinate'
+                           })
         self._data.update({'Vdcn': 100.0,
                            'Idcn': 10.0,
                            'area': 0,
@@ -73,6 +81,11 @@ class DCBase(ModelBase):
                            'Idcn': 10.0,
                            })
         self._params.extend(['Vdcn', 'Idcn'])
+        self._descr.update({'Vdcn': 'DC voltage rating',
+                            'Idcn': 'DC current rating',
+                            'node1': 'DC node 1 idx',
+                            'node2': 'DC node 2 idx',
+                            })
         self._dc = {'node1': 'v1',
                     'node2': 'v2',
                     }

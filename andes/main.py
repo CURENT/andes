@@ -86,8 +86,9 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-E', '--export', help='Export file format')
     parser.add_argument('-C', '--category', help='Dump device names belonging to the specified category.')
     parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
-    parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified device.')
-    parser.add_argument('-W', '--dev_variables', help='Dump the variables of specified devices separated with comma.')
+    parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified devices,'
+                                                   ' separated by comma.')
+    parser.add_argument('-W', '--dev_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('-G', '--group', help='Dump all the devices in the specified group.')
     parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
     parser.add_argument('--help_option', help='Print a quick help of a setting parameter')
@@ -110,7 +111,7 @@ def cli_parse(writehelp=False, helpfile=None):
         return args
 
 
-def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_variables=None,
+def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_var=None,
              quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
     """Dump all sorts of help files"""
     from .models import non_jits, jits
@@ -149,34 +150,54 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
                 ps.__dict__[item].help_doc(export=export, save=True, writemode=mode)
             _, s = elapsed(t)
             print('Model help saved to file in {}.'.format(s))
+        return True
 
-    if dev_variables:
-        pass
+    if dev_var:
+        dev, var = dev_var.split('.')
+        if not var:
+            ps.Log.error('Device parameter name not specified.')
+        if not hasattr(ps, dev):
+            ps.Log.error('Device <{}> does not exist.'.format(dev))
+        else:
+            if var not in ps.__dict__[dev]._data.keys():
+                ps.Log.error('Device <{}> does not have parameter <{}>.'.format(dev, var))
+            else:
+                c1 = ps.__dict__[dev]._descr[var]
+                c2 = ps.__dict__[dev]._data[var]
+                c3 = ps.__dict__[dev]._units[var]
+                out = '  {}, default = {:g} [{}]'.format(c1, c2, c3)
+                ps.Log.info('Quick help on <{}>:'.format(dev_var))
+                ps.Log.info(out)
+        return True
     if group:
         pass
     if quick_help:
-        pass
+        if quick_help not in all_models:
+            ps.Log.error('Model <{}> does not exist.'.format(quick_help))
+        else:
+            ps.__dict__[quick_help].help_doc(export=export, save=False)
+        return True
     if help_option:
         pass
     if help_settings:
-        help_settings = [help_settings]
-        if 'ALL' in help_settings:
-            help_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
+        all_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
+        help_settings = help_settings.split(',')
         for item in help_settings:
-            if item not in ps.__dict__.keys():
+            if item.lower() == 'all':
+                help_settings = all_settings
+                break
+        for item in help_settings:
+            if item not in all_settings:
                 ps.Log.warning('Setting <{}> does not exist.'.format(item))
                 help_settings.remove(item)
         if len(help_settings) > 0:
-            t, s = elapsed()
+            t, _ = elapsed()
             for idx, item in enumerate(help_settings):
-                writemode = 'w' if idx == 0 else 'a'
-                ps.__dict__[item].dump_help(export=export, save=True, writemode=writemode)
+                mode = 'w' if idx == 0 else 'a'
+                ps.__dict__[item].dump_help(export=export, save=True, writemode=mode)
             _, s = elapsed(t)
             print('Settings help saved to file in {}.'.format(s))
-
-    return True
-
-
+        return True
 
 
 def cleanup(clean=False, cleanall=False):

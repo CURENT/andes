@@ -7,13 +7,14 @@ class Tab(Texttable):
     Avoid using this class for static report formatting as it may be rather slow.
     """
 
-    def __init__(self, title=None, header=None, data=None, export='plain'):
+    def __init__(self, title=None, header=None, descr=None, data=None, export='plain'):
         Texttable.__init__(self)
         self.set_chars(['-', '|', '+', '-'])
         self.set_deco(Texttable.HEADER | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
         self.set_precision(3)
 
         self._title = title
+        self._descr = descr
         self._format = export  # outformat in ['plain', 'latex', 'html']
         if header is not None:
             self.header(header)
@@ -65,9 +66,16 @@ class Tab(Texttable):
         """generate texttable formatted string"""
         self.guess_header()
         self.add_left_space()  # for Texttable, add a column of whitespace on the left for better visual effect
-        title = self._title + '\n\n' if self._title else ''
+        if self._title and self._descr:
+            pre = self._title + '\n' + self._descr + '\n\n'
+        elif self._title:
+            pre = self._title + '\n\n'
+        elif self._descr:
+            pre = 'Empty Title' + '\n' + self._descr + '\n'
+        else:
+            pre = ''
         empty_line = '\n\n'
-        return title + str(Texttable.draw(self)) + empty_line
+        return pre + str(Texttable.draw(self)) + empty_line
 
 
 class simpletab(object):

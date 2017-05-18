@@ -617,7 +617,7 @@ class VSC1(DCBase):
 
 
 class VSC2(DCBase):
-    """The voltage-source type power-synchronizatino controlled VSC"""
+    """The voltage-source type power-synchronization controlled VSC"""
     def __init__(self, system, name):
         super(VSC2, self).__init__(system, name)
         self._group = 'AC/DC'
@@ -654,6 +654,7 @@ class VSC2(DCBase):
                             'D': 'emulated damping',
                             'Tt': 'ac voltage measurement delay',
                             'wref0': 'frequency reference',
+                            'vsc': 'static vsc idx',
                             })
         self._algebs.extend(['wref', 'vref', 'p', 'q', 'vd', 'vq',
                              'Idref', 'Iqref', 'udref', 'uqref',
@@ -916,6 +917,7 @@ class VSC3(DCBase):
                             'D': 'emulated damping',
                             'Tt': 'ac voltage measurement delay',
                             'wref0': 'frequency reference',
+                            'vsc': 'static vsc idx',
                             })
         self._algebs.extend(['wref', 'vref', 'p', 'q', 'vd', 'vq',
                              'Idref', 'Iqref', 'udref', 'uqref',

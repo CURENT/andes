@@ -42,6 +42,8 @@ class SynBase(ModelBase):
                             'gen': 'static generator index',
                             'kp': 'active power feedback gain',
                             'kw': 'speed feedback gain',
+                            'S10': 'first saturation factor',
+                            'S20': 'second saturation factor',
                             })
         self._units.update({'M': 'MWs/MVA',
                             'D': 'pu',
@@ -243,8 +245,6 @@ class Ord6a(SynBase):
                             'Td20': 'd-axis sub-transient time constant',
                             'Tq20': 'q-axis sub-transient time constant',
                             'Taa': 'Taa time constant',
-                            'S10': 'first saturation factor',
-                            'S20': 'second saturation factor'
                             })
         self._units.update({'xd': 'omh',
                             'xd1': 'omh',

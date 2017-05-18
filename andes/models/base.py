@@ -641,7 +641,7 @@ class ModelBase(object):
     def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table"""
         title = '<{}.{}>'.format(self._group, self._name)
-        table = Tab(export=export, title=title)
+        table = Tab(export=export, title=title, descr=self.__doc__)
         rows = []
         keys = sorted(self._data.keys())
         for key in keys:
