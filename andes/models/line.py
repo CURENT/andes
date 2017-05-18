@@ -83,7 +83,7 @@ class Line(ModelBase):
                              'fn',
                              'rate_a'
                              ])
-        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2'])
+        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2', 'nb'])
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
@@ -112,6 +112,8 @@ class Line(ModelBase):
 
     def build_y(self):
         """Build transmission line admittance matrix into self.Y"""
+        if not self.n:
+            return
         y1 = mul(self.u, self.g1 + self.b1 * 1j)
         y2 = mul(self.u, self.g2 + self.b2 * 1j)
         y12 = div(self.u, self.r + self.x * 1j)
@@ -131,6 +133,8 @@ class Line(ModelBase):
 
     def build_b(self):
         """build Bp and Bpp for fast decoupled method"""
+        if not self.n:
+            return
         solver = self.system.SPF.solver.lower()
 
         # Build B prime matrix
@@ -178,6 +182,8 @@ class Line(ModelBase):
 
     def connectivity(self, bus):
         """check connectivity of network using Goderya's algorithm"""
+        if not self.n:
+            return
         n = self.nb
         fr = self.a1
         to = self.a2
