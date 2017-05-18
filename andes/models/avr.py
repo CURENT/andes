@@ -5,7 +5,7 @@ from .base import ModelBase
 
 
 class AVR3(ModelBase):
-    """'Automatic Voltage Regulator Type III'"""
+    """Automatic Voltage Regulator Type III"""
     def __init__(self, system, name):
         super().__init__(system, name)
         self._group = 'AVR'
@@ -18,8 +18,13 @@ class AVR3(ModelBase):
         self._mandatory.extend(['syn'])
         self._states.extend(['vm', 'vr', 'vfout'])
         self._fnamey.extend(['v_{ref}'])
-        self._data.update({'T1': 0.01, 'T2': 0.1, 'Tr': 0.001, 'K0': 20, 'vfmax': 5, 'Te': 1.0, 'syn': 0, 'vfmin': -5, 's0': True})
-        self._descr.update({'T1': 'Regulator zero', 'T2': 'Regularot Pole', 'Tr': 'Measurement time constant', 'K0': 'Regulator gain', 'vfmax': 'Maximum field voltage', 'Te': 'Field circuit time constant', 'syn': 'Generator id', 'vfmin': 'minimum field voltage'})
+        self._units.update({'T1': 's', 'T2': 's', 'Te': 's', 'Tr': 's', 'vfmax': 'pu', 'vfmin': 'pu'})
+        self._data.update(
+            {'T1': 0.01, 'T2': 0.1, 'Tr': 0.001, 'K0': 20, 'vfmax': 5, 'Te': 1.0, 'syn': 0, 'vfmin': -5, 's0': True})
+        self._descr.update(
+            {'T1': 'Regulator zero', 'T2': 'Regularot Pole', 'Tr': 'Measurement time constant', 'K0': 'Regulator gain',
+             'vfmax': 'Maximum field voltage', 'Te': 'Field circuit time constant', 'syn': 'Generator id',
+             'vfmin': 'Minimum field voltage', 's0': 'Enable excitation voltage feedback'})
         self.calls.update({'fxcall': True, 'gycall': False, 'fcall': True, 'gcall': True, 'init1': True, 'jac0': True})
         self._inst_meta()
 
