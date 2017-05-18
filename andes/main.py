@@ -88,9 +88,9 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
     parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified devices,'
                                                    ' separated by comma.')
-    parser.add_argument('-W', '--dev_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('-G', '--group', help='Dump all the devices in the specified group.')
     parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
+    parser.add_argument('-Q', '--dev_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('--help_option', help='Print a quick help of a setting parameter')
     parser.add_argument('--help_settings', help='Print a quick help of a given setting class. Use ALL'
                                                 'for all setting classes.')
@@ -162,9 +162,9 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
             if var not in ps.__dict__[dev]._data.keys():
                 ps.Log.error('Device <{}> does not have parameter <{}>.'.format(dev, var))
             else:
-                c1 = ps.__dict__[dev]._descr[var]
-                c2 = ps.__dict__[dev]._data[var]
-                c3 = ps.__dict__[dev]._units[var]
+                c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
+                c2 = ps.__dict__[dev]._data.get(var)
+                c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
                 out = '  {}, default = {:g} [{}]'.format(c1, c2, c3)
                 ps.Log.info('Quick help on <{}>:'.format(dev_var))
                 ps.Log.info(out)
@@ -202,8 +202,6 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
 
 def cleanup(clean=False, cleanall=False):
     """Clean up function for generated files"""
-    if not (clean or cleanall):
-        return
     if clean:
         pass
     if cleanall:
