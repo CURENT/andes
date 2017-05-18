@@ -7,6 +7,7 @@ import os
 input_formats = {'dome': 'dm',
                  'matpower': 'm',
                  'psse': ['raw', 'dyr'],
+                 'card': ['andc'],
                  }
 
 # output formats is a dictionary of supported output formats and their extensions

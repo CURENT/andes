@@ -1,9 +1,22 @@
+import sys
+
 from sympy import Symbol, diff, sin, cos, exp, Integer
 from andes.main import elapsed
 from andes.utils.math import to_number
 
 
-def card_parser(file):
+def testlines(fid):
+    try:
+        first = fid.readline()
+        if 'card' in first:
+            return True
+        else:
+            return False
+    except IOError:
+        print('* IOError while reading input card file.')
+
+
+def read(file, system):
     """Parse an ANDES card file into internal variables"""
     try:
         fid = open(file, 'r')
@@ -71,7 +84,8 @@ def card_parser(file):
 
     if ret_dict['service_eq'] == []:
         ret_dict['service_eq'] = {}
-    return ret_dict
+
+    return run(system, **ret_dict)
 
 
 def add_quotes(string):
@@ -90,13 +104,14 @@ def de_blank(val):
     return ret
 
 
-def run(outfile='', name='', doc_string='', group='', data={}, descr={},
+def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         units={}, params=[], fnamex=[], fnamey=[], mandatory=[], zeros=[],
         powers=[], currents=[], voltages=[], z=[], y=[], dccurrents=[],
         dcvoltages=[], r=[], g=[], times=[], ac={}, dc={}, ctrl={},
         consts=[], algebs=[], interfaces=[], states=[], init1_eq=[], service_eq={},
         algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, copy_algebs=[],
         copy_states=[], **kwargs):
+    retval = True
     space4 = '    '
     space8 = space4 * 2
     """Input data consistency check"""
@@ -468,19 +483,25 @@ def run(outfile='', name='', doc_string='', group='', data={}, descr={},
     out_init.append('')
 
     # write to file
-    fid = open(outfile, 'w')
-    for line in out_init:
-        fid.write(line + '\n')
-    for line in out_calls:
-        fid.write(line + '\n')
-    fid.close()
+    try:
+        fid = open(outfile, 'w')
+        for line in out_init:
+            fid.write(line + '\n')
+        for line in out_calls:
+            fid.write(line + '\n')
+        fid.close()
+    except IOError:
+        system.Log.error('IOError while writing card output.')
+        retval = False
 
-    print('Statistics:')
-    print('')
-    print('* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(len(sym_consts), len(sym_algebs), len(interfaces), len(sym_states)))
-    print('* diff equations: {}, algeb equations: {}'.format(len(fcall), len(gcall)))
-    print('* fxcall: {}, gycall: {}, jac0: {}'.format(len(fxcall), len(gycall), len(jac0)))
-    print('')
+    if retval:
+        system.Log.info('Card file successfully saved to <{}> with'.format(outfile))
+        system.Log.info('* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(len(sym_consts), len(sym_algebs), len(interfaces), len(sym_states)))
+        system.Log.info('* diff equations: {}, algeb equations: {}'.format(len(fcall), len(gcall)))
+        system.Log.info('* fxcall: {}, gycall: {}, jac0: {}'.format(len(fxcall), len(gycall), len(jac0)))
+
+    sys.exit(0)
+    # return retval
 
 
 def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
@@ -557,10 +578,3 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
         else:
             raise NotImplementedError
     return expr_str
-
-if __name__ == "__main__":
-    t, s = elapsed()
-    inputs_dict = card_parser('AVR3.andc')
-    run(**inputs_dict)
-    _, s = elapsed(t)
-    print('Elapsed time: {}'.format(s))
