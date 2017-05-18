@@ -2,12 +2,13 @@ import platform
 import importlib
 from time import strftime
 from operator import itemgetter
-from cvxopt import mul
-from ..formats import all_formats
-# from .. import __revision__ as revision
 
-revision = '2017.03.01'
-this_year = revision[:4]
+from cvxopt import mul
+
+from ..formats import all_formats
+from andes import __version__ as version
+
+year = version[:4]
 
 
 def preamble(disable=False):
@@ -15,8 +16,8 @@ def preamble(disable=False):
     if disable:
         return
     message = '\n'
-    message += 'ANDES ' + revision + '\n'
-    message += 'Copyright (C) 2015-' + this_year + ' Hantao Cui\n\n'
+    message += 'ANDES ' + version + '\n'
+    message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n\n'
     message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n'
     message += 'Use this software AT YOUR OWN RISK\n\n'
     message += 'Platform:    ' + platform.system() + '\n'
@@ -46,8 +47,8 @@ class Report(object):
     @property
     def info(self):
         info = list()
-        info.append('ANDES' + ' ' + revision + '\n')
-        info.append('Copyright (C) 2015-' + this_year + ' Hantao Cui\n\n')
+        info.append('ANDES' + ' ' + version + '\n')
+        info.append('Copyright (C) 2015-' + year + ' Hantao Cui\n\n')
         info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
         info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
