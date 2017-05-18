@@ -69,7 +69,7 @@ class ModelBase(object):
         # units of parameters
         self._units = {'u': 'boolean',
                        'Sn': 'MVA',
-                       'Vn': 'KV',
+                       'Vn': 'kV',
                        }
 
         # variable descriptions
