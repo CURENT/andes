@@ -433,7 +433,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     out_init.append('from .base import ModelBase\n\n')
     out_init.append('class {}(ModelBase):'.format(name))
     if doc_string:
-        out_init.append(space4 + "\"\"\"{}\"\"\"".format(add_quotes(doc_string)))
+        out_init.append(space4 + "\"\"\"{}\"\"\"".format(doc_string))
     out_init.append(space4 + 'def __init__(self, system, name):')
     out_init.append(space8 + 'super().__init__(system, name)')
     if not group:
