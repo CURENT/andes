@@ -45,11 +45,11 @@ class Tab(Texttable):
         elif self._row_size == 3:
             self.set_cols_align(['l', 'l', 'l'])
             self.set_cols_valign(['t', 't', 't'])
-            self.set_cols_width([20, 54, 12])
+            self.set_cols_width([12, 54, 12])
         elif self._row_size == 4:
             self.set_cols_align(['l', 'l', 'l', 'l'])
             self.set_cols_valign(['t', 't', 't', 't'])
-            self.set_cols_width([16, 34, 14, 12])
+            self.set_cols_width([10, 40, 10, 10])
             # TODO: third column use scientific notation for small values
 
     def set_title(self, val):
