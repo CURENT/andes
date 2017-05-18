@@ -153,22 +153,25 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
     if dev_var:
-        dev, var = dev_var.split('.')
-        if not var:
+        dev_var = dev_var.split('.')
+        if len(dev_var) == 1:
             ps.Log.error('Device parameter name not specified.')
-        if not hasattr(ps, dev):
-            ps.Log.error('Device <{}> does not exist.'.format(dev))
+        elif len(dev_var) > 2:
+            ps.Log.error('Device parameter not specified correctly.')
         else:
-            if var not in ps.__dict__[dev]._data.keys():
-                ps.Log.error('Device <{}> does not have parameter <{}>.'.format(dev, var))
+            dev, var = dev_var
+            if not hasattr(ps, dev):
+                ps.Log.error('Device <{}> does not exist.'.format(dev))
             else:
-                c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
-                c2 = ps.__dict__[dev]._data.get(var)
-                c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
-                out = '  {}, default = {:g} [{}]'.format(c1, c2, c3)
-                ps.Log.info('Quick help on <{}>:'.format(dev_var))
-                ps.Log.info(out)
+                if var not in ps.__dict__[dev]._data.keys():
+                    ps.Log.error('Device <{}> does not have parameter <{}>.'.format(dev, var))
+                else:
+                    c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
+                    c2 = ps.__dict__[dev]._data.get(var)
+                    c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
+                    ps.Log.info('{}: {}, default = {:g} {}'.format('.'.join(dev_var), c1, c2, c3))
         return True
+
     if group:
         pass
     if quick_help:
