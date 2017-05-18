@@ -86,6 +86,9 @@ class DCBase(ModelBase):
                             'node1': 'DC node 1 idx',
                             'node2': 'DC node 2 idx',
                             })
+        self._units.update({'Vdcn': 'kV',
+                           'Idcn': 'A',
+                           })
         self._dc = {'node1': 'v1',
                     'node2': 'v2',
                     }

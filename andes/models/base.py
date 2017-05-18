@@ -73,9 +73,9 @@ class ModelBase(object):
                        }
 
         # variable descriptions
-        self._descr = {'u': 'connection status',
-                       'Sn': 'power rating',
-                       'Vn': 'voltage rating',
+        self._descr = {'u': 'Connection status',
+                       'Sn': 'Power rating',
+                       'Vn': 'AC Voltage rating',
                        }
         # non-zero parameters
         self._zeros = ['Sn', 'Vn']
