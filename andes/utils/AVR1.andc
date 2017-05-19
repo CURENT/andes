@@ -41,14 +41,14 @@ fnamex = v_{m}; v_{r1}; v_{r2}; v_{fout}
 
 interfaces = vf
 
-service_eq = KfTf: Kf/Tf; Se: Se; vref0: v
+service_eq = KfTf: Kf/Tf; Se: Se; vref0: v + vf*(Ke + Se)/Ka
 
 init1_eq =
+vfout: vf;
 vref: v;
 vm: v;
-vfout: vf;
+vr1: vf*(Ke + Se)
 vr2: -vf / KfTf;
-
 
 algeb_eq =
  vref0 -vref;

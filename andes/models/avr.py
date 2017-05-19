@@ -34,14 +34,15 @@ class AVR1(ModelBase):
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'v', 'v', self.syn)
-        self.vref0 = dae.y[self.v]
+        self.vref0 = div(mul(dae.y[self.vf], self.Ke + self.Se), self.Ka) + dae.y[self.v]
         self.KfTf = mul(self.Kf, div(1, self.Tf))
 
     def init1(self, dae):
         self.servcall(dae)
         dae.x[self.vfout] = dae.y[self.vf]
-        dae.y[self.vref] = dae.y[self.v]
+        dae.y[self.vref] = self.vref0
         dae.x[self.vm] = dae.y[self.v]
+        dae.x[self.vr1] = mul(dae.y[self.vf], self.Ke + self.Se)
         dae.x[self.vr2] = -mul(dae.y[self.vf], self.KfTf)
 
     def gcall(self, dae):
@@ -128,7 +129,7 @@ class AVR2(ModelBase):
     def gcall(self, dae):
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
         dae.g[self.vr] = -dae.y[self.vr] + mul(self.K0, dae.x[self.vr2]) + mul(self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
-        dae.windup(self.vr, self.vrmin, self.vrmax)
+        dae.ylimiter(self.vr, self.vrmin, self.vrmax)
         dae.g += spmatrix(self.vf0 - dae.x[self.vfout], self.vf, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
