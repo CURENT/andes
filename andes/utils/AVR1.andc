@@ -1,0 +1,81 @@
+# ANDES card file, 1.0
+
+# field = elements
+# an element can be a dictionary denoted with colon
+# multiple elements: separate with semi-colon
+# multiple lines supported
+
+name = AVR1
+
+doc_string = Automatic Voltage Regulator Type I, DC exciter simplified from IEEE DC1
+
+group = AVR
+
+data = syn: 0; busr: None; Ka: 20; Ke: 1; Kf: 1;
+ Ta: 0.01; Tf: 0.1; Te: 1.0; Tr: 0.001;
+ vrmax: 5; vrmin: -5; Ae: 1; Be: 1
+
+descr = syn: Generator id; busr: Regulated voltage idx;
+ Ka: Amplifier gain; Ke: Field circuit integral deviation; Kf: Stabilizer gain;
+ Ta: Amplifier time constant; Tf: Stabilizer time constant;
+ Te: Field circuit time constant; Tr: Measurement time constant;
+ vrmax: Maximum regulator voltage; vrmin: minimum regulator voltage;
+ Ae: 1st ceiling coefficient; Be: 2nd ceiling coefficient
+
+params = syn; Ka; Ke; Kf; Ta; Tf; Tr; Te; vrmax; vrmin; Ae; Be
+
+mandatory = syn
+
+times = Ta; Tf; Te
+
+ctrl =
+ vf: Synchronous, vf, syn, y;
+ vf0: Synchronous, vf0, syn, c;
+ v: Synchronous, v, syn, y
+
+algebs = vref
+fnamey = v_{ref}
+
+states = vm; vr1; vr2; vfout
+fnamex = v_{m}; v_{r1}; v_{r2}; v_{fout}
+
+interfaces = vf
+
+service_eq = KfTf: Kf/Tf; Se: Se; vref0: v
+
+init1_eq =
+vref: v;
+vm: v;
+vfout: vf;
+vr2: -vf / KfTf;
+
+
+algeb_eq =
+ vref0 -vref;
+ -vfout + vf0
+
+anti_windup = vr1: Ta, vrmin, vrmax
+
+diff_eq =
+ (v - vm) / Tr;
+ Ka * (vref - vm - vr2 - KfTf*vfout);
+ - (KfTf * vfout + vr2) / Tf;
+ - (vfout * (Ke + Se) - vr1) / Te
+
+# Fixes to apply:
+# 1. Remove Se in self.servcall()
+# 2. Add the following in class def
+#    @property
+#    def Se(self):
+#        dae = self.system.DAE
+#        vfout = dae.y[self.vfout]
+#        return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
+#
+#    @property
+#    def dSe(self):
+#        dae = self.system.DAE
+#        vfout = dae.y[self.vfout]
+#        return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) + \
+#               mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))
+# 3. Modify the Fx0 line with self.Se to self.dSe and put it in fxcall
+# 4. Modify self.calls['fxcall'] to True
