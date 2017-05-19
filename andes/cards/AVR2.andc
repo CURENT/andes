@@ -38,19 +38,22 @@ fnamex = v_{m}; v_{r1}; v_{r2}; v_{fout}
 
 interfaces = vf
 
-service_eq = T21: T2/T1; T43: T4/T3; Se: Se; vref0: v
+service_eq = T21: T2/T1; T43: T4/T3;  Se: Se; vref0: v + vf*(1 + Se)/K0
 
 init1_eq =
-vref: v;
+vfout: vf;
+vref: vref0;
 vm: v;
-vfout: vf
+vr1: K0*(1 - T21)* (vref0 - v);
+vr2: (1 - T43)* (vr1 + K0*T21*(vref - vm)) /K0;
+vr: vf*(1 + Se)
 
 algeb_eq =
  vref0 -vref;
  K0*vr2 + T43*(vr1 + K0*T21*(vref - vm)) - vr;
  -vfout + vf0
 
-windup = vr: vrmin, vrmax
+hard_limit = vr: vrmin, vrmax
 
 diff_eq =
  (v - vm) / Tr;

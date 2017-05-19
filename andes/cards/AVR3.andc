@@ -1,15 +1,19 @@
 # ANDES card file, 1.0
 
 # field = elements
-# an element can be a dictionary denoted with colon
+# an element can be a dictionary denoted with a colon
 # multiple elements: separate with semi-colon
 # multiple lines supported
 
 name = AVR3
+
 doc_string = Automatic Voltage Regulator Type III
+
 group = AVR
+
 data = syn: 0; K0: 20; T1: 0.01; T2: 0.1; Te: 1.0; Tr: 0.001;
 vfmax: 5; vfmin: -5; s0: True
+
 descr = syn: Generator id; K0: Regulator gain; T1: Regulator zero;
  T2: Regularot Pole; Te: Field circuit time constant; Tr: Measurement time constant;
  vfmax: Maximum field voltage; vfmin: minimum field voltage
@@ -17,10 +21,9 @@ descr = syn: Generator id; K0: Regulator gain; T1: Regulator zero;
 params = syn; T1; T2; Tr; Te; vfmax; vfmin; K0; s0
 
 mandatory = syn
-times = T2; Te; Tr
-# ac = bus: a, v
 
-# vf index, vf value, v index
+times = T2; Te; Tr
+
 ctrl =
  vf: Synchronous, vf, syn, y;
  vf0: Synchronous, vf0, syn, c;
