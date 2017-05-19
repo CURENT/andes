@@ -31,7 +31,7 @@ class SynBase(ModelBase):
         self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'gen', 'kp', 'kw', 'S10', 'S20',])
         self._descr.update({'fn': 'rated frequency',
                             'bus': 'interface bus id',
-                            'D': 'rotor damping',
+                            'D': 'Damping coefficient',
                             'M': 'machine start up time (2H)',
                             'ra': 'armature resistance',
                             'xl': 'leakage reactance',
@@ -244,7 +244,7 @@ class Ord6a(SynBase):
                             'Tq10': 'q-axis transient time constant',
                             'Td20': 'd-axis sub-transient time constant',
                             'Tq20': 'q-axis sub-transient time constant',
-                            'Taa': 'Taa time constant',
+                            'Taa': 'd-axis additional leakage time constant',
                             })
         self._units.update({'xd': 'omh',
                             'xd1': 'omh',
@@ -459,7 +459,7 @@ class Syn2(Ord2, Flux0):
 
 
 class Syn6a(Ord6a, Flux0):
-    """6nd-order generator model. Inherited from (Ord6, Flux0)  """
+    """GENROU, 6th-order generator model with xd2 = xq2."""
     def __init__(self, system, name):
         Ord6a.__init__(self, system, name)
         Flux0.__init__(self)
