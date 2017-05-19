@@ -109,4 +109,6 @@ def to_number(s):
         ret = True
     elif ret == 'False':
         ret = False
+    elif ret == 'None':
+        ret = None
     return ret
