@@ -612,8 +612,28 @@ class ModelBase(object):
                 data.append(str(value))
             print(header_fmt.format(*data))
 
+    def var_insight(self):
+        """Print variable values for debugging"""
+        if not self.n:
+            return
+        m = len(self._algebs)
+        n = len(self._states)
+        dae = self.system.DAE
+        out = []
+        header = '{:^4s}' + '{:^10s}' * (n + m)
+        tpl = '{:^4d}' + '{:^10g}' * (n + m)
+        out.append(header.format(*(['u'] + self._states + self._algebs)))
+        for i in range(self.n):
+            vals = [self.u[i]]
+            vals += [dae.x[self.__dict__[var][i]] for var in self._states]
+            vals += [dae.y[self.__dict__[var][i]] for var in self._algebs]
+            out.append(tpl.format(*vals))
+        for line in out:
+            print(line)
+
     def __str__(self):
         self.insight()
+        self.var_insight()
 
     def get_by_idx(self, field, idx):
         """Get values of a field by idx"""
