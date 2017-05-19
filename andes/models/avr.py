@@ -102,7 +102,7 @@ class AVR2(ModelBase):
         self._mandatory.extend(['syn'])
         self._params.extend(['syn', 'K0', 'T1', 'T2', 'T3', 'T4', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
         self._data.update(
-            {'K0': 100, 'Ae': 0.0006, 'T3': 0.05, 'Te': 1.0, 'syn': 0, 'vrmin': -5, 'vrmax': 5, 'Tr': 0.001, 'T1': 0.01, 'T4': 1,
+            {'K0': 200, 'Ae': 0.0006, 'T3': 0.05, 'Te': 1.0, 'syn': 0, 'vrmin': -5, 'vrmax': 5, 'Tr': 0.001, 'T1': 0.01, 'T4': 1,
              'Be': 0.9, 'T2': 0.1})
         self._descr.update(
             {'K0': 'Regulator gain', 'vrmin': 'minimum regulator voltage', 'Ae': '1st ceiling coefficient',
