@@ -106,7 +106,7 @@ class DAE(object):
     #     I = spdiag([1.0] * self.m) - H
     #     self.Gy = I * (self.Gy * I) + H
 
-    def ylimiter(self, yidx, ymin, ymax):
+    def hard_limit(self, yidx, ymin, ymax):
         """Limit algebraic variables and set the Jacobians"""
         yidx = matrix(yidx)
         above = agtb(self.y[yidx], ymax)
