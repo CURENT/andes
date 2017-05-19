@@ -17,12 +17,13 @@ class GovernorBase(ModelBase):
                            'R': 0.05,
                            'wref0': 1.0,
                            })
-        self._descr.update({'gen': 'generator index',
-                            'pmax': 'maximum turbine output in Syn Sn',
-                            'pmin': 'minimum turbine output in Syn Sn',
-                            'R': 'speed regulation droop',
-                            'wref0': 'initial reference speed',
+        self._descr.update({'gen': 'Generator index',
+                            'pmax': 'Maximum turbine output in Syn Sn',
+                            'pmin': 'Minimum turbine output in Syn Sn',
+                            'R': 'Speed regulation droop',
+                            'wref0': 'Initial reference speed',
                             })
+        self._units.update({'pmax': 'pu', 'pmin': 'pu', 'wref0': 'pu', 'R': 'pu'})
         self._params.extend(['pmax', 'pmin', 'R', 'wref0'])
         self._algebs.extend(['wref', 'pout'])
         self._fnamey.extend(['\\omega_{ref}', 'P_{out}'])
@@ -76,6 +77,13 @@ class TG1(GovernorBase):
                            'Ts': 0.1,
                            })
         self._params.extend(['T3', 'T4', 'T5', 'Tc', 'Ts'])
+        self._descr.update({'T3': 'Transient gain time constant',
+                            'T4': 'Power fraction time constant',
+                            'T5': 'Reheat time constant',
+                            'Tc': 'Servo time constant',
+                            'Ts': 'Governor time constant',
+                            })
+        self._units.update({'T3': 's', 'T4': 's', 'T5': 's', 'Tc': 's', 'Ts': 's'})
         self._mandatory.extend(['T5', 'Tc', 'Ts'])
         self._service.extend(['iTs', 'iTc', 'iT5', 'k1', 'k2', 'k3', 'k4'])
         self._states.extend(['xg1', 'xg2', 'xg3'])
@@ -141,6 +149,10 @@ class TG2(GovernorBase):
         self._data.update({'T1': 0.2,
                            'T2': 10.0,
                            })
+        self._descr.update({'T1': 'Transient gain time constant',
+                            'T2': 'Governor time constant',
+                            })
+        self._units.update({'T1': 's', 'T2': 's'})
         self._params.extend(['T1', 'T2'])
         self._service.extend(['T12', 'iT2'])
         self._mandatory.extend(['T2'])
