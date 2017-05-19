@@ -95,7 +95,7 @@ class AVR2(ModelBase):
         self._name = 'AVR2'
         self._states.extend(['vm', 'vr1', 'vr2', 'vfout'])
         self._algebs.extend(['vref', 'vr'])
-        self._service.extend(['T21', 'Se', 'vref0', 'T43'])
+        self._service.extend(['T21', 'vref0', 'T43'])
         self._fnamey.extend(['v_{ref}', 'v_r'])
         self._fnamex.extend(['v_{m}', 'v_{r1}', 'v_{r2}', 'v_{fout}'])
         self._times.extend(['T1', 'T3', 'Te', 'Tr'])
@@ -113,23 +113,26 @@ class AVR2(ModelBase):
         self._inst_meta()
 
     def servcall(self, dae):
-        self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'v', 'v', self.syn)
+        self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
-        self.T21 = mul(self.T2, div(1, self.T1))
-        self.vref0 = dae.y[self.v]
         self.T43 = mul(self.T4, div(1, self.T3))
+        self.T21 = mul(self.T2, div(1, self.T1))
+        self.vref0 = dae.y[self.v] + mul(dae.y[self.vf], div(1, self.K0), 1 + self.Se)
 
     def init1(self, dae):
         self.servcall(dae)
-        dae.y[self.vref] = dae.y[self.v]
-        dae.x[self.vfout] = dae.y[self.vf]
+        dae.y[self.vref] = self.vref0
         dae.x[self.vm] = dae.y[self.v]
+        dae.x[self.vr1] = mul(self.K0, 1 - self.T21, self.vref0 - dae.y[self.v])
+        dae.x[self.vfout] = dae.y[self.vf]
+        dae.y[self.vr] = mul(dae.y[self.vf], 1 + self.Se)
+        dae.x[self.vr2] = mul(div(1, self.K0), 1 - self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
 
     def gcall(self, dae):
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
         dae.g[self.vr] = -dae.y[self.vr] + mul(self.K0, dae.x[self.vr2]) + mul(self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
-        dae.ylimiter(self.vr, self.vrmin, self.vrmax)
+        dae.hard_limit(self.vr, self.vrmin, self.vrmax)
         dae.g += spmatrix(self.vf0 - dae.x[self.vfout], self.vf, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
@@ -142,16 +145,16 @@ class AVR2(ModelBase):
         dae.add_jac(Gy0, -1, self.vref, self.vref)
         dae.add_jac(Gy0, mul(self.K0, self.T21, self.T43), self.vr, self.vref)
         dae.add_jac(Gy0, -1, self.vr, self.vr)
-        dae.add_jac(Gx0, - mul(self.K0, self.T21, self.T43), self.vr, self.vm)
-        dae.add_jac(Gx0, self.K0, self.vr, self.vr2)
         dae.add_jac(Gx0, self.T43, self.vr, self.vr1)
-        dae.add_jac(Gx0, -1, self.vf, self.vfout)
+        dae.add_jac(Gx0, self.K0, self.vr, self.vr2)
+        dae.add_jac(Gx0, - mul(self.K0, self.T21, self.T43), self.vr, self.vm)
+        dae.add_jac(Gx0, -1, self.v, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tr), self.vm, self.vm)
         dae.add_jac(Fx0, - div(1, self.T1), self.vr1, self.vr1)
         dae.add_jac(Fx0, - mul(self.K0, div(1, self.T1), 1 - self.T21), self.vr1, self.vm)
-        dae.add_jac(Fx0, - mul(self.T21, div(1, self.T3), 1 - self.T43), self.vr2, self.vm)
-        dae.add_jac(Fx0, - div(1, self.T3), self.vr2, self.vr2)
         dae.add_jac(Fx0, mul(div(1, self.K0), div(1, self.T3), 1 - self.T43), self.vr2, self.vr1)
+        dae.add_jac(Fx0, - div(1, self.T3), self.vr2, self.vr2)
+        dae.add_jac(Fx0, - mul(self.T21, div(1, self.T3), 1 - self.T43), self.vr2, self.vm)
         dae.add_jac(Fy0, div(1, self.Tr), self.vm, self.v)
         dae.add_jac(Fy0, mul(self.K0, div(1, self.T1), 1 - self.T21), self.vr1, self.vref)
         dae.add_jac(Fy0, mul(self.T21, div(1, self.T3), 1 - self.T43), self.vr2, self.vref)
