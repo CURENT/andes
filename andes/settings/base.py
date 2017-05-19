@@ -35,7 +35,7 @@ class SettingsBase(object):
                 warn_msg = 'Setting object {:s} has no \'{:s}\' option. Correct in doc_help.'.format(self.__class__.__name__, opt)
                 print(warn_msg)
         table.add_rows(rows, header=False)  # first row is not header
-        table.header(['Option', 'Description', 'Value', 'Alternatives'])
+        table.header(['Option', 'Description', 'Value', 'Alt.'])
 
         ext = 'txt'
         if export == 'latex':
