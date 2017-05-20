@@ -1,3 +1,5 @@
+from ..models import order, jits, non_jits
+
 
 class DevMan(object):
     """Device Manager class. Maintains the loaded model list, groups and categories"""
@@ -36,30 +38,24 @@ class DevMan(object):
     def sort_device(self):
         """sort device to meet device prerequisites (initialize devices before controllers)"""
         self.devices.sort()
-        if 'Bus' in self.devices:
-            k = self.devices.index('Bus')
-            self.devices[k] = self.devices[0]
-            self.devices[0] = 'Bus'
-        if 'Node' in self.devices:
-            k = self.devices.index('Node')
-            self.devices[k] = self.devices[1]
-            self.devices[1] = 'Node'
-        if 'Ground' in self.devices:
-            k = self.devices.index('Ground')
-            self.devices[k] = self.devices[2]
-            self.devices[2] = 'Ground'
-        if 'AVR3' in self.devices:
-            k = self.devices.index('AVR3')
-            self.devices[k] = self.devices[-1]
-            self.devices[-1] = 'AVR3'
-        if 'AVR2' in self.devices:
-            k = self.devices.index('AVR2')
-            self.devices[k] = self.devices[-2]
-            self.devices[-2] = 'AVR2'
-        if 'AVR1' in self.devices:
-            k = self.devices.index('AVR1')
-            self.devices[k] = self.devices[-3]
-            self.devices[-3] = 'AVR1'
+        mapping = non_jits
+        mapping.update(jits)
+        idx = []
+        names = []
+        for dev in order:
+            if dev in mapping.keys():
+                all_dev = list(mapping[dev].keys())
+                for item in all_dev:
+                    if item in self.devices:
+                        idx.append(self.devices.index(item))
+                        names.append(item)
+            elif dev in self.devices:
+                idx.append(self.devices.index(dev))
+                names.append(dev)
+
+        idx = sorted(idx)
+        for id, name in zip(idx, names):
+            self.devices[id] = name
 
     def swap_device(self, front, back):
         if front in self.devices and back in self.devices:
