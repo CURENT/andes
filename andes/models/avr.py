@@ -67,12 +67,12 @@ class AVR1(ModelBase):
         dae.add_jac(Fx0, - mul(self.Ka, self.KfTf), self.vr1, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tf), self.vr2, self.vr2)
         dae.add_jac(Fx0, - mul(self.KfTf, div(1, self.Tf)), self.vr2, self.vfout)
-        dae.add_jac(Fx0, div(1, self.Te), self.vfout, self.vr1)
         dae.add_jac(Fy0, div(1, self.Tr), self.vm, self.v)
         dae.add_jac(Fy0, self.Ka, self.vr1, self.vref)
 
     def fxcall(self, dae):
         dae.add_jac(Fx, mul(div(1, self.Te), -self.Ke - self.dSe), self.vfout, self.vfout)
+        dae.add_jac(Fx, div(self.Ke + self.dSe, self.Te), self.vfout, self.vr1)
 
     @property
     def Se(self):
@@ -134,7 +134,7 @@ class AVR2(ModelBase):
     def gcall(self, dae):
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
         dae.g[self.vr] = -dae.y[self.vr] + mul(self.K0, dae.x[self.vr2]) + mul(self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
-        dae.hard_limit(self.vr, self.vrmin, self.vrmax)
+        # dae.hard_limit(self.vr, self.vrmin, self.vrmax)
         dae.g += spmatrix(self.vf0 - dae.x[self.vfout], self.vf, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
@@ -160,10 +160,10 @@ class AVR2(ModelBase):
         dae.add_jac(Fy0, div(1, self.Tr), self.vm, self.v)
         dae.add_jac(Fy0, mul(self.K0, div(1, self.T1), 1 - self.T21), self.vr1, self.vref)
         dae.add_jac(Fy0, mul(self.T21, div(1, self.T3), 1 - self.T43), self.vr2, self.vref)
-        dae.add_jac(Fy0, div(1, self.Te), self.vfout, self.vr)
 
     def fxcall(self, dae):
-        dae.add_jac(Fx, mul(div(1, self.Te), -1 - self.dSe), self.vfout, self.vfout)
+        dae.add_jac(Fy, div(1 + self.dSe, self.Te), self.vfout, self.vr)
+        dae.add_jac(Fx, - div(1 + self.dSe, self.Te), self.vfout, self.vfout)
 
     @property
     def Se(self):
