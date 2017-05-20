@@ -72,23 +72,23 @@ Line, Vn = 13.8, Vn2 = 13.8, bus1 = 12, bus2 = 13, idx = "Line_19",
 Line, Vn = 13.8, Vn2 = 13.8, bus1 = 13, bus2 = 14, idx = "Line_20",
       name = "Line 20", r = 0.17093, x = 0.34802, xcoord = [7.5; 7.5; 6.45; 6.45], ycoord = [5.625; 5.325; 5.925; 6.075]
 
-BusFreq, idx = 1, bus = 1
-BusFreq, idx = 2, bus = 2
-BusFreq, idx = 3, bus = 3
-BusFreq, idx = 4, bus = 4
-BusFreq, idx = 5, bus = 5
-BusFreq, idx = 6, bus = 6
-BusFreq, idx = 7, bus = 7
-BusFreq, idx = 8, bus = 8
-BusFreq, idx = 9, bus = 9
-BusFreq, idx = 10, bus = 10
-BusFreq, idx = 11, bus = 11
-BusFreq, idx = 12, bus = 12
-BusFreq, idx = 13, bus = 13
-BusFreq, idx = 14, bus = 14
+#BusFreq, idx = 1, bus = 1
+#BusFreq, idx = 2, bus = 2
+#BusFreq, idx = 3, bus = 3
+#BusFreq, idx = 4, bus = 4
+#BusFreq, idx = 5, bus = 5
+#BusFreq, idx = 6, bus = 6
+#BusFreq, idx = 7, bus = 7
+#BusFreq, idx = 8, bus = 8
+#BusFreq, idx = 9, bus = 9
+#BusFreq, idx = 10, bus = 10
+#BusFreq, idx = 11, bus = 11
+#BusFreq, idx = 12, bus = 12
+#BusFreq, idx = 13, bus = 13
+#BusFreq, idx = 14, bus = 14
 
-PMU, idx = 1, bus = 1
-PMU, idx = 1, bus = 2
+#PMU, idx = 1, bus = 1
+#PMU, idx = 1, bus = 2
 
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
@@ -153,7 +153,7 @@ Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt Bus 9"
 
 SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1",
     pmax = 999.9, pmin = -999.9, qmax = 9.9, qmin = -9.9,
-    v0 = 1.06, ref = True
+    v0 = 1.06
 
 #Syn2, D = 3.01, M = 6.02, Sn = 200, Vn = 69, xd1 = 0.302,
 #      bus = 1, fn = 60.0, gen = 1, idx = 1, name = "Syn_1"
@@ -190,27 +190,24 @@ Syn6a, D = 2.0, M = 10.12, Sn = 25.0, Td10 = 4.75, Td20 = 0.06,
        xd1 = 0.232, xd2 = 0.12, xl = 0.134, xq = 1.22, xq1 = 0.715,
        xq2 = 0.12
 
-AVR3, syn = 1
-AVR1, syn = 2
+TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
+     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
+TG1, gen = 2, pmax = 2, pmin = 0, R = 0.01, wref0 = 1.0,
+     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
 
-#TG2, gen = 1, pmax = 5, pmin = 0.5, R = 0.01, wref0 = 1.0,
-#     T1 = 0.2, T2 = 10.0
-
-
-#Avr1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-#      bus = 1, idx = 1, name = "AVR 1", syn = 1, vmax = 9.99,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      bus = 2, idx = 2, name = "AVR 2", syn = 2, vmax = 2.05,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      bus = 3, idx = 3, name = "AVR 3", syn = 3, vmax = 1.7,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      bus = 6, idx = 4, name = "AVR 4", syn = 4, vmax = 2.2,
-#      vmin = 1.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      bus = 8, idx = 5, name = "AVR 5", syn = 5, vmax = 2.2,
-#      vmin = 1.0
-
+AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
+      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
+      vrmin = -0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
+      idx = 2, name = "AVR 2", syn = 2, vrmax = 2.05,
+      vrmin = 0.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
+      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
+      vrmin = 0.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
+      vrmin = 1.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
+      vrmin = 1.0
