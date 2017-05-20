@@ -9,7 +9,10 @@ from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
 
 from ..utils.jactools import *
-
+try:
+    from ..utils.matlab import write_mat
+except:
+    pass
 F = []
 
 
@@ -174,15 +177,16 @@ def run(system):
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
                 # windup limiters
-                dae.anti_windup_jac()
-
-                # Ac = matrix(dae.Ac)
-                # Ac = array(Ac)
+                dae.reset_Ac()
 
                 if dae.factorize:
                     F = symbolic(dae.Ac)
                     dae.factorize = False
                 inc = -matrix([dae.q, dae.g])
+
+                # Ac = matrix(dae.Ac)
+                # Ac = array(Ac)
+                # write_mat('avr.mat', [Ac, inc], ['Ac', 'inc'])
 
                 try:
                     N = numeric(dae.Ac, F)
