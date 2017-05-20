@@ -124,17 +124,20 @@ class DAE(object):
 
     def anti_windup(self, xidx, xmin, xmax):
         """State variable anti-windup limiter"""
+        self.zxmax = ones(self.n, 1)
+        self.zxmin = ones(self.n, 1)
+
         xidx = matrix(xidx)
 
-        x_above = agtb(self.x[xidx], xmax)
-        f_above = agtb(self.f[xidx], 0.0)
+        x_above = ageb(self.x[xidx], xmax)
+        f_above = ageb(self.f[xidx], 0.0)
         above = aandb(x_above, f_above)
         above_idx = findeq(above, 1.0)
         self.x[xidx[above_idx]] = xmax[above_idx]
         self.zxmax[xidx[above_idx]] = 0
 
-        x_below = altb(self.x[xidx], xmin)
-        f_below = altb(self.f[xidx], 0.0)
+        x_below = aleb(self.x[xidx], xmin)
+        f_below = aleb(self.f[xidx], 0.0)
         below = aandb(x_below, f_below)
         below_idx = findeq(below, 1.0)
         self.x[xidx[below_idx]] = xmin[below_idx]
@@ -154,8 +157,20 @@ class DAE(object):
         H = spmatrix(1.0, idx, idx, (self.m, self.m))
         I = spdiag([1.0] * self.m) - H
         self.Gy = I * (self.Gy * I) + H
+        # H = spmatrix(1.0, idx, idx, (self.n, self.n))
+        # I = spdiag([1.0] * self.n) - H
+        # self.Fx = I * (self.Fx * I) + H
         self.Fy = self.Fy * I
         self.Gx = I * self.Gx
+
+    def reset_Ac(self):
+        if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n:
+            return
+        idx = matrix(findeq(aandb(self.zxmin, self.zxmax), 0.0))
+        H = spmatrix(1.0, idx, idx, (self.m + self.n, self.m + self.n))
+        I = spdiag([1.0] * (self.m + self.n)) - H
+        self.Ac = I * (self.Ac * I) - H
+        self.q[idx] = 0
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""
