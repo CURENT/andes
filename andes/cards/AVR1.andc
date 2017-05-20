@@ -68,13 +68,13 @@ diff_eq =
 #    @property
 #    def Se(self):
 #        dae = self.system.DAE
-#        vfout = dae.y[self.vfout]
+#        vfout = dae.x[self.vfout]
 #        return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
 #
 #    @property
 #    def dSe(self):
 #        dae = self.system.DAE
-#        vfout = dae.y[self.vfout]
+#        vfout = dae.x[self.vfout]
 #        return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) + \
 #               mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))
 # 3. Modify the Fx0 line with self.Se to self.dSe and put it in fxcall
