@@ -15,7 +15,7 @@ class AVR1(ModelBase):
         self._fnamex.extend(['v_{m}', 'v_{r1}', 'v_{r2}', 'v_{fout}'])
         self._service.extend(['vref0', 'Se', 'KfTf'])
         self._fnamey.extend(['v_{ref}'])
-        self._times.extend(['Tr', 'Te'])
+        self._times.extend(['Tr', 'Te', 'Ta', 'Tf'])
         self._algebs.extend(['vref'])
         self._params.extend(['syn', 'Ka', 'Ke', 'Kf', 'Ta', 'Tf', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
         self._descr.update(
@@ -63,6 +63,7 @@ class AVR1(ModelBase):
         dae.add_jac(Fx0, - div(1, self.Tr), self.vm, self.vm)
         dae.add_jac(Fx0, - self.Ka, self.vr1, self.vm)
         dae.add_jac(Fx0, - self.Ka, self.vr1, self.vr2)
+        dae.add_jac(Fx0, - div(1, self.Ta), self.vr1, self.vr1)
         dae.add_jac(Fx0, - mul(self.Ka, self.KfTf), self.vr1, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tf), self.vr2, self.vr2)
         dae.add_jac(Fx0, - mul(self.KfTf, div(1, self.Tf)), self.vr2, self.vfout)
@@ -76,13 +77,13 @@ class AVR1(ModelBase):
     @property
     def Se(self):
         dae = self.system.DAE
-        vfout = dae.y[self.vfout]
+        vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
 
     @property
     def dSe(self):
         dae = self.system.DAE
-        vfout = dae.y[self.vfout]
+        vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) + \
                mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))
 
@@ -98,7 +99,8 @@ class AVR2(ModelBase):
         self._service.extend(['T21', 'vref0', 'T43'])
         self._fnamey.extend(['v_{ref}', 'v_r'])
         self._fnamex.extend(['v_{m}', 'v_{r1}', 'v_{r2}', 'v_{fout}'])
-        self._times.extend(['T1', 'T3', 'Te', 'Tr'])
+        self._times.extend(['T1', 'T2', 'T3', 'T4'])
+        self._zeros.extend(['Te', 'Tr', 'T1', 'T3'])
         self._mandatory.extend(['syn'])
         self._params.extend(['syn', 'K0', 'T1', 'T2', 'T3', 'T4', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
         self._data.update(
@@ -166,13 +168,13 @@ class AVR2(ModelBase):
     @property
     def Se(self):
         dae = self.system.DAE
-        vfout = dae.y[self.vfout]
+        vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
 
     @property
     def dSe(self):
         dae = self.system.DAE
-        vfout = dae.y[self.vfout]
+        vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) + \
                mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))
 
@@ -240,3 +242,4 @@ class AVR3(ModelBase):
         dae.add_jac(Fx0, - div(1, self.T2), self.vr, self.vr)
         dae.add_jac(Fy0, div(1, self.Tr), self.vm, self.v)
         dae.add_jac(Fy0, mul(self.K0, div(1, self.T2), 1 - self.T1T2), self.vr, self.vref)
+        dae.add_jac(Fx0, - div(1, self.Te), self.vfout, self.vfout)
