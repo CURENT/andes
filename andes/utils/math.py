@@ -15,6 +15,19 @@ def agtb(a, b):
         b = matrix(b, (len(a), 1), 'd')
     return matrix(list(map(lambda x, y: x > y, a, b)), a.size)
 
+def aleb(a, b):
+    """Return a matrix of logic comparison of A<=B"""
+    if type(b) == float:
+        b = matrix(b, (len(a), 1), 'd')
+    return matrix(list(map(lambda x, y: x <= y, a, b)), a.size)
+
+
+def ageb(a, b):
+    """Return a matrix of logic comparision of A>=B"""
+    if type(b) == float:
+        b = matrix(b, (len(a), 1), 'd')
+    return matrix(list(map(lambda x, y: x >= y, a, b)), a.size)
+
 
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
