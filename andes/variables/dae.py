@@ -9,7 +9,7 @@ class DAE(object):
         self._data = dict(x=[], y=[], f=[], g=[], Fx=[], Fy=[], Gx=[], Gy=[], Fx0=[], Fy0=[], Gx0=[], Gy0=[], Ac=[],
                           tn=[])
 
-        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True)
+        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True, rebuild=True)
 
         self._flags = dict(zxmax=[], zxmin=[], zymax=[], zymin=[], ux=[], uy=[])
 

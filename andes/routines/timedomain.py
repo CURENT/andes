@@ -135,7 +135,10 @@ def run(system):
         if switch:
             system.Fault.checktime(actual_time)
             # system.Breaker.get_times(actual_time)
+            dae.rebuild = True
             switch = False
+        else:
+            dae.rebuild = False
 
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
@@ -166,17 +169,13 @@ def run(system):
 
             elif settings.method in ['euler', 'trapezoidal']:
 
-                if switch:
-                    rebuild = True
                 if actual_time - t_jac >= 1:
-                    rebuild = True
+                    dae.rebuild = True
                     t_jac = actual_time
                 elif niter > 3:
-                    rebuild = True
-                else:
-                    rebuild = False
+                    dae.rebuild = True
 
-                if rebuild:
+                if dae.rebuild:
                     exec(system.Call.int)
                 else:
                     exec(system.Call.int_fg)
@@ -192,7 +191,7 @@ def run(system):
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
                 # windup limiters
-                if rebuild:
+                if dae.rebuild:
                     dae.reset_Ac()
 
                 if dae.factorize:
