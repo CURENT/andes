@@ -199,6 +199,9 @@ class Call(object):
                 string += call
         string += '\n'
 
+        fg_string = string + '"""'
+        self.int_fg = compile(eval(fg_string), '', 'exec')
+
         # rebuild constant Jacobian elements if needed
         string += 'if system.DAE.factorize:\n'
         string += '    system.DAE.init_jac0()\n'
