@@ -25,10 +25,10 @@ def guess(system):
     for key, val in input_formats.items():
         if type(val) == list:
             for item in val:
-                if files.ext.strip('.') == item:
+                if files.ext.strip('.').lower() == item:
                     maybe.append(key)
         else:
-            if files.ext.strip('.') == val:
+            if files.ext.strip('.').lower() == val:
                 maybe.append(key)
 
     # second, guess by lines
