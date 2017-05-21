@@ -102,6 +102,7 @@ def run(system):
     actual_time = 0
     rt_headroom = 0
     settings.qrtstart = time()
+    t_jac = -1
     while t <= settings.tf and t + h > t and not diff_max:
 
         # last time step length
@@ -164,7 +165,21 @@ def run(system):
                 niter += 1
 
             elif settings.method in ['euler', 'trapezoidal']:
-                exec(system.Call.int)
+
+                if switch:
+                    rebuild = True
+                if actual_time - t_jac >= 1:
+                    rebuild = True
+                    t_jac = actual_time
+                elif niter > 3:
+                    rebuild = True
+                else:
+                    rebuild = False
+
+                if rebuild:
+                    exec(system.Call.int)
+                else:
+                    exec(system.Call.int_fg)
 
                 # complete Jacobian matrix DAE.Ac
                 if settings.method == 'euler':
@@ -177,7 +192,8 @@ def run(system):
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
                 # windup limiters
-                dae.reset_Ac()
+                if rebuild:
+                    dae.reset_Ac()
 
                 if dae.factorize:
                     F = symbolic(dae.Ac)
