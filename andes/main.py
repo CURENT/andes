@@ -243,7 +243,7 @@ def clean(clean=False):
         cwd = os.getcwd()
         for file in os.listdir(cwd):
             if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
-                    file.endswith('_out.dat'):
+                    file.endswith('_out.dat') or file.endswith('_prof.txt'):
                 found = True
                 try:
                     os.remove(file)
