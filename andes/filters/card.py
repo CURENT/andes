@@ -47,12 +47,15 @@ def read(file, system):
             val = de_blank(val)
             ret_dict[key] = val
 
+    ret_dict_ord = dict(ret_dict)
+
     for key, val in ret_dict.items():
         if not val:
             continue
         if type(val) == list:
             if ':' in val[0]:
-                new_val = {}
+                new_val = {}         # return in a dictionary
+                new_val_ord = []     # return in an ordered list with the dict keys at 0
                 for item in val:
                     m, n = item.split(':')
                     m, n = m.strip(), n.strip()
@@ -63,12 +66,17 @@ def read(file, system):
                     else:
                         n = to_number(n)
                     new_val.update({m.strip(): n})
+                    new_val_ord.append([m.strip(), n])
                 ret_dict[key] = new_val
+                ret_dict_ord[key] = new_val_ord
 
     ret_dict['name'] = ret_dict['name'][0]
     ret_dict['doc_string'] = ret_dict['doc_string'][0]
     ret_dict['group'] = ret_dict['group'][0]
+    ret_dict['service_keys'] = list(ret_dict['service_eq'].keys())
     ret_dict['consts'] = list(ret_dict['data'].keys()) + list(ret_dict['service_eq'].keys())
+    ret_dict['init1_eq'] = ret_dict_ord['init1_eq']
+    ret_dict['service_eq'] = ret_dict_ord['service_eq']
 
     copy_algebs = []
     copy_states = []
@@ -81,9 +89,6 @@ def read(file, system):
             ret_dict['consts'].append(key)
     ret_dict['copy_algebs'] = copy_algebs
     ret_dict['copy_states'] = copy_states
-
-    if ret_dict['service_eq'] == []:
-        ret_dict['service_eq'] = {}
 
     return run(system, **ret_dict)
 
@@ -108,9 +113,9 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         units={}, params=[], fnamex=[], fnamey=[], mandatory=[], zeros=[],
         powers=[], currents=[], voltages=[], z=[], y=[], dccurrents=[],
         dcvoltages=[], r=[], g=[], times=[], ac={}, dc={}, ctrl={},
-        consts=[], algebs=[], interfaces=[], states=[], init1_eq=[], service_eq={},
+        consts=[], algebs=[], interfaces=[], states=[], init1_eq={}, service_eq={},
         algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, copy_algebs=[],
-        copy_states=[], **kwargs):
+        copy_states=[], service_keys=[], **kwargs):
     retval = True
     space4 = '    '
     space8 = space4 * 2
@@ -210,18 +215,22 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             val.append(eval(item))
 
     # convert service_eq.keys() into sympy.Symbols and values into equations
-    for var, eq in service_eq.items():
-        if var not in consts:
-            print('* Warning: declaring undefined service variable <{}>'.format(var))
-        call = '{} = Symbol(var)'.format(var)
-        exec(call)
-        expr = eval('{}'.format(eq))
-        sym_serv.append([eval(var), expr])
+    # for var, eq in service_eq.items():
+    if service_eq:
+        for item in service_eq:
+            var = item[0]
+            eq = item[1]
+            if var not in consts:
+                print('* Warning: declaring undefined service variable <{}>'.format(var))
+            call = '{} = Symbol(var)'.format(var)
+            exec(call)
+            expr = eval('{}'.format(eq))
+            sym_serv.append([eval(var), expr])
 
     if init1_eq:
-        for var, eq in init1_eq.items():
-            # var = item[0]
-            # eq = item[1]
+        for item in init1_eq:
+            var = item[0]
+            eq = item[1]
             if var not in states + algebs:
                 print('* Warning: initializing undefined variable <{}>'.format(var))
             call = '{} = Symbol(var)'.format(var)
@@ -457,7 +466,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
                      'states': states,
                      'fnamex': fnamex,
                      'fnamey': fnamey,
-                     'service': list(service_eq.keys()),
+                     'service': service_keys,
                      'mandatory': mandatory,
                      'zeros': zeros,
                      'powers': powers,
