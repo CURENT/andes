@@ -499,14 +499,14 @@ def run(case, **kwargs):
         if system.Files.no_output:
             s = io.StringIO()
             nlines = 20
-            ps = pstats.Stats(pr, stream=s).sort_stats('time')
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             print(s.getvalue())
             s.close()
         else:
             s = open(system.Files.prof, 'w')
             nlines = 50
-            ps = pstats.Stats(pr, stream=s).sort_stats('time')
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()
             system.Log.info('cProfile results for job{:s} written.'.format(' ' + str(pid) if pid >= 0 else ''))
