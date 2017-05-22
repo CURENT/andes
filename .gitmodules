@@ -1,0 +1,3 @@
+[submodule "cvxopt"]
+	path = cvxopt
+	url = https://github.com/sanurielf/cvxopt
