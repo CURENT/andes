@@ -87,7 +87,7 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
     parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified devices,'
                                                    ' separated by comma.')
-    parser.add_argument('-G', '--group', help='Dump all the devices in the specified group.')
+    parser.add_argument('-g', '--group', help='Dump all the devices in the specified group.')
     parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
     parser.add_argument('-Q', '--dev_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('--help_option', help='Print a quick help of a setting parameter')
@@ -188,15 +188,17 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
             found = True
         else:
             group = [group]
+            match = []
             for item in group_dict.keys():
                 if group[0].lower() in item.lower():
                     # partial match
-                    group = [item]
+                    match.append(item)
                     found = True
-
-        if not found:
-            print('Group <{:s}> not found.'.format(group[0]))
-            return True
+            if not found:
+                print('Group <{:s}> not found.'.format(group[0]))
+                return True
+            else:
+                group = match
         for idx, item in enumerate(group):
             print('<{:s}>'.format(item))
             v = sorted(list(group_dict[item]))
