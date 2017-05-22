@@ -113,8 +113,8 @@ def cli_parse(writehelp=False, helpfile=None):
 def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_var=None,
              quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
     """Dump all sorts of help files"""
-    if not (usage and group and category and dev_list and dev_format and dev_var
-            and quick_help and help_option and help_settings):
+    if not (usage or group or category or dev_list or dev_format or dev_var
+            or quick_help or help_option or help_settings):
         return
     from .models import non_jits, jits
 
@@ -175,7 +175,36 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
     if group:
-        pass
+        found = False
+        group_dict = {}
+        for model in all_models:
+            g = ps.__dict__[model]._group
+            if g not in group_dict:
+                group_dict[g] = []
+            group_dict[g].append(model)
+
+        if group.lower() == 'all':
+            group = sorted(list(group_dict.keys()))
+            found = True
+        else:
+            group = [group]
+            for item in group_dict.keys():
+                if group[0].lower() in item.lower():
+                    # partial match
+                    group = [item]
+                    found = True
+
+        if not found:
+            print('Group <{:s}> not found.'.format(group[0]))
+            return True
+        for idx, item in enumerate(group):
+            print('<{:s}>'.format(item))
+            v = sorted(list(group_dict[item]))
+            print(', '.join(v))
+            if idx < len(group) - 1:
+                print('')
+        return True
+
     if quick_help:
         if quick_help not in all_models:
             ps.Log.error('Model <{}> does not exist.'.format(quick_help))
