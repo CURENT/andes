@@ -44,6 +44,7 @@ class AVR1(ModelBase):
         dae.x[self.vm] = dae.y[self.v]
         dae.x[self.vr1] = mul(dae.y[self.vf], self.Ke + self.Se)
         dae.x[self.vr2] = -mul(dae.y[self.vf], self.KfTf)
+        self.check_limit('vfout', vmin='vrmin', vmax='vrmax')
 
     def gcall(self, dae):
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]

@@ -699,3 +699,41 @@ class ModelBase(object):
             fid.close()
         except IOError:
             raise IOError('Error writing model help file.')
+
+    def check_limit(self, varname, vmin=None, vmax=None):
+        """Check if the variable values are within the limits. Return False if fails."""
+        assert type(varname) == str
+        mat = None
+        val = None
+        retval = True
+        if varname not in self.__dict__.keys():
+            self.system.Log.error('Model <{}> does not have attribute <{}>'.format(self._name, varname))
+            return
+        elif varname in self._algebs:
+            val = self.system.DAE.y[self.__dict__[varname]]
+        elif varname in self._states:
+            val = self.system.DAE.x[self.__dict__[varname]]
+        else:  # service or temporary variable
+            val = matrix(self.__dict__[varname])
+
+        if min:
+            vmin = matrix(self.__dict__[vmin])
+            comp = altb(val, vmin)
+            comp = mul(self.u, comp)
+            for c, n, idx in zip(comp, self.name, range(self.n)):
+                if c == 1:
+                    v = val[idx]
+                    vm = vmin[idx]
+                    self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is lower that minimum {:6.4g}'.format(n, varname, v, vm))
+                    retval = False
+        if max:
+            vmax = matrix(self.__dict__[vmax])
+            comp = agtb(val, vmax)
+            comp = mul(self.u, comp)
+            for c, n, idx in zip(comp, self.name, range(self.n)):
+                if c == 1:
+                    v = val[idx]
+                    vm = vmax[idx]
+                    self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is higher that maximum {:6.4g}'.format(n, varname, v, vm))
+                    retval = False
+        return retval
