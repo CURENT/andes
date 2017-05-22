@@ -137,12 +137,14 @@ class AVR2(ModelBase):
         dae.g[self.vr] = -dae.y[self.vr] + mul(self.K0, dae.x[self.vr2]) + mul(self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
         dae.hard_limit(self.vr, self.vrmin, self.vrmax)
         dae.g += spmatrix(self.vf0 - dae.x[self.vfout], self.vf, [0]*self.n, (dae.m, 1), 'd')
+        pass
 
     def fcall(self, dae):
         dae.f[self.vm] = mul(div(1, self.Tr), dae.y[self.v] - dae.x[self.vm])
         dae.f[self.vr1] = mul(div(1, self.T1), -dae.x[self.vr1] + mul(self.K0, 1 - self.T21, dae.y[self.vref] - dae.x[self.vm]))
         dae.f[self.vr2] = mul(div(1, self.K0), div(1, self.T3), mul(1 - self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm])) - mul(self.K0, dae.x[self.vr2]))
         dae.f[self.vfout] = mul(div(1, self.Te), dae.y[self.vr] - mul(dae.x[self.vfout], 1 + self.Se))
+        pass
 
     def jac0(self, dae):
         dae.add_jac(Gy0, -1, self.vref, self.vref)
@@ -151,7 +153,7 @@ class AVR2(ModelBase):
         dae.add_jac(Gx0, self.T43, self.vr, self.vr1)
         dae.add_jac(Gx0, self.K0, self.vr, self.vr2)
         dae.add_jac(Gx0, - mul(self.K0, self.T21, self.T43), self.vr, self.vm)
-        dae.add_jac(Gx0, -1, self.v, self.vfout)
+        dae.add_jac(Gx0, -1, self.vf, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tr), self.vm, self.vm)
         dae.add_jac(Fx0, - div(1, self.T1), self.vr1, self.vr1)
         dae.add_jac(Fx0, - mul(self.K0, div(1, self.T1), 1 - self.T21), self.vr1, self.vm)
@@ -165,6 +167,7 @@ class AVR2(ModelBase):
     def fxcall(self, dae):
         dae.add_jac(Fy, div(1 + self.dSe, self.Te), self.vfout, self.vr)
         dae.add_jac(Fx, - div(1 + self.dSe, self.Te), self.vfout, self.vfout)
+        pass
 
     @property
     def Se(self):
@@ -237,7 +240,7 @@ class AVR3(ModelBase):
 
     def jac0(self, dae):
         dae.add_jac(Gy0, -1, self.vref, self.vref)
-        dae.add_jac(Gx0, -1, self.v, self.vfout)
+        dae.add_jac(Gx0, -1, self.vf, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tr), self.vm, self.vm)
         dae.add_jac(Fx0, - mul(self.K0, div(1, self.T2), 1 - self.T1T2), self.vr, self.vm)
         dae.add_jac(Fx0, - div(1, self.T2), self.vr, self.vr)
