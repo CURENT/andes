@@ -194,7 +194,13 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     states_anti_windup = list(anti_windup.keys())
     algebs_windup = list(windup.keys())
     algebs_hard_limit = list(hard_limit.keys())
-    algebs_ext = algebs + copy_algebs
+
+    # remove interface variables in copy_algebs
+    for item in interfaces:
+        if item in copy_algebs:
+            copy_algebs.remove(item)
+
+    algebs_ext = algebs + interfaces + copy_algebs
     states_ext = states + copy_states
 
     # convert consts and variables into sympy.Symbol
