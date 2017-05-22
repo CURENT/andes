@@ -28,7 +28,7 @@ from .consts import *
 class PowerSystem(object):
     """everything in a power system class including models, settings,
      file and call managers"""
-    def __init__(self, case='', pid=0, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
+    def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
                  addfile=None, settings=None, input_format=None, output_format=None, gis=None, **kwargs):
         """
         Initialize an empty power system object with defaults
