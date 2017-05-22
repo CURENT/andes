@@ -155,6 +155,7 @@ class Logger(object):
             self.error(message)
         elif level == CRITICAL:
             self.always(message)
+
     @staticmethod
     def basicConfig(level=DEBUG):
         """

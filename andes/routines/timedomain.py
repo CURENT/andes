@@ -53,9 +53,11 @@ def first_time_step(system):
 def run(system):
     """Entry function of Time Domain Simulation"""
     global F
-    bar = progressbar.ProgressBar(
-                                  widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
-                                           progressbar.AdaptiveETA(), '] '])
+    bar = None
+    if system.pid == -1:
+        bar = progressbar.ProgressBar(
+                                      widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
+                                               progressbar.AdaptiveETA(), '] '])
     dae = system.DAE
     settings = system.TDS
 
@@ -98,7 +100,8 @@ def run(system):
             PERT = -1
 
     # main loop
-    bar.start()
+    if bar:
+        bar.start()
     actual_time = 0
     rt_headroom = 0
     settings.qrtstart = time()
@@ -241,7 +244,8 @@ def run(system):
 
         # plot variables and display iteration status
         perc = (t - settings.t0) / (settings.tf - settings.t0) * 100
-        bar.update(perc)
+        if bar:
+            bar.update(perc)
 
         if perc > nextpc:
             system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f}, niter = {}'.format(t, step, settings.error, niter))
@@ -259,7 +263,8 @@ def run(system):
                 rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:
                     sleep(1e-4)
-    bar.finish()
+    if bar:
+        bar.finish()
     if settings.qrt:
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
 

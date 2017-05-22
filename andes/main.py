@@ -56,12 +56,11 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
     parser.add_argument('-v', '--verbose', help='Program logging level, an integer from 1 to 5.'
                                                 'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
-                                                'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 2.',
+                                                'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
                         type=int)
 
     # file and format related
     parser.add_argument('-c', '--clean', help='Clean output files and exit.', action='store_true')
-    parser.add_argument('-K', '--cleanall', help='Clean all output and auxillary files.', action='store_true')
     parser.add_argument('-p', '--path', help='Path to case files', default='')
     parser.add_argument('-P', '--pert', help='Path to perturbation file', default='')
     parser.add_argument('-s', '--settings', help='Specify a setting file. This will take precedence of .andesrc '
@@ -114,6 +113,9 @@ def cli_parse(writehelp=False, helpfile=None):
 def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_var=None,
              quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
     """Dump all sorts of help files"""
+    if not (usage and group and category and dev_list and dev_format and dev_var
+            and quick_help and help_option and help_settings):
+        return
     from .models import non_jits, jits
 
     all = dict(non_jits)
@@ -203,12 +205,22 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
 
-def cleanup(clean=False, cleanall=False):
+def clean(clean=False):
     """Clean up function for generated files"""
     if clean:
-        pass
-    if cleanall:
-        pass
+        found = False
+        cwd = os.getcwd()
+        for file in os.listdir(cwd):
+            if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
+                    file.endswith('_out.dat'):
+                found = True
+                try:
+                    os.remove(file)
+                    print('<{:s}> removed.'.format(file))
+                except IOError:
+                    print('Error removing file <{:s}>.'.format(file))
+        if not found:
+            print('--> No Andes output detected in the working directory.')
 
 
 def main():
@@ -219,13 +231,14 @@ def main():
     kwargs = {}
 
     # run clean-ups and exit
-    if args.clean or args.cleanall:
-        cleanup(args.clean, args.cleanall)
+    if args.clean:
+        clean(args.clean)
         return
 
     # extract case names
     for item in args.casename:
         cases += glob.glob(os.path.join(args.path, item))
+    cases = list(set(cases))
     args.casename = None
 
     # extract all arguments
@@ -240,7 +253,8 @@ def main():
     # exit if no case specified
     if len(cases) == 0:
         print(preamble(args.no_preamble))
-        print('--> No valid data file or action is defined.')
+        print('--> Data file undefined or path is invalid.')
+        print('Use "andes -h" for command line help.')
         return
 
     # single case study
@@ -259,6 +273,7 @@ def main():
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(casename,), kwargs=kwargs)
             jobs.append(job)
             job.start()
+            print('Process {:d} <{:s}> started.'.format(idx, casename))
 
         sleep(0.1)
         for job in jobs:
@@ -439,7 +454,7 @@ def run(case, **kwargs):
 
     if pid >= 0:
         t3, s = elapsed(t0)
-        system.Log.info('Process {:d} finished in {:s}.'.format(pid, s))
+        print('Process {:d} finished in {:s}.'.format(pid, s))
 
 
 if __name__ == '__main__':
