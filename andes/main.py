@@ -200,7 +200,7 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         for idx, item in enumerate(group):
             print('<{:s}>'.format(item))
             v = sorted(list(group_dict[item]))
-            print(', '.join(v))
+            print(' '.join(v))
             if idx < len(group) - 1:
                 print('')
         return True
