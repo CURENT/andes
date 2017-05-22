@@ -220,7 +220,31 @@ def clean(clean=False):
                 except IOError:
                     print('Error removing file <{:s}>.'.format(file))
         if not found:
-            print('--> No Andes output detected in the working directory.')
+            print('--> No Andes output found in the working directory.')
+
+
+def search(keyword):
+    from .models import non_jits, jits
+    all_models = jits
+    all_models.update(non_jits)
+    out = []
+
+    keys = sorted(list(all_models.keys()))
+
+    for key in keys:
+        vals = all_models[key]
+        val = list(vals.keys())
+        val = sorted(val)
+
+        for item in val:
+            if keyword.lower() in item.lower():
+                out.append(key + '.' + item)
+
+    if out:
+        print('Search result: <file.model> containing <{}>'.format(keyword))
+        print(' '.join(out))
+    else:
+        print('No model containing <{:s}> found'.format(keyword))
 
 
 def main():
@@ -233,6 +257,10 @@ def main():
     # run clean-ups and exit
     if args.clean:
         clean(args.clean)
+        return
+
+    if args.search:
+        search(args.search)
         return
 
     # extract case names
