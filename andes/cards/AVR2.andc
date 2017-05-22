@@ -38,7 +38,7 @@ fnamex = v_{m}; v_{r1}; v_{r2}; v_{fout}
 
 interfaces = vf
 
-service_eq = T21: T2/T1; T43: T4/T3;  Se: Se; vref0: v + vf*(1 + Se)/K0
+service_eq = T21: T2/T1; T43: T4/T3; vref0: v + vf*(1 + Se)/K0; Se: Se
 
 init1_eq =
 vfout: vf;
