@@ -165,8 +165,6 @@ class TG2(GovernorBase):
         self.T12 = div(self.T1, self.T2)
         self.iT2 = div(1, self.T2)
 
-        dae.x[self.xg] = zeros(self.n, 1)
-
     def fcall(self, dae):
         dae.f[self.xg] = mul(self.iT2, mul(self.gain, 1 - self.T12, self.wref0 - dae.x[self.omega]) - dae.x[self.xg])
 
