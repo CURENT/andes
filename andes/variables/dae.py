@@ -112,11 +112,13 @@ class DAE(object):
         above = agtb(self.y[yidx], ymax)
         above_idx = findeq(above, 1.0)
         self.y[yidx[above_idx]] = ymax[above_idx]
+        self.g[yidx[above_idx]] = 0
         self.zymax[yidx[above_idx]] = 0
 
         below = altb(self.y[yidx], ymin)
         below_idx = findeq(below, 1.0)
         self.y[yidx[below_idx]] = ymin[below_idx]
+        self.g[yidx[below_idx]] = 0
         self.zymin[yidx[below_idx]] = 0
 
         if len(above_idx) + len(below_idx) > 0:
@@ -149,6 +151,7 @@ class DAE(object):
         if len(idx) > 0:
             self.factorize = True
 
+    # --- not used ---
     def anti_windup_jac(self):
         """Reset Jacobian elements for limited state variables"""
         if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n:
@@ -162,15 +165,21 @@ class DAE(object):
         # self.Fx = I * (self.Fx * I) + H
         self.Fy = self.Fy * I
         self.Gx = I * self.Gx
+    # --- not used ---
 
     def reset_Ac(self):
-        if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n:
+        if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n \
+                and sum(self.zymin) == self.n and sum(self.zymax) == self.n:
             return
-        idx = matrix(findeq(aandb(self.zxmin, self.zxmax), 0.0))
+        idx1 = findeq(aandb(self.zxmin, self.zxmax), 0.0)
+        idx2 = findeq(aandb(self.zymin, self.zymax), 0.0)
+        idx2 = [i + self.n for i in idx2]
+
+        idx = matrix(idx1 + idx2)
         H = spmatrix(1.0, idx, idx, (self.m + self.n, self.m + self.n))
         I = spdiag([1.0] * (self.m + self.n)) - H
         self.Ac = I * (self.Ac * I) - H
-        self.q[idx] = 0
+        self.q[idx1] = 0
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""

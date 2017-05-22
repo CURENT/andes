@@ -135,7 +135,7 @@ class AVR2(ModelBase):
     def gcall(self, dae):
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
         dae.g[self.vr] = -dae.y[self.vr] + mul(self.K0, dae.x[self.vr2]) + mul(self.T43, dae.x[self.vr1] + mul(self.K0, self.T21, dae.y[self.vref] - dae.x[self.vm]))
-        # dae.hard_limit(self.vr, self.vrmin, self.vrmax)
+        dae.hard_limit(self.vr, self.vrmin, self.vrmax)
         dae.g += spmatrix(self.vf0 - dae.x[self.vfout], self.vf, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):

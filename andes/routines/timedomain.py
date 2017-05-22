@@ -177,6 +177,8 @@ def run(system):
                     t_jac = actual_time
                 elif niter > 3:
                     dae.rebuild = True
+                elif dae.factorize:
+                    dae.rebuild = True
 
                 if dae.rebuild:
                     exec(system.Call.int)
