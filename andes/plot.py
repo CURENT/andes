@@ -250,18 +250,16 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
         try:
             fig.savefig(outfile)
             print('Figure saved to file {}'.format(outfile))
-        except RuntimeError:
-            rc('text', usetex=False)
-            fig.savefig(outfile)
-            print('Figure saved to file {}'.format(outfile))
+        except:
+            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
+            return
 
     if not args.unattended:
         try:
             pyplot.show()
-        except RuntimeError:
-            rc('text', usetex=False)
-            pyplot.show()
-
+        except:
+            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
+            return
 
 def isfloat(value):
     try:
