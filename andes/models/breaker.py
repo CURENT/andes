@@ -1,0 +1,94 @@
+from cvxopt import matrix, spmatrix
+from cvxopt import mul, div, exp
+from ..consts import *
+from ..utils.math import neg
+from .base import ModelBase
+
+
+class Breaker(ModelBase):
+    """Simple line breaker model"""
+    def __init__(self, system, name):
+        super(Breaker, self).__init__(system, name)
+        self._group = 'Relay'
+        self._name = 'Breaker'
+        self._data.update({'bus': None,
+                           'line': None,
+                           't1': 0.0,
+                           't2': 0.0,
+                           't3': 0.0,
+                           't4': 0.0,
+                           'u1': False,
+                           'u2': False,
+                           'u3': False,
+                           'u4': False,
+                           })
+        self._params.extend(['t1', 't2', 't3', 't4', 'u1', 'u2', 'u3', 'u4'])
+        self._descr.update({'bus': 'Bus idx',
+                            'line': 'Line idx',
+                            't1': 'Time of the 1st switch',
+                            't2': 'Time of the 2nd switch',
+                            't3': 'Time of the 3rd switch',
+                            't4': 'Time of the 4th switch',
+                            'u1': 'Apply the 1st switch',
+                            'u2': 'Apply the 2nd switch',
+                            'u3': 'Apply the 3rd switch',
+                            'u4': 'Apply the 4th switch',
+                            })
+        self._units.update({'t1': 's',
+                            't2': 's',
+                            't3': 's',
+                            't4': 's',
+                            'u1': 'boolean',
+                            'u2': 'boolean',
+                            'u3': 'boolean',
+                            'u4': 'boolean',
+                            })
+        self._mandatory.extend(['bus', 'line'])
+        self._service.extend(['times', 'time'])
+        self.remove_param('Sn')
+        self.remove_param('Vn')
+        self._inst_meta()
+
+    def setup(self):
+        super(Breaker, self).setup()
+        # check if `self.bus` is connected by `self.line`
+        self.copy_param('Line', 'bus1', fkey=self.line)
+        self.copy_param('Line', 'bus2', fkey=self.line)
+        for i in range(self.n):
+            if self.bus[i] != self.bus1[i] and self.bus[i] != self.bus2[i]:
+                self.system.Log.warning('<Breaker> {} on line {} and bus {} is incorrect and is thus disabled.'.format(self.idx[i], self.line[i], self.bus[i]))
+                self.u[i] = 0
+
+    def get_times(self):
+        """Return all the action times and times-1e-6 in a list"""
+        self.times = list(mul(self.u1, self.t1)) + list(mul(self.u2, self.t2)) + list(mul(self.u3, self.t3)) + list(mul(self.u4, self.t4))
+        self.times = matrix(list(set(self.times)))
+        self.times = list(self.times) + list(self.times - 1e-6)
+        return self.times
+
+    def istime(self, t):
+        if not self.n:
+            return
+        return t in self.times
+
+    def check_time(self, actual_time):
+        if self.time != actual_time:
+            self.time = actual_time
+        else:
+            return
+
+        for i in range(self.n):
+            tn = matrix([self.t1[i], self.t2[i], self.t3[i], self.t4[i]])
+            tn = mul(self.u[i], tn)
+            if actual_time in tn:
+
+                line_int = self.system.Line.int[self.line[i]]
+                u0 = self.system.Line.u[line_int]
+                self.system.Line.u[line_int] = neg(u0)
+                self.system.DAE.factorize = True
+
+                if u0 == 1:
+                    inf = '\n Breaker <{}>: Line <{}> disconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
+                elif u0 == 0:
+                    inf = '\n Breaker <{}>: Line <{}> reconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
+                self.system.Log.info(inf)

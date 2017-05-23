@@ -55,7 +55,7 @@ class Fault(ModelBase):
     def istime(self, t):
         return t in self.get_times()
 
-    def checktime(self, actual_time):
+    def check_time(self, actual_time):
         """Check time and apply faults"""
         if self.time != actual_time:
             self.time = actual_time

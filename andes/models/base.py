@@ -676,7 +676,7 @@ class ModelBase(object):
             c1 = key + suf
             c2 = self._descr.get(key, '')
             c3 = val
-            c4 = self._units.get(key, '')
+            c4 = self._units.get(key, '-')
             rows.append([c1, c2, c3, c4])
         table.add_rows(rows, header=False)
         table.header(['Parameter', 'Description', 'Default', 'Unit'])

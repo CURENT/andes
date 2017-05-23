@@ -136,8 +136,8 @@ def run(system):
 
         # apply fixed_time interventions and perturbations
         if switch:
-            system.Fault.checktime(actual_time)
-            # system.Breaker.get_times(actual_time)
+            system.Fault.check_time(actual_time)
+            system.Breaker.check_time(actual_time)
             dae.rebuild = True
             switch = False
         else:
@@ -295,7 +295,7 @@ def time_step(system, convergence, niter, t):
         if settings.deltat < settings.deltatmin:
             settings.deltat = 0
 
-    if system.Fault.istime(t):
+    if system.Fault.istime(t) or system.Breaker.istime(t):
         settings.deltat = min(settings.deltat, 0.002778)
     if settings.method == 'fwdeuler':
         settings.deltat = min(settings.deltat, settings.tstep)
