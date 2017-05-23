@@ -232,7 +232,9 @@ def run(system):
 
         if niter >= maxit:
             h = time_step(system, False, niter, t)
-            system.Log.debug('Reducing time step (delta t={:.5g}s)'.format(h))
+            system.Log.debug('Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
+            if h == 0:
+                system.Log.error('Reached minimum time step. Convergence is not likely.')
             dae.x = matrix(xa)
             dae.y = matrix(ya)
             dae.f = matrix(fn)
