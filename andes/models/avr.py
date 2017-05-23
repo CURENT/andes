@@ -211,12 +211,12 @@ class AVR3(ModelBase):
         self.copy_param('Synchronous', 'v', 'v', self.syn)
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
-        self.v0 = dae.y[self.v]
-        self.vref0 = dae.y[self.v]
         self.T1T2 = mul(self.T1, div(1, self.T2))
 
     def init1(self, dae):
         self.servcall(dae)
+        self.v0 = dae.y[self.v]
+        self.vref0 = dae.y[self.v]
         dae.y[self.vref] = dae.y[self.v]
         dae.x[self.vfout] = dae.y[self.vf]
         dae.x[self.vm] = dae.y[self.v]

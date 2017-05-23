@@ -297,7 +297,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     # format f and g equations
     fcall_anti_windup_1 = 'dae.f[self.{0}] = div({0} - dae.x[self.{0}], self.{1})'
     fcall_anti_windup_2 = 'dae.anti_windup(self.{0}, self.{1}, self.{2})'
-    fxcall_anti_windup = 'dae.add_jac(Fx, -div(1, self.{0}), {1}, {1})'
+    fxcall_anti_windup = 'dae.add_jac(Fx0, -div(1, self.{0}), self.{1}, self.{1})'
 
     for sym, eq in zip(sym_states, sym_f):
         string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
@@ -311,7 +311,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             val = eval('anti_windup[\'{}\']'.format(sym))
             fcall.append(fcall_anti_windup_1.format(sym, val[0]))
             fcall.append(fcall_anti_windup_2.format(sym, val[1], val[2]))
-            fxcall.append(fxcall_anti_windup.format(val[0], sym))
+            jac0.append(fxcall_anti_windup.format(val[0], sym))
 
     gcall_windup = 'dae.windup(self.{0}, self.{1}, self.{2})'
     gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'

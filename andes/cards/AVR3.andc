@@ -18,11 +18,13 @@ descr = syn: Generator id; K0: Regulator gain; T1: Regulator zero;
  T2: Regularot Pole; Te: Field circuit time constant; Tr: Measurement time constant;
  vfmax: Maximum field voltage; vfmin: minimum field voltage
 
+units= T1: s; T2: s; Te: s; Tr: s; vfmax: pu; vfmin: pu
+
 params = syn; T1; T2; Tr; Te; vfmax; vfmin; K0; s0
 
 mandatory = syn
 
-times = T2; Te; Tr
+times = T1; T2; Te; Tr
 
 ctrl =
  vf: Synchronous, vf, syn, y;

@@ -106,7 +106,6 @@ def run(system):
     rt_headroom = 0
     settings.qrtstart = time()
     t_jac = -1
-    niter0 = 99
     while t <= settings.tf and t + h > t and not diff_max:
 
         # last time step length
@@ -176,11 +175,11 @@ def run(system):
                 if actual_time - t_jac >= 1:
                     dae.rebuild = True
                     t_jac = actual_time
-                elif niter0 > 3:  # niter from the last step
+                elif niter > 3:
                     dae.rebuild = True
                 elif dae.factorize:
                     dae.rebuild = True
-                dae.rebuid = True
+
                 if dae.rebuild:
                     exec(system.Call.int)
                 else:
@@ -231,8 +230,6 @@ def run(system):
                 settings.error = max(abs(inc))
                 niter += 1
 
-        niter0 = niter
-
         if niter >= maxit:
             h = time_step(system, False, niter, t)
             system.Log.debug('Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
@@ -274,6 +271,7 @@ def run(system):
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
     if t != settings.tf:
         system.Log.error('Reached minimum time step. Convergence is not likely.')
+        retval = False
     return retval
 
 

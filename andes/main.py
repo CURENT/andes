@@ -478,9 +478,12 @@ def run(case, **kwargs):
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
-        timedomain.run(system)
+        ret = timedomain.run(system)
         t2, s = elapsed(t1)
-        system.Log.info('Time domain simulation finished in {:s}.'.format(s))
+        if ret == True:
+            system.Log.info('Time domain simulation finished in {:s}.'.format(s))
+        else:
+            system.Log.info('Time domain simulation blown up in {:s}.'.format(s))
         if not system.Files.no_output:
             system.VarOut.dump()
             t3, s = elapsed(t2)

@@ -195,11 +195,9 @@ TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
 TG1, gen = 2, pmax = 2, pmin = 0, R = 0.01, wref0 = 1.0,
      T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
-AVR2, syn=1
-
-#AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-#      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
-#      vrmin = -0
+AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
+      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
+      vrmin = -0
 AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
       idx = 2, name = "AVR 2", syn = 2, vrmax = 2.05,
       vrmin = 0.0

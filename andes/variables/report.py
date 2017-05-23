@@ -93,8 +93,8 @@ class Report(object):
                               'Qsh': round(sum(system.PQ.q) - sum(system.Bus.Ql), 5) ,
                               'Ploss': round(Sloss.real, 5),
                               'Qloss': round(Sloss.imag, 5),
-                              'Pch': 0.0,
-                              'Qch': round(sum(system.Line.chg1.real() + system.Line.chg2.real()), 5) ,
+                              'Pch': round(sum(system.Line.Pchg1 + system.Line.Pchg2), 5),
+                              'Qch': round(sum(system.Line.Qchg1 + system.Line.Qchg2), 5),
                               })
 
     def update(self, content=None):

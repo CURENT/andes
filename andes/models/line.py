@@ -297,6 +297,16 @@ class Line(ModelBase):
         I2 = mul(V2, y12+y2) - mul(V1, div(y12, m))
         self.S1 = mul(V1, conj(I1))
         self.S2 = mul(V2, conj(I2))
+        self.P1 = self.S1.real()
+        self.P2 = self.S2.real()
+        self.Q1 = self.S1.imag()
+        self.Q2 = self.S2.imag()
 
-        self.chg1 = mul(self.b1, div(V1 ** 2, m2))
-        self.chg2 = mul(self.b2, V2 ** 2)
+        self.chg1 = mul(self.g1 + 1j * self.b1, div(V1 ** 2, m2))
+        self.chg2 = mul(self.g2 + 1j * self.b2, V2 ** 2)
+
+        self.Pchg1 = self.chg1.real()
+        self.Pchg2 = self.chg2.real()
+
+        self.Qchg1 = self.chg1.imag()
+        self.Qchg2 = self.chg2.imag()
