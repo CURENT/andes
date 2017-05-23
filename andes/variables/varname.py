@@ -33,7 +33,7 @@ class VarName(object):
             self.system.Log.error('Wrong list name for VarName.')
             return
         elif listname in ['fnamex', 'fnamey']:
-            string = '{0}_{{{1}}}'
+            string = '${0} {1}$'
 
         if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
             for i, j in zip(xy_idx, element_name):

@@ -50,7 +50,7 @@ class VarOut(object):
         """Dump the variable name lst file"""
         try:
             lst = open(self.system.Files.lst, 'w')
-            line = '{:>6s}, {:>25s}, {:>25s}\n'.format('0', 'Time [s]', '# Time [s]#')
+            line = '{:>6s}, {:>25s}, {:>25s}\n'.format('0', 'Time [s]', '$ Time [s]$')
             lst.write(line)
 
             varname = self.system.VarName
