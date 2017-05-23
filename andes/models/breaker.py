@@ -21,6 +21,7 @@ class Breaker(ModelBase):
                            'u2': False,
                            'u3': False,
                            'u4': False,
+                           'fn': 60.0,
                            })
         self._params.extend(['t1', 't2', 't3', 't4', 'u1', 'u2', 'u3', 'u4'])
         self._descr.update({'bus': 'Bus idx',
@@ -33,6 +34,7 @@ class Breaker(ModelBase):
                             'u2': 'Apply the 2nd switch',
                             'u3': 'Apply the 3rd switch',
                             'u4': 'Apply the 4th switch',
+                            'fn': 'rated frequency',
                             })
         self._units.update({'t1': 's',
                             't2': 's',
@@ -46,7 +48,6 @@ class Breaker(ModelBase):
         self._mandatory.extend(['bus', 'line'])
         self._service.extend(['times', 'time'])
         self.remove_param('Sn')
-        self.remove_param('Vn')
         self._inst_meta()
 
     def setup(self):
@@ -61,6 +62,8 @@ class Breaker(ModelBase):
 
     def get_times(self):
         """Return all the action times and times-1e-6 in a list"""
+        if not self.n:
+            return []
         self.times = list(mul(self.u1, self.t1)) + list(mul(self.u2, self.t2)) + list(mul(self.u3, self.t3)) + list(mul(self.u4, self.t4))
         self.times = matrix(list(set(self.times)))
         self.times = list(self.times) + list(self.times - 1e-6)
@@ -84,8 +87,7 @@ class Breaker(ModelBase):
 
                 line_int = self.system.Line.int[self.line[i]]
                 u0 = self.system.Line.u[line_int]
-                self.system.Line.u[line_int] = neg(u0)
-                self.system.DAE.factorize = True
+                self.system.Line.switch(self.line[i], neg(u0))
 
                 if u0 == 1:
                     inf = '\n Breaker <{}>: Line <{}> disconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)

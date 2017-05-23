@@ -49,6 +49,8 @@ class Fault(ModelBase):
         self.u = zeros(self.n, 1)
 
     def get_times(self):
+        if not self.n:
+            return []
         t = matrix(list(self.tf) + list(self.tc))
         return list(t) + list(t - 1e-6)
 

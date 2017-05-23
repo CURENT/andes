@@ -83,10 +83,11 @@ class Line(ModelBase):
                              'fn',
                              'rate_a'
                              ])
-        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2', 'nb'])
+        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2', 'nb', 'gy_store'])
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
+        self.rebuild = True
         self.Y = []
         self.C = []
         self.Bp = []
@@ -242,6 +243,8 @@ class Line(ModelBase):
             self.build_b()
 
     def gcall(self, dae):
+        if self.rebuild:
+            self.build_y()
         vc = polar(dae.y[self.v], dae.y[self.a])
         Ic = self.Y*vc
         S = mul(vc, conj(Ic))
@@ -249,10 +252,10 @@ class Line(ModelBase):
         dae.g[self.v] += S.imag()
 
     def gycall(self, dae):
-        gy = self.build_gy(dae)
-        # for item in range(self.nb):
-        #     if gy[item, item] == 0:
-        #         gy[item, item] = 1e-6
+        if self.rebuild:
+            gy = self.build_gy(dae)
+        else:
+            gy = self.gy_store
         dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
@@ -277,7 +280,11 @@ class Line(ModelBase):
         dR = diagIc
         dR -= self.Y * diagVc
         dR = diagVc.H.T * dR
-        return sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
+
+        self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
+        rebuild = False
+
+        return sparse(self.gy_store)
 
     def seriesflow(self, dae):
         """Compute the flow through the line after solving PF, including: terminal injections, line losses"""
@@ -310,3 +317,10 @@ class Line(ModelBase):
 
         self.Qchg1 = self.chg1.imag()
         self.Qchg2 = self.chg2.imag()
+
+    def switch(self, idx, u):
+        """switch the status of Line idx"""
+        self.u[self.int[idx]] = u
+        self.rebuild = True
+        self.system.DAE.factorize = True
+        self.message('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)

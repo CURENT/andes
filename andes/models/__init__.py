@@ -5,7 +5,7 @@ __all__ = ['base',
            'bus',
            ]
 
-order = ['bus', 'Node', 'Ground', 'synchronous', 'governor', 'avr']
+order = ['bus', 'Node', 'Ground', 'measurement', 'synchronous', 'governor', 'avr']
 
 non_jits = {'bus': {'Bus': 'Bus'},
             'pq': {'PQ': 'PQ'},
