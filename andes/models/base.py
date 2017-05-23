@@ -182,7 +182,7 @@ class ModelBase(object):
 
         # check destination type
         if astype and astype not in [list, matrix]:
-            self.message('Wrong destination type <{0}>.'.format(astype), ERROR)
+            self.message('Destination type <{0}> is not <list> or <matrix>.'.format(astype), ERROR)
             if hasattr(self, dest):
                 astype = type(self.__dict__[dest])
             else:
@@ -190,15 +190,23 @@ class ModelBase(object):
 
         # do param copy
         if dev_type == 'model':
+            # check if fkey exists
+            for item in fkey:
+                if item not in self.system.__dict__[model].idx:
+                    self.message('Model <{}> does not have element <{}>'.format(model, item), ERROR)
+                    return
             self.__dict__[dest] = self.system.__dict__[model]._slice(src, fkey)
         elif dev_type == 'group':
             if not fkey:
                 fkey = self.system.DevMan.group.keys()
                 if not fkey:
-                    self.message('Group <{0}> does not have any element.'.format(model))
+                    self.message('Group <{0}> does not have any element.'.format(model), ERROR)
                     return
             for item in fkey:
-                dev_name = self.system.DevMan.group[model][item]
+                dev_name = self.system.DevMan.group[model].get(item, None)
+                if not dev_name:
+                    self.message('Group <{0}> does not have element {}.'.format(model, item), ERROR)
+                    return
                 pos = self.system.__dict__[dev_name].int[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
                 if not astype:
@@ -214,7 +222,7 @@ class ModelBase(object):
         """slice list or matrix with idx and return (type, sliced)"""
         ty = type(self.__dict__[param])
         if ty not in [list, matrix]:
-            self.message('Unsupported type <{0}>to slice.'.format(ty))
+            self.message('Unsupported type <{0}> to slice.'.format(ty))
             return None
 
         if not idx:
