@@ -53,6 +53,7 @@ def first_time_step(system):
 def run(system):
     """Entry function of Time Domain Simulation"""
     global F
+    retval = True
     bar = None
     if system.pid == -1:
         bar = progressbar.ProgressBar(
@@ -102,10 +103,10 @@ def run(system):
     # main loop
     if bar:
         bar.start()
-    actual_time = 0
     rt_headroom = 0
     settings.qrtstart = time()
     t_jac = -1
+    niter0 = 99
     while t <= settings.tf and t + h > t and not diff_max:
 
         # last time step length
@@ -175,11 +176,11 @@ def run(system):
                 if actual_time - t_jac >= 1:
                     dae.rebuild = True
                     t_jac = actual_time
-                elif niter > 3:
+                elif niter0 > 3:  # niter from the last step
                     dae.rebuild = True
                 elif dae.factorize:
                     dae.rebuild = True
-
+                dae.rebuid = True
                 if dae.rebuild:
                     exec(system.Call.int)
                 else:
@@ -230,11 +231,11 @@ def run(system):
                 settings.error = max(abs(inc))
                 niter += 1
 
+        niter0 = niter
+
         if niter >= maxit:
             h = time_step(system, False, niter, t)
             system.Log.debug('Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
-            if h == 0:
-                system.Log.error('Reached minimum time step. Convergence is not likely.')
             dae.x = matrix(xa)
             dae.y = matrix(ya)
             dae.f = matrix(fn)
@@ -271,6 +272,9 @@ def run(system):
         bar.finish()
     if settings.qrt:
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
+    if t != settings.tf:
+        system.Log.error('Reached minimum time step. Convergence is not likely.')
+    return retval
 
 
 def time_step(system, convergence, niter, t):
