@@ -25,22 +25,23 @@ import matplotlib as mpl
 
 from distutils.spawn import find_executable
 
-if find_executable('latex'):
-    LATEX = True
-else:
-    LATEX = False
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-if LATEX:
-    rc('text', usetex=True)
-
-lfile = []
-dfile = []
-
 try:
     from blist import *
     BLIST = 1
 except ImportError:
     BLIST = 0
+
+if find_executable('dvipng'):
+    LATEX = True
+else:
+    LATEX = False
+
+if LATEX:
+    rc('text', usetex=True)
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+
+lfile = []
+dfile = []
 
 
 def cli_parse():
@@ -186,10 +187,17 @@ def do_plot(x, y, xl, yl, xmin=None, xmax=None, ylabel=None):
         xmax = x[-1] + 1e-6
 
     fig, ax = pyplot.subplots()
-    for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl[0][idx], ls=style[idx])
+    if LATEX:
+        xl_data = xl[1]
+        yl_data = yl[1]
+    else:
+        xl_data = xl[0]
+        yl_data = yl[0]
 
-    ax.set_xlabel(xl[0])
+    for idx in range(len(y)):
+        ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
+
+    ax.set_xlabel(xl_data)
     if ylabel:
         ax.set_ylabel(ylabel)
 

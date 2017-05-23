@@ -28,12 +28,12 @@ class VarName(object):
     def append(self, listname, xy_idx, var_name, element_name):
         """Append variable names to the name lists"""
         self.resize()
-        string = '{0}_{1}'
+        string = '{0} {1}'
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
             self.system.Log.error('Wrong list name for VarName.')
             return
         elif listname in ['fnamex', 'fnamey']:
-            string = '${0} {1}$'
+            string = '${0}\ {1}$'
 
         if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
             for i, j in zip(xy_idx, element_name):
