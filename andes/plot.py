@@ -106,11 +106,13 @@ def read_dat(dat, x, y):
 
     try:
         dfile = open(dat)
+        dfile_raw = dfile.readlines()
+        dfile.close()
     except IOError:
         print('* Error while opening the dat file')
         return None, None
 
-    for num, line in enumerate(dfile.readlines()):
+    for num, line in enumerate(dfile_raw):
         if num == 0:
             continue
         thisline = line.rstrip('\n').split()
@@ -139,6 +141,8 @@ def read_label(lst, x, y):
     x.extend(y)
     try:
         lfile = open(lst)
+        lfile_raw = lfile.readlines()
+        lfile.close()
     except IOError:
         print('* Error while opening the lst file')
         return None, None
@@ -147,7 +151,7 @@ def read_label(lst, x, y):
     xsorted = sorted(x)
     at = 0
 
-    for line in lfile.readlines():
+    for line in lfile_raw:
         thisline = line.rstrip('\n').split(',')
         thisline = [item.lstrip() for item in thisline]
         if not isfloat(thisline[0].strip()):
@@ -169,22 +173,23 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args):
+def do_plot(x, y, xl, yl, args, no_latex=False):
     xmin = args.xmin
     xmax = args.xmax
     xlabel = args.xlabel
     ylabel = args.ylabel
 
-    if args.no_latex:
+    LATEX = False
+    if no_latex:
         LATEX = False
     elif find_executable('dvipng'):
         LATEX = True
-    else:
-        LATEX = False
 
     if LATEX:
         rc('text', usetex=True)
-    rc('font', **{'family': 'serif', 'serif': ['computer modern roman']})
+    else:
+        rc('text', usetex=False)
+    rc('font', family='Arial')
 
     if not y:
         return
@@ -231,19 +236,31 @@ def do_plot(x, y, xl, yl, args):
     pyplot.draw()
 
     # output to file
+
     if args.save or args.unattended:
         name, _ = os.path.splitext(args.datfile[0])
         count = 1
         cwd = os.getcwd()
         for file in os.listdir(cwd):
             if file.startswith(name) and file.endswith('.png'):
-                count +=1
+                count += 1
 
         outfile = name + '_' + str(count) + '.png'
-        fig.savefig(outfile)
-        print('Figure saved to file {}'.format(outfile))
+
+        try:
+            fig.savefig(outfile)
+            print('Figure saved to file {}'.format(outfile))
+        except RuntimeError:
+            rc('text', usetex=False)
+            fig.savefig(outfile)
+            print('Figure saved to file {}'.format(outfile))
+
     if not args.unattended:
-        pyplot.show()
+        try:
+            pyplot.show()
+        except RuntimeError:
+            rc('text', usetex=False)
+            pyplot.show()
 
 
 def isfloat(value):
@@ -281,7 +298,7 @@ def main():
         check_init(yval, yl[0])
         return
 
-    do_plot(xval, yval, xl, yl, args)
+    do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
 
 
 def check_init(yval, yl):
