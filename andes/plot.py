@@ -21,7 +21,6 @@ import re
 
 from argparse import ArgumentParser
 from matplotlib import pyplot, rc
-import matplotlib as mpl
 
 from distutils.spawn import find_executable
 
@@ -30,15 +29,6 @@ try:
     BLIST = 1
 except ImportError:
     BLIST = 0
-
-if find_executable('dvipng'):
-    LATEX = True
-else:
-    LATEX = False
-
-if LATEX:
-    rc('text', usetex=True)
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 
 lfile = []
 dfile = []
@@ -53,7 +43,12 @@ def cli_parse():
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
-    parser.add_argument('--ylabel', type=str, help='y-axis text label')
+    parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
+    parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
+    parser.add_argument('-s', '--save', action='store_true', help='save to file')
+    parser.add_argument('-g', '--grid', action='store_true', help='grid on')
+    parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
+    parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
     args = parser.parse_args()
     return args
 
@@ -174,9 +169,23 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, xmin=None, xmax=None, ylabel=None):
-    # Configurate matplotlib
-    mpl.rc('font', family='Arial')
+def do_plot(x, y, xl, yl, args):
+    xmin = args.xmin
+    xmax = args.xmax
+    xlabel = args.xlabel
+    ylabel = args.ylabel
+
+    if args.no_latex:
+        LATEX = False
+    elif find_executable('dvipng'):
+        LATEX = True
+    else:
+        LATEX = False
+
+    if LATEX:
+        rc('text', usetex=True)
+    rc('font', **{'family': 'serif', 'serif': ['computer modern roman']})
+
     if not y:
         return
     style = ['-', '--', '-.', ':'] * len(y)
@@ -186,7 +195,6 @@ def do_plot(x, y, xl, yl, xmin=None, xmax=None, ylabel=None):
     if not xmax:
         xmax = x[-1] + 1e-6
 
-    fig, ax = pyplot.subplots()
     if LATEX:
         xl_data = xl[1]
         yl_data = yl[1]
@@ -194,20 +202,48 @@ def do_plot(x, y, xl, yl, xmin=None, xmax=None, ylabel=None):
         xl_data = xl[0]
         yl_data = yl[0]
 
+    fig, ax = pyplot.subplots()
+
     for idx in range(len(y)):
         ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
 
-    ax.set_xlabel(xl_data)
+    if not xlabel:
+        ax.set_xlabel(xl_data)
+    else:
+        if LATEX:
+            xlabel = '$' + xlabel.replace(' ', '\ ') + '$'
+        ax.set_xlabel(xlabel)
+
     if ylabel:
+        if LATEX:
+            ylabel = '$' + ylabel.replace(' ', '\ ') + '$'
         ax.set_ylabel(ylabel)
 
     ax.ticklabel_format(useOffset=False)
+
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
 
+    if args.grid:
+        ax.grid(b=True, linestyle='--')
     legend = ax.legend(loc='upper right')
 
-    pyplot.show()
+    pyplot.draw()
+
+    # output to file
+    if args.save or args.unattended:
+        name, _ = os.path.splitext(args.datfile[0])
+        count = 1
+        cwd = os.getcwd()
+        for file in os.listdir(cwd):
+            if file.startswith(name) and file.endswith('.png'):
+                count +=1
+
+        outfile = name + '_' + str(count) + '.png'
+        fig.savefig(outfile)
+        print('Figure saved to file {}'.format(outfile))
+    if not args.unattended:
+        pyplot.show()
 
 
 def isfloat(value):
@@ -245,7 +281,7 @@ def main():
         check_init(yval, yl[0])
         return
 
-    do_plot(xval, yval, xl, yl, xmin=args.xmin, xmax=args.xmax, ylabel=args.ylabel)
+    do_plot(xval, yval, xl, yl, args)
 
 
 def check_init(yval, yl):
