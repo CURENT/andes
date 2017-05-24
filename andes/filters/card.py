@@ -391,7 +391,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
              'fcall': not not fcall,
              'gycall': not not gycall,
              'fxcall': not not fxcall,
-             'jac0': not not jac0,
+             'jac0': (not not jac0) or (not not sym_algebs),
              'init1': (not not init1call) or (not not servcall),
              }
 
@@ -432,10 +432,14 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         for item in fxcall:
             out_calls.append(space8 + item)
         out_calls.append('')
-    if jac0:
+
+    tinyGy = 'dae.add_jac(Gy0, 1e-6, self.{0}, self.{0})'
+    if jac0 or sym_states:
         out_calls.append(space4 + 'def jac0(self, dae):')
         for item in jac0:
             out_calls.append(space8 + item)
+        for item in sym_algebs:
+            out_calls.append(space8 + tinyGy.format(item))
 
     """Class definitions in out_init"""
     # bulk update or extend of dict and list
