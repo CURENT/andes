@@ -106,21 +106,31 @@ class DAE(object):
     #     I = spdiag([1.0] * self.m) - H
     #     self.Gy = I * (self.Gy * I) + H
 
-    def hard_limit(self, yidx, ymin, ymax):
+    def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
         """Limit algebraic variables and set the Jacobians"""
         self.zymax = ones(self.m, 1)
         self.zymin = ones(self.m, 1)
 
         yidx = matrix(yidx)
 
+        if not min_set:
+            min_set = ymin
+        if not max_set:
+            max_set = ymax
+
+        if isinstance(min_set, (int, float)):
+            min_set = matrix(min_set, (len(yidx), 1), 'd')
+        if isinstance(max_set, (int, float)):
+            max_set = matrix(max_set, (len(yidx), 1), 'd')
+
         above = ageb(self.y[yidx], ymax)
         above_idx = findeq(above, 1.0)
-        self.y[yidx[above_idx]] = ymax[above_idx]
+        self.y[yidx[above_idx]] = max_set[above_idx]
         self.zymax[yidx[above_idx]] = 0
 
         below = aleb(self.y[yidx], ymin)
         below_idx = findeq(below, 1.0)
-        self.y[yidx[below_idx]] = ymin[below_idx]
+        self.y[yidx[below_idx]] = min_set[below_idx]
         self.zymin[yidx[below_idx]] = 0
 
         idx = list(above_idx) + list(below_idx)
@@ -128,6 +138,10 @@ class DAE(object):
 
         if len(idx) > 0:
             self.factorize = True
+
+    def output_limiter(self, yidx):
+        """Limit the output of yidx if the remote y is not within the limits"""
+        pass
 
     def anti_windup(self, xidx, xmin, xmax):
         """State variable anti-windup limiter"""
