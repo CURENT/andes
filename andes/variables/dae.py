@@ -156,22 +156,6 @@ class DAE(object):
         if len(idx) > 0:
             self.factorize = True
 
-    # --- not used ---
-    def anti_windup_jac(self):
-        """Reset Jacobian elements for limited state variables"""
-        if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n:
-            return
-        idx = matrix(findeq(aandb(self.zxmin, self.zxmax), 0.0))
-        H = spmatrix(1.0, idx, idx, (self.m, self.m))
-        I = spdiag([1.0] * self.m) - H
-        self.Gy = I * (self.Gy * I) + H
-        # H = spmatrix(1.0, idx, idx, (self.n, self.n))
-        # I = spdiag([1.0] * self.n) - H
-        # self.Fx = I * (self.Fx * I) + H
-        self.Fy = self.Fy * I
-        self.Gx = I * self.Gx
-    # --- not used ---
-
     def reset_Ac(self):
         if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n \
                 and sum(self.zymin) == self.n and sum(self.zymax) == self.n:
