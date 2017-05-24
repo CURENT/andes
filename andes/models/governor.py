@@ -113,7 +113,7 @@ class TG1(GovernorBase):
         dae.f[self.xg3] = mul(self.u, mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.x[self.xg3], self.iT5)
 
     def gcall(self, dae):
-        dae.g[self.pin] = self.pm0 + mul(self.gain, self.wref0 - dae.x[self.omega]) - dae.y[self.pin]
+        dae.g[self.pin] = self.pm0 + mul(self.gain, dae.y[self.wref] - dae.x[self.omega]) - dae.y[self.pin]
         dae.hard_limit(self.pin, self.pmin, self.pmax)
 
         dae.g[self.pout] = dae.x[self.xg3] + mul(self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.y[self.pout]
@@ -124,6 +124,7 @@ class TG1(GovernorBase):
         dae.add_jac(Gy0, -self.u + 1e-6, self.pin, self.pin)
 
         dae.add_jac(Gx0, -mul(self.u, self.gain), self.pin, self.omega)
+        dae.add_jac(Gy0, mul(self.u, self.gain), self.pin, self.wref)
 
         dae.add_jac(Fx0, -mul(self.u, self.iTs) + 1e-6, self.xg1, self.xg1)
         dae.add_jac(Fy0, mul(self.u, self.iTs), self.xg1, self.pin)

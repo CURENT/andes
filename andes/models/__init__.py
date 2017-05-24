@@ -5,7 +5,7 @@ __all__ = ['base',
            'bus',
            ]
 
-order = ['bus', 'Node', 'Ground', 'measurement', 'synchronous', 'governor', 'avr']
+order = ['bus', 'Node', 'Ground', 'measurement', 'synchronous', 'governor', 'avr', 'pss']
 
 non_jits = {'bus': {'Bus': 'Bus'},
             'pq': {'PQ': 'PQ'},
@@ -34,8 +34,9 @@ non_jits = {'bus': {'Bus': 'Bus'},
             'avr': {'AVR3': 'AVR3',
                     'AVR2': 'AVR2',
                     'AVR1': 'AVR1',
-                    }
-
+                    },
+            'pss': {'PSS1': 'PSS1',
+                    },
            }
 
 jits = {'vsc': {'VSC': 'VSC',

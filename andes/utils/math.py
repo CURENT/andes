@@ -29,6 +29,14 @@ def ageb(a, b):
     return matrix(list(map(lambda x, y: x >= y, a, b)), a.size)
 
 
+def aeb(a, b):
+    """Return a matrix of logic comparison of A == B"""
+    if type(b) == int or type(b) == float:
+        return matrix(list(map(lambda x: x == b, a)), a.size)
+    else:
+        return matrix(list(map(lambda x, y: x == y, a, b)), a.size)
+
+
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(list(map(lambda x, y: x or y, a, b)), a.size)
