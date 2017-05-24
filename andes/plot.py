@@ -189,7 +189,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
         rc('text', usetex=True)
     else:
         rc('text', usetex=False)
-    rc('font', family='Arial')
+    rc('font', family='Arial', size=12)
 
     if not y:
         return
