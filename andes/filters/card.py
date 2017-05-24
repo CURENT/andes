@@ -269,7 +269,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
                 Gy.append([eq_idx, sym_idx, expr.diff(sym)])
             elif sym in sym_states_ext:
                 # take the derivative and go to Gx
-                sym_idx = sym_states.index(sym)
+                sym_idx = sym_states_ext.index(sym)
                 Gx.append([eq_idx, sym_idx, expr.diff(sym)])
             else:
                 pass  # skip constants
