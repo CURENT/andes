@@ -77,10 +77,12 @@ def read(file, system):
     ret_dict['consts'] = list(ret_dict['data'].keys()) + list(ret_dict['service_eq'].keys())
     ret_dict['init1_eq'] = ret_dict_ord['init1_eq']
     ret_dict['service_eq'] = ret_dict_ord['service_eq']
+    ret_dict['ctrl'] = ret_dict_ord['ctrl']
 
     copy_algebs = []
     copy_states = []
-    for key, val in ret_dict['ctrl'].items():
+    for item in ret_dict['ctrl']:
+        key, val = item
         if val[3] == 'y':
             copy_algebs.append(key)
         elif val[3] == 'x':
@@ -379,7 +381,8 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         init1call.append(out)
 
     servcall = []
-    for key, val in ctrl.items():
+    for item in ctrl:
+        key, val = item
         out = 'self.copy_param(\'{}\', \'{}\', \'{}\', self.{})'.format(val[0], val[1], key, val[2])
         servcall.append(out)
     for item in sym_serv:
@@ -491,10 +494,12 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
                      'times': times,
                      }
 
-    for key, val in meta_list_ext.items():
+    for key in sorted(meta_list_ext.keys()):
+        val = meta_list_ext[key]
         if val:
             out_init.append(list_extend.format(key, val))
-    for key, val in meta_dict_upd.items():
+    for key in sorted(meta_dict_upd.keys()):
+        val = meta_dict_upd[key]
         if val:
             out_init.append(dict_update.format(key, val))
 
@@ -535,7 +540,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
         sym_algebs = []
     expr_str = []
     if type(expr) == int:
-        return
+        return expr
     if expr.is_Atom:
         if expr in sym_const:
             expr_str = 'self.{}'.format(expr)
