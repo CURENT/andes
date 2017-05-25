@@ -166,3 +166,150 @@ class PSS1(ModelBase):
         dae.add_jac(Gy0, 1e-6, self.x6, self.x6)
         dae.add_jac(Gy0, 1e-6, self.vss, self.vss)
         dae.add_jac(Gy0, 1e-6, self.vst, self.vst)
+
+
+class PSS2(ModelBase):
+    """Stabilizer IEEEST"""
+
+    def __init__(self, system, name):
+        super().__init__(system, name)
+        self._group = 'PSS'
+        self._name = 'PSS2'
+        self._algebs.extend(['In', 'v1', 'v2', 'v3', 'v4', 'vss', 'vst'])
+        self._fnamex.extend(['q_0', 'q_1', 'q_2', 'q_3', 'x_1', 'x_2', 'x_3'])
+        self._fnamey.extend(['In', 'v_1', 'v_2', 'v_3', 'v_4', 'V_{SS}', 'V_{ST}'])
+        self._mandatory.extend(['avr'])
+        self._params.extend(
+            ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'Ks', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'lsmax', 'lsmin', 'vcu',
+             'vcl', 'Ic'])
+        self._service.extend(
+            ['Ic3', 'Ic5', 'Ic1', 'H2', 'H1', 'H3', 'T34', 'T56', 'T12', 'toSg', 'Ic2', 'Ic6', 'Ic4', 'u0', 'KsT56',
+             'H4'])
+        self._states.extend(['q0', 'q1', 'q2', 'q3', 'x1', 'x2', 'x3'])
+        self._times.extend(['T1', 'T2', 'T3', 'T4', 'T5', 'T6'])
+        self._data.update(
+            {'A4': 1, 'lsmax': 0.1, 'u': 1, 'A1': 1, 'Ks': -2, 'lsmin': -0.1, 'avr': 0, 'T4': 0.75, 'T6': 0.2,
+             'T2': 0.02, 'A5': 1, 'T5': 1, 'T1': 0.02, 'A2': 1, 'A6': 1, 'T3': 1, 'Ic': 0, 'A3': 1, 'vcu': 1.2,
+             'vcl': 0.8})
+        self._descr.update({'A4': 'Filter-1 denominator coefficient', 'lsmax': 'PSS output maximum limit',
+                            'A6': 'Filter-1 numerator coefficient',
+                            'A1': 'Filter-1 denominator coefficient (1 + s*A1 + s^2 * A2)', 'Ks': 'Gain',
+                            'lsmin': 'PSS output minimum limit', 'avr': 'Exciter id',
+                            'T4': 'Filter-3 denominator time constant', 'T6': 'Washout denominator time constant',
+                            'A5': 'Filter-1 numerator coefficient (1 + s*A5 + s^2 * A6)',
+                            'T5': 'Washout numerator time constant', 'T1': 'Filter-2 numerator time constant',
+                            'A2': 'Filter-1 denominator coefficient', 'T2': 'Filter-2 denominator time constant',
+                            'T3': 'Filter-3 numerator time constant',
+                            'Ic': 'Input signal selector (1) shaft speed dev (2) bus freq dev (3) P in syn base (4) Pm in syn base (5) Vbus',
+                            'A3': 'Filter-1 denominator coefficient (1 + s*A3 + s^2 * A4)', 'vcu': 'Cutoff upper limit',
+                            'vcl': 'Cutoff lower limit'})
+        self._units.update(
+            {'A4': 'pu', 'lsmax': 'pu', 'A6': 'pu', 'A1': 'pu', 'Ks': 'pu', 'lsmin': 'pu', 'vcl': 'pu', 'T4': 's',
+             'T6': 's', 'A5': 'pu', 'T5': 's', 'T1': 's', 'A2': 'pu', 'T2': 's', 'T3': 's', 'A3': 'pu', 'vcu': 'pu'})
+        self.calls.update({'fcall': True, 'fxcall': False, 'jac0': True, 'init1': True, 'gycall': False, 'gcall': True})
+        self._inst_meta()
+
+    def servcall(self, dae):
+        self.copy_param('AVR', 'syn', 'syn', self.avr)
+        self.copy_param('AVR', 'u', 'uavr', self.avr)
+        self.copy_param('Synchronous', 'bus', 'bus', self.syn)
+        self.copy_param('Synchronous', 'u', 'usyn', self.syn)
+        self.copy_param('Synchronous', 'Sn', 'Sg', self.syn)
+        self.copy_param('Synchronous', 'omega', 'omega', self.syn)
+        self.copy_param('Synchronous', 'v', 'v', self.syn)
+        self.copy_param('Synchronous', 'p', 'p', self.syn)
+        self.copy_param('Synchronous', 'pm', 'pm', self.syn)
+        self.copy_param('Synchronous', 'vf', 'vf', self.syn)
+        self.copy_param('BusFreq', 'w', 'w', self.bus)
+        self.u0 = mul(self.u, self.uavr, self.usyn)
+        self.H1 = self.A1 + self.A3
+        self.H2 = self.A2 + mul(self.A1, self.A3, self.A4)
+        self.H3 = mul(self.A1, self.A4) + mul(self.A2, self.A3)
+        self.H4 = mul(self.A2, self.A4)
+        self.T12 = mul(self.T1, div(1, self.T2))
+        self.T34 = mul(self.T3, div(1, self.T4))
+        self.T56 = mul(self.T5, div(1, self.T6))
+        self.KsT56 = mul(self.Ks, self.T5, div(1, self.T6))
+        self.toSg = 100*div(1, self.Sg)
+        self.update_ctrl()
+
+    def update_ctrl(self):
+        self.Ic1 = aeb(self.Ic, 1)
+        self.Ic2 = aeb(self.Ic, 2)
+        self.Ic3 = aeb(self.Ic, 3)
+        self.Ic4 = aeb(self.Ic, 4)
+        self.Ic5 = aeb(self.Ic, 5)
+
+    def init1(self, dae):
+        self.servcall(dae)
+        dae.y[self.In] = mul(self.u0, mul(self.Ic1, -1 + dae.x[self.omega]) + mul(self.Ic2, -1 + dae.x[self.w]) + mul(self.Ic5, dae.y[self.v]) + mul(self.Ic3, dae.y[self.p], self.toSg) + mul(self.Ic4, dae.y[self.pm], self.toSg))
+        dae.x[self.q0] = dae.y[self.In]
+
+    def gcall(self, dae):
+        self.update_ctrl()
+        dae.g[self.In] = mul(self.u, -dae.y[self.In] + mul(self.Ic1, -1 + dae.x[self.omega]) + mul(self.Ic2, -1 + dae.x[self.w]) + mul(self.Ic5, dae.y[self.v]) + mul(self.Ic3, dae.y[self.p], self.toSg) + mul(self.Ic4, dae.y[self.pm], self.toSg))
+        dae.g[self.v1] = mul(self.u, dae.x[self.q0] - dae.y[self.v1] + mul(self.A5, dae.x[self.q1]) + mul(self.A6, dae.x[self.q2]))
+        dae.g[self.v2] = mul(self.u, dae.x[self.x1] - dae.y[self.v2] + mul(self.T12, dae.y[self.v1]))
+        dae.g[self.v3] = mul(self.u, dae.x[self.x2] - dae.y[self.v3] + mul(self.T34, dae.y[self.v2]))
+        dae.g[self.v4] = mul(self.u, -dae.y[self.v4] - dae.x[self.x3] + mul(self.KsT56, dae.y[self.v3]))
+        dae.g[self.vss] = mul(self.u, dae.y[self.v4] - dae.y[self.vss])
+        dae.hard_limit(self.vss, self.lsmin, self.lsmax)
+        dae.g[self.vst] = mul(self.u, dae.y[self.vss] - dae.y[self.vst])
+        dae.hard_limit_remote(self.vst, self.v, rtype='y', rmin=self.vcl, rmax=self.vcu, min_yset=0, max_yset=0)
+        dae.g += spmatrix(mul(self.u, dae.y[self.vst]), self.vf, [0]*self.n, (dae.m, 1), 'd')
+
+    def fcall(self, dae):
+        dae.f[self.q0] = mul(dae.x[self.q1], self.u)
+        dae.f[self.q1] = mul(dae.x[self.q2], self.u)
+        dae.f[self.q2] = mul(dae.x[self.q3], self.u)
+        dae.f[self.q3] = mul(self.u, div(1, self.H4), dae.y[self.In] - dae.x[self.q0] - mul(self.H1, dae.x[self.q1]) - mul(self.H2, dae.x[self.q2]) - mul(self.H3, dae.x[self.q3]))
+        dae.f[self.x1] = mul(self.u, div(1, self.T2), -dae.x[self.x1] + mul(dae.y[self.v1], 1 - self.T12))
+        dae.f[self.x2] = mul(self.u, div(1, self.T4), -dae.x[self.x2] + mul(dae.y[self.v2], 1 - self.T34))
+        dae.f[self.x3] = mul(self.u, div(1, self.T6), -dae.x[self.x3] + mul(self.KsT56, dae.y[self.v3]))
+
+    def jac0(self, dae):
+        dae.add_jac(Gy0, mul(self.Ic3, self.toSg, self.u), self.In, self.p)
+        dae.add_jac(Gy0, mul(self.Ic4, self.toSg, self.u), self.In, self.pm)
+        dae.add_jac(Gy0, mul(self.Ic5, self.u), self.In, self.v)
+        dae.add_jac(Gy0, - self.u, self.In, self.In)
+        dae.add_jac(Gy0, - self.u, self.v1, self.v1)
+        dae.add_jac(Gy0, - self.u, self.v2, self.v2)
+        dae.add_jac(Gy0, mul(self.T12, self.u), self.v2, self.v1)
+        dae.add_jac(Gy0, mul(self.T34, self.u), self.v3, self.v2)
+        dae.add_jac(Gy0, - self.u, self.v3, self.v3)
+        dae.add_jac(Gy0, mul(self.KsT56, self.u), self.v4, self.v3)
+        dae.add_jac(Gy0, - self.u, self.v4, self.v4)
+        dae.add_jac(Gy0, - self.u, self.vss, self.vss)
+        dae.add_jac(Gy0, self.u, self.vss, self.v4)
+        dae.add_jac(Gy0, - self.u, self.vst, self.vst)
+        dae.add_jac(Gy0, self.u, self.vst, self.vss)
+        dae.add_jac(Gy0, self.u, self.vf, self.vst)
+        dae.add_jac(Gx0, mul(self.Ic2, self.u), self.In, self.w)
+        dae.add_jac(Gx0, mul(self.Ic1, self.u), self.In, self.omega)
+        dae.add_jac(Gx0, mul(self.A6, self.u), self.v1, self.q2)
+        dae.add_jac(Gx0, self.u, self.v1, self.q0)
+        dae.add_jac(Gx0, mul(self.A5, self.u), self.v1, self.q1)
+        dae.add_jac(Gx0, self.u, self.v2, self.x1)
+        dae.add_jac(Gx0, self.u, self.v3, self.x2)
+        dae.add_jac(Gx0, - self.u, self.v4, self.x3)
+        dae.add_jac(Fx0, self.u, self.q0, self.q1)
+        dae.add_jac(Fx0, self.u, self.q1, self.q2)
+        dae.add_jac(Fx0, self.u, self.q2, self.q3)
+        dae.add_jac(Fx0, - mul(self.u, div(1, self.H4)), self.q3, self.q0)
+        dae.add_jac(Fx0, - mul(self.H2, self.u, div(1, self.H4)), self.q3, self.q2)
+        dae.add_jac(Fx0, - mul(self.H3, self.u, div(1, self.H4)), self.q3, self.q3)
+        dae.add_jac(Fx0, - mul(self.H1, self.u, div(1, self.H4)), self.q3, self.q1)
+        dae.add_jac(Fx0, - mul(self.u, div(1, self.T2)), self.x1, self.x1)
+        dae.add_jac(Fx0, - mul(self.u, div(1, self.T4)), self.x2, self.x2)
+        dae.add_jac(Fx0, - mul(self.u, div(1, self.T6)), self.x3, self.x3)
+        dae.add_jac(Fy0, mul(self.u, div(1, self.H4)), self.q3, self.In)
+        dae.add_jac(Fy0, mul(self.u, div(1, self.T2), 1 - self.T12), self.x1, self.v1)
+        dae.add_jac(Fy0, mul(self.u, div(1, self.T4), 1 - self.T34), self.x2, self.v2)
+        dae.add_jac(Fy0, mul(self.KsT56, self.u, div(1, self.T6)), self.x3, self.v3)
+        dae.add_jac(Gy0, 1e-6, self.In, self.In)
+        dae.add_jac(Gy0, 1e-6, self.v1, self.v1)
+        dae.add_jac(Gy0, 1e-6, self.v2, self.v2)
+        dae.add_jac(Gy0, 1e-6, self.v3, self.v3)
+        dae.add_jac(Gy0, 1e-6, self.v4, self.v4)
+        dae.add_jac(Gy0, 1e-6, self.vss, self.vss)
+        dae.add_jac(Gy0, 1e-6, self.vst, self.vst)
