@@ -211,4 +211,4 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
       idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
       vrmin = 1.0
 
-PSS1, avr = 1, Ic1 = 1, I u = 1
+PSS1, avr = 1, Ic1 = 1, Ic2 = 2, u = 1
