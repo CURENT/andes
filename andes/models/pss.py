@@ -244,6 +244,7 @@ class PSS2(ModelBase):
         self.servcall(dae)
         dae.y[self.In] = mul(self.u0, mul(self.Ic1, -1 + dae.x[self.omega]) + mul(self.Ic2, -1 + dae.x[self.w]) + mul(self.Ic5, dae.y[self.v]) + mul(self.Ic3, dae.y[self.p], self.toSg) + mul(self.Ic4, dae.y[self.pm], self.toSg))
         dae.x[self.q0] = dae.y[self.In]
+        dae.y[self.v1] = dae.y[self.In]
 
     def gcall(self, dae):
         self.update_ctrl()
