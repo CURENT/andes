@@ -39,9 +39,13 @@ class DAE(object):
         self.init_g()
 
     def init_f(self):
+        self.zxmax = ones(self.n, 1)
+        self.zxmin = ones(self.n, 1)
         self.f = matrix(0.0, (self.n, 1), 'd')
 
     def init_g(self):
+        self.zymax = ones(self.m, 1)
+        self.zymin = ones(self.m, 1)
         self.g = matrix(0.0, (self.m, 1), 'd')
 
     def setup_Gy(self):
@@ -100,17 +104,8 @@ class DAE(object):
             self.zxmin = matrix([self.zxmin, xones], (self.n, 1), 'd')
             self.zxmax = matrix([self.zxmax, xones], (self.n, 1), 'd')
 
-    # def algeb_windup(self, idx):
-    #     """Reset Jacobian elements related to windup algebs"""
-    #     H = spmatrix(1.0, idx, idx, (self.m, self.m))
-    #     I = spdiag([1.0] * self.m) - H
-    #     self.Gy = I * (self.Gy * I) + H
-
     def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
         """Limit algebraic variables and set the Jacobians"""
-        self.zymax = ones(self.m, 1)
-        self.zymin = ones(self.m, 1)
-
         yidx = matrix(yidx)
 
         if not min_set:
@@ -133,21 +128,48 @@ class DAE(object):
         self.y[yidx[below_idx]] = min_set[below_idx]
         self.zymin[yidx[below_idx]] = 0
 
-        idx = list(above_idx) + list(below_idx)
+        idx = above_idx + below_idx
         self.g[yidx[idx]] = 0
 
         if len(idx) > 0:
             self.factorize = True
 
-    def output_limiter(self, yidx):
+    def hard_limit_remote(self, yidx, ridx, rtype='y', rmin=None, rmax=None, min_yset=0, max_yset=0):
         """Limit the output of yidx if the remote y is not within the limits"""
-        pass
+        ny = len(yidx)
+        assert ny == len(ridx), "Length of output vars and remote vars does not match"
+        assert rtype in ('x', 'y'), "ridx must be either y (algeb) or x (state)"
+
+        if isinstance(min_yset, (int, float)):
+            min_yset = matrix(min_yset, (ny, 1), 'd')
+        if isinstance(max_yset, (int, float)):
+            max_yset = matrix(max_yset, (ny, 1), 'd')
+
+        above_idx, below_idx = list(), list()
+        yidx = matrix(yidx)
+
+        if rmax:
+            # find the over-limit remote idx
+            above = ageb(self.__dict__[rtype][ridx], rmax)
+            above_idx = findeq(above, 1.0)
+            # reset the y values based on the remote limit violations
+            self.y[yidx[above_idx]] = max_yset[above_idx]
+            self.zymax[yidx[above_idx]] = 0
+
+        if rmin:
+            below = aleb(self.__dict__[rtype][ridx], rmin)
+            below_idx = findeq(below, 1.0)
+            self.y[yidx[below_idx]] = min_yset[below_idx]
+            self.zymin[yidx[below_idx]] = 0
+
+        idx = above_idx + below_idx
+        self.g[yidx[idx]] = 0
+
+        if len(idx) > 0:
+            self.factorize = True
 
     def anti_windup(self, xidx, xmin, xmax):
         """State variable anti-windup limiter"""
-        self.zxmax = ones(self.n, 1)
-        self.zxmin = ones(self.n, 1)
-
         xidx = matrix(xidx)
 
         x_above = ageb(self.x[xidx], xmax)

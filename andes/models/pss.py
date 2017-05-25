@@ -32,7 +32,7 @@ class PSS1(ModelBase):
             {'vcu': 'pu', 'T4': 's', 'T5': 's', 'vcl': 'pu', 'T10': 's', 'lsmin': 'pu', 'T9': 's', 'T2': 's', 'T7': 's',
              'T8': 's', 'lsmax': 'pu', 'T6': 's', 'T1': 's', 'T3': 's'})
         self._data.update(
-            {'K2': 0, 'vcu': 1.25, 'Ic2': 0, 'T4': 1, 'T5': 1.5, 'lsmin': -0.2, 'vcl': 0.6, 'avr': 0, 'T8': 0.15,
+            {'K2': 0, 'vcu': 0.25, 'Ic2': 0, 'T4': 1, 'T5': 1.5, 'lsmin': -0.2, 'vcl': -0.25, 'avr': 0, 'T8': 0.15,
              'T9': 1.5, 'T2': 0.02, 'T7': 1.5, 'K1': 0, 'lsmax': 0.2, 'Ic1': 0, 'T10': 0.15, 'T6': 0.15, 'T1': 0.02,
              'T3': 1})
         self._descr.update({'K2': 'Input 2 gain', 'vcu': 'cutoff upper limit', 'Ic2': 'Input 2 control switch',
@@ -98,7 +98,7 @@ class PSS1(ModelBase):
         dae.g[self.vss] = mul(self.u, dae.y[self.x6] - dae.y[self.vss])
         dae.hard_limit(self.vss, self.lsmin, self.lsmax)
         dae.g[self.vst] = mul(self.u, dae.y[self.vss] - dae.y[self.vst])
-        # dae.hard_limit(self.vst, self.vtmin, self.vtmax, min_set=0, max_set=0)
+        dae.hard_limit_remote(self.vst, self.v, rtype='y', rmin=self.vtmin, rmax=self.vtmax, min_yset=0, max_yset=0)
         dae.g += spmatrix(mul(self.u, dae.y[self.vst]), self.vf, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
