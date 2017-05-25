@@ -245,6 +245,11 @@ class PSS2(ModelBase):
         dae.y[self.In] = mul(self.u0, mul(self.Ic1, -1 + dae.x[self.omega]) + mul(self.Ic2, -1 + dae.x[self.w]) + mul(self.Ic5, dae.y[self.v]) + mul(self.Ic3, dae.y[self.p], self.toSg) + mul(self.Ic4, dae.y[self.pm], self.toSg))
         dae.x[self.q0] = dae.y[self.In]
         dae.y[self.v1] = dae.y[self.In]
+        dae.x[self.x1] = mul(dae.y[self.v1], 1 - self.T12)
+        dae.y[self.v2] = dae.y[self.v1]
+        dae.x[self.x2] = mul(dae.y[self.v2], 1 - self.T34)
+        dae.y[self.v3] = dae.y[self.v2]
+        dae.x[self.x3] = mul(self.KsT56, dae.y[self.v3])
 
     def gcall(self, dae):
         self.update_ctrl()
