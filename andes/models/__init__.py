@@ -36,6 +36,7 @@ non_jits = {'bus': {'Bus': 'Bus'},
                     'AVR1': 'AVR1',
                     },
             'pss': {'PSS1': 'PSS1',
+                    'PSS2': 'PSS2',
                     },
            }
 
