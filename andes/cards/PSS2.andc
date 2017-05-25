@@ -108,22 +108,22 @@ v3: v2;
 x3: KsT56 * v3;
 
 algeb_eq =
- u * (Ic1*(omega - 1) + Ic2*(w - 1) + Ic3*p*toSg + Ic4*pm*toSg + Ic5*v - In);
- u * (q0 + A5*q1 + A6* q2 - v1);
- u * (x1 + v1 * T12 - v2);
- u * (x2 + v2 * T34 - v3);
- u * (v3*KsT56 - x3 - v4);
- u * (v4 - vss);
- u * (vss - vst);
- u * vst;
+ u0 * (Ic1*(omega - 1) + Ic2*(w - 1) + Ic3*p*toSg + Ic4*pm*toSg + Ic5*v - In);
+ u0 * (q0 + A5*q1 + A6* q2 - v1);
+ u0 * (x1 + v1 * T12 - v2);
+ u0 * (x2 + v2 * T34 - v3);
+ u0 * (v3*KsT56 - x3 - v4);
+ u0 * (v4 - vss);
+ u0 * (vss - vst);
+ u0 * vst;
 
 hard_limit = vss: lsmin, lsmax
 
 diff_eq =
- u * q1;
- u * q2;
- u * q3;
- u * (In - q0 - H1*q1 - H2*q2 - H3*q3)/H4;
- u * (v1*(1 - T12) - x1)/T2;
- u * (v2*(1 - T34) - x2)/T4;
- u * (v3* KsT56 - x3)/T6;
+ u0 * q1;
+ u0 * q2;
+ u0 * q3;
+ u0 * (In - q0 - H1*q1 - H2*q2 - H3*q3)/H4;
+ u0 * (v1*(1 - T12) - x1)/T2;
+ u0 * (v2*(1 - T34) - x2)/T4;
+ u0 * (v3* KsT56 - x3)/T6;
