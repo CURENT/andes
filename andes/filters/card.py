@@ -57,7 +57,11 @@ def read(file, system):
                 new_val = {}         # return in a dictionary
                 new_val_ord = []     # return in an ordered list with the dict keys at 0
                 for item in val:
-                    m, n = item.split(':')
+                    try:
+                        m, n = item.split(':')
+                    except ValueError:
+                        print('* Error: check line <{}>'.format(item))
+                        return
                     m, n = m.strip(), n.strip()
                     if ',' in n:
                         n = n.split(',')
