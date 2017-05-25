@@ -230,7 +230,7 @@ class PSS2(ModelBase):
         self.T34 = mul(self.T3, div(1, self.T4))
         self.T56 = mul(self.T5, div(1, self.T6))
         self.KsT56 = mul(self.Ks, self.T5, div(1, self.T6))
-        self.toSg = 100*div(1, self.Sg)
+        self.toSg = self.system.Settings.mva*div(1, self.Sg)
         self.update_ctrl()
 
     def update_ctrl(self):
