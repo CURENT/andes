@@ -31,7 +31,7 @@ descr =
  T3: Washout time constant (numerator);
  T4: Washout time constant (denominator);
  T5: LL1 time constant (zero);
- T5: LL1 time constant (pole);
+ T6: LL1 time constant (pole);
  T7: LL2 time constant (zero);
  T8: LL2 time constant (pole);
  T9: LL3 time constant (zero);

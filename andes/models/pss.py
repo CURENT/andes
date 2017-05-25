@@ -35,14 +35,14 @@ class PSS1(ModelBase):
             {'K2': 0, 'vcu': 0.25, 'Ic2': 0, 'T4': 1, 'T5': 1.5, 'lsmin': -0.2, 'vcl': -0.25, 'avr': 0, 'T8': 0.15,
              'T9': 1.5, 'T2': 0.02, 'T7': 1.5, 'K1': 0, 'lsmax': 0.2, 'Ic1': 0, 'T10': 0.15, 'T6': 0.15, 'T1': 0.02,
              'T3': 1})
-        self._descr.update({'K2': 'Input 2 gain', 'vcu': 'cutoff upper limit', 'Ic2': 'Input 2 control switch',
-                            'T4': 'Washout time constant (denominator)', 'T5': 'LL1 time constant (pole)',
-                            'lsmin': 'PSS output minimum limit', 'vcl': 'cutoff lower limit',
+        self._descr.update({'K2': 'Input 2 gain', 'vcu': 'cutoff upper limit offset over Vt', 'Ic2': 'Input 2 control switch',
+                            'T4': 'Washout time constant (denominator)', 'T5': 'LL1 time constant (zero)',
+                            'lsmin': 'PSS output minimum limit', 'vcl': 'cutoff lower limit offset over Vt',
                             'Ic1': 'Input 1 control switch', 'T8': 'LL2 time constant (pole)',
                             'T9': 'LL3 time constant (zero)', 'T2': 'Input 2 time constant',
                             'T7': 'LL2 time constant (zero)', 'K1': 'Input 1 gain', 'lsmax': 'PSS output maximum limit',
                             'T10': 'LL3 time constant (pole)', 'avr': 'Exciter id', 'T1': 'Input 1 time constant',
-                            'T3': 'Washout time constant (numerator)'})
+                            'T3': 'Washout time constant (numerator)', 'T6': 'LL1 time constant (pole)'})
         self.calls.update({'gcall': True, 'fcall': True, 'fxcall': False, 'init1': True, 'jac0': True, 'gycall': False})
         self._inst_meta()
 
