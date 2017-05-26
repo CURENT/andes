@@ -255,9 +255,24 @@ def readadd(file, system):
     fid.close()
 
     # add device elements to system
-    for model in dyr.keys():
+    supported = ['GENROU', 'GENCLS',
+                 'ESST3A', 'ESDC2A', 'SEXS', 'EXST1',
+                 'ST2CUT', 'IEEEST',
+                 ]
+    used = list(supported)
+    for model in supported:
+        if model not in dyr.keys():
+            used.remove(model)
+            continue
         for data in dyr[model]:
             add_dyn(system, model, data)
+
+    needed = list(dyr.keys())
+    for i in supported:
+        if i in needed:
+            needed.remove(i)
+
+    system.Log.warning('Models currently unsupported: {}'.format(', '.join(needed)))
 
     return retval
 
@@ -276,14 +291,18 @@ def add_dyn(system, model, data):
         else:
             raise KeyError
         # todo: check xl
+        idx_PV = get_idx(system, 'StaticGen', 'bus', bus)
+        u = get_param(system, 'StaticGen', 'u', idx_PV)
         param = {'bus': bus,
                  'gen': gen_idx,
+                 # 'idx': bus,  # use `bus` for `idx`. Only one generator allowed on each bus
                  'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
                  'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
                  'xd1': system.__dict__[dev].get_by_idx('xs', gen_idx),
                  'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
                  'M': 2 * data[0],
                  'D': data[1],
+                 'u': u,
                  }
         system.Syn2.add(**param)
 
@@ -298,8 +317,12 @@ def add_dyn(system, model, data):
             gen_idx = system.SW.idx[system.SW.bus.index(bus)]
         else:
             raise KeyError
+        idx_PV = get_idx(system, 'StaticGen', 'bus', bus)
+        u = get_param(system, 'StaticGen', 'u', idx_PV)
+
         param = {'bus': bus,
                  'gen': gen_idx,
+                 # 'idx': bus,  # use `bus` for `idx`. Only one generator allowed on each bus
                  'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
                  'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
                  'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
@@ -316,8 +339,166 @@ def add_dyn(system, model, data):
                  'xd2': data[10],
                  'xq2': data[10],  # xd2 = xq2
                  'xl': data[11],
+                 'u': u,
                  }
         system.Syn6a.add(**param)
 
+    elif model == 'ESST3A':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        param = {'syn': syn,
+                 'vrmax': data[8],
+                 'vrmin': data[9],
+                 'Ka': data[6],
+                 'Ta': data[7],
+                 'Tf': data[5],
+                 'Tr': data[0],
+                 'Kf': data[5],
+                 'Ke': 1,
+                 'Te': 1,
+                 }
+        system.AVR1.add(**param)
+
+    elif model == 'ESDC2A':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        param = {'syn': syn,
+                 'vrmax': data[5],
+                 'vrmin': data[6],
+                 'Ka': data[1],
+                 'Ta': data[2],
+                 'Tf': data[5],
+                 'Tr': data[0],
+                 'Kf': data[9],
+                 'Ke': data[8],
+                 'Te': 1,
+                 }
+        system.AVR1.add(**param)
+
+    elif model == 'EXST1':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        param = {'syn': syn,
+                 'vrmax': data[7],
+                 'vrmin': data[8],
+                 'Ka': data[5],
+                 'Ta': data[6],
+                 'Kf': data[10],
+                 'Tf': data[11],
+                 'Tr': data[0],
+                 'Te': data[4],
+                 }
+        system.AVR1.add(**param)
+
+    elif model == 'SEXS':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        param = {'syn': syn,
+                 'vrmax': data[5],
+                 'vrmin': data[4],
+                 'K0': data[2],
+                 'T2': data[1],
+                 'T1': data[0],
+                 'Te': data[3],
+                 }
+        system.AVR3.add(**param)
+
+    elif model == 'IEEEG1':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+
+        pass
+
+    elif model == 'ST2CUT':
+        bus = data[0]
+        data = data[3:]
+        Ic1 = data[0]
+        Ic2 = data[2]
+
+        data = data[4:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        avr = get_idx(system, 'AVR', 'syn', syn)
+        param = {'avr': avr,
+                 'Ic1': Ic1,
+                 'Ic2': Ic2,
+                 'K1': data[0],
+                 'K2': data[1],
+                 'T1': data[2],
+                 'T2': data[3],
+                 'T3': data[4],
+                 'T4': data[5],
+                 'T5': data[6],
+                 'T6': data[7],
+                 'T7': data[8],
+                 'T8': data[9],
+                 'T9': data[10],
+                 'T10': data[11],
+                 'lsmax': data[12],
+                 'lsmin': data[13],
+                 'vcu': data[14],
+                 'vcl': data[15],
+                 }
+        system.PSS1.add(**param)
+
+    elif model == 'IEEEST':
+        bus = data[0]
+        data = data[3:]
+        Ic = data[0]
+
+        data = data[2:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        avr = get_idx(system, 'AVR', 'syn', syn)
+        param = {'avr': avr,
+                 'Ic': Ic,
+                 'A1': data[0],
+                 'A2': data[1],
+                 'A3': data[2],
+                 'A4': data[3],
+                 'A5': data[4],
+                 'A6': data[5],
+                 'T1': data[6],
+                 'T2': data[7],
+                 'T3': data[8],
+                 'T4': data[9],
+                 'T5': data[10],
+                 'T6': data[11],
+                 'Ks': data[12],
+                 'lsmax': data[13],
+                 'lsmin': data[14],
+                 'vcu': data[15],
+                 'vcl': data[16],
+                 }
+        system.PSS2.add(**param)
+
     else:
-        system.Log.warning('Skipping unsupported mode <{}> on bus {}'.format(model, data[0]))
+        system.Log.warning('Skipping unsupported model <{}> on bus {}'.format(model, data[0]))
+
+
+def get_idx(system, group, param, fkey):
+    ret = None
+    for key, item in system.DevMan.group.items():
+        if key != group:
+            continue
+        for name, dev in item.items():
+            int_id = system.__dict__[dev].int[name]
+            if system.__dict__[dev].__dict__[param][int_id] == fkey:
+                ret = name
+                break
+    return ret
+
+
+def get_param(system, group, param, fkey):
+    ret = None
+    for key, item in system.DevMan.group.items():
+        if key != group:
+            continue
+        for name, dev in item.items():
+            if name == fkey:
+                int_id = system.__dict__[dev].int[name]
+                ret = system.__dict__[dev].__dict__[param][int_id]
+    return ret
