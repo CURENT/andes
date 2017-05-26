@@ -200,12 +200,12 @@ class ModelBase(object):
             if not fkey:
                 fkey = self.system.DevMan.group.keys()
                 if not fkey:
-                    self.message('Group <{0}> does not have any element.'.format(model), ERROR)
+                    self.message('Group <{}> does not have any element.'.format(model), ERROR)
                     return
             for item in fkey:
                 dev_name = self.system.DevMan.group[model].get(item, None)
                 if not dev_name:
-                    self.message('Group <{0}> does not have element {}.'.format(model, item), ERROR)
+                    self.message('Group <{}> does not have element {}.'.format(model, item), ERROR)
                     return
                 pos = self.system.__dict__[dev_name].int[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
@@ -275,7 +275,7 @@ class ModelBase(object):
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
-                self.message('Using default value for <{:s}.{:s}>'.format(name, key), WARNING)
+                self.message('Using default value for <{:s}.{:s}>'.format(self.name[-1], key), WARNING)
 
         return idx
 
@@ -496,7 +496,10 @@ class ModelBase(object):
     def _param2matrix(self):
         """convert _params from list to matrix"""
         for item in self._params:
-            self.__dict__[item] = matrix(self.__dict__[item])
+            try:
+                self.__dict__[item] = matrix(self.__dict__[item])
+            except:
+                pass
 
     def _param2list(self):
         """convert _param from matrix to list"""
@@ -628,11 +631,12 @@ class ModelBase(object):
         n = len(self._states)
         dae = self.system.DAE
         out = []
-        header = '{:^4s}' + '{:^10s}' * (n + m)
-        tpl = '{:^4d}' + '{:^10g}' * (n + m)
-        out.append(header.format(*(['u'] + self._states + self._algebs)))
+        header = '{:^10s}{:^4s}' + '{:^10s}' * (n + m)
+        tpl = '{:^10s}{:^4d}' + '{:^10g}' * (n + m)
+        out.append(header.format(*(['idx', 'u'] + self._states + self._algebs)))
         for i in range(self.n):
-            vals = [self.u[i]]
+            vals = [self.idx[i]]
+            vals += [self.u[i]]
             vals += [dae.x[self.__dict__[var][i]] for var in self._states]
             vals += [dae.y[self.__dict__[var][i]] for var in self._algebs]
             out.append(tpl.format(*vals))
@@ -742,6 +746,13 @@ class ModelBase(object):
                 if c == 1:
                     v = val[idx]
                     vm = vmax[idx]
-                    self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is higher that maximum {:6.4g}'.format(n, varname, v, vm))
+                    self.system.Log.error('Initialization of <{}.{}> = {:.4g} is higher that maximum {:.4g}'.format(n, varname, v, vm))
                     retval = False
         return retval
+
+    def on_bus(self, bus_id):
+        if not hasattr(self, 'bus'):
+            return
+        for idx, bus in enumerate(self.bus):
+            if bus == bus_id:
+                return self.idx[idx]

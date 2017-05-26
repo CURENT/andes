@@ -27,7 +27,7 @@ class PSS1(ModelBase):
         self._fnamex.extend(['x_1', 'x_2', 'u_3', 'u_4', 'u_5', 'u_6'])
         self._service.extend(
             ['Ic23', 'Ic12', 'T34', 'toSg', 'Ic15', 'T910', 'Ic21', 'Ic14', 'Ic13', 'Ic22', 'Ic24', 'T56', 'T78', 'v0',
-             'Ic11', 'Ic25', 'u0'])
+             'Ic11', 'Ic25', 'u0', 'bus'])
         self._units.update(
             {'vcu': 'pu', 'T4': 's', 'T5': 's', 'vcl': 'pu', 'T10': 's', 'lsmin': 'pu', 'T9': 's', 'T2': 's', 'T7': 's',
              'T8': 's', 'lsmax': 'pu', 'T6': 's', 'T1': 's', 'T3': 's'})
@@ -44,6 +44,7 @@ class PSS1(ModelBase):
                             'T10': 'LL3 time constant (pole)', 'avr': 'Exciter id', 'T1': 'Input 1 time constant',
                             'T3': 'Washout time constant (numerator)', 'T6': 'LL1 time constant (pole)'})
         self.calls.update({'gcall': True, 'fcall': True, 'fxcall': False, 'init1': True, 'jac0': True, 'gycall': False})
+        self._zeros.extend(['T1', 'T2', 'T4', 'T6', 'T8', 'T10'])
         self._inst_meta()
 
     def servcall(self, dae):
@@ -83,10 +84,10 @@ class PSS1(ModelBase):
 
     def init1(self, dae):
         self.servcall(dae)
-        dae.x[self.x1] = mul(dae.y[self.In1], self.u0)
-        dae.x[self.x2] = mul(dae.y[self.In2], self.u0)
         dae.y[self.In1] = mul(self.u0, mul(self.Ic11, -1 + dae.x[self.omega]) + mul(self.Ic12, -1 + dae.x[self.w]) + mul(self.Ic15, dae.y[self.v]) + mul(self.Ic13, dae.y[self.p], self.toSg) + mul(self.Ic14, dae.y[self.pm], self.toSg))
         dae.y[self.In2] = mul(self.u0, mul(self.Ic21, -1 + dae.x[self.omega]) + mul(self.Ic22, -1 + dae.x[self.w]) + mul(self.Ic25, dae.y[self.v]) + mul(self.Ic23, dae.y[self.p], self.toSg) + mul(self.Ic24, dae.y[self.pm], self.toSg))
+        dae.x[self.x1] = mul(self.K1, dae.y[self.In1], self.u0)
+        dae.x[self.x2] = mul(self.K2, dae.y[self.In2], self.u0)
         dae.y[self.In] = mul(self.u0, dae.y[self.In1] + dae.y[self.In2])
         dae.x[self.u3] = mul(dae.y[self.In], self.T34, self.u0)
 
@@ -206,6 +207,7 @@ class PSS2(ModelBase):
         self._units.update(
             {'A4': 'pu', 'lsmax': 'pu', 'A6': 'pu', 'A1': 'pu', 'Ks': 'pu', 'lsmin': 'pu', 'vcl': 'pu', 'T4': 's',
              'T6': 's', 'A5': 'pu', 'T5': 's', 'T1': 's', 'A2': 'pu', 'T2': 's', 'T3': 's', 'A3': 'pu', 'vcu': 'pu'})
+        self._zeros.extend(['T2', 'T4', 'T6', 'A2', 'A4'])
         self.calls.update({'fcall': True, 'fxcall': False, 'jac0': True, 'init1': True, 'gycall': False, 'gcall': True})
         self._inst_meta()
 

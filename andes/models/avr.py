@@ -17,7 +17,7 @@ class AVR1(ModelBase):
         self._fnamey.extend(['v_{ref}'])
         self._times.extend(['Tr', 'Te', 'Ta', 'Tf'])
         self._algebs.extend(['vref'])
-        self._params.extend(['syn', 'Ka', 'Ke', 'Kf', 'Ta', 'Tf', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
+        self._params.extend(['Ka', 'Ke', 'Kf', 'Ta', 'Tf', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
         self._descr.update(
             {'busr': 'Regulated voltage idx', 'vrmax': 'Maximum regulator voltage', 'Kf': 'Stabilizer gain',
              'Ka': 'Amplifier gain', 'syn': 'Generator id', 'Ta': 'Amplifier time constant',
@@ -28,6 +28,7 @@ class AVR1(ModelBase):
             {'busr': None, 'vrmax': 5, 'Kf': 0.063, 'Ka': 20, 'syn': 0, 'Ta': 0.2, 'vrmin': -5, 'Tr': 0.001, 'Be': 0.9,
              'Tf': 0.35, 'Ae': 0.0006, 'Ke': 1, 'Te': 1.0})
         self.calls.update({'jac0': True, 'gycall': False, 'gcall': True, 'fcall': True, 'fxcall': True, 'init1': True})
+        self._zeros.extend(['Ta'])
         self._inst_meta()
 
     def servcall(self, dae):
@@ -105,7 +106,7 @@ class AVR2(ModelBase):
         self._times.extend(['T1', 'T2', 'T3', 'T4'])
         self._zeros.extend(['Te', 'Tr', 'T1', 'T3'])
         self._mandatory.extend(['syn'])
-        self._params.extend(['syn', 'K0', 'T1', 'T2', 'T3', 'T4', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
+        self._params.extend(['K0', 'T1', 'T2', 'T3', 'T4', 'Tr', 'Te', 'vrmax', 'vrmin', 'Ae', 'Be'])
         self._data.update(
             {'K0': 200, 'Ae': 0.0006, 'T3': 0.05, 'Te': 1.0, 'syn': 0, 'vrmin': -5, 'vrmax': 5, 'Tr': 0.001, 'T1': 0.01, 'T4': 1,
              'Be': 0.9, 'T2': 0.1})
@@ -189,7 +190,7 @@ class AVR3(ModelBase):
         self._group = 'AVR'
         self._name = 'AVR3'
         self._service.extend(['v0', 'vref0', 'T1T2'])
-        self._params.extend(['syn', 'T1', 'T2', 'Tr', 'Te', 'vfmax', 'vfmin', 'K0', 's0'])
+        self._params.extend(['T1', 'T2', 'Tr', 'Te', 'vfmax', 'vfmin', 'K0', 's0'])
         self._algebs.extend(['vref'])
         self._times.extend(['T2', 'Te', 'Tr'])
         self._fnamex.extend(['v_{m}', 'v_{r}', 'v_{fout}'])
