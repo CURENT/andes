@@ -13,7 +13,7 @@ group = AVR
 
 data = syn: 0; busr: None; Ka: 20; Ke: 1; Kf: 1;
  Ta: 0.01; Tf: 0.1; Te: 1.0; Tr: 0.001;
- vrmax: 5; vrmin: -5; Ae: 1; Be: 1
+ vrmax: 5; vrmin: -5; Ae: 0.0006; Be: 0.9; u: 1
 
 descr = syn: Generator id; busr: Regulated voltage idx;
  Ka: Amplifier gain; Ke: Field circuit integral deviation; Kf: Stabilizer gain;
@@ -22,13 +22,16 @@ descr = syn: Generator id; busr: Regulated voltage idx;
  vrmax: Maximum regulator voltage; vrmin: minimum regulator voltage;
  Ae: 1st ceiling coefficient; Be: 2nd ceiling coefficient
 
-params = syn; Ka; Ke; Kf; Ta; Tf; Tr; Te; vrmax; vrmin; Ae; Be
+params = Ka; Ke; Kf; Ta; Tf; Tr; Te; vrmax; vrmin; Ae; Be
 
 mandatory = syn
 
 times = Ta; Tf; Te
 
+zeros = Ta
+
 ctrl =
+ usyn: Synchronous, u, syn, c;
  vf: Synchronous, vf, syn, y;
  vf0: Synchronous, vf0, syn, c;
  v: Synchronous, v, syn, y
@@ -41,26 +44,26 @@ fnamex = v_{m}; v_{r1}; v_{r2}; v_{fout}
 
 interfaces = vf
 
-service_eq = KfTf: Kf/Tf; Se: Se; vref0: v + vf*(Ke + Se)/Ka
+service_eq = KfTf: Kf/Tf; Se: Se; u0: u * usyn; vref0: u0 *(v + vf*(Ke + Se)/Ka);
 
 init1_eq =
-vfout: vf;
-vref: v;
-vm: v;
-vr1: vf*(Ke + Se)
-vr2: -vf / KfTf;
+vfout: u0 * vf;
+vref: u0 * vref0;
+vm: u0 * v;
+vr1: u0 * vf*(Ke + Se)
+vr2: (-vf * KfTf) * u0;
 
 algeb_eq =
- vref0 -vref;
- -vfout + vf0
-
-anti_windup = vr1: Ta, vrmin, vrmax
+ u0 * (vref0 -vref);
+ u0 * (-vfout + vf0)
 
 diff_eq =
- (v - vm) / Tr;
- Ka * (vref - vm - vr2 - KfTf*vfout);
- - (KfTf * vfout + vr2) / Tf;
- - (vfout * (Ke + Se) - vr1) / Te
+ u0 * (v - vm) / Tr;
+ u0 * (Ka * (vref - vm - vr2 - KfTf*vfout));
+ u0 * (- (KfTf * vfout + vr2) / Tf);
+ u0 * (- (vfout * (Ke + Se) - vr1) / Te)
+
+anti_windup = vr1: Ta, vrmin, vrmax
 
 # Fixes to apply:
 # 1. Remove Se in self.servcall()

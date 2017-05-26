@@ -54,7 +54,9 @@ times = T1; T2; T3; T4; T5; T6; T7; T8; T9; T10
 zeros = T4
 
 ctrl =
+ uavr: AVR, u, avr, c;
  syn: AVR, syn, avr, c;
+ usyn: Synchronous, u, syn, c;
  omega: Synchronous, omega, syn, x;
  Sg: Synchronous, Sn, syn, c;
  bus: Synchronous, bus, syn, c;
@@ -78,33 +80,34 @@ Ic21: 1; Ic22: 0; Ic23: 0; Ic24: 0; Ic25: 0;
 T34: T3/T4; T56: T5/T6; T78: T7/T8; T910: T9/T10;
 toSg: 100 / Sg;
 v0: v
+u0: usyn*uavr*u
 
 init1_eq =
-x1: u * In1;
-x2: u * In2;
-In1: u * (Ic11*(omega - 1) + Ic12*(w - 1) + Ic13*p*toSg + Ic14*pm*toSg + Ic15*v);
-In2: u * (Ic21*(omega - 1) + Ic22*(w - 1) + Ic23*p*toSg + Ic24*pm*toSg + Ic25*v);
-In: u * (In1 + In2);
-u3: u * (In * T34)
+In1: u0 * (Ic11*(omega - 1) + Ic12*(w - 1) + Ic13*p*toSg + Ic14*pm*toSg + Ic15*v);
+In2: u0 * (Ic21*(omega - 1) + Ic22*(w - 1) + Ic23*p*toSg + Ic24*pm*toSg + Ic25*v);
+x1: u0 * K1 * In1;
+x2: u0 * K2 * In2;
+In: u0 * (In1 + In2);
+u3: u0 * (In * T34)
 
 algeb_eq =
- u * (Ic11*(omega - 1) + Ic12*(w - 1) + Ic13*p*toSg + Ic14*pm*toSg + Ic15*v - In1);
- u * (Ic21*(omega - 1) + Ic22*(w - 1) + Ic23*p*toSg + Ic24*pm*toSg + Ic25*v - In2);
- u * (In1 + In2 - In);
- u * (T34*In - u3 - x3);
- u * (T56*x3 + u4 - x4);
- u * (T78*x4 + u5 - x5);
- u * (T910*x5 + u6 - x6);
- u * (x6 - vss);
- u * (vss - vst);
- u* vst;
+ u0 * (Ic11*(omega - 1) + Ic12*(w - 1) + Ic13*p*toSg + Ic14*pm*toSg + Ic15*v - In1);
+ u0 * (Ic21*(omega - 1) + Ic22*(w - 1) + Ic23*p*toSg + Ic24*pm*toSg + Ic25*v - In2);
+ u0 * (In1 + In2 - In);
+ u0 * (T34*In - u3 - x3);
+ u0 * (T56*x3 + u4 - x4);
+ u0 * (T78*x4 + u5 - x5);
+ u0 * (T910*x5 + u6 - x6);
+ u0 * (x6 - vss);
+ u0 * (vss - vst);
+ u0 * vst;
 
 hard_limit = vss: lsmin, lsmax
 
 diff_eq =
- u * (K1*In1 - x1) / T1;
- u * (K2*In2 - x2) / T2;
- u * (In*T34 - u3) / T4;
- u * (x3 * (1 - T56) - u4) / T6;
- u * (x4 * (1 - T78) - u5) / T8;
- u * (x5 * (1 - T910) - u6) / T10;
+ u0 * (K1*In1 - x1) / T1;
+ u0 * (K2*In2 - x2) / T2;
+ u0 * (In*T34 - u3) / T4;
+ u0 * (x3 * (1 - T56) - u4) / T6;
+ u0 * (x4 * (1 - T78) - u5) / T8;
+ u0 * (x5 * (1 - T910) - u6) / T10;
