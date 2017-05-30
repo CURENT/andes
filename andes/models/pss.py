@@ -4,7 +4,7 @@ from cvxopt import mul, div
 from .base import ModelBase
 from .measurement import BusFreq
 
-from ..utils.math import aeb
+from ..utils.math import aeb, sdiv
 from ..consts import *
 
 
@@ -27,7 +27,7 @@ class PSS1(ModelBase):
         self._fnamex.extend(['x_1', 'x_2', 'u_3', 'u_4', 'u_5', 'u_6'])
         self._service.extend(
             ['Ic23', 'Ic12', 'T34', 'toSg', 'Ic15', 'T910', 'Ic21', 'Ic14', 'Ic13', 'Ic22', 'Ic24', 'T56', 'T78', 'v0',
-             'Ic11', 'Ic25', 'u0', 'bus'])
+             'Ic11', 'Ic25', 'u0', 'bus', 'd1', 'd2', 'd3'])
         self._units.update(
             {'vcu': 'pu', 'T4': 's', 'T5': 's', 'vcl': 'pu', 'T10': 's', 'lsmin': 'pu', 'T9': 's', 'T2': 's', 'T7': 's',
              'T8': 's', 'lsmax': 'pu', 'T6': 's', 'T1': 's', 'T3': 's'})
@@ -44,8 +44,9 @@ class PSS1(ModelBase):
                             'T10': 'LL3 time constant (pole)', 'avr': 'Exciter id', 'T1': 'Input 1 time constant',
                             'T3': 'Washout time constant (numerator)', 'T6': 'LL1 time constant (pole)'})
         self.calls.update({'gcall': True, 'fcall': True, 'fxcall': False, 'init1': True, 'jac0': True, 'gycall': False})
-        self._zeros.extend(['T1', 'T2', 'T4', 'T6', 'T8', 'T10'])
+        self._zeros.extend(['T1', 'T2', 'T4'])
         self._inst_meta()
+        # todo: fix T6, T8 or T10 == 10. Ignore the filter if they are zeros.
 
     def servcall(self, dae):
         self.copy_param('AVR', 'syn', 'syn', self.avr)
@@ -59,13 +60,26 @@ class PSS1(ModelBase):
         self.copy_param('Synchronous', 'omega', 'omega', self.syn)
         self.copy_param('Synchronous', 'p', 'p', self.syn)
         self.copy_param('BusFreq', 'w', 'w', self.bus)
-        self.T34 = mul(self.T3, div(1, self.T4))
-        self.T56 = mul(self.T5, div(1, self.T6))
-        self.T78 = mul(self.T7, div(1, self.T8))
-        self.T910 = mul(self.T9, div(1, self.T10))
+        self.T34 = sdiv(self.T3, self.T4)
+        self.T56 = sdiv(self.T5, self.T6)
+        self.T78 = sdiv(self.T7, self.T8)
+        self.T910 = sdiv(self.T9, self.T10)
+        self.set_flag('T6', 'd1', reset_val=True)
+        self.set_flag('T8', 'd2', reset_val=True)
+        self.set_flag('T10', 'd3', reset_val=True)
         self.toSg = div(self.system.Settings.mva, self.Sg)
         self.v0 = dae.y[self.v]
         self.update_ctrl()
+
+    def set_flag(self, value, flag, reset_val=False):
+        """Set a flag to 0 if the corresponding value is 0"""
+        if not self.__dict__[flag]:
+            self.__dict__[flag] = matrix(1.0, (len(self.__dict__[value]), 1), 'd')
+        for idx, item in enumerate(self.__dict__[value]):
+            if item == 0:
+                self.__dict__[flag][idx] = 0
+                if reset_val:
+                    self.__dict__[value][idx] = 1
 
     def update_ctrl(self):
         self.u0 = mul(self.u, self.uavr, self.usyn)  # effective PSS connectivity status
@@ -79,6 +93,9 @@ class PSS1(ModelBase):
         self.Ic23 = aeb(self.Ic2, 3)
         self.Ic24 = aeb(self.Ic2, 4)
         self.Ic25 = aeb(self.Ic2, 5)
+        # ignore the hard limiters if vcu == 0 or vcl == 0
+        self.vcu += mul(aeb(self.vcu, 0.0), 9999)
+        self.vcl += mul(aeb(self.vcl, 0.0), -9999)
         self.vtmax = self.v0 + self.vcu
         self.vtmin = self.v0 + self.vcl
 
@@ -109,9 +126,9 @@ class PSS1(ModelBase):
         dae.f[self.x1] = mul(self.u0, div(1, self.T1), -dae.x[self.x1] + mul(dae.y[self.In1], self.K1))
         dae.f[self.x2] = mul(self.u0, div(1, self.T2), -dae.x[self.x2] + mul(dae.y[self.In2], self.K2))
         dae.f[self.u3] = mul(self.u0, div(1, self.T4), -dae.x[self.u3] + mul(dae.y[self.In], self.T34))
-        dae.f[self.u4] = mul(self.u0, div(1, self.T6), -dae.x[self.u4] + mul(dae.y[self.x3], 1 - self.T56))
-        dae.f[self.u5] = mul(self.u0, div(1, self.T8), -dae.x[self.u5] + mul(dae.y[self.x4], 1 - self.T78))
-        dae.f[self.u6] = mul(self.u0, div(1, self.T10), -dae.x[self.u6] + mul(dae.y[self.x5], 1 - self.T910))
+        dae.f[self.u4] = mul(self.u0, self.d1, div(1, self.T6), -dae.x[self.u4] + mul(dae.y[self.x3], 1 - self.T56))
+        dae.f[self.u5] = mul(self.u0, self.d2, div(1, self.T8), -dae.x[self.u5] + mul(dae.y[self.x4], 1 - self.T78))
+        dae.f[self.u6] = mul(self.u0, self.d3, div(1, self.T10), -dae.x[self.u6] + mul(dae.y[self.x5], 1 - self.T910))
 
     def jac0(self, dae):
         dae.add_jac(Gy0, mul(self.Ic15, self.u0), self.In1, self.v)
@@ -241,6 +258,8 @@ class PSS2(ModelBase):
         self.Ic3 = aeb(self.Ic, 3)
         self.Ic4 = aeb(self.Ic, 4)
         self.Ic5 = aeb(self.Ic, 5)
+        self.lsmax += mul(aeb(self.lsmax, 0.0), 9999)
+        self.lsmin += mul(aeb(self.lsmin, 0.0), -9999)
 
     def init1(self, dae):
         self.servcall(dae)
