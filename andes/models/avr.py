@@ -13,7 +13,7 @@ class AVR1(ModelBase):
         self._mandatory.extend(['syn'])
         self._states.extend(['vm', 'vr1', 'vr2', 'vfout'])
         self._fnamex.extend(['v_{m}', 'v_{r1}', 'v_{r2}', 'v_{fout}'])
-        self._service.extend(['vref0', 'KfTf', 'usyn', 'u0'])
+        self._service.extend(['vref0', 'KfTf', 'usyn', 'u0', 'iTa'])
         self._fnamey.extend(['v_{ref}'])
         self._times.extend(['Tr', 'Te', 'Ta', 'Tf'])
         self._algebs.extend(['vref'])
@@ -37,6 +37,7 @@ class AVR1(ModelBase):
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'v', 'v', self.syn)
         self.KfTf = mul(self.Kf, div(1, self.Tf))
+        self.iTa = div(self.u, self.Ta)
         self.u0 = mul(self.u, self.usyn)
 
     def init1(self, dae):
@@ -65,14 +66,14 @@ class AVR1(ModelBase):
         dae.add_jac(Gy0, -1, self.vref, self.vref)
         dae.add_jac(Gx0, -self.u0, self.vf, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tr), self.vm, self.vm)
-        dae.add_jac(Fx0, - self.Ka, self.vr1, self.vm)
-        dae.add_jac(Fx0, - self.Ka, self.vr1, self.vr2)
+        dae.add_jac(Fx0, - mul(self.Ka, self.iTa), self.vr1, self.vm)
+        dae.add_jac(Fx0, - mul(self.Ka, self.iTa), self.vr1, self.vr2)
         dae.add_jac(Fx0, - div(1, self.Ta), self.vr1, self.vr1)
-        dae.add_jac(Fx0, - mul(self.Ka, self.KfTf), self.vr1, self.vfout)
+        dae.add_jac(Fx0, - mul(self.Ka, self.KfTf, self.iTa), self.vr1, self.vfout)
         dae.add_jac(Fx0, - div(1, self.Tf), self.vr2, self.vr2)
         dae.add_jac(Fx0, - mul(self.KfTf, div(1, self.Tf)), self.vr2, self.vfout)
         dae.add_jac(Fy0, div(1, self.Tr), self.vm, self.v)
-        dae.add_jac(Fy0, self.Ka, self.vr1, self.vref)
+        dae.add_jac(Fy0, mul(self.Ka, self.iTa), self.vr1, self.vref)
 
     def fxcall(self, dae):
         dae.add_jac(Fx, mul(div(1, self.Te), -self.Ke - self.dSe), self.vfout, self.vfout)
@@ -212,6 +213,7 @@ class AVR3(ModelBase):
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
         self.T1T2 = mul(self.T1, div(1, self.T2))
+        self.iTe = div(self.u, self.Te)
 
     def init1(self, dae):
         self.servcall(dae)
@@ -233,10 +235,10 @@ class AVR3(ModelBase):
         dae.anti_windup(self.vfout, self.vfmin, self.vfmax)
 
     def fxcall(self, dae):
-        dae.add_jac(Fx, - mul(self.K0, self.T1T2, 1 + mul(self.s0, -1 + mul(dae.y[self.v], div(1, self.v0)))), self.vfout, self.vm)
-        dae.add_jac(Fx, 1 + mul(self.s0, -1 + mul(dae.y[self.v], div(1, self.v0))), self.vfout, self.vr)
-        dae.add_jac(Fy, mul(self.K0, self.T1T2, 1 + mul(self.s0, -1 + mul(dae.y[self.v], div(1, self.v0)))), self.vfout, self.vref)
-        dae.add_jac(Fy, mul(self.s0, div(1, self.v0), self.vf0 + dae.x[self.vr] + mul(self.K0, self.T1T2, dae.y[self.vref] - dae.x[self.vm])), self.vfout, self.v)
+        dae.add_jac(Fx, - mul(self.iTe, self.K0, self.T1T2, 1 + mul(self.s0, -1 + mul(dae.y[self.v], div(1, self.v0)))), self.vfout, self.vm)
+        dae.add_jac(Fx, self.iTe + mul(self.iTe, self.s0, -1 + mul(dae.y[self.v], div(1, self.v0))), self.vfout, self.vr)
+        dae.add_jac(Fy, mul(self.iTe, self.K0, self.T1T2, 1 + mul(self.s0, -1 + mul(dae.y[self.v], div(1, self.v0)))), self.vfout, self.vref)
+        dae.add_jac(Fy, mul(self.iTe, self.s0, div(1, self.v0), self.vf0 + dae.x[self.vr] + mul(self.K0, self.T1T2, dae.y[self.vref] - dae.x[self.vm])), self.vfout, self.v)
 
     def jac0(self, dae):
         dae.add_jac(Gy0, -1, self.vref, self.vref)
