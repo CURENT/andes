@@ -133,3 +133,19 @@ def to_number(s):
     elif ret == 'None':
         ret = None
     return ret
+
+
+def sdiv(a, b):
+    """Safe division: if a == b == 0, sdiv(a, b) == 1"""
+    if len(a) != len(b):
+        raise ValueError('Argument a and b does not have the same length')
+    idx = 0
+    ret = matrix(0, (len(a), 1), 'd')
+    for m, n in zip(a, b):
+        try:
+            ret[idx] = m / n
+        except ZeroDivisionError:
+            ret[idx] = 1
+        finally:
+            idx += 1
+    return ret
