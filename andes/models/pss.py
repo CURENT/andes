@@ -27,14 +27,14 @@ class PSS1(ModelBase):
         self._fnamex.extend(['x_1', 'x_2', 'u_3', 'u_4', 'u_5', 'u_6'])
         self._service.extend(
             ['Ic23', 'Ic12', 'T34', 'toSg', 'Ic15', 'T910', 'Ic21', 'Ic14', 'Ic13', 'Ic22', 'Ic24', 'T56', 'T78', 'v0',
-             'Ic11', 'Ic25', 'u0', 'bus', 'd1', 'd2', 'd3'])
+             'Ic11', 'Ic25', 'u0', 'bus'])
         self._units.update(
             {'vcu': 'pu', 'T4': 's', 'T5': 's', 'vcl': 'pu', 'T10': 's', 'lsmin': 'pu', 'T9': 's', 'T2': 's', 'T7': 's',
              'T8': 's', 'lsmax': 'pu', 'T6': 's', 'T1': 's', 'T3': 's'})
         self._data.update(
             {'K2': 0, 'vcu': 0.25, 'Ic2': 0, 'T4': 1, 'T5': 1.5, 'lsmin': -0.2, 'vcl': -0.25, 'avr': 0, 'T8': 0.15,
              'T9': 1.5, 'T2': 0.02, 'T7': 1.5, 'K1': 0, 'lsmax': 0.2, 'Ic1': 0, 'T10': 0.15, 'T6': 0.15, 'T1': 0.02,
-             'T3': 1})
+             'T3': 1, 'd1': 1, 'd2': 1, 'd3': 1})
         self._descr.update({'K2': 'Input 2 gain', 'vcu': 'cutoff upper limit offset over Vt', 'Ic2': 'Input 2 control switch',
                             'T4': 'Washout time constant (denominator)', 'T5': 'LL1 time constant (zero)',
                             'lsmin': 'PSS output minimum limit', 'vcl': 'cutoff lower limit offset over Vt',
