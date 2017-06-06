@@ -160,14 +160,18 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         if key not in algebs:
             print('* Warning: variable <{}> in hard_limit not defined.'.format(key))
         for item in val:
-            if item not in consts:
+            if type(item) in (int, float):
+                pass
+            elif item not in consts:
                 print('* Warning: const <{}> in hard_limit not defined.'.format(item))
 
     for key, val in windup.items():
         if key not in algebs:
             print('* Warning: variable <{}> in windup not defined.'.format(key))
         for item in val:
-            if item not in consts:
+            if type(item) in (int, float):
+                pass
+            elif item not in consts:
                 print('* Warning: const <{}> in windup not defined.'.format(item))
 
     for key, val in anti_windup.items():
@@ -320,8 +324,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             jac0.append(fxcall_anti_windup.format(val[0], sym))
 
     gcall_windup = 'dae.windup(self.{0}, self.{1}, self.{2})'
-    gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
-    gcall_hard_limit = 'dae.hard_limit(self.{0}, self.{1}, self.{2})'
+    gcall_hard_limit = 'dae.hard_limit(self.{0}, {1}, {2})'
 
     for sym, eq in zip(sym_algebs + sym_interfaces, sym_g):
         string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
@@ -336,7 +339,13 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             gcall.append(gcall_windup.format(sym, val[0], val[1]))
         elif sym in sym_hard_limit:
             val = eval('hard_limit[\'{}\']'.format(sym))
-            gcall.append(gcall_hard_limit.format(sym, val[0], val[1]))
+            val_formatted = list(val)
+            for idx, item in enumerate(val):
+                if type(item) in (int, float):
+                    pass
+                else:
+                    val_formatted[idx] = 'self.{}'.format(item)
+            gcall.append(gcall_hard_limit.format(sym, val_formatted[0], val_formatted[1]))
 
     # format Jacobians
     jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
@@ -456,7 +465,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
 
     out_init = list()  # def __init__ call strings
     out_init.append('from cvxopt import matrix, spmatrix')
-    out_init.append('from cvxopt import mul, div')
+    out_init.append('from cvxopt import mul, div, sin, cos, exp')
     out_init.append('from ..consts import *')
     out_init.append('from .base import ModelBase\n\n')
     out_init.append('class {}(ModelBase):'.format(name))
@@ -543,7 +552,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
     if not sym_algebs:
         sym_algebs = []
     expr_str = []
-    if type(expr) == int:
+    if type(expr) in (int, float):
         return expr
     if expr.is_Atom:
         if expr in sym_const:
@@ -553,10 +562,14 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
         elif expr in sym_algebs:
             expr_str = 'dae.y[self.{}]'.format(expr)
         elif expr.is_Number:
-            if expr.is_negative:
-                expr_str = '{}'.format(expr)
+            if expr.is_Integer:
+                expr_str = str(int(expr))
             else:
-                expr_str = str(expr)
+                expr_str = str(float(expr))
+            # if expr.is_negative:
+            #     expr_str = '{}'.format(expr)
+            # else:
+            #     expr_str = str(expr)
         else:
             raise AttributeError('Unknown free symbol <{}>'.format(expr))
     else:
