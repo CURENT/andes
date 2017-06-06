@@ -203,3 +203,5 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
 PSS2, avr = 1, Ic = 1
 
 WTG3, gen = 2, wind = 1
+
+Weibull, idx = 1
