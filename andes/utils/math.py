@@ -4,34 +4,34 @@ from cvxopt import mul, exp
 
 def altb(a, b):
     """Return a matrix of logic comparison of A<B"""
-    if type(b) == float:
+    if type(b) in (int, float):
         b = matrix(b, (len(a), 1), 'd')
     return matrix(list(map(lambda x, y: x < y, a, b)), a.size)
 
 
 def agtb(a, b):
     """Return a matrix of logic comparision of A>B"""
-    if type(b) == float:
+    if type(b) in (int, float):
         b = matrix(b, (len(a), 1), 'd')
     return matrix(list(map(lambda x, y: x > y, a, b)), a.size)
 
 def aleb(a, b):
     """Return a matrix of logic comparison of A<=B"""
-    if type(b) == float:
+    if type(b) in (int, float):
         b = matrix(b, (len(a), 1), 'd')
     return matrix(list(map(lambda x, y: x <= y, a, b)), a.size)
 
 
 def ageb(a, b):
     """Return a matrix of logic comparision of A>=B"""
-    if type(b) == float:
+    if type(b) in (int, float):
         b = matrix(b, (len(a), 1), 'd')
     return matrix(list(map(lambda x, y: x >= y, a, b)), a.size)
 
 
 def aeb(a, b):
     """Return a matrix of logic comparison of A == B"""
-    if type(b) == int or type(b) == float:
+    if type(b) in (int, float):
         return matrix(list(map(lambda x: x == b, a)), a.size)
     else:
         return matrix(list(map(lambda x, y: x == y, a, b)), a.size)
