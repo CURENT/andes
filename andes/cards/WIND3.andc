@@ -80,6 +80,7 @@ times = Tp; Te
 
 ctrl =
  bus: StaticGen, bus, gen, c;
+ ugen: StaticGen, u, gen, c;
  v: Bus, v, bus, y;
  a: Bus, a, bus, y;
  p0: Bus, Pg, bus, c;
@@ -99,6 +100,7 @@ service_eq =
  x0: xs + xmu;
  pi: 3.14;
  phi: 0.1;
+ u0: u * ugen;
 
 init1_eq =
 
@@ -117,17 +119,20 @@ algeb_eq =
  omega_m * R / vw - lamb;
  1 / (lamb + 0.08 * theta_p) - 0.035 / (theta_p ** 3 + 1) - ilamb;
  1 - omega_ref;
- u * (-vsd * isd - vsq * isq - vrd * ird - vrq * irq);
- u * (v**2/xmu + v*xmu*ird/x0);
+ u0 * (-vsd * isd - vsq * isq - vrd * ird - vrq * irq);
+ u0 * (v**2/xmu + v*xmu*ird/x0);
 
 hard_limit =
  pwa: 0, 1;
 
 diff_eq =
- (Kp * phi *(omega_m - omega_ref) - theta_p) / Tp;
+ Kp * phi *(omega_m - omega_ref);
  ((pw/omega_m) - xmu * (irq * isd - ird * isq)) / (2 * H);
  (- x0 / xmu / v * pwa / omega_m - irq) / Te;
  KV * (v - vref) - v / xmu - ird;
+
+anti_windup =
+ theta_p: Tp, 0, 999999;
 
 # 1. Delete self.pi in self.servcall(self, dae); replace all self.pi with pi;
 # 2.
