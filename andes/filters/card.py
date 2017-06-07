@@ -170,7 +170,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             print('* Warning: variable <{}> in windup not defined.'.format(key))
         for item in val:
             if type(item) in (int, float):
-                pass
+                continue
             elif item not in consts:
                 print('* Warning: const <{}> in windup not defined.'.format(item))
 
@@ -178,7 +178,9 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
         if key not in states:
             print('* Warning: variable <{}> in anti_windup not defined.'.format(key))
         for item in val:
-            if item not in consts:
+            if type(item) in (int, float):
+                continue
+            elif item not in consts:
                 print('* Warning: const <{}> in anti_windup not defined.'.format(item))
 
     """Equation and variable number check"""
@@ -212,6 +214,11 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
 
     algebs_ext = algebs + interfaces + copy_algebs
     states_ext = states + copy_states
+
+    for idx, var in enumerate(states):
+        if var in states_anti_windup:
+            tpl = '({} - {}) / {}'
+            diff_eq[idx] = tpl.format(var, diff_eq[idx], anti_windup[var][0])
 
     # convert consts and variables into sympy.Symbol
     sym_maping = {'consts': sym_consts,
@@ -305,23 +312,20 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     call_line = 'dae.add_jac({}, {}, self.{}, self.{})'
 
     # format f and g equations
-    fcall_anti_windup_1 = 'dae.f[self.{0}] = div({0} - dae.x[self.{0}], self.{1})'
-    fcall_anti_windup_2 = 'dae.anti_windup(self.{0}, self.{1}, self.{2})'
-    fxcall_anti_windup = 'dae.add_jac(Fx0, -div(1, self.{0}), self.{1}, self.{1})'
+    fcall_anti_windup = 'dae.anti_windup(self.{0}, {1}, {2})'
 
     for sym, eq in zip(sym_states, sym_f):
         string_eq = stringfy(eq, sym_consts, sym_states_ext, sym_algebs_ext)
         # handling anti_windup
-        if sym in sym_anti_windup:
-            template = '{0} = {1}'
-        else:
-            template = 'dae.f[self.{0}] = {1}'
+        template = 'dae.f[self.{0}] = {1}'
         fcall.append(template.format(sym, string_eq))
         if sym in sym_anti_windup:
             val = eval('anti_windup[\'{}\']'.format(sym))
-            fcall.append(fcall_anti_windup_1.format(sym, val[0]))
-            fcall.append(fcall_anti_windup_2.format(sym, val[1], val[2]))
-            jac0.append(fxcall_anti_windup.format(val[0], sym))
+            if type(val[1]) not in (int, float):
+                val[1] = 'self.' + val[1]
+            if type(val[2]) not in (int, float):
+                val[2] = 'self.' + val[2]
+            fcall.append(fcall_anti_windup.format(sym, val[1], val[2]))
 
     gcall_windup = 'dae.windup(self.{0}, self.{1}, self.{2})'
     gcall_hard_limit = 'dae.hard_limit(self.{0}, {1}, {2})'

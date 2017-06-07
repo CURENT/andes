@@ -108,6 +108,11 @@ class DAE(object):
         """Limit algebraic variables and set the Jacobians"""
         yidx = matrix(yidx)
 
+        if type(ymin) in (float, int):
+            ymin = matrix(ymin, yidx.size)
+        if type(ymax) in (float, int):
+            ymax = matrix(ymax, yidx.size)
+
         if not min_set:
             min_set = ymin
         if not max_set:
@@ -171,6 +176,11 @@ class DAE(object):
     def anti_windup(self, xidx, xmin, xmax):
         """State variable anti-windup limiter"""
         xidx = matrix(xidx)
+
+        if type(xmin) in (float, int):
+            xmin = matrix(xmin, xidx.size)
+        if type(xmax) in (float, int):
+            xmax = matrix(xmax, xidx.size)
 
         x_above = ageb(self.x[xidx], xmax)
         f_above = ageb(self.f[xidx], 0.0)
