@@ -218,7 +218,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     for idx, var in enumerate(states):
         if var in states_anti_windup:
             tpl = '({} - {}) / {}'
-            diff_eq[idx] = tpl.format(var, diff_eq[idx], anti_windup[var][0])
+            diff_eq[idx] = tpl.format(diff_eq[idx], var, anti_windup[var][0])
 
     # convert consts and variables into sympy.Symbol
     sym_maping = {'consts': sym_consts,
