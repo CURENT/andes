@@ -17,7 +17,7 @@ class WindBase(ModelBase):
         self._group = 'Wind'
         self.remove_param('Sn')
         self.remove_param('Vn')
-        self._data.update({'T': 0.01,
+        self._data.update({'T': 2,
                            'Vwn': 15,
                            'dt': 0.1,
                            'rho': 1.225,
@@ -45,7 +45,7 @@ class WindBase(ModelBase):
 
     def setup(self):
         super(WindBase, self).setup()
-        self.vwa = ones(self.n, 1)  # todo: remove this after wind turbine init
+        # self.vwa = ones(self.n, 1)  # todo: remove this after wind turbine init
 
     def servcall(self, dae):
         self.iT = div(1, self.T)
@@ -60,9 +60,12 @@ class WindBase(ModelBase):
             self.time[i] = list(arange(self.t0, self.tf + self.dt[i], self.dt[i]))
             self.speed[i] = [0] * len(self.time[i])
 
-        self.generate()
+        self.generate(dae)
 
-    def generate(self):
+        dae.y[self.ws] = dae.x[self.vw]
+        self.speed[:][0] = dae.y[self.ws]
+
+    def generate(self, dae):
         """Generate the wind speed time and data points"""
         pass
 
@@ -104,7 +107,7 @@ class Weibull(WindBase):
         self._params.extend(['c', 's'])
         self._inst_meta()
 
-    def generate(self):
+    def generate(self, dae):
         for i in range(self.n):
             npoint = len(self.time[i])
             if self.c[i] <= 0.0:
@@ -112,7 +115,11 @@ class Weibull(WindBase):
             if self.s[i] <= 0.0:
                 self.s[i] = 2.0
             sample = self.c[i] * weibull(self.s[i], npoint)
-            sample_avg = sum(sample) / npoint
-            sample[0] = sample_avg
+            sample[0] = dae.x[self.vw[i]]
+            sample_avg = sum(sample[1:]) / npoint
+            k = sample[0] / sample_avg
+
             sample, sample_avg = matrix(sample), matrix(sample_avg)
-            self.speed[i] = self.vwa[i] * (1.0 + sample - sample_avg)
+
+            sample[1:] *= k
+            self.speed[i] = sample
