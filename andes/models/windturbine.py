@@ -256,7 +256,7 @@ class WTG3(ModelBase):
         dae = self.system.DAE
         above = agtb(dae.x[self.omega_m], 1)
         phi_degree_step = mfloor((dae.x[self.omega_m] - 1)/deg1) * deg1
-        return phi_degree_step * above
+        return mul(phi_degree_step, above)
 
     def gcall(self, dae):
         toSb = div(self.Sn, self.system.Settings.mva)
@@ -267,7 +267,7 @@ class WTG3(ModelBase):
         dae.g[self.vsd] = -dae.y[self.vsd] - mul(dae.y[self.v], sin(dae.y[self.a]))
         dae.g[self.vsq] = -dae.y[self.vsq] + mul(dae.y[self.v], cos(dae.y[self.a]))
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
-        dae.g[self.pwa] = (2*dae.x[self.omega_m] - 1)*toSb - dae.y[self.pwa]
+        dae.g[self.pwa] = mul(2*dae.x[self.omega_m] - 1, toSb) - dae.y[self.pwa]
         dae.hard_limit(self.pwa, 0, 1)
         dae.g[self.pw] = -dae.y[self.pw] + mul(0.5, dae.y[self.cp], self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3)
         dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
