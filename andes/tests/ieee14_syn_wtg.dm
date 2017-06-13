@@ -179,29 +179,29 @@ Syn6a, D = 2.0, M = 10.12, Sn = 25.0, Td10 = 4.75, Td20 = 0.06,
        xd1 = 0.232, xd2 = 0.12, xl = 0.134, xq = 1.22, xq1 = 0.715,
        xq2 = 0.12
 
-TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
-     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
+#TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
+#     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 #TG1, gen = 2, pmax = 2, pmin = 0, R = 0.01, wref0 = 1.0,
 #     T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
-AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
-      vrmin = -0
+#AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
+#      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
+#      vrmin = -0
 #AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
 #      idx = 2, name = "AVR 2", syn = 2, vrmax = 2.05,
 #      vrmin = 0.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
-      vrmin = 0.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
-      vrmin = 1.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
-      vrmin = 1.0
+#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
+#      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
+#      vrmin = 0.0
+#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+#      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
+#      vrmin = 1.0
+#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+#      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
+#      vrmin = 1.0
 
-PSS2, avr = 1, Ic = 1
+#PSS2, avr = 1, Ic = 1
 
-WTG3, gen = 2, wind = 1
+WTG3, bus = 2, gen = 2, wind = 1, Vn = 69, Sn = 100, qmax = 0.7, qmin = -0.7
 
 Weibull, idx = 1

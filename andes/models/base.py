@@ -497,7 +497,7 @@ class ModelBase(object):
         """convert _params from list to matrix"""
         for item in self._params:
             try:
-                self.__dict__[item] = matrix(self.__dict__[item])
+                self.__dict__[item] = matrix(self.__dict__[item], tc='d')
             except:
                 pass
 
@@ -613,14 +613,15 @@ class ModelBase(object):
             for item in header:
                 try:
                     value = self.__dict__[item][self.int[i]]
-                except IndexError:
+                except:
                     value = None
                 if value is not None:
                     if type(value) in [int, float]:
                         value = round(value, 6)
+                        value = '{:g}'.format(value)
                 else:
-                    value = '/'
-                data.append(str(value))
+                    value = '-'
+                data.append(value)
             print(header_fmt.format(*data))
 
     def var_insight(self):

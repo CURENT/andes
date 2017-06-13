@@ -9,6 +9,20 @@ def altb(a, b):
     return matrix(list(map(lambda x, y: x < y, a, b)), a.size)
 
 
+def mmax(a, b):
+    """Return a matrix of maximum values in a and b element-wise"""
+    if type(b) in (int, float):
+        b = matrix(b, (len(a), 1), 'd')
+    return matrix(list(map(lambda x, y: x if x > y else y, a, b)), a.size)
+
+
+def mmin(a, b):
+    """Return a matrix of minimum values in a and b element-wise"""
+    if type(b) in (int, float):
+        b = matrix(b, (len(a), 1), 'd')
+    return matrix(list(map(lambda x, y: x if x < y else y, a, b)), a.size)
+
+
 def agtb(a, b):
     """Return a matrix of logic comparision of A>B"""
     if type(b) in (int, float):
@@ -64,6 +78,11 @@ def conj(a):
 def neg(u):
     """Return the negative of binary states u"""
     return 1 - u
+
+
+def not0(a):
+    """Return u if u!= 0, return 1 if u == 0"""
+    return matrix(list(map(lambda x: 1 if x == 0 else x, a)), a.size)
 
 
 def zeros(m, n):
