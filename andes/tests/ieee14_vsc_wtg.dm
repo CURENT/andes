@@ -87,9 +87,6 @@ BusFreq, idx = 12, bus = 12
 BusFreq, idx = 13, bus = 13
 BusFreq, idx = 14, bus = 14
 
-#PMU, idx = 1, bus = 1
-#PMU, idx = 1, bus = 2
-
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
 #BusLine, line = "Line_3", busf = 2
@@ -111,9 +108,9 @@ BusFreq, idx = 14, bus = 14
 #BusLine, line = "Line_19", busf = 12
 #BusLine, line = "Line_20", busf = 13
 
-PQ, Vn = 69.0, bus = 2, idx = "PQ load_1", name = "PQ Bus 2", p = 0.217,
+PQ, Vn = 69.0, bus = 2, idx = "PQ load_1", name = "PQ_Bus_2", p = 0.217,
     q = 0.127
-PQ, Vn = 69.0, bus = 3, idx = "PQ load_2", name = "PQ Bus 3", p = 0.942,
+PQ, Vn = 69.0, bus = 3, idx = "PQ load_2", name = "PQ_Bus_3", p = 0.942,
     q = 0.19
 PQ, Vn = 69.0, bus = 4, idx = "PQ load_3", name = "PQ Bus 4", p = 0.478,
     q = -0.039
@@ -134,11 +131,6 @@ PQ, Vn = 13.8, bus = 13, idx = "PQ load_10", name = "PQ Bus 13", p = 0.135,
 PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
-# Fault, bus = 4, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.00001
-
-#Breaker, Vn = 69.0, bus = 2, fn = 60.0, idx = 1, line = "Line_4",
-#         name = "Breaker 1", t1 = 1.0, t2 = 200.0, u1 = 1, u2 = 1
-
 PV, Vn = 69.0, bus = 2, busr = 2, idx = 2, name = "PV Bus 2",
     pg = 0.4, pmax = 1.0, pmin = 0, qmax = 0.4, qmin = -0.4,
     v0 = 1.045
@@ -149,11 +141,12 @@ PV, Vn = 13.8, bus = 6, busr = 6, idx = 6, name = "PV Bus 6",
 PV, Vn = 18.0, bus = 8, busr = 8, idx = 8, name = "PV Bus 8",
     pg = 0, pmax = 1.0, pmin = 0, qmax = 0.24, qmin = -0.06, v0 = 1.09
 
-Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt Bus 9"
+Shunt, Vn = 13.8, b = 0.19, bus = 9, idx = 1, name = "Shunt_Bus_9"
 
-SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1",
+SW, Vn = 69.0, bus = 1, busr = 1, idx = 1, name = "SW_Bus_1",
     pmax = 999.9, pmin = -999.9, qmax = 9.9, qmin = -9.9,
     v0 = 1.06
+
 
 Syn6a, D = 2.0, M = 10.296, Sn = 615.0, Td10 = 7.4, Td20 = 0.03,
        Tq10 = 1.8, Tq20 = 0.033, Vn = 69.0, bus = 1, fn = 60.0,
@@ -190,18 +183,56 @@ AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
 #AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
 #      idx = 2, name = "AVR 2", syn = 2, vrmax = 2.05,
 #      vrmin = 0.0
-#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
-#      vrmin = 0.0
-#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
-#      vrmin = 1.0
-#AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-#      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
-#      vrmin = 1.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
+      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
+      vrmin = 0.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
+      vrmin = 1.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
+      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
+      vrmin = 1.0
 
-#PSS2, avr = 1, Ic = 1
+PSS2, avr = 1, Ic = 1
 
 WTG3, bus = 2, gen = 2, wind = 1, Vn = 69, Sn = 50, qmax = 0.7, qmin = -0.7
 
 Weibull, idx = 1
+
+Node, idx = 0, name = "Node 0", Vdcn = 100.0
+Node, idx = 1, name = "Node 1", Vdcn = 100.0
+Node, idx = 2, name = "Node 2", Vdcn = 100.0
+Node, idx = 3, name = "Node 3", Vdcn = 100.0
+Node, idx = 4, name = "Node 4", Vdcn = 100.0
+
+Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
+
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
+     Vdcn = 100, u = 1
+VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
+     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
+
+VSC1, vsc = 1, name = "VSCD 1", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
+VSC2, vsc = 2, name = "VSCD 2", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 0.2, Ki3 = 0.2, Kp4 = 0.2, Ki4 = 0
+VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
+VSC1, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0
+
+Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
+
+RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
+RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
+RLine, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100, R = 5
+RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
+#RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 1

@@ -1,3 +1,5 @@
+from math import floor
+
 from cvxopt import matrix
 from cvxopt import mul, exp
 
@@ -78,6 +80,11 @@ def conj(a):
 def neg(u):
     """Return the negative of binary states u"""
     return 1 - u
+
+
+def mfloor(a):
+    """Return the element-wise floor value of a"""
+    return matrix(list(map(lambda x: floor(x), a)), a.size)
 
 
 def not0(a):

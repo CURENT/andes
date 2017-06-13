@@ -17,7 +17,7 @@ class WindBase(ModelBase):
         self._group = 'Wind'
         self.remove_param('Sn')
         self.remove_param('Vn')
-        self._data.update({'T': 2,
+        self._data.update({'T': 1,
                            'Vwn': 15,
                            'dt': 0.1,
                            'rho': 1.225,
@@ -116,7 +116,7 @@ class Weibull(WindBase):
                 self.s[i] = 2.0
             sample = self.c[i] * weibull(self.s[i], npoint)
             sample[0] = dae.x[self.vw[i]]
-            sample_avg = sum(sample[1:]) / npoint
+            sample_avg = sum(sample[1:]) / (npoint-1)
             k = sample[0] / sample_avg
 
             sample, sample_avg = matrix(sample), matrix(sample_avg)
