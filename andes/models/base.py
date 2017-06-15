@@ -161,11 +161,12 @@ class ModelBase(object):
         if param in self._mandatory:
             self._mandatory.remove(param)
 
-    def copy_param(self, model, src, dest=None, fkey=None, astype=None):
-        """get a copy of the system.model.src as self.dest"""
+    def read_param(self, model, src, fkey=None):
+        """Return the param of the `model` group or class indexed by fkey"""
         if not self.n:
             return
         # input check
+        retval = None
         dev_type = None
         val = list()
         if model in self.system.DevMan.devices:
@@ -176,18 +177,6 @@ class ModelBase(object):
             self.message('Model or group <{0}> does not exist.'.format(model), ERROR)
             return
 
-        # use default destination
-        if not dest:
-            dest = src
-
-        # check destination type
-        if astype and astype not in [list, matrix]:
-            self.message('Destination type <{0}> is not <list> or <matrix>.'.format(astype), ERROR)
-            if hasattr(self, dest):
-                astype = type(self.__dict__[dest])
-            else:
-                astype = None
-
         # do param copy
         if dev_type == 'model':
             # check if fkey exists
@@ -195,7 +184,9 @@ class ModelBase(object):
                 if item not in self.system.__dict__[model].idx:
                     self.message('Model <{}> does not have element <{}>'.format(model, item), ERROR)
                     return
-            self.__dict__[dest] = self.system.__dict__[model]._slice(src, fkey)
+            retval = self.system.__dict__[model]._slice(src, fkey)
+            src_type = type(self.system.__dict__[model].__dict__[src])
+
         elif dev_type == 'group':
             if not fkey:
                 fkey = self.system.DevMan.group.keys()
@@ -209,9 +200,24 @@ class ModelBase(object):
                     return
                 pos = self.system.__dict__[dev_name].int[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
-                if not astype:
-                    astype = type(self.system.__dict__[dev_name].__dict__[src])
-            self.__dict__[dest] = val
+
+            retval = val
+            src_type = type(self.system.__dict__[dev_name].__dict__[src])
+
+        return src_type(retval)
+
+    def copy_param(self, model, src, dest=None, fkey=None, astype=None):
+        """get a copy of the system.model.src as self.dest"""
+        # use default destination
+        if not dest:
+            dest = src
+
+        if astype == None:
+            pass
+        elif astype not in (list, matrix):
+            astype = matrix
+
+        self.__dict__[dest] = self.read_param(model, src, fkey)
 
         # do conversion if needed
         if astype:
