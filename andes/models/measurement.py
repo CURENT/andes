@@ -11,6 +11,7 @@ class BusFreq(ModelBase):
         super(BusFreq, self).__init__(system, name)
         self._group = 'Measurement'
         self._name = 'BusFreq'
+        self.remove_param('Vn')
         self._data.update({'bus': None,
                            'Tf': 0.1,
                            'Tw': 1.0,

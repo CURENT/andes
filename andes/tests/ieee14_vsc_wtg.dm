@@ -207,16 +207,16 @@ Node, idx = 4, name = "Node 4", Vdcn = 100.0
 
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
-VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, Vn = 69, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
-VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
+VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, Vn = 69, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
@@ -229,7 +229,7 @@ VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
 VSC1, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
       Kp3 = 1, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0
 
-Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
+Fault, bus = 5, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
 
 RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
 RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5

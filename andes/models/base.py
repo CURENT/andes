@@ -426,6 +426,7 @@ class ModelBase(object):
         self._interface()
         self._param2matrix()
         self._alloc()
+        self.check_Vn()
 
     def _interface(self):
         """implement bus, node and controller interfaces"""
@@ -763,3 +764,29 @@ class ModelBase(object):
         for idx, bus in enumerate(self.bus):
             if bus == bus_id:
                 return self.idx[idx]
+
+    def check_Vn(self):
+        """Check data consistency of Vn and Vdcn if connected to bus or node"""
+        if not self.n:
+            return
+        if hasattr(self, 'bus') and hasattr(self, 'Vn'):
+            bus_Vn = self.read_param('Bus', src='Vn', fkey=self.bus)
+            for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
+                if Vn != Vn0:
+                    self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'.format(name, Vn, bus, Vn0), WARNING)
+        if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
+            node_Vdcn = self.read_param('Node', src='Vdcn', fkey=self.node)
+            for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
+                if Vdcn != Vdcn0:
+                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, bus, Vdcn0), WARNING)
+    #
+    # def use_model(self, model, dest=None, fkey=None):
+    #     """Create reference of `self.system.__dict__[model]` to self.__dict__[model]"""
+    #     if not dest:
+    #         dest = model
+    #     if model in self.system.DevMan.devices:
+    #         # `model` is a device
+    #         self.__dict__[dest] = self.system.__dict__[model]
+    #     elif model in self.system.DevMan.group.keys():
+    #         # `model` is a group
+    #

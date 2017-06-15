@@ -430,6 +430,8 @@ class VSC1(DCBase):
         self.iTt = (self.Tt) ** -1
 
     def init1(self, dae):
+        self.copy_param('VSC', src='Vn', fkey=self.vsc)
+        self.copy_param('VSC', src='Vdcn', fkey=self.vsc)
         self.copy_param('VSC', src='rsh', fkey=self.vsc)
         self.copy_param('VSC', src='xsh', fkey=self.vsc)
         self.copy_param('VSC', src='PQ', fkey=self.vsc)
@@ -702,6 +704,10 @@ class VSC2(DCBase):
 
     def init1(self, dae):
         self.copy_param('VSC', src='u', dest='u0', fkey=self.vsc)
+
+        self.copy_param('VSC', src='Vn', fkey=self.vsc)
+        self.copy_param('VSC', src='Vdcn', fkey=self.vsc)
+
         self.copy_param('VSC', src='PQ', fkey=self.vsc)
         self.copy_param('VSC', src='PV', fkey=self.vsc)
         self.copy_param('VSC', src='vV', fkey=self.vsc)
