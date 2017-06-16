@@ -2,6 +2,8 @@ import sys
 import importlib
 
 import progressbar
+
+from math import isnan
 from numpy import array
 from time import monotonic as time, sleep
 
@@ -9,6 +11,8 @@ from cvxopt import matrix, spmatrix, sparse, spdiag
 from cvxopt.klu import numeric, symbolic, solve, linsolve
 
 from ..utils.jactools import *
+
+from .eigenanalysis import run as run_eig
 try:
     from ..utils.matlab import write_mat
 except:
@@ -151,6 +155,7 @@ def run(system):
 
         niter = 0
         settings.error = tol + 1
+        t = actual_time
 
         while settings.error > tol and niter < maxit:
             if settings.method == 'fwdeuler':
@@ -181,7 +186,13 @@ def run(system):
                     dae.rebuild = True
 
                 if dae.rebuild:
-                    exec(system.Call.int)
+                    try:
+                        exec(system.Call.int)
+                    except OverflowError:
+                        system.Log.error('Data overflow. Convergence is not likely.')
+                        t = settings.tf + 1
+                        retval = False
+                        break
                 else:
                     exec(system.Call.int_fg)
 
@@ -204,10 +215,6 @@ def run(system):
                     dae.factorize = False
                 inc = -matrix([dae.q, dae.g])
 
-                # Ac = matrix(dae.Ac)
-                # Ac = array(Ac)
-                # write_mat('avr.mat', [Ac, inc], ['Ac', 'inc'])
-
                 try:
                     N = numeric(dae.Ac, F)
                     solve(dae.Ac, F, N, inc)
@@ -228,6 +235,11 @@ def run(system):
                 dae.x += inc[:dae.n]
                 dae.y += inc[dae.n: dae.m+dae.n]
                 settings.error = max(abs(inc))
+                if isnan(settings.error):
+                    t = settings.tf + 1
+                    system.Log.error('Iteration error: NaN detected.')
+                    retval = False
+                    break
                 niter += 1
 
         if niter >= maxit:
@@ -239,13 +251,12 @@ def run(system):
             continue
 
         # update output variables and time step
-        t = actual_time
         step += 1
         system.VarOut.store(t)
         h = time_step(system, True, niter, t)
 
         # plot variables and display iteration status
-        perc = (t - settings.t0) / (settings.tf - settings.t0) * 100
+        perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
         if bar:
             bar.update(perc)
 

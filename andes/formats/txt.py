@@ -62,7 +62,18 @@ def dump_data(text, header, rowname, data, file):
                     pass
                 else:
                     print('Unexpected Data during output, in formats/txt.py')
-                s = '{:{width}s}' + '{:{width}.{precision}g}' * ncol + '\n'
+
+                s = '{:{width}s}'  # for row header
+                for col in out:
+                    if type(col) in (int, float):
+                        s += '{:{width}.{precision}g}'
+                    elif type(col) == str:
+                        if len(col) > width:
+                            col = col[:width]
+                        s += '{:{width}s}'
+                    else:
+                        pass
+                s += '\n'
 
                 fid.write(s.format(str(item), *out, width=width, precision=precision))
         fid.write('\n')

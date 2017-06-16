@@ -1,6 +1,8 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from ..utils.math import *
 
+from blist import blist
+
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (DAE)"""
@@ -256,3 +258,19 @@ class DAE(object):
         for name, val in zip(self.system.VarName.__dict__[key], value):
             str += '{:12s} [{:>12.4f}]\n'.format(name, val)
         return str
+
+    def find_val(self, eq, val):
+        """Return the name of the equation having the given value"""
+        if eq not in ('f', 'g', 'q'):
+            return
+        elif eq in ('f', 'q'):
+            key = 'unamex'
+        elif eq == 'g':
+            key = 'unamey'
+        idx = 0
+        for m, n in zip(self.system.VarName.__dict__[key], self.__dict__[eq]):
+            if n == val:
+                return m, idx
+            idx += 1
+        return
+

@@ -31,15 +31,14 @@ def part_factor(As):
     WN = b * partfact
     partfact = partfact.T
 
-    mu_real = []
-    mu_imag = []
     for item in idx:
         mu_real = mu[item].real
         mu_imag = mu[item].imag
         mu[item] = complex(round(mu_real, 4), round(mu_imag, 4))
         partfact[item, :] /= WN[item]
 
-    return mu, partfact
+    # participation factor:
+    return matrix(mu), matrix(partfact)
 
 
 def dump_results(system, mu, partfact):
@@ -53,15 +52,17 @@ def dump_results(system, mu, partfact):
     data = []
 
     neig = len(mu)
-    npositive = sum(1 for x in mu.real if x > 0)
-    nzero = sum(1 for x in mu.real if x == 0)
-    nnegative = sum(1 for x in mu.real if x < 0)
+    mu_real = mu.real()
+    mu_imag = mu.imag()
+    npositive = sum(1 for x in mu_real if x > 0)
+    nzero = sum(1 for x in mu_real if x == 0)
+    nnegative = sum(1 for x in mu_real if x < 0)
 
     numeral = []
     for idx, item in enumerate(range(neig)):
-        if mu.real[idx] == 0:
+        if mu_real[idx] == 0:
             marker = '*'
-        elif mu.real[idx] > 0:
+        elif mu_real[idx] > 0:
             marker = '**'
         else:
             marker = ''
@@ -81,6 +82,13 @@ def dump_results(system, mu, partfact):
             ufreq[idx] = abs(item.imag/2/pi)
             damping[idx] = - div(item.real, abs(item)) * 100
 
+    # obtain most associated variables
+    var_assoc = []
+    for eig_idx in range(neig):
+        temp_col = partfact[:, eig_idx]
+        name_idx = list(temp_col).index(max(temp_col))
+        var_assoc.append(system.VarName.unamex[name_idx])
+
     pf = []
     for prow in range(neig):
         temp_row = []
@@ -99,9 +107,9 @@ def dump_results(system, mu, partfact):
     data.append([npositive, nzero, nnegative])
 
     text.append('EIGENVALUE DATA\n')
-    header.append(['Real', 'Imag', 'Damped Freq.', 'Frequency', 'Damping [%]'])
+    header.append(['Most Associated', 'Real', 'Imag', 'Damped Freq.', 'Frequency', 'Damping [%]'])
     rowname.append(numeral)
-    data.append([list(mu.real), list(mu.imag), ufreq, freq, damping])
+    data.append([var_assoc, list(mu_real), list(mu_imag), ufreq, freq, damping])
 
     cpb = 7 # columns per block
     nblock = int(ceil(neig / cpb))
