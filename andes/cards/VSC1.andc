@@ -1,0 +1,108 @@
+# ANDES card file, 1.0
+
+name = VSC4
+
+doc_string = Current-source controlled VSC dynamic model
+
+group = AC/DC
+
+data = 
+ vsc: None;
+ Kp1: 0.2; Ki1: 1; Kp2: 0.2; Ki2: 1;
+ Kp3: 0.2; Ki3: 1; Kp4: 0.2; Ki4: 1;
+ Kpdc: 0.2; Kidc: 1;
+ Tt: 0.01; Tdc: 0.01;
+
+params = Kp1; Ki1; Kp2; Ki2; Kp3; Ki3; Kp4; Ki4; Kpdc; Kidc; Tt; Tdc;
+
+mandatory = vsc;
+
+descr = 
+ vsc: static vsc idx;
+ Kp1: Inner current controller proportional gain;
+ Ki1: Innercurrent controller integrator gain;
+ Kp2: Q controller proportional gain;
+ Ki2: Q controller integrator gain;
+ Kp3: ac voltage controller proportional gain;
+ Ki3: ac voltage controller integrator gain;
+ Kp4: P controller proportional gain;
+ Ki4: P controller integrator gain;
+ Kpdc: dc voltage controller proportional gain;
+ Kidc: dc voltage controller integrator gain;
+ Tt: ac voltage measurement delay time constant;
+ Tdc: dc voltage time constant;
+
+algebs = vd; vq; p; q; Idref; Iqref; udref; uqref; Idcy;
+
+states = Id; Iq; ud; uq; Md; Mq; Nd; Nq; Idcx;
+
+interfaces = a; v; v1; v2
+
+ctrl = 
+ rsh: VSC, rsh, vsc, c;
+ xsh: VSC, xsh, vsc, c;
+ PQ: VSC, PQ, vsc, c;
+ PV: VSC, PV, vsc, c;
+ vQ: VSC, vQ, vsc, c;
+ vV: VSC, vV, vsc, c;
+ a: VSC, a, vsc, y;
+ v: VSC, v, vsc, y;
+ v1: VSC, v1, vsc, y;
+ v2: VSC, v2, vsc, y;
+ pref0: VSC, psh, vsc, c;
+ qref0: VSC, qsh, vsc, c;
+ 
+service_eq = 
+ iTt: 1/Tt; 
+ iTdc: 1/Tdc; 
+ iLsh: 1/xsh;
+ adq: a;
+ vref0: (PV + vV) * v;
+ vdcref0: (vV + vQ) * (v1 - v2);
+
+init1_eq = 
+ vd: v;
+ vq: 0;
+ Idref: pref0 / vd;
+ Iqref: qref0 / vd;
+ Id: Idref;
+ Iq: Iqref;
+ udref: vd + xsh*Iq + rsh*Id;
+ uqref: vq - xsh*Id + rsh*Iq;
+ ud: udref;
+ uq: uqref;
+ Idcy: (PQ + PV) * ((-ud*Id - Iq*uq) /(v1-v2));
+ Idcx: (vV+ vQ) * ((-ud*Id - Iq*uq) /(v1-v2));
+ Md: rsh * Id;
+ Mq: rsh * Iq;
+ Nd: (vV + vQ) * Idcx;
+ Nq: (PV + vV) * Iq;
+ p: vd*Id + vq*Iq;
+ q: vd*Iq - vq*Id;
+
+
+algeb_eq = 
+ v*cos(adq - a) - vd; 
+ v*sin(adq - a) - vq;
+ vd*Id + vq*Iq - p;
+ vd*Iq - vq*Id - q;
+ (PQ + PV)*(pref0/vd + Kp3*(pref0 - p) + Nd) + (vQ + vV) * (-Idcx*(v1 - v2) - (uq*Iq))/ud - Idref;
+ (PQ + vQ)*(qref0/vd + Kp4*(qref0 - q)) + (PV + vV)*(Kp4 * (vref0 - vd)) + Nq - Iqref;
+ vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref;
+ vq - xsh*Idref + Kp1*(Iqref - Iq) + Mq - uqref;
+ (PQ + PV)* (-ud*Id - uq*Iq)/(v1 - v2) - Idcy;
+ -p;
+ -q;
+ -(PQ + PV)*Idcy - (vV + vQ)*Idcx;
+ +(PQ + PV)*Idcy + (vV + vQ)*Idcx;
+
+diff_eq = 
+ -rsh*iLsh*Id - Iq + iLsh*(ud - vd);
+ -rsh*iLsh*Iq + Id + iLsh*(uq - vq);
+ iTt*(udref - ud);
+ iTt*(uqref - uq);
+ Ki1*(Idref - Id);
+ Ki1*(Iqref - Iq);
+ (PQ + PV)*(Ki3*(pref0 - p)) + (vQ + vV)*(Kidc*(vdcref0 - v1));
+ (PQ + vQ)*(Ki4*(qref0 - q)) + (PV + vV)*(Ki4*(vref0 - vd));
+ (vV + vQ)*iTdc*(-Idcx - Kpdc*(vdcref0 - v1) - Nd);
