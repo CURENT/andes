@@ -1,5 +1,7 @@
 import sys
 
+import pprint
+
 from sympy import Symbol, diff, sin, cos, exp, Integer
 from andes.main import elapsed
 from andes.utils.math import to_number
@@ -465,7 +467,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     # bulk update or extend of dict and list
     param_assign = space8 + 'self._{} = {}'
     list_extend = space8 + 'self._{}.extend({})'
-    dict_update = space8 + 'self._{}.update({})'
+    dict_update = space8 + 'self._{}.update(\n{})'
 
     out_init = list()  # def __init__ call strings
     out_init.append('from cvxopt import matrix, spmatrix')
@@ -518,7 +520,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     for key in sorted(meta_dict_upd.keys()):
         val = meta_dict_upd[key]
         if val:
-            out_init.append(dict_update.format(key, val))
+            out_init.append(dict_update.format(key, pprint.pformat(val, indent=12)))
 
     out_init.append(space8 + 'self.calls.update({})'.format(calls))
 
