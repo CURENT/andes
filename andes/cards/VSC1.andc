@@ -21,20 +21,16 @@ descr =
  vsc: static vsc idx;
  Kp1: Inner current controller proportional gain;
  Ki1: Innercurrent controller integrator gain;
- Kp2: Q controller proportional gain;
- Ki2: Q controller integrator gain;
- Kp3: ac voltage controller proportional gain;
- Ki3: ac voltage controller integrator gain;
- Kp4: P controller proportional gain;
- Ki4: P controller integrator gain;
- Kpdc: dc voltage controller proportional gain;
- Kidc: dc voltage controller integrator gain;
+ Kp2: P or Vdc controller proportional gain;
+ Ki2: P or Vdc voltage controller integrator gain;
+ Kp3: Q or V controller proportional gain;
+ Ki3: Q or V controller integrator gain;
  Tt: ac voltage measurement delay time constant;
  Tdc: dc voltage time constant;
 
-algebs = vd; vq; p; q; Idref; Iqref; udref; uqref; Idcy;
+algebs = ref1; ref2; adq; vd; vq; p; q; Idref; Iqref; Idcy;
 
-states = Id; Iq; ud; uq; Md; Mq; Nd; Nq; Idcx;
+states = Id; Iq; ud; uq; Md; Mq;                                                                                   Nd; Nq; Idcx;
 
 interfaces = a; v; v1; v2
 
@@ -56,9 +52,10 @@ service_eq =
  iTt: 1/Tt; 
  iTdc: 1/Tdc; 
  iLsh: 1/xsh;
- adq: a;
  vref0: (PV + vV) * v;
  vdcref0: (vV + vQ) * (v1 - v2);
+ ref10: (vV + vQ) * (v1 - v2) + (PQ + PV) * pref0
+ ref20: (PV + vV) * v + (PQ+ vQ) * qref0
 
 init1_eq = 
  vd: v;
@@ -67,10 +64,8 @@ init1_eq =
  Iqref: qref0 / vd;
  Id: Idref;
  Iq: Iqref;
- udref: vd + xsh*Iq + rsh*Id;
- uqref: vq - xsh*Id + rsh*Iq;
- ud: udref;
- uq: uqref;
+ ud: vd + xsh*Iq + rsh*Id;
+ uq: vq - xsh*Id + rsh*Iq;
  Idcy: (PQ + PV) * ((-ud*Id - Iq*uq) /(v1-v2));
  Idcx: (vV+ vQ) * ((-ud*Id - Iq*uq) /(v1-v2));
  Md: rsh * Id;
@@ -79,17 +74,22 @@ init1_eq =
  Nq: (PV + vV) * Iq;
  p: vd*Id + vq*Iq;
  q: vd*Iq - vq*Id;
+ ref1: ref10;
+ ref2: ref20
+ adq: a;
 
-
-algeb_eq = 
+algeb_eq =
+ ref10 - ref1;
+ ref20 - ref2;
+ adq - a;
  v*cos(adq - a) - vd; 
  v*sin(adq - a) - vq;
  vd*Id + vq*Iq - p;
  vd*Iq - vq*Id - q;
- (PQ + PV)*(pref0/vd + Kp3*(pref0 - p) + Nd) + (vQ + vV) * (-Idcx*(v1 - v2) - (uq*Iq))/ud - Idref;
- (PQ + vQ)*(qref0/vd + Kp4*(qref0 - q)) + (PV + vV)*(Kp4 * (vref0 - vd)) + Nq - Iqref;
- vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref;
- vq - xsh*Idref + Kp1*(Iqref - Iq) + Mq - uqref;
+ (PQ + PV)*(ref1/vd + Kp2*(ref1 - p) + Nd) + (vQ + vV) * (-Idcx*(v1 - v2) - (uq*Iq))/ud - Idref;
+ (PQ + vQ)*(ref2/vd + Kp3*(ref2 - q)) + (PV + vV)*(Kp3 * (ref2 - vd)) + Nq - Iqref;
+# vd + xsh*Iqref + Kp1*(Idref - Id) + Md - udref;
+# vq - xsh*Idref + Kp1*(Iqref - Iq) + Mq - uqref;
  (PQ + PV)* (-ud*Id - uq*Iq)/(v1 - v2) - Idcy;
  -p;
  -q;
@@ -99,10 +99,10 @@ algeb_eq =
 diff_eq = 
  -rsh*iLsh*Id - Iq + iLsh*(ud - vd);
  -rsh*iLsh*Iq + Id + iLsh*(uq - vq);
- iTt*(udref - ud);
- iTt*(uqref - uq);
+ iTt*((vd + xsh*Iqref + Kp1*(Idref - Id) + Md) - ud);
+ iTt*((vq - xsh*Idref + Kp1*(Iqref - Iq) + Mq) - uq);
  Ki1*(Idref - Id);
  Ki1*(Iqref - Iq);
- (PQ + PV)*(Ki3*(pref0 - p)) + (vQ + vV)*(Kidc*(vdcref0 - v1));
- (PQ + vQ)*(Ki4*(qref0 - q)) + (PV + vV)*(Ki4*(vref0 - vd));
- (vV + vQ)*iTdc*(-Idcx - Kpdc*(vdcref0 - v1) - Nd);
+ (PQ + PV)*(Ki2*(ref1 - p)) + (vQ + vV)*(Ki2*(ref1 - v1));
+ (PQ + vQ)*(Ki3*(ref2 - q)) + (PV + vV)*(Ki3*(ref2 - vd));
+ (vV + vQ)*iTdc*(-Idcx - Kp2*(ref1 - v1) - Nd);
