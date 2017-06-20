@@ -30,7 +30,7 @@ descr =
 
 algebs = ref1; ref2; adq; vd; vq; p; q; Idref; Iqref; Idcy;
 
-states = Id; Iq; ud; uq; Md; Mq;                                                                                   Nd; Nq; Idcx;
+states = Id; Iq; ud; uq; Md; Mq; Nd; Nq; Idcx;
 
 interfaces = a; v; v1; v2
 
@@ -105,4 +105,4 @@ diff_eq =
  Ki1*(Iqref - Iq);
  (PQ + PV)*(Ki2*(ref1 - p)) + (vQ + vV)*(Ki2*(ref1 - v1));
  (PQ + vQ)*(Ki3*(ref2 - q)) + (PV + vV)*(Ki3*(ref2 - vd));
- (vV + vQ)*iTdc*(-Idcx - Kp2*(ref1 - v1) - Nd);
+ (vV + vQ)*iTdc*(Idcx - Kp2*(ref1 - v1) - Nd);
