@@ -248,7 +248,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
         outfile = name + '_' + str(count) + '.png'
 
         try:
-            fig.savefig(outfile)
+            fig.savefig(outfile, dpi=300)
             print('Figure saved to file {}'.format(outfile))
         except:
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
