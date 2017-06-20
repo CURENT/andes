@@ -132,7 +132,7 @@ PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
 PV, Vn = 69.0, bus = 2, busr = 2, idx = 2, name = "PV Bus 2",
-    pg = 0.4, pmax = 1.0, pmin = 0, qmax = 0.4, qmin = -0.4,
+    pg = 0.1, pmax = 1.0, pmin = 0, qmax = 0.4, qmin = -0.4,
     v0 = 1.045
 PV, Vn = 69.0, bus = 3, busr = 3, idx = 3, name = "PV Bus 3",
     pg = 0, pmax = 1.0, pmin = 0, qmax = 0.4, v0 = 1.01
@@ -195,7 +195,7 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
 
 PSS2, avr = 1, Ic = 1
 
-WTG3, bus = 2, gen = 2, wind = 1, Vn = 69, Sn = 50, qmax = 0.7, qmin = -0.7
+WTG3, bus = 2, gen = 2, wind = 1, Vn = 69, Sn = 15, qmax = 0.7, qmin = -0.7
 
 Weibull, idx = 1
 
@@ -211,23 +211,23 @@ VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, Vn = 69, name = "VSC 1", rsh = 0.00
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, Vn = 69, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.12, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
 VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSCD 1", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 2, name = "VSCD 2", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 0.2, Ki3 = 0.2, Kp4 = 0.2, Ki4 = 0
-VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
-VSC1, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0
+VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.5, Ki1 = 4, Kp2 = 0.5, Ki2 = 4,
+      Kp3 = 1, Ki3 = 4
+VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 1,
+      Kp3 = 0.2, Ki3 = 0.01
+VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 1
+VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
+      Kp3 = 1, Ki3 = 0.1
 
 Fault, bus = 5, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
 
