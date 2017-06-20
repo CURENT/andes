@@ -44,7 +44,7 @@ class DevMan(object):
         names = []
         for dev in order:
             if dev in mapping.keys():
-                all_dev = list(mapping[dev].keys())
+                all_dev = list(sorted(mapping[dev].keys()))
                 for item in all_dev:
                     if item in self.devices:
                         idx.append(self.devices.index(item))
