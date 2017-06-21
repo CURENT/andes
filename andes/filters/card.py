@@ -36,6 +36,8 @@ def read(file, system):
             continue
         if line.startswith('#'):
             continue
+        elif '#' in line:
+            line = line.split('#')[0]
         if '=' in line:  # defining a field
             key, val = line.split('=')
             key, val = key.strip(), val.strip()
