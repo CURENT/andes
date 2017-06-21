@@ -193,7 +193,7 @@ class WTG3(ModelBase):
             while abs(mis) > self.system.TDS.tol:
                 if iter > 50:
                     self.message(
-                        'Initialization of wind <> failed. Try increasing the nominal wind speed.'.format(self.wind[i]))
+                        'Initialization of wind <{}> failed. Try increasing the nominal wind speed.'.format(self.wind[i]))
                     retval = False
                     break
 
