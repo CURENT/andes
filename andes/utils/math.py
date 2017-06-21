@@ -1,5 +1,8 @@
 from math import floor
 
+from numpy import sign as sgn
+from numpy import array
+
 from cvxopt import matrix
 from cvxopt import mul, exp
 
@@ -100,6 +103,11 @@ def zeros(m, n):
 def ones(m, n):
     """Return a m-by-n one-value matrix"""
     return matrix(1.0, (m, n), 'd')
+
+
+def sign(a):
+    """Return the sign of a in (1, -1, 0)"""
+    return matrix(sgn(array(a)))
 
 
 def sort(m, reverse=False):
