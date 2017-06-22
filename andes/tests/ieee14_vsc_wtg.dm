@@ -220,14 +220,14 @@ VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.5, Ki1 = 4, Kp2 = 0.5, Ki2 = 4,
-      Kp3 = 1, Ki3 = 4
-VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 1,
-      Kp3 = 0.2, Ki3 = 0.01
-VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 1
-VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 0.1
+VSC1, vsc = 1, name = "VSC 1", Kp1 = 1, Ki1 = 1, Kp2 = 2, Ki2 = 5,
+      Kp3 = 1, Ki3 = 0.5
+VSC2A, vsc = 2, name = "VSC 2", Kp1 =0.5, Ki1 = 0.2, Kp2 = 0.5, Ki2 = 0,
+      Kp3 = 0.2, Ki3 = 0, D = 3, M = 3
+VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
+      Kp3 = 1, Ki3 = 0.2
+VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
+      Kp3 = 1, Ki3 = 0.2
 
 Fault, bus = 5, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
 

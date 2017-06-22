@@ -43,8 +43,8 @@ non_jits = {'bus': {'Bus': 'Bus'},
 
 jits = {'vsc': {'VSC': 'VSC',
                 'VSC1': 'VSC1',
-                'VSC2': 'VSC2',
-                'VSC3': 'VSC3'
+                'VSC2A': 'VSC2A',
+                'VSC2B': 'VSC2B'
                 },
         'windturbine': {'WTG3': 'WTG3',
                         },

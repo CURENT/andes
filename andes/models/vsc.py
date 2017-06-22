@@ -5,6 +5,7 @@ from ..consts import *
 
 from .base import ModelBase
 
+
 class VSC(DCBase):
     """VSC model for power flow study"""
 
@@ -675,10 +676,6 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1):
         self._inst_meta()
 
 
-
-
-
-
 class VSC2(DCBase):
     """The voltage-source type power-synchronization controlled VSC"""
 
@@ -957,168 +954,179 @@ class VSC2(DCBase):
         dae.add_jac(Fy0, - self.iM, self.xw, self.p)
 
 
-class VSC3(DCBase):
-    """Simplified voltage-source type power synchronizing control VSC """
+class VSC2_Voltage1(object):
+    """Outer voltage controller for voltage-source controlled VSC using two PIs"""
 
     def __init__(self, system, name):
-        super(VSC3, self).__init__(system, name)
-        self._group = 'AC/DC'
-        self._name = 'VSC3'
-        self._data.update({'vsc': None,
-                           'Kp1': 0.2,
-                           'Ki1': 1,
+        self._data.update({'Ki2': 1,
+                           'Ki3': 1,
                            'Kp2': 0.2,
-                           'Ki2': 1,
-                           'KQ': 0.05,
-                           'M': 6,
-                           'D': 3,
-                           'Tt': 0.01,
-                           'wref0': 1,
+                           'Kp3': 0.2,
+                           'KQ': 0.1
                            })
-
-        self._params.extend(['vsc', 'Kp1', 'Ki1', 'Kp2', 'Ki2', 'KQ', 'M', 'D', 'Tt', 'wref0'])
-        self._descr.update({'Kp1': 'proportional gain of Id',
-                            'Ki1': 'integral gain of Id',
-                            'Kp2': 'proportional gain of Iq',
-                            'Ki2': 'integral gain of Iq',
-                            'KQ': 'reactive power droop',
-                            'M': 'startup time constant of emulated mass',
-                            'D': 'emulated damping',
-                            'Tt': 'ac voltage measurement delay',
-                            'wref0': 'frequency reference',
-                            'vsc': 'static vsc idx',
+        self._descr.update({'Ki2': 'vd -> v controller integrator gain',
+                            'Ki3': 'vq -> 0 controller integrator gain',
+                            'Kp2': 'vd -> v controller proportional gain',
+                            'Kp3': 'vq -> 0 controller proportional gain',
+                            'KQ': 'reactive power droop on voltage',
                             })
-        self._algebs.extend(['wref', 'vref', 'p', 'q', 'vd', 'vq',
-                             'Idref', 'Iqref', 'udref', 'uqref',
-                             ])
-        self._states.extend(['Id', 'Iq', 'ud', 'uq',
-                             'Md', 'Mq', 'Nd', 'Nq',
-                             'adq', 'xw',
-                             ])
-        self._fnamey.extend(['\\omega^{ref}', 'V^{ref}', 'P', 'Q', 'U_d^s', 'U_q^s',
-                             'I_d^{ref}', 'I_q^{ref}', 'U_d^{ref}', 'U_q^{ref}',
-                             ])
-        self._fnamex.extend(['I_d', 'I_q', 'u_c^d', 'u_^q', '\\theta_{dq}',
-                             'M_d', 'M_q', 'Nd', 'Nq', 'x_\\omega',
-                             ])
-        self._zeros.extend(['Tt'])
-        self._service.extend(['wn', 'iTt', 'iLsh', ])
-        self.calls.update({'init1': True, 'gcall': True,
-                           'fcall': True, 'jac0': True,
-                           'gycall': True, 'fxcall': True,
+        self._params.extend(['Ki2', 'Ki3', 'Kp2', 'Kp3', 'KQ'])
+
+        self._algebs.extend(['ref2', 'Idref', 'Iqref'])
+        self._fnamey.extend(['ref_2', 'I_d^{ref}', 'I_q^{ref}'])
+
+        self._states.extend(['Nd', 'Nq'])
+        self._fnamex.extend(['N_d', 'N_q'])
+
+    def voltage_init1(self, dae):
+        dae.y[self.Idref] = mul(self.pref0, div(1, dae.y[self.vd]))
+        dae.y[self.Iqref] = mul(self.qref0, div(1, dae.y[self.vd]))
+        dae.x[self.Nd] = dae.y[self.Idref]
+        dae.x[self.Nq] = dae.y[self.Iqref]
+        dae.y[self.ref2] = dae.y[self.v]
+
+    def voltage_gcall(self, dae):
+        dae.g[self.ref2] = self.vref0 - dae.y[self.ref2] + mul(self.KQ, self.qref0 - dae.y[self.q])
+        dae.g[self.Idref] = dae.x[self.Nd] - dae.y[self.Idref] + mul(self.Kp2, dae.y[self.ref2] - dae.y[self.vd])
+        dae.g[self.Iqref] = dae.x[self.Nq] - dae.y[self.Iqref] - mul(self.Kp3, dae.y[self.vq])
+
+    def voltage_fcall(self, dae):
+        dae.f[self.Nd] = mul(self.Ki2, self.u, dae.y[self.ref2] - dae.y[self.vd])
+        dae.f[self.Nq] = - mul(self.Ki3, self.u, dae.y[self.vq])
+
+    def voltage_gycall(self, dae):
+        pass
+
+    def voltage_fxcall(self, dae):
+        pass
+
+    def voltage_jac0(self, dae):
+        dae.add_jac(Gy0, -self.u - 1e-6, self.ref2, self.ref2)
+        dae.add_jac(Gy0, - self.KQ, self.ref2, self.q)
+        dae.add_jac(Gy0, self.Kp2, self.Idref, self.ref2)
+        dae.add_jac(Gy0, - self.Kp2, self.Idref, self.vd)
+        dae.add_jac(Gy0, -self.u - 1e-6, self.Idref, self.Idref)
+        dae.add_jac(Gy0, -self.u - 1e-6, self.Iqref, self.Iqref)
+        dae.add_jac(Gy0, - self.Kp3, self.Iqref, self.vq)
+
+        dae.add_jac(Gx0, 1, self.Idref, self.Nd)
+        dae.add_jac(Gx0, 1, self.Iqref, self.Nq)
+
+        dae.add_jac(Fy0, mul(self.Ki2, self.u), self.Nd, self.ref2)
+        dae.add_jac(Fy0, - mul(self.Ki2, self.u), self.Nd, self.vd)
+        dae.add_jac(Fy0, - mul(self.Ki3, self.u), self.Nq, self.vq)
+
+
+class VSC2_Speed1(object):
+    """Active power droop speed control"""
+
+    def __init__(self, system, name):
+        self._data.update({'D': 0.5,
+                           'M': 3,
                            })
+        self._descr.update({'D': 'Active power droop for speed reference',
+                            })
+        self._params.extend(['D'])
+        self._algebs.extend(['ref1'])
+        self._fnamey.extend(['ref_1'])
+
+        self._states.extend(['adq'])
+        self._fnamex.extend(['\\theta_{dq}'])
+
+
+    def speed_init1(self, dae):
+        dae.x[self.adq] = mul(dae.y[self.a], self.u)
+        dae.y[self.ref1] = self.wref0
+
+    def speed_gcall(self, dae):
+        dae.g[self.ref1] = self.wref0 - dae.y[self.ref1] + mul(self.D, self.pref0 - dae.y[self.p])
+
+    def speed_fcall(self, dae):
+        dae.f[self.adq] = mul(self.u, dae.y[self.ref1] - self.wref0)
+
+    def speed_fxcall(self, dae):
+        pass
+
+    def speed_gycall(self, dae):
+        pass
+
+    def speed_jac0(self, dae):
+        dae.add_jac(Gy0, -self.u - 1e-6, self.ref1, self.ref1)
+        dae.add_jac(Gy0, - self.D, self.ref1, self.p)
+        dae.add_jac(Fy0, self.u, self.adq, self.ref1)
+
+
+class VSC2_Speed2(object):
+    """Inertia emulation speed control"""
+
+    def __init__(self, system, name):
+        self._data.update({'D': 0.5,
+                           'M': 3,
+                           })
+        self._descr.update({'D': 'Emulated damping',
+                            'M': 'Emulated start-up time constant',
+                            })
+        self._params.extend(['M', 'D'])
+        self._algebs.extend(['ref1'])
+        self._fnamey.extend(['ref_1'])
+
+        self._states.extend(['adq', 'xw'])
+        self._fnamex.extend(['\\theta_{dq}', 'x_\\omega'])
+
+        self._service.extend(['iM'])
+
+    def speed_servcall(self, dae):
+        self.iM = mul(self.u, div(1, self.M))
+
+    def speed_init1(self, dae):
+        self.speed_servcall(dae)
+        dae.x[self.adq] = mul(dae.y[self.a], self.u)
+        dae.y[self.ref1] = self.wref0
+
+    def speed_gcall(self, dae):
+        dae.g[self.ref1] = self.wref0 + dae.x[self.xw] - dae.y[self.ref1]
+
+    def speed_fcall(self, dae):
+        dae.f[self.adq] = mul(self.u, dae.y[self.ref1] - self.wref0)
+        dae.f[self.xw] = mul(self.iM, self.u, self.pref0 - dae.y[self.p] - mul(self.D, dae.x[self.xw]))
+
+    def speed_fxcall(self, dae):
+        pass
+
+    def speed_gycall(self, dae):
+        pass
+
+    def speed_jac0(self, dae):
+        dae.add_jac(Gy0, -self.u - 1e-6, self.ref1, self.ref1)
+        dae.add_jac(Gx0, self.u, self.ref1, self.xw)
+        dae.add_jac(Fy0, self.u, self.adq, self.ref1)
+        dae.add_jac(Fx0, - mul(self.D, self.iM, self.u), self.xw, self.xw)
+        dae.add_jac(Fy0, - mul(self.iM, self.u), self.xw, self.p)
+
+
+class VSC2_Common(DCBase):
+    """Common equations for voltage-source controlled VSC"""
+
+    def __init__(self, system, name):
+        super(VSC2_Common, self).__init__(system, name)
+        self._group = 'AC/DC'
+        self._data.update({'vsc': None,
+                           })
+        self._descr.update({'vsc': 'static vsc idx'
+                            })
+        self._params.extend(['vsc'])
         self._mandatory.extend(['vsc'])
+
+        self._algebs.extend(['p', 'q', 'vd', 'vq'])
+        self._fnamey.extend(['P', 'Q', 'v_d', 'v_q'])
+        self._service.extend(['qref0', 'vref0', 'wref0', 'pref0'])
+
+        self.calls.update({'gcall': True, 'jac0': True, 'gycall': True, 'init1': True, 'fxcall': True, 'fcall': True})
         self._mandatory.remove('node1')
         self._mandatory.remove('node2')
         self._mandatory.remove('Vdcn')
         self._ac = {}
         self._dc = {}
-        self._inst_meta()
-
-    def setup(self):
-        super(VSC3, self).setup()
-
-    def init1(self, dae):
-        self.copy_param('VSC', src='u', dest='u0', fkey=self.vsc)
-        self.copy_param('VSC', src='rsh', fkey=self.vsc)
-        self.copy_param('VSC', src='xsh', fkey=self.vsc)
-        self.copy_param('VSC', src='ash', fkey=self.vsc)
-        self.copy_param('VSC', src='vsh', fkey=self.vsc)
-        self.copy_param('VSC', src='psh', dest='pref0', fkey=self.vsc)
-        self.copy_param('VSC', src='qsh', dest='qref0', fkey=self.vsc)
-
-        self.copy_param('VSC', src='pdc', fkey=self.vsc)
-        self.copy_param('VSC', src='bus', fkey=self.vsc)
-        self.copy_param('VSC', src='a', fkey=self.vsc)
-        self.copy_param('VSC', src='v', fkey=self.vsc)
-        self.copy_param('VSC', src='v1', fkey=self.vsc)
-        self.copy_param('VSC', src='v2', fkey=self.vsc)
-
-        self.u = aandb(self.u, self.u0)
-
-        self.pref0 = dae.y[self.pref0]
-        self.qref0 = dae.y[self.qref0]
-        self.vref0 = dae.y[self.v]
-        self.vdcref0 = dae.y[self.v1] - dae.y[self.v2]
-
-        self.iLsh = div(1.0, self.xsh)
-        self.iTt = div(1.0, self.Tt)
-        self.iM = div(self.u, self.M)
-        self.iD = div(self.u, self.D)
-
-        # start initialization
-        dae.x[self.adq] = dae.y[self.a]
-        dae.y[self.vd] = dae.y[self.v]
-        dae.y[self.vq] = zeros(self.n, 1)
-
-        Id = div(self.pref0, dae.y[self.vd])
-        Iq = div(self.qref0, dae.y[self.vd])
-        dae.y[self.Idref] = Id
-        dae.y[self.Iqref] = Iq
-        dae.x[self.Md] = mul(self.rsh, Id)
-        dae.x[self.Mq] = mul(self.rsh, Iq)
-        dae.x[self.Id] = Id
-        dae.x[self.Iq] = Iq
-
-        ud = dae.y[self.vd] + mul(self.xsh, Iq) + mul(self.rsh, Id)
-        uq = dae.y[self.vq] - mul(self.xsh, Id) + mul(self.rsh, Iq)
-
-        dae.y[self.udref] = ud
-        dae.y[self.uqref] = uq
-        dae.x[self.ud] = ud
-        dae.x[self.uq] = uq
-
-        dae.x[self.Nd] = Id
-        dae.x[self.Nq] = Iq
-
-        dae.y[self.p] = self.pref0
-        dae.y[self.q] = self.qref0
-        dae.y[self.vref] = self.vref0 - mul(self.KQ, self.qref0 - dae.y[self.q])
-        dae.y[self.wref] = self.wref0
-
-        for idx in self.vsc:
-            self.system.VSC.disable(idx)
-
-
-class VSC4(ModelBase):
-    """Voltage-source controlled VSC"""
-    def __init__(self, system, name):
-        super().__init__(system, name)
-        self._group = 'AC/DC'
-        self._name = 'VSC4'
-        self._algebs.extend(['ref1', 'ref2', 'p', 'q', 'vd', 'vq', 'Idref', 'Iqref'])
-        self._fnamex.extend(['I_d', 'I_q', 'u_d', 'u_q', 'M_d', 'M_q', 'N_d', 'N_q', '\\theta_{dq}', 'x_\\omega'])
-        self._fnamey.extend(['ref_1', 'ref_2', 'P', 'Q', 'v_d', 'v_q', 'I_d^{ref}', 'I_q^{ref}'])
-        self._mandatory.extend(['vsc'])
-        self._params.extend(['Kp1', 'Ki1', 'Kp2', 'Ki2', 'Kp3', 'Ki3', 'KQ', 'Tt', 'vsc', 'M', 'D'])
-        self._service.extend(['vref0', 'wref0', 'iTt', 'pref0', 'u', 'iM', 'iLsh', 'qref0'])
-        self._states.extend(['Id', 'Iq', 'ud', 'uq', 'Md', 'Mq', 'Nd', 'Nq', 'adq', 'xw'])
-        self._data.update(
-{           'D': 2,
-            'KQ': 0,
-            'Ki1': 1,
-            'Ki2': 1,
-            'Ki3': 1,
-            'Kp1': 0.2,
-            'Kp2': 0.2,
-            'Kp3': 0.2,
-            'M': 3,
-            'Tt': 0.01,
-            'vsc': None})
-        self._descr.update(
-{           'D': 'Emulated damping',
-            'KQ': 'reactive power droop on voltage',
-            'Ki1': 'Innercurrent controller integrator gain',
-            'Ki2': 'vd -> v controller integrator gain',
-            'Ki3': 'vq -> 0 controller integrator gain',
-            'Kp1': 'Inner current controller proportional gain',
-            'Kp2': 'vd -> v controller proportional gain',
-            'Kp3': 'vq -> 0 controller proportional gain',
-            'M': 'Emulated startup time constant',
-            'Tt': 'ac voltage measurement delay time constant',
-            'vsc': 'static vsc idx'})
-        self.calls.update({'init1': True, 'gcall': True, 'gycall': True, 'fcall': True, 'jac0': True, 'fxcall': True})
-        self._inst_meta()
 
     def servcall(self, dae):
         self.copy_param('VSC', 'u', 'uvsc', self.vsc)
@@ -1135,9 +1143,6 @@ class VSC4(ModelBase):
         self.copy_param('VSC', 'psh', 'psh', self.vsc)
         self.copy_param('VSC', 'qsh', 'qsh', self.vsc)
         self.u = mul(self.u, self.uvsc)
-        self.iM = mul(self.u, div(1, self.M))
-        self.iTt = mul(self.u, div(1, self.Tt))
-        self.iLsh = mul(self.u, div(1, self.xsh))
         self.vref0 = mul(self.u, dae.y[self.v])
         self.wref0 = self.u
         self.pref0 = mul(dae.y[self.psh], self.u)
@@ -1147,67 +1152,59 @@ class VSC4(ModelBase):
         self.servcall(dae)
         dae.y[self.vd] = mul(self.u, dae.y[self.v])
         dae.y[self.vq] = 0
-        dae.x[self.adq] = mul(dae.y[self.a], self.u)
-        dae.y[self.Idref] = mul(self.u, div(self.pref0, not0(dae.y[self.vd])))
-        dae.y[self.Iqref] = mul(self.u, div(self.qref0, not0(dae.y[self.vd])))
-        dae.x[self.Id] = mul(self.u, div(self.pref0, not0(dae.y[self.vd])))
-        dae.x[self.Iq] = mul(self.u, div(self.qref0, not0(dae.y[self.vd])))
-        dae.x[self.ud] = dae.y[self.vd] + mul(dae.x[self.Id], self.rsh) + mul(dae.x[self.Iq], self.xsh)
-        dae.x[self.uq] = dae.y[self.vq] + mul(dae.x[self.Iq], self.rsh) - mul(dae.x[self.Id], self.xsh)
-        dae.x[self.Md] = mul(dae.x[self.Id], self.rsh)
-        dae.x[self.Mq] = mul(dae.x[self.Iq], self.rsh)
-        dae.x[self.Nd] = dae.x[self.Id]
-        dae.x[self.Nq] = dae.x[self.Iq]
         dae.y[self.p] = mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
         dae.y[self.q] = mul(dae.x[self.Iq], dae.y[self.vd]) - mul(dae.x[self.Id], dae.y[self.vq])
-        dae.y[self.ref1] = self.wref0
-        dae.y[self.ref2] = dae.y[self.vd]
+
+        self.speed_init1(dae)
+        self.voltage_init1(dae)
+        self.current_init1(dae)
+
         for idx in self.vsc:
             self.system.VSC.disable(idx)
 
     def gcall(self, dae):
-        dae.g[self.ref1] = self.wref0 + dae.x[self.xw] - dae.y[self.ref1]
-        dae.g[self.ref2] = self.vref0 - dae.y[self.ref2] + mul(self.KQ, self.qref0 - dae.y[self.q])
+        self.speed_gcall(dae)
+        self.voltage_gcall(dae)
+        self.current_gcall(dae)
         dae.g[self.p] = -dae.y[self.p] + mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
         dae.g[self.q] = -dae.y[self.q] + mul(dae.x[self.Iq], dae.y[self.vd]) - mul(dae.x[self.Id], dae.y[self.vq])
         dae.g[self.vd] = -dae.y[self.vd] + mul(self.u, dae.y[self.v], cos(dae.y[self.a] - dae.x[self.adq]))
         dae.g[self.vq] = -dae.y[self.vq] - mul(self.u, dae.y[self.v], sin(dae.y[self.a] - dae.x[self.adq]))
-        dae.g[self.Idref] = dae.x[self.Nd] - dae.y[self.Idref] + mul(self.Kp2, dae.y[self.ref2] - dae.y[self.vd])
-        dae.g[self.Iqref] = dae.x[self.Nq] - dae.y[self.Iqref] - mul(self.Kp3, dae.y[self.vq])
         dae.g += spmatrix(- mul(dae.y[self.p], self.u), self.a, [0]*self.n, (dae.m, 1), 'd')
         dae.g += spmatrix(- mul(dae.y[self.q], self.u), self.v, [0]*self.n, (dae.m, 1), 'd')
         dae.g += spmatrix(mul(self.u, div(1, dae.y[self.v1] - dae.y[self.v2]), mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1, [0]*self.n, (dae.m, 1), 'd')
         dae.g += spmatrix(- mul(self.u, div(1, dae.y[self.v1] - dae.y[self.v2]), mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v2, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        dae.f[self.Id] = mul(self.u, -dae.x[self.Iq] + mul(self.iLsh, dae.x[self.ud] - dae.y[self.vd]) - mul(dae.x[self.Id], self.iLsh, self.rsh))
-        dae.f[self.Iq] = mul(self.u, dae.x[self.Id] + mul(self.iLsh, dae.x[self.uq] - dae.y[self.vq]) - mul(dae.x[self.Iq], self.iLsh, self.rsh))
-        dae.f[self.ud] = mul(self.iTt, self.u, dae.x[self.Md] + dae.y[self.vd] - dae.x[self.ud] + mul(dae.y[self.Iqref], self.xsh) + mul(self.Kp1, dae.y[self.Idref] - dae.x[self.Id]))
-        dae.f[self.uq] = mul(self.iTt, self.u, dae.x[self.Mq] + dae.y[self.vq] - dae.x[self.uq] + mul(self.Kp1, dae.y[self.Iqref] - dae.x[self.Iq]) - mul(dae.y[self.Idref], self.xsh))
-        dae.f[self.Md] = mul(self.Ki1, self.u, dae.y[self.Idref] - dae.x[self.Id])
-        dae.f[self.Mq] = mul(self.Ki1, self.u, dae.y[self.Iqref] - dae.x[self.Iq])
-        dae.f[self.Nd] = mul(self.Ki2, self.u, dae.y[self.ref2] - dae.y[self.vd])
-        dae.f[self.Nq] = - mul(self.Ki3, self.u, dae.y[self.vq])
-        dae.f[self.adq] = mul(self.u, dae.y[self.ref1] - self.wref0)
-        dae.f[self.xw] = mul(self.iM, self.u, self.pref0 - dae.y[self.p] - mul(self.D, dae.x[self.xw]))
+        self.speed_fcall(dae)
+        self.voltage_fcall(dae)
+        self.current_fcall(dae)
 
     def gycall(self, dae):
-        dae.add_jac(Gy, dae.x[self.Id], self.p, self.vd)
+        self.speed_gycall(dae)
+        self.voltage_gycall(dae)
+        self.current_gycall(dae)
+
         dae.add_jac(Gy, dae.x[self.Iq], self.p, self.vq)
-        dae.add_jac(Gy, dae.x[self.Iq], self.q, self.vd)
+        dae.add_jac(Gy, dae.x[self.Id], self.p, self.vd)
         dae.add_jac(Gy, - dae.x[self.Id], self.q, self.vq)
-        dae.add_jac(Gy, mul(self.u, cos(dae.y[self.a] - dae.x[self.adq])), self.vd, self.v)
+        dae.add_jac(Gy, dae.x[self.Iq], self.q, self.vd)
         dae.add_jac(Gy, - mul(self.u, dae.y[self.v], sin(dae.y[self.a] - dae.x[self.adq])), self.vd, self.a)
+        dae.add_jac(Gy, mul(self.u, cos(dae.y[self.a] - dae.x[self.adq])), self.vd, self.v)
         dae.add_jac(Gy, - mul(self.u, sin(dae.y[self.a] - dae.x[self.adq])), self.vq, self.v)
         dae.add_jac(Gy, - mul(self.u, dae.y[self.v], cos(dae.y[self.a] - dae.x[self.adq])), self.vq, self.a)
-        dae.add_jac(Gy, - mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1, self.v1)
         dae.add_jac(Gy, mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1, self.v2)
-        dae.add_jac(Gy, mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v2, self.v1)
+        dae.add_jac(Gy, - mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v1, self.v1)
         dae.add_jac(Gy, - mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v2, self.v2)
+        dae.add_jac(Gy, mul(self.u, (dae.y[self.v1] - dae.y[self.v2])**-2, mul(dae.x[self.Id], dae.x[self.ud]) + mul(dae.x[self.Iq], dae.x[self.uq])), self.v2, self.v1)
 
     def fxcall(self, dae):
-        dae.add_jac(Gx, dae.y[self.vd], self.p, self.Id)
+        self.speed_fxcall(dae)
+        self.voltage_fxcall(dae)
+        self.current_fxcall(dae)
+
         dae.add_jac(Gx, dae.y[self.vq], self.p, self.Iq)
+        dae.add_jac(Gx, dae.y[self.vd], self.p, self.Id)
         dae.add_jac(Gx, dae.y[self.vd], self.q, self.Iq)
         dae.add_jac(Gx, - dae.y[self.vq], self.q, self.Id)
         dae.add_jac(Gx, mul(self.u, dae.y[self.v], sin(dae.y[self.a] - dae.x[self.adq])), self.vd, self.adq)
@@ -1222,58 +1219,37 @@ class VSC4(ModelBase):
         dae.add_jac(Gx, - mul(dae.x[self.Iq], self.u, div(1, dae.y[self.v1] - dae.y[self.v2])), self.v2, self.uq)
 
     def jac0(self, dae):
-        dae.add_jac(Gy0, -1, self.ref1, self.ref1)
-        dae.add_jac(Gy0, - self.KQ, self.ref2, self.q)
-        dae.add_jac(Gy0, -1, self.ref2, self.ref2)
+        self.speed_jac0(dae)
+        self.voltage_jac0(dae)
+        self.current_jac0(dae)
+
         dae.add_jac(Gy0, -1, self.p, self.p)
         dae.add_jac(Gy0, -1, self.q, self.q)
         dae.add_jac(Gy0, -1, self.vd, self.vd)
         dae.add_jac(Gy0, -1, self.vq, self.vq)
-        dae.add_jac(Gy0, -1, self.Idref, self.Idref)
-        dae.add_jac(Gy0, - self.Kp2, self.Idref, self.vd)
-        dae.add_jac(Gy0, self.Kp2, self.Idref, self.ref2)
-        dae.add_jac(Gy0, -1, self.Iqref, self.Iqref)
-        dae.add_jac(Gy0, - self.Kp3, self.Iqref, self.vq)
         dae.add_jac(Gy0, - self.u, self.a, self.p)
         dae.add_jac(Gy0, - self.u, self.v, self.q)
-        dae.add_jac(Gx0, 1, self.ref1, self.xw)
-        dae.add_jac(Gx0, 1, self.Idref, self.Nd)
-        dae.add_jac(Gx0, 1, self.Iqref, self.Nq)
-        dae.add_jac(Fx0, - self.u, self.Id, self.Iq)
-        dae.add_jac(Fx0, - mul(self.iLsh, self.rsh, self.u), self.Id, self.Id)
-        dae.add_jac(Fx0, mul(self.iLsh, self.u), self.Id, self.ud)
-        dae.add_jac(Fx0, - mul(self.iLsh, self.rsh, self.u), self.Iq, self.Iq)
-        dae.add_jac(Fx0, self.u, self.Iq, self.Id)
-        dae.add_jac(Fx0, mul(self.iLsh, self.u), self.Iq, self.uq)
-        dae.add_jac(Fx0, mul(self.iTt, self.u), self.ud, self.Md)
-        dae.add_jac(Fx0, - mul(self.iTt, self.u), self.ud, self.ud)
-        dae.add_jac(Fx0, - mul(self.Kp1, self.iTt, self.u), self.ud, self.Id)
-        dae.add_jac(Fx0, mul(self.iTt, self.u), self.uq, self.Mq)
-        dae.add_jac(Fx0, - mul(self.iTt, self.u), self.uq, self.uq)
-        dae.add_jac(Fx0, - mul(self.Kp1, self.iTt, self.u), self.uq, self.Iq)
-        dae.add_jac(Fx0, - mul(self.Ki1, self.u), self.Md, self.Id)
-        dae.add_jac(Fx0, - mul(self.Ki1, self.u), self.Mq, self.Iq)
-        dae.add_jac(Fx0, - mul(self.D, self.iM, self.u), self.xw, self.xw)
-        dae.add_jac(Fy0, - mul(self.iLsh, self.u), self.Id, self.vd)
-        dae.add_jac(Fy0, - mul(self.iLsh, self.u), self.Iq, self.vq)
-        dae.add_jac(Fy0, mul(self.iTt, self.u), self.ud, self.vd)
-        dae.add_jac(Fy0, mul(self.Kp1, self.iTt, self.u), self.ud, self.Idref)
-        dae.add_jac(Fy0, mul(self.iTt, self.u, self.xsh), self.ud, self.Iqref)
-        dae.add_jac(Fy0, - mul(self.iTt, self.u, self.xsh), self.uq, self.Idref)
-        dae.add_jac(Fy0, mul(self.Kp1, self.iTt, self.u), self.uq, self.Iqref)
-        dae.add_jac(Fy0, mul(self.iTt, self.u), self.uq, self.vq)
-        dae.add_jac(Fy0, mul(self.Ki1, self.u), self.Md, self.Idref)
-        dae.add_jac(Fy0, mul(self.Ki1, self.u), self.Mq, self.Iqref)
-        dae.add_jac(Fy0, - mul(self.Ki2, self.u), self.Nd, self.vd)
-        dae.add_jac(Fy0, mul(self.Ki2, self.u), self.Nd, self.ref2)
-        dae.add_jac(Fy0, - mul(self.Ki3, self.u), self.Nq, self.vq)
-        dae.add_jac(Fy0, self.u, self.adq, self.ref1)
-        dae.add_jac(Fy0, - mul(self.iM, self.u), self.xw, self.p)
-        dae.add_jac(Gy0, 1e-6, self.ref1, self.ref1)
-        dae.add_jac(Gy0, 1e-6, self.ref2, self.ref2)
-        dae.add_jac(Gy0, 1e-6, self.p, self.p)
-        dae.add_jac(Gy0, 1e-6, self.q, self.q)
-        dae.add_jac(Gy0, 1e-6, self.vd, self.vd)
-        dae.add_jac(Gy0, 1e-6, self.vq, self.vq)
-        dae.add_jac(Gy0, 1e-6, self.Idref, self.Idref)
-        dae.add_jac(Gy0, 1e-6, self.Iqref, self.Iqref)
+
+
+class VSC2A(VSC2_Common, Current1, VSC2_Speed1, VSC2_Voltage1):
+    """Voltage-source controlled VSC with active power droop"""
+
+    def __init__(self, system, name):
+        VSC2_Common.__init__(self, system, name)
+        Current1.__init__(self, system, name)
+        VSC2_Speed1.__init__(self, system, name)
+        VSC2_Voltage1.__init__(self, system, name)
+        self._name = 'VSC2A'
+        self._inst_meta()
+
+
+class VSC2B(VSC2_Common, Current1, VSC2_Speed2, VSC2_Voltage1):
+    """Voltage-source controlled VSC with inertia emulation"""
+
+    def __init__(self, system, name):
+        VSC2_Common.__init__(self, system, name)
+        Current1.__init__(self, system, name)
+        VSC2_Speed2.__init__(self, system, name)
+        VSC2_Voltage1.__init__(self, system, name )
+        self._name = 'VSC2B'
+        self._inst_meta()
