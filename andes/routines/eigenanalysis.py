@@ -131,5 +131,10 @@ def run(system):
     exec(system.Call.int)
 
     As = state_matrix(system)
-    mu, pf = part_factor(As)
-    dump_results(system, mu, pf)
+    if not As:
+        system.Log.info('No dynamic model loaded. Eivgenvalue analysis will not continue.')
+        return False
+    else:
+        mu, pf = part_factor(As)
+        dump_results(system, mu, pf)
+        return True
