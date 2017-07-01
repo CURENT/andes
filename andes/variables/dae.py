@@ -246,18 +246,22 @@ class DAE(object):
         self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
-    def show(self, eq):
+    def show(self, eq, value=None):
         """Show equation or variable array along with the names"""
-        str = ''
         if eq in ['f', 'x']:
             key = 'unamex'
         elif eq in ['g', 'y']:
             key = 'unamey'
 
-        value = list(self.__dict__[eq])
+        if value:
+            value = list(value)
+        else:
+            value = list(self.__dict__[eq])
+
+        out = ''
         for name, val in zip(self.system.VarName.__dict__[key], value):
-            str += '{:12s} [{:>12.4f}]\n'.format(name, val)
-        return str
+            out += '{:12s} [{:>12.4f}]\n'.format(name, val)
+        return out
 
     def find_val(self, eq, val):
         """Return the name of the equation having the given value"""

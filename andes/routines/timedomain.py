@@ -232,8 +232,15 @@ def run(system):
                     except ArithmeticError:
                         system.Log.error('Singular matrix')
                         niter = maxit + 1
-                dae.x += inc[:dae.n]
-                dae.y += inc[dae.n: dae.m+dae.n]
+
+                # for debugging
+                if niter > 15:
+                    pass
+                inc_x = inc[:dae.n]
+                inc_y = inc[dae.n: dae.m+dae.n]
+                dae.x += inc_x
+                dae.y += inc_y
+
                 settings.error = max(abs(inc))
                 if isnan(settings.error):
                     t = settings.tf + 1
@@ -243,6 +250,14 @@ def run(system):
                 niter += 1
 
         if niter >= maxit:
+            inc_g = inc[dae.n: dae.m+dae.n]
+            max_g_err_sign = 1 if abs(max(inc_g)) > abs(min(inc_g)) else -1
+            if max_g_err_sign == 1:
+                max_g_err_idx = list(inc_g).index(max(inc_g))
+            else:
+                max_g_err_idx = list(inc_g).index(min(inc_g))
+            system.Log.debug('Maximum mismatch = {:.4g} at equation <{}>'.format(max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
+
             h = time_step(system, False, niter, t)
             system.Log.debug('Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
             dae.x = matrix(xa)
