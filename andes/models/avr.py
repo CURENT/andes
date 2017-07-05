@@ -121,10 +121,13 @@ class AVR2(ModelBase):
 
     def servcall(self, dae):
         self.copy_param('Synchronous', 'v', 'v', self.syn)
+        self.copy_param('Synchronous', 'u', 'usyn', self.syn)
+        self.copy_param('Synchronous', 'v', 'v', self.syn)
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
         self.T43 = mul(self.T4, div(1, self.T3))
         self.T21 = mul(self.T2, div(1, self.T1))
+        self.u0 = mul(self.u, self.usyn)
 
     def init1(self, dae):
         self.servcall(dae)
@@ -209,11 +212,13 @@ class AVR3(ModelBase):
         self._inst_meta()
 
     def servcall(self, dae):
+        self.copy_param('Synchronous', 'u', 'usyn', self.syn)
         self.copy_param('Synchronous', 'v', 'v', self.syn)
         self.copy_param('Synchronous', 'vf', 'vf', self.syn)
         self.copy_param('Synchronous', 'vf0', 'vf0', self.syn)
         self.T1T2 = mul(self.T1, div(1, self.T2))
         self.iTe = div(self.u, self.Te)
+        self.u0 = mul(self.u, self.usyn)
 
     def init1(self, dae):
         self.servcall(dae)
