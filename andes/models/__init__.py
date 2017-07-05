@@ -5,8 +5,14 @@ __all__ = ['base',
            'bus',
            ]
 
-order = ['bus', 'Node', 'Ground', 'zone', 'pq', 'pv', 'line', 'shunt', 'measurement', 'synchronous', 'governor',
-         'avr', 'pss', 'windturbine', 'wind', 'RLine', 'vsc']
+order = ['bus', 'Node', 'Ground', 'zone',
+         'pq', 'pv', 'line', 'shunt',
+         'synchronous', 'governor', 'avr', 'pss',
+         'windturbine', 'wind',
+         'RLine', 'RLLine',
+         'vsc',
+         'measurement',
+         ]
 
 non_jits = {'bus': {'Bus': 'Bus'},
             'pq': {'PQ': 'PQ'},
@@ -19,8 +25,9 @@ non_jits = {'bus': {'Bus': 'Bus'},
                      'Region': 'Region',
                      },
             'dcbase': {'Node': 'Node',
-                       'RLine': 'RLine',
                        'Ground': 'Ground',
+                       'RLine': 'RLine',
+                       'RLLine': 'RLLine',
                        },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',

@@ -94,6 +94,10 @@ class DCBase(ModelBase):
                     }
         self._mandatory.extend(['node1', 'node2', 'Vdcn'])
 
+    @property
+    def v12(self):
+        return self.system.DAE.y[self.v1] - self.system.DAE.y[self.v2]
+
 
 class RLine(DCBase):
     """DC Resistence line class"""
@@ -101,7 +105,7 @@ class RLine(DCBase):
         super().__init__(system, name)
         self._name = 'RLine'
         self._params.extend(['R'])
-        self._data.update({'R': 1.0,
+        self._data.update({'R': 0.1,
                            })
         self._r.extend('R')
         self.calls.update({'pflow': True,
@@ -125,6 +129,53 @@ class RLine(DCBase):
         dae.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
         dae.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
         dae.add_jac(Gy0, self.u - 1e-6, self.I, self.I)
+
+
+class RLLine(DCBase):
+    """DC Resistive and Inductive line"""
+    def __init__(self, system, name):
+        super(RLLine, self).__init__(system, name)
+        self._name = 'RLLine'
+        self._params.extend(['R', 'L'])
+        self._data.update({'R': 0.1,
+                           'L': 0.1,
+                           })
+        self._params.extend(['R', 'L'])
+        self._r.extend(['R', 'L'])
+        self._algebs.extend(['Idc'])
+        self._fnamey.extend(['I_{dc}'])
+        self._states.extend(['IL'])
+        self._fnamex.extend(['I_L'])
+        self.calls.update({'pflow': True, 'init0': True,
+                           'gcall': True, 'fcall': True,
+                           'jac0': True, 'fxcall': True,
+                           })
+        self._service.extend(['iR', 'iL'])
+        self._inst_meta()
+
+    def servcall(self, dae):
+        self.iR = div(1, self.R)
+        self.iL = div(1, self.L)
+
+    def init0(self, dae):
+        self.servcall(dae)
+        dae.x[self.IL] = mul(self.v12, self.iR)
+        dae.y[self.Idc] = - dae.x[self.IL]
+
+    def gcall(self, dae):
+        dae.g[self.Idc] = dae.x[self.IL] + dae.y[self.Idc]
+
+    def fcall(self, dae):
+        dae.f[self.IL] = mul(self.v12 - mul(self.R, dae.x[self.IL]), self.iL)
+
+    def jac0(self, dae):
+        dae.add_jac(Gx0, 1, self.Idc, self.IL)
+        dae.add_jac(Gy0, 1, self.Idc, self.Idc)
+        dae.add_jac(Fx0, -mul(self.R, self.iL), self.IL, self.IL)
+
+    def fxcall(self, dae):
+        dae.add_jac(Fy, 1, self.IL, self.v1)
+        dae.add_jac(Fy, -1, self.IL, self.v2)
 
 
 class Ground(DCBase):
