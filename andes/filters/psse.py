@@ -372,8 +372,8 @@ def add_dyn(system, model, data):
                  'Tf': data[10],
                  'Tr': data[0],
                  'Kf': data[9],
-                 'Ke': data[8],
-                 'Te': 1,
+                 'Ke': 1,
+                 'Te': data[8],
                  }
         system.AVR1.add(**param)
 
