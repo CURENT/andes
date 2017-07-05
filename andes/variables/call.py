@@ -120,9 +120,12 @@ class Call(object):
                 string += '    ' + call
 
         # evaluate Jacobians Gy and Fx
-        string += 'system.DAE.setup_Gy()\n'
+        string += 'system.DAE.setup_FxGy()\n'
         for pflow, gycall, call in zip(self.pflow, self.gycall, self.gycalls):
             if pflow and gycall:
+                string += call
+        for pflow, fxcall, call in zip(self.pflow, self.fxcall, self.fxcalls):
+            if pflow and fxcall:
                 string += call
 
         # handle islanded buses in the Jacobian

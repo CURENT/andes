@@ -167,7 +167,8 @@ def newton(system):
     # main loop
     while system.Settings.error > tol:
         inc = calcInc(system)
-        system.DAE.y += inc
+        system.DAE.x += inc[:system.DAE.n]
+        system.DAE.y += inc[system.DAE.n:system.DAE.n + system.DAE.m]
 
         niter += 1
         system.SPF.iter = niter
