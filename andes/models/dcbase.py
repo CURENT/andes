@@ -131,6 +131,33 @@ class RLine(DCBase):
         dae.add_jac(Gy0, self.u - 1e-6, self.I, self.I)
 
 
+class LLine(DCBase):
+    """Pure inductive line"""
+    def __init__(self, system, name):
+        super(LLine, self).__init__(system, name)
+        self._name = 'LLine'
+        self._data.update({'L': 0.1})
+        self._params.extend(['L'])
+        self._r.extend(['L'])
+        self._algebs.extend(['Idc'])
+        self._fnamey.extend(['I_{dc}'])
+        self._states.extend(['IL'])
+        self._fnamex.extend(['I_L'])
+        self._service.extend(['iL'])
+        self.calls.update({'pflow': True, 'init0': True,
+                           'gcall': True, 'fcall': True,
+                           'jac0': True, 'fxcall': True,
+                           })
+        self._inst_meta()
+
+    def servcall(self, dae):
+        self.iL = div(self.u, self.L)
+
+    def init0(self, dae):
+        self.servcall(dae)
+        # dae.
+
+
 class RLLine(DCBase):
     """DC Resistive and Inductive line"""
     def __init__(self, system, name):
