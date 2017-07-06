@@ -99,44 +99,42 @@ class DCBase(ModelBase):
         return self.system.DAE.y[self.v1] - self.system.DAE.y[self.v2]
 
 
-class RLine(DCBase):
+class R(DCBase):
     """DC Resistence line class"""
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._name = 'RLine'
+        self._name = 'R'
         self._params.extend(['R'])
-        self._data.update({'R': 0.1,
+        self._data.update({'R': 0.01,
                            })
         self._r.extend('R')
         self.calls.update({'pflow': True,
                            'gcall': True,
                            'jac0': True,
                            })
-        self._algebs.extend(['I'])
-        self._unamey = ['I']
-        self._fnamey = ['I']
+        self._algebs.extend(['Idc'])
+        self._fnamey = ['I_{dc}']
         self._inst_meta()
-        self.Y = []
 
     def gcall(self, dae):
-        dae.g[self.I] = div(dae.y[self.v1] - dae.y[self.v2], self.R) + dae.y[self.I]
-        dae.g -= spmatrix(dae.y[self.I], self.v1, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(dae.y[self.I], self.v2, [0] * self.n, (dae.m, 1), 'd')
+        dae.g[self.Idc] = div(dae.y[self.v1] - dae.y[self.v2], self.R) + dae.y[self.Idc]
+        dae.g -= spmatrix(dae.y[self.Idc], self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def jac0(self, dae):
-        dae.add_jac(Gy0, -self.u, self.v1, self.I)
-        dae.add_jac(Gy0, self.u, self.v2, self.I)
-        dae.add_jac(Gy0, div(self.u, self.R), self.I, self.v1)
-        dae.add_jac(Gy0, -div(self.u, self.R), self.I, self.v2)
-        dae.add_jac(Gy0, self.u - 1e-6, self.I, self.I)
+        dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
+        dae.add_jac(Gy0, self.u, self.v2, self.Idc)
+        dae.add_jac(Gy0, div(self.u, self.R), self.Idc, self.v1)
+        dae.add_jac(Gy0, -div(self.u, self.R), self.Idc, self.v2)
+        dae.add_jac(Gy0, self.u - 1e-6, self.Idc, self.Idc)
 
 
-class LLine(DCBase):
+class L(DCBase):
     """Pure inductive line"""
     def __init__(self, system, name):
-        super(LLine, self).__init__(system, name)
-        self._name = 'LLine'
-        self._data.update({'L': 0.1})
+        super(L, self).__init__(system, name)
+        self._name = 'L'
+        self._data.update({'L': 0.001})
         self._params.extend(['L'])
         self._r.extend(['L'])
         self._algebs.extend(['Idc'])
@@ -146,7 +144,7 @@ class LLine(DCBase):
         self._service.extend(['iL'])
         self.calls.update({'pflow': True, 'init0': True,
                            'gcall': True, 'fcall': True,
-                           'jac0': True, 'fxcall': True,
+                           'jac0': True,
                            })
         self._inst_meta()
 
@@ -155,17 +153,77 @@ class LLine(DCBase):
 
     def init0(self, dae):
         self.servcall(dae)
-        # dae.
+
+    def gcall(self, dae):
+        dae.g[self.Idc] = dae.x[self.IL] + dae.y[self.Idc]
+        dae.g -= spmatrix(dae.y[self.Idc], self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
+
+    def fcall(self, dae):
+        dae.f[self.IL] = mul(self.v12, self.iL)
+
+    def jac0(self, dae):
+        dae.add_jac(Gx0, self.u, self.Idc, self.IL)
+        dae.add_jac(Gy0, self.u, self.Idc, self.Idc)
+        dae.add_jac(Fy0, self.iL, self.IL, self.v1)
+        dae.add_jac(Fy0, -self.iL, self.IL, self.v2)
+        dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
+        dae.add_jac(Gy0, self.u, self.v2, self.Idc)
 
 
-class RLLine(DCBase):
+class C(DCBase):
+    """Pure capacitive line"""
+    def __init__(self, system, name):
+        super(C, self).__init__(system, name)
+        self._name = 'C'
+        self._data.update({'C': 0.001})
+        self._params.extend(['C'])
+        self._r.extend(['C'])
+        self._algebs.extend(['Idc'])
+        self._fnamey.extend(['I_{dc}'])
+        self._states.extend(['vC'])
+        self._fnamex.extend(['vC'])
+        self._service.extend(['iC'])
+        self.calls.update({'pflow': True, 'init0': True,
+                           'gcall': True, 'fcall': True,
+                           'jac0': True,
+                           })
+        self._inst_meta()
+
+    def servcall(self, dae):
+        self.iC = div(self.u, self.C)
+
+    def init0(self, dae):
+        self.servcall(dae)
+
+    def gcall(self, dae):
+        dae.g[self.Idc] = dae.x[self.vC] - self.v12
+        dae.g -= spmatrix(dae.y[self.Idc], self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
+
+    def fcall(self, dae):
+        dae.f[self.vC] = - mul(dae.y[self.Idc], self.iC)
+
+    def jac0(self, dae):
+        dae.add_jac(Gx0, self.u, self.Idc, self.vC)
+        dae.add_jac(Gy0, -self.u, self.Idc, self.v1)
+        dae.add_jac(Gy0, self.u, self.Idc, self.v2)
+        dae.add_jac(Gy0, 1e-6, self.Idc, self.Idc)
+
+        dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
+        dae.add_jac(Gy0, self.u, self.v2, self.Idc)
+
+        dae.add_jac(Fy0, -self.iC, self.vC, self.Idc)
+
+
+class RL(DCBase):
     """DC Resistive and Inductive line"""
     def __init__(self, system, name):
-        super(RLLine, self).__init__(system, name)
-        self._name = 'RLLine'
+        super(RL, self).__init__(system, name)
+        self._name = 'RL'
         self._params.extend(['R', 'L'])
-        self._data.update({'R': 0.1,
-                           'L': 0.1,
+        self._data.update({'R': 0.01,
+                           'L': 0.001,
                            })
         self._params.extend(['R', 'L'])
         self._r.extend(['R', 'L'])
@@ -175,14 +233,14 @@ class RLLine(DCBase):
         self._fnamex.extend(['I_L'])
         self.calls.update({'pflow': True, 'init0': True,
                            'gcall': True, 'fcall': True,
-                           'jac0': True, 'fxcall': True,
+                           'jac0': True,
                            })
         self._service.extend(['iR', 'iL'])
         self._inst_meta()
 
     def servcall(self, dae):
-        self.iR = div(1, self.R)
-        self.iL = div(1, self.L)
+        self.iR = div(self.u, self.R)
+        self.iL = div(self.u, self.L)
 
     def init0(self, dae):
         self.servcall(dae)
@@ -191,18 +249,20 @@ class RLLine(DCBase):
 
     def gcall(self, dae):
         dae.g[self.Idc] = dae.x[self.IL] + dae.y[self.Idc]
+        dae.g -= spmatrix(dae.y[self.Idc], self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
         dae.f[self.IL] = mul(self.v12 - mul(self.R, dae.x[self.IL]), self.iL)
 
     def jac0(self, dae):
-        dae.add_jac(Gx0, 1, self.Idc, self.IL)
-        dae.add_jac(Gy0, 1, self.Idc, self.Idc)
+        dae.add_jac(Gx0, self.u, self.Idc, self.IL)
+        dae.add_jac(Gy0, self.u, self.Idc, self.Idc)
+        dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
+        dae.add_jac(Gy0, self.u, self.v2, self.Idc)
         dae.add_jac(Fx0, -mul(self.R, self.iL), self.IL, self.IL)
-
-    def fxcall(self, dae):
-        dae.add_jac(Fy, 1, self.IL, self.v1)
-        dae.add_jac(Fy, -1, self.IL, self.v2)
+        dae.add_jac(Fy0, mul(self.u, self.iL), self.IL, self.v1)
+        dae.add_jac(Fy0, -mul(self.u,self.iL), self.IL, self.v2)
 
 
 class Ground(DCBase):

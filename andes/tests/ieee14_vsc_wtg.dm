@@ -229,10 +229,10 @@ VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
 VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
       Kp3 = 1, Ki3 = 0.2
 
-Fault, bus = 5, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
+Fault, bus = 5, Vn = 69, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.02
 
-RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
-RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
-RLine, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100, R = 5
-RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
-#RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 1
+C, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100
+R, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, L = 0.01
+R, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100
+R, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, L = 0.01
+#RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100
