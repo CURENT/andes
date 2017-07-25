@@ -195,7 +195,7 @@ VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
 VSC2, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
       Kp3 = 01, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0.1
 
-Fault, bus = 5, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.05
+Fault, bus = 5, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.05
 
 RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
 RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5

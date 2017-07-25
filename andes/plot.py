@@ -41,6 +41,7 @@ def cli_parse():
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
+    parser.add_argument('--ymax', type=float, help='y axis maximum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
     parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
@@ -176,6 +177,7 @@ def read_label(lst, x, y):
 def do_plot(x, y, xl, yl, args, no_latex=False):
     xmin = args.xmin
     xmax = args.xmax
+    ymax = args.ymax
     xlabel = args.xlabel
     ylabel = args.ylabel
 
@@ -228,6 +230,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
 
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
+    ax.set_ylim(ymax=ymax)
 
     if args.grid:
         ax.grid(b=True, linestyle='--')
