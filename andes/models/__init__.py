@@ -7,11 +7,11 @@ __all__ = ['base',
 
 order = ['bus', 'Node', 'Ground', 'zone',
          'pq', 'pv', 'line', 'shunt',
+         'measurement',
          'synchronous', 'governor', 'avr', 'pss',
          'windturbine', 'wind',
-         'R', 'L', 'C', 'RL',
+         'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs'
          'vsc',
-         'measurement',
          ]
 
 non_jits = {'bus': {'Bus': 'Bus'},
@@ -29,7 +29,11 @@ non_jits = {'bus': {'Bus': 'Bus'},
                        'R': 'R',
                        'L': 'L',
                        'C': 'C',
-                       'RL': 'RL',
+                       'RLs': 'RLs',
+                       'RCs': 'RCs',
+                       'RCp': 'RCp',
+                       'RLCp': 'RLCp',
+                       'RLCs': 'RLCs'
                        },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',
