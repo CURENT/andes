@@ -127,6 +127,10 @@ def dump_results(system, mu, partfact):
 
 
 def run(system):
+    if system.SPF.solved == False:
+        system.Log.warning('Power flow not solved. Eigenvalue analysis will not continue.')
+        return True
+
     system.DAE.factorize = True
     exec(system.Call.int)
 

@@ -56,6 +56,10 @@ def first_time_step(system):
 
 def run(system):
     """Entry function of Time Domain Simulation"""
+    if not system.SPF.solved:
+        system.Log.warning('Power flow not solved. Time domain simulation will not continue.')
+        return False
+
     global F
     retval = True
     bar = None
