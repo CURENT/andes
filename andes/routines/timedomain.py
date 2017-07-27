@@ -60,6 +60,13 @@ def run(system):
         system.Log.warning('Power flow not solved. Time domain simulation will not continue.')
         return False
 
+    if system.Settings.dime_enable:
+        system.Streaming.send_init(recepient='all')
+        system.Log.info('Waiting for modules to send init info...')
+        sleep(2)
+        system.Streaming.sync_and_handle()
+
+
     global F
     retval = True
     bar = None
@@ -271,8 +278,12 @@ def run(system):
 
         # update output variables and time step
         step += 1
-        system.VarOut.store(t)
         h = time_step(system, True, niter, t)
+
+        system.VarOut.store(t)
+        if system.Settings.dime_enable:
+            system.Streaming.sync_and_handle()
+            system.Streaming.vars_to_modules()
 
         # plot variables and display iteration status
         perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
