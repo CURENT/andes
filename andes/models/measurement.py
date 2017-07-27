@@ -67,9 +67,15 @@ class PMU(ModelBase):
         self._group = 'Measurement'
         self._data.update({'Tv': 0.1,
                            'Ta': 0.1,
+                           'fn': 60,
                            'bus': None,
                            })
-        self._params.extend(['Tv', 'Ta'])
+        self._params.extend(['Tv', 'Ta', 'fn'])
+        self._descr.update({'Tv': 'Voltage magnitude time constant',
+                            'Ta': 'Voltage angle time constant',
+                            'fn': 'Frequency base',
+                            'bus': 'Bus idx'
+                            })
         self._states.extend(['vm', 'am'])
         self._fnamex.extend(['V_m', '\\theta_m'])
         self._mandatory.extend(['bus'])

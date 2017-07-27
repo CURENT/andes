@@ -26,9 +26,9 @@ class SynBase(ModelBase):
                            'kp': 0,
                            'kw': 0,
                            'S10': 0,
-                           'S20': 0,
+                           'S12': 0,
                            })
-        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'gen', 'kp', 'kw', 'S10', 'S20',])
+        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'gen', 'kp', 'kw', 'S10', 'S12',])
         self._descr.update({'fn': 'rated frequency',
                             'bus': 'interface bus id',
                             'D': 'Damping coefficient',
@@ -43,7 +43,7 @@ class SynBase(ModelBase):
                             'kp': 'active power feedback gain',
                             'kw': 'speed feedback gain',
                             'S10': 'first saturation factor',
-                            'S20': 'second saturation factor',
+                            'S12': 'second saturation factor',
                             })
         self._units.update({'M': 'MWs/MVA',
                             'D': 'pu',
@@ -221,7 +221,7 @@ class Ord6a(SynBase):
                            'Tq20': 0.02,
                            'Taa': 0.0,
                            'S10': 0,
-                           'S20': 0})
+                           'S12': 0})
         self._params.extend(['xd',
                              'xd1',
                              'xq1',
@@ -233,7 +233,7 @@ class Ord6a(SynBase):
                              'Tq20',
                              'Taa',
                              'S10',
-                             'S20'
+                             'S12'
                              ])
         self._descr.update({'xd': 'd-axis synchronous reactance',
                             'xd1': 'd-axis transient reactance',
@@ -257,7 +257,7 @@ class Ord6a(SynBase):
                             'Tq20': 's',
                             'Taa': 's',
                             'S10': 'n/a',
-                            'S20': 'n/a'
+                            'S12': 'n/a'
                             })
         self._mandatory.extend(['xd', 'xq', 'xd1', 'xq1', 'xd2', 'xq2', 'Td10', 'Tq10', 'Td20', 'Tq20'])
         self._service.extend(['c1', 'c2', 'c3', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'b1', 'b2', 'b3', 'b4'])
