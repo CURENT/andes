@@ -479,6 +479,8 @@ def run(case, **kwargs):
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
         ret = timedomain.run(system)
+        if system.Settings.dime_enable:
+            system.Streaming.dimec.exit()
         t2, s = elapsed(t1)
         if ret == True:
             system.Log.info('Time domain simulation finished in {:s}.'.format(s))
