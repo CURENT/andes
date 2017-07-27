@@ -23,6 +23,10 @@ class Settings(SettingsBase):
         self.forcepq = False
         self.forcez = True
         self.base = True
+        self.dime_enable = True
+        self.dime_name = 'sim'
+        self.dime_server = 'tcp://127.0.0.1:5000'
+
 
     @property
     def wb(self):
