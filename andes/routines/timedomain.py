@@ -60,13 +60,6 @@ def run(system):
         system.Log.warning('Power flow not solved. Time domain simulation will not continue.')
         return False
 
-    if system.Settings.dime_enable:
-        system.Streaming.send_init(recepient='all')
-        system.Log.info('Waiting for modules to send init info...')
-        sleep(2)
-        system.Streaming.sync_and_handle()
-
-
     global F
     retval = True
     bar = None

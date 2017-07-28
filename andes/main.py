@@ -474,6 +474,12 @@ def run(case, **kwargs):
     elif routine.lower() in ['small', 'ss', 'sssa', 's']:
         routine = 'sssa'
     if routine is 'td':
+        if system.Settings.dime_enable:
+            system.Streaming.send_init(recepient='all')
+            system.Log.info('Waiting for modules to send init info...')
+            sleep(0.5)
+            system.Streaming.sync_and_handle()
+
         t1, s = elapsed(t0)
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')

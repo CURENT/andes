@@ -5,7 +5,7 @@ from ..utils.cached import cached
 class SPF(SettingsBase):
     def __init__(self):
         self.flatstart = False
-        self.maxit = 1000
+        self.maxit = 100
         self.pv2pq = False
         self.ipv2pq = 4
         self.npv2pq = 1
@@ -20,7 +20,7 @@ class SPF(SettingsBase):
         self.switch2nr = False
         self.units = 'pu'
         self.units_alt = ['pu', 'nominal']
-        self.usedegree = True
+        self.usedegree = False
         self.solved = False
 
     @cached

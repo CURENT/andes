@@ -35,7 +35,7 @@ class Dime:
         self.socket.connect(self.address)
         outgoing = {'command': 'connect', 'name': self.name, 'listen_to_events': self.listen_to_events}
         self.socket.send_string(json.dumps(outgoing))
-        if self.socket.recv() == 'OK':
+        if self.socket.recv() == b'OK':
             return True
         else:
             return False
@@ -68,7 +68,7 @@ class Dime:
 
         outgoing = {'command': 'sync', 'name': self.name}
         self.socket.send_string(json.dumps(outgoing))
-        msg = self.socket.recv()
+        msg = self.socket.recv().decode('utf-8')
         try:
             msg = self.matlab.json_decode(msg)
             if append == True and msg['func_args'][1] in self.workspace:
@@ -159,5 +159,5 @@ class Dime:
         """Asks the server for a list of all the devices currently connected."""
         outgoing = {'command': 'get_devices', 'name': self.name}
         self.socket.send_string(json.dumps(outgoing))
-        msg = json.loads(self.socket.recv())
+        msg = json.loads(self.socket.recv().decode('utf-8'))
         return msg['response']

@@ -131,7 +131,7 @@ class Streaming(object):
 
         if self.system.TG1.n or self.system.TG2.n:
             if self.system.TG1.n:
-                params = ['gen', 1, 'wref0', 'R', 'Tmax', 'Tmin', 'Ts', 'Tc', 'T3', 'T4', 'T5', 'u']
+                params = ['gen', 1, 'wref0', 'R', 'pmax', 'pmin', 'Ts', 'Tc', 'T3', 'T4', 'T5', 'u']
                 data_list_tg1 = self._build_list('TG1', params)
                 data_array_tg1 = array(data_list_tg1).T
             else:
@@ -189,17 +189,17 @@ class Streaming(object):
         self.Idxvgs['Bus'] = {'theta': 1 + n + array(self.system.Bus.a),
                               'V': 1 + n + array(self.system.Bus.v),
                               'w_Busfreq': array(self.system.BusFreq.w),
-                              'P': array([1]),
-                              'Q': array([1]),
+                              'P': array([]),
+                              'Q': array([]),
                               }
-        self.Idxvgs['Line'] = {'Pij': array([1]),
-                               'Pji': array([1]),
-                               'Qij': array([1]),
-                               'Qji': array([1]),
-                               'Iij': array([1]),
-                               'Iji': array([1]),
-                               'Sij': array([1]),
-                               'Sji': array([1]),
+        self.Idxvgs['Line'] = {'Pij': array([]),
+                               'Pji': array([]),
+                               'Qij': array([]),
+                               'Qji': array([]),
+                               'Iij': array([]),
+                               'Iji': array([]),
+                               'Sij': array([]),
+                               'Sji': array([]),
                                }
         self.Idxvgs['Syn'] = {'delta': array(self.system.Syn6a.delta),
                               'omega': array(self.system.Syn6a.omega),
@@ -287,6 +287,14 @@ class Streaming(object):
         else:
             self.ModuleInfo[module_name] = init_var
 
+        vgsvaridx = self.ModuleInfo[module_name]['vgsvaridx'].tolist()
+        if type(vgsvaridx[0]) == list:
+            self.ModuleInfo[module_name]['vgsvaridx'] = vgsvaridx[0]
+        else:
+            self.ModuleInfo[module_name]['vgsvaridx'] = vgsvaridx
+
+        self.ModuleInfo[module_name]['vgsvaridx'] = [int(i) for i in self.ModuleInfo[module_name]['vgsvaridx']]
+
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
         pass
@@ -308,7 +316,8 @@ class Streaming(object):
             # send Varheader, SysParam and Idxvgs to modules on the fly
             if set(current_devices) != set(self.last_devices):
                 new_devices = list(current_devices)
-                for item in last_devices:
+                new_devices.remove('sim')
+                for item in self.last_devices:
                     new_devices.remove(item)
                 self.send_init(new_devices)
 
@@ -329,12 +338,13 @@ class Streaming(object):
             return
 
         for mod in self.ModuleInfo.keys():
-            idx = self.ModuleInfo[mod]['varvgsidx']
+            idx = self.ModuleInfo[mod]['vgsvaridx']
             values = self.system.VarOut.vars[-1][idx]
-
-            Varvgs = {'t': self.system.VarOut.t,
-                      'k': self.system.VarOut.k,
-                      'vars': values,
+            t = self.system.VarOut.t[-1]
+            k = len(self.system.VarOut.t)
+            Varvgs = {'t': t,
+                      'k': k,
+                      'vars': array(values),
                       }
 
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
