@@ -318,9 +318,53 @@ class Line(ModelBase):
         self.Qchg1 = self.chg1.imag()
         self.Qchg2 = self.chg2.imag()
 
+        self._line_flows = matrix([self.P1, self.P2, self.Q1, self.Q2])
+
     def switch(self, idx, u):
         """switch the status of Line idx"""
         self.u[self.int[idx]] = u
         self.rebuild = True
         self.system.DAE.factorize = True
         self.message('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
+
+    def build_name_from_bus(self):
+        """Rebuild line names from bus names"""
+        pass
+
+    def _varname_flow(self):
+        """Build variable names for Pij, Pji, Qij, Qji, Sij, Sji"""
+        if not self.n:
+            return
+
+        mpq = self.system.DAE.m + 2*self.system.Bus.n
+        nl = self.n
+
+        # Pij
+        xy_idx = range(mpq, mpq + nl)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Pij', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='P_{ij}', element_name=self.name)
+
+        # Pji
+        xy_idx = range(mpq + nl, mpq + 2*nl)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Pji', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='P_{ji}', element_name=self.name)
+
+        # Qij
+        xy_idx = range(mpq + 2*nl, mpq + 3*nl)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Qij', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='Q_{ij}', element_name=self.name)
+
+        # Qji
+        xy_idx = range(mpq + 3*nl, mpq + 4*nl)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Qji', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='Q_{ji}', element_name=self.name)
+
+        # # Sij
+        # xy_idx = range(mpq + 4*nl, mpq + 5*nl)
+        # self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Sij', element_name=self.name)
+        # self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='S_{ij}', element_name=self.name)
+        #
+        # # Qji
+        # xy_idx = range(mpq + 5*nl, mpq + 6*nl)
+        # self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Sji', element_name=self.name)
+        # self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='S_{ji}', element_name=self.name)

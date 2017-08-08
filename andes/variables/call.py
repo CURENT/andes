@@ -57,6 +57,7 @@ class Call(object):
         self._compile_int()
         self._compile_int_f()
         self._compile_int_g()
+        self._compile_bus_injection()
 
     def build_vec(self):
         """build call validity vector for each device"""
@@ -172,6 +173,17 @@ class Call(object):
         string += '"""'
         self.pfgen = compile(eval(string), '', 'exec')
 
+    def _compile_bus_injection(self):
+        """Impose injections on buses"""
+        string = '"""\n'
+        for device, series in zip(self.devices, self.series):
+            if series:
+                string += 'system.' + device + '.gcall(system.DAE)\n'
+        string += '\n'
+        string += self.gisland
+        string += '"""'
+        self.bus_injection = compile(eval(string), '', 'exec')
+
     def _compile_seriesflow(self):
         """Post power flow computation of series device flow"""
         string = '"""\n'
@@ -224,6 +236,8 @@ class Call(object):
         string += self.gyisland
 
         string += '"""'
+        self.system.Log.debug(string)
+
         self.int = compile(eval(string), '', 'exec')
 
     def _compile_int_f(self):
@@ -270,3 +284,4 @@ class Call(object):
 
         string += '"""'
         self.int_g = compile(eval(string), '', 'exec')
+

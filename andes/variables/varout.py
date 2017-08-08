@@ -10,11 +10,21 @@ class VarOut(object):
         self.t = []
         self.vars = []
         self.dat = None
+        self._mode = 'w'
 
     def store(self, t):
         """Record the state/algeb values at time t to self.vars"""
         self.t.append(t)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
+
+        if self.system.TDS.compute_flows:
+            self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
+
+        if len(self.vars) >= 500:
+            self.system.Log.debug('VarOut cache written to file at simulation t = {:g}.'.format(self.system.DAE.t))
+            self.dump(lst=False)
+            self.vars = list()
+            self._mode = 'a'
 
     def show(self):
         """
@@ -29,15 +39,19 @@ class VarOut(object):
             out.append(list(item))
         return array(out)
 
-    def dump(self):
-        """Dump the TDS results to files after the simulation """
+    def dump(self, lst=True):
+        """Dump the TDS results to the output `dat` file"""
         if self.system.Files.no_output:
             return
-        self._write_lst()
+        if lst:
+            self._write_lst()
 
         nvars = self.system.DAE.m + self.system.DAE.n + 1
+        if self.system.TDS.compute_flows:
+            nvars += 2 * self.system.Bus.n + 4 * self.system.Line.n
+
         try:
-            self.dat = open(self.system.Files.dat, 'w')
+            self.dat = open(self.system.Files.dat, self._mode)
             self.dat.write('{}'.format(nvars) + '\n')
 
             for t, line in zip(self.t, self.vars):
@@ -58,7 +72,11 @@ class VarOut(object):
                 line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1, varname.unamex[i], varname.fnamex[i])
                 lst.write(line)
 
-            for i in range(self.system.DAE.m):
+            nflows = 0
+            if self.system.TDS.compute_flows:
+                nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n
+
+            for i in range(self.system.DAE.m + nflows):
                 line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1 + self.system.DAE.n, varname.unamey[i], varname.fnamey[i])
                 lst.write(line)
 

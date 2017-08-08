@@ -25,6 +25,13 @@ class VarName(object):
             self.unamex.extend([''] * xext)
             self.fnamex.extend([''] * xext)
 
+    def resize_for_flows(self):
+        """Extend `unamey` and `fnamey` for bus injections and line flows"""
+        if self.system.TDS.compute_flows:
+            nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n
+            self.unamey.extend([''] * nflows)
+            self.fnamey.extend([''] * nflows)
+
     def append(self, listname, xy_idx, var_name, element_name):
         """Append variable names to the name lists"""
         self.resize()
@@ -45,3 +52,9 @@ class VarName(object):
             self.__dict__[listname][xy_idx] = string.format(var_name, element_name)
         else:
             self.system.Log.warning('Unknown element_name type while building VarName')
+
+    def bus_line_names(self):
+        """Append bus injection and line flow names to `VarName`"""
+        if self.system.TDS.compute_flows:
+            self.system.Bus._varname_inj()
+            self.system.Line._varname_flow()

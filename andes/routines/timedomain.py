@@ -94,7 +94,14 @@ def run(system):
     diff_max = anglediff()
 
     # store the initial value
+    if system.TDS.compute_flows:
+        dae.init_fg()
+        compute_flows(system)
     system.VarOut.store(t)
+
+    if system.Settings.dime_enable:
+        system.Streaming.sync_and_handle()
+        system.Streaming.vars_to_modules()
 
     # perturbation file
     PERT = 0  # 0 - not loaded, 1 - loaded, -1 - error
@@ -273,6 +280,8 @@ def run(system):
         step += 1
         h = time_step(system, True, niter, t)
 
+        compute_flows(system)
+
         system.VarOut.store(t)
         if system.Settings.dime_enable:
             system.Streaming.sync_and_handle()
@@ -306,6 +315,7 @@ def run(system):
     if t != settings.tf:
         system.Log.error('Reached minimum time step. Convergence is not likely.')
         retval = False
+
     return retval
 
 
@@ -370,3 +380,15 @@ def calcInc(system):
         system.Log.error('Jacobian matrix is singular.')
         diag0(system.DAE.Gy, 'unamey', system)
     return -inc
+
+
+def compute_flows(system):
+    if system.TDS.compute_flows:
+        # compute and append series injections on buses
+        dae = system.DAE
+
+        exec(system.Call.bus_injection)
+        bus_inj = dae.g[:2 * system.Bus.n]
+
+        exec(system.Call.seriesflow)
+        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows])

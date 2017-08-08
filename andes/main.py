@@ -441,7 +441,7 @@ def run(case, **kwargs):
         system.SPF.solver = 'NR'
 
     system.Log.info('Power Flow Analysis:')
-    system.Log.info('Sparse Library: ' + system.Settings.sparselib.upper())
+    system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
     system.Log.info('Solution Method: ' + system.SPF.solver.upper())
     system.Log.info('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
@@ -486,6 +486,7 @@ def run(case, **kwargs):
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
         ret = timedomain.run(system)
         if system.Settings.dime_enable:
+            system.Streaming.dimec.send_var('geovis', 'DONE', 1)
             system.Streaming.dimec.exit()
         t2, s = elapsed(t1)
         if ret == True:

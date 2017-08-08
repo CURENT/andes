@@ -1,6 +1,7 @@
 from numpy import ndarray, array, concatenate
 from cvxopt import matrix
 from . import dime
+from time import sleep
 
 
 class Streaming(object):
@@ -19,6 +20,7 @@ class Streaming(object):
             self.__dict__[item] = list()
 
         if self.system.Settings.dime_enable:
+            self.system.Log.debug('Trying to connect to dime server {}.'.format(system.Settings.dime_server))
             try:
                 self.dimec.start()
                 self.system.Log.debug('DiME connection established.')
@@ -188,29 +190,29 @@ class Streaming(object):
                                  }
         self.Idxvgs['Bus'] = {'theta': 1 + n + array(self.system.Bus.a),
                               'V': 1 + n + array(self.system.Bus.v),
-                              'w_Busfreq': array(self.system.BusFreq.w),
-                              'P': array([]),
-                              'Q': array([]),
+                              'w_Busfreq': 1 + array(self.system.BusFreq.w),
+                              # 'P': array([]),
+                              # 'Q': array([]),
                               }
-        self.Idxvgs['Line'] = {'Pij': array([]),
-                               'Pji': array([]),
-                               'Qij': array([]),
-                               'Qji': array([]),
-                               'Iij': array([]),
-                               'Iji': array([]),
-                               'Sij': array([]),
-                               'Sji': array([]),
-                               }
-        self.Idxvgs['Syn'] = {'delta': array(self.system.Syn6a.delta),
-                              'omega': array(self.system.Syn6a.omega),
-                              'e1d': array(self.system.Syn6a.e1d),
-                              'e1q': array(self.system.Syn6a.e1q),
-                              'e2d': array(self.system.Syn6a.e2d),
-                              'e2q': array(self.system.Syn6a.e2q),
-                              'psid': array(self.system.Syn6a.psid),
-                              'psiq': array(self.system.Syn6a.psiq),
-                              'p': array(self.system.Syn6a.p),
-                              'q': array(self.system.Syn6a.q),
+        # self.Idxvgs['Line'] = {'Pij': array([]),
+        #                        'Pji': array([]),
+        #                        'Qij': array([]),
+        #                        'Qji': array([]),
+        #                        'Iij': array([]),
+        #                        'Iji': array([]),
+        #                        'Sij': array([]),
+        #                        'Sji': array([]),
+        #                        }
+        self.Idxvgs['Syn'] = {'delta': 1 + array(self.system.Syn6a.delta),
+                              'omega': 1 + array(self.system.Syn6a.omega),
+                              # 'e1d': 1 + array(self.system.Syn6a.e1d),
+                              # 'e1q': 1 + array(self.system.Syn6a.e1q),
+                              # 'e2d': 1 + array(self.system.Syn6a.e2d),
+                              # 'e2q': 1 + array(self.system.Syn6a.e2q),
+                              # 'psid': array(self.system.Syn6a.psid),
+                              # 'psiq': array(self.system.Syn6a.psiq),
+                              # 'p': array(self.system.Syn6a.p),
+                              # 'q': array(self.system.Syn6a.q),
                               }
         # self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
         #                      'wref': array(self.system.TG1.wref + self.system.TG2.wref),
@@ -268,10 +270,14 @@ class Streaming(object):
         if not self.params_built:
             self.build_init()
         if recepient == 'all':
+            self.system.Log.debug('Broadcasting Varheader, Idxvgs and SysParam...')
+            sleep(0.2)
             self.dimec.broadcast('Varheader', self.Varheader)
+            sleep(0.2)
             self.dimec.broadcast('Idxvgs', self.Idxvgs)
+            sleep(0.2)
             self.dimec.broadcast('SysParam', self.SysParam)
-            self.system.Log.info('Varheader, Idxvgs and SysParam broadcasted.')
+            sleep(0.2)
         else:
             if type(recepient) != list:
                 recepient = [recepient]
@@ -282,7 +288,7 @@ class Streaming(object):
 
     def record_module_init(self, module_name, init_var):
         """Record the variable requests from modules"""
-        if hasattr(self.ModuleInfo, module_name):
+        if self.ModuleInfo.haskey(module_name):
             self.ModuleInfo[module_name].update(init_var)
         else:
             self.ModuleInfo[module_name] = init_var
@@ -293,7 +299,7 @@ class Streaming(object):
         else:
             self.ModuleInfo[module_name]['vgsvaridx'] = vgsvaridx
 
-        self.ModuleInfo[module_name]['vgsvaridx'] = [int(i) for i in self.ModuleInfo[module_name]['vgsvaridx']]
+        self.ModuleInfo[module_name]['vgsvaridx'] = [int(i)-1 for i in self.ModuleInfo[module_name]['vgsvaridx']]
 
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
@@ -345,6 +351,6 @@ class Streaming(object):
             Varvgs = {'t': t,
                       'k': k,
                       'vars': array(values),
+                      'accurate': array(values),
                       }
-
             self.dimec.send_var(mod, 'Varvgs', Varvgs)

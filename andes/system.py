@@ -147,6 +147,10 @@ class PowerSystem(object):
         self.VarName.resize()
         self.xy_addr1()
 
+        # Assign variable names for bus injections and line flows if enabled
+        self.VarName.resize_for_flows()
+        self.VarName.bus_line_names()
+
         # Reshape DAE to retain power flow solutions
         self.DAE.init1()
 

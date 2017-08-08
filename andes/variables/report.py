@@ -185,7 +185,7 @@ class Report(object):
             # Additional Algebraic data
             text.append(['OTHER ALGEBRAIC VARIABLES:\n'])
             header.append([''])
-            rowname.append(system.VarName.unamey[2 * system.Bus.n:])
+            rowname.append(system.VarName.unamey[2 * system.Bus.n:system.DAE.m])
             data.append([round(i, 5) for i in system.DAE.y[2 * system.Bus.n:]])
 
             # Additional State variable data
