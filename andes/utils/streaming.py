@@ -185,24 +185,27 @@ class Streaming(object):
     def _build_Idxvgs(self):
         m = self.system.DAE.m
         n = self.system.DAE.n
+        mn = m + n
+
         self.Idxvgs['System'] = {'nBus': self.system.Bus.n,
                                  'nLine': self.system.Line.n,
                                  }
         self.Idxvgs['Bus'] = {'theta': 1 + n + array(self.system.Bus.a),
                               'V': 1 + n + array(self.system.Bus.v),
                               'w_Busfreq': 1 + array(self.system.BusFreq.w),
-                              # 'P': array([]),
-                              # 'Q': array([]),
+                              'P': 1 + mn + array(range(self.system.Bus.n)),
+                              'Q': 1 + mn + self.system.Bus.n + array(range(self.system.Bus.n)),
                               }
-        # self.Idxvgs['Line'] = {'Pij': array([]),
-        #                        'Pji': array([]),
-        #                        'Qij': array([]),
-        #                        'Qji': array([]),
-        #                        'Iij': array([]),
-        #                        'Iji': array([]),
-        #                        'Sij': array([]),
-        #                        'Sji': array([]),
-        #                        }
+        line0 = 1 + mn + 2 * self.system.Bus.n
+        self.Idxvgs['Line'] = {'Pij': line0 + array(range(self.system.Line.n)),
+                               'Pji': line0 + self.system.Line.n + array(range(self.system.Line.n)),
+                               'Qij': line0 + 2 * self.system.Line.n + array(range(self.system.Line.n)),
+                               'Qji': line0 + 3 * self.system.Line.n + array(range(self.system.Line.n)),
+                               # 'Iij': array([]),
+                               # 'Iji': array([]),
+                               # 'Sij': array([]),
+                               # 'Sji': array([]),
+                               }
         self.Idxvgs['Syn'] = {'delta': 1 + array(self.system.Syn6a.delta),
                               'omega': 1 + array(self.system.Syn6a.omega),
                               # 'e1d': 1 + array(self.system.Syn6a.e1d),
