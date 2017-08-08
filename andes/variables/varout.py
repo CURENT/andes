@@ -52,7 +52,6 @@ class VarOut(object):
 
         try:
             self.dat = open(self.system.Files.dat, self._mode)
-            self.dat.write('{}'.format(nvars) + '\n')
 
             for t, line in zip(self.t, self.vars):
                 self._write_vars(t, line)
