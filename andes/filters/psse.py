@@ -27,7 +27,7 @@ def read(file, system):
               'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q']
     nol = [1, 1, 1, 1, 1, 4, 1,
            0, 0, 0, 0, 0, 0,
-           0, 1, 0, 0, 0, 0]
+           0, 1, 0, 1, 0, 0]
     rawd = re.compile('rawd\d\d')
 
     retval = True
@@ -75,7 +75,7 @@ def read(file, system):
         data = [to_number(item) for item in data]
         mdata.append(data)
         mline += 1
-        if mline == nol[b]:
+        if mline >= nol[b]:
             if nol[b] == 1:
                 mdata = mdata[0]
             raw[blocks[b]].append(mdata)
@@ -222,6 +222,21 @@ def read(file, system):
                  'Vn2': system.Bus.get_by_idx('Vn', data[0][1]),
                  }
         system.Line.add(**param)
+
+    for data in raw['swshunt']:
+        """I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
+                                               BINIT, N1, B1, N2, B2, ... N8, B8
+        """
+        bus = data[0]
+        vn = system.Bus.get_by_idx('Vn', bus)
+        param = {'bus': bus,
+                 'Vn': vn,
+                 'Sn': mva,
+                 'u': data[3],
+                 'b': data[9]/mva,
+                 }
+        system.Shunt.add(**param)
+
     return retval
 
 

@@ -259,8 +259,8 @@ class DAE(object):
             value = list(self.__dict__[eq])
 
         out = ''
-        for name, val in zip(self.system.VarName.__dict__[key], value):
-            out += '{:12s} [{:>12.4f}]\n'.format(name, val)
+        for name, val, idx in zip(self.system.VarName.__dict__[key], value, range(len(value))):
+            out += '{:12s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
         return out
 
     def find_val(self, eq, val):

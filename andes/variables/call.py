@@ -1,3 +1,5 @@
+SHOW_PF_CALL = True
+SHOW_INT_CALL = False
 
 all_calls = ['gcall',
              'gycall',
@@ -133,7 +135,8 @@ class Call(object):
         string += self.gyisland
 
         string += '"""'
-        # print(string)
+        if SHOW_PF_CALL:
+            self.system.Log.debug(string)
         self.newton = compile(eval(string), '', 'exec')
 
     def _compile_fdpf(self):
@@ -236,7 +239,8 @@ class Call(object):
         string += self.gyisland
 
         string += '"""'
-        self.system.Log.debug(string)
+        if SHOW_INT_CALL:
+            self.system.Log.debug(string)
 
         self.int = compile(eval(string), '', 'exec')
 
