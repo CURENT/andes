@@ -84,9 +84,9 @@ def dump_results(system, mu, partfact):
 
     # obtain most associated variables
     var_assoc = []
-    for eig_idx in range(neig):
-        temp_col = partfact[:, eig_idx]
-        name_idx = list(temp_col).index(max(temp_col))
+    for prow in range(neig):
+        temp_row = partfact[prow, :]
+        name_idx = list(temp_row).index(max(temp_row))
         var_assoc.append(system.VarName.unamex[name_idx])
 
     pf = []
@@ -111,7 +111,7 @@ def dump_results(system, mu, partfact):
     rowname.append(numeral)
     data.append([var_assoc, list(mu_real), list(mu_imag), ufreq, freq, damping])
 
-    cpb = 7 # columns per block
+    cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
     for idx in range(nblock):
