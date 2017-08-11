@@ -21,9 +21,9 @@ class VarOut(object):
             self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
 
         if len(self.vars) >= 500:
-            self.system.Log.debug('VarOut cache written to file at simulation t = {:g}.'.format(self.system.DAE.t))
             self.dump(lst=False)
             self.vars = list()
+            self.system.Log.debug('VarOut cache cleared at simulation t = {:g}.'.format(self.system.DAE.t))
             self._mode = 'a'
 
     def show(self):
