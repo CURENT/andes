@@ -279,7 +279,10 @@ class Streaming(object):
             sleep(0.2)
             self.dimec.broadcast('Idxvgs', self.Idxvgs)
             sleep(0.2)
-            self.dimec.broadcast('SysParam', self.SysParam)
+            try:
+                self.dimec.broadcast('SysParam', self.SysParam)
+            except:
+                self.system.Log.warning('SysParam broadcast error. Check bus coordinates.')
             sleep(0.2)
         else:
             if type(recepient) != list:
