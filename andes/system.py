@@ -30,11 +30,13 @@ try:
 except:
     STREAMING = False
 
+
 class PowerSystem(object):
     """everything in a power system class including models, settings,
      file and call managers"""
     def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
-                 addfile=None, settings=None, input_format=None, output_format=None, gis=None, dime=None, **kwargs):
+                 addfile=None, settings=None, input_format=None, output_format=None, gis=None, dime=None, tf=None,
+                 **kwargs):
         """
         Initialize an empty power system object with defaults
         Args:
@@ -77,6 +79,8 @@ class PowerSystem(object):
         if dime:
             self.Settings.dime_enable = True
             self.Settings.dime_server = dime
+        if tf:
+            self.TDS.tf = tf
 
         if STREAMING:
             self.Streaming = Streaming(self)

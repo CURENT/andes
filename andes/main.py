@@ -52,6 +52,7 @@ def cli_parse(writehelp=False, helpfile=None):
                                                   'outputs and simulation dumps', action='store_true')
     parser.add_argument('--profile', action='store_true', help='Enable Python profiler.')
     parser.add_argument('--dime', help='Speficy DiME streaming server address and port.')
+    parser.add_argument('--tf', help='End time of time-domain simulation.', type=float)
     parser.add_argument('-l', '--log', help='Specify the name of log file.')
     parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
     parser.add_argument('-v', '--verbose', help='Program logging level, an integer from 1 to 5.'
