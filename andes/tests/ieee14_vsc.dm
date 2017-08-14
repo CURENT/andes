@@ -164,7 +164,6 @@ TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
 TG1, gen = 2, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
      T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
-
 Node, idx = 0, name = "Node 0", Vdcn = 100.0
 Node, idx = 1, name = "Node 1", Vdcn = 100.0
 Node, idx = 2, name = "Node 2", Vdcn = 100.0
@@ -173,32 +172,36 @@ Node, idx = 4, name = "Node 4", Vdcn = 100.0
 
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
-VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, Vn = 69, name = "VSC 1", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
-VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.2, qref0 = 0.01, control = "PQ",
+VSC, idx = 2, node1 = 2, node2 = 0, bus = 3, Vn = 69, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = -0.1, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = 0.01, control = "PQ",
+VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, qref0 = 0.01, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.2, vref0 = 1.00, control = "PV",
+VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, vref0 = 1.00, control = "PV",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSCD 1", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 2, name = "VSCD 2", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 0.2, Ki3 = 0.2, Kp4 = 0.2, Ki4 = 0
-VSC1, vsc = 3, name = "VSCD 3", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 1, Ki3 = 1, Kp4 = 1, Ki4 = 1, Kp5 = 1, Ki5 = 1, Kidc = 0
-VSC2, vsc = 4, name = "VSCD 4", Kp1 = 0.2, Ki1 = 4, Kp2 = 0.2, Ki2 = 4,
-      Kp3 = 01, Ki3 = 0.1, Kp4 = 0.1, Ki4 = 0.1
+VSC1, vsc = 1, name = "VSC 1", Kp1 = 1, Ki1 = 5, Kp2 = 1, Ki2 = 5,
+      Kp3 = 1, Ki3 = 0.5
+VSC1, vsc = 2, name = "VSC 2", Kp1 =0.5, Ki1 = 0.2, Kp2 = 0.5, Ki2 = 0.1,
+      Kp3 = 0.2, Ki3 = 0.1, D = 3, M = 3
+VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
+      Kp3 = 1, Ki3 = 0.2
+VSC2A, vsc = 4, name = "VSC 4", Kp1 = 0.5, Ki1 = 0.5, Kp2 = 1, Ki2 = 0.2,
+      Kp3 = 1, Ki3 = 0.2
 
-Fault, bus = 5, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.05
+Fault, bus = 3, Vn = 69, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.1
 
-RLine, idx = 1, name = "DCLine 1", node1 = 1, node2 = 2, Vdcn = 100, R = 5
-RLine, idx = 2, name = "DCLine 2", node1 = 2, node2 = 3, Vdcn = 100, R = 5
-RLine, idx = 3, name = "DCLine 3", node1 = 3, node2 = 4, Vdcn = 100, R = 5
-#RLine, idx = 4, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 5
-#RLine, idx = 5, name = "DCLine 4", node1 = 4, node2 = 1, Vdcn = 100, R = 1
+RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.01
+RLs, idx = "RLs2", name = "RLs 2-3", node1 = 2, node2 = 3, Vdcn = 100, R = 0.1, L = 0.01
+RLs, idx = "RLs3", name = "RLs 3-4", node1 = 3, node2 = 4, Vdcn = 100, R = 0.1, L = 0.01
+RLs, idx = "RLs4", name = "RLs 1-4", node1 = 1, node2 = 4, Vdcn = 100, R = 0.1, L = 0.01
+
+C, idx = "C1", name = "C 1", node1 = 1, node2 = 0, Vdcn = 100, C = 2
+C, idx = "C1", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.5
+C, idx = "C1", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 1
+C, idx = "C1", name = "C 3", node1 = 4, node2 = 0, Vdcn = 100, C = 0.5
