@@ -589,7 +589,7 @@ class VSC1_Outer1(object):
     def outer_fcall(self, dae):
         dae.f[self.Nd] = mul(self.Ki2, self.PQ + self.PV, dae.y[self.ref1] - dae.y[self.p]) + mul(self.Ki2, dae.y[self.ref1] - dae.y[self.v1], self.vQ + self.vV)
         dae.f[self.Nq] = mul(self.Ki3, self.PQ + self.vQ, dae.y[self.ref2] - dae.y[self.q]) + mul(self.Ki3, self.PV + self.vV, dae.y[self.ref2] - dae.y[self.vd])
-        dae.f[self.Idcx] = mul(sign(dae.y[self.p]), self.iTdc, self.vQ + self.vV, -dae.x[self.Idcx] + dae.x[self.Nd] + mul(self.Kp2, dae.y[self.ref1] - dae.y[self.v1]))
+        dae.f[self.Idcx] = mul(self.iTdc, self.vQ + self.vV, -dae.x[self.Idcx] + dae.x[self.Nd] + mul(self.Kp2, dae.y[self.ref1] - dae.y[self.v1]))
 
     def outer_gycall(self, dae):
         dae.add_jac(Gy, mul(self.Kp2 + div(1, dae.y[self.vd]), self.PQ + self.PV), self.Idref, self.ref1)
@@ -611,10 +611,10 @@ class VSC1_Outer1(object):
         dae.add_jac(Gx, - mul(dae.x[self.ud], div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV), self.Idcy, self.Id)
         dae.add_jac(Gx, - mul(dae.x[self.uq], div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV), self.Idcy, self.Iq)
 
-        dae.add_jac(Fx, - mul(sign(dae.y[self.p]), self.iTdc, self.vQ + self.vV), self.Idcx, self.Idcx)
-        dae.add_jac(Fx, mul(sign(dae.y[self.p]), self.iTdc, self.vQ + self.vV), self.Idcx, self.Nd)
-        dae.add_jac(Fy, mul(sign(dae.y[self.p]), self.Kp2, self.iTdc, self.vQ + self.vV), self.Idcx, self.ref1)
-        dae.add_jac(Fy, - mul(sign(dae.y[self.p]), self.Kp2, self.iTdc, self.vQ + self.vV), self.Idcx, self.v1)
+        dae.add_jac(Fx, - mul(self.iTdc, self.vQ + self.vV), self.Idcx, self.Idcx)
+        dae.add_jac(Fx, mul(self.iTdc, self.vQ + self.vV), self.Idcx, self.Nd)
+        dae.add_jac(Fy, mul(self.Kp2, self.iTdc, self.vQ + self.vV), self.Idcx, self.ref1)
+        dae.add_jac(Fy, - mul(self.Kp2, self.iTdc, self.vQ + self.vV), self.Idcx, self.v1)
 
     def outer_jac0(self, dae):
         dae.add_jac(Gy0, -1, self.Idref, self.Idref)
