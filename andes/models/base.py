@@ -268,7 +268,7 @@ class ModelBase(object):
         # overwrite custom values
         for key, value in kwargs.items():
             if key not in self._data:
-                self.message('Parameter <{:s}.{:s}> is undefined'.format(self.name[-1], key), WARNING)
+                self.message('Parameter <{:s}.{:s}> is not used.'.format(self.name[-1], key), WARNING)
                 continue
             self.__dict__[key][-1] = value
 

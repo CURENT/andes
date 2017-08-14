@@ -162,7 +162,7 @@ class Report(object):
             text.append(['BUS DATA:\n'])
             # todo: consider system.SPF.units
             header.append(['Vm(pu)', 'Va({:s})'.format(Va_unit), 'Pg (pu)', 'Qg (pu)', 'Pl (pu)', 'Ql (pu)'])
-            name = [str(i) + '-' + j[:11] for i, j in zip(idx, name)]
+            name = [str(i) + '-' + j[:8] for i, j in zip(idx, name)]
             rowname.append(name)
             data.append([Vm, Va, Pg, Qg, Pl, Ql])
 

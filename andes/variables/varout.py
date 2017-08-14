@@ -23,6 +23,7 @@ class VarOut(object):
         if len(self.vars) >= 500:
             self.dump(lst=False)
             self.vars = list()
+            self.t = list()
             self.system.Log.debug('VarOut cache cleared at simulation t = {:g}.'.format(self.system.DAE.t))
             self._mode = 'a'
 
