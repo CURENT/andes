@@ -874,6 +874,8 @@ class VSC2_Common(DCBase):
         self.servcall(dae)
         dae.y[self.vd] = mul(self.u, dae.y[self.v])
         dae.y[self.vq] = 0
+        dae.x[self.Id] = mul(self.pref0, div(1, dae.y[self.vd]))
+        dae.x[self.Iq] = mul(self.qref0, div(1, dae.y[self.vd]))
         dae.y[self.p] = mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
         dae.y[self.q] = mul(dae.x[self.Iq], dae.y[self.vd]) - mul(dae.x[self.Id], dae.y[self.vq])
 
