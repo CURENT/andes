@@ -356,7 +356,7 @@ class Streaming(object):
             k = len(self.system.VarOut.t)
             Varvgs = {'t': t,
                       'k': k,
-                      'vars': array(values),
-                      'accurate': array(values),
+                      'vars': array(values).T,
+                      'accurate': array(values).T,
                       }
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
