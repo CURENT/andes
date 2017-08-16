@@ -278,3 +278,15 @@ class DAE(object):
             idx += 1
         return
 
+    def reset_small(self, eq):
+        """Reset numbers smaller than 1e-12 in f and g equations"""
+        assert eq in ('f', 'g')
+        for idx, var in enumerate(self.__dict__[eq]):
+            if abs(var) <= 1e-12:
+                self.__dict__[eq][idx] = 0
+
+    def reset_small_f(self):
+        pass
+
+    def reset_small_g(self):
+        pass
