@@ -11,7 +11,7 @@ class Streaming(object):
         self.dimec = dime.Dime(system.Settings.dime_name, system.Settings.dime_server)
         self.params_built = False
 
-        _dicts = ['SysParam', 'Idxvgs', 'ModuleInfo']
+        _dicts = ['SysParam', 'SysName', 'Idxvgs', 'ModuleInfo']
         _lists = ['Varheader', 'last_devices']
 
         for item in _dicts:
@@ -179,6 +179,13 @@ class Streaming(object):
             data_list = self._build_list('WTG3', params)
             self.SysParam.update({'Dfig': array(data_list).T})
 
+    def _build_SysName(self):
+        self.SysName['Bus'] = self.system.Bus.name
+        if self.system.Area.n:
+            self.SysName['Areas'] = self.system.Area.name
+        if self.system.Region.n:
+            self.SysName['Regions'] = self.system.Region.name
+
     def _build_Varheader(self):
         self.Varheader = self.system.VarName.unamex + self.system.VarName.unamey
 
@@ -263,6 +270,7 @@ class Streaming(object):
     def build_init(self):
         """Build `Varheader`, `Idxvgs` and `SysParam` after power flow routine"""
         self._build_SysParam()
+        self._build_SysName()
         self._build_Idxvgs()
         self._build_Varheader()
 
@@ -273,7 +281,7 @@ class Streaming(object):
         if not self.params_built:
             self.build_init()
         if recepient == 'all':
-            self.system.Log.debug('Broadcasting Varheader, Idxvgs and SysParam...')
+            self.system.Log.debug('Broadcasting Varheader, Idxvgs, SysParam and SysName...')
             sleep(0.2)
             self.dimec.broadcast('Varheader', self.Varheader)
             sleep(0.2)
@@ -281,8 +289,9 @@ class Streaming(object):
             sleep(0.2)
             try:
                 self.dimec.broadcast('SysParam', self.SysParam)
+                self.dimec.broadcast('SysName', self.SysName)
             except:
-                self.system.Log.warning('SysParam broadcast error. Check bus coordinates.')
+                self.system.Log.warning('SysParam or SysName broadcast error. Check bus coordinates.')
             sleep(0.2)
         else:
             if type(recepient) != list:
@@ -291,6 +300,7 @@ class Streaming(object):
                 self.dimec.send_var(item, 'Varheader', self.Varheader)
                 self.dimec.send_var(item, 'Idxvgs', self.Idxvgs)
                 self.dimec.send_var(item, 'SysParam', self.SysParam)
+                self.dimec.send_var(item, 'SysName', self.SysName)
 
     def record_module_init(self, module_name, init_var):
         """Record the variable requests from modules"""
