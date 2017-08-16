@@ -294,7 +294,7 @@ class Streaming(object):
 
     def record_module_init(self, module_name, init_var):
         """Record the variable requests from modules"""
-        if self.ModuleInfo.haskey(module_name):
+        if module_name in self.ModuleInfo:
             self.ModuleInfo[module_name].update(init_var)
         else:
             self.ModuleInfo[module_name] = init_var

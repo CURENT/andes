@@ -17,6 +17,7 @@ setup(name='andes',
           'matplotlib',
           'progressbar2',
           'python_utils',
+          'pyzmq',
       ],
       packages=[
           'andes',
