@@ -63,7 +63,7 @@ def run(system):
     global F
     retval = True
     bar = None
-    if system.pid == -1:
+    if system.pid == -1 and system.Settings.progressbar:
         bar = progressbar.ProgressBar(
                                       widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
                                                progressbar.AdaptiveETA(), '] '])
