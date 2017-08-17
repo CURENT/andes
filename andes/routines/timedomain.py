@@ -63,7 +63,7 @@ def run(system):
     global F
     retval = True
     bar = None
-    if system.pid == -1:
+    if system.pid == -1 and system.Settings.progressbar:
         bar = progressbar.ProgressBar(
                                       widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
                                                progressbar.AdaptiveETA(), '] '])
@@ -168,26 +168,38 @@ def run(system):
         settings.error = tol + 1
         t = actual_time
 
-        while settings.error > tol and niter < maxit:
-            if settings.method == 'fwdeuler':
-                # predictor of x
-                exec(system.Call.int_f)
-                f0 = dae.f
-                dae.x = xa + h * f0
+        if settings.method == 'fwdeuler':
+            # predictor of x
+            exec(system.Call.int_f)
+            f0 = matrix(dae.f)
+            dae.x = xa + h * f0
+            while settings.error > tol and niter < maxit:
                 inc = calcInc(system)
                 dae.y += inc
-
-                # corrector step
-                exec(system.Call.int_f)
-                dae.x = xa + 0.5 * h * (f0 + dae.f)
-                inc = calcInc(system)
-                dae.y += inc
-
-                settings.error = abs(max(inc))
+                settings.error = max(abs(inc))
                 niter += 1
 
-            elif settings.method in ['euler', 'trapezoidal']:
+            # corrector step
+            exec(system.Call.int_f)
+            dae.x = xa + 0.5 * h * (f0 + dae.f)
 
+            settings.error = 1 + tol
+            niter = 0
+            while settings.error > tol and niter < maxit:
+                inc = calcInc(system)
+                dae.y += inc
+                settings.error = max(abs(inc))
+                niter += 1
+
+            if isnan(settings.error):
+                system.Log.error('Iteration error: NaN detected at t = {}.'.format(actual_time))
+                niter = maxit + 1
+            if settings.error == float('Inf'):
+                niter = maxit + 1
+
+
+        if settings.method in ['euler', 'trapezoidal']:
+            while settings.error > tol and niter < maxit:
                 if actual_time - t_jac >= 1:
                     dae.rebuild = True
                     t_jac = actual_time
@@ -292,7 +304,7 @@ def run(system):
         if bar:
             bar.update(perc)
 
-        if perc > nextpc:
+        if perc > nextpc or t == settings.tf:
             system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f}, niter = {}'.format(t, step, settings.error, niter))
             nextpc += 10
         # compute max rotor angle difference
@@ -369,16 +381,18 @@ def calcInc(system):
         solve(A, F, N, inc)
     except ValueError:
         system.Log.warning('Unexpected symbolic factorization. Refactorizing...')
-        F = symbolic(dae.Ac)
+        F = symbolic(A)
         try:
-            N = numeric(dae.Ac, F)
-            solve(dae.Ac, F, N, inc)
+            N = numeric(A, F)
+            solve(A, F, N, inc)
         except ArithmeticError:
             system.Log.error('Singular matrix')
             niter = maxit + 1
     except ArithmeticError:
         system.Log.error('Jacobian matrix is singular.')
         diag0(system.DAE.Gy, 'unamey', system)
+    except:
+        raise
     return -inc
 
 

@@ -26,6 +26,7 @@ class Settings(SettingsBase):
         self.dime_enable = False
         self.dime_name = 'sim'
         self.dime_server = 'tcp://127.0.0.1:5000'
+        self.progressbar = False
 
     @property
     def wb(self):
