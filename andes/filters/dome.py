@@ -3,6 +3,7 @@ Parser for DOME RAW format 0.1
 From Book "Power System Modeling and Scripting" by Dr. Federico Milano
 """
 import re
+import os
 from math import ceil
 
 def testlines(fid):
@@ -88,11 +89,15 @@ def read(file, system, header=True):
             alter(data, system)
             continue
         if device == 'INCLUDE':
-            print('Parsing include file <%s>', data[0])
-            newfid = open(data[0], 'rt')
-            read(newfid, system, header=False)  # recursive call
-            newfid.close()
-            print('Parsing of include file <%s> completed.', data[0])
+            system.Log.info('Parsing include file <{}>'.format(data[0]))
+            newpath = data[0]
+            if not os.path.isfile(newpath):
+                newpath = os.path.join(system.Files.path, data[0])
+                if not os.path.isfile(newpath):
+                    system.Log.warning('Unable to locate file in {}'.format(newpath))
+                    continue
+            read(newpath, system, header=False)  # recursive call
+            system.Log.info('Parsing of include file <{}> completed.'.format(data[0]))
             continue
         kwargs = {}
         for item in data:
