@@ -1034,28 +1034,6 @@ Bus, Vn = 230.0, angle = -0.4951, area = 342, idx = 306111, name = "393", owner 
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01859, xcoord = 0, ycoord = 0
 Bus, Vn = 100.0, angle = -0.73332, area = 342, idx = 306300, name = "394", owner = 1, region = 325,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99644, xcoord = 0, ycoord = 0
-Bus, Vn = 230.0, angle = -0.07708, area = 672, idx = 320001, name = "SASKACHEWA_I", owner = 1, region = 672,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.09461, xcoord = 0, ycoord = 0
-Bus, Vn = 230.0, angle = -0.07713, area = 672, idx = 320002, name = "SASKACHEWA_R", owner = 1, region = 672,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.09476, xcoord = 0, ycoord = 0
-Bus, Vn = 230.0, angle = -0.53842, area = 618, idx = 320003, name = "N_DAKOTA	_I", owner = 1, region = 624,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0037, xcoord = 0, ycoord = 0
-Bus, Vn = 230.0, angle = -0.53842, area = 618, idx = 320004, name = "N_DAKOTA	_R", owner = 1, region = 624,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0037, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.48375, area = 640, idx = 320005, name = "V_NEBRASKA_I", owner = 1, region = 659,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.019, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.53407, area = 640, idx = 320006, name = "V_NEBRASKA_R", owner = 1, region = 659,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02463, xcoord = 0, ycoord = 0
-Bus, Vn = 230.0, angle = -0.52235, area = 640, idx = 320007, name = "S_NEBRASKA_I", owner = 1, region = 659,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96003, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.79358, area = 999, idx = 320008, name = "TX_OLKU_	I", owner = 1, region = 999,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97077, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.79358, area = 999, idx = 320009, name = "TX_OLKU_	R", owner = 1, region = 999,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97082, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.29217, area = 525, idx = 320010, name = "TX_WELSH	_I", owner = 1, region = 525,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.12853, xcoord = 0, ycoord = 0
-Bus, Vn = 345.0, angle = -0.29217, area = 525, idx = 320011, name = "T459X_WELSH", owner = 1, region = 525,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.12853, xcoord = 0, ycoord = 0
 
 Line, Sn = 100.0, Vn = 500.0, Vn2 = 500.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 100001,
       bus2 = 100006, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_0", name = "Line 1",
@@ -3069,10 +3047,6 @@ Line, Sn = 100.0, Vn = 230.0, Vn2 = 115.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 166452, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_502", name = "Line 503",
       owner = 0, phi = 0, r = 0.01629, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.11945, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.2, b1 = 0.0, b2 = 0.0, bus1 = 163056,
-      bus2 = 320003, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_503", name = "Line 504",
-      owner = 0, phi = 0, r = -0.0, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.0001, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 163800,
       bus2 = 163875, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_504", name = "Line 505",
       owner = 0, phi = 0, r = 0.01018, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
@@ -3109,10 +3083,6 @@ Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 164403, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_512", name = "Line 513",
       owner = 0, phi = 0, r = 0.00305, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.02635, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 164759,
-      bus2 = 320007, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_513", name = "Line 514",
-      owner = 0, phi = 0, r = 0.00129, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.0103, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 164783,
       bus2 = 166565, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_514", name = "Line 515",
       owner = 0, phi = 0, r = 0.02526, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
@@ -3125,10 +3095,6 @@ Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 164902, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_516", name = "Line 517",
       owner = 0, phi = 0, r = 0.01289, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.10298, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 164786,
-      bus2 = 320005, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_517", name = "Line 518",
-      owner = 0, phi = 0, r = 0.00129, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.0103, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 164831,
       bus2 = 164902, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_518", name = "Line 519",
       owner = 0, phi = 0, r = 0.0177, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
@@ -3141,10 +3107,6 @@ Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 166571, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_520", name = "Line 521",
       owner = 0, phi = 0, r = 0.00317, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.03434, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 164902,
-      bus2 = 320006, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_521", name = "Line 522",
-      owner = 0, phi = 0, r = 0.00129, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.0103, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 166444,
       bus2 = 166754, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_522", name = "Line 523",
       owner = 0, phi = 0, r = 0.01017, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
@@ -3189,10 +3151,6 @@ Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 167560, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_532", name = "Line 533",
       owner = 0, phi = 0, r = 0.00909, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.08214, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 168601,
-      bus2 = 320001, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_533", name = "Line 534",
-      owner = 0, phi = 0, r = 0.05282, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.03737, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 161.0, Vn2 = 161.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 196088,
       bus2 = 196096, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_534", name = "Line 535",
       owner = 0, phi = 0, r = 0.04083, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
@@ -3217,22 +3175,6 @@ Line, Sn = 100.0, Vn = 500.0, Vn2 = 500.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 199742, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_539", name = "Line 540",
       owner = 0, phi = 0, r = 0.00804, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
       x = 0.07647, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.02, b1 = 0.0, b2 = 0.0, bus1 = 320001,
-      bus2 = 320002, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_540", name = "Line 541",
-      owner = 0, phi = 0, r = 0.00528, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.01369, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.001, b1 = 0.0, b2 = 0.0, bus1 = 320003,
-      bus2 = 320004, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_541", name = "Line 542",
-      owner = 0, phi = 0, r = -0.0, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.0001, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.1, b1 = 0.0, b2 = 0.0, bus1 = 320008,
-      bus2 = 320009, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_542", name = "Line 543",
-      owner = 0, phi = 0, r = -0.0, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.001, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 320010,
-      bus2 = 320011, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_543", name = "Line 544",
-      owner = 0, phi = 0, r = 0.001, rate_a = 0.0, tap = 1.0, trasf = False, u = 1,
-      x = 0.01, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 22.0, Vn2 = 500.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 100042,
       bus2 = 100001, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_544", name = "Line 545",
       owner = 0, phi = -15.248, r = 0.00161, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
@@ -6941,10 +6883,6 @@ Line, Sn = 100.0, Vn = 230.0, Vn2 = 138.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
       bus2 = 155948, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1470", name = "Line 1471",
       owner = 0, phi = -24.213, r = 0.01521, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
       x = 0.1815, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 138.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 155948,
-      bus2 = 320010, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1471", name = "Line 1472",
-      owner = 0, phi = -17.707, r = 0.00014, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
-      x = 0.01232, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 25.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 156751,
       bus2 = 156449, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1472", name = "Line 1473",
       owner = 0, phi = 4.657, r = 0.00109, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
@@ -7189,10 +7127,6 @@ Line, Sn = 100.0, Vn = 230.0, Vn2 = 21.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 15
       bus2 = 198954, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1532", name = "Line 1533",
       owner = 0, phi = -42.101, r = 0.00189, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
       x = 0.02383, xcoord = 0, ycoord = 0
-Line, Sn = 100.0, Vn = 230.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 159995,
-      bus2 = 320008, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1533", name = "Line 1534",
-      owner = 0, phi = -4.079, r = 0.00018, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
-      x = 0.00144, xcoord = 0, ycoord = 0
 Line, Sn = 100.0, Vn = 26.0, Vn2 = 345.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 160002,
       bus2 = 160105, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_1534", name = "Line 1535",
       owner = 0, phi = 20.544, r = 0.01772, rate_a = 0.0, tap = 1.0, trasf = True, u = 1,
@@ -10723,8 +10657,6 @@ Shunt, Sn = 100.0, Vn = 230.0, b = 9.41549, bus = 306111, fn = 60.0, g = -0.3467
        name = "Shunt 395", u = 1
 Shunt, Sn = 100.0, Vn = 100.0, b = 3.062, bus = 306300, fn = 60.0, g = -0.28241, idx = "Shunt_395",
        name = "Shunt 396", u = 1
-Shunt, Sn = 100.0, Vn = 230.0, b = 1.0, bus = 320007, fn = 60.0, g = 0.0, idx = "Shunt_396",
-       name = "Shunt 397", u = 1
 Shunt, Sn = 100.0, Vn = 500.0, b = 2.6, bus = 100001, fn = 60.0, g = 0, idx = "Shunt_397",
        name = "Shunt 398", u = 1
 Shunt, Sn = 100.0, Vn = 500.0, b = 2.48, bus = 100009, fn = 60.0, g = 0, idx = "Shunt_398",
@@ -10865,256 +10797,3 @@ Shunt, Sn = 100.0, Vn = 115.0, b = 0.9159, bus = 198899, fn = 60.0, g = 0, idx =
        name = "Shunt 466", u = 1
 Shunt, Sn = 100.0, Vn = 161.0, b = 0.324, bus = 199519, fn = 60.0, g = 0, idx = "Shunt_466",
        name = "Shunt 467", u = 1
-
-Syn2, D = 3.93, M = 7.86, S10 = 0, S12 = 0, Sn = 29988.801, Vn = 22.0, bus = 100042,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 1, idx = "Syn2_0", kp = 0,
-      kw = 0, name = "Syn2 1", ra = 0.0, u = 1, xd1 = 0.30733, xl = 0.0, xq = 1.7
-Syn2, D = 3.04, M = 6.08, S10 = 0, S12 = 0, Sn = 41575.398, Vn = 22.0, bus = 100577,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 8, idx = "Syn2_1", kp = 0,
-      kw = 0, name = "Syn2 2", ra = 0.0, u = 1, xd1 = 0.24956, xl = 0.0, xq = 1.7
-Syn2, D = 46.0, M = 92.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 500.0, bus = 100115,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 2, idx = "Syn2_2", kp = 0,
-      kw = 0, name = "Syn2 3", ra = 0.0, u = 1, xd1 = 0.03, xl = 0.0, xq = 1.7
-Syn2, D = 30.0, M = 60.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 100119,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 3, idx = "Syn2_3", kp = 0,
-      kw = 0, name = "Syn2 4", ra = 0.0, u = 1, xd1 = 0.0357, xl = 0.0, xq = 1.7
-Syn2, D = 1000.0, M = 2000.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 100120,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 4, idx = "Syn2_4", kp = 0,
-      kw = 0, name = "Syn2 5", ra = 0.0, u = 1, xd1 = 0.0001, xl = 0.0, xq = 1.7
-Syn2, D = 66.0, M = 132.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 100121,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 5, idx = "Syn2_5", kp = 0,
-      kw = 0, name = "Syn2 6", ra = 0.0, u = 1, xd1 = 0.025, xl = 0.0, xq = 1.7
-Syn2, D = 190.0, M = 380.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 100122,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 6, idx = "Syn2_6", kp = 0,
-      kw = 0, name = "Syn2 7", ra = 0.0, u = 1, xd1 = 0.008, xl = 0.0, xq = 1.7
-Syn2, D = 33.0, M = 66.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 100123,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 7, idx = "Syn2_7", kp = 0,
-      kw = 0, name = "Syn2 8", ra = 0.0, u = 1, xd1 = 0.023, xl = 0.0, xq = 1.7
-Syn2, D = 34.8, M = 69.6, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101021,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 9, idx = "Syn2_8", kp = 0,
-      kw = 0, name = "Syn2 9", ra = 0.0, u = 1, xd1 = 0.048, xl = 0.0, xq = 1.7
-Syn2, D = 28.6, M = 57.2, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101022,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 10, idx = "Syn2_9", kp = 0,
-      kw = 0, name = "Syn2 10", ra = 0.0, u = 1, xd1 = 0.0436, xl = 0.0, xq = 1.7
-Syn2, D = 7.34, M = 14.68, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101023,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 11, idx = "Syn2_10", kp = 0,
-      kw = 0, name = "Syn2 11", ra = 0.0, u = 1, xd1 = 0.0815, xl = 0.0, xq = 1.7
-Syn2, D = 18.6, M = 37.2, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101023,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 11, idx = "Syn2_11", kp = 0,
-      kw = 0, name = "Syn2 12", ra = 0.0, u = 1, xd1 = 0.0815, xl = 0.0, xq = 1.7
-Syn2, D = 34.8, M = 69.6, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101024,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 13, idx = "Syn2_12", kp = 0,
-      kw = 0, name = "Syn2 13", ra = 0.0, u = 1, xd1 = 0.048, xl = 0.0, xq = 1.7
-Syn2, D = 26.4, M = 52.8, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101025,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 14, idx = "Syn2_13", kp = 0,
-      kw = 0, name = "Syn2 14", ra = 0.0, u = 1, xd1 = 0.048, xl = 0.0, xq = 1.7
-Syn2, D = 34.2, M = 68.4, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101026,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 15, idx = "Syn2_14", kp = 0,
-      kw = 0, name = "Syn2 15", ra = 0.0, u = 1, xd1 = 0.058, xl = 0.0, xq = 1.7
-Syn2, D = 24.3, M = 48.6, S10 = 0, S12 = 0, Sn = 100.0, Vn = 14.0, bus = 101027,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 16, idx = "Syn2_15", kp = 0,
-      kw = 0, name = "Syn2 16", ra = 0.0, u = 1, xd1 = 0.055, xl = 0.0, xq = 1.7
-Syn2, D = 30.3, M = 60.6, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101036,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 17, idx = "Syn2_16", kp = 0,
-      kw = 0, name = "Syn2 17", ra = 0.0, u = 1, xd1 = 0.081, xl = 0.0, xq = 1.7
-Syn2, D = 18.86, M = 37.72, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101042,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 18, idx = "Syn2_17", kp = 0,
-      kw = 0, name = "Syn2 18", ra = 0.0, u = 1, xd1 = 0.0595, xl = 0.0, xq = 1.7
-Syn2, D = 15.17, M = 30.34, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101047,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 19, idx = "Syn2_18", kp = 0,
-      kw = 0, name = "Syn2 19", ra = 0.0, u = 1, xd1 = 0.11, xl = 0.0, xq = 1.7
-Syn2, D = 15.17, M = 30.34, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101048,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 20, idx = "Syn2_19", kp = 0,
-      kw = 0, name = "Syn2 20", ra = 0.0, u = 1, xd1 = 0.11, xl = 0.0, xq = 1.7
-Syn2, D = 34.44, M = 68.88, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101050,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 21, idx = "Syn2_20", kp = 0,
-      kw = 0, name = "Syn2 21", ra = 0.0, u = 1, xd1 = 0.078, xl = 0.0, xq = 1.7
-Syn2, D = 21.46, M = 42.92, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101051,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 22, idx = "Syn2_21", kp = 0,
-      kw = 0, name = "Syn2 22", ra = 0.0, u = 1, xd1 = 0.0625, xl = 0.0, xq = 1.7
-Syn2, D = 51.24, M = 102.48, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101054,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 24, idx = "Syn2_22", kp = 0,
-      kw = 0, name = "Syn2 23", ra = 0.0, u = 1, xd1 = 0.0566, xl = 0.0, xq = 1.7
-Syn2, D = 51.24, M = 102.48, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101054,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 24, idx = "Syn2_23", kp = 0,
-      kw = 0, name = "Syn2 24", ra = 0.0, u = 1, xd1 = 0.0566, xl = 0.0, xq = 1.7
-Syn2, D = 59.78, M = 119.56, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101055,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 26, idx = "Syn2_24", kp = 0,
-      kw = 0, name = "Syn2 25", ra = 0.0, u = 1, xd1 = 0.0364, xl = 0.0, xq = 1.7
-Syn2, D = 21.94, M = 43.88, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101056,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 27, idx = "Syn2_25", kp = 0,
-      kw = 0, name = "Syn2 26", ra = 0.0, u = 1, xd1 = 0.0715, xl = 0.0, xq = 1.7
-Syn2, D = 17.71, M = 35.42, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101057,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 28, idx = "Syn2_26", kp = 0,
-      kw = 0, name = "Syn2 27", ra = 0.0, u = 1, xd1 = 0.0699, xl = 0.0, xq = 1.7
-Syn2, D = 21.74, M = 43.48, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101060,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 29, idx = "Syn2_27", kp = 0,
-      kw = 0, name = "Syn2 28", ra = 0.0, u = 1, xd1 = 0.0722, xl = 0.0, xq = 1.7
-Syn2, D = 8.32, M = 16.64, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101061,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 30, idx = "Syn2_28", kp = 0,
-      kw = 0, name = "Syn2 29", ra = 0.0, u = 1, xd1 = 0.1248, xl = 0.0, xq = 1.7
-Syn2, D = 48.0, M = 96.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101079,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 36, idx = "Syn2_29", kp = 0,
-      kw = 0, name = "Syn2 30", ra = 0.0, u = 1, xd1 = 0.032, xl = 0.0, xq = 1.7
-Syn2, D = 23.8, M = 47.6, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101080,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 37, idx = "Syn2_30", kp = 0,
-      kw = 0, name = "Syn2 31", ra = 0.0, u = 1, xd1 = 0.047, xl = 0.0, xq = 1.7
-Syn2, D = 19.6, M = 39.2, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101082,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 38, idx = "Syn2_31", kp = 0,
-      kw = 0, name = "Syn2 32", ra = 0.0, u = 1, xd1 = 0.062, xl = 0.0, xq = 1.7
-Syn2, D = 55.0, M = 110.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101101,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 44, idx = "Syn2_32", kp = 0,
-      kw = 0, name = "Syn2 33", ra = 0.0, u = 1, xd1 = 0.026, xl = 0.0, xq = 1.7
-Syn2, D = 79.0, M = 158.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101086,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 39, idx = "Syn2_33", kp = 0,
-      kw = 0, name = "Syn2 34", ra = 0.0, u = 1, xd1 = 0.02, xl = 0.0, xq = 1.7
-Syn2, D = 72.0, M = 144.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101098,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 43, idx = "Syn2_34", kp = 0,
-      kw = 0, name = "Syn2 35", ra = 0.0, u = 1, xd1 = 0.022, xl = 0.0, xq = 1.7
-Syn2, D = 37.0, M = 74.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101053,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 23, idx = "Syn2_35", kp = 0,
-      kw = 0, name = "Syn2 36", ra = 0.0, u = 1, xd1 = 0.07, xl = 0.0, xq = 1.7
-Syn2, D = 10.71, M = 21.42, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101065,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 31, idx = "Syn2_36", kp = 0,
-      kw = 0, name = "Syn2 37", ra = 0.0, u = 1, xd1 = 0.122, xl = 0.0, xq = 1.7
-Syn2, D = 3.77, M = 7.54, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101068,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 32, idx = "Syn2_37", kp = 0,
-      kw = 0, name = "Syn2 38", ra = 0.0, u = 1, xd1 = 0.2686, xl = 0.0, xq = 1.7
-Syn2, D = 8.5, M = 17.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101071,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 33, idx = "Syn2_38", kp = 0,
-      kw = 0, name = "Syn2 39", ra = 0.0, u = 1, xd1 = 0.19, xl = 0.0, xq = 1.7
-Syn2, D = 11.77, M = 23.54, S10 = 0, S12 = 0, Sn = 100.0, Vn = 115.0, bus = 101072,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 34, idx = "Syn2_39", kp = 0,
-      kw = 0, name = "Syn2 40", ra = 0.0, u = 1, xd1 = 0.1185, xl = 0.0, xq = 1.7
-Syn2, D = 1000.0, M = 2000.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 345.0, bus = 101078,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 35, idx = "Syn2_40", kp = 0,
-      kw = 0, name = "Syn2 41", ra = 0.0, u = 1, xd1 = 0.0001, xl = 0.0, xq = 1.7
-Syn2, D = 98.7, M = 197.4, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101091,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 40, idx = "Syn2_41", kp = 0,
-      kw = 0, name = "Syn2 42", ra = 0.0, u = 1, xd1 = 0.015, xl = 0.0, xq = 1.7
-Syn2, D = 27.0, M = 54.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101092,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 41, idx = "Syn2_42", kp = 0,
-      kw = 0, name = "Syn2 43", ra = 0.0, u = 1, xd1 = 0.1, xl = 0.0, xq = 1.7
-Syn2, D = 36.0, M = 72.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101097,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 42, idx = "Syn2_43", kp = 0,
-      kw = 0, name = "Syn2 44", ra = 0.0, u = 1, xd1 = 0.065, xl = 0.0, xq = 1.7
-Syn2, D = 3.5, M = 7.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 230.0, bus = 101117,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 45, idx = "Syn2_44", kp = 0,
-      kw = 0, name = "Syn2 45", ra = 0.0, u = 1, xd1 = 0.21, xl = 0.0, xq = 1.7
-Syn2, D = 3.35, M = 6.7, S10 = 0, S12 = 0, Sn = 4254.2, Vn = 19.0, bus = 101733,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 46, idx = "Syn2_45", kp = 0,
-      kw = 0, name = "Syn2 46", ra = 0.0, u = 1, xd1 = 0.28334, xl = 0.0, xq = 1.7
-Syn2, D = 3.06, M = 6.12, S10 = 0, S12 = 0, Sn = 10332.0, Vn = 24.0, bus = 103147,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 47, idx = "Syn2_46", kp = 0,
-      kw = 0, name = "Syn2 47", ra = 0.0, u = 1, xd1 = 0.28561, xl = 0.0, xq = 1.7
-Syn2, D = 3.22, M = 6.44, S10 = 0, S12 = 0, Sn = 16896.0, Vn = 20.0, bus = 104110,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 48, idx = "Syn2_47", kp = 0,
-      kw = 0, name = "Syn2 48", ra = 0.0, u = 1, xd1 = 0.27283, xl = 0.0, xq = 1.7
-Syn2, D = 3.13, M = 6.26, S10 = 0, S12 = 0, Sn = 15673.4, Vn = 24.0, bus = 105167,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 49, idx = "Syn2_48", kp = 0,
-      kw = 0, name = "Syn2 49", ra = 0.0, u = 1, xd1 = 0.24012, xl = 0.0, xq = 1.7
-Syn2, D = 4.05, M = 8.1, S10 = 0, S12 = 0, Sn = 15829.8, Vn = 24.0, bus = 110862,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 50, idx = "Syn2_49", kp = 0,
-      kw = 0, name = "Syn2 50", ra = 0.0, u = 1, xd1 = 0.271, xl = 0.0, xq = 1.7
-Syn2, D = 3.48, M = 6.96, S10 = 0, S12 = 0, Sn = 14831.7, Vn = 22.0, bus = 112803,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 51, idx = "Syn2_50", kp = 0,
-      kw = 0, name = "Syn2 51", ra = 0.0, u = 1, xd1 = 0.27337, xl = 0.0, xq = 1.7
-Syn2, D = 3.32, M = 6.64, S10 = 0, S12 = 0, Sn = 74128.602, Vn = 25.0, bus = 115250,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 52, idx = "Syn2_51", kp = 0,
-      kw = 0, name = "Syn2 52", ra = 0.0, u = 1, xd1 = 0.26153, xl = 0.0, xq = 1.7
-Syn2, D = 4.27, M = 8.54, S10 = 0, S12 = 0, Sn = 44549.699, Vn = 20.7, bus = 118167,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 53, idx = "Syn2_52", kp = 0,
-      kw = 0, name = "Syn2 53", ra = 0.0, u = 1, xd1 = 0.29527, xl = 0.0, xq = 1.7
-Syn2, D = 3.43, M = 6.86, S10 = 0, S12 = 0, Sn = 47754.5, Vn = 18.0, bus = 121783,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 54, idx = "Syn2_53", kp = 0,
-      kw = 0, name = "Syn2 54", ra = 0.0, u = 1, xd1 = 0.25093, xl = 0.0, xq = 1.7
-Syn2, D = 3.96, M = 7.92, S10 = 0, S12 = 0, Sn = 48029.801, Vn = 345.0, bus = 122674,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 55, idx = "Syn2_54", kp = 0,
-      kw = 0, name = "Syn2 55", ra = 0.0, u = 1, xd1 = 0.28307, xl = 0.0, xq = 1.7
-Syn2, D = 3.0, M = 6.0, S10 = 0, S12 = 0, Sn = 10444.8, Vn = 20.9, bus = 127502,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 56, idx = "Syn2_55", kp = 0,
-      kw = 0, name = "Syn2 56", ra = 0.0, u = 1, xd1 = 0.20569, xl = 0.0, xq = 1.7
-Syn2, D = 3.32, M = 6.64, S10 = 0, S12 = 0, Sn = 26637.0, Vn = 22.0, bus = 127964,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 57, idx = "Syn2_56", kp = 0,
-      kw = 0, name = "Syn2 57", ra = 0.0, u = 1, xd1 = 0.25657, xl = 0.0, xq = 1.7
-Syn2, D = 3.0, M = 6.0, S10 = 0, S12 = 0, Sn = 4248.39, Vn = 22.0, bus = 129529,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 58, idx = "Syn2_57", kp = 0,
-      kw = 0, name = "Syn2 58", ra = 0.0, u = 1, xd1 = 0.19335, xl = 0.0, xq = 1.7
-Syn2, D = 3.26, M = 6.52, S10 = 0, S12 = 0, Sn = 16042.8, Vn = 25.0, bus = 130225,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 59, idx = "Syn2_58", kp = 0,
-      kw = 0, name = "Syn2 59", ra = 0.0, u = 1, xd1 = 0.26571, xl = 0.0, xq = 1.7
-Syn2, D = 3.15, M = 6.3, S10 = 0, S12 = 0, Sn = 9426.4, Vn = 22.0, bus = 132435,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 60, idx = "Syn2_59", kp = 0,
-      kw = 0, name = "Syn2 60", ra = 0.0, u = 1, xd1 = 0.22119, xl = 0.0, xq = 1.7
-Syn2, D = 3.49, M = 6.98, S10 = 0, S12 = 0, Sn = 5389.31, Vn = 22.0, bus = 134090,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 61, idx = "Syn2_60", kp = 0,
-      kw = 0, name = "Syn2 61", ra = 0.0, u = 1, xd1 = 0.22248, xl = 0.0, xq = 1.7
-Syn2, D = 4.04, M = 8.08, S10 = 0, S12 = 0, Sn = 36427.895, Vn = 25.0, bus = 137523,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 62, idx = "Syn2_61", kp = 0,
-      kw = 0, name = "Syn2 62", ra = 0.0, u = 1, xd1 = 0.29402, xl = 0.0, xq = 1.7
-Syn2, D = 2.99, M = 5.98, S10 = 0, S12 = 0, Sn = 6366.25, Vn = 22.0, bus = 139152,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 63, idx = "Syn2_62", kp = 0,
-      kw = 0, name = "Syn2 63", ra = 0.0, u = 1, xd1 = 0.26783, xl = 0.0, xq = 1.7
-Syn2, D = 3.71, M = 7.42, S10 = 0, S12 = 0, Sn = 12717.8, Vn = 24.0, bus = 139430,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 64, idx = "Syn2_63", kp = 0,
-      kw = 0, name = "Syn2 64", ra = 0.0, u = 1, xd1 = 0.26304, xl = 0.0, xq = 1.7
-Syn2, D = 3.52, M = 7.04, S10 = 0, S12 = 0, Sn = 35832.5, Vn = 22.0, bus = 140199,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 65, idx = "Syn2_64", kp = 0,
-      kw = 0, name = "Syn2 65", ra = 0.0, u = 1, xd1 = 0.29854, xl = 0.0, xq = 1.7
-Syn2, D = 3.6, M = 7.2, S10 = 0, S12 = 0, Sn = 24166.801, Vn = 21.0, bus = 143301,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 66, idx = "Syn2_65", kp = 0,
-      kw = 0, name = "Syn2 66", ra = 0.0, u = 1, xd1 = 0.25057, xl = 0.0, xq = 1.7
-Syn2, D = 3.63, M = 7.26, S10 = 0, S12 = 0, Sn = 7562.15, Vn = 22.0, bus = 147916,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 67, idx = "Syn2_66", kp = 0,
-      kw = 0, name = "Syn2 67", ra = 0.0, u = 1, xd1 = 0.25556, xl = 0.0, xq = 1.7
-Syn2, D = 2.82, M = 5.64, S10 = 0, S12 = 0, Sn = 2344.59, Vn = 13.8, bus = 152632,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 68, idx = "Syn2_67", kp = 0,
-      kw = 0, name = "Syn2 68", ra = 0.0, u = 1, xd1 = 0.25019, xl = 0.0, xq = 1.7
-Syn2, D = 2.72, M = 5.44, S10 = 0, S12 = 0, Sn = 9709.1, Vn = 18.0, bus = 155223,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 69, idx = "Syn2_68", kp = 0,
-      kw = 0, name = "Syn2 69", ra = 0.0, u = 1, xd1 = 0.24252, xl = 0.0, xq = 1.7
-Syn2, D = 3.16, M = 6.32, S10 = 0, S12 = 0, Sn = 8793.75, Vn = 25.0, bus = 156751,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 70, idx = "Syn2_69", kp = 0,
-      kw = 0, name = "Syn2 70", ra = 0.0, u = 1, xd1 = 0.27021, xl = 0.0, xq = 1.7
-Syn2, D = 2.95, M = 5.9, S10 = 0, S12 = 0, Sn = 6926.08, Vn = 25.0, bus = 157962,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 71, idx = "Syn2_70", kp = 0,
-      kw = 0, name = "Syn2 71", ra = 0.0, u = 1, xd1 = 0.30429, xl = 0.0, xq = 1.7
-Syn2, D = 3.94, M = 7.88, S10 = 0, S12 = 0, Sn = 3147.9, Vn = 34.5, bus = 159169,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 72, idx = "Syn2_71", kp = 0,
-      kw = 0, name = "Syn2 72", ra = 0.0, u = 1, xd1 = 0.17055, xl = 0.0, xq = 1.7
-Syn2, D = 3.71, M = 7.42, S10 = 0, S12 = 0, Sn = 1455.1, Vn = 18.0, bus = 159657,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 73, idx = "Syn2_72", kp = 0,
-      kw = 0, name = "Syn2 73", ra = 0.0, u = 1, xd1 = 0.21963, xl = 0.0, xq = 1.7
-Syn2, D = 3.01, M = 6.02, S10 = 0, S12 = 0, Sn = 19244.0, Vn = 230.0, bus = 159995,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 74, idx = "Syn2_73", kp = 0,
-      kw = 0, name = "Syn2 74", ra = 0.0, u = 1, xd1 = 0.24616, xl = 0.0, xq = 1.7
-Syn2, D = 3.11, M = 6.22, S10 = 0, S12 = 0, Sn = 13985.4, Vn = 26.0, bus = 160002,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 75, idx = "Syn2_74", kp = 0,
-      kw = 0, name = "Syn2 75", ra = 0.0, u = 1, xd1 = 0.25424, xl = 0.0, xq = 1.7
-Syn2, D = 3.0, M = 6.0, S10 = 0, S12 = 0, Sn = 2891.0, Vn = 22.0, bus = 163000,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 76, idx = "Syn2_75", kp = 0,
-      kw = 0, name = "Syn2 76", ra = 0.0, u = 1, xd1 = 0.24871, xl = 0.0, xq = 1.7
-Syn2, D = 3.24, M = 6.48, S10 = 0, S12 = 0, Sn = 8152.0, Vn = 25.0, bus = 163317,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 77, idx = "Syn2_76", kp = 0,
-      kw = 0, name = "Syn2 77", ra = 0.0, u = 1, xd1 = 0.30109, xl = 0.0, xq = 1.7
-Syn2, D = 3.3, M = 6.6, S10 = 0, S12 = 0, Sn = 6268.89, Vn = 26.0, bus = 163806,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 78, idx = "Syn2_77", kp = 0,
-      kw = 0, name = "Syn2 78", ra = 0.0, u = 1, xd1 = 0.25439, xl = 0.0, xq = 1.7
-Syn2, D = 3.12, M = 6.24, S10 = 0, S12 = 0, Sn = 7695.4, Vn = 18.0, bus = 165302,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 79, idx = "Syn2_78", kp = 0,
-      kw = 0, name = "Syn2 79", ra = 0.0, u = 1, xd1 = 0.30155, xl = 0.0, xq = 1.7
-Syn2, D = 3.26, M = 6.52, S10 = 0, S12 = 0, Sn = 8001.5, Vn = 13.8, bus = 167680,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 80, idx = "Syn2_79", kp = 0,
-      kw = 0, name = "Syn2 80", ra = 0.0, u = 1, xd1 = 0.28743, xl = 0.0, xq = 1.7
-Syn2, D = 3.0, M = 6.0, S10 = 0, S12 = 0, Sn = 1696.78, Vn = 24.0, bus = 169542,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 81, idx = "Syn2_80", kp = 0,
-      kw = 0, name = "Syn2 81", ra = 0.0, u = 1, xd1 = 0.30567, xl = 0.0, xq = 1.7
-Syn2, D = 3.14, M = 6.28, S10 = 0, S12 = 0, Sn = 8401.56, Vn = 24.0, bus = 196003,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 82, idx = "Syn2_81", kp = 0,
-      kw = 0, name = "Syn2 82", ra = 0.0, u = 1, xd1 = 0.23113, xl = 0.0, xq = 1.7
-Syn2, D = 3.41, M = 6.82, S10 = 0, S12 = 0, Sn = 51480.398, Vn = 21.0, bus = 198954,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 83, idx = "Syn2_82", kp = 0,
-      kw = 0, name = "Syn2 83", ra = 0.0, u = 1, xd1 = 0.24396, xl = 0.0, xq = 1.7
-Syn2, D = 3.03, M = 6.06, S10 = 0, S12 = 0, Sn = 28918.699, Vn = 24.0, bus = 306001,
-      coi = 0, fn = 60.0, gammap = 1.0, gammaq = 1.0, gen = 84, idx = "Syn2_83", kp = 0,
-      kw = 0, name = "Syn2 84", ra = 0.0, u = 1, xd1 = 0.22222, xl = 0.0, xq = 1.7
