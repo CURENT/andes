@@ -1,5 +1,7 @@
 # DOME format version 1.0
 
+# ERCOT HVDC STATION BUSES: 32002, 32004, 32007, 32008
+
 Bus, Vn = 230.0, angle = 0.48021, area = 1, idx = 32001, name = "MRGNCRK_1", owner = 130, region = 163,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03474, xcoord = 32.332383, ycoord = -100.915183
 Bus, Vn = 230.0, angle = 0.48018, area = 1, idx = 32002, name = "MRGNCRK_2", owner = 130, region = 163,

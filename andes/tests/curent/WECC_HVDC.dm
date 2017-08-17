@@ -1,6 +1,7 @@
 # DOME format version 1.0
 
 # WECC SYSTEM HVDC CONVERTER STATION AC CONNECTIONS
+# WECC HVDC station buses: 2191, 2189, 2190, 2192
 
 Bus, Vn = 345.0, angle = -0.53362, area = 10, idx = 2183, name = "NEXMEXIC", owner = 1, region = 10,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 0, ycoord = 0
@@ -74,4 +75,3 @@ Line, Sn = 100.0, Vn = 345.0, Vn2 = 138.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 1
 Shunt, Sn = 100.0, Vn = 138.0, b = 1.5, bus = 2185, fn = 60.0, g = 0.0, idx = "Shunt_WECC_HVDC_2185",
        name = "Shunt WECC HVDC 2185", u = 1
 
-# WECC HVDC station buses: 2191, 2189, 2090, 2192
