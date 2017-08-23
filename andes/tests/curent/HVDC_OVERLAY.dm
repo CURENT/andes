@@ -12,18 +12,18 @@ RLs, idx = "RLs_COI_1", name = "RLs Celilo-Sylmarla", node1 = "Node_COI_1", node
      Vdcn = 193.0, R = 0.1, L = 0.01
 
 C, idx = "C_COI_1", name = "C Celilo", node1 = "Node_COI_1", node2 = "Node_COI_0", Vdcn = 193.0, C = 2
-C, idx = "C_COI_2", name = "C Sylmarla", node1 = "Node_COI_2", node2 = "Node_COI_0", Vdcn = 193.0, C = 2
+C, idx = "C_COI_2", name = "C Sylmarla", node1 = "Node_COI_2", node2 = "Node_COI_0", Vdcn = 193.0, C = 1
 
 VSC, idx = "VSC_Celilo", name = "VSC Celilo", bus = 70, node1 = "Node_COI_1", node2 = "Node_COI_0",
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
      vref0 = 1.05, vdcref0 = 1.0, control = "vV", Vdcn = 193, u = 1
 VSC, idx = "VSC_Sylmarla", name = "VSC Sylmarla", bus = 59, node1 = "Node_COI_2", node2 = "Node_COI_0",
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = -15, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
+     pref0 = 15, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
 
-VSC1, vsc = "VSC_Celilo", name = "VSC Celilo", Kp1 = 1, Ki1 = 5, Kp2 = 1, Ki2 = 5,
+VSC1, vsc = "VSC_Celilo", name = "VSC Celilo", Kp1 = 2, Ki1 = 10, Kp2 = 4, Ki2 = 2,
       Kp3 = 1, Ki3 = 0.5
-VSC1, vsc = "VSC_Sylmarla", name = "VSC Sylmarla", Kp1 =0.5, Ki1 = 0.2, Kp2 = 0.5, Ki2 = 0.1,
+VSC1, vsc = "VSC_Sylmarla", name = "VSC Sylmarla", Kp1 = 0.1, Ki1 = 2, Kp2 = 2, Ki2 = 3,
       Kp3 = 0.2, Ki3 = 0, D = 3, M = 3
 
 
