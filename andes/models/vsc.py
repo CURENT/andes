@@ -174,8 +174,8 @@ class VSC(DCBase):
                             self.system.Log.debug(' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power
-        dae.g[self.a] -= mul(self.u, dae.y[self.psh])  # active power load
-        dae.g[self.v] -= mul(self.u, dae.y[self.qsh])  # reactive power load
+        dae.g -= spmatrix(mul(self.u, dae.y[self.psh]), self.a, [0]*self.n, (dae.m, 1), 'd')
+        dae.g -= spmatrix(mul(self.u, dae.y[self.qsh]), self.v, [0] * self.n, (dae.m, 1), 'd')
 
         # DC interfaces - current
         above = list(dae.y[self.v1] - self.vhigh)
@@ -184,7 +184,7 @@ class VSC(DCBase):
         below = matrix([1 if i < 0 else 0 for i in below])
         self.R = mul(above or below, self.K)
         self.vdcref = mul(self.droop, above, self.vhigh) + mul(self.droop, below, self.vlow)
-        dae.g[self.v1] += div(mul(self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2])  # current injection
+        dae.g += spmatrix(div(mul(self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2]), self.v1, [0]*self.n, (dae.m, 1), 'd')
         dae.g -= spmatrix(div(mul(self.u, dae.y[self.pdc]), dae.y[self.v1] - dae.y[self.v2]), self.v2, [0]*self.n, (dae.m, 1), 'd')  # negative current injection
 
         dae.g[self.ash] = mul(self.u, Ssh.real() - dae.y[self.psh])  # (2)
