@@ -26,7 +26,7 @@ def read(file, system):
               'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline', 'zone',
               'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q']
     nol = [1, 1, 1, 1, 1, 4, 1,
-           0, 0, 0, 0, 0, 0,
+           0, 0, 0, 0, 0, 1,
            0, 1, 0, 1, 0, 0]
     rawd = re.compile('rawd\d\d')
 
@@ -101,7 +101,7 @@ def read(file, system):
                  'voltage': data[7],
                  'angle': a0,
                  'area': data[4],
-                 'region': data[5],
+                 'zone': data[5],
                  'owner': data[6],
                  }
         system.Bus.add(**param)
@@ -236,6 +236,23 @@ def read(file, system):
                  'b': data[9]/mva,
                  }
         system.Shunt.add(**param)
+
+    for data in raw['area']:
+        """ID, ISW, PDES, PTOL, ARNAME"""
+        param = {'idx': data[0],
+                 'isw': data[1],
+                 'pdes': data[2],
+                 'ptol': data[3],
+                 'name': data[4],
+                 }
+        system.Area.add(**param)
+
+    for data in raw['zone']:
+        """ID, NAME"""
+        param = {'idx': data[0],
+                 'name': data[1],
+                 }
+        system.Zone.add(**param)
 
     return retval
 

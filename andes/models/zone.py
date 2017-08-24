@@ -7,6 +7,20 @@ class Zone(ModelBase):
         super().__init__(system, name)
         self._group = 'Topology'
         self._name = 'Zone'
+        self._params.extend(['pdes', 'ptol', 'isw'])
+        self._descr.update({'pdes': "Desired net interchange leaving this area",
+                            'ptol': 'Interchange tolerance bandwidth',
+                            'isw': 'Area slack bus idx',
+                            })
+        self._units.update({'pdes': 'MW',
+                            'ptol': 'MW',
+                            })
+        self._data.update({'pdes': 0.0,
+                           'ptol': 10.0,
+                           'isw': 0,
+                           })
+        self._powers.extend(['pdes', 'ptol'])
+
         self._inst_meta()
 
         self.tieline = dict()
@@ -54,14 +68,14 @@ class Region(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Region'
-        self._params.extend(['Ptol', 'slack'])
-        self._descr.update({'Ptol': 'Total transfer capacity',
-                            'slack': 'slack bus idx',
-                            })
-        self._data.update({'Ptol': None,
-                           'slack': None,
-                           })
-        self._powers.extend(['Ptol'])
+        # self._params.extend(['Ptol', 'slack'])
+        # self._descr.update({'Ptol': 'Total transfer capacity',
+        #                     'slack': 'slack bus idx',
+        #                     })
+        # self._data.update({'Ptol': None,
+        #                    'slack': None,
+        #                    })
+        # self._powers.extend(['Ptol'])
         self._inst_meta()
 
     def setup(self):
