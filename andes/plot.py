@@ -50,6 +50,7 @@ def cli_parse():
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
     parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
+    parser.add_argument('--yop', type=str, help='manipulate y data')
     args = parser.parse_args()
     return args
 
@@ -81,7 +82,8 @@ def parse_y(y, nvars):
             elif ylist[1] > nvars:
                 ylist[1] = nvars
 
-            ylist = eval('range({}, {}, {})'.format(*ylist))
+            # ylist = eval('range({}, {}, {})'.format(*ylist))
+            ylist = range(*ylist)
         else:
             print('* Error: Wrong format for y range')
     elif len(y) > 1:
@@ -93,8 +95,8 @@ def get_nvars(dat):
     try:
         with open(dat, 'r') as f:
             line1 = f.readline()
-        line1 = line1.strip('\n').split()
-        return int(line1[0])
+        line1 = line1.strip().split()
+        return len(line1)
     except IOError:
         print('* Error while opening the dat file')
 
@@ -264,6 +266,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
+
 def isfloat(value):
     try:
         float(value)
@@ -298,7 +301,9 @@ def main():
     if args.checkinit:
         check_init(yval, yl[0])
         return
-
+    # if args.yop:
+    #     op = args.yop[0]
+    #     num =
     do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
 
 
