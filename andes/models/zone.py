@@ -68,14 +68,14 @@ class Region(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Region'
-        # self._params.extend(['Ptol', 'slack'])
-        # self._descr.update({'Ptol': 'Total transfer capacity',
-        #                     'slack': 'slack bus idx',
-        #                     })
-        # self._data.update({'Ptol': None,
-        #                    'slack': None,
-        #                    })
-        # self._powers.extend(['Ptol'])
+        self._params.extend(['Ptol', 'slack'])
+        self._descr.update({'Ptol': 'Total transfer capacity',
+                            'slack': 'slack bus idx',
+                            })
+        self._data.update({'Ptol': None,
+                           'slack': None,
+                           })
+        self._powers.extend(['Ptol'])
         self._inst_meta()
 
     def setup(self):
