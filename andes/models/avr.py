@@ -28,7 +28,7 @@ class AVR1(ModelBase):
             {'busr': None, 'vrmax': 5, 'Kf': 0.063, 'Ka': 20, 'syn': 0, 'Ta': 0.2, 'vrmin': -5, 'Tr': 0.001, 'Be': 0.9,
              'Tf': 0.35, 'Ae': 0.0006, 'Ke': 1, 'Te': 1.0})
         self.calls.update({'jac0': True, 'gycall': False, 'gcall': True, 'fcall': True, 'fxcall': True, 'init1': True})
-        self._zeros.extend(['Ta'])
+        self._zeros.extend(['Ta', 'Tr'])
         self._inst_meta()
 
     def servcall(self, dae):
