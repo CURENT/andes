@@ -1,1039 +1,1039 @@
 # DOME format version 1.0
 
 Bus, Vn = 500.0, angle = -1.22126, area = 725, idx = 100001, name = "1", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03528, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03528, xcoord = 40.48, ycoord = -75.58
 Bus, Vn = 500.0, angle = -1.47734, area = 725, idx = 100006, name = "2", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01799, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01799, xcoord = 40.4, ycoord = -74.48
 Bus, Vn = 500.0, angle = -1.27501, area = 725, idx = 100007, name = "3", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03374, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03374, xcoord = 40.28, ycoord = -75.33
 Bus, Vn = 500.0, angle = -1.21619, area = 725, idx = 100008, name = "4", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0371, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0371, xcoord = 40.46, ycoord = -75.5
 Bus, Vn = 500.0, angle = -1.01357, area = 725, idx = 100009, name = "5", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04961, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04961, xcoord = 40.43, ycoord = -77.17
 Bus, Vn = 500.0, angle = -0.74358, area = 725, idx = 100011, name = "6", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05393, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05393, xcoord = 40.66, ycoord = -79.34
 Bus, Vn = 500.0, angle = -1.05444, area = 725, idx = 100013, name = "7", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05962, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05962, xcoord = 39.76, ycoord = -76.27
 Bus, Vn = 500.0, angle = -0.9807, area = 725, idx = 100026, name = "8", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05299, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05299, xcoord = 39.88, ycoord = -77.17
 Bus, Vn = 500.0, angle = -1.12212, area = 725, idx = 100029, name = "9", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05512, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05512, xcoord = 39.47, ycoord = -75.53
 Bus, Vn = 22.0, angle = -1.09773, area = 725, idx = 100042, name = "10", owner = 1, region = 1,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 40.23, ycoord = -75.59
 Bus, Vn = 230.0, angle = -0.55161, area = 5, idx = 100114, name = "MARYSVILLE", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00552, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00552, xcoord = 42.928333, ycoord = -82.4625
 Bus, Vn = 500.0, angle = -0.50911, area = 5, idx = 100115, name = "ST CLAIR", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 42.851111, ycoord = -82.425
 Bus, Vn = 230.0, angle = -0.62079, area = 5, idx = 100116, name = "WATERMAN", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0067, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0067, xcoord = 42.272303, ycoord = -83.113138
 Bus, Vn = 230.0, angle = -0.55324, area = 5, idx = 100117, name = "PONTIAC", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00626, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00626, xcoord = 42.731955, ycoord = -83.283208
 Bus, Vn = 115.0, angle = -0.53678, area = 5, idx = 100118, name = "WAYNE", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00027, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00027, xcoord = 42.310141, ycoord = -83.465158
 Bus, Vn = 230.0, angle = -0.56339, area = 5, idx = 100119, name = "THETFORD", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 43.158471, ycoord = -83.630264
 Bus, Vn = 230.0, angle = -0.62575, area = 5, idx = 100120, name = "ARGENTA", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 42.436797, ycoord = -85.60914
 Bus, Vn = 230.0, angle = -0.51524, area = 5, idx = 100121, name = "SC415", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.717778, ycoord = -83.008611
 Bus, Vn = 230.0, angle = -0.53259, area = 5, idx = 100122, name = "WATERMAN", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 42.272303, ycoord = -83.113138
 Bus, Vn = 230.0, angle = -0.43518, area = 5, idx = 100123, name = "MONROE", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 41.893567, ycoord = -83.346397
 Bus, Vn = 230.0, angle = -1.11654, area = 726, idx = 100214, name = "11", owner = 1, region = 9,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0222, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0222, xcoord = 40.58, ycoord = -77.59
 Bus, Vn = 115.0, angle = -0.94971, area = 726, idx = 100285, name = "12", owner = 1, region = 706,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99175, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99175, xcoord = 41.2, ycoord = -79.44
 Bus, Vn = 115.0, angle = -1.02374, area = 726, idx = 100423, name = "13", owner = 1, region = 7,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02409, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02409, xcoord = 41.07, ycoord = -78.37
 Bus, Vn = 230.0, angle = -1.01818, area = 726, idx = 100435, name = "14", owner = 1, region = 7,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03376, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03376, xcoord = 41.07, ycoord = -78.37
 Bus, Vn = 230.0, angle = -0.73801, area = 726, idx = 100477, name = "15", owner = 1, region = 8,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02452, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02452, xcoord = 40.52, ycoord = -79.19
 Bus, Vn = 22.0, angle = -0.60411, area = 726, idx = 100577, name = "16", owner = 1, region = 8,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05352, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05352, xcoord = 40.41, ycoord = -79.03
 Bus, Vn = 345.0, angle = -1.54205, area = 65, idx = 101001, name = "395", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00523, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00523, xcoord = 41.314961, ycoord = -72.165386
 Bus, Vn = 345.0, angle = -1.54815, area = 65, idx = 101002, name = "396", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00004, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00004, xcoord = 41.428814, ycoord = -72.103714
 Bus, Vn = 115.0, angle = -1.55337, area = 65, idx = 101003, name = "397", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03913, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03913, xcoord = 41.428814, ycoord = -72.103714
 Bus, Vn = 345.0, angle = -1.55593, area = 65, idx = 101004, name = "398", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00126, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00126, xcoord = 41.428814, ycoord = -72.103714
 Bus, Vn = 345.0, angle = -1.58959, area = 65, idx = 101005, name = "399", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99647, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99647, xcoord = 41.702294, ycoord = -72.234276
 Bus, Vn = 345.0, angle = -1.62171, area = 65, idx = 101006, name = "400", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00125, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00125, xcoord = 42.010123, ycoord = -71.673243
 Bus, Vn = 345.0, angle = -1.60513, area = 65, idx = 101007, name = "401", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01935, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01935, xcoord = 42.14, ycoord = -71.45
 Bus, Vn = 345.0, angle = -1.62794, area = 65, idx = 101008, name = "402", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01591, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01591, xcoord = 42.249, ycoord = -71.618
 Bus, Vn = 345.0, angle = -1.6318, area = 65, idx = 101009, name = "403", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01031, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01031, xcoord = 42.128786, ycoord = -71.99752
 Bus, Vn = 345.0, angle = -1.56106, area = 65, idx = 101010, name = "404", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04173, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04173, xcoord = 41.712947, ycoord = -71.190264
 Bus, Vn = 115.0, angle = -1.59008, area = 65, idx = 101011, name = "405", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98351, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98351, xcoord = 41.712947, ycoord = -71.190264
 Bus, Vn = 345.0, angle = -1.57655, area = 65, idx = 101012, name = "406", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02586, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02586, xcoord = 41.972111, ycoord = -71.016971
 Bus, Vn = 345.0, angle = -1.51096, area = 65, idx = 101013, name = "407", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05033, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05033, xcoord = 41.943286, ycoord = -70.579564
 Bus, Vn = 345.0, angle = -1.50647, area = 65, idx = 101014, name = "408", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04877, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04877, xcoord = 41.769306, ycoord = -70.510758
 Bus, Vn = 345.0, angle = -1.58588, area = 65, idx = 101015, name = "409", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02417, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02417, xcoord = 42.131432, ycoord = -71.268297
 Bus, Vn = 345.0, angle = -1.58351, area = 65, idx = 101016, name = "410", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01295, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01295, xcoord = 42.780125, ycoord = -72.515928
 Bus, Vn = 345.0, angle = -1.65378, area = 65, idx = 101017, name = "411", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02947, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02947, xcoord = 42.90209, ycoord = -71.340232
 Bus, Vn = 345.0, angle = -1.66383, area = 65, idx = 101018, name = "412", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01719, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01719, xcoord = 42.570746, ycoord = -71.524175
 Bus, Vn = 345.0, angle = -1.66542, area = 65, idx = 101019, name = "413", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03949, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03949, xcoord = 43.931973, ycoord = -70.20317
 Bus, Vn = 345.0, angle = -1.63955, area = 65, idx = 101020, name = "414", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04191, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04191, xcoord = 43.953372, ycoord = -69.695417
 Bus, Vn = 14.0, angle = -1.4368, area = 65, idx = 101021, name = "415", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98, xcoord = 41.314961, ycoord = -72.165386
 Bus, Vn = 14.0, angle = -1.49509, area = 65, idx = 101022, name = "416", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99, xcoord = 41.712947, ycoord = -71.190264
 Bus, Vn = 14.0, angle = -1.49922, area = 65, idx = 101023, name = "417", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0066, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0066, xcoord = 41.712947, ycoord = -71.190264
 Bus, Vn = 14.0, angle = -1.44928, area = 65, idx = 101024, name = "418", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 41.943286, ycoord = -70.579564
 Bus, Vn = 14.0, angle = -1.41201, area = 65, idx = 101025, name = "419", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06, xcoord = 41.769306, ycoord = -70.510758
 Bus, Vn = 14.0, angle = -1.56413, area = 65, idx = 101026, name = "420", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 43.953372, ycoord = -69.695417
 Bus, Vn = 14.0, angle = -1.53964, area = 65, idx = 101027, name = "421", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 42.780125, ycoord = -72.515928
 Bus, Vn = 14.0, angle = -1.55071, area = 65, idx = 101028, name = "422", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04044, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04044, xcoord = 42.611, ycoord = -72.468244
 Bus, Vn = 345.0, angle = -1.55071, area = 65, idx = 101029, name = "423", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01507, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01507, xcoord = 42.611, ycoord = -72.468244
 Bus, Vn = 345.0, angle = -1.61639, area = 65, idx = 101030, name = "424", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0051, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0051, xcoord = 42.194996, ycoord = -72.446717
 Bus, Vn = 345.0, angle = -1.61373, area = 65, idx = 101031, name = "425", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98523, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98523, xcoord = 41.769887, ycoord = -72.557652
 Bus, Vn = 345.0, angle = -1.56896, area = 65, idx = 101032, name = "426", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98955, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98955, xcoord = 41.510189, ycoord = -72.568089
 Bus, Vn = 345.0, angle = -1.55914, area = 65, idx = 101033, name = "427", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99325, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99325, xcoord = 41.487179, ycoord = -72.49352
 Bus, Vn = 345.0, angle = -1.57558, area = 65, idx = 101034, name = "428", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97957, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97957, xcoord = 41.489306, ycoord = -72.755041
 Bus, Vn = 345.0, angle = -1.57248, area = 65, idx = 101035, name = "429", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97726, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97726, xcoord = 41.587493, ycoord = -72.866841
 Bus, Vn = 345.0, angle = -1.44229, area = 65, idx = 101036, name = "430", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98, xcoord = 41.483214, ycoord = -72.501478
 Bus, Vn = 345.0, angle = -1.25907, area = 66, idx = 101037, name = "431", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00586, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00586, xcoord = 42.609389, ycoord = -73.904285
 Bus, Vn = 345.0, angle = -1.18644, area = 66, idx = 101038, name = "432", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00375, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00375, xcoord = 42.439941, ycoord = -74.447931
 Bus, Vn = 345.0, angle = -1.30658, area = 66, idx = 101039, name = "433", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00859, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00859, xcoord = 42.265022, ycoord = -73.848921
 Bus, Vn = 230.0, angle = -1.2679, area = 66, idx = 101040, name = "434", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98616, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98616, xcoord = 42.609389, ycoord = -73.904285
 Bus, Vn = 115.0, angle = -1.31432, area = 66, idx = 101041, name = "435", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02698, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02698, xcoord = 42.829667, ycoord = -73.997077
 Bus, Vn = 115.0, angle = -1.28839, area = 66, idx = 101042, name = "436", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.652882, ycoord = -73.75475
 Bus, Vn = 345.0, angle = -1.08399, area = 66, idx = 101043, name = "437", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01937, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01937, xcoord = 43.156953, ycoord = -75.228502
 Bus, Vn = 230.0, angle = -1.12033, area = 66, idx = 101044, name = "438", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01737, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01737, xcoord = 43.16, ycoord = -75.23
 Bus, Vn = 115.0, angle = -1.1645, area = 66, idx = 101045, name = "439", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01208, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01208, xcoord = 43.16, ycoord = -75.23
 Bus, Vn = 115.0, angle = -1.24134, area = 66, idx = 101046, name = "440", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.91204, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.91204, xcoord = 44.578278, ycoord = -74.956837
 Bus, Vn = 115.0, angle = -1.03694, area = 66, idx = 101047, name = "441", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 45, ycoord = -74.81
 Bus, Vn = 230.0, angle = -0.95833, area = 66, idx = 101048, name = "442", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 45, ycoord = -74.81
 Bus, Vn = 230.0, angle = -1.28193, area = 66, idx = 101049, name = "443", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.93551, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.93551, xcoord = 44.726107, ycoord = -73.485977
 Bus, Vn = 345.0, angle = -0.92074, area = 66, idx = 101050, name = "444", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 43.19774, ycoord = -76.170609
 Bus, Vn = 115.0, angle = -0.99781, area = 66, idx = 101051, name = "445", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 43.19774, ycoord = -76.170609
 Bus, Vn = 345.0, angle = -0.71704, area = 66, idx = 101052, name = "446", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02814, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02814, xcoord = 43.268533, ycoord = -77.632906
 Bus, Vn = 115.0, angle = -0.73033, area = 66, idx = 101053, name = "447", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 43.268533, ycoord = -77.632906
 Bus, Vn = 230.0, angle = -0.48914, area = 66, idx = 101054, name = "448", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0408, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0408, xcoord = 43.22453, ycoord = -79.5268
 Bus, Vn = 115.0, angle = -0.51827, area = 66, idx = 101055, name = "449", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 43.22453, ycoord = -79.5268
 Bus, Vn = 230.0, angle = -0.52987, area = 66, idx = 101056, name = "450", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 42.971658, ycoord = -78.932619
 Bus, Vn = 115.0, angle = -0.54231, area = 66, idx = 101057, name = "451", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 42.971658, ycoord = -78.932619
 Bus, Vn = 230.0, angle = -0.60307, area = 66, idx = 101058, name = "452", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00034, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00034, xcoord = 42.852196, ycoord = -78.768191
 Bus, Vn = 115.0, angle = -0.63761, area = 66, idx = 101059, name = "453", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0211, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0211, xcoord = 42.852196, ycoord = -78.768191
 Bus, Vn = 230.0, angle = -0.58496, area = 66, idx = 101060, name = "454", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.491275, ycoord = -79.347892
 Bus, Vn = 115.0, angle = -0.61778, area = 66, idx = 101061, name = "455", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.491275, ycoord = -79.347892
 Bus, Vn = 230.0, angle = -0.62238, area = 66, idx = 101062, name = "456", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00566, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00566, xcoord = 42.832008, ycoord = -78.580493
 Bus, Vn = 230.0, angle = -0.79931, area = 66, idx = 101063, name = "457", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9913, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9913, xcoord = 42.555719, ycoord = -77.7095
 Bus, Vn = 115.0, angle = -0.84781, area = 66, idx = 101064, name = "458", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99638, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99638, xcoord = 42.555719, ycoord = -77.7095
 Bus, Vn = 115.0, angle = -0.79241, area = 66, idx = 101065, name = "459", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.679167, ycoord = -76.950833
 Bus, Vn = 345.0, angle = -0.82916, area = 66, idx = 101066, name = "460", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00983, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00983, xcoord = 42.108947, ycoord = -76.770051
 Bus, Vn = 230.0, angle = -0.9034, area = 66, idx = 101067, name = "461", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99402, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99402, xcoord = 42.102322, ycoord = -76.793826
 Bus, Vn = 115.0, angle = -0.95436, area = 66, idx = 101068, name = "462", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99, xcoord = 42.103065, ycoord = -76.79426
 Bus, Vn = 345.0, angle = -0.96593, area = 66, idx = 101069, name = "463", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00228, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00228, xcoord = 42.1081, ycoord = -75.9281
 Bus, Vn = 230.0, angle = -0.94857, area = 66, idx = 101070, name = "464", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99601, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99601, xcoord = 42.1081, ycoord = -75.9281
 Bus, Vn = 115.0, angle = -0.9834, area = 66, idx = 101071, name = "465", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 42.1081, ycoord = -75.9281
 Bus, Vn = 115.0, angle = -0.98299, area = 66, idx = 101072, name = "466", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 42.444167, ycoord = -76.124722
 Bus, Vn = 345.0, angle = -1.36453, area = 67, idx = 101073, name = "467", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01043, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01043, xcoord = 41.741796, ycoord = -73.832662
 Bus, Vn = 345.0, angle = -1.37217, area = 67, idx = 101074, name = "468", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02294, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02294, xcoord = 41.1928, ycoord = -73.800662
 Bus, Vn = 500.0, angle = -1.34972, area = 67, idx = 101075, name = "469", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03547, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03547, xcoord = 41.149981, ycoord = -74.155936
 Bus, Vn = 345.0, angle = -1.36004, area = 67, idx = 101076, name = "470", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04297, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04297, xcoord = 41.149981, ycoord = -74.155936
 Bus, Vn = 345.0, angle = -1.36652, area = 67, idx = 101077, name = "471", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03121, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03121, xcoord = 41.264374, ycoord = -73.9474
 Bus, Vn = 345.0, angle = -1.37434, area = 67, idx = 101078, name = "472", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02, xcoord = 40.728333, ycoord = -73.972414
 Bus, Vn = 345.0, angle = -1.23173, area = 67, idx = 101079, name = "473", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 40.76, ycoord = -73.94
 Bus, Vn = 345.0, angle = -1.36721, area = 67, idx = 101080, name = "474", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0232, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0232, xcoord = 40.923643, ycoord = -73.341182
 Bus, Vn = 345.0, angle = -1.46861, area = 67, idx = 101081, name = "475", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02624, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02624, xcoord = 40.616594, ycoord = -74.194394
 Bus, Vn = 345.0, angle = -1.24229, area = 67, idx = 101082, name = "476", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 40.56, ycoord = -74.19
 Bus, Vn = 230.0, angle = -0.67237, area = 68, idx = 101083, name = "477", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00769, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00769, xcoord = 42.28, ycoord = -83.09
 Bus, Vn = 230.0, angle = -0.66473, area = 68, idx = 101084, name = "478", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01177, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01177, xcoord = 42.28, ycoord = -83.09
 Bus, Vn = 230.0, angle = -0.46298, area = 68, idx = 101085, name = "479", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0789, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0789, xcoord = 42.797208, ycoord = -82.467339
 Bus, Vn = 230.0, angle = -0.3681, area = 68, idx = 101086, name = "480", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 42.797208, ycoord = -82.467339
 Bus, Vn = 345.0, angle = -0.50557, area = 68, idx = 101087, name = "481", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01957, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01957, xcoord = 42.797208, ycoord = -82.467339
 Bus, Vn = 230.0, angle = -0.5161, area = 68, idx = 101088, name = "482", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0503, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0503, xcoord = 42.93, ycoord = -82.39
 Bus, Vn = 230.0, angle = -0.5575, area = 68, idx = 101089, name = "483", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01775, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01775, xcoord = 42.93, ycoord = -82.39
 Bus, Vn = 230.0, angle = -0.55949, area = 68, idx = 101090, name = "484", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01221, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01221, xcoord = 42.909, ycoord = -82.338
 Bus, Vn = 230.0, angle = -0.88206, area = 68, idx = 101091, name = "485", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03144, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03144, xcoord = 43.69677, ycoord = -79.58027
 Bus, Vn = 230.0, angle = -0.81114, area = 68, idx = 101092, name = "486", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 46.59511, ycoord = -80.91164
 Bus, Vn = 230.0, angle = -0.97025, area = 68, idx = 101093, name = "487", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95812, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95812, xcoord = 44.34581, ycoord = -79.82057
 Bus, Vn = 230.0, angle = -0.94841, area = 68, idx = 101094, name = "488", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96024, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96024, xcoord = 43.92197, ycoord = -80.15658
 Bus, Vn = 230.0, angle = -0.93527, area = 68, idx = 101095, name = "489", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94443, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94443, xcoord = 46.181069, ycoord = -77.697119
 Bus, Vn = 230.0, angle = -0.92783, area = 68, idx = 101096, name = "490", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99513, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99513, xcoord = 46.38, ycoord = -78.73
 Bus, Vn = 230.0, angle = -0.91007, area = 68, idx = 101097, name = "491", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 46.53661, ycoord = -80.90041
 Bus, Vn = 230.0, angle = -0.55823, area = 68, idx = 101098, name = "492", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 45.038693, ycoord = -74.80178
 Bus, Vn = 230.0, angle = -0.57384, area = 68, idx = 101099, name = "493", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0381, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0381, xcoord = 45.058333, ycoord = -74.686111
 Bus, Vn = 230.0, angle = -0.69405, area = 68, idx = 101100, name = "494", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03428, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03428, xcoord = 45.01, ycoord = -74.79
 Bus, Vn = 230.0, angle = -0.58602, area = 68, idx = 101101, name = "495", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05, xcoord = 43.146389, ycoord = -79.049373
 Bus, Vn = 230.0, angle = -0.54042, area = 68, idx = 101102, name = "496", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01971, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01971, xcoord = 43.142497, ycoord = -79.048297
 Bus, Vn = 230.0, angle = -0.5481, area = 68, idx = 101103, name = "497", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01047, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01047, xcoord = 43.140113, ycoord = -79.027696
 Bus, Vn = 230.0, angle = -0.82384, area = 68, idx = 101104, name = "498", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99671, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99671, xcoord = 43.248931, ycoord = -79.782967
 Bus, Vn = 230.0, angle = -0.64556, area = 68, idx = 101105, name = "499", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02757, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02757, xcoord = 42.95, ycoord = -81.17
 Bus, Vn = 230.0, angle = -0.79949, area = 68, idx = 101106, name = "500", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99995, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99995, xcoord = 43.216, ycoord = -79.933
 Bus, Vn = 230.0, angle = -0.77103, area = 68, idx = 101107, name = "501", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00982, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00982, xcoord = 43.216, ycoord = -79.933
 Bus, Vn = 230.0, angle = -0.80821, area = 68, idx = 101108, name = "502", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99917, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99917, xcoord = 43.538611, ycoord = -79.850833
 Bus, Vn = 230.0, angle = -0.80873, area = 68, idx = 101109, name = "503", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99916, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99916, xcoord = 43.406944, ycoord = -79.734722
 Bus, Vn = 230.0, angle = -0.84015, area = 68, idx = 101110, name = "504", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00081, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00081, xcoord = 43.33896, ycoord = -79.86448
 Bus, Vn = 230.0, angle = -0.88835, area = 68, idx = 101111, name = "505", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96957, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96957, xcoord = 43.43722, ycoord = -80.56758
 Bus, Vn = 230.0, angle = -0.5655, area = 68, idx = 101112, name = "506", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04637, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04637, xcoord = 42.39259, ycoord = -82.0899
 Bus, Vn = 230.0, angle = -0.68, area = 68, idx = 101113, name = "507", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00848, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00848, xcoord = 42.283753, ycoord = -82.915537
 Bus, Vn = 500.0, angle = -1.32447, area = 70, idx = 101114, name = "508", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03109, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03109, xcoord = 40.54, ycoord = -74.74
 Bus, Vn = 230.0, angle = -1.47238, area = 70, idx = 101115, name = "509", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 40.62, ycoord = -74.21
 Bus, Vn = 345.0, angle = -0.82804, area = 70, idx = 101116, name = "510", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99632, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99632, xcoord = 41.937774, ycoord = -80.363172
 Bus, Vn = 230.0, angle = -0.75477, area = 70, idx = 101117, name = "511", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 42.069767, ycoord = -80.048357
 Bus, Vn = 230.0, angle = -1.03206, area = 70, idx = 101118, name = "512", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96022, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96022, xcoord = 42.083611, ycoord = -76.2475
 Bus, Vn = 230.0, angle = -0.68521, area = 70, idx = 101119, name = "513", owner = 1, region = 100,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03764, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03764, xcoord = 42.196723, ycoord = -79.759808
 Bus, Vn = 230.0, angle = -1.18432, area = 27, idx = 101168, name = "17", owner = 1, region = 14,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.995, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.995, xcoord = 39.96, ycoord = -76.59
 Bus, Vn = 19.0, angle = -1.03533, area = 27, idx = 101733, name = "18", owner = 1, region = 20,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99169, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99169, xcoord = 40.15, ycoord = -76.72
 Bus, Vn = 230.0, angle = -1.57311, area = 28, idx = 102884, name = "19", owner = 1, region = 726,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97091, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97091, xcoord = 40.25, ycoord = -74.57
 Bus, Vn = 230.0, angle = -1.12531, area = 29, idx = 103054, name = "20", owner = 1, region = 32,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00676, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00676, xcoord = 40.1, ycoord = -76.7
 Bus, Vn = 230.0, angle = -1.27923, area = 29, idx = 103066, name = "21", owner = 1, region = 32,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02323, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02323, xcoord = 40.46, ycoord = -75.5
 Bus, Vn = 230.0, angle = -1.11702, area = 29, idx = 103070, name = "22", owner = 1, region = 32,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97807, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97807, xcoord = 41.61, ycoord = -75.87
 Bus, Vn = 230.0, angle = -1.29962, area = 29, idx = 103080, name = "23", owner = 1, region = 32,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01076, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01076, xcoord = 40.14, ycoord = -76.21
 Bus, Vn = 24.0, angle = -0.74092, area = 29, idx = 103147, name = "24", owner = 1, region = 33,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05907, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05907, xcoord = 41.25, ycoord = -76.96
 Bus, Vn = 230.0, angle = -1.42519, area = 30, idx = 104048, name = "25", owner = 1, region = 741,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03712, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03712, xcoord = 39.84, ycoord = -75.43
 Bus, Vn = 20.0, angle = -1.1709, area = 30, idx = 104110, name = "26", owner = 1, region = 44,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0, xcoord = 39.86, ycoord = -75.32
 Bus, Vn = 230.0, angle = -1.59059, area = 30, idx = 104366, name = "27", owner = 1, region = 741,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99932, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99932, xcoord = 40.01, ycoord = -75.12
 Bus, Vn = 230.0, angle = -1.55881, area = 31, idx = 105016, name = "28", owner = 1, region = 51,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97289, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97289, xcoord = 40.34, ycoord = -74.92
 Bus, Vn = 138.0, angle = -1.58187, area = 31, idx = 105025, name = "29", owner = 1, region = 52,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99886, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99886, xcoord = 40.23, ycoord = -74.7
 Bus, Vn = 24.0, angle = -1.56485, area = 31, idx = 105167, name = "30", owner = 1, region = 750,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05872, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05872, xcoord = 40.75, ycoord = -74.07
 Bus, Vn = 230.0, angle = -1.23869, area = 32, idx = 105964, name = "31", owner = 1, region = 59,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00418, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00418, xcoord = 39.7, ycoord = -76.39
 Bus, Vn = 230.0, angle = -0.91303, area = 140, idx = 110024, name = "32", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02409, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02409, xcoord = 36.48, ycoord = -79.07
 Bus, Vn = 115.0, angle = -1.15568, area = 140, idx = 110030, name = "33", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03323, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03323, xcoord = 35.38, ycoord = -78.09
 Bus, Vn = 230.0, angle = -0.91824, area = 140, idx = 110070, name = "34", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02392, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02392, xcoord = 36.48, ycoord = -79.05
 Bus, Vn = 115.0, angle = -1.16821, area = 140, idx = 110163, name = "35", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97369, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97369, xcoord = 35.78, ycoord = -78.55
 Bus, Vn = 115.0, angle = -1.1737, area = 140, idx = 110185, name = "36", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97724, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97724, xcoord = 35.94, ycoord = -78.56
 Bus, Vn = 230.0, angle = -1.10473, area = 140, idx = 110190, name = "37", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00887, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00887, xcoord = 35.78, ycoord = -78.45
 Bus, Vn = 230.0, angle = -1.25484, area = 140, idx = 110228, name = "38", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98992, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98992, xcoord = 35.74, ycoord = -77.9
 Bus, Vn = 115.0, angle = -0.73709, area = 141, idx = 110741, name = "39", owner = 1, region = 106,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0094, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0094, xcoord = 35.77, ycoord = -83.1
 Bus, Vn = 115.0, angle = -0.68753, area = 141, idx = 110800, name = "40", owner = 1, region = 106,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00537, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00537, xcoord = 35.57, ycoord = -82.57
 Bus, Vn = 24.0, angle = -0.71457, area = 140, idx = 110862, name = "41", owner = 1, region = 101,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01069, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01069, xcoord = 33.96, ycoord = -78.01
 Bus, Vn = 230.0, angle = -0.4569, area = 143, idx = 112015, name = "42", owner = 1, region = 115,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00913, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00913, xcoord = 33.33, ycoord = -81.66
 Bus, Vn = 230.0, angle = -0.55127, area = 143, idx = 112407, name = "43", owner = 1, region = 115,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00167, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00167, xcoord = 32.71, ycoord = -80.86
 Bus, Vn = 115.0, angle = -0.57617, area = 143, idx = 112460, name = "44", owner = 1, region = 115,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00814, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00814, xcoord = 33.06, ycoord = -80.62
 Bus, Vn = 22.0, angle = -0.44644, area = 143, idx = 112803, name = "45", owner = 1, region = 115,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02032, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02032, xcoord = 34.3, ycoord = -81.32
 Bus, Vn = 230.0, angle = -1.26322, area = 145, idx = 114072, name = "46", owner = 1, region = 182,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01978, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01978, xcoord = 39.07, ycoord = -77.53
 Bus, Vn = 230.0, angle = -1.36584, area = 145, idx = 114574, name = "47", owner = 1, region = 192,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97424, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97424, xcoord = 35.84, ycoord = -77.11
 Bus, Vn = 115.0, angle = -0.94178, area = 145, idx = 114696, name = "48", owner = 1, region = 188,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99975, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99975, xcoord = 36.77, ycoord = -78.93
 Bus, Vn = 115.0, angle = -0.9394, area = 145, idx = 114744, name = "49", owner = 1, region = 193,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99651, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99651, xcoord = 37.71, ycoord = -78.29
 Bus, Vn = 230.0, angle = -0.86483, area = 145, idx = 114794, name = "50", owner = 1, region = 194,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01146, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01146, xcoord = 38.11, ycoord = -78.85
 Bus, Vn = 500.0, angle = -1.06791, area = 145, idx = 114902, name = "51", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05112, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05112, xcoord = 37.09, ycoord = -77.41
 Bus, Vn = 500.0, angle = -1.03717, area = 145, idx = 114908, name = "52", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02986, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02986, xcoord = 37.7, ycoord = -77.48
 Bus, Vn = 500.0, angle = -1.14073, area = 145, idx = 114913, name = "53", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03855, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03855, xcoord = 38.89, ycoord = -77.57
 Bus, Vn = 500.0, angle = -1.06958, area = 145, idx = 114916, name = "54", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04409, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04409, xcoord = 38.5, ycoord = -77.71
 Bus, Vn = 500.0, angle = -0.8558, area = 145, idx = 114917, name = "55", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03736, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03736, xcoord = 39.2, ycoord = -79.27
 Bus, Vn = 500.0, angle = -1.13404, area = 145, idx = 114922, name = "56", owner = 1, region = 196,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03909, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03909, xcoord = 38.54, ycoord = -77.28
 Bus, Vn = 500.0, angle = -0.32909, area = 146, idx = 115007, name = "57", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04961, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04961, xcoord = 33.63, ycoord = -87.06
 Bus, Vn = 230.0, angle = -0.4171, area = 146, idx = 115016, name = "58", owner = 1, region = 744,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02933, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02933, xcoord = 32.35, ycoord = -81.18
 Bus, Vn = 230.0, angle = -0.49988, area = 146, idx = 115018, name = "59", owner = 1, region = 143,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98727, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98727, xcoord = 31.28, ycoord = -89.35
 Bus, Vn = 230.0, angle = -0.71597, area = 146, idx = 115025, name = "60", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01302, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01302, xcoord = 30.84, ycoord = -84.49
 Bus, Vn = 230.0, angle = -0.50776, area = 146, idx = 115038, name = "61", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02707, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02707, xcoord = 31.29, ycoord = -85.58
 Bus, Vn = 25.0, angle = -0.30803, area = 146, idx = 115250, name = "62", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98205, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98205, xcoord = 33.15, ycoord = -81.76
 Bus, Vn = 500.0, angle = -0.55445, area = 146, idx = 116018, name = "63", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03656, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03656, xcoord = 31.47, ycoord = -83.55
 Bus, Vn = 230.0, angle = -0.71051, area = 146, idx = 116085, name = "64", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02523, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02523, xcoord = 33.84, ycoord = -83.31
 Bus, Vn = 230.0, angle = -0.46521, area = 146, idx = 116106, name = "65", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03018, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03018, xcoord = 32.61, ycoord = -84.91
 Bus, Vn = 230.0, angle = -0.53369, area = 146, idx = 116124, name = "66", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02477, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02477, xcoord = 32.56, ycoord = -83.6
 Bus, Vn = 230.0, angle = -0.51796, area = 146, idx = 116151, name = "67", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03292, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03292, xcoord = 34.25, ycoord = -85.35
 Bus, Vn = 230.0, angle = -0.71437, area = 146, idx = 116181, name = "68", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9912, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9912, xcoord = 33.78, ycoord = -84.7
 Bus, Vn = 115.0, angle = -0.48551, area = 146, idx = 116241, name = "69", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0207, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0207, xcoord = 32.66, ycoord = -85.09
 Bus, Vn = 115.0, angle = -0.9658, area = 146, idx = 116301, name = "70", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00642, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00642, xcoord = 31.83, ycoord = -82.39
 Bus, Vn = 115.0, angle = -0.86722, area = 146, idx = 116302, name = "71", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9659, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9659, xcoord = 31.22, ycoord = -82.4
 Bus, Vn = 230.0, angle = -0.5319, area = 146, idx = 116364, name = "72", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03054, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03054, xcoord = 32.3, ycoord = -83.61
 Bus, Vn = 115.0, angle = -0.43138, area = 146, idx = 116521, name = "73", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01499, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01499, xcoord = 33.64, ycoord = -87.2
 Bus, Vn = 115.0, angle = -0.53957, area = 146, idx = 116536, name = "74", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99502, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99502, xcoord = 33.23, ycoord = -87.47
 Bus, Vn = 115.0, angle = -0.63886, area = 146, idx = 116549, name = "75", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00785, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00785, xcoord = 34.01, ycoord = -85.97
 Bus, Vn = 230.0, angle = -0.40198, area = 146, idx = 116555, name = "76", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03065, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03065, xcoord = 33.14, ycoord = -87.16
 Bus, Vn = 115.0, angle = -0.80571, area = 146, idx = 116557, name = "77", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02406, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02406, xcoord = 30.91, ycoord = -84.55
 Bus, Vn = 230.0, angle = -0.40913, area = 146, idx = 116600, name = "78", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04282, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04282, xcoord = 33.24, ycoord = -86.46
 Bus, Vn = 115.0, angle = -0.51081, area = 146, idx = 116603, name = "79", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01429, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01429, xcoord = 32.96, ycoord = -86.52
 Bus, Vn = 115.0, angle = -0.49357, area = 146, idx = 116605, name = "80", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01546, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01546, xcoord = 32.62, ycoord = -86.26
 Bus, Vn = 115.0, angle = -0.57382, area = 146, idx = 116608, name = "81", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0176, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0176, xcoord = 32.66, ycoord = -85.45
 Bus, Vn = 115.0, angle = -0.58437, area = 146, idx = 116609, name = "82", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01812, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01812, xcoord = 32.53, ycoord = -85.89
 Bus, Vn = 230.0, angle = -0.43535, area = 146, idx = 116620, name = "83", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03154, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03154, xcoord = 32.21, ycoord = -86.25
 Bus, Vn = 115.0, angle = -0.53609, area = 146, idx = 116626, name = "84", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00521, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00521, xcoord = 31.25, ycoord = -85.29
 Bus, Vn = 230.0, angle = -0.57109, area = 146, idx = 116740, name = "85", owner = 1, region = 742,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03411, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03411, xcoord = 30.56, ycoord = -87.22
 Bus, Vn = 115.0, angle = -0.6026, area = 146, idx = 116741, name = "86", owner = 1, region = 742,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99884, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99884, xcoord = 30.56, ycoord = -87.22
 Bus, Vn = 230.0, angle = -0.66543, area = 146, idx = 116757, name = "87", owner = 1, region = 742,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02645, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02645, xcoord = 30.27, ycoord = -85.7
 Bus, Vn = 230.0, angle = -0.21272, area = 146, idx = 116784, name = "88", owner = 1, region = 143,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0408, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0408, xcoord = 30.53, ycoord = -88.55
 Bus, Vn = 115.0, angle = -0.61085, area = 146, idx = 116912, name = "89", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00277, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00277, xcoord = 32.88, ycoord = -85.16
 Bus, Vn = 115.0, angle = -0.57046, area = 146, idx = 116914, name = "90", owner = 1, region = 140,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00562, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00562, xcoord = 32.42, ycoord = -84.94
 Bus, Vn = 115.0, angle = -0.63286, area = 146, idx = 116959, name = "91", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01104, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01104, xcoord = 33.25, ycoord = -85.62
 Bus, Vn = 115.0, angle = -0.51453, area = 146, idx = 116967, name = "92", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02945, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02945, xcoord = 32.42, ycoord = -87.07
 Bus, Vn = 115.0, angle = -0.60479, area = 146, idx = 116974, name = "93", owner = 1, region = 141,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00604, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00604, xcoord = 32.12, ycoord = -85.72
 Bus, Vn = 115.0, angle = -0.88699, area = 146, idx = 117008, name = "94", owner = 1, region = 143,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94495, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94495, xcoord = 31.32, ycoord = -85.57
 Bus, Vn = 115.0, angle = -0.40997, area = 150, idx = 117785, name = "95", owner = 1, region = 750,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01847, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01847, xcoord = 31.42, ycoord = -87.11
 Bus, Vn = 115.0, angle = -0.43064, area = 150, idx = 117812, name = "96", owner = 1, region = 750,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 31.24, ycoord = -86.29
 Bus, Vn = 115.0, angle = -0.47268, area = 150, idx = 117831, name = "97", owner = 1, region = 750,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0191, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0191, xcoord = 31, ycoord = -86.05
 Bus, Vn = 161.0, angle = -0.54414, area = 149, idx = 117879, name = "99", owner = 1, region = 146,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99312, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99312, xcoord = 31.97, ycoord = -89.85
 Bus, Vn = 161.0, angle = -0.40415, area = 147, idx = 118007, name = "100", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03915, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03915, xcoord = 37.02, ycoord = -88.39
 Bus, Vn = 500.0, angle = -0.53665, area = 147, idx = 118009, name = "101", owner = 1, region = 165,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02742, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02742, xcoord = 35, ycoord = -90.05
 Bus, Vn = 161.0, angle = -0.45151, area = 147, idx = 118012, name = "102", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04082, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04082, xcoord = 37.26, ycoord = -86.98
 Bus, Vn = 500.0, angle = -0.42851, area = 147, idx = 118016, name = "103", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04817, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04817, xcoord = 35.22, ycoord = -85.09
 Bus, Vn = 500.0, angle = -0.69594, area = 147, idx = 118018, name = "104", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03793, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03793, xcoord = 36.49, ycoord = -82.85
 Bus, Vn = 161.0, angle = -0.55703, area = 147, idx = 118022, name = "105", owner = 1, region = 165,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05638, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05638, xcoord = 35.07, ycoord = -90.15
 Bus, Vn = 161.0, angle = -0.41449, area = 147, idx = 118026, name = "106", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02895, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02895, xcoord = 37.02, ycoord = -88.22
 Bus, Vn = 161.0, angle = -0.83007, area = 147, idx = 118027, name = "107", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04514, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04514, xcoord = 36.88, ycoord = -85.69
 Bus, Vn = 161.0, angle = -0.72524, area = 147, idx = 118029, name = "108", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0568, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0568, xcoord = 36.87, ycoord = -85.15
 Bus, Vn = 161.0, angle = -0.81781, area = 147, idx = 118030, name = "109", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00415, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00415, xcoord = 36.8, ycoord = -83.75
 Bus, Vn = 161.0, angle = -0.27116, area = 147, idx = 118035, name = "110", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04671, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04671, xcoord = 37.15, ycoord = -88.78
 Bus, Vn = 161.0, angle = -0.56751, area = 147, idx = 118060, name = "111", owner = 1, region = 165,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99453, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99453, xcoord = 34.33, ycoord = -89.93
 Bus, Vn = 20.7, angle = -0.2366, area = 147, idx = 118167, name = "112", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.11442, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.11442, xcoord = 36.39, ycoord = -87.66
 Bus, Vn = 161.0, angle = -0.52449, area = 147, idx = 118408, name = "113", owner = 1, region = 165,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0541, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0541, xcoord = 36.27, ycoord = -88.83
 Bus, Vn = 161.0, angle = -0.33062, area = 147, idx = 118423, name = "114", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05521, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05521, xcoord = 36.03, ycoord = -87.98
 Bus, Vn = 500.0, angle = -0.36477, area = 147, idx = 118425, name = "115", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04916, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04916, xcoord = 36.39, ycoord = -87.66
 Bus, Vn = 161.0, angle = -0.52378, area = 147, idx = 118429, name = "116", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04794, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04794, xcoord = 36.6, ycoord = -87.27
 Bus, Vn = 500.0, angle = -0.34651, area = 147, idx = 118444, name = "117", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05675, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05675, xcoord = 34.88, ycoord = -85.76
 Bus, Vn = 161.0, angle = -0.48815, area = 147, idx = 118445, name = "118", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0414, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0414, xcoord = 34.88, ycoord = -85.76
 Bus, Vn = 161.0, angle = -0.58593, area = 147, idx = 118450, name = "119", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04344, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04344, xcoord = 36.21, ycoord = -86.46
 Bus, Vn = 161.0, angle = -0.44308, area = 147, idx = 118454, name = "120", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02323, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02323, xcoord = 35.22, ycoord = -85.09
 Bus, Vn = 161.0, angle = -0.65192, area = 147, idx = 118467, name = "121", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9888, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9888, xcoord = 35.78, ycoord = -83.97
 Bus, Vn = 161.0, angle = -0.68704, area = 147, idx = 118471, name = "122", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03067, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03067, xcoord = 36.38, ycoord = -82.96
 Bus, Vn = 161.0, angle = -0.70416, area = 147, idx = 118472, name = "123", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02402, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02402, xcoord = 36.38, ycoord = -82.96
 Bus, Vn = 161.0, angle = -0.55063, area = 147, idx = 118711, name = "124", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0486, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0486, xcoord = 36.36, ycoord = -86.44
 Bus, Vn = 161.0, angle = -0.68215, area = 147, idx = 118717, name = "125", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02699, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02699, xcoord = 36.28, ycoord = -86.71
 Bus, Vn = 161.0, angle = -0.56532, area = 147, idx = 118778, name = "126", owner = 1, region = 167,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00732, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00732, xcoord = 35.19, ycoord = -84.82
 Bus, Vn = 161.0, angle = -0.57729, area = 147, idx = 118885, name = "127", owner = 1, region = 166,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04954, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04954, xcoord = 36.36, ycoord = -86.44
 Bus, Vn = 500.0, angle = -1.17378, area = 201, idx = 120105, name = "128", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04485, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04485, xcoord = 39.3, ycoord = -77.52
 Bus, Vn = 138.0, angle = -0.86749, area = 201, idx = 120124, name = "129", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99836, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99836, xcoord = 40.22, ycoord = -79.97
 Bus, Vn = 138.0, angle = -0.89326, area = 201, idx = 120152, name = "130", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99544, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99544, xcoord = 40.86, ycoord = -79.88
 Bus, Vn = 138.0, angle = -0.96935, area = 201, idx = 120202, name = "131", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97044, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97044, xcoord = 40.63, ycoord = -79.63
 Bus, Vn = 138.0, angle = -0.96325, area = 201, idx = 120256, name = "132", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97506, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97506, xcoord = 40.54, ycoord = -79.77
 Bus, Vn = 138.0, angle = -1.23113, area = 201, idx = 120445, name = "133", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99568, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99568, xcoord = 39.51, ycoord = -77.92
 Bus, Vn = 230.0, angle = -1.28315, area = 201, idx = 120459, name = "134", owner = 1, region = 201,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01204, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01204, xcoord = 39.3, ycoord = -77.52
 Bus, Vn = 138.0, angle = -1.02775, area = 202, idx = 121348, name = "135", owner = 1, region = 239,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0133, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0133, xcoord = 41.91, ycoord = -80.77
 Bus, Vn = 345.0, angle = -1.0573, area = 202, idx = 121380, name = "136", owner = 1, region = 233,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99892, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99892, xcoord = 41.43, ycoord = -82.26
 Bus, Vn = 138.0, angle = -1.27455, area = 202, idx = 121398, name = "137", owner = 1, region = 241,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96046, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96046, xcoord = 40.87, ycoord = -82.29
 Bus, Vn = 138.0, angle = -1.14234, area = 202, idx = 121559, name = "138", owner = 1, region = 242,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9666, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9666, xcoord = 40.69, ycoord = -82.8
 Bus, Vn = 138.0, angle = -1.25007, area = 202, idx = 121581, name = "139", owner = 1, region = 244,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95946, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95946, xcoord = 41.43, ycoord = -82.72
 Bus, Vn = 18.0, angle = -0.65919, area = 202, idx = 121783, name = "140", owner = 1, region = 230,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01559, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01559, xcoord = 40.63, ycoord = -80.41
 Bus, Vn = 345.0, angle = -0.95796, area = 202, idx = 121855, name = "141", owner = 1, region = 239,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00849, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00849, xcoord = 41.8, ycoord = -81.14
 Bus, Vn = 345.0, angle = -0.74071, area = 202, idx = 121912, name = "142", owner = 1, region = 738,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01463, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01463, xcoord = 40.53, ycoord = -80.63
 Bus, Vn = 138.0, angle = -0.94437, area = 202, idx = 121955, name = "143", owner = 1, region = 242,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96696, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96696, xcoord = 40.26, ycoord = -83.09
 Bus, Vn = 765.0, angle = -0.65784, area = 205, idx = 122562, name = "144", owner = 1, region = 250,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00594, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00594, xcoord = 36.88, ycoord = -80.83
 Bus, Vn = 345.0, angle = -0.50454, area = 205, idx = 122613, name = "145", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01436, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01436, xcoord = 39.02, ycoord = -83.01
 Bus, Vn = 345.0, angle = -0.967, area = 205, idx = 122622, name = "146", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97201, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97201, xcoord = 40.68, ycoord = -84.18
 Bus, Vn = 345.0, angle = -0.37613, area = 205, idx = 122663, name = "147", owner = 1, region = 252,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01718, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01718, xcoord = 39.94, ycoord = -87.5
 Bus, Vn = 765.0, angle = -0.67007, area = 205, idx = 122665, name = "148", owner = 1, region = 252,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96832, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96832, xcoord = 40.5, ycoord = -85.94
 Bus, Vn = 345.0, angle = -0.82212, area = 205, idx = 122668, name = "149", owner = 1, region = 252,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01233, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01233, xcoord = 41.71, ycoord = -86.48
 Bus, Vn = 345.0, angle = -0.54963, area = 205, idx = 122674, name = "150", owner = 1, region = 252,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.017, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.017, xcoord = 39.08, ycoord = -84.86
 Bus, Vn = 345.0, angle = -0.84478, area = 205, idx = 122701, name = "151", owner = 1, region = 253,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97564, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97564, xcoord = 39.86, ycoord = -83.12
 Bus, Vn = 138.0, angle = -0.71656, area = 205, idx = 122756, name = "152", owner = 1, region = 250,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01474, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01474, xcoord = 36.92, ycoord = -81.68
 Bus, Vn = 138.0, angle = -0.81781, area = 205, idx = 122981, name = "153", owner = 1, region = 250,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99276, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99276, xcoord = 37.2, ycoord = -81.33
 Bus, Vn = 138.0, angle = -0.70951, area = 205, idx = 123002, name = "154", owner = 1, region = 250,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00936, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00936, xcoord = 37.59, ycoord = -81.68
 Bus, Vn = 138.0, angle = -0.65359, area = 205, idx = 123173, name = "155", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9943, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9943, xcoord = 38.76, ycoord = -82.93
 Bus, Vn = 138.0, angle = -0.92728, area = 205, idx = 123195, name = "156", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99957, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99957, xcoord = 40.09, ycoord = -82.02
 Bus, Vn = 138.0, angle = -1.01296, area = 205, idx = 123197, name = "157", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99256, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99256, xcoord = 39.86, ycoord = -81.9
 Bus, Vn = 138.0, angle = -0.70939, area = 205, idx = 123357, name = "158", owner = 1, region = 251,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99746, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99746, xcoord = 39.75, ycoord = -80.86
 Bus, Vn = 138.0, angle = -0.75827, area = 205, idx = 123418, name = "159", owner = 1, region = 252,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99478, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99478, xcoord = 39.57, ycoord = -84.82
 Bus, Vn = 138.0, angle = -0.95203, area = 205, idx = 123605, name = "160", owner = 1, region = 253,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96573, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96573, xcoord = 39.86, ycoord = -83.12
 Bus, Vn = 138.0, angle = -0.92066, area = 205, idx = 123633, name = "161", owner = 1, region = 253,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96626, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96626, xcoord = 40.22, ycoord = -83.1
 Bus, Vn = 138.0, angle = -0.84245, area = 205, idx = 123647, name = "162", owner = 1, region = 253,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97345, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97345, xcoord = 39.38, ycoord = -82.18
 Bus, Vn = 345.0, angle = -0.09673, area = 208, idx = 125387, name = "163", owner = 1, region = 280,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0515, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0515, xcoord = 38.37, ycoord = -87.76
 Bus, Vn = 138.0, angle = -0.74889, area = 208, idx = 125440, name = "164", owner = 1, region = 280,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99965, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99965, xcoord = 40.46, ycoord = -86.97
 Bus, Vn = 138.0, angle = -0.59563, area = 208, idx = 125484, name = "165", owner = 1, region = 280,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01149, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01149, xcoord = 39.27, ycoord = -85.22
 Bus, Vn = 138.0, angle = -0.61314, area = 208, idx = 126095, name = "166", owner = 1, region = 284,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98412, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98412, xcoord = 39.11, ycoord = -84.81
 Bus, Vn = 138.0, angle = -0.58214, area = 211, idx = 126988, name = "167", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97265, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97265, xcoord = 38.27, ycoord = -85.71
 Bus, Vn = 345.0, angle = -0.62009, area = 211, idx = 127030, name = "169", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00416, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00416, xcoord = 37.79, ycoord = -84.71
 Bus, Vn = 138.0, angle = -0.61075, area = 211, idx = 127031, name = "170", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02569, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02569, xcoord = 37.79, ycoord = -84.71
 Bus, Vn = 138.0, angle = -0.53299, area = 211, idx = 127056, name = "171", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.998, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.998, xcoord = 38.67, ycoord = -85.17
 Bus, Vn = 138.0, angle = -0.52756, area = 211, idx = 127070, name = "172", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00592, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00592, xcoord = 37.82, ycoord = -86.67
 Bus, Vn = 138.0, angle = -0.49659, area = 211, idx = 127179, name = "173", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01027, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01027, xcoord = 38.75, ycoord = -85.03
 Bus, Vn = 138.0, angle = -0.61986, area = 211, idx = 127213, name = "174", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98779, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98779, xcoord = 37.69, ycoord = -86.11
 Bus, Vn = 345.0, angle = -0.46592, area = 211, idx = 127327, name = "175", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99698, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99698, xcoord = 38.05, ycoord = -85.91
 Bus, Vn = 138.0, angle = -0.54184, area = 211, idx = 127375, name = "176", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99998, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99998, xcoord = 38.22, ycoord = -85.85
 Bus, Vn = 20.9, angle = -0.26599, area = 211, idx = 127502, name = "177", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02795, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02795, xcoord = 38.58, ycoord = -85.41
 Bus, Vn = 345.0, angle = -0.3879, area = 211, idx = 127510, name = "178", owner = 1, region = 211,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01896, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01896, xcoord = 38.58, ycoord = -85.41
 Bus, Vn = 161.0, angle = -0.41289, area = 214, idx = 127551, name = "179", owner = 1, region = 214,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02662, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02662, xcoord = 37.64, ycoord = -87.5
 Bus, Vn = 161.0, angle = -0.46815, area = 214, idx = 127552, name = "180", owner = 1, region = 214,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02238, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02238, xcoord = 37.96, ycoord = -86.79
 Bus, Vn = 345.0, angle = -0.18129, area = 216, idx = 127824, name = "181", owner = 1, region = 216,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02058, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02058, xcoord = 38.53, ycoord = -87.25
 Bus, Vn = 22.0, angle = -0.08161, area = 216, idx = 127964, name = "182", owner = 1, region = 216,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00066, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00066, xcoord = 38.53, ycoord = -87.25
 Bus, Vn = 345.0, angle = -0.83956, area = 217, idx = 128001, name = "183", owner = 1, region = 217,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01113, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01113, xcoord = 41.58, ycoord = -87.09
 Bus, Vn = 345.0, angle = -0.94556, area = 217, idx = 128007, name = "184", owner = 1, region = 217,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00263, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00263, xcoord = 41.34, ycoord = -85.95
 Bus, Vn = 138.0, angle = -0.92759, area = 217, idx = 128054, name = "185", owner = 1, region = 217,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98491, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98491, xcoord = 41.72, ycoord = -86.91
 Bus, Vn = 138.0, angle = -0.86452, area = 217, idx = 128059, name = "186", owner = 1, region = 217,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9881, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9881, xcoord = 40.76, ycoord = -86.75
 Bus, Vn = 138.0, angle = -0.97329, area = 217, idx = 128066, name = "187", owner = 1, region = 217,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00062, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00062, xcoord = 41.34, ycoord = -86.33
 Bus, Vn = 138.0, angle = -0.56066, area = 220, idx = 129199, name = "188", owner = 1, region = 220,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99266, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99266, xcoord = 38.03, ycoord = -84.32
 Bus, Vn = 161.0, angle = -0.74393, area = 220, idx = 129257, name = "189", owner = 1, region = 220,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02911, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02911, xcoord = 36.52, ycoord = -86.95
 Bus, Vn = 22.0, angle = -0.33915, area = 220, idx = 129529, name = "190", owner = 1, region = 220,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9953, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9953, xcoord = 38.7, ycoord = -83.82
 Bus, Vn = 161.0, angle = -0.83073, area = 220, idx = 129545, name = "191", owner = 1, region = 220,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04488, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04488, xcoord = 36.88, ycoord = -85.69
 Bus, Vn = 161.0, angle = -0.71604, area = 356, idx = 130001, name = "192", owner = 1, region = 314,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96923, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96923, xcoord = 40.15, ycoord = -92.61
 Bus, Vn = 25.0, angle = -0.46815, area = 356, idx = 130225, name = "193", owner = 1, region = 314,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01623, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01623, xcoord = 38.76, ycoord = -91.78
 Bus, Vn = 161.0, angle = -0.7555, area = 356, idx = 130677, name = "194", owner = 1, region = 314,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01481, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01481, xcoord = 38.73, ycoord = -92.1
 Bus, Vn = 138.0, angle = -0.55875, area = 356, idx = 130789, name = "195", owner = 1, region = 322,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02816, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02816, xcoord = 40.34, ycoord = -90.33
 Bus, Vn = 161.0, angle = -0.51217, area = 356, idx = 130850, name = "196", owner = 1, region = 316,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01041, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01041, xcoord = 37.18, ycoord = -89.56
 Bus, Vn = 345.0, angle = -0.50366, area = 356, idx = 130886, name = "197", owner = 1, region = 311,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04693, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04693, xcoord = 38.56, ycoord = -90.84
 Bus, Vn = 138.0, angle = -0.40958, area = 356, idx = 130931, name = "198", owner = 1, region = 323,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96671, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96671, xcoord = 38.72, ycoord = -87.69
 Bus, Vn = 345.0, angle = -0.48134, area = 356, idx = 130974, name = "199", owner = 1, region = 316,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03153, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03153, xcoord = 37.26, ycoord = -89.84
 Bus, Vn = 138.0, angle = -0.63161, area = 356, idx = 131052, name = "200", owner = 1, region = 317,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03047, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03047, xcoord = 38.69, ycoord = -90.47
 Bus, Vn = 138.0, angle = -0.58486, area = 356, idx = 131180, name = "201", owner = 1, region = 322,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02402, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02402, xcoord = 39.82, ycoord = -90.57
 Bus, Vn = 138.0, angle = -0.37569, area = 356, idx = 131351, name = "203", owner = 1, region = 321,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00201, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00201, xcoord = 38.03, ycoord = -88.28
 Bus, Vn = 138.0, angle = -1.03274, area = 356, idx = 131400, name = "204", owner = 1, region = 314,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.90527, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.90527, xcoord = 38.2, ycoord = -92.62
 Bus, Vn = 161.0, angle = -0.76413, area = 356, idx = 131409, name = "205", owner = 1, region = 314,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01531, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01531, xcoord = 38.92, ycoord = -92.57
 Bus, Vn = 161.0, angle = -0.71736, area = 356, idx = 131437, name = "206", owner = 1, region = 313,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01344, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01344, xcoord = 39.84, ycoord = -91.55
 Bus, Vn = 138.0, angle = -0.55777, area = 356, idx = 131610, name = "207", owner = 1, region = 312,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02252, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02252, xcoord = 37.84, ycoord = -90.53
 Bus, Vn = 345.0, angle = -0.52778, area = 356, idx = 131651, name = "208", owner = 1, region = 710,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01084, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01084, xcoord = 38.83, ycoord = -90.1
 Bus, Vn = 345.0, angle = -0.55821, area = 356, idx = 131747, name = "209", owner = 1, region = 313,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0126, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0126, xcoord = 38.91, ycoord = -90.29
 Bus, Vn = 138.0, angle = -0.57692, area = 356, idx = 131755, name = "210", owner = 1, region = 313,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03893, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03893, xcoord = 38.91, ycoord = -90.29
 Bus, Vn = 138.0, angle = -0.57485, area = 356, idx = 131764, name = "211", owner = 1, region = 313,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0389, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0389, xcoord = 38.91, ycoord = -90.29
 Bus, Vn = 138.0, angle = -0.52818, area = 356, idx = 131774, name = "212", owner = 1, region = 312,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03213, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03213, xcoord = 37.95, ycoord = -90.46
 Bus, Vn = 345.0, angle = -0.33918, area = 357, idx = 132327, name = "213", owner = 1, region = 357,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0333, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0333, xcoord = 38.33, ycoord = -88.97
 Bus, Vn = 22.0, angle = -0.39167, area = 357, idx = 132435, name = "214", owner = 1, region = 357,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01703, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01703, xcoord = 40.17, ycoord = -88.83
 Bus, Vn = 161.0, angle = -0.85996, area = 331, idx = 134009, name = "215", owner = 1, region = 793,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99583, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99583, xcoord = 43.74, ycoord = -94.16
 Bus, Vn = 22.0, angle = -0.70436, area = 331, idx = 134090, name = "216", owner = 1, region = 391,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.07004, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.07004, xcoord = 42.1, ycoord = -91.78
 Bus, Vn = 161.0, angle = -0.65207, area = 331, idx = 134180, name = "217", owner = 1, region = 391,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01609, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01609, xcoord = 40.74, ycoord = -91.35
 Bus, Vn = 765.0, angle = -0.79379, area = 363, idx = 136260, name = "219", owner = 1, region = 935,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00137, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00137, xcoord = 41.4, ycoord = -87.95
 Bus, Vn = 345.0, angle = -0.75055, area = 363, idx = 136362, name = "220", owner = 1, region = 935,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01877, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01877, xcoord = 41.76, ycoord = -89.61
 Bus, Vn = 345.0, angle = -0.89551, area = 363, idx = 136406, name = "221", owner = 1, region = 935,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00501, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00501, xcoord = 42.34, ycoord = -89.19
 Bus, Vn = 345.0, angle = -1.11142, area = 363, idx = 136421, name = "222", owner = 1, region = 935,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02911, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02911, xcoord = 42.45, ycoord = -87.81
 Bus, Vn = 138.0, angle = -0.78627, area = 363, idx = 137038, name = "223", owner = 1, region = 933,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0318, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0318, xcoord = 41.76, ycoord = -89.61
 Bus, Vn = 138.0, angle = -1.1618, area = 363, idx = 137326, name = "224", owner = 1, region = 932,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01452, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01452, xcoord = 42.38, ycoord = -87.82
 Bus, Vn = 25.0, angle = -0.63891, area = 363, idx = 137523, name = "225", owner = 1, region = 937,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01334, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01334, xcoord = 41.25, ycoord = -88.23
 Bus, Vn = 22.0, angle = -1.07746, area = 364, idx = 139152, name = "226", owner = 1, region = 371,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03, xcoord = 43.5, ycoord = -89.4
 Bus, Vn = 138.0, angle = -1.43826, area = 364, idx = 139241, name = "227", owner = 1, region = 371,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95593, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95593, xcoord = 44.35, ycoord = -89.87
 Bus, Vn = 345.0, angle = -1.23371, area = 364, idx = 139244, name = "228", owner = 1, region = 371,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01588, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01588, xcoord = 44.57, ycoord = -90.03
 Bus, Vn = 345.0, angle = -1.17378, area = 365, idx = 139247, name = "229", owner = 1, region = 376,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99795, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99795, xcoord = 43.01, ycoord = -88.17
 Bus, Vn = 24.0, angle = -1.00274, area = 365, idx = 139430, name = "230", owner = 1, region = 376,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 42.54, ycoord = -87.91
 Bus, Vn = 138.0, angle = -1.70317, area = 365, idx = 139582, name = "231", owner = 1, region = 379,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9541, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9541, xcoord = 45.98, ycoord = -87.1
 Bus, Vn = 345.0, angle = -1.22822, area = 366, idx = 139676, name = "232", owner = 1, region = 366,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01959, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01959, xcoord = 44.86, ycoord = -89.66
 Bus, Vn = 115.0, angle = -1.33437, area = 366, idx = 139786, name = "233", owner = 1, region = 366,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02449, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02449, xcoord = 44.5, ycoord = -89.61
 Bus, Vn = 22.0, angle = -0.82456, area = 401, idx = 140199, name = "234", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00884, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00884, xcoord = 27.35, ycoord = -80.25
 Bus, Vn = 115.0, angle = -0.89799, area = 401, idx = 140376, name = "235", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01647, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01647, xcoord = 29.89, ycoord = -82.08
 Bus, Vn = 230.0, angle = -0.74487, area = 401, idx = 140463, name = "236", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0405, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0405, xcoord = 30.27, ycoord = -81.95
 Bus, Vn = 230.0, angle = -0.91681, area = 401, idx = 140467, name = "237", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05684, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05684, xcoord = 28.37, ycoord = -80.88
 Bus, Vn = 230.0, angle = -1.01172, area = 401, idx = 140474, name = "238", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00493, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00493, xcoord = 29.25, ycoord = -81.16
 Bus, Vn = 500.0, angle = -0.91181, area = 401, idx = 140476, name = "239", owner = 1, region = 401,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06663, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06663, xcoord = 28.37, ycoord = -80.88
 Bus, Vn = 230.0, angle = -0.75077, area = 402, idx = 142269, name = "240", owner = 1, region = 402,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01912, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01912, xcoord = 28.06, ycoord = -82.65
 Bus, Vn = 230.0, angle = -0.90651, area = 402, idx = 142442, name = "241", owner = 1, region = 402,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03239, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03239, xcoord = 28.97, ycoord = -81.38
 Bus, Vn = 230.0, angle = -0.9676, area = 402, idx = 143169, name = "242", owner = 1, region = 402,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03206, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03206, xcoord = 30.38, ycoord = -83.18
 Bus, Vn = 21.0, angle = -0.51178, area = 402, idx = 143301, name = "243", owner = 1, region = 402,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03279, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03279, xcoord = 28.97, ycoord = -82.7
 Bus, Vn = 230.0, angle = -0.8543, area = 402, idx = 143521, name = "244", owner = 1, region = 402,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99521, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99521, xcoord = 28.82, ycoord = -81.96
 Bus, Vn = 230.0, angle = -0.66142, area = 411, idx = 146102, name = "245", owner = 1, region = 413,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02966, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02966, xcoord = 28.03, ycoord = -82.01
 Bus, Vn = 230.0, angle = -0.70676, area = 412, idx = 147119, name = "246", owner = 1, region = 412,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04244, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04244, xcoord = 29.73, ycoord = -81.63
 Bus, Vn = 22.0, angle = -0.59117, area = 416, idx = 147916, name = "247", owner = 1, region = 416,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02658, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02658, xcoord = 27.91, ycoord = -82.41
 Bus, Vn = 230.0, angle = -0.60787, area = 416, idx = 149050, name = "248", owner = 1, region = 416,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04235, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04235, xcoord = 27.84, ycoord = -81.94
 Bus, Vn = 230.0, angle = -0.39798, area = 502, idx = 150106, name = "249", owner = 1, region = 502,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95703, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95703, xcoord = 30.43, ycoord = -90.19
 Bus, Vn = 13.8, angle = -1.00521, area = 515, idx = 152632, name = "250", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0428, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0428, xcoord = 36.88, ycoord = -89.63
 Bus, Vn = 161.0, angle = -1.01337, area = 515, idx = 152680, name = "251", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96739, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96739, xcoord = 36.44, ycoord = -93.84
 Bus, Vn = 161.0, angle = -0.92058, area = 515, idx = 152692, name = "252", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99426, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99426, xcoord = 37.15, ycoord = -93.31
 Bus, Vn = 161.0, angle = -0.57556, area = 515, idx = 152708, name = "253", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0015, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0015, xcoord = 35.25, ycoord = -93.17
 Bus, Vn = 138.0, angle = -0.93007, area = 515, idx = 152792, name = "254", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9686, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9686, xcoord = 35.35, ycoord = -96.12
 Bus, Vn = 138.0, angle = -1.0561, area = 515, idx = 152800, name = "255", owner = 1, region = 515,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.92674, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.92674, xcoord = 34.62, ycoord = -96.46
 Bus, Vn = 161.0, angle = -0.80984, area = 520, idx = 153139, name = "256", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0077, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0077, xcoord = 36.25, ycoord = -94.53
 Bus, Vn = 138.0, angle = -0.73942, area = 520, idx = 153802, name = "257", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99793, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99793, xcoord = 36.17, ycoord = -95.75
 Bus, Vn = 345.0, angle = -0.69506, area = 520, idx = 153819, name = "258", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99792, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99792, xcoord = 36.01, ycoord = -95.7
 Bus, Vn = 345.0, angle = -0.69312, area = 520, idx = 153866, name = "259", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99752, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99752, xcoord = 36.28, ycoord = -95.98
 Bus, Vn = 138.0, angle = -0.64009, area = 520, idx = 153945, name = "260", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00767, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00767, xcoord = 36.43, ycoord = -95.7
 Bus, Vn = 138.0, angle = -0.89502, area = 520, idx = 153972, name = "261", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95939, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95939, xcoord = 36.92, ycoord = -95.65
 Bus, Vn = 138.0, angle = -1.15992, area = 520, idx = 154022, name = "262", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94576, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94576, xcoord = 34.87, ycoord = -95.54
 Bus, Vn = 345.0, angle = -0.69839, area = 520, idx = 154033, name = "263", owner = 1, region = 520,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02014, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02014, xcoord = 34.69, ycoord = -95.92
 Bus, Vn = 115.0, angle = -0.66956, area = 523, idx = 154434, name = "264", owner = 1, region = 523,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0004, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0004, xcoord = 36.23, ycoord = -95.18
 Bus, Vn = 161.0, angle = -0.65777, area = 523, idx = 154448, name = "265", owner = 1, region = 523,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00664, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00664, xcoord = 36.21, ycoord = -95.28
 Bus, Vn = 161.0, angle = -0.65534, area = 523, idx = 154456, name = "266", owner = 1, region = 523,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00808, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00808, xcoord = 36.19, ycoord = -95.29
 Bus, Vn = 161.0, angle = -0.72485, area = 524, idx = 155222, name = "267", owner = 1, region = 524,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99976, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99976, xcoord = 35.76, ycoord = -95.3
 Bus, Vn = 18.0, angle = -1.04584, area = 524, idx = 155223, name = "268", owner = 1, region = 524,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98761, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98761, xcoord = 35.76, ycoord = -95.3
 Bus, Vn = 345.0, angle = -0.59101, area = 524, idx = 155224, name = "269", owner = 1, region = 524,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00905, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00905, xcoord = 35.76, ycoord = -95.3
 Bus, Vn = 138.0, angle = -0.60122, area = 525, idx = 155948, name = "270", owner = 1, region = 525,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01213, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01213, xcoord = 34.02, ycoord = -95.32
 Bus, Vn = 345.0, angle = -0.5281, area = 534, idx = 156449, name = "271", owner = 1, region = 534,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01378, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01378, xcoord = 37.93, ycoord = -100.97
 Bus, Vn = 25.0, angle = -0.41046, area = 536, idx = 156751, name = "272", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01485, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01485, xcoord = 38.24, ycoord = -95.69
 Bus, Vn = 345.0, angle = -0.58853, area = 536, idx = 156772, name = "273", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99661, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99661, xcoord = 39.23, ycoord = -95
 Bus, Vn = 345.0, angle = -0.71962, area = 536, idx = 156793, name = "274", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00019, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00019, xcoord = 37.3, ycoord = -95.11
 Bus, Vn = 345.0, angle = -0.7111, area = 536, idx = 156796, name = "275", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98826, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98826, xcoord = 37.79, ycoord = -97.52
 Bus, Vn = 161.0, angle = -0.82877, area = 536, idx = 156934, name = "276", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99726, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99726, xcoord = 37.83, ycoord = -95.16
 Bus, Vn = 138.0, angle = -0.83349, area = 536, idx = 157039, name = "277", owner = 1, region = 536,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0195, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0195, xcoord = 37.57, ycoord = -97.25
 Bus, Vn = 25.0, angle = -0.40652, area = 541, idx = 157962, name = "278", owner = 1, region = 541,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04, xcoord = 39.45, ycoord = -94.98
 Bus, Vn = 345.0, angle = -0.6545, area = 541, idx = 157968, name = "279", owner = 1, region = 541,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99006, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99006, xcoord = 38.78, ycoord = -94.65
 Bus, Vn = 345.0, angle = -0.55285, area = 541, idx = 157981, name = "280", owner = 1, region = 541,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02038, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02038, xcoord = 38.35, ycoord = -94.64
 Bus, Vn = 161.0, angle = -0.72393, area = 541, idx = 158064, name = "281", owner = 1, region = 541,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03023, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03023, xcoord = 39.18, ycoord = -93.13
 Bus, Vn = 161.0, angle = -0.74546, area = 541, idx = 158126, name = "282", owner = 1, region = 541,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01347, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01347, xcoord = 38.91, ycoord = -94.76
 Bus, Vn = 161.0, angle = -0.78374, area = 542, idx = 158742, name = "283", owner = 1, region = 542,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98487, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98487, xcoord = 39.07, ycoord = -94.79
 Bus, Vn = 115.0, angle = -0.81549, area = 539, idx = 158754, name = "284", owner = 1, region = 539,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0064, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0064, xcoord = 37.16, ycoord = -100.76
 Bus, Vn = 34.5, angle = -0.60005, area = 540, idx = 159169, name = "285", owner = 1, region = 740,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02808, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02808, xcoord = 39.73, ycoord = -94.88
 Bus, Vn = 345.0, angle = -0.57488, area = 540, idx = 159199, name = "286", owner = 1, region = 740,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00122, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00122, xcoord = 39.84, ycoord = -94.79
 Bus, Vn = 345.0, angle = -0.69545, area = 540, idx = 159201, name = "287", owner = 1, region = 740,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99119, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99119, xcoord = 39.18, ycoord = -94.18
 Bus, Vn = 161.0, angle = -0.73393, area = 540, idx = 159209, name = "289", owner = 1, region = 740,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99432, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99432, xcoord = 38.7, ycoord = -93.28
 Bus, Vn = 161.0, angle = -0.74015, area = 540, idx = 159221, name = "290", owner = 1, region = 740,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98969, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98969, xcoord = 39.39, ycoord = -94.78
 Bus, Vn = 161.0, angle = -0.77882, area = 540, idx = 159314, name = "291", owner = 1, region = 400,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99575, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99575, xcoord = 38.27, ycoord = -93.36
 Bus, Vn = 161.0, angle = -0.77832, area = 544, idx = 159469, name = "292", owner = 1, region = 544,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98944, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98944, xcoord = 37.07, ycoord = -94.7
 Bus, Vn = 161.0, angle = -0.77635, area = 544, idx = 159476, name = "293", owner = 1, region = 544,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99323, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99323, xcoord = 37.36, ycoord = -94.59
 Bus, Vn = 161.0, angle = -0.95363, area = 544, idx = 159480, name = "294", owner = 1, region = 544,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94264, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.94264, xcoord = 36.97, ycoord = -93.92
 Bus, Vn = 18.0, angle = -0.63649, area = 544, idx = 159657, name = "295", owner = 1, region = 544,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01, xcoord = 37.07, ycoord = -94.61
 Bus, Vn = 230.0, angle = -0.86475, area = 999, idx = 159995, name = "296", owner = 1, region = 999,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97063, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97063, xcoord = 34.6, ycoord = -103.26
 Bus, Vn = 26.0, angle = -0.6398, area = 600, idx = 160002, name = "297", owner = 1, region = 600,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03446, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03446, xcoord = 45.37, ycoord = -93.9
 Bus, Vn = 345.0, angle = -0.81226, area = 600, idx = 160105, name = "298", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01741, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01741, xcoord = 44.62, ycoord = -92.63
 Bus, Vn = 115.0, angle = -0.75429, area = 600, idx = 160110, name = "299", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03877, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03877, xcoord = 44.2, ycoord = -94.01
 Bus, Vn = 345.0, angle = -0.85246, area = 600, idx = 160186, name = "300", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01399, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01399, xcoord = 45.03, ycoord = -92.78
 Bus, Vn = 345.0, angle = -0.85472, area = 600, idx = 160192, name = "301", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00665, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00665, xcoord = 44.79, ycoord = -93.43
 Bus, Vn = 345.0, angle = -0.79717, area = 600, idx = 160199, name = "302", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02186, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02186, xcoord = 45.46, ycoord = -92.91
 Bus, Vn = 115.0, angle = -0.955, area = 600, idx = 160238, name = "303", owner = 1, region = 601,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03531, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03531, xcoord = 44.89, ycoord = -93.01
 Bus, Vn = 161.0, angle = -1.15212, area = 600, idx = 160290, name = "304", owner = 1, region = 604,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03308, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03308, xcoord = 45.9, ycoord = -91.52
 Bus, Vn = 161.0, angle = -1.09893, area = 600, idx = 160308, name = "305", owner = 1, region = 604,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96689, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96689, xcoord = 43.83, ycoord = -91.24
 Bus, Vn = 115.0, angle = -1.19692, area = 600, idx = 160313, name = "306", owner = 1, region = 604,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98394, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98394, xcoord = 45.03, ycoord = -92.26
 Bus, Vn = 230.0, angle = -1.04403, area = 608, idx = 161612, name = "308", owner = 1, region = 608,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98726, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98726, xcoord = 46.45, ycoord = -94.07
 Bus, Vn = 230.0, angle = -0.69335, area = 608, idx = 161624, name = "309", owner = 1, region = 608,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01809, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01809, xcoord = 47.36, ycoord = -92.69
 Bus, Vn = 230.0, angle = -0.73435, area = 608, idx = 161627, name = "310", owner = 1, region = 608,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02206, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02206, xcoord = 47.5, ycoord = -93.03
 Bus, Vn = 115.0, angle = -1.22977, area = 608, idx = 161640, name = "311", owner = 1, region = 608,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96455, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96455, xcoord = 46.88, ycoord = -94.72
 Bus, Vn = 115.0, angle = -1.10411, area = 608, idx = 161653, name = "312", owner = 1, region = 608,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00383, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00383, xcoord = 46.45, ycoord = -94.07
 Bus, Vn = 161.0, angle = -0.88794, area = 600, idx = 161948, name = "313", owner = 1, region = 616,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0305, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0305, xcoord = 44.03, ycoord = -92.67
 Bus, Vn = 22.0, angle = -0.70125, area = 618, idx = 163000, name = "314", owner = 1, region = 624,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01782, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01782, xcoord = 47.37, ycoord = -101.16
 Bus, Vn = 230.0, angle = -0.93958, area = 618, idx = 163048, name = "315", owner = 1, region = 619,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9838, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9838, xcoord = 45.67, ycoord = -92.92
 Bus, Vn = 230.0, angle = -1.01128, area = 626, idx = 163052, name = "316", owner = 1, region = 621,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00259, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00259, xcoord = 46.36, ycoord = -95.41
 Bus, Vn = 230.0, angle = -0.53842, area = 618, idx = 163056, name = "317", owner = 1, region = 624,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0037, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0037, xcoord = 48.17, ycoord = -100
 Bus, Vn = 25.0, angle = -0.54191, area = 626, idx = 163317, name = "318", owner = 1, region = 628,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02501, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02501, xcoord = 45.3, ycoord = -96.51
 Bus, Vn = 230.0, angle = -0.90706, area = 626, idx = 163345, name = "319", owner = 1, region = 826,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0144, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0144, xcoord = 47.55, ycoord = -95
 Bus, Vn = 230.0, angle = -0.65796, area = 626, idx = 163362, name = "320", owner = 1, region = 627,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9921, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.9921, xcoord = 46.05, ycoord = -98.12
 Bus, Vn = 345.0, angle = -0.51847, area = 635, idx = 163800, name = "321", owner = 1, region = 836,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02874, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02874, xcoord = 41.18, ycoord = -95.83
 Bus, Vn = 161.0, angle = -0.57094, area = 635, idx = 163801, name = "322", owner = 1, region = 836,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02879, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02879, xcoord = 41.18, ycoord = -95.83
 Bus, Vn = 26.0, angle = -0.38471, area = 635, idx = 163806, name = "323", owner = 1, region = 836,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01133, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01133, xcoord = 41.18, ycoord = -95.83
 Bus, Vn = 345.0, angle = -0.56244, area = 635, idx = 163875, name = "324", owner = 1, region = 836,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02824, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02824, xcoord = 42.33, ycoord = -96.36
 Bus, Vn = 161.0, angle = -0.59831, area = 635, idx = 163876, name = "325", owner = 1, region = 836,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02752, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02752, xcoord = 42.33, ycoord = -96.36
 Bus, Vn = 345.0, angle = -0.73057, area = 635, idx = 164350, name = "326", owner = 1, region = 638,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04613, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04613, xcoord = 41.57, ycoord = -91.54
 Bus, Vn = 345.0, angle = -0.66907, area = 635, idx = 164402, name = "327", owner = 1, region = 638,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06076, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06076, xcoord = 41.31, ycoord = -91.09
 Bus, Vn = 345.0, angle = -0.68698, area = 635, idx = 164403, name = "328", owner = 1, region = 638,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03285, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03285, xcoord = 41.5, ycoord = -90.57
 Bus, Vn = 161.0, angle = -0.75494, area = 635, idx = 164415, name = "329", owner = 1, region = 638,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0264, xcoord = 41.43, ycoord = -90.61
 Bus, Vn = 230.0, angle = -0.52105, area = 640, idx = 164759, name = "330", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95014, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95014, xcoord = 40.89, ycoord = -99.71
 Bus, Vn = 230.0, angle = -0.7746, area = 640, idx = 164783, name = "331", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.90888, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.90888, xcoord = 41.47, ycoord = -97.33
 Bus, Vn = 345.0, angle = -0.48375, area = 640, idx = 164786, name = "332", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.019, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.019, xcoord = 40.36, ycoord = -95.65
 Bus, Vn = 345.0, angle = -0.23079, area = 640, idx = 164831, name = "333", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99765, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99765, xcoord = 41.08, ycoord = -101.15
 Bus, Vn = 161.0, angle = -0.63591, area = 645, idx = 164863, name = "334", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01734, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01734, xcoord = 40.18, ycoord = -95.93
 Bus, Vn = 115.0, angle = -0.60714, area = 640, idx = 164870, name = "335", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03106, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03106, xcoord = 40.68, ycoord = -99.74
 Bus, Vn = 115.0, angle = -0.57056, area = 640, idx = 164893, name = "336", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.11104, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.11104, xcoord = 41.14, ycoord = -100.49
 Bus, Vn = 345.0, angle = -0.53407, area = 640, idx = 164902, name = "337", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02463, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02463, xcoord = 40.56, ycoord = -96.81
 Bus, Vn = 115.0, angle = -1.05982, area = 640, idx = 164915, name = "338", owner = 1, region = 640,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.88089, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.88089, xcoord = 42.12, ycoord = -98.03
 Bus, Vn = 18.0, angle = -0.3367, area = 645, idx = 165302, name = "339", owner = 1, region = 645,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0096, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0096, xcoord = 40.67, ycoord = -95.87
 Bus, Vn = 161.0, angle = -0.58854, area = 645, idx = 165411, name = "340", owner = 1, region = 645,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03471, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03471, xcoord = 41.33, ycoord = -95.94
 Bus, Vn = 230.0, angle = -0.65273, area = 652, idx = 166444, name = "341", owner = 1, region = 655,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02712, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02712, xcoord = 46.88, ycoord = -98.68
 Bus, Vn = 115.0, angle = -0.69343, area = 652, idx = 166452, name = "342", owner = 1, region = 655,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97068, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97068, xcoord = 48.35, ycoord = -100
 Bus, Vn = 115.0, angle = -0.5505, area = 652, idx = 166512, name = "343", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01215, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01215, xcoord = 45.37, ycoord = -98.08
 Bus, Vn = 230.0, angle = -0.61912, area = 652, idx = 166523, name = "344", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02235, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02235, xcoord = 42.6, ycoord = -96.3
 Bus, Vn = 230.0, angle = -0.61511, area = 652, idx = 166530, name = "345", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03235, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03235, xcoord = 44.88, ycoord = -97.04
 Bus, Vn = 115.0, angle = -0.66073, area = 652, idx = 166531, name = "346", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01482, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01482, xcoord = 44.88, ycoord = -97.04
 Bus, Vn = 345.0, angle = -0.62669, area = 652, idx = 166537, name = "347", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03419, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03419, xcoord = 44.39, ycoord = -96.54
 Bus, Vn = 230.0, angle = -0.76071, area = 652, idx = 166550, name = "348", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01721, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01721, xcoord = 44.81, ycoord = -95.53
 Bus, Vn = 230.0, angle = -0.74892, area = 652, idx = 166554, name = "349", owner = 1, region = 655,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0331, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0331, xcoord = 45.58, ycoord = -96.01
 Bus, Vn = 161.0, angle = -0.80412, area = 652, idx = 166560, name = "350", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00593, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00593, xcoord = 41.12, ycoord = -94.35
 Bus, Vn = 161.0, angle = -0.81795, area = 652, idx = 166563, name = "351", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00697, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00697, xcoord = 43.16, ycoord = -95.26
 Bus, Vn = 230.0, angle = -0.64933, area = 652, idx = 166565, name = "352", owner = 1, region = 654,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01098, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01098, xcoord = 42.6, ycoord = -96.3
 Bus, Vn = 345.0, angle = -0.52991, area = 640, idx = 166571, name = "353", owner = 1, region = 656,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98355, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98355, xcoord = 40.91, ycoord = -98.26
 Bus, Vn = 230.0, angle = -0.84061, area = 626, idx = 166754, name = "354", owner = 1, region = 657,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04802, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.04802, xcoord = 46.92, ycoord = -96.87
 Bus, Vn = 115.0, angle = -0.29156, area = 640, idx = 167132, name = "355", owner = 1, region = 659,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03723, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03723, xcoord = 41.1, ycoord = -101.71
 Bus, Vn = 230.0, angle = -0.11711, area = 667, idx = 167503, name = "356", owner = 1, region = 668,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02389, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02389, xcoord = 49.98, ycoord = -97.44
 Bus, Vn = 230.0, angle = -0.34359, area = 667, idx = 167524, name = "357", owner = 1, region = 668,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0354, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0354, xcoord = 49.84, ycoord = -99.9
 Bus, Vn = 110.0, angle = -0.2059, area = 667, idx = 167529, name = "358", owner = 1, region = 667,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0456, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0456, xcoord = 49.96, ycoord = -97.18
 Bus, Vn = 230.0, angle = -0.35696, area = 667, idx = 167557, name = "359", owner = 1, region = 668,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98587, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98587, xcoord = 49.1, ycoord = -97.33
 Bus, Vn = 230.0, angle = -0.17126, area = 667, idx = 167560, name = "360", owner = 1, region = 667,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01102, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01102, xcoord = 49.94, ycoord = -97.06
 Bus, Vn = 13.8, angle = -0.13908, area = 667, idx = 167680, name = "361", owner = 1, region = 668,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99483, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99483, xcoord = 49.98, ycoord = -97.44
 Bus, Vn = 230.0, angle = -0.07602, area = 672, idx = 168601, name = "362", owner = 1, region = 672,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0938, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0938, xcoord = 49.13, ycoord = -103.12
 Bus, Vn = 161.0, angle = -1.14593, area = 680, idx = 169503, name = "363", owner = 1, region = 681,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00276, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00276, xcoord = 42.71, ycoord = -91.03
 Bus, Vn = 161.0, angle = -1.00662, area = 680, idx = 169523, name = "364", owner = 1, region = 681,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01571, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01571, xcoord = 43.56, ycoord = -91.23
 Bus, Vn = 24.0, angle = -0.82918, area = 680, idx = 169542, name = "365", owner = 1, region = 681,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01618, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01618, xcoord = 44.31, ycoord = -91.91
 Bus, Vn = 161.0, angle = -0.88494, area = 680, idx = 169543, name = "366", owner = 1, region = 681,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02147, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02147, xcoord = 44.31, ycoord = -91.91
 Bus, Vn = 161.0, angle = -1.14254, area = 680, idx = 169565, name = "367", owner = 1, region = 681,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98157, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98157, xcoord = 45.29, ycoord = -92.18
 Bus, Vn = 24.0, angle = -0.44466, area = 130, idx = 196003, name = "368", owner = 1, region = 930,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01465, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01465, xcoord = 39.55, ycoord = -92.64
 Bus, Vn = 345.0, angle = -0.70669, area = 130, idx = 196041, name = "369", owner = 1, region = 930,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98404, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98404, xcoord = 37.95, ycoord = -92.03
 Bus, Vn = 161.0, angle = -0.763, area = 130, idx = 196071, name = "370", owner = 1, region = 934,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01732, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01732, xcoord = 38.39, ycoord = -93.76
 Bus, Vn = 161.0, angle = -0.87568, area = 130, idx = 196088, name = "371", owner = 1, region = 136,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96805, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96805, xcoord = 37.58, ycoord = -92.79
 Bus, Vn = 161.0, angle = -0.67145, area = 130, idx = 196090, name = "372", owner = 1, region = 133,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02725, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02725, xcoord = 38.93, ycoord = -92.01
 Bus, Vn = 161.0, angle = -0.82671, area = 130, idx = 196096, name = "373", owner = 1, region = 133,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95264, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.95264, xcoord = 38.03, ycoord = -92.05
 Bus, Vn = 161.0, angle = -0.74069, area = 130, idx = 196098, name = "374", owner = 1, region = 931,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0036, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0036, xcoord = 39.23, ycoord = -94.31
 Bus, Vn = 161.0, angle = -0.5373, area = 130, idx = 196103, name = "375", owner = 1, region = 930,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02805, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02805, xcoord = 36.52, ycoord = -89.57
 Bus, Vn = 161.0, angle = -1.00801, area = 130, idx = 196119, name = "376", owner = 1, region = 136,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.86457, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.86457, xcoord = 38.18, ycoord = -91.2
 Bus, Vn = 161.0, angle = -0.5554, area = 130, idx = 196120, name = "377", owner = 1, region = 930,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03769, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03769, xcoord = 39.55, ycoord = -92.64
 Bus, Vn = 230.0, angle = -0.39338, area = 151, idx = 198488, name = "378", owner = 1, region = 157,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99274, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99274, xcoord = 30.78, ycoord = -89.91
 Bus, Vn = 230.0, angle = -0.30035, area = 151, idx = 198652, name = "379", owner = 1, region = 157,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0089, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0089, xcoord = 30.01, ycoord = -89.94
 Bus, Vn = 500.0, angle = -0.31871, area = 151, idx = 198808, name = "380", owner = 1, region = 158,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02277, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02277, xcoord = 32.97, ycoord = -89.73
 Bus, Vn = 115.0, angle = -0.478, area = 151, idx = 198899, name = "381", owner = 1, region = 158,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98543, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98543, xcoord = 32.25, ycoord = -90.25
 Bus, Vn = 21.0, angle = -0.10179, area = 151, idx = 198954, name = "382", owner = 1, region = 158,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02977, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.02977, xcoord = 32.02, ycoord = -91.03
 Bus, Vn = 115.0, angle = -0.53054, area = 151, idx = 199054, name = "383", owner = 1, region = 158,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.93498, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.93498, xcoord = 31.12, ycoord = -90.12
 Bus, Vn = 115.0, angle = -0.48008, area = 151, idx = 199418, name = "384", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96941, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96941, xcoord = 34.49, ycoord = -92.91
 Bus, Vn = 500.0, angle = -0.37693, area = 151, idx = 199486, name = "385", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01908, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01908, xcoord = 35.33, ycoord = -92.27
 Bus, Vn = 161.0, angle = -0.68045, area = 151, idx = 199519, name = "386", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96872, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.96872, xcoord = 35.33, ycoord = -92.27
 Bus, Vn = 115.0, angle = -0.62947, area = 151, idx = 199598, name = "387", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97956, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.97956, xcoord = 34.9, ycoord = -91.14
 Bus, Vn = 500.0, angle = -0.39461, area = 151, idx = 199627, name = "388", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0202, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0202, xcoord = 34.65, ycoord = -91.97
 Bus, Vn = 500.0, angle = -0.48994, area = 151, idx = 199742, name = "389", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0302, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0302, xcoord = 35.85, ycoord = -89.99
 Bus, Vn = 161.0, angle = -0.42417, area = 151, idx = 199817, name = "390", owner = 1, region = 159,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99773, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99773, xcoord = 35.7, ycoord = -91.47
 Bus, Vn = 24.0, angle = -0.6103, area = 342, idx = 306001, name = "391", owner = 1, region = 325,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99436, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99436, xcoord = 35.42, ycoord = -80.95
 Bus, Vn = 500.0, angle = -0.50347, area = 342, idx = 306105, name = "392", owner = 1, region = 325,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06792, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.06792, xcoord = 34.8, ycoord = -82.9
 Bus, Vn = 230.0, angle = -0.4951, area = 342, idx = 306111, name = "393", owner = 1, region = 325,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01859, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.01859, xcoord = 34.44, ycoord = -82.67
 Bus, Vn = 100.0, angle = -0.73332, area = 342, idx = 306300, name = "394", owner = 1, region = 325,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99644, xcoord = 0, ycoord = 0
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.99644, xcoord = 35.25, ycoord = -82.68
 
 Line, Sn = 100.0, Vn = 500.0, Vn2 = 500.0, b = 0.0, b1 = 0.0, b2 = 0.0, bus1 = 100001,
       bus2 = 100006, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_EI_0", name = "Line EI 1",
