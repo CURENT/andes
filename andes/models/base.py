@@ -778,7 +778,7 @@ class ModelBase(object):
             node_Vdcn = self.read_param('Node', src='Vdcn', fkey=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
-                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, bus, Vdcn0), WARNING)
+                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, node, Vdcn0), WARNING)
     #
     # def use_model(self, model, dest=None, fkey=None):
     #     """Create reference of `self.system.__dict__[model]` to self.__dict__[model]"""
