@@ -5,6 +5,17 @@ from cvxopt import matrix, spmatrix, mul, div
 from math import ceil
 from ..formats.txt import dump_data
 from ..consts import *
+from matplotlib.pyplot import *
+
+try:
+    from petsc4py import PETSc
+except:
+    PETSC = False
+try:
+    from slepc4py import SLEPc
+except:
+    SLEPC = False
+
 
 def state_matrix(system):
     """Return state matrix"""
@@ -12,10 +23,12 @@ def state_matrix(system):
     linsolve(system.DAE.Gy, Gyx)
     return matrix(system.DAE.Fx - system.DAE.Fy*Gyx)
 
-
 def eigs(As):
     """Solve eigenvalues from state matrix"""
-    return numpy.linalg.eigvals(As)
+    if (not SLEPC) or (not SLEPC):
+        return numpy.linalg.eigvals(As)
+
+    A = PETSc.Mat()
 
 
 def part_factor(As):
@@ -141,4 +154,24 @@ def run(system):
     else:
         mu, pf = part_factor(As)
         dump_results(system, mu, pf)
+        if system.SSSA.plot:
+            mu_real = mu.real()
+            mu_imag = mu.imag()
+            p_mu_real, p_mu_imag, z_mu_real, z_mu_imag, n_mu_real, n_mu_imag = [], [], [], [], [], []
+            for re, im in zip(mu_real, mu_imag):
+                if re == 0:
+                    z_mu_real.append(re)
+                    z_mu_imag.append(im)
+                elif re > 0:
+                    p_mu_real.append(re)
+                    p_mu_imag.append(im)
+                elif re < 0:
+                    n_mu_real.append(re)
+                    n_mu_imag.append(im)
+
+            fig, ax = subplots()
+            ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
+            ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
+            ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
+            show()
         return True

@@ -286,6 +286,36 @@ def isint(value):
 def main():
     args = cli_parse()
     name, ext = os.path.splitext(args.datfile[0])
+    if 'out' in name:
+        tds_plot(name)
+    elif 'eig' in name:
+        eig_plot(name)
+
+
+def eig_plot(name):
+    fullpath = os.path.join(name, '.txt')
+    raw_data = []
+    started = 0
+    fid = open(fullpath)
+    for line in fid.readline():
+        if '#1' in line:
+            started = 1
+        elif 'PARTICIPATION FACTORS' in line:
+            started = -1
+
+        if started == 1:
+            raw_data.append(line)
+        elif started == -1:
+            break
+    fid.close()
+
+    for line in raw_data:
+        data = line.split()
+
+
+
+
+def tds_plot(name):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 

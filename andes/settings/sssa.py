@@ -12,6 +12,7 @@ class SSSA(SettingsBase):
         self.report = ''
         self.eigs = ''
         self.pf = ''
+        self.plot = True
 
     @cached
     def doc_help(self):
