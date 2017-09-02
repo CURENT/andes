@@ -287,12 +287,12 @@ def main():
     args = cli_parse()
     name, ext = os.path.splitext(args.datfile[0])
     if 'out' in name:
-        tds_plot(name)
+        tds_plot(name, args)
     elif 'eig' in name:
-        eig_plot(name)
+        eig_plot(name, args)
 
 
-def eig_plot(name):
+def eig_plot(name, args):
     fullpath = os.path.join(name, '.txt')
     raw_data = []
     started = 0
@@ -315,7 +315,7 @@ def eig_plot(name):
 
 
 
-def tds_plot(name):
+def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
