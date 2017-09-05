@@ -35,6 +35,11 @@ class Streaming(object):
             data_list = self._build_list('Bus', params)
             self.SysParam.update({'Bus': array(data_list).T})
 
+        if self.system.Line.n:
+            params = ['bus1', 'bus2', 'Sn', 'Vn', 'fn', 0, 1, 'r', 'x', 'b', 'tap', 'phi', 0, 0, 0, 0]
+            data_list = self._build_list('Line', params)
+            self.SysParam.update({'Line': array(data_list).T})
+
         if self.system.PQ.n:
             params = ['bus', 'Sn', 'Vn', 'p', 'q', 'vmax', 'vmin', 1, 'u']
             data_list = self._build_list('PQ', params)
@@ -208,33 +213,33 @@ class Streaming(object):
                                'Pji': line0 + self.system.Line.n + array(range(self.system.Line.n)),
                                'Qij': line0 + 2 * self.system.Line.n + array(range(self.system.Line.n)),
                                'Qji': line0 + 3 * self.system.Line.n + array(range(self.system.Line.n)),
-                               # 'Iij': array([]),
-                               # 'Iji': array([]),
-                               # 'Sij': array([]),
-                               # 'Sji': array([]),
+                               'Iij': array([]),
+                               'Iji': array([]),
+                               'Sij': array([]),
+                               'Sji': array([]),
                                }
         self.Idxvgs['Syn'] = {'delta': 1 + array(self.system.Syn6a.delta),
                               'omega': 1 + array(self.system.Syn6a.omega),
-                              # 'e1d': 1 + array(self.system.Syn6a.e1d),
-                              # 'e1q': 1 + array(self.system.Syn6a.e1q),
-                              # 'e2d': 1 + array(self.system.Syn6a.e2d),
-                              # 'e2q': 1 + array(self.system.Syn6a.e2q),
-                              # 'psid': array(self.system.Syn6a.psid),
-                              # 'psiq': array(self.system.Syn6a.psiq),
-                              # 'p': array(self.system.Syn6a.p),
-                              # 'q': array(self.system.Syn6a.q),
+                              'e1d': 1 + array(self.system.Syn6a.e1d),
+                              'e1q': 1 + array(self.system.Syn6a.e1q),
+                              'e2d': 1 + array(self.system.Syn6a.e2d),
+                              'e2q': 1 + array(self.system.Syn6a.e2q),
+                              'psid': array(self.system.Syn6a.psid),
+                              'psiq': array(self.system.Syn6a.psiq),
+                              'p': array(self.system.Syn6a.p),
+                              'q': array(self.system.Syn6a.q),
                               }
-        # self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
-        #                      'wref': array(self.system.TG1.wref + self.system.TG2.wref),
-        #                      }
-        # self.Idxvgs['Exc'] = {'vf': array(self.system.AVR1.vfout + self.system.AVR2.vfout + self.system.AVR3.vfout),
-        #                       'vm': array(self.system.AVR1.vm + self.system.AVR2.vm + self.system.AVR3.vm),
-        #                       }
-        # self.Idxvgs['Dfig'] = {'omega_m': array(self.system.WTG3.omega_m),
-        #                        'theta_p': array(self.system.WTG3.theta_p),
-        #                        'idr': array(self.system.WTG3.ird),
-        #                        'iqr': array(self.system.WTG3.irq),
-        #                        }
+        self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
+                             'wref': array(self.system.TG1.wref + self.system.TG2.wref),
+                             }
+        self.Idxvgs['Exc'] = {'vf': array(self.system.AVR1.vfout + self.system.AVR2.vfout + self.system.AVR3.vfout),
+                              'vm': array(self.system.AVR1.vm + self.system.AVR2.vm + self.system.AVR3.vm),
+                              }
+        self.Idxvgs['Dfig'] = {'omega_m': array(self.system.WTG3.omega_m),
+                               'theta_p': array(self.system.WTG3.theta_p),
+                               'idr': array(self.system.WTG3.ird),
+                               'iqr': array(self.system.WTG3.irq),
+                               }
 
     def _build_list(self, model, params, ret=None):
         if not ret:

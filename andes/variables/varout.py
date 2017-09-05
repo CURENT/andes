@@ -14,11 +14,6 @@ class VarOut(object):
 
     def store(self, t):
         """Record the state/algeb values at time t to self.vars"""
-        self.t.append(t)
-        self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
-
-        if self.system.TDS.compute_flows:
-            self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
 
         if len(self.vars) >= 500:
             self.dump(lst=False)
@@ -26,6 +21,12 @@ class VarOut(object):
             self.t = list()
             self.system.Log.debug('VarOut cache cleared at simulation t = {:g}.'.format(self.system.DAE.t))
             self._mode = 'a'
+
+        self.t.append(t)
+        self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
+
+        if self.system.TDS.compute_flows:
+            self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
 
     def show(self):
         """
