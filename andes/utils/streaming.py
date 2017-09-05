@@ -36,7 +36,7 @@ class Streaming(object):
             self.SysParam.update({'Bus': array(data_list).T})
 
         if self.system.Line.n:
-            params = ['bus1', 'bus2', 'Sn', 'Vn', 'fn', 0, 1, 'r', 'x', 'b', 'tap', 'phi', 0, 0, 0, 0]
+            params = ['bus1', 'bus2', 'Sn', 'Vn', 'fn', 0, 1, 'r', 'x', 'b', 'tap', 'phi', 0, 0, 0, 1]
             data_list = self._build_list('Line', params)
             self.SysParam.update({'Line': array(data_list).T})
 
