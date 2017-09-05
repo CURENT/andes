@@ -4,9 +4,9 @@
 # WECC HVDC station buses: 2191, 2189, 2190, 2192
 
 Bus, Vn = 345.0, angle = -0.53362, area = 10, idx = 2183, name = "NEXMEXIC", owner = 1, region = 10,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 32.133383, ycoord = -101.216183
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 33.133383, ycoord = -106.216183
 Bus, Vn = 345.0, angle = -0.53362, area = 10, idx = 2184, name = "NEXMEXIC1", owner = 1, region = 10,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 34.082211, ycoord = -100.180769
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 33.082211, ycoord = -106.180769
 Bus, Vn = 138.0, angle = -0.39605, area = 60, idx = 2185, name = "WYOMING1", owner = 1, region = 63,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.08886, xcoord = 41.12, ycoord = -104.15
 Bus, Vn = 138.0, angle = -0.39605, area = 60, idx = 2186, name = "WYOMING2", owner = 1, region = 63,
@@ -20,7 +20,7 @@ Bus, Vn = 138.0, angle = -0.39605, area = 60, idx = 2189, name = "WYOMING3", own
 Bus, Vn = 138.0, angle = 0.00586, area = 50, idx = 2190, name = "ALBERTA3", owner = 1, region = 50,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.03538, xcoord = 50.48, ycoord = -110.14
 Bus, Vn = 345.0, angle = -0.53362, area = 10, idx = 2191, name = "NEXMEXIC2", owner = 1, region = 10,
-     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 32.332383, ycoord = -101.215183
+     u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05366, xcoord = 33.332383, ycoord = -107.215183
 Bus, Vn = 138.0, angle = 0.39447, area = 60, idx = 2192, name = "MONTANA2", owner = 1, region = 62,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.05793, xcoord = 46.61, ycoord = -105.99
 
