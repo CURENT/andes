@@ -127,13 +127,14 @@ def dump_results(system, mu, partfact):
     cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
-    for idx in range(nblock):
-        start = cpb*idx
-        end = cpb*(idx+1)
-        text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(idx+1, nblock))
-        header.append(numeral[start:end])
-        rowname.append(system.VarName.unamex)
-        data.append(pf[start:end])
+    if nblock <= 10:
+        for idx in range(nblock):
+            start = cpb*idx
+            end = cpb*(idx+1)
+            text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(idx+1, nblock))
+            header.append(numeral[start:end])
+            rowname.append(system.VarName.unamex)
+            data.append(pf[start:end])
 
     dump_data(text, header, rowname, data, system.Files.eig)
     system.Log.info('Report saved.')
