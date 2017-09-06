@@ -89,7 +89,7 @@ def read(file, system, header=True):
             alter(data, system)
             continue
         if device == 'INCLUDE':
-            system.Log.info('Parsing include file <{}>'.format(data[0]))
+            system.Log.debug('Parsing include file <{}>'.format(data[0]))
             newpath = data[0]
             if not os.path.isfile(newpath):
                 newpath = os.path.join(system.Files.path, data[0])
@@ -97,7 +97,7 @@ def read(file, system, header=True):
                     system.Log.warning('Unable to locate file in {}'.format(newpath))
                     continue
             read(newpath, system, header=False)  # recursive call
-            system.Log.info('Parsing of include file <{}> completed.'.format(data[0]))
+            system.Log.debug('Parsing of include file <{}> completed.'.format(data[0]))
             continue
         kwargs = {}
         for item in data:

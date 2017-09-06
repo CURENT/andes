@@ -340,10 +340,10 @@ def time_step(system, convergence, niter, t):
     if convergence:
         if niter >= 15:
             settings.deltat = max(settings.deltat * 0.5, settings.deltatmin)
-        elif niter <= 8:
+        elif niter <= 6:
             settings.deltat = min(settings.deltat * 1.1, settings.deltatmax)
         else:
-            settings.deltat = max(settings.deltat * 0.9, settings.deltatmin)
+            settings.deltat = max(settings.deltat * 0.95, settings.deltatmin)
         if settings.fixt:  # adjust fixed time step if niter is high
             settings.deltat = min(settings.tstep, settings.deltat)
     else:

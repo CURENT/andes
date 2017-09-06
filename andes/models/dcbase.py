@@ -238,6 +238,9 @@ class RLs(DCBase):
         self._service.extend(['iR', 'iL'])
         self._inst_meta()
 
+    def base(self):
+        super(RLs, self).base()
+
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
         self.iL = div(self.u, self.L)
@@ -253,16 +256,16 @@ class RLs(DCBase):
         dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        dae.f[self.IL] = - mul(self.v12 - mul(self.R, dae.x[self.IL]), self.iL)
+        dae.f[self.IL] = mul(self.v12 - mul(self.R, dae.x[self.IL]), self.iL)
 
     def jac0(self, dae):
         dae.add_jac(Gx0, self.u, self.Idc, self.IL)
         dae.add_jac(Gy0, self.u, self.Idc, self.Idc)
         dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
         dae.add_jac(Gy0, self.u, self.v2, self.Idc)
-        dae.add_jac(Fx0, mul(self.R, self.iL), self.IL, self.IL)
-        dae.add_jac(Fy0, -mul(self.u, self.iL), self.IL, self.v1)
-        dae.add_jac(Fy0, mul(self.u,self.iL), self.IL, self.v2)
+        dae.add_jac(Fx0, -mul(self.R, self.iL), self.IL, self.IL)
+        dae.add_jac(Fy0, mul(self.u, self.iL), self.IL, self.v1)
+        dae.add_jac(Fy0, -mul(self.u,self.iL), self.IL, self.v2)
 
 
 class RCp(DCBase):
