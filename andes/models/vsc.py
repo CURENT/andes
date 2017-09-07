@@ -356,6 +356,7 @@ class VSC1_Common(DCBase):
     """Common equations for VSC1"""
     def __init__(self, system, name):
         super(VSC1_Common, self).__init__(system, name)
+        self._group = 'AC/DC'
         self._data.update({'vsc': None})
         self._mandatory.extend(['vsc'])
         self._descr.update({'vsc': 'static vsc idx'})

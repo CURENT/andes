@@ -3,17 +3,17 @@
 # 4-Node HVDC Overlay
 
 Ground, idx = 0, name = "Ground COI", node = 0, Vdcn = 193.0, voltage = 0
-Node, idx = 0, name = "Node 0", Vdcn = 193.0
+Node, idx = 0, name = "Node 0", Vdcn = 193.0, xcoord = 45.596416, ycoord = -121.312202
 
-Node, idx = 1, name = "Node 70 P", Vdcn = 193.0
-Node, idx = 2, name = "Node 59 P", Vdcn = 193.0
-Node, idx = 3, name = "Node 160002 P", Vdcn = 193.0
-Node, idx = 4, name = "Node 30247 P", Vdcn = 193.0
+Node, idx = 1, name = "Node 70 P", Vdcn = 193.0, xcoord = 45.596416, ycoord = -121.312202, area = 90, region = 90
+Node, idx = 2, name = "Node 59 P", Vdcn = 193.0, xcoord = 34.312456, ycoord = -118.481217, area = 90, region = 90
+Node, idx = 3, name = "Node 160002 P", Vdcn = 193.0, xcoord = 45.37, ycoord = -93.9, area = 600, region = 600
+Node, idx = 4, name = "Node 30247 P", Vdcn = 193.0, xcoord = 29.7482, ycoord = -94.924983, area = 4, region = 305
 
-Node, idx = 201, name = "Node 70 N", Vdcn = -193.0
-Node, idx = 202, name = "Node 59 N", Vdcn = -193.0
-Node, idx = 203, name = "Node 160002 N", Vdcn = -193.0
-Node, idx = 204, name = "Node 30247 N", Vdcn = -193.0
+Node, idx = 201, name = "Node 70 N", Vdcn = -193.0, xcoord = 45.596416, ycoord = -121.312202, area = 90, region = 90
+Node, idx = 202, name = "Node 59 N", Vdcn = -193.0, xcoord = 34.312456, ycoord = -118.481217, area = 90, region = 90
+Node, idx = 203, name = "Node 160002 N", Vdcn = -193.0, xcoord = 45.37, ycoord = -93.9, area = 600, region = 600
+Node, idx = 204, name = "Node 30247 N", Vdcn = -193.0, xcoord = 29.7482, ycoord = -94.924983, area = 4, region = 305
 
 RLs, idx = 1, name = "RLs 70_59 P", node1 = 1, node2 = 2, Vdcn = 193.0, R = 5, L = 0.5
 RLs, idx = 2, name = "RLs 160002_70 P", node1 = 3, node2 = 1, Vdcn = 193.0, R = 5, L = 0.5

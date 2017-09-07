@@ -1,4 +1,4 @@
-from numpy import ndarray, array, concatenate
+from numpy import ndarray, array, concatenate, delete
 from cvxopt import matrix
 from . import dime
 from time import sleep
@@ -183,9 +183,33 @@ class Streaming(object):
                       'Kp', 'Tp', 'KV', 'Te', 'R', 'p', 'nblade', 'ngb', 'pmax', 'pmin', 'qmax', 'qmin', 'u']
             data_list = self._build_list('WTG3', params)
             self.SysParam.update({'Dfig': array(data_list).T})
-        if self.Node.n:
+
+        if self.system.Node.n:
             """Idx, Vdcn, area, region, xcoord, ycoord"""
-            pass
+            params = ['idx', 'Vdcn', 'area', 'region', 'xcoord', 'ycoord']
+            data_list = self._build_list('Node', params)
+            self.SysParam.update({'Node': array(data_list).T})
+
+        if self.system.R.n or self.system.C.n or self.system.L.n or \
+                self.system.RCp.n or self.system.RCs.n or self.system.RLCp.n or self.system.RLCs.n or self.system.RLs.n:
+
+            ground_idx = self.system.Ground.node
+
+            data_array = array([]).reshape(0, 3)
+            dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
+                      5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
+            for id, dev in dev_id.items():
+                if self.system.__dict__[dev].n:
+                    params = ['node1', 'node2', id]
+                    data_list = self._build_list(dev, params)
+                    data_array = concatenate((data_array, array(data_list).T), axis=0)
+            to_delete = []
+            for row in range(data_array.shape[0]):
+                if data_array[row, 0] in ground_idx or data_array[row, 1] in ground_idx:
+                    to_delete.append(row)
+            data_array = delete(data_array, tuple(to_delete), axis=0)
+
+            self.SysParam.update({'DCLine': data_array})
 
     def _build_SysName(self):
         self.SysName['Bus'] = self.system.Bus.name
@@ -243,6 +267,16 @@ class Streaming(object):
                                'idr': array(self.system.WTG3.ird),
                                'iqr': array(self.system.WTG3.irq),
                                }
+        self.Idxvgs['Node'] = {'v': array(self.system.Node.v)}
+
+        dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
+                  5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
+        DCLine_types = set(self.SysParam['DCLine'][:, 2])
+        idx = []
+
+        for item in DCLine_types:
+            idx.extend(self.system.__dict__[dev_id[item]].Idc)
+        self.Idxvgs['DCLine'] = {'Idc': array(idx)}
 
     def _build_list(self, model, params, ret=None):
         if not ret:
