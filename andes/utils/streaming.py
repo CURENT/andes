@@ -183,6 +183,9 @@ class Streaming(object):
                       'Kp', 'Tp', 'KV', 'Te', 'R', 'p', 'nblade', 'ngb', 'pmax', 'pmin', 'qmax', 'qmin', 'u']
             data_list = self._build_list('WTG3', params)
             self.SysParam.update({'Dfig': array(data_list).T})
+        if self.Node.n:
+            """Idx, Vdcn, area, region, xcoord, ycoord"""
+            pass
 
     def _build_SysName(self):
         self.SysName['Bus'] = self.system.Bus.name
