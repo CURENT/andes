@@ -155,21 +155,26 @@ def run(system):
     else:
         mu, pf = part_factor(As)
         dump_results(system, mu, pf)
-        if system.SSSA.plot:
-            mu_real = mu.real()
-            mu_imag = mu.imag()
-            p_mu_real, p_mu_imag, z_mu_real, z_mu_imag, n_mu_real, n_mu_imag = [], [], [], [], [], []
-            for re, im in zip(mu_real, mu_imag):
-                if re == 0:
-                    z_mu_real.append(re)
-                    z_mu_imag.append(im)
-                elif re > 0:
-                    p_mu_real.append(re)
-                    p_mu_imag.append(im)
-                elif re < 0:
-                    n_mu_real.append(re)
-                    n_mu_imag.append(im)
+        mu_real = mu.real()
+        mu_imag = mu.imag()
+        p_mu_real, p_mu_imag, z_mu_real, z_mu_imag, n_mu_real, n_mu_imag = [], [], [], [], [], []
+        for re, im in zip(mu_real, mu_imag):
+            if re == 0:
+                z_mu_real.append(re)
+                z_mu_imag.append(im)
+            elif re > 0:
+                p_mu_real.append(re)
+                p_mu_imag.append(im)
+            elif re < 0:
+                n_mu_real.append(re)
+                n_mu_imag.append(im)
 
+        if len(p_mu_real) > 0:
+            system.Log.warning('System is not stable due to {} positive eigenvalues.'.format(len(p_mu_real)))
+        else:
+            system.Log.info('System is small-signal stable in the initial neighbourhood.')
+
+        if system.SSSA.plot:
             fig, ax = subplots()
             ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
             ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
