@@ -53,7 +53,7 @@ class WTG3(ModelBase):
     def init1(self, dae):
         self.servcall(dae)
         dae.x[self.omega_m] = 1
-        dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.y[self.vw]))
+        dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.x[self.vw]))
         dae.y[self.vsd] = mul(dae.y[self.v], -sin(dae.y[self.a]))
         dae.y[self.vsq] = mul(dae.y[self.v], cos(dae.y[self.a]))
         self.p0 = mul(self.p0, self.gammap)
