@@ -200,7 +200,7 @@ class Streaming(object):
                       5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
             for id, dev in dev_id.items():
                 if self.system.__dict__[dev].n:
-                    params = ['node1', 'node2', id]
+                    params = ['node1', 'node2', id, 'u']
                     data_list = self._build_list(dev, params)
                     data_array = concatenate((data_array, array(data_list).T), axis=0)
             to_delete = []
