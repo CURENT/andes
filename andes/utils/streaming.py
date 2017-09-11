@@ -275,6 +275,7 @@ class Streaming(object):
         idx = []
 
         for item in DCLine_types:
+            item = int(item)
             idx.extend(self.system.__dict__[dev_id[item]].Idc)
         self.Idxvgs['DCLine'] = {'Idc': array(idx)}
 
