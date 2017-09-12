@@ -195,7 +195,7 @@ class Streaming(object):
 
             ground_idx = self.system.Ground.node
 
-            data_array = array([]).reshape(0, 3)
+            data_array = array([]).reshape(0, 4)
             dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
                       5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
             for id, dev in dev_id.items():
