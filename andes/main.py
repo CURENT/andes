@@ -476,6 +476,7 @@ def run(case, **kwargs):
         routine = 'sssa'
     if routine is 'td':
         if system.Settings.dime_enable:
+            system.TDS.compute_flows = True
             system.Streaming.send_init(recepient='all')
             system.Log.info('Waiting for modules to send init info...')
             sleep(0.5)
