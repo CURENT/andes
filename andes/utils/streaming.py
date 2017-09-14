@@ -217,6 +217,8 @@ class Streaming(object):
             self.SysName['Areas'] = self.system.Area.name
         if self.system.Region.n:
             self.SysName['Regions'] = self.system.Region.name
+        if self.system.Node.n:
+            self.SysName['Node'] = self.system.Node.name
 
     def _build_Varheader(self):
         self.Varheader = self.system.VarName.unamex + self.system.VarName.unamey
