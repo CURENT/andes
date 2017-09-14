@@ -99,6 +99,9 @@ class VSC(DCBase):
         self.ylim = []
         self.vio = {}
 
+    def base(self):
+        super(VSC, self).base()
+
     def setup(self):
         super().setup()
         self.K = mul(self.K, self.droop)
@@ -372,6 +375,9 @@ class VSC1_Common(DCBase):
         self._dc = {}
 
     def servcall(self, dae):
+        self.copy_param('VSC', 'Sn', 'Sn', self.vsc)
+        self.copy_param('VSC', 'Vn', 'Vn', self.vsc)
+        self.copy_param('VSC', 'Vdcn', 'Vdcn', self.vsc)
         self.copy_param('VSC', 'rsh', 'rsh', self.vsc)
         self.copy_param('VSC', 'xsh', 'xsh', self.vsc)
         self.copy_param('VSC', 'PQ', 'PQ', self.vsc)
@@ -675,6 +681,9 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         self._inst_meta()
+    
+    def base(self):
+        super(VSC1, self).base()
 
 
 class VSC2_Voltage1(object):
