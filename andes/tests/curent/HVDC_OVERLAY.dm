@@ -25,48 +25,48 @@ RLs, idx = 6, name = "RLs 160002_70 N", node1 = 203, node2 = 201, Vdcn = -193.0,
 RLs, idx = 7, name = "RLs 160002_30247 N", node1 = 203, node2 = 204, Vdcn = -193.0, R = 5, L = 0.5
 RLs, idx = 8, name = "RLs 30247_59 N", node1 = 204, node2 = 202, Vdcn = -193.0, R = 5, L = 0.5
 
-C, idx = 1, name = "C 70 P", node1 = 1, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 2, name = "C 59 P", node1 = 2, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 3, name = "C 160002 P", node1 = 3, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 4, name = "C 30247 P", node1 = 4, node2 = 0, Vdcn = 193.0, C = 100
+C, idx = 1, name = "C 70 P", node1 = 1, node2 = 0, Vdcn = 193.0, C = 0.02
+C, idx = 2, name = "C 59 P", node1 = 2, node2 = 0, Vdcn = 193.0, C = 0.005
+C, idx = 3, name = "C 160002 P", node1 = 3, node2 = 0, Vdcn = 193.0, C = 0.005
+C, idx = 4, name = "C 30247 P", node1 = 4, node2 = 0, Vdcn = 193.0, C = 0.005
 
-C, idx = 5, name = "C 70 N", node1 = 201, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 6, name = "C 59 N", node1 = 202, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 7, name = "C 160002 N", node1 = 203, node2 = 0, Vdcn = 193.0, C = 100
-C, idx = 8, name = "C 30247 N", node1 = 204, node2 = 0, Vdcn = 193.0, C = 100
+C, idx = 5, name = "C 70 N", node1 = 201, node2 = 0, Vdcn = 193.0, C = 0.02
+C, idx = 6, name = "C 59 N", node1 = 202, node2 = 0, Vdcn = 193.0, C = 0.005
+C, idx = 7, name = "C 160002 N", node1 = 203, node2 = 0, Vdcn = 193.0, C = 0.005
+C, idx = 8, name = "C 30247 N", node1 = 204, node2 = 0, Vdcn = 193.0, C = 0.005
 
 VSC, idx = 1, name = "VSC 70_P", bus = 70, node1 = 1, node2 = 0,
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
      vref0 = 1.00, vdcref0 = 1.025, control = "vV", Vdcn = 193, u = 1
 VSC, idx = 2, name = "VSC 59_P", bus = 59, node1 = 2, node2 = 0,
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
+     pref0 = 10, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
 VSC, idx = 3, name = "VSC 160002_P", bus = 160002, node1 = 3, node2 = 0,
      Vn = 26,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = -10, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 4, name = "VSC 30247_P", bus = 30247, node1 = 4, node2 = 0,
      Vn = 20,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 10, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 
 VSC, idx = 201, name = "VSC 70_N", bus = 70, node1 = 201, node2 = 0,
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
      vref0 = 1.00, vdcref0 = 1.025, control = "vV", Vdcn = 193, u = 1
 VSC, idx = 202, name = "VSC 59_N", bus = 59, node1 = 202, node2 = 0,
      Vn = 230,  rsh = 0.0025, xsh = 0.06, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
+     pref0 = 10, vref0 = 1.03, control = "PV", Vdcn = 193, u = 1
 VSC, idx = 203, name = "VSC 160002_N", bus = 160002, node1 = 203, node2 = 0,
      Vn = 26,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = -10, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 204, name = "VSC 30247_N", bus = 30247, node1 = 204, node2 = 0,
      Vn = 20,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 10, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 
-VSC1, vsc = 1, name = "VSC 70 P", Kp1 = 0.05, Ki1 = 0.01, Kp2 = 20, Ki2 = 1, Kp3 = 1, Ki3 = 0.2
+VSC1, vsc = 1, name = "VSC 70 P", Kp1 = 0.051, Ki1 = 0.0000, Kp2 = 50, Ki2 = 5, Kp3 = 5, Ki3 = 1
 VSC1, vsc = 2, name = "VSC 59 P", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
 VSC1, vsc = 3, name = "VSC 160002 P", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
 VSC1, vsc = 4, name = "VSC 30247 P", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
 
-VSC1, vsc = 201, name = "VSC 70 N", Kp1 = 0.05, Ki1 = 0.01, Kp2 = 20, Ki2 = 1, Kp3 = 1, Ki3 = 0.2
+VSC1, vsc = 201, name = "VSC 70 N", Kp1 = 0.051, Ki1 = 0.0000, Kp2 = 50, Ki2 = 5, Kp3 = 5, Ki3 = 1
 VSC1, vsc = 202, name = "VSC 59 N", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
 VSC1, vsc = 203, name = "VSC 160002 N", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
 VSC1, vsc = 204, name = "VSC 30247 N", Kp1 = 0.2, Ki1 = 0.5, Kp2 = 2, Ki2 = 1, Kp3 = 1, Ki3 = 1
