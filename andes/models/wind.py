@@ -124,3 +124,17 @@ class Weibull(WindBase):
 
             sample[1:] *= k
             self.speed[i] = sample
+
+
+class ConstWind(WindBase):
+    """Constant wind power class"""
+    def __init__(self, system, name):
+        super(ConstWind, self).__init__(system, name)
+        self._name = 'ConstWind'
+        self._inst_meta()
+
+    def generate(self, dae):
+        for i in range(self.n):
+            sample = [dae.x[self.vw[i]]] * len(self.time[i])
+            self.speed[i] = list(sample)
+
