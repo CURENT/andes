@@ -178,7 +178,7 @@ class C(DCBase):
         self._name = 'C'
         self._data.update({'C': 0.001})
         self._params.extend(['C'])
-        self._r.extend(['C'])
+        self._g.extend(['C'])
         self._algebs.extend(['Idc'])
         self._fnamey.extend(['I_{dc}'])
         self._states.extend(['vC'])
@@ -278,7 +278,8 @@ class RCp(DCBase):
                            'C': 0.001,
                            })
         self._params.extend(['R', 'C'])
-        self._r.extend(['R', 'C'])
+        self._r.extend(['R'])
+        self._g.extend(['C'])
         self._algebs.extend(['Idc'])
         self._fnamey.extend(['I_{dc}'])
         self._states.extend(['vC'])
@@ -331,7 +332,8 @@ class RLCp(DCBase):
                            'C': 0.001,
                            })
         self._params.extend(['R', 'L', 'C'])
-        self._r.extend(['R', 'L', 'C'])
+        self._r.extend(['R', 'L'])
+        self._g.extend(['C'])
         self._algebs.extend(['Idc'])
         self._fnamey.extend(['I_{dc}'])
         self._states.extend(['IL', 'vC'])
@@ -386,7 +388,8 @@ class RCs(DCBase):
         self._data.update({'R': 0.01,
                            'C': 0.001})
         self._params.extend(['R', 'C'])
-        self._r.extend(['R', 'C'])
+        self._r.extend(['R'])
+        self._g.extend(['C'])
         self._algebs.extend(['Idc'])
         self._fnamey.extend(['I_{dc}'])
         self._states.extend(['vC'])
@@ -436,7 +439,8 @@ class RLCs(DCBase):
                            'C': 0.001
                            })
         self._params.extend(['R', 'L', 'C'])
-        self._r.extend(['R', 'L', 'C'])
+        self._r.extend(['R', 'L'])
+        self._g.extend(['C'])
         self._algebs.extend(['Idc'])
         self._fnamey.extend(['I_{dc}'])
         self._states.extend(['IL', 'vC'])
