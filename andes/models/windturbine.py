@@ -167,8 +167,8 @@ class WTG3(ModelBase):
             dae.y[self.vref[i]] = self.vref0[i]
 
             # k = x1 * toSb / Vc / xmu
-            k = x1 / Vc / xmu * toSb
-            self.irq_off[i] = -k *max(min(2*omega - 1, 1), 0)/omega - irq
+            k = x1 / Vc / xmu /omega * toSb
+            self.irq_off[i] = -k *max(min(2*omega - 1, 1), 0) - irq
 
             # electrical torque in pu
             # te = xmu * (irq * isd - ird * isq)
@@ -222,7 +222,7 @@ class WTG3(ModelBase):
         dae.x[self.irq] = mul(self.u0, dae.x[self.irq])
         dae.x[self.omega_m] = mul(self.u0, dae.x[self.omega_m])
         dae.x[self.theta_p] = mul(self.u0, dae.x[self.theta_p])
-        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0) * toSb
+        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0)
 
         if not retval:
             self.message('DFIG initialization failed', ERROR)
@@ -268,7 +268,10 @@ class WTG3(ModelBase):
         dae.g[self.vsd] = -dae.y[self.vsd] - mul(dae.y[self.v], sin(dae.y[self.a]))
         dae.g[self.vsq] = -dae.y[self.vsq] + mul(dae.y[self.v], cos(dae.y[self.a]))
         dae.g[self.vref] = self.vref0 - dae.y[self.vref]
-        dae.g[self.pwa] = mul(2*dae.x[self.omega_m] - 1, toSb) - dae.y[self.pwa]
+        # dae.g[self.pwa] = mul(2*dae.x[self.omega_m] - 1, toSb) - dae.y[self.pwa]
+        dae.g[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0) - dae.y[self.pwa]
+
+
         dae.hard_limit(self.pwa, 0, 1)
         dae.g[self.pw] = -dae.y[self.pw] + mul(0.5, dae.y[self.cp], self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3)
         dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
@@ -278,13 +281,15 @@ class WTG3(ModelBase):
         dae.g += spmatrix(mul(self.u0, mul((dae.y[self.v])**2, div(1, self.x0)) + mul(dae.x[self.ird], dae.y[self.v], self.xmu, div(1, self.x0))), self.v, [0]*self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
+        toSb = self.Sn / self.system.Settings.mva
         omega = not0(dae.x[self.omega_m])
         dae.f[self.theta_p] = mul(div(1, self.Tp), -dae.x[self.theta_p] + mul(self.Kp, self.phi, -1 + dae.x[self.omega_m]))
         dae.anti_windup(self.theta_p, 0, pi)
         dae.f[self.omega_m] = mul(0.5, div(1, self.H), mul(dae.y[self.pw], div(1, omega)) + mul(dae.x[self.irq], dae.y[self.v], self.xmu, div(1, self.x0)))
         dae.f[self.ird] = mul(div(1, self.Ts), -dae.x[self.ird] + mul(self.KV, dae.y[self.v] - dae.y[self.vref]) - mul(dae.y[self.v], div(1, self.xmu)))
         dae.anti_windup(self.ird, self.ird_min, self.irq_max)
-        dae.f[self.irq] = mul(div(1, self.Te), -dae.x[self.irq] - self.irq_off - mul(dae.y[self.pwa], self.x0, div(1, omega), div(1, dae.y[self.v]), div(1, self.xmu)))
+        k = mul(self.x0, toSb, div(1, dae.y[self.v]), div(1, self.xmu), div(1, omega))
+        dae.f[self.irq] = mul(div(1, self.Te), -dae.x[self.irq] - self.irq_off - mul(dae.y[self.pwa], k))
         dae.anti_windup(self.irq, self.irq_min, self.irq_max)
 
     def gycall(self, dae):
@@ -307,6 +312,7 @@ class WTG3(ModelBase):
 
     def fxcall(self, dae):
         omega = not0(dae.x[self.omega_m])
+        toSb = div(self.Sn, self.system.Settings.mva)
         dae.add_jac(Gx, mul(self.x1, 1 - dae.x[self.omega_m]), self.vrd, self.irq)
         dae.add_jac(Gx, -mul(dae.x[self.irq], self.x1) - mul(dae.y[self.isq], self.xmu), self.vrd, self.omega_m)
         dae.add_jac(Gx, mul(dae.x[self.ird], self.x1) + mul(dae.y[self.isd], self.xmu), self.vrq, self.omega_m)
@@ -321,11 +327,11 @@ class WTG3(ModelBase):
         dae.add_jac(Gx, mul(self.u0, dae.y[self.v], self.xmu, div(1, self.x0)), self.v, self.ird)
         dae.add_jac(Fx, mul(0.5, dae.y[self.v], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.irq)
         dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
-        dae.add_jac(Fx, mul(dae.y[self.pwa], self.x0, div(1, self.Te), (dae.x[self.omega_m])**-2, div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.omega_m)
+        dae.add_jac(Fx, mul(dae.y[self.pwa], self.x0, toSb, div(1, self.Te), (dae.x[self.omega_m])**-2, div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.omega_m)
         dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, omega)), self.omega_m, self.pw)
         dae.add_jac(Fy, mul(0.5, dae.x[self.irq], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.v)
-        dae.add_jac(Fy, mul(dae.y[self.pwa], self.x0, div(1, self.Te), div(1, omega), (dae.y[self.v])**-2, div(1, self.xmu)), self.irq, self.v)
-        dae.add_jac(Fy, - mul(self.x0, div(1, self.Te), div(1, omega), div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.pwa)
+        dae.add_jac(Fy, mul(dae.y[self.pwa], self.x0, toSb, div(1, self.Te), div(1, omega), (dae.y[self.v])**-2, div(1, self.xmu)), self.irq, self.v)
+        dae.add_jac(Fy, - mul(self.x0, toSb, div(1, self.Te), div(1, omega), div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.pwa)
 
     def jac0(self, dae):
         toSb = div(self.Sn, self.system.Settings.mva)
@@ -349,7 +355,7 @@ class WTG3(ModelBase):
         dae.add_jac(Gx0, - self.xmu, self.isq, self.ird)
         dae.add_jac(Gx0, - self.rr, self.vrd, self.ird)
         dae.add_jac(Gx0, - self.rr, self.vrq, self.irq)
-        dae.add_jac(Gx0, 2 * toSb, self.pwa, self.omega_m)
+        dae.add_jac(Gx0, 2, self.pwa, self.omega_m)
         dae.add_jac(Fx0, - div(1, self.Tp), self.theta_p, self.theta_p)
         dae.add_jac(Fx0, mul(self.Kp, self.phi, div(1, self.Tp)), self.theta_p, self.omega_m)
         dae.add_jac(Fx0, - div(1, self.Ts), self.ird, self.ird)
