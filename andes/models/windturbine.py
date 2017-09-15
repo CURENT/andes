@@ -17,16 +17,16 @@ class WTG3(ModelBase):
         self._fnamex.extend(['\\theta_p', '\\omega_m', 'I_{r, d}', 'I_{r, q}'])
         self._fnamey.extend(['I_{s, d}', 'I_{s, q}', 'V_{r, d}', 'V_{r, q}', 'V_{s, d}', 'V_{s, q}', 'V_{ref}', 'P_{\\omega a}', 'P_w', 'c_p', '\\lambda', '\\frac{1}{\\lambda}', '\\omega_{ref}'])
         self._mandatory.extend(['bus', 'gen', 'wind'])
-        self._params.extend(['Kp', 'nblade', 'ngen', 'npole', 'R', 'Tp', 'Ts', 'ngb', 'H', 'rr', 'rs', 'xr', 'xs', 'xmu', 'Te', 'KV', 'pmax', 'pmin', 'qmax', 'qmin', 'gammap', 'gammaq'])
+        self._params.extend(['fn', 'Kp', 'nblade', 'ngen', 'npole', 'R', 'Tp', 'Ts', 'ngb', 'H', 'rr', 'rs', 'xr', 'xs', 'xmu', 'Te', 'KV', 'pmax', 'pmin', 'qmax', 'qmin', 'gammap', 'gammaq'])
         self._powers.extend(['H', 'pmax', 'pmin', 'qmax', 'qmin'])
         self._service.extend(['u0', 'vref0', 'irq_min', 'ird_min', 'phi', 'fn', 'ird_max', 'x0', 'irq_max', 'pi', 'irq_off', 'mva_mega', 'x1'])
         self._states.extend(['theta_p', 'omega_m', 'ird', 'irq'])
         self._times.extend(['Tp', 'Te'])
         self._z.extend(['rs', 'xs', 'rr', 'xr', 'xmu'])
         self._ac.update({'bus': ['a', 'v']})
-        self._data.update({'rs': 0.01, 'xmu': 3, 'R': 35, 'ngb': 0.011235, 'gammap': 1, 'npole': 4, 'qmin': -0.6, 'KV': 10, 'xr': 0.08, 'Te': 0.01, 'pmin': 0, 'Ts': 1, 'Sn': 40, 'wind': 0, 'gen': 0, 'rr': 0.01, 'pmax': 1.0, 'gammaq': 1, 'Kp': 10, 'xs': 0.1, 'H': 2, 'Tp': 3.0, 'qmax': 0.6, 'nblade': 3, 'bus': 0, 'ngen': 40, 'u': 1})
-        self._descr.update({'rs': 'Stator resistance', 'xmu': 'Magnetizing reactance', 'R': 'Rotor radius', 'pmax': 'Maximum active power', 'gammap': 'Active power generation ratio', 'npole': 'Number of poles', 'qmin': 'Minimum reactive power', 'KV': 'Voltage control gain', 'xr': 'Rotor reactance', 'Te': 'Power control time constant', 'pmin': 'Minimum reactive power', 'Ts': 'Speed control time constant', 'wind': 'Wind time series idx', 'gen': 'Static generator idx', 'rr': 'Rotor resistance', 'ngb': 'Gear box ratio', 'gammaq': 'Reactive power generation ratio', 'Kp': 'Pitch control gain', 'xs': 'Stator reactance', 'H': 'Machine rotor and turbine inertia constant', 'Tp': 'Pitch control time constant', 'qmax': 'Maximum active power', 'nblade': 'Number of blades', 'bus': 'Bus idx', 'ngen': 'Number of generators'})
-        self._units.update({'rs': 'pu', 'xmu': 'pu', 'rr': 'pu', 'R': 'm', 'pmax': 'pu', 'qmin': 'pu', 'Kp': 'pu', 'xs': 'pu', 'qmax': 'pu', 'H': 'MWs/MVA', 'Tp': 's', 'KV': 'pu', 'Te': 's', 'xr': 'pu', 'pmin': 'pu'})
+        self._data.update({'fn': 60, 'rs': 0.01, 'xmu': 3, 'R': 35, 'ngb': 0.011235, 'gammap': 1, 'npole': 4, 'qmin': -0.6, 'KV': 10, 'xr': 0.08, 'Te': 0.01, 'pmin': 0, 'Ts': 1, 'Sn': 40, 'wind': 0, 'gen': 0, 'rr': 0.01, 'pmax': 1.0, 'gammaq': 1, 'Kp': 10, 'xs': 0.1, 'H': 2, 'Tp': 3.0, 'qmax': 0.6, 'nblade': 3, 'bus': 0, 'ngen': 40, 'u': 1})
+        self._descr.update({'fn': 'Base frequency', 'rs': 'Stator resistance', 'xmu': 'Magnetizing reactance', 'R': 'Rotor radius', 'pmax': 'Maximum active power', 'gammap': 'Active power generation ratio', 'npole': 'Number of poles', 'qmin': 'Minimum reactive power', 'KV': 'Voltage control gain', 'xr': 'Rotor reactance', 'Te': 'Power control time constant', 'pmin': 'Minimum reactive power', 'Ts': 'Speed control time constant', 'wind': 'Wind time series idx', 'gen': 'Static generator idx', 'rr': 'Rotor resistance', 'ngb': 'Gear box ratio', 'gammaq': 'Reactive power generation ratio', 'Kp': 'Pitch control gain', 'xs': 'Stator reactance', 'H': 'Machine rotor and turbine inertia constant', 'Tp': 'Pitch control time constant', 'qmax': 'Maximum active power', 'nblade': 'Number of blades', 'bus': 'Bus idx', 'ngen': 'Number of generators'})
+        self._units.update({'fn': 'Hz', 'rs': 'pu', 'xmu': 'pu', 'rr': 'pu', 'R': 'm', 'pmax': 'pu', 'qmin': 'pu', 'Kp': 'pu', 'xs': 'pu', 'qmax': 'pu', 'H': 'MWs/MVA', 'Tp': 's', 'KV': 'pu', 'Te': 's', 'xr': 'pu', 'pmin': 'pu'})
         self.calls.update({'init1': True, 'gycall': True, 'fxcall': True, 'fcall': True, 'gcall': True, 'jac0': True})
         self._inst_meta()
 
@@ -47,7 +47,6 @@ class WTG3(ModelBase):
         self.irq_off = zeros(self.n, 1)
         self.u0 = mul(self.u, self.ugen)
         # self.omega_ref0 = ones(self.n, 1)
-        self.fn = self.system.Settings.freq
         self.mva_mega = 100000000.0
 
     def init1(self, dae):

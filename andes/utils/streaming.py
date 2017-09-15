@@ -179,8 +179,8 @@ class Streaming(object):
             self.SysParam['Pss'][:, 0] += 1
 
         if self.system.WTG3.n:
-            params = ['bus', 'wind', 'Sn', 'Vn', 'fn', 'rs', 'xs', 'rr', 'xr', 'xmu', 'Hm',
-                      'Kp', 'Tp', 'KV', 'Te', 'R', 'p', 'nblade', 'ngb', 'pmax', 'pmin', 'qmax', 'qmin', 'u']
+            params = ['bus', 'wind', 'Sn', 'Vn', 'fn', 'rs', 'xs', 'rr', 'xr', 'xmu', 'H',
+                      'Kp', 'Tp', 'KV', 'Te', 'R', 'npole', 'nblade', 'ngb', 'pmax', 'pmin', 'qmax', 'qmin', 'u']
             data_list = self._build_list('WTG3', params)
             self.SysParam.update({'Dfig': array(data_list).T})
 
@@ -273,7 +273,10 @@ class Streaming(object):
 
         dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
                   5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
-        DCLine_types = set(self.SysParam['DCLine'][:, 2])
+        if 'DCLine' in self.SysParam:
+            DCLine_types = set(self.SysParam['DCLine'][:, 2])
+        else:
+            DCLine_types = ()
         idx = []
 
         for item in DCLine_types:
