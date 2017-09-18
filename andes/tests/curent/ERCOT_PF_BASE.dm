@@ -9317,13 +9317,13 @@ PV, Sn = 903.79, Vn = 25.0, bus = 30249, busr = 0, idx = "PV_ERCOT_23", name = "
 PV, Sn = 2340.0, Vn = 25.0, bus = 30250, busr = 0, idx = "PV_ERCOT_24", name = "PV ERCOT 24", pg = 8.7366,
     pmax = 99.99, pmin = -99.99, qg = 0.2241, qmax = 4.3683, qmin = -2.1841, ra = 0.0, u = 1,
     v0 = 1.01983, vmax = 1.4, vmin = 0.6, xs = 0.23878
-PV, Sn = 100.0, Vn = 2.2, bus = 30253, busr = 0, idx = "PV_ERCOT_26", name = "PV ERCOT 25", pg = 0.0,
+PV, Sn = 100.0, Vn = 2.2, bus = 30253, busr = 0, idx = "PV_ERCOT_26", name = "PV ERCOT 25", pg = 0.2,
     pmax = 99.99, pmin = -99.99, qg = 0.0424, qmax = 0.0534, qmin = 0.0, ra = 0.0, u = 1,
     v0 = 1.0, vmax = 1.4, vmin = 0.6, xs = 0.2
-PV, Sn = 100.0, Vn = 12.47, bus = 30254, busr = 0, idx = "PV_ERCOT_27", name = "PV ERCOT 26", pg = 0.0,
+PV, Sn = 100.0, Vn = 12.47, bus = 30254, busr = 0, idx = "PV_ERCOT_27", name = "PV ERCOT 26", pg = 0.2,
     pmax = 99.99, pmin = -99.99, qg = -0.0406, qmax = 0.0, qmin = -0.0491, ra = 0.0, u = 1,
     v0 = 1.025, vmax = 1.4, vmin = 0.6, xs = 0.2
-PV, Sn = 100.0, Vn = 17.9, bus = 30260, busr = 0, idx = "PV_ERCOT_28", name = "PV ERCOT 27", pg = 0.0,
+PV, Sn = 100.0, Vn = 17.9, bus = 30260, busr = 0, idx = "PV_ERCOT_28", name = "PV ERCOT 27", pg = 0.2,
     pmax = 99.99, pmin = -99.99, qg = -0.0838, qmax = 0.0, qmin = -0.1005, ra = 0.0, u = 1,
     v0 = 1.00186, vmax = 1.4, vmin = 0.6, xs = 0.2
 PV, Sn = 8044.83, Vn = 34.5, bus = 30262, busr = 0, idx = "PV_ERCOT_29", name = "PV ERCOT 28", pg = 44.0352,
@@ -9335,7 +9335,7 @@ PV, Sn = 610.2, Vn = 13.8, bus = 30264, busr = 0, idx = "PV_ERCOT_30", name = "P
 PV, Sn = 600.0, Vn = 34.5, bus = 30266, busr = 0, idx = "PV_ERCOT_31", name = "PV ERCOT 30", pg = 0.5404,
     pmax = 99.99, pmin = -99.99, qg = -0.4792, qmax = 0.2702, qmin = -0.5755, ra = 0.0, u = 1,
     v0 = 1.025, vmax = 1.4, vmin = 0.6, xs = 0.3
-PV, Sn = 100.0, Vn = 2.2, bus = 30269, busr = 0, idx = "PV_ERCOT_32", name = "PV ERCOT 31", pg = 0.0,
+PV, Sn = 100.0, Vn = 2.2, bus = 30269, busr = 0, idx = "PV_ERCOT_32", name = "PV ERCOT 31", pg = 0.2,
     pmax = 99.99, pmin = -99.99, qg = 0.0, qmax = 0.0, qmin = -0.0082, ra = 0.0, u = 1,
     v0 = 1.01666, vmax = 1.4, vmin = 0.6, xs = 0.2
 
