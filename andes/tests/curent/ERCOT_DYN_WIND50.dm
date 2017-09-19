@@ -68,55 +68,55 @@ Syn2, D = 3.0, M = 6.0, S10 = 0, S12 = 0, Sn = 100.0, Vn = 2.2, bus = 30269,
 WTG3, idx = 101, bus = 30254, wind = 101, Sn = 100, Vn = 12.47, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_27"
-Weibull, idx = 101
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_27", ngen = 67
+Weibull, idx = 101, name = "Weibull 101"
 WTG3, idx = 102, bus = 30200, wind = 102, Sn = 2010.1, Vn = 34.5, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_17"
-Weibull, idx = 102
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_17", ngen = 1341
+Weibull, idx = 102, name = "Weibull 102"
 WTG3, idx = 103, bus = 30199, wind = 103, Sn = 3730, Vn = 34.5, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_16"
-Weibull, idx = 103
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_16", ngen = 2487
+Weibull, idx = 103, name = "Weibull 103"
 WTG3, idx = 104, bus = 30123, wind = 104, Sn = 5221.25, Vn = 24, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_8"
-Weibull, idx = 104
-WTG3, idx = 105, bus = 30018, wind = 105, Sn = 12801.02, Vn = 345, fn = 60, rs = 0,
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_8", ngen = 3481
+Weibull, idx = 104, name = "Weibull 104"
+WTG3, idx = 105, bus = 30018, wind = 105, Sn = 7400.51, Vn = 345, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_2"
-Weibull, idx = 105, Vwn = 18
-WTG3, idx = 106, bus = 30262, wind = 106, Sn = 9000.83, Vn = 34.5, fn = 60, rs = 0,
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_2", ngen = 4934
+Weibull, idx = 105, Vwn = 18, name = "Weibull 105"
+WTG3, idx = 106, bus = 30262, wind = 106, Sn = 8044.83, Vn = 34.5, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_29"
-Weibull, idx = 106, Vwm = 18
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_29", ngen = 5364
+Weibull, idx = 106, Vwm = 18, name = "Weibull 106"
 WTG3, idx = 107, bus = 30253, wind = 107, Sn = 100, Vn = 2.2, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_26"
-Weibull, idx = 107
-WTG3, idx = 108, bus = 30035, wind = 108, Sn = 5000.9, Vn = 22, fn = 60, rs = 0,
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_26", ngen = 67
+Weibull, idx = 107, name = "Weibull 108"
+WTG3, idx = 108, bus = 30035, wind = 108, Sn = 17517.9, Vn = 22, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_3"
-Weibull, idx = 108, Vwn = 20
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_3", ngen = 11679
+Weibull, idx = 108, Vwn = 20, name = "Weibull 108"
 WTG3, idx = 109, bus = 30260, wind = 109, Sn = 100, Vn = 17.9, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_28"
-Weibull, idx = 109
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_28", ngen = 67
+Weibull, idx = 109, name = "Weibull 109"
 WTG3, idx = 110, bus = 30124, wind = 110, Sn = 479, Vn = 22.8, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_9"
-Weibull, idx = 110
-WTG3, idx = 111, bus = 30088, wind = 111, Sn = 7509.2, Vn = 25, fn = 60, rs = 0,
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_9", ngen = 320
+Weibull, idx = 110, name = "Weibull 110"
+WTG3, idx = 111, bus = 30088, wind = 111, Sn = 3754.6, Vn = 25, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_7"
-Weibull, idx = 111
+      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_7", ngen = 2504
+Weibull, idx = 111, name = "Weibull 111"
