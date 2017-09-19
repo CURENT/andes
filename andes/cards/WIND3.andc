@@ -139,7 +139,8 @@ hard_limit =
 
 diff_eq =
  Kp * phi *(omega_m - 1);
- (pw/omega_m + (xmu * v * irq / x0)) / (2 * H);
+ #(pw/omega_m + (xmu * v * irq / x0)) / (2 * H);
+ (pw/omega_m - xmu *(irq * isd - ird * isq)) / (2 * H);
  KV * (v - vref) - v/xmu;
  - x0 * pwa / v / xmu / omega_m - irq_off;
 
