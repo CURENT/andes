@@ -461,7 +461,7 @@ def run(case, **kwargs):
         if not system.Files.no_output:
             system.Report.write(content='powerflow')
             t5, s = elapsed(t4)
-            system.Log.info('Static report written in {:s}.'.format(s))
+            system.Log.info('Static report written to <{:s}> in {:s}.'.format(system.Files.output, s))
 
     # run more studies
     t0, s = elapsed()
