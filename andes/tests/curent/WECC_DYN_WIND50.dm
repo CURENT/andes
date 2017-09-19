@@ -155,7 +155,7 @@ Syn6a, D = 0.0, M = 5.9, S10 = 0, S12 = 0, Sn = 11386, Taa = 0.0, Td10 = 4.6,
        gammap = 1.0, gammaq = 1.0, gen = 9, idx = 8, kp = 0, kw = 0, name = "Syn6a 9",
        ra = 0.0, u = 1, xd = 1.825, xd1 = 0.291, xd2 = 0.25, xl = 0.239, xq = 1.78,
        xq1 = 0.44, xq2 = 0.25
-TG1, gen = 8, R = 0.05, T5 = 8.72, Ts = 0.1, Tc = 0.2, T4 = 2.616
+TG1, gen = 8, R = 0.04, T5 = 8.72, Ts = 0.1, Tc = 0.2, T4 = 2.616
 AVR1, Ae = 0.0006, Be = 0.9, Ka = 50.0, Ke = 1, Kf = 0.015, Sn = 100.0, Ta = 0.08,
       Te = 0.02, Tf = 1.0, Tr = 0.02, Vn = 110.0, busr = 0, idx = 17, name = "AVR1 18",
       syn = 8, u = 1, vrmax = 9999.0, vrmin = -9999.0

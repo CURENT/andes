@@ -15,15 +15,15 @@ Node, idx = 202, name = "Node 59 N", Vdcn = -193.0, xcoord = 34.312456, ycoord =
 Node, idx = 203, name = "Node 160002 N", Vdcn = -193.0, xcoord = 45.37, ycoord = -93.9, area = 600, region = 600
 Node, idx = 204, name = "Node 30247 N", Vdcn = -193.0, xcoord = 29.7482, ycoord = -94.924983, area = 4, region = 305
 
-RLs, idx = 1, name = "RLs 70_59 P", node1 = 1, node2 = 2, Vdcn = 193.0, R = 5, L = 0.5
-RLs, idx = 2, name = "RLs 160002_70 P", node1 = 3, node2 = 1, Vdcn = 193.0, R = 5, L = 0.5
-RLs, idx = 3, name = "RLs 160002_30247 P", node1 = 3, node2 = 4, Vdcn = 193.0, R = 5, L = 0.5
-RLs, idx = 4, name = "RLs 30247_59 P", node1 = 4, node2 = 2, Vdcn = 193.0, R = 5, L = 0.5
+RLs, idx = 1, name = "RLs 70_59 P", node1 = 1, node2 = 2, Vdcn = 193.0, R = 2, L = 0.5
+RLs, idx = 2, name = "RLs 160002_70 P", node1 = 3, node2 = 1, Vdcn = 193.0, R = 2, L = 0.5
+RLs, idx = 3, name = "RLs 160002_30247 P", node1 = 3, node2 = 4, Vdcn = 193.0, R = 2, L = 0.5
+RLs, idx = 4, name = "RLs 30247_59 P", node1 = 4, node2 = 2, Vdcn = 193.0, R = 2, L = 0.5
 
-RLs, idx = 5, name = "RLs 70_59 N", node1 = 201, node2 = 202, Vdcn = -193.0, R = 5, L = 0.5
-RLs, idx = 6, name = "RLs 160002_70 N", node1 = 203, node2 = 201, Vdcn = -193.0, R = 5, L = 0.5
-RLs, idx = 7, name = "RLs 160002_30247 N", node1 = 203, node2 = 204, Vdcn = -193.0, R = 5, L = 0.5
-RLs, idx = 8, name = "RLs 30247_59 N", node1 = 204, node2 = 202, Vdcn = -193.0, R = 5, L = 0.5
+RLs, idx = 5, name = "RLs 70_59 N", node1 = 201, node2 = 202, Vdcn = -193.0, R = 2, L = 0.5
+RLs, idx = 6, name = "RLs 160002_70 N", node1 = 203, node2 = 201, Vdcn = -193.0, R = 2, L = 0.5
+RLs, idx = 7, name = "RLs 160002_30247 N", node1 = 203, node2 = 204, Vdcn = -193.0, R = 2, L = 0.5
+RLs, idx = 8, name = "RLs 30247_59 N", node1 = 204, node2 = 202, Vdcn = -193.0, R = 2, L = 0.5
 
 C, idx = 1, name = "C 70 P", node1 = 1, node2 = 0, Vdcn = 193.0, C = 0.02
 C, idx = 2, name = "C 59 P", node1 = 2, node2 = 0, Vdcn = 193.0, C = 0.005
