@@ -170,8 +170,8 @@ class WTG3(ModelBase):
             self.irq_off[i] = -k *max(min(2*omega - 1, 1), 0) - irq
 
             # electrical torque in pu
-            # te = xmu * (irq * isd - ird * isq)
-            te = -xmu * Vc * irq / x1
+            te = xmu * (irq * isd - ird * isq)
+            # te = -xmu * Vc * irq / x1
 
             if te < 0:
                 self.message(
@@ -284,7 +284,9 @@ class WTG3(ModelBase):
         omega = not0(dae.x[self.omega_m])
         dae.f[self.theta_p] = mul(div(1, self.Tp), -dae.x[self.theta_p] + mul(self.Kp, self.phi, -1 + dae.x[self.omega_m]))
         dae.anti_windup(self.theta_p, 0, pi)
-        dae.f[self.omega_m] = mul(0.5, div(1, self.H), mul(dae.y[self.pw], div(1, omega)) + mul(dae.x[self.irq], dae.y[self.v], self.xmu, div(1, self.x0)))
+        # dae.f[self.omega_m] = mul(0.5, div(1, self.H), mul(dae.y[self.pw], div(1, omega)) + mul(dae.x[self.irq], dae.y[self.v], self.xmu, div(1, self.x0)))
+        dae.f[self.omega_m] = mul(0.5, div(1, self.H), mul(dae.y[self.pw], div(1, dae.x[self.omega_m])) - mul(self.xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq])))
+
         dae.f[self.ird] = mul(div(1, self.Ts), -dae.x[self.ird] + mul(self.KV, dae.y[self.v] - dae.y[self.vref]) - mul(dae.y[self.v], div(1, self.xmu)))
         dae.anti_windup(self.ird, self.ird_min, self.irq_max)
         k = mul(self.x0, toSb, div(1, dae.y[self.v]), div(1, self.xmu), div(1, omega))
@@ -324,13 +326,23 @@ class WTG3(ModelBase):
         dae.add_jac(Gx, - mul(self.u0, dae.y[self.vrq]), self.a, self.irq)
         dae.add_jac(Gx, - mul(self.u0, dae.y[self.vrd]), self.a, self.ird)
         dae.add_jac(Gx, mul(self.u0, dae.y[self.v], self.xmu, div(1, self.x0)), self.v, self.ird)
-        dae.add_jac(Fx, mul(0.5, dae.y[self.v], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.irq)
-        dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
+        # dae.add_jac(Fx, mul(0.5, dae.y[self.v], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.irq)
+        # dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
+
         dae.add_jac(Fx, mul(dae.y[self.pwa], self.x0, toSb, div(1, self.Te), (dae.x[self.omega_m])**-2, div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.omega_m)
-        dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, omega)), self.omega_m, self.pw)
-        dae.add_jac(Fy, mul(0.5, dae.x[self.irq], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.v)
+        # dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, omega)), self.omega_m, self.pw)
+        # dae.add_jac(Fy, mul(0.5, dae.x[self.irq], self.xmu, div(1, self.H), div(1, self.x0)), self.omega_m, self.v)
         dae.add_jac(Fy, mul(dae.y[self.pwa], self.x0, toSb, div(1, self.Te), div(1, omega), (dae.y[self.v])**-2, div(1, self.xmu)), self.irq, self.v)
         dae.add_jac(Fy, - mul(self.x0, toSb, div(1, self.Te), div(1, omega), div(1, dae.y[self.v]), div(1, self.xmu)), self.irq, self.pwa)
+
+        dae.add_jac(Fx, mul(0.5, dae.y[self.isq], self.xmu, div(1, self.H)), self.omega_m, self.ird)
+        dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
+        dae.add_jac(Fx, mul(-0.5, dae.y[self.isd], self.xmu, div(1, self.H)), self.omega_m, self.irq)
+        dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, dae.x[self.omega_m])), self.omega_m, self.pw)
+        dae.add_jac(Fy, mul(-0.5, dae.x[self.irq], self.xmu, div(1, self.H)), self.omega_m, self.isd)
+        dae.add_jac(Fy, mul(0.5, dae.x[self.ird], self.xmu, div(1, self.H)), self.omega_m, self.isq)
+
+
 
     def jac0(self, dae):
         toSb = div(self.Sn, self.system.Settings.mva)

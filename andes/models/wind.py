@@ -1,8 +1,8 @@
 """Wind power classes"""
 from math import floor
 
-from numpy.random import weibull
-from numpy import arange
+from numpy.random import weibull, uniform
+from numpy import arange, log
 
 from cvxopt import matrix, mul, spmatrix, div, sin, cos
 from .base import ModelBase
@@ -18,7 +18,7 @@ class WindBase(ModelBase):
         self.remove_param('Sn')
         self.remove_param('Vn')
         self._data.update({'T': 1,
-                           'Vwn': 15,
+                           'Vwn': 13,
                            'dt': 0.1,
                            'rho': 1.225,
                            })
@@ -115,15 +115,13 @@ class Weibull(WindBase):
                 self.c[i] = 5.0
             if self.s[i] <= 0.0:
                 self.s[i] = 2.0
-            sample = self.c[i] * weibull(self.s[i], npoint)
+            sample = (-log(uniform(0, 1, (npoint, 1)))/self.c[i]) ** (1/self.s[i])
+
+            avg = sum(sample) / npoint
             sample[0] = dae.x[self.vw[i]]
-            sample_avg = sum(sample[1:]) / (npoint-1)
-            k = sample[0] / sample_avg
+            sample[1:] = abs(sample[1:] - avg + 1) * sample[0]
 
-            sample, sample_avg = matrix(sample), matrix(sample_avg)
-
-            sample[1:] *= k
-            self.speed[i] = sample
+            self.speed[i] = matrix(sample)
 
 
 class ConstWind(WindBase):
