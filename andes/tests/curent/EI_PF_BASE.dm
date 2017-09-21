@@ -9677,9 +9677,9 @@ PV, Sn = 100.0, Vn = 115.0, bus = 101051, busr = 0, idx = "PV_EI_22", name = "PV
 PV, Sn = 100.0, Vn = 115.0, bus = 101053, busr = 0, idx = "PV_EI_23", name = "PV EI 22", pg = 8.7893,
     pmax = 99.99, pmin = -99.99, qg = 2.20504, qmax = 9.99, qmin = -9.99, ra = 0.0, u = 1,
     v0 = 1.03, vmax = 1.4, vmin = 0.6, xs = 0.07
-#PV, Sn = 100.0, Vn = 230.0, bus = 101054, busr = 0, idx = "PV_EI_24", name = "PV EI 23", pg = 11.3815,
-#    pmax = 99.99, pmin = -99.99, qg = 0.07777, qmax = 9.99, qmin = -9.99, ra = 0.0, u = 1,
-#    v0 = 1.0408, vmax = 1.4, vmin = 0.6, xs = 0.0566
+PV, Sn = 100.0, Vn = 230.0, bus = 101054, busr = 0, idx = "PV_EI_24", name = "PV EI 23", pg = 11.3815,
+    pmax = 99.99, pmin = -99.99, qg = 0.07777, qmax = 9.99, qmin = -9.99, ra = 0.0, u = 1,
+    v0 = 1.0408, vmax = 1.4, vmin = 0.6, xs = 0.0566
 PV, Sn = 100.0, Vn = 230.0, bus = 101054, busr = 0, idx = "PV_EI_25", name = "PV EI 24", pg = 11.3815,
     pmax = 99.99, pmin = -99.99, qg = 0.07777, qmax = 9.99, qmin = -9.99, ra = 0.0, u = 1,
     v0 = 1.0408, vmax = 1.4, vmin = 0.6, xs = 0.0566
