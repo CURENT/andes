@@ -1,3 +1,5 @@
+SHOW_PF_CALL = False
+SHOW_INT_CALL = False
 
 all_calls = ['gcall',
              'gycall',
@@ -57,6 +59,7 @@ class Call(object):
         self._compile_int()
         self._compile_int_f()
         self._compile_int_g()
+        self._compile_bus_injection()
 
     def build_vec(self):
         """build call validity vector for each device"""
@@ -103,10 +106,12 @@ class Call(object):
         for pflow, gcall, call in zip(self.pflow, self.gcall, self.gcalls):
             if pflow and gcall:
                 string += call
+        string += 'system.DAE.reset_small_g()\n'
         string += '\n'
         for pflow, fcall, call in zip(self.pflow, self.fcall, self.fcalls):
             if pflow and fcall:
                 string += call
+        string += 'system.DAE.reset_small_f()\n'
 
         # handle islanded buses in algebraic equations
         string += self.gisland
@@ -120,16 +125,20 @@ class Call(object):
                 string += '    ' + call
 
         # evaluate Jacobians Gy and Fx
-        string += 'system.DAE.setup_Gy()\n'
+        string += 'system.DAE.setup_FxGy()\n'
         for pflow, gycall, call in zip(self.pflow, self.gycall, self.gycalls):
             if pflow and gycall:
+                string += call
+        for pflow, fxcall, call in zip(self.pflow, self.fxcall, self.fxcalls):
+            if pflow and fxcall:
                 string += call
 
         # handle islanded buses in the Jacobian
         string += self.gyisland
 
         string += '"""'
-        # print(string)
+        if SHOW_PF_CALL:
+            self.system.Log.debug(string)
         self.newton = compile(eval(string), '', 'exec')
 
     def _compile_fdpf(self):
@@ -140,6 +149,7 @@ class Call(object):
         for pflow, gcall, call in zip(self.pflow, self.gcall, self.gcalls):
             if pflow and gcall:
                 string += call
+        string += 'system.DAE.reset_small_g()\n'
         string += '\n'
         string += '"""'
         self.fdpf = compile(eval(string), '', 'exec')
@@ -154,6 +164,7 @@ class Call(object):
             if gcall and pflow and shunt and not stagen:
                 string += call
         string += '\n'
+        string += 'system.DAE.reset_small_g()\n'
         string += '"""'
         self.pfload = compile(eval(string), '', 'exec')
 
@@ -166,8 +177,21 @@ class Call(object):
             if gcall and pflow and (shunt or series) and not stagen:
                 string += call
         string += '\n'
+        string += 'system.DAE.reset_small_g()\n'
         string += '"""'
         self.pfgen = compile(eval(string), '', 'exec')
+
+    def _compile_bus_injection(self):
+        """Impose injections on buses"""
+        string = '"""\n'
+        for device, series in zip(self.devices, self.series):
+            if series:
+                string += 'system.' + device + '.gcall(system.DAE)\n'
+        string += '\n'
+        string += 'system.DAE.reset_small_g()\n'
+        string += self.gisland
+        string += '"""'
+        self.bus_injection = compile(eval(string), '', 'exec')
 
     def _compile_seriesflow(self):
         """Post power flow computation of series device flow"""
@@ -189,6 +213,7 @@ class Call(object):
             if gcall:
                 string += call
         string += '\n'
+        string += 'system.DAE.reset_small_g()\n'
 
         # handle islands
         string += self.gisland
@@ -197,6 +222,7 @@ class Call(object):
         for fcall, call in zip(self.fcall, self.fcalls):
             if fcall:
                 string += call
+        string += 'system.DAE.reset_small_f()\n'
         string += '\n'
 
         fg_string = string + '"""'
@@ -221,6 +247,9 @@ class Call(object):
         string += self.gyisland
 
         string += '"""'
+        if SHOW_INT_CALL:
+            self.system.Log.debug(string)
+
         self.int = compile(eval(string), '', 'exec')
 
     def _compile_int_f(self):
@@ -232,7 +261,7 @@ class Call(object):
         for fcall, call in zip(self.fcall, self.fcalls):
             if fcall:
                 string += call
-
+        string += 'system.DAE.reset_small_f()\n'
         string += '"""'
         self.int_f = compile(eval(string), '', 'exec')
 
@@ -246,6 +275,7 @@ class Call(object):
             if gcall:
                 string += call
         string += '\n'
+        string += 'system.DAE.reset_small_g()\n'
 
         # handle islands
         string += self.gisland
@@ -267,3 +297,4 @@ class Call(object):
 
         string += '"""'
         self.int_g = compile(eval(string), '', 'exec')
+

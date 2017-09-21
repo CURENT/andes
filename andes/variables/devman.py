@@ -1,5 +1,6 @@
 from ..models import order, jits, non_jits
-
+from numpy import ndarray
+from cvxopt import matrix
 
 class DevMan(object):
     """Device Manager class. Maintains the loaded model list, groups and categories"""
@@ -64,3 +65,30 @@ class DevMan(object):
             if m > n:
                 self.devices[n] = front
                 self.devices[m] = back
+
+    def get_param(self, group, param, fkey):
+        ret = []
+        ret_list = False
+        if type(fkey) == matrix:
+            fkey = list(fkey)
+        elif type(fkey) == ndarray:
+            fkey = fkey.tolist()
+
+        for key, item in self.system.DevMan.group.items():
+            if key != group:
+                continue
+            if type(fkey) != list:
+                fkey = [fkey]
+            else:
+                ret_list = True
+
+            for k in fkey:
+                for name, dev in item.items():
+                    if name == k:
+                        int_id = self.system.__dict__[dev].int[name]
+                        ret.append(self.system.__dict__[dev].__dict__[param][int_id])
+                        continue
+            if not ret_list:
+                ret = ret[0]
+
+        return ret

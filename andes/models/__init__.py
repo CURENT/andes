@@ -5,8 +5,14 @@ __all__ = ['base',
            'bus',
            ]
 
-order = ['bus', 'Node', 'Ground', 'zone', 'pq', 'pv', 'line', 'shunt', 'measurement', 'synchronous', 'governor',
-         'avr', 'pss', 'windturbine', 'wind', 'RLine', 'vsc']
+order = ['bus', 'Node', 'Ground', 'zone',
+         'pq', 'pv', 'line', 'shunt',
+         'measurement',
+         'synchronous', 'governor', 'avr', 'pss',
+         'windturbine', 'wind',
+         'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs'
+         'vsc',
+         ]
 
 non_jits = {'bus': {'Bus': 'Bus'},
             'pq': {'PQ': 'PQ'},
@@ -19,8 +25,15 @@ non_jits = {'bus': {'Bus': 'Bus'},
                      'Region': 'Region',
                      },
             'dcbase': {'Node': 'Node',
-                       'RLine': 'RLine',
                        'Ground': 'Ground',
+                       'R': 'R',
+                       'L': 'L',
+                       'C': 'C',
+                       'RLs': 'RLs',
+                       'RCs': 'RCs',
+                       'RCp': 'RCp',
+                       'RLCp': 'RLCp',
+                       'RLCs': 'RLCs'
                        },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',
@@ -49,5 +62,6 @@ jits = {'vsc': {'VSC': 'VSC',
         'windturbine': {'WTG3': 'WTG3',
                         },
         'wind': {'Weibull': 'Weibull',
+                 'ConstWind': 'ConstWind'
                  },
         }

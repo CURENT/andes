@@ -15,6 +15,7 @@ class Bus(ModelBase):
                            'vmax': 1.1,
                            'vmin': 0.9,
                            'area': 0,
+                           'zone': 0,
                            'region': 0,
                            'owner': 0,
                            'xcoord': None,
@@ -24,9 +25,6 @@ class Bus(ModelBase):
                             'angle': 'rad',
                             'vmax': 'pu',
                             'vmin': 'pu',
-                            'area': 'na',
-                            'region': 'na',
-                            'owner': 'na',
                             'xcoord': 'deg',
                             'ycoord': 'deg',
                             })
@@ -41,6 +39,7 @@ class Bus(ModelBase):
                             'vmax': 'maximum voltage in p.u.',
                             'vmin': 'minimum voltage in p.u.',
                             'area': 'area code',
+                            'zone': 'zone code',
                             'region': 'region code',
                             'owner': 'owner code',
                             'xcoord': 'x coordinate',
@@ -74,6 +73,21 @@ class Bus(ModelBase):
         self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='vm', element_name=self.name)
         self.system.VarName.append(listname='fnamey', xy_idx=self.a, var_name='\\theta', element_name=self.name)
         self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V', element_name=self.name)
+
+    def _varname_inj(self):
+        """Customize varname for bus injections"""
+        # Bus Pi
+        if not self.n:
+            return
+        m = self.system.DAE.m
+        xy_idx = range(m, self.n + m)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='P', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='P', element_name=self.name)
+
+        # Bus Qi
+        xy_idx = range(m + self.n, m + 2*self.n)
+        self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Q', element_name=self.name)
+        self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='Q', element_name=self.name)
 
     def init0(self, dae):
         """Set bus Va and Vm initial values"""

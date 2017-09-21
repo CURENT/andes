@@ -4,8 +4,8 @@ from ..utils.cached import cached
 
 class TDS(SettingsBase):
     def __init__(self):
-        self.fixt = False
-        self.tstep = 1/60
+        self.fixt = True
+        self.tstep = 1/30
         self.method = 'trapezoidal'
         self.method_alt = ['euler', 'trapezoidal','fwdeuler']
         self.t0 = 0.0
@@ -17,9 +17,9 @@ class TDS(SettingsBase):
         self.tol = 1e-06
         self.disturbance = False
         self.error = 1
-        self.qrt = 0
+        self.qrt = False
         self.kqrt = 1
-        self.qrtstart = 0
+        self.compute_flows = False
         self.method_desc = {'euler': 'Implicit Euler',
                             'trapezoidal': 'Implicit Trapezoidal',
                             'fwdeuler': 'Explicit Euler'}
@@ -35,5 +35,6 @@ class TDS(SettingsBase):
                         'tol': 'iteration error tolerance',
                         'qrt': 'quasi-real-time simulation speed',
                         'kqrt': 'quasi-rt runs at kqrt seconds per simulated second',
+                        'compute_flows': 'post-compute bus injections and line flows at each step'
                         }
         return descriptions

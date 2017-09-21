@@ -41,6 +41,7 @@ def cli_parse():
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
+    parser.add_argument('--ymax', type=float, help='y axis maximum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
     parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
@@ -49,6 +50,7 @@ def cli_parse():
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
     parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
+    parser.add_argument('--yop', type=str, help='manipulate y data')
     args = parser.parse_args()
     return args
 
@@ -80,7 +82,8 @@ def parse_y(y, nvars):
             elif ylist[1] > nvars:
                 ylist[1] = nvars
 
-            ylist = eval('range({}, {}, {})'.format(*ylist))
+            # ylist = eval('range({}, {}, {})'.format(*ylist))
+            ylist = range(*ylist)
         else:
             print('* Error: Wrong format for y range')
     elif len(y) > 1:
@@ -92,8 +95,8 @@ def get_nvars(dat):
     try:
         with open(dat, 'r') as f:
             line1 = f.readline()
-        line1 = line1.strip('\n').split()
-        return int(line1[0])
+        line1 = line1.strip().split()
+        return len(line1)
     except IOError:
         print('* Error while opening the dat file')
 
@@ -176,6 +179,7 @@ def read_label(lst, x, y):
 def do_plot(x, y, xl, yl, args, no_latex=False):
     xmin = args.xmin
     xmax = args.xmax
+    ymax = args.ymax
     xlabel = args.xlabel
     ylabel = args.ylabel
 
@@ -228,6 +232,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
 
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
+    ax.set_ylim(ymax=ymax)
 
     if args.grid:
         ax.grid(b=True, linestyle='--')
@@ -261,6 +266,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
+
 def isfloat(value):
     try:
         float(value)
@@ -280,6 +286,36 @@ def isint(value):
 def main():
     args = cli_parse()
     name, ext = os.path.splitext(args.datfile[0])
+    if 'out' in name:
+        tds_plot(name, args)
+    elif 'eig' in name:
+        eig_plot(name, args)
+
+
+def eig_plot(name, args):
+    fullpath = os.path.join(name, '.txt')
+    raw_data = []
+    started = 0
+    fid = open(fullpath)
+    for line in fid.readline():
+        if '#1' in line:
+            started = 1
+        elif 'PARTICIPATION FACTORS' in line:
+            started = -1
+
+        if started == 1:
+            raw_data.append(line)
+        elif started == -1:
+            break
+    fid.close()
+
+    for line in raw_data:
+        data = line.split()
+
+
+
+
+def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
@@ -295,7 +331,9 @@ def main():
     if args.checkinit:
         check_init(yval, yl[0])
         return
-
+    # if args.yop:
+    #     op = args.yop[0]
+    #     num =
     do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
 
 

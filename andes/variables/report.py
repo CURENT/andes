@@ -162,7 +162,7 @@ class Report(object):
             text.append(['BUS DATA:\n'])
             # todo: consider system.SPF.units
             header.append(['Vm(pu)', 'Va({:s})'.format(Va_unit), 'Pg (pu)', 'Qg (pu)', 'Pl (pu)', 'Ql (pu)'])
-            name = [str(i) + '-' + j[:11] for i, j in zip(idx, name)]
+            name = [str(i) + '-' + j[:8] for i, j in zip(idx, name)]
             rowname.append(name)
             data.append([Vm, Va, Pg, Qg, Pl, Ql])
 
@@ -185,7 +185,7 @@ class Report(object):
             # Additional Algebraic data
             text.append(['OTHER ALGEBRAIC VARIABLES:\n'])
             header.append([''])
-            rowname.append(system.VarName.unamey[2 * system.Bus.n:])
+            rowname.append(system.VarName.unamey[2 * system.Bus.n:system.DAE.m])
             data.append([round(i, 5) for i in system.DAE.y[2 * system.Bus.n:]])
 
             # Additional State variable data

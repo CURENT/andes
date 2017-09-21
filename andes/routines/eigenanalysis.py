@@ -1,26 +1,99 @@
 import numpy.linalg
 from cvxopt.klu import linsolve
 from cvxopt.lapack import gesv
-from cvxopt import matrix, spmatrix, mul, div
+from cvxopt import matrix, spmatrix, mul, div, sparse
 from math import ceil
 from ..formats.txt import dump_data
 from ..consts import *
+from matplotlib.pyplot import *
+import scipy
+from scipy.sparse import linalg
+
+try:
+    from petsc4py import PETSc
+    PETSC = True
+except:
+    PETSC = False
+try:
+    from slepc4py import SLEPc
+    import slepc4py
+    SLEPC = True
+except:
+    SLEPC = False
+
 
 def state_matrix(system):
     """Return state matrix"""
     Gyx = matrix(system.DAE.Gx)
     linsolve(system.DAE.Gy, Gyx)
-    return matrix(system.DAE.Fx - system.DAE.Fy*Gyx)
+    return system.DAE.Fx - system.DAE.Fy*Gyx
 
 
 def eigs(As):
     """Solve eigenvalues from state matrix"""
-    return numpy.linalg.eigvals(As)
+
+    # if (not SLEPC) or (not SLEPC):
+    return numpy.linalg.eig(As)
+    # try:
+
+    As = sparse(As)
+    As = scipy.sparse.csc_matrix((numpy.array(As.CCS[2]).flatten(),
+                                      numpy.array(As.CCS[1]).flatten(),
+                                      numpy.array(As.CCS[0]).flatten()
+                                      ), shape=As.size)
+    # return linalg.eigs(As, k=1326)
+    As_csr = As.tocsr()
+
+    opts = PETSc.Options()
+    A = PETSc.Mat().createAIJ(size=As_csr.shape,
+                              csr=(As_csr.indptr, As_csr.indices, As_csr.data))
+    A.setFromOptions()
+    A.setUp()
+
+    xr, tmp = A.getVecs()
+    xi, tmp = A.getVecs()
+
+    # Setup the eigensolver
+    E = SLEPc.EPS().create()
+    E.setOperators(A, None)
+    E.setDimensions(500, PETSc.DECIDE)
+    E.setProblemType( SLEPc.EPS.ProblemType.GNHEP )
+    E.setFromOptions()
+
+    # Solve the eigensystem
+    E.solve()
+
+    Print = PETSc.Sys.Print
+    Print("")
+    its = E.getIterationNumber()
+    Print("Number of iterations of the method: %i" % its)
+    sol_type = E.getType()
+    Print("Solution method: %s" % sol_type)
+    nev, ncv, mpd = E.getDimensions()
+    Print("Number of requested eigenvalues: %i" % nev)
+    tol, maxit = E.getTolerances()
+    Print("Stopping condition: tol=%.4g, maxit=%d" % (tol, maxit))
+    nconv = E.getConverged()
+    Print("Number of converged eigenpairs: %d" % nconv)
+    if nconv > 0:
+        Print("")
+        Print("        k          ||Ax-kx||/||kx|| ")
+        Print("----------------- ------------------")
+        for i in range(nconv):
+            k = E.getEigenpair(i, xr, xi)
+            error = E.computeError(i)
+            if k.imag != 0.0:
+              Print(" %9f%+9f j  %12g" % (k.real, k.imag, error))
+            else:
+              Print(" %12f       %12g" % (k.real, error))
+        Print("")
+    # except:
+    #     return numpy.linalg.eigvals(As)
 
 
 def part_factor(As):
     """Compute participation factor of states in eigenvalues"""
-    mu, N = numpy.linalg.eig(As)
+    mu, N = eigs(As)
     N = matrix(N)
     n = len(mu)
     idx = range(n)
@@ -84,9 +157,9 @@ def dump_results(system, mu, partfact):
 
     # obtain most associated variables
     var_assoc = []
-    for eig_idx in range(neig):
-        temp_col = partfact[:, eig_idx]
-        name_idx = list(temp_col).index(max(temp_col))
+    for prow in range(neig):
+        temp_row = partfact[prow, :]
+        name_idx = list(temp_row).index(max(temp_row))
         var_assoc.append(system.VarName.unamex[name_idx])
 
     pf = []
@@ -111,25 +184,61 @@ def dump_results(system, mu, partfact):
     rowname.append(numeral)
     data.append([var_assoc, list(mu_real), list(mu_imag), ufreq, freq, damping])
 
-    cpb = 7 # columns per block
+    cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
-    for idx in range(nblock):
-        start = cpb*idx
-        end = cpb*(idx+1)
-        text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(idx+1, nblock))
-        header.append(numeral[start:end])
-        rowname.append(system.VarName.unamex)
-        data.append(pf[start:end])
+    if nblock <= 10:
+        for idx in range(nblock):
+            start = cpb*idx
+            end = cpb*(idx+1)
+            text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(idx+1, nblock))
+            header.append(numeral[start:end])
+            rowname.append(system.VarName.unamex)
+            data.append(pf[start:end])
 
     dump_data(text, header, rowname, data, system.Files.eig)
     system.Log.info('Report saved.')
 
 
 def run(system):
+    if not system.SPF.solved:
+        system.Log.warning('Power flow not solved. Eigenvalue analysis will not continue.')
+        return True
+
     system.DAE.factorize = True
     exec(system.Call.int)
 
     As = state_matrix(system)
-    mu, pf = part_factor(As)
-    dump_results(system, mu, pf)
+    if not As:
+        system.Log.info('No dynamic model loaded. Eivgenvalue analysis will not continue.')
+        return False
+    else:
+        system.Log.info('System dynamic order: {:g}'.format(system.DAE.n))
+        mu, pf = part_factor(As)
+        dump_results(system, mu, pf)
+        mu_real = mu.real()
+        mu_imag = mu.imag()
+        p_mu_real, p_mu_imag, z_mu_real, z_mu_imag, n_mu_real, n_mu_imag = [], [], [], [], [], []
+        for re, im in zip(mu_real, mu_imag):
+            if re == 0:
+                z_mu_real.append(re)
+                z_mu_imag.append(im)
+            elif re > 0:
+                p_mu_real.append(re)
+                p_mu_imag.append(im)
+            elif re < 0:
+                n_mu_real.append(re)
+                n_mu_imag.append(im)
+
+        if len(p_mu_real) > 0:
+            system.Log.warning('System is not stable due to {} positive eigenvalues.'.format(len(p_mu_real)))
+        else:
+            system.Log.info('System is small-signal stable in the initial neighbourhood.')
+
+        if system.SSSA.plot:
+            fig, ax = subplots()
+            ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
+            ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
+            ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
+            show()
+        return True

@@ -26,8 +26,8 @@ def read(file, system):
               'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline', 'zone',
               'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q']
     nol = [1, 1, 1, 1, 1, 4, 1,
-           0, 0, 0, 0, 0, 0,
-           0, 1, 0, 0, 0, 0]
+           0, 0, 0, 0, 0, 1,
+           0, 1, 0, 1, 0, 0]
     rawd = re.compile('rawd\d\d')
 
     retval = True
@@ -75,7 +75,7 @@ def read(file, system):
         data = [to_number(item) for item in data]
         mdata.append(data)
         mline += 1
-        if mline == nol[b]:
+        if mline >= nol[b]:
             if nol[b] == 1:
                 mdata = mdata[0]
             raw[blocks[b]].append(mdata)
@@ -101,7 +101,7 @@ def read(file, system):
                  'voltage': data[7],
                  'angle': a0,
                  'area': data[4],
-                 'region': data[5],
+                 'zone': data[5],
                  'owner': data[6],
                  }
         system.Bus.add(**param)
@@ -222,6 +222,38 @@ def read(file, system):
                  'Vn2': system.Bus.get_by_idx('Vn', data[0][1]),
                  }
         system.Line.add(**param)
+
+    for data in raw['swshunt']:
+        """I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
+                                               BINIT, N1, B1, N2, B2, ... N8, B8
+        """
+        bus = data[0]
+        vn = system.Bus.get_by_idx('Vn', bus)
+        param = {'bus': bus,
+                 'Vn': vn,
+                 'Sn': mva,
+                 'u': data[3],
+                 'b': data[9]/mva,
+                 }
+        system.Shunt.add(**param)
+
+    for data in raw['area']:
+        """ID, ISW, PDES, PTOL, ARNAME"""
+        param = {'idx': data[0],
+                 'isw': data[1],
+                 'pdes': data[2],
+                 'ptol': data[3],
+                 'name': data[4],
+                 }
+        system.Area.add(**param)
+
+    for data in raw['zone']:
+        """ID, NAME"""
+        param = {'idx': data[0],
+                 'name': data[1],
+                 }
+        system.Zone.add(**param)
+
     return retval
 
 
@@ -328,8 +360,8 @@ def add_dyn(system, model, data):
                  'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
                  'Td10': data[0],
                  'Td20': data[1],
-                 'Tq10': data[3],
-                 'Tq20': data[4],
+                 'Tq10': data[2],
+                 'Tq20': data[3],
                  'M': 2 * data[4],
                  'D': data[5],
                  'xd': data[6],
@@ -369,11 +401,11 @@ def add_dyn(system, model, data):
                  'vrmin': data[6],
                  'Ka': data[1],
                  'Ta': data[2],
-                 'Tf': data[5],
+                 'Tf': data[10],
                  'Tr': data[0],
                  'Kf': data[9],
-                 'Ke': data[8],
-                 'Te': 1,
+                 'Ke': 1,
+                 'Te': data[8],
                  }
         system.AVR1.add(**param)
 

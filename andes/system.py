@@ -24,12 +24,19 @@ from .utils import Logger
 from .models import non_jits, jits, JIT
 from .consts import *
 
+try:
+    from .utils.streaming import Streaming
+    STREAMING = True
+except:
+    STREAMING = False
+
 
 class PowerSystem(object):
     """everything in a power system class including models, settings,
      file and call managers"""
     def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
-                 addfile=None, settings=None, input_format=None, output_format=None, gis=None, **kwargs):
+                 addfile=None, settings=None, input_format=None, output_format=None, gis=None, dime=None, tf=None,
+                 **kwargs):
         """
         Initialize an empty power system object with defaults
         Args:
@@ -68,6 +75,17 @@ class PowerSystem(object):
         self.VarName = VarName(self)
         self.VarOut = VarOut(self)
         self.Report = Report(self)
+
+        if dime:
+            self.Settings.dime_enable = True
+            self.Settings.dime_server = dime
+        if tf:
+            self.TDS.tf = tf
+
+        if STREAMING:
+            self.Streaming = Streaming(self)
+        else:
+            self.Settings.dime_enable = False
 
         self.inst_models()
 
@@ -136,6 +154,10 @@ class PowerSystem(object):
         # Assign indices for post-powerflow device variables
         self.VarName.resize()
         self.xy_addr1()
+
+        # Assign variable names for bus injections and line flows if enabled
+        self.VarName.resize_for_flows()
+        self.VarName.bus_line_names()
 
         # Reshape DAE to retain power flow solutions
         self.DAE.init1()

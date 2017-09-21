@@ -51,7 +51,8 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-n', '--no_output', help='Force not to write any output, including log,'
                                                   'outputs and simulation dumps', action='store_true')
     parser.add_argument('--profile', action='store_true', help='Enable Python profiler.')
-
+    parser.add_argument('--dime', help='Speficy DiME streaming server address and port.')
+    parser.add_argument('--tf', help='End time of time-domain simulation.', type=float)
     parser.add_argument('-l', '--log', help='Specify the name of log file.')
     parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
     parser.add_argument('-v', '--verbose', help='Program logging level, an integer from 1 to 5.'
@@ -441,7 +442,7 @@ def run(case, **kwargs):
         system.SPF.solver = 'NR'
 
     system.Log.info('Power Flow Analysis:')
-    system.Log.info('Sparse Library: ' + system.Settings.sparselib.upper())
+    system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
     system.Log.info('Solution Method: ' + system.SPF.solver.upper())
     system.Log.info('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
@@ -460,7 +461,7 @@ def run(case, **kwargs):
         if not system.Files.no_output:
             system.Report.write(content='powerflow')
             t5, s = elapsed(t4)
-            system.Log.info('Static report written in {:s}.'.format(s))
+            system.Log.info('Static report written to <{:s}> in {:s}.'.format(system.Files.output, s))
 
     # run more studies
     t0, s = elapsed()
@@ -474,16 +475,26 @@ def run(case, **kwargs):
     elif routine.lower() in ['small', 'ss', 'sssa', 's']:
         routine = 'sssa'
     if routine is 'td':
+        if system.Settings.dime_enable:
+            system.TDS.compute_flows = True
+            system.Streaming.send_init(recepient='all')
+            system.Log.info('Waiting for modules to send init info...')
+            sleep(0.5)
+            system.Streaming.sync_and_handle()
+
         t1, s = elapsed(t0)
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
         ret = timedomain.run(system)
+        if system.Settings.dime_enable:
+            system.Streaming.dimec.send_var('geovis', 'DONE', 1)
+            system.Streaming.dimec.exit()
         t2, s = elapsed(t1)
         if ret == True:
             system.Log.info('Time domain simulation finished in {:s}.'.format(s))
         else:
-            system.Log.info('Time domain simulation blown up in {:s}.'.format(s))
+            system.Log.info('Time domain simulation failed in {:s}.'.format(s))
         if not system.Files.no_output:
             system.VarOut.dump()
             t3, s = elapsed(t2)

@@ -1,7 +1,10 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from ..utils.math import *
-
-from blist import blist
+try:
+    from blist import blist
+    BLIST = True
+except:
+    BLIST = False
 
 
 class DAE(object):
@@ -246,18 +249,22 @@ class DAE(object):
         self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
-    def show(self, eq):
+    def show(self, eq, value=None):
         """Show equation or variable array along with the names"""
-        str = ''
         if eq in ['f', 'x']:
             key = 'unamex'
         elif eq in ['g', 'y']:
             key = 'unamey'
 
-        value = list(self.__dict__[eq])
-        for name, val in zip(self.system.VarName.__dict__[key], value):
-            str += '{:12s} [{:>12.4f}]\n'.format(name, val)
-        return str
+        if value:
+            value = list(value)
+        else:
+            value = list(self.__dict__[eq])
+
+        out = ''
+        for name, val, idx in zip(self.system.VarName.__dict__[key], value, range(len(value))):
+            out += '{:12s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
+        return out
 
     def find_val(self, eq, val):
         """Return the name of the equation having the given value"""
@@ -274,3 +281,15 @@ class DAE(object):
             idx += 1
         return
 
+    def reset_small(self, eq):
+        """Reset numbers smaller than 1e-12 in f and g equations"""
+        assert eq in ('f', 'g')
+        for idx, var in enumerate(self.__dict__[eq]):
+            if abs(var) <= 1e-12:
+                self.__dict__[eq][idx] = 0
+
+    def reset_small_f(self):
+        pass
+
+    def reset_small_g(self):
+        pass
