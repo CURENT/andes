@@ -8,63 +8,48 @@ Andes runs on Python 3.4+ with CVXOPT, Numpy and Matplotlib. Windows, Linux and 
 
 Ubuntu
 --------
-Install ```git```, ```python3-dev```, ```build-essential``` and necessary libraries:
+The easiest way to install `Andes` is to use the automatic installation script in `scripts/install.sh`.
 
-~~~~
-# apt update
-# apt install build-essential git python3-dev
-# apt install libopenblas-dev suitesparse-dev
-~~~~
+Download or use `git` to obtain the `Andes` source. Change directory to the `scripts` folder in `Andes` and run
 
-Clone the andes repository and an enhanced CVXOPT repository (by sanurielf):
-~~~~
-git clone https://github.com/cuihantao/andes.git
-git clone https://github.com/sanurielf/cvxopt.git
-~~~~
+```
+sh install.sh
+```
 
-Install CVXOPT and Andes as follows:
-~~~~
-set CVXOPT_BLAS_LIB=openblas
-set CVXOPT_LAPACK_LIB=openblas
+You will be prompted to type in your sudo password. Please refer to `install.sh` if you want to customize the installation.
 
-cd cvxopt
-python3 setup.py build
-python3 setup.py install --user
-cd ..
-
-cd andes
-python3 setup.py develop --user
-~~~~
-
-If you encounter any problem while installing CVXOPT, please read [CVXOPT installation instructions](http://cvxopt.org/install/index.html).
  
 Windows
 --------
+### Toolchain Setup
 
-Run ```powershell``` as Administrator, type in the following command:
-~~~~
+1. Search `powershell` in the `Start Menu`, right click and select `Run as Administrator`. Run the following command and press Enter:
+
+```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
-~~~~
+```
 Type in ```Y``` when asked.
 
-Run the following commands in the same PowerShell window:
-~~~~
+2. Run the following commands in the same window:
+```
 iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
 choco install -y wget git 7zip.commandline
-~~~~
+```
+3. If no error occurs, you can close the `PowerShell` window.
 
-Download and install Miniconda with Python 3.6 for your architecture from [Miniconda download page](https://conda.io/miniconda.html).
-After installing, open the ```Anaconda Prompt```, clone the `Andes` repository with
+### Python Setup
+1. Download and install Miniconda with Python 3.6 for your architecture (preferably x64) from [Miniconda download page](https://conda.io/miniconda.html).
+
+2. After installing, open the ```Anaconda Prompt```, clone the `Andes` repository with
 
 ~~~~
 git clone https://github.com/cuihantao/andes
 ~~~~
 
-Run the automatic installation script with the following and wait for the demo to show up.
-
+3. Run the automatic installation script with the following
 ~~~~
 cd scripts
 install.bat
 ~~~~
 
-Congratulations!
+and wait for the demo plot to show up.
