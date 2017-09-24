@@ -38,9 +38,9 @@ choco install -y wget git 7zip.commandline
 3. If no error occurs, you can close the `PowerShell` window.
 
 ### Python Setup
-1. Download and install Miniconda with Python 3.6 for your architecture (preferably x64) from [Miniconda download page](https://conda.io/miniconda.html).
+1. From the [Miniconda download page](https://conda.io/miniconda.html), download and install Miniconda with Python 3.6 for your architecture (64-bit preferred).
 
-2. After installing, open the ```Anaconda Prompt```, clone the `Andes` repository with
+2. After installing, open the ```Anaconda Prompt``` from the Start Menu, clone the `Andes` repository with
 
 ~~~~
 git clone https://github.com/cuihantao/andes
@@ -48,7 +48,7 @@ git clone https://github.com/cuihantao/andes
 
 3. Run the automatic installation script with the following
 ~~~~
-cd scripts
+cd andes/scripts
 install.bat
 ~~~~
 
