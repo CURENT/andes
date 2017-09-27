@@ -264,25 +264,28 @@ class Streaming(object):
         self.Idxvgs['Exc'] = {'vf': array(self.system.AVR1.vfout + self.system.AVR2.vfout + self.system.AVR3.vfout),
                               'vm': array(self.system.AVR1.vm + self.system.AVR2.vm + self.system.AVR3.vm),
                               }
-        self.Idxvgs['Dfig'] = {'omega_m': array(self.system.WTG3.omega_m),
-                               'theta_p': array(self.system.WTG3.theta_p),
-                               'idr': array(self.system.WTG3.ird),
-                               'iqr': array(self.system.WTG3.irq),
-                               }
-        self.Idxvgs['Node'] = {'v': array(self.system.Node.v)}
+        if self.system.WTG3.n:
+            self.Idxvgs['Dfig'] = {'omega_m': array(self.system.WTG3.omega_m),
+                                   'theta_p': array(self.system.WTG3.theta_p),
+                                   'idr': array(self.system.WTG3.ird),
+                                   'iqr': array(self.system.WTG3.irq),
+                                   }
+        if self.system.Node.n:
+            self.Idxvgs['Node'] = {'v': array(self.system.Node.v)}
 
         dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
                   5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
         if 'DCLine' in self.SysParam:
             DCLine_types = set(self.SysParam['DCLine'][:, 2])
+            idx = []
+            for item in DCLine_types:
+                item = int(item)
+                idx.extend(self.system.__dict__[dev_id[item]].Idc)
+            self.Idxvgs['DCLine'] = {'Idc': array(idx)}
         else:
             DCLine_types = ()
-        idx = []
+            # self.Idxvgs['DCLine'] = {}
 
-        for item in DCLine_types:
-            item = int(item)
-            idx.extend(self.system.__dict__[dev_id[item]].Idc)
-        self.Idxvgs['DCLine'] = {'Idc': array(idx)}
 
     def _build_list(self, model, params, ret=None):
         if not ret:
@@ -330,17 +333,17 @@ class Streaming(object):
             self.build_init()
         if recepient == 'all':
             self.system.Log.debug('Broadcasting Varheader, Idxvgs, SysParam and SysName...')
-            sleep(0.2)
+            sleep(0.5)
             self.dimec.broadcast('Varheader', self.Varheader)
-            sleep(0.2)
+            sleep(0.5)
             self.dimec.broadcast('Idxvgs', self.Idxvgs)
-            sleep(0.2)
+            sleep(0.5)
             try:
                 self.dimec.broadcast('SysParam', self.SysParam)
                 self.dimec.broadcast('SysName', self.SysName)
             except:
                 self.system.Log.warning('SysParam or SysName broadcast error. Check bus coordinates.')
-            sleep(0.2)
+            sleep(0.5)
         else:
             if type(recepient) != list:
                 recepient = [recepient]
@@ -356,6 +359,9 @@ class Streaming(object):
             self.ModuleInfo[module_name].update(init_var)
         else:
             self.ModuleInfo[module_name] = init_var
+
+        if type(self.ModuleInfo[module_name]['vgsvaridx']) == int:
+            self.ModuleInfo[module_name]['vgsvaridx'] = array(self.ModuleInfo[module_name]['vgsvaridx'])
 
         vgsvaridx = self.ModuleInfo[module_name]['vgsvaridx'].tolist()
         if type(vgsvaridx[0]) == list:
