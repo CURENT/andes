@@ -73,16 +73,22 @@ class WindBase(ModelBase):
     def windspeed(self, t):
         """Return the wind speed list at time `t`"""
         ws = [0] * self.n
+
         for i in range(self.n):
-            if t in self.time[i]:
-                idx = self.time[i].index(t)
-                ws[i] = self.speed[i][idx]
+            q = int(t / self.dt[i])
+            q_prev = 0 if q == 0 else q-1
+
+            r = t % self.dt[i]
+            r = 0 if abs(r) < 1e-6 else r
+
+            if r == 0:
+                ws[i] = self.speed[i][q]
             else:
-                loca = floor(t/self.dt[i])
-                t1 = self.time[i][loca]
-                s1 = self.speed[i][loca]
-                s2 = self.speed[i][loca + 1]
-                ws[i] = s1 + (t - t1) * (s2 - s1)/self.dt[i]
+                t1 = self.time[i][q_prev]
+                s1 = self.speed[i][q_prev]
+                s2 = self.speed[i][q]
+                ws[i] = s1 + (t - t1) * (s2 - s1) / self.dt[i]
+
         return matrix(ws)
 
     def gcall(self, dae):
