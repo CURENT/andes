@@ -443,11 +443,12 @@ WTG3, idx = 230, bus = 152632, wind = 230, Sn = 3258, Vn = 13.8, fn = 60, rs = 0
       KV = 10, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3,
       pmin = 0.01, qmax = 0.436, qmin = -0.436, ngen = 3258, u = 1, gen = "PV_EI_68"
 ConstWind, idx = 230
-WTG3, idx = 231, bus = 155223, wind = 231, Sn = 9000, Vn = 18, fn = 60, rs = 0,
-      xs = 0.08, rr = 0, xr = 0.08, xmu = 0.2, H = 2, Kp = 150, Tp = 0.3,
-      KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3,
-      pmin = 0.01, qmax = 0.436, qmin = -0.436, ngen = 6000, u = 1, gen = "PV_EI_69"
-ConstWind, idx = 231
+# WEIRD RANDOM ERRORS
+#WTG3, idx = 231, bus = 155223, wind = 231, Sn = 9000, Vn = 18, fn = 60, rs = 0,
+#      xs = 0.08, rr = 0, xr = 0.08, xmu = 0.2, H = 2, Kp = 150, Tp = 0.3,
+#      KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3,
+#      pmin = 0.01, qmax = 0.436, qmin = -0.436, ngen = 6000, u = 1, gen = "PV_EI_69"
+#ConstWind, idx = 231
 WTG3, idx = 235, bus = 159657, wind = 235, Sn = 2000, Vn = 18, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 3, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3,

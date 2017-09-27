@@ -16,7 +16,7 @@ WTG3, idx = 0, bus = 3, wind = 1, Sn = 2062.4, Vn = 20, rs = 0,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 1, ngen = 1375
 
-Weibull, idx = 1, name = "Weibull 1"
+ConstWind, idx = 1, name = "Weibull 1"
 
 #Syn6a, D = 0.0, M = 5.22, S10 = 0, S12 = 0, Sn = 1488.0, Taa = 0.0, Td10 = 4.0,
 #       Td20 = 0.032, Tq10 = 0.52, Tq20 = 0.063, Vn = 20.0, bus = 5, coi = 0, fn = 60.0,
@@ -36,7 +36,7 @@ WTG3, idx = 1, bus = 5, wind = 2, Sn = 1488, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3.00,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 2, ngen = 992
-Weibull, idx = 2, name = "Weibull 2", Vwn = 18
+ConstWind, idx = 2, name = "Weibull 2", Vwn = 18
 
 #Syn6a, D = 0.0, M = 6.84, S10 = 0, S12 = 0, Sn = 2458.0, Taa = 0.0, Td10 = 8.4,
 #       Td20 = 0.035, Tq10 = 0.46, Tq20 = 0.07, Vn = 20.0, bus = 8, coi = 0, fn = 60.0,
@@ -57,7 +57,7 @@ WTG3, idx = 2, bus = 8, wind = 3, Sn = 2458, Vn = 20, rs = 0,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 3, ngen = 1639
 
-Weibull, idx = 3, name = "Weibull 3", Vwn = 20
+ConstWind, idx = 3, name = "Weibull 3", Vwn = 20
 
 
 #Syn6a, D = 0.0, M = 4.9, S10 = 0, S12 = 0, Sn = 3000.0, Taa = 0.0, Td10 = 4.5,
@@ -79,7 +79,7 @@ WTG3, idx = 3, bus = 10, wind = 4, Sn = 3000, Vn = 20, rs = 0,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3.00,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 4, ngen = 2000
 
-Weibull, idx = 4, name = "Weibull 4"
+ConstWind, idx = 4, name = "Weibull 4"
 
 
 #Syn6a, D = 0.0, M = 7.18, S10 = 0, S12 = 0, Sn = 3540.0, Taa = 0.0, Td10 = 4.2,
@@ -99,7 +99,7 @@ WTG3, idx = 4, bus = 12, wind = 5, Sn = 3540, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 5, ngen = 2360
-Weibull, idx = 5, name = "Weibull 5"
+ConstWind, idx = 5, name = "Weibull 5"
 
 Syn6a, D = 0.0, M = 7.66, S10 = 0, S12 = 0, Sn = 3117.0, Taa = 0.0, Td10 = 8.2,
        Td20 = 0.033, Tq10 = 0.48, Tq20 = 0.055, Vn = 20.0, bus = 14, coi = 0, fn = 60.0,
@@ -133,7 +133,7 @@ WTG3, idx = 5, bus = 17, wind = 6, Sn = 2054, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H =  4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 7, ngen = 1370
-Weibull, idx = 6, name = "Weibull 6"
+ConstWind, idx = 6, name = "Weibull 6"
 
 Syn6a, D = 0.0, M = 8.68, S10 = 0, S12 = 0, Sn = 12120.6, Taa = 0.0, Td10 = 8.0,
        Td20 = 0.05, Tq10 = 0.2, Tq20 = 0.08, Vn = 20.0, bus = 29, coi = 0, fn = 60.0,
@@ -184,7 +184,7 @@ WTG3, idx = 6, bus = 35, wind = 7, Sn = 3216, Vn = 22, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 10, ngen = 2144
-Weibull, idx = 7, name = "Weibull 7"
+ConstWind, idx = 7, name = "Weibull 7"
 
 Syn6a, D = 0.0, M = 12.82, S10 = 0, S12 = 0, Sn = 500.0, Taa = 0.0, Td10 = 9.8,
        Td20 = 0.028, Tq10 = 0.2, Tq20 = 0.16, Vn = 20.0, bus = 39, coi = 0, fn = 60.0,
@@ -264,7 +264,7 @@ WTG3, idx = 7, bus = 64, wind = 8, Sn = 5430, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 3.00,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 15, ngen = 3620
-Weibull, idx = 8, Vwn = 18, name = "Weibull 8"
+ConstWind, idx = 8, Vwn = 18, name = "Weibull 8"
 
 #Syn6a, D = 0.0, M = 6.0, S10 = 0, S12 = 0, Sn = 2822.0, Taa = 0.0, Td10 = 4.0,
 #       Td20 = 0.02, Tq10 = 0.2, Tq20 = 0.05, Vn = 20.0, bus = 69, coi = 0, fn = 60.0,
@@ -283,7 +283,7 @@ WTG3, idx = 8, bus = 69, wind = 9, Sn = 3962.1, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 16, ngen = 2642
-Weibull, idx = 9, name = "Weibull 9"
+ConstWind, idx = 9, name = "Weibull 9"
 
 Syn6a, D = 0.0, M = 7.34, S10 = 0, S12 = 0, Sn = 10522.0, Taa = 0.0, Td10 = 8.0,
        Td20 = 0.03, Tq10 = 0.2, Tq20 = 0.06, Vn = 20.0, bus = 76, coi = 0, fn = 60.0,
@@ -342,7 +342,7 @@ WTG3, idx = 9, bus = 111, wind = 10, Sn = 2000, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen =20, ngen = 1334
-Weibull, idx = 10, name = "Weibull 10"
+ConstWind, idx = 10, name = "Weibull 10"
 
 Syn6a, D = 0.0, M = 8.32, S10 = 0, S12 = 0, Sn = 895.0, Taa = 0.0, Td10 = 7.8,
        Td20 = 0.06, Tq10 = 0.2, Tq20 = 0.11, Vn = 20.0, bus = 115, coi = 0, fn = 60.0,
@@ -398,7 +398,7 @@ WTG3, idx = 14, bus = 139, wind = 15, Sn = 12371.5, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 3, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.01, qmax = 0.436, qmin = -0.436, u = 1, gen = 24, ngen = 8248
-Weibull, idx = 15, name = "Weibull 15"
+ConstWind, idx = 15, name = "Weibull 15"
 
 
 #Syn6a, D = 0.0, M = 5.5, S10 = 0, S12 = 0, Sn = 3000.0, Taa = 0.0, Td10 = 8.0,
@@ -419,7 +419,7 @@ WTG3, idx = 13, bus = 143, wind = 14, Sn = 3000, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 25, ngen = 2000
-Weibull, idx = 14, name = "Weibull 14"
+ConstWind, idx = 14, name = "Weibull 14"
 
 #Syn6a, D = 0.0, M = 6.98, S10 = 0, S12 = 0, Sn = 3393.6, Taa = 0.0, Td10 = 8.4,
 #       Td20 = 0.035, Tq10 = 0.46, Tq20 = 0.07, Vn = 22.0, bus = 147, coi = 0, fn = 60.0,
@@ -438,7 +438,7 @@ WTG3, idx = 11, bus = 147, wind = 12, Sn = 5074, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 26, ngen = 3383
-Weibull, idx = 12, name = "Weibull 12"
+ConstWind, idx = 12, name = "Weibull 12"
 
 Syn6a, D = 0.0, M = 6.06, S10 = 0, S12 = 0, Sn = 2500.0, Taa = 0.0, Td10 = 4.3,
        Td20 = 0.032, Tq10 = 0.43, Tq20 = 0.066, Vn = 20.0, bus = 148, coi = 0, fn = 60.0,
@@ -472,7 +472,7 @@ WTG3, idx = 12, bus = 158, wind = 13, Sn = 2229, Vn = 20, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = 28, ngen = 1486
-Weibull, idx = 13, name = "Weibull 13"
+ConstWind, idx = 13, name = "Weibull 13"
 
 Syn6a, D = 0.0, M = 6.02, S10 = 0, S12 = 0, Sn = 832.0, Taa = 0.0, Td10 = 5.21,
        Td20 = 0.042, Tq10 = 1.5, Tq20 = 0.042, Vn = 20.0, bus = 161, coi = 0, fn = 60.0,
@@ -517,4 +517,4 @@ PSS1, Ic1 = 1, Ic2 = 0, K1 = 10.0, K2 = 0.0, T1 = 0.03, T10 = 0.0, T2 = 0.02,
 #      avr = 5, idx = 30, lsmax = 0.1, lsmin = -0.1, name = "PSS2 6", u = 1, vcl = 0.0,
 #      vcu = 0.0
 
-Fault, Vn = 500, bus = 6, tf = 0.1, tc = 0.15, xf = 0.01
+#Fault, Vn = 500, bus = 6, tf = 0.1, tc = 0.15, xf = 0.01
