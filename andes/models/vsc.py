@@ -123,8 +123,8 @@ class VSC(DCBase):
         dae.y[self.ash] = dae.y[self.a] + 1e-6
         dae.y[self.vsh] = mul(self.v0, 1 - self.vV) + mul(self.vref0, self.vV) + 1e-6
 
-        Vm = polar(dae.y[self.v], dae.y[self.a] * 1j)
-        Vsh = polar(dae.y[self.vsh], dae.y[self.ash] * 1j)  # Initial value for Vsh
+        Vm = polar(dae.y[self.v], dae.y[self.a])
+        Vsh = polar(dae.y[self.vsh], dae.y[self.ash])  # Initial value for Vsh
         IshC = conj(div(Vsh - Vm, self.Zsh))
         Ssh = mul(Vsh, IshC)
 
