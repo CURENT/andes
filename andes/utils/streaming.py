@@ -417,7 +417,7 @@ class Streaming(object):
             idx = self.ModuleInfo[mod]['vgsvaridx']
             values = self.system.VarOut.vars[-1][idx]
             t = self.system.VarOut.t[-1]
-            k = self.system.Varout.k[-1]
+            k = self.system.VarOut.k[-1]
             Varvgs = {'t': t,
                       'k': k,
                       'vars': array(values).T,

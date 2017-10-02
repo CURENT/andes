@@ -97,7 +97,7 @@ def run(system):
     if system.TDS.compute_flows:
         dae.init_fg()
         compute_flows(system)
-    system.VarOut.store(t)
+    system.VarOut.store(t, step)
 
     if system.Settings.dime_enable:
         system.Streaming.sync_and_handle()

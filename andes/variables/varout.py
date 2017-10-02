@@ -25,7 +25,7 @@ class VarOut(object):
             self._mode = 'a'
 
         self.t.append(t)
-        self.k.append(k)
+        self.k.append(step)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
 
         if self.system.TDS.compute_flows:
