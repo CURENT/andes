@@ -243,7 +243,7 @@ class Line(ModelBase):
             self.build_b()
 
     def gcall(self, dae):
-        if self.rebuild:
+        if self.rebuild or dae.rebuild:
             self.build_y()
             self.rebuild = False
         vc = polar(dae.y[self.v], dae.y[self.a])
