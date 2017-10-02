@@ -238,6 +238,9 @@ def run(system):
                     dae.factorize = False
                 inc = -matrix([dae.q, dae.g])
 
+                if max(abs(inc)) > tol:
+                    pass
+
                 try:
                     N = numeric(dae.Ac, F)
                     solve(dae.Ac, F, N, inc)
@@ -272,6 +275,9 @@ def run(system):
                     break
                 niter += 1
 
+                if niter >= 2:
+                    pass
+
         if niter >= maxit:
             inc_g = inc[dae.n: dae.m+dae.n]
             max_g_err_sign = 1 if abs(max(inc_g)) > abs(min(inc_g)) else -1
@@ -294,7 +300,7 @@ def run(system):
 
         compute_flows(system)
 
-        system.VarOut.store(t)
+        system.VarOut.store(t, step)
         if system.Settings.dime_enable:
             system.Streaming.sync_and_handle()
             system.Streaming.vars_to_modules()

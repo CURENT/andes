@@ -8,21 +8,24 @@ class VarOut(object):
         """Constructor of empty Varout object"""
         self.system = system
         self.t = []
+        self.k = []
         self.vars = []
         self.dat = None
         self._mode = 'w'
 
-    def store(self, t):
+    def store(self, t, step):
         """Record the state/algeb values at time t to self.vars"""
 
         if len(self.vars) >= 500:
             self.dump(lst=False)
             self.vars = list()
             self.t = list()
+            self.k = list()
             self.system.Log.debug('VarOut cache cleared at simulation t = {:g}.'.format(self.system.DAE.t))
             self._mode = 'a'
 
         self.t.append(t)
+        self.k.append(k)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
 
         if self.system.TDS.compute_flows:
