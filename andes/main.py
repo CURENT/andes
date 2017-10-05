@@ -486,6 +486,7 @@ def run(case, **kwargs):
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
+        system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
         ret = timedomain.run(system)
         if system.Settings.dime_enable:
             system.Streaming.dimec.send_var('geovis', 'DONE', 1)

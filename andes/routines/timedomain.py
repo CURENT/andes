@@ -313,7 +313,7 @@ def run(system):
         if perc > nextpc or t == settings.tf:
             system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f},'
                              ' niter = {} ({:.0f}%)'.format(t, step, settings.error, niter, 100*t /settings.tf))
-            nextpc += 2
+            nextpc += 5
         # compute max rotor angle difference
         diff_max = anglediff()
 

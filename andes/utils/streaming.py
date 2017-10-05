@@ -332,6 +332,7 @@ class Streaming(object):
         if not self.params_built:
             self.build_init()
         if recepient == 'all':
+            self.system.Log.debug('Connected modules are: ' + ','.join(self.dimec.get_devices()))
             self.system.Log.debug('Broadcasting Varheader, Idxvgs, SysParam and SysName...')
             sleep(0.5)
             self.dimec.broadcast('Varheader', self.Varheader)
@@ -373,7 +374,20 @@ class Streaming(object):
 
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
-        pass
+        names = Event.get('name')
+        n = len(names)
+        for i in range(n):
+            name = names[i]
+            idx = Event.get('id')[i]
+            action = Event.get('action')[i]
+            time = Event.get('time')[i]
+            duration = Event.get('duration')[i]
+
+            if any([name, idx, action, time, duration]) is None:
+                continue
+
+
+
 
     def sync_and_handle(self):
         """Sync until the queue is empty"""
