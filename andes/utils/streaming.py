@@ -360,6 +360,7 @@ class Streaming(object):
             self.ModuleInfo[module_name].update(init_var)
         else:
             self.ModuleInfo[module_name] = init_var
+        self.ModuleInfo[module_name]['lastk'] = 0
 
         if type(self.ModuleInfo[module_name]['vgsvaridx']) == int:
             self.ModuleInfo[module_name]['vgsvaridx'] = array(self.ModuleInfo[module_name]['vgsvaridx'])
@@ -428,10 +429,20 @@ class Streaming(object):
             return
 
         for mod in self.ModuleInfo.keys():
+            limitsample = self.ModuleInfo[mod]['limitsample']
+
             idx = self.ModuleInfo[mod]['vgsvaridx']
-            values = self.system.VarOut.vars[-1][idx]
             t = self.system.VarOut.t[-1]
             k = self.system.VarOut.k[-1]
+            lastk = self.ModuleInfo[mod]['lastk']
+            if limitsample:
+                every = 1 / self.system.TDS.tstep / limitsample
+                if (k - lastk) / every < 1:
+                    continue
+                else:
+                    self.ModuleInfo[mod]['lastk'] = k
+
+            values = self.system.VarOut.vars[-1][idx]
             Varvgs = {'t': t,
                       'k': k,
                       'vars': array(values).T,
