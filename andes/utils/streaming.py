@@ -247,16 +247,17 @@ class Streaming(object):
                                # 'Sij': array([]),
                                # 'Sji': array([]),
                                }
-        self.Idxvgs['Syn'] = {'delta': 1 + array(self.system.Syn6a.delta),
-                              'omega': 1 + array(self.system.Syn6a.omega),
-                              'e1d': 1 + array(self.system.Syn6a.e1d),
-                              'e1q': 1 + array(self.system.Syn6a.e1q),
-                              'e2d': 1 + array(self.system.Syn6a.e2d),
-                              'e2q': 1 + array(self.system.Syn6a.e2q),
-                              'psid': array(self.system.Syn6a.psid),
-                              'psiq': array(self.system.Syn6a.psiq),
-                              'p': array(self.system.Syn6a.p),
-                              'q': array(self.system.Syn6a.q),
+
+        self.Idxvgs['Syn'] = {'delta': 1 + array(self.system.Syn2.delta + self.system.Syn6a.delta),
+                              'omega': 1 + array(self.system.Syn2.omega + self.system.Syn6a.omega),
+                              'e1d': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e1d),
+                              'e1q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e1q),
+                              'e2d': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e2d),
+                              'e2q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e2q),
+                              'psid': array([0] * self.system.Syn2.n + self.system.Syn6a.psid),
+                              'psiq': array([0] * self.system.Syn2.n + self.system.Syn6a.psiq),
+                              'p': array([0] * self.system.Syn2.n + self.system.Syn6a.p),
+                              'q': array([0] * self.system.Syn2.n + self.system.Syn6a.q),
                               }
         self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
                              'wref': array(self.system.TG1.wref + self.system.TG2.wref),
@@ -429,7 +430,7 @@ class Streaming(object):
             return
 
         for mod in self.ModuleInfo.keys():
-            limitsample = self.ModuleInfo[mod]['limitsample']
+            limitsample = self.ModuleInfo[mod].get('limitsample', 0)
 
             idx = self.ModuleInfo[mod]['vgsvaridx']
             t = self.system.VarOut.t[-1]
