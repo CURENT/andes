@@ -376,20 +376,44 @@ class Streaming(object):
 
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
+        fields = ('name', 'id', 'action', 'time', 'duration')
+        if any(fields) not in Event.keys():
+            self.system.Log.Warning('Event has missing keys.')
+            return
+
         names = Event.get('name')
         n = len(names)
         for i in range(n):
-            name = names[i]
-            idx = Event.get('id')[i]
-            action = Event.get('action')[i]
-            time = Event.get('time')[i]
-            duration = Event.get('duration')[i]
-
-            if any([name, idx, action, time, duration]) is None:
+            try:
+                name = names[i]
+                idx = Event.get('id')[i]
+                action = Event.get('action')[i]
+                time = Event.get('time')[i]
+                duration = Event.get('duration')[i]
+            except:
+                self.system.Log.Warning('Event key values might have different lengths.')
                 continue
 
+            tf = time + duration
+            if duration == 0.:
+                tf = 1e+10
 
+            if name in ('Bus', 'Line'):
+                param = {'tf': time,
+                         'tc': tf,
+                         'bus': idx
+                         }
+                self.system.Fault.add(idx='Fault_'+str(time), name='Fault '+str(time), kwargs=param)
+            elif name == 'Line':
+                bus = self.system.Line.get_by_idx('bus1', 'Line_'+str(idx-1))
+                param = {'line': 'Line_'+str(idx-1),
+                         'bus': bus,
+                         't1': time,
+                         't2': tf,
+                         }
+                self.system.Breaker.add(idx='Breaker_'+str(time), name='Breaker ' + str(time), kwargs=param)
 
+            self.system.DAE.rebuild = True
 
     def sync_and_handle(self):
         """Sync until the queue is empty"""
@@ -449,4 +473,5 @@ class Streaming(object):
                       'vars': array(values).T,
                       'accurate': array(values).T,
                       }
-            self.dimec.send_var(mod, 'Varvgs', Varvgs)
+            # self.dimec.send_var(mod, 'Varvgs', Varvgs)
+            self.dimec.broadcast('Varvgs', Varvgs)
