@@ -376,6 +376,7 @@ class Streaming(object):
 
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
+        print(Event)
         fields = ('name', 'id', 'action', 'time', 'duration')
         for key in fields:
             if key not in Event:
