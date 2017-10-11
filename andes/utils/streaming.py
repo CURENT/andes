@@ -254,10 +254,10 @@ class Streaming(object):
                               'e1q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e1q),
                               'e2d': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e2d),
                               'e2q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e2q),
-                              'psid': array([0] * self.system.Syn2.n + self.system.Syn6a.psid),
-                              'psiq': array([0] * self.system.Syn2.n + self.system.Syn6a.psiq),
-                              'p': array([0] * self.system.Syn2.n + self.system.Syn6a.p),
-                              'q': array([0] * self.system.Syn2.n + self.system.Syn6a.q),
+                              'psid': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.psid),
+                              'psiq': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.psiq),
+                              'p': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.p),
+                              'q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.q),
                               }
         self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
                              'wref': array(self.system.TG1.wref + self.system.TG2.wref),
@@ -377,9 +377,10 @@ class Streaming(object):
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
         fields = ('name', 'id', 'action', 'time', 'duration')
-        if any(fields) not in Event.keys():
-            self.system.Log.Warning('Event has missing keys.')
-            return
+        for key in fields:
+            if key not in Event:
+                self.system.Log.warning('Event has missing key {}.'.format(key))
+                return
 
         names = Event.get('name')
         n = len(names)
@@ -396,14 +397,15 @@ class Streaming(object):
 
             tf = time + duration
             if duration == 0.:
-                tf = 1e+10
+                tf = 9999
 
             if name in ('Bus', 'Line'):
                 param = {'tf': time,
                          'tc': tf,
                          'bus': idx
                          }
-                self.system.Fault.add(idx='Fault_'+str(time), name='Fault '+str(time), kwargs=param)
+                self.system.Fault.insert(idx='Fault_'+str(time), name='Fault '+str(time), **param)
+                self.system.Log.debug('Event <Fault> added for bus {} at t = {} and tf = {}'.format(idx, time, tf))
             elif name == 'Line':
                 bus = self.system.Line.get_by_idx('bus1', 'Line_'+str(idx-1))
                 param = {'line': 'Line_'+str(idx-1),
@@ -411,8 +413,12 @@ class Streaming(object):
                          't1': time,
                          't2': tf,
                          }
-                self.system.Breaker.add(idx='Breaker_'+str(time), name='Breaker ' + str(time), kwargs=param)
+                self.system.Breaker.insert(idx='Breaker_'+str(time), name='Breaker ' + str(time), **param)
+                self.system.Log.debug(
+                    'Event <Breaker> added for line {} at t = {} and tf = {}'.format(idx, time, tf))
 
+            self.system.Call.build_vec()
+            self.system.Call._compile_int()
             self.system.DAE.rebuild = True
 
     def sync_and_handle(self):

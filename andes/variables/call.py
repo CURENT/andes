@@ -63,6 +63,9 @@ class Call(object):
 
     def build_vec(self):
         """build call validity vector for each device"""
+        for item in all_calls:
+            self.__dict__[item] = []
+
         for dev in self.devices:
             for item in all_calls:
                 if self.system.__dict__[dev].n == 0:
