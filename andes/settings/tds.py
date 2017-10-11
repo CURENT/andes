@@ -17,7 +17,7 @@ class TDS(SettingsBase):
         self.tol = 1e-4
         self.disturbance = False
         self.error = 1
-        self.qrt = False
+        self.qrt = True
         self.kqrt = 1
         self.compute_flows = False
         self.method_desc = {'euler': 'Implicit Euler',
