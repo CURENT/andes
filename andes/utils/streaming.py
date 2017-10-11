@@ -374,24 +374,35 @@ class Streaming(object):
 
         self.ModuleInfo[module_name]['vgsvaridx'] = [int(i)-1 for i in self.ModuleInfo[module_name]['vgsvaridx']]
 
+    @staticmethod
+    def transpose_matlab_row(a):
+        if type(a) is ndarray:
+            if a.shape[0] == 1:
+                a = a[0]
+        return a
+
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
-        print(Event)
         fields = ('name', 'id', 'action', 'time', 'duration')
         for key in fields:
             if key not in Event:
                 self.system.Log.warning('Event has missing key {}.'.format(key))
                 return
 
-        names = Event.get('name')
+        names = self.transpose_matlab_row(Event.get('name'))
+        idxes = self.transpose_matlab_row(Event.get('id'))
+        actions = self.transpose_matlab_row(Event.get('action'))
+        times = self.transpose_matlab_row(Event.get('time'))
+        durations = self.transpose_matlab_row(Event.get('duration'))
+
         n = len(names)
         for i in range(n):
             try:
                 name = names[i]
-                idx = Event.get('id')[i]
-                action = Event.get('action')[i]
-                time = Event.get('time')[i]
-                duration = Event.get('duration')[i]
+                idx = idxes[i]
+                action = actions[i]
+                time = times[i]
+                duration = durations[i]
             except:
                 self.system.Log.Warning('Event key values might have different lengths.')
                 continue
@@ -408,7 +419,7 @@ class Streaming(object):
                 self.system.Fault.insert(**param)
                 self.system.Log.debug('Event <Fault> added for bus {} at t = {} and tf = {}'.format(idx, time, tf))
             elif name == 'Line':
-                bus = self.system.Line.get_by_idx('bus1', ['Line_'+str(idx-1)])[0]
+                bus = self.system.Line.get_by_idx('bus1', ['Line_'+str(int(idx-1))])[0]
                 param = {'line': 'Line_'+str(idx-1),
                          'bus': bus,
                          't1': time,
