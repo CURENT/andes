@@ -399,21 +399,23 @@ class Streaming(object):
             if duration == 0.:
                 tf = 9999
 
-            if name in ('Bus', 'Line'):
+            if name == 'Bus':
                 param = {'tf': time,
                          'tc': tf,
                          'bus': idx
                          }
-                self.system.Fault.insert(idx='Fault_'+str(time), name='Fault '+str(time), **param)
+                self.system.Fault.insert(**param)
                 self.system.Log.debug('Event <Fault> added for bus {} at t = {} and tf = {}'.format(idx, time, tf))
             elif name == 'Line':
-                bus = self.system.Line.get_by_idx('bus1', 'Line_'+str(idx-1))
+                bus = self.system.Line.get_by_idx('bus1', ['Line_'+str(idx-1)])[0]
                 param = {'line': 'Line_'+str(idx-1),
                          'bus': bus,
                          't1': time,
                          't2': tf,
+                         'u1': 1,
+                         'u2': 1 if duration else 0,
                          }
-                self.system.Breaker.insert(idx='Breaker_'+str(time), name='Breaker ' + str(time), **param)
+                self.system.Breaker.insert(**param)
                 self.system.Log.debug(
                     'Event <Breaker> added for line {} at t = {} and tf = {}'.format(idx, time, tf))
 

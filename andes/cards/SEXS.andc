@@ -1,0 +1,58 @@
+# ANDES card file, 1.0
+
+# field = elements
+# an element can be a dictionary denoted with a colon
+# multiple elements: separate with semi-colon
+# multiple lines supported
+
+name = SEXS
+
+doc_string = Simplified EXcitation System
+
+group = AVR
+
+data = syn: 0; K0: 20; T1: 0.01; T2: 0.1; Te: 1.0; Tr: 0.001;
+vfmax: 5; vfmin: -5; s0: True
+
+descr = syn: Generator id; K0: Regulator gain; T1: Regulator zero;
+ T2: Regularot Pole; Te: Field circuit time constant; Tr: Measurement time constant;
+ vfmax: Maximum field voltage; vfmin: minimum field voltage
+
+units= T1: s; T2: s; Te: s; Tr: s; vfmax: pu; vfmin: pu
+
+params = syn; T1; T2; Tr; Te; vfmax; vfmin; K0; s0
+
+mandatory = syn
+
+times = T1; T2; Te; Tr
+
+ctrl =
+ vf: Synchronous, vf, syn, y;
+ vf0: Synchronous, vf0, syn, c;
+ v: Synchronous, v, syn, y
+
+algebs = vref
+fnamey = v_{ref}
+
+states = vm; vr; vfout
+fnamex = v_{m}; v_{r}; v_{fout}
+
+interfaces = vf
+
+service_eq = v0: v; T1T2: T1/T2; vref0: v
+
+init1_eq =
+vref: v;
+vm: v;
+vfout: vf
+
+algeb_eq =
+ vref0 -vref
+ -vfout + vf0;
+
+diff_eq =
+ (v - vm) / Tr;
+ (K0*(1 - T1T2)*(vref - vm) - vr) / T2;
+ (vr + K0*T1T2*(vref - vm) + vf0) * (1 + s0*(v/v0 - 1))
+
+anti_windup = vfout: Te, vfmin, vfmax
