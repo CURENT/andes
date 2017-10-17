@@ -263,6 +263,7 @@ def readadd(file, system):
     data = []
     end = 0
     retval = True
+    sep = ','
 
     fid = open(file, 'r')
     for line in fid.readlines():
@@ -289,7 +290,7 @@ def readadd(file, system):
     # add device elements to system
     supported = ['GENROU', 'GENCLS',
                  'ESST3A', 'ESDC2A', 'SEXS', 'EXST1',
-                 'ST2CUT', 'IEEEST',
+                 'ST2CUT', 'IEEEST', 'TGOV1',
                  ]
     used = list(supported)
     for model in supported:
@@ -445,6 +446,17 @@ def add_dyn(system, model, data):
         syn = get_idx(system, 'Synchronous', 'bus', bus)
 
         pass
+
+    elif model == 'TGOV1':
+        bus = data[0]
+        data = data[3:]
+        syn = get_idx(system, 'Synchronous', 'bus', bus)
+        param = {'gen': syn,
+                 'R': data[0],
+                 'T1': data[4],
+                 'T2': data[5],
+                 }
+        system.TG2.add(**param)
 
     elif model == 'ST2CUT':
         bus = data[0]

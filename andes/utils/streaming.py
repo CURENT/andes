@@ -145,7 +145,7 @@ class Streaming(object):
                 data_array_tg1 = array([]).reshape(0, 12)
 
             if self.system.TG2.n:
-                params = ['syn', 2, 'wref0', 'R', 'pmax', 'pmin', 'T2', 'T1', 0, 0, 0, 'u']
+                params = ['gen', 2, 'wref0', 'R', 'pmax', 'pmin', 'T2', 'T1', 0, 0, 0, 'u']
                 data_list_tg2 = self._build_list('TG2', params)
                 data_array_tg2 = array(data_list_tg2).T
             else:
@@ -256,23 +256,23 @@ class Streaming(object):
                               'e2q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.e2q),
                               'psid': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.psid),
                               'psiq': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.psiq),
-                              'p': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.p),
-                              'q': 1 + array([0] * self.system.Syn2.n + self.system.Syn6a.q),
+                              'p': 1 + n + array([0] * self.system.Syn2.n + self.system.Syn6a.p),
+                              'q': 1 + n + array([0] * self.system.Syn2.n + self.system.Syn6a.q),
                               }
-        self.Idxvgs['Tg'] = {'pm': array(self.system.TG1.pout + self.system.TG2.pout),
-                             'wref': array(self.system.TG1.wref + self.system.TG2.wref),
+        self.Idxvgs['Tg'] = {'pm': 1 + n + array(self.system.TG1.pout + self.system.TG2.pout),
+                             'wref': 1 + n + array(self.system.TG1.wref + self.system.TG2.wref),
                              }
-        self.Idxvgs['Exc'] = {'vf': array(self.system.AVR1.vfout + self.system.AVR2.vfout + self.system.AVR3.vfout),
-                              'vm': array(self.system.AVR1.vm + self.system.AVR2.vm + self.system.AVR3.vm),
+        self.Idxvgs['Exc'] = {'vf': 1 + n + array(self.system.AVR1.vfout + self.system.AVR2.vfout + self.system.AVR3.vfout),
+                              'vm': 1 + array(self.system.AVR1.vm + self.system.AVR2.vm + self.system.AVR3.vm),
                               }
         if self.system.WTG3.n:
-            self.Idxvgs['Dfig'] = {'omega_m': array(self.system.WTG3.omega_m),
-                                   'theta_p': array(self.system.WTG3.theta_p),
-                                   'idr': array(self.system.WTG3.ird),
-                                   'iqr': array(self.system.WTG3.irq),
+            self.Idxvgs['Dfig'] = {'omega_m': 1 + array(self.system.WTG3.omega_m),
+                                   'theta_p': 1 + array(self.system.WTG3.theta_p),
+                                   'idr': 1 + array(self.system.WTG3.ird),
+                                   'iqr': 1 + array(self.system.WTG3.irq),
                                    }
         if self.system.Node.n:
-            self.Idxvgs['Node'] = {'v': array(self.system.Node.v)}
+            self.Idxvgs['Node'] = {'v': 1 + n + array(self.system.Node.v)}
 
         dev_id = {1: 'R', 2: 'C', 3: 'L', 4: 'RCp',
                   5: 'RCs', 6: 'RLCp', 7: 'RLCs', 8: 'RLs'}
@@ -282,7 +282,7 @@ class Streaming(object):
             for item in DCLine_types:
                 item = int(item)
                 idx.extend(self.system.__dict__[dev_id[item]].Idc)
-            self.Idxvgs['DCLine'] = {'Idc': array(idx)}
+            self.Idxvgs['DCLine'] = {'Idc': 1 + array(idx)}
         else:
             DCLine_types = ()
             # self.Idxvgs['DCLine'] = {}
@@ -493,5 +493,5 @@ class Streaming(object):
                       'vars': array(values).T,
                       'accurate': array(values).T,
                       }
-            # self.dimec.send_var(mod, 'Varvgs', Varvgs)
-            self.dimec.broadcast('Varvgs', Varvgs)
+            self.dimec.send_var(mod, 'Varvgs', Varvgs)
+            # self.dimec.broadcast('Varvgs', Varvgs)
