@@ -381,6 +381,11 @@ class Streaming(object):
                 a = a[0]
         return a
 
+    def handle_alter(self, Alter):
+        """Handle parameter altering"""
+        pass
+
+
     def handle_event(self, Event):
         """Handle Fault, Breaker, Syn and Load Events"""
         fields = ('name', 'id', 'action', 'time', 'duration')
@@ -406,6 +411,9 @@ class Streaming(object):
             except:
                 self.system.Log.Warning('Event key values might have different lengths.')
                 continue
+
+            if time == -1:
+                time = max(self.system.DAE.t, 0) + self.system.TDS.tstep
 
             tf = time + duration
             if duration == 0.:

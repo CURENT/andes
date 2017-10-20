@@ -134,6 +134,7 @@ def run(system):
         actual_time = t + h
 
         # check for the occurrence of a disturbance
+        fixed_times = system.Call.get_times()
         for item in fixed_times:
             if (item > t) and (item < t+h):
                 actual_time = item

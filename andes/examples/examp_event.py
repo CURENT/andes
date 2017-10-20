@@ -12,7 +12,7 @@ Event['name'] = ['Line']
 Event['id'] = [1]
 Event['duration'] = [0.1]
 Event['action'] = [1]
-Event['time'] = [2]
+Event['time'] = [-1]
 
 
 # Event['name'] = ['Line', 'Bus']
