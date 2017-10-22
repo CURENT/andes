@@ -78,7 +78,7 @@ class VarOut(object):
 
             nflows = 0
             if self.system.TDS.compute_flows:
-                nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n
+                nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination
 
             for i in range(self.system.DAE.m + nflows):
                 line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1 + self.system.DAE.n, varname.unamey[i], varname.fnamey[i])

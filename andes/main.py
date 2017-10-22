@@ -520,7 +520,7 @@ def run(case, **kwargs):
             s.close()
         else:
             s = open(system.Files.prof, 'w')
-            nlines = 50
+            nlines = 999
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()

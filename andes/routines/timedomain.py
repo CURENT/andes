@@ -413,4 +413,6 @@ def compute_flows(system):
         bus_inj = dae.g[:2 * system.Bus.n]
 
         exec(system.Call.seriesflow)
-        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows])
+        system.Area.seriesflow(system.DAE)
+        system.Area.interchange_varout()
+        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout])

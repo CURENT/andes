@@ -369,3 +369,21 @@ class Line(ModelBase):
         # xy_idx = range(mpq + 5*nl, mpq + 6*nl)
         # self.system.VarName.append(listname='unamey', xy_idx=xy_idx, var_name='Sji', element_name=self.name)
         # self.system.VarName.append(listname='fnamey', xy_idx=xy_idx, var_name='S_{ji}', element_name=self.name)
+
+    def get_flow_by_idx(self, idx, bus):
+        """Return seriesflow based on the external idx on the `bus` side"""
+        P, Q = [], []
+        if type(idx) is not list:
+            idx = [idx]
+        if type(bus) is not list:
+            bus = [bus]
+
+        for line_idx, bus_idx in zip(idx, bus):
+            line_int = self.int[line_idx]
+            if bus_idx == self.bus1[line_int]:
+                P.append(self.P1[line_int])
+                Q.append(self.Q1[line_int])
+            elif bus_idx == self.bus2[line_int]:
+                P.append(self.P2[line_int])
+                Q.append(self.Q2[line_int])
+        return matrix(P), matrix(Q)

@@ -208,3 +208,5 @@ def post_processing(system, convergence):
             system.SW.qg = system.DAE.y[system.SW.q]
 
         exec(system.Call.seriesflow)
+
+        system.Area.seriesflow(system.DAE)
