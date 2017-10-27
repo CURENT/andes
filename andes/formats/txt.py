@@ -28,7 +28,12 @@ def dump_data(text, header, rowname, data, file):
     precision = 4
     s = ''
     out = ''
-    fid = open(file, 'w')
+    try:
+        fid = open(file, 'w')
+    except:
+        print('Cannot open file <{}> for writing.'.format(file))
+        return
+
     for Text, Header, Rowname, Data in zip(text, header, rowname, data):
         # Write Text
         if Text:
