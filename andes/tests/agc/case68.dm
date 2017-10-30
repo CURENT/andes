@@ -765,32 +765,35 @@ Syn6a, D = 4.45, M = 17.8, S10 = 0, S12 = 0, Sn = 11000.0, Taa = 0.0, Td10 = 7.8
 # TG1, gen = 13, R = 1/5, pmax = 1.1, pmin = 0.6, Ts = 0.6, Tc = 1, T3 = 0, T4 = 1.5, T5 = 5
 # TG1, gen = 14, R = 1/5, pmax = 1.1, pmin = 0.6, Ts = 0.6, Tc = 1, T3 = 0, T4 = 1.5, T5 = 5
 
-TG2, gen = 1, R = 1/25, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 2, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 3, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 4, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 5, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 7, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 8, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 9, R = 1/35, pmax = 1.8, pmin = 0.6, T2 = 10
-TG2, gen = 12, R = 1/25, pmax = 1.8, pmin = 0.6, T2 = 10
+TG2, gen = 1, R = 1/25, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 2, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 3, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 4, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 5, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 7, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 8, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 9, R = 1/35, pmax = 1.8, pmin = 0.2, T2 = 10
+TG2, gen = 12, R = 1/25, pmax = 1.8, pmin = 0.2, T2 = 10
 TG2, gen = 13, R = 1/5, pmax = 1.8, pmin = 0.2, T2 = 10
 TG2, gen = 14, R = 1/5, pmax = 1.8, pmin = 0.1, T2 = 10
+TG2, gen = 15, R = 1/35, pmax = 1.8, pmin = 0.1, T2 = 10
+TG2, gen = 16, R = 1/5, pmax = 1.8, pmin = 0, T2 = 10
 
-# AVR1, syn = 1, idx = 1
-# AVR1, syn = 2, idx = 2
-# AVR1, syn = 3, idx = 3
-# AVR1, syn = 4, idx = 4
-# AVR1, syn = 5, idx = 5
-# AVR1, syn = 6, idx = 6
-# AVR1, syn = 7, idx = 7
-# AVR1, syn = 8, idx = 8
-# AVR2, syn = 9, idx = 9
-# AVR1, syn = 10, idx = 10
-# AVR1, syn = 11, idx = 11
-# AVR1, syn = 12, idx = 12
-# AVR1, syn = 13, idx = 13
-# AVR1, syn = 14, idx = 14
+ AVR1, syn = 1, idx = 1
+ AVR1, syn = 2, idx = 2
+ AVR1, syn = 3, idx = 3
+ AVR1, syn = 4, idx = 4
+ AVR1, syn = 5, idx = 5
+ AVR1, syn = 6, idx = 6
+ AVR1, syn = 7, idx = 7
+ AVR1, syn = 8, idx = 8
+ AVR1, syn = 9, idx = 9
+ AVR1, syn = 10, idx = 10
+ AVR1, syn = 11, idx = 11
+ AVR1, syn = 12, idx = 12
+ AVR1, syn = 13, idx = 13
+ AVR1, syn = 14, idx = 14
+ AVR1, syn = 16, idx = 16
 
 # PSS1, Ic1 = 1, avr = 1
 # PSS1, Ic1 = 1, avr = 2
@@ -807,7 +810,10 @@ TG2, gen = 14, R = 1/5, pmax = 1.8, pmin = 0.1, T2 = 10
 # PSS1, Ic1 = 1, avr = 13
 # PSS1, Ic1 = 1, avr = 14
 
-# Breaker, Vn = 345, line = "Line_45", bus = 29, t1 = 2.0, u1 = 1
+# TRIP GEN 9
+Breaker, Vn = 345, line = "Line_45", bus = 29, t1 = 2.0, u1 = 1
+
+# TRIP GEN 10
 Breaker, Vn = 345, line = "Line_78", bus = 31, t1 = 2.0, u1 = 1
 
 # Fault, bus = 1, tf = 2.0, tc = 2.1, xf = 0.01
@@ -815,9 +821,6 @@ Breaker, Vn = 345, line = "Line_78", bus = 31, t1 = 2.0, u1 = 1
 ALTER, PQ, MUL, *, p, 100
 ALTER, PQ, MUL, *, q, 100
 ALTER, Syn6a, MUL, *, M, 0.5
-
-# ALTER, PV, MUL, *, pg, 100
-
 
 Area, idx = 1, name = "Area1"
 Area, idx = 2, name = "Area2"
@@ -827,9 +830,21 @@ ACE, idx = 1, area = 1
 ACE, idx = 2, area = 2
 ACE, idx = 3, area = 3
 
+COI, idx = 1, name = "COI 1", syn = [14; 15; 16]
+COI, idx = 2, name = "COI 2", syn = [11; 12; 13]
+COI, idx = 3, name = "COI 3", syn = [1; 2; 3; 4; 5; 6; 7; 8]
 
-COI, idx = 1, name = "COI 1", syn = [1; 2; 3; 4; 5; 6; 7; 8; 9; 11; 12; 13; 14; 15; 16]
+# TODO: AVR parameter corrections
+# TODO: COI for all
+# TODO: Hold for 6 seconds
+# TODO: Limits on the AGC signals
 
-AGC, idx = 1, ace = 1, coi = 1, beta = 1600, Ki = 1/30
-AGC, idx = 2, ace = 2, coi = 1, beta = 1600, Ki = 1/30
-AGC, idx = 3, ace = 3, coi = 1, beta = 2500, Ki = 1/30
+AGC, idx = 1, ace = 1, coi = 1, beta = 6250, Ki = 0.01
+AGC, idx = 2, ace = 2, coi = 2, beta = 4500, Ki = 0.01
+AGC, idx = 3, ace = 3, coi = 3, beta = 2000, Ki = 0.01
+
+# LOSS OF 500 MW GEN #10 in Area 2
+ EAGC, idx = 1, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 5; 10], agc = [1; 2; 3]
+
+# LOSS OF 1,000 MW GEN #9 in Area 3
+# EAGC, idx = 2, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 0; 10], agc = [1; 2; 3]

@@ -1,7 +1,7 @@
 import numpy.linalg
 from cvxopt.klu import linsolve
 from cvxopt.lapack import gesv
-from cvxopt import matrix, spmatrix, mul, div
+from cvxopt import matrix, spmatrix, sparse, mul, div
 from math import ceil
 from ..formats.txt import dump_data
 from ..consts import *
