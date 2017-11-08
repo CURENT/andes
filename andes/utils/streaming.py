@@ -419,14 +419,14 @@ class Streaming(object):
             if duration == 0.:
                 tf = 9999
 
-            if name == 'Bus':
+            if name.lower() == 'bus':
                 param = {'tf': time,
                          'tc': tf,
                          'bus': idx
                          }
                 self.system.Fault.insert(**param)
                 self.system.Log.debug('Event <Fault> added for bus {} at t = {} and tf = {}'.format(idx, time, tf))
-            elif name == 'Line':
+            elif name.lower() == 'line':
                 bus = self.system.Line.get_by_idx('bus1', ['Line_'+str(int(idx-1))])[0]
                 param = {'line': 'Line_'+str(idx-1),
                          'bus': bus,
@@ -502,4 +502,5 @@ class Streaming(object):
                       'accurate': array(values).T,
                       }
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
+            # self.system.Log.debug('Varvgs sent to <{}>'.format(mod))
             # self.dimec.broadcast('Varvgs', Varvgs)

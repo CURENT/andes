@@ -71,141 +71,141 @@ BusFreq, idx = 67, bus = 67
 BusFreq, idx = 68, bus = 68
 
 Bus, Vn = 345.0, angle = -0.00755, area = 2.0, idx = 1, name = "Bus 1 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10285, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10285, xcoord = 42.609389, ycoord = -73.904285, zone = 0
 Bus, Vn = 345.0, angle = -0.0021, area = 3.0, idx = 2, name = "Bus 2 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06308, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06308, xcoord = 42.611, ycoord = -72.468244, zone = 0
 Bus, Vn = 345.0, angle = -0.00252, area = 3.0, idx = 3, name = "Bus 3 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0599, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0599, xcoord = 42.194996, ycoord = -72.446717, zone = 0
 Bus, Vn = 345.0, angle = -0.0019, area = 3.0, idx = 4, name = "Bus 4 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.04265, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.04265, xcoord = 41.769887, ycoord = -72.557652, zone = 0
 Bus, Vn = 345.0, angle = -0.00124, area = 3.0, idx = 5, name = "Bus 5 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0325, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0325, xcoord = 41.510189, ycoord = -72.568089, zone = 0
 Bus, Vn = 345.0, angle = -0.00083, area = 3.0, idx = 6, name = "Bus 6 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02858, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02858, xcoord = 41.487179, ycoord = -72.49352, zone = 0
 Bus, Vn = 345.0, angle = -0.00174, area = 3.0, idx = 7, name = "Bus 7 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03554, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03554, xcoord = 41.489306, ycoord = -72.755041, zone = 0
 Bus, Vn = 345.0, angle = -0.00213, area = 3.0, idx = 8, name = "Bus 8 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03861, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03861, xcoord = 41.587493, ycoord = -72.866841, zone = 0
 Bus, Vn = 345.0, angle = -0.00483, area = 2.0, idx = 9, name = "Bus 9 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07196, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07196, xcoord = 41.741796, ycoord = -73.832662, zone = 0
 Bus, Vn = 345.0, angle = 0.00032, area = 3.0, idx = 10, name = "Bus 10 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02207, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02207, xcoord = 41.314961, ycoord = -72.165386, zone = 0
 Bus, Vn = 345.0, angle = -0.00012, area = 3.0, idx = 11, name = "Bus 11 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0247, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0247, xcoord = 41.428814, ycoord = -72.103714, zone = 0
 Bus, Vn = 345.0, angle = -0.00019, area = 3.0, idx = 12, name = "Bus 12 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02591, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02591, xcoord = 41.428814, ycoord = -72.103714, zone = 0
 Bus, Vn = 345.0, angle = -0.00023, area = 3.0, idx = 13, name = "Bus 13 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02751, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02751, xcoord = 41.428814, ycoord = -72.103714, zone = 0
 Bus, Vn = 345.0, angle = -0.00139, area = 3.0, idx = 14, name = "Bus 14 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03937, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03937, xcoord = 41.702294, ycoord = -72.234276, zone = 0
 Bus, Vn = 345.0, angle = -0.00209, area = 3.0, idx = 15, name = "Bus 15 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05172, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05172, xcoord = 42.010123, ycoord = -71.673243, zone = 0
 Bus, Vn = 345.0, angle = -0.00195, area = 3.0, idx = 16, name = "Bus 16 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05458, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05458, xcoord = 42.14, ycoord = -71.45, zone = 0
 Bus, Vn = 345.0, angle = -0.00263, area = 3.0, idx = 17, name = "Bus 17 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06352, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06352, xcoord = 42.249, ycoord = -71.618, zone = 0
 Bus, Vn = 345.0, angle = -0.00273, area = 3.0, idx = 18, name = "Bus 18 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06305, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06305, xcoord = 42.128786, ycoord = -71.99752, zone = 0
 Bus, Vn = 345.0, angle = 0.00153, area = 3.0, idx = 19, name = "Bus 19 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02012, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.02012, xcoord = 41.712947, ycoord = -71.190264, zone = 0
 Bus, Vn = 345.0, angle = 0.0015, area = 3.0, idx = 20, name = "Bus 20 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01606, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01606, xcoord = 41.712947, ycoord = -71.190264, zone = 0
 Bus, Vn = 345.0, angle = -0.00169, area = 3.0, idx = 21, name = "Bus 21 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05783, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05783, xcoord = 41.972111, ycoord = -71.016971, zone = 0
 Bus, Vn = 345.0, angle = -0.00087, area = 3.0, idx = 22, name = "Bus 22 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0576, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0576, xcoord = 41.943286, ycoord = -70.579564, zone = 0
 Bus, Vn = 345.0, angle = -0.00107, area = 3.0, idx = 23, name = "Bus 23 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06026, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06026, xcoord = 41.769306, ycoord = -70.510758, zone = 0
 Bus, Vn = 345.0, angle = -0.00201, area = 3.0, idx = 24, name = "Bus 24 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05658, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05658, xcoord = 42.131432, ycoord = -71.268297, zone = 0
 Bus, Vn = 345.0, angle = 0.00014, area = 3.0, idx = 25, name = "Bus 25 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05996, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05996, xcoord = 42.780125, ycoord = -72.515928, zone = 0
 Bus, Vn = 345.0, angle = -0.00279, area = 3.0, idx = 26, name = "Bus 26 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07872, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07872, xcoord = 42.90209, ycoord = -71.340232, zone = 0
 Bus, Vn = 345.0, angle = -0.00327, area = 3.0, idx = 27, name = "Bus 27 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07647, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07647, xcoord = 42.570746, ycoord = -71.524175, zone = 0
 Bus, Vn = 345.0, angle = -0.0013, area = 3.0, idx = 28, name = "Bus 28 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06633, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06633, xcoord = 43.931973, ycoord = -70.20317, zone = 0
 Bus, Vn = 345.0, angle = 0.0002, area = 3.0, idx = 29, name = "Bus 29 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05417, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05417, xcoord = 43.953372, ycoord = -69.695417, zone = 0
 Bus, Vn = 345.0, angle = -0.00605, area = 2.0, idx = 30, name = "Bus 30 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08642, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08642, xcoord = 42.265022, ycoord = -73.848921, zone = 0
 Bus, Vn = 345.0, angle = -0.00548, area = 2.0, idx = 31, name = "Bus 31 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08085, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08085, xcoord = 43.156953, ycoord = -75.228502, zone = 0
 Bus, Vn = 345.0, angle = -0.00316, area = 2.0, idx = 32, name = "Bus 32 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.04708, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.04708, xcoord = 42.1081, ycoord = -75.9281, zone = 0
 Bus, Vn = 345.0, angle = -0.00552, area = 2.0, idx = 33, name = "Bus 33 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06594, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06594, xcoord = 42.1081, ycoord = -75.9281, zone = 0
 Bus, Vn = 345.0, angle = -0.00789, area = 2.0, idx = 34, name = "Bus 34 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07846, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07846, xcoord = 42.108947, ycoord = -76.770051, zone = 0
 Bus, Vn = 345.0, angle = -0.00778, area = 2.0, idx = 35, name = "Bus 35 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09184, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09184, xcoord = 42.102322, ycoord = -76.793826, zone = 0
 Bus, Vn = 345.0, angle = -0.0035, area = 2.0, idx = 36, name = "Bus 36 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05699, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05699, xcoord = 41.1928, ycoord = -73.800662, zone = 0
 Bus, Vn = 345.0, angle = -0.00507, area = 2.0, idx = 37, name = "Bus 37 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06048, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06048, xcoord = 40.728333, ycoord = -73.972414, zone = 0
 Bus, Vn = 345.0, angle = -0.00647, area = 2.0, idx = 38, name = "Bus 38 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09006, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09006, xcoord = 43.19774, ycoord = -76.170609, zone = 0
 Bus, Vn = 345.0, angle = -0.00777, area = 2.0, idx = 39, name = "Bus 39 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08957, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.08957, xcoord = 40.429179, ycoord = -77.169063, zone = 0
 Bus, Vn = 345.0, angle = -0.01325, area = 2.0, idx = 40, name = "Bus 40 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.18994, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.18994, xcoord = 45, ycoord = -74.81, zone = 0
 Bus, Vn = 345.0, angle = 0.00237, area = 1.0, idx = 41, name = "Bus 41 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.00722, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.00722, xcoord = 45, ycoord = -74.81, zone = 0
 Bus, Vn = 345.0, angle = 0.00187, area = 1.0, idx = 42, name = "Bus 42 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0038, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0038, xcoord = 42.797208, ycoord = -82.467339, zone = 0
 Bus, Vn = 345.0, angle = -0.0067, area = 2.0, idx = 43, name = "Bus 43 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07879, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07879, xcoord = 40.616594, ycoord = -74.194394, zone = 0
 Bus, Vn = 345.0, angle = -0.00681, area = 2.0, idx = 44, name = "Bus 44 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07952, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.07952, xcoord = 40.75, ycoord = -74.07, zone = 0
 Bus, Vn = 345.0, angle = -0.0078, area = 2.0, idx = 45, name = "Bus 45 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.1102, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.1102, xcoord = 42.083611, ycoord = -76.2475, zone = 0
 Bus, Vn = 345.0, angle = -0.00742, area = 2.0, idx = 46, name = "Bus 46 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10206, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10206, xcoord = 43.268533, ycoord = -77.632906, zone = 0
 Bus, Vn = 345.0, angle = -0.01122, area = 2.0, idx = 47, name = "Bus 47 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.15734, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.15734, xcoord = 43.16, ycoord = -75.23, zone = 0
 Bus, Vn = 345.0, angle = -0.01297, area = 2.0, idx = 48, name = "Bus 48 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.17988, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.17988, xcoord = 44.578278, ycoord = -74.956837, zone = 0
 Bus, Vn = 345.0, angle = -0.00725, area = 2.0, idx = 49, name = "Bus 49 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10318, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.10318, xcoord = 43.248931, ycoord = -79.782967, zone = 0
 Bus, Vn = 345.0, angle = -0.00504, area = 2.0, idx = 50, name = "Bus 50 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09896, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.09896, xcoord = 41.937774, ycoord = -80.363172, zone = 0
 Bus, Vn = 345.0, angle = -0.00745, area = 2.0, idx = 51, name = "Bus 51 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.11594, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.11594, xcoord = 42.069767, ycoord = -80.048357, zone = 0
 Bus, Vn = 345.0, angle = 0.00108, area = 1.0, idx = 52, name = "Bus 52 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01825, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01825, xcoord = 38.91, ycoord = -82.13, zone = 0
 Bus, Vn = 345.0, angle = 0.0, area = 3.0, idx = 53, name = "Bus 53 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.045, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.045, xcoord = 42.611, ycoord = -72.468244, zone = 0
 Bus, Vn = 345.0, angle = 0.00052, area = 3.0, idx = 54, name = "Bus 54 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.98, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.98, xcoord = 41.483214, ycoord = -72.501478, zone = 0
 Bus, Vn = 345.0, angle = 0.00162, area = 3.0, idx = 55, name = "Bus 55 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.983, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.983, xcoord = 41.314961, ycoord = -72.165386, zone = 0
 Bus, Vn = 345.0, angle = 0.00353, area = 3.0, idx = 56, name = "Bus 56 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.997, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 0.997, xcoord = 41.712947, ycoord = -71.190264, zone = 0
 Bus, Vn = 345.0, angle = 0.00263, area = 3.0, idx = 57, name = "Bus 57 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.011, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.011, xcoord = 41.712947, ycoord = -71.190264, zone = 0
 Bus, Vn = 345.0, angle = 3e-05, area = 3.0, idx = 58, name = "Bus 58 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.05, xcoord = 41.943286, ycoord = -70.579564, zone = 0
 Bus, Vn = 345.0, angle = 0.00023, area = 3.0, idx = 59, name = "Bus 59 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.063, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.063, xcoord = 41.769306, ycoord = -70.510758, zone = 0
 Bus, Vn = 345.0, angle = 0.00202, area = 3.0, idx = 60, name = "Bus 60 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.03, xcoord = 42.780125, ycoord = -72.515928, zone = 0
 Bus, Vn = 345.0, angle = 0.00278, area = 3.0, idx = 61, name = "Bus 61 (NE)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.025, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.025, xcoord = 43.953372, ycoord = -69.695417, zone = 0
 Bus, Vn = 345.0, angle = -0.00429, area = 2.0, idx = 62, name = "Bus 62 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.01, xcoord = 43.19774, ycoord = -76.170609, zone = 0
 Bus, Vn = 345.0, angle = -0.00192, area = 2.0, idx = 63, name = "Bus 63 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 42.1081, ycoord = -75.9281, zone = 0
 Bus, Vn = 345.0, angle = -0.00256, area = 2.0, idx = 64, name = "Bus 64 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0156, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0156, xcoord = 41.149981, ycoord = -74.155936, zone = 0
 Bus, Vn = 345.0, angle = -0.00401, area = 2.0, idx = 65, name = "Bus 65 (NY)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06048, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.06048, xcoord = 40.76, ycoord = -73.94, zone = 0
 Bus, Vn = 345.0, angle = 0.00264, area = 1.0, idx = 66, name = "Bus 66 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 45.01, ycoord = -74.79, zone = 0
 Bus, Vn = 345.0, angle = 0.00202, area = 1.0, idx = 67, name = "Bus 67 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 42.797208, ycoord = -82.467339, zone = 0
 Bus, Vn = 345.0, angle = 0.00226, area = 1.0, idx = 68, name = "Bus 68 (PJM)", owner = 0, region = 1.0,
-     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 0, ycoord = 0, zone = 0
+     u = 1, vmax = 1.7, vmin = 0.6, voltage = 1.0, xcoord = 38.91, ycoord = -82.13, zone = 0
 
 Line, Sn = 100.0, Vn = 345.0, Vn2 = 345.0, b = 0.6987, b1 = 0.0, b2 = 0.0, bus1 = 1.0,
       bus2 = 2.0, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_0", name = "Line 1",
@@ -844,7 +844,7 @@ AGC, idx = 2, ace = 2, coi = 2, beta = 4500, Ki = 0.01
 AGC, idx = 3, ace = 3, coi = 3, beta = 2000, Ki = 0.01
 
 # LOSS OF 500 MW GEN #10 in Area 2
- EAGC, idx = 1, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 5; 10], agc = [1; 2; 3]
+EAGC, idx = 1, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 5; 10], agc = [1; 2; 3]
 
 # LOSS OF 1,000 MW GEN #9 in Area 3
 # EAGC, idx = 2, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 0; 10], agc = [1; 2; 3]
