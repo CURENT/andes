@@ -282,7 +282,7 @@ class Line(ModelBase):
         dR = diagVc.H.T * dR
 
         self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
-        rebuild = False
+        self.rebuild = False
 
         return sparse(self.gy_store)
 
