@@ -87,7 +87,7 @@ class Line(ModelBase):
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
-        self.rebuild = True
+        self.rebuild_y = True
         self.Y = []
         self.C = []
         self.Bp = []
@@ -243,7 +243,7 @@ class Line(ModelBase):
             self.build_b()
 
     def gcall(self, dae):
-        if self.rebuild:
+        if not self.Y or self.rebuild_y:
             self.build_y()
         vc = polar(dae.y[self.v], dae.y[self.a])
         Ic = self.Y*vc
@@ -252,10 +252,7 @@ class Line(ModelBase):
         dae.g[self.v] += S.imag()
 
     def gycall(self, dae):
-        if self.rebuild:
-            gy = self.build_gy(dae)
-        else:
-            gy = self.gy_store
+        gy = self.build_gy(dae)
         dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
@@ -282,7 +279,6 @@ class Line(ModelBase):
         dR = diagVc.H.T * dR
 
         self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
-        self.rebuild = False
 
         return sparse(self.gy_store)
 
@@ -323,7 +319,7 @@ class Line(ModelBase):
     def switch(self, idx, u):
         """switch the status of Line idx"""
         self.u[self.int[idx]] = u
-        self.rebuild = True
+        self.rebuild_y = True
         self.system.DAE.factorize = True
         self.message('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
 
