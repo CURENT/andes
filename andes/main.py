@@ -32,7 +32,7 @@ from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
 from .routines import powerflow, timedomain, eigenanalysis
-
+from .routines.fakemodule import EAGC
 
 def cli_parse(writehelp=False, helpfile=None):
     """command line input argument parser"""
@@ -487,6 +487,8 @@ def run(case, **kwargs):
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
         system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
+        # system.hack_EAGC()
+
         ret = timedomain.run(system)
         if system.Settings.dime_enable:
             system.Streaming.dimec.send_var('geovis', 'DONE', 1)

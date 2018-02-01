@@ -31,6 +31,8 @@ class VarOut(object):
         if self.system.TDS.compute_flows:
             self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
 
+        # self.system.EAGC_module.stream_to_geovis()
+
     def show(self):
         """
         The representation of an Varout object

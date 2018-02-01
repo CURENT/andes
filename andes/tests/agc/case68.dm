@@ -810,11 +810,11 @@ TG2, gen = 16, R = 1/5, pmax = 1.8, pmin = 0, T2 = 10
 # PSS1, Ic1 = 1, avr = 13
 # PSS1, Ic1 = 1, avr = 14
 
-# TRIP GEN 9
+ TRIP GEN 9
 Breaker, Vn = 345, line = "Line_45", bus = 29, t1 = 2.0, u1 = 1
 
 # TRIP GEN 10
-Breaker, Vn = 345, line = "Line_78", bus = 31, t1 = 2.0, u1 = 1
+#Breaker, Vn = 345, line = "Line_78", bus = 31, t1 = 2.0, u1 = 1
 
 # Fault, bus = 1, tf = 2.0, tc = 2.1, xf = 0.01
 
@@ -831,20 +831,22 @@ ACE, idx = 2, area = 2
 ACE, idx = 3, area = 3
 
 COI, idx = 1, name = "COI 1", syn = [14; 15; 16]
-COI, idx = 2, name = "COI 2", syn = [11; 12; 13]
-COI, idx = 3, name = "COI 3", syn = [1; 2; 3; 4; 5; 6; 7; 8]
+COI, idx = 2, name = "COI 2", syn = [11; 12; 13; 10]
+COI, idx = 3, name = "COI 3", syn = [1; 2; 3; 4; 5; 7; 8]
+COI, idx = 4, name = "COI 4", syn = [1; 2; 3; 4; 5; 6; 7; 8; 10; 11; 12; 13; 14; 15; 16]
 
 # TODO: AVR parameter corrections
 # TODO: COI for all
 # TODO: Hold for 6 seconds
 # TODO: Limits on the AGC signals
 
-AGC, idx = 1, ace = 1, coi = 1, beta = 6250, Ki = 0.01
-AGC, idx = 2, ace = 2, coi = 2, beta = 4500, Ki = 0.01
-AGC, idx = 3, ace = 3, coi = 3, beta = 2000, Ki = 0.01
+AGC, idx = 1, ace = 1, coi = 1, beta = 6250, Ki = 0.005, coi_measure = 1
+AGC, idx = 2, ace = 2, coi = 2, beta = 4500, Ki = 0.005, coi_measure = 2
+AGC, idx = 3, ace = 3, coi = 3, beta = 2000, Ki = 0.005, coi_measure = 3
+
+#AGC, idx = 1, ace = 1, coi = 1, beta = 0, Ki = 0.1, coi_measure = 1
+#AGC, idx = 2, ace = 2, coi = 2, beta = 0, Ki = 0.1, coi_measure = 2
+#AGC, idx = 3, ace = 3, coi = 3, beta = 0, Ki = 0.1, coi_measure = 3
 
 # LOSS OF 500 MW GEN #10 in Area 2
-EAGC, idx = 1, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 5; 10], agc = [1; 2; 3]
-
-# LOSS OF 1,000 MW GEN #9 in Area 3
-# EAGC, idx = 2, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 0; 10], agc = [1; 2; 3]
+#EAGC, idx = 1, cl = [0.5; 0.2; 0.3], tl = 2, Pl = [0; 5; 8], agc = [1; 2; 3]

@@ -24,6 +24,9 @@ from .utils import Logger
 from .models import non_jits, jits, JIT
 from .consts import *
 
+from .routines.fakemodule import EAGC
+
+
 try:
     from .utils.streaming import Streaming
     STREAMING = True
@@ -237,3 +240,7 @@ class PowerSystem(object):
         Qloss = [i + j for i, j in zip(Qfr, Qto)]
         return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
 
+    def hack_EAGC(self):
+        self.EAGC_module = EAGC(name='EAGC', address=self.Settings.dime_server, idx=[671, 672, 673, 1154, 1155, 1156, 1157],
+                         varout=self.VarOut, varname=self.VarName)
+        self.EAGC_module.init_on_geovis()

@@ -39,7 +39,7 @@ def pert(t, system):
     vref = vref0[k]
 
     set_load(t, start, system, load_idx, xp, xq)
-    # set_avr(t, system, start, interval=0.1, values=vref)
+    set_avr(t, system, start + 5, interval=0.1, values=vref)
 
     system.DAE.rebuild = True
 
