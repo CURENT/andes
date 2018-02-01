@@ -38,6 +38,7 @@ class AGC(ModelBase):
                            'ace': None,
                            'beta': 0,
                            'Ki': 0,
+                           'coi_measure': None,
                            })
         self._params.extend(['beta', 'Ki'])
         self._algebs.extend(['ACE'])
@@ -57,7 +58,7 @@ class AGC(ModelBase):
         self.pm = [[]] * self.n
         self.copy_param('ACE', src='e', fkey=self.ace)
         self.copy_param('COI', src='syn', fkey=self.coi)
-        self.copy_param('COI', src='omega', dest='comega', fkey=self.coi)
+        self.copy_param('COI', src='omega', dest='comega', fkey=self.coi_measure)
         self.copy_param('COI', src='M', dest='M', fkey=self.coi)
         self.copy_param('COI', src='Mtot', dest='Mtot', fkey=self.coi)
         for idx in range(self.n):
