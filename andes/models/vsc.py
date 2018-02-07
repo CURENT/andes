@@ -754,7 +754,6 @@ class VSC2_Speed1(object):
 
     def __init__(self, system, name):
         self._data.update({'D': 0.5,
-                           'M': 3,
                            })
         self._descr.update({'D': 'Active power droop for speed reference',
                             })
@@ -764,7 +763,6 @@ class VSC2_Speed1(object):
 
         self._states.extend(['adq'])
         self._fnamex.extend(['\\theta_{dq}'])
-
 
     def speed_init1(self, dae):
         dae.x[self.adq] = mul(dae.y[self.a], self.u)

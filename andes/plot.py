@@ -24,6 +24,8 @@ from matplotlib import pyplot, rc
 
 from distutils.spawn import find_executable
 
+from numpy import array
+
 try:
     from blist import *
     BLIST = 1
@@ -42,6 +44,7 @@ def cli_parse():
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
     parser.add_argument('--ymax', type=float, help='y axis maximum value')
+    parser.add_argument('--ymin', type=float, help='y axis minimum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
     parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
@@ -50,7 +53,7 @@ def cli_parse():
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
     parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
-    parser.add_argument('--yop', type=str, help='manipulate y data')
+    parser.add_argument('--ytimes', type=str, help='y times')
     args = parser.parse_args()
     return args
 
@@ -180,6 +183,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
     xmin = args.xmin
     xmax = args.xmax
     ymax = args.ymax
+    ymin = args.ymin
     xlabel = args.xlabel
     ylabel = args.ylabel
 
@@ -233,6 +237,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
     ax.set_ylim(ymax=ymax)
+    ax.set_ylim(ymin=ymin)
 
     if args.grid:
         ax.grid(b=True, linestyle='--')
@@ -313,8 +318,6 @@ def eig_plot(name, args):
         data = line.split()
 
 
-
-
 def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
@@ -331,9 +334,12 @@ def tds_plot(name, args):
     if args.checkinit:
         check_init(yval, yl[0])
         return
-    # if args.yop:
-    #     op = args.yop[0]
-    #     num =
+    if args.ytimes:
+        times = float(args.ytimes)
+        new_yval = []
+        for val in yval:
+            new_yval.append([i*times for i in val])
+        yval = new_yval
     do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
 
 

@@ -156,8 +156,8 @@ def run(system):
             system.Breaker.check_time(actual_time)
             dae.rebuild = True
             switch = False
-        else:
-            dae.rebuild = False
+        # else:
+        dae.rebuild = True
 
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
