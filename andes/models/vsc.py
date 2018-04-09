@@ -588,6 +588,7 @@ class VSC1_Outer1(object):
 
     def outer_gcall(self, dae):
         dae.g[self.Idref] = -dae.y[self.Idref] + mul(self.PQ + self.PV, dae.x[self.Nd] + mul(self.Kp2, dae.y[self.ref1] - dae.y[self.p]) + mul(dae.y[self.ref1], div(1, dae.y[self.vd]))) + mul(div(1, dae.x[self.ud]), self.vQ + self.vV, -mul(dae.x[self.Idcx], dae.y[self.v1] - dae.y[self.v2]) - mul(dae.x[self.Iq], dae.x[self.uq]))
+
         dae.g[self.Iqref] = dae.x[self.Nq] - dae.y[self.Iqref] + mul(self.PQ + self.vQ, mul(self.Kp3, dae.y[self.ref2] - dae.y[self.q]) + mul(dae.y[self.ref2], div(1, dae.y[self.vd]))) + mul(self.Kp3, self.PV + self.vV, dae.y[self.ref2] - dae.y[self.vd])
         dae.g[self.Idcy] = -dae.y[self.Idcy] + mul(div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV, -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq]))
         dae.g += spmatrix(mul(dae.y[self.Idcy], - self.PQ - self.PV) - mul(dae.x[self.Idcx], self.vQ + self.vV), self.v1, [0]*self.n, (dae.m, 1), 'd')
@@ -600,9 +601,10 @@ class VSC1_Outer1(object):
 
     def outer_gycall(self, dae):
         dae.add_jac(Gy, mul(self.Kp2 + div(1, dae.y[self.vd]), self.PQ + self.PV), self.Idref, self.ref1)
-        dae.add_jac(Gy, mul(dae.x[self.Idcx], div(1, dae.x[self.ud]), self.vQ + self.vV), self.Idref, self.v2)
+        dae.add_jac(Gy, mul(dae.x[self.Idcx], div(1, dae.x[self.ud]), self.vQ + self.vV), self.Idref, self.v2)  # beware
         dae.add_jac(Gy, - mul(dae.x[self.Idcx], div(1, dae.x[self.ud]), self.vQ + self.vV), self.Idref, self.v1)
         dae.add_jac(Gy, - mul(dae.y[self.ref1], (dae.y[self.vd])**-2, self.PQ + self.PV), self.Idref, self.vd)
+
         dae.add_jac(Gy, mul(self.Kp3, self.PV + self.vV) + mul(self.Kp3 + div(1, dae.y[self.vd]), self.PQ + self.vQ), self.Iqref, self.ref2)
         dae.add_jac(Gy, -mul(self.Kp3, self.PV + self.vV) - mul(dae.y[self.ref2], (dae.y[self.vd])**-2, self.PQ + self.vQ), self.Iqref, self.vd)
         dae.add_jac(Gy, mul((dae.y[self.v1] - dae.y[self.v2])**-2, self.PQ + self.PV, -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq])), self.Idcy, self.v2)
@@ -613,6 +615,7 @@ class VSC1_Outer1(object):
         dae.add_jac(Gx, - mul((dae.x[self.ud])**-2, self.vQ + self.vV, -mul(dae.x[self.Idcx], dae.y[self.v1] - dae.y[self.v2]) - mul(dae.x[self.Iq], dae.x[self.uq])), self.Idref, self.ud)
         dae.add_jac(Gx, - mul(dae.x[self.Iq], div(1, dae.x[self.ud]), self.vQ + self.vV), self.Idref, self.uq)
         dae.add_jac(Gx, - mul(dae.x[self.uq], div(1, dae.x[self.ud]), self.vQ + self.vV), self.Idref, self.Iq)
+
         dae.add_jac(Gx, - mul(dae.x[self.Id], div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV), self.Idcy, self.ud)
         dae.add_jac(Gx, - mul(dae.x[self.Iq], div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV), self.Idcy, self.uq)
         dae.add_jac(Gx, - mul(dae.x[self.ud], div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV), self.Idcy, self.Id)
@@ -765,6 +768,7 @@ class VSC2_Speed1(object):
         self._fnamex.extend(['\\theta_{dq}'])
 
     def speed_init1(self, dae):
+        # self.iD = div(self.u, self.D)
         dae.x[self.adq] = mul(dae.y[self.a], self.u)
         dae.y[self.ref1] = self.wref0
 
@@ -807,6 +811,7 @@ class VSC2_Speed2(object):
 
     def speed_servcall(self, dae):
         self.iM = mul(self.u, div(1, self.M))
+        # self.iD = div(self.u, self.D)
 
     def speed_init1(self, dae):
         self.speed_servcall(dae)

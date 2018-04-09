@@ -84,7 +84,7 @@ class SynBase(ModelBase):
 
         p0 = mul(self.u, self.system.Bus.Pg[self.a], self.gammap)
         q0 = mul(self.u, self.system.Bus.Qg[self.a], self.gammaq)
-        v0 = mul(self.u, dae.y[self.v])
+        v0 = mul(1, dae.y[self.v])
         theta0 = dae.y[self.a]
         v = polar(v0, theta0)
         S = p0 - q0*1j
@@ -96,7 +96,7 @@ class SynBase(ModelBase):
 
         delta = log(div(E, abs(E) + 0j))
         dae.x[self.delta] = mul(self.u, delta.imag())
-        dae.x[self.omega] = matrix(1.0, (self.n, 1), 'd')
+        dae.x[self.omega] = matrix(self.u, (self.n, 1), 'd')
 
         # d- and q-axis voltages and currents
         vdq = mul(self.u, mul(v, exp(jpi2 - delta)))
@@ -113,10 +113,10 @@ class SynBase(ModelBase):
     def gcall(self, dae):
         nzeros = [0] * self.n
         v = mul(self.u, dae.y[self.v])
-        vd = dae.y[self.vd]
-        vq = dae.y[self.vq]
-        Id = dae.y[self.Id]
-        Iq = dae.y[self.Iq]
+        vd = mul(self.u, dae.y[self.vd])
+        vq = mul(self.u, dae.y[self.vq])
+        Id = mul(self.u,dae.y[self.Id])
+        Iq = mul(self.u,dae.y[self.Iq])
         self.ss = sin(dae.x[self.delta] - dae.y[self.a])
         self.cc = cos(dae.x[self.delta] - dae.y[self.a])
 
@@ -126,8 +126,8 @@ class SynBase(ModelBase):
         dae.g -= spmatrix(vq - mul(v, self.cc), self.vq, nzeros, (dae.m, 1), 'd')  # note d(vq)/d(delta)
         dae.g += spmatrix(mul(vd, Id) + mul(vq, Iq) - dae.y[self.p], self.p, nzeros, (dae.m, 1), 'd')
         dae.g += spmatrix(mul(vq, Id) - mul(vd, Iq) - dae.y[self.q], self.q, nzeros, (dae.m, 1), 'd')
-        dae.g += spmatrix(dae.y[self.pm] - self.pm0, self.pm, nzeros, (dae.m, 1), 'd')
-        dae.g += spmatrix(dae.y[self.vf] - self.vf0, self.vf, nzeros, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.pm] - mul(self.u, self.pm0), self.pm, nzeros, (dae.m, 1), 'd')
+        dae.g += spmatrix(dae.y[self.vf] - mul(self.u, self.vf0), self.vf, nzeros, (dae.m, 1), 'd')
 
     def saturation(self, e1q):
         """Saturation characteristic function"""
@@ -139,36 +139,36 @@ class SynBase(ModelBase):
     def jac0(self, dae):
         dae.add_jac(Gy0, -self.u, self.a, self.p)
         dae.add_jac(Gy0, -self.u, self.v, self.q)
-        dae.add_jac(Gy0, -1.0, self.vd, self.vd)
-        dae.add_jac(Gy0, -1.0, self.vq, self.vq)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.vd, self.vd)
+        dae.add_jac(Gy0, -self.u + 1e-6, self.vq, self.vq)
         dae.add_jac(Gy0, -1.0, self.p, self.p)
         dae.add_jac(Gy0, -1.0, self.q, self.q)
         dae.add_jac(Gy0, 1.0, self.pm, self.pm)
         dae.add_jac(Gy0, 1.0, self.vf, self.vf)
 
-        dae.add_jac(Fx0, self.u - 1 - 1e-6, self.delta, self.delta)
+        dae.add_jac(Fx0, 1e-6, self.delta, self.delta)
         dae.add_jac(Fx0, mul(self.u, self.system.Settings.wb), self.delta, self.omega)
 
     def gycall(self, dae):
-        dae.add_jac(Gy, dae.y[self.Id], self.p, self.vd)
-        dae.add_jac(Gy, dae.y[self.Iq], self.p, self.vq)
-        dae.add_jac(Gy, dae.y[self.vd], self.p, self.Id)
-        dae.add_jac(Gy, dae.y[self.vq], self.p, self.Iq)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.Id]), self.p, self.vd)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.Iq]), self.p, self.vq)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.vd]), self.p, self.Id)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.vq]), self.p, self.Iq)
 
-        dae.add_jac(Gy, -dae.y[self.Iq], self.q, self.vd)
-        dae.add_jac(Gy, dae.y[self.Id], self.q, self.vq)
-        dae.add_jac(Gy, dae.y[self.vq], self.q, self.Id)
-        dae.add_jac(Gy, -dae.y[self.vd], self.q, self.Iq)
+        dae.add_jac(Gy, -mul(self.u, dae.y[self.Iq]), self.q, self.vd)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.Id]), self.q, self.vq)
+        dae.add_jac(Gy, mul(self.u, dae.y[self.vq]), self.q, self.Id)
+        dae.add_jac(Gy, -mul(self.u, dae.y[self.vd]), self.q, self.Iq)
 
-        dae.add_jac(Gy, -mul(dae.y[self.v], self.cc), self.vd, self.a)
-        dae.add_jac(Gy, self.ss, self.vd, self.v)
+        dae.add_jac(Gy, -mul(self.u, dae.y[self.v], self.cc), self.vd, self.a)
+        dae.add_jac(Gy, mul(self.u, self.ss), self.vd, self.v)
 
-        dae.add_jac(Gy,  mul(dae.y[self.v], self.ss), self.vq, self.a)
-        dae.add_jac(Gy, self.cc, self.vq, self.v)
+        dae.add_jac(Gy,  mul(self.u, dae.y[self.v], self.ss), self.vq, self.a)
+        dae.add_jac(Gy, mul(self.u, self.cc), self.vq, self.v)
 
     def fxcall(self, dae):
-        dae.add_jac(Gx,  mul(dae.y[self.v], self.cc), self.vd, self.delta)
-        dae.add_jac(Gx, -mul(dae.y[self.v], self.ss), self.vq, self.delta)
+        dae.add_jac(Gx,  mul(self.u, dae.y[self.v], self.cc), self.vd, self.delta)
+        dae.add_jac(Gx, -mul(self.u, dae.y[self.v], self.ss), self.vq, self.delta)
 
 
 class Ord2(SynBase):
@@ -287,10 +287,10 @@ class Ord6a(SynBase):
 
     def init1(self, dae):
         super(Ord6a, self).init1(dae)
-        vd = dae.y[self.vd]
-        vq = dae.y[self.vq]
-        Id = dae.y[self.Id]
-        Iq = dae.y[self.Iq]
+        vd = mul(self.u, dae.y[self.vd])
+        vq = mul(self.u, dae.y[self.vq])
+        Id = mul(self.u, dae.y[self.Id])
+        Iq = mul(self.u, dae.y[self.Iq])
 
         k1 = self.xd - self.xd1 - self.gd
         k2 = self.xd1 - self.xd2 + self.gd
@@ -305,41 +305,41 @@ class Ord6a(SynBase):
 
     def gcall(self, dae):
         super(Ord6a, self).gcall(dae)
-        dae.g[self.Id] += mul(self.u, self.xd2, dae.y[self.Id]) - dae.x[self.e2q]
-        dae.g[self.Iq] += mul(self.u, self.xq2, dae.y[self.Iq]) + dae.x[self.e2d]
+        dae.g[self.Id] += mul(self.u, self.xd2, dae.y[self.Id]) - mul(self.u, dae.x[self.e2q])
+        dae.g[self.Iq] += mul(self.u, self.xq2, dae.y[self.Iq]) + mul(self.u, dae.x[self.e2d])
 
     def fcall(self, dae):
         super(Ord6a, self).fcall(dae)
-        Id = dae.y[self.Id]
-        Iq = dae.y[self.Iq]
-        dae.f[self.e1d] = - mul(self.b3, dae.x[self.e1d]) + mul(self.b4, Iq)
-        dae.f[self.e1q] = - mul(self.saturation(dae.x[self.e1q]), self.a4) - mul(self.a5, Id) + mul(self.a6, dae.y[self.vf])
-        dae.f[self.e2d] = - mul(self.b1, dae.x[self.e2d]) + mul(self.b1, dae.x[self.e1d]) + mul(self.b2, Iq)
-        dae.f[self.e2q] = - mul(self.a1, dae.x[self.e2q]) + mul(self.a1, dae.x[self.e1q]) - mul(self.a2, Id) + mul(self.a3, dae.y[self.vf])
+        Id = mul(self.u, dae.y[self.Id])
+        Iq = mul(self.u, dae.y[self.Iq])
+        dae.f[self.e1d] = - mul(self.b3, dae.x[self.e1d], self.u) + mul(self.b4, Iq, self.u)
+        dae.f[self.e1q] = - mul(self.saturation(dae.x[self.e1q]), self.a4, self.u) - mul(self.a5, Id, self.u) + mul(self.a6, dae.y[self.vf], self.u)
+        dae.f[self.e2d] = - mul(self.b1, dae.x[self.e2d], self.u) + mul(self.b1, dae.x[self.e1d], self.u) + mul(self.b2, Iq, self.u)
+        dae.f[self.e2q] = - mul(self.a1, dae.x[self.e2q], self.u) + mul(self.a1, dae.x[self.e1q], self.u) - mul(self.a2, Id, self.u) + mul(self.a3, dae.y[self.vf], self.u)
     
     def jac0(self, dae):
         super(Ord6a, self).jac0(dae)
-        self.add_jac(Gy0, mul(self.u, self.xd2), self.Id, self.Id)
+        self.add_jac(Gy0, mul(self.u, self.xd2) + 1e-6, self.Id, self.Id)
         self.add_jac(Gx0, -self.u, self.Id, self.e2q)
 
-        self.add_jac(Gy0, mul(self.u, self.xq2), self.Iq, self.Iq)
+        self.add_jac(Gy0, mul(self.u, self.xq2) + 1e-6, self.Iq, self.Iq)
         self.add_jac(Gx0, self.u, self.Iq, self.e2d)
         
-        self.add_jac(Fx0, -self.b3, self.e1d, self.e1d)
-        self.add_jac(Fy0, self.b4, self.e1d, self.Iq)
+        self.add_jac(Fx0, -mul(self.u, self.b3) + 1e-6, self.e1d, self.e1d)
+        self.add_jac(Fy0, mul(self.u, self.b4), self.e1d, self.Iq)
 
-        self.add_jac(Fx0, -self.a4, self.e1q, self.e1q)
-        self.add_jac(Fy0, self.a6, self.e1q, self.vf)
-        self.add_jac(Fy0, -self.a5, self.e1q, self.Id)
+        self.add_jac(Fx0, -mul(self.u, self.a4) + 1e-6, self.e1q, self.e1q)
+        self.add_jac(Fy0, mul(self.u, self.a6), self.e1q, self.vf)
+        self.add_jac(Fy0, -mul(self.u, self.a5), self.e1q, self.Id)
 
-        self.add_jac(Fx0, -self.b1, self.e2d, self.e2d)
-        self.add_jac(Fx0, self.b1, self.e2d, self.e1d)
-        self.add_jac(Fy0, self.b2, self.e2d, self.Iq)
+        self.add_jac(Fx0, -mul(self.u, self.b1) + 1e-6, self.e2d, self.e2d)
+        self.add_jac(Fx0, mul(self.u, self.b1), self.e2d, self.e1d)
+        self.add_jac(Fy0, mul(self.u, self.b2), self.e2d, self.Iq)
 
-        self.add_jac(Fx0, -self.a1, self.e2q, self.e2q)
-        self.add_jac(Fx0, self.a1, self.e2q, self.e1q)
-        self.add_jac(Fy0, self.a3, self.e2q, self.vf)
-        self.add_jac(Fy0, -self.a2, self.e2q, self.Id)
+        self.add_jac(Fx0, -mul(self.u, self.a1) + 1e-6, self.e2q, self.e2q)
+        self.add_jac(Fx0, mul(self.u, self.a1), self.e2q, self.e1q)
+        self.add_jac(Fy0, mul(self.u, self.a3), self.e2q, self.vf)
+        self.add_jac(Fy0, -mul(self.u, self.a2), self.e2q, self.Id)
 
 
 class Flux0(object):
@@ -353,28 +353,28 @@ class Flux0(object):
         self._inst_meta()
 
     def init1(self, dae):
-        dae.y[self.psiq] = -mul(self.ra, dae.y[self.Id]) - dae.y[self.vd]
-        dae.y[self.psid] =  mul(self.ra, dae.y[self.Iq]) + dae.y[self.vq]
+        dae.y[self.psiq] = -mul(self.u, self.ra, dae.y[self.Id]) - dae.y[self.vd]
+        dae.y[self.psid] =  mul(self.u, self.ra, dae.y[self.Iq]) + dae.y[self.vq]
 
     def gcall(self, dae):
-        dae.g[self.psiq] = mul(self.ra, dae.y[self.Id]) + dae.y[self.psiq] + dae.y[self.vd]
-        dae.g[self.psid] = mul(self.ra, dae.y[self.Iq]) - dae.y[self.psid] + dae.y[self.vq]
-        dae.g[self.Id] += dae.y[self.psid]
-        dae.g[self.Iq] += dae.y[self.psiq]
+        dae.g[self.psiq] = mul(self.u, self.ra, dae.y[self.Id]) + dae.y[self.psiq] + mul(self.u, dae.y[self.vd])
+        dae.g[self.psid] = mul(self.u, self.ra, dae.y[self.Iq]) - dae.y[self.psid] + mul(self.u, dae.y[self.vq])
+        dae.g[self.Id] += mul(self.u, dae.y[self.psid])
+        dae.g[self.Iq] += mul(self.u, dae.y[self.psiq])
 
     def gycall(self, dae):
-        dae.add_jac(Gy, self.ra, self.psiq, self.Id)
-        dae.add_jac(Gy, self.ra, self.psid, self.Iq)
+        dae.add_jac(Gy, mul(self.u, self.ra), self.psiq, self.Id)
+        dae.add_jac(Gy, mul(self.u, self.ra), self.psid, self.Iq)
 
     def fcall(self, dae):
-        dae.f[self.omega] = mul(self.iM, dae.y[self.pm] - mul(dae.y[self.psid], dae.y[self.Iq])
+        dae.f[self.omega] = mul(self.u, self.iM, dae.y[self.pm] - mul(dae.y[self.psid], dae.y[self.Iq])
                                 + mul(dae.y[self.psiq], dae.y[self.Id]) - mul(self.D, dae.x[self.omega] - 1))
 
     def fxcall(self, dae):
-        dae.add_jac(Fy,  mul(dae.y[self.Id], self.iM), self.omega, self.psiq)
-        dae.add_jac(Fy,  mul(dae.y[self.psiq], self.iM), self.omega, self.Id)
-        dae.add_jac(Fy, -mul(dae.y[self.Iq], self.iM), self.omega, self.psid)
-        dae.add_jac(Fy, -mul(dae.y[self.psid], self.iM), self.omega, self.Iq)
+        dae.add_jac(Fy,  mul(self.u, dae.y[self.Id], self.iM), self.omega, self.psiq)
+        dae.add_jac(Fy,  mul(self.u, dae.y[self.psiq], self.iM), self.omega, self.Id)
+        dae.add_jac(Fy, -mul(self.u, dae.y[self.Iq], self.iM), self.omega, self.psid)
+        dae.add_jac(Fy, -mul(self.u, dae.y[self.psid], self.iM), self.omega, self.Iq)
 
     def jac0(self, dae):
         dae.add_jac(Gy0, 1.0, self.psiq, self.psiq)
@@ -387,7 +387,7 @@ class Flux0(object):
 
         dae.add_jac(Gy0, self.u, self.Iq, self.psiq)
 
-        dae.add_jac(Fx0, -mul(self.iM, self.D) + 1 - self.u - 1e-6, self.omega, self.omega)
+        dae.add_jac(Fx0, -mul(self.u, self.iM, self.D) + 1e-6, self.omega, self.omega)
         dae.add_jac(Fy0, mul(self.u, self.iM), self.omega, self.pm)
 
 

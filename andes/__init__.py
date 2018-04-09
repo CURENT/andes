@@ -1,5 +1,5 @@
 __author__ = 'Hantao Cui'
-__version__ = '2017.05.18-dev'
+__version__ = '2018.04.19-dev'
 __all__ = ['main',
            'consts',
            'plot',
