@@ -22,11 +22,11 @@ VSC, idx = 4, node1 = 4, node2 = 0, bus = 16, Vn = 1, name = "VSC 4", rsh = 0.00
 
 VSC1, vsc = 1, name = "VSC 1", Kp1 = 2, Ki1 = 0.2, Kp2 = 4, Ki2 = 1,
       Kp3 = 1, Ki3 = 1
-VSC2B, vsc = 2, name = "VSC 2", Kp1 = 0.1, Ki1 = 0.05, Kp2 = 0.5, Ki2 = 0.01,
+VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.1, Ki1 = 0.05, Kp2 = 0.5, Ki2 = 0.01,
       Kp3 = 0.6, Ki3 = 0.04, D = 4, M = 4, KQ = 0
-VSC2B, vsc = 3, name = "VSC 3", Kp1 = 0.08, Ki1 = 0.04, Kp2 = 0.04, Ki2 = 0.00,
+VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.08, Ki1 = 0.04, Kp2 = 0.04, Ki2 = 0.00,
       Kp3 = 0.02, Ki3 = 0.001, D = 1, M = 4
-VSC2B, vsc = 4, name = "VSC 4", Kp1 = 0.08, Ki1 = 0.04, Kp2 = 0.1, Ki2 = 0.00,
+VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.08, Ki1 = 0.04, Kp2 = 0.1, Ki2 = 0.00,
       Kp3 = 0.02, Ki3 = 0.001, D = 0.4, M = 4
 
 RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.001

@@ -1,6 +1,8 @@
 # DOME format version 1.0
 INCLUDE, vsc39.dm
 
+Fault, bus = 35, Sn = 100, Vn = 1.0, fn = 60, tf = 2.0, tc = 2.04, xf = 0.00001
+
 Syn6a, D = 0.0, M = 8.4, S10 = 0, S12 = 0, Sn = 1000.0, Taa = 0.0, Td10 = 10.2,
        Td20 = 0.03, Tq10 = 1.5, Tq20 = 0.04, Vn = 1.0, bus = 30, coi = 0, fn = 60.0,
        gammap = 1.0, gammaq = 1.0, gen = 1, idx = 1, kp = 0, kw = 0, name = "Syn6a 1",
@@ -132,7 +134,6 @@ BusFreq, idx = 37, bus = 37
 BusFreq, idx = 38, bus = 38
 BusFreq, idx = 39, bus = 39
 
-#Fault, bus = 39, Sn = 100, Vn = 1.0, fn = 60, tf = 2.0, tc = 2.5, xf = 0.00001
 
 Bus, Vn = 1.0, angle = -0.16461, area = 1, idx = 1, name = "Bus 1", owner = 1, region = 0,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.0455, xcoord = 42.557016, ycoord = -73.7173, zone = 1
