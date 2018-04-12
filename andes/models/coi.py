@@ -9,12 +9,12 @@ class COI(ModelBase):
         super(COI, self).__init__(system, name)
         self._data.update({'syn': None,
                            })
-        self._algebs.extend(['omega', 'delta'])
+        self._algebs.extend(['delta', 'omega'])
         self.calls.update({'init1': True, 'gcall': True,
                            'fcall': True, 'jac0': True,
                            })
         self._service.extend(['H', 'M', 'Mtot', 'usyn', 'gdelta', 'gomega'])
-        self._fnamey.extend(['\omega', '\delta'])
+        self._fnamey.extend(['\delta', '\omega'])
         self._inst_meta()
 
     def init1(self, dae):

@@ -17,7 +17,7 @@ class Settings(SettingsBase):
         self.coi = False
         self.connectivity = False
         self.error = 1
-        self.tol = 1e-8
+        self.tol = 1e-6
         self.static = 0
         self.nseries = 0
         self.forcepq = False
@@ -25,8 +25,11 @@ class Settings(SettingsBase):
         self.base = True
         self.dime_enable = False
         self.dime_name = 'sim'
-        self.dime_server = 'tcp://127.0.0.1:5000'
-        self.progressbar = False
+        # self.dime_server = 'tcp://127.0.0.1:5000'
+        # self.dime_server = 'tcp://10.129.132.192:9999'
+        # self.dime_server = 'tcp://160.36.56.211:9900'
+        self.dime_server = 'tcp://160.36.58.82:8898'
+        self.progressbar = True
 
     @property
     def wb(self):

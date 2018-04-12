@@ -127,7 +127,7 @@ def dump_results(system, mu, partfact):
     cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
-    if nblock <= 10:
+    if nblock <= 100:
         for idx in range(nblock):
             start = cpb*idx
             end = cpb*(idx+1)

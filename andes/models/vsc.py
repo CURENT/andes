@@ -766,14 +766,15 @@ class VSC2_Speed1(object):
 
         self._states.extend(['adq'])
         self._fnamex.extend(['\\theta_{dq}'])
+        self._powers.extend(['D'])
 
     def speed_init1(self, dae):
-        # self.iD = div(self.u, self.D)
+        self.iD = div(self.u, self.D)
         dae.x[self.adq] = mul(dae.y[self.a], self.u)
         dae.y[self.ref1] = self.wref0
 
     def speed_gcall(self, dae):
-        dae.g[self.ref1] = self.wref0 - dae.y[self.ref1] + mul(self.D, self.pref0 - dae.y[self.p])
+        dae.g[self.ref1] = self.wref0 - dae.y[self.ref1] + mul(self.iD, self.pref0 - dae.y[self.p])
 
     def speed_fcall(self, dae):
         dae.f[self.adq] = mul(self.u, dae.y[self.ref1] - self.wref0)
@@ -786,7 +787,7 @@ class VSC2_Speed1(object):
 
     def speed_jac0(self, dae):
         dae.add_jac(Gy0, -self.u - 1e-6, self.ref1, self.ref1)
-        dae.add_jac(Gy0, - self.D, self.ref1, self.p)
+        dae.add_jac(Gy0, - self.iD, self.ref1, self.p)
         dae.add_jac(Fy0, self.u, self.adq, self.ref1)
 
 
@@ -808,6 +809,7 @@ class VSC2_Speed2(object):
         self._fnamex.extend(['\\theta_{dq}', 'x_\\omega'])
 
         self._service.extend(['iM'])
+        self._powers.extend(['M', 'D'])
 
     def speed_servcall(self, dae):
         self.iM = mul(self.u, div(1, self.M))
@@ -849,7 +851,7 @@ class VSC2_Common(DCBase):
                            })
         self._descr.update({'vsc': 'static vsc idx'
                             })
-        self._params.extend(['vsc'])
+        self._params.extend(['vsc', 'Sn'])
         self._mandatory.extend(['vsc'])
 
         self._algebs.extend(['p', 'q', 'vd', 'vq'])
