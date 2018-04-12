@@ -89,8 +89,8 @@ AVR1, idx = 9, vrmax = 10.5, vrmin = -10.5, Te = 0.500, Tr = 0.02, Ae = 0.0039, 
 AVR1, idx = 2, vrmax = 5, vrmin = -5, Te = 0.25, Tr = 0.02, Ae = 0.0039, Be = 1.555, syn = 2
 AVR1, idx = 10, vrmax = 20, vrmin = -20, Te = 0.410, Tr = 0.02, Ae = 0.0039, Be = 1.555, syn = 10
 
-COI, idx = 1, name = "COI 1", syn = [8; 9; 10]
-COI, idx = 2, name = "COI 2", syn = [1; 2; 4; 5; 6; 7]
+COI, idx = 1, name = "COI 1", syn = [9; 10]
+COI, idx = 2, name = "COI 2", syn = [1; 2; 3; 4; 5; 6; 7]
 
 BusFreq, idx = 1, bus = 1
 BusFreq, idx = 2, bus = 2
