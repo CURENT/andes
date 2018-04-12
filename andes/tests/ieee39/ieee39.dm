@@ -1,5 +1,5 @@
 # DOME format version 1.0
-INCLUDE, vsc39_fallback.dm
+INCLUDE, vsc39.dm
 
 Syn6a, D = 0.0, M = 8.4, S10 = 0, S12 = 0, Sn = 1000.0, Taa = 0.0, Td10 = 10.2,
        Td20 = 0.03, Tq10 = 1.5, Tq20 = 0.04, Vn = 1.0, bus = 30, coi = 0, fn = 60.0,
