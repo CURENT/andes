@@ -14,7 +14,7 @@ class TDS(SettingsBase):
         self.deltatmax = 1
         self.deltatmin = 0.0002
         self.maxit = 30
-        self.tol = 1e-4
+        self.tol = 1e-6
         self.disturbance = False
         self.error = 1
         self.qrt = False

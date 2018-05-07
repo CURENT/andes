@@ -327,7 +327,7 @@ def main():
     # multiple studies on multiple processors
     else:
         jobs = []
-        kwargs['verbose'] = ERROR
+        kwargs['verbose'] = CRITICAL
         for idx, casename in enumerate(cases):
             kwargs['pid'] = idx
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(casename,), kwargs=kwargs)

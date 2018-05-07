@@ -333,7 +333,7 @@ def run(system):
     if settings.qrt:
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
     if t != settings.tf:
-        system.Log.error('Reached minimum time step. Convergence is not likely.')
+        system.Log.always('Reached minimum time step. Convergence is not likely.')
         retval = False
 
     return retval
