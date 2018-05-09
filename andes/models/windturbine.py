@@ -60,33 +60,58 @@ class Turbine(object):
         self.mva_mega = 100000000.0
 
     def init1(self, dae):
-        dae.x[self.omega_m] = 1
-        dae.x[self.vw] = 1
-        dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.x[self.vw]))
-        self.p0 = mul(self.p0, self.gammap)
-        self.q0 = mul(self.q0, self.gammaq)
-        mva = self.system.Settings.mva
+        retval = True
+        omega = dae.x[self.omega_m]
+        theta = dae.x[self.theta_m]
+
+        # electrical torque in pu
+        te = mul(xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq]))
 
         for i in range(self.n):
-            # base convert constants
-            toSn = mva / self.Sn[i]
-            toSb = self.Sn[i] / mva
+            if te[i] < 0:
+                self.message(
+                    'Electric power is negative at bus <{}>. Wind speed initialize failed.'.format(self.bus[i]), ERROR)
+                retval = False
 
-            # rotor speed
-            if Pg * mva > self.Sn[i]:
-                omega = 1
-            elif Pg > 0 and (Pg * mva < self.Sn[i]):
-                omega = 0.5 * Pg * toSn + 0.5
-            else:
-                omega = 0.5
+        # wind power in pu
+        pw = mul(te, omega)
+        dae.y[self.pw] = pw
 
-            slip = 1 - omega
+        # wind speed initialization loop
 
-            theta = self.Kp[i] * round(1000 * (omega - 1)) / 1000
-            theta = max(theta, 0)
+        R = 4 * pi * mul(self.fn, self.R, self.ngb, div(1, self.npole))
+        AA = pi * self.R ** 2
+        vw = 0.9 * self.Vwn
 
-            dae.x[self.omega_m[i]] = omega
-            dae.x[self.theta_p[i]] = theta
+        for i in range(self.n):
+            mis = 1
+            iter = 0
+            while abs(mis) > self.system.TDS.tol:
+                if iter > 50:
+                    self.message(
+                        'Initialization of wind <{}> failed. Try increasing the nominal wind speed.'.format(self.wind[i]))
+                    retval = False
+                    break
+
+                pw_iter, jac = self.windpower(self.ngen[i], self.rho[i], vw[i], AA[i], R[i], omega[i], theta[i])
+
+                mis = pw_iter - pw[i]
+                inc = -mis / jac[1]
+                vw[i] += inc
+                iter += 1
+
+        # set wind speed and rotor speed
+        dae.x[self.vw] = div(vw, self.Vwn)
+
+        lamb = div(omega, vw, div(1, R))
+        ilamb = div(1, (div(1, lamb + 0.08 * theta) - div(0.035, theta ** 3 + 1)))
+        cp = 0.22 * mul(div(116, ilamb) - 0.4 * theta - 5, exp(div(-12.5, ilamb)))
+
+        dae.y[self.lamb] = lamb
+        dae.y[self.ilamb] = ilamb
+        dae.y[self.cp] = cp
+
+
 
 
 
@@ -141,8 +166,6 @@ class WTG3(ModelBase):
         self.p0 = mul(self.p0, self.gammap)
         self.q0 = mul(self.q0, self.gammaq)
 
-        dae.x[self.vw] = 1
-        dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.x[self.vw]))
         dae.y[self.vsd] = mul(dae.y[self.v], -sin(dae.y[self.a]))
         dae.y[self.vsq] = mul(dae.y[self.v], cos(dae.y[self.a]))
 
@@ -172,11 +195,8 @@ class WTG3(ModelBase):
         # prepare for the iterations
 
         irq = mul(-x1, toSb, (2 * omega - 1), div(1, Vc), div(1, xmu), div(1, omega))
-        ird = zeros(*irq.size)
         isd = zeros(*irq.size)
         isq = zeros(*irq.size)
-        vrd = zeros(*irq.size)
-        vrq = zeros(*irq.size)
 
         # obtain ird isd isq
         for i in range(self.n):
@@ -235,12 +255,17 @@ class WTG3(ModelBase):
             vrd[i] = x[4]
             vrq[i] = x[5]
 
-        dae.x[self.ird] = ird
-        dae.x[self.irq] = irq
+
+        dae.x[self.ird] = mul(self.u0, ird)
+        dae.x[self.irq] = mul(self.u0, irq)
         dae.y[self.isd] = isd
         dae.y[self.isq] = isq
         dae.y[self.vrd] = vrd
         dae.y[self.vrq] = vrq
+
+        dae.x[self.omega_m] = mul(self.u0, omega)
+        dae.x[self.theta_p] = mul(self.u0, theta)
+        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0)
 
         self.vref0 = mul(aneb(self.KV, 0), Vc - div(ird + div(Vc, xmu), self.KV))
         dae.y[self.vref] = self.vref0
@@ -249,7 +274,7 @@ class WTG3(ModelBase):
         self.irq_off = -mul(k, mmax(mmin(2 * omega - 1, 1), 0)) - irq
 
         # electrical torque in pu
-        te = mul(xmu, mul(irq, isd) - mul(ird, isq))
+        te = mul(xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq]))
 
         for i in range(self.n):
             if te[i] < 0:
@@ -284,8 +309,7 @@ class WTG3(ModelBase):
                 vw[i] += inc
                 iter += 1
 
-        # set wind speed and rotor speed
-        dae.x[self.omega_m] = omega
+        # set wind speed
         dae.x[self.vw] = div(vw, self.Vwn)
 
         lamb = div(omega, vw, div(1, R))
@@ -296,13 +320,8 @@ class WTG3(ModelBase):
         dae.y[self.ilamb] = ilamb
         dae.y[self.cp] = cp
 
-        self.system.rmgen(self.gen)
 
-        dae.x[self.ird] = mul(self.u0, dae.x[self.ird])
-        dae.x[self.irq] = mul(self.u0, dae.x[self.irq])
-        dae.x[self.omega_m] = mul(self.u0, dae.x[self.omega_m])
-        dae.x[self.theta_p] = mul(self.u0, dae.x[self.theta_p])
-        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0)
+        self.system.rmgen(self.gen)
 
         if not retval:
             self.message('DFIG initialization failed', ERROR)
