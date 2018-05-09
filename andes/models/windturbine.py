@@ -4,7 +4,90 @@ from ..consts import *
 from .base import ModelBase
 
 from cvxopt.klu import linsolve
-from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, mfloor
+from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
+
+
+class Turbine(object):
+    """Generic wind turbine model"""
+    def __init__(self, system, name):
+        self._algebs.extend([ 'pwa', 'pw', 'cp', 'lamb', 'ilamb'])
+        self._fnamey.extend(
+            ['P_{\\omega a}', 'P_w', 'c_p', '\\lambda', '\\frac{1}{\\lambda}', '\\omega_{ref}'])
+        self._states.extend(['theta_p', 'omega_m'])
+        self._fnamex.extend(['\\theta_p', '\\omega_m'])
+        self._mandatory.extend(['bus', 'wind'])
+        self._params.extend(
+            ['Kp', 'nblade', 'ngen', 'npole', 'R', 'Tp', 'ngb', 'H'])
+        self._ac.update({'bus': ['a', 'v']})
+        self._powers.extend(['H'])
+        self._times.extend(['Tp'])
+        self._data.update(
+            {'R': 35,
+             'ngb': 0.011235,
+             'npole': 4,
+             'wind': 0,
+             'Kp': 10,
+             'H': 2,
+             'Tp': 3.0,
+             'nblade': 3,
+             'ngen': 40,
+             })
+        self._descr.update(
+            {'R': 'Rotor radius',
+             'npole': 'Number of poles',
+             'wind': 'Wind time series idx',
+             'ngb': 'Gear box ratio',
+             'Kp': 'Pitch control gain',
+             'H': 'Machine rotor and turbine inertia constant',
+             'Tp': 'Pitch control time constant',
+             'nblade': 'Number of blades',
+             'ngen': 'Number of generators',
+             })
+        self._units.update(
+            {'R': 'm',
+             'Kp': 'pu',
+             'H': 'MWs/MVA',
+             'Tp': 's',
+             })
+
+    def servcall(self, dae):
+        self.copy_param('Wind', 'vw', 'vw', self.wind)
+        self.copy_param('Wind', 'rho', 'rho', self.wind)
+        self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
+        self.copy_param('Bus', 'Pg', 'p0', self.bus)
+        self.copy_param('Bus', 'Qg', 'q0', self.bus)
+
+        self.mva_mega = 100000000.0
+
+    def init1(self, dae):
+        dae.x[self.omega_m] = 1
+        dae.x[self.vw] = 1
+        dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.x[self.vw]))
+        self.p0 = mul(self.p0, self.gammap)
+        self.q0 = mul(self.q0, self.gammaq)
+        mva = self.system.Settings.mva
+
+        for i in range(self.n):
+            # base convert constants
+            toSn = mva / self.Sn[i]
+            toSb = self.Sn[i] / mva
+
+            # rotor speed
+            if Pg * mva > self.Sn[i]:
+                omega = 1
+            elif Pg > 0 and (Pg * mva < self.Sn[i]):
+                omega = 0.5 * Pg * toSn + 0.5
+            else:
+                omega = 0.5
+
+            slip = 1 - omega
+
+            theta = self.Kp[i] * round(1000 * (omega - 1)) / 1000
+            theta = max(theta, 0)
+
+            dae.x[self.omega_m[i]] = omega
+            dae.x[self.theta_p[i]] = theta
+
 
 
 class WTG3(ModelBase):
@@ -50,61 +133,75 @@ class WTG3(ModelBase):
         self.mva_mega = 100000000.0
 
     def init1(self, dae):
+        """New initialization function"""
         self.servcall(dae)
-        dae.x[self.omega_m] = 1
+        retval = True
+
+        mva = self.system.Settings.mva
+        self.p0 = mul(self.p0, self.gammap)
+        self.q0 = mul(self.q0, self.gammaq)
+
         dae.x[self.vw] = 1
         dae.y[self.lamb] = mul(self.R, dae.x[self.omega_m], div(1, dae.x[self.vw]))
         dae.y[self.vsd] = mul(dae.y[self.v], -sin(dae.y[self.a]))
         dae.y[self.vsq] = mul(dae.y[self.v], cos(dae.y[self.a]))
-        self.p0 = mul(self.p0, self.gammap)
-        self.q0 = mul(self.q0, self.gammaq)
-        mva = self.system.Settings.mva
-        retval = True
+
+        rs = matrix(self.rs)
+        rr = matrix(self.rr)
+        xmu = matrix(self.xmu)
+        x1 = matrix(self.xs) + xmu
+        x2 = matrix(self.xr) + xmu
+        Pg = matrix(self.p0)
+        Qg = matrix(self.q0)
+        Vc = dae.y[self.v]
+        vsq = dae.y[self.vsq]
+        vsd = dae.y[self.vsd]
+
+        toSn = div(mva, self.Sn)  # to system base
+        toSb = self.Sn / mva  # to machine base
+
+        # rotor speed
+        omega = 1 * (ageb(mva * Pg, self.Sn)) + \
+                mul(0.5 + 0.5 * mul(Pg, toSn), aandb(agtb(Pg, 0), altb(mva * Pg, self.Sn))) + \
+                0.5 * (aleb(mva * Pg, 0))
+
+        slip = 1 - omega
+        theta = mul(self.Kp, mround(1000 * (omega - 1)) / 1000)
+        theta = mmax(theta, 0)
+
+        # prepare for the iterations
+
+        irq = mul(-x1, toSb, (2 * omega - 1), div(1, Vc), div(1, xmu), div(1, omega))
+        ird = zeros(*irq.size)
+        isd = zeros(*irq.size)
+        isq = zeros(*irq.size)
+        vrd = zeros(*irq.size)
+        vrq = zeros(*irq.size)
+
+        # obtain ird isd isq
         for i in range(self.n):
-            rs = self.rs[i]
-            rr = self.rr[i]
-            xmu = self.xmu[i]
-            x1 = self.xs[i] + xmu
-            x2 = self.xr[i] + xmu
-            Pg = self.p0[i]
-            Qg = self.q0[i]
-            Vc = dae.y[self.v[i]]
-            vsq = dae.y[self.vsq][i]
-            vsd = dae.y[self.vsd][i]
-
-            # base convert constants
-            toSn = mva / self.Sn[i]
-            toSb = self.Sn[i] / mva
-
-            # rotor speed
-            if Pg * mva > self.Sn[i]:
-                omega = 1
-            elif Pg > 0 and (Pg * mva < self.Sn[i]):
-                omega = 0.5 * Pg * toSn + 0.5
-            else:
-                omega = 0.5
-
-            slip = 1 - omega
-
-            irq = -x1 * toSb * (2 * omega - 1) / Vc / xmu / omega
-            A = sparse([[-rs, vsq], [x1, -vsd]])
-            B = matrix([vsd - xmu * irq, Qg])
+            A = sparse([[-rs[i], vsq[i]], [x1[i], -vsd[i]]])
+            B = matrix([vsd[i] - xmu[i] * irq[i], Qg[i]])
             linsolve(A, B)
+            isd[i] = B[0]
+            isq[i] = B[1]
+        ird = -div(vsq + mul(rs, isq) + mul(x1, isd), xmu)
+        vrd = - mul(rr, ird) + mul(slip, mul(x2, irq) + mul(xmu, isq))  # todo: check x1 or x2
+        vrq = - mul(rr, irq) - mul(slip, mul(x2, ird) + mul(xmu, isd))
 
-            isd = B[0]
-            isq = B[1]
-            ird = -(vsq + rs * isq + x1 * isd) / xmu
-            vrd = - rr * ird + slip * (x2 * irq + xmu * isq) # todo: check x1 or x2
-            vrq = - rr * irq - slip * (x2 * ird + xmu * isd)
-
+        # main iterations
+        for i in range(self.n):
             mis = ones(6, 1)
-            x = matrix([isd, isq, ird, irq, vrd, vrq])
-
             rows = [0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
             cols = [0, 1, 3, 0, 1, 2, 2, 4, 3, 5, 0, 1, 2]
-            vals = [-rs, x1, xmu, -x1, -rs, -xmu, -rr, -1, -rr, -1, vsd, vsq, -xmu * Vc / x1]
-            jac0 = spmatrix(vals, rows, cols, (6, 6), 'd')
 
+            x = matrix([isd[i], isq[i], ird[i], irq[i], vrd[i], vrq[i]])
+            # vals = [-rs, x1, xmu, -x1, -rs, -xmu, -rr,
+            #         -1, -rr, -1, vsd, vsq, -xmu * Vc / x1]
+
+            vals = [-rs[i], x1[i], xmu[i], -x1[i], -rs[i], -xmu[i], -rr[i],
+                    -1, -rr[i], -1, vsd[i], vsq[i], - xmu[i] * Vc[i] / x1[i]]
+            jac0 = spmatrix(vals, rows, cols, (6, 6), 'd')
             iter = 0
 
             while max(abs(mis)) > self.system.TDS.tol:
@@ -113,16 +210,16 @@ class WTG3(ModelBase):
                     retval = False
                     break
 
-                mis[0] = -rs * x[0] + x1 * x[1] + xmu * x[3] - vsd
-                mis[1] = -rs * x[1] - x1 * x[0] - xmu * x[2] - vsq
-                mis[2] = -rr * x[2] + slip * (x2 * x[3] + xmu * x[1]) - x[4]
-                mis[3] = -rr * x[3] - slip * (x2 * x[2] + xmu * x[0]) - x[5]
-                mis[4] = vsd * x[0] + vsq * x[1] + x[4] * x[2] + x[5] * x[3] - Pg
-                mis[5] = -xmu * Vc * x[2] / x1 - Vc * Vc / x1 - Qg
+                mis[0] = -rs[i] * x[0] + x1[i] * x[1] + xmu[i] * x[3] - vsd[i]
+                mis[1] = -rs[i] * x[1] - x1[i] * x[0] - xmu[i] * x[2] - vsq[i]
+                mis[2] = -rr[i] * x[2] + slip[i] * (x2[i] * x[3] + xmu[i] * x[1]) - x[4]
+                mis[3] = -rr[i] * x[3] - slip[i] * (x2[i] * x[2] + xmu[i] * x[0]) - x[5]
+                mis[4] = vsd[i] * x[0] + vsq[i] * x[1] + x[4] * x[2] + x[5] * x[3] - Pg[i]
+                mis[5] = -xmu[i] * Vc[i] * x[2] / x1[i] - Vc[i] * Vc[i] / x1[i] - Qg[i]
 
                 rows = [2, 2, 3, 3, 4, 4, 4, 4]
                 cols = [1, 3, 0, 2, 2, 3, 4, 5]
-                vals = [slip * xmu, slip * x2, -slip * xmu, -slip * x2, x[4], x[5], x[2], x[3]]
+                vals = [slip[i] * xmu[i], slip[i] * x2[i], -slip[i] * xmu[i], -slip[i] * x2[i], x[4], x[5], x[2], x[3]]
 
                 jac = jac0 + spmatrix(vals, rows, cols, (6, 6), 'd')
 
@@ -131,65 +228,48 @@ class WTG3(ModelBase):
                 x -= mis
                 iter += 1
 
-            isd = x[0]
-            isq = x[1]
-            ird = x[2]
-            irq = x[3]
-            vrd = x[4]
-            vrq = x[5]
+            isd[i] = x[0]
+            isq[i] = x[1]
+            ird[i] = x[2]
+            irq[i] = x[3]
+            vrd[i] = x[4]
+            vrq[i] = x[5]
 
-            # check limits
-            pass
+        dae.x[self.ird] = ird
+        dae.x[self.irq] = irq
+        dae.y[self.isd] = isd
+        dae.y[self.isq] = isq
+        dae.y[self.vrd] = vrd
+        dae.y[self.vrq] = vrq
 
-            theta = self.Kp[i] * round(1000 * (omega - 1)) / 1000
-            theta = max(theta, 0)
+        self.vref0 = mul(aneb(self.KV, 0), Vc - div(ird + div(Vc, xmu), self.KV))
+        dae.y[self.vref] = self.vref0
+        k = mul(div(x1, Vc, xmu, omega), toSb)
 
-            # states
-            dae.x[self.ird[i]] = ird
-            dae.x[self.irq[i]] = irq
-            dae.x[self.omega_m[i]] = omega
-            dae.x[self.theta_p[i]] = theta
-            dae.y[self.isd[i]] = isd
-            dae.y[self.isq[i]] = isq
-            dae.y[self.vrd[i]] = vrd
-            dae.y[self.vrq[i]] = vrq
-            # dae.y[self.omega_ref[i]] = omega
+        self.irq_off = -mul(k, mmax(mmin(2 * omega - 1, 1), 0)) - irq
 
-            # self.omega_ref0[i] = omega
+        # electrical torque in pu
+        te = mul(xmu, mul(irq, isd) - mul(ird, isq))
 
-            # voltage control
-            if self.KV[i] == 0:
-                self.vref0[i] = 0
-            else:
-                self.vref0[i] = Vc - (ird + Vc/xmu) / self.KV[i]
-
-            dae.y[self.vref[i]] = self.vref0[i]
-
-            # k = x1 * toSb / Vc / xmu
-            k = x1 / Vc / xmu /omega * toSb
-            self.irq_off[i] = -k *max(min(2*omega - 1, 1), 0) - irq
-
-            # electrical torque in pu
-            te = xmu * (irq * isd - ird * isq)
-            # te = -xmu * Vc * irq / x1
-
-            if te < 0:
+        for i in range(self.n):
+            if te[i] < 0:
                 self.message(
                     'Electric power is negative at bus <{}>. Wind speed initialize failed.'.format(self.bus[i]), ERROR)
                 retval = False
 
-            # wind power in pu
-            pw = te * omega
-            dae.y[self.pw[i]] = pw
+        # wind power in pu
+        pw = mul(te, omega)
+        dae.y[self.pw] = pw
 
-            # wind speed
+        # wind speed initialization loop
+
+        R = 4 * pi * self.system.Settings.freq * mul(self.R, self.ngb, div(1, self.npole[i]))
+        AA = pi * self.R ** 2
+        vw = 0.9 * self.Vwn
+
+        for i in range(self.n):
             mis = 1
             iter = 0
-
-            R = 4 * pi * self.system.Settings.freq * self.R[i] * self.ngb[i] / self.npole[i]
-            AA = pi * self.R[i] ** 2
-            vw = 0.9 * self.Vwn[i]
-
             while abs(mis) > self.system.TDS.tol:
                 if iter > 50:
                     self.message(
@@ -197,24 +277,25 @@ class WTG3(ModelBase):
                     retval = False
                     break
 
-                pw_iter, jac = self.windpower(self.ngen[i], self.rho[i], vw, AA, R, omega, theta)
+                pw_iter, jac = self.windpower(self.ngen[i], self.rho[i], vw[i], AA[i], R[i], omega[i], theta[i])
 
-                mis = pw_iter - pw
+                mis = pw_iter - pw[i]
                 inc = -mis / jac[1]
-                vw += inc
+                vw[i] += inc
                 iter += 1
-            # set wind speed
-            dae.x[self.vw[i]] = vw / self.Vwn[i]
 
-            lamb = omega * R / vw
-            ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta ** 3 + 1))
-            cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
+        # set wind speed and rotor speed
+        dae.x[self.omega_m] = omega
+        dae.x[self.vw] = div(vw, self.Vwn)
 
-            dae.y[self.lamb[i]] = lamb
-            dae.y[self.ilamb[i]] = ilamb
-            dae.y[self.cp[i]] = cp
+        lamb = div(omega, vw, div(1, R))
+        ilamb = div(1, (div(1, lamb + 0.08 * theta) - div(0.035, theta ** 3 + 1)))
+        cp = 0.22 * mul(div(116, ilamb) - 0.4 * theta - 5, exp(div(-12.5, ilamb)))
 
-        # remove static gen
+        dae.y[self.lamb] = lamb
+        dae.y[self.ilamb] = ilamb
+        dae.y[self.cp] = cp
+
         self.system.rmgen(self.gen)
 
         dae.x[self.ird] = mul(self.u0, dae.x[self.ird])

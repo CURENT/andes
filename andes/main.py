@@ -328,16 +328,20 @@ def main():
     else:
         jobs = []
         kwargs['verbose'] = CRITICAL
+        ncpu = os.cpu_count()
         for idx, casename in enumerate(cases):
+            if idx % ncpu == ncpu - 1:
+                sleep(0.1)
+                for job in jobs:
+                    job.join()
+                jobs = []
+
             kwargs['pid'] = idx
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(casename,), kwargs=kwargs)
             jobs.append(job)
             job.start()
             print('Process {:d} <{:s}> started.'.format(idx, casename))
 
-        sleep(0.1)
-        for job in jobs:
-            job.join()
         t0, s0 = elapsed(t0)
         print('--> Multiple processing finished in {0:s}.'.format(s0))
         return
