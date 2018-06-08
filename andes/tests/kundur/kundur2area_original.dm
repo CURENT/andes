@@ -38,13 +38,6 @@ AVR1, Ae = 0.0056, Be = 1.075, Ka = 20.0, Kf = 0.125, Ta = 0.055,
       Te = 0.36, Tf = 1.8, Tr = 0.05, idx = 4, name = "AVR1 4",
       syn = 3
 
-BusFreq, idx = 1, bus = 1
-BusFreq, idx = 2, bus = 2
-BusFreq, idx = 3, bus = 3
-BusFreq, idx = 4, bus = 4
-
-PSS1, idx = 1, avr = 3
-
 #Breaker, bus = 1, idx = "Breaker_1", line = "Line_14", name = "Breaker 1", t1 = 1.1,
 #         t2 = 999999.0, u1 = 1
 Breaker, bus = 7, Vn = 230, idx = "Breaker_2", line = "Line_5", name = "Breaker 2", t1 = 2.0,

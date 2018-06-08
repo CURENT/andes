@@ -107,7 +107,7 @@ class R(DCBase):
         self._params.extend(['R'])
         self._data.update({'R': 0.01,
                            })
-        self._r.extend('R')
+        self._r.extend(['R'])
         self.calls.update({'pflow': True,
                            'gcall': True,
                            'jac0': True,
@@ -521,3 +521,26 @@ class Ground(DCBase):
         dae.add_jac(Gy0, -self.u, self.v, self.I)
         dae.add_jac(Gy0, self.u - 1 - 1e-6, self.I, self.I)
         dae.add_jac(Gy0, -self.u, self.I, self.v)
+
+
+class DCgen(DCBase):
+    """DC generator to impose active power injection"""
+    def __init__(self, system, name):
+        super().__init__(system, name)
+        self._name = 'DCgen'
+        self._params.extend(['P', 'Sn'])
+        self._data.update({'P': 0.0,
+                           })
+        self._powers.extend(['P'])
+        self.calls.update({'pflow': True,
+                           'gcall': True,
+                           'stagen': True,
+                           })
+        self._inst_meta()
+
+    def gcall(self, dae):
+        dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
+
+    def disable_gen(self, idx):
+        pass

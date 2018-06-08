@@ -204,4 +204,4 @@ AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
 
 WTG3, bus = 2, gen = 2, wind = 1, Vn = 69, Sn = 50, qmax = 0.7, qmin = -0.7
 
-Weibull, idx = 1
+ConstWind, idx = 1

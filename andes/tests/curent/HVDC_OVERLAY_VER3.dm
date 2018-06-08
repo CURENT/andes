@@ -25,27 +25,27 @@ Node, idx = 207, name = "Node 72 N", Vdcn = -193.0, xcoord = 45.89, ycoord = -10
 Node, idx = 208, name = "Node 157962 N", Vdcn = -193.0, xcoord = 39.45, ycoord = -94.98, area = 541, region = 541
 Node, idx = 209, name = "Node 115250 N", Vdcn = -193.0, xcoord = 33.15, ycoord = -81.76, area = 146, region = 140
 
-RLs, idx = 1, name = "RLs 70_59 P", node1 = 1, node2 = 2, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 2, name = "RLs 72_70 P", node1 = 7, node2 = 1, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 3, name = "RLs 160002_72 P", node1 = 3, node2 = 7, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 4, name = "RLs 160002_137523 P", node1 = 3, node2 = 4, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 5, name = "RLs 137523_30035 P", node1 = 4, node2 = 5, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 6, name = "RLs 30035_15 P", node1 = 5, node2 = 6, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 7, name = "RLs 15_59 P", node1 = 6, node2 = 2, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 8, name = "RLs 72_59 P", node1 = 7, node2 = 2, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 9, name = "RLs 157962_137523 P", node1 = 8, node2 = 4, Vdcn = 193.0, R = 2, L = 0.5
-RLs, idx = 10, name = "RLs 30035_115250 P", node1 = 5, node2 = 9, Vdcn = 193.0, R = 2, L = 0.5
+RLs, idx = 1, name = "RLs 70_59 P", node1 = 1, node2 = 2, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 2, name = "RLs 72_70 P", node1 = 7, node2 = 1, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 3, name = "RLs 160002_72 P", node1 = 3, node2 = 7, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 4, name = "RLs 160002_137523 P", node1 = 3, node2 = 4, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 5, name = "RLs 137523_30035 P", node1 = 4, node2 = 5, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 6, name = "RLs 30035_15 P", node1 = 5, node2 = 6, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 7, name = "RLs 15_59 P", node1 = 6, node2 = 2, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 8, name = "RLs 72_59 P", node1 = 7, node2 = 2, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 9, name = "RLs 157962_137523 P", node1 = 8, node2 = 4, Vdcn = 193.0, R = 1, L = 0.01
+RLs, idx = 10, name = "RLs 30035_115250 P", node1 = 5, node2 = 9, Vdcn = 193.0, R = 1, L = 0.01
 
-RLs, idx = 201, name = "RLs 70_59 N", node1 = 201, node2 = 202, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 202, name = "RLs 72_70 N", node1 = 207, node2 = 201, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 203, name = "RLs 160002_72 N", node1 = 203, node2 = 207, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 204, name = "RLs 160002_137523 N", node1 = 203, node2 = 204, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 205, name = "RLs 137523_30035 N", node1 = 204, node2 = 205, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 206, name = "RLs 30035_15 N", node1 = 205, node2 = 206, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 207, name = "RLs 15_59 N", node1 = 206, node2 = 202, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 208, name = "RLs 72_59 N", node1 = 207, node2 = 202, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 209, name = "RLs 157962_137523 N", node1 = 208, node2 = 204, Vdcn = -193.0, R = 2, L = 0.5
-RLs, idx = 210, name = "RLs 30035_115250 N", node1 = 205, node2 = 209, Vdcn = -193.0, R = 2, L = 0.5
+RLs, idx = 201, name = "RLs 70_59 N", node1 = 201, node2 = 202, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 202, name = "RLs 72_70 N", node1 = 207, node2 = 201, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 203, name = "RLs 160002_72 N", node1 = 203, node2 = 207, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 204, name = "RLs 160002_137523 N", node1 = 203, node2 = 204, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 205, name = "RLs 137523_30035 N", node1 = 204, node2 = 205, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 206, name = "RLs 30035_15 N", node1 = 205, node2 = 206, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 207, name = "RLs 15_59 N", node1 = 206, node2 = 202, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 208, name = "RLs 72_59 N", node1 = 207, node2 = 202, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 209, name = "RLs 157962_137523 N", node1 = 208, node2 = 204, Vdcn = -193.0, R = 1, L = 0.01
+RLs, idx = 210, name = "RLs 30035_115250 N", node1 = 205, node2 = 209, Vdcn = -193.0, R = 1, L = 0.01
 
 C, idx = 1, name = "C 70 P", node1 = 1, node2 = 0, Vdcn = 193.0, C = 0.02
 C, idx = 2, name = "C 59 P", node1 = 2, node2 = 0, Vdcn = 193.0, C = 0.005
@@ -100,28 +100,28 @@ VSC, idx = 201, name = "VSC 70_N", bus = 70, node1 = 201, node2 = 0,
      vref0 = 1.00, vdcref0 = 1.025, control = "vV", Vdcn = 193, u = 1
 VSC, idx = 202, name = "VSC 59_N", bus = 59, node1 = 202, node2 = 0,
      Vn = 230,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = -3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = -4, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 203, name = "VSC 160002_N", bus = 160002, node1 = 203, node2 = 0,
      Vn = 26,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 1, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 204, name = "VSC 137523_N", bus = 137523, node1 = 204, node2 = 0,
      Vn = 25,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = -0.5, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = -4, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 205, name = "VSC 30035_N", bus = 30035, node1 = 205, node2 = 0,
      Vn = 22,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 1, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 206, name = "VSC 15_N", bus = 15, node1 = 206, node2 = 0,
      Vn = 500,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 0.2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 207, name = "VSC 72_N", bus = 72, node1 = 207, node2 = 0,
      Vn = 500,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 1, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 208, name = "VSC 157962_N", bus = 157962, node1 = 208, node2 = 0,
      Vn = 25,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = 1, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = 3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 VSC, idx = 209, name = "VSC 115250_N", bus = 115250, node1 = 209, node2 = 0,
      Vn = 25,  rsh = 0.001, xsh = 0.04, vshmax = 999, vshmin = 0, Ishmax = 999,
-     pref0 = -2, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
+     pref0 = -3, qref0 = 0.01, control = "PQ", Vdcn = 193, u = 1
 
 VSC1, vsc = 1, name = "VSC 70 P", Kp1 = 0.02, Ki1 = 0, Kp2 = 10, Ki2 = 0, Kp3 = 1, Ki3 = 0
 VSC1, vsc = 2, name = "VSC 59 P", Kp1 = 1, Ki1 = 0, Kp2 = 1, Ki2 = 0, Kp3 = 1, Ki3 = 0

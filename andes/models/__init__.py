@@ -11,7 +11,7 @@ order = ['bus', 'Node', 'Ground', 'line',
          'synchronous', 'governor', 'avr', 'pss',
          'windturbine', 'wind',
          'coi', 'ACE', 'AGC', 'EAGC',
-         'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs'
+         'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs', 'DCgen',
          'vsc',
          ]
 
@@ -40,7 +40,8 @@ non_jits = {'bus': {'Bus': 'Bus'},
                        'RCs': 'RCs',
                        'RCp': 'RCp',
                        'RLCp': 'RLCp',
-                       'RLCs': 'RLCs'
+                       'RLCs': 'RLCs',
+                       'DCgen': 'DCgen',
                        },
             'synchronous': {'Syn2': 'Syn2',
                             'Syn6a': 'Syn6a',
