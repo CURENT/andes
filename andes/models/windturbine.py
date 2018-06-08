@@ -12,9 +12,9 @@ class Turbine(object):
     def __init__(self, system, name):
         self._algebs.extend([ 'pw', 'cp', 'lamb', 'ilamb'])
         self._fnamey.extend(
-            ['P_w', 'c_p', '\\lambda', '\\frac{1}{\\lambda}', '\\omega_{ref}'])
-        self._states.extend(['theta_p', 'omega_m'])
-        self._fnamex.extend(['\\theta_p', '\\omega_m'])
+            ['P_w', 'c_p', '\\lambda', '\\frac{1}{\\lambda}', ])
+        self._states.extend(['theta_p'])
+        self._fnamex.extend(['\\theta_p'])
         self._mandatory.extend(['wind'])
         self._params.extend(
             ['Kp', 'nblade', 'ngen', 'npole', 'R', 'Tp', 'ngb', 'H'])
@@ -136,8 +136,6 @@ class Turbine(object):
         dae.f[self.theta_p] = mul(div(1, self.Tp), -dae.x[self.theta_p] + mul(self.Kp, self.phi, -1 + dae.x[self.omega_m]))
         dae.anti_windup(self.theta_p, 0, pi)
 
-        dae.f[self.omega_m] = mul(0.5, div(1, self.H), mul(dae.y[self.pw], div(1, dae.x[self.omega_m])) - mul(self.xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq])))
-
     def gycall(self, dae):
         dae.add_jac(Gy, mul(0.5, self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3), self.pw, self.cp)
         dae.add_jac(Gy, mul(-25.52, (dae.y[self.ilamb])**-2, exp(mul(-12.5, div(1, dae.y[self.ilamb])))) + mul(12.5, (dae.y[self.ilamb])**-2, -1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb])))), self.cp, self.ilamb)
@@ -159,6 +157,8 @@ class Turbine(object):
         dae.add_jac(Gy0, 1e-6, self.cp, self.cp)
         dae.add_jac(Gy0, 1e-6, self.lamb, self.lamb)
         dae.add_jac(Gy0, 1e-6, self.ilamb, self.ilamb)
+        dae.add_jac(Fx0, - div(1, self.Tp), self.theta_p, self.theta_p)
+        dae.add_jac(Fx0, mul(self.Kp, self.phi, div(1, self.Tp)), self.theta_p, self.omega_m)
 
 
 class WTG3(ModelBase):
