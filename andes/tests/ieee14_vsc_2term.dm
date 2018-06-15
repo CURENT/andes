@@ -18,7 +18,6 @@ Bus, Vn = 13.8, idx = 14, name = "Bus 14", xcoord = [7.875; 7.275], ycoord = [5.
 Area, idx = 1, name = "14-Bus Area 1"
 Area, idx = 2, name = "14-Bus Area 2"
 
-
 Region, Ptol = 9.9999, idx = 1, name = "14Bus   14", slack = 1.0
 
 # Parameter 'phi' of phase changer has unit 'Deg'
@@ -233,6 +232,13 @@ C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C4", name = "C 4", node1 = 4, node2 = 0, Vdcn = 100, C = 0.0001
 
-Fault, bus = 1, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+# Fault, bus = 1, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
-DCgen, idx = 1, Vdcn = 100, node1 = 1, node2 = 0, P = 1
+DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 1
+DCgen, idx = "DCgen_2", Vdcn = 100, node1 = 1, node2 = 0, P = 1
+DCgen, idx = "DCgen_3", Vdcn = 100, node1 = 1, node2 = 0, P = 1
+DCgen, idx = "DCgen_4", Vdcn = 100, node1 = 1, node2 = 0, P = 1
+
+ConstWind, idx = 1
+
+WTG4DC, node1 = 1, node2 = 0, dcgen = "DCgen_1", wind = 1

@@ -29,7 +29,7 @@ class Settings(SettingsBase):
         # self.dime_server = 'tcp://10.129.132.192:9999'
         # self.dime_server = 'tcp://160.36.56.211:9900'
         self.dime_server = 'tcp://160.36.58.82:8898'
-        self.progressbar = True
+        self.progressbar = False
 
     @property
     def wb(self):

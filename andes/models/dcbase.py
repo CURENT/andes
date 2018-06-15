@@ -540,7 +540,8 @@ class DCgen(DCBase):
 
     def gcall(self, dae):
         dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
+        dae.g -= spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def disable_gen(self, idx):
-        pass
+        self.u[self.int[idx]] = 0
+        self.system.DAE.factorize = True

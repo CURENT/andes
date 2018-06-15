@@ -6,6 +6,26 @@ from .base import ModelBase
 from cvxopt.klu import linsolve
 from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
 
+class MPPT(object):
+    """MPPT control algorithm"""
+    def __init__(self, system, name):
+        self._algebs.extend(['pwa'])
+        self._fnamey.extend(['P_w^{opt}'])
+
+    def init1(self, dae):
+        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0)
+
+    def gcall(self, dae):
+        dae.g[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0) - dae.y[self.pwa]
+        dae.hard_limit(self.pwa, 0, 1)
+
+    def gycall(self, dae):
+        pass
+
+    def jac0(self, dae):
+        dae.add_jac(Gy0, -1, self.pwa, self.pwa)
+        dae.add_jac(Gx0, 2, self.pwa, self.omega_m)
+        dae.add_jac(Gy0, 1e-6, self.pwa, self.pwa)
 
 class Turbine(object):
     """Generic wind turbine model"""
@@ -49,10 +69,20 @@ class Turbine(object):
              'Tp': 's',
              })
 
+    @property
+    def phi(self):
+        deg1 = pi / 180
+        dae = self.system.DAE
+        above = agtb(dae.x[self.omega_m], 1)
+        phi_degree_step = mfloor((dae.x[self.omega_m] - 1)/deg1) * deg1
+        return mul(phi_degree_step, above)
+
     def servcall(self, dae):
         self.copy_param('Wind', 'vw', 'vw', self.wind)
         self.copy_param('Wind', 'rho', 'rho', self.wind)
         self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
+        self.mva_mega = 100e6
+
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
         mva_mega = self.system.Settings.mva * 1e6
@@ -80,16 +110,18 @@ class Turbine(object):
         retval = True
 
         # electrical torque in pu
-        te = mul(xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq]))
+        # te = mul(xmu, mul(dae.x[self.irq], dae.y[self.isd]) - mul(dae.x[self.ird], dae.y[self.isq]))
 
         for i in range(self.n):
-            if te[i] < 0:
+            if self.te0[i] < 0:
                 self.message(
                     'Electric power is negative at bus <{}>. Wind speed initialize failed.'.format(self.bus[i]), ERROR)
                 retval = False
 
         # wind power in pu
-        pw = mul(te, omega)
+        omega = dae.x[self.omega_m]
+        theta = dae.x[self.theta_p]
+        pw = mul(self.te0, dae.x[self.omega_m])
         dae.y[self.pw] = pw
 
         # wind speed initialization loop
@@ -159,6 +191,251 @@ class Turbine(object):
         dae.add_jac(Gy0, 1e-6, self.ilamb, self.ilamb)
         dae.add_jac(Fx0, - div(1, self.Tp), self.theta_p, self.theta_p)
         dae.add_jac(Fx0, mul(self.Kp, self.phi, div(1, self.Tp)), self.theta_p, self.omega_m)
+
+
+class WTG4DC(ModelBase, Turbine, MPPT):
+    """Wind turbine type IV DC output"""
+    def __init__(self, system, name):
+        ModelBase.__init__(self, system, name)
+        Turbine.__init__(self, system, name)
+        MPPT.__init__(self, system, name)
+        self._group = 'WTG'
+        self._name = 'WTG4DC'
+        self._algebs.extend(['isd', 'vsd', 'vsq', 'ps', 'te'])
+        self._fnamex.extend(['\\omega_m', 'I_{s, q}'])
+        self._fnamey.extend(['I_{s, d}', 'I_{s, q}', 'V_{s, d}', 'V_{s, q}', 'P_s', 'Q_s', '\\\\tau_e'])
+        self._mandatory.extend(['node1', 'node2', 'dcgen', 'wind'])
+        self._params.extend(['fn','rs', 'xd', 'xq', 'psip', 'Tep', 'Teq', 'pmax', 'pmin', 'qmax', 'qmin', 'u', 'Sn'])
+        self._powers.extend(['H', 'pmax', 'pmin', 'qmax', 'qmin'])
+        self._service.extend(['qs0'])
+        self._states.extend(['omega_m', 'isq'])
+        self._times.extend(['Tep', 'Teq', 'Tp'])
+        self._r.extend(['rs', 'xd', 'xq'])
+        self._data.update({
+            'fn': 60,
+            'Sn': 40,
+            'Tep': 0.01,
+            'Teq': 0.01,
+            'dcgen': 0,
+            'node1': 0,
+            'node2': 0,
+            'pmax': 1.0,
+            'pmin': 0,
+            'psip': 0.1,
+            'qmax': 0.6,
+            'qmin': -0.6,
+            'rs': 0.01,
+            'u': 1,
+            'wind': 0,
+            'xd': 0.08,
+            'xq': 0.1})
+        self._descr.update({
+            'Sn': 'Power rating',
+            'Tep': 'Active power time constant',
+            'Teq': 'Reactive power time constant',
+            'dcgen': 'Static generator index',
+            'node1': 'DC node 1',
+            'node2': 'DC node 2',
+            'pmax': 'Maximum active power',
+            'pmin': 'Minimum reactive power',
+            'psip': 'Permanent field flux',
+            'qmax': 'Maximum reactive power',
+            'qmin': 'Minimum reactive power',
+            'rs': 'Stator resistance',
+            'u': 'Connection status',
+            'wind': 'Wind time series index',
+            'xd': 'd-axis reactance',
+            'xq': 'q-axis reactance'})
+        self._units.update({
+            'Sn': 'MVA',
+            'Tep': 's',
+            'Teq': 's',
+            'pmax': 'pu',
+            'psip': 'Weber',
+            'qmax': 'pu',
+            'rs': 'pu',
+            'xd': 'pu',
+            'xq': 'pu'})
+        self.calls.update({'fcall': True, 'fxcall': True, 'gcall': True, 'gycall': True, 'init1': True, 'jac0': True})
+        self._dc = {'node1': 'v1',
+                    'node2': 'v2',
+                    }
+
+        self._inst_meta()
+
+    def _inst_meta(self):
+        super(WTG4DC, self)._inst_meta()
+
+    def base(self):
+        super(WTG4DC, self).base()
+
+    def servcall(self, dae):
+        self.copy_param('DCgen', 'u', 'u0', self.dcgen)
+        self.copy_param('DCgen', 'P', 'p0', self.dcgen)
+        self.copy_param('Wind', 'vw', 'vw', self.wind)
+        self.copy_param('Wind', 'rho', 'rho', self.wind)
+        self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
+        # self.copy_param('Node', 'v', 'v1', self.node1)
+        # self.copy_param('Node', 'v', 'v2', self.node2)
+        # self.qs0 = 0
+        Turbine.servcall(self, dae)
+
+    def init1(self, dae):
+        self.servcall(dae)
+        mva = self.system.Settings.mva
+        self.p0 = mul(self.p0, 1)
+
+        toSn = div(mva, self.Sn)  # to system base
+        toSb = self.Sn / mva  # to machine base
+        rs = matrix(self.rs)
+        xd = matrix(self.xd)
+        xq = matrix(self.xq)
+        psip = matrix(self.psip)
+        Pg = matrix(self.p0)
+
+        # rotor speed
+        omega = 1 * (ageb(mva * Pg, self.Sn)) + \
+                mul(0.5 + 0.5 * mul(Pg, toSn), aandb(agtb(Pg, 0), altb(mva * Pg, self.Sn))) + \
+                0.5 * (aleb(mva * Pg, 0))
+
+        theta = mul(self.Kp, mround(1000 * (omega - 1)) / 1000)
+        theta = mmax(theta, 0)
+
+        # variables to initialize iteratively: vsd, vsq, isd, isq
+
+        vsd = matrix(0.8, (self.n, 1))
+        vsq = matrix(0.6, (self.n, 1))
+        isd = matrix(self.p0 / 2)
+        isq = matrix(self.p0 / 2)
+
+        for i in range(self.n):
+            # vsd = 0.5
+            # vsq = self.psip[i]
+            # isd = Pg / 2
+            # isq = Pg / 2
+            x = matrix([vsd[i], vsq[i], isd[i], isq[i]])
+
+            mis = ones(4, 1)
+            jac = sparse(matrix(0, (4, 4), 'd'))
+            iter = 0
+            while (max(abs(mis))) > self.system.TDS.tol:
+                if iter > 40:
+                    self.message('Initialization of WTG4DC <{}> failed.'.format(self.name[i]), ERROR)
+                    break
+                mis[0] = x[0] * x[2] + x[1] * x[3] - Pg[i]
+                # mis[1] = omega[i] * x[3] * (psip[i] + (xq[i] - xd[i]) * x[2]) - Pg[i]
+                mis[1] = omega[i] * x[3] * (psip[i] - xd[i] * x[2]) - Pg[i]
+                mis[2] = -x[0] - rs[i] * x[2] + omega[i] * xq[i] * x[3]
+                mis[3] = x[1] + rs[i] * x[3] + omega[i] * xd[i] * x[2] - omega[i] * psip[i]
+
+                jac[0, 0] = x[2]
+                jac[0, 1] = x[3]
+                jac[0, 2] = x[0]
+                jac[0, 3] = x[1]
+
+                jac[1, 2] = omega[i] * x[3] * ( - xd[i])
+                jac[1, 3] = omega[i] * (psip[i] + ( - xd[i]) * x[2])
+
+                jac[2, 0] = -1
+                jac[2, 2] = -rs[i]
+                jac[2, 3] = omega[i] * xq[i]
+                jac[3, 1] = 1
+                jac[3, 2] = omega[i] * xd[i]
+                jac[3, 3] = rs[i]
+
+                linsolve(jac, mis)
+                x -= mis
+                iter += 1
+
+            vsd[i] = x[0]
+            vsq[i] = x[1]
+            isd[i] = x[2]
+            isq[i] = x[3]
+
+        dae.y[self.isd] = isd
+        dae.y[self.vsd] = vsd
+        dae.y[self.vsq] = vsq
+
+        dae.x[self.isq] = isq
+        dae.x[self.omega_m] = mul(self.u0, omega)
+        dae.x[self.theta_p] = mul(self.u0, theta)
+        dae.y[self.pwa] = mmax(mmin(2 * dae.x[self.omega_m] - 1, 1), 0)
+
+        self.ps0 = mul(vsd, isd) + mul(vsq, isq)
+        self.qs0 = mul(vsq, isd) - mul(vsd, isq)
+        self.te0 = mul(isq, psip + mul(xq - xd, isd))
+        dae.y[self.te] = self.te0
+        dae.y[self.ps] = self.ps0
+
+        MPPT.init1(self, dae)
+        Turbine.init1(self, dae)
+
+        self.system.rmgen(self.dcgen)
+
+    def gcall(self, dae):
+        Turbine.gcall(self, dae)
+        MPPT.gcall(self, dae)
+        dae.g[self.isd] = -self.qs0 + mul(dae.y[self.isd], dae.y[self.vsq]) - mul(dae.x[self.isq], dae.y[self.vsd])
+        dae.g[self.vsd] = -dae.y[self.vsd] - mul(dae.y[self.isd], self.rs) + mul(dae.x[self.isq], dae.x[self.omega_m], self.xq)
+        dae.g[self.vsq] = -dae.y[self.vsq] - mul(dae.x[self.isq], self.rs) - mul(dae.x[self.omega_m], -self.psip + mul(dae.y[self.isd], self.xd))
+        dae.g[self.ps] = -dae.y[self.ps] + mul(dae.y[self.isd], dae.y[self.vsd]) + mul(dae.x[self.isq], dae.y[self.vsq])
+        dae.g[self.te] = -dae.y[self.te] + mul(dae.x[self.isq], self.psip + mul(dae.y[self.isd], self.xq - self.xd))
+        dae.g += spmatrix(- mul(dae.y[self.ps], div(1, dae.y[self.v1] - dae.y[self.v2])), self.v1, [0]*self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(mul(dae.y[self.ps], div(1, dae.y[self.v1] - dae.y[self.v2])), self.v2, [0]*self.n, (dae.m, 1), 'd')
+
+    def fcall(self, dae):
+        Turbine.gcall(self, dae)
+        dae.f[self.omega_m] = mul(0.5, div(1, self.H), -dae.y[self.te] + mul(dae.y[self.pw], div(1, dae.x[self.omega_m])))
+        dae.f[self.isq] = mul(div(1, self.Teq), -dae.x[self.isq] + mul(dae.y[self.pwa], div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))))
+
+    def gycall(self, dae):
+        Turbine.gycall(self, dae)
+        MPPT.gycall(self, dae)
+        dae.add_jac(Gy, - dae.x[self.isq], self.isd, self.vsd)
+        dae.add_jac(Gy, dae.y[self.vsq], self.isd, self.isd)
+        dae.add_jac(Gy, dae.y[self.isd], self.isd, self.vsq)
+        dae.add_jac(Gy, - mul(dae.x[self.omega_m], self.xd), self.vsq, self.isd)
+        dae.add_jac(Gy, dae.y[self.isd], self.ps, self.vsd)
+        dae.add_jac(Gy, dae.y[self.vsd], self.ps, self.isd)
+        dae.add_jac(Gy, dae.x[self.isq], self.ps, self.vsq)
+        dae.add_jac(Gy, mul(dae.x[self.isq], self.xq - self.xd), self.te, self.isd)
+        dae.add_jac(Gy, - div(1, dae.y[self.v1] - dae.y[self.v2]), self.v1, self.ps)
+        dae.add_jac(Gy, - mul(dae.y[self.ps], (dae.y[self.v1] - dae.y[self.v2])**-2), self.v1, self.v2)
+        dae.add_jac(Gy, mul(dae.y[self.ps], (dae.y[self.v1] - dae.y[self.v2])**-2), self.v1, self.v1)
+        dae.add_jac(Gy, div(1, dae.y[self.v1] - dae.y[self.v2]), self.v2, self.ps)
+        dae.add_jac(Gy, mul(dae.y[self.ps], (dae.y[self.v1] - dae.y[self.v2])**-2), self.v2, self.v2)
+        dae.add_jac(Gy, - mul(dae.y[self.ps], (dae.y[self.v1] - dae.y[self.v2])**-2), self.v2, self.v1)
+
+    def fxcall(self, dae):
+        Turbine.jac0(self, dae)
+        dae.add_jac(Gx, - dae.y[self.vsd], self.isd, self.isq)
+        dae.add_jac(Gx, mul(dae.x[self.isq], self.xq), self.vsd, self.omega_m)
+        dae.add_jac(Gx, mul(dae.x[self.omega_m], self.xq), self.vsd, self.isq)
+        dae.add_jac(Gx, self.psip - mul(dae.y[self.isd], self.xd), self.vsq, self.omega_m)
+        dae.add_jac(Gx, dae.y[self.vsq], self.ps, self.isq)
+        dae.add_jac(Gx, self.psip + mul(dae.y[self.isd], self.xq - self.xd), self.te, self.isq)
+        dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
+        dae.add_jac(Fx, - mul(dae.y[self.pwa], div(1, self.Teq), (dae.x[self.omega_m])**-2, div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.omega_m)
+        dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, dae.x[self.omega_m])), self.omega_m, self.pw)
+        dae.add_jac(Fy, mul(dae.y[self.pwa], self.xd, div(1, self.Teq), div(1, dae.x[self.omega_m]), (self.psip - mul(dae.y[self.isd], self.xd))**-2), self.isq, self.isd)
+        dae.add_jac(Fy, mul(div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.pwa)
+
+    def jac0(self, dae):
+        Turbine.jac0(self, dae)
+        MPPT.jac0(self, dae)
+        dae.add_jac(Gy0, -1, self.vsd, self.vsd)
+        dae.add_jac(Gy0, - self.rs, self.vsd, self.isd)
+        dae.add_jac(Gy0, -1, self.vsq, self.vsq)
+        dae.add_jac(Gy0, -1, self.ps, self.ps)
+        dae.add_jac(Gy0, -1, self.te, self.te)
+        dae.add_jac(Gx0, - self.rs, self.vsq, self.isq)
+        dae.add_jac(Fx0, - div(1, self.Teq), self.isq, self.isq)
+        dae.add_jac(Fy0, mul(-0.5, div(1, self.H)), self.omega_m, self.te)
+        dae.add_jac(Gy0, 1e-6, self.isd, self.isd)
+        dae.add_jac(Gy0, 1e-6, self.vsd, self.vsd)
+        dae.add_jac(Gy0, 1e-6, self.vsq, self.vsq)
+        dae.add_jac(Gy0, 1e-6, self.ps, self.ps)
+        dae.add_jac(Gy0, 1e-6, self.te, self.te)
 
 
 class WTG3(ModelBase):

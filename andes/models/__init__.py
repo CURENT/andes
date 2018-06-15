@@ -68,6 +68,7 @@ jits = {'vsc': {'VSC': 'VSC',
                 'VSC2B': 'VSC2B'
                 },
         'windturbine': {'WTG3': 'WTG3',
+                        'WTG4DC': 'WTG4DC',
                         },
         'wind': {'Weibull': 'Weibull',
                  'ConstWind': 'ConstWind'
