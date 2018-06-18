@@ -126,5 +126,5 @@ fnamex = \omega_m; I_{s, q};
 diff_eq =
  0.5 / H * ( pw / omega_m - te);
  (pwa / omega_m / (psip - xd * isd) - isq) / Teq;
-
+# we control the turbine speed and reactive power injection
 #anti_windup =
