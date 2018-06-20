@@ -94,3 +94,11 @@ class Breaker(ModelBase):
                 elif u0 == 0:
                     inf = '\n Breaker <{}>: Line <{}> reconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
                 self.system.Log.info(inf)
+        self.system.check_islands()
+
+    def insert(self, idx=None, name=None, **kwargs):
+        if self.n:
+            self._param2list()
+
+        self.add(idx, name, **kwargs)
+        self._param2matrix()
