@@ -191,7 +191,7 @@ class Line(ModelBase):
         os = [0] * self.n
 
         # find islanded buses
-        diag = list(matrix(spmatrix(1.0, to, os, (n, 1), 'd') + spmatrix(1.0, fr, os, (n, 1), 'd')))
+        diag = list(matrix(spmatrix(self.u, to, os, (n, 1), 'd') + spmatrix(self.u, fr, os, (n, 1), 'd')))
         nib = bus.n_islanded_buses = diag.count(0)
         bus.islanded_buses = []
         for idx in range(n):
@@ -199,7 +199,7 @@ class Line(ModelBase):
                 bus.islanded_buses.append(idx)
 
         # find islanded areas
-        temp = spmatrix(1.0, fr + to + fr + to, to + fr + fr + to, (n, n), 'd')
+        temp = spmatrix(list(self.u) * 4, fr + to + fr + to, to + fr + fr + to, (n, n), 'd')
         cons = temp[0, :]
         nelm = len(cons.J)
         conn = spmatrix([], [], [], (1, n), 'd')
@@ -214,6 +214,7 @@ class Line(ModelBase):
                 if new_nelm == nelm:
                     break
                 nelm = new_nelm
+            cons = sparse(cons)  # remove zero values
             if len(cons.J) == n:  # all buses are interconnected
                 return
             bus.island_sets.append(list(cons.J))

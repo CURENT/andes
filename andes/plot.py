@@ -144,7 +144,9 @@ def read_label(lst, x, y):
     yl[0] = [''] * len(y)
     yl[1] = [''] * len(y)
 
-    x.extend(y)
+    xy = list(x)
+    xy.extend(y)
+
     try:
         lfile = open(lst)
         lfile_raw = lfile.readlines()
@@ -153,8 +155,8 @@ def read_label(lst, x, y):
         print('* Error while opening the lst file')
         return None, None
 
-    xidx = sorted(range(len(x)), key=lambda i: x[i])
-    xsorted = sorted(x)
+    xidx = sorted(range(len(xy)), key=lambda i: xy[i])
+    xsorted = sorted(xy)
     at = 0
 
     for line in lfile_raw:
@@ -165,7 +167,7 @@ def read_label(lst, x, y):
 
         varid = int(thisline[0])
         if varid == xsorted[at]:
-            if xsorted[at] == x[0]:
+            if xsorted[at] == xy[0]:
                 xl[0] = thisline[1]
                 xl[1] = thisline[2].strip('#')
             else:
@@ -173,13 +175,13 @@ def read_label(lst, x, y):
                 yl[1][xidx[at] - 1] = thisline[2].strip('#')
             at += 1
 
-        if at >= len(x):
+        if at >= len(xy):
             break
 
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args):
+def do_plot(x, y, xl, yl, args, fig=None, ax=None):
     xmin = args.pop('xmin', None)
     xmax = args.pop('xmax', None)
     ymax = args.pop('ymax', None)
@@ -216,7 +218,8 @@ def do_plot(x, y, xl, yl, args):
         xl_data = xl[0]
         yl_data = yl[0]
 
-    fig, ax = pyplot.subplots()
+    if not (fig and ax):
+        fig, ax = pyplot.subplots()
 
     for idx in range(len(y)):
         ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
@@ -272,6 +275,23 @@ def do_plot(x, y, xl, yl, args):
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
+    return fig, ax
+
+
+def add_plot(x, y, xl, yl, fig, ax, LATEX=False):
+    """Add plots to an existing plot"""
+    if LATEX:
+        xl_data = xl[1]
+        yl_data = yl[1]
+    else:
+        xl_data = xl[0]
+        yl_data = yl[0]
+
+    for idx in range(len(y)):
+        ax.plot(x, y[idx], label=yl_data[idx])
+
+    legend = ax.legend(loc='upper right')
+    ax.set_ylim(auto=True)
 
 def isfloat(value):
     try:

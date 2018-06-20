@@ -360,9 +360,20 @@ class VSC1_Common(DCBase):
     def __init__(self, system, name):
         super(VSC1_Common, self).__init__(system, name)
         self._group = 'AC/DC'
-        self._data.update({'vsc': None})
+        self._data.update({'vsc': None,
+                           'Kdc': 0,
+                           'Kf': 0,
+                           'kV': 0,
+                           'Kp': 0,
+                           })
         self._mandatory.extend(['vsc'])
-        self._descr.update({'vsc': 'static vsc idx'})
+        self._descr.update({'vsc': 'static vsc idx',
+                            'Kdc': 'droop of dc voltage on active power',
+                            'Kf': 'droop of ac frequency on power',
+                            'KV': 'droop of ac voltage on reactive power',
+                            'Kp': 'droop of power on dc voltage',
+                            })
+        self._params.extend(['Kdc', 'Kf', 'KV', 'Kp'])
         self._algebs.extend(['ref1', 'ref2', 'vd', 'vq', 'p', 'q'])
         self._fnamey.extend(['ref_1', 'ref2', 'v_d', 'v_q', 'P', 'Q'])
         self._service.extend(['ref10', 'ref20'])
@@ -390,11 +401,15 @@ class VSC1_Common(DCBase):
         self.copy_param('VSC', 'v2', 'v2', self.vsc)
         self.copy_param('VSC', 'psh', 'pref0', self.vsc)
         self.copy_param('VSC', 'qsh', 'qref0', self.vsc)
+        self.copy_param('VSC', 'bus', 'bus', self.vsc)
+        self.copy_param('BusFreq', 'w', 'w', self.bus)  # TODO: BusFreq idx must be the same as bus idx
 
         self.pref0 = dae.y[self.pref0]
         self.qref0 = dae.y[self.qref0]
         self.ref10 = mul(self.pref0, self.PQ + self.PV) + mul(dae.y[self.v1] - dae.y[self.v2], self.vQ + self.vV)
         self.ref20 = mul(self.qref0, self.PQ + self.vQ) + mul(dae.y[self.v], self.PV + self.vV)
+        self.v120 = matrix(self.v12)
+        self.V0 = matrix(dae.y[self.v])
 
     def init1(self, dae):
         self.servcall(dae)
@@ -420,7 +435,12 @@ class VSC1_Common(DCBase):
         self.outer_gcall(dae)
         self.current_gcall(dae)
 
-        dae.g[self.ref1] = self.ref10 - dae.y[self.ref1]
+        dae.g[self.ref1] = self.ref10 - dae.y[self.ref1] \
+                           + mul(self.PQ + self.PV, mul(self.v12 - self.v120, self.Kdc)) \
+                           - mul(self.PQ + self.PV, mul(dae.x[self.w] - 1), self.Kf) \
+                           + mul(self.vV + self.vQ, self.Kp, dae.y[self.p] - self.pref0)\
+                           - mul(self.vV + self.vQ, mul(dae.x[self.w] - 1), self.Kf)
+
         dae.g[self.ref2] = self.ref20 - dae.y[self.ref2]
         dae.g[self.vd] = -dae.y[self.vd] + mul(dae.y[self.v], cos(dae.y[self.a] - dae.y[self.adq]))
         dae.g[self.vq] = -dae.y[self.vq] - mul(dae.y[self.v], sin(dae.y[self.a] - dae.y[self.adq]))
@@ -464,6 +484,11 @@ class VSC1_Common(DCBase):
         self.pll_jac0(dae)
         self.outer_jac0(dae)
         self.current_jac0(dae)
+        dae.add_jac(Gy0, mul(self.PQ + self.PV, self.Kdc), self.ref1, self.v1)
+        dae.add_jac(Gy0, -mul(self.PQ + self.PV, self.Kdc), self.ref1, self.v2)
+        dae.add_jac(Gx0, -mul(self.PQ + self.PV, self.Kf), self.ref1, self.w)
+        dae.add_jac(Gy0, mul(self.vV + self.vQ, self.Kp), self.ref1, self.p)
+        dae.add_jac(Gx0, -mul(self.vV + self.vQ, self.Kf), self.ref1, self.w)
 
         dae.add_jac(Gy0, -self.u - 1e-6, self.ref1, self.ref1)
         dae.add_jac(Gy0, -self.u - 1e-6, self.ref2, self.ref2)

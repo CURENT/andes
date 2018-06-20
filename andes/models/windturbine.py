@@ -203,7 +203,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         self._name = 'WTG4DC'
         self._algebs.extend(['isd', 'vsd', 'vsq', 'ps', 'te'])
         self._fnamex.extend(['\\omega_m', 'I_{s, q}'])
-        self._fnamey.extend(['I_{s, d}', 'I_{s, q}', 'V_{s, d}', 'V_{s, q}', 'P_s', 'Q_s', '\\\\tau_e'])
+        self._fnamey.extend(['I_{s, d}', 'V_{s, d}', 'V_{s, q}', 'P_s', '\\tau_e'])
         self._mandatory.extend(['node1', 'node2', 'dcgen', 'wind'])
         self._params.extend(['fn','rs', 'xd', 'xq', 'psip', 'Tep', 'Teq', 'pmax', 'pmin', 'qmax', 'qmin', 'u', 'Sn'])
         self._powers.extend(['H', 'pmax', 'pmin', 'qmax', 'qmin'])
@@ -285,8 +285,8 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         mva = self.system.Settings.mva
         self.p0 = mul(self.p0, 1)
 
-        toSn = div(mva, self.Sn)  # to system base
-        toSb = self.Sn / mva  # to machine base
+        self.toMb = div(mva, self.Sn)  # to machine base
+        self.toSb = self.Sn / mva  # to system base
         rs = matrix(self.rs)
         xd = matrix(self.xd)
         xq = matrix(self.xq)
@@ -295,7 +295,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
         # rotor speed
         omega = 1 * (ageb(mva * Pg, self.Sn)) + \
-                mul(0.5 + 0.5 * mul(Pg, toSn), aandb(agtb(Pg, 0), altb(mva * Pg, self.Sn))) + \
+                mul(0.5 + 0.5 * mul(Pg, self.toMb), aandb(agtb(Pg, 0), altb(mva * Pg, self.Sn))) + \
                 0.5 * (aleb(mva * Pg, 0))
 
         theta = mul(self.Kp, mround(1000 * (omega - 1)) / 1000)
@@ -386,7 +386,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
     def fcall(self, dae):
         Turbine.gcall(self, dae)
         dae.f[self.omega_m] = mul(0.5, div(1, self.H), -dae.y[self.te] + mul(dae.y[self.pw], div(1, dae.x[self.omega_m])))
-        dae.f[self.isq] = mul(div(1, self.Teq), -dae.x[self.isq] + mul(dae.y[self.pwa], div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))))
+        dae.f[self.isq] = mul(div(1, self.Teq), -dae.x[self.isq] + mul(self.toSb, dae.y[self.pwa], div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))))
 
     def gycall(self, dae):
         Turbine.gycall(self, dae)
@@ -503,8 +503,8 @@ class WTG3(ModelBase):
         vsq = dae.y[self.vsq]
         vsd = dae.y[self.vsd]
 
-        toSn = div(mva, self.Sn)  # to system base
-        toSb = self.Sn / mva  # to machine base
+        toSn = div(mva, self.Sn)  # to machine base
+        toSb = self.Sn / mva  # to system base
 
         # rotor speed
         omega = 1 * (ageb(mva * Pg, self.Sn)) + \

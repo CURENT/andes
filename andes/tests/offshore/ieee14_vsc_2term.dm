@@ -181,25 +181,33 @@ Node, idx = 4, name = "Node 4", Vdcn = 100.0
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
 VSC, idx = 1, node1 = 1, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 1", rsh = 0.0025, xsh = 0.5,
-     vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.05, vdcref0 = 1.0, control = "vV",
+     vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = -0.00, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
-#VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
+# VSC, idx = 3, node1 = 3, node2 = 0, bus = 13, Vn = 13.8, name = "VSC 3", rsh = 0.0025, xsh = 0.06,
 #     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, qref0 = 0.00, control = "PQ",
 #     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
-#VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
+# VSC, idx = 4, node1 = 4, node2 = 0, bus = 14, Vn = 13.8, name = "VSC 4", rsh = 0.0025, xsh = 0.06,
 #     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.1, qref0 = 0.00, control = "PQ",
 #     droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.995, Vdcn = 100, u = 1
 
-VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 1, Kp2 = 4, Ki2 = 2,
+# VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
+#       Kp3 = 1, Ki3 = 0.5, Kp = 0.005, Kf = 5
+# VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
+#       Kp3 = 0.01, Ki3 = 0., D = 2, M = 2, KQ = 0, Kdc = 5, Kf = 5
+VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
       Kp3 = 1, Ki3 = 0.5
 VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
-      Kp3 = 0.01, Ki3 = 0., D = 2, M = 2, KQ = 0
-#VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
+      Kp3 = 0.01, Ki3 = 0.
+
+
+
+
+# VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
 #      Kp3 = 0.05, Ki3 = 0.01, D = 1, M = 2
-#VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
+# VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
 #      Kp3 = 0.05, Ki3 = 0.001, D = 1, M = 2
 
 RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.001
@@ -212,15 +220,15 @@ C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C4", name = "C 4", node1 = 4, node2 = 0, Vdcn = 100, C = 0.0001
 
-Fault, bus = 1, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+Fault, bus = 3, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
-#DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 1
-#DCgen, idx = "DCgen_2", Vdcn = 100, node1 = 2, node2 = 0, P = 1
-DCgen, idx = "DCgen_3", Vdcn = 100, node1 = 3, node2 = 0, P = 0.2
-#DCgen, idx = "DCgen_4", Vdcn = 100, node1 = 4, node2 = 0, P = 0.2
+# DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 1
+# DCgen, idx = "DCgen_2", Vdcn = 100, node1 = 2, node2 = 0, P = 1
+DCgen, idx = "DCgen_3", Vdcn = 100, node1 = 3, node2 = 0, P = 0.3
+DCgen, idx = "DCgen_4", Vdcn = 100, node1 = 4, node2 = 0, P = 0.3
 
 ConstWind, idx = 3
-#ConstWind, idx = 4
+ConstWind, idx = 4
 
 WTG4DC, node1 = 3, node2 = 0, dcgen = "DCgen_3", wind = 3
-#WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4
+WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4
