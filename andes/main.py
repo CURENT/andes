@@ -32,7 +32,7 @@ from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
 from .routines import powerflow, timedomain, eigenanalysis
-from .routines.fakemodule import EAGC
+# from .routines.fakemodule import EAGC
 
 def cli_parse(writehelp=False, helpfile=None):
     """command line input argument parser"""

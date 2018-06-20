@@ -18,19 +18,10 @@ limitations under the License.
 """
 import os
 import re
-
 from argparse import ArgumentParser
-from matplotlib import pyplot, rc
-
 from distutils.spawn import find_executable
 
-from numpy import array
-
-try:
-    from blist import *
-    BLIST = 1
-except ImportError:
-    BLIST = 0
+from matplotlib import pyplot, rc
 
 lfile = []
 dfile = []

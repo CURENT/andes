@@ -1,5 +1,5 @@
 SHOW_PF_CALL = False
-SHOW_INT_CALL = True
+SHOW_INT_CALL = False
 
 all_calls = ['gcall',
              'gycall',

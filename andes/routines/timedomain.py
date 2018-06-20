@@ -1,7 +1,11 @@
 import sys
 import importlib
 
-import progressbar
+try:
+    import progressbar
+    PROGRESSBAR = True
+except:
+    PROGRESSBAR = False
 
 from math import isnan
 from numpy import array
@@ -63,10 +67,12 @@ def run(system):
     global F
     retval = True
     bar = None
-    if system.pid == -1 and system.Settings.progressbar:
+    if PROGRESSBAR and system.pid == -1 and system.Settings.progressbar:
         bar = progressbar.ProgressBar(
                                       widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
                                                progressbar.AdaptiveETA(), '] '])
+    else:
+        bar = None
     dae = system.DAE
     settings = system.TDS
 
@@ -116,7 +122,7 @@ def run(system):
             PERT = -1
 
     # main loop
-    if bar:
+    if bar is not None:
         bar.start()
     rt_headroom = 0
     settings.qrtstart = time()
@@ -308,7 +314,7 @@ def run(system):
 
         # plot variables and display iteration status
         perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
-        if bar:
+        if bar is not None:
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
@@ -328,7 +334,7 @@ def run(system):
                 rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:
                     sleep(1e-4)
-    if bar:
+    if bar is not None:
         bar.finish()
     if settings.qrt:
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))

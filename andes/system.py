@@ -24,7 +24,7 @@ from .utils import Logger
 from .models import non_jits, jits, JIT
 from .consts import *
 
-from .routines.fakemodule import EAGC
+# from .routines.fakemodule import EAGC
 
 
 try:
