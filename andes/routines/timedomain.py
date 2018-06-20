@@ -15,6 +15,7 @@ try:
     from cvxopt.klu import numeric, symbolic, solve, linsolve
     KLU = True
 except:
+    from cvxopt.umfpack import numeric, symbolic, solve, linsolve
     KLU = False
 
 from ..utils.jactools import *
@@ -252,7 +253,10 @@ def run(system):
 
                 try:
                     N = numeric(dae.Ac, F)
-                    solve(dae.Ac, F, N, inc)
+                    if KLU:
+                        solve(dae.Ac, F, N, inc)
+                    else:
+                        solve(dae.Ac, N, inc)
                 except ArithmeticError:
                     system.Log.error('Singular matrix')
                     niter = maxit + 1  # force quit
@@ -320,8 +324,8 @@ def run(system):
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
-            system.Log.info(' * Simulation time = {:.4f}s, step = {},'.format(t, step))
-            system.Log.debug('  - max mismatch = {:.4f}, niter = {} ({:.0f}%)'.format(settings.error, niter, 100*t /settings.tf))
+            system.Log.info(' ({:.0f}%) Time = {:.4f}s, step = {}, niter = {}'
+                            .format(100*t /settings.tf, t, step, niter))
 
             nextpc += 5
         # compute max rotor angle difference
