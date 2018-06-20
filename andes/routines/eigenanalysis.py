@@ -1,5 +1,11 @@
 import numpy.linalg
-from cvxopt.klu import linsolve
+try:
+    from cvxopt.klu import linsolve
+    KLU = True
+except:
+    from cvxopt.umfpack import linsolve
+    KLU = False
+
 from cvxopt.lapack import gesv
 from cvxopt import matrix, spmatrix, sparse, mul, div
 from math import ceil

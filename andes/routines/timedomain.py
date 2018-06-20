@@ -1,5 +1,5 @@
-import sys
 import importlib
+import sys
 
 try:
     import progressbar
@@ -8,15 +8,17 @@ except:
     PROGRESSBAR = False
 
 from math import isnan
-from numpy import array
 from time import monotonic as time, sleep
 
-from cvxopt import matrix, spmatrix, sparse, spdiag
-from cvxopt.klu import numeric, symbolic, solve, linsolve
+from cvxopt import sparse, spdiag
+try:
+    from cvxopt.klu import numeric, symbolic, solve, linsolve
+    KLU = True
+except:
+    KLU = False
 
 from ..utils.jactools import *
 
-from .eigenanalysis import run as run_eig
 try:
     from ..utils.matlab import write_mat
 except:
@@ -318,8 +320,9 @@ def run(system):
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
-            system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f},'
-                             ' niter = {} ({:.0f}%)'.format(t, step, settings.error, niter, 100*t /settings.tf))
+            system.Log.info(' * Simulation time = {:.4f}s, step = {},'.format(t, step))
+            system.Log.debug('  - max mismatch = {:.4f}, niter = {} ({:.0f}%)'.format(settings.error, niter, 100*t /settings.tf))
+
             nextpc += 5
         # compute max rotor angle difference
         diff_max = anglediff()

@@ -4,7 +4,11 @@ from ..consts import DEBUG
 import importlib
 import math
 
-klu = importlib.import_module('cvxopt.klu')
+try:
+    klu = importlib.import_module('cvxopt.klu')
+    KLU = True
+except:
+    KLU = False
 umfpack = importlib.import_module('cvxopt.umfpack')
 lib = umfpack
 F = None
@@ -24,7 +28,7 @@ def run(system):
     if system.Settings.sparselib not in system.Settings.sparselib_alt:
         system.Settings.sparselib = 'umfpack'
         globals()['lib'] = umfpack
-    elif system.Settings.sparselib == 'klu':
+    elif system.Settings.sparselib == 'klu' and KLU:
         globals()['lib'] = klu
 
     # default solver setup
@@ -56,7 +60,7 @@ def calcInc(system):
 
     try:
         N = lib.numeric(A, F)
-        if system.Settings.sparselib.lower() == 'klu':
+        if system.Settings.sparselib.lower() == 'klu' and KLU:
             lib.solve(A, F, N, inc)
         elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)

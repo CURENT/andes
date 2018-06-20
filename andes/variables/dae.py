@@ -1,10 +1,5 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from ..utils.math import *
-try:
-    from blist import blist
-    BLIST = True
-except:
-    BLIST = False
 
 
 class DAE(object):
