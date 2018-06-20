@@ -55,7 +55,7 @@ def cli_parse():
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
     parser.add_argument('--ytimes', type=str, help='y times')
     args = parser.parse_args()
-    return args
+    return vars(args)
 
 
 def parse_y(y, nvars):
@@ -179,13 +179,14 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args, no_latex=False):
-    xmin = args.xmin
-    xmax = args.xmax
-    ymax = args.ymax
-    ymin = args.ymin
-    xlabel = args.xlabel
-    ylabel = args.ylabel
+def do_plot(x, y, xl, yl, args):
+    xmin = args.pop('xmin', None)
+    xmax = args.pop('xmax', None)
+    ymax = args.pop('ymax', None)
+    ymin = args.pop('ymin', None)
+    xlabel = args.pop('xlabel', None)
+    ylabel = args.pop('ylabel', None)
+    no_latex = args.pop('no_latex', None)
 
     LATEX = False
     if no_latex:
@@ -239,7 +240,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
     ax.set_ylim(ymax=ymax)
     ax.set_ylim(ymin=ymin)
 
-    if args.grid:
+    if args.pop('grid', None):
         ax.grid(b=True, linestyle='--')
     legend = ax.legend(loc='upper right')
 
@@ -247,8 +248,8 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
 
     # output to file
 
-    if args.save or args.unattended:
-        name, _ = os.path.splitext(args.datfile[0])
+    if args.pop('save', None) or args.pop('unattended', None):
+        name, _ = os.path.splitext(args['datfile'])
         count = 1
         cwd = os.getcwd()
         for file in os.listdir(cwd):
@@ -264,7 +265,7 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
-    if not args.unattended:
+    if not args.pop('unattended', None):
         try:
             pyplot.show()
         except:
@@ -288,9 +289,11 @@ def isint(value):
         return False
 
 
-def main():
-    args = cli_parse()
-    name, ext = os.path.splitext(args.datfile[0])
+def main(cli=True, **args):
+    if cli:
+        args = cli_parse()
+
+    name, ext = os.path.splitext(args['datfile'][0])
     if 'out' in name:
         tds_plot(name, args)
     elif 'eig' in name:
@@ -322,25 +325,25 @@ def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
-    y = parse_y(args.y, get_nvars(dat))
+    y = parse_y(args['y'], get_nvars(dat))
     try:
-        xval, yval = read_dat(dat, args.x, y)
+        xval, yval = read_dat(dat, args['x'], y)
     except IndexError:
         print('* Error: X or Y index out of bound')
         return
 
-    xl, yl = read_label(lst, args.x, y)
+    xl, yl = read_label(lst, args['x'], y)
 
-    if args.checkinit:
+    if args.pop('checkinit', False):
         check_init(yval, yl[0])
         return
-    if args.ytimes:
-        times = float(args.ytimes)
+    if args.pop('ytimes', False):
+        times = float(args['ytimes'])
         new_yval = []
         for val in yval:
             new_yval.append([i*times for i in val])
         yval = new_yval
-    do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
+    do_plot(xval, yval, xl, yl, args)
 
 
 def check_init(yval, yl):
@@ -357,4 +360,4 @@ def check_init(yval, yl):
 
 
 if __name__ == "__main__":
-    main()
+    main(cli=True)
