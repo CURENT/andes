@@ -28,12 +28,16 @@ def run(system):
     if system.Settings.sparselib not in system.Settings.sparselib_alt:
         system.Settings.sparselib = 'umfpack'
         globals()['lib'] = umfpack
-    elif system.Settings.sparselib == 'klu' and KLU:
-        globals()['lib'] = klu
+    elif system.Settings.sparselib == 'klu':
+        if not KLU:
+            system.Settings.sparselib = 'umfpack'
+            globals()['lib'] = umfpack
+        else:
+            globals()['lib'] = klu
 
     # default solver setup
     if system.SPF.solver.lower() not in solvers.keys():
-        system.SPF.solver = 'NR'
+            system.SPF.solver = 'NR'
 
     func_name = solvers.get(system.SPF.solver.lower())
     run_powerflow = importlib.import_module('andes.routines.powerflow')

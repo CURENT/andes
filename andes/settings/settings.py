@@ -10,7 +10,7 @@ class Settings(SettingsBase):
         self.freq = 60.0
         self.mva = 100.0
         self.distrsw = False
-        self.sparselib = 'umfpack'
+        self.sparselib = 'klu'
         self.sparselib_alt = ['klu', 'umfpack']
         self.export = 'txt'
         self.export_alt = ['txt', 'latex']

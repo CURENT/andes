@@ -1,3 +1,0 @@
-[submodule "pkg/cvxopt"]
-	path = pkg/cvxopt
-	url = https://github.com/sanurielf/cvxopt

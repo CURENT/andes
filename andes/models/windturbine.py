@@ -3,7 +3,7 @@ from cvxopt import mul, div, sin, cos, exp
 from ..consts import *
 from .base import ModelBase
 
-from cvxopt.klu import linsolve
+from cvxoptklu.klu import linsolve
 from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
 
 class MPPT(object):
