@@ -5,7 +5,7 @@ import importlib
 import math
 
 try:
-    klu = importlib.import_module('cvxopt.klu')
+    klu = importlib.import_module('cvxoptklu.klu')
     KLU = True
 except:
     KLU = False

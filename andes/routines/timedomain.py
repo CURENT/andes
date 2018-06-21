@@ -12,7 +12,7 @@ from time import monotonic as time, sleep
 
 from cvxopt import sparse, spdiag
 try:
-    from cvxopt.klu import numeric, symbolic, solve, linsolve
+    from cvxoptklu.klu import numeric, symbolic, solve, linsolve
     KLU = True
 except:
     KLU = False
