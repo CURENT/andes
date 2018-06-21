@@ -2,6 +2,7 @@ from cvxopt import matrix, spmatrix
 from cvxopt import mul, div, exp
 from ..consts import *
 from .base import ModelBase
+from ..utils.math import zeros
 
 
 class ACE(ModelBase):
@@ -114,7 +115,8 @@ class EAGC(ModelBase):
 
         # self.copy_param('AGC', src='Mtot', fkey=self.agc)
 
-        self.en = matrix(0, (self.n, 1), 'd')
+        # self.en = matrix(0, (self.n, 1), 'd')
+        self.en = zeros(self.n, 1)
 
     def switch(self):
         """Switch if time for n has come"""

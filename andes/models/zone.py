@@ -1,5 +1,6 @@
 from .base import ModelBase
 from cvxopt import spmatrix, spdiag, matrix
+from ..utils.math import zeros
 
 
 class Zone(ModelBase):
@@ -107,8 +108,8 @@ class Zone(ModelBase):
             self.uname.append('{}-{}'.format(self.name[i], self.name[j]))
             self.fname.append('{}-{}'.format(self.name[i], self.name[j]))
 
-        self.area_P0 = matrix([0.] * self.n)
-        self.area_Q0 = matrix([0.] * self.n)
+        self.area_P0 = zeros(self.n, 1)
+        self.area_Q0 = zeros(self.n, 1)
 
     def seriesflow(self, dae):
         for code in self.idx:

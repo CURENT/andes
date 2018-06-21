@@ -1,6 +1,6 @@
 import numpy.linalg
 try:
-    from cvxopt.klu import linsolve
+    from cvxoptklu.klu import linsolve
     KLU = True
 except:
     from cvxopt.umfpack import linsolve
