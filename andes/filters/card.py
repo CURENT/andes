@@ -1,8 +1,10 @@
 import sys
 
 import pprint
-
-from sympy import Symbol, diff, sin, cos, exp, Integer
+try:
+    from sympy import Symbol, diff, sin, cos, exp, Integer
+except ImportError:
+     raise ImportError('Please install sympy to parse ANDES cards.')
 from andes.main import elapsed
 from andes.utils.math import to_number
 

@@ -14,7 +14,6 @@ setup(name='andes',
           'numpy',
           'texttable',
           'matplotlib',
-          'sympy',
       ],
       packages=[
           'andes',
@@ -23,7 +22,6 @@ setup(name='andes',
           'andes.models',
           'andes.routines',
           'andes.settings',
-          'andes.tests',
           'andes.utils',
           'andes.variables'
       ],
@@ -32,7 +30,6 @@ setup(name='andes',
             "Topic :: System :: Power",
             "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
             "Environment :: Console",
-
       ],
       entry_points={
             'console_scripts': [
@@ -40,5 +37,4 @@ setup(name='andes',
                   'andesplot = andes:plot'
             ]
       },
-
       )
