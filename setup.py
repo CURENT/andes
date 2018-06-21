@@ -26,10 +26,10 @@ setup(name='andes',
           'andes.variables'
       ],
       classifiers=[
-            "Development Status :: 4 - Beta",
-            "Topic :: System :: Power",
-            "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-            "Environment :: Console",
+          "Development Status :: 4 - Beta",
+          "Topic :: Scientific/Engineering",
+          "License :: OSI Approved :: Apache Software License",
+          "Environment :: Console",
       ],
       entry_points={
             'console_scripts': [
