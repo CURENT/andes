@@ -4,7 +4,7 @@ from setuptools import setup
 
 
 setup(name='andes',
-      version='0.2',
+      version='0.3.0',
       description='ANDES - A Python Package for Power System Research',
       author='Hantao Cui',
       author_email='hcui7@utk.edu',
@@ -14,10 +14,6 @@ setup(name='andes',
           'numpy',
           'texttable',
           'matplotlib',
-          'progressbar2',
-          'python_utils',
-          'sympy',
-          'scipy',
       ],
       packages=[
           'andes',
@@ -26,16 +22,14 @@ setup(name='andes',
           'andes.models',
           'andes.routines',
           'andes.settings',
-          'andes.tests',
           'andes.utils',
           'andes.variables'
       ],
       classifiers=[
-            "Development Status :: 3 - Alpha",
-            "Topic :: System :: Power",
-            "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-            "Environment :: Console",
-
+          "Development Status :: 4 - Beta",
+          "Topic :: Scientific/Engineering",
+          "License :: OSI Approved :: Apache Software License",
+          "Environment :: Console",
       ],
       entry_points={
             'console_scripts': [
@@ -43,5 +37,4 @@ setup(name='andes',
                   'andesplot = andes:plot'
             ]
       },
-
       )

@@ -30,7 +30,6 @@ descr =
 
 algebs = ref1; ref2; adq; vd; vq; p; q; Idref; Iqref; Idcy;
 
-states = Id; Iq; ud; uq; Md; Mq; Nd; Nq; Idcx;
 
 interfaces = a; v; v1; v2
 
@@ -95,6 +94,8 @@ algeb_eq =
  -q;
  -(PQ + PV)*Idcy - (vV + vQ)*Idcx;
  +(PQ + PV)*Idcy + (vV + vQ)*Idcx;
+
+states = Id; Iq; ud; uq; Md; Mq; Nd; Nq; Idcx;
 
 diff_eq = 
  -rsh*iLsh*Id - Iq + iLsh*(ud - vd);

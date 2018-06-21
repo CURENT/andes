@@ -1,23 +1,24 @@
 import numpy.linalg
-from cvxopt.klu import linsolve
+try:
+    from cvxoptklu.klu import linsolve
+    KLU = True
+except:
+    from cvxopt.umfpack import linsolve
+    KLU = False
+
 from cvxopt.lapack import gesv
-from cvxopt import matrix, spmatrix, mul, div, sparse
+from cvxopt import matrix, spmatrix, sparse, mul, div
 from math import ceil
 from ..formats.txt import dump_data
 from ..consts import *
 from matplotlib.pyplot import *
-import scipy
-from scipy.sparse import linalg
 
 try:
     from petsc4py import PETSc
-    PETSC = True
 except:
     PETSC = False
 try:
     from slepc4py import SLEPc
-    import slepc4py
-    SLEPC = True
 except:
     SLEPC = False
 
@@ -26,74 +27,19 @@ def state_matrix(system):
     """Return state matrix"""
     Gyx = matrix(system.DAE.Gx)
     linsolve(system.DAE.Gy, Gyx)
-    return system.DAE.Fx - system.DAE.Fy*Gyx
-
+    return matrix(system.DAE.Fx - system.DAE.Fy*Gyx)
 
 def eigs(As):
     """Solve eigenvalues from state matrix"""
+    if (not SLEPC) or (not SLEPC):
+        return numpy.linalg.eigvals(As)
 
-    # if (not SLEPC) or (not SLEPC):
-    return numpy.linalg.eig(As)
-    # try:
-
-    As = sparse(As)
-    As = scipy.sparse.csc_matrix((numpy.array(As.CCS[2]).flatten(),
-                                      numpy.array(As.CCS[1]).flatten(),
-                                      numpy.array(As.CCS[0]).flatten()
-                                      ), shape=As.size)
-    # return linalg.eigs(As, k=1326)
-    As_csr = As.tocsr()
-
-    opts = PETSc.Options()
-    A = PETSc.Mat().createAIJ(size=As_csr.shape,
-                              csr=(As_csr.indptr, As_csr.indices, As_csr.data))
-    A.setFromOptions()
-    A.setUp()
-
-    xr, tmp = A.getVecs()
-    xi, tmp = A.getVecs()
-
-    # Setup the eigensolver
-    E = SLEPc.EPS().create()
-    E.setOperators(A, None)
-    E.setDimensions(500, PETSc.DECIDE)
-    E.setProblemType( SLEPc.EPS.ProblemType.GNHEP )
-    E.setFromOptions()
-
-    # Solve the eigensystem
-    E.solve()
-
-    Print = PETSc.Sys.Print
-    Print("")
-    its = E.getIterationNumber()
-    Print("Number of iterations of the method: %i" % its)
-    sol_type = E.getType()
-    Print("Solution method: %s" % sol_type)
-    nev, ncv, mpd = E.getDimensions()
-    Print("Number of requested eigenvalues: %i" % nev)
-    tol, maxit = E.getTolerances()
-    Print("Stopping condition: tol=%.4g, maxit=%d" % (tol, maxit))
-    nconv = E.getConverged()
-    Print("Number of converged eigenpairs: %d" % nconv)
-    if nconv > 0:
-        Print("")
-        Print("        k          ||Ax-kx||/||kx|| ")
-        Print("----------------- ------------------")
-        for i in range(nconv):
-            k = E.getEigenpair(i, xr, xi)
-            error = E.computeError(i)
-            if k.imag != 0.0:
-              Print(" %9f%+9f j  %12g" % (k.real, k.imag, error))
-            else:
-              Print(" %12f       %12g" % (k.real, error))
-        Print("")
-    # except:
-    #     return numpy.linalg.eigvals(As)
+    A = PETSc.Mat()
 
 
 def part_factor(As):
     """Compute participation factor of states in eigenvalues"""
-    mu, N = eigs(As)
+    mu, N = numpy.linalg.eig(As)
     N = matrix(N)
     n = len(mu)
     idx = range(n)
@@ -187,7 +133,7 @@ def dump_results(system, mu, partfact):
     cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
-    if nblock <= 10:
+    if nblock <= 100:
         for idx in range(nblock):
             start = cpb*idx
             end = cpb*(idx+1)
@@ -201,7 +147,7 @@ def dump_results(system, mu, partfact):
 
 
 def run(system):
-    if not system.SPF.solved:
+    if system.SPF.solved == False:
         system.Log.warning('Power flow not solved. Eigenvalue analysis will not continue.')
         return True
 
@@ -213,7 +159,6 @@ def run(system):
         system.Log.info('No dynamic model loaded. Eivgenvalue analysis will not continue.')
         return False
     else:
-        system.Log.info('System dynamic order: {:g}'.format(system.DAE.n))
         mu, pf = part_factor(As)
         dump_results(system, mu, pf)
         mu_real = mu.real()

@@ -32,7 +32,7 @@ from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
 from .routines import powerflow, timedomain, eigenanalysis
-
+# from .routines.fakemodule import EAGC
 
 def cli_parse(writehelp=False, helpfile=None):
     """command line input argument parser"""
@@ -51,7 +51,6 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-n', '--no_output', help='Force not to write any output, including log,'
                                                   'outputs and simulation dumps', action='store_true')
     parser.add_argument('--profile', action='store_true', help='Enable Python profiler.')
-    parser.add_argument('--dime', help='Speficy DiME streaming server address and port.')
     parser.add_argument('--tf', help='End time of time-domain simulation.', type=float)
     parser.add_argument('-l', '--log', help='Specify the name of log file.')
     parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
@@ -327,17 +326,21 @@ def main():
     # multiple studies on multiple processors
     else:
         jobs = []
-        kwargs['verbose'] = ERROR
+        kwargs['verbose'] = CRITICAL
+        ncpu = os.cpu_count()
         for idx, casename in enumerate(cases):
+            if idx % ncpu == ncpu - 1:
+                sleep(0.1)
+                for job in jobs:
+                    job.join()
+                jobs = []
+
             kwargs['pid'] = idx
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(casename,), kwargs=kwargs)
             jobs.append(job)
             job.start()
             print('Process {:d} <{:s}> started.'.format(idx, casename))
 
-        sleep(0.1)
-        for job in jobs:
-            job.join()
         t0, s0 = elapsed(t0)
         print('--> Multiple processing finished in {0:s}.'.format(s0))
         return
@@ -475,21 +478,14 @@ def run(case, **kwargs):
     elif routine.lower() in ['small', 'ss', 'sssa', 's']:
         routine = 'sssa'
     if routine is 'td':
-        if system.Settings.dime_enable:
-            system.TDS.compute_flows = True
-            system.Streaming.send_init(recepient='all')
-            system.Log.info('Waiting for modules to send init info...')
-            sleep(0.5)
-            system.Streaming.sync_and_handle()
 
         t1, s = elapsed(t0)
         system.Log.info('')
         system.Log.info('Time Domain Simulation:')
         system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
+        system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
+
         ret = timedomain.run(system)
-        if system.Settings.dime_enable:
-            system.Streaming.dimec.send_var('geovis', 'DONE', 1)
-            system.Streaming.dimec.exit()
         t2, s = elapsed(t1)
         if ret == True:
             system.Log.info('Time domain simulation finished in {:s}.'.format(s))
@@ -519,7 +515,7 @@ def run(case, **kwargs):
             s.close()
         else:
             s = open(system.Files.prof, 'w')
-            nlines = 50
+            nlines = 999
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()

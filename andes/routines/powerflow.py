@@ -4,7 +4,11 @@ from ..consts import DEBUG
 import importlib
 import math
 
-klu = importlib.import_module('cvxopt.klu')
+try:
+    klu = importlib.import_module('cvxoptklu.klu')
+    KLU = True
+except:
+    KLU = False
 umfpack = importlib.import_module('cvxopt.umfpack')
 lib = umfpack
 F = None
@@ -25,11 +29,15 @@ def run(system):
         system.Settings.sparselib = 'umfpack'
         globals()['lib'] = umfpack
     elif system.Settings.sparselib == 'klu':
-        globals()['lib'] = klu
+        if not KLU:
+            system.Settings.sparselib = 'umfpack'
+            globals()['lib'] = umfpack
+        else:
+            globals()['lib'] = klu
 
     # default solver setup
     if system.SPF.solver.lower() not in solvers.keys():
-        system.SPF.solver = 'NR'
+            system.SPF.solver = 'NR'
 
     func_name = solvers.get(system.SPF.solver.lower())
     run_powerflow = importlib.import_module('andes.routines.powerflow')
@@ -56,7 +64,7 @@ def calcInc(system):
 
     try:
         N = lib.numeric(A, F)
-        if system.Settings.sparselib.lower() == 'klu':
+        if system.Settings.sparselib.lower() == 'klu' and KLU:
             lib.solve(A, F, N, inc)
         elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
@@ -208,3 +216,5 @@ def post_processing(system, convergence):
             system.SW.qg = system.DAE.y[system.SW.q]
 
         exec(system.Call.seriesflow)
+
+        system.Area.seriesflow(system.DAE)

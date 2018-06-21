@@ -24,12 +24,6 @@ from .utils import Logger
 from .models import non_jits, jits, JIT
 from .consts import *
 
-try:
-    from .utils.streaming import Streaming
-    STREAMING = True
-except:
-    STREAMING = False
-
 
 class PowerSystem(object):
     """everything in a power system class including models, settings,
@@ -76,16 +70,8 @@ class PowerSystem(object):
         self.VarOut = VarOut(self)
         self.Report = Report(self)
 
-        if dime:
-            self.Settings.dime_enable = True
-            self.Settings.dime_server = dime
         if tf:
             self.TDS.tf = tf
-
-        if STREAMING:
-            self.Streaming = Streaming(self)
-        else:
-            self.Settings.dime_enable = False
 
         self.inst_models()
 

@@ -96,3 +96,10 @@ class Fault(ModelBase):
         V = mul(2, self.u, dae.y[self.v])
         dae.add_jac(Gy,  mul(self.gf, V), self.a, self.v)
         dae.add_jac(Gy, -mul(self.bf, V), self.v, self.v)
+
+    def insert(self, idx=None, name=None, **kwargs):
+        if self.n:
+            self._param2list()
+
+        self.add(idx, name, **kwargs)
+        self.setup()

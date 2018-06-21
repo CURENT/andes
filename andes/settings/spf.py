@@ -20,7 +20,7 @@ class SPF(SettingsBase):
         self.switch2nr = False
         self.units = 'pu'
         self.units_alt = ['pu', 'nominal']
-        self.usedegree = False
+        self.usedegree = True
         self.solved = False
 
     @cached

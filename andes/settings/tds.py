@@ -14,12 +14,12 @@ class TDS(SettingsBase):
         self.deltatmax = 1
         self.deltatmin = 0.0002
         self.maxit = 30
-        self.tol = 1e-06
+        self.tol = 1e-6
         self.disturbance = False
         self.error = 1
         self.qrt = False
         self.kqrt = 1
-        self.compute_flows = False
+        self.compute_flows = True
         self.method_desc = {'euler': 'Implicit Euler',
                             'trapezoidal': 'Implicit Trapezoidal',
                             'fwdeuler': 'Explicit Euler'}

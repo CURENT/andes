@@ -18,17 +18,10 @@ limitations under the License.
 """
 import os
 import re
-
 from argparse import ArgumentParser
-from matplotlib import pyplot, rc
-
 from distutils.spawn import find_executable
 
-try:
-    from blist import *
-    BLIST = 1
-except ImportError:
-    BLIST = 0
+from matplotlib import pyplot, rc
 
 lfile = []
 dfile = []
@@ -42,6 +35,7 @@ def cli_parse():
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmax', type=float, help='x axis maximum value')
     parser.add_argument('--ymax', type=float, help='y axis maximum value')
+    parser.add_argument('--ymin', type=float, help='y axis minimum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
     parser.add_argument('--checkinit', action='store_true', help='check initialization value')
     parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
@@ -50,9 +44,9 @@ def cli_parse():
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
     parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
-    parser.add_argument('--yop', type=str, help='manipulate y data')
+    parser.add_argument('--ytimes', type=str, help='y times')
     args = parser.parse_args()
-    return args
+    return vars(args)
 
 
 def parse_y(y, nvars):
@@ -141,7 +135,9 @@ def read_label(lst, x, y):
     yl[0] = [''] * len(y)
     yl[1] = [''] * len(y)
 
-    x.extend(y)
+    xy = list(x)
+    xy.extend(y)
+
     try:
         lfile = open(lst)
         lfile_raw = lfile.readlines()
@@ -150,8 +146,8 @@ def read_label(lst, x, y):
         print('* Error while opening the lst file')
         return None, None
 
-    xidx = sorted(range(len(x)), key=lambda i: x[i])
-    xsorted = sorted(x)
+    xidx = sorted(range(len(xy)), key=lambda i: xy[i])
+    xsorted = sorted(xy)
     at = 0
 
     for line in lfile_raw:
@@ -162,7 +158,7 @@ def read_label(lst, x, y):
 
         varid = int(thisline[0])
         if varid == xsorted[at]:
-            if xsorted[at] == x[0]:
+            if xsorted[at] == xy[0]:
                 xl[0] = thisline[1]
                 xl[1] = thisline[2].strip('#')
             else:
@@ -170,18 +166,20 @@ def read_label(lst, x, y):
                 yl[1][xidx[at] - 1] = thisline[2].strip('#')
             at += 1
 
-        if at >= len(x):
+        if at >= len(xy):
             break
 
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args, no_latex=False):
-    xmin = args.xmin
-    xmax = args.xmax
-    ymax = args.ymax
-    xlabel = args.xlabel
-    ylabel = args.ylabel
+def do_plot(x, y, xl, yl, args, fig=None, ax=None):
+    xmin = args.pop('xmin', None)
+    xmax = args.pop('xmax', None)
+    ymax = args.pop('ymax', None)
+    ymin = args.pop('ymin', None)
+    xlabel = args.pop('xlabel', None)
+    ylabel = args.pop('ylabel', None)
+    no_latex = args.pop('no_latex', None)
 
     LATEX = False
     if no_latex:
@@ -211,7 +209,8 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
         xl_data = xl[0]
         yl_data = yl[0]
 
-    fig, ax = pyplot.subplots()
+    if not (fig and ax):
+        fig, ax = pyplot.subplots()
 
     for idx in range(len(y)):
         ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
@@ -233,8 +232,9 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
     ax.set_xlim(xmin=xmin)
     ax.set_xlim(xmax=xmax)
     ax.set_ylim(ymax=ymax)
+    ax.set_ylim(ymin=ymin)
 
-    if args.grid:
+    if args.pop('grid', None):
         ax.grid(b=True, linestyle='--')
     legend = ax.legend(loc='upper right')
 
@@ -242,8 +242,8 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
 
     # output to file
 
-    if args.save or args.unattended:
-        name, _ = os.path.splitext(args.datfile[0])
+    if args.pop('save', None) or args.pop('unattended', None):
+        name, _ = os.path.splitext(args['datfile'])
         count = 1
         cwd = os.getcwd()
         for file in os.listdir(cwd):
@@ -259,13 +259,30 @@ def do_plot(x, y, xl, yl, args, no_latex=False):
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
-    if not args.unattended:
+    if not args.pop('unattended', None):
         try:
             pyplot.show()
         except:
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
+    return fig, ax
+
+
+def add_plot(x, y, xl, yl, fig, ax, LATEX=False):
+    """Add plots to an existing plot"""
+    if LATEX:
+        xl_data = xl[1]
+        yl_data = yl[1]
+    else:
+        xl_data = xl[0]
+        yl_data = yl[0]
+
+    for idx in range(len(y)):
+        ax.plot(x, y[idx], label=yl_data[idx])
+
+    legend = ax.legend(loc='upper right')
+    ax.set_ylim(auto=True)
 
 def isfloat(value):
     try:
@@ -283,9 +300,11 @@ def isint(value):
         return False
 
 
-def main():
-    args = cli_parse()
-    name, ext = os.path.splitext(args.datfile[0])
+def main(cli=True, **args):
+    if cli:
+        args = cli_parse()
+
+    name, ext = os.path.splitext(args['datfile'][0])
     if 'out' in name:
         tds_plot(name, args)
     elif 'eig' in name:
@@ -313,28 +332,29 @@ def eig_plot(name, args):
         data = line.split()
 
 
-
-
 def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
-    y = parse_y(args.y, get_nvars(dat))
+    y = parse_y(args['y'], get_nvars(dat))
     try:
-        xval, yval = read_dat(dat, args.x, y)
+        xval, yval = read_dat(dat, args['x'], y)
     except IndexError:
         print('* Error: X or Y index out of bound')
         return
 
-    xl, yl = read_label(lst, args.x, y)
+    xl, yl = read_label(lst, args['x'], y)
 
-    if args.checkinit:
+    if args.pop('checkinit', False):
         check_init(yval, yl[0])
         return
-    # if args.yop:
-    #     op = args.yop[0]
-    #     num =
-    do_plot(xval, yval, xl, yl, args, no_latex=args.no_latex)
+    if args.pop('ytimes', False):
+        times = float(args['ytimes'])
+        new_yval = []
+        for val in yval:
+            new_yval.append([i*times for i in val])
+        yval = new_yval
+    do_plot(xval, yval, xl, yl, args)
 
 
 def check_init(yval, yl):
@@ -351,4 +371,4 @@ def check_init(yval, yl):
 
 
 if __name__ == "__main__":
-    main()
+    main(cli=True)

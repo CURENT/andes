@@ -107,7 +107,7 @@ class R(DCBase):
         self._params.extend(['R'])
         self._data.update({'R': 0.01,
                            })
-        self._r.extend('R')
+        self._r.extend(['R'])
         self.calls.update({'pflow': True,
                            'gcall': True,
                            'jac0': True,
@@ -251,19 +251,19 @@ class RLs(DCBase):
         dae.y[self.Idc] = - dae.x[self.IL]
 
     def gcall(self, dae):
-        dae.g[self.Idc] = dae.x[self.IL] + dae.y[self.Idc]
-        dae.g -= spmatrix(dae.y[self.Idc], self.v1, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(dae.y[self.Idc], self.v2, [0] * self.n, (dae.m, 1), 'd')
+        dae.g[self.Idc] = mul(self.u, dae.x[self.IL] + dae.y[self.Idc])
+        dae.g -= spmatrix(mul(self.u, dae.y[self.Idc]), self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(mul(self.u, dae.y[self.Idc]), self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        dae.f[self.IL] = mul(self.v12 - mul(self.R, dae.x[self.IL]), self.iL)
+        dae.f[self.IL] = mul(self.v12 - mul(self.R, dae.x[self.IL], self.u), self.iL)
 
     def jac0(self, dae):
         dae.add_jac(Gx0, self.u, self.Idc, self.IL)
-        dae.add_jac(Gy0, self.u, self.Idc, self.Idc)
+        dae.add_jac(Gy0, self.u + 1e-6, self.Idc, self.Idc)
         dae.add_jac(Gy0, -self.u, self.v1, self.Idc)
         dae.add_jac(Gy0, self.u, self.v2, self.Idc)
-        dae.add_jac(Fx0, -mul(self.R, self.iL), self.IL, self.IL)
+        dae.add_jac(Fx0, -mul(self.R, self.iL, self.u) + 1e-6, self.IL, self.IL)
         dae.add_jac(Fy0, mul(self.u, self.iL), self.IL, self.v1)
         dae.add_jac(Fy0, -mul(self.u,self.iL), self.IL, self.v2)
 
@@ -521,3 +521,27 @@ class Ground(DCBase):
         dae.add_jac(Gy0, -self.u, self.v, self.I)
         dae.add_jac(Gy0, self.u - 1 - 1e-6, self.I, self.I)
         dae.add_jac(Gy0, -self.u, self.I, self.v)
+
+
+class DCgen(DCBase):
+    """DC generator to impose active power injection"""
+    def __init__(self, system, name):
+        super().__init__(system, name)
+        self._name = 'DCgen'
+        self._params.extend(['P', 'Sn'])
+        self._data.update({'P': 0.0,
+                           })
+        self._powers.extend(['P'])
+        self.calls.update({'pflow': True,
+                           'gcall': True,
+                           'stagen': True,
+                           })
+        self._inst_meta()
+
+    def gcall(self, dae):
+        dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g -= spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
+
+    def disable_gen(self, idx):
+        self.u[self.int[idx]] = 0
+        self.system.DAE.factorize = True

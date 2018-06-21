@@ -1,18 +1,25 @@
-import sys
 import importlib
+import sys
 
-import progressbar
+try:
+    import progressbar
+    PROGRESSBAR = True
+except:
+    PROGRESSBAR = False
 
 from math import isnan
-from numpy import array
 from time import monotonic as time, sleep
 
-from cvxopt import matrix, spmatrix, sparse, spdiag
-from cvxopt.klu import numeric, symbolic, solve, linsolve
+from cvxopt import sparse, spdiag
+try:
+    from cvxoptklu.klu import numeric, symbolic, solve, linsolve
+    KLU = True
+except:
+    from cvxopt.umfpack import numeric, symbolic, solve, linsolve
+    KLU = False
 
 from ..utils.jactools import *
 
-from .eigenanalysis import run as run_eig
 try:
     from ..utils.matlab import write_mat
 except:
@@ -63,10 +70,12 @@ def run(system):
     global F
     retval = True
     bar = None
-    if system.pid == -1 and system.Settings.progressbar:
+    if PROGRESSBAR and system.pid == -1 and system.Settings.progressbar:
         bar = progressbar.ProgressBar(
                                       widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
                                                progressbar.AdaptiveETA(), '] '])
+    else:
+        bar = None
     dae = system.DAE
     settings = system.TDS
 
@@ -97,11 +106,7 @@ def run(system):
     if system.TDS.compute_flows:
         dae.init_fg()
         compute_flows(system)
-    system.VarOut.store(t)
-
-    if system.Settings.dime_enable:
-        system.Streaming.sync_and_handle()
-        system.Streaming.vars_to_modules()
+    system.VarOut.store(t, step)
 
     # perturbation file
     PERT = 0  # 0 - not loaded, 1 - loaded, -1 - error
@@ -116,7 +121,7 @@ def run(system):
             PERT = -1
 
     # main loop
-    if bar:
+    if bar is not None:
         bar.start()
     rt_headroom = 0
     settings.qrtstart = time()
@@ -134,6 +139,7 @@ def run(system):
         actual_time = t + h
 
         # check for the occurrence of a disturbance
+        fixed_times = system.Call.get_times()
         for item in fixed_times:
             if (item > t) and (item < t+h):
                 actual_time = item
@@ -155,8 +161,8 @@ def run(system):
             system.Breaker.check_time(actual_time)
             dae.rebuild = True
             switch = False
-        else:
-            dae.rebuild = False
+        # else:
+        dae.rebuild = True
 
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
@@ -238,9 +244,15 @@ def run(system):
                     dae.factorize = False
                 inc = -matrix([dae.q, dae.g])
 
+                if max(abs(inc)) > tol:
+                    pass
+
                 try:
                     N = numeric(dae.Ac, F)
-                    solve(dae.Ac, F, N, inc)
+                    if KLU:
+                        solve(dae.Ac, F, N, inc)
+                    else:
+                        solve(dae.Ac, N, inc)
                 except ArithmeticError:
                     system.Log.error('Singular matrix')
                     niter = maxit + 1  # force quit
@@ -272,6 +284,9 @@ def run(system):
                     break
                 niter += 1
 
+                if niter >= 2:
+                    pass
+
         if niter >= maxit:
             inc_g = inc[dae.n: dae.m+dae.n]
             max_g_err_sign = 1 if abs(max(inc_g)) > abs(min(inc_g)) else -1
@@ -294,20 +309,18 @@ def run(system):
 
         compute_flows(system)
 
-        system.VarOut.store(t)
-        if system.Settings.dime_enable:
-            system.Streaming.sync_and_handle()
-            system.Streaming.vars_to_modules()
+        system.VarOut.store(t, step)
 
         # plot variables and display iteration status
         perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
-        if bar:
+        if bar is not None:
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
-            system.Log.debug(' * Simulation time = {:.4f}s, step = {}, max mismatch = {:.4f},'
-                             ' niter = {} ({:.0f}%)'.format(t, step, settings.error, niter, 100*t /settings.tf))
-            nextpc += 10
+            system.Log.info(' ({:.0f}%) Time = {:.4f}s, step = {}, niter = {}'
+                            .format(100*t /settings.tf, t, step, niter))
+
+            nextpc += 5
         # compute max rotor angle difference
         diff_max = anglediff()
 
@@ -321,12 +334,12 @@ def run(system):
                 rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:
                     sleep(1e-4)
-    if bar:
+    if bar is not None:
         bar.finish()
     if settings.qrt:
         system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
     if t != settings.tf:
-        system.Log.error('Reached minimum time step. Convergence is not likely.')
+        system.Log.always('Reached minimum time step. Convergence is not likely.')
         retval = False
 
     return retval
@@ -406,4 +419,6 @@ def compute_flows(system):
         bus_inj = dae.g[:2 * system.Bus.n]
 
         exec(system.Call.seriesflow)
-        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows])
+        system.Area.seriesflow(system.DAE)
+        system.Area.interchange_varout()
+        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout])

@@ -10,23 +10,20 @@ class Settings(SettingsBase):
         self.freq = 60.0
         self.mva = 100.0
         self.distrsw = False
-        self.sparselib = 'klu'
+        self.sparselib = 'umfpack'
         self.sparselib_alt = ['klu', 'umfpack']
         self.export = 'txt'
         self.export_alt = ['txt', 'latex']
         self.coi = False
         self.connectivity = False
         self.error = 1
-        self.tol = 1e-8
+        self.tol = 1e-6
         self.static = 0
         self.nseries = 0
         self.forcepq = False
         self.forcez = True
         self.base = True
-        self.dime_enable = False
-        self.dime_name = 'sim'
-        self.dime_server = 'tcp://127.0.0.1:5000'
-        self.progressbar = True
+        self.progressbar = False
 
     @property
     def wb(self):

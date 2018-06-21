@@ -1,10 +1,5 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag
 from ..utils.math import *
-try:
-    from blist import blist
-    BLIST = True
-except:
-    BLIST = False
 
 
 class DAE(object):
@@ -263,7 +258,7 @@ class DAE(object):
 
         out = ''
         for name, val, idx in zip(self.system.VarName.__dict__[key], value, range(len(value))):
-            out += '{:12s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
+            out += '{:20s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
         return out
 
     def find_val(self, eq, val):

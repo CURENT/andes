@@ -56,6 +56,14 @@ def aeb(a, b):
         return matrix(list(map(lambda x, y: x == y, a, b)), a.size)
 
 
+def aneb(a, b):
+    """Return a matrix of logic comparison of A != B"""
+    if type(b) in (int, float):
+        return matrix(list(map(lambda x: x != b, a)), a.size)
+    else:
+        return matrix(list(map(lambda x, y: x != y, a, b)), a.size)
+
+
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(list(map(lambda x, y: x or y, a, b)), a.size)
@@ -88,6 +96,11 @@ def neg(u):
 def mfloor(a):
     """Return the element-wise floor value of a"""
     return matrix(list(map(lambda x: floor(x), a)), a.size)
+
+
+def mround(a):
+    """Return the element-wise round value of a"""
+    return matrix(list(map(lambda x: round(x), a)), a.size)
 
 
 def not0(a):
