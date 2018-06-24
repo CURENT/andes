@@ -156,21 +156,21 @@ TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
 TG1, gen = 2, pmax = 2, pmin = 0, R = 0.01, wref0 = 1.0,
      T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
 
-AVR1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
-      vrmin = -0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-      idx = 2, name = "AVR 2", syn = 2, vrmax = 2.05,
+AVR1, Ka = 100.0, Kf = 0.002, Ta = 0.02, Te = 0.2, Tf = 1.0, Tr = 0.001,
+      idx = 1, name = "AVR 1", syn = 1, vrmax = 7.32,
+      vrmin = 0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0, Tr = 0.001,
+      idx = 2, name = "AVR 2", syn = 2, vrmax = 4.38,
       vrmin = 0.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-      idx = 3, name = "AVR 3", syn = 3, vrmax = 1.7,
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0, Tr = 0.001,
+      idx = 3, name = "AVR 3", syn = 3, vrmax = 4.38,
       vrmin = 0.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-      idx = 4, name = "AVR 4", syn = 4, vrmax = 2.2,
-      vrmin = 1.0
-AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0,
-      idx = 5, name = "AVR 5", syn = 5, vrmax = 2.2,
-      vrmin = 1.0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
+      idx = 4, name = "AVR 4", syn = 4, vrmax = 6.81,
+      vrmin = 1.395
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
+      idx = 5, name = "AVR 5", syn = 5, vrmax = 6.81,
+      vrmin = 1.395
 
 Node, idx = 0, name = "Node 0", Vdcn = 100.0
 Node, idx = 1, name = "Node 1", Vdcn = 100.0
@@ -202,9 +202,6 @@ VSC1, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
 VSC1, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
       Kp3 = 0.01, Ki3 = 0.
 
-
-
-
 # VSC1, vsc = 3, name = "VSC 3", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
 #      Kp3 = 0.05, Ki3 = 0.01, D = 1, M = 2
 # VSC1, vsc = 4, name = "VSC 4", Kp1 = 0.2, Ki1 = 1, Kp2 = 0.2, Ki2 = 0.01,
@@ -220,7 +217,7 @@ C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 0.0001
 C, idx = "C4", name = "C 4", node1 = 4, node2 = 0, Vdcn = 100, C = 0.0001
 
-Fault, bus = 3, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+# Fault, bus = 3, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
 
 # DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 1
 # DCgen, idx = "DCgen_2", Vdcn = 100, node1 = 2, node2 = 0, P = 1
