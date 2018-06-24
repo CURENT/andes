@@ -303,7 +303,6 @@ def isint(value):
 def main(cli=True, **args):
     if cli:
         args = cli_parse()
-
     name, ext = os.path.splitext(args['datfile'][0])
     if 'out' in name:
         tds_plot(name, args)
@@ -348,8 +347,9 @@ def tds_plot(name, args):
     if args.pop('checkinit', False):
         check_init(yval, yl[0])
         return
-    if args.pop('ytimes', False):
-        times = float(args['ytimes'])
+    ytimes = args.pop('ytimes', False)
+    if ytimes:
+        times = float(ytimes)
         new_yval = []
         for val in yval:
             new_yval.append([i*times for i in val])

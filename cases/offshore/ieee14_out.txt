@@ -5,7 +5,7 @@ ANDES comes with ABSOLUTELY NO WARRANTY
 Use this software AT YOUR OWN RISK
 
 Case file: /home/hcui7/repos/andes_github/cases/offshore/ieee14.dm
-Report Time: 06/22/2018 04:57:24 PM
+Report Time: 06/24/2018 02:45:16 PM
 
 Power flow method: NR
 Number of iterations: 5
