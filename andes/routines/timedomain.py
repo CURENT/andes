@@ -207,7 +207,6 @@ def run(system):
             if settings.error == float('Inf'):
                 niter = maxit + 1
 
-
         if settings.method in ['euler', 'trapezoidal']:
             while settings.error > tol and niter < maxit:
                 if actual_time - t_jac >= 1:

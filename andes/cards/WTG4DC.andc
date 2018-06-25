@@ -33,6 +33,9 @@ data =
  pmax: 1.0; pmin: 0;
  qmax: 0.6; qmin: -0.6;
  u: 1; Sn: 40;
+ Ki: 0;
+ Kdc: 0;
+ Kcoi: 0;
 
 descr =
  node1: DC node 1;
@@ -57,6 +60,8 @@ descr =
  qmax: Maximum reactive power; qmin: Minimum reactive power;
  u: Connection status;
  Sn: Power rating;
+ busfreq: BusFreq index;
+ coi: COI unit index;
 
 units =
  Kp: pu;
@@ -98,6 +103,8 @@ ctrl =
  pwa: Turbine, pw, gen, y;
  v1: Node, v, node1, y;
  v2: Node, v, node2, y;
+ dwdt: BusFreq, dwdt, busfreq, y;
+ dwdt_coi: COI, dwdt, coi, y;
 
 interfaces = v1; v2;
 
@@ -124,7 +131,7 @@ states = omega_m; isq;
 fnamex = \omega_m; I_{s, q};
 
 diff_eq =
- 0.5 / H * ( pw / omega_m - te);
- (pwa / omega_m / (psip - xd * isd) - isq) / Teq;
+ 0.5 / H * ( toSb * pw / omega_m - te);
+ ( (pwa - Kdc *(v1 - v2) - Ki*dwdt - Kcoi*dwdt_coi) / omega_m / (psip - xd * isd) - isq) / Teq;
 # we control the turbine speed and reactive power injection
 #anti_windup =

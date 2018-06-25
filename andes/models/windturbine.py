@@ -6,6 +6,7 @@ from .base import ModelBase
 from cvxoptklu.klu import linsolve
 from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
 
+
 class MPPT(object):
     """MPPT control algorithm"""
     def __init__(self, system, name):
@@ -205,7 +206,8 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         self._fnamex.extend(['\\omega_m', 'I_{s, q}'])
         self._fnamey.extend(['I_{s, d}', 'V_{s, d}', 'V_{s, q}', 'P_s', '\\tau_e'])
         self._mandatory.extend(['node1', 'node2', 'dcgen', 'wind'])
-        self._params.extend(['fn','rs', 'xd', 'xq', 'psip', 'Tep', 'Teq', 'pmax', 'pmin', 'qmax', 'qmin', 'u', 'Sn'])
+        self._params.extend(['fn','rs', 'xd', 'xq', 'psip', 'Tep', 'Teq', 'pmax', 'pmin', 'qmax', 'qmin', 'u', 'Sn',
+                             'Kdc', 'Ki', 'Kcoi'])
         self._powers.extend(['H', 'pmax', 'pmin', 'qmax', 'qmin'])
         self._service.extend(['qs0'])
         self._states.extend(['omega_m', 'isq'])
@@ -228,7 +230,13 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             'u': 1,
             'wind': 0,
             'xd': 0.08,
-            'xq': 0.1})
+            'xq': 0.1,
+            'Kdc': 0,
+            'Ki': 0,
+            'Kcoi': 0,
+            'busfreq': 0,
+            'coi': 0,
+        })
         self._descr.update({
             'Sn': 'Power rating',
             'Tep': 'Active power time constant',
@@ -245,7 +253,11 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             'u': 'Connection status',
             'wind': 'Wind time series index',
             'xd': 'd-axis reactance',
-            'xq': 'q-axis reactance'})
+            'xq': 'q-axis reactance',
+            'Kdc': 'DC voltage droop on P reference',
+            'Ki': 'Bus frequency derivative droop on P reference',
+            'Kcoi': 'COI frequency derivative droop on P reference',
+        })
         self._units.update({
             'Sn': 'MVA',
             'Tep': 's',
@@ -278,12 +290,15 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         # self.copy_param('Node', 'v', 'v1', self.node1)
         # self.copy_param('Node', 'v', 'v2', self.node2)
         # self.qs0 = 0
+        self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+        self.copy_param('COI', 'dwdt', 'dwdt_coi', self.coi)
         Turbine.servcall(self, dae)
 
     def init1(self, dae):
         self.servcall(dae)
         mva = self.system.Settings.mva
         self.p0 = mul(self.p0, 1)
+        self.v120 = self.v12
 
         self.toMb = div(mva, self.Sn)  # to machine base
         self.toSb = self.Sn / mva  # to system base
@@ -386,7 +401,24 @@ class WTG4DC(ModelBase, Turbine, MPPT):
     def fcall(self, dae):
         Turbine.gcall(self, dae)
         dae.f[self.omega_m] = mul(0.5, div(1, self.H), -dae.y[self.te] + mul(dae.y[self.pw], div(1, dae.x[self.omega_m])))
-        dae.f[self.isq] = mul(div(1, self.Teq), -dae.x[self.isq] + mul(self.toSb, dae.y[self.pwa], div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))))
+        # dae.f[self.isq] = mul(div(1, self.Teq),
+        #                       -dae.x[self.isq] + mul(self.toSb, dae.y[self.pwa] - mul(self.Kdc, self.v12),
+        #                                              div(1, dae.x[self.omega_m]),
+        #                                              div(1, self.psip - mul(dae.y[self.isd], self.xd))))
+
+        dae.f[self.isq] = mul(div(1, self.Teq),
+                              -dae.x[self.isq] + mul(self.toSb, div(1, dae.x[self.omega_m]),
+                                                     div(1, self.psip - mul(dae.y[self.isd], self.xd)),
+                                                     dae.y[self.pwa] - mul(self.Kcoi, dae.y[self.dwdt_coi])
+                                                     - mul(self.Kdc, (dae.y[self.v1] - dae.y[self.v2]) - self.v120)
+                                                     - mul(self.Ki, dae.y[self.dwdt])
+                                                     )
+                              )
+
+    @property
+    def v12(self):
+        dae = self.system.DAE
+        return dae.y[self.v1] - dae.y[self.v2]
 
     def gycall(self, dae):
         Turbine.gycall(self, dae)
@@ -415,10 +447,20 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         dae.add_jac(Gx, dae.y[self.vsq], self.ps, self.isq)
         dae.add_jac(Gx, self.psip + mul(dae.y[self.isd], self.xq - self.xd), self.te, self.isq)
         dae.add_jac(Fx, mul(-0.5, dae.y[self.pw], div(1, self.H), (dae.x[self.omega_m])**-2), self.omega_m, self.omega_m)
-        dae.add_jac(Fx, - mul(dae.y[self.pwa], div(1, self.Teq), (dae.x[self.omega_m])**-2, div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.omega_m)
+        # dae.add_jac(Fx, - mul(dae.y[self.pwa], div(1, self.Teq), (dae.x[self.omega_m])**-2, div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.omega_m)
+
+        dae.add_jac(Fx, - mul(div(1, self.Teq), (dae.x[self.omega_m])**-2, div(1, self.psip - mul(dae.y[self.isd], self.xd)), dae.y[self.pwa] - mul(self.Kcoi, dae.y[self.dwdt_coi]) - mul(self.Kdc, dae.y[self.v1] - dae.y[self.v2]) - mul(self.Ki, dae.y[self.dwdt])), self.isq, self.omega_m)
         dae.add_jac(Fy, mul(0.5, div(1, self.H), div(1, dae.x[self.omega_m])), self.omega_m, self.pw)
-        dae.add_jac(Fy, mul(dae.y[self.pwa], self.xd, div(1, self.Teq), div(1, dae.x[self.omega_m]), (self.psip - mul(dae.y[self.isd], self.xd))**-2), self.isq, self.isd)
+
+        # dae.add_jac(Fy, mul(dae.y[self.pwa], self.xd, div(1, self.Teq), div(1, dae.x[self.omega_m]), (self.psip - mul(dae.y[self.isd], self.xd))**-2), self.isq, self.isd)
+        # dae.add_jac(Fy, mul(div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.pwa)
+
+        dae.add_jac(Fy, mul(self.Kdc, div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.v2)
+        dae.add_jac(Fy, - mul(self.Ki, div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.dwdt)
         dae.add_jac(Fy, mul(div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.pwa)
+        dae.add_jac(Fy, - mul(self.Kdc, div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.v1)
+        dae.add_jac(Fy, mul(self.xd, div(1, self.Teq), div(1, dae.x[self.omega_m]), (self.psip - mul(dae.y[self.isd], self.xd))**-2, dae.y[self.pwa] - mul(self.Kcoi, dae.y[self.dwdt_coi]) - mul(self.Kdc, dae.y[self.v1] - dae.y[self.v2]) - mul(self.Ki, dae.y[self.dwdt])), self.isq, self.isd)
+        dae.add_jac(Fy, - mul(self.Kcoi, div(1, self.Teq), div(1, dae.x[self.omega_m]), div(1, self.psip - mul(dae.y[self.isd], self.xd))), self.isq, self.dwdt_coi)
 
     def jac0(self, dae):
         Turbine.jac0(self, dae)
