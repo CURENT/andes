@@ -427,6 +427,7 @@ class VSC1_Common(DCBase):
         dae.y[self.p] = mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
         dae.y[self.q] = mul(dae.x[self.Iq], dae.y[self.vd]) - mul(dae.x[self.Id], dae.y[self.vq])
 
+        self.power_init1(dae)
         for idx in self.vsc:
             self.system.VSC.disable(idx)
 
@@ -434,14 +435,15 @@ class VSC1_Common(DCBase):
         self.pll_gcall(dae)
         self.outer_gcall(dae)
         self.current_gcall(dae)
+        self.power_gcall(dae)
 
-        dae.g[self.ref1] = self.ref10 - dae.y[self.ref1] \
+        dae.g[self.ref1] += self.ref10 - dae.y[self.ref1] \
                            + mul(self.PQ + self.PV, mul(self.v12 - self.v120, self.Kdc)) \
                            - mul(self.PQ + self.PV, mul(dae.x[self.w] - 1), self.Kf) \
                            + mul(self.vV + self.vQ, self.Kp, dae.y[self.p] - self.pref0)\
                            - mul(self.vV + self.vQ, mul(dae.x[self.w] - 1), self.Kf)
 
-        dae.g[self.ref2] = self.ref20 - dae.y[self.ref2]
+        dae.g[self.ref2] += self.ref20 - dae.y[self.ref2]
         dae.g[self.vd] = -dae.y[self.vd] + mul(dae.y[self.v], cos(dae.y[self.a] - dae.y[self.adq]))
         dae.g[self.vq] = -dae.y[self.vq] - mul(dae.y[self.v], sin(dae.y[self.a] - dae.y[self.adq]))
         dae.g[self.p] = -dae.y[self.p] + mul(dae.x[self.Id], dae.y[self.vd]) + mul(dae.x[self.Iq], dae.y[self.vq])
@@ -453,11 +455,13 @@ class VSC1_Common(DCBase):
         self.pll_fcall(dae)
         self.outer_fcall(dae)
         self.current_fcall(dae)
+        self.power_fcall(dae)
 
     def gycall(self, dae):
         self.pll_gycall(dae)
         self.outer_gycall(dae)
         self.current_gycall(dae)
+        self.power_gycall(dae)
 
         dae.add_jac(Gy, cos(dae.y[self.a] - dae.y[self.adq]), self.vd, self.v)
         dae.add_jac(Gy, - mul(dae.y[self.v], sin(dae.y[self.a] - dae.y[self.adq])), self.vd, self.a)
@@ -474,6 +478,7 @@ class VSC1_Common(DCBase):
         self.pll_fxcall(dae)
         self.outer_fxcall(dae)
         self.current_fxcall(dae)
+        self.power_fxcall(dae)
 
         dae.add_jac(Gx, dae.y[self.vd], self.p, self.Id)
         dae.add_jac(Gx, dae.y[self.vq], self.p, self.Iq)
@@ -484,6 +489,8 @@ class VSC1_Common(DCBase):
         self.pll_jac0(dae)
         self.outer_jac0(dae)
         self.current_jac0(dae)
+        self.power_jac0(dae)
+
         dae.add_jac(Gy0, mul(self.PQ + self.PV, self.Kdc), self.ref1, self.v1)
         dae.add_jac(Gy0, -mul(self.PQ + self.PV, self.Kdc), self.ref1, self.v2)
         dae.add_jac(Gx0, -mul(self.PQ + self.PV, self.Kf), self.ref1, self.w)
@@ -498,6 +505,50 @@ class VSC1_Common(DCBase):
         dae.add_jac(Gy0, -self.u - 1e-6, self.q, self.q)
         dae.add_jac(Gy0, -self.u , self.a, self.p)
         dae.add_jac(Gy0, -self.u, self.v, self.q)
+
+
+class Power1(object):
+    """Inertia emulation control device that modifies Pref based on the derivative of frequency deviation """
+    def __init__(self, system, name):
+        self._data.update({'Ki': 0,
+                           'Tf': 1,
+                           })
+        self._descr.update({'Ki': 'droop of the derivative of frequency on active power reference',
+                            'Tf': 'dw/dr washout filter time constant'
+                            })
+        self._params.extend({'Ki', 'Tf'})
+        self._states.extend(['xdw'])
+        self._fnamex.extend(['x_{dw}'])
+        self._algebs.extend(['dwdt'])
+        self._fnamey.extend(['\\frac{d\\omega}{dt}'])
+
+    def power_init1(self, dae):
+        self.iTf = div(self.u, self.Tf)
+        dae.x[self.xdw] = self.iTf
+
+    def power_gcall(self, dae):
+        dae.g[self.dwdt] = (mul(self.iTf, dae.x[self.w]) - dae.x[self.xdw]) - dae.y[self.dwdt]
+        dae.g[self.ref1] -= mul(self.PQ + self.PV, self.Ki, dae.y[self.dwdt])
+
+    def power_fcall(self, dae):
+        dae.f[self.xdw] = mul(self.iTf, mul(self.iTf, dae.x[self.w]) - dae.x[self.xdw])
+
+    def power_gycall(self, dae):
+        pass
+
+    def power_fxcall(self, dae):
+        pass
+
+    def power_jac0(self, dae):
+        dae.add_jac(Gx0, self.iTf, self.dwdt, self.w)
+        dae.add_jac(Gx0, -1, self.dwdt, self.xdw)
+
+        dae.add_jac(Fx0, self.iTf **2, self.xdw, self.w)
+        dae.add_jac(Fx0, -self.iTf, self.xdw, self.xdw)
+
+        dae.add_jac(Gy0, -1, self.dwdt, self.dwdt)
+
+        dae.add_jac(Gy0, -mul(self.PQ + self.PV, self.Ki), self.ref1, self.dwdt)
 
 
 class Current1(object):
@@ -702,12 +753,13 @@ class PLL1(object):
         pass
 
 
-class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1):
+class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
     def __init__(self, system, name):
         VSC1_Common.__init__(self, system, name)
         VSC1_Outer1.__init__(self, system, name)
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
+        Power1.__init__(self, system, name)
         self._inst_meta()
     
     def base(self):
