@@ -15,28 +15,34 @@ class BusFreq(ModelBase):
         self._data.update({'bus': None,
                            'Tf': 0.1,
                            'Tw': 1.0,
+                           'Td': 0.5,
                            })
-        self._params.extend(['Tf', 'Tw'])
+        self._params.extend(['Tf', 'Tw', 'Td'])
         self._descr.update({'bus': 'bus idx',
                             'Tf': 'low-pass filter time constant',
-                            'Tw': 'washout filter time constant',
+                            'Tw': 'washout filter time constant for phase angle',
+                            'Td': 'washout filter time constant for frequency',
                             })
         self._units.update({'bus': 'na',
                             'Tf': 'sec',
                             'Tw': 'sec',
                             })
         self._mandatory.extend(['bus'])
-        self._states.extend(['xt', 'w'])
-        self._fnamex.extend(['x_\\theta', '\\omega'])
+        self._states.extend(['xt', 'w', 'xdw'])
+        self._fnamex.extend(['x_\\theta', '\\omega', 'x_\\omwga'])
+        self._algebs.extend(['dwdt'])
+        self._fnamey.extend(['\\frac{d\\omega}{dt}'])
+
         self.calls.update({'init1': True, 'fcall': True,
-                           'jac0': True,
+                           'gcall': True, 'jac0': True,
                            })
-        self._service.extend(['iTf', 'iTw', 'iwn', 'a0', 'dw'])
+        self._service.extend(['iTf', 'iTw', 'iwn', 'a0', 'dw', 'iTd'])
         self._inst_meta()
 
     def init1(self, dae):
         self.copy_param(model='Bus', src='a', dest='a', fkey=self.bus)
         self.iTf = div(self.u, self.Tf)
+        self.iTd = div(self.u, self.Td)
         self.iTw = div(self.u, self.Tw)
         self.iwn = div(self.u, self.system.Settings.wb)
         self.a0 = dae.y[self.a]
@@ -44,11 +50,16 @@ class BusFreq(ModelBase):
         dae.x[self.xt] = zeros(self.n, 1)
         dae.x[self.w] = ones(self.n, 1)
         # dae.y[self.dw] = zeros(self.n, 1)
+        dae.x[self.xdw] = self.iTd
 
     def fcall(self, dae):
         self.dw = -dae.x[self.xt] + mul(self.iwn, self.iTf, dae.y[self.a] - self.a0)
         dae.f[self.xt] = mul(self.iTf, mul(self.iwn, self.iTf, dae.y[self.a] - self.a0) - dae.x[self.xt])
         dae.f[self.w] = mul(self.dw + 1 - dae.x[self.w], self.iTw)
+        dae.f[self.xdw] = mul(self.iTd, mul(self.iTd, dae.x[self.w]) - dae.x[self.xdw])
+
+    def gcall(self, dae):
+        dae.g[self.dwdt] = (mul(self.iTd, dae.x[self.w]) - dae.x[self.xdw]) - dae.y[self.dwdt]
 
     def jac0(self, dae):
         dae.add_jac(Fy0, mul(self.iTf **2, self.iwn), self.xt, self.a)
@@ -58,6 +69,14 @@ class BusFreq(ModelBase):
 
         dae.add_jac(Fx0, -self.iTw, self.w, self.xt)
         dae.add_jac(Fy0, mul(self.iTw, self.iwn, self.iTf), self.w, self.a)
+
+        dae.add_jac(Gx0, self.iTd, self.dwdt, self.w)
+        dae.add_jac(Gx0, -1, self.dwdt, self.xdw)
+
+        dae.add_jac(Fx0, self.iTd **2, self.xdw, self.w)
+        dae.add_jac(Fx0, -self.iTd, self.xdw, self.xdw)
+
+        dae.add_jac(Gy0, -1, self.dwdt, self.dwdt)
 
 
 class PMU(ModelBase):
