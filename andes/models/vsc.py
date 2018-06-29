@@ -506,6 +506,28 @@ class VSC1_Common(DCBase):
         dae.add_jac(Gy0, -self.u , self.a, self.p)
         dae.add_jac(Gy0, -self.u, self.v, self.q)
 
+class Power0(object):
+    """Empty class for inertia emulation control - place holder"""
+    def __init__(self, system, name):
+        pass
+
+    def power_init1(self, dae):
+        pass
+
+    def power_gcall(self, dae):
+        pass
+
+    def power_fcall(self, dae):
+        pass
+
+    def power_jac0(self, dae):
+        pass
+
+    def power_gycall(self, dae):
+        pass
+
+    def power_fxcall(self, dae):
+        pass
 
 class Power1(object):
     """Inertia emulation control device that modifies Pref based on the derivative of frequency deviation """
@@ -753,7 +775,21 @@ class PLL1(object):
         pass
 
 
-class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
+class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power0):
+    def __init__(self, system, name):
+        VSC1_Common.__init__(self, system, name)
+        VSC1_Outer1.__init__(self, system, name)
+        Current1.__init__(self, system, name)
+        PLL1.__init__(self, system, name)
+        Power0.__init__(self, system, name)
+        self._inst_meta()
+
+    def base(self):
+        super(VSC1, self).base()
+
+
+class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
+    """VSC1 with Inertia Emulation"""
     def __init__(self, system, name):
         VSC1_Common.__init__(self, system, name)
         VSC1_Outer1.__init__(self, system, name)
@@ -761,10 +797,9 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
         PLL1.__init__(self, system, name)
         Power1.__init__(self, system, name)
         self._inst_meta()
-    
-    def base(self):
-        super(VSC1, self).base()
 
+    def base(self):
+        super(VSC1_IE, self).base()
 
 class VSC2_Voltage1(object):
     """Outer voltage controller for voltage-source controlled VSC using two PIs"""

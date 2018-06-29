@@ -193,7 +193,6 @@ class Turbine(object):
         dae.add_jac(Fx0, - div(1, self.Tp), self.theta_p, self.theta_p)
         dae.add_jac(Fx0, mul(self.Kp, self.phi, div(1, self.Tp)), self.theta_p, self.omega_m)
 
-
 class WTG4DC(ModelBase, Turbine, MPPT):
     """Wind turbine type IV DC output"""
     def __init__(self, system, name):
@@ -234,8 +233,8 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             'Kdc': 0,
             'Ki': 0,
             'Kcoi': 0,
-            'busfreq': 0,
-            'coi': 0,
+            'busfreq': None,
+            'coi': None,
         })
         self._descr.update({
             'Sn': 'Power rating',
@@ -290,8 +289,15 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         # self.copy_param('Node', 'v', 'v1', self.node1)
         # self.copy_param('Node', 'v', 'v2', self.node2)
         # self.qs0 = 0
-        self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
-        self.copy_param('COI', 'dwdt', 'dwdt_coi', self.coi)
+        # TODO: Fix this dirty hard code
+        if self.busfreq[0] is not None:
+            self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+        else:
+            self.dwdt = matrix(0, (self.n, 1))
+        if self.coi[0] is not None:
+            self.copy_param('COI', 'dwdt', 'dwdt_coi', self.coi)
+        else:
+            self.dwdt_coi = matrix(0, (self.n, 1))
         Turbine.servcall(self, dae)
 
     def init1(self, dae):
