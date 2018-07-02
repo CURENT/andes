@@ -357,24 +357,49 @@ class Streaming(object):
                 self.dimec.send_var(item, 'SysParam', self.SysParam)
                 self.dimec.send_var(item, 'SysName', self.SysName)
 
-    def record_module_init(self, module_name, init_var):
+    def record_module_init(self, name, init_var):
         """Record the variable requests from modules"""
-        if module_name in self.ModuleInfo:
-            self.ModuleInfo[module_name].update(init_var)
-        else:
-            self.ModuleInfo[module_name] = init_var
-        self.ModuleInfo[module_name]['lastk'] = 0
+        ivar = dict(init_var)
+        var_idx = ivar['vgsvaridx']
+        ivar['lastk'] = 0
 
-        if type(self.ModuleInfo[module_name]['vgsvaridx']) == int:
-            self.ModuleInfo[module_name]['vgsvaridx'] = array(self.ModuleInfo[module_name]['vgsvaridx'])
+        if name not in self.ModuleInfo:
+            self.ModuleInfo[name] = {}
 
-        vgsvaridx = self.ModuleInfo[module_name]['vgsvaridx'].tolist()
-        if type(vgsvaridx[0]) == list:
-            self.ModuleInfo[module_name]['vgsvaridx'] = vgsvaridx[0]
-        else:
-            self.ModuleInfo[module_name]['vgsvaridx'] = vgsvaridx
+        if isinstance(var_idx, int):
+            var_idx = array(var_idx, dtype=int)
+        elif isinstance(var_idx, ndarray):
+            var_idx = var_idx.tolist()
+            # unwrap if nested
+            if isinstance(var_idx[0], list):
+                var_idx = array(var_idx[0], dtype=int)
+            else:
+                var_idx = array(var_idx, dtype=int)
 
-        self.ModuleInfo[module_name]['vgsvaridx'] = [int(i)-1 for i in self.ModuleInfo[module_name]['vgsvaridx']]
+        ivar['vgsvaridx'] = (var_idx - 1).tolist()
+        ivar['lastk'] = 0
+
+        self.ModuleInfo[name].update(ivar)
+
+
+        # if name in self.ModuleInfo:
+        #     self.ModuleInfo[name].update(init_var)
+        # else:
+        #     self.ModuleInfo[name] = init_var
+        # self.ModuleInfo[name]['lastk'] = 0
+        #
+        # if type(self.ModuleInfo[name]['vgsvaridx']) == int:
+        #     self.ModuleInfo[name]['vgsvaridx'] = array(self.ModuleInfo[name]['vgsvaridx'])
+        #
+        # vgsvaridx = self.ModuleInfo[name]['vgsvaridx'].tolist()
+        # if type(vgsvaridx[0]) == list:
+        #     self.ModuleInfo[name]['vgsvaridx'] = vgsvaridx[0]
+        # else:
+        #     self.ModuleInfo[name]['vgsvaridx'] = vgsvaridx
+        #
+        # self.ModuleInfo[name]['vgsvaridx'] = [int(i) - 1 for i in self.ModuleInfo[name]['vgsvaridx']]
+        self.system.Log.debug('Module <{}> request index {}'
+                              .format(name, var_idx))
 
     @staticmethod
     def transpose_matlab_row(a):

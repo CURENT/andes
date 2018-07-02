@@ -7,20 +7,32 @@ import time
 from andes.utils.dime import Dime
 
 import numpy as np
-from numpy import array, ndarray
+from numpy import array, ndarray, zeros
 
 from pypmu import Pmu
 from pypmu.frame import ConfigFrame2, HeaderFrame
 
 
+def get_logger(name):
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        # Prevent logging from propagating to the root logger
+        logger.propagate = 0
+        console = logging.StreamHandler()
+        logger.addHandler(console)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+        console.setFormatter(formatter)
+    return logger
+
+
 class MiniPMU(object):
 
-    def __init__(self, name:str='', dime_address:str='ipc:///tmp/dime',
-                 pmu_idx:list=list(), max_store=1000, pmu_ip='0.0.0.0', pmu_port=1410,
+    def __init__(self, name: str='', dime_address: str='ipc:///tmp/dime',
+                 pmu_idx: list=list(), max_store: int=1000, pmu_ip: str='0.0.0.0', pmu_port: int=1410,
                  ):
         assert name, 'PMU Receiver name is empty'
         assert pmu_idx, 'PMU idx is empty'
-
+        self.name = name
         self.dime_address = dime_address
         self.pmu_idx = pmu_idx
         self.max_store = max_store
@@ -40,19 +52,26 @@ class MiniPMU(object):
         self.data = ndarray([])
         self.count = 0
 
-        self.dimec = Dime(name, dime_address)
+        self.dimec = Dime(self.name, self.dime_address)
         self.pmu = Pmu(ip="0.0.0.0", port=pmu_port)
+        self.logger = get_logger(self.name)
 
     def start_dime(self):
         """Starts the dime client stored in `self.dimec`
         """
-        # self.dimec.exit()
+        self.logger.info('Trying to connect to dime server {}'.format(self.dime_address))
         assert self.dimec.start()
-        logging.info('DiME client connected to {}'.format(self.dime_address))
+        # clear data in the DiME server queue
+        self.dimec.exit()
+        assert self.dimec.start()
+        self.logger.info('DiME client connected')
 
     def respond_to_sim(self):
         """Respond with data streaming configuration to the simulator"""
-        pass
+        response = {'vgsvaridx': self.vgsvaridx,
+                    'limitsample': 0,
+                    }
+        self.dimec.send_var('sim', self.name, response)
 
     def get_bus_name(self):
         """Return bus names based on ``self.pmu_idx`` and store bus names to ``self.bus_name``
@@ -94,7 +113,6 @@ class MiniPMU(object):
 
         self.pmu.set_configuration(self.cfg)
         self.pmu.set_header(self.hf)
-
         self.pmu.run()
 
     def find_var_idx(self):
@@ -116,14 +134,14 @@ class MiniPMU(object):
 
     @property
     def vgsvaridx(self):
-        return self.var_idx['am'] + self.var_idx['vm'] + self.var_idx['w']
+        return array(self.var_idx['am'] + self.var_idx['vm'] + self.var_idx['w'])
 
     def init_storage(self):
         """Initialize data storage `self.t` and `self.data`
         """
         if self.count % self.max_store == 0:
-            self.t = ndarray(shape=(self.max_store, 1), dtype=float)
-            self.data = ndarray(shape=(self.max_store, len(self.pmu_idx)), dtype=float)
+            self.t = zeros(shape=(self.max_store, 1), dtype=float)
+            self.data = zeros(shape=(self.max_store, len(self.pmu_idx * 3)), dtype=float)
             self.count = 0
             return True
         else:
@@ -138,7 +156,7 @@ class MiniPMU(object):
         ws = self.dimec.workspace
 
         if var == 'Varvgs':
-            self.data[self.count, :] = ws[var]['vars']
+            self.data[self.count, :] = ws[var]['vars'][:]
             self.t[self.count, :] = ws[var]['t']
             self.count += 1
             return ws[var]['t'], ws[var]['vars']
@@ -148,7 +166,7 @@ class MiniPMU(object):
     def sync_initialization(self):
         """Sync for ``SysParam``, ``Idxvgs`` and ``Varheader`` until all are received
         """
-        logging.info('Syncing for SysParam, Idxvgs and Varheader')
+        self.logger.info('Syncing for SysParam, Idxvgs and Varheader')
         ret = False
         count = 0
         while True:
@@ -159,7 +177,7 @@ class MiniPMU(object):
             if var in ('SysParam', 'Idxvgs', 'Varheader'):
                 self.__dict__[var] = self.dimec.workspace[var]
                 count += 1
-                logging.info('{} synced.'.format(var))
+                self.logger.info('{} synced.'.format(var))
             if count == 3:
                 ret = True
                 break
@@ -171,26 +189,25 @@ class MiniPMU(object):
         """
         self.start_dime()
         if self.sync_initialization():
+            self.find_var_idx()
             self.respond_to_sim()
-        self.find_var_idx()
         self.get_bus_name()
         self.config_pmu()
 
         while True:
             t, var = self.sync_measurement_data()
-            # if t:
+            if not t:
+                time.sleep(0.005)
+
             if self.pmu.clients:
-                self.pmu.send_data(phasors=[(var[1], var[0])],
+                self.pmu.send_data(phasors=[(int(var[0, 1]), int(var[0, 0]))],
                                    analog=[9.99],
                                    digital=[0x0001],
-                                   freq=var[2])
-            # else:
-            #     time.sleep(0.005)
-
-        self.pmu.join()
+                                   freq=var[0, 2])
 
 
 if __name__ == "__main__":
     mini = MiniPMU(name='TestPMU', dime_address='ipc:///tmp/dime', pmu_idx=[1],
-                   pmu_port=1412)
+                   pmu_port=1414)
     mini.run()
+
