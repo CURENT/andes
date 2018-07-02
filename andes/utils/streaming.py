@@ -237,6 +237,9 @@ class Streaming(object):
                               'P': 1 + mn + array(range(self.system.Bus.n)),
                               'Q': 1 + mn + self.system.Bus.n + array(range(self.system.Bus.n)),
                               }
+        self.Idxvgs['Pmu'] = {'vm': 1 + array(self.system.PMU.vm),
+                              'am': 1 + array(self.system.PMU.am),
+                              }
         line0 = 1 + mn + 2 * self.system.Bus.n
         self.Idxvgs['Line'] = {'Pij': line0 + array(range(self.system.Line.n)),
                                'Pji': line0 + self.system.Line.n + array(range(self.system.Line.n)),
@@ -286,7 +289,6 @@ class Streaming(object):
         else:
             DCLine_types = ()
             # self.Idxvgs['DCLine'] = {}
-
 
     def _build_list(self, model, params, ret=None):
         if not ret:
