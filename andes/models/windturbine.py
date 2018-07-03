@@ -162,9 +162,7 @@ class Turbine(object):
 
     def gcall(self, dae):
         dae.g[self.pw] = -dae.y[self.pw] + mul(0.5, dae.y[self.cp], self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3)
-        # dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
         dae.g[self.lamb] = -dae.y[self.lamb] + mul(4, self.R, self.fn, self.ngb, dae.x[self.omega_m], pi, div(1, self.Vwn), div(1, self.npole), div(1, dae.x[self.vw]))
-        # dae.g[self.ilamb] = div(1, div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3))) - dae.y[self.ilamb]
         dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, dae.y[self.ilamb]) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, dae.y[self.ilamb])))
         dae.g[self.ilamb] = div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) - dae.y[self.ilamb] + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3))
 

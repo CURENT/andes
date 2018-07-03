@@ -529,6 +529,7 @@ class Power0(object):
     def power_fxcall(self, dae):
         pass
 
+
 class Power1(object):
     """Inertia emulation control device that modifies Pref based on the derivative of frequency deviation """
     def __init__(self, system, name):
@@ -550,7 +551,7 @@ class Power1(object):
 
     def power_gcall(self, dae):
         dae.g[self.dwdt] = (mul(self.iTf, dae.x[self.w]) - dae.x[self.xdw]) - dae.y[self.dwdt]
-        dae.g[self.ref1] -= mul(self.PQ + self.PV, self.Ki, dae.y[self.dwdt])
+        dae.g[self.ref1] += -mul(self.Ki, dae.y[self.dwdt])
 
     def power_fcall(self, dae):
         dae.f[self.xdw] = mul(self.iTf, mul(self.iTf, dae.x[self.w]) - dae.x[self.xdw])
@@ -570,7 +571,7 @@ class Power1(object):
 
         dae.add_jac(Gy0, -1, self.dwdt, self.dwdt)
 
-        dae.add_jac(Gy0, -mul(self.PQ + self.PV, self.Ki), self.ref1, self.dwdt)
+        dae.add_jac(Gy0, -self.Ki, self.ref1, self.dwdt)
 
 
 class Current1(object):
@@ -685,7 +686,9 @@ class VSC1_Outer1(object):
         dae.x[self.Nq] = mul(dae.x[self.Iq], self.PV + self.vV)
 
     def outer_gcall(self, dae):
-        dae.g[self.Idref] = -dae.y[self.Idref] + mul(self.PQ + self.PV, dae.x[self.Nd] + mul(self.Kp2, dae.y[self.ref1] - dae.y[self.p]) + mul(dae.y[self.ref1], div(1, dae.y[self.vd]))) + mul(div(1, dae.x[self.ud]), self.vQ + self.vV, -mul(dae.x[self.Idcx], dae.y[self.v1] - dae.y[self.v2]) - mul(dae.x[self.Iq], dae.x[self.uq]))
+        dae.g[self.Idref] = -dae.y[self.Idref] + \
+                            mul(self.PQ + self.PV, dae.x[self.Nd] + mul(self.Kp2, dae.y[self.ref1] - dae.y[self.p]) + mul(dae.y[self.ref1], div(1, dae.y[self.vd]))) + \
+                            mul(div(1, dae.x[self.ud]), self.vQ + self.vV, -mul(dae.x[self.Idcx], dae.y[self.v1] - dae.y[self.v2]) - mul(dae.x[self.Iq], dae.x[self.uq]))
 
         dae.g[self.Iqref] = dae.x[self.Nq] - dae.y[self.Iqref] + mul(self.PQ + self.vQ, mul(self.Kp3, dae.y[self.ref2] - dae.y[self.q]) + mul(dae.y[self.ref2], div(1, dae.y[self.vd]))) + mul(self.Kp3, self.PV + self.vV, dae.y[self.ref2] - dae.y[self.vd])
         dae.g[self.Idcy] = -dae.y[self.Idcy] + mul(div(1, dae.y[self.v1] - dae.y[self.v2]), self.PQ + self.PV, -mul(dae.x[self.Id], dae.x[self.ud]) - mul(dae.x[self.Iq], dae.x[self.uq]))

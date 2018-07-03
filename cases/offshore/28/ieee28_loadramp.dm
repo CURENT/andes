@@ -346,30 +346,30 @@ Node, idx = 4, name = "Node 4", Vdcn = 100.0
 
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
-VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, Vn = 69, name = "VSC 1", rsh = 0.0025, xsh = 0.5,
+VSC, idx = 1, node1 = 1, node2 = 0, bus = 1, Vn = 69, name = "VSC 1", rsh = 0.0025, xsh = 0.05,
      vshmax = 999, vshmin = 0, Ishmax = 999, vref0 = 1.06, vdcref0 = 1.0, control = "vV",
      Vdcn = 100, u = 1
 VSC, idx = 2, node1 = 2, node2 = 0, bus = 202, Vn = 69, name = "VSC 2", rsh = 0.0025, xsh = 0.06,
-     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.3, qref0 = -0.00, control = "PQ",
+     vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.4, qref0 = -0.00, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
 VSC1_IE, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
-      Kp3 = 1, Ki3 = 0.5, Kp = 0.005, Kf = -5, Ki = 500
+      Kp3 = 1, Ki3 = 0.5, Kp = 0, Kf = -0, Ki = -100
 VSC1_IE, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
-      Kp3 = 0.01, Ki3 = 0., Kdc = 5, Kf = 5, Ki = 500
+      Kp3 = 0.01, Ki3 = 0., Kdc = 50, Kf = 0, Ki = 100
 
-RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.001
-RLs, idx = "RLs2", name = "RLs 2-4", node1 = 2, node2 = 4, Vdcn = 100, R = 0.1, L = 0.001
-RLs, idx = "RLs3", name = "RLs 3-4", node1 = 3, node2 = 4, Vdcn = 100, R = 0.1, L = 0.001
-RLs, idx = "RLs4", name = "RLs 1-3", node1 = 1, node2 = 3, Vdcn = 100, R = 0.1, L = 0.002
+RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.0001
+RLs, idx = "RLs2", name = "RLs 2-4", node1 = 2, node2 = 4, Vdcn = 100, R = 0.1, L = 0.0001
+RLs, idx = "RLs3", name = "RLs 3-4", node1 = 3, node2 = 4, Vdcn = 100, R = 0.1, L = 0.0001
+RLs, idx = "RLs4", name = "RLs 1-3", node1 = 1, node2 = 3, Vdcn = 100, R = 0.1, L = 0.0001
 
-C, idx = "C1", name = "C 1", node1 = 1, node2 = 0, Vdcn = 100, C = 0.0001
-C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.0001
-C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 0.0001
-C, idx = "C4", name = "C 4", node1 = 4, node2 = 0, Vdcn = 100, C = 0.0001
+C, idx = "C1", name = "C 1", node1 = 1, node2 = 0, Vdcn = 100, C = 0.00001
+C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 0.00001
+C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 0.00001
+C, idx = "C4", name = "C 4", node1 = 4, node2 = 0, Vdcn = 100, C = 0.00001
 
-DCgen, idx = "DCgen_3", Vdcn = 100, node1 = 3, node2 = 0, P = 0.3
-DCgen, idx = "DCgen_4", Vdcn = 100, node1 = 4, node2 = 0, P = 0.3
+DCgen, idx = "DCgen_3", Vdcn = 100, node1 = 3, node2 = 0, P = 0.4
+DCgen, idx = "DCgen_4", Vdcn = 100, node1 = 4, node2 = 0, P = 0.4
 
 ConstWind, idx = 3
 ConstWind, idx = 4
@@ -378,8 +378,8 @@ ConstWind, idx = 4
 # WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4
 
 WTG4DC, node1 = 3, node2 = 0, dcgen = "DCgen_3", wind = 3, busfreq = 1, coi = 1,
-        Kdc = 0, Ki = 0, Kcoi = 0
+        Kdc = 20, Ki = 00, Kcoi = 0
 WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4, busfreq = 2, coi = 1,
-        Kdc = 0, Ki = 0, Kcoi = 0
+        Kdc = 20, Ki = 0, Kcoi = 0
 
 COI, idx = 1, name = "COI 1", syn = [1; 2]
