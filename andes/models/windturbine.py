@@ -28,6 +28,7 @@ class MPPT(object):
         dae.add_jac(Gx0, 2, self.pwa, self.omega_m)
         dae.add_jac(Gy0, 1e-6, self.pwa, self.pwa)
 
+
 class Turbine(object):
     """Generic wind turbine model"""
     def __init__(self, system, name):
@@ -152,8 +153,8 @@ class Turbine(object):
         dae.x[self.vw] = div(vw, self.Vwn)
 
         lamb = div(omega, vw, div(1, R))
-        ilamb = div(1, (div(1, lamb + 0.08 * theta) - div(0.035, theta ** 3 + 1)))
-        cp = 0.22 * mul(div(116, ilamb) - 0.4 * theta - 5, exp(div(-12.5, ilamb)))
+        ilamb = div(1, lamb + 0.08 * theta) - div(0.035, theta ** 3 + 1)
+        cp = 0.22 * mul(mul(116, ilamb) - 0.4 * theta - 5, exp(mul(-12.5, ilamb)))
 
         dae.y[self.lamb] = lamb
         dae.y[self.ilamb] = ilamb
@@ -161,9 +162,11 @@ class Turbine(object):
 
     def gcall(self, dae):
         dae.g[self.pw] = -dae.y[self.pw] + mul(0.5, dae.y[self.cp], self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3)
-        dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
+        # dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
         dae.g[self.lamb] = -dae.y[self.lamb] + mul(4, self.R, self.fn, self.ngb, dae.x[self.omega_m], pi, div(1, self.Vwn), div(1, self.npole), div(1, dae.x[self.vw]))
-        dae.g[self.ilamb] = div(1, div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3))) - dae.y[self.ilamb]
+        # dae.g[self.ilamb] = div(1, div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3))) - dae.y[self.ilamb]
+        dae.g[self.cp] = -dae.y[self.cp] + mul(-1.1 + mul(25.52, dae.y[self.ilamb]) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, dae.y[self.ilamb])))
+        dae.g[self.ilamb] = div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) - dae.y[self.ilamb] + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3))
 
     def fcall(self, dae):
         dae.f[self.theta_p] = mul(div(1, self.Tp), -dae.x[self.theta_p] + mul(self.Kp, self.phi, -1 + dae.x[self.omega_m]))
@@ -171,15 +174,15 @@ class Turbine(object):
 
     def gycall(self, dae):
         dae.add_jac(Gy, mul(0.5, self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3), self.pw, self.cp)
-        dae.add_jac(Gy, mul(-25.52, (dae.y[self.ilamb])**-2, exp(mul(-12.5, div(1, dae.y[self.ilamb])))) + mul(12.5, (dae.y[self.ilamb])**-2, -1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, div(1, dae.y[self.ilamb])))), self.cp, self.ilamb)
-        dae.add_jac(Gy, mul((dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p]))**-2, (div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3)))**-2), self.ilamb, self.lamb)
+        dae.add_jac(Gy, mul(25.52, exp(mul(-12.5, dae.y[self.ilamb]))) + mul(-12.5, -1.1 + mul(25.52, dae.y[self.ilamb]) + mul(-0.08800000000000001, dae.x[self.theta_p]), exp(mul(-12.5, dae.y[self.ilamb]))), self.cp, self.ilamb)
+        dae.add_jac(Gy, - (dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p]))**-2, self.ilamb, self.lamb)
 
     def fxcall(self, dae):
         dae.add_jac(Gx, mul(1.5, dae.y[self.cp], self.ngen, pi, self.rho, (self.R)**2, (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**2), self.pw, self.vw)
-        dae.add_jac(Gx, mul(-0.08800000000000001, exp(mul(-12.5, div(1, dae.y[self.ilamb])))), self.cp, self.theta_p)
+        dae.add_jac(Gx, mul(-0.088, exp(mul(-12.5, dae.y[self.ilamb]))), self.cp, self.theta_p)
         dae.add_jac(Gx, mul(-4, self.R, self.fn, self.ngb, dae.x[self.omega_m], pi, div(1, self.Vwn), div(1, self.npole), (dae.x[self.vw])**-2), self.lamb, self.vw)
         dae.add_jac(Gx, mul(4, self.R, self.fn, self.ngb, pi, div(1, self.Vwn), div(1, self.npole), div(1, dae.x[self.vw])), self.lamb, self.omega_m)
-        dae.add_jac(Gx, mul((div(1, dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p])) + mul(-0.035, div(1, 1 + (dae.x[self.theta_p])**3)))**-2, mul(0.08, (dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p]))**-2) + mul(-0.10500000000000001, (dae.x[self.theta_p])**2, (1 + (dae.x[self.theta_p])**3)**-2)), self.ilamb, self.theta_p)
+        dae.add_jac(Gx, mul(-0.08, (dae.y[self.lamb] + mul(0.08, dae.x[self.theta_p]))**-2) + mul(0.10500000000000001, (dae.x[self.theta_p])**2, (1 + (dae.x[self.theta_p])**3)**-2), self.ilamb, self.theta_p)
 
     def jac0(self, dae):
         dae.add_jac(Gy0, -1, self.pw, self.pw)
