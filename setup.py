@@ -4,7 +4,7 @@ from setuptools import setup
 
 
 setup(name='andes',
-      version='0.3.0',
+      version='0.3.1',
       description='ANDES - A Python Package for Power System Research',
       author='Hantao Cui',
       author_email='hcui7@utk.edu',

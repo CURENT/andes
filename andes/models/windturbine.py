@@ -3,8 +3,13 @@ from cvxopt import mul, div, sin, cos, exp
 from ..consts import *
 from .base import ModelBase
 
-from cvxoptklu.klu import linsolve
+try:
+    from cvxoptklu.klu import linsolve
+except ImportError:
+    from cvxopt.umfpack import linsolve
+
 from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
+
 
 class MPPT(object):
     """MPPT control algorithm"""
@@ -26,6 +31,7 @@ class MPPT(object):
         dae.add_jac(Gy0, -1, self.pwa, self.pwa)
         dae.add_jac(Gx0, 2, self.pwa, self.omega_m)
         dae.add_jac(Gy0, 1e-6, self.pwa, self.pwa)
+
 
 class Turbine(object):
     """Generic wind turbine model"""
@@ -82,7 +88,6 @@ class Turbine(object):
         self.copy_param('Wind', 'rho', 'rho', self.wind)
         self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
         self.mva_mega = 100e6
-
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
         mva_mega = self.system.Settings.mva * 1e6
