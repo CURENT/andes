@@ -356,7 +356,7 @@ VSC, idx = 2, node1 = 2, node2 = 0, bus = 202, Vn = 69, name = "VSC 2", rsh = 0.
 VSC1_IE, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
       Kp3 = 1, Ki3 = 0.5, Kp = 0, Kf = -0, Ki = -100
 VSC1_IE, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
-      Kp3 = 0.01, Ki3 = 0., Kdc = 50, Kf = 0, Ki = 100
+      Kp3 = 0.01, Ki3 = 0., Kdc = 10, Kf = 0, Ki = 100
 
 RLs, idx = "RLs1", name = "RLs 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 0.1, L = 0.0001
 RLs, idx = "RLs2", name = "RLs 2-4", node1 = 2, node2 = 4, Vdcn = 100, R = 0.1, L = 0.0001
@@ -378,8 +378,8 @@ ConstWind, idx = 4
 # WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4
 
 WTG4DC, node1 = 3, node2 = 0, dcgen = "DCgen_3", wind = 3, busfreq = 1, coi = 1,
-        Kdc = 20, Ki = 00, Kcoi = 0
+        Kdc = 0, Ki = 00, Kcoi = 0
 WTG4DC, node1 = 4, node2 = 0, dcgen = "DCgen_4", wind = 4, busfreq = 2, coi = 1,
-        Kdc = 20, Ki = 0, Kcoi = 0
+        Kdc = 0, Ki = 00, Kcoi = 0
 
 COI, idx = 1, name = "COI 1", syn = [1; 2]

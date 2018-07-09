@@ -60,3 +60,11 @@ VSC, idx = "VSC_Sylmarla_P", name = "VSC Sylmarla_P", bus = 59, node1 = "Node_CO
 #       Kp3 = 0, Ki3 = 0
 # VSC1, vsc = "VSC_Sylmarla_N", name = "VSC Sylmarla N", Kp1 = 1, Ki1 = 1, Kp2 = 1, Ki2 = 1,
 #       Kp3 = 1, Ki3 = 1
+
+Fault, Vn = 500, bus = 6, tf = 0.1, tc = 0.15, xf = 0.01
+Fault, Vn = 500, bus = 6, tf = 100.1, tc = 100.15, xf = 0.01
+Fault, Vn = 500, bus = 6, tf = 200.1, tc = 200.15, xf = 0.01
+Fault, Vn = 500, bus = 6, tf = 300.1, tc = 300.15, xf = 0.01
+Fault, Vn = 500, bus = 6, tf = 400.1, tc = 400.15, xf = 0.01
+Fault, Vn = 500, bus = 6, tf = 500.1, tc = 500.15, xf = 0.01
+

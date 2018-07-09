@@ -197,13 +197,13 @@ class MiniPMU(object):
         while True:
             t, var = self.sync_measurement_data()
             if not t:
-                time.sleep(0.005)
+                continue
 
             if self.pmu.clients:
-                self.pmu.send_data(phasors=[(int(var[0, 1]), int(var[0, 0]))],
+                self.pmu.send_data(phasors=[(220*int(var[0, 1]), int(var[0, 0]))],
                                    analog=[9.99],
                                    digital=[0x0001],
-                                   freq=var[0, 2])
+                                   freq=60*var[0, 2])
 
 
 if __name__ == "__main__":

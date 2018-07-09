@@ -4,8 +4,8 @@ from ..utils.cached import cached
 
 class TDS(SettingsBase):
     def __init__(self):
-        self.fixt = False
-        self.tstep = 1/30
+        self.fixt = True
+        self.tstep = 1/60
         self.method = 'trapezoidal'
         self.method_alt = ['euler', 'trapezoidal','fwdeuler']
         self.t0 = 0.0
@@ -14,7 +14,7 @@ class TDS(SettingsBase):
         self.deltatmax = 1
         self.deltatmin = 0.0002
         self.maxit = 30
-        self.tol = 1e-6
+        self.tol = 1e-4
         self.disturbance = False
         self.error = 1
         self.qrt = False
