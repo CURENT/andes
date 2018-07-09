@@ -3,7 +3,11 @@ from cvxopt import mul, div, sin, cos, exp
 from ..consts import *
 from .base import ModelBase
 
-from cvxoptklu.klu import linsolve
+try:
+    from cvxoptklu.klu import linsolve
+except ImportError:
+    from cvxopt.umfpack import linsolve
+
 from ..utils.math import zeros, ones, mmax, mmin, not0, agtb, ageb, altb, aleb, aandb, mfloor, mround, mmax, aneb
 
 
