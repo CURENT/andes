@@ -21,7 +21,8 @@ import re
 from argparse import ArgumentParser
 from distutils.spawn import find_executable
 
-from matplotlib import pyplot, rc
+from matplotlib import rc
+from matplotlib import pyplot as plt
 
 lfile = []
 dfile = []
@@ -45,6 +46,7 @@ def cli_parse():
     parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
     parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
     parser.add_argument('--ytimes', type=str, help='y times')
+    parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
     args = parser.parse_args()
     return vars(args)
 
@@ -172,14 +174,16 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args, fig=None, ax=None):
-    xmin = args.pop('xmin', None)
-    xmax = args.pop('xmax', None)
-    ymax = args.pop('ymax', None)
-    ymin = args.pop('ymin', None)
-    xlabel = args.pop('xlabel', None)
-    ylabel = args.pop('ylabel', None)
-    no_latex = args.pop('no_latex', None)
+def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin=None, ymax=None,
+            xlabel=None, ylabel=None, no_latex=False, grid=False, save=False, unattended=False, datfile='',
+            **kwargs):
+    # xmin = args.pop('xmin', None)
+    # xmax = args.pop('xmax', None)
+    # ymax = args.pop('ymax', None)
+    # ymin = args.pop('ymin', None)
+    # xlabel = args.pop('xlabel', None)
+    # ylabel = args.pop('ylabel', None)
+    # no_latex = args.pop('no_latex', None)
 
     LATEX = False
     if no_latex:
@@ -210,7 +214,8 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
         yl_data = yl[0]
 
     if not (fig and ax):
-        fig, ax = pyplot.subplots()
+        fig = plt.figure(1, dpi=dpi)
+        ax = plt.gca()
 
     for idx in range(len(y)):
         ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
@@ -234,16 +239,16 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
     ax.set_ylim(ymax=ymax)
     ax.set_ylim(ymin=ymin)
 
-    if args.pop('grid', None):
+    if grid:
         ax.grid(b=True, linestyle='--')
     legend = ax.legend(loc='upper right')
 
-    pyplot.draw()
+    plt.draw()
 
     # output to file
 
-    if args.pop('save', None) or args.pop('unattended', None):
-        name, _ = os.path.splitext(args['datfile'])
+    if save or unattended:
+        name, _ = os.path.splitext(datfile[0])
         count = 1
         cwd = os.getcwd()
         for file in os.listdir(cwd):
@@ -253,15 +258,15 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
         outfile = name + '_' + str(count) + '.png'
 
         try:
-            fig.savefig(outfile, dpi=300)
+            fig.savefig(outfile, dpi=1200)
             print('Figure saved to file {}'.format(outfile))
         except:
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
-    if not args.pop('unattended', None):
+    if not unattended:
         try:
-            pyplot.show()
+            plt.show()
         except:
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
@@ -269,7 +274,7 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
     return fig, ax
 
 
-def add_plot(x, y, xl, yl, fig, ax, LATEX=False):
+def add_plot(x, y, xl, yl, fig, ax, LATEX=False, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
         xl_data = xl[1]
@@ -283,6 +288,7 @@ def add_plot(x, y, xl, yl, fig, ax, LATEX=False):
 
     legend = ax.legend(loc='upper right')
     ax.set_ylim(auto=True)
+
 
 def isfloat(value):
     try:
@@ -354,7 +360,10 @@ def tds_plot(name, args):
         for val in yval:
             new_yval.append([i*times for i in val])
         yval = new_yval
-    do_plot(xval, yval, xl, yl, args)
+
+    args.pop('x')
+    args.pop('y')
+    do_plot(xval, yval, xl, yl, **args)
 
 
 def check_init(yval, yl):
