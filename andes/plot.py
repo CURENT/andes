@@ -176,6 +176,7 @@ def read_label(lst, x, y):
 
 def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin=None, ymax=None,
             xlabel=None, ylabel=None, no_latex=False, grid=False, save=False, unattended=False, datfile='',
+            noshow=False,
             **kwargs):
     # xmin = args.pop('xmin', None)
     # xmax = args.pop('xmax', None)
@@ -199,7 +200,7 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
 
     if not y:
         return
-    style = ['-', '--', '-.', ':'] * len(y)
+    linestyles = ['-', '--', '-.', ':'] * len(y)
 
     if not xmin:
         xmin = x[0] - 1e-6
@@ -214,11 +215,11 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
         yl_data = yl[0]
 
     if not (fig and ax):
-        fig = plt.figure(1, dpi=dpi)
+        fig = plt.figure(dpi=dpi)
         ax = plt.gca()
 
     for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
+        ax.plot(x, y[idx], label=yl_data[idx], ls=linestyles[idx])
 
     if not xlabel:
         ax.set_xlabel(xl_data)
@@ -264,9 +265,15 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
 
-    if not unattended:
+    if unattended:
+        noshow = True
+
+    if not noshow:
+        print(unattended)
+        print(noshow)
         try:
             plt.show()
+            pass
         except:
             print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
             return
@@ -274,7 +281,7 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
     return fig, ax
 
 
-def add_plot(x, y, xl, yl, fig, ax, LATEX=False, **kwargs):
+def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
         xl_data = xl[1]
@@ -284,7 +291,7 @@ def add_plot(x, y, xl, yl, fig, ax, LATEX=False, **kwargs):
         yl_data = yl[0]
 
     for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx])
+        ax.plot(x, y[idx], label=yl_data[idx], linestyle=linestyle)
 
     legend = ax.legend(loc='upper right')
     ax.set_ylim(auto=True)

@@ -574,6 +574,37 @@ class Power1(object):
         dae.add_jac(Gy0, -self.Ki, self.ref1, self.dwdt)
 
 
+class Power2(object):
+    """Inertia emulation control device that modifies Pref based on the derivative of frequency deviation """
+    def __init__(self, system, name):
+        self._data.update({'Ki': 0,
+                           'busfreq': 0,
+                           })
+        self._descr.update({'Ki': 'droop of the derivative of frequency on active power reference',
+                            'busfreq': 'BusFreq measurement unit index',
+                            })
+        self._params.extend({'Ki'})
+
+    def power_init1(self, dae):
+        self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+        self.copy_param('BusFreq', 'w', 'w', self.busfreq)
+
+    def power_gcall(self, dae):
+        dae.g[self.ref1] += -mul(self.Ki, dae.y[self.dwdt])
+
+    def power_fcall(self, dae):
+        pass
+
+    def power_gycall(self, dae):
+        pass
+
+    def power_fxcall(self, dae):
+        pass
+
+    def power_jac0(self, dae):
+        dae.add_jac(Gy0, -self.Ki, self.ref1, self.dwdt)
+
+
 class Current1(object):
     """Inner current controllers with two PIs"""
 
@@ -792,7 +823,7 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power0):
 
 
 class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
-    """VSC1 with Inertia Emulation"""
+    """VSC1 with Inertia Emulation with frequency sensor at local bus"""
     def __init__(self, system, name):
         VSC1_Common.__init__(self, system, name)
         VSC1_Outer1.__init__(self, system, name)
@@ -803,6 +834,21 @@ class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
 
     def base(self):
         super(VSC1_IE, self).base()
+
+
+class VSC1_IE2(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power2):
+    """VSC1 with Inertia Emulation with frequency sensor at remote bus"""
+    def __init__(self, system, name):
+        VSC1_Common.__init__(self, system, name)
+        VSC1_Outer1.__init__(self, system, name)
+        Current1.__init__(self, system, name)
+        PLL1.__init__(self, system, name)
+        Power2.__init__(self, system, name)
+        self._inst_meta()
+
+    def base(self):
+        super(VSC1_IE2, self).base()
+
 
 class VSC2_Voltage1(object):
     """Outer voltage controller for voltage-source controlled VSC using two PIs"""
