@@ -20,7 +20,7 @@ class Streaming(object):
             self.__dict__[item] = list()
 
         if self.system.Settings.dime_enable:
-            self.system.Log.debug('Trying to connect to dime server {}.'.format(system.Settings.dime_server))
+            self.system.Log.info('Trying to connect to dime server {}.'.format(system.Settings.dime_server))
             try:
                 self.dimec.start()
                 self.system.Log.debug('DiME connection established.')
