@@ -1,7 +1,10 @@
-from numpy import ndarray, array, concatenate, delete
-from cvxopt import matrix
 from . import dime
+
 from time import sleep
+
+from numpy import ndarray, array, concatenate, delete
+
+from cvxopt import matrix
 
 
 class Streaming(object):
@@ -11,16 +14,17 @@ class Streaming(object):
         self.dimec = dime.Dime(system.Settings.dime_name, system.Settings.dime_server)
         self.params_built = False
 
-        _dicts = ['SysParam', 'SysName', 'Idxvgs', 'ModuleInfo']
-        _lists = ['Varheader', 'last_devices']
+        self.SysParam = dict()
+        self.SysName = dict()
+        self.Idxvgs = dict()
+        self.ModuleInfo = dict()
 
-        for item in _dicts:
-            self.__dict__[item] = dict()
-        for item in _lists:
-            self.__dict__[item] = list()
+        self.Varheader = list()
+        self.last_devices = list()
 
         if self.system.Settings.dime_enable:
-            self.system.Log.info('Trying to connect to dime server {}.'.format(system.Settings.dime_server))
+            self.system.Log.info('Trying to connect to dime server {}.'
+                                 .format(system.Settings.dime_server))
             try:
                 self.dimec.start()
                 self.system.Log.debug('DiME connection established.')
@@ -28,6 +32,7 @@ class Streaming(object):
                 self.dimec.exit()
                 self.dimec.start()
                 self.system.Log.debug('DiME connection established.')
+        self.has_pmu = False
 
     def _build_SysParam(self):
         if self.system.Bus.n:
@@ -335,6 +340,8 @@ class Streaming(object):
         if not self.params_built:
             self.build_init()
         if recepient == 'all':
+            self.last_devices = self.dimec.get_devices()
+
             self.system.Log.debug('Connected modules are: ' + ','.join(self.dimec.get_devices()))
             self.system.Log.debug('Broadcasting Varheader, Idxvgs, SysParam and SysName...')
             sleep(0.5)
@@ -381,23 +388,6 @@ class Streaming(object):
 
         self.ModuleInfo[name].update(ivar)
 
-
-        # if name in self.ModuleInfo:
-        #     self.ModuleInfo[name].update(init_var)
-        # else:
-        #     self.ModuleInfo[name] = init_var
-        # self.ModuleInfo[name]['lastk'] = 0
-        #
-        # if type(self.ModuleInfo[name]['vgsvaridx']) == int:
-        #     self.ModuleInfo[name]['vgsvaridx'] = array(self.ModuleInfo[name]['vgsvaridx'])
-        #
-        # vgsvaridx = self.ModuleInfo[name]['vgsvaridx'].tolist()
-        # if type(vgsvaridx[0]) == list:
-        #     self.ModuleInfo[name]['vgsvaridx'] = vgsvaridx[0]
-        # else:
-        #     self.ModuleInfo[name]['vgsvaridx'] = vgsvaridx
-        #
-        # self.ModuleInfo[name]['vgsvaridx'] = [int(i) - 1 for i in self.ModuleInfo[name]['vgsvaridx']]
         self.system.Log.debug('Module <{}> request index {}'
                               .format(name, var_idx))
 
@@ -474,25 +464,31 @@ class Streaming(object):
         """Sync until the queue is empty"""
         if not self.system.Settings.dime_enable:
             return
+        current_devices = self.dimec.get_devices()
+
+        # record MiniPMU
+        if not self.has_pmu:
+            for item in current_devices:
+                if item.startswith('PMU_'):
+                    self.has_pmu = True
+
+        # send Varheader, SysParam and Idxvgs to modules on the fly
+        if set(current_devices) != set(self.last_devices):
+            new_devices = list(current_devices)
+            new_devices.remove('sim')
+            for item in self.last_devices:
+                if item in new_devices:
+                    new_devices.remove(item)
+            self.send_init(new_devices)
+
+            self.last_devices = current_devices
 
         while True:
             var_name = self.dimec.sync()
             if not var_name:
                 break
-
-            current_devices = self.dimec.get_devices()
-            workspace = self.dimec.workspace
             var_value = workspace[var_name]
-
-            # send Varheader, SysParam and Idxvgs to modules on the fly
-            if set(current_devices) != set(self.last_devices):
-                new_devices = list(current_devices)
-                new_devices.remove('sim')
-                for item in self.last_devices:
-                    new_devices.remove(item)
-                self.send_init(new_devices)
-
-                self.last_devices = current_devices
+            workspace = self.dimec.workspace
 
             if var_name in current_devices:
                 self.record_module_init(var_name, var_value)
@@ -503,12 +499,35 @@ class Streaming(object):
             else:
                 self.system.Log.warning('Synced variable {} not handled'.format(var_name))
 
+    def vars_to_pmu(self):
+        """Broadcast all PMU measurements and BusFreq measurements in the variable `pmu_data`"""
+        if not self.system.Settings.dime_enable:
+            return
+        if not self.has_pmu:
+            return
+
+        idx = self.system.PMU.vm + self.system.PMU.am + self.system.BusFreq.w
+
+        t = self.system.VarOut.t[-1]
+        k = self.system.VarOut.k[-1]
+
+        values = self.system.VarOut.vars[-1][idx]
+        pmu_data = {'t': t,
+                  'k': k,
+                  'vars': array(values).T,
+                 }
+        self.dimec.broadcast('pmu_data', pmu_data)
+
     def vars_to_modules(self):
         """Stream the last results to the modules"""
         if not self.system.Settings.dime_enable:
             return
 
         for mod in self.ModuleInfo.keys():
+            # skip PMU modules in this function. offload it to vars_to_pmu()
+            if mod.startswith('PMU_'):
+                continue
+
             limitsample = self.ModuleInfo[mod].get('limitsample', 0)
 
             idx = self.ModuleInfo[mod]['vgsvaridx']
@@ -530,4 +549,4 @@ class Streaming(object):
                       }
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
             # self.system.Log.debug('Varvgs sent to <{}>'.format(mod))
-            # self.dimec.broadcast('Varvgs', Varvgs)
+
