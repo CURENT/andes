@@ -15,10 +15,10 @@ VSC, idx = 2, node1 = 2, node2 = 0, bus = 202, Vn = 69, name = "VSC 2", rsh = 0.
      vshmax = 999, vshmin = 0, Ishmax = 999, pref0 = 0.4, qref0 = -0.00, control = "PQ",
      droop = 0, K = -0.5, vhigh = 1.01, vlow = 0.99, Vdcn = 100, u = 1
 
-VSC1_IE, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
-      Kp3 = 1, Ki3 = 0.5, Kp = 0, Kf = -0, Ki = -100
-VSC1_IE, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
-      Kp3 = 0.01, Ki3 = 0., Kdc = 10, Kf = 0, Ki = 100
+VSC1_IE2, vsc = 1, name = "VSC 1", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 1, Ki2 = 0.2,
+      Kp3 = 1, Ki3 = 0.5, Kp = 0, Kf = -0, Ki = -100, busfreq = 1
+VSC1_IE2, vsc = 2, name = "VSC 2", Kp1 = 0.2, Ki1 = 0.1, Kp2 = 0.2, Ki2 = 0.,
+      Kp3 = 0.01, Ki3 = 0., Kdc = 10, Kf = 0, Ki = 100, busfreq = 202
 
 WTG4DC, node1 = 3, node2 = 0, dcgen = "DCgen_3", wind = 3, busfreq = 1, coi = 1,
         Kdc = 10, Ki = 00, Kcoi = 0, name = "WTG4 1"
