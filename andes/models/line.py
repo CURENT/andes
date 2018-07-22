@@ -128,9 +128,9 @@ class Line(ModelBase):
         self.Y += spmatrix(y12 + y2, self.a2, self.a2, (self.nb, self.nb), 'z')
 
         # avoid singularity
-        for item in range(self.nb):
-            if abs(self.Y[item, item]) == 0:
-                self.Y[item, item] = 1e-6 + 0j
+        # for item in range(self.nb):
+        #     if abs(self.Y[item, item]) == 0:
+        #         self.Y[item, item] = 1e-6 + 0j
 
     def build_b(self):
         """build Bp and Bpp for fast decoupled method"""

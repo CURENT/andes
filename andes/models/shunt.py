@@ -1,4 +1,7 @@
 from cvxopt import matrix, mul, spmatrix
+from scipy.sparse import coo_matrix
+from numpy import array
+
 from .base import ModelBase
 from ..consts import *
 
@@ -45,8 +48,18 @@ class Shunt(ModelBase):
 
     def gcall(self, dae):
         vc2 = mul(self.u, dae.y[self.v] ** 2)
-        dae.g += spmatrix(mul(vc2, self.g), self.a, [0] * self.n, (dae.m, 1), 'd')
-        dae.g -= spmatrix(mul(vc2, self.b), self.v, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g += spmatrix(mul(vc2, self.g), self.a, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g -= spmatrix(mul(vc2, self.b), self.v, [0] * self.n, (dae.m, 1), 'd')
+        # a = spmatrix(mul(vc2, self.g), self.a, [0] * self.n, (dae.m, 1), 'd')
+        # b = spmatrix(mul(vc2, self.b), self.v, [0] * self.n, (dae.m, 1), 'd')
+        p = array(mul(vc2, self.g)).reshape((-1))
+        q = array(mul(vc2, self.b)).reshape((-1))
+
+        p = coo_matrix((p, (self.a, [0] * self.n)), shape=(dae.m, 1)).toarray()
+        q = coo_matrix((q, (self.v, [0] * self.n)), shape=(dae.m, 1)).toarray()
+
+        dae.g += matrix(p)
+        dae.g -= matrix(q)
 
     def gycall(self, dae):
         dV2 = mul(self.u, 2 * dae.y[self.v])

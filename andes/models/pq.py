@@ -1,4 +1,7 @@
 from cvxopt import matrix, spdiag, mul, div, log, exp, spmatrix
+from scipy.sparse import coo_matrix
+import numpy as np
+
 from .base import ModelBase
 from ..consts import *
 from ..utils.math import *
@@ -74,8 +77,16 @@ class PQ(ModelBase):
         self.p0 = mul(k, self.p)
         self.q0 = mul(k, self.q)
 
-        dae.g += spmatrix(self.p0, self.a, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(self.q0, self.v, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g += spmatrix(self.p0, self.a, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g += spmatrix(self.q0, self.v, [0] * self.n, (dae.m, 1), 'd')
+
+        p0 = np.array(self.p0).reshape((-1,))
+        q0 = np.array(self.q0).reshape((-1,))
+        p0 = coo_matrix((p0, (self.a, [0] * self.n)), shape=(dae.m, 1)).toarray()
+        q0 = coo_matrix((q0, (self.v, [0] * self.n)), shape=(dae.m, 1)).toarray()
+
+        dae.g += matrix(p0)
+        dae.g += matrix(q0)
 
     def gycall(self, dae):
         k = zeros(self.n, 1)
