@@ -286,7 +286,7 @@ class Line(ModelBase):
         self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
         # rebuild = False
 
-        return sparse(self.gy_store)
+        return self.gy_store
 
     def seriesflow(self, dae):
         """Compute the flow through the line after solving PF, including: terminal injections, line losses"""

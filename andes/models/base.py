@@ -173,17 +173,13 @@ class ModelBase(object):
             dev_type = 'model'
         elif model in self.system.DevMan.group.keys():
             dev_type = 'group'
-        if not dev_type:
-            self.message('Model or group <{0}> does not exist.'.format(model), ERROR)
-            return
+
+        assert dev_type, 'Model or group <{0}> does not exist.'.format(model)
+
+        src_type = list
 
         # do param copy
         if dev_type == 'model':
-            # check if fkey exists
-            for item in fkey:
-                if item not in self.system.__dict__[model].idx:
-                    self.message('Model <{}> does not have element <{}>'.format(model, item), ERROR)
-                    return
             retval = self.system.__dict__[model]._slice(src, fkey)
             src_type = type(self.system.__dict__[model].__dict__[src])
 
@@ -204,7 +200,10 @@ class ModelBase(object):
             retval = val
             src_type = type(self.system.__dict__[dev_name].__dict__[src])
 
-        return src_type(retval)
+        if src_type == list:
+            return list(retval)
+        if src_type == matrix:
+            return matrix(retval)
 
     def copy_param(self, model, src, dest=None, fkey=None, astype=None):
         """get a copy of the system.model.src as self.dest"""
@@ -214,6 +213,7 @@ class ModelBase(object):
 
         if astype == None:
             pass
+
         elif astype not in (list, matrix):
             astype = matrix
 
@@ -227,21 +227,23 @@ class ModelBase(object):
     def _slice(self, param, idx=None):
         """slice list or matrix with idx and return (type, sliced)"""
         ty = type(self.__dict__[param])
-        if ty not in [list, matrix]:
-            self.message('Unsupported type <{0}> to slice.'.format(ty))
-            return None
+        assert ty in (list, matrix), 'Unsupported type <{0}> to slice.'.format(ty)
+
+        ret = None
 
         if not idx:
-            idx = list(range(self.n))
+            ret = self.__dict__[param]
+
         if type(idx) != list:
             idx = list(idx)
 
-        if ty == list:
-            return [self.__dict__[param][self.int[i]] for i in idx]
-        elif ty == matrix:
-            return matrix([self.__dict__[param][self.int[i]] for i in idx])
-        else:
-            raise NotImplementedError
+        pos = [self.int[i] for i in idx]
+        if isinstance(self.__dict__[param], list):
+            ret = [self.__dict__[param][i] for i in pos]
+        elif isinstance(self.__dict__[param], matrix):
+            ret = self.__dict__[param][pos]
+
+        return ret
 
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
