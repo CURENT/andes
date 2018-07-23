@@ -208,23 +208,13 @@ class DAE(object):
                 and sum(self.zymax) == self.n:
             return
 
-        x_reset = findeq(aandb(self.zxmin, self.zxmax), 0.0)
-        y_reset = findeq(aandb(self.zymin, self.zymax), 0.0)
-        y_reset = [i + self.n for i in y_reset]
-        xy_reset = matrix(x_reset + y_reset)
-        H = spmatrix(1.0, xy_reset, xy_reset, (self.m + self.n, self.m + self.n))
+        x_reset = aeqb(aandb(self.zxmin, self.zxmax), 0.)
+        y_reset = aeqb(aandb(self.zymin, self.zymax), 0.)
+        xy_reset = list(x_reset) + list(y_reset)
+        H = spdiag(xy_reset)
         I = spdiag([1.0] * (self.m + self.n)) - H
         self.Ac = I * (self.Ac * I) - H
-        self.q[x_reset] = 0
-
-        # x_reset = aorb(aeqb(self.zxmin, 0.), aeqb(self.zxmax, 0.))
-        # y_reset = aorb(aeqb(self.zymin, 0.), aeqb(self.zymax, 0.))
-        # xy_reset = list(x_reset) + list(y_reset)
-        # H = spdiag(xy_reset)
-        #
-        # I = spdiag([1.0] * (self.m + self.n)) - H
-        # self.Ac = I * (self.Ac * I) - H
-        # self.q = mul(self.q, nota(x_reset))
+        self.q = mul(self.q, nota(x_reset))
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""
