@@ -543,5 +543,5 @@ class DCgen(DCBase):
         dae.g -= spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def disable_gen(self, idx):
-        self.u[self.int[idx]] = 0
+        self.u[self.uid[idx]] = 0
         self.system.DAE.factorize = True

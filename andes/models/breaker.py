@@ -85,7 +85,7 @@ class Breaker(ModelBase):
             tn = mul(self.u[i], tn)
             if actual_time in tn:
 
-                line_int = self.system.Line.int[self.line[i]]
+                line_int = self.system.Line.uid[self.line[i]]
                 u0 = self.system.Line.u[line_int]
                 self.system.Line.switch(self.line[i], neg(u0))
 

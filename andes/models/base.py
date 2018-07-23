@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Base class for building ANDES models
+"""
+
 import sys
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
@@ -34,8 +37,8 @@ class ModelBase(object):
         self.system = system
         self.n = 0    # device count
         self.u = []   # device status
-        self.idx = []    # internal index list
-        self.int = {}    # external index to internal
+        self.idx = []    # external index list
+        self.uid = {}    # mapping from `self.idx` to unique positional indices
         self.name = []  # element name list
 
         # identifications
@@ -119,12 +122,22 @@ class ModelBase(object):
         self.param_dict = {}
         self.param_df = {}
 
+        self.define()
+
+    def define(self):
+        """
+        Hook function where derived models define parameters, variables, service constants, and equations
+        :return:
+        """
+        # raise NotImplemented('Subclasses must overwrite this method')
+        pass
+
     def _inst_meta(self):
         """instantiate meta-data defined in __init__().
         Call this function at the end of __init__() of child classes
         """
-        if not self._name:
-            self._name = self._group
+        assert self._name
+
         if not self._unamey:
             self._unamey = self._algebs
         if not self._unamex:
@@ -141,6 +154,84 @@ class ModelBase(object):
 
         for var in self._states + self._algebs + self._service:
             self.__dict__[var] = []
+
+    def add_param(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
+                  voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
+                  time=False, **kwargs):
+        """Define a parameter in the model
+
+        :param tomatrix: convert this parameter list to matrix
+        :param param: parameter name
+        :param default: parameter default value
+        :param unit: parameter unit
+        :param descr: description
+        :param nonzero: is non-zero
+        :param mandatory: is mandatory
+        :param power: is a power value in the `self.Sn` base
+        :param voltage: is a voltage value in the `self.Vn` base
+        :param current: is a current value in the device base
+        :param z: is an impedance value in the device base
+        :param y: is an admittance value in the device base
+        :param r: is a dc resistance value in the device base
+        :param g: is a dc conductance value in the device base
+        :param dccurrent: is a dc current value in the device base
+        :param dcvoltage: is a dc votlage value in the device base
+        :param time is a time value in the device base
+
+        :type: param: str
+        :type defualt: str, float, uid
+        :type unit: str
+        :type descr: str
+        :type nonzero: bool
+        :type mandatory: bool
+        :type power: bool
+        :type voltage: bool
+        :type current: bool
+        :type z: bool
+        :type y: bool
+        :type r: bool
+        :type g: bool
+        :type dccurrent: bool
+        :type dcvoltage: bool
+        :type time: bool
+        """
+        assert param not in self._data
+        assert param not in self._algebs
+        assert param not in self._states
+        assert param not in self._service
+
+        self._data.update({param: default})
+        if unit:
+            self._units.update({param: unit})
+        if descr:
+            self._descr.update({param: descr})
+        if tomatrix:
+            self._params.append(param)
+        if nonzero:
+            self._zeros.append(param)
+        if mandatory:
+            self._mandatory.append(param)
+        if power:
+            self._powers.append(param)
+        if voltage:
+            self._voltages.append(param)
+        if current:
+            self._currents.append(param)
+        if z:
+            self._z.append(param)
+        if y:
+            self._y.append(param)
+        if r:
+            self._r.append(param)
+        if g:
+            self._g.append(param)
+        if dccurrent:
+            self._dccurrents.append(param)
+        if dcvoltage:
+            self._dcvoltages.append(param)
+        if time:
+            self._times.append(param)
+
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -251,7 +342,7 @@ class ModelBase(object):
                 if not dev_name:
                     self.message('Group <{}> does not have element {}.'.format(model, item), ERROR)
                     return
-                pos = self.system.__dict__[dev_name].int[item]
+                pos = self.system.__dict__[dev_name].uid[item]
                 val.append(self.system.__dict__[dev_name].__dict__[src][pos])
 
             retval = val
@@ -294,7 +385,7 @@ class ModelBase(object):
         if type(idx) != list:
             idx = list(idx)
 
-        pos = [self.int[i] for i in idx]
+        pos = [self.uid[i] for i in idx]
         if isinstance(self.__dict__[param], list):
             ret = [self.__dict__[param][i] for i in pos]
         elif isinstance(self.__dict__[param], matrix):
@@ -305,7 +396,7 @@ class ModelBase(object):
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
         idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
-        self.int[idx] = self.n
+        self.uid[idx] = self.n
         self.idx.append(idx)
         self.n += 1
 
@@ -346,9 +437,9 @@ class ModelBase(object):
 
     def remove(self, idx=None):
         if idx is not None:
-            if idx in self.int:
+            if idx in self.uid:
                 key = idx
-                item = self.int[idx]
+                item = self.uid[idx]
             else:
                 self.message('The item <{:s}> does not exist.'.format(idx), ERROR)
                 return None
@@ -361,12 +452,12 @@ class ModelBase(object):
             convert = True
 
         self.n -= 1
-        self.int.pop(key, '')
+        self.uid.pop(key, '')
         self.idx.pop(item)
 
-        for x, y in self.int.items():
+        for x, y in self.uid.items():
             if y > item:
-                self.int[x] = y - 1
+                self.uid[x] = y - 1
 
         for param in self._data:
             self.__dict__[param].pop(item)
@@ -453,7 +544,7 @@ class ModelBase(object):
                 temp = sorted(self._dc.keys())
                 for item in range(self.n):
                     idx = self.__dict__[temp[0]][item]
-                    Vbdc[item] = Vdc[self.system.Node.int[idx]]
+                    Vbdc[item] = Vdc[self.system.Node.uid[idx]]
             Ib = div(Sb, Vbdc)
             Rb = div(Vbdc, Ib)
 
@@ -628,9 +719,9 @@ class ModelBase(object):
         ret = []
         int_idx = idx
         if type(idx) == int:
-            int_idx = self.int[idx]
+            int_idx = self.uid[idx]
         elif type(idx) == list or matrix:
-            int_idx = [self.int[item] for item in idx]
+            int_idx = [self.uid[item] for item in idx]
         else:
             raise TypeError
         if not field in self.__dict__:

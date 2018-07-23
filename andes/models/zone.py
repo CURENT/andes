@@ -48,8 +48,8 @@ class Zone(ModelBase):
         # TODO: account for >1 area/region/zone
         super().setup()
         var = self._name.lower()
-        for idx, int_idx in self.system.Bus.int.items():
-            code = self.system.Bus.__dict__[var][int_idx]
+        for idx, uid in self.system.Bus.uid.items():
+            code = self.system.Bus.__dict__[var][uid]
             if code and code not in self.idx:
                 self.system.Log.warning('{} <{}> not defined.'.format(self._name, code))
             if code not in self.buses.keys():
@@ -57,11 +57,11 @@ class Zone(ModelBase):
             self.buses[code].append(idx)
 
         x, a, b = list(), list(), list()
-        for idx, int_idx in self.system.Line.int.items():
-            bus1 = self.system.Line.bus1[int_idx]
-            bus2 = self.system.Line.bus2[int_idx]
-            code1 = self.system.Bus.__dict__[var][self.system.Bus.int[bus1]]
-            code2 = self.system.Bus.__dict__[var][self.system.Bus.int[bus2]]
+        for idx, uid in self.system.Line.uid.items():
+            bus1 = self.system.Line.bus1[uid]
+            bus2 = self.system.Line.bus2[uid]
+            code1 = self.system.Bus.__dict__[var][self.system.Bus.uid[bus1]]
+            code2 = self.system.Bus.__dict__[var][self.system.Bus.uid[bus2]]
 
             if code1 == 0 or code2 == 0:
                 continue
@@ -87,8 +87,8 @@ class Zone(ModelBase):
                 self.interchange[code1][code2].append([idx, bus1])
                 self.interchange[code2][code1].append([idx, bus2])
 
-            int_code1 = self.int[code1]
-            int_code2 = self.int[code2]
+            int_code1 = self.uid[code1]
+            int_code2 = self.uid[code2]
 
             x.append(0.5) if int_code1 == int_code2 else x.append(1)
             a.append(int_code1)
@@ -113,7 +113,7 @@ class Zone(ModelBase):
 
     def seriesflow(self, dae):
         for code in self.idx:
-            int_idx = self.int[code]
+            int_idx = self.uid[code]
             pairs = self.tielines.get(code, None)
             if not pairs:
                 continue

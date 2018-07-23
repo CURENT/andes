@@ -320,7 +320,7 @@ class Line(ModelBase):
 
     def switch(self, idx, u):
         """switch the status of Line idx"""
-        self.u[self.int[idx]] = u
+        self.u[self.uid[idx]] = u
         self.rebuild = True
         self.system.DAE.factorize = True
         self.message('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
@@ -376,7 +376,7 @@ class Line(ModelBase):
             bus = [bus]
 
         for line_idx, bus_idx in zip(idx, bus):
-            line_int = self.int[line_idx]
+            line_int = self.uid[line_idx]
             if bus_idx == self.bus1[line_int]:
                 P.append(self.P1[line_int])
                 Q.append(self.Q1[line_int])

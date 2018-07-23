@@ -349,10 +349,10 @@ class VSC(DCBase):
 
     def disable(self, idx):
         """Disable an element and reset the outputs"""
-        if idx not in self.int.keys():
+        if idx not in self.uid.keys():
             self.message('Element index {0} does not exist.'.format(idx))
             return
-        self.u[self.int[idx]] = 0
+        self.u[self.uid[idx]] = 0
 
 
 class VSC1_Common(DCBase):

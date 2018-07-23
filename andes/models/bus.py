@@ -109,7 +109,7 @@ class Bus(ModelBase):
         for island in self.island_sets:
             nosw = 1
             for item in self.system.SW.bus:
-                if self.int[item] in island:
+                if self.uid[item] in island:
                     nosw = 0
                     break
             if nosw:

@@ -98,7 +98,7 @@ class Dime:
         ----------
         var_name: str
             Name of the variable to be included in the message
-        value: int, str
+        value: uid, str
             Value of the variable indicated by var_name
 
         Returns
@@ -119,7 +119,7 @@ class Dime:
             Name of the recipient (connected to the server) that will receive the message
         var_name: str
             Name of the variable to be sent
-        value: str, int
+        value: str, uid
             Value of the variable to be sent
         """
 
@@ -141,7 +141,7 @@ class Dime:
         ----------
         var_name: str
             Name of the variable to be broadcasted
-        value: str, int
+        value: str, uid
             Value of the variable to be broadcasted
         """
 

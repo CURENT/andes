@@ -305,7 +305,7 @@ class _Session(object):
             Name of function to run or a path to an m-file.
         func_args: object, optional
             Function args to send to the function.
-        nargout: int, optional
+        nargout: uid, optional
             Desired number of return arguments.
         kwargs:
             Keyword arguments are passed to Matlab in the form [key, val] so

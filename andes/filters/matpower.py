@@ -148,7 +148,7 @@ def read(file, system):
         pmin = data[9] / mbase
 
         try:
-            vn = system.Bus.Vn[system.Bus.int[bus_idx]]
+            vn = system.Bus.Vn[system.Bus.uid[bus_idx]]
             if bus_idx in sw:
                 system.SW.add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg,
                               pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
@@ -184,8 +184,8 @@ def read(file, system):
             ratio = data[8]
             angle = data[9]
         try:
-            vf = system.Bus.Vn[system.Bus.int[fbus]]
-            vt = system.Bus.Vn[system.Bus.int[tbus]]
+            vf = system.Bus.Vn[system.Bus.uid[fbus]]
+            vt = system.Bus.Vn[system.Bus.uid[tbus]]
             system.Line.add(Vn=vf, Vn2=vt, bus1=fbus, bus2=tbus, r=r, x=x, b=b, u=status, trasf=tf, tap=ratio,
                             phi=angle)
         except:

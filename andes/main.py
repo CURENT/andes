@@ -427,7 +427,7 @@ def run(case, **kwargs):
     for idx, island in enumerate(system.Bus.island_sets):
         nosw = 1
         for item in system.SW.bus:
-            if system.Bus.int[item] in island:
+            if system.Bus.uid[item] in island:
                 nosw -= 1
         if nosw == 1:
             nosw_island.append(idx)

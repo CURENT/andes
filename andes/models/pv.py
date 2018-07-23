@@ -129,7 +129,7 @@ class PV(Stagen):
 
     def disable_gen(self, idx):
         """Disable a PV element for TDS"""
-        self.u[self.int[idx]] = 0
+        self.u[self.uid[idx]] = 0
         self.system.DAE.factorize = True
 
 

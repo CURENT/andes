@@ -138,7 +138,7 @@ def to_number(s):
         ret = float(s)
     except ValueError:
         ret = ret.strip('\'').strip()
-    # try converting to int
+    # try converting to uid
     try:
         ret = int(s)
     except ValueError:

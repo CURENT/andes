@@ -529,7 +529,7 @@ def get_idx(system, group, param, fkey):
         if key != group:
             continue
         for name, dev in item.items():
-            int_id = system.__dict__[dev].int[name]
+            int_id = system.__dict__[dev].uid[name]
             if system.__dict__[dev].__dict__[param][int_id] == fkey:
                 ret = name
                 break
@@ -543,6 +543,6 @@ def get_param(system, group, param, fkey):
             continue
         for name, dev in item.items():
             if name == fkey:
-                int_id = system.__dict__[dev].int[name]
+                int_id = system.__dict__[dev].uid[name]
                 ret = system.__dict__[dev].__dict__[param][int_id]
     return ret

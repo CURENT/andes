@@ -85,7 +85,7 @@ class DevMan(object):
             for k in fkey:
                 for name, dev in item.items():
                     if name == k:
-                        int_id = self.system.__dict__[dev].int[name]
+                        int_id = self.system.__dict__[dev].uid[name]
                         ret.append(self.system.__dict__[dev].__dict__[param][int_id])
                         continue
             if not ret_list:
