@@ -353,6 +353,24 @@ class ModelBase(object):
 
         return self.param_df
 
+    def snapshot(self):
+        """
+        Return the current snapshot of variables
+        :return: pandas.DataFrame
+        """
+        ret = {}
+        ret.update({'name': self.name})
+        ret.update({'idx': self.idx})
+
+        for x in self._states:
+            idx = self.__dict__[x]
+            ret.update({x: self.system.DAE.x[idx]})
+        for y in self._algebs:
+            idx = self.__dict__[y]
+            ret.update({y: self.system.DAE.y[idx]})
+
+        return pd.DataFrame.from_dict(ret)
+
     def remove_param(self, param):
         """Remove a param from this class"""
         if param in self._data.keys():
@@ -710,15 +728,18 @@ class ModelBase(object):
             self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
 
     def _param2matrix(self):
-        """convert _params from list to matrix"""
+        """Convert parameters defined in `self._params` from list to `cvxopt.matrix`
+
+        :return None
+        """
         for item in self._params:
-            try:
-                self.__dict__[item] = matrix(self.__dict__[item], tc='d')
-            except:
-                pass
+            self.__dict__[item] = matrix(self.__dict__[item], tc='d')
 
     def _param2list(self):
-        """convert _param from matrix to list"""
+        """Convert parameters defined in `self._param` from `cvxopt.matrix` to list
+
+        :return None
+        """
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
 
@@ -749,29 +770,15 @@ class ModelBase(object):
             if limit:
                 self.__dict__[key][idx] = minval
 
-    def var_insight(self):
-        """Print variable values for debugging"""
-        if not self.n:
-            return
-        m = len(self._algebs)
-        n = len(self._states)
-        dae = self.system.DAE
-        out = []
-        header = '{:^10s}{:^4s}' + '{:^10s}' * (n + m)
-        tpl = '{:^10s}{:^4d}' + '{:^10g}' * (n + m)
-        out.append(header.format(*(['idx', 'u'] + self._states + self._algebs)))
-        for i in range(self.n):
-            vals = [self.idx[i]]
-            vals += [self.u[i]]
-            vals += [dae.x[self.__dict__[var][i]] for var in self._states]
-            vals += [dae.y[self.__dict__[var][i]] for var in self._algebs]
-            out.append(tpl.format(*vals))
-        for line in out:
-            print(line)
-
     def __str__(self):
+        print('')
         print('Model <{:s}> parameters in device base'.format(self._name))
         print(self.to_dataframe(sysbase=False).to_string())
+
+        print('')
+        print('Model <{:s}> snapshot'.format(self._name))
+        print(self.snapshot().to_string())
+
 
     def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table
