@@ -244,7 +244,7 @@ class Line(ModelBase):
             self.build_b()
 
     def gcall(self, dae):
-        if self.rebuild or dae.rebuild:
+        if self.rebuild:
             self.build_y()
             self.rebuild = False
         vc = polar(dae.y[self.v], dae.y[self.a])
@@ -254,10 +254,7 @@ class Line(ModelBase):
         dae.g[self.v] += S.imag()
 
     def gycall(self, dae):
-        # if self.rebuild:
         gy = self.build_gy(dae)
-        # else:
-        #     gy = self.gy_store
         dae.add_jac(Gy, gy.V, gy.I, gy.J)
 
     def build_gy(self, dae):
@@ -284,7 +281,6 @@ class Line(ModelBase):
         dR = diagVc.H.T * dR
 
         self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(), dS.imag()]])
-        # rebuild = False
 
         return self.gy_store
 

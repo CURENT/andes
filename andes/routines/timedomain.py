@@ -209,11 +209,11 @@ def run(system):
 
         if settings.method in ['euler', 'trapezoidal']:
             while settings.error > tol and niter < maxit:
-                if actual_time - t_jac >= 2:
+                if actual_time - t_jac >= 5:
                     dae.rebuild = True
                     t_jac = actual_time
-                elif niter > 3:
-                    dae.rebuild = True
+                # elif niter > 4:
+                #     dae.rebuild = True
                 elif dae.factorize:
                     dae.rebuild = True
 

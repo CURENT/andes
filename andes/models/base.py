@@ -582,20 +582,22 @@ class ModelBase(object):
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
         above = agtb(self.__dict__[key], upper)
-        idx = findeq(above, 1.0)
-        for item in idx:
-            maxval = upper[item]
-            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[item], self._name, key, maxval), ERROR)
+        for idx, item in enumerate(above):
+            if item == 0.:
+                continue
+            maxval = upper[idx]
+            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[idx], self._name, key, maxval), ERROR)
             if limit:
-                self.__dict__[key][item] = maxval
+                self.__dict__[key][idx] = maxval
 
         below = altb(self.__dict__[key], lower)
-        idx = findeq(below, 1.0)
-        for item in idx:
-            minval = lower[item]
-            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[item], self._name, key, minval), ERROR)
+        for idx, item in enumerate(below):
+            if item == 0.:
+                continue
+            minval = lower[idx]
+            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[idx], self._name, key, minval), ERROR)
             if limit:
-                self.__dict__[key][item] = minval
+                self.__dict__[key][idx] = minval
 
     def var_insight(self):
         """Print variable values for debugging"""
