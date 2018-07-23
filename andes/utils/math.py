@@ -3,79 +3,59 @@ from math import floor
 from numpy import sign as sgn
 from numpy import array
 
+import numpy as np
+
 from cvxopt import matrix
 from cvxopt import mul, exp
 
 
 def altb(a, b):
     """Return a matrix of logic comparison of A<B"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x < y, a, b)), a.size)
-
+    return matrix(np.less(a, b).astype('float'))
 
 def mmax(a, b):
     """Return a matrix of maximum values in a and b element-wise"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x if x > y else y, a, b)), a.size)
+    return matrix(np.maximum(a, b))
 
 
 def mmin(a, b):
     """Return a matrix of minimum values in a and b element-wise"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x if x < y else y, a, b)), a.size)
-
+    return matrix(np.minimum(a, b))
 
 def agtb(a, b):
     """Return a matrix of logic comparision of A>B"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x > y, a, b)), a.size)
+    return matrix(np.greater(a, b).astype('float'))
+
 
 def aleb(a, b):
     """Return a matrix of logic comparison of A<=B"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x <= y, a, b)), a.size)
-
+    return matrix(np.less_equal(a, b).astype('float'))
 
 def ageb(a, b):
     """Return a matrix of logic comparision of A>=B"""
-    if type(b) in (int, float):
-        b = matrix(b, (len(a), 1), 'd')
-    return matrix(list(map(lambda x, y: x >= y, a, b)), a.size)
+    return matrix(np.greater_equal(a, b).astype('float'))
 
-
-def aeb(a, b):
+def aeqb(a, b):
     """Return a matrix of logic comparison of A == B"""
-    if type(b) in (int, float):
-        return matrix(list(map(lambda x: x == b, a)), a.size)
-    else:
-        return matrix(list(map(lambda x, y: x == y, a, b)), a.size)
-
+    return matrix(np.equal(a, b).astype('float'))
 
 def aneb(a, b):
     """Return a matrix of logic comparison of A != B"""
-    if type(b) in (int, float):
-        return matrix(list(map(lambda x: x != b, a)), a.size)
-    else:
-        return matrix(list(map(lambda x, y: x != y, a, b)), a.size)
-
+    return matrix(np.not_equal(a, b).astype('float'))
 
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(list(map(lambda x, y: x or y, a, b)), a.size)
 
+
 def aandb(a, b):
     """Return a matrix of logic comparison of A or B"""
-    return matrix(list(map(lambda x, y: x and y, a, b)), a.size)
+    return matrix(np.logical_and(a, b).astype('float'), a.size)
 
 
 def nota(a):
     """Return a matrix of logic negative of A"""
-    return matrix(list(map(lambda x: not x, a)), a.size)
+    return matrix(np.logical_not(a).astype('float'), a.size)
 
 
 def polar(m, a):
@@ -95,12 +75,14 @@ def neg(u):
 
 def mfloor(a):
     """Return the element-wise floor value of a"""
-    return matrix(list(map(lambda x: floor(x), a)), a.size)
+    return matrix(np.floor(a), a.size)
+    # return matrix(list(map(lambda x: floor(x), a)), a.size)
 
 
 def mround(a):
     """Return the element-wise round value of a"""
-    return matrix(list(map(lambda x: round(x), a)), a.size)
+    return matrix(np.round(a), a.size)
+    # return matrix(list(map(lambda x: round(x), a)), a.size)
 
 
 def not0(a):
@@ -147,17 +129,6 @@ def findeq(m, val):
         idx = [i for i, j in enumerate(m) if j == val]
     return idx
 
-
-def algeb_limiter(m, upper, lower):
-    above = agtb(m, upper)
-    idx = findeq(above, 1.0)
-    m[idx] = upper[idx]
-
-    below = altb(m, lower)
-    idx = findeq(below, 1.0)
-    m[idx] = lower[idx]
-
-    return m
 
 def to_number(s):
     """Convert a string to a number. If not successful, return the string without blanks"""

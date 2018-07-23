@@ -4,7 +4,7 @@ from cvxopt import mul, div
 from .base import ModelBase
 from .measurement import BusFreq
 
-from ..utils.math import aeb, sdiv
+from ..utils.math import aeqb, sdiv
 from ..consts import *
 
 
@@ -85,19 +85,19 @@ class PSS1(ModelBase):
 
     def update_ctrl(self):
         self.u0 = mul(self.u, self.uavr, self.usyn)  # effective PSS connectivity status
-        self.Ic11 = aeb(self.Ic1, 1)
-        self.Ic12 = aeb(self.Ic1, 2)
-        self.Ic13 = aeb(self.Ic1, 3)
-        self.Ic14 = aeb(self.Ic1, 4)
-        self.Ic15 = aeb(self.Ic1, 5)
-        self.Ic21 = aeb(self.Ic2, 1)
-        self.Ic22 = aeb(self.Ic2, 2)
-        self.Ic23 = aeb(self.Ic2, 3)
-        self.Ic24 = aeb(self.Ic2, 4)
-        self.Ic25 = aeb(self.Ic2, 5)
+        self.Ic11 = aeqb(self.Ic1, 1)
+        self.Ic12 = aeqb(self.Ic1, 2)
+        self.Ic13 = aeqb(self.Ic1, 3)
+        self.Ic14 = aeqb(self.Ic1, 4)
+        self.Ic15 = aeqb(self.Ic1, 5)
+        self.Ic21 = aeqb(self.Ic2, 1)
+        self.Ic22 = aeqb(self.Ic2, 2)
+        self.Ic23 = aeqb(self.Ic2, 3)
+        self.Ic24 = aeqb(self.Ic2, 4)
+        self.Ic25 = aeqb(self.Ic2, 5)
         # ignore the hard limiters if vcu == 0 or vcl == 0
-        self.vcu += mul(aeb(self.vcu, 0.0), 9999)
-        self.vcl += mul(aeb(self.vcl, 0.0), -9999)
+        self.vcu += mul(aeqb(self.vcu, 0.0), 9999)
+        self.vcl += mul(aeqb(self.vcl, 0.0), -9999)
         self.vtmax = self.v0 + self.vcu
         self.vtmin = self.v0 + self.vcl
 
@@ -257,13 +257,13 @@ class PSS2(ModelBase):
         self.update_ctrl()
 
     def update_ctrl(self):
-        self.Ic1 = aeb(self.Ic, 1)
-        self.Ic2 = aeb(self.Ic, 2)
-        self.Ic3 = aeb(self.Ic, 3)
-        self.Ic4 = aeb(self.Ic, 4)
-        self.Ic5 = aeb(self.Ic, 5)
-        self.lsmax += mul(aeb(self.lsmax, 0.0), 9999)
-        self.lsmin += mul(aeb(self.lsmin, 0.0), -9999)
+        self.Ic1 = aeqb(self.Ic, 1)
+        self.Ic2 = aeqb(self.Ic, 2)
+        self.Ic3 = aeqb(self.Ic, 3)
+        self.Ic4 = aeqb(self.Ic, 4)
+        self.Ic5 = aeqb(self.Ic, 5)
+        self.lsmax += mul(aeqb(self.lsmax, 0.0), 9999)
+        self.lsmin += mul(aeqb(self.lsmin, 0.0), -9999)
 
     def init1(self, dae):
         self.servcall(dae)

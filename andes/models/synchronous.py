@@ -319,27 +319,27 @@ class Ord6a(SynBase):
     
     def jac0(self, dae):
         super(Ord6a, self).jac0(dae)
-        self.add_jac(Gy0, mul(self.u, self.xd2) + 1e-6, self.Id, self.Id)
-        self.add_jac(Gx0, -self.u, self.Id, self.e2q)
+        dae.add_jac(Gy0, mul(self.u, self.xd2) + 1e-6, self.Id, self.Id)
+        dae.add_jac(Gx0, -self.u, self.Id, self.e2q)
 
-        self.add_jac(Gy0, mul(self.u, self.xq2) + 1e-6, self.Iq, self.Iq)
-        self.add_jac(Gx0, self.u, self.Iq, self.e2d)
-        
-        self.add_jac(Fx0, -mul(self.u, self.b3) + 1e-6, self.e1d, self.e1d)
-        self.add_jac(Fy0, mul(self.u, self.b4), self.e1d, self.Iq)
+        dae.add_jac(Gy0, mul(self.u, self.xq2) + 1e-6, self.Iq, self.Iq)
+        dae.add_jac(Gx0, self.u, self.Iq, self.e2d)
 
-        self.add_jac(Fx0, -mul(self.u, self.a4) + 1e-6, self.e1q, self.e1q)
-        self.add_jac(Fy0, mul(self.u, self.a6), self.e1q, self.vf)
-        self.add_jac(Fy0, -mul(self.u, self.a5), self.e1q, self.Id)
+        dae.add_jac(Fx0, -mul(self.u, self.b3) + 1e-6, self.e1d, self.e1d)
+        dae.add_jac(Fy0, mul(self.u, self.b4), self.e1d, self.Iq)
 
-        self.add_jac(Fx0, -mul(self.u, self.b1) + 1e-6, self.e2d, self.e2d)
-        self.add_jac(Fx0, mul(self.u, self.b1), self.e2d, self.e1d)
-        self.add_jac(Fy0, mul(self.u, self.b2), self.e2d, self.Iq)
+        dae.add_jac(Fx0, -mul(self.u, self.a4) + 1e-6, self.e1q, self.e1q)
+        dae.add_jac(Fy0, mul(self.u, self.a6), self.e1q, self.vf)
+        dae.add_jac(Fy0, -mul(self.u, self.a5), self.e1q, self.Id)
 
-        self.add_jac(Fx0, -mul(self.u, self.a1) + 1e-6, self.e2q, self.e2q)
-        self.add_jac(Fx0, mul(self.u, self.a1), self.e2q, self.e1q)
-        self.add_jac(Fy0, mul(self.u, self.a3), self.e2q, self.vf)
-        self.add_jac(Fy0, -mul(self.u, self.a2), self.e2q, self.Id)
+        dae.add_jac(Fx0, -mul(self.u, self.b1) + 1e-6, self.e2d, self.e2d)
+        dae.add_jac(Fx0, mul(self.u, self.b1), self.e2d, self.e1d)
+        dae.add_jac(Fy0, mul(self.u, self.b2), self.e2d, self.Iq)
+
+        dae.add_jac(Fx0, -mul(self.u, self.a1) + 1e-6, self.e2q, self.e2q)
+        dae.add_jac(Fx0, mul(self.u, self.a1), self.e2q, self.e1q)
+        dae.add_jac(Fy0, mul(self.u, self.a3), self.e2q, self.vf)
+        dae.add_jac(Fy0, -mul(self.u, self.a2), self.e2q, self.Id)
 
 
 class Flux0(object):

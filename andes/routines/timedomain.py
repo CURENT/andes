@@ -166,7 +166,7 @@ def run(system):
             dae.rebuild = True
             switch = False
         # else:
-        dae.rebuild = True
+        # dae.rebuild = True
 
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
@@ -209,7 +209,7 @@ def run(system):
 
         if settings.method in ['euler', 'trapezoidal']:
             while settings.error > tol and niter < maxit:
-                if actual_time - t_jac >= 1:
+                if actual_time - t_jac >= 2:
                     dae.rebuild = True
                     t_jac = actual_time
                 elif niter > 3:

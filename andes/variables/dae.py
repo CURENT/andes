@@ -1,5 +1,5 @@
-from cvxopt import matrix, spmatrix, sparse, spdiag
-from ..utils.math import *
+from cvxopt import matrix, spmatrix, sparse, spdiag, mul
+from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb
 
 
 class DAE(object):
@@ -26,7 +26,6 @@ class DAE(object):
         self.zxmax = ones(self.n, 1)
         self.zxmin = ones(self.n, 1)
         self.ux = ones(self.n, 1)
-
 
     def init_y(self):
         self.y = zeros(self.m, 1)
@@ -87,7 +86,7 @@ class DAE(object):
         """Resize DAE and and extend for init1 variables"""
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
-        if yext:
+        if yext > 0:
             yzeros = zeros(yext, 1)
             yones = ones(yext, 1)
             self.y = matrix([self.y, yzeros], (self.m, 1), 'd')
@@ -95,7 +94,7 @@ class DAE(object):
             self.uy = matrix([self.uy, yones], (self.m, 1), 'd')
             self.zymin = matrix([self.zymin, yones], (self.m, 1), 'd')
             self.zymax = matrix([self.zymax, yones], (self.m, 1), 'd')
-        if xext:
+        if xext > 0:
             xzeros = zeros(xext, 1)
             xones = ones(xext, 1)
             self.x = matrix([self.x, xzeros], (self.n, 1), 'd')
@@ -203,18 +202,29 @@ class DAE(object):
             self.factorize = True
 
     def reset_Ac(self):
-        if sum(self.zxmin) == self.n and sum(self.zxmax) == self.n \
-                and sum(self.zymin) == self.n and sum(self.zymax) == self.n:
+        if sum(self.zxmin) == self.n \
+                and sum(self.zxmax) == self.n \
+                and sum(self.zymin) == self.n \
+                and sum(self.zymax) == self.n:
             return
-        idx1 = findeq(aandb(self.zxmin, self.zxmax), 0.0)
-        idx2 = findeq(aandb(self.zymin, self.zymax), 0.0)
-        idx2 = [i + self.n for i in idx2]
 
-        idx = matrix(idx1 + idx2)
-        H = spmatrix(1.0, idx, idx, (self.m + self.n, self.m + self.n))
+        x_reset = findeq(aandb(self.zxmin, self.zxmax), 0.0)
+        y_reset = findeq(aandb(self.zymin, self.zymax), 0.0)
+        y_reset = [i + self.n for i in y_reset]
+        xy_reset = matrix(x_reset + y_reset)
+        H = spmatrix(1.0, xy_reset, xy_reset, (self.m + self.n, self.m + self.n))
         I = spdiag([1.0] * (self.m + self.n)) - H
         self.Ac = I * (self.Ac * I) - H
-        self.q[idx1] = 0
+        self.q[x_reset] = 0
+
+        # x_reset = aorb(aeqb(self.zxmin, 0.), aeqb(self.zxmax, 0.))
+        # y_reset = aorb(aeqb(self.zymin, 0.), aeqb(self.zymax, 0.))
+        # xy_reset = list(x_reset) + list(y_reset)
+        # H = spdiag(xy_reset)
+        #
+        # I = spdiag([1.0] * (self.m + self.n)) - H
+        # self.Ac = I * (self.Ac * I) - H
+        # self.q = mul(self.q, nota(x_reset))
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""

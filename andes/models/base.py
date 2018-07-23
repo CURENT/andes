@@ -1,20 +1,19 @@
-"""
-ANDES, a power system simulation tool for research.
+# ANDES, a power system simulation tool for research.
+#
+# Copyright 2015-2017 Hantao Cui
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Copyright 2015-2017 Hantao Cui
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
 import sys
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
@@ -23,6 +22,8 @@ from cvxopt import mul, div
 
 from ..utils.math import agtb, altb, findeq
 from ..utils.tab import Tab
+
+import pandas as pd
 
 
 class ModelBase(object):
@@ -114,6 +115,10 @@ class ModelBase(object):
         self.addr = False
         self.ispu = False
 
+        # pandas.DataFrame
+        self.param_dict = {}
+        self.param_df = {}
+
     def _inst_meta(self):
         """instantiate meta-data defined in __init__().
         Call this function at the end of __init__() of child classes
@@ -145,6 +150,58 @@ class ModelBase(object):
             self.__dict__[var] = zeros[:]
         for var in self._algebs:
             self.__dict__[var] = zeros[:]
+
+    def to_dict_compressed(self, sysbase=False):
+        """Return the loaded device parameters as one compressed dictionary.
+         Each key of the dictionary is a parameter name, and the value is a list of all the parameters.
+         :param sysbase: save per unit values in system base
+         """
+        assert isinstance(sysbase, bool)
+
+        ret = {'ispu': sysbase}
+
+        for key in sorted(self._data.keys()):
+            if sysbase and (key in self._store):
+                val = self._store[key]
+            else:
+                val = self.__dict__[key]
+
+            ret[key] = val
+
+        return ret
+
+    def to_dict(self, sysbase=False):
+        """Return the loaded device parameters as a list of dictionaries.
+        Each dictionary contains the full parameters of an element.
+        :param sysbase: save per unit values in system base
+        :type sysbase: bool
+        """
+        ret = list()
+
+        e = {'ispu': sysbase}
+
+        for i in range(self.n):
+            for key in sorted(self._data.keys()):
+                if sysbase and (key in self._store):
+                    val = self._store[key]
+                else:
+                    val = self.__dict__[key]
+                e[key] = val
+
+            ret.append(e)
+
+        return ret
+
+    def to_dataframe(self, sysbase=False):
+        """
+        Return a pandas.DataFrame of device parameters.
+        :param sysbase: save per unit values in system base
+        """
+
+        p_dict_comp = self.to_dict_compressed(sysbase=sysbase)
+        self.param_df = pd.DataFrame(data=p_dict_comp)
+
+        return self.param_df
 
     def remove_param(self, param):
         """Remove a param from this class"""
@@ -540,99 +597,6 @@ class ModelBase(object):
             if limit:
                 self.__dict__[key][item] = minval
 
-    def add_jac(self, m, val, row, col):
-        """Add spmatrix(m, val, row) to DAE.(m)"""
-        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
-
-        size = self.system.DAE.__dict__[m].size
-        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
-
-    def set_jac(self, m, val, row, col):
-        """Set spmatrix(m, val, row) on DAE.(m)"""
-        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
-
-        size = self.system.DAE.__dict__[m].size
-        oldval = []
-        if type(row) is int:
-            row = [row]
-        if type(col) is int:
-            col = [col]
-        if type(row) is range:
-            row = list(row)
-        if type(col) is range:
-            col = list(col)
-        for i, j in zip(row, col):
-            oldval.append(self.system.DAE.__dict__[m][i, j])
-        self.system.DAE.__dict__[m] -= spmatrix(oldval, row, col, size, 'd')
-        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
-
-    def reset_offline(self):
-        """Reset mismatch and differential for disabled elements"""
-        for idx in range(self.n):
-            if self.u[idx] == 0:
-                for item in self._states:
-                    self.system.DAE.f[self.__dict__[item][idx]] = 0
-                    self.system.DAE.xu[self.__dict__[item][idx]] = 0
-                for item in self._algebs:
-                    self.system.DAE.g[self.__dict__[item][idx]] = 0
-                    self.system.DAE.yu[self.__dict__[item][idx]] = 0
-
-    def insight(self, idx=None):
-        """Print the parameter values as a list"""
-        if not self.n:
-            print('Model <{:s}> has no element'.format(self._name))
-        if not idx:
-            idx = sorted(self.int.keys())
-        count = 2
-        header_fmt = '{:^8s}{:^10s}{:^3s}'
-        header = ['idx', 'name', 'u']
-        if 'Sn' in self._data:
-            count += 1
-            header_fmt += '{:^6}'
-            header.append('Sn')
-        if 'Vn' in self._data:
-            count += 1
-            header_fmt += '{:^6}'
-            header.append('Vn')
-
-        keys = list(self._data.keys())
-        for item in header:
-            if item in keys:
-                keys.remove(item)
-        keys = sorted(keys)
-
-        header_fmt += '|' + '{:^10s}' * len(keys)
-        header += keys
-
-        svckeys = sorted(self._service)
-        keys += svckeys
-        header_fmt += '|' + '{:^10s}' * len(svckeys)
-        header += svckeys
-
-        print(' ')
-        print('Model <{:s}> parameter view: per-unit values'.format(self._name))
-        print(header_fmt.format(*header))
-
-        header.remove('idx')
-        for i in idx:
-            data = list()
-            data.append(str(i))
-            for item in header:
-                try:
-                    value = self.__dict__[item][self.int[i]]
-                except:
-                    value = None
-                if value is not None:
-                    if type(value) in [int, float]:
-                        value = round(value, 6)
-                        value = '{:g}'.format(value)
-                else:
-                    value = '-'
-                data.append(value)
-            print(header_fmt.format(*data))
-
     def var_insight(self):
         """Print variable values for debugging"""
         if not self.n:
@@ -654,8 +618,8 @@ class ModelBase(object):
             print(line)
 
     def __str__(self):
-        self.insight()
-        self.var_insight()
+        print('Model <{:s}> parameters in device base'.format(self._name))
+        print(self.to_dataframe(sysbase=False).to_string())
 
     def get_by_idx(self, field, idx):
         """Get values of a field by idx"""
@@ -681,7 +645,8 @@ class ModelBase(object):
         return ret
 
     def help_doc(self, export='plain', save=None, writemode='a'):
-        """Build help document into a Texttable table"""
+        """Build help document into a Texttable table
+        """
         title = '<{}.{}>'.format(self._group, self._name)
         table = Tab(export=export, title=title, descr=self.__doc__)
         rows = []
@@ -724,9 +689,6 @@ class ModelBase(object):
 
     def check_limit(self, varname, vmin=None, vmax=None):
         """Check if the variable values are within the limits. Return False if fails."""
-        assert type(varname) == str
-        mat = None
-        val = None
         retval = True
         if varname not in self.__dict__.keys():
             self.system.Log.error('Model <{}> does not have attribute <{}>'.format(self._name, varname))
@@ -738,26 +700,25 @@ class ModelBase(object):
         else:  # service or temporary variable
             val = matrix(self.__dict__[varname])
 
-        if min:
-            vmin = matrix(self.__dict__[vmin])
-            comp = altb(val, vmin)
-            comp = mul(self.u, comp)
-            for c, n, idx in zip(comp, self.name, range(self.n)):
-                if c == 1:
-                    v = val[idx]
-                    vm = vmin[idx]
-                    self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is lower that minimum {:6.4g}'.format(n, varname, v, vm))
-                    retval = False
-        if max:
-            vmax = matrix(self.__dict__[vmax])
-            comp = agtb(val, vmax)
-            comp = mul(self.u, comp)
-            for c, n, idx in zip(comp, self.name, range(self.n)):
-                if c == 1:
-                    v = val[idx]
-                    vm = vmax[idx]
-                    self.system.Log.error('Initialization of <{}.{}> = {:.4g} is higher that maximum {:.4g}'.format(n, varname, v, vm))
-                    retval = False
+        vmin = matrix(self.__dict__[vmin])
+        comp = altb(val, vmin)
+        comp = mul(self.u, comp)
+        for c, n, idx in zip(comp, self.name, range(self.n)):
+            if c == 1:
+                v = val[idx]
+                vm = vmin[idx]
+                self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is lower that minimum {:6.4g}'.format(n, varname, v, vm))
+                retval = False
+
+        vmax = matrix(self.__dict__[vmax])
+        comp = agtb(val, vmax)
+        comp = mul(self.u, comp)
+        for c, n, idx in zip(comp, self.name, range(self.n)):
+            if c == 1:
+                v = val[idx]
+                vm = vmax[idx]
+                self.system.Log.error('Initialization of <{}.{}> = {:.4g} is higher that maximum {:.4g}'.format(n, varname, v, vm))
+                retval = False
         return retval
 
     def on_bus(self, bus_id):
@@ -781,14 +742,3 @@ class ModelBase(object):
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
                     self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, node, Vdcn0), WARNING)
-    #
-    # def use_model(self, model, dest=None, fkey=None):
-    #     """Create reference of `self.system.__dict__[model]` to self.__dict__[model]"""
-    #     if not dest:
-    #         dest = model
-    #     if model in self.system.DevMan.devices:
-    #         # `model` is a device
-    #         self.__dict__[dest] = self.system.__dict__[model]
-    #     elif model in self.system.DevMan.group.keys():
-    #         # `model` is a group
-    #
