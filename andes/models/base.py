@@ -27,7 +27,7 @@ from ..utils.math import agtb, altb, findeq
 from ..utils.tab import Tab
 
 import pandas as pd
-
+import numpy as np
 
 class ModelBase(object):
     """base class for power system device models"""
@@ -54,6 +54,8 @@ class ModelBase(object):
         # variables
         self._states = []
         self._algebs = []
+        self._states_descr = {}
+        self._algebs_descr = {}
 
         # variable names
         self._unamex = []
@@ -232,6 +234,63 @@ class ModelBase(object):
         if time:
             self._times.append(param)
 
+    def add_variable(self, variable, ty, fname, descr='', uname=''):
+        """
+        Define a variable in the model
+
+        :param fname: LaTex formatted variable name string
+        :param uname: unformatted variable name string, `variable` as default
+        :param variable: variable name
+        :param ty: type code in ('x', 'y')
+        :param descr: variable description
+
+        :type variable: str
+        :type ty: str
+        :type descr: str
+        :return:
+        """
+        assert ty in ('x', 'y')
+        if not uname:
+            uname = variable
+
+        if ty == 'x':
+            self._states.append(variable)
+            self._fnamex.append(fname)
+            self._unamex.append(uname)
+            if descr:
+                self._states_descr.update({variable: descr})
+        elif ty == 'y':
+            self._algebs.append(variable)
+            self._fnamey.append(fname)
+            self._unamey.append(uname)
+            if descr:
+                self._algebs_descr.update({variable: descr})
+
+    def to_uid(self, idx):
+        """
+        Return the `uid` of the elements with the given `idx`
+
+        :param idx: external indices
+        :return: a matrix of uid
+        """
+        return matrix(np.vectorize(self.uid.get)([idx]))
+
+    def get_field(self, field, idx, astype=None):
+        """
+        Return `self.field` for the elements labeled by `idx`
+        :param astype: type cast of the return value
+        :param field: field name of this model
+        :param idx: element indices
+        :return: field values
+        """
+        assert astype in (None, list, matrix)
+        uid = self.to_uid(idx)
+
+        ret = matrix(self.__dict__[field])[uid]
+
+        if astype == list:
+            ret = list(ret)
+        return ret
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -713,29 +772,6 @@ class ModelBase(object):
     def __str__(self):
         print('Model <{:s}> parameters in device base'.format(self._name))
         print(self.to_dataframe(sysbase=False).to_string())
-
-    def get_by_idx(self, field, idx):
-        """Get values of a field by idx"""
-        ret = []
-        int_idx = idx
-        if type(idx) == int:
-            int_idx = self.uid[idx]
-        elif type(idx) == list or matrix:
-            int_idx = [self.uid[item] for item in idx]
-        else:
-            raise TypeError
-        if not field in self.__dict__:
-            raise KeyError('<{}> is not a field of model <{}>'.format(field, self._name))
-
-        if type(self.__dict__[field]) == matrix:
-            ret = self.__dict__[field][int_idx]
-        elif type(self.__dict__[field]) == list:
-            if type(int_idx) == int:
-                ret = self.__dict__[field][int_idx]
-            else:
-                ret = [self.__dict__[field][item] for item in int_idx]
-
-        return ret
 
     def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table

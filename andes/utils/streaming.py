@@ -444,7 +444,7 @@ class Streaming(object):
                 self.system.Fault.insert(**param)
                 self.system.Log.debug('Event <Fault> added for bus {} at t = {} and tf = {}'.format(idx, time, tf))
             elif name.lower() == 'line':
-                bus = self.system.Line.get_by_idx('bus1', ['Line_'+str(int(idx-1))])[0]
+                bus = self.system.Line.get_field('bus1', ['Line_'+str(int(idx-1))])[0]
                 param = {'line': 'Line_'+str(idx-1),
                          'bus': bus,
                          't1': time,

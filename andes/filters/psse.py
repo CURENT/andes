@@ -112,8 +112,8 @@ def read(file, system):
         Bus, Id, Status, Area, Zone, PL(MW), QL (MW), IP, IQ, YP, YQ, OWNER
         """
         bus = data[0]
-        vn = system.Bus.get_by_idx('Vn', bus)
-        voltage = system.Bus.get_by_idx('voltage', bus)
+        vn = system.Bus.get_field('Vn', bus)
+        voltage = system.Bus.get_field('voltage', bus)
         param = {'bus': bus,
                  'Vn': vn,
                  'Sn': mva,
@@ -129,7 +129,7 @@ def read(file, system):
         Bus, name, Status, g (MW), b (Mvar)
         """
         bus = data[0]
-        vn = system.Bus.get_by_idx('Vn', bus)
+        vn = system.Bus.get_field('Vn', bus)
         param = {'bus': bus,
                  'Vn': vn,
                  'u': data[2],
@@ -146,7 +146,7 @@ def read(file, system):
          I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
         """
         bus = data[0]
-        vn = system.Bus.get_by_idx('Vn', bus)
+        vn = system.Bus.get_field('Vn', bus)
         gen_mva = data[8]  # unused yet
         gen_idx += 1
         status = data[14]
@@ -182,8 +182,8 @@ def read(file, system):
                  'x': data[4],
                  'b': data[5],
                  'rate_a': data[6],
-                 'Vn': system.Bus.get_by_idx('Vn', data[0]),
-                 'Vn2': system.Bus.get_by_idx('Vn', data[1]),
+                 'Vn': system.Bus.get_field('Vn', data[0]),
+                 'Vn2': system.Bus.get_field('Vn', data[1]),
                  }
         system.Line.add(**param)
 
@@ -218,8 +218,8 @@ def read(file, system):
                  'tap': tap,
                  'phi': phi,
                  'rate_a': data[2][3],
-                 'Vn': system.Bus.get_by_idx('Vn', data[0][0]),
-                 'Vn2': system.Bus.get_by_idx('Vn', data[0][1]),
+                 'Vn': system.Bus.get_field('Vn', data[0][0]),
+                 'Vn2': system.Bus.get_field('Vn', data[0][1]),
                  }
         system.Line.add(**param)
 
@@ -228,7 +228,7 @@ def read(file, system):
                                                BINIT, N1, B1, N2, B2, ... N8, B8
         """
         bus = data[0]
-        vn = system.Bus.get_by_idx('Vn', bus)
+        vn = system.Bus.get_field('Vn', bus)
         param = {'bus': bus,
                  'Vn': vn,
                  'Sn': mva,
@@ -329,10 +329,10 @@ def add_dyn(system, model, data):
         param = {'bus': bus,
                  'gen': gen_idx,
                  # 'idx': bus,  # use `bus` for `idx`. Only one generator allowed on each bus
-                 'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
-                 'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
-                 'xd1': system.__dict__[dev].get_by_idx('xs', gen_idx),
-                 'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
+                 'Sn': system.__dict__[dev].get_field('Sn', gen_idx),
+                 'Vn': system.__dict__[dev].get_field('Vn', gen_idx),
+                 'xd1': system.__dict__[dev].get_field('xs', gen_idx),
+                 'ra': system.__dict__[dev].get_field('ra', gen_idx),
                  'M': 2 * data[0],
                  'D': data[1],
                  'u': u,
@@ -356,9 +356,9 @@ def add_dyn(system, model, data):
         param = {'bus': bus,
                  'gen': gen_idx,
                  # 'idx': bus,  # use `bus` for `idx`. Only one generator allowed on each bus
-                 'Sn': system.__dict__[dev].get_by_idx('Sn', gen_idx),
-                 'Vn': system.__dict__[dev].get_by_idx('Vn', gen_idx),
-                 'ra': system.__dict__[dev].get_by_idx('ra', gen_idx),
+                 'Sn': system.__dict__[dev].get_field('Sn', gen_idx),
+                 'Vn': system.__dict__[dev].get_field('Vn', gen_idx),
+                 'ra': system.__dict__[dev].get_field('ra', gen_idx),
                  'Td10': data[0],
                  'Td20': data[1],
                  'Tq10': data[2],
