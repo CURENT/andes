@@ -502,7 +502,7 @@ def run(case, **kwargs):
             system.Log.info('Time domain simulation finished in {:s}.'.format(s))
         else:
             system.Log.info('Time domain simulation failed in {:s}.'.format(s))
-        if not system.Files.no_output:
+        if ret and (not system.Files.no_output):
             system.VarOut.dump()
             t3, s = elapsed(t2)
             system.Log.info('Simulation data dumped in {:s}.'.format(s))
