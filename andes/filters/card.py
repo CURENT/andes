@@ -406,7 +406,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     servcall = []
     for item in ctrl:
         key, val = item
-        out = 'self.copy_param(\'{}\', \'{}\', \'{}\', self.{})'.format(val[0], val[1], key, val[2])
+        out = 'self.get_field_ext(\'{}\', \'{}\', \'dest={}\', idx=self.{})'.format(val[0], val[1], key, val[2])
         servcall.append(out)
     for item in sym_serv:
         rhs = stringfy(item[1], sym_consts, sym_states_ext, sym_algebs_ext)

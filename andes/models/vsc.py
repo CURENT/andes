@@ -386,23 +386,23 @@ class VSC1_Common(DCBase):
         self._dc = {}
 
     def servcall(self, dae):
-        self.copy_param('VSC', 'Sn', 'Sn', self.vsc)
-        self.copy_param('VSC', 'Vn', 'Vn', self.vsc)
-        self.copy_param('VSC', 'Vdcn', 'Vdcn', self.vsc)
-        self.copy_param('VSC', 'rsh', 'rsh', self.vsc)
-        self.copy_param('VSC', 'xsh', 'xsh', self.vsc)
-        self.copy_param('VSC', 'PQ', 'PQ', self.vsc)
-        self.copy_param('VSC', 'PV', 'PV', self.vsc)
-        self.copy_param('VSC', 'vQ', 'vQ', self.vsc)
-        self.copy_param('VSC', 'vV', 'vV', self.vsc)
-        self.copy_param('VSC', 'a', 'a', self.vsc)
-        self.copy_param('VSC', 'v', 'v', self.vsc)
-        self.copy_param('VSC', 'v1', 'v1', self.vsc)
-        self.copy_param('VSC', 'v2', 'v2', self.vsc)
-        self.copy_param('VSC', 'psh', 'pref0', self.vsc)
-        self.copy_param('VSC', 'qsh', 'qref0', self.vsc)
-        self.copy_param('VSC', 'bus', 'bus', self.vsc)
-        self.copy_param('BusFreq', 'w', 'w', self.bus)  # TODO: BusFreq idx must be the same as bus idx
+        self.get_field_ext('VSC', 'Sn', 'Sn', self.vsc)
+        self.get_field_ext('VSC', 'Vn', 'Vn', self.vsc)
+        self.get_field_ext('VSC', 'Vdcn', 'Vdcn', self.vsc)
+        self.get_field_ext('VSC', 'rsh', 'rsh', self.vsc)
+        self.get_field_ext('VSC', 'xsh', 'xsh', self.vsc)
+        self.get_field_ext('VSC', 'PQ', 'PQ', self.vsc)
+        self.get_field_ext('VSC', 'PV', 'PV', self.vsc)
+        self.get_field_ext('VSC', 'vQ', 'vQ', self.vsc)
+        self.get_field_ext('VSC', 'vV', 'vV', self.vsc)
+        self.get_field_ext('VSC', 'a', 'a', self.vsc)
+        self.get_field_ext('VSC', 'v', 'v', self.vsc)
+        self.get_field_ext('VSC', 'v1', 'v1', self.vsc)
+        self.get_field_ext('VSC', 'v2', 'v2', self.vsc)
+        self.get_field_ext('VSC', 'psh', 'pref0', self.vsc)
+        self.get_field_ext('VSC', 'qsh', 'qref0', self.vsc)
+        self.get_field_ext('VSC', 'bus', 'bus', self.vsc)
+        self.get_field_ext('BusFreq', 'w', 'w', self.bus)  # TODO: BusFreq idx must be the same as bus idx
 
         self.pref0 = dae.y[self.pref0]
         self.qref0 = dae.y[self.qref0]
@@ -1027,19 +1027,19 @@ class VSC2_Common(DCBase):
         self._dc = {}
 
     def servcall(self, dae):
-        self.copy_param('VSC', 'u', 'uvsc', self.vsc)
-        self.copy_param('VSC', 'rsh', 'rsh', self.vsc)
-        self.copy_param('VSC', 'xsh', 'xsh', self.vsc)
-        self.copy_param('VSC', 'PQ', 'PQ', self.vsc)
-        self.copy_param('VSC', 'PV', 'PV', self.vsc)
-        self.copy_param('VSC', 'vQ', 'vQ', self.vsc)
-        self.copy_param('VSC', 'vV', 'vV', self.vsc)
-        self.copy_param('VSC', 'a', 'a', self.vsc)
-        self.copy_param('VSC', 'v', 'v', self.vsc)
-        self.copy_param('VSC', 'v1', 'v1', self.vsc)
-        self.copy_param('VSC', 'v2', 'v2', self.vsc)
-        self.copy_param('VSC', 'psh', 'psh', self.vsc)
-        self.copy_param('VSC', 'qsh', 'qsh', self.vsc)
+        self.get_field_ext('VSC', 'u', 'uvsc', self.vsc)
+        self.get_field_ext('VSC', 'rsh', 'rsh', self.vsc)
+        self.get_field_ext('VSC', 'xsh', 'xsh', self.vsc)
+        self.get_field_ext('VSC', 'PQ', 'PQ', self.vsc)
+        self.get_field_ext('VSC', 'PV', 'PV', self.vsc)
+        self.get_field_ext('VSC', 'vQ', 'vQ', self.vsc)
+        self.get_field_ext('VSC', 'vV', 'vV', self.vsc)
+        self.get_field_ext('VSC', 'a', 'a', self.vsc)
+        self.get_field_ext('VSC', 'v', 'v', self.vsc)
+        self.get_field_ext('VSC', 'v1', 'v1', self.vsc)
+        self.get_field_ext('VSC', 'v2', 'v2', self.vsc)
+        self.get_field_ext('VSC', 'psh', 'psh', self.vsc)
+        self.get_field_ext('VSC', 'qsh', 'qsh', self.vsc)
         self.u = mul(self.u, self.uvsc)
         self.vref0 = mul(self.u, dae.y[self.v])
         self.wref0 = self.u

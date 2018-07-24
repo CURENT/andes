@@ -98,8 +98,8 @@ class Line(ModelBase):
         self._param2matrix()
         self.a = self.system.Bus.a
         self.v = self.system.Bus.v
-        self.a1 = self.system.Bus._slice('a', self.bus1)
-        self.a2 = self.system.Bus._slice('a', self.bus2)
+        self.a1 = self.system.Bus.get_field('a', self.bus1, astype=list)
+        self.a2 = self.system.Bus.get_field('a', self.bus2, astype=list)
         self.nb = int(self.system.Bus.n)
         self.system.Settings.nseries += self.n
 

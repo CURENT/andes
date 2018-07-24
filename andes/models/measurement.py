@@ -40,7 +40,7 @@ class BusFreq(ModelBase):
         self._inst_meta()
 
     def init1(self, dae):
-        self.copy_param(model='Bus', src='a', dest='a', fkey=self.bus)
+        self.get_field_ext(model='Bus', field='a', dest='a', idx=self.bus)
         self.iTf = div(self.u, self.Tf)
         self.iTd = div(self.u, self.Td)
         self.iTw = div(self.u, self.Tw)
@@ -105,8 +105,8 @@ class PMU(ModelBase):
                            })
 
     def init1(self, dae):
-        self.copy_param(model='Bus', src='a', fkey=self.bus)
-        self.copy_param(model='Bus', src='v', fkey=self.bus)
+        self.get_field_ext(model='Bus', field='a', idx=self.bus)
+        self.get_field_ext(model='Bus', field='v', idx=self.bus)
         self.iTv = div(self.u, self.Tv)
         self.iTa = div(self.u, self.Ta)
         dae.x[self.am] = dae.y[self.a]

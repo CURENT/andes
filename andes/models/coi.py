@@ -30,11 +30,11 @@ class COI(ModelBase):
 
         dae.y[self.omega] = 1
         for idx, item in enumerate(self.syn):
-            self.usyn[idx] = self.read_param('Synchronous', src='u', fkey=item)
-            self.M[idx] = self.read_param('Synchronous', src='M', fkey=item)
+            self.usyn[idx] = self.read_param('Synchronous', field='u', idx=item)
+            self.M[idx] = self.read_param('Synchronous', field='M', idx=item)
             self.Mtot[idx] = sum(self.M[idx])
-            self.gdelta[idx] = self.read_param('Synchronous', src='delta', fkey=item)
-            self.gomega[idx] = self.read_param('Synchronous', src='omega', fkey=item)
+            self.gdelta[idx] = self.read_param('Synchronous', field='delta', idx=item)
+            self.gomega[idx] = self.read_param('Synchronous', field='omega', idx=item)
 
             dae.y[self.delta[idx]] = sum(mul(self.M[idx], dae.x[self.gdelta[idx]])) / self.Mtot[idx]
 

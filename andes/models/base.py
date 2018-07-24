@@ -287,31 +287,36 @@ class ModelBase(object):
         :type idx: list, matrix
         :return: a matrix of uid
         """
-        idx = list(idx)
-        return matrix(np.vectorize(self.uid.get)([idx]))
+        if isinstance(idx, (int, float, str)):
+            return self.uid[idx]
 
-    def get_field(self, field, idx, astype=None):
+        return matrix(np.vectorize(self.uid.get)(idx))
+
+    def get_field(self, field, idx=None, astype=None):
         """
         Return `self.field` for the elements labeled by `idx`
         :param astype: type cast of the return value
         :param field: field name of this model
-        :param idx: element indices
+        :param idx: element indices, will be the whole list if not specified
         :return: field values
         """
         assert astype in (None, list, matrix)
-        if not astype:
-            astype = type(self.__dict__[field])
+        if not idx:
+            idx = range(self.n)
 
         if field in self._service:
             self.system.Log.warning(
-                'Reading service variable {field} from {model} are unsafe.\n'
+                'Reading service variable {field} from {model} could be unsafe.\n'
                 'Service variables are mutable during the simulation.'.format(field=field, model=self._name)
             )
 
         uid = self.to_uid(idx)
         ret = matrix(self.__dict__[field])[uid]
 
-        return astype(ret)
+        if not astype:
+            return ret
+        else:
+            return astype(ret)
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -410,63 +415,91 @@ class ModelBase(object):
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
-    def read_param(self, model, src, fkey=None):
-        """Return the param of the `model` group or class indexed by fkey"""
+    def read_param(self, model, field, idx=None, astype=None):
+        """Return the param of the `model` group or class indexed by idx"""
         retval = None
-        dev_type = None
+        dtype = None
         val = list()
         if model in self.system.DevMan.devices:
-            dev_type = 'model'
+            dtype = 'model'
         elif model in self.system.DevMan.group.keys():
-            dev_type = 'group'
+            dtype = 'group'
 
-        assert dev_type, 'Model or group <{0}> does not exist.'.format(model)
+        assert dtype, 'Model or group <{0}> does not exist.'.format(model)
 
         src_type = list
 
         # do param copy
-        if dev_type == 'model':
-            retval = self.system.__dict__[model]._slice(src, fkey)
-            src_type = type(self.system.__dict__[model].__dict__[src])
+        if dtype == 'model':
+            retval = self.system.__dict__[model].get_field(field, idx)
+            src_type = type(self.system.__dict__[model].__dict__[field])
 
-        elif dev_type == 'group':
-            if not fkey:
-                fkey = self.system.DevMan.group.keys()
-                if not fkey:
-                    self.message('Group <{}> does not have any element.'.format(model), ERROR)
+        elif dtype == 'group':
+            if not idx:
+                idx = self.system.DevMan.group.keys()
+                if not idx:
+                    self.message('Group <{}> is empty.'.format(model), ERROR)
                     return
-            for item in fkey:
+            for item in idx:
                 dev_name = self.system.DevMan.group[model].get(item, None)
                 if not dev_name:
                     self.message('Group <{}> does not have element {}.'.format(model, item), ERROR)
                     return
-                pos = self.system.__dict__[dev_name].uid[item]
-                val.append(self.system.__dict__[dev_name].__dict__[src][pos])
+                # pos = self.system.__dict__[dev_name].uid[item]
+                # val.append(self.system.__dict__[dev_name].__dict__[field][pos])
+                val.append(self.system.__dict__[dev_name].get_field(field, item))
 
             retval = val
-            src_type = type(self.system.__dict__[dev_name].__dict__[src])
+            src_type = type(self.system.__dict__[dev_name].__dict__[field])
 
         if src_type == list:
             return list(retval)
         if src_type == matrix:
             return matrix(retval)
 
-    def copy_param(self, model, src, dest=None, fkey=None, astype=None):
-        """get a copy of the system.model.src as self.dest"""
+    def get_field_ext(self, model, field, dest=None, idx=None, astype=None):
+        """
+        Retrieve the field of another model and store it as a field of this model
+
+        :param model: name of the source model, either a model name or a group name
+        :param field: name of the field to retrieve
+        :param dest: name of the destination field in ``self``
+        :param idx: idx of elements to access
+        :param astype: type cast
+
+        :type model: str
+        :type field: str
+        :type dest: str
+        :type idx: list, matrix
+        :type astype: None, list, matrix
+
+        :return: None
+
+        """
         # use default destination
         assert astype in (None, list, matrix)
 
         if not dest:
-            dest = src
+            dest = field
 
-        self.__dict__[dest] = self.read_param(model, src, fkey)
+        self.__dict__[dest] = self.read_param(model, field, idx)
 
         if astype:
             self.__dict__[dest] = astype(self.__dict__[dest])
         return self.__dict__[dest]
 
+    def copy_param(self, model, field, dest=None, idx=None, astype=None):
+        """
+        Copy a parameter from other models.
+
+        This function will be depreciated and replaced by ``self.get_field_ext``
+        """
+        return self.get_field_ext(model, field, dest=dest, idx=idx, astype=astype)
+
     def _slice(self, param, idx=None):
-        """slice list or matrix with idx and return (type, sliced)"""
+        """slice list or matrix with idx and return (type, sliced).
+
+        This function will be depreated and replaced by ``self.get_field``"""
         return self.get_field(param, idx)
 
     def add(self, idx=None, name=None, **kwargs):
@@ -663,17 +696,17 @@ class ModelBase(object):
     def _ac_interface(self):
         """retrieve ac bus a and v addresses"""
         for key, val in self._ac.items():
-            self.copy_param(model='Bus', src='a', dest=val[0], fkey=self.__dict__[key])
-            self.copy_param(model='Bus', src='v', dest=val[1], fkey=self.__dict__[key])
+            self.get_field_ext(model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
+            self.get_field_ext(model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
 
     def _dc_interface(self):
         """retrieve v addresses of dc buses"""
         for key, val in self._dc.items():
             if type(val) == list:
                 for item in val:
-                    self.copy_param(model='Node', src='v', dest=item, fkey=self.__dict__[key])
+                    self.get_field_ext(model='Node', field='v', dest=item, idx=self.__dict__[key])
             else:
-                self.copy_param(model='Node', src='v', dest=val, fkey=self.__dict__[key])
+                self.get_field_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
 
     def _ctrl_interface(self):
         """Retrieve parameters of controlled model
@@ -683,7 +716,7 @@ class ModelBase(object):
             args = {'dest': key,
                     'fkey': self.__dict__[val[2]],
                     }
-            self.copy_param(val[0], val[1], **args)
+            self.get_field_ext(val[0], val[1], **args)
 
     def _addr(self):
         """
@@ -866,12 +899,12 @@ class ModelBase(object):
         if not self.n:
             return
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
-            bus_Vn = self.read_param('Bus', src='Vn', fkey=self.bus)
+            bus_Vn = self.read_param('Bus', field='Vn', idx=self.bus)
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
                 if Vn != Vn0:
                     self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'.format(name, Vn, bus, Vn0), WARNING)
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
-            node_Vdcn = self.read_param('Node', src='Vdcn', fkey=self.node)
+            node_Vdcn = self.read_param('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
                     self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, node, Vdcn0), WARNING)

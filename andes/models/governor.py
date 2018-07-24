@@ -37,7 +37,7 @@ class GovernorBase(ModelBase):
     def base(self):
         if not self.n:
             return
-        self.copy_param(model='Synchronous', src='Sn', dest='Sn', fkey=self.gen)
+        self.get_field_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
         super(GovernorBase, self).base()
         self.R = self.system.Settings.mva * div(self.R, self.Sn)
 
@@ -45,11 +45,11 @@ class GovernorBase(ModelBase):
         self.gain = div(1.0, self.R)
 
         # values
-        self.copy_param(model='Synchronous', src='pm0', dest='pm0', fkey=self.gen)
+        self.get_field_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
 
         # indices
-        self.copy_param(model='Synchronous', src='omega', dest='omega', fkey=self.gen)
-        self.copy_param(model='Synchronous', src='pm', dest='pm', fkey=self.gen)
+        self.get_field_ext(model='Synchronous', field='omega', dest='omega', idx=self.gen)
+        self.get_field_ext(model='Synchronous', field='pm', dest='pm', idx=self.gen)
 
         self.init_limit(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
         dae.y[self.wref] = self.wref0

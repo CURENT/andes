@@ -286,21 +286,21 @@ class WTG4DC(ModelBase, Turbine, MPPT):
         super(WTG4DC, self).base()
 
     def servcall(self, dae):
-        self.copy_param('DCgen', 'u', 'u0', self.dcgen)
-        self.copy_param('DCgen', 'P', 'p0', self.dcgen)
-        self.copy_param('Wind', 'vw', 'vw', self.wind)
-        self.copy_param('Wind', 'rho', 'rho', self.wind)
-        self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
-        # self.copy_param('Node', 'v', 'v1', self.node1)
-        # self.copy_param('Node', 'v', 'v2', self.node2)
+        self.get_field_ext('DCgen', 'u', 'u0', self.dcgen)
+        self.get_field_ext('DCgen', 'P', 'p0', self.dcgen)
+        self.get_field_ext('Wind', 'vw', 'vw', self.wind)
+        self.get_field_ext('Wind', 'rho', 'rho', self.wind)
+        self.get_field_ext('Wind', 'Vwn', 'Vwn', self.wind)
+        # self.get_field_ext('Node', 'v', 'v1', self.node1)
+        # self.get_field_ext('Node', 'v', 'v2', self.node2)
         # self.qs0 = 0
         # TODO: Fix this dirty hard code
         if self.busfreq[0] is not None:
-            self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+            self.get_field_ext('BusFreq', 'dwdt', 'dwdt', self.busfreq)
         else:
             self.dwdt = matrix(0, (self.n, 1))
         if self.coi[0] is not None:
-            self.copy_param('COI', 'dwdt', 'dwdt_coi', self.coi)
+            self.get_field_ext('COI', 'dwdt', 'dwdt_coi', self.coi)
         else:
             self.dwdt_coi = matrix(0, (self.n, 1))
         Turbine.servcall(self, dae)
@@ -515,12 +515,12 @@ class WTG3(ModelBase):
         self._inst_meta()
 
     def servcall(self, dae):
-        self.copy_param('StaticGen', 'u', 'ugen', self.gen)
-        self.copy_param('Bus', 'Pg', 'p0', self.bus)
-        self.copy_param('Bus', 'Qg', 'q0', self.bus)
-        self.copy_param('Wind', 'vw', 'vw', self.wind)
-        self.copy_param('Wind', 'rho', 'rho', self.wind)
-        self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
+        self.get_field_ext('StaticGen', 'u', 'ugen', self.gen)
+        self.get_field_ext('Bus', 'Pg', 'p0', self.bus)
+        self.get_field_ext('Bus', 'Qg', 'q0', self.bus)
+        self.get_field_ext('Wind', 'vw', 'vw', self.wind)
+        self.get_field_ext('Wind', 'rho', 'rho', self.wind)
+        self.get_field_ext('Wind', 'Vwn', 'Vwn', self.wind)
         self.vref0 = dae.y[self.v]
         self.x0 = self.xmu + self.xs
         self.x1 = self.xmu + self.xr

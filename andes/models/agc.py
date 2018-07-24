@@ -20,11 +20,11 @@ class ACE(ModelBase):
         self._inst_meta()
 
     def init1(self, dae):
-        self.copy_param('Area', src='area_P0', dest='P0', fkey=self.area)
-        self.copy_param('Area', src='area_Q0', dest='Q0', fkey=self.area)
+        self.get_field_ext('Area', field='area_P0', dest='P0', idx=self.area)
+        self.get_field_ext('Area', field='area_Q0', dest='Q0', idx=self.area)
 
     def gcall(self, dae):
-        P = self.read_param('Area', src='area_P0', fkey=self.area)
+        P = self.read_param('Area', field='area_P0', idx=self.area)
 
         dae.g[self.e] = dae.y[self.e] - (P - self.P0)
 
@@ -57,13 +57,13 @@ class AGC(ModelBase):
 
     def init1(self, dae):
         self.pm = [[]] * self.n
-        self.copy_param('ACE', src='e', fkey=self.ace)
-        self.copy_param('COI', src='syn', fkey=self.coi)
-        self.copy_param('COI', src='omega', dest='comega', fkey=self.coi_measure)
-        self.copy_param('COI', src='M', dest='M', fkey=self.coi)
-        self.copy_param('COI', src='Mtot', dest='Mtot', fkey=self.coi)
+        self.get_field_ext('ACE', field='e', idx=self.ace)
+        self.get_field_ext('COI', field='syn', idx=self.coi)
+        self.get_field_ext('COI', field='omega', dest='comega', idx=self.coi_measure)
+        self.get_field_ext('COI', field='M', dest='M', idx=self.coi)
+        self.get_field_ext('COI', field='Mtot', dest='Mtot', idx=self.coi)
         for idx in range(self.n):
-            self.pm[idx] = self.read_param('Synchronous', src='pm', fkey=self.syn[idx])
+            self.pm[idx] = self.read_param('Synchronous', field='pm', idx=self.syn[idx])
 
     def gcall(self, dae):
         dae.g[self.ACE] = -mul(self.beta, (dae.y[self.comega] - 1)) - dae.y[self.e] - dae.y[self.ACE]
@@ -109,11 +109,11 @@ class EAGC(ModelBase):
         self.M = [[]] * self.n
         self.Mtot = [[]] * self.n
         for idx, item in enumerate(self.agc):
-            self.pm[idx] = self.read_param('AGC', src='pm', fkey=item)
-            self.M[idx] = self.read_param('AGC', src='M', fkey=item)
-            self.Mtot[idx] = self.read_param('AGC', src='Mtot', fkey=item)
+            self.pm[idx] = self.read_param('AGC', field='pm', idx=item)
+            self.M[idx] = self.read_param('AGC', field='M', idx=item)
+            self.Mtot[idx] = self.read_param('AGC', field='Mtot', idx=item)
 
-        # self.copy_param('AGC', src='Mtot', fkey=self.agc)
+        # self.get_field_ext('AGC', src='Mtot', fkey=self.agc)
 
         # self.en = matrix(0, (self.n, 1), 'd')
         self.en = zeros(self.n, 1)
@@ -162,11 +162,11 @@ class EAGC(ModelBase):
 #
 #     def init1(self, dae):
 #         self.pm = [[]] * self.n
-#         self.copy_param('ACE', src='e', fkey=self.ace)
-#         self.copy_param('COI', src='syn', fkey=self.coi)
-#         self.copy_param('COI', src='omega', dest='comega', fkey=self.coi)
-#         self.copy_param('COI', src='M', dest='M', fkey=self.coi)
-#         self.copy_param('COI', src='Mtot', dest='Mtot', fkey=self.coi)
+#         self.get_field_ext('ACE', src='e', fkey=self.ace)
+#         self.get_field_ext('COI', src='syn', fkey=self.coi)
+#         self.get_field_ext('COI', src='omega', dest='comega', fkey=self.coi)
+#         self.get_field_ext('COI', src='M', dest='M', fkey=self.coi)
+#         self.get_field_ext('COI', src='Mtot', dest='Mtot', fkey=self.coi)
 #         for idx in range(self.n):
 #             self.pm[idx] = self.read_param('Synchronous', src='pm', fkey=self.syn[idx])
 #
