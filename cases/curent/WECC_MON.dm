@@ -264,126 +264,126 @@ PMU, idx=67, bus = 67, Vn=230.0
 PMU, idx=68, bus = 68, Vn=500.0
 PMU, idx=69, bus = 69, Vn=20.0
 PMU, idx=70, bus = 70, Vn=230.0
-# PMU, idx=71, bus = 71, Vn=500.0
-# PMU, idx=72, bus = 72, Vn=500.0
-# PMU, idx=73, bus = 73, Vn=500.0
-# PMU, idx=74, bus = 74, Vn=500.0
-# PMU, idx=75, bus = 75, Vn=500.0
-# PMU, idx=76, bus = 76, Vn=20.0
-# PMU, idx=77, bus = 77, Vn=500.0
-# PMU, idx=78, bus = 78, Vn=20.0
-# PMU, idx=79, bus = 79, Vn=500.0
-# PMU, idx=80, bus = 80, Vn=500.0
-# PMU, idx=81, bus = 81, Vn=500.0
-# PMU, idx=82, bus = 82, Vn=500.0
-# PMU, idx=83, bus = 83, Vn=500.0
-# PMU, idx=84, bus = 84, Vn=345.0
-# PMU, idx=85, bus = 85, Vn=500.0
-# PMU, idx=86, bus = 86, Vn=500.0
-# PMU, idx=87, bus = 87, Vn=500.0
-# PMU, idx=88, bus = 88, Vn=500.0
-# PMU, idx=89, bus = 89, Vn=500.0
-# PMU, idx=90, bus = 90, Vn=500.0
-# PMU, idx=91, bus = 91, Vn=500.0
-# PMU, idx=92, bus = 92, Vn=500.0
-# PMU, idx=93, bus = 93, Vn=500.0
-# PMU, idx=94, bus = 94, Vn=500.0
-# PMU, idx=95, bus = 95, Vn=500.0
-# PMU, idx=96, bus = 96, Vn=500.0
-# PMU, idx=97, bus = 97, Vn=500.0
-# PMU, idx=98, bus = 98, Vn=500.0
-# PMU, idx=99, bus = 99, Vn=230.0
-# PMU, idx=100, bus = 100, Vn=230.0
-# PMU, idx=101, bus = 101, Vn=500.0
-# PMU, idx=102, bus = 102, Vn=20.0
-# PMU, idx=103, bus = 103, Vn=500.0
-# PMU, idx=104, bus = 104, Vn=230.0
-# PMU, idx=105, bus = 105, Vn=230.0
-# PMU, idx=106, bus = 106, Vn=500.0
-# PMU, idx=107, bus = 107, Vn=500.0
-# PMU, idx=108, bus = 108, Vn=230.0
-# PMU, idx=109, bus = 109, Vn=500.0
-# PMU, idx=110, bus = 110, Vn=500.0
-# PMU, idx=111, bus = 111, Vn=20.0
-# PMU, idx=112, bus = 112, Vn=230.0
-# PMU, idx=113, bus = 113, Vn=500.0
-# PMU, idx=114, bus = 114, Vn=500.0
-# PMU, idx=115, bus = 115, Vn=20.0
-# PMU, idx=116, bus = 116, Vn=200.0
-# PMU, idx=117, bus = 117, Vn=20.0
-# PMU, idx=118, bus = 118, Vn=500.0
-# PMU, idx=119, bus = 119, Vn=500.0
-# PMU, idx=120, bus = 120, Vn=500.0
-# PMU, idx=121, bus = 121, Vn=500.0
-# PMU, idx=122, bus = 122, Vn=500.0
-# PMU, idx=123, bus = 123, Vn=500.0
-# PMU, idx=124, bus = 124, Vn=500.0
-# PMU, idx=125, bus = 125, Vn=500.0
-# PMU, idx=126, bus = 126, Vn=500.0
-# PMU, idx=127, bus = 127, Vn=500.0
-# PMU, idx=128, bus = 128, Vn=500.0
-# PMU, idx=129, bus = 129, Vn=500.0
-# PMU, idx=130, bus = 130, Vn=500.0
-# PMU, idx=131, bus = 131, Vn=500.0
-# PMU, idx=132, bus = 132, Vn=500.0
-# PMU, idx=133, bus = 133, Vn=500.0
-# PMU, idx=134, bus = 134, Vn=500.0
-# PMU, idx=135, bus = 135, Vn=500.0
-# PMU, idx=136, bus = 136, Vn=230.0
-# PMU, idx=137, bus = 137, Vn=20.0
-# PMU, idx=138, bus = 138, Vn=500.0
-# PMU, idx=139, bus = 139, Vn=20.0
-# PMU, idx=140, bus = 140, Vn=230.0
-# PMU, idx=141, bus = 141, Vn=500.0
-# PMU, idx=142, bus = 142, Vn=230.0
-# PMU, idx=143, bus = 143, Vn=20.0
-# PMU, idx=144, bus = 144, Vn=500.0
-# PMU, idx=145, bus = 145, Vn=230.0
-# PMU, idx=146, bus = 146, Vn=500.0
-# PMU, idx=147, bus = 147, Vn=22.0
-# PMU, idx=148, bus = 148, Vn=20.0
-# PMU, idx=149, bus = 149, Vn=230.0
-# PMU, idx=150, bus = 150, Vn=500.0
-# PMU, idx=151, bus = 151, Vn=500.0
-# PMU, idx=152, bus = 152, Vn=500.0
-# PMU, idx=153, bus = 153, Vn=230.0
-# PMU, idx=154, bus = 154, Vn=345.0
-# PMU, idx=155, bus = 155, Vn=345.0
-# PMU, idx=156, bus = 156, Vn=230.0
-# PMU, idx=157, bus = 157, Vn=345.0
-# PMU, idx=158, bus = 158, Vn=20.0
-# PMU, idx=159, bus = 159, Vn=345.0
-# PMU, idx=160, bus = 160, Vn=230.0
-# PMU, idx=161, bus = 161, Vn=20.0
-# PMU, idx=162, bus = 162, Vn=345.0
-# PMU, idx=163, bus = 163, Vn=345.0
-# PMU, idx=164, bus = 164, Vn=345.0
-# PMU, idx=165, bus = 165, Vn=345.0
-# PMU, idx=166, bus = 166, Vn=345.0
-# PMU, idx=167, bus = 167, Vn=500.0
-# PMU, idx=168, bus = 168, Vn=500.0
-# PMU, idx=169, bus = 169, Vn=500.0
-# PMU, idx=170, bus = 170, Vn=500.0
-# PMU, idx=171, bus = 171, Vn=500.0
-# PMU, idx=172, bus = 172, Vn=500.0
-# PMU, idx=173, bus = 173, Vn=500.0
-# PMU, idx=174, bus = 174, Vn=500.0
-# PMU, idx=175, bus = 175, Vn=500.0
-# PMU, idx=176, bus = 176, Vn=500.0
-# PMU, idx=177, bus = 177, Vn=500.0
-# PMU, idx=178, bus = 178, Vn=500.0
-# PMU, idx=179, bus = 179, Vn=500.0
-# PMU, idx=180, bus = 180, Vn=20.0
-# PMU, idx=181, bus = 181, Vn=20.0
+PMU, idx=71, bus = 71, Vn=500.0
+PMU, idx=72, bus = 72, Vn=500.0
+PMU, idx=73, bus = 73, Vn=500.0
+PMU, idx=74, bus = 74, Vn=500.0
+PMU, idx=75, bus = 75, Vn=500.0
+PMU, idx=76, bus = 76, Vn=20.0
+PMU, idx=77, bus = 77, Vn=500.0
+PMU, idx=78, bus = 78, Vn=20.0
+PMU, idx=79, bus = 79, Vn=500.0
+PMU, idx=80, bus = 80, Vn=500.0
+PMU, idx=81, bus = 81, Vn=500.0
+PMU, idx=82, bus = 82, Vn=500.0
+PMU, idx=83, bus = 83, Vn=500.0
+PMU, idx=84, bus = 84, Vn=345.0
+PMU, idx=85, bus = 85, Vn=500.0
+PMU, idx=86, bus = 86, Vn=500.0
+PMU, idx=87, bus = 87, Vn=500.0
+PMU, idx=88, bus = 88, Vn=500.0
+PMU, idx=89, bus = 89, Vn=500.0
+PMU, idx=90, bus = 90, Vn=500.0
+PMU, idx=91, bus = 91, Vn=500.0
+PMU, idx=92, bus = 92, Vn=500.0
+PMU, idx=93, bus = 93, Vn=500.0
+PMU, idx=94, bus = 94, Vn=500.0
+PMU, idx=95, bus = 95, Vn=500.0
+PMU, idx=96, bus = 96, Vn=500.0
+PMU, idx=97, bus = 97, Vn=500.0
+PMU, idx=98, bus = 98, Vn=500.0
+PMU, idx=99, bus = 99, Vn=230.0
+PMU, idx=100, bus = 100, Vn=230.0
+PMU, idx=101, bus = 101, Vn=500.0
+PMU, idx=102, bus = 102, Vn=20.0
+PMU, idx=103, bus = 103, Vn=500.0
+PMU, idx=104, bus = 104, Vn=230.0
+PMU, idx=105, bus = 105, Vn=230.0
+PMU, idx=106, bus = 106, Vn=500.0
+PMU, idx=107, bus = 107, Vn=500.0
+PMU, idx=108, bus = 108, Vn=230.0
+PMU, idx=109, bus = 109, Vn=500.0
+PMU, idx=110, bus = 110, Vn=500.0
+PMU, idx=111, bus = 111, Vn=20.0
+PMU, idx=112, bus = 112, Vn=230.0
+PMU, idx=113, bus = 113, Vn=500.0
+PMU, idx=114, bus = 114, Vn=500.0
+PMU, idx=115, bus = 115, Vn=20.0
+PMU, idx=116, bus = 116, Vn=200.0
+PMU, idx=117, bus = 117, Vn=20.0
+PMU, idx=118, bus = 118, Vn=500.0
+PMU, idx=119, bus = 119, Vn=500.0
+PMU, idx=120, bus = 120, Vn=500.0
+PMU, idx=121, bus = 121, Vn=500.0
+PMU, idx=122, bus = 122, Vn=500.0
+PMU, idx=123, bus = 123, Vn=500.0
+PMU, idx=124, bus = 124, Vn=500.0
+PMU, idx=125, bus = 125, Vn=500.0
+PMU, idx=126, bus = 126, Vn=500.0
+PMU, idx=127, bus = 127, Vn=500.0
+PMU, idx=128, bus = 128, Vn=500.0
+PMU, idx=129, bus = 129, Vn=500.0
+PMU, idx=130, bus = 130, Vn=500.0
+PMU, idx=131, bus = 131, Vn=500.0
+PMU, idx=132, bus = 132, Vn=500.0
+PMU, idx=133, bus = 133, Vn=500.0
+PMU, idx=134, bus = 134, Vn=500.0
+PMU, idx=135, bus = 135, Vn=500.0
+PMU, idx=136, bus = 136, Vn=230.0
+PMU, idx=137, bus = 137, Vn=20.0
+PMU, idx=138, bus = 138, Vn=500.0
+PMU, idx=139, bus = 139, Vn=20.0
+PMU, idx=140, bus = 140, Vn=230.0
+PMU, idx=141, bus = 141, Vn=500.0
+PMU, idx=142, bus = 142, Vn=230.0
+PMU, idx=143, bus = 143, Vn=20.0
+PMU, idx=144, bus = 144, Vn=500.0
+PMU, idx=145, bus = 145, Vn=230.0
+PMU, idx=146, bus = 146, Vn=500.0
+PMU, idx=147, bus = 147, Vn=22.0
+PMU, idx=148, bus = 148, Vn=20.0
+PMU, idx=149, bus = 149, Vn=230.0
+PMU, idx=150, bus = 150, Vn=500.0
+PMU, idx=151, bus = 151, Vn=500.0
+PMU, idx=152, bus = 152, Vn=500.0
+PMU, idx=153, bus = 153, Vn=230.0
+PMU, idx=154, bus = 154, Vn=345.0
+PMU, idx=155, bus = 155, Vn=345.0
+PMU, idx=156, bus = 156, Vn=230.0
+PMU, idx=157, bus = 157, Vn=345.0
+PMU, idx=158, bus = 158, Vn=20.0
+PMU, idx=159, bus = 159, Vn=345.0
+PMU, idx=160, bus = 160, Vn=230.0
+PMU, idx=161, bus = 161, Vn=20.0
+PMU, idx=162, bus = 162, Vn=345.0
+PMU, idx=163, bus = 163, Vn=345.0
+PMU, idx=164, bus = 164, Vn=345.0
+PMU, idx=165, bus = 165, Vn=345.0
+PMU, idx=166, bus = 166, Vn=345.0
+PMU, idx=167, bus = 167, Vn=500.0
+PMU, idx=168, bus = 168, Vn=500.0
+PMU, idx=169, bus = 169, Vn=500.0
+PMU, idx=170, bus = 170, Vn=500.0
+PMU, idx=171, bus = 171, Vn=500.0
+PMU, idx=172, bus = 172, Vn=500.0
+PMU, idx=173, bus = 173, Vn=500.0
+PMU, idx=174, bus = 174, Vn=500.0
+PMU, idx=175, bus = 175, Vn=500.0
+PMU, idx=176, bus = 176, Vn=500.0
+PMU, idx=177, bus = 177, Vn=500.0
+PMU, idx=178, bus = 178, Vn=500.0
+PMU, idx=179, bus = 179, Vn=500.0
+PMU, idx=180, bus = 180, Vn=20.0
+PMU, idx=181, bus = 181, Vn=20.0
 
 # HVDC STATION BUSES
-# PMU, idx=2183, bus = 2183, Vn=345.0
-# PMU, idx=2184, bus = 2184, Vn=345.0
-# PMU, idx=2185, bus = 2185, Vn=138.0
-# PMU, idx=2186, bus = 2186, Vn=138.0
-# PMU, idx=2187, bus = 2187, Vn=138.0
-# PMU, idx=2188, bus = 2188, Vn=138.0
-# PMU, idx=2189, bus = 2189, Vn=138.0
-# PMU, idx=2190, bus = 2190, Vn=138.0
-# PMU, idx=2191, bus = 2191, Vn=345.0
-# PMU, idx=2192, bus = 2192, Vn=138.0
+PMU, idx=2183, bus = 2183, Vn=345.0
+PMU, idx=2184, bus = 2184, Vn=345.0
+PMU, idx=2185, bus = 2185, Vn=138.0
+PMU, idx=2186, bus = 2186, Vn=138.0
+PMU, idx=2187, bus = 2187, Vn=138.0
+PMU, idx=2188, bus = 2188, Vn=138.0
+PMU, idx=2189, bus = 2189, Vn=138.0
+PMU, idx=2190, bus = 2190, Vn=138.0
+PMU, idx=2191, bus = 2191, Vn=345.0
+PMU, idx=2192, bus = 2192, Vn=138.0
