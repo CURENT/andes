@@ -29,11 +29,21 @@ from ..utils.tab import Tab
 import pandas as pd
 import numpy as np
 
+
 class ModelBase(object):
     """base class for power system device models"""
 
     def __init__(self, system, name):
         """meta-data to be overloaded by subclasses"""
+
+        # metadata list and dictionaries
+        self._param_attr_lists = ('_params', '_zeros', '_mandatory',
+                                  '_powers', '_voltages', '_currents', '_z', '_y',
+                                  '_r', '_g', '_dccurrents', '_dcvoltages', '_times'
+                                  )
+
+        self._param_attr_dicts = ('_data', '_units', '_descr')
+
         self.system = system
         self.n = 0    # device count
         self.u = []   # device status
@@ -178,10 +188,11 @@ class ModelBase(object):
         :param g: is a dc conductance value in the device base
         :param dccurrent: is a dc current value in the device base
         :param dcvoltage: is a dc votlage value in the device base
-        :param time is a time value in the device base
+        :param time: is a time value in the device base
 
-        :type: param: str
-        :type defualt: str, float, uid
+        :type param: str
+        :type tomatrix: bool
+        :type default: str, float
         :type unit: str
         :type descr: str
         :type nonzero: bool
@@ -241,7 +252,7 @@ class ModelBase(object):
         :param fname: LaTex formatted variable name string
         :param uname: unformatted variable name string, `variable` as default
         :param variable: variable name
-        :param ty: type code in ('x', 'y')
+        :param ty: type code in ``('x', 'y')``
         :param descr: variable description
 
         :type variable: str
@@ -271,8 +282,10 @@ class ModelBase(object):
         Return the `uid` of the elements with the given `idx`
 
         :param idx: external indices
+        :type idx: list, matrix
         :return: a matrix of uid
         """
+        idx = list(idx)
         return matrix(np.vectorize(self.uid.get)([idx]))
 
     def get_field(self, field, idx, astype=None):
@@ -284,13 +297,13 @@ class ModelBase(object):
         :return: field values
         """
         assert astype in (None, list, matrix)
-        uid = self.to_uid(idx)
+        if not astype:
+            astype = type(self.__dict__[field])
 
+        uid = self.to_uid(idx)
         ret = matrix(self.__dict__[field])[uid]
 
-        if astype == list:
-            ret = list(ret)
-        return ret
+        return astype(ret)
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -371,26 +384,22 @@ class ModelBase(object):
 
         return pd.DataFrame.from_dict(ret)
 
-    def remove_param(self, param):
-        """Remove a param from this class"""
-        if param in self._data.keys():
-            self._data.pop(param)
-        if param in self._descr.keys():
-            self._descr.pop(param)
-        if param in self._units:
-            self._units.pop(param)
-        if param in self._params:
-            self._params.remove(param)
-        if param in self._zeros:
-            self._zeros.remove(param)
-        if param in self._mandatory:
-            self._mandatory.remove(param)
+    def remove_param(self, param: 'str') -> None:
+        """Remove a param from this model
+
+        :param param: name of the parameter to be removed
+        :type param: str
+        """
+        for attr in self._param_attr_dicts:
+            if attr in self.__dict__[attr]:
+                self.__dict__[attr].pop(param)
+
+        for attr in self._param_attr_lists:
+            if attr in self.__dict__[attr]:
+                self.__dict__[attr].remove(param)
 
     def read_param(self, model, src, fkey=None):
         """Return the param of the `model` group or class indexed by fkey"""
-        if not self.n:
-            return
-        # input check
         retval = None
         dev_type = None
         val = list()
@@ -433,42 +442,20 @@ class ModelBase(object):
     def copy_param(self, model, src, dest=None, fkey=None, astype=None):
         """get a copy of the system.model.src as self.dest"""
         # use default destination
+        assert astype in (None, list, matrix)
+
         if not dest:
             dest = src
 
-        if astype == None:
-            pass
-
-        elif astype not in (list, matrix):
-            astype = matrix
-
         self.__dict__[dest] = self.read_param(model, src, fkey)
 
-        # do conversion if needed
         if astype:
             self.__dict__[dest] = astype(self.__dict__[dest])
         return self.__dict__[dest]
 
     def _slice(self, param, idx=None):
         """slice list or matrix with idx and return (type, sliced)"""
-        ty = type(self.__dict__[param])
-        assert ty in (list, matrix), 'Unsupported type <{0}> to slice.'.format(ty)
-
-        ret = None
-
-        if not idx:
-            ret = self.__dict__[param]
-
-        if type(idx) != list:
-            idx = list(idx)
-
-        pos = [self.uid[i] for i in idx]
-        if isinstance(self.__dict__[param], list):
-            ret = [self.__dict__[param][i] for i in pos]
-        elif isinstance(self.__dict__[param], matrix):
-            ret = self.__dict__[param][pos]
-
-        return ret
+        return self.get_field(param, idx)
 
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
@@ -778,7 +765,6 @@ class ModelBase(object):
         print('')
         print('Model <{:s}> snapshot'.format(self._name))
         print(self.snapshot().to_string())
-
 
     def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table
