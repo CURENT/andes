@@ -127,8 +127,10 @@ class ModelBase(object):
                           series=False, shunt=False,
                           flows=False, dcseries=False,
                           )
-        self.addr = False
-        self.ispu = False
+
+        self._flags = {'sysbase': False,
+                       'address': False,
+                       }
 
         # pandas.DataFrame
         self.param_dict = {}
@@ -300,6 +302,12 @@ class ModelBase(object):
         if not astype:
             astype = type(self.__dict__[field])
 
+        if field in self._service:
+            self.system.Log.warning(
+                'Reading service variable {field} from {model} are unsafe.\n'
+                'Service variables are mutable during the simulation.'.format(field=field, model=self._name)
+            )
+
         uid = self.to_uid(idx)
         ret = matrix(self.__dict__[field])[uid]
 
@@ -315,13 +323,16 @@ class ModelBase(object):
             self.__dict__[var] = zeros[:]
 
     def to_dict_compressed(self, sysbase=False):
-        """Return the loaded device parameters as one compressed dictionary.
-         Each key of the dictionary is a parameter name, and the value is a list of all the parameters.
-         :param sysbase: save per unit values in system base
-         """
+        """Return the loaded model parameters as one dictionary.
+
+        Each key of the dictionary is a parameter name, and the value is a list of all the parameter values.
+
+        :param sysbase: use system base quantities
+        :type sysbase: bool
+        """
         assert isinstance(sysbase, bool)
 
-        ret = {'ispu': sysbase}
+        ret = {'sysbase': sysbase}
 
         for key in sorted(self._data.keys()):
             if sysbase and (key in self._store):
@@ -334,14 +345,15 @@ class ModelBase(object):
         return ret
 
     def to_dict(self, sysbase=False):
-        """Return the loaded device parameters as a list of dictionaries.
+        """Return the loaded model parameters as a list of dictionaries.
+
         Each dictionary contains the full parameters of an element.
-        :param sysbase: save per unit values in system base
+        :param sysbase: use system base quantities
         :type sysbase: bool
         """
         ret = list()
 
-        e = {'ispu': sysbase}
+        e = {'sysbase': sysbase}
 
         for i in range(self.n):
             for key in sorted(self._data.keys()):
@@ -391,11 +403,11 @@ class ModelBase(object):
         :type param: str
         """
         for attr in self._param_attr_dicts:
-            if attr in self.__dict__[attr]:
+            if param in self.__dict__[attr]:
                 self.__dict__[attr].pop(param)
 
         for attr in self._param_attr_lists:
-            if attr in self.__dict__[attr]:
+            if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
     def read_param(self, model, src, fkey=None):
@@ -560,7 +572,7 @@ class ModelBase(object):
 
     def base(self):
         """Per-unitize parameters. Store a copy."""
-        if (not self.n) or self.ispu:
+        if (not self.n) or self._flags['sysbase']:
             return
         if 'bus' in self._ac.keys():
             bus_idx = self.__dict__[self._ac['bus'][0]]
@@ -630,7 +642,7 @@ class ModelBase(object):
             self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], Rb)
 
-        self.ispu = True
+        self._flags['sysbase'] = True
 
     def setup(self):
         """
@@ -678,9 +690,8 @@ class ModelBase(object):
         Assign address for xvars and yvars
         Function calls aggregated in class PowerSystem and called by main()
         """
-        if self.addr is True:
-            self.message('Address already assigned for <{}>'.format(self._name), WARNING)
-            return
+        assert not self._flags['address']
+
         for var in range(self.n):
             for item in self._states:
                 self.__dict__[item][var] = self.system.DAE.n
@@ -689,11 +700,11 @@ class ModelBase(object):
                 m = self.system.DAE.m
                 self.__dict__[item][var] = m
                 self.system.DAE.m += 1
-        self.addr = True
+        self._flags['address'] = True
 
     def _varname(self):
         """ Set up xvars and yvars names in Varname"""
-        if not self.addr:
+        if not self._flags['address']:
             self.message('Unable to assign Varname before allocating address', ERROR)
             return
         if not self.n:

@@ -487,8 +487,8 @@ class Streaming(object):
             var_name = self.dimec.sync()
             if not var_name:
                 break
-            var_value = workspace[var_name]
             workspace = self.dimec.workspace
+            var_value = workspace[var_name]
 
             if var_name in current_devices:
                 self.record_module_init(var_name, var_value)

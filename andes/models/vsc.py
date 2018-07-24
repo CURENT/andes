@@ -363,7 +363,7 @@ class VSC1_Common(DCBase):
         self._data.update({'vsc': None,
                            'Kdc': 0,
                            'Kf': 0,
-                           'kV': 0,
+                           'KV': 0,
                            'Kp': 0,
                            })
         self._mandatory.extend(['vsc'])

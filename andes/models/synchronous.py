@@ -28,7 +28,7 @@ class SynBase(ModelBase):
                            'S10': 0,
                            'S12': 0,
                            })
-        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'gen', 'kp', 'kw', 'S10', 'S12',])
+        self._params.extend(['D', 'M', 'ra', 'xl', 'xq', 'gammap', 'gammaq', 'kp', 'kw', 'S10', 'S12',])
         self._descr.update({'fn': 'rated frequency',
                             'bus': 'interface bus id',
                             'D': 'Damping coefficient',

@@ -100,11 +100,11 @@ WTG3, idx = 107, bus = 30253, wind = 107, Sn = 100, Vn = 2.2, fn = 60, rs = 0,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_26", ngen = 67
 ConstWind, idx = 107, name = "Weibull 108"
-WTG3, idx = 108, bus = 30035, wind = 108, Sn = 17517.9, Vn = 22, fn = 60, rs = 0,
-      xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
-      KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
-      pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_3", ngen = 11679
-ConstWind, idx = 108, Vwn = 20, name = "Weibull 108"
+# WTG3, idx = 108, bus = 30035, wind = 108, Sn = 17517.9, Vn = 22, fn = 60, rs = 0,
+#       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
+#       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 2.00,
+#       pmin = 0.04, qmax = 0.436, qmin = -0.436, u = 1, gen = "PV_ERCOT_3", ngen = 11679
+# ConstWind, idx = 108, Vwn = 20, name = "Weibull 108"
 WTG3, idx = 109, bus = 30260, wind = 109, Sn = 100, Vn = 17.9, fn = 60, rs = 0,
       xs = 0.08, rr = 0, xr = 0.08, xmu = 1, H = 4.95, Kp = 150, Tp = 0.3,
       KV = 18, Te = 0.05, R = 75, npole = 4, nblade = 3, ngb = 0.01123596, pmax = 1.12,
