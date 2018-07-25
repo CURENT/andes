@@ -279,7 +279,7 @@ class ModelBase(object):
             if descr:
                 self._algebs_descr.update({variable: descr})
 
-    def to_uid(self, idx):
+    def idx_to_uid(self, idx):
         """
         Return the `uid` of the elements with the given `idx`
 
@@ -293,6 +293,15 @@ class ModelBase(object):
             return self.uid[idx]
 
         return matrix(np.vectorize(self.uid.get)(idx))
+
+    def uid_to_idx(self, uid):
+        """
+        Return the ``idx`` of the elements whose internal indices are ``uid
+
+        :param uid:
+        :return:
+        """
+        return [self.idx[i] for i in uid]
 
     def get_field(self, field, idx=None, astype=None):
         """
@@ -308,12 +317,15 @@ class ModelBase(object):
             idx = self.idx
 
         if field in self._service:
-            self.system.Log.warning(
-                'Reading service variable <{model}.{field}> could be unsafe.'
-                    .format(field=field, model=self._name)
-            )
+            # ====== Temporarily disable warning ==============================
+            # self.system.Log.warning(
+            #     'Reading service variable <{model}.{field}> could be unsafe.'
+            #         .format(field=field, model=self._name)
+            # )
+            # =================================================================
+            pass
 
-        uid = self.to_uid(idx)
+        uid = self.idx_to_uid(idx)
         ret = matrix(self.__dict__[field])[uid]
 
         if not astype:
@@ -445,7 +457,7 @@ class ModelBase(object):
 
             for item in idx:
                 dev_name = self.system.DevMan.group[model].get(item, None)
-                ret.append(self.get_field_ext(dev_name, field, idx=item))
+                ret.append(self.read_field_ext(dev_name, field, idx=item))
 
         else:
             raise NameError('Model or Group <{0}> does not exist.'.format(model))
@@ -883,24 +895,34 @@ class ModelBase(object):
                 retval = False
         return retval
 
-    def on_bus(self, bus_id):
-        if not hasattr(self, 'bus'):
-            return
-        for idx, bus in enumerate(self.bus):
-            if bus == bus_id:
-                return self.idx[idx]
+    def on_bus(self, bus_idx):
+        """Return the indices of elements on the given buses
+
+        :param bus_idx: idx of the buses to which the elements are connected
+        :return: idx of elements connected to bus_idx
+
+        """
+        assert hasattr(self, 'bus')
+        return self.find_element('bus', bus_idx)
 
     def find_element(self, field, value):
         """
-        Return the idx of elements whose field satisfies the given values
+        Return the indices of elements whose field first satisfies the given values
+
+        ``value`` should be unique in self.field. This function does not check the uniqueness.
 
         :param field: name of the supplied field
         :param value: value of field of the elemtn to find
         :return:
+        :rtype: list, int, float, str
         """
-        f = self.__dict__[field]
-        # for idx,
-        # TODO
+        if isinstance(value, (int, float, str)):
+            value = [value]
+
+        f = list(self.__dict__[field])
+        uid = np.vectorize(f.index)(value)
+        return self.uid_to_idx(uid)
+
 
     def check_Vn(self):
         """Check data consistency of Vn and Vdcn if connected to bus or node"""
