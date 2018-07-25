@@ -44,7 +44,6 @@ class Node(ModelBase):
                            })
         self._mandatory = ['Vdcn']
         self._zeros = ['Vdcn', 'Idcn']
-        self.v = []
         self._inst_meta()
 
     def add(self, idx=None, name=None, **kwargs):
@@ -491,7 +490,7 @@ class Ground(DCBase):
         super().__init__(system, name)
         self.remove_param('node1')
         self.remove_param('node2')
-
+        self.remove_param('v')
         self._data.update({'node': None,
                            'voltage': 0.0,
                            })

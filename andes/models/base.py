@@ -23,7 +23,7 @@ from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import matrix, spmatrix
 from cvxopt import mul, div
 
-from ..utils.math import agtb, altb, findeq
+from ..utils.math import agtb, altb, findeq, zeros
 from ..utils.tab import Tab
 
 import pandas as pd
@@ -292,7 +292,12 @@ class ModelBase(object):
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
 
-        return matrix(np.vectorize(self.uid.get)(idx))
+        try:
+            ret = [self.uid[i] for i in idx]
+        except:
+            pass
+
+        return ret
 
     def uid_to_idx(self, uid):
         """
@@ -487,10 +492,10 @@ class ModelBase(object):
 
         """
         # use default destination
-        assert astype in (None, list, matrix)
 
         if not dest:
             dest = field
+        assert dest not in self._states + self._algebs
 
         self.__dict__[dest] = self.read_field_ext(model, field, idx, astype=astype)
 
@@ -503,12 +508,6 @@ class ModelBase(object):
         This function will be depreciated and replaced by ``self.get_field_ext``
         """
         return self.get_field_ext(model, field, dest=dest, idx=idx, astype=astype)
-
-    def _slice(self, param, idx=None):
-        """slice list or matrix with idx and return (type, sliced).
-
-        This function will be depreated and replaced by ``self.get_field``"""
-        return self.get_field(param, idx)
 
     def add(self, idx=None, name=None, **kwargs):
         """add an element of this model"""
@@ -615,14 +614,13 @@ class ModelBase(object):
         """Per-unitize parameters. Store a copy."""
         if (not self.n) or self._flags['sysbase']:
             return
-        if 'bus' in self._ac.keys():
-            bus_idx = self.__dict__[self._ac['bus'][0]]
-        elif 'bus1' in self._ac.keys():
-            bus_idx = self.__dict__[self._ac['bus1'][0]]
-        else:
-            bus_idx = []
         Sb = self.system.Settings.mva
-        Vb = self.system.Bus.Vn[bus_idx]
+        Vb = matrix([])
+        if 'bus' in self._ac.keys():
+            Vb = self.read_field_ext('Bus', 'Vn', idx=self.bus)
+        elif 'bus1' in self._ac.keys():
+            Vb = self.read_field_ext('Bus', 'Vn', idx=self.bus1)
+
         for var in self._voltages:
             self._store[var] = self.__dict__[var]
             self.__dict__[var] = mul(self.__dict__[var], self.Vn)
@@ -652,16 +650,10 @@ class ModelBase(object):
                 elif self.__dict__[var].typecode == 'z':
                     self.__dict__[var] = div(self.__dict__[var], Zn + 0j)
                     self.__dict__[var] = mul(self.__dict__[var], Zb + 0j)
+
         if len(self._dcvoltages) or len(self._dccurrents) or len(self._r) or len(self._g):
-            Vdc = self.system.Node.Vdcn
-            if Vdc is None:
-                Vdc = matrix(self.Vdcn)
-            else:
-                Vbdc = matrix(0.0, (self.n, 1), 'd')
-                temp = sorted(self._dc.keys())
-                for item in range(self.n):
-                    idx = self.__dict__[temp[0]][item]
-                    Vbdc[item] = Vdc[self.system.Node.uid[idx]]
+            dckey = sorted(self._dc.keys())[0]
+            Vbdc = self.read_field_ext('Node', 'Vdcn', self.__dict__[dckey])
             Ib = div(Sb, Vbdc)
             Rb = div(Vbdc, Ib)
 
@@ -690,10 +682,13 @@ class ModelBase(object):
         Set up device parameters and variable addresses
         Called AFTER parsing the input file
         """
-        self._interface()
+        if not self.n:
+            return
+
         self._param2matrix()
         self._alloc()
-        self.check_Vn()
+        self._interface()
+        self._check_Vn()
 
     def _interface(self):
         """implement bus, node and controller interfaces"""
@@ -728,8 +723,11 @@ class ModelBase(object):
 
     def _addr(self):
         """
-        Assign address for xvars and yvars
-        Function calls aggregated in class PowerSystem and called by main()
+        Assign DAE addresses for algebraic and state variables
+
+        Addresses are stored at ``self.__dict__[var]``. ``DAE.m`` and ``DAE.n`` are updated accordingly.
+
+        :return None
         """
         assert not self._flags['address']
 
@@ -741,14 +739,13 @@ class ModelBase(object):
                 m = self.system.DAE.m
                 self.__dict__[item][var] = m
                 self.system.DAE.m += 1
+
         self._flags['address'] = True
 
     def _varname(self):
         """ Set up xvars and yvars names in Varname"""
         if not self._flags['address']:
             self.message('Unable to assign Varname before allocating address', ERROR)
-            return
-        if not self.n:
             return
         for idx, item in enumerate(self._states):
             self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
@@ -913,8 +910,8 @@ class ModelBase(object):
 
         :param field: name of the supplied field
         :param value: value of field of the elemtn to find
-        :return:
-        :rtype: list, int, float, str
+        :return idx of the elements
+        :rtype list, int, float, str
         """
         if isinstance(value, (int, float, str)):
             value = [value]
@@ -923,18 +920,21 @@ class ModelBase(object):
         uid = np.vectorize(f.index)(value)
         return self.uid_to_idx(uid)
 
+    def _check_Vn(self):
+        """Check data consistency of Vn and Vdcn if connected to Bus or Node
 
-    def check_Vn(self):
-        """Check data consistency of Vn and Vdcn if connected to bus or node"""
-        if not self.n:
-            return
+        :return None
+        """
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
             bus_Vn = self.get_field_ext('Bus', field='Vn', idx=self.bus)
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
                 if Vn != Vn0:
-                    self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'.format(name, Vn, bus, Vn0), WARNING)
+                    self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'
+                                 .format(name, Vn, bus, Vn0), WARNING)
+
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
             node_Vdcn = self.get_field_ext('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
-                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, node, Vdcn0), WARNING)
+                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'
+                                 .format(name, Vdcn, node, Vdcn0), WARNING)
