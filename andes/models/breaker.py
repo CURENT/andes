@@ -90,9 +90,9 @@ class Breaker(ModelBase):
                 self.system.Line.switch(self.line[i], neg(u0))
 
                 if u0 == 1:
-                    inf = '\n Breaker <{}>: Line <{}> disconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
+                    inf = ' Breaker <{}>: Line <{}> disconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
                 elif u0 == 0:
-                    inf = '\n Breaker <{}>: Line <{}> reconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
+                    inf = ' Breaker <{}>: Line <{}> reconnected at t = {}.'.format(self.idx[i], self.line[i], actual_time)
                 self.system.Log.info(inf)
         self.system.check_islands()
 

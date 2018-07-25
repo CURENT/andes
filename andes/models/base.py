@@ -287,6 +287,8 @@ class ModelBase(object):
         :type idx: list, matrix
         :return: a matrix of uid
         """
+        assert idx is not None
+
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
 
@@ -301,13 +303,13 @@ class ModelBase(object):
         :return: field values
         """
         assert astype in (None, list, matrix)
-        if not idx:
-            idx = range(self.n)
+        if idx is None:
+            idx = self.idx
 
         if field in self._service:
             self.system.Log.warning(
-                'Reading service variable {field} from {model} could be unsafe.\n'
-                'Service variables are mutable during the simulation.'.format(field=field, model=self._name)
+                'Reading service variable {field} from {model} could be unsafe.'
+                    .format(field=field, model=self._name)
             )
 
         uid = self.to_uid(idx)
