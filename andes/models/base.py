@@ -297,6 +297,7 @@ class ModelBase(object):
     def get_field(self, field, idx=None, astype=None):
         """
         Return `self.field` for the elements labeled by `idx`
+
         :param astype: type cast of the return value
         :param field: field name of this model
         :param idx: element indices, will be the whole list if not specified
@@ -308,7 +309,7 @@ class ModelBase(object):
 
         if field in self._service:
             self.system.Log.warning(
-                'Reading service variable {field} from {model} could be unsafe.'
+                'Reading service variable <{model}.{field}> could be unsafe.'
                     .format(field=field, model=self._name)
             )
 
@@ -417,48 +418,43 @@ class ModelBase(object):
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
-    def read_param(self, model, field, idx=None, astype=None):
-        """Return the param of the `model` group or class indexed by idx"""
-        retval = None
-        dtype = None
-        val = list()
+    def read_field_ext(self, model: str, field: str, idx=None, astype=None):
+        """
+        Return a field of a model or group at the given indices
+
+        :param model: name of the group or model to retrieve
+        :param field: name of the field
+        :param idx: idx of elements to access
+        :param astype: type cast
+        :return:
+        """
+        ret = list()
+
+        if astype is None:
+            astype = matrix
+
         if model in self.system.DevMan.devices:
-            dtype = 'model'
+            ret = self.system.__dict__[model].get_field(field, idx)
+
         elif model in self.system.DevMan.group.keys():
-            dtype = 'group'
+            # ===============================================================
+            # Since ``self.system.DevMan.group`` is an unordered dictionary,
+            #   ``idx`` must be given to retrieve ``field`` across models
+            # ===============================================================
+            assert idx is not None, 'idx must be specified when accessing group fields'
 
-        assert dtype, 'Model or group <{0}> does not exist.'.format(model)
-
-        src_type = list
-
-        # do param copy
-        if dtype == 'model':
-            retval = self.system.__dict__[model].get_field(field, idx)
-            src_type = type(self.system.__dict__[model].__dict__[field])
-
-        elif dtype == 'group':
-            if not idx:
-                idx = self.system.DevMan.group.keys()
-                if not idx:
-                    self.message('Group <{}> is empty.'.format(model), ERROR)
-                    return
             for item in idx:
                 dev_name = self.system.DevMan.group[model].get(item, None)
-                if not dev_name:
-                    self.message('Group <{}> does not have element {}.'.format(model, item), ERROR)
-                    return
-                # pos = self.system.__dict__[dev_name].uid[item]
-                # val.append(self.system.__dict__[dev_name].__dict__[field][pos])
-                val.append(self.system.__dict__[dev_name].get_field(field, item))
+                ret.append(self.get_field_ext(dev_name, field, idx=item))
 
-            retval = val
-            src_type = type(self.system.__dict__[dev_name].__dict__[field])
+        else:
+            raise NameError('Model or Group <{0}> does not exist.'.format(model))
 
-        if src_type == list:
-            return list(retval)
-        if src_type == matrix:
-            return matrix(retval)
-
+        if ret is None or isinstance(ret, (int, float, str)):
+            return ret
+        else:
+            return astype(ret)
+        
     def get_field_ext(self, model, field, dest=None, idx=None, astype=None):
         """
         Retrieve the field of another model and store it as a field of this model
@@ -484,10 +480,8 @@ class ModelBase(object):
         if not dest:
             dest = field
 
-        self.__dict__[dest] = self.read_param(model, field, idx)
+        self.__dict__[dest] = self.read_field_ext(model, field, idx, astype=astype)
 
-        if astype:
-            self.__dict__[dest] = astype(self.__dict__[dest])
         return self.__dict__[dest]
 
     def copy_param(self, model, field, dest=None, idx=None, astype=None):
@@ -896,17 +890,29 @@ class ModelBase(object):
             if bus == bus_id:
                 return self.idx[idx]
 
+    def find_element(self, field, value):
+        """
+        Return the idx of elements whose field satisfies the given values
+
+        :param field: name of the supplied field
+        :param value: value of field of the elemtn to find
+        :return:
+        """
+        f = self.__dict__[field]
+        # for idx,
+        # TODO
+
     def check_Vn(self):
         """Check data consistency of Vn and Vdcn if connected to bus or node"""
         if not self.n:
             return
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
-            bus_Vn = self.read_param('Bus', field='Vn', idx=self.bus)
+            bus_Vn = self.get_field_ext('Bus', field='Vn', idx=self.bus)
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
                 if Vn != Vn0:
                     self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'.format(name, Vn, bus, Vn0), WARNING)
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
-            node_Vdcn = self.read_param('Node', field='Vdcn', idx=self.node)
+            node_Vdcn = self.get_field_ext('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
                     self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'.format(name, Vdcn, node, Vdcn0), WARNING)

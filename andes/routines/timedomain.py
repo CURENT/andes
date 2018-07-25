@@ -111,6 +111,7 @@ def run(system):
     if system.Settings.dime_enable:
         system.Streaming.sync_and_handle()
         system.Streaming.vars_to_modules()
+        system.Streaming.vars_to_pmu()
 
     # perturbation file
     PERT = 0  # 0 - not loaded, 1 - loaded, -1 - error

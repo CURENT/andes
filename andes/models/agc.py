@@ -24,7 +24,7 @@ class ACE(ModelBase):
         self.get_field_ext('Area', field='area_Q0', dest='Q0', idx=self.area)
 
     def gcall(self, dae):
-        P = self.read_param('Area', field='area_P0', idx=self.area)
+        P = self.read_field_ext('Area', field='area_P0', idx=self.area)
 
         dae.g[self.e] = dae.y[self.e] - (P - self.P0)
 
@@ -63,7 +63,7 @@ class AGC(ModelBase):
         self.get_field_ext('COI', field='M', dest='M', idx=self.coi)
         self.get_field_ext('COI', field='Mtot', dest='Mtot', idx=self.coi)
         for idx in range(self.n):
-            self.pm[idx] = self.read_param('Synchronous', field='pm', idx=self.syn[idx])
+            self.pm[idx] = self.read_field_ext('Synchronous', field='pm', idx=self.syn[idx])
 
     def gcall(self, dae):
         dae.g[self.ACE] = -mul(self.beta, (dae.y[self.comega] - 1)) - dae.y[self.e] - dae.y[self.ACE]
@@ -109,9 +109,9 @@ class EAGC(ModelBase):
         self.M = [[]] * self.n
         self.Mtot = [[]] * self.n
         for idx, item in enumerate(self.agc):
-            self.pm[idx] = self.read_param('AGC', field='pm', idx=item)
-            self.M[idx] = self.read_param('AGC', field='M', idx=item)
-            self.Mtot[idx] = self.read_param('AGC', field='Mtot', idx=item)
+            self.pm[idx] = self.read_field_ext('AGC', field='pm', idx=item)
+            self.M[idx] = self.read_field_ext('AGC', field='M', idx=item)
+            self.Mtot[idx] = self.read_field_ext('AGC', field='Mtot', idx=item)
 
         # self.get_field_ext('AGC', src='Mtot', fkey=self.agc)
 
@@ -168,7 +168,7 @@ class EAGC(ModelBase):
 #         self.get_field_ext('COI', src='M', dest='M', fkey=self.coi)
 #         self.get_field_ext('COI', src='Mtot', dest='Mtot', fkey=self.coi)
 #         for idx in range(self.n):
-#             self.pm[idx] = self.read_param('Synchronous', src='pm', fkey=self.syn[idx])
+#             self.pm[idx] = self.read_field_ext('Synchronous', src='pm', fkey=self.syn[idx])
 #
 #
 #     def gcall(self, dae):
