@@ -16,7 +16,7 @@ class VarOut(object):
     def store(self, t, step):
         """Record the state/algeb values at time t to self.vars"""
 
-        if len(self.vars) >= 500:
+        if len(self.vars) >= 700:
             self.dump(lst=False)
             self.vars = list()
             self.t = list()

@@ -721,47 +721,86 @@ class ModelBase(object):
                     }
             self.get_field_ext(val[0], val[1], **args)
 
-    def _addr(self):
+    def _addr(self, groupby='element'):
         """
         Assign DAE addresses for algebraic and state variables
 
         Addresses are stored at ``self.__dict__[var]``. ``DAE.m`` and ``DAE.n`` are updated accordingly.
 
+        :param groupby: consecutive addresses for ``element`` or ``variable``
         :return None
         """
         assert not self._flags['address']
+        assert groupby in ('element', 'variable')
 
-        for var in range(self.n):
+
+        # m0 = self.system.DAE.m
+        # n0 = self.system.DAE.m
+        # mend = m0 + len(self._algebs) * self.n
+        # nend = n0 + len(self._states) * self.n
+        #
+        # if groupby == 'variable':
+        #     for idx, item in enumerate(self._algebs):
+        #         self.__dict__[item] = list(range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
+        #         self.system.DAE.m = mend
+        #     for idx, item in enumerate(self._states):
+        #         self.__dict__[item] = list(range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
+        #         self.system.DAE.n = nend
+        # elif groupby == 'element':
+        #     for idx, item in enumerate(self._algebs):
+        #         self.__dict__[item] = list(range(m0, mend, len(self._algebs)))
+        #     for idx, item in enumerate(self._states):
+        #         self.__dict__[item] = list(range(n0, nend, len(self._states)))
+
+
+        if groupby == 'element':
+            for i in range(self.n):
+                for item in self._states:
+                    self.__dict__[item][i] = self.system.DAE.n
+                    self.system.DAE.n += 1
+                for item in self._algebs:
+                    self.__dict__[item][i] = self.system.DAE.m
+                    self.system.DAE.m += 1
+        elif groupby == 'variable':
             for item in self._states:
-                self.__dict__[item][var] = self.system.DAE.n
-                self.system.DAE.n += 1
+                for i in range(self.n):
+                    self.__dict__[item][i] = self.system.DAE.n
+                    self.system.DAE.n += 1
             for item in self._algebs:
-                m = self.system.DAE.m
-                self.__dict__[item][var] = m
-                self.system.DAE.m += 1
+                for i in range(self.n):
+                    self.__dict__[item][i] = self.system.DAE.n
+
 
         self._flags['address'] = True
 
     def _varname(self):
-        """ Set up xvars and yvars names in Varname"""
+        """
+        Set up variable names in ``self.system.VarName```
+
+        :return: None
+        """
         if not self._flags['address']:
             self.message('Unable to assign Varname before allocating address', ERROR)
             return
-        for idx, item in enumerate(self._states):
-            self.system.VarName.append(listname='unamex', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamex[idx], element_name=self.name)
-        for idx, item in enumerate(self._algebs):
-            self.system.VarName.append(listname='unamey', xy_idx=self.__dict__[item][:],
-                                       var_name=self._unamey[idx], element_name=self.name)
-        try:
-            for idx, item in enumerate(self._states):
-                self.system.VarName.append(listname='fnamex', xy_idx=self.__dict__[item][:],
-                                           var_name=self._fnamex[idx], element_name=self.name)
-            for idx, item in enumerate(self._algebs):
-                self.system.VarName.append(listname='fnamey', xy_idx=self.__dict__[item][:],
-                                           var_name=self._fnamey[idx], element_name=self.name)
-        except IndexError:
-            self.message('Formatted names missing in class <{0}> definition.'.format(self._name))
+
+        for i in range(self.n):
+            iname = self.name[i]
+
+            for e, var in enumerate(self._states):
+                unamex = self._unamex[e]
+                fnamex = self._fnamex[e]
+                idx = self.__dict__[var][i]
+
+                self.system.VarName.__dict__['unamex'][idx] = unamex + iname
+                self.system.VarName.__dict__['fnamex'][idx] = fnamex + iname.replace(' ', '\\ ')
+
+            for e, var in enumerate(self._algebs):
+                unamey = self._unamey[e]
+                fnamey = self._fnamey[e]
+                idx = self.__dict__[var][i]
+
+                self.system.VarName.__dict__['unamey'][idx] = unamey + iname
+                self.system.VarName.__dict__['fnamey'][idx] = fnamey + iname.replace(' ', '\\ ')
 
     def _param2matrix(self):
         """Convert parameters defined in `self._params` from list to `cvxopt.matrix`

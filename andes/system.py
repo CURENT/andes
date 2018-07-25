@@ -127,6 +127,11 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if pflow:
                 self.__dict__[device]._addr()
+
+        self.VarName.resize()
+
+        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+            if pflow:
                 self.__dict__[device]._varname()
 
     def xy_addr1(self):
@@ -134,6 +139,11 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._addr()
+
+        self.VarName.resize()
+
+        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+            if not pflow:
                 self.__dict__[device]._varname()
 
     def init_pf(self):
@@ -152,7 +162,7 @@ class PowerSystem(object):
         """run models.init1() time domain simulation"""
 
         # Assign indices for post-powerflow device variables
-        self.VarName.resize()
+
         self.xy_addr1()
 
         # Assign variable names for bus injections and line flows if enabled
