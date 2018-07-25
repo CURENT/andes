@@ -733,25 +733,25 @@ class ModelBase(object):
         assert not self._flags['address']
         assert groupby in ('element', 'variable')
 
-
         # m0 = self.system.DAE.m
-        # n0 = self.system.DAE.m
+        # n0 = self.system.DAE.n
         # mend = m0 + len(self._algebs) * self.n
         # nend = n0 + len(self._states) * self.n
         #
         # if groupby == 'variable':
         #     for idx, item in enumerate(self._algebs):
         #         self.__dict__[item] = list(range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
-        #         self.system.DAE.m = mend
+        #     self.system.DAE.m = mend
         #     for idx, item in enumerate(self._states):
         #         self.__dict__[item] = list(range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
-        #         self.system.DAE.n = nend
+        #     self.system.DAE.n = nend
         # elif groupby == 'element':
         #     for idx, item in enumerate(self._algebs):
         #         self.__dict__[item] = list(range(m0, mend, len(self._algebs)))
+        #     self.system.DAE.m = mend
         #     for idx, item in enumerate(self._states):
         #         self.__dict__[item] = list(range(n0, nend, len(self._states)))
-
+        #     self.system.DAE.n = nend
 
         if groupby == 'element':
             for i in range(self.n):
@@ -769,7 +769,6 @@ class ModelBase(object):
             for item in self._algebs:
                 for i in range(self.n):
                     self.__dict__[item][i] = self.system.DAE.n
-
 
         self._flags['address'] = True
 
