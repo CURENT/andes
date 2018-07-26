@@ -194,7 +194,7 @@ def write(file, system):
                     string = header + string
                 else:
                     string = space + string
-                if not line == nline - 1: # element_add comma except for last line
+                if not line == nline - 1:  # add comma except for last line
                     string += ','
 
                 out.append(string)

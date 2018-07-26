@@ -83,7 +83,7 @@ def read(file, system):
             mline = 0
     fid.close()
 
-    # element_add device elements to system
+    # add device elements to system
     sw = {}  # idx:a0
     for data in raw['bus']:
         """version 32:

@@ -84,7 +84,7 @@ class ModelBase(object):
                       }
 
         # units of parameters
-        self._units = {'u': 'boolean',
+        self._units = {'u': 'bool',
                        'Sn': 'MVA',
                        'Vn': 'kV',
                        }
@@ -870,8 +870,12 @@ class ModelBase(object):
         print('Model <{:s}> variable snapshot'.format(self._name))
         print(self.var_to_df().to_string())
 
-    def help_doc(self, export='plain', save=None, writemode='a'):
+    def help_doc(self, export='plain', save=False, writemode='a'):
         """Build help document into a Texttable table
+        :param ('plain', 'latex') export: export format
+        :param save: save to file ``help_model.extension`` or not
+        :param writemode: file write mode
+        :return: None
         """
         title = '<{}.{}>'.format(self._group, self._name)
         table = Tab(export=export, title=title, descr=self.__doc__)
@@ -904,12 +908,11 @@ class ModelBase(object):
 
         if not save:
             print(table.draw())
-            return True
+            return
 
         try:
-            fid = open(outfile, writemode)
-            fid.write(table.draw())
-            fid.close()
+            with open(outfile, writemode) as f:
+                f.write(table.draw(), writemode)
         except IOError:
             raise IOError('Error writing model help file.')
 

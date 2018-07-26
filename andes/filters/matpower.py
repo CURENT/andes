@@ -94,7 +94,7 @@ def read(file, system):
 
     fid.close()
 
-    # element_add model elements to system
+    # add model elements to system
     sw = []
 
     system.Settings.mva = basemva
