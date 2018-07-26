@@ -2,6 +2,7 @@ from ..models import order, jits, non_jits
 from numpy import ndarray
 from cvxopt import matrix
 
+
 class DevMan(object):
     """Device Manager class. Maintains the loaded model list, groups and categories"""
     def __init__(self, system=None):

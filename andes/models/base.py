@@ -65,8 +65,11 @@ class ModelBase(object):
         # variables
         self._states = []
         self._algebs = []
+        self._algebs_intf = []
+
         self._states_descr = {}
         self._algebs_descr = {}
+
 
         # variable names
         self._unamex = []
@@ -92,7 +95,7 @@ class ModelBase(object):
         # variable descriptions
         self._descr = {'u': 'Connection status',
                        'Sn': 'Power rating',
-                       'Vn': 'AC Voltage rating',
+                       'Vn': 'Ac Voltage rating',
                        }
         # non-zero parameters
         self._zeros = ['Sn', 'Vn']
@@ -102,7 +105,13 @@ class ModelBase(object):
 
         # service/temporary variables
         self._service = []
+        self._service_ty = []
+
         self._store = {}
+        self._snapshot = {}
+
+        # equation storage
+        self._equations = []
 
         # parameters to be per-unitized
         self._powers = []      # powers, inertia and damping
@@ -133,6 +142,9 @@ class ModelBase(object):
                        'allocate': False,
                        'address': False,
                        }
+
+        self._config = {'address_group_by': 'element',
+                        }
 
         # pandas.DataFrame
         self.param_dict = {}
@@ -284,6 +296,21 @@ class ModelBase(object):
             if descr:
                 self._algebs_descr.update({variable: descr})
 
+    def service_add(self, service, ty):
+        """
+        Add a service variable of type ``ty`` to this model
+
+        :param str service: variable name
+        :param type ty: variable type
+        :return: None
+        """
+
+        assert service not in self._data
+        assert service not in self._algebs + self._states
+
+        self._service.append(service)
+        self._service_ty.append(ty)
+
     def idx_to_uid(self, idx):
         """
         Return the `uid` of the elements with the given `idx`
@@ -342,13 +369,15 @@ class ModelBase(object):
             return astype(ret)
 
     def _alloc(self):
-        """Allocate memory for DAE variable indices. Called after finishing adding components
+        """Allocate empty memory for DAE variable indices. Called in device setup phase.
+
+        :return: None
         """
-        zeros = [0] * self.n
+        nzeros = [0] * self.n
         for var in self._states:
-            self.__dict__[var] = zeros[:]
+            self.__dict__[var] = nzeros[:]
         for var in self._algebs:
-            self.__dict__[var] = zeros[:]
+            self.__dict__[var] = nzeros[:]
 
     def param_to_dict_compressed(self, sysbase=False):
         """Return the loaded model parameters as one dictionary.
@@ -393,7 +422,7 @@ class ModelBase(object):
 
             ret.append(e)
 
-        return retremove_param
+        return ret
 
     def param_to_df(self, sysbase=False):
         """
@@ -437,6 +466,93 @@ class ModelBase(object):
         for attr in self._param_attr_lists:
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
+
+    def param_set_attr(self, param, default=None, unit=None, descr=None, tomatrix=None, nonzero=None, mandatory=None,
+                       power=None, voltage=None, current=None, z=None, y=None, r=None, g=None, dccurrent=None,
+                       dcvoltage=None, time=None, **kwargs):
+        """
+        Set attribute of an existing parameter. To be used to alter an attribute inherited from parent models.
+
+        See .. self.param_add for argument descriptions.
+        """
+        assert param in self._data, 'parameter <{}> does not exist in {}'.format(param, self._name)
+
+        def alter_attr(p, attr, value):
+            """Set self.__dict__[attr] for param based on value
+            """
+            if value is None:
+                return
+            elif (value is True) and (p not in self.__dict__[attr]):
+                self.__dict__[attr].append(p)
+            elif (value is False) and (p in self.__dict__[attr]):
+                self.__dict__[attr].remove(p)
+            else:
+                self.message('No need to alter {} for {}'.format(attr, p), WARNING)
+
+        if default is not None:
+            self._data.update({param: default})
+        if unit is not None:
+            self._units.update({param: unit})
+        if descr is not None:
+            self._descr.update({param: descr})
+
+        alter_attr(param, '_params', tomatrix)
+        alter_attr(param, '_zeros', nonzero)
+        alter_attr(param, '_mandatory', mandatory)
+        alter_attr(param, '_powers', power)
+        alter_attr(param, '_voltages', voltage)
+        alter_attr(param, '_currents', current)
+        alter_attr(param, '_z', z)
+        alter_attr(param, '_y', y)
+        alter_attr(param, '_r', r)
+        alter_attr(param, '_g', g)
+        alter_attr(param, '_dcvoltages', dcvoltage)
+        alter_attr(param, '_dccurrents', dccurrent)
+        alter_attr(param, '_times', time)
+
+    def eq_add(self, expr, var, intf=False):
+        """
+        Add an equation to this model. An equation is associated with the addresses of a variable. The number of
+        equations must equal that of variables.
+
+        Stored to ``self._equations`` is a tuple of ``(expr, var, intf, ty)`` where ``ty`` is in ('f', 'g')
+
+        :param str expr: equation expression
+        :param str var: variable name to be associated with
+        :param bool intf: if this equation is added to an interface equation, namely, an equation outside this model
+
+        :return: None
+
+        """
+
+        # determine the type of the equation, ('f', 'g') based on var
+
+        # We assume that all differential equations are only modifiable by the model itself
+        #   Only interface to algebraic varbailes of external models
+
+        ty = ''
+        if var in self._algebs:
+            ty = 'g'
+        elif var in self._states:
+            ty = 'f'
+        else:
+            for _, item in self._ac:
+                if var in ac:
+                    ty = 'g'
+                    if intf is False:
+                        intf = True
+            for _, item in self._dc:
+                if var == item:
+                    ty = 'g'
+                    if intf is False:
+                        intf = True
+        if ty == '':
+            self.message('Equation associated with interface variable {var} assumed as algeb'.format(var=var), DEBUG)
+            ty = 'g'
+
+        self._equations.append((expr, var, intf, ty))
+
+
 
     def read_field_ext(self, model: str, field: str, idx=None, astype=None):
         """
@@ -749,14 +865,15 @@ class ModelBase(object):
             model, field, dest, astype = val
             self.get_field_ext(model, field, dest=dest, idx=self.__dict__[key], astype=astype)
 
-    def _addr(self, group_by='element'):
+    def _addr(self):
         """
         Assign DAE addresses for algebraic and state variables. Addresses are stored in ``self.__dict__[var]``.
           ``DAE.m`` and ``DAE.n`` are updated accordingly.
 
-        :param 'element'm 'variable' group_by: consecutive addresses for ``element`` or ``variable``
         :return None
         """
+        group_by = self._config['address_group_by']
+
         assert not self._flags['address']
         assert group_by in ('element', 'variable')
 
@@ -996,3 +1113,36 @@ class ModelBase(object):
                 if Vdcn != Vdcn0:
                     self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'
                                  .format(name, Vdcn, node, Vdcn0), WARNING)
+
+    def var_store_snapshot(self, variable='all'):
+        """
+        Store a snapshot of variable values to self._snapshot.
+
+        :param variable: name of the variable, or ``all``
+        :return: None
+        """
+
+        # store (variable name, equation name) in the list ``var_eq_pairs``
+        # equation name is in ('x', 'y')
+
+        var_eq_pairs = []
+        dae = self.system.DAE
+        if variable != 'all':
+            if variable in self._states:
+                var_eq_pairs.append((variable, 'x'))
+            elif variable in self._algebs:
+                var_eq_pairs.append((variable, 'y'))
+            else:
+                raise NameError('<{}> is not a variable of model {}'
+                                .format(variable, self._name))
+        else:
+            for var in self._states:
+                var_eq_pairs.append((var, 'x'))
+            for var in self._algebs:
+                var_eq_pairs.append((var, 'y'))
+
+        # retrieve values and store in ``self._snapshot``
+
+        for var, eq in var_eq_pairs:
+            idx = self.__dict__[var]
+            self._snapshot[var] = dae.__dict__[eq][idx]
