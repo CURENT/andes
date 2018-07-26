@@ -56,21 +56,12 @@ class Bus(ModelBase):
         self.calls.update({'init0': True,
                            'pflow': True,
                            })
-        self._inst_meta()
-        self.a = list()
-        self.v = list()
+        self._meta_to_attr()
         self.islanded_buses = list()
         self.island_sets = list()
 
     def _addr(self, group_by='element'):
         super(Bus, self)._addr('variable')
-
-    def _varname(self):
-        """Customize varname for bus class"""
-        self.system.VarName.append(listname='unamey', xy_idx=self.a, var_name='theta', element_name=self.name)
-        self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='vm', element_name=self.name)
-        self.system.VarName.append(listname='fnamey', xy_idx=self.a, var_name='\\theta', element_name=self.name)
-        self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V', element_name=self.name)
 
     def _varname_inj(self):
         """Customize varname for bus injections"""

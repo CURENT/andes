@@ -350,7 +350,7 @@ class Flux0(object):
     def __init__(self):
         self._algebs.extend(['psid', 'psiq'])
         self._fnamey.extend(['\\psi_d', '\\psi_q'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         dae.y[self.psiq] = -mul(self.u, self.ra, dae.y[self.Id]) - dae.y[self.vd]
@@ -399,7 +399,7 @@ class Flux2(object):
     def __init__(self):
         self._states.extend(['psid', 'psiq'])
         self._fnamex.extend(['\\psi_d', '\\psi_q'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         dae.x[self.psiq] = -mul(self.ra, dae.y[self.Id]) - dae.y[self.vd]

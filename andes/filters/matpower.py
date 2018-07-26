@@ -94,7 +94,7 @@ def read(file, system):
 
     fid.close()
 
-    # add model elements to system
+    # element_add model elements to system
     sw = []
 
     system.Settings.mva = basemva
@@ -120,12 +120,12 @@ def read(file, system):
         vmin = data[12]
 
         try:
-            system.Bus.add(idx=idx, name='Bus ' + str(idx), Vn=baseKV, voltage=vmag, angle=vang,
-                           vmax=vmax, vmin=vmin, area=area, region=zone)
+            system.Bus.element_add(idx=idx, name='Bus ' + str(idx), Vn=baseKV, voltage=vmag, angle=vang,
+                                   vmax=vmax, vmin=vmin, area=area, region=zone)
             if pd or qd:
-                system.PQ.add(bus=idx, name='PQ ' + str(idx), Vn=baseKV, p=pd, q=qd)
+                system.PQ.element_add(bus=idx, name='PQ ' + str(idx), Vn=baseKV, p=pd, q=qd)
             if gs or bs:
-                system.Shunt.add(bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
+                system.Shunt.element_add(bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
         except:
             system.Log.error('Error adding <Bus> to powersystem object.')
             retval = False
@@ -150,11 +150,11 @@ def read(file, system):
         try:
             vn = system.Bus.Vn[system.Bus.uid[bus_idx]]
             if bus_idx in sw:
-                system.SW.add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg,
-                              pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
+                system.SW.element_add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg,
+                                      pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
             else:
-                system.PV.add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='PV ' + str(bus_idx), u=status, Vn=vn, v0=vg,
-                              pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin)
+                system.PV.element_add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='PV ' + str(bus_idx), u=status, Vn=vn, v0=vg,
+                                      pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin)
         except:
             system.Log.error('Error adding <SW> or <PV> to powersystem object.')
             retval = False
@@ -186,8 +186,8 @@ def read(file, system):
         try:
             vf = system.Bus.Vn[system.Bus.uid[fbus]]
             vt = system.Bus.Vn[system.Bus.uid[tbus]]
-            system.Line.add(Vn=vf, Vn2=vt, bus1=fbus, bus2=tbus, r=r, x=x, b=b, u=status, trasf=tf, tap=ratio,
-                            phi=angle)
+            system.Line.element_add(Vn=vf, Vn2=vt, bus1=fbus, bus2=tbus, r=r, x=x, b=b, u=status, trasf=tf, tap=ratio,
+                                    phi=angle)
         except:
             system.Log.error('Error adding <Line> to powersystem object.')
             retval = False

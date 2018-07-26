@@ -528,7 +528,7 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
 
     out_init.append(space8 + 'self.calls.update({})'.format(calls))
 
-    out_init.append(space8 + 'self._inst_meta()')
+    out_init.append(space8 + 'self._meta_to_attr()')
     out_init.append('')
 
     # write to file

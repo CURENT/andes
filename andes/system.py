@@ -27,7 +27,7 @@ from .consts import *
 try:
     from .utils.streaming import Streaming
     STREAMING = True
-except:
+except ImportError:
     STREAMING = False
 
 
@@ -96,6 +96,15 @@ class PowerSystem(object):
         self.dev_setup()
         self.xy_addr0()
         self.DAE.setup()
+        self.to_sysbase()
+
+    def to_sysbase(self):
+        """Convert model parameters to system base
+        """
+
+        if self.Settings.base:
+            for item in self.DevMan.devices:
+                self.__dict__[item].param_to_sysbase()
 
     def inst_models(self):
         """instantiate non-JIT models and import JIT models"""
@@ -127,8 +136,8 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if pflow:
                 self.__dict__[device]._addr()
-                self.__dict__[device]._network_intf()
-                self.__dict__[device]._ctrl_intf()
+                self.__dict__[device]._intf_network()
+                self.__dict__[device]._intf_ctrl()
 
         self.VarName.resize()
 
@@ -141,8 +150,8 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._addr()
-                self.__dict__[device]._network_intf()
-                self.__dict__[device]._ctrl_intf()
+                self.__dict__[device]._intf_network()
+                self.__dict__[device]._intf_ctrl()
 
         self.VarName.resize()
 
@@ -157,16 +166,13 @@ class PowerSystem(object):
             if pflow and init0:
                 self.__dict__[device].init0(self.DAE)
 
-    def base(self):
-        """per-unitize model parameters"""
-        for item in self.DevMan.devices:
-            self.__dict__[item].base()
+        # check for islands
+        self.check_islands()
 
     def td_init(self):
         """run models.init1() time domain simulation"""
 
         # Assign indices for post-powerflow device variables
-
         self.xy_addr1()
 
         # Assign variable names for bus injections and line flows if enabled
@@ -203,6 +209,31 @@ class PowerSystem(object):
             self.Log.error('<Line> device not found.')
             return
         self.Line.connectivity(self.Bus)
+
+        if len(self.Bus.islanded_buses) == 0 and len(self.Bus.island_sets) == 0:
+            self.Log.info('System is interconnected.\n')
+        else:
+            self.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
+                          (len(self.Bus.island_sets), len(self.Bus.islanded_buses)))
+
+        nosw_island = []  # no slack bus island
+        msw_island = []  # multiple slack bus island
+        for idx, island in enumerate(self.Bus.island_sets):
+            nosw = 1
+            for item in self.SW.bus:
+                if self.Bus.uid[item] in island:
+                    nosw -= 1
+            if nosw == 1:
+                nosw_island.append(idx)
+            elif nosw < 0:
+                msw_island.append(idx)
+
+        if nosw_island:
+            self.Log.error('Slack bus is not defined for {:g} island(s).\n'.format(len(nosw_island)))
+        if msw_island:
+            self.Log.error('Multiple slack buses are defined for {:g} island(s).\n'.format(len(nosw_island)))
+        else:
+            self.Log.info('Each island has a slack bus correctly defined.\n'.format(nosw_island))
 
     def get_busdata(self, dec=5):
         """get ac bus data from solved power flow"""

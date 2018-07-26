@@ -9,8 +9,8 @@ class Node(ModelBase):
         super().__init__(system, name)
         self._group = 'Topology'
         self._name = 'Node'
-        self.remove_param('Sn')
-        self.remove_param('Vn')
+        self.param_remove('Sn')
+        self.param_remove('Vn')
         self._params.extend(['Vdcn',
                              'Idcn',
                              'voltage',
@@ -44,11 +44,13 @@ class Node(ModelBase):
                            })
         self._mandatory = ['Vdcn']
         self._zeros = ['Vdcn', 'Idcn']
-        self.v = list()
-        self._inst_meta()
+        # self.v = list()
+        self._algebs.extend(['v'])
+        self._fnamey.extend(['V_{dc}'])
+        self._meta_to_attr()
 
-    def add(self, idx=None, name=None, **kwargs):
-        super().add(idx, name, **kwargs)
+    def element_add(self, idx=None, name=None, **kwargs):
+        super().element_add(idx, name, **kwargs)
 
     def _varname(self):
         if not self.n:
@@ -57,9 +59,9 @@ class Node(ModelBase):
         self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V_{dc}', element_name=self.name)
 
     def setup(self):
-        self.v = list(range(self.system.DAE.m, self.system.DAE.m + self.n))
-        self.system.DAE.m += self.n
-        self._param2matrix()
+        # self.v = list(range(self.system.DAE.m, self.system.DAE.m + self.n))
+        # self.system.DAE.m += self.n
+        self._param_to_matrix()
 
     def init0(self, dae):
         dae.y[self.v] = matrix(self.voltage, (self.n, 1), 'd')
@@ -116,7 +118,7 @@ class R(DCBase):
                            })
         self._algebs.extend(['Idc'])
         self._fnamey = ['I_{dc}']
-        self._inst_meta()
+        self._meta_to_attr()
 
     def gcall(self, dae):
         dae.g[self.Idc] = div(self.v12, self.R) + dae.y[self.Idc]
@@ -148,7 +150,7 @@ class L(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iL = div(self.u, self.L)
@@ -190,7 +192,7 @@ class C(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iC = div(self.u, self.C)
@@ -238,7 +240,7 @@ class RLs(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def base(self):
         super(RLs, self).base()
@@ -291,7 +293,7 @@ class RCp(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iC'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -345,7 +347,7 @@ class RLCp(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL', 'iC'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -401,7 +403,7 @@ class RCs(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iC = div(self.u, self.C)
@@ -452,7 +454,7 @@ class RLCs(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL', 'iC'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -491,9 +493,9 @@ class Ground(DCBase):
     """DC Ground node"""
     def __init__(self, system, name):
         super().__init__(system, name)
-        self.remove_param('node1')
-        self.remove_param('node2')
-        self.remove_param('v')
+        self.param_remove('node1')
+        self.param_remove('node2')
+        self.param_remove('v')
         self._data.update({'node': None,
                            'voltage': 0.0,
                            })
@@ -510,7 +512,7 @@ class Ground(DCBase):
                            'pflow': True,
                            })
 
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init0(self, dae):
         dae.y[self.v] = self.voltage
@@ -538,7 +540,7 @@ class DCgen(DCBase):
                            'gcall': True,
                            'stagen': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
 
     def gcall(self, dae):
         dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')

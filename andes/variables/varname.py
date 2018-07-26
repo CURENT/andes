@@ -47,7 +47,7 @@ class VarName(object):
 
         if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
             for i, j in zip(xy_idx, element_name):
-                # manual add LaTex space for auto-generated element name
+                # manual element_add LaTex space for auto-generated element name
                 if listname == 'fnamex' or listname == 'fnamey':
                     j = j.replace(' ', '\ ')
                 self.__dict__[listname][i] = string.format(var_name, j)

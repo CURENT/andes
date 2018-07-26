@@ -22,7 +22,7 @@ class COI(ModelBase):
         self._service.extend(['H', 'M', 'Mtot', 'usyn', 'gdelta', 'gomega', 'iTd'])
         self._fnamey.extend(['\\delta', '\\omega', '\\frac{d\\omega}{dt}'])
         self._fnamex.extend(['x\\omega'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         for item in self._service:

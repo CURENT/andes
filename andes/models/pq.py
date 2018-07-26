@@ -42,7 +42,7 @@ class PQ(ModelBase):
                            'init0': True, 'init1': True,
                            'pflow': True, 'shunt': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init0(self, dae):
         """Set initial p and q for power flow"""

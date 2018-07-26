@@ -10,7 +10,7 @@ class GovernorBase(ModelBase):
     def __init__(self, system, name):
         super(GovernorBase, self).__init__(system, name)
         self._group = 'Governor'
-        self.remove_param('Vn')
+        self.param_remove('Vn')
         self._data.update({'gen': None,
                            'pmax': 999.0,
                            'pmin': 0.0,
@@ -90,7 +90,7 @@ class TG1(GovernorBase):
         self._fnamex.extend(['x_{g1}', 'x_{g2}', 'x_{g3}'])
         self._algebs.extend(['pin'])
         self._fnamey.extend(['P_{in}'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         super(TG1, self).init1(dae)
@@ -159,7 +159,7 @@ class TG2(GovernorBase):
         self._mandatory.extend(['T2'])
         self._states.extend(['xg'])
         self._fnamex.extend(['x_g'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         super(TG2, self).init1(dae)

@@ -50,7 +50,7 @@ def alter(data, system):
 
 
 def read(file, system, header=True):
-    """Read a dm format file and add to system"""
+    """Read a dm format file and element_add to system"""
     retval = True
     fid = open(file, 'r')
     sep = re.compile(r'\s*,\s*')
@@ -127,7 +127,7 @@ def read(file, system, header=True):
         index = kwargs.pop('idx', None)
         namex = kwargs.pop('name', None)
         try:
-            system.__dict__[device].add(idx=index, name=namex, **kwargs)
+            system.__dict__[device].element_add(idx=index, name=namex, **kwargs)
         except KeyError:
             system.Log.error('Error adding device {:s} to powersystem object.'.format(device))
             system.Log.debug('  Check if you have new jit models added to models.__init__.py')
@@ -194,7 +194,7 @@ def write(file, system):
                     string = header + string
                 else:
                     string = space + string
-                if not line == nline - 1: # add comma except for last line
+                if not line == nline - 1: # element_add comma except for last line
                     string += ','
 
                 out.append(string)

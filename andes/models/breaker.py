@@ -47,8 +47,8 @@ class Breaker(ModelBase):
                             })
         self._mandatory.extend(['bus', 'line'])
         self._service.extend(['times', 'time'])
-        self.remove_param('Sn')
-        self._inst_meta()
+        self.param_remove('Sn')
+        self._meta_to_attr()
 
     def setup(self):
         super(Breaker, self).setup()
@@ -98,7 +98,7 @@ class Breaker(ModelBase):
 
     def insert(self, idx=None, name=None, **kwargs):
         if self.n:
-            self._param2list()
+            self._param_to_list()
 
-        self.add(idx, name, **kwargs)
-        self._param2matrix()
+        self.element_add(idx, name, **kwargs)
+        self._param_to_matrix()

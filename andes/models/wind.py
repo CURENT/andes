@@ -15,8 +15,8 @@ class WindBase(ModelBase):
     def __init__(self, system, name):
         super(WindBase, self).__init__(system, name)
         self._group = 'Wind'
-        self.remove_param('Sn')
-        self.remove_param('Vn')
+        self.param_remove('Sn')
+        self.param_remove('Vn')
         self._data.update({'T': 1,
                            'Vwn': 13,
                            'dt': 0.1,
@@ -112,7 +112,7 @@ class Weibull(WindBase):
         self._descr.update({'c': 'Scale factor', 's': 'Shape factor',})
         self._zeros.extend(['c', 's'])
         self._params.extend(['c', 's'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def generate(self, dae):
         for i in range(self.n):
@@ -135,7 +135,7 @@ class ConstWind(WindBase):
     def __init__(self, system, name):
         super(ConstWind, self).__init__(system, name)
         self._name = 'ConstWind'
-        self._inst_meta()
+        self._meta_to_attr()
 
     def generate(self, dae):
         for i in range(self.n):

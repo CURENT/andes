@@ -29,7 +29,7 @@ class AVR1(ModelBase):
              'Tf': 0.35, 'Ae': 0.0006, 'Ke': 1, 'Te': 1.0})
         self.calls.update({'jac0': True, 'gycall': False, 'gcall': True, 'fcall': True, 'fxcall': True, 'init1': True})
         self._zeros.extend(['Ta', 'Tr'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.get_field_ext('Synchronous', 'u', 'usyn', self.syn)
@@ -117,7 +117,7 @@ class AVR2(ModelBase):
              'Be': '2nd ceiling coefficient', 'Te': 'Field circuit time constant', 'vrmax': 'Maximum regulator voltage',
              'T2': 'Regulator Pole'})
         self.calls.update({'fcall': True, 'init1': True, 'gcall': True, 'fxcall': True, 'gycall': False, 'jac0': True})
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.get_field_ext('Synchronous', 'v', 'v', self.syn)
@@ -209,7 +209,7 @@ class AVR3(ModelBase):
              'vfmax': 'Maximum field voltage', 'Te': 'Field circuit time constant', 'syn': 'Generator id',
              'vfmin': 'Minimum field voltage', 's0': 'Enable excitation voltage feedback'})
         self.calls.update({'fxcall': True, 'gycall': False, 'fcall': True, 'gcall': True, 'init1': True, 'jac0': True})
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.get_field_ext('Synchronous', 'u', 'usyn', self.syn)

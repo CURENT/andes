@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Base class for building ANDES models
+"""
+Base class for building ANDES models
 """
 
 import sys
@@ -147,9 +148,12 @@ class ModelBase(object):
         # raise NotImplemented('Subclasses must overwrite this method')
         pass
 
-    def _inst_meta(self):
-        """instantiate meta-data defined in __init__().
-        Call this function at the end of __init__() of child classes
+    def _meta_to_attr(self):
+        """
+        Convert model metadata to class attributes. This function is called automatically after ``define()``
+        in new versions.
+
+        :return: None
         """
         assert self._name
 
@@ -170,7 +174,7 @@ class ModelBase(object):
         for var in self._states + self._algebs + self._service:
             self.__dict__[var] = []
 
-    def add_param(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
+    def param_add(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
                   voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
                   time=False, **kwargs):
         """Define a parameter in the model
@@ -248,7 +252,7 @@ class ModelBase(object):
         if time:
             self._times.append(param)
 
-    def add_variable(self, variable, ty, fname, descr='', uname=''):
+    def var_add(self, variable, ty, fname, descr='', uname=''):
         """
         Define a variable in the model
 
@@ -284,7 +288,7 @@ class ModelBase(object):
         """
         Return the `uid` of the elements with the given `idx`
 
-        :param idx: external indices
+        :param list, matrix idx: external indices
         :type idx: list, matrix
         :return: a matrix of uid
         """
@@ -293,11 +297,7 @@ class ModelBase(object):
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
 
-        try:
-            ret = [self.uid[i] for i in idx]
-        except:
-            pass
-
+        ret = [self.uid[i] for i in idx]
         return ret
 
     def uid_to_idx(self, uid):
@@ -322,14 +322,13 @@ class ModelBase(object):
         if idx is None:
             idx = self.idx
 
-        if field in self._service:
-            # ====== Temporarily disable warning ==============================
-            # self.system.Log.warning(
-            #     'Reading service variable <{model}.{field}> could be unsafe.'
-            #         .format(field=field, model=self._name)
-            # )
-            # =================================================================
-            pass
+        # ====== Temporarily disable warning ==============================
+        # if field in self._service:
+        # self.system.Log.warning(
+        #     'Reading service variable <{model}.{field}> could be unsafe.'
+        #         .format(field=field, model=self._name)
+        # )
+        # =================================================================
 
         uid = self.idx_to_uid(idx)
         if not astype:
@@ -337,7 +336,10 @@ class ModelBase(object):
 
         ret = matrix(self.__dict__[field])[uid]
 
-        return astype(ret)
+        if isinstance(idx, (float, int, str)):
+            return ret
+        else:
+            return astype(ret)
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -348,7 +350,7 @@ class ModelBase(object):
         for var in self._algebs:
             self.__dict__[var] = zeros[:]
 
-    def to_dict_compressed(self, sysbase=False):
+    def param_to_dict_compressed(self, sysbase=False):
         """Return the loaded model parameters as one dictionary.
 
         Each key of the dictionary is a parameter name, and the value is a list of all the parameter values.
@@ -370,7 +372,7 @@ class ModelBase(object):
 
         return ret
 
-    def to_dict(self, sysbase=False):
+    def param_to_dict(self, sysbase=False):
         """Return the loaded model parameters as a list of dictionaries.
 
         Each dictionary contains the full parameters of an element.
@@ -391,22 +393,22 @@ class ModelBase(object):
 
             ret.append(e)
 
-        return ret
+        return retremove_param
 
-    def to_dataframe(self, sysbase=False):
+    def param_to_df(self, sysbase=False):
         """
         Return a pandas.DataFrame of device parameters.
         :param sysbase: save per unit values in system base
         """
 
-        p_dict_comp = self.to_dict_compressed(sysbase=sysbase)
+        p_dict_comp = self.param_to_dict_compressed(sysbase=sysbase)
         self.param_df = pd.DataFrame(data=p_dict_comp)
 
         return self.param_df
 
-    def snapshot(self):
+    def var_to_df(self):
         """
-        Return the current snapshot of variables
+        Return the current var_to_df of variables
         :return: pandas.DataFrame
         """
         ret = {}
@@ -422,7 +424,7 @@ class ModelBase(object):
 
         return pd.DataFrame.from_dict(ret)
 
-    def remove_param(self, param: 'str') -> None:
+    def param_remove(self, param: 'str') -> None:
         """Remove a param from this model
 
         :param param: name of the parameter to be removed
@@ -448,18 +450,18 @@ class ModelBase(object):
         """
         ret = list()
 
-        # if astype is None:
-        #     astype = matrix
-
         if model in self.system.DevMan.devices:
             ret = self.system.__dict__[model].get_field(field, idx)
 
         elif model in self.system.DevMan.group.keys():
             # ===============================================================
             # Since ``self.system.DevMan.group`` is an unordered dictionary,
-            #   ``idx`` must be given to retrieve ``field`` across models
+            #   ``idx`` must be given to retrieve ``field`` across models.
+            #
+            # Returns a matrix by default
             # ===============================================================
             assert idx is not None, 'idx must be specified when accessing group fields'
+            astype = matrix
 
             for item in idx:
                 dev_name = self.system.DevMan.group[model].get(item, None)
@@ -512,8 +514,8 @@ class ModelBase(object):
         """
         return self.get_field_ext(model, field, dest=dest, idx=idx, astype=astype)
 
-    def add(self, idx=None, name=None, **kwargs):
-        """add an element of this model"""
+    def element_add(self, idx=None, name=None, **kwargs):
+        """element_add an element of this model"""
         idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
         self.uid[idx] = self.n
         self.idx.append(idx)
@@ -554,7 +556,13 @@ class ModelBase(object):
 
         return idx
 
-    def remove(self, idx=None):
+    def element_remove(self, idx=None):
+        """
+        Remove elements labeled by idx from this model instance.
+
+        :param list,matrix idx: indices of elements to be removed
+        :return: None
+        """
         if idx is not None:
             if idx in self.uid:
                 key = idx
@@ -567,7 +575,7 @@ class ModelBase(object):
 
         convert = False
         if isinstance(self.__dict__[self._params[0]], matrix):
-            self._param2list()
+            self._param_to_list()
             convert = True
 
         self.n -= 1
@@ -611,9 +619,9 @@ class ModelBase(object):
 
         self.name.pop(item)
         if convert and self.n:
-            self._param2matrix()
+            self._param_to_matrix()
 
-    def base(self):
+    def param_to_sysbase(self):
         """Per-unitize parameters. Store a copy."""
         if (not self.n) or self._flags['sysbase']:
             return
@@ -684,21 +692,15 @@ class ModelBase(object):
         """
         Set up empty class structure and allocate empty memory for variable addresses.
 
-
+        :return: None
         """
         if not self.n:
             return
 
-        self._param2matrix()
+        self._param_to_matrix()
         self._alloc()
 
-    def _interface(self):
-        """implement bus, node and controller interfaces"""
-        # self._ac_interface()
-        # self._dc_interface()
-        self._ctrl_intf()
-
-    def _network_intf(self):
+    def _intf_network(self):
         """
         Retrieve the ac and dc network interface variable indices.
 
@@ -726,25 +728,26 @@ class ModelBase(object):
         # check for interface voltage differences
         self._check_Vn()
 
-    def _ctrl_intf(self):
+    def _intf_ctrl(self):
         """
         Retrieve variable indices of controlled models.
 
         Control interfaces are specified in ``self._ctrl``. Each ``key:value`` pair has ``key`` being the variable names
-        for the reference idx and ``value`` being a tuple of ``(model name, field to read, destination field)``.
+        for the reference idx and ``value`` being a tuple of
+        ``(model name, field to read, destination field, return type)``.
 
         :Example:
 
-            ``self._ctrl = {'syn', ('Synchronous', 'omega', 'w')}``
+            ``self._ctrl = {'syn', ('Synchronous', 'omega', 'w', list)}``
              - indices: self.syn
-             - self.w = system.Synchronous.omega
+             - self.w = list(system.Synchronous.omega)
 
         :return: None
         """
 
         for key, val in self._ctrl.items():
-            model, field, dest = val
-            self.get_field_ext(model, field, dest=dest, idx=self.__dict__[key])
+            model, field, dest, astype = val
+            self.get_field_ext(model, field, dest=dest, idx=self.__dict__[key], astype=astype)
 
     def _addr(self, group_by='element'):
         """
@@ -780,7 +783,8 @@ class ModelBase(object):
 
     def _varname(self):
         """
-        Set up variable names in ``self.system.VarName```
+        Set up variable names in ``self.system.VarName```. Variable names follows the convention
+        ``VariableName,Model Name``. A maximum of 24 characters are allowed for each variable.
 
         :return: None
         """
@@ -796,18 +800,18 @@ class ModelBase(object):
                 fnamex = self._fnamex[e]
                 idx = self.__dict__[var][i]
 
-                self.system.VarName.__dict__['unamex'][idx] = unamex + iname
-                self.system.VarName.__dict__['fnamex'][idx] = fnamex + iname.replace(' ', '\\ ')
+                self.system.VarName.unamex[idx] = (unamex + ' ' + iname)[:24]
+                self.system.VarName.fnamex[idx] = '$' + (fnamex + '\ ' + iname.replace(' ', '\\ '))[:24] + '$'
 
             for e, var in enumerate(self._algebs):
                 unamey = self._unamey[e]
                 fnamey = self._fnamey[e]
                 idx = self.__dict__[var][i]
 
-                self.system.VarName.__dict__['unamey'][idx] = unamey + iname
-                self.system.VarName.__dict__['fnamey'][idx] = fnamey + iname.replace(' ', '\\ ')
+                self.system.VarName.unamey[idx] = (unamey + ' ' + iname)[:24]
+                self.system.VarName.fnamey[idx] = '$' + (fnamey + '\ ' + iname.replace(' ', '\\ '))[:24] + '$'
 
-    def _param2matrix(self):
+    def _param_to_matrix(self):
         """Convert parameters defined in `self._params` from list to `cvxopt.matrix`
 
         :return None
@@ -815,7 +819,7 @@ class ModelBase(object):
         for item in self._params:
             self.__dict__[item] = matrix(self.__dict__[item], tc='d')
 
-    def _param2list(self):
+    def _param_to_list(self):
         """Convert parameters defined in `self._param` from `cvxopt.matrix` to list
 
         :return None
@@ -824,7 +828,14 @@ class ModelBase(object):
             self.__dict__[item] = list(self.__dict__[item])
 
     def message(self, msg, level=INFO):
-        """keep a line of message"""
+        """Record a line of message in logger
+
+        :param str msg: content of the messag
+
+        :param level: logging level
+        :return: None
+
+        """
         if level not in (DEBUG, INFO, WARNING, ERROR, CRITICAL):
             self.system.Log.error('Message logging level does not exist.')
             return
@@ -853,11 +864,11 @@ class ModelBase(object):
     def __str__(self):
         print('')
         print('Model <{:s}> parameters in device base'.format(self._name))
-        print(self.to_dataframe(sysbase=False).to_string())
+        print(self.param_to_df(sysbase=False).to_string())
 
         print('')
-        print('Model <{:s}> snapshot'.format(self._name))
-        print(self.snapshot().to_string())
+        print('Model <{:s}> var_to_df'.format(self._name))
+        print(self.var_to_df().to_string())
 
     def help_doc(self, export='plain', save=None, writemode='a'):
         """Build help document into a Texttable table

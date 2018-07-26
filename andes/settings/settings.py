@@ -49,6 +49,6 @@ class Settings(SettingsBase):
                         'tol': 'iteration error tolerance',
                         'forcepq': 'force to use constant PQ load',
                         'forcez': 'force to convert load to impedance',
-                        'base': 'per-unitize parameters to the common base',
+                        'base': 'convert model parameters to the system base',
                         }
         return descriptions

@@ -94,7 +94,7 @@ class VSC(DCBase):
                            'gcall': True, 'gycall': True,
                            'jac0': True, 'shunt': True,
                            })
-        self._inst_meta()
+        self._meta_to_attr()
         self.glim = []
         self.ylim = []
         self.vio = {}
@@ -816,7 +816,7 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power0):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power0.__init__(self, system, name)
-        self._inst_meta()
+        self._meta_to_attr()
 
     def base(self):
         super(VSC1, self).base()
@@ -830,7 +830,7 @@ class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power1.__init__(self, system, name)
-        self._inst_meta()
+        self._meta_to_attr()
 
     def base(self):
         super(VSC1_IE, self).base()
@@ -844,7 +844,7 @@ class VSC1_IE2(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power2):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power2.__init__(self, system, name)
-        self._inst_meta()
+        self._meta_to_attr()
 
     def base(self):
         super(VSC1_IE2, self).base()
@@ -1140,7 +1140,7 @@ class VSC2A(VSC2_Common, Current1, VSC2_Speed1, VSC2_Voltage1):
         VSC2_Speed1.__init__(self, system, name)
         VSC2_Voltage1.__init__(self, system, name)
         self._name = 'VSC2A'
-        self._inst_meta()
+        self._meta_to_attr()
 
 
 class VSC2B(VSC2_Common, Current1, VSC2_Speed2, VSC2_Voltage1):
@@ -1152,4 +1152,4 @@ class VSC2B(VSC2_Common, Current1, VSC2_Speed2, VSC2_Voltage1):
         VSC2_Speed2.__init__(self, system, name)
         VSC2_Voltage1.__init__(self, system, name )
         self._name = 'VSC2B'
-        self._inst_meta()
+        self._meta_to_attr()

@@ -5,7 +5,7 @@ __all__ = ['base',
            'bus',
            ]
 
-order = ['bus', 'Node', 'Ground', 'line',
+order = ['Bus', 'Node', 'Ground', 'line',
          'pq', 'pv', 'zone', 'shunt',
          'measurement',
          'synchronous', 'governor', 'avr', 'pss',

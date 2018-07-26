@@ -36,7 +36,7 @@ class Shunt(ModelBase):
                            })
 
         self._y = ['g', 'b']
-        self._inst_meta()
+        self._meta_to_attr()
 
     def full_y(self, Y):
         """Add self(shunt) into full Jacobian Y"""

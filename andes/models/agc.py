@@ -17,7 +17,7 @@ class ACE(ModelBase):
                            })
         self._service.extend(['P0', 'Q0'])
         self._fnamey.extend(['\epsilon'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         self.get_field_ext('Area', field='area_P0', dest='P0', idx=self.area)
@@ -53,7 +53,7 @@ class AGC(ModelBase):
 
                            })
         self._service.extend(['pm'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         self.pm = [[]] * self.n
@@ -102,7 +102,7 @@ class EAGC(ModelBase):
         self._mandatory.extend(['cl', 'tl', 'Pl', 'agc'])
         self._service.extend(['en', 'pm', 'M', 'Mtot'])
 
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         self.pm = [[]] * self.n
@@ -158,7 +158,7 @@ class EAGC(ModelBase):
 #                            'jac0': True, 'fcall': True,
 #                            })
 #         self._service.extend(['pm', 'en'])
-#         self._inst_meta()
+#         self._meta_to_attr()
 #
 #     def init1(self, dae):
 #         self.pm = [[]] * self.n

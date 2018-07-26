@@ -95,10 +95,10 @@ class Line(ModelBase):
         self.C = []
         self.Bp = []
         self.Bpp = []
-        self._inst_meta()
+        self._meta_to_attr()
 
     def setup(self):
-        self._param2matrix()
+        self._param_to_matrix()
         # self.a = self.system.Bus.a
         # self.v = self.system.Bus.v
         # self.a1 = self.system.Bus.get_field('a', self.bus1, astype=list)

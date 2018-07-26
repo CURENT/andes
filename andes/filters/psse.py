@@ -83,7 +83,7 @@ def read(file, system):
             mline = 0
     fid.close()
 
-    # add device elements to system
+    # element_add device elements to system
     sw = {}  # idx:a0
     for data in raw['bus']:
         """version 32:
@@ -104,7 +104,7 @@ def read(file, system):
                  'zone': data[5],
                  'owner': data[6],
                  }
-        system.Bus.add(**param)
+        system.Bus.element_add(**param)
 
     for data in raw['load']:
         """version 32:
@@ -121,7 +121,7 @@ def read(file, system):
                  'q': (data[6] + data[8] * voltage - data[10] * voltage ** 2) / mva,
                  'owner': data[11],
                  }
-        system.PQ.add(**param)
+        system.PQ.element_add(**param)
 
     for data in raw['fshunt']:
         """
@@ -137,7 +137,7 @@ def read(file, system):
                  'g': data[3] / mva,
                  'b': data[4] / mva,
                  }
-        system.Shunt.add(**param)
+        system.Shunt.element_add(**param)
 
     gen_idx = 0
     for data in raw['gen']:
@@ -168,9 +168,9 @@ def read(file, system):
         if data[0] in sw.keys():
             param.update({'a0': sw[data[0]],
                           })
-            system.SW.add(**param)
+            system.SW.element_add(**param)
         else:
-            system.PV.add(**param)
+            system.PV.element_add(**param)
 
     for data in raw['branch']:
         """
@@ -185,7 +185,7 @@ def read(file, system):
                  'Vn': system.Bus.get_field('Vn', data[0]),
                  'Vn2': system.Bus.get_field('Vn', data[1]),
                  }
-        system.Line.add(**param)
+        system.Line.element_add(**param)
 
     for data in raw['transf']:
         """
@@ -221,7 +221,7 @@ def read(file, system):
                  'Vn': system.Bus.get_field('Vn', data[0][0]),
                  'Vn2': system.Bus.get_field('Vn', data[0][1]),
                  }
-        system.Line.add(**param)
+        system.Line.element_add(**param)
 
     for data in raw['swshunt']:
         """I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
@@ -235,7 +235,7 @@ def read(file, system):
                  'u': data[3],
                  'b': data[9]/mva,
                  }
-        system.Shunt.add(**param)
+        system.Shunt.element_add(**param)
 
     for data in raw['area']:
         """ID, ISW, PDES, PTOL, ARNAME"""
@@ -245,14 +245,14 @@ def read(file, system):
                  'ptol': data[3],
                  'name': data[4],
                  }
-        system.Area.add(**param)
+        system.Area.element_add(**param)
 
     for data in raw['zone']:
         """ID, NAME"""
         param = {'idx': data[0],
                  'name': data[1],
                  }
-        system.Zone.add(**param)
+        system.Zone.element_add(**param)
 
     return retval
 
@@ -287,7 +287,7 @@ def readadd(file, system):
             data = []
     fid.close()
 
-    # add device elements to system
+    # element_add device elements to system
     supported = ['GENROU', 'GENCLS',
                  'ESST3A', 'ESDC2A', 'SEXS', 'EXST1',
                  'ST2CUT', 'IEEEST', 'TGOV1',
@@ -311,7 +311,7 @@ def readadd(file, system):
 
 
 def add_dyn(system, model, data):
-    """helper function to add a device element to system"""
+    """helper function to element_add a device element to system"""
     if model == 'GENCLS':
         bus = data[0]
         data = data[3:]
@@ -337,7 +337,7 @@ def add_dyn(system, model, data):
                  'D': data[1],
                  'u': u,
                  }
-        system.Syn2.add(**param)
+        system.Syn2.element_add(**param)
 
     elif model == 'GENROU':
         bus = data[0]
@@ -374,7 +374,7 @@ def add_dyn(system, model, data):
                  'xl': data[11],
                  'u': u,
                  }
-        system.Syn6a.add(**param)
+        system.Syn6a.element_add(**param)
 
     elif model == 'ESST3A':
         bus = data[0]
@@ -391,7 +391,7 @@ def add_dyn(system, model, data):
                  'Ke': 1,
                  'Te': 1,
                  }
-        system.AVR1.add(**param)
+        system.AVR1.element_add(**param)
 
     elif model == 'ESDC2A':
         bus = data[0]
@@ -408,7 +408,7 @@ def add_dyn(system, model, data):
                  'Ke': 1,
                  'Te': data[8],
                  }
-        system.AVR1.add(**param)
+        system.AVR1.element_add(**param)
 
     elif model == 'EXST1':
         bus = data[0]
@@ -424,7 +424,7 @@ def add_dyn(system, model, data):
                  'Tr': data[0],
                  'Te': data[4],
                  }
-        system.AVR1.add(**param)
+        system.AVR1.element_add(**param)
 
     elif model == 'SEXS':
         bus = data[0]
@@ -438,7 +438,7 @@ def add_dyn(system, model, data):
                  'T1': data[0],
                  'Te': data[3],
                  }
-        system.AVR3.add(**param)
+        system.AVR3.element_add(**param)
 
     elif model == 'IEEEG1':
         bus = data[0]
@@ -456,7 +456,7 @@ def add_dyn(system, model, data):
                  'T1': data[4],
                  'T2': data[5],
                  }
-        system.TG2.add(**param)
+        system.TG2.element_add(**param)
 
     elif model == 'ST2CUT':
         bus = data[0]
@@ -487,7 +487,7 @@ def add_dyn(system, model, data):
                  'vcu': data[14],
                  'vcl': data[15],
                  }
-        system.PSS1.add(**param)
+        system.PSS1.element_add(**param)
 
     elif model == 'IEEEST':
         bus = data[0]
@@ -517,7 +517,7 @@ def add_dyn(system, model, data):
                  'vcu': data[15],
                  'vcl': data[16],
                  }
-        system.PSS2.add(**param)
+        system.PSS2.element_add(**param)
 
     else:
         system.Log.warning('Skipping unsupported model <{}> on bus {}'.format(model, data[0]))

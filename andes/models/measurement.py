@@ -11,7 +11,7 @@ class BusFreq(ModelBase):
         super(BusFreq, self).__init__(system, name)
         self._group = 'Measurement'
         self._name = 'BusFreq'
-        self.remove_param('Vn')
+        self.param_remove('Vn')
         self._data.update({'bus': None,
                            'Tf': 0.1,
                            'Tw': 1.0,
@@ -37,7 +37,7 @@ class BusFreq(ModelBase):
                            'gcall': True, 'jac0': True,
                            })
         self._service.extend(['iTf', 'iTw', 'iwn', 'a0', 'dw', 'iTd'])
-        self._inst_meta()
+        self._meta_to_attr()
 
     def init1(self, dae):
         self.get_field_ext(model='Bus', field='a', dest='a', idx=self.bus)
@@ -99,7 +99,7 @@ class PMU(ModelBase):
         self._fnamex.extend(['V_m', '\\theta_m'])
         self._mandatory.extend(['bus'])
         self._service.extend(['iTv', 'iTa'])
-        self._inst_meta()
+        self._meta_to_attr()
         self.calls.update({'fcall': True, 'jac0': True,
                            'init1': True,
                            })

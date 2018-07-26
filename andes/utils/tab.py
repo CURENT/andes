@@ -56,7 +56,7 @@ class Tab(Texttable):
         self._title = val
 
     def add_left_space(self, nspace=1):
-        """add n cols of spaces before the first col.
+        """element_add n cols of spaces before the first col.
            (for texttable 0.8.3)"""
         sp = ' ' * nspace
         for item in self._rows:
@@ -65,7 +65,7 @@ class Tab(Texttable):
     def draw(self):
         """generate texttable formatted string"""
         self.guess_header()
-        self.add_left_space()  # for Texttable, add a column of whitespace on the left for better visual effect
+        self.add_left_space()  # for Texttable, element_add a column of whitespace on the left for better visual effect
         if self._title and self._descr:
             pre = self._title + '\n' + self._descr + '\n\n'
         elif self._title:

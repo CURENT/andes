@@ -45,9 +45,9 @@ class PSS1(ModelBase):
                             'T3': 'Washout time constant (numerator)', 'T6': 'LL1 time constant (pole)'})
         self.calls.update({'gcall': True, 'fcall': True, 'fxcall': False, 'init1': True, 'jac0': True, 'gycall': False})
         self._zeros.extend(['T1', 'T2', 'T4'])
-        self.remove_param('Vn')
-        self.remove_param('Sn')
-        self._inst_meta()
+        self.param_remove('Vn')
+        self.param_remove('Sn')
+        self._meta_to_attr()
         # todo: fix T6, T8 or T10 == 10. Ignore the filter if they are zeros.
 
     def servcall(self, dae):
@@ -228,9 +228,9 @@ class PSS2(ModelBase):
              'T6': 's', 'A5': 'pu', 'T5': 's', 'T1': 's', 'A2': 'pu', 'T2': 's', 'T3': 's', 'A3': 'pu', 'vcu': 'pu'})
         self._zeros.extend(['T2', 'T4', 'T6', 'A2', 'A4'])
         self.calls.update({'fcall': True, 'fxcall': False, 'jac0': True, 'init1': True, 'gycall': False, 'gcall': True})
-        self.remove_param('Vn')
-        self.remove_param('Sn')
-        self._inst_meta()
+        self.param_remove('Vn')
+        self.param_remove('Sn')
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.get_field_ext('AVR', 'syn', 'syn', self.avr)

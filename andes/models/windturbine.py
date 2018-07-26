@@ -277,10 +277,10 @@ class WTG4DC(ModelBase, Turbine, MPPT):
                     'node2': 'v2',
                     }
 
-        self._inst_meta()
+        self._meta_to_attr()
 
-    def _inst_meta(self):
-        super(WTG4DC, self)._inst_meta()
+    def _meta_to_attr(self):
+        super(WTG4DC, self)._meta_to_attr()
 
     def base(self):
         super(WTG4DC, self).base()
@@ -512,7 +512,7 @@ class WTG3(ModelBase):
         self._descr.update({'fn': 'Base frequency', 'rs': 'Stator resistance', 'xmu': 'Magnetizing reactance', 'R': 'Rotor radius', 'pmax': 'Maximum active power', 'gammap': 'Active power generation ratio', 'npole': 'Number of poles', 'qmin': 'Minimum reactive power', 'KV': 'Voltage control gain', 'xr': 'Rotor reactance', 'Te': 'Power control time constant', 'pmin': 'Minimum reactive power', 'Ts': 'Speed control time constant', 'wind': 'Wind time series idx', 'gen': 'Static generator idx', 'rr': 'Rotor resistance', 'ngb': 'Gear box ratio', 'gammaq': 'Reactive power generation ratio', 'Kp': 'Pitch control gain', 'xs': 'Stator reactance', 'H': 'Machine rotor and turbine inertia constant', 'Tp': 'Pitch control time constant', 'qmax': 'Maximum active power', 'nblade': 'Number of blades', 'bus': 'Bus idx', 'ngen': 'Number of generators'})
         self._units.update({'fn': 'Hz', 'rs': 'pu', 'xmu': 'pu', 'rr': 'pu', 'R': 'm', 'pmax': 'pu', 'qmin': 'pu', 'Kp': 'pu', 'xs': 'pu', 'qmax': 'pu', 'H': 'MWs/MVA', 'Tp': 's', 'KV': 'pu', 'Te': 's', 'xr': 'pu', 'pmin': 'pu'})
         self.calls.update({'init1': True, 'gycall': True, 'fxcall': True, 'fcall': True, 'gcall': True, 'jac0': True})
-        self._inst_meta()
+        self._meta_to_attr()
 
     def servcall(self, dae):
         self.get_field_ext('StaticGen', 'u', 'ugen', self.gen)
