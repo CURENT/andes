@@ -9,7 +9,8 @@ except:
 
 from math import isnan
 from time import monotonic as time, sleep
-
+from numpy import array
+from scipy.sparse import csr_matrix
 from cvxopt import sparse, spdiag
 try:
     from cvxoptklu.klu import numeric, symbolic, solve, linsolve
@@ -250,6 +251,9 @@ def run(system):
 
                 if max(abs(inc)) > tol:
                     pass
+
+                # qq = array(inc)
+                # Ac = csr_matrix((array(dae.Ac.V).reshape((-1)), (array(dae.Ac.I).reshape((-1)), array(dae.Ac.J).reshape((-1))))).toarray()
 
                 try:
                     N = numeric(dae.Ac, F)

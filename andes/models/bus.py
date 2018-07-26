@@ -51,6 +51,8 @@ class Bus(ModelBase):
                          'Ql']
         self._zeros = ['Vn']
         self._mandatory = ['Vn']
+        self._algebs.extend(['a', 'v'])
+        self._fnamey.extend(['\\theta', 'V'])
         self.calls.update({'init0': True,
                            'pflow': True,
                            })
@@ -60,12 +62,8 @@ class Bus(ModelBase):
         self.islanded_buses = list()
         self.island_sets = list()
 
-    def setup(self):
-        """Set up bus class after data parsing - manually assign angle and voltage indices"""
-        self.a = list(range(0, self.n))
-        self.v = list(range(self.n, 2*self.n))
-        self.system.DAE.m = 2*self.n
-        self._param2matrix()
+    def _addr(self, group_by='element'):
+        super(Bus, self)._addr('variable')
 
     def _varname(self):
         """Customize varname for bus class"""

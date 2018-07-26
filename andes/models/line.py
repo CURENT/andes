@@ -87,6 +87,9 @@ class Line(ModelBase):
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
+        self._ac = {'bus1': ['a1', 'v1'],
+                    'bus2': ['a2', 'v2']
+                    }
         self.rebuild = True
         self.Y = []
         self.C = []
@@ -96,10 +99,11 @@ class Line(ModelBase):
 
     def setup(self):
         self._param2matrix()
-        self.a = self.system.Bus.a
-        self.v = self.system.Bus.v
-        self.a1 = self.system.Bus.get_field('a', self.bus1, astype=list)
-        self.a2 = self.system.Bus.get_field('a', self.bus2, astype=list)
+        # self.a = self.system.Bus.a
+        # self.v = self.system.Bus.v
+        # self.a1 = self.system.Bus.get_field('a', self.bus1, astype=list)
+        # self.a2 = self.system.Bus.get_field('a', self.bus2, astype=list)
+
         self.nb = int(self.system.Bus.n)
         self.system.Settings.nseries += self.n
 
@@ -237,6 +241,9 @@ class Line(ModelBase):
             cons = temp[enum, :]
 
     def init0(self, dae):
+        self.get_field_ext('Bus', 'a', dest='a', idx=None, astype=list)
+        self.get_field_ext('Bus', 'v', dest='v', idx=None, astype=list)
+
         solver = self.system.SPF.solver.lower()
         self.build_y()
         self.incidence()

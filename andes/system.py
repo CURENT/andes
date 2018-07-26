@@ -127,6 +127,8 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if pflow:
                 self.__dict__[device]._addr()
+                self.__dict__[device]._network_intf()
+                self.__dict__[device]._ctrl_intf()
 
         self.VarName.resize()
 
@@ -139,6 +141,8 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._addr()
+                self.__dict__[device]._network_intf()
+                self.__dict__[device]._ctrl_intf()
 
         self.VarName.resize()
 

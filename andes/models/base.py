@@ -129,6 +129,7 @@ class ModelBase(object):
                           )
 
         self._flags = {'sysbase': False,
+                       'allocate': False,
                        'address': False,
                        }
 
@@ -331,12 +332,12 @@ class ModelBase(object):
             pass
 
         uid = self.idx_to_uid(idx)
+        if not astype:
+            astype = type(self.__dict__[field])
+
         ret = matrix(self.__dict__[field])[uid]
 
-        if not astype:
-            return ret
-        else:
-            return astype(ret)
+        return astype(ret)
 
     def _alloc(self):
         """Allocate memory for DAE variable indices. Called after finishing adding components
@@ -439,16 +440,16 @@ class ModelBase(object):
         """
         Return a field of a model or group at the given indices
 
-        :param model: name of the group or model to retrieve
-        :param field: name of the field
-        :param idx: idx of elements to access
-        :param astype: type cast
+        :param str model: name of the group or model to retrieve
+        :param str field: name of the field
+        :param list, int, float str idx: idx of elements to access
+        :param type astype: type cast
         :return:
         """
         ret = list()
 
-        if astype is None:
-            astype = matrix
+        # if astype is None:
+        #     astype = matrix
 
         if model in self.system.DevMan.devices:
             ret = self.system.__dict__[model].get_field(field, idx)
@@ -467,14 +468,16 @@ class ModelBase(object):
         else:
             raise NameError('Model or Group <{0}> does not exist.'.format(model))
 
-        if ret is None or isinstance(ret, (int, float, str)):
+        if (ret is None) or isinstance(ret, (int, float, str)):
+            return ret
+        elif astype is None:
             return ret
         else:
             return astype(ret)
         
     def get_field_ext(self, model, field, dest=None, idx=None, astype=None):
         """
-        Retrieve the field of another model and store it as a field of this model
+        Retrieve the field of another model and store it as a field of this model.
 
         :param model: name of the source model, either a model name or a group name
         :param field: name of the field to retrieve
@@ -488,7 +491,7 @@ class ModelBase(object):
         :type idx: list, matrix
         :type astype: None, list, matrix
 
-        :return: None
+        :return: retrieved external field values
 
         """
         # use default destination
@@ -679,96 +682,99 @@ class ModelBase(object):
 
     def setup(self):
         """
-        Set up device parameters and variable addresses
-        Called AFTER parsing the input file
+        Set up empty class structure and allocate empty memory for variable addresses.
+
+
         """
         if not self.n:
             return
 
         self._param2matrix()
         self._alloc()
-        self._interface()
-        self._check_Vn()
 
     def _interface(self):
         """implement bus, node and controller interfaces"""
-        self._ac_interface()
-        self._dc_interface()
-        self._ctrl_interface()
+        # self._ac_interface()
+        # self._dc_interface()
+        self._ctrl_intf()
 
-    def _ac_interface(self):
-        """retrieve ac bus a and v addresses"""
+    def _network_intf(self):
+        """
+        Retrieve the ac and dc network interface variable indices.
+
+        :Example:
+
+            ``self._ac = {'bus1': (a1, v1)}`` gives
+             - indices: self.bus1
+             - system.Bus.a -> self.a1
+             - system.Bus.v -> self.v1
+
+            ``self._dc = {'node1': v1}`` gives
+              - indices: self.node1
+              - system.Node.v-> self.v1
+
+        :return: None
+        """
+
         for key, val in self._ac.items():
             self.get_field_ext(model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
             self.get_field_ext(model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
 
-    def _dc_interface(self):
-        """retrieve v addresses of dc buses"""
         for key, val in self._dc.items():
-            if type(val) == list:
-                for item in val:
-                    self.get_field_ext(model='Node', field='v', dest=item, idx=self.__dict__[key])
-            else:
-                self.get_field_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
+            self.get_field_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
 
-    def _ctrl_interface(self):
-        """Retrieve parameters of controlled model
-        as: {model, param, fkey}
+        # check for interface voltage differences
+        self._check_Vn()
+
+    def _ctrl_intf(self):
         """
+        Retrieve variable indices of controlled models.
+
+        Control interfaces are specified in ``self._ctrl``. Each ``key:value`` pair has ``key`` being the variable names
+        for the reference idx and ``value`` being a tuple of ``(model name, field to read, destination field)``.
+
+        :Example:
+
+            ``self._ctrl = {'syn', ('Synchronous', 'omega', 'w')}``
+             - indices: self.syn
+             - self.w = system.Synchronous.omega
+
+        :return: None
+        """
+
         for key, val in self._ctrl.items():
-            args = {'dest': key,
-                    'fkey': self.__dict__[val[2]],
-                    }
-            self.get_field_ext(val[0], val[1], **args)
+            model, field, dest = val
+            self.get_field_ext(model, field, dest=dest, idx=self.__dict__[key])
 
-    def _addr(self, groupby='element'):
+    def _addr(self, group_by='element'):
         """
-        Assign DAE addresses for algebraic and state variables
+        Assign DAE addresses for algebraic and state variables. Addresses are stored in ``self.__dict__[var]``.
+          ``DAE.m`` and ``DAE.n`` are updated accordingly.
 
-        Addresses are stored at ``self.__dict__[var]``. ``DAE.m`` and ``DAE.n`` are updated accordingly.
-
-        :param groupby: consecutive addresses for ``element`` or ``variable``
+        :param 'element'm 'variable' group_by: consecutive addresses for ``element`` or ``variable``
         :return None
         """
         assert not self._flags['address']
-        assert groupby in ('element', 'variable')
+        assert group_by in ('element', 'variable')
 
-        # m0 = self.system.DAE.m
-        # n0 = self.system.DAE.n
-        # mend = m0 + len(self._algebs) * self.n
-        # nend = n0 + len(self._states) * self.n
-        #
-        # if groupby == 'variable':
-        #     for idx, item in enumerate(self._algebs):
-        #         self.__dict__[item] = list(range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
-        #     self.system.DAE.m = mend
-        #     for idx, item in enumerate(self._states):
-        #         self.__dict__[item] = list(range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
-        #     self.system.DAE.n = nend
-        # elif groupby == 'element':
-        #     for idx, item in enumerate(self._algebs):
-        #         self.__dict__[item] = list(range(m0, mend, len(self._algebs)))
-        #     self.system.DAE.m = mend
-        #     for idx, item in enumerate(self._states):
-        #         self.__dict__[item] = list(range(n0, nend, len(self._states)))
-        #     self.system.DAE.n = nend
+        m0 = self.system.DAE.m
+        n0 = self.system.DAE.n
+        mend = m0 + len(self._algebs) * self.n
+        nend = n0 + len(self._states) * self.n
 
-        if groupby == 'element':
-            for i in range(self.n):
-                for item in self._states:
-                    self.__dict__[item][i] = self.system.DAE.n
-                    self.system.DAE.n += 1
-                for item in self._algebs:
-                    self.__dict__[item][i] = self.system.DAE.m
-                    self.system.DAE.m += 1
-        elif groupby == 'variable':
-            for item in self._states:
-                for i in range(self.n):
-                    self.__dict__[item][i] = self.system.DAE.n
-                    self.system.DAE.n += 1
-            for item in self._algebs:
-                for i in range(self.n):
-                    self.__dict__[item][i] = self.system.DAE.n
+        if group_by == 'variable':
+            for idx, item in enumerate(self._algebs):
+                self.__dict__[item] = list(range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
+            for idx, item in enumerate(self._states):
+                self.__dict__[item] = list(range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
+        elif group_by == 'element':
+            for idx, item in enumerate(self._algebs):
+                self.__dict__[item] = list(range(m0 + idx, mend, len(self._algebs)))
+            for idx, item in enumerate(self._states):
+                self.__dict__[item] = list(range(n0 + idx, nend, len(self._states)))
+
+        self.system.DAE.m = mend
+        self.system.DAE.n = nend
 
         self._flags['address'] = True
 
@@ -964,14 +970,14 @@ class ModelBase(object):
         :return None
         """
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
-            bus_Vn = self.get_field_ext('Bus', field='Vn', idx=self.bus)
+            bus_Vn = self.read_field_ext('Bus', field='Vn', idx=self.bus)
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
                 if Vn != Vn0:
                     self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'
                                  .format(name, Vn, bus, Vn0), WARNING)
 
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
-            node_Vdcn = self.get_field_ext('Node', field='Vdcn', idx=self.node)
+            node_Vdcn = self.read_field_ext('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
                     self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'

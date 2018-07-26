@@ -44,12 +44,15 @@ class Node(ModelBase):
                            })
         self._mandatory = ['Vdcn']
         self._zeros = ['Vdcn', 'Idcn']
+        self.v = list()
         self._inst_meta()
 
     def add(self, idx=None, name=None, **kwargs):
         super().add(idx, name, **kwargs)
 
     def _varname(self):
+        if not self.n:
+            return
         self.system.VarName.append(listname='unamey', xy_idx=self.v, var_name='Vdc', element_name=self.name)
         self.system.VarName.append(listname='fnamey', xy_idx=self.v, var_name='V_{dc}', element_name=self.name)
 
