@@ -867,7 +867,7 @@ class ModelBase(object):
         print(self.param_to_df(sysbase=False).to_string())
 
         print('')
-        print('Model <{:s}> var_to_df'.format(self._name))
+        print('Model <{:s}> variable snapshot'.format(self._name))
         print(self.var_to_df().to_string())
 
     def help_doc(self, export='plain', save=None, writemode='a'):

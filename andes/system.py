@@ -167,7 +167,7 @@ class PowerSystem(object):
                 self.__dict__[device].init0(self.DAE)
 
         # check for islands
-        self.check_islands()
+        self.check_islands(show_info=True)
 
     def td_init(self):
         """run models.init1() time domain simulation"""
@@ -203,37 +203,39 @@ class PowerSystem(object):
         self.Log.debug('Loaded specified settings file.')
         raise NotImplementedError
 
-    def check_islands(self):
+    def check_islands(self, show_info=False):
         """check connectivity for the ac system"""
         if not hasattr(self, 'Line'):
             self.Log.error('<Line> device not found.')
             return
         self.Line.connectivity(self.Bus)
 
-        if len(self.Bus.islanded_buses) == 0 and len(self.Bus.island_sets) == 0:
-            self.Log.info('System is interconnected.\n')
-        else:
-            self.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
-                          (len(self.Bus.island_sets), len(self.Bus.islanded_buses)))
+        if show_info is True:
 
-        nosw_island = []  # no slack bus island
-        msw_island = []  # multiple slack bus island
-        for idx, island in enumerate(self.Bus.island_sets):
-            nosw = 1
-            for item in self.SW.bus:
-                if self.Bus.uid[item] in island:
-                    nosw -= 1
-            if nosw == 1:
-                nosw_island.append(idx)
-            elif nosw < 0:
-                msw_island.append(idx)
+            if len(self.Bus.islanded_buses) == 0 and len(self.Bus.island_sets) == 0:
+                self.Log.info('System is interconnected.')
+            else:
+                self.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
+                              (len(self.Bus.island_sets), len(self.Bus.islanded_buses)))
 
-        if nosw_island:
-            self.Log.error('Slack bus is not defined for {:g} island(s).\n'.format(len(nosw_island)))
-        if msw_island:
-            self.Log.error('Multiple slack buses are defined for {:g} island(s).\n'.format(len(nosw_island)))
-        else:
-            self.Log.info('Each island has a slack bus correctly defined.\n'.format(nosw_island))
+            nosw_island = []  # no slack bus island
+            msw_island = []  # multiple slack bus island
+            for idx, island in enumerate(self.Bus.island_sets):
+                nosw = 1
+                for item in self.SW.bus:
+                    if self.Bus.uid[item] in island:
+                        nosw -= 1
+                if nosw == 1:
+                    nosw_island.append(idx)
+                elif nosw < 0:
+                    msw_island.append(idx)
+
+            if nosw_island:
+                self.Log.warning('Slack bus is not defined for {:g} island(s).'.format(len(nosw_island)))
+            if msw_island:
+                self.Log.warning('Multiple slack buses are defined for {:g} island(s).'.format(len(nosw_island)))
+            else:
+                self.Log.info('Each island has a slack bus correctly defined.'.format(nosw_island))
 
     def get_busdata(self, dec=5):
         """get ac bus data from solved power flow"""

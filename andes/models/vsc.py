@@ -219,6 +219,7 @@ class VSC(DCBase):
                     self.switch(comp, 'P')
 
                 self.system.DAE.factorize = True
+
                 dae.g[idx] = dae.y[yidx] - ylim
                 if idx not in self.glim:
                     self.glim.append(idx)

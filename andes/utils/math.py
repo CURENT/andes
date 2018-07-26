@@ -45,8 +45,7 @@ def aneb(a, b):
 
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
-    return matrix(list(map(lambda x, y: x or y, a, b)), a.size)
-
+    return matrix(np.logical_or(a, b).astype('float'), a.size)
 
 def aandb(a, b):
     """Return a matrix of logic comparison of A or B"""

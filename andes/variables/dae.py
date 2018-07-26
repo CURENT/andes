@@ -1,5 +1,5 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag, mul
-from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb
+from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb, agtb, altb, nota
 
 
 class DAE(object):
@@ -9,7 +9,7 @@ class DAE(object):
         self._data = dict(x=[], y=[], f=[], g=[], Fx=[], Fy=[], Gx=[], Gy=[], Fx0=[], Fy0=[], Gx0=[], Gy0=[], Ac=[],
                           tn=[])
 
-        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True, rebuild=True)
+        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True, rebuild=True, ac_reset=True)
 
         self._flags = dict(zxmax=[], zxmin=[], zymax=[], zymin=[], ux=[], uy=[])
 
@@ -40,12 +40,12 @@ class DAE(object):
     def init_f(self):
         self.zxmax = ones(self.n, 1)
         self.zxmin = ones(self.n, 1)
-        self.f = matrix(0.0, (self.n, 1), 'd')
+        self.f = zeros(self.n, 1)
 
     def init_g(self):
         self.zymax = ones(self.m, 1)
         self.zymin = ones(self.m, 1)
-        self.g = matrix(0.0, (self.m, 1), 'd')
+        self.g = zeros(self.m, 1)
 
     def setup_Gy(self):
         self.Gy = sparse(self.Gy0)
@@ -83,7 +83,8 @@ class DAE(object):
         self.init_jac0()
 
     def resize(self):
-        """Resize DAE and and extend for init1 variables"""
+        """Resize DAE and and extend for init1 variables
+        """
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
         if yext > 0:
@@ -104,13 +105,8 @@ class DAE(object):
             self.zxmax = matrix([self.zxmax, xones], (self.n, 1), 'd')
 
     def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
-        """Limit algebraic variables and set the Jacobians"""
-        yidx = matrix(yidx)
-
-        if type(ymin) in (float, int):
-            ymin = matrix(ymin, yidx.size)
-        if type(ymax) in (float, int):
-            ymax = matrix(ymax, yidx.size)
+        """Limit algebraic variables and set the Jacobians
+        """
 
         if not min_set:
             min_set = ymin
@@ -122,24 +118,28 @@ class DAE(object):
         if isinstance(max_set, (int, float)):
             max_set = matrix(max_set, (len(yidx), 1), 'd')
 
-        above = ageb(self.y[yidx], ymax)
-        above_idx = findeq(above, 1.0)
-        self.y[yidx[above_idx]] = max_set[above_idx]
-        self.zymax[yidx[above_idx]] = 0
+        yvals = self.y[yidx]
 
-        below = aleb(self.y[yidx], ymin)
-        below_idx = findeq(below, 1.0)
-        self.y[yidx[below_idx]] = min_set[below_idx]
-        self.zymin[yidx[below_idx]] = 0
+        above = agtb(yvals, ymax)
+        below = altb(yvals, ymin)
 
-        idx = above_idx + below_idx
-        self.g[yidx[idx]] = 0
+        self.y[yidx] = mul(self.y[yidx], nota(above)) + mul(max_set, above)
+        self.zymax[yidx] = mul(self.zymax[yidx], nota(above))
 
-        if len(idx) > 0:
-            self.factorize = True
+        self.y[yidx] = mul(self.y[yidx], nota(below)) + mul(min_set, above)
+        self.zymin[yidx] = mul(self.zymin[yidx], nota(below))
+
+        idx = aorb(above, below)
+        self.g[yidx] = mul(self.g[yidx], nota(idx))
+
+        if sum(idx) > 0:
+            self.ac_reset = True
 
     def hard_limit_remote(self, yidx, ridx, rtype='y', rmin=None, rmax=None, min_yset=0, max_yset=0):
-        """Limit the output of yidx if the remote y is not within the limits"""
+        """Limit the output of yidx if the remote y is not within the limits
+
+        This function needs to be modernized.
+        """
         ny = len(yidx)
         assert ny == len(ridx), "Length of output vars and remote vars does not match"
         assert rtype in ('x', 'y'), "ridx must be either y (algeb) or x (state)"
@@ -170,36 +170,30 @@ class DAE(object):
         self.g[yidx[idx]] = 0
 
         if len(idx) > 0:
-            self.factorize = True
+            self.ac_reset = True
 
     def anti_windup(self, xidx, xmin, xmax):
         """State variable anti-windup limiter"""
-        xidx = matrix(xidx)
-
-        if type(xmin) in (float, int):
-            xmin = matrix(xmin, xidx.size)
-        if type(xmax) in (float, int):
-            xmax = matrix(xmax, xidx.size)
 
         x_above = ageb(self.x[xidx], xmax)
-        f_above = ageb(self.f[xidx], 0.0)
+        f_above = ageb(self.f[xidx], 0)
         above = aandb(x_above, f_above)
-        above_idx = findeq(above, 1.0)
-        self.x[xidx[above_idx]] = xmax[above_idx]
-        self.zxmax[xidx[above_idx]] = 0
+
+        self.x[xidx] = mul(self.x[xidx], nota(above)) + mul(xmax, above)
+        self.zxmax[xidx] = mul(self.zxmax[xidx], nota(above))
 
         x_below = aleb(self.x[xidx], xmin)
-        f_below = aleb(self.f[xidx], 0.0)
+        f_below = aleb(self.f[xidx], 0)
         below = aandb(x_below, f_below)
-        below_idx = findeq(below, 1.0)
-        self.x[xidx[below_idx]] = xmin[below_idx]
-        self.zxmin[xidx[below_idx]] = 0
 
-        idx = list(above_idx) + list(below_idx)
-        self.f[xidx[idx]] = 0
+        self.x[xidx] = mul(self.x[xidx], nota(below)) + mul(xmin, below)
+        self.zxmin[xidx] = mul(self.zxmin[xidx], nota(below))
 
-        if len(idx) > 0:
-            self.factorize = True
+        idx = aorb(f_above, f_below)
+        self.f[xidx] = mul(self.f[xidx], nota(idx))
+
+        if sum(idx) > 0:
+            self.ac_reset = True
 
     def reset_Ac(self):
         if sum(self.zxmin) == self.n \
@@ -215,6 +209,8 @@ class DAE(object):
         I = spdiag([1.0] * (self.m + self.n)) - H
         self.Ac = I * (self.Ac * I) - H
         self.q = mul(self.q, nota(x_reset))
+
+        self.factorize = True
 
     def add_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m"""
