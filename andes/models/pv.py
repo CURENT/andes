@@ -122,10 +122,10 @@ class PV(Stagen):
             self.set_jac('Gy0', 1.0, q, q)
 
     def jac0(self, dae):
-        dae.set_jac('Gy0', -1e-6, self.v, self.v)
+        dae.set_jac('Gy0', 1e-6, self.v, self.v)
         dae.set_jac('Gy0', -self.u, self.v, self.q)
         dae.set_jac('Gy0', self.u, self.q, self.v)
-        dae.set_jac('Gy0', -1e-6, self.q, self.q)
+        dae.set_jac('Gy0', 1e-6, self.q, self.q)
 
     def disable_gen(self, idx):
         """Disable a PV element for TDS"""
@@ -165,4 +165,4 @@ class Slack(PV):
         super().jac0(dae)
         dae.set_jac('Gy0', -self.u, self.a, self.p)
         dae.set_jac('Gy0', self.u, self.p, self.a)
-        dae.set_jac('Gy0', - 1e-6, self.p, self.p)
+        dae.set_jac('Gy0', 1e-6, self.p, self.p)

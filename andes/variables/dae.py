@@ -1,6 +1,6 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag, mul
 from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb, agtb, altb, nota
-
+import numpy as np
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (DAE)"""
@@ -16,6 +16,26 @@ class DAE(object):
         self.__dict__.update(self._data)
         self.__dict__.update(self._scalars)
         self.__dict__.update(self._flags)
+
+        self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      }
+
+        self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      }
 
     def init_xy(self):
         self.init_x()
@@ -49,11 +69,26 @@ class DAE(object):
 
     def setup_Gy(self):
         self.Gy = sparse(self.Gy0)
+        self._temp.update({'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      })
+
+        self._set.update({'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                     })
 
     def setup_Fx(self):
-        self.Fx = sparse(self.Fx0)
-        self.Fy = sparse(self.Fy0)
-        self.Gx = sparse(self.Gx0)
+        # self.Fx = sparse(self.Fx0)
+        # self.Fy = sparse(self.Fy0)
+        # self.Gx = sparse(self.Gx0)
+
+        self._temp.update({'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      })
+
+        self._set.update({'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      })
 
     def setup_FxGy(self):
         self.setup_Fx()
@@ -69,14 +104,33 @@ class DAE(object):
     def init_Gy0(self):
         self.Gy0 = spmatrix([], [], [], (self.m, self.m), 'd')
 
+        self._temp.update({'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
+                                   'J': np.ndarray((0, 1), dtype=np.int32),
+                                   'V': np.ndarray((0, 1))}
+                           })
+
+        self._set.update({'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                         })
+
     def init_Fx0(self):
         self.Gx0 = spmatrix([], [], [], (self.m, self.n), 'd')
         self.Fy0 = spmatrix([], [], [], (self.n, self.m), 'd')
         self.Fx0 = spmatrix([], [], [], (self.n, self.n), 'd')
 
+        self._temp.update({'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      })
+
+        self._set.update({'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+                     })
+
     def init_jac0(self):
         self.init_Gy0()
         self.init_Fx0()
+
 
     def init1(self):
         self.resize()
@@ -212,33 +266,138 @@ class DAE(object):
 
         self.factorize = True
 
-    def add_jac(self, m, val, row, col):
-        """Add values (val, row, col) to Jacobian m"""
-        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+    # def add_jac(self, m, val, row, col):
+    #     """Add values (val, row, col) to Jacobian m"""
+    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+    #
+    #     size = self.__dict__[m].size
+    #     self.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
-        size = self.__dict__[m].size
-        self.__dict__[m] += spmatrix(val, row, col, size, 'd')
+    def get_size(self, m):
+        """
+        Return the 2-D size of a Jacobian matrix in tuple
+        """
+        nrow, ncol = 0, 0
+        if m[0] == 'F':
+            nrow = self.n
+        elif m[0] == 'G':
+            nrow = self.m
+
+        if m[1] == 'x':
+            ncol = self.n
+        elif m[1] == 'y':
+            ncol = self.m
+
+        return nrow, ncol
+
+    def add_jac(self, m, val, row, col):
+        """Add tuples (val, row, col) to the Jacobian matrix ``m``
+
+        Implemented in numpy.arrays for temporary storage.
+        """
+        assert m in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'), \
+            'Wrong Jacobian matrix name <{0}>'.format(m)
+
+        if isinstance(val, (int, float)):
+            val = val * ones(len(row), 1)
+
+        self._temp[m]['I'] = np.append(self._temp[m]['I'], row)
+        self._temp[m]['J'] = np.append(self._temp[m]['J'], col)
+        self._temp[m]['V'] = np.append(self._temp[m]['V'], val)
+
+    def temp_to_spmatrix(self, ty):
+        """
+        Convert Jacobian tuples to matrices
+
+        :param ty: name of the matrices to convert in ``('jac0','jac')``
+
+        :return: None
+        """
+        assert ty in ('jac0', 'jac')
+
+        jac0s = ['Fx0', 'Fy0', 'Gx0', 'Gy0']
+        jacs = ['Fx', 'Fy', 'Gx', 'Gy']
+
+        if ty == 'jac0':
+            todo = jac0s
+        elif ty == 'jac':
+            todo = jacs
+
+        for m in todo:
+            self.__dict__[m] = spmatrix(self._temp[m]['V'],
+                                        self._temp[m]['I'],
+                                        self._temp[m]['J'],
+                                        self.get_size(m),
+                                        'd'
+                                        )
+            if ty == 'jac':
+                self.__dict__[m] += self.__dict__[m + '0']
+
+        self.apply_set(ty)
 
     def set_jac(self, m, val, row, col):
-        """Add values (val, row, col) to Jacobian m """
-        if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-            raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+        """
+        Set the values at (row, col) to val in Jacobian m
 
-        old_val = []
-        if type(row) is int:
-            row = [row]
-        if type(col) is int:
-            col = [col]
-        if type(row) is range:
-            row = list(row)
-        if type(col) is range:
-            col = list(col)
-        for i, j in zip(row, col):
-            old_val.append(self.system.DAE.__dict__[m][i, j])
-        size = self.__dict__[m].size
-        self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
-        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+        :param m: Jacobian name
+        :param val: values to set
+        :param row: row indices
+        :param col: col indices
+        :return: None
+        """
+        assert m in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'), \
+            'Wrong Jacobian matrix name <{0}>'.format(m)
+
+        if isinstance(val, (int, float)) and isinstance(row, (np.ndarray, matrix, list)):
+            val = val * ones(len(row), 1)
+
+        self._set[m]['I'] = np.append(self._set[m]['I'], row)
+        self._set[m]['J'] = np.append(self._set[m]['J'], col)
+        self._set[m]['V'] = np.append(self._set[m]['V'], val)
+
+
+    def apply_set(self, ty):
+        """
+        Apply Jacobian set values to matrices
+
+        :param ty: Jacobian type in ``('jac0', 'jac')``
+        :return:
+        """
+        assert ty in ('jac0', 'jac')
+
+        if ty == 'jac0':
+            todo = ['Fx0', 'Fy0', 'Gx0', 'Gy0']
+        else:
+            todo = ['Fx', 'Fy', 'Gx', 'Gy']
+
+        for m in todo:
+            for idx in range(len(self._set[m]['I'])):
+                # for i, j, v in zip(self._set[m]['I'], self._set[m]['J'], self._set[m]['V']):
+                i = self._set[m]['I'].item(idx)
+                j = self._set[m]['J'].item(idx)
+                v = self._set[m]['V'].item(idx)
+                self.__dict__[m][i, j] = v
+
+    # def set_jac(self, m, val, row, col):
+    #     """Add values (val, row, col) to Jacobian m """
+    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+    #
+    #     old_val = []
+    #     if type(row) is int:
+    #         row = [row]
+    #     if type(col) is int:
+    #         col = [col]
+    #     if type(row) is range:
+    #         row = list(row)
+    #     if type(col) is range:
+    #         col = list(col)
+    #     for i, j in zip(row, col):
+    #         old_val.append(self.system.DAE.__dict__[m][i, j])
+    #     size = self.__dict__[m].size
+    #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
+    #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def show(self, eq, value=None):
         """Show equation or variable array along with the names"""

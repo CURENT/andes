@@ -1,5 +1,5 @@
 SHOW_PF_CALL = False
-SHOW_INT_CALL = True
+SHOW_INT_CALL = False
 
 all_calls = ['gcall',
              'gycall',
@@ -126,6 +126,7 @@ class Call(object):
         for pflow, jac0, call in zip(self.pflow, self.jac0, self.jac0s):
             if pflow and jac0:
                 string += '    ' + call
+        string += '    system.DAE.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy and Fx
         string += 'system.DAE.setup_FxGy()\n'
@@ -138,6 +139,7 @@ class Call(object):
 
         # handle islanded buses in the Jacobian
         string += self.gyisland
+        string += 'system.DAE.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         if SHOW_PF_CALL:
@@ -237,6 +239,7 @@ class Call(object):
         for jac0, call in zip(self.jac0, self.jac0s):
             if jac0:
                 string += '    ' + call
+        string += '    system.DAE.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy and Fx
         string += 'system.DAE.setup_FxGy()\n'
@@ -248,6 +251,7 @@ class Call(object):
             if fxcall:
                 string += call
         string += self.gyisland
+        string += 'system.DAE.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         if SHOW_INT_CALL:
