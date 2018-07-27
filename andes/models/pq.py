@@ -77,8 +77,15 @@ class PQ(ModelBase):
         self.p0 = mul(k, self.p)
         self.q0 = mul(k, self.q)
 
-        dae.g += spmatrix(self.p0, self.a, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(self.q0, self.v, [0] * self.n, (dae.m, 1), 'd')
+        if self.n <= 400:
+            dae.g += spmatrix(self.p0, self.a, [0] * self.n, (dae.m, 1), 'd')
+            dae.g += spmatrix(self.q0, self.v, [0] * self.n, (dae.m, 1), 'd')
+        else:
+            p0 = coo_matrix((np.array(self.p0).reshape((-1)), (self.a, np.zeros(self.n))), shape=(dae.m, 1)).toarray()
+            q0 = coo_matrix((np.array(self.q0).reshape((-1)), (self.v, np.zeros(self.n))), shape=(dae.m, 1)).toarray()
+
+            dae.g += matrix(p0)
+            dae.g += matrix(q0)
 
     def gycall(self, dae):
         k = zeros(self.n, 1)

@@ -83,7 +83,8 @@ class Line(ModelBase):
                              'fn',
                              'rate_a'
                              ])
-        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2', 'nb', 'gy_store'])
+        self._service.extend(['a', 'v', 'a1', 'a2', 'S1', 'S2', 'nb', 'gy_store',
+                              'y1', 'y2', 'y12', 'm', 'm2', 'mconj'])
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
@@ -119,17 +120,18 @@ class Line(ModelBase):
         """Build transmission line admittance matrix into self.Y"""
         if not self.n:
             return
-        y1 = mul(self.u, self.g1 + self.b1 * 1j)
-        y2 = mul(self.u, self.g2 + self.b2 * 1j)
-        y12 = div(self.u, self.r + self.x * 1j)
-        m = polar(self.tap, self.phi * deg2rad)
-        m2 = abs(m) ** 2
+        self.y1 = mul(self.u, self.g1 + self.b1 * 1j)
+        self.y2 = mul(self.u, self.g2 + self.b2 * 1j)
+        self.y12 = div(self.u, self.r + self.x * 1j)
+        self.m = polar(self.tap, self.phi * deg2rad)
+        self.m2 = abs(self.m) ** 2
+        self.mconj = conj(self.m)
 
         # build self and mutual admittances into Y
-        self.Y = spmatrix(div(y12 + y1, m2), self.a1, self.a1, (self.nb, self.nb), 'z')
-        self.Y -= spmatrix(div(y12, conj(m)), self.a1, self.a2, (self.nb, self.nb), 'z')
-        self.Y -= spmatrix(div(y12, m), self.a2, self.a1, (self.nb, self.nb), 'z')
-        self.Y += spmatrix(y12 + y2, self.a2, self.a2, (self.nb, self.nb), 'z')
+        self.Y = spmatrix(div(self.y12 + self.y1, self.m2), self.a1, self.a1, (self.nb, self.nb), 'z')
+        self.Y -= spmatrix(div(self.y12, self.mconj), self.a1, self.a2, (self.nb, self.nb), 'z')
+        self.Y -= spmatrix(div(self.y12, self.m), self.a2, self.a1, (self.nb, self.nb), 'z')
+        self.Y += spmatrix(self.y12 + self.y2, self.a2, self.a2, (self.nb, self.nb), 'z')
 
         # avoid singularity
         # for item in range(self.nb):
@@ -146,6 +148,7 @@ class Line(ModelBase):
         y1 = mul(self.u, self.g1)  # y1 neglects line charging shunt, and g1 is usually 0 in HV lines
         y2 = mul(self.u, self.g2)  # y2 neglects line charging shunt, and g2 is usually 0 in HV lines
         m = polar(1.0, self.phi * deg2rad)  # neglected tap ratio
+        mconj = conj(m)
         m2 = matrix(1.0, (self.n, 1), 'z')
         if solver is 'fdxb':
             # neglect line resistance in Bp in XB method
@@ -293,20 +296,20 @@ class Line(ModelBase):
 
     def seriesflow(self, dae):
         """Compute the flow through the line after solving PF, including: terminal injections, line losses"""
-        y1 = mul(self.u, self.g1 + self.b1 * 1j)
-        y2 = mul(self.u, self.g2 + self.b2 * 1j)
-        y12 = div(self.u, self.r + self.x * 1j)
-        m = polar(self.tap, self.phi*deg2rad)
-        mconj = conj(m)
-        m2 = abs(m)**2 + 0j
+        # y1 = mul(self.u, self.g1 + self.b1 * 1j)
+        # y2 = mul(self.u, self.g2 + self.b2 * 1j)
+        # y12 = div(self.u, self.r + self.x * 1j)
+        # m = polar(self.tap, self.phi*deg2rad)
+        # mconj = conj(m)
+        # m2 = abs(m)**2 + 0j
 
         Vm = dae.y[self.v]
         Va = dae.y[self.a]
         V1 = polar(Vm[self.a1], Va[self.a1])
         V2 = polar(Vm[self.a2], Va[self.a2])
 
-        I1 = mul(V1, div(y12 + y1, m2)) - mul(V2, div(y12, mconj))
-        I2 = mul(V2, y12+y2) - mul(V1, div(y12, m))
+        I1 = mul(V1, div(self.y12 + self.y1, self.m2)) - mul(V2, div(self.y12, self.mconj))
+        I2 = mul(V2, self.y12 + self.y2) - mul(V1, div(self.y12, self.m))
         self.S1 = mul(V1, conj(I1))
         self.S2 = mul(V2, conj(I2))
         self.P1 = self.S1.real()
@@ -314,7 +317,7 @@ class Line(ModelBase):
         self.Q1 = self.S1.imag()
         self.Q2 = self.S2.imag()
 
-        self.chg1 = mul(self.g1 + 1j * self.b1, div(V1 ** 2, m2))
+        self.chg1 = mul(self.g1 + 1j * self.b1, div(V1 ** 2, self.m2))
         self.chg2 = mul(self.g2 + 1j * self.b2, V2 ** 2)
 
         self.Pchg1 = self.chg1.real()

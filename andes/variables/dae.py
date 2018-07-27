@@ -17,24 +17,44 @@ class DAE(object):
         self.__dict__.update(self._scalars)
         self.__dict__.update(self._flags)
 
-        self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        # self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               }
+        #
+        # self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        #               }
+
+        self._temp = {'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       }
 
-        self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._set = {'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       }
 
     def init_xy(self):
@@ -69,10 +89,10 @@ class DAE(object):
 
     def setup_Gy(self):
         self.Gy = sparse(self.Gy0)
-        self._temp.update({'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._temp.update({'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       })
 
-        self._set.update({'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._set.update({'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                      })
 
     def setup_Fx(self):
@@ -80,14 +100,14 @@ class DAE(object):
         # self.Fy = sparse(self.Fy0)
         # self.Gx = sparse(self.Gx0)
 
-        self._temp.update({'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._temp.update({'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       })
 
-        self._set.update({'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._set.update({'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       })
 
     def setup_FxGy(self):
@@ -104,12 +124,10 @@ class DAE(object):
     def init_Gy0(self):
         self.Gy0 = spmatrix([], [], [], (self.m, self.m), 'd')
 
-        self._temp.update({'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
-                                   'J': np.ndarray((0, 1), dtype=np.int32),
-                                   'V': np.ndarray((0, 1))}
+        self._temp.update({'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                            })
 
-        self._set.update({'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._set.update({'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                          })
 
     def init_Fx0(self):
@@ -117,14 +135,14 @@ class DAE(object):
         self.Fy0 = spmatrix([], [], [], (self.n, self.m), 'd')
         self.Fx0 = spmatrix([], [], [], (self.n, self.n), 'd')
 
-        self._temp.update({'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._temp.update({'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                       })
 
-        self._set.update({'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-                      'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        self._set.update({'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
+                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
                      })
 
     def init_jac0(self):
@@ -302,9 +320,9 @@ class DAE(object):
         if isinstance(val, (int, float)):
             val = val * ones(len(row), 1)
 
-        self._temp[m]['I'] = np.append(self._temp[m]['I'], row)
-        self._temp[m]['J'] = np.append(self._temp[m]['J'], col)
-        self._temp[m]['V'] = np.append(self._temp[m]['V'], val)
+        self._temp[m]['I'] = matrix([self._temp[m]['I'], matrix(row)])
+        self._temp[m]['J'] = matrix([self._temp[m]['J'], matrix(col)])
+        self._temp[m]['V'] = matrix([self._temp[m]['V'], matrix(val)])
 
     def temp_to_spmatrix(self, ty):
         """
@@ -352,9 +370,9 @@ class DAE(object):
         if isinstance(val, (int, float)) and isinstance(row, (np.ndarray, matrix, list)):
             val = val * ones(len(row), 1)
 
-        self._set[m]['I'] = np.append(self._set[m]['I'], row)
-        self._set[m]['J'] = np.append(self._set[m]['J'], col)
-        self._set[m]['V'] = np.append(self._set[m]['V'], val)
+        self._set[m]['I'] = matrix([self._set[m]['I'], matrix(row)])
+        self._set[m]['J'] = matrix([self._set[m]['J'], matrix(col)])
+        self._set[m]['V'] = matrix([self._set[m]['V'], matrix(val)])
 
 
     def apply_set(self, ty):
@@ -374,9 +392,9 @@ class DAE(object):
         for m in todo:
             for idx in range(len(self._set[m]['I'])):
                 # for i, j, v in zip(self._set[m]['I'], self._set[m]['J'], self._set[m]['V']):
-                i = self._set[m]['I'].item(idx)
-                j = self._set[m]['J'].item(idx)
-                v = self._set[m]['V'].item(idx)
+                i = self._set[m]['I'][idx]
+                j = self._set[m]['J'][idx]
+                v = self._set[m]['V'][idx]
                 self.__dict__[m][i, j] = v
 
     # def set_jac(self, m, val, row, col):
