@@ -217,15 +217,14 @@ class DAE(object):
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
-        size = self.system.DAE.__dict__[m].size
-        self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+        size = self.__dict__[m].size
+        self.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def set_jac(self, m, val, row, col):
         """Add values (val, row, col) to Jacobian m """
         if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
             raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
 
-        size = self.system.DAE.__dict__[m].size
         old_val = []
         if type(row) is int:
             row = [row]
@@ -237,6 +236,7 @@ class DAE(object):
             col = list(col)
         for i, j in zip(row, col):
             old_val.append(self.system.DAE.__dict__[m][i, j])
+        size = self.__dict__[m].size
         self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
         self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
