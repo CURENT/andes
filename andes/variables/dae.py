@@ -177,35 +177,62 @@ class DAE(object):
             self.zxmax = matrix([self.zxmax, xones], (self.n, 1), 'd')
 
     def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
-        """Limit algebraic variables and set the Jacobians
+        """Set hard limits for algebraic variables and reset the equation mismatches
+
+        :param yidx: algebraic variable indices
+        :param ymin: lower limit to check for
+        :param ymax: upper limit to check for
+        :param min_set: optional lower limit to set to. Uses ``ymin`` if not present.
+        :param max_set: optional upper limit to set to. Uses ``ymax`` if not present.
+
+        :type yidx: list, matrix
+        :type ymin: matrix, int, float, list
+        :type ymax: matrix, int, float, list
+        :type min_set: matrix
+        :type max_set: matrix
+
+        :return: None
+
         """
         yidx = matrix(yidx)
+        yval = self.y[yidx]
+        ny = len(yidx)
+
+        if isinstance(ymin, (int, float, list)):
+            ymin = matrix(ymin, (ny, 1), 'd')
+        if isinstance(ymax, (int, float, list)):
+            ymax = matrix(ymax, (ny, 1), 'd')
 
         if not min_set:
             min_set = ymin
+        elif isinstance(min_set, (int, float, list)):
+            min_set = matrix(min_set, (ny, 1), 'd')
+
         if not max_set:
             max_set = ymax
+        elif isinstance(max_set, (int, float, list)):
+            max_set = matrix(max_set, (ny, 1), 'd')
 
-        if isinstance(min_set, (int, float)):
-            min_set = matrix(min_set, (len(yidx), 1), 'd')
-        if isinstance(max_set, (int, float)):
-            max_set = matrix(max_set, (len(yidx), 1), 'd')
+        above = ageb(yval, ymax)
+        below = aleb(yval, ymin)
 
-        yvals = self.y[yidx]
+        above_idx = findeq(above, 1.0)
+        below_idx = findeq(below, 1.0)
 
-        above = ageb(yvals, ymax)
-        below = aleb(yvals, ymin)
+        above_yidx = yidx[above_idx]
+        below_yidx = yidx[below_idx]
+        idx = list(above_idx) + list(below_idx)
 
-        self.y[yidx] = mul(self.y[yidx], nota(above)) + mul(max_set, above)
-        self.y[yidx] = mul(self.y[yidx], nota(below)) + mul(min_set, below)
+        if len(above_yidx) > 0:
+            self.y[above_yidx] = max_set[above_idx]
+            self.zymax[above_yidx] = 0
 
-        self.zymax[yidx] = mul(self.zymax[yidx], nota(above))
-        self.zymin[yidx] = mul(self.zymin[yidx], nota(below))
+        if len(below_yidx) > 0:
+            self.y[below_yidx] = min_set[below_idx]
+            self.zymin[below_yidx ] = 0
 
-        idx = aorb(above, below)
-        self.g[yidx] = mul(self.g[yidx], nota(idx))
-
-        if sum(idx) > 0:
+        if len(idx):
+            self.g[yidx[idx]] = 0
             self.ac_reset = True
 
     def hard_limit_remote(self, yidx, ridx, rtype='y', rmin=None, rmax=None, min_yset=0, max_yset=0):
@@ -246,36 +273,51 @@ class DAE(object):
             self.factorize = True
 
     def anti_windup(self, xidx, xmin, xmax):
-        """State variable anti-windup limiter
+        """Anti-windup limiter for state variables. Resets the limited variables and differential equations.
+
+        :param xidx: state variable indices
+        :param xmin: lower limit
+        :param xmax: upper limit
+
+        :type xidx: matrix, list
+        :type xmin: matrix, float, int, list
+        :type xmax: matrix, float, int, list
+
         """
         xidx = matrix(xidx)
         xval = self.x[xidx]
+        fval = self.f[xidx]
 
-        if type(xmin) in (float, int):
-            xmin = matrix(xmin, xidx.size)
-        if type(xmax) in (float, int):
-            xmax = matrix(xmax, xidx.size)
+        if isinstance(xmin, (float, int, list)):
+            xmin = matrix(xmin, xidx.size, 'd')
+
+        if isinstance(xmax, (float, int, list)):
+            xmax = matrix(xmax, xidx.size, 'd')
 
         x_above = ageb(xval, xmax)
-        x_below = aleb(xval, xmin)
+        f_above = ageb(fval, 0.0)
 
-        f_above = ageb(xval, 0.0)
-        f_below = aleb(xval, 0.0)
+        x_below = aleb(xval, xmin)
+        f_below = aleb(fval, 0.0)
 
         above = aandb(x_above, f_above)
+        above_idx = findeq(above, 1.0)
+        if len(above_idx) > 0:
+            above_xidx = xidx[above_idx]
+            self.x[above_xidx] = xmax[above_idx]
+            self.zxmax[above_xidx] = 0
+
         below = aandb(x_below, f_below)
+        below_idx = findeq(below, 1.0)
+        if len(below_idx) > 0:
+            below_xidx = xidx[below_idx]
+            self.x[below_xidx] = xmin[below_idx]
+            self.zxmin[below_xidx ] = 0
 
-        self.x[xidx] = mul(self.x[xidx], nota(above)) + mul(xmax, above)
-        self.zxmax[xidx] = mul(self.zxmax[xidx], nota(above))
-
-        self.x[xidx] = mul(self.x[xidx], nota(below)) + mul(xmin, below)
-        self.zxmin[xidx] = mul(self.zxmin[xidx], nota(below))
-
-        idx = aorb(above, below)
-        self.f[xidx] = mul(self.f[xidx], nota(idx))
-
-        if sum(idx) > 0:
-            self.factorize = True
+        idx = list(above_idx) + list(below_idx)
+        if len(idx) > 0:
+            self.f[xidx[idx]] = 0
+            self.ac_reset = True
 
     def reset_Ac(self):
         if sum(self.zxmin) == self.n \
@@ -444,9 +486,12 @@ class DAE(object):
     def reset_small_g(self):
         pass
 
-    # # ====== Construct spmatrix and add to Jacobian matrix ================
     # def add_jac(self, m, val, row, col):
-    #     """Add values (val, row, col) to Jacobian m"""
+    #     """Add values (val, row, col) to Jacobian m
+    #
+    #     This implementation construct the Jacobians incrementally. It is less efficient than storing (I,J,V)
+    #     and create altogether.
+    #     """
     #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
     #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
     #
@@ -454,7 +499,10 @@ class DAE(object):
     #     self.__dict__[m] += spmatrix(val, row, col, size, 'd')
     #
     # def set_jac(self, m, val, row, col):
-    #     """Add values (val, row, col) to Jacobian m """
+    #     """Add values (val, row, col) to Jacobian m
+    #
+    #     This implementation is very inefficient as it involves two __getitem__ and two __setitem__ ops.
+    #     """
     #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
     #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
     #
@@ -473,4 +521,73 @@ class DAE(object):
     #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
     #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
     #
-    # # =====================================================================
+    #
+    # def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
+    #     """Limit algebraic variables and set the Jacobians.
+    #
+    #     This method is slower than the current version because,  comparing with modifying matrix elements directly,
+    #     matrix multiplication and re-assignment involves more ops.
+    #     """
+    #     yidx = matrix(yidx)
+    #
+    #     if not min_set:
+    #         min_set = ymin
+    #     if not max_set:
+    #         max_set = ymax
+    #
+    #     if isinstance(min_set, (int, float)):
+    #         min_set = matrix(min_set, (len(yidx), 1), 'd')
+    #     if isinstance(max_set, (int, float)):
+    #         max_set = matrix(max_set, (len(yidx), 1), 'd')
+    #
+    #     yvals = self.y[yidx]
+    #
+    #     above = ageb(yvals, ymax)
+    #     below = aleb(yvals, ymin)
+    #
+    #     self.y[yidx] = mul(self.y[yidx], nota(above)) + mul(max_set, above)
+    #     self.y[yidx] = mul(self.y[yidx], nota(below)) + mul(min_set, below)
+    #
+    #     self.zymax[yidx] = mul(self.zymax[yidx], nota(above))
+    #     self.zymin[yidx] = mul(self.zymin[yidx], nota(below))
+    #
+    #     idx = aorb(above, below)
+    #     self.g[yidx] = mul(self.g[yidx], nota(idx))
+    #
+    #     if sum(idx) > 0:
+    #         self.ac_reset = True
+    #
+    #
+    # def anti_windup(self, xidx, xmin, xmax):
+    #     """State variable anti-windup limiter.
+    #
+    #     This version is slow for the same reason as hard_limit().
+    #     """
+    #     xidx = matrix(xidx)
+    #     xval = self.x[xidx]
+    #
+    #     if type(xmin) in (float, int):
+    #         xmin = matrix(xmin, xidx.size)
+    #     if type(xmax) in (float, int):
+    #         xmax = matrix(xmax, xidx.size)
+    #
+    #     x_above = ageb(xval, xmax)
+    #     x_below = aleb(xval, xmin)
+    #
+    #     f_above = ageb(xval, 0.0)
+    #     f_below = aleb(xval, 0.0)
+    #
+    #     above = aandb(x_above, f_above)
+    #     below = aandb(x_below, f_below)
+    #
+    #     self.x[xidx] = mul(self.x[xidx], nota(above)) + mul(xmax, above)
+    #     self.zxmax[xidx] = mul(self.zxmax[xidx], nota(above))
+    #
+    #     self.x[xidx] = mul(self.x[xidx], nota(below)) + mul(xmin, below)
+    #     self.zxmin[xidx] = mul(self.zxmin[xidx], nota(below))
+    #
+    #     idx = aorb(above, below)
+    #     self.f[xidx] = mul(self.f[xidx], nota(idx))
+    #
+    #     if sum(idx) > 0:
+    #         self.factorize = True
