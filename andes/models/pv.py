@@ -107,9 +107,19 @@ class PV(Stagen):
             dae.y[mq[self.above]] = self.qmax[self.above]
             self.qlim = list(set(list(mq[self.below]) + list(mq[self.above])))
 
-        dae.g -= spmatrix(mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
-        dae.g -= spmatrix(mul(self.u, dae.y[self.q]), self.v, [0] * self.n, (dae.m, 1), 'd')
-        dae.g += spmatrix(mul(self.u, dae.y[self.v] - self.v0), self.q, [0] * self.n, (dae.m, 1), 'd')
+        p_inj = - mul(self.u, self.pg)
+        q_inj = - mul(self.u, dae.y[self.q])
+        v_mis = mul(self.u, dae.y[self.v] - self.v0)
+
+        # TODO: improve readability
+        for a, v, q, pi, qi, dv in zip(self.a, self.v, self.q, p_inj, q_inj, v_mis):
+            dae.g[a] += pi
+            dae.g[v] += qi
+            dae.g[q] = dv  # not an interface equation
+
+        # dae.g -= spmatrix(mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g -= spmatrix(mul(self.u, dae.y[self.q]), self.v, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g += spmatrix(mul(self.u, dae.y[self.v] - self.v0), self.q, [0] * self.n, (dae.m, 1), 'd')
 
         if self.qlim:
             dae.g[self.qlim] = 0
@@ -156,10 +166,20 @@ class Slack(PV):
         dae.y[self.p] = mul(self.u, self.pg)
 
     def gcall(self, dae):
-        dae.g[self.a] -= mul(self.u, dae.y[self.p])
-        dae.g[self.v] -= mul(self.u, dae.y[self.q])
-        dae.g[self.q] = mul(self.u, dae.y[self.v] - self.v0)
-        dae.g[self.p] = mul(self.u, dae.y[self.a] - self.a0)
+        p_inj = -mul(self.u, dae.y[self.p])
+        q_inj = -mul(self.u, dae.y[self.q])
+        v_mis = mul(self.u, dae.y[self.v] - self.v0)
+        a_mis = mul(self.u, dae.y[self.a] - self.a0)
+        for a, v, p, q, pi, qi, dv, da in zip(self.a, self.v, self.p, self.q, p_inj, q_inj, v_mis, a_mis):
+            dae.g[a] += pi
+            dae.g[v] += qi
+            dae.g[q] = dv
+            dae.g[p] = da
+
+        # dae.g[self.a] -= mul(self.u, dae.y[self.p])
+        # dae.g[self.v] -= mul(self.u, dae.y[self.q])
+        # dae.g[self.q] = mul(self.u, dae.y[self.v] - self.v0)
+        # dae.g[self.p] = mul(self.u, dae.y[self.a] - self.a0)
 
     def jac0(self, dae):
         super().jac0(dae)
