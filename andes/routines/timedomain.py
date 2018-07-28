@@ -241,8 +241,8 @@ def run(system):
                     dae.q = dae.x - xa - h*0.5*(dae.f + fn)
 
                 # windup limiters
-                if dae.rebuild or dae.ac_reset:
-                    dae.reset_Ac()
+                # if dae.rebuild or dae.ac_reset:
+                dae.reset_Ac()
 
                 if dae.factorize:
                     F = symbolic(dae.Ac)

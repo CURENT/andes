@@ -320,20 +320,33 @@ class DAE(object):
             self.ac_reset = True
 
     def reset_Ac(self):
-        if sum(self.zxmin) == self.n \
-                and sum(self.zxmax) == self.n \
-                and sum(self.zymin) == self.n \
-                and sum(self.zymax) == self.n:
+        """
+        Reset ``DAE.Ac`` sparse matrix for disabled equations due to hard_limit and anti_windup limiters.
+
+        :return: None
+        """
+        if self.ac_reset is False:
             return
 
-        x_reset = aeqb(aandb(self.zxmin, self.zxmax), 0.)
-        y_reset = aeqb(aandb(self.zymin, self.zymax), 0.)
-        xy_reset = list(x_reset) + list(y_reset)
-        H = spdiag(xy_reset)
-        I = spdiag([1.0] * (self.m + self.n)) - H
-        self.Ac = I * (self.Ac * I) - H
-        self.q = mul(self.q, nota(x_reset))
+        mn = self.m + self.n
 
+        x = findeq(aandb(self.zxmin, self.zxmax), 0.)
+        y = [i + self.n for i in findeq(aandb(self.zymin, self.zymax), 0.)]
+        xy = list(x) + y
+
+        I = spdiag([1.0] * mn)
+        H = spmatrix(1.0, xy, xy, (mn, mn), 'd')
+
+        # Modifying ``I`` is more efficient than ``I = I - H``.
+        # CVXOPT modifies I in place because all accessed elements exist.
+
+        for idx in xy:
+            I[idx, idx] = 0
+
+        self.Ac = I * (self.Ac * I) - H
+        self.q[x] = 0
+
+        self.ac_reset = False
         self.factorize = True
 
     def get_size(self, m):
