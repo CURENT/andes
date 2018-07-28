@@ -179,6 +179,7 @@ class DAE(object):
     def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
         """Limit algebraic variables and set the Jacobians
         """
+        yidx = matrix(yidx)
 
         if not min_set:
             min_set = ymin
@@ -192,13 +193,13 @@ class DAE(object):
 
         yvals = self.y[yidx]
 
-        above = agtb(yvals, ymax)
-        below = altb(yvals, ymin)
+        above = ageb(yvals, ymax)
+        below = aleb(yvals, ymin)
 
         self.y[yidx] = mul(self.y[yidx], nota(above)) + mul(max_set, above)
-        self.zymax[yidx] = mul(self.zymax[yidx], nota(above))
+        self.y[yidx] = mul(self.y[yidx], nota(below)) + mul(min_set, below)
 
-        self.y[yidx] = mul(self.y[yidx], nota(below)) + mul(min_set, above)
+        self.zymax[yidx] = mul(self.zymax[yidx], nota(above))
         self.zymin[yidx] = mul(self.zymin[yidx], nota(below))
 
         idx = aorb(above, below)
@@ -242,30 +243,39 @@ class DAE(object):
         self.g[yidx[idx]] = 0
 
         if len(idx) > 0:
-            self.ac_reset = True
+            self.factorize = True
 
     def anti_windup(self, xidx, xmin, xmax):
-        """State variable anti-windup limiter"""
+        """State variable anti-windup limiter
+        """
+        xidx = matrix(xidx)
+        xval = self.x[xidx]
 
-        x_above = ageb(self.x[xidx], xmax)
-        f_above = ageb(self.f[xidx], 0)
+        if type(xmin) in (float, int):
+            xmin = matrix(xmin, xidx.size)
+        if type(xmax) in (float, int):
+            xmax = matrix(xmax, xidx.size)
+
+        x_above = ageb(xval, xmax)
+        x_below = aleb(xval, xmin)
+
+        f_above = ageb(xval, 0.0)
+        f_below = aleb(xval, 0.0)
+
         above = aandb(x_above, f_above)
+        below = aandb(x_below, f_below)
 
         self.x[xidx] = mul(self.x[xidx], nota(above)) + mul(xmax, above)
         self.zxmax[xidx] = mul(self.zxmax[xidx], nota(above))
 
-        x_below = aleb(self.x[xidx], xmin)
-        f_below = aleb(self.f[xidx], 0)
-        below = aandb(x_below, f_below)
-
         self.x[xidx] = mul(self.x[xidx], nota(below)) + mul(xmin, below)
         self.zxmin[xidx] = mul(self.zxmin[xidx], nota(below))
 
-        idx = aorb(f_above, f_below)
+        idx = aorb(above, below)
         self.f[xidx] = mul(self.f[xidx], nota(idx))
 
         if sum(idx) > 0:
-            self.ac_reset = True
+            self.factorize = True
 
     def reset_Ac(self):
         if sum(self.zxmin) == self.n \
@@ -283,14 +293,6 @@ class DAE(object):
         self.q = mul(self.q, nota(x_reset))
 
         self.factorize = True
-
-    # def add_jac(self, m, val, row, col):
-    #     """Add values (val, row, col) to Jacobian m"""
-    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
-    #
-    #     size = self.__dict__[m].size
-    #     self.__dict__[m] += spmatrix(val, row, col, size, 'd')
 
     def get_size(self, m):
         """
@@ -397,26 +399,6 @@ class DAE(object):
                 v = self._set[m]['V'][idx]
                 self.__dict__[m][i, j] = v
 
-    # def set_jac(self, m, val, row, col):
-    #     """Add values (val, row, col) to Jacobian m """
-    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
-    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
-    #
-    #     old_val = []
-    #     if type(row) is int:
-    #         row = [row]
-    #     if type(col) is int:
-    #         col = [col]
-    #     if type(row) is range:
-    #         row = list(row)
-    #     if type(col) is range:
-    #         col = list(col)
-    #     for i, j in zip(row, col):
-    #         old_val.append(self.system.DAE.__dict__[m][i, j])
-    #     size = self.__dict__[m].size
-    #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
-    #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
-
     def show(self, eq, value=None):
         """Show equation or variable array along with the names"""
         if eq in ['f', 'x']:
@@ -461,3 +443,34 @@ class DAE(object):
 
     def reset_small_g(self):
         pass
+
+    # # ====== Construct spmatrix and add to Jacobian matrix ================
+    # def add_jac(self, m, val, row, col):
+    #     """Add values (val, row, col) to Jacobian m"""
+    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+    #
+    #     size = self.__dict__[m].size
+    #     self.__dict__[m] += spmatrix(val, row, col, size, 'd')
+    #
+    # def set_jac(self, m, val, row, col):
+    #     """Add values (val, row, col) to Jacobian m """
+    #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
+    #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
+    #
+    #     old_val = []
+    #     if type(row) is int:
+    #         row = [row]
+    #     if type(col) is int:
+    #         col = [col]
+    #     if type(row) is range:
+    #         row = list(row)
+    #     if type(col) is range:
+    #         col = list(col)
+    #     for i, j in zip(row, col):
+    #         old_val.append(self.system.DAE.__dict__[m][i, j])
+    #     size = self.__dict__[m].size
+    #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
+    #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+    #
+    # # =====================================================================
