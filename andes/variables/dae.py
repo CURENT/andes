@@ -344,8 +344,9 @@ class DAE(object):
         for idx in xy:
             I[idx, idx] = 0
 
-        self.Ac = I * (self.Ac * I) - H
-        self.q[x] = 0
+        if len(xy) > 0:
+            self.Ac = I * (self.Ac * I) - H
+            self.q[x] = 0
 
         self.ac_reset = False
         self.factorize = True

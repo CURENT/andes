@@ -302,16 +302,16 @@ class PowerSystem(object):
             return tuple([False] * 7)
         idx = self.Bus.idx
         names = self.Bus.name
-        Vm = [round(self.DAE.y[x], dec) for x in self.Bus.v]
+        Vm = [self.DAE.y[x] for x in self.Bus.v]
         if self.SPF.usedegree:
-            Va = [round(self.DAE.y[x] * rad2deg, dec) for x in self.Bus.a]
+            Va = [self.DAE.y[x] * rad2deg for x in self.Bus.a]
         else:
-            Va = [round(self.DAE.y[x], dec) for x in self.Bus.a]
+            Va = [self.DAE.y[x] for x in self.Bus.a]
 
-        Pg = [round(self.Bus.Pg[x], dec) for x in range(self.Bus.n)]
-        Qg = [round(self.Bus.Qg[x], dec) for x in range(self.Bus.n)]
-        Pl = [round(self.Bus.Pl[x], dec) for x in range(self.Bus.n)]
-        Ql = [round(self.Bus.Ql[x], dec) for x in range(self.Bus.n)]
+        Pg = [self.Bus.Pg[x] for x in range(self.Bus.n)]
+        Qg = [self.Bus.Qg[x] for x in range(self.Bus.n)]
+        Pl = [self.Bus.Pl[x] for x in range(self.Bus.n)]
+        Ql = [self.Bus.Ql[x] for x in range(self.Bus.n)]
         return (list(x) for x in zip(*sorted(zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
     def get_nodedata(self, dec=5):
@@ -323,7 +323,7 @@ class PowerSystem(object):
             return tuple([False] * 7)
         idx = self.Node.idx
         names = self.Node.name
-        V = [round(self.DAE.y[x], dec) for x in self.Node.v]
+        V = [self.DAE.y[x] for x in self.Node.v]
         return (list(x) for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
 
     def get_linedata(self, dec=5):
@@ -334,10 +334,10 @@ class PowerSystem(object):
         idx = self.Line.idx
         fr = self.Line.bus1
         to = self.Line.bus2
-        Pfr = [round(self.Line.S1[x].real, dec) for x in range(self.Line.n)]
-        Qfr = [round(self.Line.S1[x].imag, dec) for x in range(self.Line.n)]
-        Pto = [round(self.Line.S2[x].real, dec) for x in range(self.Line.n)]
-        Qto = [round(self.Line.S2[x].imag, dec) for x in range(self.Line.n)]
+        Pfr = [self.Line.S1[x].real for x in range(self.Line.n)]
+        Qfr = [self.Line.S1[x].imag for x in range(self.Line.n)]
+        Pto = [self.Line.S2[x].real for x in range(self.Line.n)]
+        Qto = [self.Line.S2[x].imag for x in range(self.Line.n)]
         Ploss = [i + j for i, j in zip(Pfr, Pto)]
         Qloss = [i + j for i, j in zip(Qfr, Qto)]
         return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
