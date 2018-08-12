@@ -339,7 +339,7 @@ class DAE(object):
         H = spmatrix(1.0, xy, xy, (mn, mn), 'd')
 
         # Modifying ``I`` is more efficient than ``I = I - H``.
-        # CVXOPT modifies I in place because all accessed elements exist.
+        # CVXOPT modifies I in place because all the accessed elements exist.
 
         for idx in xy:
             I[idx, idx] = 0

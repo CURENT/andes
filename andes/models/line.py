@@ -296,12 +296,6 @@ class Line(ModelBase):
 
     def seriesflow(self, dae):
         """Compute the flow through the line after solving PF, including: terminal injections, line losses"""
-        # y1 = mul(self.u, self.g1 + self.b1 * 1j)
-        # y2 = mul(self.u, self.g2 + self.b2 * 1j)
-        # y12 = div(self.u, self.r + self.x * 1j)
-        # m = polar(self.tap, self.phi*deg2rad)
-        # mconj = conj(m)
-        # m2 = abs(m)**2 + 0j
 
         Vm = dae.y[self.v]
         Va = dae.y[self.a]
