@@ -74,8 +74,6 @@ def read(file, system, header=True):
         while line.endswith(',') or line.endswith(';'):
             newline = fid.readline()
             line = line.replace('\n', '')
-            if not newline:
-                break
             newline = newline.strip()
             if not newline:
                 continue

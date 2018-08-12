@@ -170,8 +170,6 @@ def run(system):
 
             dae.rebuild = True
             switch = False
-        # else:
-        # dae.rebuild = True
 
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
@@ -217,14 +215,15 @@ def run(system):
                 if actual_time - t_jac >= 5:
                     dae.rebuild = True
                     t_jac = actual_time
-                # elif niter > 4:
-                #     dae.rebuild = True
+                elif niter > 4:
+                    dae.rebuild = True
                 elif dae.factorize:
                     dae.rebuild = True
 
                 if dae.rebuild:
                     try:
                         exec(system.Call.int)
+                        dae.rebuild = False
                     except OverflowError:
                         system.Log.error('Data overflow. Convergence is not likely.')
                         t = settings.tf + 1
