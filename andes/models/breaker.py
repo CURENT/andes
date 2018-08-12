@@ -69,12 +69,12 @@ class Breaker(ModelBase):
         self.times = list(self.times) + list(self.times - 1e-6)
         return self.times
 
-    def istime(self, t):
+    def is_time(self, t):
         if not self.n:
             return
         return t in self.times
 
-    def check_time(self, actual_time):
+    def apply(self, actual_time):
         if self.time != actual_time:
             self.time = actual_time
         else:

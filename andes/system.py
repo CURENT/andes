@@ -1,20 +1,23 @@
+# ANDES, a power system simulation tool for research.
+#
+# Copyright 2015-2017 Hantao Cui
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
-ANDES, a power system simulation tool for research.
-
-Copyright 2015-2017 Hantao Cui
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Power system class
 """
+
 import importlib
 from operator import itemgetter
 from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
@@ -216,6 +219,43 @@ class PowerSystem(object):
                 if gen in self.__dict__[stagen].uid.keys():
                     self.__dict__[stagen].disable_gen(gen)
 
+    def check_event(self, sim_time):
+        """
+        Check for event occurrance at time ``sim_time``
+
+        :param sim_time: current simulation time
+        :return: a list of models with events at time t
+        """
+        ret = []
+        for model in self.__dict__['Event'].all_models:
+            if self.__dict__[model].is_time(sim_time):
+                ret.append(model)
+
+        # if self.Fault.is_time(sim_time):
+        #     ret.append(Fault)
+        if self.Breaker.is_time(sim_time):
+            ret.append(Fault)
+
+        return ret
+
+    def get_event_times(self):
+        """
+        Return event times of Fault, Breaker and other timed events
+
+        :return: a sorted list of event times
+        """
+        times = []
+
+        times.extend(self.Breaker.get_times())
+
+        for model in self.__dict__['Event'].all_models:
+            times.extend(self.__dict__[model].get_times())
+
+        if times:
+            times = sorted(list(set(times)))
+
+        return times
+
     def load_settings(self, Files):
         """load settings from file"""
         self.Log.debug('Loaded specified settings file.')
@@ -315,7 +355,7 @@ class Group(metaclass=GroupMeta):
     def __init__(self, system, name):
         self.system = system
         self.name = name
-        self._all_models = []
+        self.all_models = []
         self._idx_model = {}
 
     def register_model(self, model):
@@ -327,9 +367,9 @@ class Group(metaclass=GroupMeta):
         """
 
         assert isinstance(model, str)
-        assert model not in self._all_models
+        assert model not in self.all_models
 
-        self._all_models.append(model)
+        self.all_models.append(model)
 
     def register_element(self, model, idx):
         """
@@ -389,6 +429,8 @@ class Group(metaclass=GroupMeta):
 
         if isinstance(idx, (int, float, str)):
             idx = [idx]
+        if isinstance(value, (int, float)):
+            value = [value]
 
         models = [self._idx_model[i] for i in idx]
 

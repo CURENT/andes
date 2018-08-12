@@ -98,7 +98,7 @@ def run(system):
     h = first_time_step(system)
 
     # time vector for faults and breaker events
-    fixed_times = system.Call.get_times()
+    fixed_times = system.get_event_times()
 
     # compute max rotor angle difference
     diff_max = anglediff()
@@ -145,7 +145,7 @@ def run(system):
         actual_time = t + h
 
         # check for the occurrence of a disturbance
-        fixed_times = system.Call.get_times()
+        fixed_times = system.get_event_times()
         for item in fixed_times:
             if (item > t) and (item < t+h):
                 actual_time = item
@@ -163,8 +163,11 @@ def run(system):
 
         # apply fixed_time interventions and perturbations
         if switch:
-            system.Fault.check_time(actual_time)
-            system.Breaker.check_time(actual_time)
+            # system.Fault.apply(actual_time)
+            system.Breaker.apply(actual_time)
+            for item in system.check_event(actual_time):
+                system.__dict__[item].apply(actual_time)
+
             dae.rebuild = True
             switch = False
         # else:
@@ -375,7 +378,9 @@ def time_step(system, convergence, niter, t):
         if settings.deltat < settings.deltatmin:
             settings.deltat = 0
 
-    if system.Fault.istime(t) or system.Breaker.istime(t):
+    if system.Fault.is_time(t) or system.Breaker.is_time(t):
+        settings.deltat = min(settings.deltat, 0.002778)
+    elif system.check_event(t):
         settings.deltat = min(settings.deltat, 0.002778)
     if settings.method == 'fwdeuler':
         settings.deltat = min(settings.deltat, settings.tstep)

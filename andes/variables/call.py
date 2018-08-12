@@ -84,16 +84,6 @@ class Call(object):
             self.fxcalls[idx] = header + '.fxcall(system.DAE)\n'
             self.jac0s[idx] = header + '.jac0(system.DAE)\n'
 
-    def get_times(self):
-        """return event times of Fault and Breaker"""
-        times = []
-        times.extend(self.system.Fault.get_times())
-        times.extend(self.system.Breaker.get_times())
-        if times:
-            times = sorted(list(set(times)))
-
-        return times
-
     def _compile_newton(self):
         """Newton power flow execution
                 1. evaluate g and f;
