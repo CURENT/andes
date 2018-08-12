@@ -18,6 +18,11 @@ class JIT(object):
             model = importlib.import_module('.'+self.model, 'andes.models')
             device = getattr(model, self.device)
             self.system.__dict__[self.name] = device(self.system, self.name)
+
+            g = self.system.__dict__[self.name]._group
+            self.system.add_group(g)
+            self.system.__dict__[g].register_model(self.name)
+
             self.system.DevMan.register_device(self.name)  # register device after loading
             self.loaded = 1
             self.system.Log.debug('Imported model <{:s}.{:s}>.'.format(self.model, self.device))

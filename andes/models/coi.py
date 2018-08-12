@@ -7,6 +7,7 @@ from .base import ModelBase
 class COI(ModelBase):
     def __init__(self, system, name):
         super(COI, self).__init__(system, name)
+        self._group = 'Calculation'
         self._data.update({'syn': None,
                            'Td': 1,
                            })

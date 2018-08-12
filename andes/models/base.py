@@ -127,6 +127,8 @@ class ModelBase(object):
 
         self._times = []       # time constants
 
+        self._event_times = []  # event occurrance times
+
         # property functions this device has
 
         self.calls = dict(pflow=False, addr1=False,
@@ -188,7 +190,7 @@ class ModelBase(object):
 
     def param_add(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
                   voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
-                  time=False, **kwargs):
+                  time=False, event_time=False, **kwargs):
         """Define a parameter in the model
 
         :param tomatrix: convert this parameter list to matrix
@@ -208,6 +210,7 @@ class ModelBase(object):
         :param dccurrent: is a dc current value in the device base
         :param dcvoltage: is a dc votlage value in the device base
         :param time: is a time value in the device base
+        :param event_time: is a variable for timed event
 
         :type param: str
         :type tomatrix: bool
@@ -226,6 +229,7 @@ class ModelBase(object):
         :type dccurrent: bool
         :type dcvoltage: bool
         :type time: bool
+        :type event_time: bool
         """
         assert param not in self._data
         assert param not in self._algebs
@@ -263,6 +267,8 @@ class ModelBase(object):
             self._dcvoltages.append(param)
         if time:
             self._times.append(param)
+        if event_time:
+            self._event_times.append(param)
 
     def var_add(self, variable, ty, fname, descr='', uname=''):
         """
@@ -633,6 +639,7 @@ class ModelBase(object):
     def element_add(self, idx=None, name=None, **kwargs):
         """element_add an element of this model"""
         idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
+        _ = self.system.__dict__[self._group].register_element(self._name, idx)
         self.uid[idx] = self.n
         self.idx.append(idx)
         self.n += 1

@@ -8,7 +8,7 @@ class Line(ModelBase):
     """AC transmission line lumped model"""
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._group = 'Line'
+        self._group = 'Series'
         self._name = 'Line'
         self._data.update({'r': 0.0,
                            'x': 1e-6,

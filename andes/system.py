@@ -23,6 +23,7 @@ from .settings import Settings, SPF, TDS, CPF, SSSA
 from .utils import Logger
 from .models import non_jits, jits, JIT
 from .consts import *
+from cvxopt import matrix
 
 try:
     from .utils.streaming import Streaming
@@ -76,6 +77,8 @@ class PowerSystem(object):
         self.VarOut = VarOut(self)
         self.Report = Report(self)
 
+        self.groups = []
+
         if dime:
             self.Settings.dime_enable = True
             self.Settings.dime_server = dime
@@ -106,6 +109,16 @@ class PowerSystem(object):
             for item in self.DevMan.devices:
                 self.__dict__[item].param_to_sysbase()
 
+    def add_group(self, name):
+        """
+        Add group ``name`` to the system
+
+        :param name: group name
+        :return: None
+        """
+        if not hasattr(self, name):
+            self.__dict__[name] = Group(self, name)
+
     def inst_models(self):
         """instantiate non-JIT models and import JIT models"""
         # non-JIT models
@@ -115,6 +128,11 @@ class PowerSystem(object):
                     themodel = importlib.import_module('andes.models.' + file)
                     theclass = getattr(themodel, cls)
                     self.__dict__[name] = theclass(self, name)
+
+                    group = self.__dict__[name]._group
+                    self.add_group(group)
+                    self.__dict__[group].register_model(name)
+
                     self.DevMan.register_device(name)
                 except ImportError:
                     self.Log.error('Error adding non-JIT model <{:s}.{:s}>.'.format(file, cls))
@@ -283,4 +301,98 @@ class PowerSystem(object):
         Ploss = [i + j for i, j in zip(Pfr, Pto)]
         Qloss = [i + j for i, j in zip(Qfr, Qto)]
         return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
+
+
+class GroupMeta(type):
+    def __new__(cls, name, base, attr_dict):
+        # print(name)
+        # print(base)
+        # print(attr_dict)
+        return super(GroupMeta, cls).__new__(cls, name, base, attr_dict)
+
+
+class Group(metaclass=GroupMeta):
+    def __init__(self, system, name):
+        self.system = system
+        self.name = name
+        self._all_models = []
+        self._idx_model = {}
+
+    def register_model(self, model):
+        """
+        Register ``model`` to this model group
+
+        :param model: name of the model
+        :return: None
+        """
+
+        assert isinstance(model, str)
+        assert model not in self._all_models
+
+        self._all_models.append(model)
+
+    def register_element(self, model, idx):
+        """
+        Register element with index ``idx`` to ``model``
+
+        :param model: model name
+        :param idx: element idx
+        :return: final element idx
+        """
+
+        if idx is None:
+            idx = model + '_' + str(len(self._idx_model))
+
+        assert idx not in self._idx_model.values()
+
+        self._idx_model[idx] = model
+        return idx
+
+    def get_field(self, field, idx):
+        """
+        Return the field ``field`` of elements ``idx`` in the group
+
+        :param field: field name
+        :param idx: element idx
+        :return: values of the requested field
+        """
+        ret = []
+        scalar = False
+
+        # if isinstance(idx, matrix):
+        #     idx = list(idx)
+        if isinstance(idx, (int, float, str)):
+            scalar = True
+            idx = [idx]
+
+        models = [self._idx_model[i] for i in idx]
+
+        for i, m in zip(idx, models):
+            ret.append(self.system.__dict__[m].get_field(field, idx=i))
+
+        if scalar is True:
+            return ret[0]
+        else:
+            return ret
+
+    def set_field(self, field, idx, value):
+        """
+        Set the field ``field`` of elements ``idx`` to ``value``.
+
+        This function does not if the field is valid for all models.
+
+        :param field: field name
+        :param idx: element idx
+        :param value: value of fields to set
+        :return: None
+        """
+
+        if isinstance(idx, (int, float, str)):
+            idx = [idx]
+
+        models = [self._idx_model[i] for i in idx]
+
+        for i, m, v in zip(idx, models, value):
+            uid = self.system.__dict__[m].idx_to_uid(idx)
+            self.system.__dict__[m].__dict__[field][uid] = v
 

@@ -8,6 +8,7 @@ from ..utils.math import zeros
 class ACE(ModelBase):
     def __init__(self, system, name):
         super(ACE, self).__init__(system, name)
+        self._group = 'Calculation'
         self._data.update({'area': None,
                            })
         self._mandatory.extend(['area'])
@@ -35,6 +36,7 @@ class ACE(ModelBase):
 class AGC(ModelBase):
     def __init__(self, system, name):
         super(AGC, self).__init__(system, name)
+        self._group = 'Control'
         self._data.update({'coi': None,
                            'ace': None,
                            'beta': 0,
@@ -88,6 +90,7 @@ class AGC(ModelBase):
 class EAGC(ModelBase):
     def __init__(self, system, name):
         super(EAGC, self).__init__(system, name)
+        self._group = 'Control'
         self._data.update({'cl': None,
                            'tl': 0.,
                            'Pl': None,

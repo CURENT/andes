@@ -8,7 +8,7 @@ class Fault(ModelBase):
     """3-phase to ground fault class"""
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._group = 'Fault'
+        self._group = 'Event'
         self._name = 'Fault'
         self._data.update({'bus': None,
                            'fn': 60.0,
