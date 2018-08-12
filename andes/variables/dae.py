@@ -2,6 +2,7 @@ from cvxopt import matrix, spmatrix, sparse, spdiag, mul
 from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb, agtb, altb, nota
 import numpy as np
 
+
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (DAE)"""
     def __init__(self, system):

@@ -369,10 +369,6 @@ def run(case, **kwargs):
     # create a power system object
     system = PowerSystem(case, **kwargs)
 
-    # print preamble
-    if pid == -1:
-        system.Log.info(preamble(no_preamble))
-
     t0, _ = elapsed()
 
     # parse input file

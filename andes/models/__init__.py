@@ -79,7 +79,7 @@ jits = {'vsc': {'VSC': 'VSC',
                  },
         }
 
-all_models = jits
+all_models = dict(jits)
 all_models.update(non_jits)
 
 all_models_list = []
