@@ -15,6 +15,7 @@ setup(name='andes',
           'texttable',
           'matplotlib',
           'scipy',
+          'pandas',
       ],
       packages=[
           'andes',

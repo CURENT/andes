@@ -14,12 +14,12 @@ year = version[:4]
 def preamble(disable=False):
     """Return preamble string for command line use"""
     if disable:
-        return
+        return ''
+
     message = '\n'
     message += 'ANDES ' + version + '\n'
-    message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n\n'
-    message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n'
-    message += 'Use this software AT YOUR OWN RISK\n\n'
+    message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n'
+    message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n\n'
     message += 'Platform:    ' + platform.system() + '\n'
     message += 'Interpreter: ' + 'Python ' + platform.python_version() + '\n'
     message += 'Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n'

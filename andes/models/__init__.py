@@ -1,8 +1,10 @@
 from .jit import JIT
 
 
-__all__ = ['base',
-           'bus',
+__all__ = ['jits',
+           'non_jits',
+           'all_models',
+           'all_models_list'
            ]
 
 order = ['Bus', 'Node', 'Ground', 'line',
@@ -76,3 +78,12 @@ jits = {'vsc': {'VSC': 'VSC',
                  'ConstWind': 'ConstWind'
                  },
         }
+
+all_models = jits
+all_models.update(non_jits)
+
+all_models_list = []
+
+for key in sorted(all_models.keys()):
+    val = all_models[key]
+    all_models_list.extend(sorted(list(val.values())))

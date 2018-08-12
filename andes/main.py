@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""
-ANDES, a power system simulation tool for research.
 
-Copyright 2015-2017 Hantao Cui
+# ANDES, a power system simulation tool for research.
+#
+# Copyright 2015-2017 Hantao Cui
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+""" Andes main entry points"""
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
 
 import os
 import glob
@@ -33,6 +35,7 @@ from .utils import elapsed
 from .variables import preamble
 from .routines import powerflow, timedomain, eigenanalysis
 # from .routines.fakemodule import EAGC
+
 
 def cli_parse(writehelp=False, helpfile=None):
     """command line input argument parser"""
@@ -98,11 +101,10 @@ def cli_parse(writehelp=False, helpfile=None):
 
     if writehelp:
         try:
-            usagefile = open(helpfile, 'w')
-            usagefile.writelines('[ANDES] Command Line Usage Help\n\n')
-            parser.print_help(file=usagefile)
-            usagefile.close()
-            print('--> Command line usage written to file.')
+            with open(helpfile, 'w') as f:
+                f.writelines('[ANDES] Command Line Usage Help\n\n')
+                parser.print_help(file=f)
+                print('--> Command line usage written to file.')
         except IOError:
             print('I/O exception while writing help file.')
         return
@@ -113,36 +115,32 @@ def cli_parse(writehelp=False, helpfile=None):
 
 def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_var=None,
              quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
-    """Dump all sorts of help files"""
+    """Dump all sorts of help files
+
+    :return: True if executed
+    """
     if not (usage or group or category or dev_list or dev_format or dev_var
             or quick_help or help_option or help_settings):
         return
-    from .models import non_jits, jits
-
-    all = dict(non_jits)
-    all.update(jits)
-    all_models = []
-    keys = sorted(all.keys())
-    for key in keys:
-        val = all[key]
-        all_models.extend(sorted(list(val.values())))
+    from .models import all_models_list
 
     ps = PowerSystem()
 
     if usage:
         cli_parse(writehelp=True, helpfile='cli_help.txt')
+        return True
     if category:
         pass
     if dev_list:
         pass
     if dev_format:
         if dev_format.lower() == 'all':
-            dev_format = all_models
+            dev_format = all_models_list
         else:
             dev_format = dev_format.split(',')
 
         for item in dev_format:
-            if item not in all_models:
+            if item not in all_models_list:
                 ps.Log.warning('Model <{}> does not exist.'.format(item))
                 dev_format.remove(item)
 
@@ -178,7 +176,7 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
     if group:
         found = False
         group_dict = {}
-        for model in all_models:
+        for model in all_models_list:
             g = ps.__dict__[model]._group
             if g not in group_dict:
                 group_dict[g] = []
@@ -209,7 +207,7 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
     if quick_help:
-        if quick_help not in all_models:
+        if quick_help not in all_models_list:
             ps.Log.error('Model <{}> does not exist.'.format(quick_help))
         else:
             ps.__dict__[quick_help].help_doc(export=export, save=False)
@@ -237,22 +235,26 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
 
-def clean(clean=False):
+def clean(run=False):
     """Clean up function for generated files"""
-    if clean:
-        found = False
-        cwd = os.getcwd()
-        for file in os.listdir(cwd):
-            if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
-                    file.endswith('_out.dat') or file.endswith('_prof.txt'):
-                found = True
-                try:
-                    os.remove(file)
-                    print('<{:s}> removed.'.format(file))
-                except IOError:
-                    print('Error removing file <{:s}>.'.format(file))
-        if not found:
-            print('--> No Andes output found in the working directory.')
+    if not run:
+        return False
+
+    found = False
+    cwd = os.getcwd()
+    for file in os.listdir(cwd):
+        if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
+                file.endswith('_out.dat') or file.endswith('_prof.txt'):
+            found = True
+            try:
+                os.remove(file)
+                print('<{:s}> removed.'.format(file))
+            except IOError:
+                print('Error removing file <{:s}>.'.format(file))
+    if not found:
+        print('--> No Andes output found in the working directory.')
+
+    return True
 
 
 def search(keyword):
@@ -287,8 +289,7 @@ def main():
     kwargs = {}
 
     # run clean-ups and exit
-    if args.clean:
-        clean(args.clean)
+    if clean(args.clean):
         return
 
     if args.search:
@@ -296,6 +297,9 @@ def main():
         return
 
     # extract case names
+    if len(args.casename) >= 2:
+        args.no_preamble = True
+
     for item in args.casename:
         cases += glob.glob(os.path.join(args.path, item))
     cases = list(set(cases))
@@ -310,9 +314,10 @@ def main():
     if dumphelp(**kwargs):
         return
 
+    print(preamble(args.no_preamble))
+
     # exit if no case specified
     if len(cases) == 0:
-        print(preamble(args.no_preamble))
         print('--> Data file undefined or path is invalid.')
         print('Use "andes -h" for command line help.')
         return
@@ -327,20 +332,20 @@ def main():
     # multiple studies on multiple processors
     else:
         jobs = []
-        kwargs['verbose'] = CRITICAL
+        kwargs['verbose'] = ERROR
         ncpu = os.cpu_count()
-        for idx, casename in enumerate(cases):
-            if idx % ncpu == ncpu - 1:
+        for idx, case_name in enumerate(cases):
+            kwargs['pid'] = idx
+            job = Process(name='Process {0:d}'.format(idx), target=run, args=(case_name,), kwargs=kwargs)
+            jobs.append(job)
+            job.start()
+            print('Process {:d} <{:s}> started.'.format(idx, case_name))
+
+            if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
                 sleep(0.1)
                 for job in jobs:
                     job.join()
                 jobs = []
-
-            kwargs['pid'] = idx
-            job = Process(name='Process {0:d}'.format(idx), target=run, args=(casename,), kwargs=kwargs)
-            jobs.append(job)
-            job.start()
-            print('Process {:d} <{:s}> started.'.format(idx, casename))
 
         t0, s0 = elapsed(t0)
         print('--> Multiple processing finished in {0:s}.'.format(s0))
