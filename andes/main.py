@@ -60,6 +60,7 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('--tf', help='End time of time-domain simulation.', type=float)
     parser.add_argument('-l', '--log', help='Specify the name of log file.')
     parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
+    parser.add_argument('--ncpu', help='number of parallel processes', type=int, default=0)
     parser.add_argument('-v', '--verbose', help='Program logging level, an integer from 1 to 5.'
                                                 'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
                                                 'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
@@ -335,7 +336,10 @@ def main():
     else:
         jobs = []
         kwargs['verbose'] = ERROR
-        ncpu = os.cpu_count()
+        ncpu = kwargs['ncpu']
+        if ncpu == 0 or ncpu > os.cpu_count():
+            ncpu = os.cpu_count()
+
         for idx, case_name in enumerate(cases):
             kwargs['pid'] = idx
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(case_name,), kwargs=kwargs)
