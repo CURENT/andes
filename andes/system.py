@@ -96,13 +96,19 @@ class PowerSystem(object):
         self.inst_models()
 
     def setup(self):
-        """set up everything after receiving the inputs"""
+        """set up everything after receiving the inputs
+        """
+        # try:
         self.DevMan.sort_device()
         self.Call.setup()
         self.dev_setup()
         self.xy_addr0()
         self.DAE.setup()
         self.to_sysbase()
+        return True
+
+        # except:
+        #     return False
 
     def to_sysbase(self):
         """Convert model parameters to system base
@@ -182,17 +188,27 @@ class PowerSystem(object):
 
     def init_pf(self):
         """run models.init0() for power flow"""
+        ret = False
+        # try:
         self.DAE.init_xy()
+
         for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow, self.Call.init0):
             if pflow and init0:
                 self.__dict__[device].init0(self.DAE)
 
         # check for islands
         self.check_islands(show_info=True)
+        ret = True
+
+        # except:
+        #     pass
+
+        return ret
 
     def td_init(self):
         """run models.init1() time domain simulation"""
-
+        ret = False
+        # try:
         # Assign indices for post-powerflow device variables
         self.xy_addr1()
 
@@ -207,6 +223,12 @@ class PowerSystem(object):
         for device, init1 in zip(self.DevMan.devices, self.Call.init1):
             if init1:
                 self.__dict__[device].init1(self.DAE)
+
+        ret = True
+        # except:
+        #     pass
+        #
+        return ret
 
     def rmgen(self, idx):
         """remove static generators if dynamic ones exist"""
@@ -367,9 +389,8 @@ class Group(metaclass=GroupMeta):
         """
 
         assert isinstance(model, str)
-        assert model not in self.all_models
-
-        self.all_models.append(model)
+        if model not in self.all_models:
+            self.all_models.append(model)
 
     def register_element(self, model, idx):
         """

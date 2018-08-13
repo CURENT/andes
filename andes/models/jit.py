@@ -32,8 +32,8 @@ class JIT(object):
         except AttributeError:
             self.system.Log.error('Error importing a non-existent model <{:s}.{:s}>. Check __init__.py in models'
                                   .format(self.model, self.device))
-        except:
-            self.system.Log.error('Unknown error importing <{:s}.{:s}>.'.format(self.model, self.device))
+        # except:
+        #     self.system.Log.error('Unknown error importing <{:s}.{:s}>.'.format(self.model, self.device))
 
     def __getattr__(self, attr):
         if not self.loaded:

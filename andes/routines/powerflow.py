@@ -22,7 +22,11 @@ solvers = {'nr': 'newton',
 
 
 def run(system):
-    """Entry function of power flow routine"""
+    """Entry function of power flow routine
+
+    :return: convergence truth value
+    :rtype: bool
+    """
 
     # default sparselib setup
     if system.Settings.sparselib not in system.Settings.sparselib_alt:
@@ -47,6 +51,8 @@ def run(system):
     if convergence:
         system.SPF.solved = True
         post_processing(system, convergence)
+
+    return convergence
 
 
 def calcInc(system):

@@ -16,7 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Andes main entry points"""
+"""
+Andes main entry points
+"""
 
 
 import os
