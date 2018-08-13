@@ -1,23 +1,30 @@
-from cvxopt import matrix, sparse, div
-from ..utils.jactools import diag0
-from ..consts import DEBUG
 import importlib
 import math
 
+from cvxopt import matrix, sparse
+from cvxopt import div
+from cvxopt import umfpack
+
+from ..utils import elapsed
+from ..utils.jactools import diag0
+from ..consts import DEBUG
+
+
 try:
-    klu = importlib.import_module('cvxoptklu.klu')
+    from cvxoptklu import klu
     KLU = True
-except:
+except ImportError:
     KLU = False
-umfpack = importlib.import_module('cvxopt.umfpack')
+
+
 lib = umfpack
 F = None
 
-solvers = {'nr': 'newton',
-           'newton': 'newton',
-           'fdpf': 'fdpf',
-           'fdbx': 'fdpf',
-           'fdxb': 'fdpf',
+solvers = {'NR': 'newton',
+           'Newton': 'newton',
+           'FDPF': 'fdpf',
+           'FDBX': 'fdpf',
+           'FDXB': 'fdpf',
            }
 
 
@@ -27,50 +34,108 @@ def run(system):
     :return: convergence truth value
     :rtype: bool
     """
+    t, s = elapsed()
 
     # default sparselib setup
-    if system.Settings.sparselib not in system.Settings.sparselib_alt:
+    assert system.Settings.sparselib in system.Settings.sparselib_alt, \
+        "Invalid sparse library <{}>".format(system.Settings.sparselib)
+
+    if system.Settings.sparselib == 'klu' and KLU:
+        globals()['lib'] = klu
+    else:
         system.Settings.sparselib = 'umfpack'
         globals()['lib'] = umfpack
-    elif system.Settings.sparselib == 'klu':
-        if not KLU:
-            system.Settings.sparselib = 'umfpack'
-            globals()['lib'] = umfpack
-        else:
-            globals()['lib'] = klu
 
     # default solver setup
-    if system.SPF.solver.lower() not in solvers.keys():
+    if system.SPF.solver not in solvers.keys():
             system.SPF.solver = 'NR'
 
-    func_name = solvers.get(system.SPF.solver.lower())
+    func_name = solvers.get(system.SPF.solver)
     run_powerflow = importlib.import_module('andes.routines.powerflow')
     run_powerflow = getattr(run_powerflow, func_name)
 
-    convergence, niter = run_powerflow(system)
-    if convergence:
-        system.SPF.solved = True
-        post_processing(system, convergence)
+    # info print out
+    system.Log.info('Power Flow Analysis:')
+    system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
+    system.Log.info('Solution Method: ' + system.SPF.solver.upper())
+    system.Log.info('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
+    convergence, niter = run_powerflow(system)
+    system.status['pf_solved'] = convergence
+
+    if convergence:
+        post_processing(system)
+
+    t, s = elapsed(t)
+
+    system.Log.info('Power flow {} in {}'.format(['failed', 'converged'][convergence], s))
     return convergence
 
 
-def calcInc(system):
+def newton(system):
+    """
+    Standard Newton power flow routine
+
+    :param system: power system instance
+    :return: (convergence flag, number of iterations)
+    """
+
+    convergence = False
+    dae = system.DAE
+    iter_mis = []
+
+    # main loop
+    niter = 0
+    while True:
+        inc = calc_inc(system)
+        dae.x += inc[:dae.n]
+        dae.y += inc[dae.n:dae.n + dae.m]
+
+        niter += 1
+        system.SPF.iter = niter
+
+        max_mis = max(abs(inc))
+        iter_mis.append(max_mis)
+        system.Settings.error = max_mis
+
+        system.Log.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(niter, max_mis))
+
+        if max_mis < system.Settings.tol:
+            convergence = True
+            break
+        elif niter > 5 and max_mis > 1000 * iter_mis[0]:
+            system.Log.info('Blown up in {0} iterations.'.format(niter))
+            break
+        if niter > system.SPF.maxit:
+            system.Log.info('Reached maximum number of iterations.')
+            break
+
+    return convergence, niter
+
+
+def calc_inc(system):
+    """
+    Calculate variable correction increments for Newton method
+
+    :param system: system instance
+    :return: a matrix of variable increment from solving -Ax = b
+    """
+
     global F
     exec(system.Call.newton)
 
-    A = sparse([[system.DAE.Fx, system.DAE.Gx], [system.DAE.Fy, system.DAE.Gy]])
+    A = sparse([[system.DAE.Fx, system.DAE.Gx],
+                [system.DAE.Fy, system.DAE.Gy]])
+
     inc = matrix([system.DAE.f, system.DAE.g])
 
     if system.DAE.factorize:
         F = lib.symbolic(A)
         system.DAE.factorize = False
 
-    # matrix2mat('PF_Gy.mat', [system.DAE.Gy], ['Gy'])
-
     try:
         N = lib.numeric(A, F)
-        if system.Settings.sparselib.lower() == 'klu' and KLU:
+        if system.Settings.sparselib.lower() == 'klu':
             lib.solve(A, F, N, inc)
         elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
@@ -85,7 +150,9 @@ def calcInc(system):
 
 
 def fdpf(system):
-    """Fast Decoupled power flow solver routine"""
+    """
+    Fast Decoupled power flow solver routine
+    """
 
     # sparse library set up
     sparselib = system.Settings.sparselib.lower()
@@ -170,57 +237,27 @@ def fdpf(system):
     return convergence, niter
 
 
-def newton(system):
-    """newton power flow routine"""
-    niter = 0
-    iter_max = system.SPF.maxit
-    convergence = False
-    tol = system.Settings.tol
-    system.Settings.error = tol + 1
-    err_vec = []
-    # main loop
-    while system.Settings.error > tol:
-        inc = calcInc(system)
-        system.DAE.x += inc[:system.DAE.n]
-        system.DAE.y += inc[system.DAE.n:system.DAE.n + system.DAE.m]
+def post_processing(system):
+    """
+    Post processing for power flow routine. Computes nodal and line injections.
 
-        niter += 1
-        system.SPF.iter = niter
-        system.Settings.error = max(abs(inc))
-        err_vec.append(system.Settings.error)
+    :param system: power system object
+    :return: None
+    """
+    exec(system.Call.pfload)
+    system.Bus.Pl = system.DAE.g[system.Bus.a]
+    system.Bus.Ql = system.DAE.g[system.Bus.v]
 
-        msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(niter, system.Settings.error)
-        system.Log.info(msg)
+    exec(system.Call.pfgen)
+    system.Bus.Pg = system.DAE.g[system.Bus.a]
+    system.Bus.Qg = system.DAE.g[system.Bus.v]
 
-        if niter > 4 and err_vec[-1] > 1000 * err_vec[0]:
-            system.Log.info('Blown up in {0} iterations.'.format(niter))
-            break
-        if niter > iter_max:
-            system.Log.info('Reached maximum number of iterations.')
-            break
+    if system.PV.n:
+        system.PV.qg = system.DAE.y[system.PV.q]
+    if system.SW.n:
+        system.SW.pg = system.DAE.y[system.SW.p]
+        system.SW.qg = system.DAE.y[system.SW.q]
 
-    if err_vec[-1] < tol:
-        convergence = True
+    exec(system.Call.seriesflow)
 
-    return convergence, niter
-
-
-def post_processing(system, convergence):
-    if convergence:
-        exec(system.Call.pfload)
-        system.Bus.Pl = system.DAE.g[system.Bus.a]
-        system.Bus.Ql = system.DAE.g[system.Bus.v]
-
-        exec(system.Call.pfgen)
-        system.Bus.Pg = system.DAE.g[system.Bus.a]
-        system.Bus.Qg = system.DAE.g[system.Bus.v]
-
-        if system.PV.n:
-            system.PV.qg = system.DAE.y[system.PV.q]
-        if system.SW.n:
-            system.SW.pg = system.DAE.y[system.SW.p]
-            system.SW.qg = system.DAE.y[system.SW.q]
-
-        exec(system.Call.seriesflow)
-
-        system.Area.seriesflow(system.DAE)
+    system.Area.seriesflow(system.DAE)

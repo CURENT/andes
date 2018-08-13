@@ -360,7 +360,6 @@ def run(case, **kwargs):
     dump_raw = kwargs.get('dump_raw', False)
     summary = kwargs.pop('summary', False)
     exitnow = kwargs.pop('exit', False)
-    no_preamble = kwargs.pop('no_preamble', False)
     pid = kwargs.get('pid', -1)
     pr = cProfile.Profile()
 
@@ -374,29 +373,18 @@ def run(case, **kwargs):
     t0, _ = elapsed()
 
     # parse input file
-    if not filters.guess(system):
-        system.Log.error('Unable to determine case format.')
-        return
-    if not filters.parse(system):
-        system.Log.error('Parse input file failed.')
-        return
+    filters.guess(system)
+    filters.parse(system)
 
     t1, s = elapsed(t0)
-    system.Log.info('Case file {:s} parsed in {:s}.'.format(system.Files.fullname, s))
 
     # dump system as raw file if requested
     if dump_raw:
-        if filters.dump_raw(system):
-            t2, s = elapsed(t1)
-            system.Log.info('Raw file dump {:s} written in {:s}.'.format(system.Files.dump_raw, s))
-        else:
-            system.Log.error('Dump raw file failed.')
+        filters.dump_raw(system)
 
     # print summary only
     if summary:
-        t2, s = elapsed(t1)
         system.Report.write(content='summary')
-        system.Log.info('Summary of written in {:s}'.format(s))
         return
 
     # exit without solving power flow
@@ -408,35 +396,13 @@ def run(case, **kwargs):
     system.setup()
 
     # initialize power flow study
-    system.init_pf()
-    t2, s = elapsed(t1)
-    system.Log.info('System models initialized in {:s}.\n'.format(s))
-
-    # Choose PF solver and run_pf
-    if system.SPF.solver.lower() not in powerflow.solvers.keys():
-        system.SPF.solver = 'NR'
-
-    system.Log.info('Power Flow Analysis:')
-    system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
-    system.Log.info('Solution Method: ' + system.SPF.solver.upper())
-    system.Log.info('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
+    system.pf_init()
 
     powerflow.run(system)
-    t3, s = elapsed(t2)
-    if not system.SPF.solved:
-        system.Log.info('Power flow failed to converge in {:s}.'.format(s))
-    else:
-        system.Log.info('Power flow converged in {:s}.'.format(s))
+    if system.status['pf_solved'] is True:
         system.td_init()  # initialize variables for output even if not running TDS
-        t4, s = elapsed(t3)
-        if system.DAE.n:
-            system.Log.info('Dynamic models initialized in {:s}.'.format(s))
-        else:
-            system.Log.info('No dynamic model loaded.')
         if not system.Files.no_output:
             system.Report.write(content='powerflow')
-            t5, s = elapsed(t4)
-            system.Log.info('Static report written to <{:s}> in {:s}.'.format(system.Files.output, s))
 
     # run more studies
     t0, s = elapsed()
@@ -458,10 +424,6 @@ def run(case, **kwargs):
             system.Streaming.sync_and_handle()
 
         t1, s = elapsed(t0)
-        system.Log.info('')
-        system.Log.info('Time Domain Simulation:')
-        system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
-        system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
         # system.hack_EAGC()
 
         ret = timedomain.run(system)
@@ -469,10 +431,6 @@ def run(case, **kwargs):
             system.Streaming.dimec.send_var('geovis', 'DONE', 1)
             system.Streaming.dimec.exit()
         t2, s = elapsed(t1)
-        if ret == True:
-            system.Log.info('Time domain simulation finished in {:s}.'.format(s))
-        else:
-            system.Log.info('Time domain simulation failed in {:s}.'.format(s))
         if ret and (not system.Files.no_output):
             system.VarOut.dump()
             t3, s = elapsed(t2)

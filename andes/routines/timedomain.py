@@ -1,17 +1,15 @@
 import importlib
 import sys
 
-try:
-    import progressbar
-    PROGRESSBAR = True
-except:
-    PROGRESSBAR = False
-
 from math import isnan
 from time import monotonic as time, sleep
 from numpy import array
 from scipy.sparse import csr_matrix
 from cvxopt import sparse, spdiag
+
+from ..utils.jactools import *
+from ..utils import elapsed
+
 try:
     from cvxoptklu.klu import numeric, symbolic, solve, linsolve
     KLU = True
@@ -19,12 +17,18 @@ except:
     from cvxopt.umfpack import numeric, symbolic, solve, linsolve
     KLU = False
 
-from ..utils.jactools import *
 
 try:
     from ..utils.matlab import write_mat
 except:
     pass
+
+try:
+    import progressbar
+    PROGRESSBAR = True
+except:
+    PROGRESSBAR = False
+
 F = []
 
 
@@ -63,10 +67,19 @@ def first_time_step(system):
 
 
 def run(system):
-    """Entry function of Time Domain Simulation"""
-    if not system.SPF.solved:
+    """
+    Entry function of Time Domain Simulation
+    """
+
+    if system.status['pf_solved'] is False:
         system.Log.warning('Power flow not solved. Time domain simulation will not continue.')
         return False
+
+    t0, _ = elapsed()
+
+    system.Log.info('\nTime Domain Simulation:')
+    system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
+    system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
 
     global F
     retval = True
@@ -354,14 +367,23 @@ def run(system):
         system.Log.always('Reached minimum time step. Convergence is not likely.')
         retval = False
 
+    _, s = elapsed(t0)
+
+    if retval:
+        system.Log.info('Time domain simulation finished in {:s}.'.format(s))
+    else:
+        system.Log.info('Time domain simulation failed in {:s}.'.format(s))
+
     return retval
 
 
 def time_step(system, convergence, niter, t):
-    """determine the time step during time domain simulations
+    """
+    determine the time step during time domain simulations
         convergence: 1 - last step computation converged
                      0 - last step not converged
-        niter:  number of iterations """
+        niter:  number of iterations
+    """
     settings = system.TDS
     if convergence:
         if niter >= 15:

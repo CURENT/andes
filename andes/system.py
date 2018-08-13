@@ -23,7 +23,7 @@ from operator import itemgetter
 from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .settings import Settings, SPF, TDS, CPF, SSSA
-from .utils import Logger
+from .utils import Logger, elapsed
 from .models import non_jits, jits, JIT
 from .consts import *
 from cvxopt import matrix
@@ -81,6 +81,9 @@ class PowerSystem(object):
         self.Report = Report(self)
 
         self.groups = []
+        self.status = {'pf_solved': False,
+                       'sys_base': False,
+                       }
 
         if dime:
             self.Settings.dime_enable = True
@@ -186,8 +189,10 @@ class PowerSystem(object):
             if not pflow:
                 self.__dict__[device]._varname()
 
-    def init_pf(self):
+    def pf_init(self):
         """run models.init0() for power flow"""
+        t, s = elapsed()
+
         ret = False
         # try:
         self.DAE.init_xy()
@@ -203,12 +208,20 @@ class PowerSystem(object):
         # except:
         #     pass
 
+        t, s = elapsed(t)
+        self.Log.info('Power flow initialized in {:s}.\n'.format(s))
+
         return ret
 
     def td_init(self):
-        """run models.init1() time domain simulation"""
+        """
+        run models.init1() time domain simulation
+        """
+        t, s = elapsed()
         ret = False
+
         # try:
+
         # Assign indices for post-powerflow device variables
         self.xy_addr1()
 
@@ -228,6 +241,14 @@ class PowerSystem(object):
         # except:
         #     pass
         #
+
+        t, s = elapsed(t)
+
+        if self.DAE.n:
+            self.Log.info('Dynamic models initialized in {:s}.'.format(s))
+        else:
+            self.Log.info('No dynamic model loaded.')
+
         return ret
 
     def rmgen(self, idx):
@@ -319,7 +340,7 @@ class PowerSystem(object):
 
     def get_busdata(self, dec=5):
         """get ac bus data from solved power flow"""
-        if not self.SPF.solved:
+        if not self.status['pf_solved']:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Bus.idx
@@ -340,7 +361,7 @@ class PowerSystem(object):
         """get dc node data from solved power flow"""
         if not self.Node.n:
             return
-        if not self.SPF.solved:
+        if not self.status['pf_solved']:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
@@ -350,7 +371,7 @@ class PowerSystem(object):
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.SPF.solved:
+        if not self.status['pf_solved']:
             self.Log.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx

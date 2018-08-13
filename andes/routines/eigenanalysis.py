@@ -147,7 +147,7 @@ def dump_results(system, mu, partfact):
 
 
 def run(system):
-    if system.SPF.solved == False:
+    if system.status['pf_solved'] is False:
         system.Log.warning('Power flow not solved. Eigenvalue analysis will not continue.')
         return True
 

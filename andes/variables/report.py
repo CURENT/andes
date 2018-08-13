@@ -6,6 +6,7 @@ from operator import itemgetter
 from cvxopt import mul
 
 from ..formats import all_formats
+from ..utils import elapsed
 from andes import __version__ as version
 
 year = version[:4]
@@ -53,7 +54,7 @@ class Report(object):
         info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
         info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        if self.system.SPF.solved:
+        if self.system.status['pf_solved'] is True:
             info.append('Power flow method: ' + self.system.SPF.solver.upper() + '\n')
             info.append('Number of iterations: ' + str(self.system.SPF.iter) + '\n')
             info.append('Flat-start: ' + ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
@@ -74,7 +75,7 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if not self.system.SPF.solved:
+        if self.system.status['pf_solved'] is False:
             self.system.Log.warning('Cannot update extended summary. Power flow not solved.')
             return
 
@@ -108,6 +109,8 @@ class Report(object):
 
     def write(self, content=None):
         """Write report to file. Content could be summary, extended, powerflow"""
+        t, _ = elapsed()
+
         if not content:
             self.system.Log.warning('Report content not specified.')
             return
@@ -196,3 +199,7 @@ class Report(object):
                 data.append([round(i, 5) for i in system.DAE.x[:]])
 
         dump_data(text, header, rowname, data, file)
+
+        _, s = elapsed(t)
+        system.Log.info('{} report written to <{:s}> in {:s}.'.format(content.capitalize(), system.Files.output, s))
+

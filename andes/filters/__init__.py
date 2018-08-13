@@ -1,6 +1,8 @@
 import importlib
 import os
 
+from ..utils import elapsed
+
 # input formats is a dictionary of supported format names and the accepted file extensions
 #   The first file will be parsed by read() function and the addfile will be parsed by readadd()
 #   Typically, column based formats, such as IEEE CDF and PSS/E RAW, are faster to parse
@@ -16,7 +18,9 @@ output_formats = ['']
 
 
 def guess(system):
-    """input format guess function. First guess by extension, then test by lines"""
+    """
+    input format guess function. First guess by extension, then test by lines
+    """
     files = system.Files
     maybe = []
     if files.input_format:
@@ -32,7 +36,7 @@ def guess(system):
                 maybe.append(key)
 
     # second, guess by lines
-    true_format = None
+    true_format = ''
     fid = open(files.case, 'r')
     for item in maybe:
         try:
@@ -47,6 +51,8 @@ def guess(system):
 
     if true_format:
         system.Log.debug('Input format guessed as {:s}.'.format(true_format))
+    else:
+        system.Log.error('Unable to determine case format.')
 
     files.input_format = true_format
 
@@ -65,7 +71,12 @@ def guess(system):
 
 
 def parse(system):
-    """Parse input file with the given format in system.Files.input_format"""
+    """
+    Parse input file with the given format in system.Files.input_format
+    """
+
+    t, _ = elapsed()
+
     input_format = system.Files.input_format
     add_format = system.Files.add_format
     # exit when no input format is given
@@ -109,6 +120,9 @@ def parse(system):
             system.Log.error('Error parsing dynfile {:s} with dm format parser.'.format(system.Files.dynfile))
             return False
 
+    _, s = elapsed(t)
+    system.Log.info('Case file {:s} parsed in {:s}.'.format(system.Files.fullname, s))
+
     return True
 
 
@@ -117,6 +131,16 @@ def dump_raw(system):
     # if output_format.lower() not in output_formats:
     #     system.Log.warning('Dump output format \'{:s}\'not recognized'.format(output_format))
     #     return False
+    t, _ = elapsed()
+
     outfile = system.Files.dump_raw
     dmparser = importlib.import_module('.' + 'dome', __name__)
-    return dmparser.write(outfile, system)
+
+    ret = dmparser.write(outfile, system)
+
+    _, s = elapsed(t)
+    if ret:
+        system.Log.info('Raw file dump {:s} written in {:s}.'.format(system.Files.dump_raw, s))
+    else:
+        system.Log.error('Dump raw file failed.')
+
