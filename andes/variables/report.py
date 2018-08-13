@@ -109,6 +109,9 @@ class Report(object):
 
     def write(self, content=None):
         """Write report to file. Content could be summary, extended, powerflow"""
+        if self.system.Files.no_output is True:
+            return
+
         t, _ = elapsed()
 
         if not content:

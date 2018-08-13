@@ -20,6 +20,7 @@ class TDS(SettingsBase):
         self.qrt = False
         self.kqrt = 1
         self.compute_flows = True
+        self.max_cache = 0
         self.method_desc = {'euler': 'Implicit Euler',
                             'trapezoidal': 'Implicit Trapezoidal',
                             'fwdeuler': 'Explicit Euler'}
@@ -35,6 +36,8 @@ class TDS(SettingsBase):
                         'tol': 'iteration error tolerance',
                         'qrt': 'quasi-real-time simulation speed',
                         'kqrt': 'quasi-rt runs at kqrt seconds per simulated second',
-                        'compute_flows': 'post-compute bus injections and line flows at each step'
+                        'compute_flows': 'post-compute bus injections and line flows at each step',
+                        'max_cache': 'maximum allowed steps in varout memory, save to disk if reached, '
+                                     '0 for unlimited memory cache',
                         }
         return descriptions

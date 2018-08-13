@@ -637,9 +637,18 @@ class ModelBase(object):
         return self.get_field_ext(model, field, dest=dest, idx=idx, astype=astype)
 
     def element_add(self, idx=None, name=None, **kwargs):
-        """element_add an element of this model"""
+        """
+        Add an element of this model
+
+        :param idx: element idx
+        :param name: element name
+        :param kwargs: keyword arguments of the parameters
+        :return: allocated idx
+        """
+
         idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
         _ = self.system.__dict__[self._group].register_element(self._name, idx)
+
         self.uid[idx] = self.n
         self.idx.append(idx)
         self.n += 1
@@ -745,7 +754,12 @@ class ModelBase(object):
             self._param_to_matrix()
 
     def param_to_sysbase(self):
-        """Per-unitize parameters. Store a copy."""
+        """
+        Converts parameters to system base. Stores a copy in ``self._store``.
+        Sets the flag ``self.flag['sysbase']`` to True.
+
+        :return: None
+        """
         if (not self.n) or self._flags['sysbase']:
             return
         Sb = self.system.Settings.mva
@@ -916,24 +930,25 @@ class ModelBase(object):
             self.message('Unable to assign Varname before allocating address', ERROR)
             return
 
+        varname = self.system.VarName
         for i in range(self.n):
-            iname = self.name[i]
+            iname = str(self.name[i])
 
             for e, var in enumerate(self._states):
                 unamex = self._unamex[e]
                 fnamex = self._fnamex[e]
                 idx = self.__dict__[var][i]
 
-                self.system.VarName.unamex[idx] = (unamex + ' ' + iname)[:24]
-                self.system.VarName.fnamex[idx] = '$' + (fnamex + '\ ' + iname.replace(' ', '\\ '))[:24] + '$'
+                varname.unamex[idx] = '{} {}'.format(unamex, iname)[:24]
+                varname.fnamex[idx] = '$' + '{}\ {}'.format(fnamex, iname.replace(' ', '\\ '))[:24] + '$'
 
             for e, var in enumerate(self._algebs):
                 unamey = self._unamey[e]
                 fnamey = self._fnamey[e]
                 idx = self.__dict__[var][i]
 
-                self.system.VarName.unamey[idx] = (unamey + ' ' + iname)[:24]
-                self.system.VarName.fnamey[idx] = '$' + (fnamey + '\ ' + iname.replace(' ', '\\ '))[:24] + '$'
+                varname.unamey[idx] = '{} {}'.format(unamey, iname)[:24]
+                varname.fnamey[idx] = '$' + '{}\ {}'.format(fnamey, iname.replace(' ', '\\ '))[:24] + '$'
 
     def _param_to_matrix(self):
         """Convert parameters defined in `self._params` from list to `cvxopt.matrix`
@@ -941,8 +956,10 @@ class ModelBase(object):
         :return None
         """
         for item in self._params:
-            self.__dict__[item] = matrix(self.__dict__[item], tc='d')
-
+            try:
+                self.__dict__[item] = matrix(self.__dict__[item], tc='d')
+            except:
+                pass
     def _param_to_list(self):
         """Convert parameters defined in `self._param` from `cvxopt.matrix` to list
 
@@ -985,14 +1002,27 @@ class ModelBase(object):
             if limit:
                 self.__dict__[key][idx] = minval
 
-    def __str__(self):
-        print('')
-        print('Model <{:s}> parameters in device base'.format(self._name))
-        print(self.param_to_df(sysbase=False).to_string())
+    def __repr__(self):
+        ret = ''
 
-        print('')
-        print('Model <{:s}> variable snapshot'.format(self._name))
-        print(self.var_to_df().to_string())
+        ret += '\n'
+        ret += 'Model <{:s}> parameters in element base\n'.format(self._name)
+        ret += self.param_to_df(sysbase=False).to_string()
+
+        ret += '\n'
+        ret += 'Model <{:s}> variable snapshot\n'.format(self._name)
+        ret += self.var_to_df().to_string()
+
+        return ret
+
+    def __str__(self):
+        super(ModelBase, self).__repr__()
+        return '<{name}> with {n} elements [{mem}]'.format(
+            name=self._name,
+            mem=hex(id(self)),
+            n=self.n,
+            b='system' if self._flags['sysbase'] else 'element',
+        )
 
     def help_doc(self, export='plain', save=False, writemode='a'):
         """Build help document into a Texttable table
@@ -1041,7 +1071,10 @@ class ModelBase(object):
             raise IOError('Error writing model help file.')
 
     def check_limit(self, varname, vmin=None, vmax=None):
-        """Check if the variable values are within the limits. Return False if fails."""
+        """
+        Check if the variable values are within the limits. Return False if fails.
+
+        """
         retval = True
         if varname not in self.__dict__.keys():
             self.system.Log.error('Model <{}> does not have attribute <{}>'.format(self._name, varname))
@@ -1075,14 +1108,33 @@ class ModelBase(object):
         return retval
 
     def on_bus(self, bus_idx):
-        """Return the indices of elements on the given buses
+        """Return the indices of elements on the given buses for shunt-connected elements
 
         :param bus_idx: idx of the buses to which the elements are connected
         :return: idx of elements connected to bus_idx
 
         """
         assert hasattr(self, 'bus')
-        return self.find_element('bus', bus_idx)
+        # return self.find_element('bus', bus_idx)
+
+        ret = []
+        if isinstance(bus_idx, (int, float, str)):
+            bus_idx = [bus_idx]
+
+        for item in bus_idx:
+            idx = []
+            for e, b in enumerate(self.bus):
+                if b == item:
+                    idx.append(self.idx[e])
+            if len(idx) == 1:
+                idx = idx[0]
+            elif len(idx) == 0:
+                idx = None
+
+            ret.append(idx)
+
+        return ret
+
 
     def find_element(self, field, value):
         """

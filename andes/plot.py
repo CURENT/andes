@@ -269,8 +269,6 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
         noshow = True
 
     if not noshow:
-        print(unattended)
-        print(noshow)
         try:
             plt.show()
             pass

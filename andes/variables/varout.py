@@ -3,7 +3,9 @@ from numpy import array
 
 
 class VarOut(object):
-    """Output variable value recorder"""
+    """
+    Output variable value recorder
+    """
     def __init__(self, system):
         """Constructor of empty Varout object"""
         self.system = system
@@ -14,10 +16,12 @@ class VarOut(object):
         self._mode = 'w'
 
     def store(self, t, step):
-        """Record the state/algeb values at time t to self.vars"""
-
-        if len(self.vars) >= 700:
-            self.dump(lst=False)
+        """
+        Record the state/algeb values at time t to self.vars
+        """
+        max_cache = int(self.system.TDS.max_cache)
+        if len(self.vars) >= max_cache > 0:
+            self.dump()
             self.vars = list()
             self.t = list()
             self.k = list()
@@ -36,65 +40,100 @@ class VarOut(object):
     def show(self):
         """
         The representation of an Varout object
-        :rtype: array
+
         :return: the full result matrix (for use with PyCharm viewer)
+        :rtype: array
         """
-        nvar = self.system.DAE.m + self.system.DAE.n
-        nstep = len(self.t)
         out = []
+
         for item in self.vars:
             out.append(list(item))
+
         return array(out)
 
-    def dump(self, lst=True):
-        """Dump the TDS results to the output `dat` file"""
+    def dump(self):
+        """
+        Dump the TDS results to the output `dat` file
+
+        :param lst: dump ``.lst`` file
+
+        :return: succeed flag
+        """
+        ret = False
+
         if self.system.Files.no_output:
-            return
-        if lst:
-            self._write_lst()
+            # return ``True`` because it did not fail
+            return True
 
-        nvars = self.system.DAE.m + self.system.DAE.n + 1
+        if self.write_lst() and self.write_dat():
+            ret = True
+
+        return ret
+
+    def write_dat(self):
+        """
+        Write ``system.Varout.vars`` to a ``.dat`` file
+        :return:
+        """
+        ret = False
+
+        # compute the total number of columns, excluding time
+        n_vars = self.system.DAE.m + self.system.DAE.n
         if self.system.TDS.compute_flows:
-            nvars += 2 * self.system.Bus.n + 4 * self.system.Line.n
+            n_vars += 2 * self.system.Bus.n + 4 * self.system.Line.n
+
+        template = ['{:<8g}'] + ['{:0.10f}'] * n_vars
+        template = ' '.join(template)
+
+        # format the output in a string
+        out = ''
+        for t, line in zip(self.t, self.vars):
+            values = [t] + list(line)
+            out += template.format(*values) + '\n'
 
         try:
-            self.dat = open(self.system.Files.dat, self._mode)
+            with open(self.system.Files.dat, self._mode) as f:
+                f.write(out)
+            ret = True
 
-            for t, line in zip(self.t, self.vars):
-                self._write_vars(t, line)
-            self.dat.close()
         except IOError:
-            self.system.Log.error('I/O Error when dumping the dat file.')
+            self.system.Log.error('I/O Error while writing the dat file.')
 
-    def _write_lst(self):
-        """Dump the variable name lst file"""
+        return ret
+
+    def write_lst(self):
+        """
+        Dump the variable name lst file
+
+        :return: succeed flag
+        """
+
+        ret = False
+        out = ''
+        varname = self.system.VarName
+        template = '{:>6g}, {:>25s}, {:>25s}\n'
+
+        # header line
+        out += template.format(0, 'Time [s]', '$Time\ [s]$')
+
+        # output state variables
+        for i in range(self.system.DAE.n):
+            out += template.format(i + 1, varname.unamex[i], varname.fnamex[i])
+
+        # include line flow variables in algebraic variables
+        nflows = 0
+        if self.system.TDS.compute_flows:
+            nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination
+
+        # output algebraic variables
+        for i in range(self.system.DAE.m + nflows):
+            out += template.format(i + 1 + self.system.DAE.n, varname.unamey[i], varname.fnamey[i])
+
         try:
-            lst = open(self.system.Files.lst, 'w')
-            line = '{:>6s}, {:>25s}, {:>25s}\n'.format('0', 'Time [s]', '$Time\ [s]$')
-            lst.write(line)
-
-            varname = self.system.VarName
-            for i in range(self.system.DAE.n):
-                line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1, varname.unamex[i], varname.fnamex[i])
-                lst.write(line)
-
-            nflows = 0
-            if self.system.TDS.compute_flows:
-                nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination
-
-            for i in range(self.system.DAE.m + nflows):
-                line = '{:>6g}, {:>25s}, {:>25s}\n'.format(i + 1 + self.system.DAE.n, varname.unamey[i], varname.fnamey[i])
-                lst.write(line)
-
-            lst.close()
+            with open(self.system.Files.lst, 'w') as f:
+                f.write(out)
+            ret = True
         except IOError:
-            self.system.Log.error('I/O Error when writing the lst file.')
+            self.system.Log.error('I/O Error while writing the lst file.')
 
-    def _write_vars(self, t, vars):
-        """Helper function to write one line of simulation results"""
-        nvars = vars.size[0]
-
-        line = ['{:<8g}'] + ['{:0.10f}'] * nvars
-        line = ' '.join(line)
-        values = [t] + list(vars)
-        self.dat.write(line.format(*values) + '\n')
+        return ret

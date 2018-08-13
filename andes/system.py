@@ -36,8 +36,10 @@ except ImportError:
 
 
 class PowerSystem(object):
-    """everything in a power system class including models, settings,
-     file and call managers"""
+    """
+    everything in a power system class including models, settings,
+     file and call managers
+    """
     def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
                  addfile=None, settings=None, input_format=None, output_format=None, gis=None, dime=None, tf=None,
                  **kwargs):
@@ -132,7 +134,9 @@ class PowerSystem(object):
             self.__dict__[name] = Group(self, name)
 
     def inst_models(self):
-        """instantiate non-JIT models and import JIT models"""
+        """
+        instantiate non-JIT models and import JIT models
+        """
         # non-JIT models
         for file, pair in non_jits.items():
             for cls, name in pair.items():
@@ -156,13 +160,17 @@ class PowerSystem(object):
                 # do not register device. register after JIT loading
 
     def dev_setup(self):
-        """set up models after data input"""
+        """
+        set up models after data input
+        """
         for device in self.DevMan.devices:
             if self.__dict__[device].n:
                 self.__dict__[device].setup()
 
     def xy_addr0(self):
-        """assign x y indicies for power flow"""
+        """
+        assign x y indicies for power flow
+        """
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if pflow:
                 self.__dict__[device]._addr()
@@ -176,7 +184,9 @@ class PowerSystem(object):
                 self.__dict__[device]._varname()
 
     def xy_addr1(self):
-        """assign x y indices after power flow"""
+        """
+        assign x y indices after power flow
+        """
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._addr()
@@ -190,7 +200,9 @@ class PowerSystem(object):
                 self.__dict__[device]._varname()
 
     def pf_init(self):
-        """run models.init0() for power flow"""
+        """
+        run models.init0() for power flow
+        """
         t, s = elapsed()
 
         ret = False
@@ -217,6 +229,9 @@ class PowerSystem(object):
         """
         run models.init1() time domain simulation
         """
+        if self.status['pf_solved'] is False:
+            return False
+
         t, s = elapsed()
         ret = False
 
@@ -252,7 +267,9 @@ class PowerSystem(object):
         return ret
 
     def rmgen(self, idx):
-        """remove static generators if dynamic ones exist"""
+        """
+        remove static generators if dynamic ones exist
+        """
         stagens = []
         for device, stagen in zip(self.DevMan.devices, self.Call.stagen):
             if stagen:

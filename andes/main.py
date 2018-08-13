@@ -373,10 +373,11 @@ def run(case, **kwargs):
     t0, _ = elapsed()
 
     # parse input file
-    filters.guess(system)
-    filters.parse(system)
+    if not filters.guess(system):
+        return
 
-    t1, s = elapsed(t0)
+    if not filters.parse(system):
+        return
 
     # dump system as raw file if requested
     if dump_raw:
@@ -399,13 +400,14 @@ def run(case, **kwargs):
     system.pf_init()
 
     powerflow.run(system)
-    if system.status['pf_solved'] is True:
-        system.td_init()  # initialize variables for output even if not running TDS
-        if not system.Files.no_output:
-            system.Report.write(content='powerflow')
+
+    # initialize variables for output even if not running TDS
+    system.td_init()
+
+    system.Report.write(content='powerflow')
 
     # run more studies
-    t0, s = elapsed()
+    # t0, s = elapsed()
     routine = kwargs.pop('routine', None)
     if not routine:
         pass
@@ -415,6 +417,7 @@ def run(case, **kwargs):
         routine = 'cpf'
     elif routine.lower() in ['small', 'ss', 'sssa', 's']:
         routine = 'sssa'
+
     if routine is 'td':
         if system.Settings.dime_enable:
             system.TDS.compute_flows = True

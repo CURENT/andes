@@ -67,4 +67,3 @@ Fault, Vn = 500, bus = 6, tf = 200.1, tc = 200.15, xf = 0.01
 Fault, Vn = 500, bus = 6, tf = 300.1, tc = 300.15, xf = 0.01
 Fault, Vn = 500, bus = 6, tf = 400.1, tc = 400.15, xf = 0.01
 Fault, Vn = 500, bus = 6, tf = 500.1, tc = 500.15, xf = 0.01
-

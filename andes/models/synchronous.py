@@ -124,8 +124,8 @@ class SynBase(ModelBase):
         dae.g -= spmatrix(dae.y[self.q], self.v, nzeros, (dae.m, 1), 'd')
         dae.g -= spmatrix(vd - mul(v, self.ss), self.vd, nzeros, (dae.m, 1), 'd')  # note d(vd)/d(delta)
         dae.g -= spmatrix(vq - mul(v, self.cc), self.vq, nzeros, (dae.m, 1), 'd')  # note d(vq)/d(delta)
-        dae.g += spmatrix(mul(vd, Id) + mul(vq, Iq) - dae.y[self.p], self.p, nzeros, (dae.m, 1), 'd')
-        dae.g += spmatrix(mul(vq, Id) - mul(vd, Iq) - dae.y[self.q], self.q, nzeros, (dae.m, 1), 'd')
+        dae.g += spmatrix(mul(self.u, vd, Id) + mul(self.u, vq, Iq) - dae.y[self.p], self.p, nzeros, (dae.m, 1), 'd')
+        dae.g += spmatrix(mul(self.u, vq, Id) - mul(self.u, vd, Iq) - dae.y[self.q], self.q, nzeros, (dae.m, 1), 'd')
         dae.g += spmatrix(dae.y[self.pm] - mul(self.u, self.pm0), self.pm, nzeros, (dae.m, 1), 'd')
         dae.g += spmatrix(dae.y[self.vf] - mul(self.u, self.vf0), self.vf, nzeros, (dae.m, 1), 'd')
 
