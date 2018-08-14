@@ -76,11 +76,18 @@ class VarOut(object):
         :return:
         """
         ret = False
+        system = self.system
 
         # compute the total number of columns, excluding time
-        n_vars = self.system.DAE.m + self.system.DAE.n
-        if self.system.TDS.compute_flows:
-            n_vars += 2 * self.system.Bus.n + 4 * self.system.Line.n
+        if not system.Recorder.n:
+            n_vars = system.DAE.m + system.DAE.n
+            if system.TDS.compute_flows:
+                n_vars += 2 * system.Bus.n + 4 * system.Line.n
+            idx = list(range(n_vars))
+
+        else:
+            n_vars = len(system.Recorder.varout_idx)
+            idx = system.Recorder.varout_idx
 
         template = ['{:<8g}'] + ['{:0.10f}'] * n_vars
         template = ' '.join(template)
@@ -88,16 +95,16 @@ class VarOut(object):
         # format the output in a string
         out = ''
         for t, line in zip(self.t, self.vars):
-            values = [t] + list(line)
+            values = [t] + list(line[idx])
             out += template.format(*values) + '\n'
 
         try:
-            with open(self.system.Files.dat, self._mode) as f:
+            with open(system.Files.dat, self._mode) as f:
                 f.write(out)
             ret = True
 
         except IOError:
-            self.system.Log.error('I/O Error while writing the dat file.')
+            system.Log.error('I/O Error while writing the dat file.')
 
         return ret
 
@@ -110,24 +117,33 @@ class VarOut(object):
 
         ret = False
         out = ''
+        system = self.system
+        dae = self.system.DAE
         varname = self.system.VarName
         template = '{:>6g}, {:>25s}, {:>25s}\n'
 
         # header line
         out += template.format(0, 'Time [s]', '$Time\ [s]$')
 
-        # output state variables
-        for i in range(self.system.DAE.n):
-            out += template.format(i + 1, varname.unamex[i], varname.fnamex[i])
-
         # include line flow variables in algebraic variables
         nflows = 0
         if self.system.TDS.compute_flows:
             nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination
 
-        # output algebraic variables
-        for i in range(self.system.DAE.m + nflows):
-            out += template.format(i + 1 + self.system.DAE.n, varname.unamey[i], varname.fnamey[i])
+        # output variable indices
+        if system.Recorder.n == 0:
+            state_idx = list(range(dae.n))
+            algeb_idx = list(range(dae.n, dae.m + nflows))
+            idx = state_idx + algeb_idx
+        else:
+            idx = system.Recorder.varout_idx
+
+        # variable names concatenated
+        uname = varname.unamex + varname.unamey
+        fname = varname.fnamex + varname.fnamey
+
+        for e, i in enumerate(idx):
+            out += template.format(e + 1, uname[i], fname[i])
 
         try:
             with open(self.system.Files.lst, 'w') as f:

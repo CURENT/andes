@@ -24,3 +24,6 @@ INCLUDE, HVDC_OVERLAY_VER3.dm
 
 # PERT FILES
 # INCLUDE, NA_PERT.dm
+
+Recorder, model = "BusFreq"
+Recorder, model = "PMU"

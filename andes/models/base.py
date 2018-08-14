@@ -170,6 +170,7 @@ class ModelBase(object):
         :return: None
         """
         assert self._name
+        assert self._group
 
         if not self._unamey:
             self._unamey = self._algebs

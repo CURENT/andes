@@ -29,7 +29,7 @@ class BusFreq(ModelBase):
                             })
         self._mandatory.extend(['bus'])
         self._states.extend(['xt', 'w', 'xdw'])
-        self._fnamex.extend(['x_\\theta', '\\omega', 'x_\\omwga'])
+        self._fnamex.extend(['x_\\theta', '\\omega', 'x_\\omega'])
         self._algebs.extend(['dwdt'])
         self._fnamey.extend(['\\frac{d\\omega}{dt}'])
 

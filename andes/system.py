@@ -123,7 +123,7 @@ class PowerSystem(object):
             for item in self.DevMan.devices:
                 self.__dict__[item].param_to_sysbase()
 
-    def add_group(self, name):
+    def add_group(self, name='Ungrouped'):
         """
         Add group ``name`` to the system
 
