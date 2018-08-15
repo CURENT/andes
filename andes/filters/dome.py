@@ -93,6 +93,7 @@ def read(file, system, header=True):
                 newpath = os.path.join(system.Files.path, data[0])
                 if not os.path.isfile(newpath):
                     system.Log.warning('Unable to locate file in {}'.format(newpath))
+                    retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
             system.Log.debug('Parsing of include file <{}> completed.'.format(data[0]))
@@ -135,7 +136,12 @@ def read(file, system, header=True):
 
 
 def write(file, system):
-    """Write data in system to a dm file"""
+    """
+    Write data in system to a dm file
+    """
+
+    # TODO: Check for bugs!!!
+
     out = list()
     out.append('# DOME format version 1.0')
     ppl = 7  # parameter per line
@@ -165,7 +171,7 @@ def write(file, system):
         # for each element, read values
         for elem in range(nelement):
             for idx, key in enumerate(keys):
-                if model.ispu and key in model._store.keys():
+                if model._flags['sysbase'] and key in model._store.keys():
                     val = model._store[key][elem]
                 else:
                     val = model.__dict__[key][elem]

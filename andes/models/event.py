@@ -78,8 +78,39 @@ class GenTrip(EventBase):
             gen_idx = self.gen[i]
 
             if self.t1[i] == sim_time:
-                self.message('Applying Gen trip on <{}> at t={}'.format(gen_idx, sim_time))
+                self.message('Applying generator trip on <{}> at t={}'.format(gen_idx, sim_time))
                 self.system.Synchronous.set_field('u', gen_idx, 0)
             if self.t2[i] == sim_time:
-                self.message('Applying Gen reconnect on <{}> at t={}'.format(gen_idx, sim_time))
+                self.message('Applying generator reconnect on <{}> at t={}'.format(gen_idx, sim_time))
                 self.system.Synchronous.set_field('u', gen_idx, 1)
+
+
+class LoadShed(EventBase):
+    """
+    Timed load shedding and reconnect
+    """
+
+    def define(self):
+        super(LoadShed, self).define()
+        self.param_add('load', default=None, mandatory=True, descr='load idx', tomatrix=False)
+        self.param_add('group', default='StaticLoad', mandatory=True,
+                       descr='load group, StaticLoad or DynLoad', tomatrix=False)
+        self.param_add('t1', default=-1, mandatory=False, descr='load shedding time', event_time=True)
+        self.param_add('t2', default=-1, mandatory=False, descr='load reconnect time', event_time=True)
+
+        self._meta_to_attr()
+
+    def apply(self, sim_time):
+        super(LoadShed, self).apply(sim_time)
+
+        for i in range(self.n):
+            load_idx = self.load[i]
+            group = self.group[i]
+
+            if self.t1[i] == sim_time:
+                self.message('Applying load shedding on <{}> at t={}'.format(load_idx, sim_time))
+                self.system.__dict__[group].set_field('u', load_idx, 0)
+            if self.t2[i] == sim_time:
+                self.message('Applying Gen reconnect on <{}> at t={}'.format(load_idx, sim_time))
+                self.system.__dict__[group].set_field('u', load_idx, 1)
+

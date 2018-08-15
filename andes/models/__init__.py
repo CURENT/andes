@@ -63,7 +63,9 @@ non_jits = {'bus': {'Bus': 'Bus'},
                     },
             'fault': {'Fault': 'Fault'},
             'breaker': {'Breaker': 'Breaker'},
-            'event': {'GenTrip': 'GenTrip'},
+            'event': {'GenTrip': 'GenTrip',
+                      'LoadShed': 'LoadShed',
+                      },
             'recorder': {'Recorder': 'Recorder'},
             }
 
