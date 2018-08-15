@@ -3,8 +3,8 @@ import sys
 
 from math import isnan
 from time import monotonic as time, sleep
-from numpy import array
-from scipy.sparse import csr_matrix
+# from numpy import array
+# from scipy.sparse import csr_matrix
 from cvxopt import sparse, spdiag
 
 from ..utils.jactools import *
@@ -20,13 +20,13 @@ except:
 
 try:
     from ..utils.matlab import write_mat
-except:
+except ImportError:
     pass
 
 try:
     import progressbar
     PROGRESSBAR = True
-except:
+except ImportError:
     PROGRESSBAR = False
 
 F = []
@@ -76,6 +76,14 @@ def run(system):
         return False
 
     t0, _ = elapsed()
+
+    # process init of DiME clients
+    if system.Settings.dime_enable:
+        system.TDS.compute_flows = True
+        system.Streaming.send_init(recepient='all')
+        system.Log.info('Waiting for modules to send init info...')
+        sleep(0.5)
+        system.Streaming.sync_and_handle()
 
     system.Log.info('\nTime Domain Simulation:')
     system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
@@ -335,6 +343,7 @@ def run(system):
         if system.Settings.dime_enable:
             system.Streaming.sync_and_handle()
             system.Streaming.vars_to_modules()
+            system.Streaming.vars_to_pmu()
 
         # plot variables and display iteration status
         perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
@@ -366,6 +375,8 @@ def run(system):
     if t != settings.tf:
         system.Log.always('Reached minimum time step. Convergence is not likely.')
         retval = False
+
+    system.Streaming.finalize()
 
     _, s = elapsed(t0)
 

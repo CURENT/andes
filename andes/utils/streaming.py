@@ -365,7 +365,9 @@ class Streaming(object):
                 self.dimec.send_var(item, 'SysName', self.SysName)
 
     def record_module_init(self, name, init_var):
-        """Record the variable requests from modules"""
+        """
+        Record the variable requests from modules
+        """
         ivar = dict(init_var)
         var_idx = ivar['vgsvaridx']
         ivar['lastk'] = 0
@@ -513,13 +515,17 @@ class Streaming(object):
 
         values = self.system.VarOut.vars[-1][idx]
         pmu_data = {'t': t,
-                  'k': k,
-                  'vars': array(values).T,
-                 }
+                    'k': k,
+                    'vars': array(values).T,
+                   }
         self.dimec.broadcast('pmu_data', pmu_data)
 
     def vars_to_modules(self):
-        """Stream the last results to the modules"""
+        """
+        Stream the results from the last step to modules
+
+        :return: None
+        """
         if not self.system.Settings.dime_enable:
             return
 
@@ -550,3 +556,14 @@ class Streaming(object):
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
             # self.system.Log.debug('Varvgs sent to <{}>'.format(mod))
 
+    def finalize(self):
+        """
+        Send ``DONE`` signal when simulation completes
+
+        :return: None
+        """
+        if not self.system.Settings.dime_enable:
+            return
+
+        self.system.Streaming.dimec.broadcast('DONE', 1)
+        self.system.Streaming.dimec.exit()

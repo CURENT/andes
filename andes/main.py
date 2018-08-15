@@ -65,6 +65,7 @@ def cli_parse(writehelp=False, helpfile=None):
                                                 'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
                                                 'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
                         type=int)
+    parser.add_argument('--conf', help='Edit routine config', type=str, choices=('general', 'spf', 'tds', 'cpf', 'sssa'))
 
     # file and format related
     parser.add_argument('-c', '--clean', help='Clean output files and exit.', action='store_true')
@@ -238,6 +239,16 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         return True
 
 
+def edit_conf(conf):
+    """
+    Edit Andes routine configuration
+
+    :param conf: name of the routine
+    :return: succeed flag
+    """
+    raise NotImplementedError("Not implemented")
+
+
 def clean(run=False):
     """Clean up function for generated files"""
     if not run:
@@ -297,6 +308,9 @@ def main():
 
     if args.search:
         search(args.search)
+        return
+    if args.conf:
+        edit_conf(args.conf)
         return
 
     # extract case names
@@ -423,20 +437,11 @@ def run(case, **kwargs):
         routine = 'sssa'
 
     if routine is 'td':
-        if system.Settings.dime_enable:
-            system.TDS.compute_flows = True
-            system.Streaming.send_init(recepient='all')
-            system.Log.info('Waiting for modules to send init info...')
-            sleep(0.5)
-            system.Streaming.sync_and_handle()
-
         t1, s = elapsed(t0)
         # system.hack_EAGC()
 
         ret = timedomain.run(system)
-        if system.Settings.dime_enable:
-            system.Streaming.dimec.send_var('geovis', 'DONE', 1)
-            system.Streaming.dimec.exit()
+
         t2, s = elapsed(t1)
         if ret and (not system.Files.no_output):
             system.VarOut.dump()
