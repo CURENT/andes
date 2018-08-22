@@ -20,7 +20,7 @@ class JIT(object):
             self.system.__dict__[self.name] = device(self.system, self.name)
 
             g = self.system.__dict__[self.name]._group
-            self.system.add_group(g)
+            self.system.group_add(g)
             self.system.__dict__[g].register_model(self.name)
 
             self.system.DevMan.register_device(self.name)  # register device after loading

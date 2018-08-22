@@ -203,7 +203,7 @@ class Call(object):
         string = '"""\n'
 
         # evaluate the algebraic equations g
-        string += 'system.DAE.init_fg()\n'
+        string += 'system.DAE.init_fg(resetz=False)\n'
         for gcall, call in zip(self.gcall, self.gcalls):
             if gcall:
                 string += call
@@ -283,6 +283,7 @@ class Call(object):
         for jac0, call in zip(self.jac0, self.jac0s):
             if jac0:
                 string += '    ' + call
+        string += '    system.DAE.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy
         string += 'system.DAE.setup_Gy()\n'
@@ -291,6 +292,7 @@ class Call(object):
                 string += call
         string += '\n'
         string += self.gyisland
+        string += 'system.DAE.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         self.int_g = compile(eval(string), '', 'exec')

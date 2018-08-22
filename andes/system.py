@@ -40,9 +40,9 @@ class PowerSystem(object):
     everything in a power system class including models, settings,
      file and call managers
     """
-    def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None, output=None, dynfile=None,
-                 addfile=None, settings=None, input_format=None, output_format=None, gis=None, dime=None, tf=None,
-                 **kwargs):
+    def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None,
+                 output=None, dynfile=None, addfile=None, settings=None, input_format=None,
+                 output_format=None, gis=None, dime=None, tf=None, **kwargs):
         """
         Initialize an empty power system object with defaults
         Args:
@@ -98,32 +98,35 @@ class PowerSystem(object):
         else:
             self.Settings.dime_enable = False
 
-        self.inst_models()
+        self.model_import()
 
     def setup(self):
-        """set up everything after receiving the inputs
         """
-        # try:
+        set up everything after receiving the inputs
+
+        :return: reference of self
+        """
         self.DevMan.sort_device()
         self.Call.setup()
-        self.dev_setup()
+        self.model_setup()
         self.xy_addr0()
         self.DAE.setup()
         self.to_sysbase()
-        return True
 
-        # except:
-        #     return False
+        return self
 
     def to_sysbase(self):
-        """Convert model parameters to system base
+        """
+        Convert model parameters to system base
+
+        :return: None
         """
 
         if self.Settings.base:
             for item in self.DevMan.devices:
                 self.__dict__[item].param_to_sysbase()
 
-    def add_group(self, name='Ungrouped'):
+    def group_add(self, name='Ungrouped'):
         """
         Add group ``name`` to the system
 
@@ -133,43 +136,50 @@ class PowerSystem(object):
         if not hasattr(self, name):
             self.__dict__[name] = Group(self, name)
 
-    def inst_models(self):
+    def model_import(self):
         """
-        instantiate non-JIT models and import JIT models
+        Import and instantiate non-JIT models, and import JIT models
+
+        :return: None
         """
         # non-JIT models
         for file, pair in non_jits.items():
             for cls, name in pair.items():
-                try:
-                    themodel = importlib.import_module('andes.models.' + file)
-                    theclass = getattr(themodel, cls)
-                    self.__dict__[name] = theclass(self, name)
+                themodel = importlib.import_module('andes.models.' + file)
+                theclass = getattr(themodel, cls)
+                self.__dict__[name] = theclass(self, name)
 
-                    group = self.__dict__[name]._group
-                    self.add_group(group)
-                    self.__dict__[group].register_model(name)
+                group = self.__dict__[name]._group
+                self.group_add(group)
+                self.__dict__[group].register_model(name)
 
-                    self.DevMan.register_device(name)
-                except ImportError:
-                    self.Log.error('Error adding non-JIT model <{:s}.{:s}>.'.format(file, cls))
+                self.DevMan.register_device(name)
 
         # import JIT models
         for file, pair in jits.items():
             for cls, name in pair.items():
                 self.__dict__[name] = JIT(self, file, cls, name)
-                # do not register device. register after JIT loading
 
-    def dev_setup(self):
+    def model_setup(self):
         """
-        set up models after data input
+        Run model ``setup()`` for models present.
+
+        This function is called by ``PowerSystem.setup()`` after adding model elements
+
+        :return: None
         """
         for device in self.DevMan.devices:
             if self.__dict__[device].n:
-                self.__dict__[device].setup()
+                try:
+                    self.__dict__[device].setup()
+                except Exception as e:
+                    raise e
 
     def xy_addr0(self):
         """
-        assign x y indicies for power flow
+        Assign indicies and variable names for variables used in power flow
+
+        :return: None
         """
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if pflow:
@@ -185,7 +195,7 @@ class PowerSystem(object):
 
     def xy_addr1(self):
         """
-        assign x y indices after power flow
+        Assign indices and variable names for variables after power flow
         """
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
@@ -201,12 +211,10 @@ class PowerSystem(object):
 
     def pf_init(self):
         """
-        run models.init0() for power flow
+        Set power flow initial values by running ``init0()``
         """
         t, s = elapsed()
 
-        ret = False
-        # try:
         self.DAE.init_xy()
 
         for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow, self.Call.init0):
@@ -215,27 +223,22 @@ class PowerSystem(object):
 
         # check for islands
         self.check_islands(show_info=True)
-        ret = True
-
-        # except:
-        #     pass
 
         t, s = elapsed(t)
         self.Log.info('Power flow initialized in {:s}.\n'.format(s))
 
-        return ret
+        return self
 
     def td_init(self):
         """
-        run models.init1() time domain simulation
+        Set time domain simulation initial values by ``init1()``
+
+        :return: success flag
         """
         if self.status['pf_solved'] is False:
             return False
 
         t, s = elapsed()
-        ret = False
-
-        # try:
 
         # Assign indices for post-powerflow device variables
         self.xy_addr1()
@@ -252,11 +255,6 @@ class PowerSystem(object):
             if init1:
                 self.__dict__[device].init1(self.DAE)
 
-        ret = True
-        # except:
-        #     pass
-        #
-
         t, s = elapsed(t)
 
         if self.DAE.n:
@@ -264,11 +262,13 @@ class PowerSystem(object):
         else:
             self.Log.info('No dynamic model loaded.')
 
-        return ret
+        return self
 
     def rmgen(self, idx):
         """
         remove static generators if dynamic ones exist
+
+        :return: None
         """
         stagens = []
         for device, stagen in zip(self.DevMan.devices, self.Call.stagen):
@@ -281,18 +281,16 @@ class PowerSystem(object):
 
     def check_event(self, sim_time):
         """
-        Check for event occurrance at time ``sim_time``
+        Check for event occurrance for models in the ``Event`` group at time ``sim_time``
 
         :param sim_time: current simulation time
-        :return: a list of models with events at time t
+        :return: a list of models who report (an) event(s) at ``sim_time``
         """
         ret = []
         for model in self.__dict__['Event'].all_models:
             if self.__dict__[model].is_time(sim_time):
                 ret.append(model)
 
-        # if self.Fault.is_time(sim_time):
-        #     ret.append(Fault)
         if self.Breaker.is_time(sim_time):
             ret.append(Fault)
 
@@ -317,12 +315,20 @@ class PowerSystem(object):
         return times
 
     def load_settings(self, Files):
-        """load settings from file"""
+        """
+        load settings from file
+
+        :return: None
+        """
         self.Log.debug('Loaded specified settings file.')
         raise NotImplementedError
 
     def check_islands(self, show_info=False):
-        """check connectivity for the ac system"""
+        """
+        Check connectivity for the ac system
+
+        :return: None
+        """
         if not hasattr(self, 'Line'):
             self.Log.error('<Line> device not found.')
             return
@@ -356,7 +362,9 @@ class PowerSystem(object):
                 self.Log.info('Each island has a slack bus correctly defined.'.format(nosw_island))
 
     def get_busdata(self, dec=5):
-        """get ac bus data from solved power flow"""
+        """
+        get ac bus data from solved power flow
+        """
         if not self.status['pf_solved']:
             self.Log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
@@ -375,7 +383,9 @@ class PowerSystem(object):
         return (list(x) for x in zip(*sorted(zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
     def get_nodedata(self, dec=5):
-        """get dc node data from solved power flow"""
+        """
+        get dc node data from solved power flow
+        """
         if not self.Node.n:
             return
         if not self.status['pf_solved']:
@@ -405,13 +415,14 @@ class PowerSystem(object):
 
 class GroupMeta(type):
     def __new__(cls, name, base, attr_dict):
-        # print(name)
-        # print(base)
-        # print(attr_dict)
         return super(GroupMeta, cls).__new__(cls, name, base, attr_dict)
 
 
 class Group(metaclass=GroupMeta):
+    """
+    Group class for registering models and elements, and reading and setting attributes
+    """
+
     def __init__(self, system, name):
         self.system = system
         self.name = name
@@ -420,9 +431,9 @@ class Group(metaclass=GroupMeta):
 
     def register_model(self, model):
         """
-        Register ``model`` to this model group
+        Register ``model`` to this group
 
-        :param model: name of the model
+        :param model: model name
         :return: None
         """
 
@@ -458,8 +469,6 @@ class Group(metaclass=GroupMeta):
         ret = []
         scalar = False
 
-        # if isinstance(idx, matrix):
-        #     idx = list(idx)
         if isinstance(idx, (int, float, str)):
             scalar = True
             idx = [idx]
@@ -494,6 +503,8 @@ class Group(metaclass=GroupMeta):
         models = [self._idx_model[i] for i in idx]
 
         for i, m, v in zip(idx, models, value):
+            assert hasattr(self.system.__dict__[m], field)
+
             uid = self.system.__dict__[m].idx_to_uid(idx)
             self.system.__dict__[m].__dict__[field][uid] = v
 

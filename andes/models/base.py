@@ -24,9 +24,10 @@ from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import matrix, spmatrix
 from cvxopt import mul, div
 
-from ..utils.math import agtb, altb, findeq, zeros
+from ..utils.math import agtb, altb, index, zeros
 from ..utils.tab import Tab
 
+# pandas import slows down the program startup by 0.3 seconds
 import pandas as pd
 import numpy as np
 

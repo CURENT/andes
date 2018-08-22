@@ -1,5 +1,5 @@
 from cvxopt import matrix, spmatrix, sparse, spdiag, mul
-from ..utils.math import zeros, ones, ageb, aleb, findeq, aandb, aeqb, nota, aorb, agtb, altb, nota
+from ..utils.math import zeros, ones, ageb, aleb, index, aandb, aeqb, nota, aorb, agtb, altb, nota
 import numpy as np
 
 
@@ -74,16 +74,16 @@ class DAE(object):
         self.zymin = ones(self.m, 1)
         self.uy = ones(self.m, 1)
 
-    def init_fg(self):
-        self.init_f()
-        self.init_g()
+    def init_fg(self, resetz=False):
+        self.init_f(resetz)
+        self.init_g(resetz)
 
-    def init_f(self):
+    def init_f(self, resetz=True):
         self.zxmax = ones(self.n, 1)
         self.zxmin = ones(self.n, 1)
         self.f = zeros(self.n, 1)
 
-    def init_g(self):
+    def init_g(self, resetz=True):
         self.zymax = ones(self.m, 1)
         self.zymin = ones(self.m, 1)
         self.g = zeros(self.m, 1)
@@ -217,8 +217,8 @@ class DAE(object):
         above = ageb(yval, ymax)
         below = aleb(yval, ymin)
 
-        above_idx = findeq(above, 1.0)
-        below_idx = findeq(below, 1.0)
+        above_idx = index(above, 1.0)
+        below_idx = index(below, 1.0)
 
         above_yidx = yidx[above_idx]
         below_yidx = yidx[below_idx]
@@ -256,14 +256,14 @@ class DAE(object):
         if rmax:
             # find the over-limit remote idx
             above = ageb(self.__dict__[rtype][ridx], rmax)
-            above_idx = findeq(above, 1.0)
+            above_idx = index(above, 1.0)
             # reset the y values based on the remote limit violations
             self.y[yidx[above_idx]] = max_yset[above_idx]
             self.zymax[yidx[above_idx]] = 0
 
         if rmin:
             below = aleb(self.__dict__[rtype][ridx], rmin)
-            below_idx = findeq(below, 1.0)
+            below_idx = index(below, 1.0)
             self.y[yidx[below_idx]] = min_yset[below_idx]
             self.zymin[yidx[below_idx]] = 0
 
@@ -302,14 +302,14 @@ class DAE(object):
         f_below = aleb(fval, 0.0)
 
         above = aandb(x_above, f_above)
-        above_idx = findeq(above, 1.0)
+        above_idx = index(above, 1.0)
         if len(above_idx) > 0:
             above_xidx = xidx[above_idx]
             self.x[above_xidx] = xmax[above_idx]
             self.zxmax[above_xidx] = 0
 
         below = aandb(x_below, f_below)
-        below_idx = findeq(below, 1.0)
+        below_idx = index(below, 1.0)
         if len(below_idx) > 0:
             below_xidx = xidx[below_idx]
             self.x[below_xidx] = xmin[below_idx]
@@ -326,13 +326,13 @@ class DAE(object):
 
         :return: None
         """
-        if self.ac_reset is False:
+        if self.ac_reset is False and not self.rebuild:
             return
 
         mn = self.m + self.n
 
-        x = findeq(aandb(self.zxmin, self.zxmax), 0.)
-        y = [i + self.n for i in findeq(aandb(self.zymin, self.zymax), 0.)]
+        x = index(aandb(self.zxmin, self.zxmax), 0.)
+        y = [i + self.n for i in index(aandb(self.zymin, self.zymax), 0.)]
         xy = list(x) + y
 
         I = spdiag([1.0] * mn)
