@@ -376,7 +376,8 @@ def run(system):
         system.Log.always('Reached minimum time step. Convergence is not likely.')
         retval = False
 
-    system.Streaming.finalize()
+    if system.Settings.dime_enable:
+        system.Streaming.finalize()
 
     _, s = elapsed(t0)
 

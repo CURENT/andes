@@ -93,9 +93,8 @@ class PowerSystem(object):
         if tf:
             self.TDS.tf = tf
 
-        if STREAMING:
-            self.Streaming = Streaming(self)
-        else:
+        self.Streaming = Streaming(self)
+        if not STREAMING:
             self.Settings.dime_enable = False
 
         self.inst_models()
