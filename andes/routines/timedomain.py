@@ -363,7 +363,7 @@ def run(system):
         if settings.qrt:
             if time() - rt_end > 0:  # the ending time has passed
                 if time() - rt_end > settings.kqrt:  # simulation is too slow
-                    system.Log.warning('Simulation over-run at simulation time {:4.4g} s.'.format(t))
+                    system.Log.debug('Simulation over-run at simulation time {:4.4g} s.'.format(t))
             else:  # wait to finish
                 rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:

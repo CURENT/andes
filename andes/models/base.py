@@ -331,8 +331,12 @@ class ModelBase(object):
 
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
+        ret = []
+        for i in idx:
+            tmp = self.uid.get(i, None)
+            assert tmp is not None, ('Model <{}> does not have element <{}>'.format(self._name, i))
+            ret.append(self.uid[i])
 
-        ret = [self.uid[i] for i in idx]
         return ret
 
     def uid_to_idx(self, uid):

@@ -502,7 +502,7 @@ class Streaming(object):
                 self.system.Log.warning('Synced variable {} not handled'.format(var_name))
 
     def vars_to_pmu(self):
-        """Broadcast all PMU measurements and BusFreq measurements in the variable `pmu_data`"""
+        """Broadcast all PMU measurements and BusFreq measurements in the variable `pmudata`"""
         if not self.system.Settings.dime_enable:
             return
         if not self.has_pmu:
@@ -514,11 +514,11 @@ class Streaming(object):
         k = self.system.VarOut.k[-1]
 
         values = self.system.VarOut.vars[-1][idx]
-        pmu_data = {'t': t,
+        pmudata = {'t': t,
                     'k': k,
                     'vars': array(values).T,
                    }
-        self.dimec.broadcast('pmu_data', pmu_data)
+        self.dimec.broadcast('pmudata', pmudata)
 
     def vars_to_modules(self):
         """
