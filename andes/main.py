@@ -92,12 +92,12 @@ def cli_parse(writehelp=False, helpfile=None):
     parser.add_argument('-u', '--usage', help='Write command line usage', action='store_true')
     parser.add_argument('-E', '--export', help='Export file format')
     parser.add_argument('-C', '--category', help='Dump device names belonging to the specified category.')
-    parser.add_argument('-L', '--dev_list', help='Dump the list of all supported devices.', action='store_true')
-    parser.add_argument('-f', '--dev_format', help='Dump the format definition of specified devices,'
-                                                   ' separated by comma.')
+    parser.add_argument('-L', '--model_list', help='Dump the list of all supported model.', action='store_true')
+    parser.add_argument('-f', '--model_format', help='Dump the format definition of specified devices,'
+                                                     ' separated by comma.')
+    parser.add_argument('-Q', '--model_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('-g', '--group', help='Dump all the devices in the specified group.')
     parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
-    parser.add_argument('-Q', '--dev_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
     parser.add_argument('--help_option', help='Print a quick help of a setting parameter')
     parser.add_argument('--help_settings', help='Print a quick help of a given setting class. Use ALL'
                                                 'for all setting classes.')
@@ -117,54 +117,71 @@ def cli_parse(writehelp=False, helpfile=None):
         return args
 
 
-def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=None, dev_var=None,
-             quick_help=None, help_option=None, help_settings=None, export='plain', **kwargs):
-    """Dump all sorts of help files
+def help(usage=None,
+         group=None,
+         category=None,
+         model_list=None,
+         model_format=None,
+         model_var=None,
+         quick_help=None,
+         help_option=None,
+         help_settings=None,
+         export='plain',
+         **kwargs):
+    """
+    Dump all sorts of help files
 
     :return: True if executed
     """
-    if not (usage or group or category or dev_list or dev_format or dev_var
+    ret = False
+
+    if not (usage or group or category or model_list or model_format or model_var
             or quick_help or help_option or help_settings):
-        return
+        return ret
+
     from .models import all_models_list
 
     ps = PowerSystem()
 
     if usage:
         cli_parse(writehelp=True, helpfile='cli_help.txt')
-        return True
-    if category:
-        pass
-    if dev_list:
-        pass
-    if dev_format:
-        if dev_format.lower() == 'all':
-            dev_format = all_models_list
-        else:
-            dev_format = dev_format.split(',')
+        ret = True
 
-        for item in dev_format:
+    if category:
+        raise NotImplementedError
+
+    if model_list:
+        raise NotImplementedError
+
+    if model_format:
+        if model_format.lower() == 'all':
+            model_format = all_models_list
+        else:
+            model_format = model_format.split(',')
+
+        for item in model_format:
             if item not in all_models_list:
                 ps.Log.warning('Model <{}> does not exist.'.format(item))
-                dev_format.remove(item)
+                model_format.remove(item)
 
-        if len(dev_format) > 0:
-            t, s = elapsed()
-            for idx, item in enumerate(dev_format):
+        if len(model_format) > 0:
+            for idx, item in enumerate(model_format):
                 mode = 'w' if idx == 0 else 'a'
                 ps.__dict__[item].help_doc(export=export, save=True, writemode=mode)
-            _, s = elapsed(t)
-            print('Model help saved to file in {}.'.format(s))
-        return True
+            ps.Log.info('Model help saved to <help_model>.')
+            ret = True
 
-    if dev_var:
-        dev_var = dev_var.split('.')
-        if len(dev_var) == 1:
+    if model_var:
+        model_var = model_var.split('.')
+
+        if len(model_var) == 1:
             ps.Log.error('Device parameter name not specified.')
-        elif len(dev_var) > 2:
+
+        elif len(model_var) > 2:
             ps.Log.error('Device parameter not specified correctly.')
+
         else:
-            dev, var = dev_var
+            dev, var = model_var
             if not hasattr(ps, dev):
                 ps.Log.error('Device <{}> does not exist.'.format(dev))
             else:
@@ -174,8 +191,9 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
                     c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
                     c2 = ps.__dict__[dev]._data.get(var)
                     c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
-                    ps.Log.info('{}: {}, default = {:g} {}'.format('.'.join(dev_var), c1, c2, c3))
-        return True
+                    ps.Log.info('{}: {}, default = {:g} {}'.format('.'.join(model_var), c1, c2, c3))
+
+                    ret = True
 
     if group:
         found = False
@@ -189,6 +207,7 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         if group.lower() == 'all':
             group = sorted(list(group_dict.keys()))
             found = True
+
         else:
             group = [group]
             match = []
@@ -216,8 +235,10 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
         else:
             ps.__dict__[quick_help].help_doc(export=export, save=False)
         return True
+
     if help_option:
-        pass
+        raise NotImplementedError
+
     if help_settings:
         all_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
         help_settings = help_settings.split(',')
@@ -225,10 +246,12 @@ def dumphelp(usage=None, group=None, category=None, dev_list=None, dev_format=No
             if item.lower() == 'all':
                 help_settings = all_settings
                 break
+
         for item in help_settings:
             if item not in all_settings:
                 ps.Log.warning('Setting <{}> does not exist.'.format(item))
                 help_settings.remove(item)
+
         if len(help_settings) > 0:
             t, _ = elapsed()
             for idx, item in enumerate(help_settings):
@@ -256,6 +279,7 @@ def clean(run=False):
 
     found = False
     cwd = os.getcwd()
+
     for file in os.listdir(cwd):
         if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
                 file.endswith('_out.dat') or file.endswith('_prof.txt'):
@@ -272,10 +296,18 @@ def clean(run=False):
 
 
 def search(keyword):
-    from .models import non_jits, jits
-    all_models = jits
-    all_models.update(non_jits)
+    """
+    Search for models whose names contain ``keyword``
+
+    :param str keyword: partial or full model name
+    :return: a list of model names in <file.model> format
+    """
+
+    from .models import non_jits, jits, all_models
     out = []
+
+    if not keyword:
+        return out
 
     keys = sorted(list(all_models.keys()))
 
@@ -294,9 +326,13 @@ def search(keyword):
     else:
         print('No model containing <{:s}> found'.format(keyword))
 
+    return out
+
 
 def main():
-    """Entry function"""
+    """
+    Entry function
+    """
     t0, s = elapsed()
     args = cli_parse()
     cases = []
@@ -328,7 +364,7 @@ def main():
             kwargs[arg] = val
 
     # dump help and exit
-    if dumphelp(**kwargs):
+    if help(**kwargs):
         return
 
     print(preamble(args.no_preamble))

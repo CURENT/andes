@@ -71,7 +71,6 @@ class ModelBase(object):
         self._states_descr = {}
         self._algebs_descr = {}
 
-
         # variable names
         self._unamex = []
         self._unamey = []
@@ -1028,7 +1027,9 @@ class ModelBase(object):
         )
 
     def help_doc(self, export='plain', save=False, writemode='a'):
-        """Build help document into a Texttable table
+        """
+        Build help document into a Texttable table
+
         :param ('plain', 'latex') export: export format
         :param save: save to file ``help_model.extension`` or not
         :param writemode: file write mode
@@ -1069,7 +1070,7 @@ class ModelBase(object):
 
         try:
             with open(outfile, writemode) as f:
-                f.write(table.draw(), writemode)
+                f.write(table.draw())
         except IOError:
             raise IOError('Error writing model help file.')
 
