@@ -1,4 +1,4 @@
-from ..models import order, jits, non_jits
+from ..models import order, jits, non_jits, all_models
 from numpy import ndarray
 from cvxopt import matrix
 
@@ -38,19 +38,28 @@ class DevMan(object):
         return idx
 
     def sort_device(self):
-        """sort device to meet device prerequisites (initialize devices before controllers)"""
+        """
+        Sort device to follow the order of initialization
+
+        :return: None
+        """
+
         self.devices.sort()
-        mapping = non_jits
-        mapping.update(jits)
+        # idx: the indices of order-sensitive models
+        # names: an ordered list of order-sensitive models
         idx = []
         names = []
         for dev in order:
-            if dev in mapping.keys():
-                all_dev = list(sorted(mapping[dev].keys()))
+            # if ``dev`` in ``order`` is a model file name:
+            #   initialize the models in alphabet order
+            if dev in all_models:
+                all_dev = list(sorted(all_models[dev].keys()))
                 for item in all_dev:
                     if item in self.devices:
                         idx.append(self.devices.index(item))
                         names.append(item)
+
+            # if ``dev`` presents as a model name
             elif dev in self.devices:
                 idx.append(self.devices.index(dev))
                 names.append(dev)
@@ -58,14 +67,6 @@ class DevMan(object):
         idx = sorted(idx)
         for id, name in zip(idx, names):
             self.devices[id] = name
-
-    def swap_device(self, front, back):
-        if front in self.devices and back in self.devices:
-            m = self.devices.index(front)
-            n = self.devices.index(back)
-            if m > n:
-                self.devices[n] = front
-                self.devices[m] = back
 
     def get_param(self, group, param, fkey):
         ret = []

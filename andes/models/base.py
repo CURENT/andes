@@ -24,9 +24,10 @@ from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from cvxopt import matrix, spmatrix
 from cvxopt import mul, div
 
-from ..utils.math import agtb, altb, findeq, zeros
+from ..utils.math import agtb, altb, index, zeros
 from ..utils.tab import Tab
 
+# pandas import slows down the program startup by 0.3 seconds
 import pandas as pd
 import numpy as np
 
@@ -69,7 +70,6 @@ class ModelBase(object):
 
         self._states_descr = {}
         self._algebs_descr = {}
-
 
         # variable names
         self._unamex = []
@@ -146,6 +146,7 @@ class ModelBase(object):
                        }
 
         self._config = {'address_group_by': 'element',
+                        'is_series': False,
                         }
 
         # pandas.DataFrame
@@ -1026,7 +1027,9 @@ class ModelBase(object):
         )
 
     def help_doc(self, export='plain', save=False, writemode='a'):
-        """Build help document into a Texttable table
+        """
+        Build help document into a Texttable table
+
         :param ('plain', 'latex') export: export format
         :param save: save to file ``help_model.extension`` or not
         :param writemode: file write mode
@@ -1067,7 +1070,7 @@ class ModelBase(object):
 
         try:
             with open(outfile, writemode) as f:
-                f.write(table.draw(), writemode)
+                f.write(table.draw())
         except IOError:
             raise IOError('Error writing model help file.')
 
@@ -1136,6 +1139,49 @@ class ModelBase(object):
 
         return ret
 
+    def link_bus(self, bus_idx):
+        """
+        Return the indices of elements linking the given buses
+
+        :param bus_idx:
+        :return:
+        """
+        ret = []
+
+        if not self._config['is_series']:
+            self.message('link_bus function is not valid for non-series model <{}>'.format(self.name))
+            return []
+
+        if isinstance(bus_idx, (int, float, str)):
+            bus_idx = [bus_idx]
+
+
+        fkey = list(self._ac.keys())
+        if 'bus' in fkey:
+            fkey.remove('bus')
+
+        nfkey = len(fkey)
+        fkey_val = [self.__dict__[i] for i in fkey]
+
+        for item in bus_idx:
+            idx = []
+            key = []
+            for i in range(self.n):
+                for j in range(nfkey):
+                    if fkey_val[j][i] == item:
+                        idx.append(i)
+                        key.append(fkey[j])
+                        # no more than one terminal should connect to the same bus
+                        break
+
+            if len(idx) == 0:
+                idx = None
+            if len(key) == 0:
+                key = None
+
+            ret.append((idx, key))
+
+        return ret
 
     def find_element(self, field, value):
         """

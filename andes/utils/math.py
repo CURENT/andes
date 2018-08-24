@@ -1,8 +1,5 @@
 from math import floor
 
-from numpy import sign as sgn
-from numpy import array
-
 import numpy as np
 
 from cvxopt import matrix
@@ -13,6 +10,7 @@ def altb(a, b):
     """Return a matrix of logic comparison of A<B"""
     return matrix(np.less(a, b).astype('float'))
 
+
 def mmax(a, b):
     """Return a matrix of maximum values in a and b element-wise"""
     return matrix(np.maximum(a, b))
@@ -21,6 +19,7 @@ def mmax(a, b):
 def mmin(a, b):
     """Return a matrix of minimum values in a and b element-wise"""
     return matrix(np.minimum(a, b))
+
 
 def agtb(a, b):
     """Return a matrix of logic comparision of A>B"""
@@ -31,21 +30,26 @@ def aleb(a, b):
     """Return a matrix of logic comparison of A<=B"""
     return matrix(np.less_equal(a, b).astype('float'))
 
+
 def ageb(a, b):
     """Return a matrix of logic comparision of A>=B"""
     return matrix(np.greater_equal(a, b).astype('float'))
+
 
 def aeqb(a, b):
     """Return a matrix of logic comparison of A == B"""
     return matrix(np.equal(a, b).astype('float'))
 
+
 def aneb(a, b):
     """Return a matrix of logic comparison of A != B"""
     return matrix(np.not_equal(a, b).astype('float'))
 
+
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(np.logical_or(a, b).astype('float'), a.size)
+
 
 def aandb(a, b):
     """Return a matrix of logic comparison of A or B"""
@@ -75,13 +79,11 @@ def neg(u):
 def mfloor(a):
     """Return the element-wise floor value of a"""
     return matrix(np.floor(a), a.size)
-    # return matrix(list(map(lambda x: floor(x), a)), a.size)
 
 
 def mround(a):
     """Return the element-wise round value of a"""
     return matrix(np.round(a), a.size)
-    # return matrix(list(map(lambda x: round(x), a)), a.size)
 
 
 def not0(a):
@@ -101,7 +103,7 @@ def ones(m, n):
 
 def sign(a):
     """Return the sign of a in (1, -1, 0)"""
-    return matrix(sgn(array(a)))
+    return matrix(np.sign(np.array(a)))
 
 
 def sort(m, reverse=False):
@@ -120,8 +122,8 @@ def sort_idx(m, reverse=False):
     return sorted(range(len(m)), key=lambda k: m[k], reverse=reverse)
 
 
-def findeq(m, val):
-    """Return the indices of all (val) in m"""
+def index(m, val):
+    """Return the indices of all ``val`` in m"""
     m = list(m)
     idx = []
     if m.count(val) > 0:

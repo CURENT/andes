@@ -88,9 +88,13 @@ class Line(ModelBase):
         self.calls.update({'gcall': True, 'gycall': True,
                            'init0': True, 'pflow': True,
                            'series': True, 'flows': True})
+
         self._ac = {'bus1': ['a1', 'v1'],
                     'bus2': ['a2', 'v2']
                     }
+
+        self._config['is_series'] = True
+
         self.rebuild = True
         self.Y = []
         self.C = []
@@ -100,10 +104,6 @@ class Line(ModelBase):
 
     def setup(self):
         self._param_to_matrix()
-        # self.a = self.system.Bus.a
-        # self.v = self.system.Bus.v
-        # self.a1 = self.system.Bus.get_field('a', self.bus1, astype=list)
-        # self.a2 = self.system.Bus.get_field('a', self.bus2, astype=list)
 
         self.nb = int(self.system.Bus.n)
         self.system.Settings.nseries += self.n
