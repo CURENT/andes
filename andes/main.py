@@ -354,6 +354,8 @@ def main():
         if ncpu == 0 or ncpu > os.cpu_count():
             ncpu = os.cpu_count()
 
+        print('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(njob=len(cases), ncpu=ncpu))
+
         for idx, case_name in enumerate(cases):
             kwargs['pid'] = idx
             job = Process(name='Process {0:d}'.format(idx), target=run, args=(case_name,), kwargs=kwargs)
@@ -368,7 +370,7 @@ def main():
                 jobs = []
 
         t0, s0 = elapsed(t0)
-        print('--> Multiple processing finished in {0:s}.'.format(s0))
+        print('--> Multiple jobs finished in {0:s}.'.format(s0))
         return
 
 

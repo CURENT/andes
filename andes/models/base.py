@@ -147,6 +147,7 @@ class ModelBase(object):
                        }
 
         self._config = {'address_group_by': 'element',
+                        'is_series': False,
                         }
 
         # pandas.DataFrame
@@ -1137,6 +1138,49 @@ class ModelBase(object):
 
         return ret
 
+    def link_bus(self, bus_idx):
+        """
+        Return the indices of elements linking the given buses
+
+        :param bus_idx:
+        :return:
+        """
+        ret = []
+
+        if not self._config['is_series']:
+            self.message('link_bus function is not valid for non-series model <{}>'.format(self.name))
+            return []
+
+        if isinstance(bus_idx, (int, float, str)):
+            bus_idx = [bus_idx]
+
+
+        fkey = list(self._ac.keys())
+        if 'bus' in fkey:
+            fkey.remove('bus')
+
+        nfkey = len(fkey)
+        fkey_val = [self.__dict__[i] for i in fkey]
+
+        for item in bus_idx:
+            idx = []
+            key = []
+            for i in range(self.n):
+                for j in range(nfkey):
+                    if fkey_val[j][i] == item:
+                        idx.append(i)
+                        key.append(fkey[j])
+                        # no more than one terminal should connect to the same bus
+                        break
+
+            if len(idx) == 0:
+                idx = None
+            if len(key) == 0:
+                key = None
+
+            ret.append((idx, key))
+
+        return ret
 
     def find_element(self, field, value):
         """
