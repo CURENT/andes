@@ -62,3 +62,21 @@ class VarName(object):
             self.system.Bus._varname_inj()
             self.system.Line._varname_flow()
             self.system.Area._varname_inter()
+
+    @property
+    def uname(self):
+        """
+        Return the full unformatted variable name list in the order of state vars, algeb vars and line flow vars
+
+        :return: list of unformatted names
+        """
+        return self.unamex + self.unamey
+
+    @property
+    def fname(self):
+        """
+        Return the full formatted variable name list in the order of state vars, algeb vars and line flow vars
+
+        :return: list of formatted names
+        """
+        return self.fnamex + self.fnamey

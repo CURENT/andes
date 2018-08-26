@@ -174,55 +174,49 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin=None, ymax=None,
-            xlabel=None, ylabel=None, no_latex=False, grid=False, save=False, unattended=False, datfile='',
+def do_plot(xdata, ydata, xname=None, yname=None, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin=None, ymax=None,
+            xlabel=None, ylabel=None, no_latex=False, legend=True, grid=False, save=False, unattended=False, datfile='',
             noshow=False,
             **kwargs):
-    # xmin = args.pop('xmin', None)
-    # xmax = args.pop('xmax', None)
-    # ymax = args.pop('ymax', None)
-    # ymin = args.pop('ymin', None)
-    # xlabel = args.pop('xlabel', None)
-    # ylabel = args.pop('ylabel', None)
-    # no_latex = args.pop('no_latex', None)
 
-    LATEX = False
-    if no_latex:
-        LATEX = False
-    elif find_executable('dvipng'):
+    # set styles and LaTex
+    rc('font', family='Arial', size=12)
+    linestyles = ['-', '--', '-.', ':'] * len(ydata)
+    if not no_latex and find_executable('dvipng'):
+        # use LaTex
         LATEX = True
-
-    if LATEX:
         rc('text', usetex=True)
     else:
+        LATEX = False
         rc('text', usetex=False)
-    rc('font', family='Arial', size=12)
 
-    if not y:
-        return
-    linestyles = ['-', '--', '-.', ':'] * len(y)
+    # get variable names from lst
+    def get_lst_name(lst, LATEX):
+        idx = 1 if LATEX else 0
+        if lst is not None:
+            return lst[idx]
+        else:
+            return None
+    xl_data = get_lst_name(xname, LATEX)
+    yl_data = get_lst_name(yname, LATEX)
 
+    # set default x min based on simulation time
     if not xmin:
-        xmin = x[0] - 1e-6
+        xmin = xdata[0] - 1e-6
     if not xmax:
-        xmax = x[-1] + 1e-6
-
-    if LATEX:
-        xl_data = xl[1]
-        yl_data = yl[1]
-    else:
-        xl_data = xl[0]
-        yl_data = yl[0]
+        xmax = xdata[-1] + 1e-6
 
     if not (fig and ax):
         fig = plt.figure(dpi=dpi)
         ax = plt.gca()
 
-    for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx], ls=linestyles[idx])
+    for idx in range(len(ydata)):
+        yl_data_idx = yl_data[idx] if yl_data else None
+        ax.plot(xdata, ydata[idx], label=yl_data_idx, ls=linestyles[idx])
 
     if not xlabel:
-        ax.set_xlabel(xl_data)
+        if xl_data is not None:
+            ax.set_xlabel(xl_data)
     else:
         if LATEX:
             xlabel = '$' + xlabel.replace(' ', '\ ') + '$'
@@ -242,7 +236,8 @@ def do_plot(x, y, xl, yl, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin
 
     if grid:
         ax.grid(b=True, linestyle='--')
-    legend = ax.legend(loc='upper right')
+    if legend and yl_data:
+        legend = ax.legend(loc='upper right')
 
     plt.draw()
 

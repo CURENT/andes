@@ -1,5 +1,6 @@
+import numpy as np
+
 from cvxopt import matrix
-from numpy import array
 
 
 class VarOut(object):
@@ -42,14 +43,79 @@ class VarOut(object):
         The representation of an Varout object
 
         :return: the full result matrix (for use with PyCharm viewer)
-        :rtype: array
+        :rtype: np.array
         """
         out = []
 
         for item in self.vars:
             out.append(list(item))
 
-        return array(out)
+        return np.array(out)
+
+    def concat_t_vars(self):
+        """
+        Concatenate ``self.t`` with ``self.vars`` and output a single matrix for data dump
+
+        :return matrix: concatenated matrix with ``self.t`` as the 0-th column
+        """
+        out = np.array([])
+
+        if len(self.t) == 0:
+            return out
+
+        out = np.ndarray(shape=(0, self.vars[0].size[0] + 1))
+
+        for t, var in zip(self.t, self.vars):
+            line = [[t]]
+            line[0].extend(list(var))
+            out = np.append(out, line, axis=0)
+
+        return out
+
+    def get_xy(self, yidx, xidx=0):
+        """
+        Return stored data for the given indices for plot
+
+        :param yidx: the indices of the y-axis variables(1-indexing)
+        :param xidx: the index of the x-axis variables
+        :return: None
+        """
+        assert isinstance(xidx, int)
+        if isinstance(yidx, int):
+            yidx = [yidx]
+
+        t_vars = self.concat_t_vars()
+
+        xdata = t_vars[:, xidx]
+        ydata = t_vars[:, yidx]
+
+        return xdata.tolist(), ydata.transpose().tolist()
+
+    def get_xy_name(self, yidx, xidx=0):
+        """
+        Return variable names for the given indices
+
+        :param yidx:
+        :param xidx:
+        :return:
+        """
+        assert isinstance(xidx, int)
+        if isinstance(yidx, int):
+            yidx = [yidx]
+
+        uname = ['Time [s]'] + self.system.VarName.uname
+        fname = ['$Time\ [s]$'] + self.system.VarName.fname
+
+        xname = [list(), list()]
+        yname = [list(), list()]
+
+        xname[0] = uname[xidx]
+        xname[1] = fname[xidx]
+
+        yname[0] = [uname[i] for i in yidx]
+        yname[1] = [fname[i] for i in yidx]
+
+        return xname, yname
 
     def dump(self):
         """
