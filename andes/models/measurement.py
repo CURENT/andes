@@ -37,10 +37,10 @@ class BusFreq(ModelBase):
                            'gcall': True, 'jac0': True,
                            })
         self._service.extend(['iTf', 'iTw', 'iwn', 'a0', 'dw', 'iTd'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
-        self.get_field_ext(model='Bus', field='a', dest='a', idx=self.bus)
+        self.copy_data_ext(model='Bus', field='a', dest='a', idx=self.bus)
         self.iTf = div(self.u, self.Tf)
         self.iTd = div(self.u, self.Td)
         self.iTw = div(self.u, self.Tw)
@@ -99,14 +99,14 @@ class PMU(ModelBase):
         self._fnamex.extend(['V_m', '\\theta_m'])
         self._mandatory.extend(['bus'])
         self._service.extend(['iTv', 'iTa'])
-        self._meta_to_attr()
+        self._init()
         self.calls.update({'fcall': True, 'jac0': True,
                            'init1': True,
                            })
 
     def init1(self, dae):
-        self.get_field_ext(model='Bus', field='a', idx=self.bus)
-        self.get_field_ext(model='Bus', field='v', idx=self.bus)
+        self.copy_data_ext(model='Bus', field='a', idx=self.bus)
+        self.copy_data_ext(model='Bus', field='v', idx=self.bus)
         self.iTv = div(self.u, self.Tv)
         self.iTa = div(self.u, self.Ta)
         dae.x[self.am] = dae.y[self.a]

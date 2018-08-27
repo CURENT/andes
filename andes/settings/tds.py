@@ -17,7 +17,7 @@ class TDS(SettingsBase):
         self.tol = 1e-4
         self.disturbance = False
         self.error = 1
-        self.qrt = True
+        self.qrt = False
         self.kqrt = 1
         self.compute_flows = True
         self.max_cache = 0

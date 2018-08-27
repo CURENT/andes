@@ -20,7 +20,7 @@ def get_logger(name):
         logger.propagate = 0
         console = logging.StreamHandler()
         logger.addHandler(console)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(log)s')
         console.setFormatter(formatter)
     return logger
 

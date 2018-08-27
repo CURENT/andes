@@ -47,10 +47,10 @@ class Node(ModelBase):
         # self.v = list()
         self._algebs.extend(['v'])
         self._fnamey.extend(['V_{dc}'])
-        self._meta_to_attr()
+        self._init()
 
-    def element_add(self, idx=None, name=None, **kwargs):
-        super().element_add(idx, name, **kwargs)
+    def elem_add(self, idx=None, name=None, **kwargs):
+        super().elem_add(idx, name, **kwargs)
 
     def _varname(self):
         if not self.n:
@@ -118,7 +118,7 @@ class R(DCBase):
                            })
         self._algebs.extend(['Idc'])
         self._fnamey = ['I_{dc}']
-        self._meta_to_attr()
+        self._init()
 
     def gcall(self, dae):
         dae.g[self.Idc] = div(self.v12, self.R) + dae.y[self.Idc]
@@ -150,7 +150,7 @@ class L(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iL = div(self.u, self.L)
@@ -192,7 +192,7 @@ class C(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iC = div(self.u, self.C)
@@ -240,7 +240,7 @@ class RLs(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL'])
-        self._meta_to_attr()
+        self._init()
 
     def base(self):
         super(RLs, self).base()
@@ -293,7 +293,7 @@ class RCp(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iC'])
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -347,7 +347,7 @@ class RLCp(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL', 'iC'])
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -403,7 +403,7 @@ class RCs(DCBase):
                            'gcall': True, 'fcall': True,
                            'jac0': True,
                            })
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iC = div(self.u, self.C)
@@ -454,7 +454,7 @@ class RLCs(DCBase):
                            'jac0': True,
                            })
         self._service.extend(['iR', 'iL', 'iC'])
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
@@ -512,7 +512,7 @@ class Ground(DCBase):
                            'pflow': True,
                            })
 
-        self._meta_to_attr()
+        self._init()
 
     def init0(self, dae):
         dae.y[self.v] = self.voltage
@@ -540,7 +540,7 @@ class DCgen(DCBase):
                            'gcall': True,
                            'stagen': True,
                            })
-        self._meta_to_attr()
+        self._init()
 
     def gcall(self, dae):
         dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')

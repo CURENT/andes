@@ -47,7 +47,7 @@ class ModelBase(object):
         self._param_attr_dicts = ('_data', '_units', '_descr')
 
         self.system = system
-        self.n = 0    # device count
+        # self.n = 0    # device count
         self.u = []   # device status
         self.idx = []    # external index list
         self.uid = {}    # mapping from `self.idx` to unique positional indices
@@ -163,23 +163,36 @@ class ModelBase(object):
         # raise NotImplemented('Subclasses must overwrite this method')
         pass
 
-    def _meta_to_attr(self):
+    def _init(self):
         """
-        Convert model metadata to class attributes. This function is called automatically after ``define()``
-        in new versions.
+        Convert model metadata to class attributes.
+
+        This function is called automatically after ``define()`` in new versions.
 
         :return: None
         """
         assert self._name
         assert self._group
 
+        # self.n = 0
+        self.u = []
+        self.name = []
+        self.idx = []
+        self.uid = {}
+
         if not self._unamey:
             self._unamey = self._algebs
+        else:
+            assert len(self._unamey) == len(self._algebs)
+
         if not self._unamex:
             self._unamex = self._states
+        else:
+            assert len(self._unamex) == len(self._states)
 
         for item in self._data.keys():
             self.__dict__[item] = []
+
         for bus in self._ac.keys():
             for var in self._ac[bus]:
                 self.__dict__[var] = []
@@ -190,10 +203,15 @@ class ModelBase(object):
         for var in self._states + self._algebs + self._service:
             self.__dict__[var] = []
 
-    def param_add(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
-                  voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
-                  time=False, event_time=False, **kwargs):
-        """Define a parameter in the model
+        self._flags['sysbase'] = False
+        self._flags['allocate'] = False
+        self._flags['address'] = False
+
+    def param_define(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
+                     voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
+                     time=False, event_time=False, **kwargs):
+        """
+        Define a parameter in the model
 
         :param tomatrix: convert this parameter list to matrix
         :param param: parameter name
@@ -272,7 +290,7 @@ class ModelBase(object):
         if event_time:
             self._event_times.append(param)
 
-    def var_add(self, variable, ty, fname, descr='', uname=''):
+    def var_define(self, variable, ty, fname, descr='', uname=''):
         """
         Define a variable in the model
 
@@ -304,7 +322,7 @@ class ModelBase(object):
             if descr:
                 self._algebs_descr.update({variable: descr})
 
-    def service_add(self, service, ty):
+    def service_define(self, service, ty):
         """
         Add a service variable of type ``ty`` to this model
 
@@ -319,7 +337,7 @@ class ModelBase(object):
         self._service.append(service)
         self._service_ty.append(ty)
 
-    def idx_to_uid(self, idx):
+    def get_uid(self, idx):
         """
         Return the `uid` of the elements with the given `idx`
 
@@ -331,6 +349,7 @@ class ModelBase(object):
 
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
+
         ret = []
         for i in idx:
             tmp = self.uid.get(i, None)
@@ -339,7 +358,7 @@ class ModelBase(object):
 
         return ret
 
-    def uid_to_idx(self, uid):
+    def get_idx(self, uid):
         """
         Return the ``idx`` of the elements whose internal indices are ``uid
 
@@ -361,7 +380,7 @@ class ModelBase(object):
         if idx is None:
             idx = self.idx
 
-        # ====== Temporarily disable warning ==============================
+        # ===================disable warning ==============================
         # if field in self._service:
         # self.system.Log.warning(
         #     'Reading service variable <{model}.{field}> could be unsafe.'
@@ -369,7 +388,7 @@ class ModelBase(object):
         # )
         # =================================================================
 
-        uid = self.idx_to_uid(idx)
+        uid = self.get_uid(idx)
         if not astype:
             astype = type(self.__dict__[field])
 
@@ -391,8 +410,9 @@ class ModelBase(object):
         for var in self._algebs:
             self.__dict__[var] = nzeros[:]
 
-    def param_to_dict_compressed(self, sysbase=False):
-        """Return the loaded model parameters as one dictionary.
+    def data_to_dict(self, sysbase=False):
+        """
+        Return the loaded model parameters as one dictionary.
 
         Each key of the dictionary is a parameter name, and the value is a list of all the parameter values.
 
@@ -401,9 +421,9 @@ class ModelBase(object):
         """
         assert isinstance(sysbase, bool)
 
-        ret = {'sysbase': sysbase}
+        ret = {}
 
-        for key in sorted(self._data.keys()):
+        for key in self.data_keys:
             if sysbase and (key in self._store):
                 val = self._store[key]
             else:
@@ -413,8 +433,34 @@ class ModelBase(object):
 
         return ret
 
-    def param_to_dict(self, sysbase=False):
-        """Return the loaded model parameters as a list of dictionaries.
+    @property
+    def n(self):
+        """
+        Return the count of elements
+        Returns
+        -------
+        int:
+            count of elements
+        """
+
+        return len(self.idx)
+
+    @property
+    def data_keys(self):
+        """
+        Returns a list of all parameters plus ``name`` and ``idx``
+
+        Returns
+        -------
+        list of parameters
+        """
+
+        keys = ['idx', 'name', 'u'] + sorted(self._data.keys())
+        return set(keys)
+
+    def data_to_list(self, sysbase=False):
+        """
+        Return the loaded model data as a list of dictionaries.
 
         Each dictionary contains the full parameters of an element.
         :param sysbase: use system base quantities
@@ -422,27 +468,71 @@ class ModelBase(object):
         """
         ret = list()
 
-        e = {'sysbase': sysbase}
-
+        # for each element
         for i in range(self.n):
-            for key in sorted(self._data.keys()):
+            # read the parameter values and put in the temp dict ``e``
+            e = {}
+            for key in self.data_keys:
                 if sysbase and (key in self._store):
-                    val = self._store[key]
+                    val = self._store[key][i]
                 else:
-                    val = self.__dict__[key]
+                    val = self.__dict__[key][i]
                 e[key] = val
 
             ret.append(e)
 
         return ret
 
-    def param_to_df(self, sysbase=False):
+    def data_from_list(self, data):
+        """
+        Populate model parameters from a list of parameter dictionaries
+
+        Parameters
+        ----------
+        data: list
+            List of parameter dictionaries
+
+        Returns
+        -------
+        None
+        """
+        for item in data:
+            self.elem_add(**item)
+
+    def data_from_dict(self, data):
+        """
+        Populate model parameters from a dictionary of parameters
+
+        Parameters
+        ----------
+        data: list
+            List of parameter dictionaries
+
+        Returns
+        -------
+        None
+        """
+
+        nvars = []
+        for key, val in data.items():
+            self.__dict__[key].extend(val)
+
+            # assure the same parameter matrix size
+            if len(nvars) > 1 and len(val) != nvars[-1]:
+                raise IndexError('Model <{}> parameter <{}> must have the same length'.format(self._name, key))
+            nvars.append(len(val))
+
+        # assign idx-uid mapping
+        for i, idx in zip(range(self.n), self.idx):
+            self.uid[idx] = i
+
+    def data_to_df(self, sysbase=False):
         """
         Return a pandas.DataFrame of device parameters.
         :param sysbase: save per unit values in system base
         """
 
-        p_dict_comp = self.param_to_dict_compressed(sysbase=sysbase)
+        p_dict_comp = self.data_to_dict(sysbase=sysbase)
         self.param_df = pd.DataFrame(data=p_dict_comp)
 
         return self.param_df
@@ -450,9 +540,14 @@ class ModelBase(object):
     def var_to_df(self):
         """
         Return the current var_to_df of variables
+
         :return: pandas.DataFrame
         """
         ret = {}
+
+        if self._flags['address'] is False:
+            return pd.DataFrame.from_dict(ret)
+
         ret.update({'name': self.name})
         ret.update({'idx': self.idx})
 
@@ -466,7 +561,8 @@ class ModelBase(object):
         return pd.DataFrame.from_dict(ret)
 
     def param_remove(self, param: 'str') -> None:
-        """Remove a param from this model
+        """
+        Remove a param from this model
 
         :param param: name of the parameter to be removed
         :type param: str
@@ -479,13 +575,13 @@ class ModelBase(object):
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
-    def param_set_attr(self, param, default=None, unit=None, descr=None, tomatrix=None, nonzero=None, mandatory=None,
-                       power=None, voltage=None, current=None, z=None, y=None, r=None, g=None, dccurrent=None,
-                       dcvoltage=None, time=None, **kwargs):
+    def param_alter(self, param, default=None, unit=None, descr=None, tomatrix=None, nonzero=None, mandatory=None,
+                    power=None, voltage=None, current=None, z=None, y=None, r=None, g=None, dccurrent=None,
+                    dcvoltage=None, time=None, **kwargs):
         """
         Set attribute of an existing parameter. To be used to alter an attribute inherited from parent models.
 
-        See .. self.param_add for argument descriptions.
+        See .. self.param_define for argument descriptions.
         """
         assert param in self._data, 'parameter <{}> does not exist in {}'.format(param, self._name)
 
@@ -499,7 +595,7 @@ class ModelBase(object):
             elif (value is False) and (p in self.__dict__[attr]):
                 self.__dict__[attr].remove(p)
             else:
-                self.message('No need to alter {} for {}'.format(attr, p), WARNING)
+                self.log('No need to alter {} for {}'.format(attr, p), WARNING)
 
         if default is not None:
             self._data.update({param: default})
@@ -559,14 +655,12 @@ class ModelBase(object):
                     if intf is False:
                         intf = True
         if ty == '':
-            self.message('Equation associated with interface variable {var} assumed as algeb'.format(var=var), DEBUG)
+            self.log('Equation associated with interface variable {var} assumed as algeb'.format(var=var), DEBUG)
             ty = 'g'
 
         self._equations.append((expr, var, intf, ty))
 
-
-
-    def read_field_ext(self, model: str, field: str, idx=None, astype=None):
+    def read_data_ext(self, model: str, field: str, idx=None, astype=None):
         """
         Return a field of a model or group at the given indices
 
@@ -593,7 +687,7 @@ class ModelBase(object):
 
             for item in idx:
                 dev_name = self.system.DevMan.group[model].get(item, None)
-                ret.append(self.read_field_ext(dev_name, field, idx=item))
+                ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
             raise NameError('Model or Group <{0}> does not exist.'.format(model))
@@ -605,7 +699,7 @@ class ModelBase(object):
         else:
             return astype(ret)
         
-    def get_field_ext(self, model, field, dest=None, idx=None, astype=None):
+    def copy_data_ext(self, model, field, dest=None, idx=None, astype=None):
         """
         Retrieve the field of another model and store it as a field of this model.
 
@@ -621,7 +715,7 @@ class ModelBase(object):
         :type idx: list, matrix
         :type astype: None, list, matrix
 
-        :return: retrieved external field values
+        :return: None
 
         """
         # use default destination
@@ -630,19 +724,9 @@ class ModelBase(object):
             dest = field
         assert dest not in self._states + self._algebs
 
-        self.__dict__[dest] = self.read_field_ext(model, field, idx, astype=astype)
+        self.__dict__[dest] = self.read_data_ext(model, field, idx, astype=astype)
 
-        return self.__dict__[dest]
-
-    def copy_param(self, model, field, dest=None, idx=None, astype=None):
-        """
-        Copy a parameter from other models.
-
-        This function will be depreciated and replaced by ``self.get_field_ext``
-        """
-        return self.get_field_ext(model, field, dest=dest, idx=idx, astype=astype)
-
-    def element_add(self, idx=None, name=None, **kwargs):
+    def elem_add(self, idx=None, name=None, **kwargs):
         """
         Add an element of this model
 
@@ -657,7 +741,7 @@ class ModelBase(object):
 
         self.uid[idx] = self.n
         self.idx.append(idx)
-        self.n += 1
+        # self.n += 1
 
         if name is None:
             self.name.append(self._name + ' ' + str(self.n))
@@ -667,7 +751,7 @@ class ModelBase(object):
         # check mandatory parameters
         for key in self._mandatory:
             if key not in kwargs.keys():
-                self.message('Mandatory parameter <{:s}.{:s}> missing'.format(self.name[-1], key), ERROR)
+                self.log('Mandatory parameter <{:s}.{:s}> missing'.format(self.name[-1], key), ERROR)
                 sys.exit(1)
 
         # set default values
@@ -677,7 +761,7 @@ class ModelBase(object):
         # overwrite custom values
         for key, value in kwargs.items():
             if key not in self._data:
-                self.message('Parameter <{:s}.{:s}> is not used.'.format(self.name[-1], key), WARNING)
+                self.log('Parameter <{:s}.{:s}> is not used.'.format(self.name[-1], key), WARNING)
                 continue
             self.__dict__[key][-1] = value
 
@@ -690,11 +774,11 @@ class ModelBase(object):
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
-                self.message('Using default value for <{:s}.{:s}>'.format(self.name[-1], key), WARNING)
+                self.log('Using default value for <{:s}.{:s}>'.format(self.name[-1], key), WARNING)
 
         return idx
 
-    def element_remove(self, idx=None):
+    def elem_remove(self, idx=None):
         """
         Remove elements labeled by idx from this model instance.
 
@@ -706,7 +790,7 @@ class ModelBase(object):
                 key = idx
                 item = self.uid[idx]
             else:
-                self.message('The item <{:s}> does not exist.'.format(idx), ERROR)
+                self.log('The item <{:s}> does not exist.'.format(idx), ERROR)
                 return None
         else:
             return None
@@ -716,7 +800,7 @@ class ModelBase(object):
             self._param_to_list()
             convert = True
 
-        self.n -= 1
+        # self.n -= 1
         self.uid.pop(key, '')
         self.idx.pop(item)
 
@@ -759,7 +843,7 @@ class ModelBase(object):
         if convert and self.n:
             self._param_to_matrix()
 
-    def param_to_sysbase(self):
+    def data_to_sys_base(self):
         """
         Converts parameters to system base. Stores a copy in ``self._store``.
         Sets the flag ``self.flag['sysbase']`` to True.
@@ -771,9 +855,9 @@ class ModelBase(object):
         Sb = self.system.Settings.mva
         Vb = matrix([])
         if 'bus' in self._ac.keys():
-            Vb = self.read_field_ext('Bus', 'Vn', idx=self.bus)
+            Vb = self.read_data_ext('Bus', 'Vn', idx=self.bus)
         elif 'bus1' in self._ac.keys():
-            Vb = self.read_field_ext('Bus', 'Vn', idx=self.bus1)
+            Vb = self.read_data_ext('Bus', 'Vn', idx=self.bus1)
 
         for var in self._voltages:
             self._store[var] = self.__dict__[var]
@@ -807,7 +891,7 @@ class ModelBase(object):
 
         if len(self._dcvoltages) or len(self._dccurrents) or len(self._r) or len(self._g):
             dckey = sorted(self._dc.keys())[0]
-            Vbdc = self.read_field_ext('Node', 'Vdcn', self.__dict__[dckey])
+            Vbdc = self.read_data_ext('Node', 'Vdcn', self.__dict__[dckey])
             Ib = div(Sb, Vbdc)
             Rb = div(Vbdc, Ib)
 
@@ -830,6 +914,22 @@ class ModelBase(object):
             self.__dict__[var] = mul(self.__dict__[var], Rb)
 
         self._flags['sysbase'] = True
+
+    def data_to_elem_base(self):
+        """
+        Convert parameter data to element base
+
+        Returns
+        -------
+        None
+        """
+        if self._flags['sysbase'] is False:
+            return
+
+        for key, val in self._store:
+            self.__dict__[key] = val
+
+        self._flags['sysbase'] = False
 
     def setup(self):
         """
@@ -862,11 +962,11 @@ class ModelBase(object):
         """
 
         for key, val in self._ac.items():
-            self.get_field_ext(model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
-            self.get_field_ext(model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
+            self.copy_data_ext(model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
+            self.copy_data_ext(model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
 
         for key, val in self._dc.items():
-            self.get_field_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
+            self.copy_data_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
 
         # check for interface voltage differences
         self._check_Vn()
@@ -890,14 +990,18 @@ class ModelBase(object):
 
         for key, val in self._ctrl.items():
             model, field, dest, astype = val
-            self.get_field_ext(model, field, dest=dest, idx=self.__dict__[key], astype=astype)
+            self.copy_data_ext(model, field, dest=dest, idx=self.__dict__[key], astype=astype)
 
     def _addr(self):
         """
-        Assign DAE addresses for algebraic and state variables. Addresses are stored in ``self.__dict__[var]``.
-          ``DAE.m`` and ``DAE.n`` are updated accordingly.
+        Assign DAE addresses for algebraic and state variables.
 
-        :return None
+        Addresses are stored in ``self.__dict__[var]``. ``DAE.m`` and ``DAE.n`` are updated accordingly.
+
+        Returns
+        -------
+        None
+
         """
         group_by = self._config['address_group_by']
 
@@ -927,13 +1031,15 @@ class ModelBase(object):
 
     def _varname(self):
         """
-        Set up variable names in ``self.system.VarName```. Variable names follows the convention
-        ``VariableName,Model Name``. A maximum of 24 characters are allowed for each variable.
+        Set up variable names in ``self.system.VarName``.
+
+        Variable names follows the convention ``VariableName,Model Name``.
+        A maximum of 24 characters are allowed for each variable.
 
         :return: None
         """
         if not self._flags['address']:
-            self.message('Unable to assign Varname before allocating address', ERROR)
+            self.log('Unable to assign Varname before allocating address', ERROR)
             return
 
         varname = self.system.VarName
@@ -957,25 +1063,25 @@ class ModelBase(object):
                 varname.fnamey[idx] = '$' + '{}\ {}'.format(fnamey, iname.replace(' ', '\\ '))[:24] + '$'
 
     def _param_to_matrix(self):
-        """Convert parameters defined in `self._params` from list to `cvxopt.matrix`
+        """
+        Convert parameters defined in `self._params` from list to `cvxopt.matrix`
 
         :return None
         """
         for item in self._params:
-            try:
-                self.__dict__[item] = matrix(self.__dict__[item], tc='d')
-            except:
-                pass
+            self.__dict__[item] = matrix(self.__dict__[item], tc='d')
+
     def _param_to_list(self):
-        """Convert parameters defined in `self._param` from `cvxopt.matrix` to list
+        """
+        Convert parameters defined in `self._param` from `cvxopt.matrix` to list
 
         :return None
         """
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
 
-    def message(self, msg, level=INFO):
-        """Record a line of message in logger
+    def log(self, msg, level=INFO):
+        """Record a line of log in logger
 
         :param str msg: content of the messag
 
@@ -986,7 +1092,7 @@ class ModelBase(object):
         if level not in (DEBUG, INFO, WARNING, ERROR, CRITICAL):
             self.system.Log.error('Message logging level does not exist.')
             return
-        self.system.Log.message(msg, level)
+        self.system.Log.message('[{}] - '.format(self._name) + msg, level)
 
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
@@ -995,7 +1101,7 @@ class ModelBase(object):
             if item == 0.:
                 continue
             maxval = upper[idx]
-            self.message('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[idx], self._name, key, maxval), ERROR)
+            self.log('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[idx], self._name, key, maxval), ERROR)
             if limit:
                 self.__dict__[key][idx] = maxval
 
@@ -1004,16 +1110,15 @@ class ModelBase(object):
             if item == 0.:
                 continue
             minval = lower[idx]
-            self.message('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[idx], self._name, key, minval), ERROR)
+            self.log('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[idx], self._name, key, minval), ERROR)
             if limit:
                 self.__dict__[key][idx] = minval
 
     def __repr__(self):
         ret = ''
-
         ret += '\n'
         ret += 'Model <{:s}> parameters in element base\n'.format(self._name)
-        ret += self.param_to_df(sysbase=False).to_string()
+        ret += self.data_to_df(sysbase=False).to_string()
 
         ret += '\n'
         ret += 'Model <{:s}> variable snapshot\n'.format(self._name)
@@ -1027,16 +1132,16 @@ class ModelBase(object):
             name=self._name,
             mem=hex(id(self)),
             n=self.n,
-            b='system' if self._flags['sysbase'] else 'element',
         )
 
-    def help_doc(self, export='plain', save=False, writemode='a'):
+    def doc(self, export='plain'):
         """
         Build help document into a Texttable table
 
         :param ('plain', 'latex') export: export format
         :param save: save to file ``help_model.extension`` or not
         :param writemode: file write mode
+
         :return: None
         """
         title = '<{}.{}>'.format(self._group, self._name)
@@ -1048,6 +1153,7 @@ class ModelBase(object):
             suf = ''
             if key in self._mandatory:
                 suf = ' *'
+
             elif key in self._powers + self._voltages + self._currents + self._z + self._y +\
                         self._dccurrents + self._dcvoltages + self._r + self._g + self._times:
                 suf = ' #'
@@ -1057,26 +1163,16 @@ class ModelBase(object):
             c3 = val
             c4 = self._units.get(key, '-')
             rows.append([c1, c2, c3, c4])
+
         table.add_rows(rows, header=False)
         table.header(['Parameter', 'Description', 'Default', 'Unit'])
 
         if export == 'plain':
-            ext = '.txt'
+            pass
         elif export == 'latex':
-            ext = '.tex'
-        else:
-            ext = '.txt'
-        outfile = 'help_model' + ext
+            raise NotImplementedError('LaTex output not implemented')
 
-        if not save:
-            print(table.draw())
-            return
-
-        try:
-            with open(outfile, writemode) as f:
-                f.write(table.draw())
-        except IOError:
-            raise IOError('Error writing model help file.')
+        return table.draw()
 
     def check_limit(self, varname, vmin=None, vmax=None):
         """
@@ -1101,7 +1197,7 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmin[idx]
-                self.system.Log.error('Initialization of <{}.{}> = {:6.4g} is lower that minimum {:6.4g}'.format(n, varname, v, vm))
+                self.log('Init of <{}.{}>={:.4g} is lower than min={:6.4g}'.format(n, varname, v, vm), ERROR)
                 retval = False
 
         vmax = matrix(self.__dict__[vmax])
@@ -1111,7 +1207,7 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmax[idx]
-                self.system.Log.error('Initialization of <{}.{}> = {:.4g} is higher that maximum {:.4g}'.format(n, varname, v, vm))
+                self.log('Init of <{}.{}>={:.4g} is higher than max={:.4g}'.format(n, varname, v, vm), ERROR)
                 retval = False
         return retval
 
@@ -1123,7 +1219,6 @@ class ModelBase(object):
 
         """
         assert hasattr(self, 'bus')
-        # return self.find_element('bus', bus_idx)
 
         ret = []
         if isinstance(bus_idx, (int, float, str)):
@@ -1153,7 +1248,7 @@ class ModelBase(object):
         ret = []
 
         if not self._config['is_series']:
-            self.message('link_bus function is not valid for non-series model <{}>'.format(self.name))
+            self.log('link_bus function is not valid for non-series model <{}>'.format(self.name))
             return []
 
         if isinstance(bus_idx, (int, float, str)):
@@ -1187,7 +1282,7 @@ class ModelBase(object):
 
         return ret
 
-    def find_element(self, field, value):
+    def elem_find(self, field, value):
         """
         Return the indices of elements whose field first satisfies the given values
 
@@ -1203,7 +1298,7 @@ class ModelBase(object):
 
         f = list(self.__dict__[field])
         uid = np.vectorize(f.index)(value)
-        return self.uid_to_idx(uid)
+        return self.get_idx(uid)
 
     def _check_Vn(self):
         """Check data consistency of Vn and Vdcn if connected to Bus or Node
@@ -1211,48 +1306,48 @@ class ModelBase(object):
         :return None
         """
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
-            bus_Vn = self.read_field_ext('Bus', field='Vn', idx=self.bus)
+            bus_Vn = self.read_data_ext('Bus', field='Vn', idx=self.bus)
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
                 if Vn != Vn0:
-                    self.message('Device <{}> has Vn={} different from bus <{}> Vn={}.'
-                                 .format(name, Vn, bus, Vn0), WARNING)
+                    self.log('<{}> has Vn={} different from bus <{}> Vn={}.'
+                             .format(name, Vn, bus, Vn0), WARNING)
 
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
-            node_Vdcn = self.read_field_ext('Node', field='Vdcn', idx=self.node)
+            node_Vdcn = self.read_data_ext('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
                 if Vdcn != Vdcn0:
-                    self.message('Device <{}> has Vdcn={} different from node <{}> Vdcn={}.'
-                                 .format(name, Vdcn, node, Vdcn0), WARNING)
-
-    def var_store_snapshot(self, variable='all'):
-        """
-        Store a snapshot of variable values to self._snapshot.
-
-        :param variable: name of the variable, or ``all``
-        :return: None
-        """
-
-        # store (variable name, equation name) in the list ``var_eq_pairs``
-        # equation name is in ('x', 'y')
-
-        var_eq_pairs = []
-        dae = self.system.DAE
-        if variable != 'all':
-            if variable in self._states:
-                var_eq_pairs.append((variable, 'x'))
-            elif variable in self._algebs:
-                var_eq_pairs.append((variable, 'y'))
-            else:
-                raise NameError('<{}> is not a variable of model {}'
-                                .format(variable, self._name))
-        else:
-            for var in self._states:
-                var_eq_pairs.append((var, 'x'))
-            for var in self._algebs:
-                var_eq_pairs.append((var, 'y'))
-
-        # retrieve values and store in ``self._snapshot``
-
-        for var, eq in var_eq_pairs:
-            idx = self.__dict__[var]
-            self._snapshot[var] = dae.__dict__[eq][idx]
+                    self.log('<{}> has Vdcn={} different from node <{}> Vdcn={}.'
+                             .format(name, Vdcn, node, Vdcn0), WARNING)
+    #
+    # def var_store_snapshot(self, variable='all'):
+    #     """
+    #     Store a snapshot of variable values to self._snapshot.
+    #
+    #     :param variable: name of the variable, or ``all``
+    #     :return: None
+    #     """
+    #
+    #     # store (variable name, equation name) in the list ``var_eq_pairs``
+    #     # equation name is in ('x', 'y')
+    #
+    #     var_eq_pairs = []
+    #     dae = self.system.DAE
+    #     if variable != 'all':
+    #         if variable in self._states:
+    #             var_eq_pairs.append((variable, 'x'))
+    #         elif variable in self._algebs:
+    #             var_eq_pairs.append((variable, 'y'))
+    #         else:
+    #             raise NameError('<{}> is not a variable of model {}'
+    #                             .format(variable, self._name))
+    #     else:
+    #         for var in self._states:
+    #             var_eq_pairs.append((var, 'x'))
+    #         for var in self._algebs:
+    #             var_eq_pairs.append((var, 'y'))
+    #
+    #     # retrieve values and store in ``self._snapshot``
+    #
+    #     for var, eq in var_eq_pairs:
+    #         idx = self.__dict__[var]
+    #         self._snapshot[var] = dae.__dict__[eq][idx]

@@ -23,4 +23,6 @@ INCLUDE, ERCOT_MON.dm
 INCLUDE, HVDC_OVERLAY_VER3.dm
 
 # PERT FILES
-# INCLUDE, NA_PERT.dm
+INCLUDE, NA_PERT.dm
+
+Recorder, model = "BusFreq"

@@ -37,7 +37,7 @@ class Fault(ModelBase):
         self._service = ['gf', 'bf', 'time', 'volt0', 'angle0']
         self.calls.update({'gcall': True,
                            'gycall': True})
-        self._meta_to_attr()
+        self._init()
         self.active = 0
 
     def setup(self):
@@ -101,5 +101,5 @@ class Fault(ModelBase):
         if self.n:
             self._param_to_list()
 
-        self.element_add(idx, name, **kwargs)
+        self.elem_add(idx, name, **kwargs)
         self.setup()

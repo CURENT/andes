@@ -92,12 +92,12 @@ class Dime:
         return numpy.hstack((data1, data2))
 
     def create_send_variable_message(self, var_name, value):
-        """Create a message similar to the Matlab API's messages for sending variables
+        """Create a log similar to the Matlab API's messages for sending variables
 
         Parameters
         ----------
         var_name: str
-            Name of the variable to be included in the message
+            Name of the variable to be included in the log
         value: uid, str
             Value of the variable indicated by var_name
 
@@ -116,7 +116,7 @@ class Dime:
         Parameters
         ----------
         recipient_name: str
-            Name of the recipient (connected to the server) that will receive the message
+            Name of the recipient (connected to the server) that will receive the log
         var_name: str
             Name of the variable to be sent
         value: str, uid

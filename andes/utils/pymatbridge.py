@@ -314,7 +314,7 @@ class _Session(object):
 
         Returns
         -------
-        Result dictionary with keys: 'message', 'result', and 'success'
+        Result dictionary with keys: 'log', 'result', and 'success'
         """
         if not self.started:
             raise ValueError('Session not started, use start()')

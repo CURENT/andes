@@ -50,7 +50,7 @@ def alter(data, system):
 
 
 def read(file, system, header=True):
-    """Read a dm format file and element_add to system"""
+    """Read a dm format file and elem_add to system"""
     retval = True
     fid = open(file, 'r')
     sep = re.compile(r'\s*,\s*')
@@ -60,7 +60,7 @@ def read(file, system, header=True):
     double = re.compile(r'[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?')
 
     # parse data
-    while 1:
+    while True:
         line = fid.readline()
         if not line:
             break
@@ -126,7 +126,7 @@ def read(file, system, header=True):
         index = kwargs.pop('idx', None)
         namex = kwargs.pop('name', None)
         try:
-            system.__dict__[device].element_add(idx=index, name=namex, **kwargs)
+            system.__dict__[device].elem_add(idx=index, name=namex, **kwargs)
         except KeyError:
             system.Log.error('Error adding device {:s} to powersystem object.'.format(device))
             system.Log.debug('  Check if you have new jit models added to models.__init__.py')

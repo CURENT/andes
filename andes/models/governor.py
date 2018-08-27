@@ -37,7 +37,7 @@ class GovernorBase(ModelBase):
     def base(self):
         if not self.n:
             return
-        self.get_field_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
         super(GovernorBase, self).base()
         self.R = self.system.Settings.mva * div(self.R, self.Sn)
 
@@ -45,11 +45,11 @@ class GovernorBase(ModelBase):
         self.gain = div(1.0, self.R)
 
         # values
-        self.get_field_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
 
         # indices
-        self.get_field_ext(model='Synchronous', field='omega', dest='omega', idx=self.gen)
-        self.get_field_ext(model='Synchronous', field='pm', dest='pm', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='omega', dest='omega', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='pm', dest='pm', idx=self.gen)
 
         self.init_limit(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
         dae.y[self.wref] = self.wref0
@@ -90,7 +90,7 @@ class TG1(GovernorBase):
         self._fnamex.extend(['x_{g1}', 'x_{g2}', 'x_{g3}'])
         self._algebs.extend(['pin'])
         self._fnamey.extend(['P_{in}'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
         super(TG1, self).init1(dae)
@@ -159,7 +159,7 @@ class TG2(GovernorBase):
         self._mandatory.extend(['T2'])
         self._states.extend(['xg'])
         self._fnamex.extend(['x_g'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
         super(TG2, self).init1(dae)

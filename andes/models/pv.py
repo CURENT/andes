@@ -77,7 +77,7 @@ class PV(Stagen):
         self._unamey = ['Q']
         self._fnamey = ['Q']
         self._service.extend(['qlim', 'above', 'below'])
-        self._meta_to_attr()
+        self._init()
 
     def init0(self, dae):
         """Set initial voltage and reactive power for PQ. Overwrites Bus.voltage values"""
@@ -158,7 +158,7 @@ class Slack(PV):
         # self._service.extend(['a0'])
         self.calls.update({'gycall': False
                            })
-        self._meta_to_attr()
+        self._init()
 
     def init0(self, dae):
         super().init0(dae)

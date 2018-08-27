@@ -23,7 +23,7 @@ class COI(ModelBase):
         self._service.extend(['H', 'M', 'Mtot', 'usyn', 'gdelta', 'gomega', 'iTd'])
         self._fnamey.extend(['\\delta', '\\omega', '\\frac{d\\omega}{dt}'])
         self._fnamex.extend(['x\\omega'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
         for item in self._service:
@@ -31,11 +31,11 @@ class COI(ModelBase):
 
         dae.y[self.omega] = 1
         for idx, item in enumerate(self.syn):
-            self.usyn[idx] = self.read_field_ext('Synchronous', field='u', idx=item)
-            self.M[idx] = self.read_field_ext('Synchronous', field='M', idx=item)
+            self.usyn[idx] = self.read_data_ext('Synchronous', field='u', idx=item)
+            self.M[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
             self.Mtot[idx] = sum(self.M[idx])
-            self.gdelta[idx] = self.read_field_ext('Synchronous', field='delta', idx=item)
-            self.gomega[idx] = self.read_field_ext('Synchronous', field='omega', idx=item)
+            self.gdelta[idx] = self.read_data_ext('Synchronous', field='delta', idx=item)
+            self.gomega[idx] = self.read_data_ext('Synchronous', field='omega', idx=item)
 
             dae.y[self.delta[idx]] = sum(mul(self.M[idx], dae.x[self.gdelta[idx]])) / self.Mtot[idx]
 

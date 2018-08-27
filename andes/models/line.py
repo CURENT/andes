@@ -100,7 +100,7 @@ class Line(ModelBase):
         self.C = []
         self.Bp = []
         self.Bpp = []
-        self._meta_to_attr()
+        self._init()
 
     def setup(self):
         self._param_to_matrix()
@@ -244,8 +244,8 @@ class Line(ModelBase):
             cons = temp[enum, :]
 
     def init0(self, dae):
-        self.get_field_ext('Bus', 'a', dest='a', idx=None, astype=list)
-        self.get_field_ext('Bus', 'v', dest='v', idx=None, astype=list)
+        self.copy_data_ext('Bus', 'a', dest='a', idx=None, astype=list)
+        self.copy_data_ext('Bus', 'v', dest='v', idx=None, astype=list)
 
         solver = self.system.SPF.solver.lower()
         self.build_y()
@@ -327,7 +327,7 @@ class Line(ModelBase):
         self.u[self.uid[idx]] = u
         self.rebuild = True
         self.system.DAE.factorize = True
-        self.message('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
+        self.log('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
 
     def build_name_from_bus(self):
         """Rebuild line names from bus names"""

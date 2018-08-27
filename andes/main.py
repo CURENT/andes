@@ -22,6 +22,7 @@ Andes main entry points
 
 
 import os
+import sys
 import glob
 import io
 import pstats
@@ -117,17 +118,17 @@ def cli_parse(writehelp=False, helpfile=None):
         return args
 
 
-def help(usage=None,
-         group=None,
-         category=None,
-         model_list=None,
-         model_format=None,
-         model_var=None,
-         quick_help=None,
-         help_option=None,
-         help_settings=None,
-         export='plain',
-         **kwargs):
+def andeshelp(usage=None,
+              group=None,
+              category=None,
+              model_list=None,
+              model_format=None,
+              model_var=None,
+              quick_help=None,
+              help_option=None,
+              help_settings=None,
+              export='plain',
+              **kwargs):
     """
     Dump all sorts of help files
 
@@ -166,9 +167,9 @@ def help(usage=None,
 
         if len(model_format) > 0:
             for idx, item in enumerate(model_format):
-                mode = 'w' if idx == 0 else 'a'
-                ps.__dict__[item].help_doc(export=export, save=True, writemode=mode)
-            ps.Log.info('Model help saved to <help_model>.')
+                f = sys.stdout
+                f.write(ps.__dict__[item].doc(export=export))
+
             ret = True
 
     if model_var:
@@ -233,7 +234,7 @@ def help(usage=None,
         if quick_help not in all_models_list:
             ps.Log.error('Model <{}> does not exist.'.format(quick_help))
         else:
-            ps.__dict__[quick_help].help_doc(export=export, save=False)
+            ps.Log.info(ps.__dict__[quick_help].doc(export=export))
         return True
 
     if help_option:
@@ -260,6 +261,8 @@ def help(usage=None,
             _, s = elapsed(t)
             print('Settings help saved to file in {}.'.format(s))
         return True
+
+    return ret
 
 
 def edit_conf(conf):
@@ -364,7 +367,7 @@ def main():
             kwargs[arg] = val
 
     # dump help and exit
-    if help(**kwargs):
+    if andeshelp(**kwargs):
         return
 
     print(preamble(args.no_preamble))

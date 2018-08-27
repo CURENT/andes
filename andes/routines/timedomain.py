@@ -77,11 +77,11 @@ def run(system):
 
     t0, _ = elapsed()
 
-    # process init of DiME clients
+    # process _init of DiME clients
     if system.Settings.dime_enable:
         system.TDS.compute_flows = True
         system.Streaming.send_init(recepient='all')
-        system.Log.info('Waiting for modules to send init info...')
+        system.Log.info('Waiting for modules to send _init info...')
         sleep(0.5)
         system.Streaming.sync_and_handle()
 

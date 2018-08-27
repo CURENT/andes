@@ -48,13 +48,13 @@ class Breaker(ModelBase):
         self._mandatory.extend(['bus', 'line'])
         self._service.extend(['times', 'time'])
         self.param_remove('Sn')
-        self._meta_to_attr()
+        self._init()
 
     def setup(self):
         super(Breaker, self).setup()
         # check if `self.bus` is connected by `self.line`
-        self.get_field_ext('Line', 'bus1', idx=self.line)
-        self.get_field_ext('Line', 'bus2', idx=self.line)
+        self.copy_data_ext('Line', 'bus1', idx=self.line)
+        self.copy_data_ext('Line', 'bus2', idx=self.line)
         for i in range(self.n):
             if self.bus[i] != self.bus1[i] and self.bus[i] != self.bus2[i]:
                 self.system.Log.warning('<Breaker> {} on line {} and bus {} is incorrect and is thus disabled.'.format(self.idx[i], self.line[i], self.bus[i]))
@@ -100,5 +100,5 @@ class Breaker(ModelBase):
         if self.n:
             self._param_to_list()
 
-        self.element_add(idx, name, **kwargs)
+        self.elem_add(idx, name, **kwargs)
         self._param_to_matrix()

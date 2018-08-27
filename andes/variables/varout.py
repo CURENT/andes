@@ -91,32 +91,6 @@ class VarOut(object):
 
         return xdata.tolist(), ydata.transpose().tolist()
 
-    def get_xy_name(self, yidx, xidx=0):
-        """
-        Return variable names for the given indices
-
-        :param yidx:
-        :param xidx:
-        :return:
-        """
-        assert isinstance(xidx, int)
-        if isinstance(yidx, int):
-            yidx = [yidx]
-
-        uname = ['Time [s]'] + self.system.VarName.uname
-        fname = ['$Time\ [s]$'] + self.system.VarName.fname
-
-        xname = [list(), list()]
-        yname = [list(), list()]
-
-        xname[0] = uname[xidx]
-        xname[1] = fname[xidx]
-
-        yname[0] = [uname[i] for i in yidx]
-        yname[1] = [fname[i] for i in yidx]
-
-        return xname, yname
-
     def dump(self):
         """
         Dump the TDS results to the output `dat` file

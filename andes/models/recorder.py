@@ -12,19 +12,19 @@ class Recorder(ModelBase):
         self.param_remove('Vn')
         self.param_remove('fn')
 
-        self.param_add('model', default='ALL', tomatrix=False, descr='model to record', mandatory=True)
-        self.param_add('variable', default='ALL', tomatrix=False, descr='variable to record', mandatory=False)
-        self.param_add('element', default='ALL', tomatrix=False, descr='element idx to record', mandatory=False)
+        self.param_define('model', default='ALL', tomatrix=False, descr='model to record', mandatory=True)
+        self.param_define('variable', default='ALL', tomatrix=False, descr='variable to record', mandatory=False)
+        self.param_define('element', default='ALL', tomatrix=False, descr='element idx to record', mandatory=False)
 
         self.calls.update({'init1': True})
 
         self.varout_idx = []
         self.varout_state_idx = []
         self.varout_algeb_idx = []
-        self._meta_to_attr()
+        self._init()
 
-    def element_add(self, idx=None, name=None, **kwargs):
-        super(Recorder, self).element_add(idx, name, **kwargs)
+    def elem_add(self, idx=None, name=None, **kwargs):
+        super(Recorder, self).elem_add(idx, name, **kwargs)
 
     def init1(self, dae):
         if not self.n:

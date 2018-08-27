@@ -43,14 +43,14 @@ class JIT(object):
         else:
             self.system.Log.warning('Instance <{:s}> does not have <{:s}> attribute.'.format(self.name, attr))
 
-    def element_add(self, idx=None, name=None, **kwargs):
-        """overloading element_add function of a JIT class"""
+    def elem_add(self, idx=None, name=None, **kwargs):
+        """overloading elem_add function of a JIT class"""
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].element_add(idx, name, **kwargs)
+            self.system.__dict__[self.name].elem_add(idx, name, **kwargs)
 
-    def help_doc(self, **kwargs):
+    def doc(self, **kwargs):
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].help_doc(**kwargs)
+            self.system.__dict__[self.name].doc(**kwargs)
 

@@ -125,7 +125,7 @@ class PowerSystem(object):
 
         if self.Settings.base:
             for item in self.DevMan.devices:
-                self.__dict__[item].param_to_sysbase()
+                self.__dict__[item].data_to_sys_base()
 
     def group_add(self, name='Ungrouped'):
         """
@@ -506,6 +506,6 @@ class Group(metaclass=GroupMeta):
         for i, m, v in zip(idx, models, value):
             assert hasattr(self.system.__dict__[m], field)
 
-            uid = self.system.__dict__[m].idx_to_uid(idx)
+            uid = self.system.__dict__[m].get_uid(idx)
             self.system.__dict__[m].__dict__[field][uid] = v
 

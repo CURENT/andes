@@ -94,7 +94,7 @@ class VSC(DCBase):
                            'gcall': True, 'gycall': True,
                            'jac0': True, 'shunt': True,
                            })
-        self._meta_to_attr()
+        self._init()
         self.glim = []
         self.ylim = []
         self.vio = {}
@@ -351,7 +351,7 @@ class VSC(DCBase):
     def disable(self, idx):
         """Disable an element and reset the outputs"""
         if idx not in self.uid.keys():
-            self.message('Element index {0} does not exist.'.format(idx))
+            self.log('Element index {0} does not exist.'.format(idx))
             return
         self.u[self.uid[idx]] = 0
 
@@ -387,23 +387,23 @@ class VSC1_Common(DCBase):
         self._dc = {}
 
     def servcall(self, dae):
-        self.get_field_ext('VSC', 'Sn', 'Sn', self.vsc)
-        self.get_field_ext('VSC', 'Vn', 'Vn', self.vsc)
-        self.get_field_ext('VSC', 'Vdcn', 'Vdcn', self.vsc)
-        self.get_field_ext('VSC', 'rsh', 'rsh', self.vsc)
-        self.get_field_ext('VSC', 'xsh', 'xsh', self.vsc)
-        self.get_field_ext('VSC', 'PQ', 'PQ', self.vsc)
-        self.get_field_ext('VSC', 'PV', 'PV', self.vsc)
-        self.get_field_ext('VSC', 'vQ', 'vQ', self.vsc)
-        self.get_field_ext('VSC', 'vV', 'vV', self.vsc)
-        self.get_field_ext('VSC', 'a', 'a', self.vsc)
-        self.get_field_ext('VSC', 'v', 'v', self.vsc)
-        self.get_field_ext('VSC', 'v1', 'v1', self.vsc)
-        self.get_field_ext('VSC', 'v2', 'v2', self.vsc)
-        self.get_field_ext('VSC', 'psh', 'pref0', self.vsc)
-        self.get_field_ext('VSC', 'qsh', 'qref0', self.vsc)
-        self.get_field_ext('VSC', 'bus', 'bus', self.vsc)
-        self.get_field_ext('BusFreq', 'w', 'w', self.bus)  # TODO: BusFreq idx must be the same as bus idx
+        self.copy_data_ext('VSC', 'Sn', 'Sn', self.vsc)
+        self.copy_data_ext('VSC', 'Vn', 'Vn', self.vsc)
+        self.copy_data_ext('VSC', 'Vdcn', 'Vdcn', self.vsc)
+        self.copy_data_ext('VSC', 'rsh', 'rsh', self.vsc)
+        self.copy_data_ext('VSC', 'xsh', 'xsh', self.vsc)
+        self.copy_data_ext('VSC', 'PQ', 'PQ', self.vsc)
+        self.copy_data_ext('VSC', 'PV', 'PV', self.vsc)
+        self.copy_data_ext('VSC', 'vQ', 'vQ', self.vsc)
+        self.copy_data_ext('VSC', 'vV', 'vV', self.vsc)
+        self.copy_data_ext('VSC', 'a', 'a', self.vsc)
+        self.copy_data_ext('VSC', 'v', 'v', self.vsc)
+        self.copy_data_ext('VSC', 'v1', 'v1', self.vsc)
+        self.copy_data_ext('VSC', 'v2', 'v2', self.vsc)
+        self.copy_data_ext('VSC', 'psh', 'pref0', self.vsc)
+        self.copy_data_ext('VSC', 'qsh', 'qref0', self.vsc)
+        self.copy_data_ext('VSC', 'bus', 'bus', self.vsc)
+        self.copy_data_ext('BusFreq', 'w', 'w', self.bus)  # TODO: BusFreq idx must be the same as bus idx
 
         self.pref0 = dae.y[self.pref0]
         self.qref0 = dae.y[self.qref0]
@@ -587,8 +587,8 @@ class Power2(object):
         self._params.extend({'Ki'})
 
     def power_init1(self, dae):
-        self.copy_param('BusFreq', 'dwdt', 'dwdt', self.busfreq)
-        self.copy_param('BusFreq', 'w', 'w', self.busfreq)
+        self.copy_data_ext('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+        self.copy_data_ext('BusFreq', 'w', 'w', self.busfreq)
 
     def power_gcall(self, dae):
         dae.g[self.ref1] += -mul(self.Ki, dae.y[self.dwdt])
@@ -817,7 +817,7 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power0):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power0.__init__(self, system, name)
-        self._meta_to_attr()
+        self._init()
 
     def base(self):
         super(VSC1, self).base()
@@ -831,7 +831,7 @@ class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power1.__init__(self, system, name)
-        self._meta_to_attr()
+        self._init()
 
     def base(self):
         super(VSC1_IE, self).base()
@@ -845,7 +845,7 @@ class VSC1_IE2(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power2):
         Current1.__init__(self, system, name)
         PLL1.__init__(self, system, name)
         Power2.__init__(self, system, name)
-        self._meta_to_attr()
+        self._init()
 
     def base(self):
         super(VSC1_IE2, self).base()
@@ -1028,19 +1028,19 @@ class VSC2_Common(DCBase):
         self._dc = {}
 
     def servcall(self, dae):
-        self.get_field_ext('VSC', 'u', 'uvsc', self.vsc)
-        self.get_field_ext('VSC', 'rsh', 'rsh', self.vsc)
-        self.get_field_ext('VSC', 'xsh', 'xsh', self.vsc)
-        self.get_field_ext('VSC', 'PQ', 'PQ', self.vsc)
-        self.get_field_ext('VSC', 'PV', 'PV', self.vsc)
-        self.get_field_ext('VSC', 'vQ', 'vQ', self.vsc)
-        self.get_field_ext('VSC', 'vV', 'vV', self.vsc)
-        self.get_field_ext('VSC', 'a', 'a', self.vsc)
-        self.get_field_ext('VSC', 'v', 'v', self.vsc)
-        self.get_field_ext('VSC', 'v1', 'v1', self.vsc)
-        self.get_field_ext('VSC', 'v2', 'v2', self.vsc)
-        self.get_field_ext('VSC', 'psh', 'psh', self.vsc)
-        self.get_field_ext('VSC', 'qsh', 'qsh', self.vsc)
+        self.copy_data_ext('VSC', 'u', 'uvsc', self.vsc)
+        self.copy_data_ext('VSC', 'rsh', 'rsh', self.vsc)
+        self.copy_data_ext('VSC', 'xsh', 'xsh', self.vsc)
+        self.copy_data_ext('VSC', 'PQ', 'PQ', self.vsc)
+        self.copy_data_ext('VSC', 'PV', 'PV', self.vsc)
+        self.copy_data_ext('VSC', 'vQ', 'vQ', self.vsc)
+        self.copy_data_ext('VSC', 'vV', 'vV', self.vsc)
+        self.copy_data_ext('VSC', 'a', 'a', self.vsc)
+        self.copy_data_ext('VSC', 'v', 'v', self.vsc)
+        self.copy_data_ext('VSC', 'v1', 'v1', self.vsc)
+        self.copy_data_ext('VSC', 'v2', 'v2', self.vsc)
+        self.copy_data_ext('VSC', 'psh', 'psh', self.vsc)
+        self.copy_data_ext('VSC', 'qsh', 'qsh', self.vsc)
         self.u = mul(self.u, self.uvsc)
         self.vref0 = mul(self.u, dae.y[self.v])
         self.wref0 = self.u
@@ -1141,7 +1141,7 @@ class VSC2A(VSC2_Common, Current1, VSC2_Speed1, VSC2_Voltage1):
         VSC2_Speed1.__init__(self, system, name)
         VSC2_Voltage1.__init__(self, system, name)
         self._name = 'VSC2A'
-        self._meta_to_attr()
+        self._init()
 
 
 class VSC2B(VSC2_Common, Current1, VSC2_Speed2, VSC2_Voltage1):
@@ -1153,4 +1153,4 @@ class VSC2B(VSC2_Common, Current1, VSC2_Speed2, VSC2_Voltage1):
         VSC2_Speed2.__init__(self, system, name)
         VSC2_Voltage1.__init__(self, system, name )
         self._name = 'VSC2B'
-        self._meta_to_attr()
+        self._init()

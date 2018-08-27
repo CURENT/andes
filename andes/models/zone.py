@@ -24,7 +24,7 @@ class Zone(ModelBase):
         self._powers.extend(['pdes', 'ptol'])
         self.calls.update({'pflow': True})
         self._service.extend(['uname', 'fname'])
-        self._meta_to_attr()
+        self._init()
 
         # shape of `self.incidence` is (self.n, self.n) with
         #   the diagonals are the number of lines in the area, and
@@ -174,7 +174,7 @@ class Area(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Area'
-        self._meta_to_attr()
+        self._init()
 
     def setup(self):
         # TODO: account for >1 area/region/zone
@@ -194,7 +194,7 @@ class Region(Zone):
                            'slack': None,
                            })
         self._powers.extend(['Ptol'])
-        self._meta_to_attr()
+        self._init()
 
     def setup(self):
         super().setup()

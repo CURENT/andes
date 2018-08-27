@@ -7,5 +7,5 @@ __all__ = ['main',
            'settings']
 
 
-from andes.main import main
+from andes.main import main, andeshelp
 from andes.plot import main as plot

@@ -13,28 +13,28 @@ class Bus(ModelBase):
 
         self.param_remove('Sn')
 
-        self.param_add('voltage', 1.0, unit='pu', descr='initial voltage magnitude', nonzero=True)
-        self.param_add('angle', 0.0, unit='rad', descr='initial voltage phase angle')
-        self.param_add('vmax', 1.1, unit='pu', descr='voltage upper limit')
-        self.param_add('vmin', 0.9, unit='pu', descr='voltage upper limit')
-        self.param_add('area', 0, descr='area code', tomatrix=False)
-        self.param_add('zone', 0, descr='zone code', tomatrix=False)
-        self.param_add('region', 0, descr='region code', tomatrix=False)
-        self.param_add('owner', 0, descr='owner code', tomatrix=False)
-        self.param_add('xcoord', 0, descr='x coordinate', tomatrix=False)
-        self.param_add('ycoord', 0, descr='y coordinate', tomatrix=False)
+        self.param_define('voltage', 1.0, unit='pu', descr='initial voltage magnitude', nonzero=True)
+        self.param_define('angle', 0.0, unit='rad', descr='initial voltage phase angle')
+        self.param_define('vmax', 1.1, unit='pu', descr='voltage upper limit')
+        self.param_define('vmin', 0.9, unit='pu', descr='voltage upper limit')
+        self.param_define('area', 0, descr='area code', tomatrix=False)
+        self.param_define('zone', 0, descr='zone code', tomatrix=False)
+        self.param_define('region', 0, descr='region code', tomatrix=False)
+        self.param_define('owner', 0, descr='owner code', tomatrix=False)
+        self.param_define('xcoord', 0, descr='x coordinate', tomatrix=False)
+        self.param_define('ycoord', 0, descr='y coordinate', tomatrix=False)
 
-        self.param_set_attr('Vn', mandatory=True)
+        self.param_alter('Vn', mandatory=True)
 
-        self.var_add('a', 'y', '\\theta', descr='bus voltage phase angle')
-        self.var_add('v', 'y', 'V', descr='bus voltage magnitude')
+        self.var_define('a', 'y', '\\theta', descr='bus voltage phase angle')
+        self.var_define('v', 'y', 'V', descr='bus voltage magnitude')
 
-        self.service_add('Pg', matrix)
-        self.service_add('Qg', matrix)
-        self.service_add('Pl', matrix)
-        self.service_add('Ql', matrix)
-        self.service_add('islanded_buses', list)
-        self.service_add('island_sets', list)
+        self.service_define('Pg', matrix)
+        self.service_define('Qg', matrix)
+        self.service_define('Pl', matrix)
+        self.service_define('Ql', matrix)
+        self.service_define('islanded_buses', list)
+        self.service_define('island_sets', list)
 
         self._config['address_group_by'] = 'variable'
 
@@ -42,7 +42,7 @@ class Bus(ModelBase):
                            'pflow': True,
                            })
 
-        self._meta_to_attr()
+        self._init()
 
     def _varname_inj(self):
         """Customize varname for bus injections"""
@@ -153,7 +153,7 @@ class BusOld(ModelBase):
         self.calls.update({'init0': True,
                            'pflow': True,
                            })
-        self._meta_to_attr()
+        self._init()
         self.islanded_buses = list()
         self.island_sets = list()
         self._config['address_group_by'] = 'variable'

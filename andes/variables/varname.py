@@ -47,7 +47,7 @@ class VarName(object):
 
         if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
             for i, j in zip(xy_idx, element_name):
-                # manual element_add LaTex space for auto-generated element name
+                # manual elem_add LaTex space for auto-generated element name
                 if listname == 'fnamex' or listname == 'fnamey':
                     j = j.replace(' ', '\ ')
                 self.__dict__[listname][i] = string.format(var_name, j)
@@ -80,3 +80,29 @@ class VarName(object):
         :return: list of formatted names
         """
         return self.fnamex + self.fnamey
+
+    def get_xy_name(self, yidx, xidx=0):
+        """
+        Return variable names for the given indices
+
+        :param yidx:
+        :param xidx:
+        :return:
+        """
+        assert isinstance(xidx, int)
+        if isinstance(yidx, int):
+            yidx = [yidx]
+
+        uname = ['Time [s]'] + self.uname
+        fname = ['$Time\ [s]$'] + self.fname
+
+        xname = [list(), list()]
+        yname = [list(), list()]
+
+        xname[0] = uname[xidx]
+        xname[1] = fname[xidx]
+
+        yname[0] = [uname[i] for i in yidx]
+        yname[1] = [fname[i] for i in yidx]
+
+        return xname, yname

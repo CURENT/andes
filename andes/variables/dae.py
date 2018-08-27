@@ -433,7 +433,6 @@ class DAE(object):
         self._set[m]['J'] = matrix([self._set[m]['J'], matrix(col)])
         self._set[m]['V'] = matrix([self._set[m]['V'], matrix(val)])
 
-
     def apply_set(self, ty):
         """
         Apply Jacobian set values to matrices

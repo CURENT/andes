@@ -29,13 +29,13 @@ class AVR1(ModelBase):
              'Tf': 0.35, 'Ae': 0.0006, 'Ke': 1, 'Te': 1.0})
         self.calls.update({'jac0': True, 'gycall': False, 'gcall': True, 'fcall': True, 'fxcall': True, 'init1': True})
         self._zeros.extend(['Ta', 'Tr'])
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
-        self.get_field_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.get_field_ext('Synchronous', 'vf0', 'vf0', self.syn)
-        self.get_field_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.get_field_ext('Synchronous', 'v', 'v', self.syn)
+        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
+        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
+        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
         self.KfTf = mul(self.Kf, div(1, self.Tf))
         self.iTa = div(self.u, self.Ta)
         self.u0 = mul(self.u, self.usyn)
@@ -117,14 +117,14 @@ class AVR2(ModelBase):
              'Be': '2nd ceiling coefficient', 'Te': 'Field circuit time constant', 'vrmax': 'Maximum regulator voltage',
              'T2': 'Regulator Pole'})
         self.calls.update({'fcall': True, 'init1': True, 'gcall': True, 'fxcall': True, 'gycall': False, 'jac0': True})
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
-        self.get_field_ext('Synchronous', 'v', 'v', self.syn)
-        self.get_field_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.get_field_ext('Synchronous', 'v', 'v', self.syn)
-        self.get_field_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.get_field_ext('Synchronous', 'vf0', 'vf0', self.syn)
+        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
+        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
+        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
+        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
         self.T43 = mul(self.T4, div(1, self.T3))
         self.T21 = mul(self.T2, div(1, self.T1))
         self.u0 = mul(self.u, self.usyn)
@@ -209,13 +209,13 @@ class AVR3(ModelBase):
              'vfmax': 'Maximum field voltage', 'Te': 'Field circuit time constant', 'syn': 'Generator id',
              'vfmin': 'Minimum field voltage', 's0': 'Enable excitation voltage feedback'})
         self.calls.update({'fxcall': True, 'gycall': False, 'fcall': True, 'gcall': True, 'init1': True, 'jac0': True})
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
-        self.get_field_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.get_field_ext('Synchronous', 'v', 'v', self.syn)
-        self.get_field_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.get_field_ext('Synchronous', 'vf0', 'vf0', self.syn)
+        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
+        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
+        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
         self.T1T2 = mul(self.T1, div(1, self.T2))
         self.iTe = div(self.u, self.Te)
         self.u0 = mul(self.u, self.usyn)

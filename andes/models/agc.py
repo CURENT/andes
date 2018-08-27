@@ -18,14 +18,14 @@ class ACE(ModelBase):
                            })
         self._service.extend(['P0', 'Q0'])
         self._fnamey.extend(['\epsilon'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
-        self.get_field_ext('Area', field='area_P0', dest='P0', idx=self.area)
-        self.get_field_ext('Area', field='area_Q0', dest='Q0', idx=self.area)
+        self.copy_data_ext('Area', field='area_P0', dest='P0', idx=self.area)
+        self.copy_data_ext('Area', field='area_Q0', dest='Q0', idx=self.area)
 
     def gcall(self, dae):
-        P = self.read_field_ext('Area', field='area_P0', idx=self.area)
+        P = self.read_data_ext('Area', field='area_P0', idx=self.area)
 
         dae.g[self.e] = dae.y[self.e] - (P - self.P0)
 
@@ -55,17 +55,17 @@ class AGC(ModelBase):
 
                            })
         self._service.extend(['pm'])
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
         self.pm = [[]] * self.n
-        self.get_field_ext('ACE', field='e', idx=self.ace)
-        self.get_field_ext('COI', field='syn', idx=self.coi)
-        self.get_field_ext('COI', field='omega', dest='comega', idx=self.coi_measure)
-        self.get_field_ext('COI', field='M', dest='M', idx=self.coi)
-        self.get_field_ext('COI', field='Mtot', dest='Mtot', idx=self.coi)
+        self.copy_data_ext('ACE', field='e', idx=self.ace)
+        self.copy_data_ext('COI', field='syn', idx=self.coi)
+        self.copy_data_ext('COI', field='omega', dest='comega', idx=self.coi_measure)
+        self.copy_data_ext('COI', field='M', dest='M', idx=self.coi)
+        self.copy_data_ext('COI', field='Mtot', dest='Mtot', idx=self.coi)
         for idx in range(self.n):
-            self.pm[idx] = self.read_field_ext('Synchronous', field='pm', idx=self.syn[idx])
+            self.pm[idx] = self.read_data_ext('Synchronous', field='pm', idx=self.syn[idx])
 
     def gcall(self, dae):
         dae.g[self.ACE] = -mul(self.beta, (dae.y[self.comega] - 1)) - dae.y[self.e] - dae.y[self.ACE]
@@ -105,18 +105,18 @@ class EAGC(ModelBase):
         self._mandatory.extend(['cl', 'tl', 'Pl', 'agc'])
         self._service.extend(['en', 'pm', 'M', 'Mtot'])
 
-        self._meta_to_attr()
+        self._init()
 
     def init1(self, dae):
         self.pm = [[]] * self.n
         self.M = [[]] * self.n
         self.Mtot = [[]] * self.n
         for idx, item in enumerate(self.agc):
-            self.pm[idx] = self.read_field_ext('AGC', field='pm', idx=item)
-            self.M[idx] = self.read_field_ext('AGC', field='M', idx=item)
-            self.Mtot[idx] = self.read_field_ext('AGC', field='Mtot', idx=item)
+            self.pm[idx] = self.read_data_ext('AGC', field='pm', idx=item)
+            self.M[idx] = self.read_data_ext('AGC', field='M', idx=item)
+            self.Mtot[idx] = self.read_data_ext('AGC', field='Mtot', idx=item)
 
-        # self.get_field_ext('AGC', src='Mtot', fkey=self.agc)
+        # self.copy_data_ext('AGC', src='Mtot', fkey=self.agc)
 
         # self.en = matrix(0, (self.n, 1), 'd')
         self.en = zeros(self.n, 1)
@@ -161,17 +161,17 @@ class EAGC(ModelBase):
 #                            'jac0': True, 'fcall': True,
 #                            })
 #         self._service.extend(['pm', 'en'])
-#         self._meta_to_attr()
+#         self._init()
 #
 #     def init1(self, dae):
 #         self.pm = [[]] * self.n
-#         self.get_field_ext('ACE', src='e', fkey=self.ace)
-#         self.get_field_ext('COI', src='syn', fkey=self.coi)
-#         self.get_field_ext('COI', src='omega', dest='comega', fkey=self.coi)
-#         self.get_field_ext('COI', src='M', dest='M', fkey=self.coi)
-#         self.get_field_ext('COI', src='Mtot', dest='Mtot', fkey=self.coi)
+#         self.copy_data_ext('ACE', src='e', fkey=self.ace)
+#         self.copy_data_ext('COI', src='syn', fkey=self.coi)
+#         self.copy_data_ext('COI', src='omega', dest='comega', fkey=self.coi)
+#         self.copy_data_ext('COI', src='M', dest='M', fkey=self.coi)
+#         self.copy_data_ext('COI', src='Mtot', dest='Mtot', fkey=self.coi)
 #         for idx in range(self.n):
-#             self.pm[idx] = self.read_field_ext('Synchronous', src='pm', fkey=self.syn[idx])
+#             self.pm[idx] = self.read_data_ext('Synchronous', src='pm', fkey=self.syn[idx])
 #
 #
 #     def gcall(self, dae):

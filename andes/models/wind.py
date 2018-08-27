@@ -45,7 +45,7 @@ class WindBase(ModelBase):
 
     def setup(self):
         super(WindBase, self).setup()
-        # self.vwa = ones(self.n, 1)  # todo: remove this after wind turbine init
+        # self.vwa = ones(self.n, 1)  # todo: remove this after wind turbine _init
         # self.system.DAE.x[self.vw] = ones(self.n, 1)
 
     def servcall(self, dae):
@@ -112,7 +112,7 @@ class Weibull(WindBase):
         self._descr.update({'c': 'Scale factor', 's': 'Shape factor',})
         self._zeros.extend(['c', 's'])
         self._params.extend(['c', 's'])
-        self._meta_to_attr()
+        self._init()
 
     def generate(self, dae):
         for i in range(self.n):
@@ -135,7 +135,7 @@ class ConstWind(WindBase):
     def __init__(self, system, name):
         super(ConstWind, self).__init__(system, name)
         self._name = 'ConstWind'
-        self._meta_to_attr()
+        self._init()
 
     def generate(self, dae):
         for i in range(self.n):

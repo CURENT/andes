@@ -84,9 +84,9 @@ class Turbine(object):
         return mul(phi_degree_step, above)
 
     def servcall(self, dae):
-        self.copy_param('Wind', 'vw', 'vw', self.wind)
-        self.copy_param('Wind', 'rho', 'rho', self.wind)
-        self.copy_param('Wind', 'Vwn', 'Vwn', self.wind)
+        self.copy_data_ext('Wind', 'vw', 'vw', self.wind)
+        self.copy_data_ext('Wind', 'rho', 'rho', self.wind)
+        self.copy_data_ext('Wind', 'Vwn', 'Vwn', self.wind)
         self.mva_mega = 100e6
 
 
@@ -277,30 +277,30 @@ class WTG4DC(ModelBase, Turbine, MPPT):
                     'node2': 'v2',
                     }
 
-        self._meta_to_attr()
+        self._init()
 
-    def _meta_to_attr(self):
-        super(WTG4DC, self)._meta_to_attr()
+    def _init(self):
+        super(WTG4DC, self)._init()
 
     def base(self):
         super(WTG4DC, self).base()
 
     def servcall(self, dae):
-        self.get_field_ext('DCgen', 'u', 'u0', self.dcgen)
-        self.get_field_ext('DCgen', 'P', 'p0', self.dcgen)
-        self.get_field_ext('Wind', 'vw', 'vw', self.wind)
-        self.get_field_ext('Wind', 'rho', 'rho', self.wind)
-        self.get_field_ext('Wind', 'Vwn', 'Vwn', self.wind)
-        # self.get_field_ext('Node', 'v', 'v1', self.node1)
-        # self.get_field_ext('Node', 'v', 'v2', self.node2)
+        self.copy_data_ext('DCgen', 'u', 'u0', self.dcgen)
+        self.copy_data_ext('DCgen', 'P', 'p0', self.dcgen)
+        self.copy_data_ext('Wind', 'vw', 'vw', self.wind)
+        self.copy_data_ext('Wind', 'rho', 'rho', self.wind)
+        self.copy_data_ext('Wind', 'Vwn', 'Vwn', self.wind)
+        # self.copy_data_ext('Node', 'v', 'v1', self.node1)
+        # self.copy_data_ext('Node', 'v', 'v2', self.node2)
         # self.qs0 = 0
         # TODO: Fix this dirty hard code
         if self.busfreq[0] is not None:
-            self.get_field_ext('BusFreq', 'dwdt', 'dwdt', self.busfreq)
+            self.copy_data_ext('BusFreq', 'dwdt', 'dwdt', self.busfreq)
         else:
             self.dwdt = matrix(0, (self.n, 1))
         if self.coi[0] is not None:
-            self.get_field_ext('COI', 'dwdt', 'dwdt_coi', self.coi)
+            self.copy_data_ext('COI', 'dwdt', 'dwdt_coi', self.coi)
         else:
             self.dwdt_coi = matrix(0, (self.n, 1))
         Turbine.servcall(self, dae)
@@ -346,7 +346,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             iter = 0
             while (max(abs(mis))) > self.system.TDS.tol:
                 if iter > 40:
-                    self.message('Initialization of WTG4DC <{}> failed.'.format(self.name[i]), ERROR)
+                    self.log('Initialization of WTG4DC <{}> failed.'.format(self.name[i]), ERROR)
                     break
                 mis[0] = x[0] * x[2] + x[1] * x[3] - Pg[i]
                 # mis[1] = omega[i] * x[3] * (psip[i] + (xq[i] - xd[i]) * x[2]) - Pg[i]
@@ -512,15 +512,15 @@ class WTG3(ModelBase):
         self._descr.update({'fn': 'Base frequency', 'rs': 'Stator resistance', 'xmu': 'Magnetizing reactance', 'R': 'Rotor radius', 'pmax': 'Maximum active power', 'gammap': 'Active power generation ratio', 'npole': 'Number of poles', 'qmin': 'Minimum reactive power', 'KV': 'Voltage control gain', 'xr': 'Rotor reactance', 'Te': 'Power control time constant', 'pmin': 'Minimum reactive power', 'Ts': 'Speed control time constant', 'wind': 'Wind time series idx', 'gen': 'Static generator idx', 'rr': 'Rotor resistance', 'ngb': 'Gear box ratio', 'gammaq': 'Reactive power generation ratio', 'Kp': 'Pitch control gain', 'xs': 'Stator reactance', 'H': 'Machine rotor and turbine inertia constant', 'Tp': 'Pitch control time constant', 'qmax': 'Maximum active power', 'nblade': 'Number of blades', 'bus': 'Bus idx', 'ngen': 'Number of generators'})
         self._units.update({'fn': 'Hz', 'rs': 'pu', 'xmu': 'pu', 'rr': 'pu', 'R': 'm', 'pmax': 'pu', 'qmin': 'pu', 'Kp': 'pu', 'xs': 'pu', 'qmax': 'pu', 'H': 'MWs/MVA', 'Tp': 's', 'KV': 'pu', 'Te': 's', 'xr': 'pu', 'pmin': 'pu'})
         self.calls.update({'init1': True, 'gycall': True, 'fxcall': True, 'fcall': True, 'gcall': True, 'jac0': True})
-        self._meta_to_attr()
+        self._init()
 
     def servcall(self, dae):
-        self.get_field_ext('StaticGen', 'u', 'ugen', self.gen)
-        self.get_field_ext('Bus', 'Pg', 'p0', self.bus)
-        self.get_field_ext('Bus', 'Qg', 'q0', self.bus)
-        self.get_field_ext('Wind', 'vw', 'vw', self.wind)
-        self.get_field_ext('Wind', 'rho', 'rho', self.wind)
-        self.get_field_ext('Wind', 'Vwn', 'Vwn', self.wind)
+        self.copy_data_ext('StaticGen', 'u', 'ugen', self.gen)
+        self.copy_data_ext('Bus', 'Pg', 'p0', self.bus)
+        self.copy_data_ext('Bus', 'Qg', 'q0', self.bus)
+        self.copy_data_ext('Wind', 'vw', 'vw', self.wind)
+        self.copy_data_ext('Wind', 'rho', 'rho', self.wind)
+        self.copy_data_ext('Wind', 'Vwn', 'Vwn', self.wind)
         self.vref0 = dae.y[self.v]
         self.x0 = self.xmu + self.xs
         self.x1 = self.xmu + self.xr
@@ -602,7 +602,7 @@ class WTG3(ModelBase):
 
             while max(abs(mis)) > self.system.TDS.tol:
                 if iter > 20:
-                    self.message('Initialization of DFIG <{}> failed.'.format(self.name[i]), ERROR)
+                    self.log('Initialization of DFIG <{}> failed.'.format(self.name[i]), ERROR)
                     retval = False
                     break
 
@@ -653,7 +653,7 @@ class WTG3(ModelBase):
 
         for i in range(self.n):
             if te[i] < 0:
-                self.message(
+                self.log(
                     'Electric power is negative at bus <{}>. Wind speed initialize failed.'.format(self.bus[i]), ERROR)
                 retval = False
 
@@ -672,7 +672,7 @@ class WTG3(ModelBase):
             iter = 0
             while abs(mis) > self.system.TDS.tol:
                 if iter > 50:
-                    self.message(
+                    self.log(
                         'Initialization of wind <{}> failed. Try increasing the nominal wind speed.'.format(self.wind[i]))
                     retval = False
                     break
@@ -698,7 +698,7 @@ class WTG3(ModelBase):
         self.system.rmgen(self.gen)
 
         if not retval:
-            self.message('DFIG initialization failed', ERROR)
+            self.log('DFIG initialization failed', ERROR)
 
         return retval
 
