@@ -1,7 +1,6 @@
 """PSS/E file parser"""
 
 import re
-from python_utils import converters
 from cvxopt import matrix
 from operator import itemgetter
 

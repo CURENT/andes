@@ -9,7 +9,7 @@ from ..formats import all_formats
 from ..utils import elapsed
 from andes import __version__ as version
 
-year = version[:4]
+year = '2018'
 
 
 def preamble(disable=False):

@@ -1,5 +1,4 @@
 __author__ = 'Hantao Cui'
-__version__ = '2018.08.28'
 
 __all__ = ['main',
            'consts',
@@ -7,6 +6,9 @@ __all__ = ['main',
            'system',
            'config']
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 from andes.main import main, andeshelp
 from andes.plot import main as plot
