@@ -1,10 +1,11 @@
 __author__ = 'Hantao Cui'
-__version__ = '2018.07.27-dev'
+__version__ = '2018.08.28'
+
 __all__ = ['main',
            'consts',
            'plot',
            'system',
-           'settings']
+           'config']
 
 
 from andes.main import main, andeshelp

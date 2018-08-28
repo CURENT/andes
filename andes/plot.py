@@ -174,10 +174,28 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(xdata, ydata, xname=None, yname=None, fig=None, ax=None, dpi=200, xmin=None, xmax=None, ymin=None, ymax=None,
-            xlabel=None, ylabel=None, no_latex=False, legend=True, grid=False, save=False, unattended=False, datfile='',
+def do_plot(xdata,
+            ydata,
+            xname=None,
+            yname=None,
+            fig=None,
+            ax=None,
+            dpi=200,
+            xmin=None,
+            xmax=None,
+            ymin=None,
+            ymax=None,
+            xlabel=None,
+            ylabel=None,
+            no_latex=False,
+            legend=True,
+            grid=False,
+            save=False,
+            unattended=False,
+            datfile='',
             noshow=False,
             **kwargs):
+
 
     # set styles and LaTex
     rc('font', family='Arial', size=12)

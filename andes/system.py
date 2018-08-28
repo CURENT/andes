@@ -22,7 +22,7 @@ import importlib
 from operator import itemgetter
 from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .settings import Settings, SPF, TDS, CPF, SSSA
+from .config import Settings, SPF, TDS, CPF, SSSA
 from .utils import Logger, elapsed
 from .models import non_jits, jits, JIT
 from .consts import *
