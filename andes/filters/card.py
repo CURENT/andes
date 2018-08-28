@@ -257,16 +257,16 @@ def run(system,
     sym_hard_limit, sym_windup, sym_anti_windup = [], [], []
 
     states_anti_windup = list(anti_windup.keys())
-    algebs_windup = list(windup.keys())
-    algebs_hard_limit = list(hard_limit.keys())
+    # algebs_windup = list(windup.keys())
+    # algebs_hard_limit = list(hard_limit.keys())
 
     # remove interface variables in copy_algebs
     for item in interfaces:
         if item in copy_algebs:
             copy_algebs.remove(item)
 
-    algebs_ext = algebs + interfaces + copy_algebs
-    states_ext = states + copy_states
+    # algebs_ext = algebs + interfaces + copy_algebs
+    # states_ext = states + copy_states
 
     for idx, var in enumerate(states):
         if var in states_anti_windup:

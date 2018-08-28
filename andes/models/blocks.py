@@ -1,9 +1,9 @@
 """Control blocks"""
-from cvxopt import matrix, sparse, spmatrix
-from cvxopt import mul, div, log, sin, cos
-from .base import ModelBase
-from ..consts import *
-from ..utils.math import *
+from cvxopt import matrix, sparse, spmatrix  ## NOQA
+from cvxopt import mul, div, log, sin, cos  ## NOQA
+from .base import ModelBase  ## NOQA
+# from ..consts import *
+# from ..utils.math import *
 
 
 class PI1(object):
