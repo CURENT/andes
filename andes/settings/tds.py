@@ -1,4 +1,4 @@
-from ..settings.base import SettingsBase
+from . import SettingsBase
 from ..utils.cached import cached
 
 
@@ -26,7 +26,7 @@ class TDS(SettingsBase):
                             'fwdeuler': 'Explicit Euler'}
 
     @cached
-    def doc_help(self):
+    def descr(self):
         descriptions = {'fixt': 'use fixed time step size',
                         'tstep': 'time step size',
                         'method': 'time domain integration method',

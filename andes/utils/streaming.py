@@ -1,4 +1,8 @@
-from . import dime
+try:
+    from . import dime
+    ZMQ = True
+except ImportError:
+    ZMQ = False
 
 from time import sleep
 

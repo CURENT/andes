@@ -1,4 +1,4 @@
-from ..settings.base import SettingsBase
+from . import SettingsBase
 from ..utils.cached import cached
 
 
@@ -23,7 +23,7 @@ class SPF(SettingsBase):
         self.usedegree = True
 
     @cached
-    def doc_help(self):
+    def descr(self):
         descriptions = {'flatstart': 'flat start for power flow problem',
                         'maxit': 'the maximum iteration number',
                         'pv2pq': 'check Q limit and convert PV to PQ',

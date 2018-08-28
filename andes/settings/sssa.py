@@ -1,4 +1,4 @@
-from ..settings.base import SettingsBase
+from . import SettingsBase
 from ..utils.cached import cached
 
 
@@ -15,7 +15,7 @@ class SSSA(SettingsBase):
         self.plot = True
 
     @cached
-    def doc_help(self):
+    def descr(self):
         descriptions = {
 
         }

@@ -1,4 +1,4 @@
-from ..settings.base import SettingsBase
+from . import SettingsBase
 from ..consts import *
 from ..utils.cached import cached
 
@@ -37,7 +37,7 @@ class Settings(SettingsBase):
         return 2 * pi * self.freq
 
     @cached
-    def doc_help(self):
+    def descr(self):
         descriptions = {'verbose': 'program logging level',
                         'freq': 'system base frequency',
                         'mva': 'system base MVA',

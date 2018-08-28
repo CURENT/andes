@@ -1,4 +1,4 @@
-from ..settings.base import SettingsBase
+from . import SettingsBase
 from ..utils.cached import cached
 
 
@@ -14,7 +14,7 @@ class CPF(SettingsBase):
         self.step = 0.1
 
     @cached
-    def doc_help(self):
+    def descr(self):
         descriptions = {'method': 'method for CPF routine analysis',
                         'single_slack': 'use single slack bus mode',
                         'reactive_limits': 'consider reactive power limits',

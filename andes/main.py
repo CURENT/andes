@@ -40,7 +40,7 @@ from .routines import powerflow, timedomain, eigenanalysis
 # from .routines.fakemodule import EAGC
 
 
-def cli_parse(writehelp=False, helpfile=None):
+def cli_parse(help=False):
     """command line input argument parser"""
 
     parser = ArgumentParser(prog='andes')
@@ -104,15 +104,8 @@ def cli_parse(writehelp=False, helpfile=None):
                                                 'for all setting classes.')
     parser.add_argument('-S', '--search', help='Search devices that match the given expression.')
 
-    if writehelp:
-        try:
-            with open(helpfile, 'w') as f:
-                f.writelines('[ANDES] Command Line Usage Help\n\n')
-                parser.print_help(file=f)
-                print('--> Command line usage written to file.')
-        except IOError:
-            print('I/O exception while writing help file.')
-        return
+    if help is True:
+        return parser.format_help()
     else:
         args = parser.parse_args()
         return args
@@ -128,25 +121,25 @@ def andeshelp(usage=None,
               help_option=None,
               help_settings=None,
               export='plain',
+              save=None,
               **kwargs):
     """
-    Dump all sorts of help files
+    Return the help
 
     :return: True if executed
     """
-    ret = False
+    out = []
 
     if not (usage or group or category or model_list or model_format or model_var
             or quick_help or help_option or help_settings):
-        return ret
+        return False
 
     from .models import all_models_list
 
     ps = PowerSystem()
 
     if usage:
-        cli_parse(writehelp=True, helpfile='cli_help.txt')
-        ret = True
+        out.append(cli_parse(help=True))
 
     if category:
         raise NotImplementedError
@@ -166,39 +159,34 @@ def andeshelp(usage=None,
                 model_format.remove(item)
 
         if len(model_format) > 0:
-            for idx, item in enumerate(model_format):
-                f = sys.stdout
-                f.write(ps.__dict__[item].doc(export=export))
-
-            ret = True
+            for item in model_format:
+                out.append(ps.__dict__[item].doc(export=export))
 
     if model_var:
         model_var = model_var.split('.')
 
         if len(model_var) == 1:
-            ps.Log.error('Device parameter name not specified.')
+            ps.Log.error('Model and parameter not separated by dot.')
 
         elif len(model_var) > 2:
-            ps.Log.error('Device parameter not specified correctly.')
+            ps.Log.error('Model parameter not specified correctly.')
 
         else:
             dev, var = model_var
             if not hasattr(ps, dev):
-                ps.Log.error('Device <{}> does not exist.'.format(dev))
+                ps.Log.error('Model <{}> does not exist.'.format(dev))
             else:
                 if var not in ps.__dict__[dev]._data.keys():
-                    ps.Log.error('Device <{}> does not have parameter <{}>.'.format(dev, var))
+                    ps.Log.error('Model <{}> does not have parameter <{}>.'.format(dev, var))
                 else:
                     c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
                     c2 = ps.__dict__[dev]._data.get(var)
                     c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
-                    ps.Log.info('{}: {}, default = {:g} {}'.format('.'.join(model_var), c1, c2, c3))
-
-                    ret = True
+                    out.append('{}: {}, default = {:g} {}'.format('.'.join(model_var), c1, c2, c3))
 
     if group:
-        found = False
         group_dict = {}
+
         for model in all_models_list:
             g = ps.__dict__[model]._group
             if g not in group_dict:
@@ -207,62 +195,60 @@ def andeshelp(usage=None,
 
         if group.lower() == 'all':
             group = sorted(list(group_dict.keys()))
-            found = True
 
         else:
             group = [group]
             match = []
+
+            # search for ``group`` in all group names and store in ``match``
             for item in group_dict.keys():
                 if group[0].lower() in item.lower():
-                    # partial match
                     match.append(item)
-                    found = True
-            if not found:
-                print('Group <{:s}> not found.'.format(group[0]))
-                return True
-            else:
-                group = match
+
+            group = match
+
+            # if group name not found
+            if len(match) == 0:
+                sys.stdout.write('Group <{:s}> not found.'.format(group[0]))
+
         for idx, item in enumerate(group):
-            print('<{:s}>'.format(item))
-            v = sorted(list(group_dict[item]))
-            print(' '.join(v))
-            if idx < len(group) - 1:
-                print('')
-        return True
+            group_models = sorted(list(group_dict[item]))
+
+            out.append('<{:s}>'.format(item))
+            out.append(' '.join(group_models))
+            out.append('')
 
     if quick_help:
         if quick_help not in all_models_list:
-            ps.Log.error('Model <{}> does not exist.'.format(quick_help))
+            sys.stdout.write('Model <{}> does not exist.'.format(quick_help))
         else:
-            ps.Log.info(ps.__dict__[quick_help].doc(export=export))
-        return True
+            out.append(ps.__dict__[quick_help].doc(export=export))
 
     if help_option:
         raise NotImplementedError
 
     if help_settings:
         all_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
-        help_settings = help_settings.split(',')
-        for item in help_settings:
-            if item.lower() == 'all':
-                help_settings = all_settings
-                break
 
-        for item in help_settings:
-            if item not in all_settings:
-                ps.Log.warning('Setting <{}> does not exist.'.format(item))
-                help_settings.remove(item)
+        if help_settings.lower() == 'all':
+            help_settings = all_settings
+
+        else:
+            help_settings = help_settings.split(',')
+
+            for item in help_settings:
+                if item not in all_settings:
+                    ps.Log.warning('Setting <{}> does not exist.'.format(item))
+                    help_settings.remove(item)
 
         if len(help_settings) > 0:
-            t, _ = elapsed()
-            for idx, item in enumerate(help_settings):
-                mode = 'w' if idx == 0 else 'a'
-                ps.__dict__[item].dump_help(export=export, save=True, writemode=mode)
-            _, s = elapsed(t)
-            print('Settings help saved to file in {}.'.format(s))
-        return True
+            for item in help_settings:
+                out.append(ps.__dict__[item].doc(export=export))
 
-    return ret
+    file = sys.stdout if save is None else save
+    print('\n'.join(out), file=file)
+
+    return True
 
 
 def edit_conf(conf):

@@ -32,8 +32,6 @@ class JIT(object):
         except AttributeError:
             self.system.Log.error('Error importing a non-existent model <{:s}.{:s}>. Check __init__.py in models'
                                   .format(self.model, self.device))
-        # except:
-        #     self.system.Log.error('Unknown error importing <{:s}.{:s}>.'.format(self.model, self.device))
 
     def __getattr__(self, attr):
         if not self.loaded:
@@ -47,10 +45,9 @@ class JIT(object):
         """overloading elem_add function of a JIT class"""
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].elem_add(idx, name, **kwargs)
+            return self.system.__dict__[self.name].elem_add(idx, name, **kwargs)
 
     def doc(self, **kwargs):
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].doc(**kwargs)
-
+            return self.system.__dict__[self.name].doc(**kwargs)
