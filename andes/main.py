@@ -140,8 +140,7 @@ def cli_parse(help=False):
         '-m',
         '--map',
         help='Visualize power flow results on GIS. Neglected if no GIS '
-        'file is given. '
-    )
+        'file is given. ')
     parser.add_argument(
         '-e', '--dump_raw', help='Dump RAW format case file.'
     )  # consider being used as batch converter

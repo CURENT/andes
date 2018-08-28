@@ -1,12 +1,7 @@
-try:
-    from blist import *
-    BLIST = True
-except ImportError:
-    BLIST = False
-
 
 class VarName(object):
     """Variable name manager class"""
+
     def __init__(self, system):
         self.system = system
         self.unamex = []  # unformatted state variable names
@@ -31,7 +26,9 @@ class VarName(object):
             self.system.TDS.compute_flows = True
 
         if self.system.TDS.compute_flows:
-            nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination  # added areas
+            nflows = 2 * self.system.Bus.n + \
+                     4 * self.system.Line.n + \
+                     2 * self.system.Area.n_combination
             self.unamey.extend([''] * nflows)
             self.fnamey.extend([''] * nflows)
 
@@ -45,16 +42,18 @@ class VarName(object):
         elif listname in ['fnamex', 'fnamey']:
             string = '${0}\ {1}$'
 
-        if isinstance(element_name, list) or (BLIST and isinstance(element_name, blist)):
+        if isinstance(element_name, list):
             for i, j in zip(xy_idx, element_name):
                 # manual elem_add LaTex space for auto-generated element name
                 if listname == 'fnamex' or listname == 'fnamey':
                     j = j.replace(' ', '\ ')
                 self.__dict__[listname][i] = string.format(var_name, j)
         elif isinstance(element_name, int):
-            self.__dict__[listname][xy_idx] = string.format(var_name, element_name)
+            self.__dict__[listname][xy_idx] = string.format(
+                var_name, element_name)
         else:
-            self.system.Log.warning('Unknown element_name type while building VarName')
+            self.system.Log.warning(
+                'Unknown element_name type while building VarName')
 
     def bus_line_names(self):
         """Append bus injection and line flow names to `VarName`"""
@@ -66,7 +65,8 @@ class VarName(object):
     @property
     def uname(self):
         """
-        Return the full unformatted variable name list in the order of state vars, algeb vars and line flow vars
+        Return the full unformatted variable name list following the order of
+        state vars, algeb vars and line flow vars
 
         :return: list of unformatted names
         """
@@ -75,7 +75,8 @@ class VarName(object):
     @property
     def fname(self):
         """
-        Return the full formatted variable name list in the order of state vars, algeb vars and line flow vars
+        Return the full formatted variable name list following the order of
+        state vars, algeb vars and line flow vars
 
         :return: list of formatted names
         """

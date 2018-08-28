@@ -1,36 +1,27 @@
 SHOW_PF_CALL = False
 SHOW_INT_CALL = False
 
-all_calls = ['gcall',
-             'gycall',
-             'fcall',
-             'fxcall',
-             'init0',
-             'pflow',
-             'windup',
-             'jac0',
-             'init1',
-             'shunt',
-             'series',
-             'flows',
-             'connection',
-             'times',
-             'stagen',
-             'dyngen',
-             'gmcall',
-             'fmcall',
-             'dcseries',
-             'opf',
-             'obj']
+all_calls = [
+    'gcall', 'gycall', 'fcall', 'fxcall', 'init0', 'pflow', 'windup', 'jac0',
+    'init1', 'shunt', 'series', 'flows', 'connection', 'times', 'stagen',
+    'dyngen', 'gmcall', 'fmcall', 'dcseries', 'opf', 'obj'
+]
 
 
 class Call(object):
     """ Equation call mamager class for andes routines"""
+
     def __init__(self, system):
         self.system = system
         self.ndevice = 0
         self.devices = []
-        call_strings = ['gcalls', 'fcalls', 'gycalls', 'fxcalls', 'jac0s',]
+        call_strings = [
+            'gcalls',
+            'fcalls',
+            'gycalls',
+            'fxcalls',
+            'jac0s',
+        ]
 
         self.gisland = 'system.Bus.gisland(system.DAE)\n'
         self.gyisland = 'system.Bus.gyisland(system.DAE)\n'
@@ -39,7 +30,9 @@ class Call(object):
             self.__dict__[item] = []
 
     def setup(self):
-        """setup the call list after case file is parsed and jit models are loaded"""
+        """
+        setup the call list after case file is parsed and jit models are loaded
+        """
         self.devices = self.system.DevMan.devices
         self.ndevice = len(self.devices)
 
@@ -155,7 +148,8 @@ class Call(object):
         """
         string = '"""\n'
         string += 'system.DAE.init_g()\n'
-        for gcall, pflow, shunt, stagen, call in zip(self.gcall, self.pflow, self.shunt, self.stagen, self.gcalls):
+        for gcall, pflow, shunt, stagen, call in zip(
+                self.gcall, self.pflow, self.shunt, self.stagen, self.gcalls):
             if gcall and pflow and shunt and not stagen:
                 string += call
         string += '\n'
@@ -167,8 +161,9 @@ class Call(object):
         """Post power flow computation for PV and SW"""
         string = '"""\n'
         string += 'system.DAE.init_g()\n'
-        for gcall, pflow, shunt, series, stagen, call in zip(self.gcall, self.pflow, self.shunt,
-                                                             self.series, self.stagen, self.gcalls):
+        for gcall, pflow, shunt, series, stagen, call in zip(
+                self.gcall, self.pflow, self.shunt, self.series, self.stagen,
+                self.gcalls):
             if gcall and pflow and (shunt or series) and not stagen:
                 string += call
         string += '\n'
@@ -191,9 +186,10 @@ class Call(object):
     def _compile_seriesflow(self):
         """Post power flow computation of series device flow"""
         string = '"""\n'
-        for device, pflow, series in zip(self.devices, self.pflow, self.series):
+        for device, pflow, series in zip(self.devices, self.pflow,
+                                         self.series):
             if pflow and series:
-                string += 'system.'+device+'.seriesflow(system.DAE)\n'
+                string += 'system.' + device + '.seriesflow(system.DAE)\n'
         string += '\n'
         string += '"""'
         self.seriesflow = compile(eval(string), '', 'exec')
@@ -296,4 +292,3 @@ class Call(object):
 
         string += '"""'
         self.int_g = compile(eval(string), '', 'exec')
-

@@ -3,8 +3,21 @@ import os
 
 class FileMan(object):
     """Define a File Manager class for PowerSystem"""
-    def __init__(self, case, input_format=None, addfile=None, settings=None, no_output=False, dynfile=None,
-                 log=None, dump_raw=None, output_format=None, output=None, gis=None, pert=None, **kwargs ):
+
+    def __init__(self,
+                 case,
+                 input_format=None,
+                 addfile=None,
+                 settings=None,
+                 no_output=False,
+                 dynfile=None,
+                 log=None,
+                 dump_raw=None,
+                 output_format=None,
+                 output=None,
+                 gis=None,
+                 pert=None,
+                 **kwargs):
         """initialize the output file names
 
         case: must be full path to case
@@ -68,7 +81,9 @@ class FileMan(object):
             self.prof = add_ext(prof, 'txt')
 
     def get_fullpath(self, fullname=None):
-        """return the original full path if full path is specified, otherwise search in the case file path
+        """
+        Return the original full path if full path is specified, otherwise
+        search in the case file path
         """
         if not fullname:
             return None

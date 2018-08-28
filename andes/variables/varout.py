@@ -7,6 +7,7 @@ class VarOut(object):
     """
     Output variable value recorder
     """
+
     def __init__(self, system):
         """Constructor of empty Varout object"""
         self.system = system
@@ -26,7 +27,9 @@ class VarOut(object):
             self.vars = list()
             self.t = list()
             self.k = list()
-            self.system.Log.debug('VarOut cache cleared at simulation t = {:g}.'.format(self.system.DAE.t))
+            self.system.Log.debug(
+                'VarOut cache cleared at simulation t = {:g}.'.format(
+                    self.system.DAE.t))
             self._mode = 'a'
 
         self.t.append(t)
@@ -54,7 +57,8 @@ class VarOut(object):
 
     def concat_t_vars(self):
         """
-        Concatenate ``self.t`` with ``self.vars`` and output a single matrix for data dump
+        Concatenate ``self.t`` with ``self.vars`` and output a single matrix
+        for data dump
 
         :return matrix: concatenated matrix with ``self.t`` as the 0-th column
         """
@@ -168,7 +172,9 @@ class VarOut(object):
         # include line flow variables in algebraic variables
         nflows = 0
         if self.system.TDS.compute_flows:
-            nflows = 2 * self.system.Bus.n + 4 * self.system.Line.n + 2 * self.system.Area.n_combination
+            nflows = 2 * self.system.Bus.n + \
+                     4 * self.system.Line.n + \
+                     2 * self.system.Area.n_combination
 
         # output variable indices
         if system.Recorder.n == 0:

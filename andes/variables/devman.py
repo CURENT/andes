@@ -1,10 +1,15 @@
-from ..models import order, jits, non_jits, all_models
+from ..models import order, all_models
 from numpy import ndarray
 from cvxopt import matrix
 
 
 class DevMan(object):
-    """Device Manager class. Maintains the loaded model list, groups and categories"""
+    """
+    Device Manager class.
+    Maintains the loaded model list, groups and categories
+
+    """
+
     def __init__(self, system=None):
         """constructor for DevMan class"""
         self.system = system
@@ -29,7 +34,9 @@ class DevMan(object):
             idx: assigned element index
             """
         if dev_name not in self.devices:
-            self.system.Log.error('Device {} missing. Call add_device before adding elements'.format(dev_name))
+            self.system.Log.error(
+                'Device {} missing. Call add_device before adding elements'.
+                format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group
         if idx is None:  # "if not idx" will fail for idx==0.0
@@ -88,7 +95,8 @@ class DevMan(object):
                 for name, dev in item.items():
                     if name == k:
                         int_id = self.system.__dict__[dev].uid[name]
-                        ret.append(self.system.__dict__[dev].__dict__[param][int_id])
+                        ret.append(
+                            self.system.__dict__[dev].__dict__[param][int_id])
                         continue
             if not ret_list:
                 ret = ret[0]
