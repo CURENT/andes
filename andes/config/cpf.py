@@ -3,7 +3,6 @@ from ..utils.cached import cached
 
 
 class CPF(SettingsBase):
-
     def __init__(self):
         self.method = 'perpendicular intersection'
         self.single_slack = False
@@ -15,8 +14,9 @@ class CPF(SettingsBase):
 
     @cached
     def descr(self):
-        descriptions = {'method': 'method for CPF routine analysis',
-                        'single_slack': 'use single slack bus mode',
-                        'reactive_limits': 'consider reactive power limits',
-                        }
+        descriptions = {
+            'method': 'method for CPF routine analysis',
+            'single_slack': 'use single slack bus mode',
+            'reactive_limits': 'consider reactive power limits',
+        }
         return descriptions

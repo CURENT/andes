@@ -3,25 +3,19 @@ import sys
 
 from math import isnan
 from time import monotonic as time, sleep
+from cvxopt import matrix, sparse, spdiag
+
+from ..utils.jactools import diag0
+from ..utils import elapsed
 # from numpy import array
 # from scipy.sparse import csr_matrix
-from cvxopt import sparse, spdiag
-
-from ..utils.jactools import *
-from ..utils import elapsed
 
 try:
     from cvxoptklu.klu import numeric, symbolic, solve, linsolve
     KLU = True
-except:
+except ImportError:
     from cvxopt.umfpack import numeric, symbolic, solve, linsolve
     KLU = False
-
-
-try:
-    from ..utils.matlab import write_mat
-except ImportError:
-    pass
 
 try:
     import progressbar
@@ -40,7 +34,7 @@ def first_time_step(system):
     elif system.DAE.n == 1:
         B = matrix(system.DAE.Gx)
         linsolve(system.DAE.Gy, B)
-        As = system.DAE.Fx - system.DAE.Fy*B
+        As = system.DAE.Fx - system.DAE.Fy * B
         freq = abs(As[0, 0])
     else:
         freq = 20.0
@@ -62,7 +56,8 @@ def first_time_step(system):
         else:
             settings.deltat = settings.tstep
             if settings.tstep < settings.deltatmin:
-                system.Log.warning('Fixed time step is below the estimated minimum')
+                system.Log.warning(
+                    'Fixed time step is below the estimated minimum')
     return settings.deltat
 
 
@@ -72,7 +67,8 @@ def run(system):
     """
 
     if system.status['pf_solved'] is False:
-        system.Log.warning('Power flow not solved. Time domain simulation will not continue.')
+        system.Log.warning(
+            'Power flow not solved. Time domain simulation will not continue.')
         return False
 
     t0, _ = elapsed()
@@ -86,16 +82,20 @@ def run(system):
         system.Streaming.sync_and_handle()
 
     system.Log.info('\nTime Domain Simulation:')
-    system.Log.info('Integration Method: {0}'.format(system.TDS.method_desc[system.TDS.method]))
+    system.Log.info('Integration Method: {0}'.format(
+        system.TDS.method_desc[system.TDS.method]))
     system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
 
     global F
     retval = True
     bar = None
     if PROGRESSBAR and system.pid == -1 and system.Settings.progressbar:
-        bar = progressbar.ProgressBar(
-                                      widgets=[' [', progressbar.Percentage(), progressbar.Bar(),
-                                               progressbar.AdaptiveETA(), '] '])
+        bar = progressbar.ProgressBar(widgets=[
+            ' [',
+            progressbar.Percentage(),
+            progressbar.Bar(),
+            progressbar.AdaptiveETA(), '] '
+        ])
     else:
         bar = None
     dae = system.DAE
@@ -103,14 +103,13 @@ def run(system):
 
     # check settings
     maxit = settings.maxit
-    qrt = settings.qrt
     tol = settings.tol
     In = spdiag([1] * dae.n)
 
     # initialization
     t = settings.t0
     step = 0
-    inc = matrix(0, (dae.m + dae.n, 1), 'd' )
+    inc = matrix(0, (dae.m + dae.n, 1), 'd')
     dae.factorize = True
     dae.mu = 1.0
     dae.kg = 0.0
@@ -144,7 +143,7 @@ def run(system):
             module = importlib.import_module(system.Files.pert[:-3])
             callpert = getattr(module, 'pert')
             PERT = 1
-        except:
+        except ImportError:
             PERT = -1
 
     # main loop
@@ -168,7 +167,7 @@ def run(system):
         # check for the occurrence of a disturbance
         fixed_times = system.get_event_times()
         for item in fixed_times:
-            if (item > t) and (item < t+h):
+            if (item > t) and (item < t + h):
                 actual_time = item
                 h = actual_time - t
                 switch = True
@@ -226,7 +225,9 @@ def run(system):
                 niter += 1
 
             if isnan(settings.error):
-                system.Log.error('Iteration error: NaN detected at t = {}.'.format(actual_time))
+                system.Log.error(
+                    'Iteration error: NaN detected at t = {}.'.format(
+                        actual_time))
                 niter = maxit + 1
             if settings.error == float('Inf'):
                 niter = maxit + 1
@@ -246,7 +247,8 @@ def run(system):
                         exec(system.Call.int)
                         dae.rebuild = False
                     except OverflowError:
-                        system.Log.error('Data overflow. Convergence is not likely.')
+                        system.Log.error(
+                            'Data overflow. Convergence is not likely.')
                         t = settings.tf + 1
                         retval = False
                         break
@@ -255,13 +257,16 @@ def run(system):
 
                 # complete Jacobian matrix DAE.Ac
                 if settings.method == 'euler':
-                    dae.Ac = sparse([[In - h*dae.Fx, dae.Gx],
-                                     [   - h*dae.Fy, dae.Gy]], 'd')
-                    dae.q = dae.x - xa - h*dae.f
-                elif settings.method == 'trapezoidal':  # use implicit trapezoidal method by default
-                    dae.Ac = sparse([[In - h*0.5*dae.Fx, dae.Gx],
-                                     [   - h*0.5*dae.Fy, dae.Gy]], 'd')
-                    dae.q = dae.x - xa - h*0.5*(dae.f + fn)
+                    dae.Ac = sparse(
+                        [[In - h * dae.Fx, dae.Gx], [-h * dae.Fy, dae.Gy]],
+                        'd')
+                    dae.q = dae.x - xa - h * dae.f
+
+                # use implicit trapezoidal method by default
+                elif settings.method == 'trapezoidal':
+                    dae.Ac = sparse([[In - h * 0.5 * dae.Fx, dae.Gx],
+                                     [-h * 0.5 * dae.Fy, dae.Gy]], 'd')
+                    dae.q = dae.x - xa - h * 0.5 * (dae.f + fn)
 
                 # windup limiters
                 dae.reset_Ac()
@@ -275,7 +280,10 @@ def run(system):
                     pass
 
                 # qq = array(inc)
-                # Ac = csr_matrix((array(dae.Ac.V).reshape((-1)), (array(dae.Ac.I).reshape((-1)), array(dae.Ac.J).reshape((-1))))).toarray()
+                # Ac = csr_matrix((array(dae.Ac.V).reshape((-1)),
+                #                  (array(dae.Ac.I).reshape((-1)),
+                #                   array(dae.Ac.J).reshape((-1))))
+                #                 ).toarray()
 
                 try:
                     N = numeric(dae.Ac, F)
@@ -302,7 +310,7 @@ def run(system):
                 if niter > 15:
                     pass
                 inc_x = inc[:dae.n]
-                inc_y = inc[dae.n: dae.m+dae.n]
+                inc_y = inc[dae.n:dae.m + dae.n]
                 dae.x += inc_x
                 dae.y += inc_y
 
@@ -318,16 +326,19 @@ def run(system):
                     pass
 
         if niter >= maxit:
-            inc_g = inc[dae.n: dae.m+dae.n]
+            inc_g = inc[dae.n:dae.m + dae.n]
             max_g_err_sign = 1 if abs(max(inc_g)) > abs(min(inc_g)) else -1
             if max_g_err_sign == 1:
                 max_g_err_idx = list(inc_g).index(max(inc_g))
             else:
                 max_g_err_idx = list(inc_g).index(min(inc_g))
-            system.Log.debug('Maximum mismatch = {:.4g} at equation <{}>'.format(max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
+            system.Log.debug(
+                'Maximum mismatch = {:.4g} at equation <{}>'.format(
+                    max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
 
             h = time_step(system, False, niter, t)
-            system.Log.debug('Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
+            system.Log.debug(
+                'Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
             dae.x = matrix(xa)
             dae.y = matrix(ya)
             dae.f = matrix(fn)
@@ -346,13 +357,14 @@ def run(system):
             system.Streaming.vars_to_pmu()
 
         # plot variables and display iteration status
-        perc = max(min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
+        perc = max(
+            min((t - settings.t0) / (settings.tf - settings.t0) * 100, 100), 0)
         if bar is not None:
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
             system.Log.info(' ({:.0f}%) Time = {:.4f}s, step = {}, niter = {}'
-                            .format(100*t /settings.tf, t, step, niter))
+                            .format(100 * t / settings.tf, t, step, niter))
 
             nextpc += 5
         # compute max rotor angle difference
@@ -363,7 +375,9 @@ def run(system):
         if settings.qrt:
             if time() - rt_end > 0:  # the ending time has passed
                 if time() - rt_end > settings.kqrt:  # simulation is too slow
-                    system.Log.debug('Simulation over-run at simulation time {:4.4g} s.'.format(t))
+                    system.Log.debug(
+                        'Simulation over-run at simulation time {:4.4g} s.'.
+                        format(t))
             else:  # wait to finish
                 rt_headroom += (rt_end - time())
                 while time() - rt_end < 0:
@@ -371,9 +385,11 @@ def run(system):
     if bar is not None:
         bar.finish()
     if settings.qrt:
-        system.Log.debug('Quasi-RT headroom time: {} s.'.format(str(rt_headroom)))
+        system.Log.debug('Quasi-RT headroom time: {} s.'.format(
+            str(rt_headroom)))
     if t != settings.tf:
-        system.Log.always('Reached minimum time step. Convergence is not likely.')
+        system.Log.always(
+            'Reached minimum time step. Convergence is not likely.')
         retval = False
 
     if system.Settings.dime_enable:
@@ -442,19 +458,17 @@ def calcInc(system):
         N = numeric(A, F)
         solve(A, F, N, inc)
     except ValueError:
-        system.Log.warning('Unexpected symbolic factorization. Refactorizing...')
+        system.Log.warning(
+            'Unexpected symbolic factorization. Refactorizing...')
         F = symbolic(A)
         try:
             N = numeric(A, F)
             solve(A, F, N, inc)
         except ArithmeticError:
             system.Log.error('Singular matrix')
-            niter = maxit + 1
     except ArithmeticError:
         system.Log.error('Jacobian matrix is singular.')
         diag0(system.DAE.Gy, 'unamey', system)
-    except:
-        raise
     return -inc
 
 
@@ -469,4 +483,6 @@ def compute_flows(system):
         exec(system.Call.seriesflow)
         system.Area.seriesflow(system.DAE)
         system.Area.interchange_varout()
-        dae.y = matrix([dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout])
+        dae.y = matrix([
+            dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout
+        ])

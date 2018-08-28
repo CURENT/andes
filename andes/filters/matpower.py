@@ -1,7 +1,7 @@
 """ Simple MATPOWER format parser
 """
 import re
-from ..consts import *
+from ..consts import deg2rad
 
 
 def testlines(fid):
@@ -27,13 +27,14 @@ def read(file, system):
     info = True
 
     basemva = 100
-    mpc = {'bus': [],
-           'gen': [],
-           'branch': [],
-           'area': [],
-           'gencost': [],
-           'bus_name': [],
-           }
+    mpc = {
+        'bus': [],
+        'gen': [],
+        'branch': [],
+        'area': [],
+        'gencost': [],
+        'bus_name': [],
+    }
 
     fid = open(file, 'r')
 
@@ -100,9 +101,8 @@ def read(file, system):
     system.Settings.mva = basemva
 
     for data in mpc['bus']:
-        """ idx  ty   pd   qd  gs  bs  area  vmag  vang  baseKV  zone  vmax  vmin
-             0    1    2   3   4   5    6      7     8     9      10    11    12
-        """
+        # idx  ty   pd   qd  gs  bs  area  vmag  vang  baseKV  zone  vmax  vmin
+        # 0    1    2   3   4   5    6      7     8     9      10    11    12
         idx = int(data[0])
         ty = data[1]
         if ty == 3:
@@ -120,21 +120,35 @@ def read(file, system):
         vmin = data[12]
 
         try:
-            system.Bus.elem_add(idx=idx, name='Bus ' + str(idx), Vn=baseKV, voltage=vmag, angle=vang,
-                                vmax=vmax, vmin=vmin, area=area, region=zone)
+            system.Bus.elem_add(
+                idx=idx,
+                name='Bus ' + str(idx),
+                Vn=baseKV,
+                voltage=vmag,
+                angle=vang,
+                vmax=vmax,
+                vmin=vmin,
+                area=area,
+                region=zone)
             if pd or qd:
-                system.PQ.elem_add(bus=idx, name='PQ ' + str(idx), Vn=baseKV, p=pd, q=qd)
+                system.PQ.elem_add(
+                    bus=idx, name='PQ ' + str(idx), Vn=baseKV, p=pd, q=qd)
             if gs or bs:
-                system.Shunt.elem_add(bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
-        except:
+                system.Shunt.elem_add(
+                    bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
+        except KeyError:
             system.Log.error('Error adding <Bus> to powersystem object.')
             retval = False
 
     gen_idx = 0
     for data in mpc['gen']:
-        """bus  pg  qg  qmax  qmin  vg  mbase  status  pmax  pmin  pc1  pc2  qc1min  qc1max  qc2min  qc2max  ramp_agc  ramp_10  ramp_30  ramp_q  apf
-            0   1   2    3     4     5    6      7       8    9    10    11   12      13       14      15      16        17       18      19      20
-        """
+        # bus  pg  qg  qmax  qmin  vg  mbase  status  pmax  pmin  pc1  pc2
+        #  0   1   2    3     4     5    6      7       8    9    10    11
+        # qc1min  qc1max  qc2min  qc2max  ramp_agc  ramp_10  ramp_30  ramp_q
+        #  12      13       14      15      16        17       18      19
+        # apf
+        #  20
+
         bus_idx = int(data[0])
         gen_idx += 1
         vg = data[5]
@@ -150,20 +164,46 @@ def read(file, system):
         try:
             vn = system.Bus.Vn[system.Bus.uid[bus_idx]]
             if bus_idx in sw:
-                system.SW.elem_add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='SW ' + str(bus_idx), u=status, Vn=vn, v0=vg,
-                                   pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin, a0=0.0)
+                system.SW.elem_add(
+                    idx=gen_idx,
+                    bus=bus_idx,
+                    busr=bus_idx,
+                    name='SW ' + str(bus_idx),
+                    u=status,
+                    Vn=vn,
+                    v0=vg,
+                    pg=pg,
+                    qg=qg,
+                    pmax=pmax,
+                    pmin=pmin,
+                    qmax=qmax,
+                    qmin=qmin,
+                    a0=0.0)
             else:
-                system.PV.elem_add(idx=gen_idx, bus=bus_idx, busr=bus_idx, name='PV ' + str(bus_idx), u=status, Vn=vn, v0=vg,
-                                   pg=pg, qg=qg, pmax=pmax, pmin=pmin, qmax=qmax, qmin=qmin)
-        except:
-            system.Log.error('Error adding <SW> or <PV> to powersystem object.')
+                system.PV.elem_add(
+                    idx=gen_idx,
+                    bus=bus_idx,
+                    busr=bus_idx,
+                    name='PV ' + str(bus_idx),
+                    u=status,
+                    Vn=vn,
+                    v0=vg,
+                    pg=pg,
+                    qg=qg,
+                    pmax=pmax,
+                    pmin=pmin,
+                    qmax=qmax,
+                    qmin=qmin)
+        except KeyError:
+            system.Log.error(
+                'Error adding <SW> or <PV> to powersystem object.')
             retval = False
 
     for data in mpc['branch']:
-        """
-        fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle	status	angmin	angmax	Pf	Qf	Pt	Qt
-          0       1     2   3   4     5       6       7       8      9        10     11       12    13  14  15  16
-        """
+        # fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle
+        #  0     1      2   3   4     5       6       7       8      9
+        # status	angmin	angmax	Pf	Qf	Pt	Qt
+        #   10       11       12    13  14  15  16
         fbus = data[0]
         tbus = data[1]
         r = data[2]
@@ -186,9 +226,19 @@ def read(file, system):
         try:
             vf = system.Bus.Vn[system.Bus.uid[fbus]]
             vt = system.Bus.Vn[system.Bus.uid[tbus]]
-            system.Line.elem_add(Vn=vf, Vn2=vt, bus1=fbus, bus2=tbus, r=r, x=x, b=b, u=status, trasf=tf, tap=ratio,
-                                 phi=angle)
-        except:
+            system.Line.elem_add(
+                Vn=vf,
+                Vn2=vt,
+                bus1=fbus,
+                bus2=tbus,
+                r=r,
+                x=x,
+                b=b,
+                u=status,
+                trasf=tf,
+                tap=ratio,
+                phi=angle)
+        except KeyError:
             system.Log.error('Error adding <Line> to powersystem object.')
             retval = False
     if len(mpc['bus_name']) == len(system.Bus.name):

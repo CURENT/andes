@@ -24,15 +24,16 @@ class SPF(SettingsBase):
 
     @cached
     def descr(self):
-        descriptions = {'flatstart': 'flat start for power flow problem',
-                        'maxit': 'the maximum iteration number',
-                        'pv2pq': 'check Q limit and convert PV to PQ',
-                        'ipv2pq': 'the interation from which to convert PV to PQ',
-                        'npv2pq': 'the maximum number of PVs to convert in one iteration',
-                        'solver': 'power flow routine solver type',
-                        'sortbuses': 'index to sort buses',
-                        'switch2nr': 'switch to Newton Raphson method if non-convergence',
-                        'units': 'the unit for the power flow report',
-                        'usedegree': 'use degree in the power flow report',
-                        }
+        descriptions = {
+            'flatstart': 'flat start for power flow problem',
+            'maxit': 'the maximum iteration number',
+            'pv2pq': 'check Q limit and convert PV to PQ',
+            'ipv2pq': 'the interation from which to convert PV to PQ',
+            'npv2pq': 'the maximum number of PVs to convert in one iteration',
+            'solver': 'power flow routine solver type',
+            'sortbuses': 'index to sort buses',
+            'switch2nr': 'switch to Newton Raphson method if non-convergence',
+            'units': 'the unit for the power flow report',
+            'usedegree': 'use degree in the power flow report',
+        }
         return descriptions

@@ -13,20 +13,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Power system class
 """
 
 import importlib
 from operator import itemgetter
-from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
+from logging import INFO
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .config import Settings, SPF, TDS, CPF, SSSA
 from .utils import Logger, elapsed
 from .models import non_jits, jits, JIT
-from .consts import *
-from cvxopt import matrix
+from .consts import rad2deg
 
 try:
     from .utils.streaming import Streaming
@@ -40,9 +38,24 @@ class PowerSystem(object):
     everything in a power system class including models, settings,
      file and call managers
     """
-    def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None,
-                 output=None, dynfile=None, addfile=None, settings=None, input_format=None,
-                 output_format=None, gis=None, dime=None, tf=None, **kwargs):
+
+    def __init__(self,
+                 case='',
+                 pid=-1,
+                 verbose=INFO,
+                 no_output=False,
+                 log=None,
+                 dump_raw=None,
+                 output=None,
+                 dynfile=None,
+                 addfile=None,
+                 settings=None,
+                 input_format=None,
+                 output_format=None,
+                 gis=None,
+                 dime=None,
+                 tf=None,
+                 **kwargs):
         """
         Initialize an empty power system object with defaults
         Args:
@@ -63,8 +76,9 @@ class PowerSystem(object):
         Returns: None
         """
         self.pid = pid
-        self.Files = FileMan(case, input_format, addfile, settings, no_output, dynfile,
-                             log, dump_raw, output_format, output, gis, **kwargs)
+        self.Files = FileMan(case, input_format, addfile, settings, no_output,
+                             dynfile, log, dump_raw, output_format, output,
+                             gis, **kwargs)
         self.Settings = Settings()
         self.SPF = SPF()
         self.CPF = CPF()
@@ -83,9 +97,10 @@ class PowerSystem(object):
         self.Report = Report(self)
 
         self.groups = []
-        self.status = {'pf_solved': False,
-                       'sys_base': False,
-                       }
+        self.status = {
+            'pf_solved': False,
+            'sys_base': False,
+        }
 
         if dime:
             self.Settings.dime_enable = True
@@ -165,7 +180,7 @@ class PowerSystem(object):
         """
         Run model ``setup()`` for models present.
 
-        This function is called by ``PowerSystem.setup()`` after adding model elements
+        Called by ``PowerSystem.setup()`` after adding model elements
 
         :return: None
         """
@@ -218,7 +233,8 @@ class PowerSystem(object):
 
         self.DAE.init_xy()
 
-        for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow, self.Call.init0):
+        for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow,
+                                        self.Call.init0):
             if pflow and init0:
                 self.__dict__[device].init0(self.DAE)
 
@@ -282,7 +298,7 @@ class PowerSystem(object):
 
     def check_event(self, sim_time):
         """
-        Check for event occurrance for models in the ``Event`` group at time ``sim_time``
+        Check for event occurrance for``Event`` group models at ``sim_time``
 
         :param sim_time: current simulation time
         :return: a list of models who report (an) event(s) at ``sim_time``
@@ -293,7 +309,7 @@ class PowerSystem(object):
                 ret.append(model)
 
         if self.Breaker.is_time(sim_time):
-            ret.append(Fault)
+            ret.append('Breaker')
 
         return ret
 
@@ -337,11 +353,15 @@ class PowerSystem(object):
 
         if show_info is True:
 
-            if len(self.Bus.islanded_buses) == 0 and len(self.Bus.island_sets) == 0:
+            if len(self.Bus.islanded_buses) == 0 and len(
+                    self.Bus.island_sets) == 0:
                 self.Log.info('System is interconnected.')
             else:
-                self.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
-                              (len(self.Bus.island_sets), len(self.Bus.islanded_buses)))
+                self.Log.info(
+                    'System contains {:d} islands and {:d} islanded buses.'.
+                    format(
+                        len(self.Bus.island_sets),
+                        len(self.Bus.islanded_buses)))
 
             nosw_island = []  # no slack bus island
             msw_island = []  # multiple slack bus island
@@ -356,11 +376,17 @@ class PowerSystem(object):
                     msw_island.append(idx)
 
             if nosw_island:
-                self.Log.warning('Slack bus is not defined for {:g} island(s).'.format(len(nosw_island)))
+                self.Log.warning(
+                    'Slack bus is not defined for {:g} island(s).'.format(
+                        len(nosw_island)))
             if msw_island:
-                self.Log.warning('Multiple slack buses are defined for {:g} island(s).'.format(len(nosw_island)))
+                self.Log.warning(
+                    'Multiple slack buses are defined for {:g} island(s).'.
+                    format(len(nosw_island)))
             else:
-                self.Log.info('Each island has a slack bus correctly defined.'.format(nosw_island))
+                self.Log.info(
+                    'Each island has a slack bus correctly defined.'.format(
+                        nosw_island))
 
     def get_busdata(self, dec=5):
         """
@@ -381,7 +407,8 @@ class PowerSystem(object):
         Qg = [self.Bus.Qg[x] for x in range(self.Bus.n)]
         Pl = [self.Bus.Pl[x] for x in range(self.Bus.n)]
         Ql = [self.Bus.Ql[x] for x in range(self.Bus.n)]
-        return (list(x) for x in zip(*sorted(zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
+        return (list(x) for x in zip(*sorted(
+            zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
     def get_nodedata(self, dec=5):
         """
@@ -395,7 +422,8 @@ class PowerSystem(object):
         idx = self.Node.idx
         names = self.Node.name
         V = [self.DAE.y[x] for x in self.Node.v]
-        return (list(x) for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
+        return (list(x)
+                for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
@@ -411,7 +439,9 @@ class PowerSystem(object):
         Qto = [self.Line.S2[x].imag for x in range(self.Line.n)]
         Ploss = [i + j for i, j in zip(Pfr, Pto)]
         Qloss = [i + j for i, j in zip(Qfr, Qto)]
-        return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
+        return (list(x) for x in zip(*sorted(
+            zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss),
+            key=itemgetter(0))))
 
 
 class GroupMeta(type):
@@ -421,7 +451,9 @@ class GroupMeta(type):
 
 class Group(metaclass=GroupMeta):
     """
-    Group class for registering models and elements, and reading and setting attributes
+    Group class for registering models and elements.
+
+    Also handles reading and setting attributes.
     """
 
     def __init__(self, system, name):
@@ -508,4 +540,3 @@ class Group(metaclass=GroupMeta):
 
             uid = self.system.__dict__[m].get_uid(idx)
             self.system.__dict__[m].__dict__[field][uid] = v
-

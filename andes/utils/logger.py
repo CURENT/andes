@@ -22,7 +22,8 @@
 # THE SOFTWARE.
 #
 # License
-# Licensed under MIT license. Forks and pull-requests (and bug reports) are welcome.
+# Licensed under MIT license. Forks and pull-requests (and bug reports) are
+# welcome.
 #
 # GitHub link: https://github.com/senko/python-logger
 #
@@ -32,11 +33,14 @@ import traceback
 
 from logging import DEBUG, WARNING, ERROR, INFO, CRITICAL
 
-mapping = {INFO: 'info',
-           DEBUG: 'debug',
-           WARNING: 'warning',
-           ERROR: 'error',
-           CRITICAL: 'always'}
+mapping = {
+    INFO: 'info',
+    DEBUG: 'debug',
+    WARNING: 'warning',
+    ERROR: 'error',
+    CRITICAL: 'always'
+}
+
 
 class Logger(object):
     """
@@ -77,6 +81,7 @@ class Logger(object):
 
         logger.debug('This is a debug message')
     """
+
     def __init__(self, system=None):
         self.show_loc = False
         self.show_fcn = False
@@ -167,7 +172,5 @@ class Logger(object):
         # logging.basicConfig(level=level,
         #                     format='%(asctime)s %(levelname)s %(message)s',
         #                     datefmt='%Y-%m-%d %H:%M:%S')
-        logging.basicConfig(level=level,
-                            format='%(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
-        rootLogger = logging.getLogger()
+        logging.basicConfig(
+            level=level, format='%(message)s', datefmt='%Y-%m-%d %H:%M:%S')

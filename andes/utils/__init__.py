@@ -1,8 +1,9 @@
-__all__ = ['cached',
-           'tab',
-           ]
+__all__ = [
+    'cached',
+    'tab',
+]
 
-from .cached import cached
-from .tab import Tab
-from .logger import Logger
-from .time import elapsed
+from .cached import cached  # NOQA
+from .tab import Tab  # NOQA
+from .logger import Logger  # NOQA
+from .time import elapsed  # NOQA

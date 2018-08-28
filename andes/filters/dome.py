@@ -6,6 +6,7 @@ import re
 import os
 from math import ceil
 
+
 def testlines(fid):
     return True  # hard coded yet
 
@@ -92,11 +93,13 @@ def read(file, system, header=True):
             if not os.path.isfile(newpath):
                 newpath = os.path.join(system.Files.path, data[0])
                 if not os.path.isfile(newpath):
-                    system.Log.warning('Unable to locate file in {}'.format(newpath))
+                    system.Log.warning(
+                        'Unable to locate file in {}'.format(newpath))
                     retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
-            system.Log.debug('Parsing of include file <{}> completed.'.format(data[0]))
+            system.Log.debug('Parsing of include file <{}> completed.'.format(
+                data[0]))
             continue
         kwargs = {}
         for item in data:
@@ -128,8 +131,12 @@ def read(file, system, header=True):
         try:
             system.__dict__[device].elem_add(idx=index, name=namex, **kwargs)
         except KeyError:
-            system.Log.error('Error adding device {:s} to powersystem object.'.format(device))
-            system.Log.debug('  Check if you have new jit models added to models.__init__.py')
+            system.Log.error(
+                'Error adding device {:s} to powersystem object.'.format(
+                    device))
+            system.Log.debug(
+                'Make sure you have added the jit models in __init__.py'
+            )
 
     fid.close()
     return retval
@@ -193,7 +200,7 @@ def write(file, system):
                 pair.append('{} = {}'.format(key, val))
 
             for line in range(nline):
-                string = ', '.join(pair[ppl*line:ppl*(line+1)])
+                string = ', '.join(pair[ppl * line:ppl * (line + 1)])
                 if line == 0:  # append header or space
                     string = header + string
                 else:

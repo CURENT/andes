@@ -15,11 +15,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Andes main entry points
 """
-
 
 import os
 import sys
@@ -32,11 +30,12 @@ from multiprocessing import Process
 from argparse import ArgumentParser
 
 from . import filters
-from .consts import *
+from .consts import ERROR
 from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
 from .routines import powerflow, timedomain, eigenanalysis
+
 # from .routines.fakemodule import EAGC
 
 
@@ -44,65 +43,161 @@ def cli_parse(help=False):
     """command line input argument parser"""
 
     parser = ArgumentParser(prog='andes')
-    parser.add_argument('casename', nargs='*', default=[], help='Case file name.')
+    parser.add_argument(
+        'casename', nargs='*', default=[], help='Case file name.')
 
     # program general options
-    parser.add_argument('-x', '--exit', help='Exit before solving the power flow. Enable this option to '
-                                             'use andes ad a file format converter.', action='store_true')
-    parser.add_argument('--no_preamble', action='store_true', help='Hide preamble')
-    parser.add_argument('--license', action='store_true', help='Display MIT license and exit.')
-    parser.add_argument('--version', action='store_true', help='Print current andes version and exit.')
-    parser.add_argument('--warranty', action='store_true', help='Print warranty info and exit.')
-    parser.add_argument('--what', action='store_true', help='Show me something and exit', default=None)
-    parser.add_argument('-n', '--no_output', help='Force not to write any output, including log,'
-                                                  'outputs and simulation dumps', action='store_true')
-    parser.add_argument('--profile', action='store_true', help='Enable Python profiler.')
-    parser.add_argument('--dime', help='Speficy DiME streaming server address and port.')
-    parser.add_argument('--tf', help='End time of time-domain simulation.', type=float)
+    parser.add_argument(
+        '-x',
+        '--exit',
+        help='Exit before solving the power flow. Enable this option to '
+        'use andes ad a file format converter.',
+        action='store_true')
+    parser.add_argument(
+        '--no_preamble', action='store_true', help='Hide preamble')
+    parser.add_argument(
+        '--license', action='store_true', help='Display MIT license and exit.')
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print current andes version and exit.')
+    parser.add_argument(
+        '--warranty',
+        action='store_true',
+        help='Print warranty info and exit.')
+    parser.add_argument(
+        '--what',
+        action='store_true',
+        help='Show me something and exit',
+        default=None)
+    parser.add_argument(
+        '-n',
+        '--no_output',
+        help='Force not to write any output, including log,'
+        'outputs and simulation dumps',
+        action='store_true')
+    parser.add_argument(
+        '--profile', action='store_true', help='Enable Python profiler.')
+    parser.add_argument(
+        '--dime', help='Speficy DiME streaming server address and port.')
+    parser.add_argument(
+        '--tf', help='End time of time-domain simulation.', type=float)
     parser.add_argument('-l', '--log', help='Specify the name of log file.')
-    parser.add_argument('-d', '--dat', help='Specify the name of file to save simulation results.')
-    parser.add_argument('--ncpu', help='number of parallel processes', type=int, default=0)
-    parser.add_argument('-v', '--verbose', help='Program logging level, an integer from 1 to 5.'
-                                                'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
-                                                'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
-                        type=int)
-    parser.add_argument('--conf', help='Edit routine config', type=str, choices=('general', 'spf', 'tds', 'cpf', 'sssa'))
+    parser.add_argument(
+        '-d',
+        '--dat',
+        help='Specify the name of file to save simulation results.')
+    parser.add_argument(
+        '--ncpu', help='number of parallel processes', type=int, default=0)
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        help='Program logging level, an integer from 1 to 5.'
+        'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
+        'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
+        type=int)
+    parser.add_argument(
+        '--conf',
+        help='Edit routine config',
+        type=str,
+        choices=('general', 'spf', 'tds', 'cpf', 'sssa'))
 
     # file and format related
-    parser.add_argument('-c', '--clean', help='Clean output files and exit.', action='store_true')
+    parser.add_argument(
+        '-c',
+        '--clean',
+        help='Clean output files and exit.',
+        action='store_true')
     parser.add_argument('-p', '--path', help='Path to case files', default='')
-    parser.add_argument('-P', '--pert', help='Path to perturbation file', default='')
-    parser.add_argument('-s', '--settings', help='Specify a setting file. This will take precedence of .andesrc '
-                                                 'file in the home directory.')
-    parser.add_argument('-i', '--input_format', help='Specify input case file format.')
-    parser.add_argument('-o', '--output_format', help='Specify output case file format. For example txt, latex.')
-    parser.add_argument('-O', '--output', help='Specify the output file name. For different routines the same name'
-                                               'as the case file with proper suffix and extension wil be given.')
-    parser.add_argument('-a', '--addfile', help='Include additional files used by some formats.')
-    parser.add_argument('-D', '--dynfile', help='Include an additional dynamic file in dm format.')
+    parser.add_argument(
+        '-P', '--pert', help='Path to perturbation file', default='')
+    parser.add_argument(
+        '-s',
+        '--settings',
+        help='Specify a setting file. This will take precedence of .andesrc '
+        'file in the home directory.')
+    parser.add_argument(
+        '-i', '--input_format', help='Specify input case file format.')
+    parser.add_argument(
+        '-o',
+        '--output_format',
+        help='Specify output case file format. For example txt, latex.')
+    parser.add_argument(
+        '-O',
+        '--output',
+        help='Specify the output file name. For different routines the same '
+        'name as the case file with proper suffix and extension wil be given.')
+    parser.add_argument(
+        '-a',
+        '--addfile',
+        help='Include additional files used by some formats.')
+    parser.add_argument(
+        '-D',
+        '--dynfile',
+        help='Include an additional dynamic file in dm format.')
     parser.add_argument('-J', '--gis', help='JML format GIS file.')
-    parser.add_argument('-m', '--map', help='Visualize power flow results on GIS. Neglected if no GIS file is given.')
-    parser.add_argument('-e', '--dump_raw', help='Dump RAW format case file.')  # consider being used as batch converter
-    parser.add_argument('-Y', '--summary', help='Show summary and statistics of the data case.', action='store_true')
+    parser.add_argument(
+        '-m',
+        '--map',
+        help='Visualize power flow results on GIS. Neglected if no GIS '
+        'file is given. '
+    )
+    parser.add_argument(
+        '-e', '--dump_raw', help='Dump RAW format case file.'
+    )  # consider being used as batch converter
+    parser.add_argument(
+        '-Y',
+        '--summary',
+        help='Show summary and statistics of the data case.',
+        action='store_true')
 
     # Solver Options
-    parser.add_argument('-r', '--routine', help='Routine after power flow solution: t[TD], c[CPF], s[SS], o[OPF].')
-    parser.add_argument('-j', '--checkjacs', help='Check analytical Jacobian using numerical differentation.')
+    parser.add_argument(
+        '-r',
+        '--routine',
+        help='Routine after power flow solution: t[TD], c[CPF], s[SS], o[OPF].'
+    )
+    parser.add_argument(
+        '-j',
+        '--checkjacs',
+        help='Check analytical Jacobian using numerical differentation.')
 
     # helps and documentations
-    parser.add_argument('-u', '--usage', help='Write command line usage', action='store_true')
+    parser.add_argument(
+        '-u', '--usage', help='Write command line usage', action='store_true')
     parser.add_argument('-E', '--export', help='Export file format')
-    parser.add_argument('-C', '--category', help='Dump device names belonging to the specified category.')
-    parser.add_argument('-L', '--model_list', help='Dump the list of all supported model.', action='store_true')
-    parser.add_argument('-f', '--model_format', help='Dump the format definition of specified devices,'
-                                                     ' separated by comma.')
-    parser.add_argument('-Q', '--model_var', help='Dump the variables of specified devices given by <DEV.VAR>.')
-    parser.add_argument('-g', '--group', help='Dump all the devices in the specified group.')
-    parser.add_argument('-q', '--quick_help', help='Print a quick help of the device.')
-    parser.add_argument('--help_option', help='Print a quick help of a setting parameter')
-    parser.add_argument('--help_settings', help='Print a quick help of a given setting class. Use ALL'
-                                                'for all setting classes.')
-    parser.add_argument('-S', '--search', help='Search devices that match the given expression.')
+    parser.add_argument(
+        '-C',
+        '--category',
+        help='Dump device names belonging to the specified category.')
+    parser.add_argument(
+        '-L',
+        '--model_list',
+        help='Dump the list of all supported model.',
+        action='store_true')
+    parser.add_argument(
+        '-f',
+        '--model_format',
+        help='Dump the format definition of specified devices,'
+        ' separated by comma.')
+    parser.add_argument(
+        '-Q',
+        '--model_var',
+        help='Dump the variables of specified devices given by <DEV.VAR>.')
+    parser.add_argument(
+        '-g', '--group', help='Dump all the devices in the specified group.')
+    parser.add_argument(
+        '-q', '--quick_help', help='Print a quick help of the device.')
+    parser.add_argument(
+        '--help_option', help='Print a quick help of a setting parameter')
+    parser.add_argument(
+        '--help_settings',
+        help='Print a quick help of a given setting class. Use ALL'
+        'for all setting classes.')
+    parser.add_argument(
+        '-S',
+        '--search',
+        help='Search devices that match the given expression.')
 
     if help is True:
         return parser.format_help()
@@ -130,8 +225,8 @@ def andeshelp(usage=None,
     """
     out = []
 
-    if not (usage or group or category or model_list or model_format or model_var
-            or quick_help or help_option or help_settings):
+    if not (usage or group or category or model_list or model_format
+            or model_var or quick_help or help_option or help_settings):
         return False
 
     from .models import all_models_list
@@ -177,12 +272,15 @@ def andeshelp(usage=None,
                 ps.Log.error('Model <{}> does not exist.'.format(dev))
             else:
                 if var not in ps.__dict__[dev]._data.keys():
-                    ps.Log.error('Model <{}> does not have parameter <{}>.'.format(dev, var))
+                    ps.Log.error(
+                        'Model <{}> does not have parameter <{}>.'.format(
+                            dev, var))
                 else:
                     c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
                     c2 = ps.__dict__[dev]._data.get(var)
                     c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
-                    out.append('{}: {}, default = {:g} {}'.format('.'.join(model_var), c1, c2, c3))
+                    out.append('{}: {}, default = {:g} {}'.format(
+                        '.'.join(model_var), c1, c2, c3))
 
     if group:
         group_dict = {}
@@ -246,7 +344,7 @@ def andeshelp(usage=None,
                 out.append(ps.__dict__[item].doc(export=export))
 
     file = sys.stdout if save is None else save
-    print('\n'.join(out), file=file)
+    print('\n'.join(out), file=file)  # NOQA
 
     return True
 
@@ -270,8 +368,11 @@ def clean(run=False):
     cwd = os.getcwd()
 
     for file in os.listdir(cwd):
-        if file.endswith('_eig.txt') or file.endswith('_out.txt') or file.endswith('_out.lst') or \
-                file.endswith('_out.dat') or file.endswith('_prof.txt'):
+        if file.endswith('_eig.txt') or \
+                file.endswith('_out.txt') or \
+                file.endswith('_out.lst') or \
+                file.endswith('_out.dat') or \
+                file.endswith('_prof.txt'):
             found = True
             try:
                 os.remove(file)
@@ -292,7 +393,7 @@ def search(keyword):
     :return: a list of model names in <file.model> format
     """
 
-    from .models import non_jits, jits, all_models
+    from .models import all_models
     out = []
 
     if not keyword:
@@ -379,11 +480,16 @@ def main():
         if ncpu == 0 or ncpu > os.cpu_count():
             ncpu = os.cpu_count()
 
-        print('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(njob=len(cases), ncpu=ncpu))
+        print('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(
+            njob=len(cases), ncpu=ncpu))
 
         for idx, case_name in enumerate(cases):
             kwargs['pid'] = idx
-            job = Process(name='Process {0:d}'.format(idx), target=run, args=(case_name,), kwargs=kwargs)
+            job = Process(
+                name='Process {0:d}'.format(idx),
+                target=run,
+                args=(case_name, ),
+                kwargs=kwargs)
             jobs.append(job)
             job.start()
             print('Process {:d} <{:s}> started.'.format(idx, case_name))
@@ -498,7 +604,8 @@ def run(case, **kwargs):
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()
-            system.Log.info('cProfile results for job{:s} written.'.format(' ' + str(pid) if pid >= 0 else ''))
+            system.Log.info('cProfile results for job{:s} written.'.format(
+                ' ' + str(pid) if pid >= 0 else ''))
 
     if pid >= 0:
         t3, s = elapsed(t0)

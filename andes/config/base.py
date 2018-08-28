@@ -1,7 +1,6 @@
 import os
 import configparser
 
-
 from ..utils.cached import cached
 from ..utils.tab import Tab
 
@@ -64,15 +63,11 @@ class SettingsBase(object):
                 c4 = self.get_alt(opt)
                 rows.append([c1, c2, c3, c4])
             else:
-                print('Setting {:s} has no {:s} option. Correct in descr.'.format(self.__class__.__name__, opt))
+                print('Setting {:s} has no {:s} option. Correct in descr.'.
+                      format(self.__class__.__name__, opt))
 
         table.add_rows(rows, header=False)
         table.header(['Option', 'Description', 'Value', 'Alt.'])
-
-        ext = 'txt'
-        if export == 'latex':
-            ext = 'tex'
-            raise NotImplementedError
 
         return table.draw()
 
@@ -124,7 +119,8 @@ class SettingsBase(object):
         ret = False
 
         if not os.path.isfile(rc):
-            self.system.Log.warning('Config file {} does not exist.'.format(rc))
+            self.system.Log.warning(
+                'Config file {} does not exist.'.format(rc))
             return ret
 
         config = configparser.ConfigParser()
@@ -132,11 +128,13 @@ class SettingsBase(object):
 
         for section in config.sections():
             if section not in self.__dict__:
-                self.system.warning('Skipping Config section [{}].'.format(section))
+                self.system.warning(
+                    'Skipping Config section [{}].'.format(section))
                 continue
             for key in config[section].keys():
                 if not hasattr(self.__dict__[section], key):
-                    self.system.warning('Skipping Config [{}].<{}>'.format(section, key))
+                    self.system.warning('Skipping Config [{}].<{}>'.format(
+                        section, key))
                 val = config[section].get(key)
                 try:
                     val = config[section].getfloat(key)
@@ -147,8 +145,11 @@ class SettingsBase(object):
                         pass
 
                 if hasattr(self.__dict__[section], key + '_alt'):
-                    if val not in self.__dict__[section].__dict__[key + '_alt']:
-                        self.system.warning('Invalid Value <{}> for Config [{}].<{}>'.format(val, section, key))
+                    if val not in self.__dict__[section].__dict__[key +
+                                                                  '_alt']:
+                        self.system.warning(
+                            'Invalid Value <{}> for Config [{}].<{}>'.format(
+                                val, section, key))
                 self.__dict__[section].__dict__.update({key: val})
 
     @cached

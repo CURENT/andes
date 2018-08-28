@@ -1,5 +1,3 @@
-from math import floor
-
 import numpy as np
 
 from cvxopt import matrix
@@ -63,7 +61,7 @@ def nota(a):
 
 def polar(m, a):
     """Return complex number from polar form m*exp(1j*a)"""
-    return mul(m, exp(1j*a))
+    return mul(m, exp(1j * a))
 
 
 def conj(a):
@@ -132,18 +130,23 @@ def index(m, val):
 
 
 def to_number(s):
-    """Convert a string to a number. If not successful, return the string without blanks"""
+    """
+    Convert a string to a number.
+    If not successful, return the string without blanks
+    """
     ret = s
     # try converting to float
     try:
         ret = float(s)
     except ValueError:
         ret = ret.strip('\'').strip()
+
     # try converting to uid
     try:
         ret = int(s)
     except ValueError:
         pass
+
     # try converting to boolean
     if ret == 'True':
         ret = True

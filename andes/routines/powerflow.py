@@ -1,5 +1,4 @@
 import importlib
-import math
 
 from cvxopt import matrix, sparse
 from cvxopt import div
@@ -7,8 +6,6 @@ from cvxopt import umfpack
 
 from ..utils import elapsed
 from ..utils.jactools import diag0
-from ..consts import DEBUG
-
 
 try:
     from cvxoptklu import klu
@@ -16,16 +13,16 @@ try:
 except ImportError:
     KLU = False
 
-
 lib = umfpack
 F = None
 
-solvers = {'NR': 'newton',
-           'Newton': 'newton',
-           'FDPF': 'fdpf',
-           'FDBX': 'fdpf',
-           'FDXB': 'fdpf',
-           }
+solvers = {
+    'NR': 'newton',
+    'Newton': 'newton',
+    'FDPF': 'fdpf',
+    'FDBX': 'fdpf',
+    'FDXB': 'fdpf',
+}
 
 
 def run(system):
@@ -48,7 +45,7 @@ def run(system):
 
     # default solver setup
     if system.SPF.solver not in solvers.keys():
-            system.SPF.solver = 'NR'
+        system.SPF.solver = 'NR'
 
     func_name = solvers.get(system.SPF.solver)
     run_powerflow = importlib.import_module('andes.routines.powerflow')
@@ -58,7 +55,8 @@ def run(system):
     system.Log.info('Power Flow Analysis:')
     system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
     system.Log.info('Solution Method: ' + system.SPF.solver.upper())
-    system.Log.info('Flat-start: ' + ('Yes' if system.SPF.flatstart else 'No') + '\n')
+    system.Log.info('Flat-start: ' +
+                    ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
     convergence, niter = run_powerflow(system)
     system.status['pf_solved'] = convergence
@@ -68,7 +66,8 @@ def run(system):
 
     t, s = elapsed(t)
 
-    system.Log.info('Power flow {} in {}'.format(['failed', 'converged'][convergence], s))
+    system.Log.info('Power flow {} in {}'.format(
+        ['failed', 'converged'][convergence], s))
     return convergence
 
 
@@ -98,7 +97,8 @@ def newton(system):
         iter_mis.append(max_mis)
         system.Settings.error = max_mis
 
-        system.Log.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(niter, max_mis))
+        system.Log.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(
+            niter, max_mis))
 
         if max_mis < system.Settings.tol:
             convergence = True
@@ -124,8 +124,8 @@ def calc_inc(system):
     global F
     exec(system.Call.newton)
 
-    A = sparse([[system.DAE.Fx, system.DAE.Gx],
-                [system.DAE.Fy, system.DAE.Gy]])
+    A = sparse([[system.DAE.Fx, system.DAE.Gx], [system.DAE.Fy,
+                                                 system.DAE.Gy]])
 
     inc = matrix([system.DAE.f, system.DAE.g])
 
@@ -140,7 +140,8 @@ def calc_inc(system):
         elif system.Settings.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
     except ValueError:
-        system.Log.warning('Unexpected symbolic factorization. Refactorizing...')
+        system.Log.warning(
+            'Unexpected symbolic factorization. Refactorizing...')
         system.DAE.factorize = True
     except ArithmeticError:
         system.Log.error('Jacobian matrix is singular.')
@@ -168,7 +169,7 @@ def fdpf(system):
         system.Line.build_b()
 
     # initialize indexing and Jacobian
-    ngen = system.SW.n + system.PV.n
+    # ngen = system.SW.n + system.PV.n
     sw = system.SW.a
     sw.sort(reverse=True)
     no_sw = system.Bus.a[:]

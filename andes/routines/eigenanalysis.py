@@ -2,24 +2,25 @@ import numpy.linalg
 try:
     from cvxoptklu.klu import linsolve
     KLU = True
-except:
+except ImportError:
     from cvxopt.umfpack import linsolve
     KLU = False
 
 from cvxopt.lapack import gesv
-from cvxopt import matrix, spmatrix, sparse, mul, div
+from cvxopt import matrix, spmatrix, mul, div
 from math import ceil
 from ..formats.txt import dump_data
-from ..consts import *
-from matplotlib.pyplot import *
+from ..consts import pi
+from matplotlib import pyplot as plt
 
 try:
-    from petsc4py import PETSc
-except:
+    from petsc4py import PETSc  # NOQA
+except ImportError:
     PETSC = False
+
 try:
-    from slepc4py import SLEPc
-except:
+    from slepc4py import SLEPc  # NOQA
+except ImportError:
     SLEPC = False
 
 
@@ -27,14 +28,13 @@ def state_matrix(system):
     """Return state matrix"""
     Gyx = matrix(system.DAE.Gx)
     linsolve(system.DAE.Gy, Gyx)
-    return matrix(system.DAE.Fx - system.DAE.Fy*Gyx)
+    return matrix(system.DAE.Fx - system.DAE.Fy * Gyx)
+
 
 def eigs(As):
     """Solve eigenvalues from state matrix"""
     if (not SLEPC) or (not SLEPC):
         return numpy.linalg.eigvals(As)
-
-    A = PETSc.Mat()
 
 
 def part_factor(As):
@@ -85,7 +85,7 @@ def dump_results(system, mu, partfact):
             marker = '**'
         else:
             marker = ''
-        numeral.append('#' + str(idx+1) + marker)
+        numeral.append('#' + str(idx + 1) + marker)
 
     # compute frequency, undamped frequency and damping
     freq = [0] * neig
@@ -97,9 +97,9 @@ def dump_results(system, mu, partfact):
             ufreq[idx] = 0
             damping[idx] = 0
         else:
-            freq[idx] = abs(item)/2/pi
-            ufreq[idx] = abs(item.imag/2/pi)
-            damping[idx] = - div(item.real, abs(item)) * 100
+            freq[idx] = abs(item) / 2 / pi
+            ufreq[idx] = abs(item.imag / 2 / pi)
+            damping[idx] = -div(item.real, abs(item)) * 100
 
     # obtain most associated variables
     var_assoc = []
@@ -126,18 +126,25 @@ def dump_results(system, mu, partfact):
     data.append([npositive, nzero, nnegative])
 
     text.append('EIGENVALUE DATA\n')
-    header.append(['Most Associated', 'Real', 'Imag', 'Damped Freq.', 'Frequency', 'Damping [%]'])
+    header.append([
+        'Most Associated', 'Real', 'Imag', 'Damped Freq.', 'Frequency',
+        'Damping [%]'
+    ])
     rowname.append(numeral)
-    data.append([var_assoc, list(mu_real), list(mu_imag), ufreq, freq, damping])
+    data.append(
+        [var_assoc,
+         list(mu_real),
+         list(mu_imag), ufreq, freq, damping])
 
     cpb = 7  # columns per block
     nblock = int(ceil(neig / cpb))
 
     if nblock <= 100:
         for idx in range(nblock):
-            start = cpb*idx
-            end = cpb*(idx+1)
-            text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(idx+1, nblock))
+            start = cpb * idx
+            end = cpb * (idx + 1)
+            text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(
+                idx + 1, nblock))
             header.append(numeral[start:end])
             rowname.append(system.VarName.unamex)
             data.append(pf[start:end])
@@ -148,7 +155,8 @@ def dump_results(system, mu, partfact):
 
 def run(system):
     if system.status['pf_solved'] is False:
-        system.Log.warning('Power flow not solved. Eigenvalue analysis will not continue.')
+        system.Log.warning(
+            'Power flow not solved. Eigenvalue analysis will not continue.')
         return True
 
     system.DAE.factorize = True
@@ -156,14 +164,18 @@ def run(system):
 
     As = state_matrix(system)
     if not As:
-        system.Log.info('No dynamic model loaded. Eivgenvalue analysis will not continue.')
+        system.Log.info(
+            'No dynamic model loaded. Eivgenvalue analysis will not continue.')
         return False
     else:
         mu, pf = part_factor(As)
         dump_results(system, mu, pf)
         mu_real = mu.real()
         mu_imag = mu.imag()
-        p_mu_real, p_mu_imag, z_mu_real, z_mu_imag, n_mu_real, n_mu_imag = [], [], [], [], [], []
+        p_mu_real, p_mu_imag = list(), list()
+        z_mu_real, z_mu_imag = list(), list()
+        n_mu_real, n_mu_imag = list(), list()
+
         for re, im in zip(mu_real, mu_imag):
             if re == 0:
                 z_mu_real.append(re)
@@ -176,14 +188,17 @@ def run(system):
                 n_mu_imag.append(im)
 
         if len(p_mu_real) > 0:
-            system.Log.warning('System is not stable due to {} positive eigenvalues.'.format(len(p_mu_real)))
+            system.Log.warning(
+                'System is not stable due to {} positive eigenvalues.'.format(
+                    len(p_mu_real)))
         else:
-            system.Log.info('System is small-signal stable in the initial neighbourhood.')
+            system.Log.info(
+                'System is small-signal stable in the initial neighbourhood.')
 
         if system.SSSA.plot:
-            fig, ax = subplots()
+            fig, ax = plt.subplots()
             ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
             ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
             ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
-            show()
+            plt.show()
         return True

@@ -3,7 +3,6 @@ from ..utils.cached import cached
 
 
 class SSSA(SettingsBase):
-
     def __init__(self):
         self.neig = 1
         self.method = 1
@@ -16,7 +15,5 @@ class SSSA(SettingsBase):
 
     @cached
     def descr(self):
-        descriptions = {
-
-        }
+        descriptions = {}
         return descriptions

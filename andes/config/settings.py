@@ -1,5 +1,5 @@
 from . import SettingsBase
-from ..consts import *
+from ..consts import INFO, pi
 from ..utils.cached import cached
 
 
@@ -38,17 +38,18 @@ class Settings(SettingsBase):
 
     @cached
     def descr(self):
-        descriptions = {'verbose': 'program logging level',
-                        'freq': 'system base frequency',
-                        'mva': 'system base MVA',
-                        'distrsw': 'use distributed slack bus mode',
-                        'sparselib': 'sparse matrix library name',
-                        'export': 'help documentation export format',
-                        'coi': 'using Center of Inertia',
-                        'connectivity': 'connectivity check during TDS',
-                        'tol': 'iteration error tolerance',
-                        'forcepq': 'force to use constant PQ load',
-                        'forcez': 'force to convert load to impedance',
-                        'base': 'convert model parameters to the system base',
-                        }
+        descriptions = {
+            'verbose': 'program logging level',
+            'freq': 'system base frequency',
+            'mva': 'system base MVA',
+            'distrsw': 'use distributed slack bus mode',
+            'sparselib': 'sparse matrix library name',
+            'export': 'help documentation export format',
+            'coi': 'using Center of Inertia',
+            'connectivity': 'connectivity check during TDS',
+            'tol': 'iteration error tolerance',
+            'forcepq': 'force to use constant PQ load',
+            'forcez': 'force to convert load to impedance',
+            'base': 'convert model parameters to the system base',
+        }
         return descriptions

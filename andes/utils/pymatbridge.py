@@ -15,7 +15,8 @@ Send 'exit' command to kill the server
 .MATLAB started and connected!
 True
 >>> m.run_code('a=1;')
-{'content': {'stdout': '', 'datadir': '/private/tmp/MatlabData/', 'code': 'a=1;', 'figures': []}, 'success': True}
+{'content': {'stdout': '', 'datadir': '/private/tmp/MatlabData/',
+ 'code': 'a=1;', 'figures': []}, 'success': True}
 >>> m.get_variable('a')
 1
 
@@ -38,6 +39,7 @@ from numpy import ndarray, generic, float64, frombuffer, asfortranarray
 try:
     from scipy.sparse import spmatrix
 except ImportError:
+
     class spmatrix:
         pass
 
@@ -64,7 +66,6 @@ def encode_ndarray(obj):
 
 # JSON encoder extension to handle complex numbers and numpy arrays
 class PymatEncoder(json.JSONEncoder):
-
     def default(self, obj):
         if isinstance(obj, ndarray) and obj.dtype.kind in 'uif':
             data, shape = encode_ndarray(obj)
@@ -72,8 +73,12 @@ class PymatEncoder(json.JSONEncoder):
         elif isinstance(obj, ndarray) and obj.dtype.kind == 'c':
             real, shape = encode_ndarray(obj.real.copy())
             imag, _ = encode_ndarray(obj.imag.copy())
-            return {'ndarray': True, 'shape': shape,
-                    'real': real, 'imag': imag}
+            return {
+                'ndarray': True,
+                'shape': shape,
+                'real': real,
+                'imag': imag
+            }
         elif isinstance(obj, ndarray):
             return obj.tolist()
         elif isinstance(obj, complex):
@@ -108,6 +113,7 @@ def decode_pymat(dct):
         return complex(dct['real'], dct['imag'])
     return dct
 
+
 MATLAB_FOLDER = '%s/matlab' % os.path.realpath(os.path.dirname(__file__))
 
 
@@ -118,9 +124,14 @@ class _Session(object):
     this directly; rather, use the Matlab or Octave subclasses.
     """
 
-    def __init__(self, executable, socket_addr=None,
-                 id='python-matlab-bridge', log=False, maxtime=60,
-                 platform=None, startup_options=None):
+    def __init__(self,
+                 executable,
+                 socket_addr=None,
+                 id='python-matlab-bridge',
+                 log=False,
+                 maxtime=60,
+                 platform=None,
+                 startup_options=None):
         """
         Initialize this thing.
 
@@ -163,7 +174,10 @@ class _Session(object):
         self.startup_options = startup_options
 
         if socket_addr is None:
-            self.socket_addr = "tcp://127.0.0.1" if self.platform == "win32" else "ipc:///tmp/pymatbridge-%s"%str(uuid4())
+            if self.platform == "win32":
+                self.socket_addr = "tcp://127.0.0.1"
+            else:
+                self.socket_addr = "ipc:///tmp/pymatbridge-%s" % str(uuid4())
 
         if self.log:
             startup_options += ' > ./pymatbridge/logs/bashlog_%s.txt' % self.id
@@ -179,50 +193,50 @@ class _Session(object):
         # suppress warnings while loading the path, in the case of
         # overshadowing a built-in function on a newer version of
         # Matlab (e.g. isrow)
-        return ["old_warning_state = warning('off','all');",
-                "addpath(genpath('%s'));" % MATLAB_FOLDER,
-                "warning(old_warning_state);",
-                "clear('old_warning_state');",
-                "cd('%s');" % os.getcwd()]
+        return [
+            "old_warning_state = warning('off','all');",
+            "addpath(genpath('%s'));" % MATLAB_FOLDER,
+            "warning(old_warning_state);", "clear('old_warning_state');",
+            "cd('%s');" % os.getcwd()
+        ]
 
     def _execute_flag(self):  # pragma: no cover
         raise NotImplemented
 
     def _run_server(self):
         code = self._preamble_code()
-        code.extend([
-            "matlabserver('%s')" % self.socket_addr
-        ])
+        code.extend(["matlabserver('%s')" % self.socket_addr])
         command = '%s %s %s "%s"' % (self.executable, self.startup_options,
                                      self._execute_flag(), ','.join(code))
-        subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE)
+        subprocess.Popen(
+            command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Start server/client session and make the connection
-    def start(self, run_matlab_instance, act_as_server, address, context = None):
+    def start(self, run_matlab_instance, act_as_server, address, context=None):
         # Setup socket
         self.context = context or zmq.Context()
 
-        if act_as_server == True:
+        if act_as_server is True:
             self.socket = self.context.socket(zmq.REP)
         else:
             self.socket = self.context.socket(zmq.REQ)
 
         if self.platform == "win32":
             port = self.socket.bind_to_random_port(self.socket_addr)
-            self.socket_addr = self.socket_addr + ":%s"%port
+            self.socket_addr = self.socket_addr + ":%s" % port
             self.socket.unbind(self.socket_addr)
 
-        if run_matlab_instance == False:
+        if run_matlab_instance is False:
             # Not starting instance
             self.socket_addr = address
         else:
             # Start the MATLAB server in a new process
-            print("Starting %s on ZMQ socket %s" % (self._program_name(), self.socket_addr))
+            print("Starting %s on ZMQ socket %s" % (self._program_name(),
+                                                    self.socket_addr))
             print("Send 'exit' command to kill the server")
             self._run_server()
 
-        if act_as_server == True:
+        if act_as_server is True:
             # Start the server
             self.socket.connect(self.socket_addr)
         else:
@@ -231,7 +245,6 @@ class _Session(object):
             self.socket.connect(self.socket_addr)
 
         self.started = True
-
         """
         # Test if connection is established
         if self.is_connected():
@@ -246,7 +259,7 @@ class _Session(object):
         req = json.dumps(kwargs, cls=PymatEncoder)
         return self.socket.send(req)
         # resp = self.socket.recv_multipart()
-        #return resp
+        # return resp
 
     # Stop the Matlab server
     def stop(self):
@@ -278,17 +291,20 @@ class _Session(object):
                 sys.stdout.write('.')
                 time.sleep(1)
                 if time.time() - start_time > self.maxtime:
-                    print("%s session timed out after %d seconds" % (self._program_name(), self.maxtime))
+                    print("%s session timed out after %d seconds" %
+                          (self._program_name(), self.maxtime))
                     return False
 
     def is_function_processor_working(self):
-        result = self.run_func('%s/usrprog/test_sum.m' % MATLAB_FOLDER,
-                {'echo': '%s: Function processor is working!' % self._program_name()})
+        result = self.run_func('%s/usrprog/test_sum.m' % MATLAB_FOLDER, {
+            'echo':
+            '%s: Function processor is working!' % self._program_name()
+        })
         return result['success']
 
     def _json_response(self, **kwargs):
         return self._response(**kwargs)
-        #return json.loads(, object_hook=decode_pymat)
+        # return json.loads(, object_hook=decode_pymat)
 
     def json_decode(self, msg):
         return json.loads(msg, object_hook=decode_pymat)
@@ -320,18 +336,20 @@ class _Session(object):
             raise ValueError('Session not started, use start()')
 
         nargout = kwargs.pop('nargout', 1)
-        func_args += tuple(item for pair in zip(kwargs.keys(), kwargs.values())
-                           for item in pair)
+        func_args += tuple(
+            item for pair in zip(kwargs.keys(), kwargs.values())
+            for item in pair)
         dname = os.path.dirname(func_path)
         fname = os.path.basename(func_path)
         func_name, ext = os.path.splitext(fname)
         if ext and not ext == '.m':
             raise TypeError('Need to give path to .m file')
-        return self._json_response(cmd='eval',
-                                   func_name=func_name,
-                                   func_args=func_args or '',
-                                   dname=dname,
-                                   nargout=nargout)
+        return self._json_response(
+            cmd='eval',
+            func_name=func_name,
+            func_args=func_args or '',
+            dname=dname,
+            nargout=nargout)
 
     def run_code(self, code):
         """Run some code in Matlab command line provide by a string
@@ -359,9 +377,11 @@ class _Session(object):
         else:
             code = ["set(0, 'defaultfigurevisible', 'on')"]
         size = "set(0, 'defaultfigurepaperposition', [0 0 %s %s])"
-        code += ["set(0, 'defaultfigurepaperunits', 'inches')",
-                 "set(0, 'defaultfigureunits', 'inches')",
-                 size % (int(width) / 150., int(height) / 150.)]
+        code += [
+            "set(0, 'defaultfigurepaperunits', 'inches')",
+            "set(0, 'defaultfigureunits', 'inches')",
+            size % (int(width) / 150., int(height) / 150.)
+        ]
         self.run_code(';'.join(code))
 
     def _set_sparse_variable(self, varname, value):
@@ -416,16 +436,19 @@ class _Session(object):
                 Matlab function
 
         """
-        # TODO: This does not work if the function is a mex function inside a folder of the same name
+        # TODO: This does not work if the function is a mex function inside a
+        #   folder of the same name
         exists = self.run_func('exist', name)['result'] in [2, 3, 5]
         if not unconditionally and not exists:
-            raise AttributeError("'Matlab' object has no attribute '%s'" % name)
+            raise AttributeError(
+                "'Matlab' object has no attribute '%s'" % name)
 
         # create a new method instance
         method_instance = MatlabFunction(weakref.ref(self), name)
         method_instance.__name__ = name
 
-        # bind to the Matlab instance with a weakref (to avoid circular references)
+        # bind to the Matlab instance with a weakref (to avoid circular
+        #   references)
         if sys.version.startswith('3'):
             method = types.MethodType(method_instance, weakref.ref(self))
         else:
@@ -436,9 +459,14 @@ class _Session(object):
 
 
 class Matlab(_Session):
-    def __init__(self, executable='matlab', socket_addr=None,
-                 id='python-matlab-bridge', log=False, maxtime=60,
-                 platform=None, startup_options=None):
+    def __init__(self,
+                 executable='matlab',
+                 socket_addr=None,
+                 id='python-matlab-bridge',
+                 log=False,
+                 maxtime=60,
+                 platform=None,
+                 startup_options=None):
         """
         Initialize this thing.
 
@@ -479,7 +507,8 @@ class Matlab(_Session):
             else:
                 startup_options = ' -nodesktop -nosplash'
         if log:
-            startup_options += ' -logfile ./pymatbridge/logs/matlablog_%s.txt' % id
+            startup_options += ' -logfile ./pymatbridge/logs/matlablog_%s.txt'\
+                               % id
         super(Matlab, self).__init__(executable, socket_addr, id, log, maxtime,
                                      platform, startup_options)
 
@@ -491,9 +520,14 @@ class Matlab(_Session):
 
 
 class Octave(_Session):
-    def __init__(self, executable='octave', socket_addr=None,
-                 id='python-matlab-bridge', log=False, maxtime=60,
-                 platform=None, startup_options=None):
+    def __init__(self,
+                 executable='octave',
+                 socket_addr=None,
+                 id='python-matlab-bridge',
+                 log=False,
+                 maxtime=60,
+                 platform=None,
+                 startup_options=None):
         """
         Initialize this thing.
 
@@ -537,7 +571,8 @@ class Octave(_Session):
     def _preamble_code(self):
         code = super(Octave, self)._preamble_code()
         if self.log:
-            code.append("diary('./pymatbridge/logs/octavelog_%s.txt')" % self.id)
+            code.append(
+                "diary('./pymatbridge/logs/octavelog_%s.txt')" % self.id)
         code.append("graphics_toolkit('gnuplot')")
         return code
 
@@ -546,7 +581,6 @@ class Octave(_Session):
 
 
 class MatlabFunction(object):
-
     def __init__(self, parent, name):
         """An object representing a Matlab function
 
@@ -584,7 +618,8 @@ class MatlabFunction(object):
         """
         parent = self._parent()
         if parent is None:
-            raise AttributeError('Stale reference to attribute of non-existent Matlab object')
+            raise AttributeError(
+                'Stale reference to attribute of non-existent Matlab object')
         return parent
 
     @property

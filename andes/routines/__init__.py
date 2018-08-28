@@ -1,6 +1,1 @@
-__all__ = ['pf',
-           'timedomain',
-           'opf',
-           'sssa'
-           ]
-
+__all__ = ['pf', 'timedomain', 'opf', 'sssa']
