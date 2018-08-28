@@ -25,14 +25,21 @@ class DevMan(object):
             self.group[group_name] = {}
 
     def register_element(self, dev_name, idx=None):
-        """register a device element to the group list
-        Args:
-            dev_name: model name
-            idx (optional): element external idx
+        """
+        Register a device element to the group list
 
-        Returns:
-            idx: assigned element index
-            """
+        Parameters
+        ----------
+        dev_name : str
+            model name
+        idx : str
+            element idx
+
+        Returns
+        -------
+        str
+            assigned idx
+        """
         if dev_name not in self.devices:
             self.system.Log.error(
                 'Device {} missing. Call add_device before adding elements'.

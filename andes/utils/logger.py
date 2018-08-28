@@ -60,7 +60,7 @@ class Logger(object):
 
     Example mixin usage:
 
-        class MyClass(Logger):
+    >>> class MyClass(Logger):
     ...    def my_method(self):
     ...        self.debug('called')
     ...    def raises_exc(self):
@@ -69,9 +69,9 @@ class Logger(object):
     ...        except:
     ...            self.error('got exception', exc_info=True)
     ...
-        x = MyClass()
-        x.my_method()
-        x.raises_exc()
+    >>> x = MyClass()
+    >>> x.my_method()
+    >>> x.raises_exc()
 
     Module also provides a singleton "logger" instance of Logger class, which
     can be used when it's not feasible to use the mixin. The logger provides
@@ -79,7 +79,7 @@ class Logger(object):
 
     Example singleton usage:
 
-        logger.debug('This is a debug message')
+    >>> logger.debug('This is a debug message')
     """
 
     def __init__(self, system=None):

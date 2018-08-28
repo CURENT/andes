@@ -392,10 +392,10 @@ class ModelBase(object):
 
     def get_idx(self, uid):
         """
-        Return the ``idx`` of the elements whose internal indices are ``uid
+        Return the ``idx`` of the elements whose internal indices are ``uid``
 
-        :param uid:
-        :return:
+        :param uid: uid of elements to query
+        :return: idx of the elements
         """
         return [self.idx[i] for i in uid]
 
@@ -472,6 +472,7 @@ class ModelBase(object):
     def n(self):
         """
         Return the count of elements
+
         Returns
         -------
         int:
@@ -769,8 +770,7 @@ class ModelBase(object):
         """
         Retrieve the field of another model and store it as a field.
 
-        :param model: name of the source model being a model name or a group
-        name
+        :param model: name of the source model being a model name or a group name
         :param field: name of the field to retrieve
         :param dest: name of the destination field in ``self``
         :param idx: idx of elements to access
@@ -1396,16 +1396,15 @@ class ModelBase(object):
 
     def elem_find(self, field, value):
         """
-        Return the indices of elements whose field first satisfies the given
-        values
+        Return the indices of elements whose field first satisfies the given values
 
         ``value`` should be unique in self.field.
         This function does not check the uniqueness.
 
         :param field: name of the supplied field
         :param value: value of field of the elemtn to find
-        :return idx of the elements
-        :rtype list, int, float, str
+        :return: idx of the elements
+        :rtype: list, int, float, str
         """
         if isinstance(value, (int, float, str)):
             value = [value]

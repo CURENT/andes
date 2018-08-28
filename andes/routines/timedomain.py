@@ -408,9 +408,22 @@ def run(system):
 def time_step(system, convergence, niter, t):
     """
     determine the time step during time domain simulations
-        convergence: 1 - last step computation converged
-                     0 - last step not converged
-        niter:  number of iterations
+
+    Parameters
+    ----------
+    system:
+        power system instance
+    convergence: bool
+        truth value of the convergence of the last step
+    niter: int
+        current iteration count
+    t: float
+        current simulation time
+
+    Returns
+    -------
+    float
+        computed time step size
     """
     settings = system.TDS
     if convergence:
