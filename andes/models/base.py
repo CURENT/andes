@@ -13,18 +13,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Base class for building ANDES models
 """
 
 import sys
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
 
-from cvxopt import matrix, spmatrix
+from cvxopt import matrix, spmatrix  # NOQA
 from cvxopt import mul, div
 
-from ..utils.math import agtb, altb, index, zeros
+from ..utils.math import agtb, altb, index, zeros  # NOQA
 from ..utils.tab import Tab
 
 # pandas import slows down the program startup by 0.3 seconds
@@ -39,18 +38,17 @@ class ModelBase(object):
         """meta-data to be overloaded by subclasses"""
 
         # metadata list and dictionaries
-        self._param_attr_lists = ('_params', '_zeros', '_mandatory',
-                                  '_powers', '_voltages', '_currents', '_z', '_y',
-                                  '_r', '_g', '_dccurrents', '_dcvoltages', '_times'
-                                  )
+        self._param_attr_lists = ('_params', '_zeros', '_mandatory', '_powers',
+                                  '_voltages', '_currents', '_z', '_y', '_r',
+                                  '_g', '_dccurrents', '_dcvoltages', '_times')
 
         self._param_attr_dicts = ('_data', '_units', '_descr')
 
         self.system = system
         # self.n = 0    # device count
-        self.u = []   # device status
-        self.idx = []    # external index list
-        self.uid = {}    # mapping from `self.idx` to unique positional indices
+        self.u = []  # device status
+        self.idx = []  # external index list
+        self.uid = {}  # mapping from `self.idx` to unique positional indices
         self.name = []  # element name list
 
         # identifications
@@ -59,8 +57,8 @@ class ModelBase(object):
         self._category = None
 
         # interfaces
-        self._ac = {}    # ac bus variables
-        self._dc = {}    # dc node variables
+        self._ac = {}  # ac bus variables
+        self._dc = {}  # dc node variables
         self._ctrl = {}  # controller interfaces
 
         # variables
@@ -81,22 +79,25 @@ class ModelBase(object):
         self._params = ['u', 'Sn', 'Vn']
 
         # default parameter data
-        self._data = {'u': 1,
-                      'Sn': 100.0,
-                      'Vn': 110.0,
-                      }
+        self._data = {
+            'u': 1,
+            'Sn': 100.0,
+            'Vn': 110.0,
+        }
 
         # units of parameters
-        self._units = {'u': 'bool',
-                       'Sn': 'MVA',
-                       'Vn': 'kV',
-                       }
+        self._units = {
+            'u': 'bool',
+            'Sn': 'MVA',
+            'Vn': 'kV',
+        }
 
         # variable descriptions
-        self._descr = {'u': 'Connection status',
-                       'Sn': 'Power rating',
-                       'Vn': 'Ac Voltage rating',
-                       }
+        self._descr = {
+            'u': 'Connection status',
+            'Sn': 'Power rating',
+            'Vn': 'Ac Voltage rating',
+        }
         # non-zero parameters
         self._zeros = ['Sn', 'Vn']
 
@@ -114,40 +115,50 @@ class ModelBase(object):
         self._equations = []
 
         # parameters to be per-unitized
-        self._powers = []      # powers, inertia and damping
-        self._voltages = []    # ac voltages
-        self._currents = []    # ac currents
-        self._z = []           # ac impedance
-        self._y = []           # ac admittance
+        self._powers = []  # powers, inertia and damping
+        self._voltages = []  # ac voltages
+        self._currents = []  # ac currents
+        self._z = []  # ac impedance
+        self._y = []  # ac admittance
 
         self._dccurrents = []  # dc currents
         self._dcvoltages = []  # dc voltages
-        self._r = []           # dc resistance
-        self._g = []           # dc susceptance
+        self._r = []  # dc resistance
+        self._g = []  # dc susceptance
 
-        self._times = []       # time constants
+        self._times = []  # time constants
 
         self._event_times = []  # event occurrance times
 
         # property functions this device has
 
-        self.calls = dict(pflow=False, addr1=False,
-                          init0=False, init1=False,
-                          jac0=False, windup=False,
-                          gcall=False, fcall=False,
-                          gycall=False, fxcall=False,
-                          series=False, shunt=False,
-                          flows=False, dcseries=False,
-                          )
+        self.calls = dict(
+            pflow=False,
+            addr1=False,
+            init0=False,
+            init1=False,
+            jac0=False,
+            windup=False,
+            gcall=False,
+            fcall=False,
+            gycall=False,
+            fxcall=False,
+            series=False,
+            shunt=False,
+            flows=False,
+            dcseries=False,
+        )
 
-        self._flags = {'sysbase': False,
-                       'allocate': False,
-                       'address': False,
-                       }
+        self._flags = {
+            'sysbase': False,
+            'allocate': False,
+            'address': False,
+        }
 
-        self._config = {'address_group_by': 'element',
-                        'is_series': False,
-                        }
+        self._config = {
+            'address_group_by': 'element',
+            'is_series': False,
+        }
 
         # pandas.DataFrame
         self.param_dict = {}
@@ -157,7 +168,9 @@ class ModelBase(object):
 
     def define(self):
         """
-        Hook function where derived models define parameters, variables, service constants, and equations
+        Hook function where derived models define parameters, variables,
+        service constants, and equations
+
         :return:
         """
         # raise NotImplemented('Subclasses must overwrite this method')
@@ -167,7 +180,8 @@ class ModelBase(object):
         """
         Convert model metadata to class attributes.
 
-        This function is called automatically after ``define()`` in new versions.
+        This function is called automatically after ``define()`` in new
+        versions.
 
         :return: None
         """
@@ -207,9 +221,26 @@ class ModelBase(object):
         self._flags['allocate'] = False
         self._flags['address'] = False
 
-    def param_define(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False, power=False,
-                     voltage=False, current=False, z=False, y=False, r=False, g=False, dccurrent=False, dcvoltage=False,
-                     time=False, event_time=False, **kwargs):
+    def param_define(self,
+                     param,
+                     default,
+                     unit='',
+                     descr='',
+                     tomatrix=True,
+                     nonzero=False,
+                     mandatory=False,
+                     power=False,
+                     voltage=False,
+                     current=False,
+                     z=False,
+                     y=False,
+                     r=False,
+                     g=False,
+                     dccurrent=False,
+                     dcvoltage=False,
+                     time=False,
+                     event_time=False,
+                     **kwargs):
         """
         Define a parameter in the model
 
@@ -353,7 +384,8 @@ class ModelBase(object):
         ret = []
         for i in idx:
             tmp = self.uid.get(i, None)
-            assert tmp is not None, ('Model <{}> does not have element <{}>'.format(self._name, i))
+            assert tmp is not None, (
+                'Model <{}> does not have element <{}>'.format(self._name, i))
             ret.append(self.uid[i])
 
         return ret
@@ -400,7 +432,9 @@ class ModelBase(object):
             return astype(ret)
 
     def _alloc(self):
-        """Allocate empty memory for DAE variable indices. Called in device setup phase.
+        """
+        Allocate empty memory for DAE variable indices.
+        Called in device setup phase.
 
         :return: None
         """
@@ -414,7 +448,8 @@ class ModelBase(object):
         """
         Return the loaded model parameters as one dictionary.
 
-        Each key of the dictionary is a parameter name, and the value is a list of all the parameter values.
+        Each key of the dictionary is a parameter name, and the value is a
+        list of all the parameter values.
 
         :param sysbase: use system base quantities
         :type sysbase: bool
@@ -519,7 +554,9 @@ class ModelBase(object):
 
             # assure the same parameter matrix size
             if len(nvars) > 1 and len(val) != nvars[-1]:
-                raise IndexError('Model <{}> parameter <{}> must have the same length'.format(self._name, key))
+                raise IndexError(
+                    'Model <{}> parameter <{}> must have the same length'.
+                    format(self._name, key))
             nvars.append(len(val))
 
         # assign idx-uid mapping
@@ -575,15 +612,33 @@ class ModelBase(object):
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
-    def param_alter(self, param, default=None, unit=None, descr=None, tomatrix=None, nonzero=None, mandatory=None,
-                    power=None, voltage=None, current=None, z=None, y=None, r=None, g=None, dccurrent=None,
-                    dcvoltage=None, time=None, **kwargs):
+    def param_alter(self,
+                    param,
+                    default=None,
+                    unit=None,
+                    descr=None,
+                    tomatrix=None,
+                    nonzero=None,
+                    mandatory=None,
+                    power=None,
+                    voltage=None,
+                    current=None,
+                    z=None,
+                    y=None,
+                    r=None,
+                    g=None,
+                    dccurrent=None,
+                    dcvoltage=None,
+                    time=None,
+                    **kwargs):
         """
-        Set attribute of an existing parameter. To be used to alter an attribute inherited from parent models.
+        Set attribute of an existing parameter.
+        To be used to alter an attribute inherited from parent models.
 
         See .. self.param_define for argument descriptions.
         """
-        assert param in self._data, 'parameter <{}> does not exist in {}'.format(param, self._name)
+        assert param in self._data, \
+            'parameter <{}> does not exist in {}'.format(param, self._name)
 
         def alter_attr(p, attr, value):
             """Set self.__dict__[attr] for param based on value
@@ -595,7 +650,7 @@ class ModelBase(object):
             elif (value is False) and (p in self.__dict__[attr]):
                 self.__dict__[attr].remove(p)
             else:
-                self.log('No need to alter {} for {}'.format(attr, p), WARNING)
+                self.log('No need to alter {} for {}'.format(attr, p))
 
         if default is not None:
             self._data.update({param: default})
@@ -620,14 +675,18 @@ class ModelBase(object):
 
     def eq_add(self, expr, var, intf=False):
         """
-        Add an equation to this model. An equation is associated with the addresses of a variable. The number of
-        equations must equal that of variables.
+        Add an equation to this model.
 
-        Stored to ``self._equations`` is a tuple of ``(expr, var, intf, ty)`` where ``ty`` is in ('f', 'g')
+        An equation is associated with the addresses of a variable.  The
+        number of equations must equal that of variables.
+
+        Stored to ``self._equations`` is a tuple of ``(expr, var, intf,
+        ty)`` where ``ty`` is in ('f', 'g')
 
         :param str expr: equation expression
         :param str var: variable name to be associated with
-        :param bool intf: if this equation is added to an interface equation, namely, an equation outside this model
+        :param bool intf: if this equation is added to an interface equation,
+            namely, an equation outside this model
 
         :return: None
 
@@ -635,8 +694,9 @@ class ModelBase(object):
 
         # determine the type of the equation, ('f', 'g') based on var
 
-        # We assume that all differential equations are only modifiable by the model itself
-        #   Only interface to algebraic varbailes of external models
+        # We assume that all differential equations are only modifiable by
+        #   the model itself
+        # Only interface to algebraic varbailes of external models
 
         ty = ''
         if var in self._algebs:
@@ -645,7 +705,7 @@ class ModelBase(object):
             ty = 'f'
         else:
             for _, item in self._ac:
-                if var in ac:
+                if var in item:
                     ty = 'g'
                     if intf is False:
                         intf = True
@@ -655,7 +715,11 @@ class ModelBase(object):
                     if intf is False:
                         intf = True
         if ty == '':
-            self.log('Equation associated with interface variable {var} assumed as algeb'.format(var=var), DEBUG)
+            self.log(
+                'Equation associated with interface variable {var} '
+                'assumed as algeb'.
+                format(var=var),
+                DEBUG)
             ty = 'g'
 
         self._equations.append((expr, var, intf, ty))
@@ -682,7 +746,8 @@ class ModelBase(object):
             #
             # Returns a matrix by default
             # ===============================================================
-            assert idx is not None, 'idx must be specified when accessing group fields'
+            assert idx is not None, \
+                'idx must be specified when accessing group fields'
             astype = matrix
 
             for item in idx:
@@ -690,7 +755,8 @@ class ModelBase(object):
                 ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
-            raise NameError('Model or Group <{0}> does not exist.'.format(model))
+            raise NameError(
+                'Model or Group <{0}> does not exist.'.format(model))
 
         if (ret is None) or isinstance(ret, (int, float, str)):
             return ret
@@ -698,12 +764,13 @@ class ModelBase(object):
             return ret
         else:
             return astype(ret)
-        
+
     def copy_data_ext(self, model, field, dest=None, idx=None, astype=None):
         """
-        Retrieve the field of another model and store it as a field of this model.
+        Retrieve the field of another model and store it as a field.
 
-        :param model: name of the source model, either a model name or a group name
+        :param model: name of the source model being a model name or a group
+        name
         :param field: name of the field to retrieve
         :param dest: name of the destination field in ``self``
         :param idx: idx of elements to access
@@ -724,7 +791,8 @@ class ModelBase(object):
             dest = field
         assert dest not in self._states + self._algebs
 
-        self.__dict__[dest] = self.read_data_ext(model, field, idx, astype=astype)
+        self.__dict__[dest] = self.read_data_ext(
+            model, field, idx, astype=astype)
 
     def elem_add(self, idx=None, name=None, **kwargs):
         """
@@ -737,7 +805,7 @@ class ModelBase(object):
         """
 
         idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
-        _ = self.system.__dict__[self._group].register_element(self._name, idx)
+        self.system.__dict__[self._group].register_element(self._name, idx)
 
         self.uid[idx] = self.n
         self.idx.append(idx)
@@ -751,7 +819,9 @@ class ModelBase(object):
         # check mandatory parameters
         for key in self._mandatory:
             if key not in kwargs.keys():
-                self.log('Mandatory parameter <{:s}.{:s}> missing'.format(self.name[-1], key), ERROR)
+                self.log(
+                    'Mandatory parameter <{:s}.{:s}> missing'.format(
+                        self.name[-1], key), ERROR)
                 sys.exit(1)
 
         # set default values
@@ -761,7 +831,9 @@ class ModelBase(object):
         # overwrite custom values
         for key, value in kwargs.items():
             if key not in self._data:
-                self.log('Parameter <{:s}.{:s}> is not used.'.format(self.name[-1], key), WARNING)
+                self.log(
+                    'Parameter <{:s}.{:s}> is not used.'.format(
+                        self.name[-1], key), WARNING)
                 continue
             self.__dict__[key][-1] = value
 
@@ -774,7 +846,9 @@ class ModelBase(object):
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
-                self.log('Using default value for <{:s}.{:s}>'.format(self.name[-1], key), WARNING)
+                self.log(
+                    'Using default value for <{:s}.{:s}>'.format(
+                        self.name[-1], key), WARNING)
 
         return idx
 
@@ -874,8 +948,8 @@ class ModelBase(object):
             self.__dict__[var] = mul(self.__dict__[var], Vb)
             self.__dict__[var] /= Sb
         if len(self._z) or len(self._y):
-            Zn = div(self.Vn ** 2, self.Sn)
-            Zb = (Vb ** 2) / Sb
+            Zn = div(self.Vn**2, self.Sn)
+            Zb = (Vb**2) / Sb
             for var in self._z:
                 self._store[var] = self.__dict__[var]
                 self.__dict__[var] = mul(self.__dict__[var], Zn)
@@ -889,7 +963,8 @@ class ModelBase(object):
                     self.__dict__[var] = div(self.__dict__[var], Zn + 0j)
                     self.__dict__[var] = mul(self.__dict__[var], Zb + 0j)
 
-        if len(self._dcvoltages) or len(self._dccurrents) or len(self._r) or len(self._g):
+        if len(self._dcvoltages) or len(self._dccurrents) or len(
+                self._r) or len(self._g):
             dckey = sorted(self._dc.keys())[0]
             Vbdc = self.read_data_ext('Node', 'Vdcn', self.__dict__[dckey])
             Ib = div(Sb, Vbdc)
@@ -933,7 +1008,8 @@ class ModelBase(object):
 
     def setup(self):
         """
-        Set up empty class structure and allocate empty memory for variable addresses.
+        Set up empty class structure and allocate empty memory
+        for variable addresses.
 
         :return: None
         """
@@ -962,11 +1038,14 @@ class ModelBase(object):
         """
 
         for key, val in self._ac.items():
-            self.copy_data_ext(model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
-            self.copy_data_ext(model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
+            self.copy_data_ext(
+                model='Bus', field='a', dest=val[0], idx=self.__dict__[key])
+            self.copy_data_ext(
+                model='Bus', field='v', dest=val[1], idx=self.__dict__[key])
 
         for key, val in self._dc.items():
-            self.copy_data_ext(model='Node', field='v', dest=val, idx=self.__dict__[key])
+            self.copy_data_ext(
+                model='Node', field='v', dest=val, idx=self.__dict__[key])
 
         # check for interface voltage differences
         self._check_Vn()
@@ -975,7 +1054,8 @@ class ModelBase(object):
         """
         Retrieve variable indices of controlled models.
 
-        Control interfaces are specified in ``self._ctrl``. Each ``key:value`` pair has ``key`` being the variable names
+        Control interfaces are specified in ``self._ctrl``.
+        Each ``key:value`` pair has ``key`` being the variable names
         for the reference idx and ``value`` being a tuple of
         ``(model name, field to read, destination field, return type)``.
 
@@ -990,13 +1070,15 @@ class ModelBase(object):
 
         for key, val in self._ctrl.items():
             model, field, dest, astype = val
-            self.copy_data_ext(model, field, dest=dest, idx=self.__dict__[key], astype=astype)
+            self.copy_data_ext(
+                model, field, dest=dest, idx=self.__dict__[key], astype=astype)
 
     def _addr(self):
         """
         Assign DAE addresses for algebraic and state variables.
 
-        Addresses are stored in ``self.__dict__[var]``. ``DAE.m`` and ``DAE.n`` are updated accordingly.
+        Addresses are stored in ``self.__dict__[var]``.
+        ``DAE.m`` and ``DAE.n`` are updated accordingly.
 
         Returns
         -------
@@ -1015,14 +1097,18 @@ class ModelBase(object):
 
         if group_by == 'variable':
             for idx, item in enumerate(self._algebs):
-                self.__dict__[item] = list(range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
+                self.__dict__[item] = list(
+                    range(m0 + idx * self.n, m0 + (idx + 1) * self.n))
             for idx, item in enumerate(self._states):
-                self.__dict__[item] = list(range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
+                self.__dict__[item] = list(
+                    range(n0 + idx * self.n, n0 + (idx + 1) * self.n))
         elif group_by == 'element':
             for idx, item in enumerate(self._algebs):
-                self.__dict__[item] = list(range(m0 + idx, mend, len(self._algebs)))
+                self.__dict__[item] = list(
+                    range(m0 + idx, mend, len(self._algebs)))
             for idx, item in enumerate(self._states):
-                self.__dict__[item] = list(range(n0 + idx, nend, len(self._states)))
+                self.__dict__[item] = list(
+                    range(n0 + idx, nend, len(self._states)))
 
         self.system.DAE.m = mend
         self.system.DAE.n = nend
@@ -1039,7 +1125,8 @@ class ModelBase(object):
         :return: None
         """
         if not self._flags['address']:
-            self.log('Unable to assign Varname before allocating address', ERROR)
+            self.log('Unable to assign Varname before allocating address',
+                     ERROR)
             return
 
         varname = self.system.VarName
@@ -1052,7 +1139,8 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamex[idx] = '{} {}'.format(unamex, iname)[:24]
-                varname.fnamex[idx] = '$' + '{}\ {}'.format(fnamex, iname.replace(' ', '\\ '))[:24] + '$'
+                varname.fnamex[idx] = '$' + '{}\ {}'.format(
+                    fnamex, iname.replace(' ', '\\ '))[:24] + '$'
 
             for e, var in enumerate(self._algebs):
                 unamey = self._unamey[e]
@@ -1060,11 +1148,12 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamey[idx] = '{} {}'.format(unamey, iname)[:24]
-                varname.fnamey[idx] = '$' + '{}\ {}'.format(fnamey, iname.replace(' ', '\\ '))[:24] + '$'
+                varname.fnamey[idx] = '$' + '{}\ {}'.format(
+                    fnamey, iname.replace(' ', '\\ '))[:24] + '$'
 
     def _param_to_matrix(self):
         """
-        Convert parameters defined in `self._params` from list to `cvxopt.matrix`
+        Convert parameters defined in `self._params` to `cvxopt.matrix`
 
         :return None
         """
@@ -1073,7 +1162,7 @@ class ModelBase(object):
 
     def _param_to_list(self):
         """
-        Convert parameters defined in `self._param` from `cvxopt.matrix` to list
+        Convert parameters defined in `self._param` to list
 
         :return None
         """
@@ -1101,7 +1190,9 @@ class ModelBase(object):
             if item == 0.:
                 continue
             maxval = upper[idx]
-            self.log('{0} <{1}.{2}> above its maximum of {3}.'.format(self.name[idx], self._name, key, maxval), ERROR)
+            self.log(
+                '{0} <{1}.{2}> above its maximum of {3}.'.format(
+                    self.name[idx], self._name, key, maxval), ERROR)
             if limit:
                 self.__dict__[key][idx] = maxval
 
@@ -1110,7 +1201,9 @@ class ModelBase(object):
             if item == 0.:
                 continue
             minval = lower[idx]
-            self.log('{0} <{1}.{2}> below its minimum of {3}.'.format(self.name[idx], self._name, key, minval), ERROR)
+            self.log(
+                '{0} <{1}.{2}> below its minimum of {3}.'.format(
+                    self.name[idx], self._name, key, minval), ERROR)
             if limit:
                 self.__dict__[key][idx] = minval
 
@@ -1154,8 +1247,16 @@ class ModelBase(object):
             if key in self._mandatory:
                 suf = ' *'
 
-            elif key in self._powers + self._voltages + self._currents + self._z + self._y +\
-                        self._dccurrents + self._dcvoltages + self._r + self._g + self._times:
+            elif key in self._powers + \
+                    self._voltages + \
+                    self._currents + \
+                    self._z + \
+                    self._y + \
+                    self._dccurrents + \
+                    self._dcvoltages + \
+                    self._r + \
+                    self._g + \
+                    self._times:
                 suf = ' #'
 
             c1 = key + suf
@@ -1176,12 +1277,16 @@ class ModelBase(object):
 
     def check_limit(self, varname, vmin=None, vmax=None):
         """
-        Check if the variable values are within the limits. Return False if fails.
+        Check if the variable values are within the limits.
+
+        Return False if fails.
 
         """
         retval = True
         if varname not in self.__dict__.keys():
-            self.system.Log.error('Model <{}> does not have attribute <{}>'.format(self._name, varname))
+            self.system.Log.error(
+                'Model <{}> does not have attribute <{}>'.format(
+                    self._name, varname))
             return
         elif varname in self._algebs:
             val = self.system.DAE.y[self.__dict__[varname]]
@@ -1197,7 +1302,9 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmin[idx]
-                self.log('Init of <{}.{}>={:.4g} is lower than min={:6.4g}'.format(n, varname, v, vm), ERROR)
+                self.log(
+                    'Init of <{}.{}>={:.4g} is lower than min={:6.4g}'.format(
+                        n, varname, v, vm), ERROR)
                 retval = False
 
         vmax = matrix(self.__dict__[vmax])
@@ -1207,12 +1314,16 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmax[idx]
-                self.log('Init of <{}.{}>={:.4g} is higher than max={:.4g}'.format(n, varname, v, vm), ERROR)
+                self.log(
+                    'Init of <{}.{}>={:.4g} is higher than max={:.4g}'.format(
+                        n, varname, v, vm), ERROR)
                 retval = False
         return retval
 
     def on_bus(self, bus_idx):
-        """Return the indices of elements on the given buses for shunt-connected elements
+        """
+        Return the indices of elements on the given buses for shunt-connected
+        elements
 
         :param bus_idx: idx of the buses to which the elements are connected
         :return: idx of elements connected to bus_idx
@@ -1248,12 +1359,13 @@ class ModelBase(object):
         ret = []
 
         if not self._config['is_series']:
-            self.log('link_bus function is not valid for non-series model <{}>'.format(self.name))
+            self.log(
+                'link_bus function is not valid for non-series model <{}>'.
+                format(self.name))
             return []
 
         if isinstance(bus_idx, (int, float, str)):
             bus_idx = [bus_idx]
-
 
         fkey = list(self._ac.keys())
         if 'bus' in fkey:
@@ -1270,7 +1382,7 @@ class ModelBase(object):
                     if fkey_val[j][i] == item:
                         idx.append(i)
                         key.append(fkey[j])
-                        # no more than one terminal should connect to the same bus
+                        # <= 1 terminal should connect to the same bus
                         break
 
             if len(idx) == 0:
@@ -1284,9 +1396,11 @@ class ModelBase(object):
 
     def elem_find(self, field, value):
         """
-        Return the indices of elements whose field first satisfies the given values
+        Return the indices of elements whose field first satisfies the given
+        values
 
-        ``value`` should be unique in self.field. This function does not check the uniqueness.
+        ``value`` should be unique in self.field.
+        This function does not check the uniqueness.
 
         :param field: name of the supplied field
         :param value: value of field of the elemtn to find
@@ -1307,17 +1421,22 @@ class ModelBase(object):
         """
         if hasattr(self, 'bus') and hasattr(self, 'Vn'):
             bus_Vn = self.read_data_ext('Bus', field='Vn', idx=self.bus)
-            for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn, bus_Vn):
+            for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn,
+                                          bus_Vn):
                 if Vn != Vn0:
-                    self.log('<{}> has Vn={} different from bus <{}> Vn={}.'
-                             .format(name, Vn, bus, Vn0), WARNING)
+                    self.log(
+                        '<{}> has Vn={} different from bus <{}> Vn={}.'.format(
+                            name, Vn, bus, Vn0), WARNING)
 
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
             node_Vdcn = self.read_data_ext('Node', field='Vdcn', idx=self.node)
-            for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn, node_Vdcn):
+            for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn,
+                                               node_Vdcn):
                 if Vdcn != Vdcn0:
-                    self.log('<{}> has Vdcn={} different from node <{}> Vdcn={}.'
-                             .format(name, Vdcn, node, Vdcn0), WARNING)
+                    self.log(
+                        '<{}> has Vdcn={} different from node <{}> Vdcn={}.'
+                        .format(name, Vdcn, node, Vdcn0), WARNING)
+
     #
     # def var_store_snapshot(self, variable='all'):
     #     """

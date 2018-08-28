@@ -8,6 +8,7 @@ from ..utils.math import *
 
 class PI1(object):
     """PI controller class as addon base class"""
+
     def __init__(self, params=None, inputs=None, outputs=None):
 
         assert type(outputs) == list
@@ -25,17 +26,13 @@ class PI1(object):
         if params:
             assert type(params) == dict
         else:
-            params = {'Kp' + str(self.nPI1): 0.1,
-                      'Ki' + str(self.nPI1): 0,
-                      }
+            params = {
+                'Kp' + str(self.nPI1): 0.1,
+                'Ki' + str(self.nPI1): 0,
+            }
 
         self._algebs = ['']
         if inputs:
             assert type(inputs) == list
         else:
             inputs = ['PI_IN_']
-
-
-
-
-

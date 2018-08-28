@@ -1,75 +1,89 @@
-from cvxopt import matrix, spmatrix
+from cvxopt import matrix, mul
+
 from .base import ModelBase
-from ..consts import *
-from ..utils.math import *
+
+from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
+from ..consts import Fx, Fy, Gx, Gy  # NOQA
+
+from ..utils.math import sort_idx
 
 
 class Stagen(ModelBase):
     """Static generator base class"""
+
     def __init__(self, system, name):
         super().__init__(system, name)
         self._group = 'StaticGen'
-        self._data.update({'bus': None,
-                           'busr': None,
-                           'pg': 0.0,
-                           'qg': 0.0,
-                           'pmax': 1.0,
-                           'pmin': 0.0,
-                           'qmax': 0.0,
-                           'qmin': 0.0,
-                           'v0': 1.0,
-                           'vmax': 1.4,
-                           'vmin': 0.6,
-                           'ra': 0.01,
-                           'xs': 0.3,
-                           })
-        self._units.update({'bus': 'na',
-                            'busr': 'na',
-                            'pg': 'pu',
-                            'qg': 'pu',
-                            'pmax': 'pu',
-                            'pmin': 'pu',
-                            'qmax': 'pu',
-                            'v0': 'pu',
-                            'vmax': 'pu',
-                            'vmin': 'pu',
-                            })
-        self._params.extend(['v0',
-                             'pg',
-                             'qg',
-                             'pmax',
-                             'pmin',
-                             'qmax',
-                             'qmin',
-                             'vmax',
-                             'vmin',
-                             'ra',
-                             'xs',
-                             ])
-        self._descr.update({'bus': 'the idx of the installed bus',
-                            'busr': 'the idx of remotely controlled bus',
-                            'pg': 'active power set point',
-                            'qg': 'reactive power set point',
-                            'pmax': 'maximum active power output',
-                            'pmin': 'minimum active power output',
-                            'qmax': 'maximim reactive power output',
-                            'qmin': 'minimum reactive power output',
-                            'v0': 'voltage set point',
-                            'vmax': 'maximum voltage voltage',
-                            'vmin': 'minimum allowed voltage',
-                            })
+        self._data.update({
+            'bus': None,
+            'busr': None,
+            'pg': 0.0,
+            'qg': 0.0,
+            'pmax': 1.0,
+            'pmin': 0.0,
+            'qmax': 0.0,
+            'qmin': 0.0,
+            'v0': 1.0,
+            'vmax': 1.4,
+            'vmin': 0.6,
+            'ra': 0.01,
+            'xs': 0.3,
+        })
+        self._units.update({
+            'bus': 'na',
+            'busr': 'na',
+            'pg': 'pu',
+            'qg': 'pu',
+            'pmax': 'pu',
+            'pmin': 'pu',
+            'qmax': 'pu',
+            'v0': 'pu',
+            'vmax': 'pu',
+            'vmin': 'pu',
+        })
+        self._params.extend([
+            'v0',
+            'pg',
+            'qg',
+            'pmax',
+            'pmin',
+            'qmax',
+            'qmin',
+            'vmax',
+            'vmin',
+            'ra',
+            'xs',
+        ])
+        self._descr.update({
+            'bus': 'the idx of the installed bus',
+            'busr': 'the idx of remotely controlled bus',
+            'pg': 'active power set point',
+            'qg': 'reactive power set point',
+            'pmax': 'maximum active power output',
+            'pmin': 'minimum active power output',
+            'qmax': 'maximim reactive power output',
+            'qmin': 'minimum reactive power output',
+            'v0': 'voltage set point',
+            'vmax': 'maximum voltage voltage',
+            'vmin': 'minimum allowed voltage',
+        })
         self._ac = {'bus': ['a', 'v']}
         # self._powers = ['pg', 'qg', 'pmax', 'pmin', 'qmax', 'qmin']
         self._voltages = ['v0', 'vmax', 'vmin']
         self._service = []
-        self.calls.update({'gcall': True, 'gycall': True,
-                           'init0': True, 'pflow': True,
-                           'jac0': True, 'stagen': True,
-                           })
+        self.calls.update({
+            'gcall': True,
+            'gycall': True,
+            'init0': True,
+            'pflow': True,
+            'jac0': True,
+            'stagen': True,
+        })
 
 
 class PV(Stagen):
     """Static PV generator for power flow"""
+
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'PV'
@@ -80,12 +94,16 @@ class PV(Stagen):
         self._init()
 
     def init0(self, dae):
-        """Set initial voltage and reactive power for PQ. Overwrites Bus.voltage values"""
+        """
+        Set initial voltage and reactive power for PQ.
+        Overwrites Bus.voltage values
+        """
         dae.y[self.v] = self.v0
         dae.y[self.q] = mul(self.u, self.qg)
 
     def gcall(self, dae):
-        if self.system.SPF.pv2pq and self.system.SPF.iter >= self.system.SPF.ipv2pq:
+        if self.system.SPF.pv2pq and \
+                self.system.SPF.iter >= self.system.SPF.ipv2pq:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)
@@ -94,7 +112,7 @@ class PV(Stagen):
             nabove = nbelow = self.system.SPF.npv2pq
             nconv = min(self.system.SPF.npv2pq, self.n)
 
-            for i in range(nconv-1, -1, -1):
+            for i in range(nconv - 1, -1, -1):
                 if d_min[idx_asc[i]] >= 0:
                     nbelow -= 1
                 if d_max[idx_desc[i]] <= 0:
@@ -107,19 +125,24 @@ class PV(Stagen):
             dae.y[mq[self.above]] = self.qmax[self.above]
             self.qlim = list(set(list(mq[self.below]) + list(mq[self.above])))
 
-        p_inj = - mul(self.u, self.pg)
-        q_inj = - mul(self.u, dae.y[self.q])
+        p_inj = -mul(self.u, self.pg)
+        q_inj = -mul(self.u, dae.y[self.q])
         v_mis = mul(self.u, dae.y[self.v] - self.v0)
 
         # TODO: improve readability
-        for a, v, q, pi, qi, dv in zip(self.a, self.v, self.q, p_inj, q_inj, v_mis):
+        for a, v, q, pi, qi, dv in zip(self.a, self.v, self.q, p_inj, q_inj,
+                                       v_mis):
             dae.g[a] += pi
             dae.g[v] += qi
             dae.g[q] = dv  # not an interface equation
 
-        # dae.g -= spmatrix(mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
-        # dae.g -= spmatrix(mul(self.u, dae.y[self.q]), self.v, [0] * self.n, (dae.m, 1), 'd')
-        # dae.g += spmatrix(mul(self.u, dae.y[self.v] - self.v0), self.q, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g -= spmatrix(
+        #     mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
+        # dae.g -= spmatrix(
+        #     mul(self.u, dae.y[self.q]), self.v, [0]*self.n, (dae.m, 1), 'd')
+        # dae.g += spmatrix(
+        #     mul(self.u, dae.y[self.v] - self.v0), self.q, [0] * self.n,
+        #     (dae.m, 1), 'd')
 
         if self.qlim:
             dae.g[self.qlim] = 0
@@ -145,6 +168,7 @@ class PV(Stagen):
 
 class Slack(PV):
     """Static slack generator"""
+
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'SW'
@@ -156,8 +180,7 @@ class Slack(PV):
         self._unamey.extend(['P'])
         self._fnamey.extend(['P'])
         # self._service.extend(['a0'])
-        self.calls.update({'gycall': False
-                           })
+        self.calls.update({'gycall': False})
         self._init()
 
     def init0(self, dae):
@@ -170,7 +193,8 @@ class Slack(PV):
         q_inj = -mul(self.u, dae.y[self.q])
         v_mis = mul(self.u, dae.y[self.v] - self.v0)
         a_mis = mul(self.u, dae.y[self.a] - self.a0)
-        for a, v, p, q, pi, qi, dv, da in zip(self.a, self.v, self.p, self.q, p_inj, q_inj, v_mis, a_mis):
+        for a, v, p, q, pi, qi, dv, da in zip(self.a, self.v, self.p, self.q,
+                                              p_inj, q_inj, v_mis, a_mis):
             dae.g[a] += pi
             dae.g[v] += qi
             dae.g[q] = dv
