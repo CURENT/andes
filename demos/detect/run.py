@@ -5,7 +5,7 @@ import os
 # os.chdir('/home/hcui7/repos/andes_github/cases')
 # case = 'ieee14_syn.dm'
 
-os.chdir('/home/hcui7/repos/andes_github/cases/curent')
+os.chdir('../../cases/curent')
 case = 'NA_50_50_50_HVDC3.dm'
 
 sys = system.PowerSystem(case)
@@ -31,7 +31,7 @@ npcc_bus = list(range(100114, 100124)) + list(range(101001, 101120))
 npcc_gen = sys.Syn2.on_bus(npcc_bus)
 
 # save Andes cases to folder
-save_path = '/home/hcui7/repos/andes_github/demos/detect/GT'
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/GT'
 
 file_name_tpl = '{event}_{bus}_{element}.dm'
 
@@ -71,7 +71,7 @@ for bus_idx, gen_idx in zip(npcc_bus, npcc_gen):
 npcc_load = sys.PQ.on_bus(npcc_bus)
 
 # save Andes cases to folder
-save_path = '/home/hcui7/repos/andes_github/demos/detect/LS'
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LS'
 
 file_name_tpl = '{event}_{bus}_{element}.dm'
 
@@ -105,5 +105,12 @@ for bus_idx, load_idx in zip(npcc_bus, npcc_load):
         f.write(out)
 
 
-
-sys.Line.link_bus(1)
+# tpl = 'Breaker, line = {}, bus = {}, t1=1'
+#
+# npcc_line = sys.Line.link_bus(npcc_bus)
+#
+# for bus, line in zip(npcc_bus, npcc_line):
+#     line_idx_list, term_idx_list = line
+#     for line_idx, term_idx in zip(line_idx_list, term_idx_list):
+#
+# print(npcc_line)
