@@ -589,7 +589,7 @@ def run(case, **kwargs):
     system.setup()
 
     # initialize power flow study
-    system.pf_init()
+    system.powerflow.init()
 
     system.powerflow.run()
 

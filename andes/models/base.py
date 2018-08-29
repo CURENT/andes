@@ -1377,7 +1377,7 @@ class ModelBase(object):
             for i in range(self.n):
                 for j in range(nfkey):
                     if fkey_val[j][i] == item:
-                        idx.append(i)
+                        idx.append(self.idx[i])
                         key.append(fkey[j])
                         # <= 1 terminal should connect to the same bus
                         break
