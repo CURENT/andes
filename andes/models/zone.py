@@ -60,7 +60,7 @@ class Zone(ModelBase):
         for idx, uid in self.system.Bus.uid.items():
             code = self.system.Bus.__dict__[var][uid]
             if code and code not in self.idx:
-                self.system.Log.warning('{} <{}> not defined.'.format(
+                self.system.log.warning('{} <{}> not defined.'.format(
                     self._name, code))
             if code not in self.buses.keys():
                 self.buses[code] = list()

@@ -188,17 +188,17 @@ class VSC(DCBase):
                     if vupper[i] > 0:
                         if 'vmax' not in self.vio[i]:
                             self.vio[i].append('vmax')
-                            self.system.Log.debug(
+                            self.system.log.debug(
                                 ' * Vmax reached for VSC_{0}'.format(i))
                     elif vlower[i] < 0:
                         if 'vmin' not in self.vio[i]:
                             self.vio[i].append('vmin')
-                            self.system.Log.debug(
+                            self.system.log.debug(
                                 ' * Vmin reached for VSC_{0}'.format(i))
                     if iupper[i] > 0:
                         if 'Imax' not in self.vio[i]:
                             self.vio[i].append('Imax')
-                            self.system.Log.debug(
+                            self.system.log.debug(
                                 ' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power

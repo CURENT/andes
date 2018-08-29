@@ -30,6 +30,9 @@ from ..utils.tab import Tab
 import pandas as pd
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class ModelBase(object):
     """base class for power system device models"""
@@ -414,7 +417,7 @@ class ModelBase(object):
 
         # ===================disable warning ==============================
         # if field in self._service:
-        # self.system.Log.warning(
+        # logger.warning(
         #     'Reading service variable <{model}.{field}> could be unsafe.'
         #         .format(field=field, model=self._name)
         # )
@@ -840,9 +843,9 @@ class ModelBase(object):
             # check data consistency
             if not value and key in self._zeros:
                 if key == 'Sn':
-                    default = self.system.Settings.mva
+                    default = self.system.config.mva
                 elif key == 'fn':
-                    default = self.system.Settings.freq
+                    default = self.system.config.freq
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
@@ -926,7 +929,7 @@ class ModelBase(object):
         """
         if (not self.n) or self._flags['sysbase']:
             return
-        Sb = self.system.Settings.mva
+        Sb = self.system.config.mva
         Vb = matrix([])
         if 'bus' in self._ac.keys():
             Vb = self.read_data_ext('Bus', 'Vn', idx=self.bus)
@@ -1178,10 +1181,7 @@ class ModelBase(object):
         :return: None
 
         """
-        if level not in (DEBUG, INFO, WARNING, ERROR, CRITICAL):
-            self.system.Log.error('Message logging level does not exist.')
-            return
-        self.system.Log.message('[{}] - '.format(self._name) + msg, level)
+        logger.log(level, '[{}] - '.format(self._name) + msg)
 
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
@@ -1283,12 +1283,9 @@ class ModelBase(object):
 
         """
         retval = True
-        if varname not in self.__dict__.keys():
-            self.system.Log.error(
-                'Model <{}> does not have attribute <{}>'.format(
-                    self._name, varname))
-            return
-        elif varname in self._algebs:
+        assert varname in self.__dict__
+
+        if varname in self._algebs:
             val = self.system.DAE.y[self.__dict__[varname]]
         elif varname in self._states:
             val = self.system.DAE.x[self.__dict__[varname]]

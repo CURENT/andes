@@ -13,6 +13,9 @@ try:
 except ImportError:
     KLU = False
 
+import logging
+logger = logging.getLogger(__name__)
+
 lib = umfpack
 F = None
 
@@ -34,39 +37,41 @@ def run(system):
     t, s = elapsed()
 
     # default sparselib setup
-    assert system.Settings.sparselib in system.Settings.sparselib_alt, \
-        "Invalid sparse library <{}>".format(system.Settings.sparselib)
+    assert system.config.sparselib in system.config.sparselib_alt, \
+        "Invalid sparse library <{}>".format(system.config.sparselib)
 
-    if system.Settings.sparselib == 'klu' and KLU:
+    if system.config.sparselib == 'klu' and KLU:
         globals()['lib'] = klu
     else:
-        system.Settings.sparselib = 'umfpack'
+        system.config.sparselib = 'umfpack'
         globals()['lib'] = umfpack
 
     # default solver setup
-    if system.SPF.solver not in solvers.keys():
-        system.SPF.solver = 'NR'
+    if system.SPF.method not in solvers.keys():
+        system.SPF.method = 'NR'
 
-    func_name = solvers.get(system.SPF.solver)
+    func_name = solvers.get(system.SPF.method)
     run_powerflow = importlib.import_module('andes.routines.powerflow')
     run_powerflow = getattr(run_powerflow, func_name)
 
     # info print out
-    system.Log.info('Power Flow Analysis:')
-    system.Log.info('Sparse Solver: ' + system.Settings.sparselib.upper())
-    system.Log.info('Solution Method: ' + system.SPF.solver.upper())
-    system.Log.info('Flat-start: ' +
+    logger.info('Power Flow Analysis:')
+    logger.info('Sparse Solver: ' + system.config.sparselib.upper())
+    logger.info('Solution Method: ' + system.SPF.method.upper())
+    logger.info('Flat-start: ' +
                     ('Yes' if system.SPF.flatstart else 'No') + '\n')
 
     convergence, niter = run_powerflow(system)
-    system.status['pf_solved'] = convergence
+    # system.status['pf_solved'] = convergence
+    system.SPF.solved = False
 
     if convergence:
+        system.powerflow.solved = True
         post_processing(system)
 
     t, s = elapsed(t)
 
-    system.Log.info('Power flow {} in {}'.format(
+    logger.info('Power flow {} in {}'.format(
         ['failed', 'converged'][convergence], s))
     return convergence
 
@@ -95,19 +100,19 @@ def newton(system):
 
         max_mis = max(abs(inc))
         iter_mis.append(max_mis)
-        system.Settings.error = max_mis
+        system.config.error = max_mis
 
-        system.Log.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(
+        logger.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(
             niter, max_mis))
 
-        if max_mis < system.Settings.tol:
+        if max_mis < system.SPF.tol:
             convergence = True
             break
         elif niter > 5 and max_mis > 1000 * iter_mis[0]:
-            system.Log.info('Blown up in {0} iterations.'.format(niter))
+            logger.warning('Blown up in {0} iterations.'.format(niter))
             break
         if niter > system.SPF.maxit:
-            system.Log.info('Reached maximum number of iterations.')
+            logger.warning('Reached maximum number of iterations.')
             break
 
     return convergence, niter
@@ -135,16 +140,15 @@ def calc_inc(system):
 
     try:
         N = lib.numeric(A, F)
-        if system.Settings.sparselib.lower() == 'klu':
+        if system.config.sparselib.lower() == 'klu':
             lib.solve(A, F, N, inc)
-        elif system.Settings.sparselib.lower() == 'umfpack':
+        elif system.config.sparselib.lower() == 'umfpack':
             lib.solve(A, N, inc)
     except ValueError:
-        system.Log.warning(
-            'Unexpected symbolic factorization. Refactorizing...')
+        logger.warning('Unexpected symbolic factorization. Refactorizing...')
         system.DAE.factorize = True
     except ArithmeticError:
-        system.Log.error('Jacobian matrix is singular.')
+        logger.warning('Jacobian matrix is singular.')
         diag0(system.DAE.Gy, 'unamey', system)
 
     return -inc
@@ -156,14 +160,14 @@ def fdpf(system):
     """
 
     # sparse library set up
-    sparselib = system.Settings.sparselib.lower()
+    sparselib = system.config.sparselib.lower()
 
     # general settings
     niter = 1
     iter_max = system.SPF.maxit
     convergence = True
-    tol = system.Settings.tol
-    system.Settings.error = tol + 1
+    tol = system.SPF.tol
+    system.config.error = tol + 1
     err_vec = []
     if (not system.Line.Bp) or (not system.Line.Bpp):
         system.Line.build_b()
@@ -195,7 +199,7 @@ def fdpf(system):
     exec(system.Call.fdpf)
 
     # main loop
-    while system.Settings.error > tol:
+    while system.config.error > tol:
         # P-theta
         da = matrix(div(system.DAE.g[no_sw], system.DAE.y[no_swv]))
         if sparselib == 'umfpack':
@@ -218,20 +222,20 @@ def fdpf(system):
 
         err = max([normP, normQ])
         err_vec.append(err)
-        system.Settings.error = err
+        system.config.error = err
 
         msg = 'Iter{:4d}.  Max. Mismatch = {:8.7f}'.format(niter, err_vec[-1])
-        system.Log.info(msg)
+        logger.info(msg)
         niter += 1
         system.SPF.iter = niter
 
         if niter > 4 and err_vec[-1] > 1000 * err_vec[0]:
-            system.Log.info('Blown up in {0} iterations.'.format(niter))
+            logger.warning('Blown up in {0} iterations.'.format(niter))
             convergence = False
             break
 
         if niter > iter_max:
-            system.Log.info('Reached maximum number of iterations.')
+            logger.warning('Reached maximum number of iterations.')
             convergence = False
             break
 

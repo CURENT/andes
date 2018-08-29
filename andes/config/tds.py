@@ -3,7 +3,7 @@ from ..utils.cached import cached
 
 
 class TDS(ConfigBase):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.fixt = True
         self.tstep = 1 / 30
         self.method = 'trapezoidal'
@@ -26,6 +26,7 @@ class TDS(ConfigBase):
             'trapezoidal': 'Implicit Trapezoidal',
             'fwdeuler': 'Explicit Euler'
         }
+        super(TDS, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):

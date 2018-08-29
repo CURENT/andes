@@ -3,4 +3,4 @@ def pert(t, system):
     if t >=2 and t <= 2.1:
         system.RLs.u[7] = 0
         system.DAE.rebuild = True
-        system.Log.info('Tripped RL-7 at t=2 s')
+        system.log.info('Tripped RL-7 at t=2 s')

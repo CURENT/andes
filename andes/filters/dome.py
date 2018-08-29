@@ -88,17 +88,17 @@ def read(file, system, header=True):
             alter(data, system)
             continue
         if device == 'INCLUDE':
-            system.Log.debug('Parsing include file <{}>'.format(data[0]))
+            system.log.debug('Parsing include file <{}>'.format(data[0]))
             newpath = data[0]
             if not os.path.isfile(newpath):
                 newpath = os.path.join(system.Files.path, data[0])
                 if not os.path.isfile(newpath):
-                    system.Log.warning(
+                    system.log.warning(
                         'Unable to locate file in {}'.format(newpath))
                     retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
-            system.Log.debug('Parsing of include file <{}> completed.'.format(
+            system.log.debug('Parsing of include file <{}> completed.'.format(
                 data[0]))
             continue
         kwargs = {}
@@ -131,10 +131,10 @@ def read(file, system, header=True):
         try:
             system.__dict__[device].elem_add(idx=index, name=namex, **kwargs)
         except KeyError:
-            system.Log.error(
+            system.log.error(
                 'Error adding device {:s} to powersystem object.'.format(
                     device))
-            system.Log.debug(
+            system.log.debug(
                 'Make sure you have added the jit models in __init__.py'
             )
 

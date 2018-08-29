@@ -22,7 +22,7 @@ class VarName(object):
 
     def resize_for_flows(self):
         """Extend `unamey` and `fnamey` for bus injections and line flows"""
-        if self.system.Settings.dime_enable:
+        if self.system.config.dime_enable:
             self.system.TDS.compute_flows = True
 
         if self.system.TDS.compute_flows:
@@ -37,7 +37,7 @@ class VarName(object):
         self.resize()
         string = '{0} {1}'
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
-            self.system.Log.error('Wrong list name for VarName.')
+            self.system.log.error('Wrong list name for VarName.')
             return
         elif listname in ['fnamex', 'fnamey']:
             string = '${0}\ {1}$'
@@ -52,7 +52,7 @@ class VarName(object):
             self.__dict__[listname][xy_idx] = string.format(
                 var_name, element_name)
         else:
-            self.system.Log.warning(
+            self.system.log.warning(
                 'Unknown element_name type while building VarName')
 
     def bus_line_names(self):

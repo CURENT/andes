@@ -41,7 +41,7 @@ class DevMan(object):
             assigned idx
         """
         if dev_name not in self.devices:
-            self.system.Log.error(
+            self.system.log.error(
                 'Device {} missing. Call add_device before adding elements'.
                 format(dev_name))
             return

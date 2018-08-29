@@ -2,9 +2,15 @@ from . import ConfigBase
 from ..consts import INFO, pi
 from ..utils.cached import cached
 
+try:
+    from cvxoptklu import klu
+    KLU = True
+except ImportError:
+    KLU = False
 
-class Settings(ConfigBase):
-    def __init__(self):
+
+class Config(ConfigBase):
+    def __init__(self, **kwargs):
         self.verbose = INFO
         self.verbose_alt = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
         self.freq = 60.0
@@ -17,7 +23,7 @@ class Settings(ConfigBase):
         self.coi = False
         self.connectivity = False
         self.error = 1
-        self.tol = 1e-6
+        # self.tol = 1e-6
         self.static = 0
         self.nseries = 0
         self.forcepq = False
@@ -31,6 +37,7 @@ class Settings(ConfigBase):
         # self.dime_server = 'tcp://160.36.58.82:8898'
         self.dime_server = 'ipc:///tmp/dime'
         self.progressbar = False
+        super(Config, self).__init__(**kwargs)
 
     @property
     def wb(self):
@@ -53,3 +60,15 @@ class Settings(ConfigBase):
             'base': 'convert model parameters to the system base',
         }
         return descriptions
+
+    def check(self):
+        # TODO: use logging handler
+        if self.sparselib not in self.sparselib_alt:
+            print("Invalid sparse library <{}>".format(self.sparselib))
+            self.sparselib = 'umfpack'
+
+        if self.sparselib == 'KLU' and not KLU:
+            print("cvxoptklu import error. Fall back to umfpack".format(self.sparselib))
+            self.sparselib = 'umfpack'
+
+        return True

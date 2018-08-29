@@ -65,7 +65,7 @@ class Report(object):
                     '\n\n')
         if self.system.status['pf_solved'] is True:
             info.append('Power flow method: ' +
-                        self.system.SPF.solver.upper() + '\n')
+                        self.system.SPF.method.upper() + '\n')
             info.append('Number of iterations: ' + str(self.system.SPF.iter) +
                         '\n')
             info.append('Flat-start: ' +
@@ -88,8 +88,8 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if self.system.status['pf_solved'] is False:
-            self.system.Log.warning(
+        if self.system.powerflow.solved is False:
+            self.system.log.warning(
                 'Cannot update extended summary. Power flow not solved.')
             return
 
@@ -154,14 +154,14 @@ class Report(object):
         t, _ = elapsed()
 
         if not content:
-            self.system.Log.warning('Report content not specified.')
+            self.system.log.warning('Report content not specified.')
             return
 
         self.update(content)
 
         system = self.system
         file = system.Files.output
-        export = all_formats.get(system.Settings.export, 'txt')
+        export = all_formats.get(system.config.export, 'txt')
         module = importlib.import_module('andes.formats.' + export)
         dump_data = getattr(module, 'dump_data')
 
@@ -253,5 +253,5 @@ class Report(object):
         dump_data(text, header, rowname, data, file)
 
         _, s = elapsed(t)
-        system.Log.info('{} report written to <{:s}> in {:s}.'.format(
+        system.log.info('{} report written to <{:s}> in {:s}.'.format(
             content.capitalize(), system.Files.output, s))

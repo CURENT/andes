@@ -1,4 +1,4 @@
-SHOW_PF_CALL = False
+SHOW_PF_CALL = True
 SHOW_INT_CALL = False
 
 all_calls = [
@@ -126,7 +126,7 @@ class Call(object):
 
         string += '"""'
         if SHOW_PF_CALL:
-            self.system.Log.debug(string)
+            self.system.log.debug(string)
         self.newton = compile(eval(string), '', 'exec')
 
     def _compile_fdpf(self):
@@ -241,7 +241,7 @@ class Call(object):
 
         string += '"""'
         if SHOW_INT_CALL:
-            self.system.Log.debug(string)
+            self.system.log.debug(string)
 
         self.int = compile(eval(string), '', 'exec')
 

@@ -27,7 +27,7 @@ class VarOut(object):
             self.vars = list()
             self.t = list()
             self.k = list()
-            self.system.Log.debug(
+            self.system.log.debug(
                 'VarOut cache cleared at simulation t = {:g}.'.format(
                     self.system.DAE.t))
             self._mode = 'a'
@@ -148,7 +148,7 @@ class VarOut(object):
             ret = True
 
         except IOError:
-            system.Log.error('I/O Error while writing the dat file.')
+            system.log.error('I/O Error while writing the dat file.')
 
         return ret
 
@@ -196,6 +196,6 @@ class VarOut(object):
                 f.write(out)
             ret = True
         except IOError:
-            self.system.Log.error('I/O Error while writing the lst file.')
+            self.system.log.error('I/O Error while writing the lst file.')
 
         return ret

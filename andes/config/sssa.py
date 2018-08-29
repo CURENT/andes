@@ -3,7 +3,7 @@ from ..utils.cached import cached
 
 
 class SSSA(ConfigBase):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.neig = 1
         self.method = 1
         self.map = 1
@@ -12,6 +12,7 @@ class SSSA(ConfigBase):
         self.eigs = ''
         self.pf = ''
         self.plot = True
+        super(SSSA, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):

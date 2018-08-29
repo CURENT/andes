@@ -61,7 +61,7 @@ class Breaker(ModelBase):
         self.copy_data_ext('Line', 'bus2', idx=self.line)
         for i in range(self.n):
             if self.bus[i] != self.bus1[i] and self.bus[i] != self.bus2[i]:
-                self.system.Log.warning(
+                self.system.log.warning(
                     '<Breaker> {} on line {} and bus {} is incorrect '
                     'and is thus disabled.'.
                     format(self.idx[i], self.line[i], self.bus[i]))
@@ -108,7 +108,7 @@ class Breaker(ModelBase):
                     inf = ' Breaker <{}>: Line <{}> reconnected ' \
                           'at t = {}.'.format(
                               self.idx[i], self.line[i], actual_time)
-                self.system.Log.info(inf)
+                self.system.log.info(inf)
         self.system.check_islands()
 
     def insert(self, idx=None, name=None, **kwargs):

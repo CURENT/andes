@@ -113,7 +113,7 @@ class Line(ModelBase):
         self._param_to_matrix()
 
         self.nb = int(self.system.Bus.n)
-        self.system.Settings.nseries += self.n
+        self.system.config.nseries += self.n
 
         self.r += 1e-10
         self.b += 1e-10
@@ -155,7 +155,7 @@ class Line(ModelBase):
         """build Bp and Bpp for fast decoupled method"""
         if not self.n:
             return
-        solver = self.system.SPF.solver.lower()
+        solver = self.system.SPF.method.lower()
 
         # Build B prime matrix
         y1 = mul(
@@ -282,7 +282,7 @@ class Line(ModelBase):
         self.copy_data_ext('Bus', 'a', dest='a', idx=None, astype=list)
         self.copy_data_ext('Bus', 'v', dest='v', idx=None, astype=list)
 
-        solver = self.system.SPF.solver.lower()
+        solver = self.system.SPF.method.lower()
         self.build_y()
         self.incidence()
         if solver in ('fdpf', 'fdbx', 'fdxb'):

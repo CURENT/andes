@@ -39,8 +39,8 @@ def first_time_step(system):
     else:
         freq = 20.0
 
-    if freq > system.Settings.freq:
-        freq = float(system.Settings.freq)
+    if freq > system.config.freq:
+        freq = float(system.config.freq)
 
     tspan = abs(settings.tf - settings.t0)
     tcycle = 1 / freq
@@ -50,13 +50,13 @@ def first_time_step(system):
 
     if settings.fixt:
         if settings.tstep <= 0:
-            system.Log.warning('Fixed time step is negative or zero')
-            system.Log.warning('Switching to automatic time step')
+            system.log.warning('Fixed time step is negative or zero')
+            system.log.warning('Switching to automatic time step')
             settings.fixt = False
         else:
             settings.deltat = settings.tstep
             if settings.tstep < settings.deltatmin:
-                system.Log.warning(
+                system.log.warning(
                     'Fixed time step is below the estimated minimum')
     return settings.deltat
 
@@ -66,30 +66,30 @@ def run(system):
     Entry function of Time Domain Simulation
     """
 
-    if system.status['pf_solved'] is False:
-        system.Log.warning(
+    if system.powerflow.solved is False:
+        system.log.warning(
             'Power flow not solved. Time domain simulation will not continue.')
         return False
 
     t0, _ = elapsed()
 
     # process _init of DiME clients
-    if system.Settings.dime_enable:
+    if system.config.dime_enable:
         system.TDS.compute_flows = True
         system.Streaming.send_init(recepient='all')
-        system.Log.info('Waiting for modules to send _init info...')
+        system.log.info('Waiting for modules to send _init info...')
         sleep(0.5)
         system.Streaming.sync_and_handle()
 
-    system.Log.info('\nTime Domain Simulation:')
-    system.Log.info('Integration Method: {0}'.format(
+    system.log.info('Time Domain Simulation:')
+    system.log.info('Integration Method: {0}'.format(
         system.TDS.method_desc[system.TDS.method]))
-    system.Log.info('Simulation time: {0}'.format(system.TDS.tf))
+    system.log.info('Simulation time: {0}'.format(system.TDS.tf))
 
     global F
     retval = True
     bar = None
-    if PROGRESSBAR and system.pid == -1 and system.Settings.progressbar:
+    if PROGRESSBAR and system.pid == -1 and system.config.progressbar:
         bar = progressbar.ProgressBar(widgets=[
             ' [',
             progressbar.Percentage(),
@@ -129,7 +129,7 @@ def run(system):
         compute_flows(system)
     system.VarOut.store(t, step)
 
-    if system.Settings.dime_enable:
+    if system.config.dime_enable:
         system.Streaming.sync_and_handle()
         system.Streaming.vars_to_modules()
         system.Streaming.vars_to_pmu()
@@ -194,7 +194,7 @@ def run(system):
         if PERT == 1:  # pert file loaded
             callpert(actual_time, system)
         elif PERT == -1:
-            system.Log.warning('Pert file is discarded due to import errors.')
+            system.log.warning('Pert file is discarded due to import errors.')
             PERT = 0
 
         niter = 0
@@ -225,7 +225,7 @@ def run(system):
                 niter += 1
 
             if isnan(settings.error):
-                system.Log.error(
+                system.log.error(
                     'Iteration error: NaN detected at t = {}.'.format(
                         actual_time))
                 niter = maxit + 1
@@ -247,7 +247,7 @@ def run(system):
                         exec(system.Call.int)
                         dae.rebuild = False
                     except OverflowError:
-                        system.Log.error(
+                        system.log.error(
                             'Data overflow. Convergence is not likely.')
                         t = settings.tf + 1
                         retval = False
@@ -292,18 +292,18 @@ def run(system):
                     else:
                         solve(dae.Ac, N, inc)
                 except ArithmeticError:
-                    system.Log.error('Singular matrix')
+                    system.log.error('Singular matrix')
                     niter = maxit + 1  # force quit
                     diag0(dae.Gy, 'unamey', system)
                     diag0(dae.Fx, 'unamex', system)
                 except ValueError:
-                    system.Log.warning('Unexpected symbolic factorization')
+                    system.log.warning('Unexpected symbolic factorization')
                     F = symbolic(dae.Ac)
                     try:
                         N = numeric(dae.Ac, F)
                         solve(dae.Ac, F, N, inc)
                     except ArithmeticError:
-                        system.Log.error('Singular matrix')
+                        system.log.error('Singular matrix')
                         niter = maxit + 1
 
                 # for debugging
@@ -317,7 +317,7 @@ def run(system):
                 settings.error = max(abs(inc))
                 if isnan(settings.error):
                     t = settings.tf + 1
-                    system.Log.error('Iteration error: NaN detected.')
+                    system.log.error('Iteration error: NaN detected.')
                     retval = False
                     break
                 niter += 1
@@ -332,12 +332,12 @@ def run(system):
                 max_g_err_idx = list(inc_g).index(max(inc_g))
             else:
                 max_g_err_idx = list(inc_g).index(min(inc_g))
-            system.Log.debug(
+            system.log.debug(
                 'Maximum mismatch = {:.4g} at equation <{}>'.format(
                     max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
 
             h = time_step(system, False, niter, t)
-            system.Log.debug(
+            system.log.debug(
                 'Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
             dae.x = matrix(xa)
             dae.y = matrix(ya)
@@ -351,7 +351,7 @@ def run(system):
         compute_flows(system)
 
         system.VarOut.store(t, step)
-        if system.Settings.dime_enable:
+        if system.config.dime_enable:
             system.Streaming.sync_and_handle()
             system.Streaming.vars_to_modules()
             system.Streaming.vars_to_pmu()
@@ -363,7 +363,7 @@ def run(system):
             bar.update(perc)
 
         if perc > nextpc or t == settings.tf:
-            system.Log.info(' ({:.0f}%) Time = {:.4f}s, step = {}, niter = {}'
+            system.log.info(' ({:.0f}%) Time = {:.4f}s, step = {}, niter = {}'
                             .format(100 * t / settings.tf, t, step, niter))
 
             nextpc += 5
@@ -375,7 +375,7 @@ def run(system):
         if settings.qrt:
             if time() - rt_end > 0:  # the ending time has passed
                 if time() - rt_end > settings.kqrt:  # simulation is too slow
-                    system.Log.debug(
+                    system.log.debug(
                         'Simulation over-run at simulation time {:4.4g} s.'.
                         format(t))
             else:  # wait to finish
@@ -385,22 +385,22 @@ def run(system):
     if bar is not None:
         bar.finish()
     if settings.qrt:
-        system.Log.debug('Quasi-RT headroom time: {} s.'.format(
+        system.log.debug('Quasi-RT headroom time: {} s.'.format(
             str(rt_headroom)))
     if t != settings.tf:
-        system.Log.always(
+        system.log.always(
             'Reached minimum time step. Convergence is not likely.')
         retval = False
 
-    if system.Settings.dime_enable:
+    if system.config.dime_enable:
         system.Streaming.finalize()
 
     _, s = elapsed(t0)
 
     if retval:
-        system.Log.info('Time domain simulation finished in {:s}.'.format(s))
+        system.log.info('Time domain simulation finished in {:s}.'.format(s))
     else:
-        system.Log.info('Time domain simulation failed in {:s}.'.format(s))
+        system.log.info('Time domain simulation failed in {:s}.'.format(s))
 
     return retval
 
@@ -471,16 +471,16 @@ def calcInc(system):
         N = numeric(A, F)
         solve(A, F, N, inc)
     except ValueError:
-        system.Log.warning(
+        system.log.warning(
             'Unexpected symbolic factorization. Refactorizing...')
         F = symbolic(A)
         try:
             N = numeric(A, F)
             solve(A, F, N, inc)
         except ArithmeticError:
-            system.Log.error('Singular matrix')
+            system.log.error('Singular matrix')
     except ArithmeticError:
-        system.Log.error('Jacobian matrix is singular.')
+        system.log.error('Jacobian matrix is singular.')
         diag0(system.DAE.Gy, 'unamey', system)
     return -inc
 

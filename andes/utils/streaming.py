@@ -14,8 +14,8 @@ class Streaming(object):
 
     def __init__(self, system):
         self.system = system
-        self.dimec = dime.Dime(system.Settings.dime_name,
-                               system.Settings.dime_server)
+        self.dimec = dime.Dime(system.config.dime_name,
+                               system.config.dime_server)
         self.params_built = False
 
         self.SysParam = dict()
@@ -26,16 +26,16 @@ class Streaming(object):
         self.Varheader = list()
         self.last_devices = list()
 
-        if self.system.Settings.dime_enable:
-            self.system.Log.info('Trying to connect to dime server {}.'
-                                 .format(system.Settings.dime_server))
+        if self.system.config.dime_enable:
+            self.system.log.info('Trying to connect to dime server {}.'
+                                 .format(system.config.dime_server))
             try:
                 self.dimec.start()
-                self.system.Log.debug('DiME connection established.')
+                self.system.log.debug('DiME connection established.')
             except:  # NOQA
                 self.dimec.exit()
                 self.dimec.start()
-                self.system.Log.debug('DiME connection established.')
+                self.system.log.debug('DiME connection established.')
         self.has_pmu = False
 
     def _build_SysParam(self):
@@ -425,16 +425,16 @@ class Streaming(object):
         Broadcast `Varheader`, `Idxvgs` and `SysParam`
         to all DiME clients after power flow routine
         """
-        if not self.system.Settings.dime_enable:
+        if not self.system.config.dime_enable:
             return
         if not self.params_built:
             self.build_init()
         if recepient == 'all':
             self.last_devices = self.dimec.get_devices()
 
-            self.system.Log.debug('Connected modules are: ' +
+            self.system.log.debug('Connected modules are: ' +
                                   ','.join(self.dimec.get_devices()))
-            self.system.Log.debug(
+            self.system.log.debug(
                 'Broadcasting Varheader, Idxvgs, SysParam and SysName...')
             sleep(0.5)
             self.dimec.broadcast('Varheader', self.Varheader)
@@ -445,7 +445,7 @@ class Streaming(object):
                 self.dimec.broadcast('SysParam', self.SysParam)
                 self.dimec.broadcast('SysName', self.SysName)
             except:  # NOQA
-                self.system.Log.warning(
+                self.system.log.warning(
                     'SysParam or SysName broadcast error.'
                     ' Check bus coordinates.'
                 )
@@ -485,7 +485,7 @@ class Streaming(object):
 
         self.ModuleInfo[name].update(ivar)
 
-        self.system.Log.debug('Module <{}> request index {}'.format(
+        self.system.log.debug('Module <{}> request index {}'.format(
             name, var_idx))
 
     @staticmethod
@@ -504,7 +504,7 @@ class Streaming(object):
         fields = ('name', 'id', 'action', 'time', 'duration')
         for key in fields:
             if key not in Event:
-                self.system.Log.warning(
+                self.system.log.warning(
                     'Event has missing key {}.'.format(key))
                 return
 
@@ -523,7 +523,7 @@ class Streaming(object):
                 time = times[i]
                 duration = durations[i]
             except IndexError:
-                self.system.Log.Warning(
+                self.system.log.Warning(
                     'Event key values might have different lengths.')
                 continue
 
@@ -537,7 +537,7 @@ class Streaming(object):
             if name.lower() == 'bus':
                 param = {'tf': time, 'tc': tf, 'bus': idx}
                 self.system.Fault.insert(**param)
-                self.system.Log.debug(
+                self.system.log.debug(
                     'Event <Fault> added for bus {} at t = {} and tf = {}'.
                     format(idx, time, tf))
             elif name.lower() == 'line':
@@ -552,7 +552,7 @@ class Streaming(object):
                     'u2': 1 if duration else 0,
                 }
                 self.system.Breaker.insert(**param)
-                self.system.Log.debug(
+                self.system.log.debug(
                     'Event <Breaker> added for line {} at t = {} and tf = {}'.
                     format(idx, time, tf))
 
@@ -562,7 +562,7 @@ class Streaming(object):
 
     def sync_and_handle(self):
         """Sync until the queue is empty"""
-        if not self.system.Settings.dime_enable:
+        if not self.system.config.dime_enable:
             return
         current_devices = self.dimec.get_devices()
 
@@ -597,7 +597,7 @@ class Streaming(object):
                 self.handle_event(var_value)
 
             else:
-                self.system.Log.warning(
+                self.system.log.warning(
                     'Synced variable {} not handled'.format(var_name))
 
     def vars_to_pmu(self):
@@ -606,7 +606,7 @@ class Streaming(object):
         in the variable `pmudata`
 
         """
-        if not self.system.Settings.dime_enable:
+        if not self.system.config.dime_enable:
             return
         if not self.has_pmu:
             return
@@ -630,7 +630,7 @@ class Streaming(object):
 
         :return: None
         """
-        if not self.system.Settings.dime_enable:
+        if not self.system.config.dime_enable:
             return
 
         for mod in self.ModuleInfo.keys():
@@ -659,7 +659,7 @@ class Streaming(object):
                 'accurate': array(values).T,
             }
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
-            # self.system.Log.debug('Varvgs sent to <{}>'.format(mod))
+            # self.system.log.debug('Varvgs sent to <{}>'.format(mod))
 
     def finalize(self):
         """
@@ -667,7 +667,7 @@ class Streaming(object):
 
         :return: None
         """
-        if not self.system.Settings.dime_enable:
+        if not self.system.config.dime_enable:
             return
 
         self.system.Streaming.dimec.broadcast('DONE', 1)

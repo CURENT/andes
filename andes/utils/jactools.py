@@ -18,5 +18,5 @@ def diag0(jac, name, system):
     if len(names) > 0:
         for i, j in zip(pos, names):
             pairs += '{0}: {1}\n'.format(i, j)
-        system.Log.debug('Jacobian diagonal check:')
-        system.Log.debug(pairs)
+        system.log.debug('Jacobian diagonal check:')
+        system.log.debug(pairs)

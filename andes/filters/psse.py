@@ -48,18 +48,18 @@ def read(file, system):
             data = data.split(',')
 
             mva = float(data[1])
-            system.Settings.mva = mva
-            system.Settings.freq = float(data[5])
+            system.config.mva = mva
+            system.config.freq = float(data[5])
             version = int(data[2])
 
             if not version:
                 version = int(rawd.search(line).group(0).strip('rawd'))
             if version < 32 or version > 33:
-                system.Log.warning(
+                system.log.warning(
                     'RAW file version is not 32 or 33. Error may occur.')
             continue
         elif num == 1:  # store the case info line
-            system.Log.info(line)
+            system.log.info(line)
             continue
         elif num == 2:
             continue
@@ -322,7 +322,7 @@ def readadd(file, system):
         if i in needed:
             needed.remove(i)
 
-    system.Log.warning('Models currently unsupported: {}'.format(
+    system.log.warning('Models currently unsupported: {}'.format(
         ', '.join(needed)))
 
     return retval
@@ -549,7 +549,7 @@ def add_dyn(system, model, data):
         system.PSS2.elem_add(**param)
 
     else:
-        system.Log.warning('Skipping unsupported model <{}> on bus {}'.format(
+        system.log.warning('Skipping unsupported model <{}> on bus {}'.format(
             model, data[0]))
 
 

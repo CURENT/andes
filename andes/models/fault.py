@@ -70,7 +70,7 @@ class Fault(ModelBase):
 
         for i in range(self.n):
             if self.tf[i] == self.time:
-                self.system.Log.info(
+                self.system.log.info(
                     ' <Fault> Applying fault on Bus <{}> at t={}.'.format(
                         self.bus[i], self.tf[i]))
                 self.u[i] = 1
@@ -80,7 +80,7 @@ class Fault(ModelBase):
                 self.system.DAE.factorize = True
 
             elif self.tc[i] == self.time:
-                self.system.Log.info(
+                self.system.log.info(
                     ' <Fault> Clearing fault on Bus <{}> at t={}.'.format(
                         self.bus[i], self.tc[i]))
                 self.u[i] = 0

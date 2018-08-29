@@ -80,7 +80,7 @@ class Logger(object):
         # For use with ANDES PowerSystem class
         if system:
             self.pid = system.pid
-            lvl = system.Settings.verbose
+            lvl = system.config.verbose
         else:
             self.pid = 0
             lvl = DEBUG

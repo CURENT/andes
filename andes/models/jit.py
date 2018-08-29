@@ -26,14 +26,14 @@ class JIT(object):
             self.system.DevMan.register_device(
                 self.name)  # register device after loading
             self.loaded = 1
-            self.system.Log.debug('Imported model <{:s}.{:s}>.'.format(
+            self.system.log.debug('Imported model <{:s}.{:s}>.'.format(
                 self.model, self.device))
         except ImportError:
-            self.system.Log.error(
+            self.system.log.error(
                 'non-JIT model <{:s}.{:s}> import error'
                 .format(self.model, self.device))
         except AttributeError:
-            self.system.Log.error(
+            self.system.log.error(
                 'model <{:s}.{:s}> not exist. Check models/__init__.py'
                 .format(self.model, self.device))
 
@@ -43,7 +43,7 @@ class JIT(object):
         if attr in self.system.__dict__[self.name].__dict__:
             return self.system.__dict__[self.name].__dict__[attr]
         else:
-            self.system.Log.warning(
+            self.system.log.warning(
                 'Instance <{:s}> does not have <{:s}> attribute.'.format(
                     self.name, attr))
 

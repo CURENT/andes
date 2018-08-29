@@ -181,7 +181,7 @@ class SynBase(ModelBase):
         return e1q
 
     def fcall(self, dae):
-        dae.f[self.delta] = mul(self.u, self.system.Settings.wb,
+        dae.f[self.delta] = mul(self.u, self.system.config.wb,
                                 dae.x[self.omega] - 1)
 
     def jac0(self, dae):
@@ -195,7 +195,7 @@ class SynBase(ModelBase):
         dae.add_jac(Gy0, 1.0, self.vf, self.vf)
 
         dae.add_jac(Fx0, 1e-6, self.delta, self.delta)
-        dae.add_jac(Fx0, mul(self.u, self.system.Settings.wb), self.delta,
+        dae.add_jac(Fx0, mul(self.u, self.system.config.wb), self.delta,
                     self.omega)
 
     def gycall(self, dae):
@@ -495,7 +495,7 @@ class Flux2(object):
         dae.x[self.psid] = mul(self.ra, dae.y[self.Iq]) + dae.y[self.vq]
 
     def fcall(self, dae):
-        wn = mul(self.system.Settings.wb, self.u)
+        wn = mul(self.system.config.wb, self.u)
         dae.f[self.psid] = mul(
             wn,
             mul(self.ra, dae.y[self.Id]) + mul(
@@ -506,7 +506,7 @@ class Flux2(object):
                 dae.x[self.omega], dae.x[self.psid]) + dae.y[self.vq])
 
     def fxcall(self, dae):
-        wn = mul(self.system.Settings.wb, self.u)
+        wn = mul(self.system.config.wb, self.u)
         dae.add_jac(Fy, mul(wn, self.ra), self.psid, self.Id)
         dae.add_jac(Fx, mul(wn, dae.x[self.omega]), self.psid, self.psiq)
         dae.add_jac(Fx, mul(wn, dae.x[self.psiq]), self.psid, self.omega)
@@ -516,7 +516,7 @@ class Flux2(object):
         dae.add_jac(Fx, -mul(wn, dae.x[self.psid]), self.psiq, self.omega)
 
     def jac0(self, dae):
-        wn = mul(self.system.Settings.wb, self.u)
+        wn = mul(self.system.config.wb, self.u)
         dae.add_jac(Fy0, wn, self.psid, self.vd)
 
         dae.add_jac(Fy0, wn, self.psiq, self.vq)

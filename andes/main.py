@@ -38,6 +38,46 @@ from .routines import powerflow, timedomain, eigenanalysis
 
 # from .routines.fakemodule import EAGC
 
+import logging
+
+
+def config_logger(name='andes', logfile='andes.log', stream=True):
+    """
+    Configure a logger for the andes package
+
+    Parameters
+    ----------
+    name: str
+        base logger name, ``andes`` by default
+    logfile
+        logger file name
+
+    Returns
+    -------
+    None
+
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    # logging formatter
+    fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    sh_formatter = logging.Formatter('%(message)s')
+
+    # file handler which logs debug messages
+    if logfile is not None:
+        fh = logging.FileHandler(logfile)
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fh_formatter)
+        logger.addHandler(fh)
+
+    # stream handler for errors
+    if stream is True:
+        sh = logging.StreamHandler()
+        sh.setLevel(logging.INFO)
+        sh.setFormatter(sh_formatter)
+        logger.addHandler(sh)
+
 
 def cli_parse(help=False):
     """command line input argument parser"""
@@ -249,7 +289,7 @@ def andeshelp(usage=None,
 
         for item in model_format:
             if item not in all_models_list:
-                ps.Log.warning('Model <{}> does not exist.'.format(item))
+                ps.log.warning('Model <{}> does not exist.'.format(item))
                 model_format.remove(item)
 
         if len(model_format) > 0:
@@ -260,18 +300,18 @@ def andeshelp(usage=None,
         model_var = model_var.split('.')
 
         if len(model_var) == 1:
-            ps.Log.error('Model and parameter not separated by dot.')
+            ps.log.error('Model and parameter not separated by dot.')
 
         elif len(model_var) > 2:
-            ps.Log.error('Model parameter not specified correctly.')
+            ps.log.error('Model parameter not specified correctly.')
 
         else:
             dev, var = model_var
             if not hasattr(ps, dev):
-                ps.Log.error('Model <{}> does not exist.'.format(dev))
+                ps.log.error('Model <{}> does not exist.'.format(dev))
             else:
                 if var not in ps.__dict__[dev]._data.keys():
-                    ps.Log.error(
+                    ps.log.error(
                         'Model <{}> does not have parameter <{}>.'.format(
                             dev, var))
                 else:
@@ -325,7 +365,7 @@ def andeshelp(usage=None,
         raise NotImplementedError
 
     if help_settings:
-        all_settings = ['Settings', 'SPF', 'TDS', 'SSSA', 'CPF']
+        all_settings = ['Config', 'SPF', 'TDS', 'SSSA', 'CPF']
 
         if help_settings.lower() == 'all':
             help_settings = all_settings
@@ -335,7 +375,7 @@ def andeshelp(usage=None,
 
             for item in help_settings:
                 if item not in all_settings:
-                    ps.Log.warning('Setting <{}> does not exist.'.format(item))
+                    ps.log.warning('Setting <{}> does not exist.'.format(item))
                     help_settings.remove(item)
 
         if len(help_settings) > 0:
@@ -422,6 +462,8 @@ def main():
     """
     Entry function
     """
+    config_logger()
+
     t0, s = elapsed()
     args = cli_parse()
     cases = []
@@ -540,7 +582,7 @@ def run(case, **kwargs):
 
     # exit without solving power flow
     if exitnow:
-        system.Log.info('Exiting before solving power flow.')
+        system.log.info('Exiting before solving power flow.')
         return
 
     # set up everything in system
@@ -549,7 +591,7 @@ def run(case, **kwargs):
     # initialize power flow study
     system.pf_init()
 
-    powerflow.run(system)
+    system.powerflow.run()
 
     # initialize variables for output even if not running TDS
     system.td_init()
@@ -578,14 +620,14 @@ def run(case, **kwargs):
         if ret and (not system.Files.no_output):
             system.VarOut.dump()
             t3, s = elapsed(t2)
-            system.Log.info('Simulation data dumped in {:s}.'.format(s))
+            system.log.info('Simulation data dumped in {:s}.'.format(s))
     elif routine == 'sssa':
         t1, s = elapsed(t0)
-        system.Log.info('')
-        system.Log.info('Eigenvalue Analysis:')
+        system.log.info('')
+        system.log.info('Eigenvalue Analysis:')
         eigenanalysis.run(system)
         t2, s = elapsed(t1)
-        system.Log.info('Analysis finished in {:s}.'.format(s))
+        system.log.info('Analysis finished in {:s}.'.format(s))
 
     # Disable profiler and output results
     if profile:
@@ -603,7 +645,7 @@ def run(case, **kwargs):
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()
-            system.Log.info('cProfile results for job{:s} written.'.format(
+            system.log.info('cProfile results for job{:s} written.'.format(
                 ' ' + str(pid) if pid >= 0 else ''))
 
     if pid >= 0:

@@ -102,7 +102,7 @@ class Turbine(object):
         self.mva_mega = 100e6
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.Settings.mva * 1e6
+        mva_mega = self.system.config.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -147,7 +147,7 @@ class Turbine(object):
 
         # wind speed initialization loop
 
-        R = 4 * pi * self.system.Settings.freq * mul(self.R, self.ngb,
+        R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
                                                      div(1, self.npole[i]))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
@@ -401,7 +401,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
     def init1(self, dae):
         self.servcall(dae)
-        mva = self.system.Settings.mva
+        mva = self.system.config.mva
         self.p0 = mul(self.p0, 1)
         self.v120 = self.v12
 
@@ -795,7 +795,7 @@ class WTG3(ModelBase):
         self.servcall(dae)
         retval = True
 
-        mva = self.system.Settings.mva
+        mva = self.system.config.mva
         self.p0 = mul(self.p0, self.gammap)
         self.q0 = mul(self.q0, self.gammaq)
 
@@ -940,7 +940,7 @@ class WTG3(ModelBase):
 
         # wind speed initialization loop
 
-        R = 4 * pi * self.system.Settings.freq * mul(self.R, self.ngb,
+        R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
                                                      div(1, self.npole[i]))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
@@ -986,7 +986,7 @@ class WTG3(ModelBase):
         return retval
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.Settings.mva * 1e6
+        mva_mega = self.system.config.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -1072,7 +1072,7 @@ class WTG3(ModelBase):
                         1, self.x0))), self.v, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        toSb = self.Sn / self.system.Settings.mva
+        toSb = self.Sn / self.system.config.mva
         omega = not0(dae.x[self.omega_m])
         dae.f[self.theta_p] = mul(
             div(1, self.Tp), -dae.x[self.theta_p] + mul(
@@ -1144,7 +1144,7 @@ class WTG3(ModelBase):
 
     def fxcall(self, dae):
         omega = not0(dae.x[self.omega_m])
-        toSb = div(self.Sn, self.system.Settings.mva)
+        toSb = div(self.Sn, self.system.config.mva)
         dae.add_jac(Gx, mul(self.x1, 1 - dae.x[self.omega_m]), self.vrd,
                     self.irq)
         dae.add_jac(

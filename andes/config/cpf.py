@@ -3,7 +3,7 @@ from ..utils.cached import cached
 
 
 class CPF(ConfigBase):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.method = 'perpendicular intersection'
         self.single_slack = False
         self.reactive_limits = False
@@ -11,6 +11,7 @@ class CPF(ConfigBase):
         self.mu_init = 1.0
         self.hopf = False
         self.step = 0.1
+        super(CPF, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):

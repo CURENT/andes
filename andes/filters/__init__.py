@@ -56,16 +56,16 @@ def guess(system):
                 true_format = item
                 break
         except ImportError:
-            system.Log.debug(
+            system.log.debug(
                 'Parser for {:s} format is not found. '
                 'Format guess will continue.'.
                 format(item))
     fid.close()
 
     if true_format:
-        system.Log.debug('Input format guessed as {:s}.'.format(true_format))
+        system.log.debug('Input format guessed as {:s}.'.format(true_format))
     else:
-        system.Log.error('Unable to determine case format.')
+        system.log.error('Unable to determine case format.')
 
     files.input_format = true_format
 
@@ -94,7 +94,7 @@ def parse(system):
     add_format = system.Files.add_format
     # exit when no input format is given
     if not input_format:
-        system.Log.error(
+        system.log.error(
             'No input format found. Specify or guess a format before parsing.')
         return False
 
@@ -105,16 +105,16 @@ def parse(system):
         if add_format:
             addparser = importlib.import_module('.' + add_format, __name__)
     except ImportError:
-        system.Log.error(
+        system.log.error(
             'Parser for {:s} format not found. Program will exit.'.format(
                 input_format))
         return False
 
     # try parsing the base case file
-    system.Log.info('Parsing input file {:s}.'.format(system.Files.fullname))
+    system.log.info('Parsing input file {:s}.'.format(system.Files.fullname))
 
     if not parser.read(system.Files.case, system):
-        system.Log.error(
+        system.log.error(
             'Error parsing case file {:s} with {:s} format parser.'.format(
                 system.Files.fullname, input_format))
         return False
@@ -122,28 +122,28 @@ def parse(system):
     # Try parsing the addfile
     if system.Files.addfile:
         if not system.Files.add_format:
-            system.Log.error('Unknown addfile format.')
+            system.log.error('Unknown addfile format.')
             return
-        system.Log.info('Parsing additional file {:s}.'.format(
+        system.log.info('Parsing additional file {:s}.'.format(
             system.Files.addfile))
         if not addparser.readadd(system.Files.addfile, system):
-            system.Log.error(
+            system.log.error(
                 'Error parsing addfile {:s} with {:s} format parser.'.format(
                     system.Files.addfile, input_format))
             return False
 
     # Try parsing the dynfile with dm filter
     if system.Files.dynfile:
-        system.Log.info('Parsing input file {:s}.'.format(
+        system.log.info('Parsing input file {:s}.'.format(
             system.Files.dynfile))
         if not dmparser.read(system.Files.dynfile, system):
-            system.Log.error(
+            system.log.error(
                 'Error parsing dynfile {:s} with dm format parser.'.format(
                     system.Files.dynfile))
             return False
 
     _, s = elapsed(t)
-    system.Log.info('Case file {:s} parsed in {:s}.'.format(
+    system.log.info('Case file {:s} parsed in {:s}.'.format(
         system.Files.fullname, s))
 
     return True
@@ -159,7 +159,7 @@ def dump_raw(system):
 
     _, s = elapsed(t)
     if ret:
-        system.Log.info('Raw file dump {:s} written in {:s}.'.format(
+        system.log.info('Raw file dump {:s} written in {:s}.'.format(
             system.Files.dump_raw, s))
     else:
-        system.Log.error('Dump raw file failed.')
+        system.log.error('Dump raw file failed.')

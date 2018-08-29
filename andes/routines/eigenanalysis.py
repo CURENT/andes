@@ -150,12 +150,12 @@ def dump_results(system, mu, partfact):
             data.append(pf[start:end])
 
     dump_data(text, header, rowname, data, system.Files.eig)
-    system.Log.info('Report saved.')
+    system.log.info('Report saved.')
 
 
 def run(system):
     if system.status['pf_solved'] is False:
-        system.Log.warning(
+        system.log.warning(
             'Power flow not solved. Eigenvalue analysis will not continue.')
         return True
 
@@ -164,7 +164,7 @@ def run(system):
 
     As = state_matrix(system)
     if not As:
-        system.Log.info(
+        system.log.info(
             'No dynamic model loaded. Eivgenvalue analysis will not continue.')
         return False
     else:
@@ -188,11 +188,11 @@ def run(system):
                 n_mu_imag.append(im)
 
         if len(p_mu_real) > 0:
-            system.Log.warning(
+            system.log.warning(
                 'System is not stable due to {} positive eigenvalues.'.format(
                     len(p_mu_real)))
         else:
-            system.Log.info(
+            system.log.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
         if system.SSSA.plot:

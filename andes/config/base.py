@@ -7,6 +7,12 @@ from ..utils.tab import Tab
 
 class ConfigBase(object):
     """base setting class"""
+    def __init__(self, rc=None, **kwargs):
+
+        if rc is not None:
+            self.load_rc(rc)
+
+        self.check()
 
     def get_value(self, option):
         """
@@ -101,7 +107,7 @@ class ConfigBase(object):
         with open(path, mode=mode) as f:
             f.write('\n'.join(out))
 
-    def load_config(self, rc):
+    def load_rc(self, rc):
         """
         Load configurations from an rc file
 
@@ -119,7 +125,7 @@ class ConfigBase(object):
         ret = False
 
         if not os.path.isfile(rc):
-            self.system.Log.warning(
+            self.system.log.warning(
                 'Config file {} does not exist.'.format(rc))
             return ret
 
@@ -152,6 +158,15 @@ class ConfigBase(object):
                                 val, section, key))
                 self.__dict__[section].__dict__.update({key: val})
 
+    def check(self):
+        """
+        Check for consistency
+        Returns
+        -------
+        bool
+            True for pass, False for fail
+        """
+        return True
     @cached
     def config_descr(self):
         descriptions = {}

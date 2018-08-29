@@ -21,8 +21,11 @@ import importlib
 from operator import itemgetter
 from logging import INFO
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .config import Settings, SPF, TDS, CPF, SSSA
-from .utils import Logger, elapsed
+from .config import Config, SPF, TDS, CPF, SSSA
+# from .utils import Logger, elapsed
+from .utils import elapsed
+import logging
+
 from .models import non_jits, jits, JIT
 from .consts import rad2deg
 
@@ -31,6 +34,8 @@ try:
     STREAMING = True
 except ImportError:
     STREAMING = False
+
+from .routines.pflow import PowerFlow
 
 
 class PowerSystem(object):
@@ -80,7 +85,7 @@ class PowerSystem(object):
                              dynfile, log, dump_raw, output_format, output,
                              gis, **kwargs)
 
-        self.Settings = Settings()
+        self.config = Config()
         self.SPF = SPF()
         self.CPF = CPF()
         self.TDS = TDS()
@@ -88,8 +93,8 @@ class PowerSystem(object):
 
         if settings:
             self.load_settings(self.Files)
-        self.Settings.verbose = verbose
-        self.Log = Logger(self)
+        self.config.verbose = verbose
+        self.log = logging.getLogger(__name__)
 
         self.DevMan = DevMan(self)
         self.Call = Call(self)
@@ -105,18 +110,21 @@ class PowerSystem(object):
         }
 
         if dime:
-            self.Settings.dime_enable = True
-            self.Settings.dime_server = dime
+            self.config.dime_enable = True
+            self.config.dime_server = dime
         if tf:
             self.TDS.tf = tf
 
         if not STREAMING:
             self.Streaming = None
-            self.Settings.dime_enable = False
+            self.config.dime_enable = False
         else:
             self.Streaming = Streaming(self)
 
         self.model_import()
+
+        # import routines
+        self.powerflow = PowerFlow(self)
 
     def setup(self):
         """
@@ -140,7 +148,7 @@ class PowerSystem(object):
         :return: None
         """
 
-        if self.Settings.base:
+        if self.config.base:
             for item in self.DevMan.devices:
                 self.__dict__[item].data_to_sys_base()
 
@@ -244,7 +252,7 @@ class PowerSystem(object):
         self.check_islands(show_info=True)
 
         t, s = elapsed(t)
-        self.Log.info('Power flow initialized in {:s}.\n'.format(s))
+        self.log.info('Power flow initialized in {:s}.\n'.format(s))
 
         return self
 
@@ -254,7 +262,7 @@ class PowerSystem(object):
 
         :return: success flag
         """
-        if self.status['pf_solved'] is False:
+        if self.powerflow.solved is False:
             return False
 
         t, s = elapsed()
@@ -277,9 +285,9 @@ class PowerSystem(object):
         t, s = elapsed(t)
 
         if self.DAE.n:
-            self.Log.info('Dynamic models initialized in {:s}.'.format(s))
+            self.log.info('Dynamic models initialized in {:s}.'.format(s))
         else:
-            self.Log.info('No dynamic model loaded.')
+            self.log.info('No dynamic model loaded.')
 
         return self
 
@@ -339,7 +347,7 @@ class PowerSystem(object):
 
         :return: None
         """
-        self.Log.debug('Loaded specified settings file.')
+        self.log.debug('Loaded specified settings file.')
         raise NotImplementedError
 
     def check_islands(self, show_info=False):
@@ -349,7 +357,7 @@ class PowerSystem(object):
         :return: None
         """
         if not hasattr(self, 'Line'):
-            self.Log.error('<Line> device not found.')
+            self.log.error('<Line> device not found.')
             return
         self.Line.connectivity(self.Bus)
 
@@ -357,9 +365,9 @@ class PowerSystem(object):
 
             if len(self.Bus.islanded_buses) == 0 and len(
                     self.Bus.island_sets) == 0:
-                self.Log.info('System is interconnected.')
+                self.log.info('System is interconnected.')
             else:
-                self.Log.info(
+                self.log.info(
                     'System contains {:d} islands and {:d} islanded buses.'.
                     format(
                         len(self.Bus.island_sets),
@@ -378,15 +386,15 @@ class PowerSystem(object):
                     msw_island.append(idx)
 
             if nosw_island:
-                self.Log.warning(
+                self.log.warning(
                     'Slack bus is not defined for {:g} island(s).'.format(
                         len(nosw_island)))
             if msw_island:
-                self.Log.warning(
+                self.log.warning(
                     'Multiple slack buses are defined for {:g} island(s).'.
                     format(len(nosw_island)))
             else:
-                self.Log.info(
+                self.log.info(
                     'Each island has a slack bus correctly defined.'.format(
                         nosw_island))
 
@@ -394,8 +402,8 @@ class PowerSystem(object):
         """
         get ac bus data from solved power flow
         """
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting bus data.')
+        if self.powerflow.solved is False:
+            self.log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Bus.idx
         names = self.Bus.name
@@ -418,8 +426,8 @@ class PowerSystem(object):
         """
         if not self.Node.n:
             return
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting bus data.')
+        if not self.powerflow.solved:
+            self.log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
         names = self.Node.name
@@ -429,8 +437,8 @@ class PowerSystem(object):
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting line data.')
+        if not self.powerflow.solved:
+            self.log.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx
         fr = self.Line.bus1

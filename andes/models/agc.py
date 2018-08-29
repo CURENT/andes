@@ -140,7 +140,7 @@ class EAGC(ModelBase):
             if t >= self.tl[idx]:
                 if self.en[idx] == 0:
                     self.en[idx] = 1
-                    self.system.Log.info(
+                    self.system.log.info(
                         'EAGC <{}> activated at t = {:4} s'.format(idx, t))
 
     def gcall(self, dae):
