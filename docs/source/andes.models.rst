@@ -28,14 +28,6 @@ andes.models.base module
     :undoc-members:
     :show-inheritance:
 
-andes.models.blocks module
---------------------------
-
-.. automodule:: andes.models.blocks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 andes.models.breaker module
 ---------------------------
 
@@ -92,26 +84,10 @@ andes.models.governor module
     :undoc-members:
     :show-inheritance:
 
-andes.models.group module
--------------------------
-
-.. automodule:: andes.models.group
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 andes.models.jit module
 -----------------------
 
 .. automodule:: andes.models.jit
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-andes.models.library module
----------------------------
-
-.. automodule:: andes.models.library
     :members:
     :undoc-members:
     :show-inheritance:
