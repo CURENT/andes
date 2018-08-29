@@ -23,15 +23,17 @@ for filename in glob.glob('*.dat'):
                 frequency[idx,idx_2]=ddc[freq_idx]
             for idx_3, vol_idx in enumerate(range(3981, 4976)):
                 voltage[idx, idx_3] = ddc[vol_idx]
-            df=pd.DataFrame(voltage)
-            df.to_csv('%s_voltage.csv' % filename)
-            df=pd.DataFrame(frequency)
-            df.to_csv('%s_frequency.csv' % filename)
-            output_file=open('%s.csv' % filename,'w')
-            with output_file:
-                writer = csv.writer(output_file)
-                writer.writerows()
-            print('pp')
+    voltage=np.concatenate((time,voltage),axis=1)
+    frequency=np.concatenate((time,frequency),axis=1)
+    df=pd.DataFrame(voltage)
+    df.to_csv('%s_voltage.csv' % filename,index=False)
+    df=pd.DataFrame(frequency)
+    df.to_csv('%s_frequency.csv' % filename,index=False)
+    # output_file=open('%s.csv' % filename,'w')
+    # with output_file:
+    #     writer = csv.writer(output_file)
+    #     writer.writerows(time)
+    print('pp')
                 # frequency(idx).append(ddc[bus_idx])
                 # bus_idx.append(idx)
                 # voltage(idx).append(ddc[])
