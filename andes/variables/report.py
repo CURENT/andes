@@ -17,7 +17,7 @@ def preamble(disable=False):
         return ''
 
     message = '\n'
-    message += 'ANDES ' + version + '\n'
+    message += 'ANDES ' + version[:5] + ' Build ' + version[-8:] + '\n'
     message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n'
     message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n\n'
     message += 'Platform:    ' + platform.system() + '\n'

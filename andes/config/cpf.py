@@ -1,8 +1,8 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..utils.cached import cached
 
 
-class CPF(SettingsBase):
+class CPF(ConfigBase):
     def __init__(self):
         self.method = 'perpendicular intersection'
         self.single_slack = False
@@ -13,7 +13,7 @@ class CPF(SettingsBase):
         self.step = 0.1
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {
             'method': 'method for CPF routine analysis',
             'single_slack': 'use single slack bus mode',

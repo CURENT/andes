@@ -1,9 +1,9 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..consts import INFO, pi
 from ..utils.cached import cached
 
 
-class Settings(SettingsBase):
+class Settings(ConfigBase):
     def __init__(self):
         self.verbose = INFO
         self.verbose_alt = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
@@ -37,7 +37,7 @@ class Settings(SettingsBase):
         return 2 * pi * self.freq
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {
             'verbose': 'program logging level',
             'freq': 'system base frequency',

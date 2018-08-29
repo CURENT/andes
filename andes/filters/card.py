@@ -546,7 +546,7 @@ def run(system,
     meta_dict_upd = {
         'data': data,
         'units': units,
-        'descr': descr,
+        'config_descr': descr,
         'ac': ac,
         'dc': dc,
         # 'ctrl': ctrl,

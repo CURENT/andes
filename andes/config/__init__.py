@@ -1,4 +1,4 @@
-from .base import SettingsBase  # NOQA
+from .base import ConfigBase  # NOQA
 from .settings import Settings  # NOQA
 from .spf import SPF  # NOQA
 from .cpf import CPF  # NOQA

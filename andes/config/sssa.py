@@ -1,8 +1,8 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..utils.cached import cached
 
 
-class SSSA(SettingsBase):
+class SSSA(ConfigBase):
     def __init__(self):
         self.neig = 1
         self.method = 1
@@ -14,6 +14,6 @@ class SSSA(SettingsBase):
         self.plot = True
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {}
         return descriptions

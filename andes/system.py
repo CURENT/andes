@@ -79,11 +79,13 @@ class PowerSystem(object):
         self.Files = FileMan(case, input_format, addfile, settings, no_output,
                              dynfile, log, dump_raw, output_format, output,
                              gis, **kwargs)
+
         self.Settings = Settings()
         self.SPF = SPF()
         self.CPF = CPF()
         self.TDS = TDS()
         self.SSSA = SSSA()
+
         if settings:
             self.load_settings(self.Files)
         self.Settings.verbose = verbose

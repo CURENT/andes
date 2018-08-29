@@ -5,7 +5,7 @@ from ..utils.cached import cached
 from ..utils.tab import Tab
 
 
-class SettingsBase(object):
+class ConfigBase(object):
     """base setting class"""
 
     def get_value(self, option):
@@ -55,15 +55,15 @@ class SettingsBase(object):
         title = 'Setting <{:s}>'.format(self.__class__.__name__)
         table = Tab(export=export, title=title)
 
-        for opt in sorted(self.descr):
+        for opt in sorted(self.config_descr):
             if hasattr(self, opt):
                 c1 = opt
-                c2 = self.descr[opt]
+                c2 = self.config_descr[opt]
                 c3 = self.__dict__.get(opt, '')
                 c4 = self.get_alt(opt)
                 rows.append([c1, c2, c3, c4])
             else:
-                print('Setting {:s} has no {:s} option. Correct in descr.'.
+                print('Setting {:s} has no {:s} option. Correct in config_descr.'.
                       format(self.__class__.__name__, opt))
 
         table.add_rows(rows, header=False)
@@ -153,6 +153,6 @@ class SettingsBase(object):
                 self.__dict__[section].__dict__.update({key: val})
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {}
         return descriptions

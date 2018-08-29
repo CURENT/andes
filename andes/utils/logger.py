@@ -33,14 +33,6 @@ import traceback
 
 from logging import DEBUG, WARNING, ERROR, INFO, CRITICAL
 
-mapping = {
-    INFO: 'info',
-    DEBUG: 'debug',
-    WARNING: 'warning',
-    ERROR: 'error',
-    CRITICAL: 'always'
-}
-
 
 class Logger(object):
     """

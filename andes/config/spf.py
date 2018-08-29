@@ -1,8 +1,8 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..utils.cached import cached
 
 
-class SPF(SettingsBase):
+class SPF(ConfigBase):
     def __init__(self):
         self.flatstart = False
         self.maxit = 100
@@ -23,7 +23,7 @@ class SPF(SettingsBase):
         self.usedegree = True
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {
             'flatstart': 'flat start for power flow problem',
             'maxit': 'the maximum iteration number',

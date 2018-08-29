@@ -1,8 +1,8 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..utils.cached import cached
 
 
-class TDS(SettingsBase):
+class TDS(ConfigBase):
     def __init__(self):
         self.fixt = True
         self.tstep = 1 / 30
@@ -28,7 +28,7 @@ class TDS(SettingsBase):
         }
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {
             'fixt':
             'use fixed time step size',

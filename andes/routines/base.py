@@ -10,7 +10,21 @@ class RoutineBase(object):
         """
         Entry function for power flow routine
 
-        :return: success flag
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Success flag
         """
-        pass
+
+        raise(NotImplementedError, 'Must be overloaded by routines')
+
+    def report(self):
+        """
+        Format report from the results
+
+        Returns
+        -------
+        str
+            Output string
+        """
+        raise(NotImplementedError, 'Must be overloaded by routines')
