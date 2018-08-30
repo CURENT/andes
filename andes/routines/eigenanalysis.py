@@ -23,6 +23,7 @@ try:
 except ImportError:
     SLEPC = False
 
+__cli__ = 'eig'
 
 def state_matrix(system):
     """Return state matrix"""

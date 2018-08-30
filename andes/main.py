@@ -25,7 +25,10 @@ import glob
 import io
 import pstats
 import cProfile
-from time import sleep
+import platform
+from time import sleep, strftime
+import pprint
+
 from multiprocessing import Process
 from argparse import ArgumentParser
 
@@ -33,8 +36,8 @@ from . import filters
 from .consts import ERROR
 from .system import PowerSystem
 from .utils import elapsed
-from .variables import preamble
 from .routines import timedomain, eigenanalysis
+from . import routines
 
 # from .routines.fakemodule import EAGC
 
@@ -42,7 +45,7 @@ import logging
 logger = None
 
 
-def config_logger(name='andes', logfile='andes.log', stream=True):
+def config_logger(name='andes', logfile='andes.log', stream=True, stream_level=logging.INFO):
     """
     Configure a logger for the andes package
 
@@ -75,177 +78,124 @@ def config_logger(name='andes', logfile='andes.log', stream=True):
     # stream handler for errors
     if stream is True:
         sh = logging.StreamHandler()
-        sh.setLevel(logging.INFO)
+        sh.setLevel(stream_level)
         sh.setFormatter(sh_formatter)
         logger.addHandler(sh)
 
     globals()['logger'] = logger
 
 
-def cli_parse(help=False):
-    """command line input argument parser"""
+def preamble():
+    """
+    Log Andes preamble at the ``INFO`` level
 
-    parser = ArgumentParser(prog='andes')
-    parser.add_argument(
-        'casename', nargs='*', default=[], help='Case file name.')
+    Returns
+    -------
+    None
+    """
+    from . import __version__ as version
+    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'.format(ver=version[:5], b=version[-8:],
+                                                                     p=platform.python_version(),
+                                                                     os=platform.system()))
 
-    # program general options
-    parser.add_argument(
-        '-x',
-        '--exit',
-        help='Exit before solving the power flow. Enable this option to '
-        'use andes ad a file format converter.',
-        action='store_true')
-    parser.add_argument(
-        '--no_preamble', action='store_true', help='Hide preamble')
-    parser.add_argument(
-        '--license', action='store_true', help='Display MIT license and exit.')
-    parser.add_argument(
-        '--version',
-        action='store_true',
-        help='Print current andes version and exit.')
-    parser.add_argument(
-        '--warranty',
-        action='store_true',
-        help='Print warranty info and exit.')
-    parser.add_argument(
-        '--what',
-        action='store_true',
-        help='Show me something and exit',
-        default=None)
-    parser.add_argument(
-        '-n',
-        '--no_output',
-        help='Force not to write any output, including log,'
-        'outputs and simulation dumps',
-        action='store_true')
-    parser.add_argument(
-        '--profile', action='store_true', help='Enable Python profiler.')
-    parser.add_argument(
-        '--dime', help='Speficy DiME streaming server address and port.')
-    parser.add_argument(
-        '--tf', help='End time of time-domain simulation.', type=float)
-    parser.add_argument('-l', '--log', help='Specify the name of log file.')
-    parser.add_argument(
-        '-d',
-        '--dat',
-        help='Specify the name of file to save simulation results.')
-    parser.add_argument(
-        '--ncpu', help='number of parallel processes', type=int, default=0)
-    parser.add_argument(
-        '-v',
-        '--verbose',
-        help='Program logging level, an integer from 1 to 5.'
-        'The level corresponding to TODO=0, DEBUG=10, INFO=20, WARNING=30,'
-        'ERROR=40, CRITICAL=50, ALWAYS=60. The default verbose level is 20.',
-        type=int)
-    parser.add_argument(
-        '--conf',
-        help='Edit routine config',
-        type=str,
-        choices=('general', 'spf', 'tds', 'cpf', 'sssa'))
+    logger.info('Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p"))
+    logger.info('')
 
-    # file and format related
-    parser.add_argument(
-        '-c',
-        '--clean',
-        help='Clean output files and exit.',
-        action='store_true')
-    parser.add_argument('-p', '--path', help='Path to case files', default='')
-    parser.add_argument(
-        '-P', '--pert', help='Path to perturbation file', default='')
-    parser.add_argument(
-        '-s',
-        '--settings',
-        help='Specify a setting file. This will take precedence of .andesrc '
-        'file in the home directory.')
-    parser.add_argument(
-        '-i', '--input_format', help='Specify input case file format.')
-    parser.add_argument(
-        '-o',
-        '--output_format',
-        help='Specify output case file format. For example txt, latex.')
-    parser.add_argument(
-        '-O',
-        '--output',
-        help='Specify the output file name. For different routines the same '
-        'name as the case file with proper suffix and extension wil be given.')
-    parser.add_argument(
-        '-a',
-        '--addfile',
-        help='Include additional files used by some formats.')
-    parser.add_argument(
-        '-D',
-        '--dynfile',
-        help='Include an additional dynamic file in dm format.')
-    parser.add_argument('-J', '--gis', help='JML format GIS file.')
-    parser.add_argument(
-        '-m',
-        '--map',
-        help='Visualize power flow results on GIS. Neglected if no GIS '
-        'file is given. ')
-    parser.add_argument(
-        '-e', '--dump_raw', help='Dump RAW format case file.'
-    )  # consider being used as batch converter
-    parser.add_argument(
-        '-Y',
-        '--summary',
-        help='Show summary and statistics of the data case.',
-        action='store_true')
 
-    # Solver Options
-    parser.add_argument(
-        '-r',
-        '--routine',
-        help='Routine after power flow solution: t[TD], c[CPF], s[SS], o[OPF].'
-    )
-    parser.add_argument(
-        '-j',
-        '--checkjacs',
-        help='Check analytical Jacobian using numerical differentation.')
+def cli_new(help=False):
+    """
+    Command line argument parser
+    Parameters
+    ----------
+    help: bool
+        Return argparse help in a string
+
+    Returns
+    -------
+    None (str)
+
+    """
+    parser = ArgumentParser()
+    parser.add_argument('filename', help='Case file name', nargs='*')
+
+    # general options
+    general_group = parser.add_argument_group('General options')
+    general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='?',
+                        default='info')
+    general_group.add_argument('--conf', choices=routines.__cli__ + ['system'],
+                               help='Edit configuration', default='system')
+    general_group.add_argument('--license', action='store_true', help='Display software license')
+
+    # I/O
+    io_group = parser.add_argument_group('I/O options', 'Optional arguments for managing I/Os')
+    io_group.add_argument('-p', '--path', help='Path to case files', type=str, default='')
+    io_group.add_argument('-a', '--addfile', help='Additional files used by some formats.')
+    io_group.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')
+    io_group.add_argument('-P', '--pert', help='Perturbation file path', default='')
+    io_group.add_argument('-d', '--dump-raw', help='Dump RAW format case file.')
+    io_group.add_argument('-n', '--no_output', help='Force no output of any kind',
+                          action='store_true')
+    io_group.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
     # helps and documentations
-    parser.add_argument(
-        '-u', '--usage', help='Write command line usage', action='store_true')
-    parser.add_argument('-E', '--export', help='Export file format')
-    parser.add_argument(
-        '-C',
+    group_help = parser.add_argument_group('Help and documentation',
+                                           'Optional arguments for usage, model and config documentation')
+    group_help.add_argument(
+        '-G', '--group', help='Show the models in the group.')
+    group_help.add_argument(
+        '-q', '--quick-help', help='Show a quick help of model format.')
+    group_help.add_argument(
+        '-c',
         '--category',
-        help='Dump device names belonging to the specified category.')
-    parser.add_argument(
-        '-L',
-        '--model_list',
-        help='Dump the list of all supported model.',
+        help='Show model names in the given category.')
+    group_help.add_argument(
+        '-l',
+        '--model-list',
+        help='Show a full list of all models.',
         action='store_true')
-    parser.add_argument(
+    group_help.add_argument(
         '-f',
-        '--model_format',
-        help='Dump the format definition of specified devices,'
-        ' separated by comma.')
-    parser.add_argument(
+        '--model-format',
+        help='Show the format definition of models.', nargs='*', default=[])
+    group_help.add_argument(
         '-Q',
-        '--model_var',
-        help='Dump the variables of specified devices given by <DEV.VAR>.')
-    parser.add_argument(
-        '-g', '--group', help='Dump all the devices in the specified group.')
-    parser.add_argument(
-        '-q', '--quick_help', help='Print a quick help of the device.')
-    parser.add_argument(
-        '--help_option', help='Print a quick help of a setting parameter')
-    parser.add_argument(
-        '--help_settings',
-        help='Print a quick help of a given setting class. Use ALL'
-        'for all setting classes.')
-    parser.add_argument(
-        '-S',
+        '--model-var',
+        help='Show the definition of variables <MODEL.VAR>.')
+    group_help.add_argument(
+        '--config-option', help='Show a quick help of a config option <CONFIG.OPTION>')
+    group_help.add_argument(
+        '--help-config',
+        help='Show help of the <CONFIG> class. Use ALL for all configs.')
+    group_help.add_argument(
+        '-s',
         '--search',
-        help='Search devices that match the given expression.')
+        help='Search for models that match the pattern.')
 
-    if help is True:
-        return parser.format_help()
-    else:
-        args = parser.parse_args()
-        return args
+    # simulation control
+    sim_options = parser.add_argument_group('Simulation control options',
+                                            'Overwrites the simulation configs')
+    sim_options.add_argument(
+        '--dime', help='Specify DiME streaming server address and port')
+    sim_options.add_argument(
+        '--tf', help='End time of time-domain simulation', type=float)
+
+    # developer options
+    dev_group = parser.add_argument_group('Developer options', 'Options for developer debugging')
+    dev_group.add_argument(
+        '-v',
+        '--verbose',
+        help='Program logging level.'
+        'Available levels are 10-DEBUG, 20-INFO, 30-WARNING, '
+        '40-ERROR or 50-CRITICAL. The default level is 20-INFO',
+        type=int, default=20, choices=(10, 20, 30, 40, 50))
+    dev_group.add_argument(
+        '--profile', action='store_true', help='Enable Python cProfiler')
+    dev_group.add_argument(
+        '--ncpu', help='Number of parallel processes', type=int, default=0)
+
+    args = parser.parse_args()
+
+    return args
 
 
 def andeshelp(usage=None,
@@ -273,16 +223,13 @@ def andeshelp(usage=None,
 
     from .models import all_models_list
 
-    ps = PowerSystem()
-
-    if usage:
-        out.append(cli_parse(help=True))
-
     if category:
         raise NotImplementedError
 
     if model_list:
         raise NotImplementedError
+
+    system = PowerSystem()
 
     if model_format:
         if model_format.lower() == 'all':
@@ -292,35 +239,35 @@ def andeshelp(usage=None,
 
         for item in model_format:
             if item not in all_models_list:
-                ps.log.warning('Model <{}> does not exist.'.format(item))
+                logger.warning('Model <{}> does not exist.'.format(item))
                 model_format.remove(item)
 
         if len(model_format) > 0:
             for item in model_format:
-                out.append(ps.__dict__[item].doc(export=export))
+                out.append(system.__dict__[item].doc(export=export))
 
     if model_var:
         model_var = model_var.split('.')
 
         if len(model_var) == 1:
-            ps.log.error('Model and parameter not separated by dot.')
+            logger.error('Model and parameter not separated by dot.')
 
         elif len(model_var) > 2:
-            ps.log.error('Model parameter not specified correctly.')
+            logger.error('Model parameter not specified correctly.')
 
         else:
             dev, var = model_var
-            if not hasattr(ps, dev):
-                ps.log.error('Model <{}> does not exist.'.format(dev))
+            if not hasattr(system, dev):
+                logger.error('Model <{}> does not exist.'.format(dev))
             else:
-                if var not in ps.__dict__[dev]._data.keys():
-                    ps.log.error(
+                if var not in system.__dict__[dev]._data.keys():
+                    logger.error(
                         'Model <{}> does not have parameter <{}>.'.format(
                             dev, var))
                 else:
-                    c1 = ps.__dict__[dev]._descr.get(var, 'No Description')
-                    c2 = ps.__dict__[dev]._data.get(var)
-                    c3 = ps.__dict__[dev]._units.get(var, 'No Unit')
+                    c1 = system.__dict__[dev]._descr.get(var, 'No Description')
+                    c2 = system.__dict__[dev]._data.get(var)
+                    c3 = system.__dict__[dev]._units.get(var, 'No Unit')
                     out.append('{}: {}, default = {:g} {}'.format(
                         '.'.join(model_var), c1, c2, c3))
 
@@ -328,7 +275,7 @@ def andeshelp(usage=None,
         group_dict = {}
 
         for model in all_models_list:
-            g = ps.__dict__[model]._group
+            g = system.__dict__[model]._group
             if g not in group_dict:
                 group_dict[g] = []
             group_dict[g].append(model)
@@ -362,7 +309,7 @@ def andeshelp(usage=None,
         if quick_help not in all_models_list:
             sys.stdout.write('Model <{}> does not exist.'.format(quick_help))
         else:
-            out.append(ps.__dict__[quick_help].doc(export=export))
+            out.append(system.__dict__[quick_help].doc(export=export))
 
     if help_option:
         raise NotImplementedError
@@ -378,32 +325,32 @@ def andeshelp(usage=None,
 
             for item in help_settings:
                 if item not in all_settings:
-                    ps.log.warning('Setting <{}> does not exist.'.format(item))
+                    logger.warning('Setting <{}> does not exist.'.format(item))
                     help_settings.remove(item)
 
         if len(help_settings) > 0:
             for item in help_settings:
-                out.append(ps.__dict__[item].doc(export=export))
+                out.append(system.__dict__[item].doc(export=export))
 
-    file = sys.stdout if save is None else save
-    print('\n'.join(out), file=file)  # NOQA
+    logger.info('\n'.join(out))  # NOQA
 
     return True
 
 
-def edit_conf(conf):
+def edit_conf(conf, **kwargs):
     """
     Edit Andes routine configuration
 
     :param conf: name of the routine
     :return: succeed flag
     """
-    raise NotImplementedError("Not implemented")
+    # raise NotImplementedError("Not implemented")
+    return False
 
 
-def clean(run=False):
+def remove_output(clean=False, **kwargs):
     """Clean up function for generated files"""
-    if not run:
+    if not clean:
         return False
 
     found = False
@@ -427,18 +374,19 @@ def clean(run=False):
     return True
 
 
-def search(keyword):
+def search(search, **kwargs):
     """
+    TODO: merge to ``andeshelp``
     Search for models whose names contain ``keyword``
 
-    :param str keyword: partial or full model name
+    :param str search: partial or full model name
     :return: a list of model names in <file.model> format
     """
 
     from .models import all_models
     out = []
 
-    if not keyword:
+    if not search:
         return out
 
     keys = sorted(list(all_models.keys()))
@@ -449,104 +397,111 @@ def search(keyword):
         val = sorted(val)
 
         for item in val:
-            if keyword.lower() in item.lower():
+            if search.lower() in item.lower():
                 out.append(key + '.' + item)
 
     if out:
-        print('Search result: <file.model> containing <{}>'.format(keyword))
+        print('Search result: <file.model> containing <{}>'.format(search))
         print(' '.join(out))
     else:
-        print('No model containing <{:s}> found'.format(keyword))
+        print('No model containing <{:s}> found'.format(search))
 
     return out
 
 
 def main():
     """
-    Entry function
+    The new main function
+    Returns
+    -------
+    None
     """
-    config_logger()
-
     t0, s = elapsed()
-    args = cli_parse()
+
+    # parser command line arguments
+    args = vars(cli_new())
+
+    # configure stream handler verbose level
+    config_logger(stream_level=args['verbose'])
+
+    logger.debug('command line arguments:')
+    logger.debug(pprint.pformat(args))
+
+    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args):
+        return
+
+    # show preamble
+    preamble()
+
+    # process input files
+    if len(args['filename']) == 0:
+        logger.info('-> No input file. Try \'andes -h\' for help.')
+
+    # preprocess cli args
+    path = args.get('path', os.getcwd())
+    ncpu = args['ncpu']
+    if ncpu == 0 or ncpu > os.cpu_count():
+        ncpu = os.cpu_count()
+
     cases = []
-    kwargs = {}
 
-    # run clean-ups and exit
-    if clean(args.clean):
-        return
+    for file in args['filename']:
+        full_paths = os.path.join(path, file)
+        found = glob.glob(full_paths)
+        if len(found) == 0:
+            logger.info('-> File {} does not exist.'.format(full_paths))
+        else:
+            cases += found
 
-    if args.search:
-        search(args.search)
-        return
-    if args.conf:
-        edit_conf(args.conf)
-        return
-
-    # extract case names
-    if len(args.casename) >= 2:
-        args.no_preamble = True
-
-    for item in args.casename:
-        cases += glob.glob(os.path.join(args.path, item))
+    # remove folders and make cases unique
     cases = list(set(cases))
-    args.casename = None
+    valid_cases = []
+    for case in cases:
+        if os.path.isfile(case):
+            valid_cases.append(case)
 
-    # extract all arguments
-    for arg, val in vars(args).items():
-        if val is not None:
-            kwargs[arg] = val
+    logger.debug('Found files: ' + pprint.pformat(valid_cases))
 
-    # dump help and exit
-    if andeshelp(**kwargs):
-        return
-
-    preamble(args.no_preamble)
-
-    # exit if no case specified
-    if len(cases) == 0:
-        logger.info('--> Data file undefined or path is invalid.')
-        print('Use "andes -h" for command line help.')
-        return
-
-    # single case study
-    elif len(cases) == 1:
-        run(cases[0], **kwargs)
-        t1, s = elapsed(t0)
-        logging.info('--> Single process finished in {0:s}.'.format(s))
-        return
-
-    # multiple studies on multiple processors
+    if len(valid_cases) <= 0:
+        pass
+    elif len(valid_cases) == 1:
+        run(valid_cases[0], **args)
     else:
+        # set verbose level for multi processing
+        logger.info('Processing {} jobs on {} CPUs'.format(len(valid_cases), ncpu))
+        logger.handlers[1].setLevel(logging.WARNING)
+
+        # start processes
         jobs = []
-        kwargs['verbose'] = ERROR
-        ncpu = kwargs['ncpu']
-        if ncpu == 0 or ncpu > os.cpu_count():
-            ncpu = os.cpu_count()
-
-        logging.info('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(
-            njob=len(cases), ncpu=ncpu))
-
-        for idx, case_name in enumerate(cases):
-            kwargs['pid'] = idx
+        for idx, file in enumerate(valid_cases):
+            args['pid'] = idx
             job = Process(
                 name='Process {0:d}'.format(idx),
                 target=run,
-                args=(case_name, ),
-                kwargs=kwargs)
+                args=(file, ),
+                kwargs=args)
             jobs.append(job)
             job.start()
-            logging.info('Process {:d} <{:s}> started.'.format(idx, case_name))
 
-            if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
+            start_msg = 'Process {:d} <{:s}> started.'.format(idx, file)
+            print(start_msg)
+            logger.debug(start_msg)
+
+            if (idx % ncpu == ncpu - 1) or (idx == len(valid_cases) - 1):
                 sleep(0.1)
                 for job in jobs:
                     job.join()
                 jobs = []
 
-        t0, s0 = elapsed(t0)
-        logging.info('--> Multiple jobs finished in {0:s}.'.format(s0))
-        return
+        # restore command line output when all jobs are done
+        logger.handlers[1].setLevel(logging.INFO)
+
+    t0, s0 = elapsed(t0)
+
+    single_or_multi = 'Single process' if len(valid_cases) == 1 else 'Multiple processes'
+    logger.info('-> {} finished in {:s}.'.format(single_or_multi, s0))
+
+    return
 
 
 def run(case, **kwargs):
@@ -601,17 +556,17 @@ def run(case, **kwargs):
 
     # run more studies
     # t0, s = elapsed()
-    routine = kwargs.pop('routine', None)
+    routine = kwargs.pop('run', None)
     if not routine:
         pass
-    elif routine.lower() in ['time', 'td', 't']:
-        routine = 'td'
+    elif routine.lower() in ['time', 'tds', 't']:
+        routine = 'tds'
     elif routine.lower() in ['cpf', 'c']:
         routine = 'cpf'
     elif routine.lower() in ['small', 'ss', 'sssa', 's']:
         routine = 'sssa'
 
-    if routine is 'td':
+    if routine is 'tds':
         t1, s = elapsed(t0)
         # system.hack_EAGC()
 

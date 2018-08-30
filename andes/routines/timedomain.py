@@ -19,6 +19,7 @@ except ImportError:
     PROGRESSBAR = False
 
 F = []
+__cli__ = 'tds'
 
 
 def first_time_step(system):

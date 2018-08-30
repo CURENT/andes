@@ -12,19 +12,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def preamble(disable=False):
-    """Return preamble string for command line use"""
-    if disable:
-        return
-
-    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'.format(ver=version[:5], b=version[-8:],
-                                                                     p=platform.python_version(),
-                                                                     os=platform.system()))
-
-    logger.info('Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p"))
-    logger.info('')
-
-
 class Report(object):
     """Report class to store system static analysis reports"""
 

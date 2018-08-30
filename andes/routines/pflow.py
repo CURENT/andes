@@ -1,11 +1,12 @@
+import logging
 from cvxopt import matrix, sparse, div
 from .base import RoutineBase
 from ..config.pflow import Pflow
 from ..utils import elapsed
 from ..utils.solver import Solver
 
-import logging
 logger = logging.getLogger(__name__)
+__cli__ = 'pflow'
 
 
 class PowerFlow(RoutineBase):
@@ -66,7 +67,7 @@ class PowerFlow(RoutineBase):
         t, s = elapsed(t)
         logger.info('Power flow initialized in {:s}.'.format(s))
 
-    def run(self):
+    def run(self, **kwargs):
         """
         Call the power flow solution routine
         Returns
