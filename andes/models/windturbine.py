@@ -148,7 +148,7 @@ class Turbine(object):
         # wind speed initialization loop
 
         R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
-                                                     div(1, self.npole[i]))
+                                                   div(1, self.npole))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
 
@@ -941,7 +941,7 @@ class WTG3(ModelBase):
         # wind speed initialization loop
 
         R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
-                                                     div(1, self.npole[i]))
+                                                   div(1, self.npole))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
 

@@ -46,3 +46,4 @@ class RoutineBase(object):
         bool
             Success flag
         """
+        pass

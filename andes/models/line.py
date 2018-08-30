@@ -155,7 +155,7 @@ class Line(ModelBase):
         """build Bp and Bpp for fast decoupled method"""
         if not self.n:
             return
-        solver = self.system.SPF.method.lower()
+        method = self.system.powerflow.config.method.lower()
 
         # Build B prime matrix
         y1 = mul(
@@ -167,7 +167,7 @@ class Line(ModelBase):
         m = polar(1.0, self.phi * deg2rad)  # neglected tap ratio
         self.mconj = conj(m)
         m2 = matrix(1.0, (self.n, 1), 'z')
-        if solver is 'fdxb':
+        if method is 'fdxb':
             # neglect line resistance in Bp in XB method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -191,7 +191,8 @@ class Line(ModelBase):
         )  # y2 neglected line charging shunt, and g2 is usually 0 in HV lines
         m = self.tap + 0j  # neglected phase shifter
         m2 = abs(m)**2 + 0j
-        if solver is 'fdbx' or 'fdpf':
+
+        if method is 'fdbx' or 'fdpf':
             # neglect line resistance in Bpp in BX method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -282,10 +283,10 @@ class Line(ModelBase):
         self.copy_data_ext('Bus', 'a', dest='a', idx=None, astype=list)
         self.copy_data_ext('Bus', 'v', dest='v', idx=None, astype=list)
 
-        solver = self.system.SPF.method.lower()
+        method = self.system.powerflow.config.method.lower()
         self.build_y()
         self.incidence()
-        if solver in ('fdpf', 'fdbx', 'fdxb'):
+        if method in ('fdpf', 'fdbx', 'fdxb'):
             self.build_b()
 
     def gcall(self, dae):

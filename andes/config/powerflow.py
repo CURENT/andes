@@ -1,8 +1,6 @@
 from . import ConfigBase
 from ..utils.cached import cached
 
-import logging
-
 
 class SPF(ConfigBase):
     def __init__(self, **kwargs):
@@ -16,7 +14,7 @@ class SPF(ConfigBase):
         self.report = 'default'
         self.show = True
         self.method = 'NR'
-        self.method_alt = ['NR', 'FDBX', 'FDXB']
+        self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB']
         self.sortbuses = 'data'
         self.sortbuses_alt = ['data', 'idx']
         self.static = False

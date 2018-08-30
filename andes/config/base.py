@@ -167,6 +167,7 @@ class ConfigBase(object):
             True for pass, False for fail
         """
         return True
+
     @cached
     def config_descr(self):
         descriptions = {}

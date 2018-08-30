@@ -48,6 +48,11 @@ class PowerFlow(RoutineBase):
         -------
         None
         """
+        logger.info('')
+        logger.info('Power flow study: {} method, {} start'.format(
+            self.config.method.upper(), 'Flat' if self.config.flatstart else 'Non-flat')
+        )
+
         t, s = elapsed()
 
         system = self.system
@@ -64,7 +69,6 @@ class PowerFlow(RoutineBase):
 
         t, s = elapsed(t)
         logger.info('Power flow initialized in {:s}.'.format(s))
-        logger.info('')
 
     def run(self):
         """
@@ -74,13 +78,20 @@ class PowerFlow(RoutineBase):
         bool:
             True for success, False for fail
         """
+
+        self.init()
+
         t, _ = elapsed()
 
+        # call solution methods
         ret = None
         if self.config.method == 'NR':
             ret = self.newton()
+        elif self.config.method in ('FDPF', 'FDBX', 'FDXB'):
+            ret = self.fdpf()
 
         if self.solved:
+            # run post processing
             self.post()
 
         _, s = elapsed(t)
@@ -98,7 +109,6 @@ class PowerFlow(RoutineBase):
         (bool, int)
             success flag, number of iterations
         """
-        system = self.system
         dae = self.system.DAE
 
         while True:
@@ -111,8 +121,7 @@ class PowerFlow(RoutineBase):
             max_mis = max(abs(inc))
             self.iter_mis.append(max_mis)
 
-            logger.info(' Iter{:3d}.  Max. Mismatch = {:8.7f}'.format(
-                self.niter, max_mis))
+            self._iter_info(self.niter)
 
             if max_mis < self.config.tol:
                 self.solved = True
@@ -125,6 +134,24 @@ class PowerFlow(RoutineBase):
                 break
 
         return self.solved, self.niter
+
+    def _iter_info(self, niter, level=logging.INFO):
+        """
+        Log iteration number and mismatch
+
+        Parameters
+        ----------
+        level
+            logging level
+        Returns
+        -------
+        None
+        """
+        max_mis = self.iter_mis[niter - 1]
+        msg = ' Iter {:<d}.  max mismatch = {:8.7f}'.format(
+            niter, max_mis)
+
+        logger.log(level, msg)
 
     def calc_inc(self):
         """
@@ -139,7 +166,7 @@ class PowerFlow(RoutineBase):
         self.newton_call()
 
         A = sparse([[system.DAE.Fx, system.DAE.Gx],
-            [system.DAE.Fy, system.DAE.Gy]])
+                    [system.DAE.Fy, system.DAE.Gy]])
 
         inc = matrix([system.DAE.f, system.DAE.g])
 
@@ -243,3 +270,87 @@ class PowerFlow(RoutineBase):
         exec(system.Call.seriesflow)
 
         system.Area.seriesflow(system.DAE)
+
+    def fdpf(self):
+        """
+        Fast Decoupled Power Flow
+
+        Returns
+        -------
+        bool, int
+            Success flag, number of iterations
+        """
+        system = self.system
+
+        # general settings
+        self.niter = 1
+        iter_max = self.config.maxit
+        self.solved = True
+        tol = self.config.tol
+        error = tol + 1
+
+        self.iter_mis = []
+        if (not system.Line.Bp) or (not system.Line.Bpp):
+            system.Line.build_b()
+
+        # initialize indexing and Jacobian
+        # ngen = system.SW.n + system.PV.n
+        sw = system.SW.a
+        sw.sort(reverse=True)
+        no_sw = system.Bus.a[:]
+        no_swv = system.Bus.v[:]
+        for item in sw:
+            no_sw.pop(item)
+            no_swv.pop(item)
+        gen = system.SW.a + system.PV.a
+        gen.sort(reverse=True)
+        no_g = system.Bus.a[:]
+        no_gv = system.Bus.v[:]
+        for item in gen:
+            no_g.pop(item)
+            no_gv.pop(item)
+        Bp = system.Line.Bp[no_sw, no_sw]
+        Bpp = system.Line.Bpp[no_g, no_g]
+
+        Fp = self.solver.symbolic(Bp)
+        Fpp = self.solver.symbolic(Bpp)
+        Np = self.solver.numeric(Bp, Fp)
+        Npp = self.solver.numeric(Bpp, Fpp)
+        exec(system.Call.fdpf)
+
+        # main loop
+        while error > tol:
+            # P-theta
+            da = matrix(div(system.DAE.g[no_sw], system.DAE.y[no_swv]))
+            self.solver.solve(Bp, Fp, Np, da)
+            system.DAE.y[no_sw] += da
+
+            exec(system.Call.fdpf)
+            normP = max(abs(system.DAE.g[no_sw]))
+
+            # Q-V
+            dV = matrix(div(system.DAE.g[no_gv], system.DAE.y[no_gv]))
+            self.solver.solve(Bpp, Fpp, Npp, dV)
+            system.DAE.y[no_gv] += dV
+
+            exec(system.Call.fdpf)
+            normQ = max(abs(system.DAE.g[no_gv]))
+
+            err = max([normP, normQ])
+            self.iter_mis.append(err)
+            error = err
+
+            self._iter_info(self.niter)
+            self.niter += 1
+
+            if self.niter > 4 and self.iter_mis[-1] > 1000 * self.iter_mis[0]:
+                logger.warning('Blown up in {0} iterations.'.format(self.niter))
+                self.solved = False
+                break
+
+            if self.niter > iter_max:
+                logger.warning('Reached maximum number of iterations.')
+                self.solved = False
+                break
+
+        return self.solved, self.niter

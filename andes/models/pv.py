@@ -102,15 +102,15 @@ class PV(Stagen):
         dae.y[self.q] = mul(self.u, self.qg)
 
     def gcall(self, dae):
-        if self.system.SPF.pv2pq and \
-                self.system.SPF.iter >= self.system.SPF.ipv2pq:
+        if self.system.powerflow.config.pv2pq and \
+                self.system.powerflow.config.iter >= self.system.powerflow.config.ipv2pq:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)
             idx_desc = sort_idx(d_max, reverse=True)
 
-            nabove = nbelow = self.system.SPF.npv2pq
-            nconv = min(self.system.SPF.npv2pq, self.n)
+            nabove = nbelow = self.system.powerflow.config.npv2pq
+            nconv = min(self.system.powerflow.config.npv2pq, self.n)
 
             for i in range(nconv - 1, -1, -1):
                 if d_min[idx_asc[i]] >= 0:

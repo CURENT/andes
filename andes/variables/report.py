@@ -8,22 +8,21 @@ from ..formats import all_formats
 from ..utils import elapsed
 from andes import __version__ as version
 
-year = '2018'
+import logging
+logger = logging.getLogger(__name__)
 
 
 def preamble(disable=False):
     """Return preamble string for command line use"""
     if disable:
-        return ''
+        return
 
-    message = '\n'
-    message += 'ANDES ' + version[:5] + ' Build ' + version[-8:] + '\n'
-    message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n'
-    message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n\n'
-    message += 'Platform:    ' + platform.system() + '\n'
-    message += 'Interpreter: ' + 'Python ' + platform.python_version() + '\n'
-    message += 'Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n'
-    return message
+    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'.format(ver=version[:5], b=version[-8:],
+                                                                     p=platform.python_version(),
+                                                                     os=platform.system()))
+
+    logger.info('Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p"))
+    logger.info('')
 
 
 class Report(object):
@@ -57,7 +56,7 @@ class Report(object):
     def info(self):
         info = list()
         info.append('ANDES' + ' ' + version + '\n')
-        info.append('Copyright (C) 2015-' + year + ' Hantao Cui\n\n')
+        info.append('Copyright (C) 2015-2018 Hantao Cui\n\n')
         info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
         info.append('Use this software AT YOUR OWN RISK\n\n')
         info.append('Case file: ' + self.system.Files.case + '\n')
@@ -204,7 +203,7 @@ class Report(object):
 
             data.append([Pcol, Qcol])
 
-        if content == 'powerflow':
+        if content == 'powerflow' and system.powerflow.solved:
             idx, name, Vm, Va, Pg, Qg, Pl, Ql = system.get_busdata()
             Va_unit = 'deg' if system.SPF.usedegree else 'rad'
             text.append(['BUS DATA:\n'])

@@ -105,5 +105,3 @@ class Solver(object):
 
         elif self.sparselib == 'klu':
             return klu.linsolve(A, b)
-
-

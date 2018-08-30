@@ -394,7 +394,7 @@ class PowerSystem(object):
                     'Multiple slack buses are defined for {:g} island(s).'.
                     format(len(nosw_island)))
             else:
-                self.log.info(
+                self.log.debug(
                     'Each island has a slack bus correctly defined.'.format(
                         nosw_island))
 
@@ -404,7 +404,7 @@ class PowerSystem(object):
         """
         if self.powerflow.solved is False:
             self.log.error('Power flow not solved when getting bus data.')
-            return tuple([False] * 7)
+            return tuple([False] * 8)
         idx = self.Bus.idx
         names = self.Bus.name
         Vm = [self.DAE.y[x] for x in self.Bus.v]

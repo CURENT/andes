@@ -34,7 +34,7 @@ from .consts import ERROR
 from .system import PowerSystem
 from .utils import elapsed
 from .variables import preamble
-from .routines import powerflow, timedomain, eigenanalysis
+from .routines import timedomain, eigenanalysis
 
 # from .routines.fakemodule import EAGC
 
@@ -498,7 +498,7 @@ def main():
     if andeshelp(**kwargs):
         return
 
-    print(preamble(args.no_preamble))
+    preamble(args.no_preamble)
 
     # exit if no case specified
     if len(cases) == 0:
@@ -510,7 +510,7 @@ def main():
     elif len(cases) == 1:
         run(cases[0], **kwargs)
         t1, s = elapsed(t0)
-        print('--> Single process finished in {0:s}.'.format(s))
+        logging.info('--> Single process finished in {0:s}.'.format(s))
         return
 
     # multiple studies on multiple processors
@@ -521,7 +521,7 @@ def main():
         if ncpu == 0 or ncpu > os.cpu_count():
             ncpu = os.cpu_count()
 
-        print('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(
+        logging.info('Multi-processing: {njob} jobs started on {ncpu} CPUs'.format(
             njob=len(cases), ncpu=ncpu))
 
         for idx, case_name in enumerate(cases):
@@ -533,7 +533,7 @@ def main():
                 kwargs=kwargs)
             jobs.append(job)
             job.start()
-            print('Process {:d} <{:s}> started.'.format(idx, case_name))
+            logging.info('Process {:d} <{:s}> started.'.format(idx, case_name))
 
             if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
                 sleep(0.1)
@@ -542,7 +542,7 @@ def main():
                 jobs = []
 
         t0, s0 = elapsed(t0)
-        print('--> Multiple jobs finished in {0:s}.'.format(s0))
+        logging.info('--> Multiple jobs finished in {0:s}.'.format(s0))
         return
 
 
@@ -588,9 +588,7 @@ def run(case, **kwargs):
     # set up everything in system
     system.setup()
 
-    # initialize power flow study
-    system.powerflow.init()
-
+    # run power flow study
     system.powerflow.run()
 
     # initialize variables for output even if not running TDS
@@ -637,7 +635,7 @@ def run(case, **kwargs):
             nlines = 20
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
-            print(s.getvalue())
+            logging.info(s.getvalue())
             s.close()
         else:
             s = open(system.Files.prof, 'w')
@@ -650,7 +648,7 @@ def run(case, **kwargs):
 
     if pid >= 0:
         t3, s = elapsed(t0)
-        print('Process {:d} finished in {:s}.'.format(pid, s))
+        logging.info('Process {:d} finished in {:s}.'.format(pid, s))
 
 
 if __name__ == '__main__':

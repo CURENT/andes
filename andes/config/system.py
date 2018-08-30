@@ -3,7 +3,7 @@ from ..consts import INFO, pi
 from ..utils.cached import cached
 
 try:
-    from cvxoptklu import klu
+    from cvxoptklu import klu  # NOQA
     KLU = True
 except ImportError:
     KLU = False
