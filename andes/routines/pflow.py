@@ -1,11 +1,7 @@
-from .base import RoutineBase
-from ..config.powerflow import SPF
-
 from cvxopt import matrix, sparse, div
-
+from .base import RoutineBase
+from ..config.pflow import Pflow
 from ..utils import elapsed
-from ..utils.jactools import diag0
-
 from ..utils.solver import Solver
 
 import logging
@@ -18,7 +14,7 @@ class PowerFlow(RoutineBase):
     """
     def __init__(self, system, rc=None):
         self.system = system
-        self.config = SPF(rc=rc)
+        self.config = Pflow(rc=rc)
         self.solver = Solver(system.config.sparselib)
 
         # store status and internal flags
@@ -40,7 +36,7 @@ class PowerFlow(RoutineBase):
         self.iter_mis = []
         self.F = None
 
-    def init(self):
+    def pre(self):
         """
         Initialize system for power flow study
 
@@ -78,23 +74,20 @@ class PowerFlow(RoutineBase):
         bool:
             True for success, False for fail
         """
+        ret = None
 
-        self.init()
-
+        self.pre()
         t, _ = elapsed()
 
         # call solution methods
-        ret = None
         if self.config.method == 'NR':
             ret = self.newton()
         elif self.config.method in ('FDPF', 'FDBX', 'FDXB'):
             ret = self.fdpf()
 
-        if self.solved:
-            # run post processing
-            self.post()
-
+        self.post()
         _, s = elapsed(t)
+
         if self.solved:
             logger.info('Power flow converged in {}'.format(s))
         else:
@@ -182,7 +175,7 @@ class PowerFlow(RoutineBase):
             system.DAE.factorize = True
         except ArithmeticError:
             logger.warning('Jacobian matrix is singular.')
-            diag0(system.DAE.Gy, 'unamey', system)
+            system.DAE.check_diag(system.DAE.Gy, 'unamey')
 
         return -inc
 
@@ -251,6 +244,9 @@ class PowerFlow(RoutineBase):
         -------
         None
         """
+        if not self.solved:
+            return
+
         system = self.system
 
         exec(system.Call.pfload)

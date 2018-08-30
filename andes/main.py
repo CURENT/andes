@@ -39,6 +39,7 @@ from .routines import timedomain, eigenanalysis
 # from .routines.fakemodule import EAGC
 
 import logging
+logger = None
 
 
 def config_logger(name='andes', logfile='andes.log', stream=True):
@@ -77,6 +78,8 @@ def config_logger(name='andes', logfile='andes.log', stream=True):
         sh.setLevel(logging.INFO)
         sh.setFormatter(sh_formatter)
         logger.addHandler(sh)
+
+    globals()['logger'] = logger
 
 
 def cli_parse(help=False):
@@ -502,7 +505,7 @@ def main():
 
     # exit if no case specified
     if len(cases) == 0:
-        print('--> Data file undefined or path is invalid.')
+        logger.info('--> Data file undefined or path is invalid.')
         print('Use "andes -h" for command line help.')
         return
 

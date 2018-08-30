@@ -1,14 +1,9 @@
 import importlib
 import sys
-
 from math import isnan
 from time import monotonic as time, sleep
 from cvxopt import matrix, sparse, spdiag
-
-from ..utils.jactools import diag0
 from ..utils import elapsed
-# from numpy import array
-# from scipy.sparse import csr_matrix
 
 try:
     from cvxoptklu.klu import numeric, symbolic, solve, linsolve
@@ -294,8 +289,8 @@ def run(system):
                 except ArithmeticError:
                     system.log.error('Singular matrix')
                     niter = maxit + 1  # force quit
-                    diag0(dae.Gy, 'unamey', system)
-                    diag0(dae.Fx, 'unamex', system)
+                    system.DAE.check_diag(dae.Gy, 'unamey')
+                    system.DAE.check_diag(dae.Fx, 'unamex')
                 except ValueError:
                     system.log.warning('Unexpected symbolic factorization')
                     F = symbolic(dae.Ac)
@@ -481,7 +476,7 @@ def calcInc(system):
             system.log.error('Singular matrix')
     except ArithmeticError:
         system.log.error('Jacobian matrix is singular.')
-        diag0(system.DAE.Gy, 'unamey', system)
+        system.DAE.check_diag(system.DAE.Gy, 'unamey')
     return -inc
 
 

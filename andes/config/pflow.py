@@ -2,7 +2,7 @@ from . import ConfigBase
 from ..utils.cached import cached
 
 
-class SPF(ConfigBase):
+class Pflow(ConfigBase):
     def __init__(self, **kwargs):
         self.flatstart = False
         self.tol = 1e-6
@@ -22,7 +22,7 @@ class SPF(ConfigBase):
         self.units = 'pu'
         self.units_alt = ['pu', 'nominal']
         self.usedegree = True
-        super(SPF, self).__init__(**kwargs)
+        super(Pflow, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):

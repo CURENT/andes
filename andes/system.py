@@ -21,7 +21,7 @@ import importlib
 from operator import itemgetter
 from logging import INFO
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .config import Config, SPF, TDS, CPF, SSSA
+from .config import Config, Pflow, TDS, CPF, SSSA
 # from .utils import Logger, elapsed
 from .utils import elapsed
 import logging
@@ -86,7 +86,7 @@ class PowerSystem(object):
                              gis, **kwargs)
 
         self.config = Config()
-        self.SPF = SPF()
+        self.SPF = Pflow()
         self.CPF = CPF()
         self.TDS = TDS()
         self.SSSA = SSSA()
