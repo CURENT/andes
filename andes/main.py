@@ -498,8 +498,10 @@ def main():
 
     t0, s0 = elapsed(t0)
 
-    single_or_multi = 'Single process' if len(valid_cases) == 1 else 'Multiple processes'
-    logger.info('-> {} finished in {:s}.'.format(single_or_multi, s0))
+    if len(valid_cases) == 1:
+        logger.info('-> Single process finished in {:s}.'.format(s0))
+    elif len(valid_cases) >=2:
+        logger.info('-> Multiple processes finished in {:s}.'.format(s0))
 
     return
 
