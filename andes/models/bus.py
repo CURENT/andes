@@ -87,7 +87,7 @@ class Bus(ModelBase):
 
     def init0(self, dae):
         """Set bus Va and Vm initial values"""
-        if not self.system.powerflow.config.flatstart:
+        if not self.system.pflow.config.flatstart:
             dae.y[self.a] = self.angle + 1e-10 * uniform(self.n)
             dae.y[self.v] = self.voltage
         else:
@@ -222,7 +222,7 @@ class BusOld(ModelBase):
 
     def init0(self, dae):
         """Set bus Va and Vm initial values"""
-        if not self.system.powerflow.config.flatstart:
+        if not self.system.pflow.config.flatstart:
             dae.y[self.a] = self.angle + 1e-10 * uniform(self.n)
             dae.y[self.v] = self.voltage
         else:

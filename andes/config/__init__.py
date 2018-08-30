@@ -7,7 +7,7 @@ from .sssa import SSSA  # NOQA
 
 __all__ = [
     'settings',
-    'powerflow',
+    'pflow',
     'tds',
     'sssa',
     'cpf',

@@ -124,7 +124,7 @@ class PowerSystem(object):
         self.model_import()
 
         # import routines
-        self.powerflow = PowerFlow(self)
+        self.pflow = PowerFlow(self)
 
     def setup(self):
         """
@@ -262,7 +262,7 @@ class PowerSystem(object):
 
         :return: success flag
         """
-        if self.powerflow.solved is False:
+        if self.pflow.solved is False:
             return False
 
         t, s = elapsed()
@@ -402,7 +402,7 @@ class PowerSystem(object):
         """
         get ac bus data from solved power flow
         """
-        if self.powerflow.solved is False:
+        if self.pflow.solved is False:
             self.log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 8)
         idx = self.Bus.idx
@@ -426,7 +426,7 @@ class PowerSystem(object):
         """
         if not self.Node.n:
             return
-        if not self.powerflow.solved:
+        if not self.pflow.solved:
             self.log.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
@@ -437,7 +437,7 @@ class PowerSystem(object):
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.powerflow.solved:
+        if not self.pflow.solved:
             self.log.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx

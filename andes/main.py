@@ -98,7 +98,7 @@ def preamble():
                                                                      p=platform.python_version(),
                                                                      os=platform.system()))
 
-    logger.info('Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p"))
+    logger.info('Session: ' + strftime("%m/%d/%Y %I:%M:%S %p"))
     logger.info('')
 
 
@@ -121,7 +121,7 @@ def cli_new(help=False):
     # general options
     general_group = parser.add_argument_group('General options')
     general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='?',
-                        default='info')
+                        default='pflow')
     general_group.add_argument('--conf', choices=routines.__cli__ + ['system'],
                                help='Edit configuration', default='system')
     general_group.add_argument('--license', action='store_true', help='Display software license')
@@ -507,24 +507,35 @@ def main():
 
 
 def run(case, **kwargs):
-    """Run a single case study"""
+    """
+    Run a single case study
+
+    Parameters
+    ----------
+    case
+        case file path
+    kwargs
+        keyword arguments
+
+    Returns
+    -------
+    None
+
+    """
+    t0, _ = elapsed()
+
     profile = kwargs.pop('profile', False)
     dump_raw = kwargs.get('dump_raw', False)
-    summary = kwargs.pop('summary', False)
-    exitnow = kwargs.pop('exit', False)
     pid = kwargs.get('pid', -1)
-    pr = cProfile.Profile()
+    routine = kwargs.get('run')
 
     # enable profiler if requested
+    pr = cProfile.Profile()
     if profile:
         pr.enable()
 
-    # create a power system object
     system = PowerSystem(case, **kwargs)
 
-    t0, _ = elapsed()
-
-    # parse input file
     if not filters.guess(system):
         return
 
@@ -535,21 +546,11 @@ def run(case, **kwargs):
     if dump_raw:
         filters.dump_raw(system)
 
-    # print summary only
-    if summary:
-        system.Report.write(content='summary')
-        return
-
-    # exit without solving power flow
-    if exitnow:
-        system.log.info('Exiting before solving power flow.')
-        return
-
-    # set up everything in system
     system.setup()
 
-    # run power flow study
-    system.powerflow.run()
+    # run power flow study first for most routines
+    if routine in ('pflow', 'tds', 'eig'):
+        system.pflow.run()
 
     # initialize variables for output even if not running TDS
     system.td_init()
@@ -557,8 +558,7 @@ def run(case, **kwargs):
     system.Report.write(content='powerflow')
 
     # run more studies
-    # t0, s = elapsed()
-    routine = kwargs.pop('run', None)
+
     if not routine:
         pass
     elif routine.lower() in ['time', 'tds', 't']:
@@ -595,7 +595,7 @@ def run(case, **kwargs):
             nlines = 20
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
-            logging.info(s.getvalue())
+            logger.info(s.getvalue())
             s.close()
         else:
             s = open(system.Files.prof, 'w')
@@ -608,8 +608,9 @@ def run(case, **kwargs):
 
     if pid >= 0:
         t3, s = elapsed(t0)
-        logging.info('Process {:d} finished in {:s}.'.format(pid, s))
-
+        msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
+        logger.info(msg_finish)
+        print(msg_finish)
 
 if __name__ == '__main__':
     main()

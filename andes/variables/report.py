@@ -74,7 +74,7 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if self.system.powerflow.solved is False:
+        if self.system.pflow.solved is False:
             self.system.log.warning(
                 'Cannot update extended summary. Power flow not solved.')
             return
@@ -190,7 +190,7 @@ class Report(object):
 
             data.append([Pcol, Qcol])
 
-        if content == 'powerflow' and system.powerflow.solved:
+        if content == 'powerflow' and system.pflow.solved:
             idx, name, Vm, Va, Pg, Qg, Pl, Ql = system.get_busdata()
             Va_unit = 'deg' if system.SPF.usedegree else 'rad'
             text.append(['BUS DATA:\n'])

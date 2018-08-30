@@ -62,7 +62,7 @@ def run(system):
     Entry function of Time Domain Simulation
     """
 
-    if system.powerflow.solved is False:
+    if system.pflow.solved is False:
         system.log.warning(
             'Power flow not solved. Time domain simulation will not continue.')
         return False

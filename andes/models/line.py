@@ -155,7 +155,7 @@ class Line(ModelBase):
         """build Bp and Bpp for fast decoupled method"""
         if not self.n:
             return
-        method = self.system.powerflow.config.method.lower()
+        method = self.system.pflow.config.method.lower()
 
         # Build B prime matrix
         y1 = mul(
@@ -283,7 +283,7 @@ class Line(ModelBase):
         self.copy_data_ext('Bus', 'a', dest='a', idx=None, astype=list)
         self.copy_data_ext('Bus', 'v', dest='v', idx=None, astype=list)
 
-        method = self.system.powerflow.config.method.lower()
+        method = self.system.pflow.config.method.lower()
         self.build_y()
         self.incidence()
         if method in ('fdpf', 'fdbx', 'fdxb'):
