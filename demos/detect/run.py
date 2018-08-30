@@ -105,12 +105,42 @@ for bus_idx, load_idx in zip(npcc_bus, npcc_load):
         f.write(out)
 
 
-# tpl = 'Breaker, line = {}, bus = {}, t1=1'
-#
-# npcc_line = sys.Line.link_bus(npcc_bus)
-#
-# for bus, line in zip(npcc_bus, npcc_line):
-#     line_idx_list, term_idx_list = line
-#     for line_idx, term_idx in zip(line_idx_list, term_idx_list):
-#
+# ==================== Line trip ========================
+
+tpl = 'Breaker, line = {}, bus = {}, t1=1'
+
+npcc_line = sys.Line.link_bus(npcc_bus)
+print(sys.Line.bus1)
+for bus, line in zip(npcc_bus, npcc_line):
+    line_idx_list, term_idx_list = line
+    # for line_idx, term_idx in zip(line_idx_list, term_idx_list):
 # print(npcc_line)
+
+# get the load idx on NPCC buses.
+npcc_line = sys.Line.link_bus(npcc_bus)
+print(sys.Line.idx)
+
+
+# save Andes cases to folder
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LT'
+
+file_name_tpl = '{event}_{bus}_{element}.dm'
+
+header = """# DOME format version 1.0
+
+# This case implements Line trip idx=<{line}> event on bus <{bus}> at t=1s
+
+INCLUDE, NA_50_50_50_HVDC3.dm
+
+"""
+event_tpl = 'Breaker, bus={bus}, t1 = 1, line = \"{line}\"'
+
+
+for idx_count, line_idx in enumerate(sys.Line.idx):
+    file_name = file_name_tpl.format(event='LT', bus=line_idx, element=sys.Line.bus1[idx_count])
+    out = ''
+    out = header.format(line=line_idx, bus=sys.Line.bus1[idx_count])
+    out += event_tpl.format(line=line_idx, bus=sys.Line.bus1[idx_count])
+
+    with open(os.path.join(save_path, file_name), 'w') as f:
+        f.write(out)
