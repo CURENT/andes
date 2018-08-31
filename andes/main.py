@@ -365,11 +365,11 @@ def remove_output(clean=False, **kwargs):
             found = True
             try:
                 os.remove(file)
-                print('<{:s}> removed.'.format(file))
+                logger.info('<{:s}> removed.'.format(file))
             except IOError:
-                print('Error removing file <{:s}>.'.format(file))
+                logger.error('Error removing file <{:s}>.'.format(file))
     if not found:
-        print('--> No Andes output found in the working directory.')
+        logger.info('no output found in the working directory.')
 
     return True
 
@@ -435,7 +435,7 @@ def main():
 
     # process input files
     if len(args['filename']) == 0:
-        logger.info('-> No input file. Try \'andes -h\' for help.')
+        logger.info('error: no input file. Try \'andes -h\' for help.')
 
     # preprocess cli args
     path = args.get('path', os.getcwd())
@@ -449,7 +449,7 @@ def main():
         full_paths = os.path.join(path, file)
         found = glob.glob(full_paths)
         if len(found) == 0:
-            logger.info('-> File {} does not exist.'.format(full_paths))
+            logger.info('error: file {} does not exist.'.format(full_paths))
         else:
             cases += found
 
@@ -548,12 +548,13 @@ def run(case, **kwargs):
 
     system.setup()
 
-    # run power flow study first for most routines
+    # run power flow study first for analysis routines
     if routine in ('pflow', 'tds', 'eig'):
         system.pflow.run()
 
     # initialize variables for output even if not running TDS
-    system.td_init()
+    # system.td_init()
+    system.tds.init()
 
     system.Report.write(content='powerflow')
 
@@ -565,21 +566,22 @@ def run(case, **kwargs):
         routine = 'tds'
     elif routine.lower() in ['cpf', 'c']:
         routine = 'cpf'
-    elif routine.lower() in ['small', 'ss', 'sssa', 's']:
-        routine = 'sssa'
+    elif routine.lower() in ['eig', 'ss', 'sssa', 's']:
+        routine = 'eig'
 
     if routine is 'tds':
         t1, s = elapsed(t0)
         # system.hack_EAGC()
 
-        ret = timedomain.run(system)
+        # ret = timedomain.run(system)
+        ret = system.tds.run()
 
         t2, s = elapsed(t1)
         if ret and (not system.Files.no_output):
             system.VarOut.dump()
             t3, s = elapsed(t2)
             system.log.info('Simulation data dumped in {:s}.'.format(s))
-    elif routine == 'sssa':
+    elif routine == 'eig':
         t1, s = elapsed(t0)
         system.log.info('')
         system.log.info('Eigenvalue Analysis:')

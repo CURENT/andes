@@ -239,5 +239,4 @@ class Report(object):
         dump_data(text, header, rowname, data, file)
 
         _, s = elapsed(t)
-        system.log.info('{} report written to <{:s}> in {:s}.'.format(
-            content.capitalize(), system.Files.output, s))
+        system.log.info('Report written to <{:s}> in {:s}.'.format(system.Files.output, s))

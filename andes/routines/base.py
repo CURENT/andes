@@ -15,6 +15,16 @@ class RoutineBase(object):
 
         raise(NotImplementedError, 'Must be overloaded by routines')
 
+    def reset(self):
+        """
+        Reset internal states of the routine
+
+        Returns
+        -------
+        None
+        """
+        raise(NotImplementedError, 'Must be overloaded by routines')
+
     def report(self):
         """
         Format report from the results

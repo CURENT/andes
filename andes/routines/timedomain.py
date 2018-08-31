@@ -114,10 +114,10 @@ def run(system):
     h = first_time_step(system)
 
     # time vector for faults and breaker events
-    fixed_times = system.get_event_times()
+    # fixed_times = system.get_event_times()
 
     # compute max rotor angle difference
-    diff_max = anglediff()
+    # diff_max = anglediff()
 
     # store the initial value
     if system.TDS.compute_flows:
@@ -148,7 +148,7 @@ def run(system):
     rt_headroom = 0
     settings.qrtstart = time()
     t_jac = -1
-    while t <= settings.tf and t + h > t and not diff_max:
+    while t <= settings.tf and t + h > t:
 
         # last time step length
         if t + h > settings.tf:

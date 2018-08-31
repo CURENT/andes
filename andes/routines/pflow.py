@@ -47,7 +47,7 @@ class PowerFlow(RoutineBase):
         """
         logger.info('')
         logger.info('Power flow study: {} method, {} start'.format(
-            self.config.method.upper(), 'Flat' if self.config.flatstart else 'Non-flat')
+            self.config.method.upper(), 'flat' if self.config.flatstart else 'non-flat')
         )
 
         t, s = elapsed()
@@ -65,7 +65,7 @@ class PowerFlow(RoutineBase):
         system.check_islands(show_info=True)
 
         t, s = elapsed(t)
-        logger.info('Power flow initialized in {:s}.'.format(s))
+        logger.debug('Power flow initialized in {:s}.'.format(s))
 
     def run(self, **kwargs):
         """
@@ -90,9 +90,9 @@ class PowerFlow(RoutineBase):
         _, s = elapsed(t)
 
         if self.solved:
-            logger.info('Power flow converged in {}'.format(s))
+            logger.info('Solution converged in {} in {} iterations'.format(s, self.niter))
         else:
-            logger.warn('Power flow failed in {}'.format(s))
+            logger.warn('Solution failed in {} in {} iterations'.format(s, self.niter))
         return ret
 
     def newton(self):
@@ -142,10 +142,8 @@ class PowerFlow(RoutineBase):
         None
         """
         max_mis = self.iter_mis[niter - 1]
-        msg = ' Iter {:<d}.  max mismatch = {:8.7f}'.format(
-            niter, max_mis)
-
-        logger.log(level, msg)
+        msg = ' Iter {:<d}.  max mismatch = {:8.7f}'.format(niter, max_mis)
+        logger.info(msg)
 
     def calc_inc(self):
         """

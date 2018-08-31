@@ -21,7 +21,7 @@ import importlib
 from operator import itemgetter
 from logging import INFO
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .config import Config, Pflow, TDS, CPF, SSSA
+from .config import Config, Pflow, Tds, CPF, SSSA
 # from .utils import Logger, elapsed
 from .utils import elapsed
 import logging
@@ -36,6 +36,7 @@ except ImportError:
     STREAMING = False
 
 from .routines.pflow import PowerFlow
+from .routines.tds import TDS
 
 
 class PowerSystem(object):
@@ -88,7 +89,7 @@ class PowerSystem(object):
         self.config = Config()
         self.SPF = Pflow()
         self.CPF = CPF()
-        self.TDS = TDS()
+        self.TDS = Tds()
         self.SSSA = SSSA()
 
         if settings:
@@ -125,6 +126,19 @@ class PowerSystem(object):
 
         # import routines
         self.pflow = PowerFlow(self)
+        self.tds = TDS(self)
+
+    @property
+    def freq(self):
+        return self.config.freq
+
+    @freq.setter
+    def freq(self, freq):
+        if freq <=0:
+            self.config.freq = 1
+        else:
+            self.config.freq = freq
+
 
     def setup(self):
         """
@@ -234,27 +248,27 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._varname()
-
-    def pf_init(self):
-        """
-        Set power flow initial values by running ``init0()``
-        """
-        t, s = elapsed()
-
-        self.DAE.init_xy()
-
-        for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow,
-                                        self.Call.init0):
-            if pflow and init0:
-                self.__dict__[device].init0(self.DAE)
-
-        # check for islands
-        self.check_islands(show_info=True)
-
-        t, s = elapsed(t)
-        self.log.info('Power flow initialized in {:s}.\n'.format(s))
-
-        return self
+    #
+    # def pf_init(self):
+    #     """
+    #     Set power flow initial values by running ``init0()``
+    #     """
+    #     t, s = elapsed()
+    #
+    #     self.DAE.init_xy()
+    #
+    #     for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow,
+    #                                     self.Call.init0):
+    #         if pflow and init0:
+    #             self.__dict__[device].init0(self.DAE)
+    #
+    #     # check for islands
+    #     self.check_islands(show_info=True)
+    #
+    #     t, s = elapsed(t)
+    #     self.log.debug('Power flow initialized in {:s}.\n'.format(s))
+    #
+    #     return self
 
     def td_init(self):
         """
@@ -365,7 +379,7 @@ class PowerSystem(object):
 
             if len(self.Bus.islanded_buses) == 0 and len(
                     self.Bus.island_sets) == 0:
-                self.log.info('System is interconnected.')
+                self.log.debug('System is interconnected.')
             else:
                 self.log.info(
                     'System contains {:d} islands and {:d} islanded buses.'.
