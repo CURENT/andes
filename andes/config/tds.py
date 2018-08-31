@@ -6,7 +6,7 @@ class Tds(ConfigBase):
     def __init__(self, **kwargs):
         self.fixt = True
         self.tstep = 1 / 30
-        self.method = 'euler'
+        self.method = 'trapezoidal'
         self.method_alt = ['euler', 'trapezoidal', 'fwdeuler']
         self.t0 = 0.0
         self.tf = 20

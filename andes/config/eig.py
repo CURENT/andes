@@ -2,7 +2,7 @@ from . import ConfigBase
 from ..utils.cached import cached
 
 
-class SSSA(ConfigBase):
+class Eig(ConfigBase):
     def __init__(self, **kwargs):
         self.neig = 1
         self.method = 1
@@ -12,7 +12,7 @@ class SSSA(ConfigBase):
         self.eigs = ''
         self.pf = ''
         self.plot = True
-        super(SSSA, self).__init__(**kwargs)
+        super(Eig, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):

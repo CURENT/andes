@@ -1,14 +1,17 @@
 import logging
-from .base import RoutineBase
-from ..config.tds import Tds
-from ..utils.solver import Solver
-from ..utils import elapsed
 from math import isnan
 from time import monotonic as time, sleep
-from cvxopt import matrix, sparse, spdiag
-from ..utils.math import zeros
-import progressbar
+import importlib
+import sys
 
+import progressbar
+from cvxopt import matrix, sparse, spdiag
+
+from .base import RoutineBase
+from ..config.tds import Tds
+from ..utils import elapsed
+from ..utils.math import zeros
+from ..utils.solver import Solver
 
 logger = logging.getLogger(__name__)
 __cli__ = 'tds'
@@ -27,11 +30,11 @@ class TDS(RoutineBase):
         self.F = None
         self.bar = progressbar.ProgressBar(maxval=100,
                                            widgets=[
-            ' [',
-            progressbar.Percentage(),
-            progressbar.Bar(),
-            progressbar.AdaptiveETA(), '] '
-        ])
+                                               ' [',
+                                               progressbar.Percentage(),
+                                               progressbar.Bar(),
+                                               progressbar.AdaptiveETA(), '] '
+                                           ])
 
         self.switch = False
         self.next_pc = 0.1
@@ -151,9 +154,9 @@ class TDS(RoutineBase):
             config.deltat = config.tf - self.t
 
         # reduce time step for fixed_times events
-        for time in self.fixed_times:
-            if (time > self.t) and (time < self.t + config.deltat):
-                config.deltat = time - self.t
+        for fixed_t in self.fixed_times:
+            if (fixed_t > self.t) and (fixed_t < self.t + config.deltat):
+                config.deltat = fixed_t - self.t
                 self.switch = True
                 break
 
@@ -309,7 +312,7 @@ class TDS(RoutineBase):
             self.bar.finish()
 
         if config.qrt:
-            logger.debug('RT headroom time: {} s.'.format(str(rt_headroom)))
+            logger.debug('RT headroom time: {} s.'.format(str(self.headroom)))
 
         if self.t != config.tf:
             logger.error('Reached minimum time step. Convergence is not likely.')
@@ -339,6 +342,8 @@ class TDS(RoutineBase):
         """
         if self.convergence is True:
             return
+        dae = self.system.DAE
+        system = self.system
 
         inc_g = self.inc[dae.n:dae.m + dae.n]
         max_g_err_sign = 1 if abs(max(inc_g)) > abs(min(inc_g)) else -1
@@ -350,7 +355,7 @@ class TDS(RoutineBase):
             'Maximum mismatch = {:.4g} at equation <{}>'.format(
                 max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
         system.log.debug(
-            'Reducing time step h={:.4g}s for t={:.4g}'.format(h, t))
+            'Reducing time step h={:.4g}s for t={:.4g}'.format(self.h, self.t))
 
         # restore initial variable data
         dae.x = matrix(self.x0)

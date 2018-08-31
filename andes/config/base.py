@@ -3,6 +3,9 @@ import configparser
 
 from ..utils.cached import cached
 from ..utils.tab import Tab
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigBase(object):
@@ -125,7 +128,7 @@ class ConfigBase(object):
         ret = False
 
         if not os.path.isfile(rc):
-            self.system.log.warning(
+            logger.warning(
                 'Config file {} does not exist.'.format(rc))
             return ret
 
@@ -134,12 +137,12 @@ class ConfigBase(object):
 
         for section in config.sections():
             if section not in self.__dict__:
-                self.system.warning(
+                logger.warning(
                     'Skipping Config section [{}].'.format(section))
                 continue
             for key in config[section].keys():
                 if not hasattr(self.__dict__[section], key):
-                    self.system.warning('Skipping Config [{}].<{}>'.format(
+                    logger.warning('Skipping Config [{}].<{}>'.format(
                         section, key))
                 val = config[section].get(key)
                 try:
@@ -153,7 +156,7 @@ class ConfigBase(object):
                 if hasattr(self.__dict__[section], key + '_alt'):
                     if val not in self.__dict__[section].__dict__[key +
                                                                   '_alt']:
-                        self.system.warning(
+                        logger.warning(
                             'Invalid Value <{}> for Config [{}].<{}>'.format(
                                 val, section, key))
                 self.__dict__[section].__dict__.update({key: val})

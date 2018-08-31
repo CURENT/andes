@@ -3,12 +3,12 @@ from .system import Config  # NOQA
 from .pflow import Pflow  # NOQA
 from .cpf import CPF  # NOQA
 from .tds import Tds  # NOQA
-from .sssa import SSSA  # NOQA
+from .eig import Eig  # NOQA
 
 __all__ = [
     'settings',
     'pflow',
     'tds',
-    'sssa',
+    'eig',
     'cpf',
 ]

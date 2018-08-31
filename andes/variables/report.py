@@ -1,4 +1,3 @@
-import platform
 import importlib
 from time import strftime
 
@@ -192,7 +191,7 @@ class Report(object):
 
         if content == 'powerflow' and system.pflow.solved:
             idx, name, Vm, Va, Pg, Qg, Pl, Ql = system.get_busdata()
-            Va_unit = 'deg' if system.SPF.usedegree else 'rad'
+            Va_unit = 'deg' if system.pflow.config.usedegree else 'rad'
             text.append(['BUS DATA:\n'])
             # todo: consider system.SPF.units
             header.append([

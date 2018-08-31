@@ -19,29 +19,24 @@
 Andes main entry points
 """
 
-import os
-import sys
+import cProfile
 import glob
 import io
-import pstats
-import cProfile
+import logging
+import os
 import platform
-from time import sleep, strftime
 import pprint
-
-from multiprocessing import Process
+import pstats
+import sys
 from argparse import ArgumentParser
+from multiprocessing import Process
+from time import sleep, strftime
 
 from . import filters
-from .consts import ERROR
+from . import routines
 from .system import PowerSystem
 from .utils import elapsed
-from .routines import eigenanalysis
-from . import routines
 
-# from .routines.fakemodule import EAGC
-
-import logging
 logger = None
 
 
@@ -121,7 +116,7 @@ def cli_new(help=False):
     # general options
     general_group = parser.add_argument_group('General options')
     general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='?',
-                        default='pflow')
+                               default='pflow')
     general_group.add_argument('--conf', choices=routines.__cli__ + ['system'],
                                help='Edit configuration', default='system')
     general_group.add_argument('--license', action='store_true', help='Display software license')
@@ -500,7 +495,7 @@ def main():
 
     if len(valid_cases) == 1:
         logger.info('-> Single process finished in {:s}.'.format(s0))
-    elif len(valid_cases) >=2:
+    elif len(valid_cases) >= 2:
         logger.info('-> Multiple processes finished in {:s}.'.format(s0))
 
     return
@@ -553,27 +548,13 @@ def run(case, **kwargs):
         system.pflow.run()
 
     # initialize variables for output even if not running TDS
-    # system.td_init()
     system.tds.init()
 
     system.Report.write(content='powerflow')
 
-    # run more studies
-
-    if not routine:
-        pass
-    elif routine.lower() in ['time', 'tds', 't']:
-        routine = 'tds'
-    elif routine.lower() in ['cpf', 'c']:
-        routine = 'cpf'
-    elif routine.lower() in ['eig', 'ss', 'sssa', 's']:
-        routine = 'eig'
-
-    if routine is 'tds':
+    if routine == 'tds':
         t1, s = elapsed(t0)
-        # system.hack_EAGC()
 
-        # ret = timedomain.run(system)
         ret = system.tds.run()
 
         t2, s = elapsed(t1)
@@ -582,12 +563,7 @@ def run(case, **kwargs):
             t3, s = elapsed(t2)
             system.log.info('Simulation data dumped in {:s}.'.format(s))
     elif routine == 'eig':
-        t1, s = elapsed(t0)
-        system.log.info('')
-        system.log.info('Eigenvalue Analysis:')
-        eigenanalysis.run(system)
-        t2, s = elapsed(t1)
-        system.log.info('Analysis finished in {:s}.'.format(s))
+        system.eig.run()
 
     # Disable profiler and output results
     if profile:
@@ -613,6 +589,7 @@ def run(case, **kwargs):
         msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
         logger.info(msg_finish)
         print(msg_finish)
+
 
 if __name__ == '__main__':
     main()

@@ -18,16 +18,14 @@ Power system class
 """
 
 import importlib
-from operator import itemgetter
-from logging import INFO
-from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .config import Config, Pflow, Tds, CPF, SSSA
-# from .utils import Logger, elapsed
-from .utils import elapsed
 import logging
+from logging import INFO
+from operator import itemgetter
 
-from .models import non_jits, jits, JIT
+from .config import Config
 from .consts import rad2deg
+from .models import non_jits, jits, JIT
+from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 try:
     from .utils.streaming import Streaming
@@ -37,6 +35,7 @@ except ImportError:
 
 from .routines.pflow import PowerFlow
 from .routines.tds import TDS
+from .routines.eig import EIG
 
 
 class PowerSystem(object):
@@ -87,10 +86,10 @@ class PowerSystem(object):
                              gis, **kwargs)
 
         self.config = Config()
-        self.SPF = Pflow()
-        self.CPF = CPF()
-        self.TDS = Tds()
-        self.SSSA = SSSA()
+        # self.SPF = Pflow()
+        # self.CPF = CPF()
+        # self.TDS = Tds()
+        # self.SSSA = SSSA()
 
         if settings:
             self.load_settings(self.Files)
@@ -127,6 +126,7 @@ class PowerSystem(object):
         # import routines
         self.pflow = PowerFlow(self)
         self.tds = TDS(self)
+        self.eig = EIG(self)
 
     @property
     def freq(self):
@@ -134,11 +134,10 @@ class PowerSystem(object):
 
     @freq.setter
     def freq(self, freq):
-        if freq <=0:
+        if freq <= 0:
             self.config.freq = 1
         else:
             self.config.freq = freq
-
 
     def setup(self):
         """
@@ -366,7 +365,7 @@ class PowerSystem(object):
         idx = self.Bus.idx
         names = self.Bus.name
         Vm = [self.DAE.y[x] for x in self.Bus.v]
-        if self.SPF.usedegree:
+        if self.pflow.config.usedegree:
             Va = [self.DAE.y[x] * rad2deg for x in self.Bus.a]
         else:
             Va = [self.DAE.y[x] for x in self.Bus.a]
