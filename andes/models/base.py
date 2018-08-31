@@ -1181,7 +1181,7 @@ class ModelBase(object):
         :return: None
 
         """
-        logger.log(level, '[{}] - '.format(self._name) + msg)
+        logger.log(level, '<{}> - '.format(self._name) + msg)
 
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""

@@ -57,8 +57,8 @@ class WindBase(ModelBase):
 
     def servcall(self, dae):
         self.iT = div(1, self.T)
-        self.t0 = self.system.TDS.t0
-        self.tf = self.system.TDS.tf
+        self.t0 = self.system.tds.config.t0
+        self.tf = self.system.tds.config.tf
 
     def init1(self, dae):
         self.servcall(dae)

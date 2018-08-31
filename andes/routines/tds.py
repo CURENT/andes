@@ -51,7 +51,7 @@ class TDS(RoutineBase):
         self.y0 = None
         self.f0 = None
 
-    def first_time_step(self):
+    def _calc_time_step_first(self):
         """
         Compute the first time step and save to ``self.h``
 
@@ -94,9 +94,9 @@ class TDS(RoutineBase):
 
         self.h = config.deltat
 
-    def time_step(self):
+    def calc_time_step(self):
         """
-        determine the time step during time domain simulations
+        Set the time step during time domain simulations
 
         Parameters
         ----------
@@ -117,6 +117,10 @@ class TDS(RoutineBase):
         convergence = self.convergence
         niter = self.niter
         t = self.t
+
+        if t == 0:
+            self._calc_time_step_first()
+            return
 
         if convergence:
             if niter >= 15:
@@ -227,9 +231,8 @@ class TDS(RoutineBase):
 
         self.streaming_init()
 
-        logger.info('Time Domain Simulation: {} method'
-                    .format(config.method_desc[system.TDS.method]))
-        logger.info('Simulation time: {0}'.format(system.TDS.tf))
+        logger.info('-> Time Domain Simulation: {} method, T={}s'
+                    .format(config.method_desc[system.tds.config.method], system.tds.config.tf))
 
         self.load_pert()
 
@@ -239,7 +242,7 @@ class TDS(RoutineBase):
         self.bar.start()
 
         while self.t < config.tf:
-            self.time_step()
+            self.calc_time_step()
             self.check_fixed_times()
 
             if self.h == 0:
@@ -320,9 +323,9 @@ class TDS(RoutineBase):
         _, s = elapsed(t0)
 
         if ret is True:
-            system.log.info('Time domain simulation finished in {:s}.'.format(s))
+            system.log.info(' Time domain simulation finished in {:s}.'.format(s))
         else:
-            system.log.info('Time domain simulation failed in {:s}.'.format(s))
+            system.log.info(' Time domain simulation failed in {:s}.'.format(s))
 
         return ret
 
@@ -454,7 +457,6 @@ class TDS(RoutineBase):
 
             dae.rebuild = True
             self.switch = False
-
 
     def check_fixed_times(self):
         """

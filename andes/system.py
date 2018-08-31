@@ -248,62 +248,6 @@ class PowerSystem(object):
         for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
             if not pflow:
                 self.__dict__[device]._varname()
-    #
-    # def pf_init(self):
-    #     """
-    #     Set power flow initial values by running ``init0()``
-    #     """
-    #     t, s = elapsed()
-    #
-    #     self.DAE.init_xy()
-    #
-    #     for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow,
-    #                                     self.Call.init0):
-    #         if pflow and init0:
-    #             self.__dict__[device].init0(self.DAE)
-    #
-    #     # check for islands
-    #     self.check_islands(show_info=True)
-    #
-    #     t, s = elapsed(t)
-    #     self.log.debug('Power flow initialized in {:s}.\n'.format(s))
-    #
-    #     return self
-
-    def td_init(self):
-        """
-        Set time domain simulation initial values by ``init1()``
-
-        :return: success flag
-        """
-        if self.pflow.solved is False:
-            return False
-
-        t, s = elapsed()
-
-        # Assign indices for post-powerflow device variables
-        self.xy_addr1()
-
-        # Assign variable names for bus injections and line flows if enabled
-        self.VarName.resize_for_flows()
-        self.VarName.bus_line_names()
-
-        # Reshape DAE to retain power flow solutions
-        self.DAE.init1()
-
-        # Initialize post-powerflow device variables
-        for device, init1 in zip(self.DevMan.devices, self.Call.init1):
-            if init1:
-                self.__dict__[device].init1(self.DAE)
-
-        t, s = elapsed(t)
-
-        if self.DAE.n:
-            self.log.info('Dynamic models initialized in {:s}.'.format(s))
-        else:
-            self.log.info('No dynamic model loaded.')
-
-        return self
 
     def rmgen(self, idx):
         """

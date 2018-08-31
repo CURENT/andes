@@ -528,7 +528,7 @@ class Streaming(object):
                 continue
 
             if time == -1:
-                time = max(self.system.DAE.t, 0) + self.system.TDS.tstep
+                time = max(self.system.DAE.t, 0) + self.system.tds.config.tstep
 
             tf = time + duration
             if duration == 0.:
@@ -645,7 +645,7 @@ class Streaming(object):
             k = self.system.VarOut.k[-1]
             lastk = self.ModuleInfo[mod]['lastk']
             if limitsample:
-                every = 1 / self.system.TDS.tstep / limitsample
+                every = 1 / self.system.tds.config.tstep / limitsample
                 if (k - lastk) / every < 1:
                     continue
                 else:

@@ -36,7 +36,7 @@ from . import filters
 from .consts import ERROR
 from .system import PowerSystem
 from .utils import elapsed
-from .routines import timedomain, eigenanalysis
+from .routines import eigenanalysis
 from . import routines
 
 # from .routines.fakemodule import EAGC

@@ -23,9 +23,9 @@ class VarName(object):
     def resize_for_flows(self):
         """Extend `unamey` and `fnamey` for bus injections and line flows"""
         if self.system.config.dime_enable:
-            self.system.TDS.compute_flows = True
+            self.system.tds.config.compute_flows = True
 
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
                      4 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
@@ -57,7 +57,7 @@ class VarName(object):
 
     def bus_line_names(self):
         """Append bus injection and line flow names to `VarName`"""
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             self.system.Bus._varname_inj()
             self.system.Line._varname_flow()
             self.system.Area._varname_inter()

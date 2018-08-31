@@ -6,6 +6,8 @@ from cvxopt import matrix
 class VarOut(object):
     """
     Output variable value recorder
+
+    TODO: merge in tds.py
     """
 
     def __init__(self, system):
@@ -21,7 +23,7 @@ class VarOut(object):
         """
         Record the state/algeb values at time t to self.vars
         """
-        max_cache = int(self.system.TDS.max_cache)
+        max_cache = int(self.system.tds.config.max_cache)
         if len(self.vars) >= max_cache > 0:
             self.dump()
             self.vars = list()
@@ -36,7 +38,7 @@ class VarOut(object):
         self.k.append(step)
         self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
 
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
 
         # self.system.EAGC_module.stream_to_geovis()
@@ -125,7 +127,7 @@ class VarOut(object):
         # compute the total number of columns, excluding time
         if not system.Recorder.n:
             n_vars = system.DAE.m + system.DAE.n
-            if system.TDS.compute_flows:
+            if system.tds.config.compute_flows:
                 n_vars += 2 * system.Bus.n + 4 * system.Line.n
             idx = list(range(n_vars))
 
@@ -171,7 +173,7 @@ class VarOut(object):
 
         # include line flow variables in algebraic variables
         nflows = 0
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
                      4 * self.system.Line.n + \
                      2 * self.system.Area.n_combination

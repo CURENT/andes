@@ -22,5 +22,5 @@ def get_command(all_pkg, hook):
     return ret
 
 
-__all__ = ['pflow', 'timedomain', 'eigenanalysis']
+__all__ = ['pflow', 'tds', 'eigenanalysis']
 __cli__ = get_command(__all__, '__cli__')

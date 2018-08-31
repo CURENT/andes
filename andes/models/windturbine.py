@@ -155,7 +155,7 @@ class Turbine(object):
         for i in range(self.n):
             mis = 1
             iter = 0
-            while abs(mis) > self.system.TDS.tol:
+            while abs(mis) > self.system.tds.config.tol:
                 if iter > 50:
                     self.message(
                         'Wind <{}> init failed. '
@@ -439,7 +439,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             mis = ones(4, 1)
             jac = sparse(matrix(0, (4, 4), 'd'))
             iter = 0
-            while (max(abs(mis))) > self.system.TDS.tol:
+            while (max(abs(mis))) > self.system.tds.config.tol:
                 if iter > 40:
                     self.log(
                         'Initialization of WTG4DC <{}> failed.'.format(
@@ -863,7 +863,7 @@ class WTG3(ModelBase):
             jac0 = spmatrix(vals, rows, cols, (6, 6), 'd')
             iter = 0
 
-            while max(abs(mis)) > self.system.TDS.tol:
+            while max(abs(mis)) > self.system.tds.config.tol:
                 if iter > 20:
                     self.log(
                         'Initialization of DFIG <{}> failed.'.format(
@@ -940,7 +940,7 @@ class WTG3(ModelBase):
 
         # wind speed initialization loop
 
-        R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
+        R = 4 * pi * self.system.freq * mul(self.R, self.ngb,
                                                    div(1, self.npole))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
@@ -948,7 +948,7 @@ class WTG3(ModelBase):
         for i in range(self.n):
             mis = 1
             iter = 0
-            while abs(mis) > self.system.TDS.tol:
+            while abs(mis) > self.system.tds.config.tol:
                 if iter > 50:
                     self.log(
                         'Wind <{}> init failed. '

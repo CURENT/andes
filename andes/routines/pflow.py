@@ -45,8 +45,7 @@ class PowerFlow(RoutineBase):
         -------
         None
         """
-        logger.info('')
-        logger.info('Power flow study: {} method, {} start'.format(
+        logger.info('-> Power flow study: {} method, {} start'.format(
             self.config.method.upper(), 'flat' if self.config.flatstart else 'non-flat')
         )
 
@@ -90,9 +89,9 @@ class PowerFlow(RoutineBase):
         _, s = elapsed(t)
 
         if self.solved:
-            logger.info('Solution converged in {} in {} iterations'.format(s, self.niter))
+            logger.info(' Solution converged in {} in {} iterations'.format(s, self.niter))
         else:
-            logger.warn('Solution failed in {} in {} iterations'.format(s, self.niter))
+            logger.warn(' Solution failed in {} in {} iterations'.format(s, self.niter))
         return ret
 
     def newton(self):
