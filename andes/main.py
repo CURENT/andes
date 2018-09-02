@@ -32,10 +32,12 @@ from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep, strftime
 
+import pathlib
 from . import filters
 from . import routines
 from .system import PowerSystem
-from .utils import elapsed
+from .utils import elapsed, get_config_load_path
+from subprocess import call
 
 logger = None
 
@@ -121,8 +123,8 @@ def cli_new():
     general_group = parser.add_argument_group('General options')
     general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='*',
                                default=['pflow'], )
-    general_group.add_argument('--conf', choices=routines.__cli__ + ['system'],
-                               help='Edit configuration', default='system')
+    general_group.add_argument('--edit-config', help='Quick edit of the config file',
+                               action='store_true')
     general_group.add_argument('--license', action='store_true', help='Display software license')
 
     # I/O
@@ -135,6 +137,12 @@ def cli_new():
     io_group.add_argument('-n', '--no_output', help='Force no output of any kind',
                           action='store_true')
     io_group.add_argument('-C', '--clean', help='Clean output files', action='store_true')
+
+    config_exclusive = parser.add_mutually_exclusive_group()
+    config_exclusive.add_argument('--load-config', help='path to the rc config to load',
+                                  dest='config')
+    config_exclusive.add_argument('--save-config', help='save configuration to file name',
+                                  nargs='?', type=str, default='')
 
     # helps and documentations
     group_help = parser.add_argument_group('Help and documentation',
@@ -205,7 +213,7 @@ def andeshelp(usage=None,
               model_var=None,
               quick_help=None,
               help_option=None,
-              help_settings=None,
+              help_config=None,
               export='plain',
               save=None,
               **kwargs):
@@ -217,7 +225,7 @@ def andeshelp(usage=None,
     out = []
 
     if not (usage or group or category or model_list or model_format
-            or model_var or quick_help or help_option or help_settings):
+            or model_var or quick_help or help_option or help_config):
         return False
 
     from .models import all_models_list
@@ -313,22 +321,24 @@ def andeshelp(usage=None,
     if help_option:
         raise NotImplementedError
 
-    if help_settings:
-        all_settings = ['Config', 'SPF', 'TDS', 'SSSA', 'CPF']
+    if help_config:
 
-        if help_settings.lower() == 'all':
-            help_settings = all_settings
+        all_config = ['Config', 'SPF', 'TDS', 'SSSA', 'CPF']
+
+        if help_config.lower() == 'all':
+            help_config = all_config
 
         else:
-            help_settings = help_settings.split(',')
+            help_config = help_config.split(',')
 
-            for item in help_settings:
-                if item not in all_settings:
-                    logger.warning('Setting <{}> does not exist.'.format(item))
-                    help_settings.remove(item)
+            for item in help_config:
+                if item not in all_config:
+                    logger.warning('Config <{}> does not exist.'.format(item))
+                    help_config.remove(item)
 
-        if len(help_settings) > 0:
-            for item in help_settings:
+        if len(help_config) > 0:
+            for item in help_config:
+                # TODO: fix
                 out.append(system.__dict__[item].doc(export=export))
 
     logger.info('\n'.join(out))  # NOQA
@@ -336,7 +346,7 @@ def andeshelp(usage=None,
     return True
 
 
-def edit_conf(conf, **kwargs):
+def edit_conf(edit_config=False, config=None, **kwargs):
     """
     Edit Andes routine configuration
 
@@ -344,7 +354,25 @@ def edit_conf(conf, **kwargs):
     :return: succeed flag
     """
     # raise NotImplementedError("Not implemented")
-    return False
+    ret = False
+
+    if edit_config is False:
+        return ret
+
+    conf_path = get_config_load_path()
+
+    if conf_path is not None:
+        logger.info('Editing config file {}'.format(conf_path))
+        if platform.system() == 'Linux':
+            editor = os.environ.get('EDITOR', 'gedit')
+            call([editor, conf_path])
+        elif platform.system() == 'Windows':
+            editor = 'notepad.exe'
+            call([editor, conf_path])
+
+        ret = True
+
+    return ret
 
 
 def remove_output(clean=False, **kwargs):
@@ -408,9 +436,47 @@ def search(search, **kwargs):
     return out
 
 
+def save_config(**kwargs):
+    """
+    Save configuration to kwargs['save_config']
+
+    Parameters
+    ----------
+    kwargs
+
+    Returns
+    -------
+    bool
+        True is executed
+    """
+    ret = False
+    cf_path = kwargs['save_config']
+
+    # no ``--save-config ``
+    if cf_path == '':
+        return ret
+
+    if cf_path is None:
+        cf_path = 'andes.conf'
+        home = str(pathlib.Path.home())
+
+        path = os.path.join(home, '.andes')
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        cf_path = os.path.join(path, cf_path)
+
+    ps = PowerSystem()
+    ps.dump_config(cf_path)
+    ret = True
+
+    return ret
+
+
 def main():
     """
     The new main function
+
     Returns
     -------
     None
@@ -426,11 +492,12 @@ def main():
     logger.debug('command line arguments:')
     logger.debug(pprint.pformat(args))
 
-    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args):
-        return
-
     # show preamble
     preamble()
+
+    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) \
+            or save_config(**args):
+        return
 
     # process input files
     if len(args['filename']) == 0:

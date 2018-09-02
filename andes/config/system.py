@@ -12,7 +12,6 @@ except ImportError:
 
 class System(ConfigBase):
     def __init__(self, **kwargs):
-        self.verbose = 20
         self.freq = 60.0
         self.mva = 100.0
         self.distrsw = False
@@ -40,7 +39,6 @@ class System(ConfigBase):
     @cached
     def config_descr(self):
         descriptions = {
-            'verbose': 'program logging level',
             'freq': 'system base frequency',
             'mva': 'system base MVA',
             'distrsw': 'use distributed slack bus mode',

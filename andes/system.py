@@ -19,6 +19,7 @@ Power system class
 import configparser
 import importlib
 import logging
+import pathlib
 from operator import itemgetter
 import os
 from .config import System
@@ -27,6 +28,7 @@ from .models import non_jits, jits, JIT
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .consts import pi
 from andes import routines
+from .utils import get_config_load_path
 
 try:
     from .utils.streaming import Streaming
@@ -39,8 +41,7 @@ logger = logging.getLogger(__name__)
 
 class PowerSystem(object):
     """
-    Everything in a power system class including models, settings,
-     file and call managers
+    Everything in a power system class including models, routines, file and call managers
     """
 
     def __init__(self,
@@ -51,7 +52,7 @@ class PowerSystem(object):
                  output=None,
                  dynfile=None,
                  addfile=None,
-                 settings=None,
+                 config=None,
                  input_format=None,
                  output_format=None,
                  gis=None,
@@ -68,7 +69,7 @@ class PowerSystem(object):
             log: log file name
             dump: simulation result dump name
             addfile: additional file used by some formats
-            settings: specified setting file name
+            config: specified rc config file path
             input_format: specified input case file format
             output_format: specified dump case file format
             output: specified output case file name
@@ -79,12 +80,22 @@ class PowerSystem(object):
         """
         # set internal flags based on the arguments
         self.pid = pid
-        self.files = FileMan(case, input_format, addfile, settings, no_output,
-                             dynfile, dump_raw, output_format, output,
-                             gis, **kwargs)
+        self.files = FileMan(case,
+                             input_format=input_format,
+                             addfile=addfile,
+                             config=config,
+                             no_output=no_output,
+                             dynfile=dynfile,
+                             dump_raw=dump_raw,
+                             output_format=output_format,
+                             output=output,
+                             **kwargs)
+
 
         self.config = System()
-        self.load_config(self.files.settings)
+        self.routine_import()
+
+        self.load_config(get_config_load_path(self.files.config))
 
         self.devman = DevMan(self)
         self.call = Call(self)
@@ -108,7 +119,6 @@ class PowerSystem(object):
 
         self.model_import()
 
-        self.routine_import()
 
     @property
     def freq(self):
@@ -306,23 +316,23 @@ class PowerSystem(object):
 
         return times
 
-    def load_config(self, file_path=None):
+    def load_config(self, conf_path):
         """
-        load settings from file
+        Load settings from file.
 
         :return: None
         """
-        if file_path is None:
+        if conf_path is None:
             return
 
         conf = configparser.ConfigParser()
-        conf.read(file_path)
+        conf.read(conf_path)
 
         self.config.load_config(conf)
-
         for r in routines.__all__:
             self.__dict__[r.lower()].config.load_config(conf)
-        logger.debug('Loaded config file from {}.'.format(file_path))
+
+        logger.debug('Loaded config file from {}.'.format(conf_path))
 
     def dump_config(self, file_path):
         """
@@ -338,9 +348,10 @@ class PowerSystem(object):
             None
         """
         if os.path.isfile(file_path):
+            logger.debug('File {} alreay exist. Overwrite? [y/N]'.format(file_path))
             choice = input('File {} alreay exist. Overwrite? [y/N]'.format(file_path)).lower()
             if len(choice) == 0 or choice[0] != 'y':
-                logger.debug('Config file is not overwritte.')
+                logger.info('File not overwritten.')
                 return
 
         conf = self.config.dump_conf()

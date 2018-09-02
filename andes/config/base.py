@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 class ConfigBase(object):
     """base setting class"""
-    def __init__(self, rc=None, **kwargs):
+    def __init__(self, conf=None, **kwargs):
 
-        if rc is not None:
-            self.load_config(rc)
+        if conf is not None:
+            self.load_config(conf)
 
         self.check()
 
