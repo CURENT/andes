@@ -13,7 +13,7 @@ class ConfigBase(object):
     def __init__(self, rc=None, **kwargs):
 
         if rc is not None:
-            self.load_rc(rc)
+            self.load_config(rc)
 
         self.check()
 
@@ -80,37 +80,34 @@ class ConfigBase(object):
 
         return table.draw()
 
-    def dump_rc(self, path=None, mode='w+'):
+    def dump_conf(self, conf=None):
         """
         Dump settings to an rc config file
 
         Parameters
         ----------
-        path: str
-            rc file path
-        mode: str
-            output file write mode
+        conf
+            configparser.ConfigParser() object
 
         Returns
         -------
         None
         """
-        if not path:
-            path = os.path.abspath('.')
-        out = []
-        tab = type(self).__name__
-        dct = self.__dict__
-        out.append('[{}]'.format(tab))
-        keys_sorted = sorted(dct.keys())
+        if conf is None:
+            conf = configparser.ConfigParser()
 
-        for key in keys_sorted:
-            val = dct[key]
-            out.append('{} = {}'.format(key, val))
+        tab = self.__class__.__name__
 
-        with open(path, mode=mode) as f:
-            f.write('\n'.join(out))
+        conf[tab] = {}
 
-    def load_rc(self, rc):
+        for key, val in self.__dict__.items():
+            if key.endswith('_alt'):
+                continue
+            conf[tab][key] = str(val)
+
+        return conf
+
+    def load_config(self, conf):
         """
         Load configurations from an rc file
 
@@ -121,45 +118,30 @@ class ConfigBase(object):
 
         Returns
         -------
-        bool
-            success flag
-
+        None
         """
-        ret = False
+        section = self.__class__.__name__
 
-        if not os.path.isfile(rc):
-            logger.warning(
-                'Config file {} does not exist.'.format(rc))
-            return ret
+        if section not in conf.sections():
+            logger.warning('Config section {} not in rc file'.format(self.__class__.__name__))
+            return
 
-        config = configparser.ConfigParser()
-        config.read(rc)
-
-        for section in config.sections():
-            if section not in self.__dict__:
-                logger.warning(
-                    'Skipping Config section [{}].'.format(section))
+        for key in conf[section].keys():
+            if not hasattr(self, key):
+                logger.warning('Config key {}.{} skipped'.format(section, key))
                 continue
-            for key in config[section].keys():
-                if not hasattr(self.__dict__[section], key):
-                    logger.warning('Skipping Config [{}].<{}>'.format(
-                        section, key))
-                val = config[section].get(key)
-                try:
-                    val = config[section].getfloat(key)
-                except ValueError:
-                    try:
-                        val = config[section].getboolean(key)
-                    except ValueError:
-                        pass
 
-                if hasattr(self.__dict__[section], key + '_alt'):
-                    if val not in self.__dict__[section].__dict__[key +
-                                                                  '_alt']:
-                        logger.warning(
-                            'Invalid Value <{}> for Config [{}].<{}>'.format(
-                                val, section, key))
-                self.__dict__[section].__dict__.update({key: val})
+            val = conf[section].get(key)
+
+            try:
+                val = conf[section].getfloat(key)
+            except ValueError:
+                try:
+                    val = conf[section].getboolean(key)
+                except ValueError:
+                    pass
+
+            self.__dict__.update({key: val})
 
     def check(self):
         """
@@ -169,6 +151,7 @@ class ConfigBase(object):
         bool
             True for pass, False for fail
         """
+        # TODO: check key in _alt
         return True
 
     @cached

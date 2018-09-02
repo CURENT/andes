@@ -10,7 +10,7 @@ except ImportError:
     KLU = False
 
 
-class Config(ConfigBase):
+class System(ConfigBase):
     def __init__(self, **kwargs):
         self.verbose = 20
         self.freq = 60.0
@@ -35,7 +35,7 @@ class Config(ConfigBase):
         # self.dime_server = 'tcp://160.36.56.211:9900'
         # self.dime_server = 'tcp://160.36.58.82:8898'
         self.dime_server = 'ipc:///tmp/dime'
-        super(Config, self).__init__(**kwargs)
+        super(System, self).__init__(**kwargs)
 
     @cached
     def config_descr(self):
@@ -48,10 +48,9 @@ class Config(ConfigBase):
             'export': 'help documentation export format',
             'coi': 'using Center of Inertia',
             'connectivity': 'connectivity check during TDS',
-            'tol': 'iteration error tolerance',
             'forcepq': 'force to use constant PQ load',
             'forcez': 'force to convert load to impedance',
-            'base': 'convert model parameters to the system base',
+            'base': 'convert  parameters to the system base',
         }
         return descriptions
 

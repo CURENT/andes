@@ -16,12 +16,12 @@
 """
 Power system class
 """
-
+import configparser
 import importlib
 import logging
 from operator import itemgetter
-
-from .config import Config
+import os
+from .config import System
 from .consts import rad2deg
 from .models import non_jits, jits, JIT
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
@@ -83,8 +83,8 @@ class PowerSystem(object):
                              dynfile, dump_raw, output_format, output,
                              gis, **kwargs)
 
-        self.config = Config()
-        self.load_settings(self.files)
+        self.config = System()
+        self.load_config(self.files.settings)
 
         self.devman = DevMan(self)
         self.call = Call(self)
@@ -306,14 +306,52 @@ class PowerSystem(object):
 
         return times
 
-    def load_settings(self, Files):
+    def load_config(self, file_path=None):
         """
         load settings from file
 
         :return: None
         """
-        logger.debug('Loaded specified settings file.')
-        pass
+        if file_path is None:
+            return
+
+        conf = configparser.ConfigParser()
+        conf.read(file_path)
+
+        self.config.load_config(conf)
+
+        for r in routines.__all__:
+            self.__dict__[r.lower()].config.load_config(conf)
+        logger.debug('Loaded config file from {}.'.format(file_path))
+
+    def dump_config(self, file_path):
+        """
+        Dump system and routine configurations to an rc-formatted file.
+
+        Parameters
+        ----------
+        file_path
+            path to the configuration file
+
+        Returns
+        -------
+            None
+        """
+        if os.path.isfile(file_path):
+            choice = input('File {} alreay exist. Overwrite? [y/N]'.format(file_path)).lower()
+            if len(choice) == 0 or choice[0] != 'y':
+                logger.debug('Config file is not overwritte.')
+                return
+
+        conf = self.config.dump_conf()
+        for r in routines.__all__:
+            conf = self.__dict__[r.lower()].config.dump_conf(conf)
+
+        with open(file_path, 'w') as f:
+            conf.write(f)
+
+        logger.info('Config written to {}'.format(file_path))
+
 
     def check_islands(self, show_info=False):
         """

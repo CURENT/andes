@@ -235,8 +235,8 @@ class TDS(RoutineBase):
 
         self.streaming_init()
 
-        logger.info('-> Time Domain Simulation: {} method, T={}s'
-                    .format(config.method_desc[system.tds.config.method], system.tds.config.tf))
+        logger.info('-> Time Domain Simulation: {} method, t={} s'
+                    .format(self.config.method, self.config.tf))
 
         self.load_pert()
 

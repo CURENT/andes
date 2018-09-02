@@ -21,11 +21,6 @@ class Tds(ConfigBase):
         self.kqrt = 1
         self.compute_flows = True
         self.max_cache = 0
-        self.method_desc = {
-            'euler': 'Implicit Euler',
-            'trapezoidal': 'Implicit Trapezoidal',
-            'fwdeuler': 'Explicit Euler'
-        }
         super(Tds, self).__init__(**kwargs)
 
     @cached
