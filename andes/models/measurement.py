@@ -58,7 +58,7 @@ class BusFreq(ModelBase):
         self.iTf = div(self.u, self.Tf)
         self.iTd = div(self.u, self.Td)
         self.iTw = div(self.u, self.Tw)
-        self.iwn = div(self.u, self.system.config.wb)
+        self.iwn = div(self.u, self.system.wb)
         self.a0 = dae.y[self.a]
 
         dae.x[self.xt] = zeros(self.n, 1)

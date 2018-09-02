@@ -1,15 +1,15 @@
 import logging
 from cvxopt import matrix, sparse, div
 from .base import RoutineBase
-from ..config.pflow import Pflow
-from ..utils import elapsed
-from ..utils.solver import Solver
+from andes.config.pflow import Pflow
+from andes.utils import elapsed
+from andes.utils.solver import Solver
 
 logger = logging.getLogger(__name__)
 __cli__ = 'pflow'
 
 
-class PowerFlow(RoutineBase):
+class PFLOW(RoutineBase):
     """
     Power flow calculation routine
     """
@@ -52,11 +52,11 @@ class PowerFlow(RoutineBase):
         t, s = elapsed()
 
         system = self.system
-        dae = self.system.DAE
+        dae = self.system.dae
 
-        system.DAE.init_xy()
+        system.dae.init_xy()
 
-        for device, pflow, init0 in zip(system.DevMan.devices, system.Call.pflow, system.Call.init0):
+        for device, pflow, init0 in zip(system.devman.devices, system.call.pflow, system.call.init0):
             if pflow and init0:
                 system.__dict__[device].init0(dae)
 
@@ -68,7 +68,7 @@ class PowerFlow(RoutineBase):
 
     def run(self, **kwargs):
         """
-        Call the power flow solution routine
+        call the power flow solution routine
         Returns
         -------
         bool:
@@ -102,7 +102,7 @@ class PowerFlow(RoutineBase):
         (bool, int)
             success flag, number of iterations
         """
-        dae = self.system.DAE
+        dae = self.system.dae
 
         while True:
             inc = self.calc_inc()
@@ -156,24 +156,24 @@ class PowerFlow(RoutineBase):
         system = self.system
         self.newton_call()
 
-        A = sparse([[system.DAE.Fx, system.DAE.Gx],
-                    [system.DAE.Fy, system.DAE.Gy]])
+        A = sparse([[system.dae.Fx, system.dae.Gx],
+                    [system.dae.Fy, system.dae.Gy]])
 
-        inc = matrix([system.DAE.f, system.DAE.g])
+        inc = matrix([system.dae.f, system.dae.g])
 
-        if system.DAE.factorize:
+        if system.dae.factorize:
             self.F = self.solver.symbolic(A)
-            system.DAE.factorize = False
+            system.dae.factorize = False
 
         try:
             N = self.solver.numeric(A, self.F)
             self.solver.solve(A, self.F, N, inc)
         except ValueError:
             logger.warning('Unexpected symbolic factorization.')
-            system.DAE.factorize = True
+            system.dae.factorize = True
         except ArithmeticError:
             logger.warning('Jacobian matrix is singular.')
-            system.DAE.check_diag(system.DAE.Gy, 'unamey')
+            system.dae.check_diag(system.dae.Gy, 'unamey')
 
         return -inc
 
@@ -187,30 +187,30 @@ class PowerFlow(RoutineBase):
 
         """
         # system = self.system
-        # exec(system.Call.newton)
+        # exec(system.call.newton)
 
         system = self.system
-        dae = self.system.DAE
+        dae = self.system.dae
 
-        system.DAE.init_fg()
+        system.dae.init_fg()
 
         # evaluate algebraic equation mismatches
-        for model, pflow, gcall in zip(system.DevMan.devices, system.Call.pflow, system.Call.gcall):
+        for model, pflow, gcall in zip(system.devman.devices, system.call.pflow, system.call.gcall):
             if pflow and gcall:
                 system.__dict__[model].gcall(dae)
 
         # eval differential equations
-        for model, pflow, fcall in zip(system.DevMan.devices, system.Call.pflow, system.Call.fcall):
+        for model, pflow, fcall in zip(system.devman.devices, system.call.pflow, system.call.fcall):
             if pflow and fcall:
                 system.__dict__[model].fcall(dae)
 
         # reset islanded buses mismatches
         system.Bus.gisland(dae)
 
-        if system.DAE.factorize:
-            system.DAE.init_jac0()
+        if system.dae.factorize:
+            system.dae.init_jac0()
             # evaluate constant Jacobian elements
-            for model, pflow, jac0 in zip(system.DevMan.devices, system.Call.pflow, system.Call.jac0):
+            for model, pflow, jac0 in zip(system.devman.devices, system.call.pflow, system.call.jac0):
                 if pflow and jac0:
                     system.__dict__[model].jac0(dae)
             dae.temp_to_spmatrix('jac0')
@@ -218,12 +218,12 @@ class PowerFlow(RoutineBase):
         dae.setup_FxGy()
 
         # evaluate Gy
-        for model, pflow, gycall in zip(system.DevMan.devices, system.Call.pflow, system.Call.gycall):
+        for model, pflow, gycall in zip(system.devman.devices, system.call.pflow, system.call.gycall):
             if pflow and gycall:
                 system.__dict__[model].gycall(dae)
 
         # evaluate Fx
-        for model, pflow, fxcall in zip(system.DevMan.devices, system.Call.pflow, system.Call.fxcall):
+        for model, pflow, fxcall in zip(system.devman.devices, system.call.pflow, system.call.fxcall):
             if pflow and fxcall:
                 system.__dict__[model].fxcall(dae)
 
@@ -247,23 +247,23 @@ class PowerFlow(RoutineBase):
 
         system = self.system
 
-        exec(system.Call.pfload)
-        system.Bus.Pl = system.DAE.g[system.Bus.a]
-        system.Bus.Ql = system.DAE.g[system.Bus.v]
+        exec(system.call.pfload)
+        system.Bus.Pl = system.dae.g[system.Bus.a]
+        system.Bus.Ql = system.dae.g[system.Bus.v]
 
-        exec(system.Call.pfgen)
-        system.Bus.Pg = system.DAE.g[system.Bus.a]
-        system.Bus.Qg = system.DAE.g[system.Bus.v]
+        exec(system.call.pfgen)
+        system.Bus.Pg = system.dae.g[system.Bus.a]
+        system.Bus.Qg = system.dae.g[system.Bus.v]
 
         if system.PV.n:
-            system.PV.qg = system.DAE.y[system.PV.q]
+            system.PV.qg = system.dae.y[system.PV.q]
         if system.SW.n:
-            system.SW.pg = system.DAE.y[system.SW.p]
-            system.SW.qg = system.DAE.y[system.SW.q]
+            system.SW.pg = system.dae.y[system.SW.p]
+            system.SW.qg = system.dae.y[system.SW.q]
 
-        exec(system.Call.seriesflow)
+        exec(system.call.seriesflow)
 
-        system.Area.seriesflow(system.DAE)
+        system.Area.seriesflow(system.dae)
 
     def fdpf(self):
         """
@@ -310,25 +310,25 @@ class PowerFlow(RoutineBase):
         Fpp = self.solver.symbolic(Bpp)
         Np = self.solver.numeric(Bp, Fp)
         Npp = self.solver.numeric(Bpp, Fpp)
-        exec(system.Call.fdpf)
+        exec(system.call.fdpf)
 
         # main loop
         while error > tol:
             # P-theta
-            da = matrix(div(system.DAE.g[no_sw], system.DAE.y[no_swv]))
+            da = matrix(div(system.dae.g[no_sw], system.dae.y[no_swv]))
             self.solver.solve(Bp, Fp, Np, da)
-            system.DAE.y[no_sw] += da
+            system.dae.y[no_sw] += da
 
-            exec(system.Call.fdpf)
-            normP = max(abs(system.DAE.g[no_sw]))
+            exec(system.call.fdpf)
+            normP = max(abs(system.dae.g[no_sw]))
 
             # Q-V
-            dV = matrix(div(system.DAE.g[no_gv], system.DAE.y[no_gv]))
+            dV = matrix(div(system.dae.g[no_gv], system.dae.y[no_gv]))
             self.solver.solve(Bpp, Fpp, Npp, dV)
-            system.DAE.y[no_gv] += dV
+            system.dae.y[no_gv] += dV
 
-            exec(system.Call.fdpf)
-            normQ = max(abs(system.DAE.g[no_gv]))
+            exec(system.call.fdpf)
+            normQ = max(abs(system.dae.g[no_gv]))
 
             err = max([normP, normQ])
             self.iter_mis.append(err)

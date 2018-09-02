@@ -161,9 +161,19 @@ class PV(Stagen):
         dae.set_jac('Gy0', -1e-6, self.q, self.q)
 
     def disable_gen(self, idx):
-        """Disable a PV element for TDS"""
+        """
+        Disable a PV element for TDS
+
+        Parameters
+        ----------
+        idx
+
+        Returns
+        -------
+
+        """
         self.u[self.uid[idx]] = 0
-        self.system.DAE.factorize = True
+        self.system.dae.factorize = True
 
 
 class Slack(PV):

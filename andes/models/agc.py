@@ -5,6 +5,9 @@ from .base import ModelBase
 from ..utils.math import zeros
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ACE(ModelBase):
@@ -135,12 +138,12 @@ class EAGC(ModelBase):
 
     def switch(self):
         """Switch if time for n has come"""
-        t = self.system.DAE.t
+        t = self.system.dae.t
         for idx in range(self.n):
             if t >= self.tl[idx]:
                 if self.en[idx] == 0:
                     self.en[idx] = 1
-                    self.system.log.info(
+                    logger.info(
                         'EAGC <{}> activated at t = {:4} s'.format(idx, t))
 
     def gcall(self, dae):

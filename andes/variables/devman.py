@@ -1,6 +1,9 @@
 from ..models import order, all_models
 from numpy import ndarray
 from cvxopt import matrix
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DevMan(object):
@@ -11,7 +14,7 @@ class DevMan(object):
     """
 
     def __init__(self, system=None):
-        """constructor for DevMan class"""
+        """constructor for devman class"""
         self.system = system
         self.devices = []
         self.group = {}
@@ -41,8 +44,8 @@ class DevMan(object):
             assigned idx
         """
         if dev_name not in self.devices:
-            self.system.log.error(
-                'Device {} missing. Call add_device before adding elements'.
+            logger.error(
+                'Device {} missing. call add_device before adding elements'.
                 format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group
@@ -90,7 +93,7 @@ class DevMan(object):
         elif type(fkey) == ndarray:
             fkey = fkey.tolist()
 
-        for key, item in self.system.DevMan.group.items():
+        for key, item in self.group.items():
             if key != group:
                 continue
             if type(fkey) != list:

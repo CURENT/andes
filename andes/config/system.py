@@ -1,7 +1,8 @@
 from . import ConfigBase
-from ..consts import INFO, pi
 from ..utils.cached import cached
+import logging
 
+logger = logging.getLogger(__name__)
 try:
     from cvxoptklu import klu  # NOQA
     KLU = True
@@ -11,8 +12,7 @@ except ImportError:
 
 class Config(ConfigBase):
     def __init__(self, **kwargs):
-        self.verbose = INFO
-        self.verbose_alt = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        self.verbose = 20
         self.freq = 60.0
         self.mva = 100.0
         self.distrsw = False
@@ -23,7 +23,6 @@ class Config(ConfigBase):
         self.coi = False
         self.connectivity = False
         self.error = 1
-        # self.tol = 1e-6
         self.static = 0
         self.nseries = 0
         self.forcepq = False
@@ -36,12 +35,7 @@ class Config(ConfigBase):
         # self.dime_server = 'tcp://160.36.56.211:9900'
         # self.dime_server = 'tcp://160.36.58.82:8898'
         self.dime_server = 'ipc:///tmp/dime'
-        self.progressbar = False
         super(Config, self).__init__(**kwargs)
-
-    @property
-    def wb(self):
-        return 2 * pi * self.freq
 
     @cached
     def config_descr(self):
@@ -62,13 +56,19 @@ class Config(ConfigBase):
         return descriptions
 
     def check(self):
-        # TODO: use logging handler
+        """
+        Check config data consistency
+
+        Returns
+        -------
+
+        """
         if self.sparselib not in self.sparselib_alt:
-            print("Invalid sparse library <{}>".format(self.sparselib))
+            logger.warning("Invalid sparse library <{}>".format(self.sparselib))
             self.sparselib = 'umfpack'
 
         if self.sparselib == 'KLU' and not KLU:
-            print("cvxoptklu import error. Fall back to umfpack".format(self.sparselib))
+            logger.info("cvxoptklu import error. Fall back to umfpack".format(self.sparselib))
             self.sparselib = 'umfpack'
 
         return True

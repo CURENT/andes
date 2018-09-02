@@ -8,10 +8,10 @@ import progressbar
 from cvxopt import matrix, sparse, spdiag
 
 from .base import RoutineBase
-from ..config.tds import Tds
-from ..utils import elapsed
-from ..utils.math import zeros
-from ..utils.solver import Solver
+from andes.config.tds import Tds
+from andes.utils import elapsed
+from andes.utils.math import zeros
+from andes.utils.solver import Solver
 
 logger = logging.getLogger(__name__)
 __cli__ = 'tds'
@@ -53,6 +53,7 @@ class TDS(RoutineBase):
         self.x0 = None
         self.y0 = None
         self.f0 = None
+        self.success = False
 
     def _calc_time_step_first(self):
         """
@@ -65,12 +66,12 @@ class TDS(RoutineBase):
         system = self.system
         config = self.config
 
-        if not system.DAE.n:
+        if not system.dae.n:
             freq = 1.0
-        elif system.DAE.n == 1:
-            B = matrix(system.DAE.Gx)
-            self.solver.linsolve(system.DAE.Gy, B)
-            As = system.DAE.Fx - system.DAE.Fy * B
+        elif system.dae.n == 1:
+            B = matrix(system.dae.Gx)
+            self.solver.linsolve(system.dae.Gy, B)
+            As = system.dae.Fx - system.dae.Fy * B
             freq = abs(As[0, 0])
         else:
             freq = 20.0
@@ -172,7 +173,7 @@ class TDS(RoutineBase):
         """
         system = self.system
         config = self.config
-        dae = self.system.DAE
+        dae = self.system.dae
         if system.pflow.solved is False:
             return
 
@@ -182,16 +183,16 @@ class TDS(RoutineBase):
         system.xy_addr1()
 
         # Assign variable names for bus injections and line flows if enabled
-        system.VarName.resize_for_flows()
-        system.VarName.bus_line_names()
+        system.varname.resize_for_flows()
+        system.varname.bus_line_names()
 
-        # Reshape DAE to retain power flow solutions
-        system.DAE.init1()
+        # Reshape dae to retain power flow solutions
+        system.dae.init1()
 
         # Initialize post-powerflow device variables
-        for device, init1 in zip(system.DevMan.devices, system.Call.init1):
+        for device, init1 in zip(system.devman.devices, system.call.init1):
             if init1:
-                system.__dict__[device].init1(system.DAE)
+                system.__dict__[device].init1(system.dae)
 
         # compute line and area flow
         if config.compute_flows:
@@ -200,15 +201,15 @@ class TDS(RoutineBase):
 
         t, s = elapsed(t)
 
-        if system.DAE.n:
+        if system.dae.n:
             logger.debug('Dynamic models initialized in {:s}.'.format(s))
         else:
             logger.debug('No dynamic model loaded.')
 
-        # system.DAE flags initialize
-        system.DAE.factorize = True
-        system.DAE.mu = 1.0
-        system.DAE.kg = 0.0
+        # system.dae flags initialize
+        system.dae.factorize = True
+        system.dae.mu = 1.0
+        system.dae.kg = 0.0
 
     def run(self):
         """
@@ -222,7 +223,7 @@ class TDS(RoutineBase):
         ret = False
         system = self.system
         config = self.config
-        dae = self.system.DAE
+        dae = self.system.dae
 
         # maxit = config.maxit
         # tol = config.tol
@@ -250,7 +251,7 @@ class TDS(RoutineBase):
 
             if self.h == 0:
                 break
-            # progress time and set time in DAE
+            # progress time and set time in dae
             self.t += self.h
             dae.t = self.t
 
@@ -275,7 +276,7 @@ class TDS(RoutineBase):
 
             self.step += 1
             self.compute_flows()
-            system.VarOut.store(self.t, self.step)
+            system.varout.store(self.t, self.step)
             self.streaming_step()
 
             # plot variables and display iteration status
@@ -321,14 +322,16 @@ class TDS(RoutineBase):
             ret = True
 
         if system.config.dime_enable:
-            system.Streaming.finalize()
+            system.streaming.finalize()
 
         _, s = elapsed(t0)
 
         if ret is True:
-            system.log.info(' Time domain simulation finished in {:s}.'.format(s))
+            logger.info(' Time domain simulation finished in {:s}.'.format(s))
         else:
-            system.log.info(' Time domain simulation failed in {:s}.'.format(s))
+            logger.info(' Time domain simulation failed in {:s}.'.format(s))
+
+        self.success = ret
 
         return ret
 
@@ -342,7 +345,7 @@ class TDS(RoutineBase):
         """
         if self.convergence is True:
             return
-        dae = self.system.DAE
+        dae = self.system.dae
         system = self.system
 
         inc_g = self.inc[dae.n:dae.m + dae.n]
@@ -353,8 +356,8 @@ class TDS(RoutineBase):
             max_g_err_idx = list(inc_g).index(min(inc_g))
         logger.debug(
             'Maximum mismatch = {:.4g} at equation <{}>'.format(
-                max(abs(inc_g)), system.VarName.unamey[max_g_err_idx]))
-        system.log.debug(
+                max(abs(inc_g)), system.varname.unamey[max_g_err_idx]))
+        logger.debug(
             'Reducing time step h={:.4g}s for t={:.4g}'.format(self.h, self.t))
 
         # restore initial variable data
@@ -372,7 +375,7 @@ class TDS(RoutineBase):
         """
         config = self.config
         system = self.system
-        dae = self.system.DAE
+        dae = self.system.dae
 
         # constant short names
         In = spdiag([1] * dae.n)
@@ -389,12 +392,12 @@ class TDS(RoutineBase):
 
             # rebuild Jacobian
             if dae.rebuild:
-                exec(system.Call.int)
+                exec(system.call.int)
                 dae.rebuild = False
             else:
-                exec(system.Call.int_fg)
+                exec(system.call.int_fg)
 
-            # complete Jacobian matrix DAE.Ac
+            # complete Jacobian matrix dae.Ac
             if config.method == 'euler':
                 dae.Ac = sparse(
                     [[In - h * dae.Fx, dae.Gx], [-h * dae.Fy, dae.Gy]],
@@ -454,7 +457,7 @@ class TDS(RoutineBase):
         None
         """
         system = self.system
-        dae = system.DAE
+        dae = system.dae
         if self.switch:
             system.Breaker.apply(self.t)
             for item in system.check_event(self.t):
@@ -483,10 +486,10 @@ class TDS(RoutineBase):
         """
         system = self.system
 
-        if system.Files.pert:
+        if system.files.pert:
             try:
-                sys.path.append(system.Files.path)
-                module = importlib.import_module(system.Files.pert[:-3])
+                sys.path.append(system.files.path)
+                module = importlib.import_module(system.files.pert[:-3])
                 self.callpert = getattr(module, 'pert')
             except ImportError:
                 logger.warning('Pert file is discarded due to import errors.')
@@ -500,11 +503,11 @@ class TDS(RoutineBase):
         -------
         None
         """
-        dae = self.system.DAE
+        dae = self.system.dae
         system = self.system
 
         self.inc = zeros(dae.m + dae.n, 1)
-        system.VarOut.store(self.t, self.step)
+        system.varout.store(self.t, self.step)
 
         self.streaming_step()
 
@@ -518,9 +521,9 @@ class TDS(RoutineBase):
         """
         system = self.system
         if system.config.dime_enable:
-            system.Streaming.sync_and_handle()
-            system.Streaming.vars_to_modules()
-            system.Streaming.vars_to_pmu()
+            system.streaming.sync_and_handle()
+            system.streaming.vars_to_modules()
+            system.streaming.vars_to_pmu()
 
     def streaming_init(self):
         """
@@ -534,10 +537,10 @@ class TDS(RoutineBase):
         config = self.config
         if system.config.dime_enable:
             config.compute_flows = True
-            system.Streaming.send_init(recepient='all')
+            system.streaming.send_init(recepient='all')
             logger.info('Waiting for modules to send init info...')
             sleep(0.5)
-            system.Streaming.sync_and_handle()
+            system.streaming.sync_and_handle()
 
     def angle_diff(self):
         """
@@ -560,17 +563,34 @@ class TDS(RoutineBase):
         """
         system = self.system
         config = self.config
-        dae = system.DAE
+        dae = system.dae
 
         if config.compute_flows:
             # compute and append series injections on buses
 
-            exec(system.Call.bus_injection)
+            exec(system.call.bus_injection)
             bus_inj = dae.g[:2 * system.Bus.n]
 
-            exec(system.Call.seriesflow)
-            system.Area.seriesflow(system.DAE)
+            exec(system.call.seriesflow)
+            system.Area.seriesflow(system.dae)
             system.Area.interchange_varout()
             dae.y = matrix([
                 dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout
             ])
+
+    def dump_results(self):
+        """
+        Dump simulation results to ``dat`` and ``lst`` files
+
+        Returns
+        -------
+        None
+        """
+        system = self.system
+
+        t, _ = elapsed()
+
+        if self.success and (not system.files.no_output):
+            system.varout.dump()
+            _, s = elapsed(t)
+            logger.info('Simulation data dumped in {:s}.'.format(s))

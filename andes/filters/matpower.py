@@ -3,6 +3,9 @@
 import re
 from ..consts import deg2rad
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def testlines(fid):
     return True  # hard coded
@@ -46,7 +49,7 @@ def read(file, system):
             continue
         elif comment.search(line):  # for comment lines
             if info:
-                system.log.info(line[1:72])
+                logger.info(line[1:72])
                 info = False
             else:
                 continue
@@ -98,7 +101,7 @@ def read(file, system):
     # add model elements to system
     sw = []
 
-    system.config.mva = basemva
+    system.mva = basemva
 
     for data in mpc['bus']:
         # idx  ty   pd   qd  gs  bs  area  vmag  vang  baseKV  zone  vmax  vmin
@@ -137,7 +140,7 @@ def read(file, system):
                 system.Shunt.elem_add(
                     bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
         except KeyError:
-            system.log.error('Error adding <Bus> to powersystem object.')
+            logger.error('Error adding <Bus> to powersystem object.')
             retval = False
 
     gen_idx = 0
@@ -195,7 +198,7 @@ def read(file, system):
                     qmax=qmax,
                     qmin=qmin)
         except KeyError:
-            system.log.error(
+            logger.error(
                 'Error adding <SW> or <PV> to powersystem object.')
             retval = False
 
@@ -239,7 +242,7 @@ def read(file, system):
                 tap=ratio,
                 phi=angle)
         except KeyError:
-            system.log.error('Error adding <Line> to powersystem object.')
+            logger.error('Error adding <Line> to powersystem object.')
             retval = False
     if len(mpc['bus_name']) == len(system.Bus.name):
         system.Bus.name[:] = mpc['bus_name']

@@ -600,7 +600,7 @@ class MatlabFunction(object):
         self.doc = None
 
     def __call__(self, unused_parent_weakref, *args, **kwargs):
-        """Call a function with the supplied arguments in the Matlab subprocess
+        """call a function with the supplied arguments in the Matlab subprocess
 
         Passes parameters to `run_func`.
 

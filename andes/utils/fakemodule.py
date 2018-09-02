@@ -1,4 +1,4 @@
-from ..utils import dime
+from andes.utils import dime
 from numpy import array, arange
 
 
@@ -75,5 +75,5 @@ class EAGC(FakeModule):
 #     self.EAGC_module = EAGC(name='EAGC',
 #                             address=self.Config.dime_server,
 #                             idx=[671, 672, 673, 1154, 1155, 1156, 1157],
-#                             varout=self.VarOut, varname=self.VarName)
+#                             varout=self.varout, varname=self.varname)
 #     self.EAGC_module.init_on_geovis()

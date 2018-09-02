@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class VarName(object):
     """Variable name manager class"""
@@ -11,8 +15,8 @@ class VarName(object):
 
     def resize(self):
         """Resize (extend) the list for variable names"""
-        yext = self.system.DAE.m - len(self.unamey)
-        xext = self.system.DAE.n - len(self.unamex)
+        yext = self.system.dae.m - len(self.unamey)
+        xext = self.system.dae.n - len(self.unamex)
         if yext > 0:
             self.unamey.extend([''] * yext)
             self.fnamey.extend([''] * yext)
@@ -37,7 +41,7 @@ class VarName(object):
         self.resize()
         string = '{0} {1}'
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
-            self.system.log.error('Wrong list name for VarName.')
+            logger.error('Wrong list name for varname.')
             return
         elif listname in ['fnamex', 'fnamey']:
             string = '${0}\ {1}$'
@@ -52,11 +56,11 @@ class VarName(object):
             self.__dict__[listname][xy_idx] = string.format(
                 var_name, element_name)
         else:
-            self.system.log.warning(
-                'Unknown element_name type while building VarName')
+            logger.warning(
+                'Unknown element_name type while building varname')
 
     def bus_line_names(self):
-        """Append bus injection and line flow names to `VarName`"""
+        """Append bus injection and line flow names to `varname`"""
         if self.system.tds.config.compute_flows:
             self.system.Bus._varname_inj()
             self.system.Line._varname_flow()

@@ -129,13 +129,13 @@ class AVR1(ModelBase):
 
     @property
     def Se(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
 
     @property
     def dSe(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) \
             + mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))
@@ -274,13 +274,13 @@ class AVR2(ModelBase):
 
     @property
     def Se(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout))))
 
     @property
     def dSe(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         vfout = dae.x[self.vfout]
         return mul(self.Ae, exp(mul(self.Be, abs(vfout)))) \
             + mul(self.Ae, self.Be, abs(vfout), exp(mul(self.Be, abs(vfout))))

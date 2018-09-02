@@ -90,7 +90,7 @@ class Turbine(object):
     @property
     def phi(self):
         deg1 = pi / 180
-        dae = self.system.DAE
+        dae = self.system.dae
         above = agtb(dae.x[self.omega_m], 1)
         phi_degree_step = mfloor((dae.x[self.omega_m] - 1) / deg1) * deg1
         return mul(phi_degree_step, above)
@@ -102,7 +102,7 @@ class Turbine(object):
         self.mva_mega = 100e6
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.config.mva * 1e6
+        mva_mega = self.system.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -401,7 +401,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
     def init1(self, dae):
         self.servcall(dae)
-        mva = self.system.config.mva
+        mva = self.system.mva
         self.p0 = mul(self.p0, 1)
         self.v120 = self.v12
 
@@ -546,7 +546,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
     @property
     def v12(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         return dae.y[self.v1] - dae.y[self.v2]
 
     def gycall(self, dae):
@@ -795,7 +795,7 @@ class WTG3(ModelBase):
         self.servcall(dae)
         retval = True
 
-        mva = self.system.config.mva
+        mva = self.system.mva
         self.p0 = mul(self.p0, self.gammap)
         self.q0 = mul(self.q0, self.gammaq)
 
@@ -986,7 +986,7 @@ class WTG3(ModelBase):
         return retval
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.config.mva * 1e6
+        mva_mega = self.system.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -1013,7 +1013,7 @@ class WTG3(ModelBase):
     @property
     def phi(self):
         deg1 = pi / 180
-        dae = self.system.DAE
+        dae = self.system.dae
         above = agtb(dae.x[self.omega_m], 1)
         phi_degree_step = mfloor((dae.x[self.omega_m] - 1) / deg1) * deg1
         return mul(phi_degree_step, above)
@@ -1072,7 +1072,7 @@ class WTG3(ModelBase):
                         1, self.x0))), self.v, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        toSb = self.Sn / self.system.config.mva
+        toSb = self.Sn / self.system.mva
         omega = not0(dae.x[self.omega_m])
         dae.f[self.theta_p] = mul(
             div(1, self.Tp), -dae.x[self.theta_p] + mul(
@@ -1144,7 +1144,7 @@ class WTG3(ModelBase):
 
     def fxcall(self, dae):
         omega = not0(dae.x[self.omega_m])
-        toSb = div(self.Sn, self.system.config.mva)
+        toSb = div(self.Sn, self.system.mva)
         dae.add_jac(Gx, mul(self.x1, 1 - dae.x[self.omega_m]), self.vrd,
                     self.irq)
         dae.add_jac(

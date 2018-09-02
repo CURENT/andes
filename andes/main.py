@@ -40,7 +40,11 @@ from .utils import elapsed
 logger = None
 
 
-def config_logger(name='andes', logfile='andes.log', stream=True, stream_level=logging.INFO):
+def config_logger(name='andes',
+                  logfile='andes.log',
+                  stream=True,
+                  stream_level=logging.INFO
+                  ):
     """
     Configure a logger for the andes package
 
@@ -97,7 +101,7 @@ def preamble():
     logger.info('')
 
 
-def cli_new(help=False):
+def cli_new():
     """
     Command line argument parser
     Parameters
@@ -115,8 +119,8 @@ def cli_new(help=False):
 
     # general options
     general_group = parser.add_argument_group('General options')
-    general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='?',
-                               default='pflow')
+    general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='*',
+                               default=['pflow'], )
     general_group.add_argument('--conf', choices=routines.__cli__ + ['system'],
                                help='Edit configuration', default='system')
     general_group.add_argument('--license', action='store_true', help='Display software license')
@@ -526,7 +530,7 @@ def run(case, **kwargs):
 
     # enable profiler if requested
     pr = cProfile.Profile()
-    if profile:
+    if profile is True:
         pr.enable()
 
     system = PowerSystem(case, **kwargs)
@@ -543,45 +547,35 @@ def run(case, **kwargs):
 
     system.setup()
 
-    # run power flow study first for analysis routines
-    if routine in ('pflow', 'tds', 'eig'):
-        system.pflow.run()
+    # run power flow study by default
+    if 'pflow' in routine:
+        routine.remove('pflow')
 
-    # initialize variables for output even if not running TDS
+    system.pflow.run()
     system.tds.init()
+    system.report.write(content='powerflow')
 
-    system.Report.write(content='powerflow')
-
-    if routine == 'tds':
-        t1, s = elapsed(t0)
-
-        ret = system.tds.run()
-
-        t2, s = elapsed(t1)
-        if ret and (not system.Files.no_output):
-            system.VarOut.dump()
-            t3, s = elapsed(t2)
-            system.log.info('Simulation data dumped in {:s}.'.format(s))
-    elif routine == 'eig':
-        system.eig.run()
+    for r in routine:
+        system.__dict__[r.lower()].run()
 
     # Disable profiler and output results
     if profile:
         pr.disable()
-        if system.Files.no_output:
+
+        if system.files.no_output:
             s = io.StringIO()
             nlines = 20
-            ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
+            ps = pstats.Stats(pr, stream=sys.stdout).sort_stats('cumtime')
             ps.print_stats(nlines)
             logger.info(s.getvalue())
             s.close()
         else:
-            s = open(system.Files.prof, 'w')
+            s = open(system.files.prof, 'w')
             nlines = 999
             ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
             ps.print_stats(nlines)
             s.close()
-            system.log.info('cProfile results for job{:s} written.'.format(
+            logger.info('cProfile results for job{:s} written.'.format(
                 ' ' + str(pid) if pid >= 0 else ''))
 
     if pid >= 0:

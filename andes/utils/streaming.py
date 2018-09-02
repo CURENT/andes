@@ -7,6 +7,9 @@ except ImportError:
 from time import sleep
 
 from numpy import ndarray, array, concatenate, delete
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Streaming(object):
@@ -27,15 +30,15 @@ class Streaming(object):
         self.last_devices = list()
 
         if self.system.config.dime_enable:
-            self.system.log.info('Trying to connect to dime server {}.'
-                                 .format(system.config.dime_server))
+            logger.info('Trying to connect to dime server {}.'
+                        .format(system.config.dime_server))
             try:
                 self.dimec.start()
-                self.system.log.debug('DiME connection established.')
+                logger.debug('DiME connection established.')
             except:  # NOQA
                 self.dimec.exit()
                 self.dimec.start()
-                self.system.log.debug('DiME connection established.')
+                logger.debug('DiME connection established.')
         self.has_pmu = False
 
     def _build_SysParam(self):
@@ -157,7 +160,7 @@ class Streaming(object):
             self.SysParam.update({'Exc': data_array})
 
             # find bus of the Syn based on AVR.syn idx
-            syn_bus = self.system.DevMan.get_param(
+            syn_bus = self.system.devman.get_param(
                 'Synchronous', param='bus', fkey=self.SysParam['Exc'][:, 0])
             # find position of the Syn based on Syn_bus
             self.SysParam['Exc'][:, 0] = self._find_pos('Syn', syn_bus)
@@ -212,7 +215,7 @@ class Streaming(object):
                 (data_array_pss1, data_array_pss2), axis=0)
             self.SysParam.update({'Pss': data_array})
 
-            avr_gen = self.system.DevMan.get_param(
+            avr_gen = self.system.devman.get_param(
                 'AVR', param='syn', fkey=self.SysParam['Pss'][:, 0])
             self.SysParam['Pss'][:, 0] = self._find_pos('Exc', avr_gen)
             self.SysParam['Pss'][:, 0] += 1
@@ -280,12 +283,12 @@ class Streaming(object):
             self.SysName['Node'] = self.system.Node.name
 
     def _build_Varheader(self):
-        self.Varheader = self.system.VarName.unamex + \
-                         self.system.VarName.unamey
+        self.Varheader = self.system.varname.unamex + \
+                         self.system.varname.unamey
 
     def _build_Idxvgs(self):
-        m = self.system.DAE.m
-        n = self.system.DAE.n
+        m = self.system.dae.m
+        n = self.system.dae.n
         mn = m + n
 
         self.Idxvgs['System'] = {
@@ -432,9 +435,9 @@ class Streaming(object):
         if recepient == 'all':
             self.last_devices = self.dimec.get_devices()
 
-            self.system.log.debug('Connected modules are: ' +
-                                  ','.join(self.dimec.get_devices()))
-            self.system.log.debug(
+            logger.debug('Connected modules are: ' +
+                         ','.join(self.dimec.get_devices()))
+            logger.debug(
                 'Broadcasting Varheader, Idxvgs, SysParam and SysName...')
             sleep(0.5)
             self.dimec.broadcast('Varheader', self.Varheader)
@@ -445,7 +448,7 @@ class Streaming(object):
                 self.dimec.broadcast('SysParam', self.SysParam)
                 self.dimec.broadcast('SysName', self.SysName)
             except:  # NOQA
-                self.system.log.warning(
+                logger.warning(
                     'SysParam or SysName broadcast error.'
                     ' Check bus coordinates.'
                 )
@@ -485,7 +488,7 @@ class Streaming(object):
 
         self.ModuleInfo[name].update(ivar)
 
-        self.system.log.debug('Module <{}> request index {}'.format(
+        logger.debug('Module <{}> request index {}'.format(
             name, var_idx))
 
     @staticmethod
@@ -504,7 +507,7 @@ class Streaming(object):
         fields = ('name', 'id', 'action', 'time', 'duration')
         for key in fields:
             if key not in Event:
-                self.system.log.warning(
+                logger.warning(
                     'Event has missing key {}.'.format(key))
                 return
 
@@ -523,12 +526,12 @@ class Streaming(object):
                 time = times[i]
                 duration = durations[i]
             except IndexError:
-                self.system.log.Warning(
+                logger.Warning(
                     'Event key values might have different lengths.')
                 continue
 
             if time == -1:
-                time = max(self.system.DAE.t, 0) + self.system.tds.config.tstep
+                time = max(self.system.dae.t, 0) + self.system.tds.config.tstep
 
             tf = time + duration
             if duration == 0.:
@@ -537,7 +540,7 @@ class Streaming(object):
             if name.lower() == 'bus':
                 param = {'tf': time, 'tc': tf, 'bus': idx}
                 self.system.Fault.insert(**param)
-                self.system.log.debug(
+                logger.debug(
                     'Event <Fault> added for bus {} at t = {} and tf = {}'.
                     format(idx, time, tf))
             elif name.lower() == 'line':
@@ -552,13 +555,13 @@ class Streaming(object):
                     'u2': 1 if duration else 0,
                 }
                 self.system.Breaker.insert(**param)
-                self.system.log.debug(
+                logger.debug(
                     'Event <Breaker> added for line {} at t = {} and tf = {}'.
                     format(idx, time, tf))
 
-            self.system.Call.build_vec()
-            self.system.Call._compile_int()
-            self.system.DAE.rebuild = True
+            self.system.call.build_vec()
+            self.system.call._compile_int()
+            self.system.dae.rebuild = True
 
     def sync_and_handle(self):
         """Sync until the queue is empty"""
@@ -597,7 +600,7 @@ class Streaming(object):
                 self.handle_event(var_value)
 
             else:
-                self.system.log.warning(
+                logger.warning(
                     'Synced variable {} not handled'.format(var_name))
 
     def vars_to_pmu(self):
@@ -613,10 +616,10 @@ class Streaming(object):
 
         idx = self.system.PMU.vm + self.system.PMU.am + self.system.BusFreq.w
 
-        t = self.system.VarOut.t[-1]
-        k = self.system.VarOut.k[-1]
+        t = self.system.varout.t[-1]
+        k = self.system.varout.k[-1]
 
-        values = self.system.VarOut.vars[-1][idx]
+        values = self.system.varout.vars[-1][idx]
         pmudata = {
             't': t,
             'k': k,
@@ -641,8 +644,8 @@ class Streaming(object):
             limitsample = self.ModuleInfo[mod].get('limitsample', 0)
 
             idx = self.ModuleInfo[mod]['vgsvaridx']
-            t = self.system.VarOut.t[-1]
-            k = self.system.VarOut.k[-1]
+            t = self.system.varout.t[-1]
+            k = self.system.varout.k[-1]
             lastk = self.ModuleInfo[mod]['lastk']
             if limitsample:
                 every = 1 / self.system.tds.config.tstep / limitsample
@@ -651,7 +654,7 @@ class Streaming(object):
                 else:
                     self.ModuleInfo[mod]['lastk'] = k
 
-            values = self.system.VarOut.vars[-1][idx]
+            values = self.system.varout.vars[-1][idx]
             Varvgs = {
                 't': t,
                 'k': k,
@@ -659,7 +662,7 @@ class Streaming(object):
                 'accurate': array(values).T,
             }
             self.dimec.send_var(mod, 'Varvgs', Varvgs)
-            # self.system.log.debug('Varvgs sent to <{}>'.format(mod))
+            # logger.debug('Varvgs sent to <{}>'.format(mod))
 
     def finalize(self):
         """
@@ -670,5 +673,5 @@ class Streaming(object):
         if not self.system.config.dime_enable:
             return
 
-        self.system.Streaming.dimec.broadcast('DONE', 1)
-        self.system.Streaming.dimec.exit()
+        self.system.streaming.dimec.broadcast('DONE', 1)
+        self.system.streaming.dimec.exit()

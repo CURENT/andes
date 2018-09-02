@@ -5,6 +5,8 @@ From Book "Power System Modeling and Scripting" by Dr. Federico Milano
 import re
 import os
 from math import ceil
+import logging
+logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
@@ -88,17 +90,17 @@ def read(file, system, header=True):
             alter(data, system)
             continue
         if device == 'INCLUDE':
-            system.log.debug('Parsing include file <{}>'.format(data[0]))
+            logger.debug('Parsing include file <{}>'.format(data[0]))
             newpath = data[0]
             if not os.path.isfile(newpath):
-                newpath = os.path.join(system.Files.path, data[0])
+                newpath = os.path.join(system.files.path, data[0])
                 if not os.path.isfile(newpath):
-                    system.log.warning(
+                    logger.warning(
                         'Unable to locate file in {}'.format(newpath))
                     retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
-            system.log.debug('Parsing of include file <{}> completed.'.format(
+            logger.debug('Parsing of include file <{}> completed.'.format(
                 data[0]))
             continue
         kwargs = {}
@@ -131,10 +133,10 @@ def read(file, system, header=True):
         try:
             system.__dict__[device].elem_add(idx=index, name=namex, **kwargs)
         except KeyError:
-            system.log.error(
+            logger.error(
                 'Error adding device {:s} to powersystem object.'.format(
                     device))
-            system.log.debug(
+            logger.debug(
                 'Make sure you have added the jit models in __init__.py'
             )
 
@@ -153,7 +155,7 @@ def write(file, system):
     out.append('# DOME format version 1.0')
     ppl = 7  # parameter per line
     retval = True
-    dev_list = sorted(system.DevMan.devices)
+    dev_list = sorted(system.devman.devices)
     for dev in dev_list:
         model = system.__dict__[dev]
         if not model.n:

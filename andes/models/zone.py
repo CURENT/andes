@@ -1,6 +1,9 @@
 from .base import ModelBase
 from cvxopt import spmatrix, spdiag, matrix
 from ..utils.math import zeros
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Zone(ModelBase):
@@ -60,7 +63,7 @@ class Zone(ModelBase):
         for idx, uid in self.system.Bus.uid.items():
             code = self.system.Bus.__dict__[var][uid]
             if code and code not in self.idx:
-                self.system.log.warning('{} <{}> not defined.'.format(
+                logger.warning('{} <{}> not defined.'.format(
                     self._name, code))
             if code not in self.buses.keys():
                 self.buses[code] = list()
@@ -149,17 +152,17 @@ class Zone(ModelBase):
     def _varname_inter(self):
         if not self.n:
             return
-        mpql = self.system.DAE.m + 2 * self.system.Bus.n + \
+        mpql = self.system.dae.m + 2 * self.system.Bus.n + \
             4 * self.system.Line.n
 
         # P_ic
         xy_idx = range(mpql, mpql + self.n_combination)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='P_ic',
             element_name=self.uname)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='P_{ic}',
@@ -168,12 +171,12 @@ class Zone(ModelBase):
         # Q_ic
         xy_idx = range(mpql + self.n_combination,
                        mpql + 2 * self.n_combination)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Q_ic',
             element_name=self.uname)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='Q_{ic}',

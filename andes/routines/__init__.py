@@ -1,4 +1,7 @@
 import importlib
+from .eig import EIG
+from .pflow import PFLOW
+from .tds import TDS
 
 
 def get_command(all_pkg, hook):
@@ -17,10 +20,10 @@ def get_command(all_pkg, hook):
     """
     ret = []
     for r in all_pkg:
-        module = importlib.import_module(__name__ + '.' + r)
+        module = importlib.import_module(__name__ + '.' + r.lower())
         ret.append(getattr(module, hook))
     return ret
 
 
-__all__ = ['pflow', 'tds', 'eig']
+__all__ = ['PFLOW', 'TDS', 'EIG']
 __cli__ = get_command(__all__, '__cli__')

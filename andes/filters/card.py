@@ -7,6 +7,9 @@ except ImportError:
     raise ImportError('Please install sympy to parse ANDES cards.')
 
 from andes.utils.math import to_number
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
@@ -596,19 +599,19 @@ def run(system,
             fid.write(line + '\n')
         fid.close()
     except IOError:
-        system.log.error('IOError while writing card output.')
+        logger.error('IOError while writing card output.')
         retval = False
 
     if retval:
-        system.log.info(
+        logger.info(
             'Card file successfully saved to <{}> with'.format(outfile))
-        system.log.info(
+        logger.info(
             '* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(
                 len(sym_consts), len(sym_algebs), len(interfaces),
                 len(sym_states)))
-        system.log.info('* diff equations: {}, algeb equations: {}'.format(
+        logger.info('* diff equations: {}, algeb equations: {}'.format(
             len(fcall), len(gcall)))
-        system.log.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
+        logger.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
             len(fxcall), len(gycall), len(jac0)))
 
     sys.exit(0)

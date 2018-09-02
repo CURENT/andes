@@ -4,6 +4,9 @@ from ..utils.math import zeros, conj, polar
 
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VSC(DCBase):
@@ -188,17 +191,17 @@ class VSC(DCBase):
                     if vupper[i] > 0:
                         if 'vmax' not in self.vio[i]:
                             self.vio[i].append('vmax')
-                            self.system.log.debug(
+                            logger.debug(
                                 ' * Vmax reached for VSC_{0}'.format(i))
                     elif vlower[i] < 0:
                         if 'vmin' not in self.vio[i]:
                             self.vio[i].append('vmin')
-                            self.system.log.debug(
+                            logger.debug(
                                 ' * Vmin reached for VSC_{0}'.format(i))
                     if iupper[i] > 0:
                         if 'Imax' not in self.vio[i]:
                             self.vio[i].append('Imax')
-                            self.system.log.debug(
+                            logger.debug(
                                 ' * Imax reached for VSC_{0}'.format(i))
 
         # AC interfaces - power
@@ -261,7 +264,7 @@ class VSC(DCBase):
                     idx = self.psh[comp]
                     self.switch(comp, 'P')
 
-                self.system.DAE.factorize = True
+                self.system.dae.factorize = True
 
                 dae.g[idx] = dae.y[yidx] - ylim
                 if idx not in self.glim:

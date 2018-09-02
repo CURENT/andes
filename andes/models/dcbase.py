@@ -63,12 +63,12 @@ class Node(ModelBase):
     def _varname(self):
         if not self.n:
             return
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=self.v,
             var_name='Vdc',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=self.v,
             var_name='V_{dc}',
@@ -119,7 +119,7 @@ class DCBase(ModelBase):
 
     @property
     def v12(self):
-        return self.system.DAE.y[self.v1] - self.system.DAE.y[self.v2]
+        return self.system.dae.y[self.v1] - self.system.dae.y[self.v2]
 
 
 class R(DCBase):
@@ -631,4 +631,4 @@ class DCgen(DCBase):
 
     def disable_gen(self, idx):
         self.u[self.uid[idx]] = 0
-        self.system.DAE.factorize = True
+        self.system.dae.factorize = True

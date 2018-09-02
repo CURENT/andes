@@ -21,7 +21,7 @@ timedomain.run(sys)
 Syn6a_omega = sys.Syn6a.omega
 Syn6a_omega = [i + 1 for i in Syn6a_omega]
 
-x, y = sys.VarOut.get_xy(Syn6a_omega)
+x, y = sys.varout.get_xy(Syn6a_omega)
 
 
 do_plot(x, y)

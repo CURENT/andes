@@ -52,7 +52,7 @@ class GovernorBase(ModelBase):
         self.copy_data_ext(
             model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
         super(GovernorBase, self).base()
-        self.R = self.system.config.mva * div(self.R, self.Sn)
+        self.R = self.system.mva * div(self.R, self.Sn)
 
     def init1(self, dae):
         self.gain = div(1.0, self.R)

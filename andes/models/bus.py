@@ -59,14 +59,14 @@ class Bus(ModelBase):
         # Bus Pi
         if not self.n:
             return
-        m = self.system.DAE.m
+        m = self.system.dae.m
         xy_idx = range(m, self.n + m)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='P',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='P',
@@ -74,12 +74,12 @@ class Bus(ModelBase):
 
         # Bus Qi
         xy_idx = range(m + self.n, m + 2 * self.n)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Q',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='Q',
@@ -194,14 +194,14 @@ class BusOld(ModelBase):
         # Bus Pi
         if not self.n:
             return
-        m = self.system.DAE.m
+        m = self.system.dae.m
         xy_idx = range(m, self.n + m)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='P',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='P',
@@ -209,12 +209,12 @@ class BusOld(ModelBase):
 
         # Bus Qi
         xy_idx = range(m + self.n, m + 2 * self.n)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Q',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='Q',
