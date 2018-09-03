@@ -1,6 +1,6 @@
 # List required packages in this file, one per line.
 numpy>=1.15.0
-cvxopt==1.1.9
+cvxopt
 scipy==1.1.0
 texttable==1.4.0
 matplotlib>=2.0.0

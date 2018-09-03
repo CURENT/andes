@@ -64,7 +64,7 @@ class System(ConfigBase):
             logger.warning("Invalid sparse library <{}>".format(self.sparselib))
             self.sparselib = 'umfpack'
 
-        if self.sparselib == 'KLU' and not KLU:
+        if self.sparselib == 'klu' and not KLU:
             logger.info("cvxoptklu import error. Fall back to umfpack".format(self.sparselib))
             self.sparselib = 'umfpack'
 

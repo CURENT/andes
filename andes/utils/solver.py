@@ -80,7 +80,7 @@ class Solver(object):
         None
         """
         if self.sparselib == 'umfpack':
-            umfpack.solve(A, F, b)
+            umfpack.solve(A, N, b)
 
         elif self.sparselib == 'klu':
             klu.solve(A, F, N, b)
