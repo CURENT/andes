@@ -1,62 +1,189 @@
-from cvxopt import matrix, spmatrix, sparse, spdiag, mul
-from ..utils.math import zeros, ones, ageb, aleb, index, aandb, aeqb, nota, aorb, agtb, altb, nota
+from cvxopt import matrix, spmatrix, sparse, spdiag
+from ..utils.math import zeros, ones
+from ..utils.math import ageb, aleb, aandb, agtb  # NOQA
+from ..utils.math import index, altb  # NOQA
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DAE(object):
-    """Class for numerical Differential Algebraic Equations (DAE)"""
+    """Class for numerical Differential Algebraic Equations (dae)"""
+
     def __init__(self, system):
         self.system = system
-        self._data = dict(x=[], y=[], f=[], g=[], Fx=[], Fy=[], Gx=[], Gy=[], Fx0=[], Fy0=[], Gx0=[], Gy0=[], Ac=[],
-                          tn=[])
+        self._data = dict(
+            x=[],
+            y=[],
+            f=[],
+            g=[],
+            Fx=[],
+            Fy=[],
+            Gx=[],
+            Gy=[],
+            Fx0=[],
+            Fy0=[],
+            Gx0=[],
+            Gy0=[],
+            Ac=[],
+            tn=[])
 
-        self._scalars = dict(m=0, n=0, lamda=0, npf=0, kg=0, t=-1, factorize=True, rebuild=True, ac_reset=True)
+        self._scalars = dict(
+            m=0,
+            n=0,
+            lamda=0,
+            npf=0,
+            kg=0,
+            t=-1,
+            factorize=True,
+            rebuild=True,
+            ac_reset=True)
 
-        self._flags = dict(zxmax=[], zxmin=[], zymax=[], zymin=[], ux=[], uy=[])
+        self._flags = dict(
+            zxmax=[], zxmin=[], zymax=[], zymin=[], ux=[], uy=[])
 
         self.__dict__.update(self._data)
         self.__dict__.update(self._scalars)
         self.__dict__.update(self._flags)
 
-        # self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
+        # self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                       'J': np.ndarray((0, 1), dtype=np.int32),
+        #                       'V': np.ndarray((0, 1))},
+        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                       'J': np.ndarray((0, 1), dtype=np.int32),
+        #                       'V': np.ndarray((0, 1))},
+        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                       'J': np.ndarray((0, 1), dtype=np.int32),
+        #                       'V': np.ndarray((0, 1))},
+        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                       'J': np.ndarray((0, 1), dtype=np.int32),
+        #                       'V': np.ndarray((0, 1))},
         #               }
         #
-        # self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J':np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32), 'J': np.ndarray((0, 1), dtype=np.int32), 'V': np.ndarray((0, 1))},
-        #               }
+        # self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                     'J': np.ndarray((0, 1), dtype=np.int32),
+        #                     'V': np.ndarray((0, 1))},
+        #              'Fy': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                     'J': np.ndarray((0, 1), dtype=np.int32),
+        #                     'V': np.ndarray((0, 1))},
+        #              'Gx': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                     'J': np.ndarray((0, 1), dtype=np.int32),
+        #                     'V': np.ndarray((0, 1))},
+        #              'Gy': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                     'J': np.ndarray((0, 1), dtype=np.int32),
+        #                     'V': np.ndarray((0, 1))},
+        #              'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #              'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #              'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #              'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
+        #                      'J': np.ndarray((0, 1), dtype=np.int32),
+        #                      'V': np.ndarray((0, 1))},
+        #              }
 
-        self._temp = {'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      }
+        self._temp = {
+            'Fx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        }
 
-        self._set = {'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      }
+        self._set = {
+            'Fx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        }
 
     def init_xy(self):
         self.init_x()
@@ -90,26 +217,62 @@ class DAE(object):
 
     def setup_Gy(self):
         self.Gy = sparse(self.Gy0)
-        self._temp.update({'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      })
+        self._temp.update({
+            'Gy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
-        self._set.update({'Gy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                     })
+        self._set.update({
+            'Gy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
     def setup_Fx(self):
         # self.Fx = sparse(self.Fx0)
         # self.Fy = sparse(self.Fy0)
         # self.Gx = sparse(self.Gx0)
 
-        self._temp.update({'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      })
+        self._temp.update({
+            'Fx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
-        self._set.update({'Fx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      })
+        self._set.update({
+            'Fx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
     def setup_FxGy(self):
         self.setup_Fx()
@@ -125,38 +288,73 @@ class DAE(object):
     def init_Gy0(self):
         self.Gy0 = spmatrix([], [], [], (self.m, self.m), 'd')
 
-        self._temp.update({'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                           })
+        self._temp.update({
+            'Gy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
-        self._set.update({'Gy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                         })
+        self._set.update({
+            'Gy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
     def init_Fx0(self):
         self.Gx0 = spmatrix([], [], [], (self.m, self.n), 'd')
         self.Fy0 = spmatrix([], [], [], (self.n, self.m), 'd')
         self.Fx0 = spmatrix([], [], [], (self.n, self.n), 'd')
 
-        self._temp.update({'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      })
+        self._temp.update({
+            'Fx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
-        self._set.update({'Fx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Fy0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                      'Gx0': {'I': matrix([]), 'J': matrix([]), 'V': matrix([])},
-                     })
+        self._set.update({
+            'Fx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Fy0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+            'Gx0': {
+                'I': matrix([]),
+                'J': matrix([]),
+                'V': matrix([])
+            },
+        })
 
     def init_jac0(self):
         self.init_Gy0()
         self.init_Fx0()
-
 
     def init1(self):
         self.resize()
         self.init_jac0()
 
     def resize(self):
-        """Resize DAE and and extend for init1 variables
+        """Resize dae and and extend for init1 variables
         """
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
@@ -183,8 +381,8 @@ class DAE(object):
         :param yidx: algebraic variable indices
         :param ymin: lower limit to check for
         :param ymax: upper limit to check for
-        :param min_set: optional lower limit to set to. Uses ``ymin`` if not present.
-        :param max_set: optional upper limit to set to. Uses ``ymax`` if not present.
+        :param min_set: optional lower limit to set (``ymin`` as default)
+        :param max_set: optional upper limit to set (``ymax`` as default)
 
         :type yidx: list, matrix
         :type ymin: matrix, int, float, list
@@ -230,20 +428,29 @@ class DAE(object):
 
         if len(below_yidx) > 0:
             self.y[below_yidx] = min_set[below_idx]
-            self.zymin[below_yidx ] = 0
+            self.zymin[below_yidx] = 0
 
         if len(idx):
             self.g[yidx[idx]] = 0
             self.ac_reset = True
 
-    def hard_limit_remote(self, yidx, ridx, rtype='y', rmin=None, rmax=None, min_yset=0, max_yset=0):
+    def hard_limit_remote(self,
+                          yidx,
+                          ridx,
+                          rtype='y',
+                          rmin=None,
+                          rmax=None,
+                          min_yset=0,
+                          max_yset=0):
         """Limit the output of yidx if the remote y is not within the limits
 
         This function needs to be modernized.
         """
         ny = len(yidx)
-        assert ny == len(ridx), "Length of output vars and remote vars does not match"
-        assert rtype in ('x', 'y'), "ridx must be either y (algeb) or x (state)"
+        assert ny == len(
+            ridx), "Length of output vars and remote vars does not match"
+        assert rtype in ('x',
+                         'y'), "ridx must be either y (algeb) or x (state)"
 
         if isinstance(min_yset, (int, float)):
             min_yset = matrix(min_yset, (ny, 1), 'd')
@@ -274,7 +481,10 @@ class DAE(object):
             self.factorize = True
 
     def anti_windup(self, xidx, xmin, xmax):
-        """Anti-windup limiter for state variables. Resets the limited variables and differential equations.
+        """
+        Anti-windup limiter for state variables.
+
+        Resets the limited variables and differential equations.
 
         :param xidx: state variable indices
         :param xmin: lower limit
@@ -313,7 +523,7 @@ class DAE(object):
         if len(below_idx) > 0:
             below_xidx = xidx[below_idx]
             self.x[below_xidx] = xmin[below_idx]
-            self.zxmin[below_xidx ] = 0
+            self.zxmin[below_xidx] = 0
 
         idx = list(above_idx) + list(below_idx)
         if len(idx) > 0:
@@ -322,7 +532,8 @@ class DAE(object):
 
     def reset_Ac(self):
         """
-        Reset ``DAE.Ac`` sparse matrix for disabled equations due to hard_limit and anti_windup limiters.
+        Reset ``dae.Ac`` sparse matrix for disabled equations
+        due to hard_limit and anti_windup limiters.
 
         :return: None
         """
@@ -335,17 +546,17 @@ class DAE(object):
         y = [i + self.n for i in index(aandb(self.zymin, self.zymax), 0.)]
         xy = list(x) + y
 
-        I = spdiag([1.0] * mn)
+        eye = spdiag([1.0] * mn)
         H = spmatrix(1.0, xy, xy, (mn, mn), 'd')
 
-        # Modifying ``I`` is more efficient than ``I = I - H``.
-        # CVXOPT modifies I in place because all the accessed elements exist.
+        # Modifying ``eye`` is more efficient than ``eye = eye - H``.
+        # CVXOPT modifies eye in place because all the accessed elements exist.
 
         for idx in xy:
-            I[idx, idx] = 0
+            eye[idx, idx] = 0
 
         if len(xy) > 0:
-            self.Ac = I * (self.Ac * I) - H
+            self.Ac = eye * (self.Ac * eye) - H
             self.q[x] = 0
 
         self.ac_reset = False
@@ -403,11 +614,8 @@ class DAE(object):
 
         for m in todo:
             self.__dict__[m] = spmatrix(self._temp[m]['V'],
-                                        self._temp[m]['I'],
-                                        self._temp[m]['J'],
-                                        self.get_size(m),
-                                        'd'
-                                        )
+                                        self._temp[m]['I'], self._temp[m]['J'],
+                                        self.get_size(m), 'd')
             if ty == 'jac':
                 self.__dict__[m] += self.__dict__[m + '0']
 
@@ -426,7 +634,9 @@ class DAE(object):
         assert m in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'), \
             'Wrong Jacobian matrix name <{0}>'.format(m)
 
-        if isinstance(val, (int, float)) and isinstance(row, (np.ndarray, matrix, list)):
+        if isinstance(val,
+                      (int, float)) and isinstance(row,
+                                                   (np.ndarray, matrix, list)):
             val = val * ones(len(row), 1)
 
         self._set[m]['I'] = matrix([self._set[m]['I'], matrix(row)])
@@ -449,7 +659,6 @@ class DAE(object):
 
         for m in todo:
             for idx in range(len(self._set[m]['I'])):
-                # for i, j, v in zip(self._set[m]['I'], self._set[m]['J'], self._set[m]['V']):
                 i = self._set[m]['I'][idx]
                 j = self._set[m]['J'][idx]
                 v = self._set[m]['V'][idx]
@@ -468,7 +677,8 @@ class DAE(object):
             value = list(self.__dict__[eq])
 
         out = ''
-        for name, val, idx in zip(self.system.VarName.__dict__[key], value, range(len(value))):
+        for name, val, idx in zip(self.system.varname.__dict__[key], value,
+                                  range(len(value))):
             out += '{:20s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
         return out
 
@@ -481,7 +691,7 @@ class DAE(object):
         elif eq == 'g':
             key = 'unamey'
         idx = 0
-        for m, n in zip(self.system.VarName.__dict__[key], self.__dict__[eq]):
+        for m, n in zip(self.system.varname.__dict__[key], self.__dict__[eq]):
             if n == val:
                 return m, idx
             idx += 1
@@ -500,11 +710,35 @@ class DAE(object):
     def reset_small_g(self):
         pass
 
+    def check_diag(self, jac, name):
+        """
+        Check matrix ``jac`` for diagonal elements that equals 0
+        """
+        system = self.system
+        pos = []
+        names = []
+        pairs = ''
+        size = jac.size
+        diag = jac[0:size[0] ** 2:size[0] + 1]
+
+        for idx in range(size[0]):
+            if abs(diag[idx]) <= 1e-8:
+                pos.append(idx)
+
+        for idx in pos:
+            names.append(system.varname.__dict__[name][idx])
+
+        if len(names) > 0:
+            for i, j in zip(pos, names):
+                pairs += '{0}: {1}\n'.format(i, j)
+            logger.debug('Jacobian diagonal check:')
+            logger.debug(pairs)
+
     # def add_jac(self, m, val, row, col):
     #     """Add values (val, row, col) to Jacobian m
     #
-    #     This implementation construct the Jacobians incrementally. It is less efficient than storing (I,J,V)
-    #     and create altogether.
+    #     This implementation construct the Jacobians incrementally.
+    #       It is less efficient than storing (I,J,V) and create altogether.
     #     """
     #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
     #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
@@ -515,7 +749,8 @@ class DAE(object):
     # def set_jac(self, m, val, row, col):
     #     """Add values (val, row, col) to Jacobian m
     #
-    #     This implementation is very inefficient as it involves two __getitem__ and two __setitem__ ops.
+    #     This implementation is very inefficient as it involves two
+    #       __getitem__ and two __setitem__ ops.
     #     """
     #     if m not in ['Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0']:
     #         raise NameError('Wrong Jacobian matrix name <{0}>'.format(m))
@@ -530,16 +765,17 @@ class DAE(object):
     #     if type(col) is range:
     #         col = list(col)
     #     for i, j in zip(row, col):
-    #         old_val.append(self.system.DAE.__dict__[m][i, j])
+    #         old_val.append(self.system.dae.__dict__[m][i, j])
     #     size = self.__dict__[m].size
-    #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
-    #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+    #     self.system.dae.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
+    #     self.system.dae.__dict__[m] += spmatrix(val, row, col, size, 'd')
     #
     #
     # def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
     #     """Limit algebraic variables and set the Jacobians.
     #
-    #     This method is slower than the current version because,  comparing with modifying matrix elements directly,
+    #     This method is slower than the current version because,
+    #       comparing with modifying matrix elements directly,
     #     matrix multiplication and re-assignment involves more ops.
     #     """
     #     yidx = matrix(yidx)

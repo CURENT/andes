@@ -13,20 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Power system class
 """
-
+import configparser
 import importlib
+import logging
+import os
 from operator import itemgetter
-from logging import DEBUG, INFO, WARNING, CRITICAL, ERROR
-from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .config import Settings, SPF, TDS, CPF, SSSA
-from .utils import Logger, elapsed
+
+from . import routines
+from .config import System
+from .consts import pi
+from .consts import rad2deg
 from .models import non_jits, jits, JIT
-from .consts import *
-from cvxopt import matrix
+from .utils import get_config_load_path
+from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 try:
     from .utils.streaming import Streaming
@@ -34,15 +36,29 @@ try:
 except ImportError:
     STREAMING = False
 
+logger = logging.getLogger(__name__)
+
 
 class PowerSystem(object):
     """
-    everything in a power system class including models, settings,
-     file and call managers
+    Everything in a power system class including models, routines, file and call managers
     """
-    def __init__(self, case='', pid=-1, verbose=INFO, no_output=False, log=None, dump_raw=None,
-                 output=None, dynfile=None, addfile=None, settings=None, input_format=None,
-                 output_format=None, gis=None, dime=None, tf=None, **kwargs):
+
+    def __init__(self,
+                 case='',
+                 pid=-1,
+                 no_output=False,
+                 dump_raw=None,
+                 output=None,
+                 dynfile=None,
+                 addfile=None,
+                 config=None,
+                 input_format=None,
+                 output_format=None,
+                 gis=None,
+                 dime=None,
+                 tf=None,
+                 **kwargs):
         """
         Initialize an empty power system object with defaults
         Args:
@@ -53,7 +69,7 @@ class PowerSystem(object):
             log: log file name
             dump: simulation result dump name
             addfile: additional file used by some formats
-            settings: specified setting file name
+            config: specified rc config file path
             input_format: specified input case file format
             output_format: specified dump case file format
             output: specified output case file name
@@ -62,44 +78,68 @@ class PowerSystem(object):
 
         Returns: None
         """
+        # set internal flags based on the arguments
         self.pid = pid
-        self.Files = FileMan(case, input_format, addfile, settings, no_output, dynfile,
-                             log, dump_raw, output_format, output, gis, **kwargs)
-        self.Settings = Settings()
-        self.SPF = SPF()
-        self.CPF = CPF()
-        self.TDS = TDS()
-        self.SSSA = SSSA()
-        if settings:
-            self.load_settings(self.Files)
-        self.Settings.verbose = verbose
-        self.Log = Logger(self)
+        self.files = FileMan(case,
+                             input_format=input_format,
+                             addfile=addfile,
+                             config=config,
+                             no_output=no_output,
+                             dynfile=dynfile,
+                             dump_raw=dump_raw,
+                             output_format=output_format,
+                             output=output,
+                             **kwargs)
 
-        self.DevMan = DevMan(self)
-        self.Call = Call(self)
-        self.DAE = DAE(self)
-        self.VarName = VarName(self)
-        self.VarOut = VarOut(self)
-        self.Report = Report(self)
+        self.config = System()
+        self.routine_import()
 
-        self.groups = []
-        self.status = {'pf_solved': False,
-                       'sys_base': False,
-                       }
+        self.load_config(get_config_load_path(self.files.config))
+
+        self.devman = DevMan(self)
+        self.call = Call(self)
+        self.dae = DAE(self)
+        self.varname = VarName(self)
+        self.varout = VarOut(self)
+        self.report = Report(self)
 
         if dime:
-            self.Settings.dime_enable = True
-            self.Settings.dime_server = dime
+            self.config.dime_enable = True
+            self.config.dime_server = dime
+
         if tf:
-            self.TDS.tf = tf
+            self.tds.config.tf = tf
 
         if not STREAMING:
-            self.Streaming = None
-            self.Settings.dime_enable = False
+            self.streaming = None
+            self.config.dime_enable = False
         else:
-            self.Streaming = Streaming(self)
+            self.streaming = Streaming(self)
 
         self.model_import()
+
+    @property
+    def freq(self):
+        return self.config.freq
+
+    @freq.setter
+    def freq(self, freq):
+        if freq <= 0:
+            self.config.freq = 1
+        else:
+            self.config.freq = freq
+
+    @property
+    def wb(self):
+        return 2 * pi * self.config.freq
+
+    @property
+    def mva(self):
+        return self.config.mva
+
+    @mva.setter
+    def mva(self, mva):
+        self.config.mva = mva
 
     def setup(self):
         """
@@ -107,11 +147,11 @@ class PowerSystem(object):
 
         :return: reference of self
         """
-        self.DevMan.sort_device()
-        self.Call.setup()
+        self.devman.sort_device()
+        self.call.setup()
         self.model_setup()
         self.xy_addr0()
-        self.DAE.setup()
+        self.dae.setup()
         self.to_sysbase()
 
         return self
@@ -123,8 +163,8 @@ class PowerSystem(object):
         :return: None
         """
 
-        if self.Settings.base:
-            for item in self.DevMan.devices:
+        if self.config.base:
+            for item in self.devman.devices:
                 self.__dict__[item].data_to_sys_base()
 
     def group_add(self, name='Ungrouped'):
@@ -141,7 +181,9 @@ class PowerSystem(object):
         """
         Import and instantiate non-JIT models, and import JIT models
 
-        :return: None
+        Returns
+        -------
+        None
         """
         # non-JIT models
         for file, pair in non_jits.items():
@@ -154,22 +196,34 @@ class PowerSystem(object):
                 self.group_add(group)
                 self.__dict__[group].register_model(name)
 
-                self.DevMan.register_device(name)
+                self.devman.register_device(name)
 
         # import JIT models
         for file, pair in jits.items():
             for cls, name in pair.items():
                 self.__dict__[name] = JIT(self, file, cls, name)
 
+    def routine_import(self):
+        """
+        Dynamically import routines
+
+        Returns
+        -------
+        None
+        """
+        for r in routines.__all__:
+            file = importlib.import_module('.' + r.lower(), 'andes.routines')
+            self.__dict__[r.lower()] = getattr(file, r)(self)
+
     def model_setup(self):
         """
         Run model ``setup()`` for models present.
 
-        This function is called by ``PowerSystem.setup()`` after adding model elements
+        Called by ``PowerSystem.setup()`` after adding model elements
 
         :return: None
         """
-        for device in self.DevMan.devices:
+        for device in self.devman.devices:
             if self.__dict__[device].n:
                 try:
                     self.__dict__[device].setup()
@@ -182,15 +236,15 @@ class PowerSystem(object):
 
         :return: None
         """
-        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+        for device, pflow in zip(self.devman.devices, self.call.pflow):
             if pflow:
                 self.__dict__[device]._addr()
                 self.__dict__[device]._intf_network()
                 self.__dict__[device]._intf_ctrl()
 
-        self.VarName.resize()
+        self.varname.resize()
 
-        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+        for device, pflow in zip(self.devman.devices, self.call.pflow):
             if pflow:
                 self.__dict__[device]._varname()
 
@@ -198,72 +252,17 @@ class PowerSystem(object):
         """
         Assign indices and variable names for variables after power flow
         """
-        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+        for device, pflow in zip(self.devman.devices, self.call.pflow):
             if not pflow:
                 self.__dict__[device]._addr()
                 self.__dict__[device]._intf_network()
                 self.__dict__[device]._intf_ctrl()
 
-        self.VarName.resize()
+        self.varname.resize()
 
-        for device, pflow in zip(self.DevMan.devices, self.Call.pflow):
+        for device, pflow in zip(self.devman.devices, self.call.pflow):
             if not pflow:
                 self.__dict__[device]._varname()
-
-    def pf_init(self):
-        """
-        Set power flow initial values by running ``init0()``
-        """
-        t, s = elapsed()
-
-        self.DAE.init_xy()
-
-        for device, pflow, init0 in zip(self.DevMan.devices, self.Call.pflow, self.Call.init0):
-            if pflow and init0:
-                self.__dict__[device].init0(self.DAE)
-
-        # check for islands
-        self.check_islands(show_info=True)
-
-        t, s = elapsed(t)
-        self.Log.info('Power flow initialized in {:s}.\n'.format(s))
-
-        return self
-
-    def td_init(self):
-        """
-        Set time domain simulation initial values by ``init1()``
-
-        :return: success flag
-        """
-        if self.status['pf_solved'] is False:
-            return False
-
-        t, s = elapsed()
-
-        # Assign indices for post-powerflow device variables
-        self.xy_addr1()
-
-        # Assign variable names for bus injections and line flows if enabled
-        self.VarName.resize_for_flows()
-        self.VarName.bus_line_names()
-
-        # Reshape DAE to retain power flow solutions
-        self.DAE.init1()
-
-        # Initialize post-powerflow device variables
-        for device, init1 in zip(self.DevMan.devices, self.Call.init1):
-            if init1:
-                self.__dict__[device].init1(self.DAE)
-
-        t, s = elapsed(t)
-
-        if self.DAE.n:
-            self.Log.info('Dynamic models initialized in {:s}.'.format(s))
-        else:
-            self.Log.info('No dynamic model loaded.')
-
-        return self
 
     def rmgen(self, idx):
         """
@@ -272,7 +271,7 @@ class PowerSystem(object):
         :return: None
         """
         stagens = []
-        for device, stagen in zip(self.DevMan.devices, self.Call.stagen):
+        for device, stagen in zip(self.devman.devices, self.call.stagen):
             if stagen:
                 stagens.append(device)
         for gen in idx:
@@ -282,7 +281,7 @@ class PowerSystem(object):
 
     def check_event(self, sim_time):
         """
-        Check for event occurrance for models in the ``Event`` group at time ``sim_time``
+        Check for event occurrance for``Event`` group models at ``sim_time``
 
         :param sim_time: current simulation time
         :return: a list of models who report (an) event(s) at ``sim_time``
@@ -293,7 +292,7 @@ class PowerSystem(object):
                 ret.append(model)
 
         if self.Breaker.is_time(sim_time):
-            ret.append(Fault)
+            ret.append('Breaker')
 
         return ret
 
@@ -315,33 +314,81 @@ class PowerSystem(object):
 
         return times
 
-    def load_settings(self, Files):
+    def load_config(self, conf_path):
         """
-        load settings from file
+        Load settings from file.
 
         :return: None
         """
-        self.Log.debug('Loaded specified settings file.')
-        raise NotImplementedError
+        if conf_path is None:
+            return
+
+        conf = configparser.ConfigParser()
+        conf.read(conf_path)
+
+        self.config.load_config(conf)
+        for r in routines.__all__:
+            self.__dict__[r.lower()].config.load_config(conf)
+
+        logger.debug('Loaded config file from {}.'.format(conf_path))
+
+    def dump_config(self, file_path):
+        """
+        Dump system and routine configurations to an rc-formatted file.
+
+        Parameters
+        ----------
+        file_path
+            path to the configuration file
+
+        Returns
+        -------
+            None
+        """
+        if os.path.isfile(file_path):
+            logger.debug('File {} alreay exist. Overwrite? [y/N]'.format(file_path))
+            choice = input('File {} alreay exist. Overwrite? [y/N]'.format(file_path)).lower()
+            if len(choice) == 0 or choice[0] != 'y':
+                logger.info('File not overwritten.')
+                return
+
+        conf = self.config.dump_conf()
+        for r in routines.__all__:
+            conf = self.__dict__[r.lower()].config.dump_conf(conf)
+
+        with open(file_path, 'w') as f:
+            conf.write(f)
+
+        logger.info('Config written to {}'.format(file_path))
 
     def check_islands(self, show_info=False):
         """
         Check connectivity for the ac system
 
-        :return: None
+        Parameters
+        ----------
+        show_info
+
+        Returns
+        -------
+        None
         """
         if not hasattr(self, 'Line'):
-            self.Log.error('<Line> device not found.')
+            logger.error('<Line> device not found.')
             return
         self.Line.connectivity(self.Bus)
 
         if show_info is True:
 
-            if len(self.Bus.islanded_buses) == 0 and len(self.Bus.island_sets) == 0:
-                self.Log.info('System is interconnected.')
+            if len(self.Bus.islanded_buses) == 0 and len(
+                    self.Bus.island_sets) == 0:
+                logger.debug('System is interconnected.')
             else:
-                self.Log.info('System contains {:d} islands and {:d} islanded buses.'.format
-                              (len(self.Bus.island_sets), len(self.Bus.islanded_buses)))
+                logger.info(
+                    'System contains {:d} islands and {:d} islanded buses.'.
+                    format(
+                        len(self.Bus.island_sets),
+                        len(self.Bus.islanded_buses)))
 
             nosw_island = []  # no slack bus island
             msw_island = []  # multiple slack bus island
@@ -356,32 +403,39 @@ class PowerSystem(object):
                     msw_island.append(idx)
 
             if nosw_island:
-                self.Log.warning('Slack bus is not defined for {:g} island(s).'.format(len(nosw_island)))
+                logger.warning(
+                    'Slack bus is not defined for {:g} island(s).'.format(
+                        len(nosw_island)))
             if msw_island:
-                self.Log.warning('Multiple slack buses are defined for {:g} island(s).'.format(len(nosw_island)))
+                logger.warning(
+                    'Multiple slack buses are defined for {:g} island(s).'.
+                    format(len(nosw_island)))
             else:
-                self.Log.info('Each island has a slack bus correctly defined.'.format(nosw_island))
+                logger.debug(
+                    'Each island has a slack bus correctly defined.'.format(
+                        nosw_island))
 
     def get_busdata(self, dec=5):
         """
         get ac bus data from solved power flow
         """
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting bus data.')
-            return tuple([False] * 7)
+        if self.pflow.solved is False:
+            logger.error('Power flow not solved when getting bus data.')
+            return tuple([False] * 8)
         idx = self.Bus.idx
         names = self.Bus.name
-        Vm = [self.DAE.y[x] for x in self.Bus.v]
-        if self.SPF.usedegree:
-            Va = [self.DAE.y[x] * rad2deg for x in self.Bus.a]
+        Vm = [self.dae.y[x] for x in self.Bus.v]
+        if self.pflow.config.usedegree:
+            Va = [self.dae.y[x] * rad2deg for x in self.Bus.a]
         else:
-            Va = [self.DAE.y[x] for x in self.Bus.a]
+            Va = [self.dae.y[x] for x in self.Bus.a]
 
         Pg = [self.Bus.Pg[x] for x in range(self.Bus.n)]
         Qg = [self.Bus.Qg[x] for x in range(self.Bus.n)]
         Pl = [self.Bus.Pl[x] for x in range(self.Bus.n)]
         Ql = [self.Bus.Ql[x] for x in range(self.Bus.n)]
-        return (list(x) for x in zip(*sorted(zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
+        return (list(x) for x in zip(*sorted(
+            zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
     def get_nodedata(self, dec=5):
         """
@@ -389,18 +443,19 @@ class PowerSystem(object):
         """
         if not self.Node.n:
             return
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting bus data.')
+        if not self.pflow.solved:
+            logger.error('Power flow not solved when getting bus data.')
             return tuple([False] * 7)
         idx = self.Node.idx
         names = self.Node.name
-        V = [self.DAE.y[x] for x in self.Node.v]
-        return (list(x) for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
+        V = [self.dae.y[x] for x in self.Node.v]
+        return (list(x)
+                for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
 
     def get_linedata(self, dec=5):
         """get line data from solved power flow"""
-        if not self.status['pf_solved']:
-            self.Log.error('Power flow not solved when getting line data.')
+        if not self.pflow.solved:
+            logger.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx
         fr = self.Line.bus1
@@ -411,7 +466,9 @@ class PowerSystem(object):
         Qto = [self.Line.S2[x].imag for x in range(self.Line.n)]
         Ploss = [i + j for i, j in zip(Pfr, Pto)]
         Qloss = [i + j for i, j in zip(Qfr, Qto)]
-        return (list(x) for x in zip(*sorted(zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss), key=itemgetter(0))))
+        return (list(x) for x in zip(*sorted(
+            zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss),
+            key=itemgetter(0))))
 
 
 class GroupMeta(type):
@@ -421,7 +478,9 @@ class GroupMeta(type):
 
 class Group(metaclass=GroupMeta):
     """
-    Group class for registering models and elements, and reading and setting attributes
+    Group class for registering models and elements.
+
+    Also handles reading and setting attributes.
     """
 
     def __init__(self, system, name):
@@ -508,4 +567,3 @@ class Group(metaclass=GroupMeta):
 
             uid = self.system.__dict__[m].get_uid(idx)
             self.system.__dict__[m].__dict__[field][uid] = v
-

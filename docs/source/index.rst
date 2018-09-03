@@ -19,6 +19,8 @@ simulation, and full eigenvalue analysis for transmission networks. ANDES is cur
    formats.rst
    cases.rst
    modeling.rst
+   andes.rst
+   release-history.rst
 
 Indices and tables
 ==================

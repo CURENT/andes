@@ -1,13 +1,20 @@
-import os
 import configparser
-
 
 from ..utils.cached import cached
 from ..utils.tab import Tab
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class SettingsBase(object):
+class ConfigBase(object):
     """base setting class"""
+    def __init__(self, conf=None, **kwargs):
+
+        if conf is not None:
+            self.load_config(conf)
+
+        self.check()
 
     def get_value(self, option):
         """
@@ -56,57 +63,50 @@ class SettingsBase(object):
         title = 'Setting <{:s}>'.format(self.__class__.__name__)
         table = Tab(export=export, title=title)
 
-        for opt in sorted(self.descr):
+        for opt in sorted(self.config_descr):
             if hasattr(self, opt):
                 c1 = opt
-                c2 = self.descr[opt]
+                c2 = self.config_descr[opt]
                 c3 = self.__dict__.get(opt, '')
                 c4 = self.get_alt(opt)
                 rows.append([c1, c2, c3, c4])
             else:
-                print('Setting {:s} has no {:s} option. Correct in descr.'.format(self.__class__.__name__, opt))
+                print('Setting {:s} has no {:s} option. Correct in config_descr.'.
+                      format(self.__class__.__name__, opt))
 
         table.add_rows(rows, header=False)
         table.header(['Option', 'Description', 'Value', 'Alt.'])
 
-        ext = 'txt'
-        if export == 'latex':
-            ext = 'tex'
-            raise NotImplementedError
-
         return table.draw()
 
-    def dump_rc(self, path=None, mode='w+'):
+    def dump_conf(self, conf=None):
         """
         Dump settings to an rc config file
 
         Parameters
         ----------
-        path: str
-            rc file path
-        mode: str
-            output file write mode
+        conf
+            configparser.ConfigParser() object
 
         Returns
         -------
         None
         """
-        if not path:
-            path = os.path.abspath('.')
-        out = []
-        tab = type(self).__name__
-        dct = self.__dict__
-        out.append('[{}]'.format(tab))
-        keys_sorted = sorted(dct.keys())
+        if conf is None:
+            conf = configparser.ConfigParser()
 
-        for key in keys_sorted:
-            val = dct[key]
-            out.append('{} = {}'.format(key, val))
+        tab = self.__class__.__name__
 
-        with open(path, mode=mode) as f:
-            f.write('\n'.join(out))
+        conf[tab] = {}
 
-    def load_config(self, rc):
+        for key, val in self.__dict__.items():
+            if key.endswith('_alt'):
+                continue
+            conf[tab][key] = str(val)
+
+        return conf
+
+    def load_config(self, conf):
         """
         Load configurations from an rc file
 
@@ -117,41 +117,44 @@ class SettingsBase(object):
 
         Returns
         -------
-        bool
-            success flag
-
+        None
         """
-        ret = False
+        section = self.__class__.__name__
 
-        if not os.path.isfile(rc):
-            self.system.Log.warning('Config file {} does not exist.'.format(rc))
-            return ret
+        if section not in conf.sections():
+            logger.warning('Config section {} not in rc file'.format(self.__class__.__name__))
+            return
 
-        config = configparser.ConfigParser()
-        config.read(rc)
-
-        for section in config.sections():
-            if section not in self.__dict__:
-                self.system.warning('Skipping Config section [{}].'.format(section))
+        for key in conf[section].keys():
+            if not hasattr(self, key):
+                logger.warning('Config key {}.{} skipped'.format(section, key))
                 continue
-            for key in config[section].keys():
-                if not hasattr(self.__dict__[section], key):
-                    self.system.warning('Skipping Config [{}].<{}>'.format(section, key))
-                val = config[section].get(key)
-                try:
-                    val = config[section].getfloat(key)
-                except ValueError:
-                    try:
-                        val = config[section].getboolean(key)
-                    except ValueError:
-                        pass
 
-                if hasattr(self.__dict__[section], key + '_alt'):
-                    if val not in self.__dict__[section].__dict__[key + '_alt']:
-                        self.system.warning('Invalid Value <{}> for Config [{}].<{}>'.format(val, section, key))
-                self.__dict__[section].__dict__.update({key: val})
+            val = conf[section].get(key)
+
+            try:
+                val = conf[section].getfloat(key)
+            except ValueError:
+                try:
+                    val = conf[section].getboolean(key)
+                except ValueError:
+                    pass
+
+            self.__dict__.update({key: val})
+
+    def check(self):
+        """
+        Check for consistency
+
+        Returns
+        -------
+        bool
+            True for pass, False for fail
+        """
+        # TODO: check key in _alt
+        return True
 
     @cached
-    def descr(self):
+    def config_descr(self):
         descriptions = {}
         return descriptions

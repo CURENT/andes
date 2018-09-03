@@ -28,16 +28,14 @@ def dump_data(text, header, rowname, data, file):
     precision = 4
     s = ''
     out = ''
-    try:
-        fid = open(file, 'w')
-    except:
-        print('Cannot open file <{}> for writing.'.format(file))
-        return
+    fid = open(file, 'w')
 
     for Text, Header, Rowname, Data in zip(text, header, rowname, data):
         # Write Text
         if Text:
-            fid.writelines(Text)  # Note writelines() does not append '\n'. Need to to it when forming Text
+            fid.writelines(
+                Text
+            )
 
         # Write Header
         if Header:
@@ -57,13 +55,14 @@ def dump_data(text, header, rowname, data, file):
                 elif isinstance(Data[0], list):  # list of list in Data
                     ncol = len(Data)
                     out = [Data[i][idx] for i in range(ncol)]
-                elif isinstance(Data[0], (int, float)):  # Is just a list of numbers
+                elif isinstance(Data[0],
+                                (int, float)):  # Is just a list of numbers
                     ncol = 1
                     out = [Data[idx]]
                 elif isinstance(Data, (int, float)):
                     ncol = 1
                     out = [Data]
-                elif isinstance(Data, matrix):   # Data is a matrix
+                elif isinstance(Data, matrix):  # Data is a matrix
                     pass
                 else:
                     print('Unexpected Data during output, in formats/txt.py')
@@ -80,7 +79,9 @@ def dump_data(text, header, rowname, data, file):
                         pass
                 s += '\n'
 
-                fid.write(s.format(str(item), *out, width=width, precision=precision))
+                fid.write(
+                    s.format(
+                        str(item), *out, width=width, precision=precision))
         fid.write('\n')
 
     fid.close()

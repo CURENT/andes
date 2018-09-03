@@ -1,10 +1,9 @@
-from . import SettingsBase
+from . import ConfigBase
 from ..utils.cached import cached
 
 
-class SSSA(SettingsBase):
-
-    def __init__(self):
+class Eig(ConfigBase):
+    def __init__(self, **kwargs):
         self.neig = 1
         self.method = 1
         self.map = 1
@@ -13,10 +12,9 @@ class SSSA(SettingsBase):
         self.eigs = ''
         self.pf = ''
         self.plot = True
+        super(Eig, self).__init__(**kwargs)
 
     @cached
-    def descr(self):
-        descriptions = {
-
-        }
+    def config_descr(self):
+        descriptions = {}
         return descriptions

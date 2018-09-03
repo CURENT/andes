@@ -5,8 +5,6 @@ import logging
 import time
 
 from andes.utils.dime import Dime
-
-import numpy as np
 from numpy import array, ndarray, zeros
 
 from pypmu import Pmu
@@ -26,10 +24,15 @@ def get_logger(name):
 
 
 class MiniPMU(object):
-
-    def __init__(self, name: str='', dime_address: str='ipc:///tmp/dime',
-                 pmu_idx: list=list(), max_store: int=1000, pmu_ip: str='0.0.0.0', pmu_port: int=1410,
-                 ):
+    def __init__(
+            self,
+            name: str = '',
+            dime_address: str = 'ipc:///tmp/dime',
+            pmu_idx: list = list(),
+            max_store: int = 1000,
+            pmu_ip: str = '0.0.0.0',
+            pmu_port: int = 1410,
+    ):
         assert name, 'PMU Receiver name is empty'
         assert pmu_idx, 'PMU idx is empty'
         self.name = name
@@ -38,10 +41,11 @@ class MiniPMU(object):
         self.max_store = max_store
 
         self.bus_name = []
-        self.var_idx = {'am': [],
-                        'vm': [],
-                        'w': [],
-                        }
+        self.var_idx = {
+            'am': [],
+            'vm': [],
+            'w': [],
+        }
 
         self.Varheader = list()
         self.Idxvgs = dict()
@@ -59,7 +63,8 @@ class MiniPMU(object):
     def start_dime(self):
         """Starts the dime client stored in `self.dimec`
         """
-        self.logger.info('Trying to connect to dime server {}'.format(self.dime_address))
+        self.logger.info('Trying to connect to dime server {}'.format(
+            self.dime_address))
         assert self.dimec.start()
         # clear data in the DiME server queue
         self.dimec.exit()
@@ -68,13 +73,17 @@ class MiniPMU(object):
 
     def respond_to_sim(self):
         """Respond with data streaming configuration to the simulator"""
-        response = {'vgsvaridx': self.vgsvaridx,
-                    'limitsample': 0,
-                    }
+        response = {
+            'vgsvaridx': self.vgsvaridx,
+            'limitsample': 0,
+        }
         self.dimec.send_var('sim', self.name, response)
 
     def get_bus_name(self):
-        """Return bus names based on ``self.pmu_idx`` and store bus names to ``self.bus_name``
+        """
+        Return bus names based on ``self.pmu_idx``.
+
+        Store bus names to ``self.bus_name``
         """
         # TODO: implement method to read bus names from Varheader
         self.bus_name = list(self.pmu_idx)
@@ -87,29 +96,39 @@ class MiniPMU(object):
         """Sets the ConfigFrame2 of the PMU
         """
 
-        self.cfg = ConfigFrame2(self.pmu_idx[0],  # PMU_ID
-                           1000000,  # TIME_BASE
-                           1,  # Number of PMUs included in data frame
-                           self.bus_name[0],  # Station name
-                           self.pmu_idx[0],  # Data-stream ID(s)
-                           (True, True, True, True),  # Data format - POLAR; PH - REAL; AN - REAL; FREQ - REAL;
-                           1,  # Number of phasors
-                           1,  # Number of analog values
-                           1,  # Number of digital status words
-                           ["VA", "ANALOG1", "BREAKER 1 STATUS",
-                            "BREAKER 2 STATUS", "BREAKER 3 STATUS", "BREAKER 4 STATUS", "BREAKER 5 STATUS",
-                            "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
-                            "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
-                            "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"],  # Channel Names
-                           [(0, 'v')],  # Conversion factor for phasor channels - (float representation, not important)
-                           [(1, 'pow')],  # Conversion factor for analog channels
-                           [(0x0000, 0xffff)],  # Mask words for digital status words
-                           60,  # Nominal frequency
-                           1,  # Configuration change count
-                           30)  # Rate of phasor data transmission)
+        self.cfg = ConfigFrame2(
+            self.pmu_idx[0],  # PMU_ID
+            1000000,  # TIME_BASE
+            1,  # Number of PMUs included in data frame
+            self.bus_name[0],  # Station name
+            self.pmu_idx[0],  # Data-stream ID(s)
+            (True, True, True,
+             True),  # Data format - POLAR; PH - REAL; AN - REAL; FREQ - REAL;
+            1,  # Number of phasors
+            1,  # Number of analog values
+            1,  # Number of digital status words
+            [
+                "VA", "ANALOG1", "BREAKER 1 STATUS", "BREAKER 2 STATUS",
+                "BREAKER 3 STATUS", "BREAKER 4 STATUS", "BREAKER 5 STATUS",
+                "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS",
+                "BREAKER 9 STATUS", "BREAKER A STATUS", "BREAKER B STATUS",
+                "BREAKER C STATUS", "BREAKER D STATUS", "BREAKER E STATUS",
+                "BREAKER F STATUS", "BREAKER G STATUS"
+            ],  # Channel Names
+            [
+                (0, 'v')
+            ],
+            # Conversion factor for phasor channels -
+            #   (float representation, not important)
+            [(1, 'pow')],  # Conversion factor for analog channels
+            [(0x0000, 0xffff)],  # Mask words for digital status words
+            60,  # Nominal frequency
+            1,  # Configuration change count
+            30)  # Rate of phasor data transmission)
 
-        self.hf = HeaderFrame(self.pmu_idx[0],  # PMU_ID
-                              "Hello I'm a MiniPMU!")  # Header Message
+        self.hf = HeaderFrame(
+            self.pmu_idx[0],  # PMU_ID
+            "Hello I'm a MiniPMU!")  # Header Message
 
         self.pmu.set_configuration(self.cfg)
         self.pmu.set_header(self.hf)
@@ -130,18 +149,21 @@ class MiniPMU(object):
         for item in self.pmu_idx:
             self.var_idx['am'].append(self.Idxvgs['Pmu']['am'][0, item - 1])
             self.var_idx['vm'].append(self.Idxvgs['Pmu']['vm'][0, item - 1])
-            self.var_idx['w'].append(self.Idxvgs['Bus']['w_Busfreq'][0, item - 1])
+            self.var_idx['w'].append(
+                self.Idxvgs['Bus']['w_Busfreq'][0, item - 1])
 
     @property
     def vgsvaridx(self):
-        return array(self.var_idx['am'] + self.var_idx['vm'] + self.var_idx['w'])
+        return array(self.var_idx['am'] + self.var_idx['vm'] +
+                     self.var_idx['w'])
 
     def init_storage(self):
         """Initialize data storage `self.t` and `self.data`
         """
         if self.count % self.max_store == 0:
             self.t = zeros(shape=(self.max_store, 1), dtype=float)
-            self.data = zeros(shape=(self.max_store, len(self.pmu_idx * 3)), dtype=float)
+            self.data = zeros(
+                shape=(self.max_store, len(self.pmu_idx * 3)), dtype=float)
             self.count = 0
             return True
         else:
@@ -200,14 +222,17 @@ class MiniPMU(object):
                 continue
 
             if self.pmu.clients:
-                self.pmu.send_data(phasors=[(220*int(var[0, 1]), int(var[0, 0]))],
-                                   analog=[9.99],
-                                   digital=[0x0001],
-                                   freq=60*var[0, 2])
+                self.pmu.send_data(
+                    phasors=[(220 * int(var[0, 1]), int(var[0, 0]))],
+                    analog=[9.99],
+                    digital=[0x0001],
+                    freq=60 * var[0, 2])
 
 
 if __name__ == "__main__":
-    mini = MiniPMU(name='TestPMU', dime_address='ipc:///tmp/dime', pmu_idx=[1],
-                   pmu_port=1414)
+    mini = MiniPMU(
+        name='TestPMU',
+        dime_address='ipc:///tmp/dime',
+        pmu_idx=[1],
+        pmu_port=1414)
     mini.run()
-

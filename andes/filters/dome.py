@@ -5,6 +5,9 @@ From Book "Power System Modeling and Scripting" by Dr. Federico Milano
 import re
 import os
 from math import ceil
+import logging
+logger = logging.getLogger(__name__)
+
 
 def testlines(fid):
     return True  # hard coded yet
@@ -87,16 +90,18 @@ def read(file, system, header=True):
             alter(data, system)
             continue
         if device == 'INCLUDE':
-            system.Log.debug('Parsing include file <{}>'.format(data[0]))
+            logger.debug('Parsing include file <{}>'.format(data[0]))
             newpath = data[0]
             if not os.path.isfile(newpath):
-                newpath = os.path.join(system.Files.path, data[0])
+                newpath = os.path.join(system.files.path, data[0])
                 if not os.path.isfile(newpath):
-                    system.Log.warning('Unable to locate file in {}'.format(newpath))
+                    logger.warning(
+                        'Unable to locate file in {}'.format(newpath))
                     retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
-            system.Log.debug('Parsing of include file <{}> completed.'.format(data[0]))
+            logger.debug('Parsing of include file <{}> completed.'.format(
+                data[0]))
             continue
         kwargs = {}
         for item in data:
@@ -128,8 +133,12 @@ def read(file, system, header=True):
         try:
             system.__dict__[device].elem_add(idx=index, name=namex, **kwargs)
         except KeyError:
-            system.Log.error('Error adding device {:s} to powersystem object.'.format(device))
-            system.Log.debug('  Check if you have new jit models added to models.__init__.py')
+            logger.error(
+                'Error adding device {:s} to powersystem object.'.format(
+                    device))
+            logger.debug(
+                'Make sure you have added the jit models in __init__.py'
+            )
 
     fid.close()
     return retval
@@ -146,7 +155,7 @@ def write(file, system):
     out.append('# DOME format version 1.0')
     ppl = 7  # parameter per line
     retval = True
-    dev_list = sorted(system.DevMan.devices)
+    dev_list = sorted(system.devman.devices)
     for dev in dev_list:
         model = system.__dict__[dev]
         if not model.n:
@@ -193,7 +202,7 @@ def write(file, system):
                 pair.append('{} = {}'.format(key, val))
 
             for line in range(nline):
-                string = ', '.join(pair[ppl*line:ppl*(line+1)])
+                string = ', '.join(pair[ppl * line:ppl * (line + 1)])
                 if line == 0:  # append header or space
                     string = header + string
                 else:

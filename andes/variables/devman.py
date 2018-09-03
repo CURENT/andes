@@ -1,12 +1,20 @@
-from ..models import order, jits, non_jits, all_models
+from ..models import order, all_models
 from numpy import ndarray
 from cvxopt import matrix
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DevMan(object):
-    """Device Manager class. Maintains the loaded model list, groups and categories"""
+    """
+    Device Manager class.
+    Maintains the loaded model list, groups and categories
+
+    """
+
     def __init__(self, system=None):
-        """constructor for DevMan class"""
+        """constructor for devman class"""
         self.system = system
         self.devices = []
         self.group = {}
@@ -20,16 +28,25 @@ class DevMan(object):
             self.group[group_name] = {}
 
     def register_element(self, dev_name, idx=None):
-        """register a device element to the group list
-        Args:
-            dev_name: model name
-            idx (optional): element external idx
+        """
+        Register a device element to the group list
 
-        Returns:
-            idx: assigned element index
-            """
+        Parameters
+        ----------
+        dev_name : str
+            model name
+        idx : str
+            element idx
+
+        Returns
+        -------
+        str
+            assigned idx
+        """
         if dev_name not in self.devices:
-            self.system.Log.error('Device {} missing. Call add_device before adding elements'.format(dev_name))
+            logger.error(
+                'Device {} missing. call add_device before adding elements'.
+                format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group
         if idx is None:  # "if not idx" will fail for idx==0.0
@@ -76,7 +93,7 @@ class DevMan(object):
         elif type(fkey) == ndarray:
             fkey = fkey.tolist()
 
-        for key, item in self.system.DevMan.group.items():
+        for key, item in self.group.items():
             if key != group:
                 continue
             if type(fkey) != list:
@@ -88,7 +105,8 @@ class DevMan(object):
                 for name, dev in item.items():
                     if name == k:
                         int_id = self.system.__dict__[dev].uid[name]
-                        ret.append(self.system.__dict__[dev].__dict__[param][int_id])
+                        ret.append(
+                            self.system.__dict__[dev].__dict__[param][int_id])
                         continue
             if not ret_list:
                 ret = ret[0]

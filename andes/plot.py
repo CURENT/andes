@@ -38,15 +38,27 @@ def cli_parse():
     parser.add_argument('--ymax', type=float, help='y axis maximum value')
     parser.add_argument('--ymin', type=float, help='y axis minimum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
-    parser.add_argument('--checkinit', action='store_true', help='check initialization value')
-    parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
+    parser.add_argument(
+        '--checkinit', action='store_true', help='check initialization value')
+    parser.add_argument(
+        '-x', '--xlabel', type=str, help='manual set x-axis text label')
     parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
-    parser.add_argument('-s', '--save', action='store_true', help='save to file')
+    parser.add_argument(
+        '-s', '--save', action='store_true', help='save to file')
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
-    parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
-    parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
+    parser.add_argument(
+        '-d',
+        '--no_latex',
+        action='store_true',
+        help='disable LaTex formatting')
+    parser.add_argument(
+        '-u',
+        '--unattended',
+        action='store_true',
+        help='do not show the plot window')
     parser.add_argument('--ytimes', type=str, help='y times')
-    parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
+    parser.add_argument(
+        '--dpi', type=int, help='image resolution in dot per inch (DPI)')
     args = parser.parse_args()
     return vars(args)
 
@@ -196,7 +208,6 @@ def do_plot(xdata,
             noshow=False,
             **kwargs):
 
-
     # set styles and LaTex
     rc('font', family='Arial', size=12)
     linestyles = ['-', '--', '-.', ':'] * len(ydata)
@@ -215,6 +226,7 @@ def do_plot(xdata,
             return lst[idx]
         else:
             return None
+
     xl_data = get_lst_name(xname, LATEX)
     yl_data = get_lst_name(yname, LATEX)
 
@@ -274,20 +286,15 @@ def do_plot(xdata,
         try:
             fig.savefig(outfile, dpi=1200)
             print('Figure saved to file {}'.format(outfile))
-        except:
-            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
+        except IOError:
+            print('* Error occurred. Try disabling LaTex with "-d".')
             return
 
     if unattended:
         noshow = True
 
     if not noshow:
-        try:
-            plt.show()
-            pass
-        except:
-            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
-            return
+        plt.show()
 
     return fig, ax
 
@@ -295,16 +302,16 @@ def do_plot(xdata,
 def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
-        xl_data = xl[1]
+        xl_data = xl[1]  # NOQA
         yl_data = yl[1]
     else:
-        xl_data = xl[0]
+        xl_data = xl[0]  # NOQA
         yl_data = yl[0]
 
     for idx in range(len(y)):
         ax.plot(x, y[idx], label=yl_data[idx], linestyle=linestyle)
 
-    legend = ax.legend(loc='upper right')
+    ax.legend(loc='upper right')
     ax.set_ylim(auto=True)
 
 
@@ -352,7 +359,9 @@ def eig_plot(name, args):
     fid.close()
 
     for line in raw_data:
-        data = line.split()
+        # data = line.split()
+        # TODO: complete this function
+        pass
 
 
 def tds_plot(name, args):
@@ -376,7 +385,7 @@ def tds_plot(name, args):
         times = float(ytimes)
         new_yval = []
         for val in yval:
-            new_yval.append([i*times for i in val])
+            new_yval.append([i * times for i in val])
         yval = new_yval
 
     args.pop('x')

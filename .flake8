@@ -1,0 +1,2 @@
+[flake8]
+exclude = .git,__pycache__,build,dist,demos,cases,versioneer.py,andes/_version.py,docs/source/conf.py
