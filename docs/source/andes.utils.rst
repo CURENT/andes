@@ -28,22 +28,6 @@ andes.utils.dime module
     :undoc-members:
     :show-inheritance:
 
-andes.utils.jactools module
----------------------------
-
-.. automodule:: andes.utils.jactools
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-andes.utils.logger module
--------------------------
-
-.. automodule:: andes.utils.logger
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 andes.utils.math module
 -----------------------
 
@@ -52,10 +36,26 @@ andes.utils.math module
     :undoc-members:
     :show-inheritance:
 
+andes.utils.misc module
+-----------------------
+
+.. automodule:: andes.utils.misc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 andes.utils.pymatbridge module
 ------------------------------
 
 .. automodule:: andes.utils.pymatbridge
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+andes.utils.solver module
+-------------------------
+
+.. automodule:: andes.utils.solver
     :members:
     :undoc-members:
     :show-inheritance:
@@ -83,6 +83,7 @@ andes.utils.time module
     :members:
     :undoc-members:
     :show-inheritance:
+
 
 Module contents
 ---------------

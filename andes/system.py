@@ -19,16 +19,16 @@ Power system class
 import configparser
 import importlib
 import logging
-import pathlib
-from operator import itemgetter
 import os
+from operator import itemgetter
+
+from . import routines
 from .config import System
+from .consts import pi
 from .consts import rad2deg
 from .models import non_jits, jits, JIT
-from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .consts import pi
-from andes import routines
 from .utils import get_config_load_path
+from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 try:
     from .utils.streaming import Streaming
@@ -91,7 +91,6 @@ class PowerSystem(object):
                              output=output,
                              **kwargs)
 
-
         self.config = System()
         self.routine_import()
 
@@ -118,7 +117,6 @@ class PowerSystem(object):
             self.streaming = Streaming(self)
 
         self.model_import()
-
 
     @property
     def freq(self):
@@ -363,12 +361,17 @@ class PowerSystem(object):
 
         logger.info('Config written to {}'.format(file_path))
 
-
     def check_islands(self, show_info=False):
         """
         Check connectivity for the ac system
 
-        :return: None
+        Parameters
+        ----------
+        show_info
+
+        Returns
+        -------
+        None
         """
         if not hasattr(self, 'Line'):
             logger.error('<Line> device not found.')

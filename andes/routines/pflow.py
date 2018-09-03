@@ -69,6 +69,7 @@ class PFLOW(RoutineBase):
     def run(self, **kwargs):
         """
         call the power flow solution routine
+
         Returns
         -------
         bool:
@@ -97,6 +98,7 @@ class PFLOW(RoutineBase):
     def newton(self):
         """
         Newton power flow routine
+
         Returns
         -------
         (bool, int)

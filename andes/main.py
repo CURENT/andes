@@ -106,6 +106,7 @@ def preamble():
 def cli_new():
     """
     Command line argument parser
+
     Parameters
     ----------
     help: bool
@@ -113,8 +114,7 @@ def cli_new():
 
     Returns
     -------
-    None (str)
-
+    None
     """
     parser = ArgumentParser()
     parser.add_argument('filename', help='Case file name', nargs='*')

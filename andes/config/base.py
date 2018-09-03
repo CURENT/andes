@@ -1,4 +1,3 @@
-import os
 import configparser
 
 from ..utils.cached import cached
@@ -146,6 +145,7 @@ class ConfigBase(object):
     def check(self):
         """
         Check for consistency
+
         Returns
         -------
         bool

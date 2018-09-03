@@ -20,26 +20,26 @@ andes.config.cpf module
     :undoc-members:
     :show-inheritance:
 
-andes.config.settings module
-----------------------------
-
-.. automodule:: andes.config.settings
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-andes.config.spf module
+andes.config.eig module
 -----------------------
 
-.. automodule:: andes.config.spf
+.. automodule:: andes.config.eig
     :members:
     :undoc-members:
     :show-inheritance:
 
-andes.config.sssa module
-------------------------
+andes.config.pflow module
+-------------------------
 
-.. automodule:: andes.config.sssa
+.. automodule:: andes.config.pflow
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+andes.config.system module
+--------------------------
+
+.. automodule:: andes.config.system
     :members:
     :undoc-members:
     :show-inheritance:

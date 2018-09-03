@@ -12,34 +12,26 @@ andes.routines.base module
     :undoc-members:
     :show-inheritance:
 
-andes.routines.eigenanalysis module
------------------------------------
+andes.routines.eig module
+-------------------------
 
-.. automodule:: andes.routines.eigenanalysis
+.. automodule:: andes.routines.eig
     :members:
     :undoc-members:
     :show-inheritance:
 
-andes.routines.fakemodule module
---------------------------------
+andes.routines.pflow module
+---------------------------
 
-.. automodule:: andes.routines.fakemodule
+.. automodule:: andes.routines.pflow
     :members:
     :undoc-members:
     :show-inheritance:
 
-andes.routines.powerflow module
--------------------------------
+andes.routines.tds module
+-------------------------
 
-.. automodule:: andes.routines.powerflow
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-andes.routines.timedomain module
---------------------------------
-
-.. automodule:: andes.routines.timedomain
+.. automodule:: andes.routines.tds
     :members:
     :undoc-members:
     :show-inheritance:

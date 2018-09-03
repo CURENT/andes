@@ -40,6 +40,7 @@ class Solver(object):
     def numeric(self, A, F):
         """
         Return the numeric factorization of sparse matrix ``A`` using symbolic factorization ``F``
+
         Parameters
         ----------
         A

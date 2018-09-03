@@ -47,7 +47,7 @@ class FileMan(object):
         self.pert = pert
         self.dynfile = self.get_fullpath(dynfile)
         self.config = self.get_fullpath(config)
-        self.add_format=None
+        self.add_format = None
 
         if no_output:
             self.no_output = True

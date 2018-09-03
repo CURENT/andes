@@ -44,8 +44,8 @@ setup(
     packages=find_packages(exclude=['docs', 'tests', 'demos', 'cards']),
     entry_points={
         'console_scripts': [
-            'andes = andes:main',
-            'andesplot = andes:plot',
+            'andes = andes.main:main',
+            'andesplot = andes.plot:main',
         ],
     },
     include_package_data=True,
