@@ -5,9 +5,9 @@ A dummy debug entry point for use with Pycharm
 import andes
 
 
-def main():
-    andes.main()
+def debug():
+    andes.main.main()
 
 
 if __name__ == "__main__":
-    main()
+    debug()

@@ -3,7 +3,6 @@ from cvxopt import mul, div, sin, cos, exp
 
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
-from ..consts import ERROR
 from ..consts import pi
 from .base import ModelBase
 
@@ -14,6 +13,9 @@ except ImportError:
 
 from ..utils.math import zeros, ones, agtb, ageb, altb, aleb, aandb, aneb
 from ..utils.math import mfloor, mround, mmax, mmin, not0
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MPPT(object):
@@ -135,9 +137,8 @@ class Turbine(object):
 
         for i in range(self.n):
             if self.te0[i] < 0:
-                self.message(
-                    'Pe < 0 on bus <{}>. Wind speed initialize failed.'.format(
-                        self.bus[i]), ERROR)
+                logger.error('Pe < 0 on bus <{}>. Wind speed initialize failed.'
+                             .format(self.bus[i]))
 
         # wind power in pu
         omega = dae.x[self.omega_m]
@@ -441,9 +442,9 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             iter = 0
             while (max(abs(mis))) > self.system.tds.config.tol:
                 if iter > 40:
-                    self.log(
+                    logger.error(
                         'Initialization of WTG4DC <{}> failed.'.format(
-                            self.name[i]), ERROR)
+                            self.name[i]))
                     break
                 mis[0] = x[0] * x[2] + x[1] * x[3] - Pg[i]
                 # mis[1] = omega[i]*x[3] * (psip[i] + (xq[i] - xd[i]) * x[2])\
@@ -865,9 +866,9 @@ class WTG3(ModelBase):
 
             while max(abs(mis)) > self.system.tds.config.tol:
                 if iter > 20:
-                    self.log(
+                    logger.error(
                         'Initialization of DFIG <{}> failed.'.format(
-                            self.name[i]), ERROR)
+                            self.name[i]))
                     retval = False
                     break
 
@@ -929,9 +930,9 @@ class WTG3(ModelBase):
 
         for i in range(self.n):
             if te[i] < 0:
-                self.log(
+                logger.error(
                     'Pe < 0 on bus <{}>. Wind speed initialize failed.'.
-                    format(self.bus[i]), ERROR)
+                    format(self.bus[i]))
                 retval = False
 
         # wind power in pu
@@ -950,7 +951,7 @@ class WTG3(ModelBase):
             iter = 0
             while abs(mis) > self.system.tds.config.tol:
                 if iter > 50:
-                    self.log(
+                    logger.error(
                         'Wind <{}> init failed. '
                         'Try increasing the nominal wind speed.'.
                         format(self.wind[i]))
@@ -981,7 +982,7 @@ class WTG3(ModelBase):
         self.system.rmgen(self.gen)
 
         if not retval:
-            self.log('DFIG initialization failed', ERROR)
+            logger.error('DFIG initialization failed')
 
         return retval
 

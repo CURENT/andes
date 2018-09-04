@@ -7,8 +7,9 @@ from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 from ..utils.math import polar, conj
-from ..consts import DEBUG
 from ..consts import deg2rad
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Line(ModelBase):
@@ -369,7 +370,7 @@ class Line(ModelBase):
         self.u[self.uid[idx]] = u
         self.rebuild = True
         self.system.dae.factorize = True
-        self.log('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
+        logger.debug('<Line> Status switch to {} on idx {}.'.format(u, idx))
 
     def build_name_from_bus(self):
         """Rebuild line names from bus names"""
