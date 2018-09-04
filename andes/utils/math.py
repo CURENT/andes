@@ -44,14 +44,6 @@ def aneb(a, b):
     return matrix(np.not_equal(a, b).astype('float'))
 
 
-def aneb(a, b):
-    """Return a matrix of logic comparison of A != B"""
-    if type(b) in (int, float):
-        return matrix(list(map(lambda x: x != b, a)), a.size)
-    else:
-        return matrix(list(map(lambda x, y: x != y, a, b)), a.size)
-
-
 def aorb(a, b):
     """Return a matrix of logic comparison of A or B"""
     return matrix(np.logical_or(a, b).astype('float'), a.size)
@@ -90,11 +82,6 @@ def mfloor(a):
 def mround(a):
     """Return the element-wise round value of a"""
     return matrix(np.round(a), a.size)
-
-
-def mround(a):
-    """Return the element-wise round value of a"""
-    return matrix(list(map(lambda x: round(x), a)), a.size)
 
 
 def not0(a):
