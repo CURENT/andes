@@ -142,7 +142,8 @@ def cli_new():
     io_group.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')
     io_group.add_argument('-P', '--pert', help='Perturbation file path', default='')
     io_group.add_argument('-d', '--dump-raw', help='Dump RAW format case file.')
-    io_group.add_argument('-n', '--no_output', help='Force no output of any kind',
+    io_group.add_argument('-n', '--no-output', help='Force no output of any '
+                                                    'kind',
                           action='store_true')
     io_group.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
