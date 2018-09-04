@@ -60,7 +60,7 @@ class ConfigBase(object):
         Dump help document for setting classes
         """
         rows = []
-        title = 'Setting <{:s}>'.format(self.__class__.__name__)
+        title = '<{:s}> config options'.format(self.__class__.__name__)
         table = Tab(export=export, title=title)
 
         for opt in sorted(self.config_descr):

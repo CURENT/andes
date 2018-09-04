@@ -39,7 +39,8 @@ from .system import PowerSystem
 from .utils import elapsed, get_config_load_path
 from subprocess import call
 
-logger = None
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def config_logger(name='andes',
@@ -338,6 +339,7 @@ def andeshelp(group=None,
 
     if group:
         group_dict = {}
+        match = []
 
         for model in all_models_list:
             g = system.__dict__[model]._group
@@ -346,33 +348,28 @@ def andeshelp(group=None,
             group_dict[g].append(model)
 
         if group.lower() == 'all':
-            group = sorted(list(group_dict.keys()))
+            match = sorted(list(group_dict.keys()))
 
         else:
             group = [group]
-            match = []
-
             # search for ``group`` in all group names and store in ``match``
             for item in group_dict.keys():
                 if group[0].lower() in item.lower():
                     match.append(item)
 
-            group = match
+        # if group name not found
+        if len(match) == 0:
+            out.append('Group <{:s}> not found.'.format(group[0]))
 
-            # if group name not found
-            if len(match) == 0:
-                sys.stdout.write('Group <{:s}> not found.'.format(group[0]))
-
-        for idx, item in enumerate(group):
+        for idx, item in enumerate(match):
             group_models = sorted(list(group_dict[item]))
-
             out.append('<{:s}>'.format(item))
-            out.append(' '.join(group_models))
+            out.append(', '.join(group_models))
             out.append('')
 
     if quick_help:
         if quick_help not in all_models_list:
-            sys.stdout.write('Model <{}> does not exist.'.format(quick_help))
+            out.append('Model <{}> does not exist.'.format(quick_help))
         else:
             out.append(system.__dict__[quick_help].doc(export=export))
 
@@ -381,7 +378,7 @@ def andeshelp(group=None,
 
     if help_config:
 
-        all_config = ['Config', 'SPF', 'TDS', 'SSSA', 'CPF']
+        all_config = ['System', 'Pflow', 'Tds', 'Eig']
 
         if help_config.lower() == 'all':
             help_config = all_config
@@ -396,10 +393,10 @@ def andeshelp(group=None,
 
         if len(help_config) > 0:
             for item in help_config:
-                # TODO: fix
-                out.append(system.__dict__[item].doc(export=export))
+                out.append(system.__dict__[item.lower()].config.doc(
+                    export=export))
 
-    logger.info('\n'.join(out))  # NOQA
+    sys.stdout.write('\n'.join(out))  # NOQA
 
     return True
 
@@ -437,6 +434,8 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
 
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
+
+        editor = ''
         if platform.system() == 'Linux':
             editor = os.environ.get('EDITOR', 'gedit')
         elif platform.system() == 'Darwin':
@@ -538,11 +537,11 @@ def search(search, **kwargs):
                 out.append(key + '.' + item)
 
     if out:
-        logger.info('Search result: <file.model> containing <{}>'
-                    .format(search))
-        logger.info(' '.join(out))
+        print('Search result: <file.model> containing <{}>'
+              .format(search))
+        print(' '.join(out))
     else:
-        logger.info('No model containing <{:s}> found'.format(search))
+        print('No model containing <{:s}> found'.format(search))
 
     return out
 
