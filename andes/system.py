@@ -13,9 +13,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Power system class
 """
+
 import configparser
 import importlib
 import logging
@@ -41,7 +43,8 @@ logger = logging.getLogger(__name__)
 
 class PowerSystem(object):
     """
-    Everything in a power system class including models, routines, file and call managers
+    A power system class to hold models, routines, DAE numerical values,
+    file manager, call manager, variable names and valuable values.
     """
 
     def __init__(self,
@@ -60,23 +63,51 @@ class PowerSystem(object):
                  tf=None,
                  **kwargs):
         """
-        Initialize an empty power system object with defaults
-        Args:
-            case: case file name
-            pid: process idx
-            verbose: logging verbose level
-            no_output: disable all output
-            log: log file name
-            dump: simulation result dump name
-            addfile: additional file used by some formats
-            config: specified rc config file path
-            input_format: specified input case file format
-            output_format: specified dump case file format
-            output: specified output case file name
-            gis: JML formatted GIS file name
-            **kwargs: all other kwargs
+        PowerSystem constructor
 
-        Returns: None
+        Parameters
+        ----------
+        case : str, optional
+            Path to the case file
+
+        pid : idx, optional
+            Process index
+
+        no_output : bool, optional
+            ``True`` to disable all updates
+        dump_raw : None or str, optional
+            Path to the file to dump the raw parameters in the dm format
+
+        output : None or str, optional
+            Output case file name, NOT implemented yet
+
+        dynfile : None or str, optional
+            Path to the dynamic file for some formats, for example, ``dyr``
+            for PSS/E
+
+        addfile : None or str, optional
+            Path to the additional dynamic file in the dm format
+
+        config : None or str, optional
+            Path to the andes.conf file
+
+        input_format : None or str, optional
+            Suggested input file format
+
+        output_format : None or str, optional
+            Requested dump file format, NOT implemented yet
+
+        gis : None or str, optional
+            Path to the GIS file
+
+        dime : None or str, optional
+            DiME server address
+
+        tf : None or float, optional
+            Time-domain simulation end time
+
+        kwargs : dict, optional
+            Other keyword args
         """
         # set internal flags based on the arguments
         self.pid = pid
@@ -120,6 +151,7 @@ class PowerSystem(object):
 
     @property
     def freq(self):
+        """System base frequency"""
         return self.config.freq
 
     @freq.setter
@@ -131,10 +163,12 @@ class PowerSystem(object):
 
     @property
     def wb(self):
+        """System base radial frequency"""
         return 2 * pi * self.config.freq
 
     @property
     def mva(self):
+        """System base power in mega voltage-ampere"""
         return self.config.mva
 
     @mva.setter
@@ -143,10 +177,21 @@ class PowerSystem(object):
 
     def setup(self):
         """
-        set up everything after receiving the inputs
+        Set up the power system object by executing the following workflow:
 
-        :return: reference of self
+         * Sort the loaded models to meet the initialization sequence
+         * Create call strings for routines
+         * Call the ``setup`` function of the loaded models
+         * Assign addresses for the loaded models
+         * Call ``dae.setup`` to assign memory for the numerical dae structure
+         * Convert model parameters to the system base
+
+        Returns
+        -------
+        PowerSystem
+            The instance of the PowerSystem
         """
+
         self.devman.sort_device()
         self.call.setup()
         self.model_setup()
@@ -158,28 +203,39 @@ class PowerSystem(object):
 
     def to_sysbase(self):
         """
-        Convert model parameters to system base
+        Convert model parameters to system base. This function calls the
+        ``data_to_sys_base`` function of the loaded models.
 
-        :return: None
+        Returns
+        -------
+        None
         """
-
         if self.config.base:
             for item in self.devman.devices:
                 self.__dict__[item].data_to_sys_base()
 
     def group_add(self, name='Ungrouped'):
         """
-        Add group ``name`` to the system
+        Dynamically add a group instance to the system if not exist.
 
-        :param name: group name
-        :return: None
+        Parameters
+        ----------
+        name : str, optional ('Ungrouped' as default)
+            Name of the group
+
+        Returns
+        -------
+        None
         """
         if not hasattr(self, name):
             self.__dict__[name] = Group(self, name)
 
     def model_import(self):
         """
-        Import and instantiate non-JIT models, and import JIT models
+        Import and instantiate the non-JIT models and the JIT models.
+
+        Models defined in ``jits`` and ``non_jits`` in ``models/__init__.py``
+        will be imported and instantiated accordingly.
 
         Returns
         -------
@@ -205,7 +261,16 @@ class PowerSystem(object):
 
     def routine_import(self):
         """
-        Dynamically import routines
+        Dynamically import routines as defined in ``routines/__init__.py``.
+
+        The command-line argument ``--routine`` is defined in ``__cli__`` in
+        each routine file. A routine instance will be stored in the system
+        instance with the name being all lower case.
+
+        For example, a routine for power flow study should be defined in
+        ``routines/pflow.py`` where ``__cli__ = 'pflow'``. The class name
+        for the routine should be ``Pflow``. The routine instance will be
+        saved to ``PowerSystem.pflow``.
 
         Returns
         -------
@@ -217,11 +282,12 @@ class PowerSystem(object):
 
     def model_setup(self):
         """
-        Run model ``setup()`` for models present.
+        Call the ``setup`` function of the loaded models. This function is
+        to be called after parsing all the data files during the system set up.
 
-        Called by ``PowerSystem.setup()`` after adding model elements
-
-        :return: None
+        Returns
+        -------
+        None
         """
         for device in self.devman.devices:
             if self.__dict__[device].n:
@@ -234,7 +300,19 @@ class PowerSystem(object):
         """
         Assign indicies and variable names for variables used in power flow
 
-        :return: None
+        For each loaded model with the ``pflow`` flag as ``True``, the following
+        functions are called sequentially:
+
+         * ``_addr()``
+         * ``_intf_network()``
+         * ``_intf_ctrl()``
+
+        After resizing the ``varname`` instance, variable names from models
+        are stored by calling ``_varname()``
+
+        Returns
+        -------
+        None
         """
         for device, pflow in zip(self.devman.devices, self.call.pflow):
             if pflow:
@@ -250,7 +328,9 @@ class PowerSystem(object):
 
     def xy_addr1(self):
         """
-        Assign indices and variable names for variables after power flow
+        Assign indices and variable names for variables after power flow.
+        This function is for loaded models that do not have the ``pflow``
+        flag as ``True``.
         """
         for device, pflow in zip(self.devman.devices, self.call.pflow):
             if not pflow:
@@ -266,9 +346,15 @@ class PowerSystem(object):
 
     def rmgen(self, idx):
         """
-        remove static generators if dynamic ones exist
+        Remove the static generators if their dynamic models exist
 
-        :return: None
+        Parameters
+        ----------
+        idx : list
+            A list of static generator idx
+        Returns
+        -------
+        None
         """
         stagens = []
         for device, stagen in zip(self.devman.devices, self.call.stagen):
@@ -283,8 +369,15 @@ class PowerSystem(object):
         """
         Check for event occurrance for``Event`` group models at ``sim_time``
 
-        :param sim_time: current simulation time
-        :return: a list of models who report (an) event(s) at ``sim_time``
+        Parameters
+        ----------
+        sim_time : float
+            The current simulation time
+
+        Returns
+        -------
+        list
+            A list of model names who report (an) event(s) at ``sim_time``
         """
         ret = []
         for model in self.__dict__['Event'].all_models:
@@ -300,7 +393,10 @@ class PowerSystem(object):
         """
         Return event times of Fault, Breaker and other timed events
 
-        :return: a sorted list of event times
+        Returns
+        -------
+        list
+            A sorted list of event times
         """
         times = []
 
@@ -316,9 +412,21 @@ class PowerSystem(object):
 
     def load_config(self, conf_path):
         """
-        Load settings from file.
+        Load config from an ``andes.conf`` file.
 
-        :return: None
+        This function creates a ``configparser.ConfigParser`` object to read
+        the specified conf file and calls the ``load_config`` function of the
+        config instances of the system and the routines.
+
+        Parameters
+        ----------
+        conf_path : None or str
+            Path to the Andes config file. If ``None``, the function body
+            will not run.
+
+        Returns
+        -------
+        None
         """
         if conf_path is None:
             return
@@ -338,12 +446,13 @@ class PowerSystem(object):
 
         Parameters
         ----------
-        file_path
-            path to the configuration file
+        file_path : str
+            path to the configuration file. The user will be prompted if the
+            file already exists.
 
         Returns
         -------
-            None
+        None
         """
         if os.path.isfile(file_path):
             logger.debug('File {} alreay exist. Overwrite? [y/N]'.format(file_path))
@@ -363,11 +472,13 @@ class PowerSystem(object):
 
     def check_islands(self, show_info=False):
         """
-        Check connectivity for the ac system
+        Check the connectivity for the ac system
 
         Parameters
         ----------
-        show_info
+        show_info : bool
+            Show information when the system has islands. To be used when
+            initializing power flow.
 
         Returns
         -------

@@ -48,14 +48,24 @@ def config_logger(name='andes',
                   stream_level=logging.INFO
                   ):
     """
-    Configure a logger for the andes package
+    Configure a logger for the andes package with options for a `FileHandler`
+    and a `StreamHandler`. This function is called at the beginning of
+    ``andes.main.main()``.
 
     Parameters
     ----------
-    name: str
-        base logger name, ``andes`` by default
-    logfile
-        logger file name
+    name : str, optional
+        Base logger name, ``'andes'`` by default. Changing this
+        parameter will affect the loggers in modules and
+        cause unexpected behaviours.
+    logfile : str, optional
+        Logg file name for `FileHandler`, ``'andes.log'`` by default.
+        If ``None``, the `FileHandler` will not be created.
+    stream : bool, optional
+        Create a `StreamHandler` for `stdout` if ``True``.
+        If ``False``, the handler will not be created.
+    stream_level : {10, 20, 30, 40, 50}, optional
+        `StreamHandler` verbosity level.
 
     Returns
     -------
@@ -88,16 +98,17 @@ def config_logger(name='andes',
 
 def preamble():
     """
-    Log Andes preamble at the ``INFO`` level
+    Log the Andes command-line preamble at the `logging.INFO` level
 
     Returns
     -------
     None
     """
     from . import __version__ as version
-    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'.format(ver=version[:5], b=version[-8:],
-                                                                     p=platform.python_version(),
-                                                                     os=platform.system()))
+    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'
+                .format(ver=version[:5], b=version[-8:],
+                        p=platform.python_version(),
+                        os=platform.system()))
 
     logger.info('Session: ' + strftime("%m/%d/%Y %I:%M:%S %p"))
     logger.info('')
@@ -105,23 +116,20 @@ def preamble():
 
 def cli_new():
     """
-    Command line argument parser
-
-    Parameters
-    ----------
-    help: bool
-        Return argparse help in a string
+    Construct a CLI argument parser and return the parsed arguments.
 
     Returns
     -------
-    None
+    Namespace
+        A namespace object containing the parsed command-line arguments
     """
     parser = ArgumentParser()
     parser.add_argument('filename', help='Case file name', nargs='*')
 
     # general options
     general_group = parser.add_argument_group('General options')
-    general_group.add_argument('-r', '--run', choices=routines.__cli__, help='Routine to run', nargs='*',
+    general_group.add_argument('-r', '--routine', choices=routines.__cli__,
+                               help='Routine to run', nargs='*',
                                default=['pflow'], )
     general_group.add_argument('--edit-config', help='Quick edit of the config file',
                                action='store_true')
@@ -205,8 +213,7 @@ def cli_new():
     return args
 
 
-def andeshelp(usage=None,
-              group=None,
+def andeshelp(group=None,
               category=None,
               model_list=None,
               model_format=None,
@@ -215,16 +222,66 @@ def andeshelp(usage=None,
               help_option=None,
               help_config=None,
               export='plain',
-              save=None,
               **kwargs):
     """
-    Return the help
+    Print the requested help and documentation to stdout.
 
-    :return: True if executed
+    Parameters
+    ----------
+    group : None or str
+        Name of a group whose model names will be printed
+
+    category : None or str
+        Name of a category whose models will be printed
+
+    model_list : bool
+        If ``True``, print the full model list.
+
+    model_format : None or str
+        Names of models whose parameter definitions will be printed. Model
+        names are separated by comma without space.
+
+    model_var : None or str
+        A pair of model name and parameter name separated by dot. For
+        example, ``Bus.voltage`` stands for the ``voltage`` parameter of
+        ``Bus``.
+
+    quick_help : None or str
+        Name of a model to print a quick help of parameter definitions.
+
+    help_option : None or str
+        A pair of config name and option name separated by dot. For example,
+        ``System.sparselib`` stands for the ``sparselib`` option of
+        the ``System`` config.
+
+    help_config : None or str
+        Config names whose option definitions will be printed. Configs are
+        separated by comma without space. For example, ``System,Pflow``. In
+        the naming convention, the first letter is captialized.
+
+    export : None or {'plain', 'latex'}
+        Formatting style available in plain text or LaTex format. This option
+        has not been implemented.
+
+    kwargs : None or dict
+        Other keyword arguments
+
+    Returns
+    -------
+    bool
+        True if any help function is executed.
+
+    Notes
+    -----
+    The outputs can be written to a text file using shell command,
+    for example, ::
+
+        andes -q Bus > bus_help.txt
+
     """
     out = []
 
-    if not (usage or group or category or model_list or model_format
+    if not (group or category or model_list or model_format
             or model_var or quick_help or help_option or help_config):
         return False
 
@@ -346,37 +403,76 @@ def andeshelp(usage=None,
     return True
 
 
-def edit_conf(edit_config=False, config=None, **kwargs):
+def edit_conf(edit_config=False, load_config=None, **kwargs):
     """
-    Edit Andes routine configuration
+    Edit the Andes config file which occurs first in the search path.
 
-    :param conf: name of the routine
-    :return: succeed flag
+    Parameters
+    ----------
+    edit_config : bool
+        If ``True``, try to open up an editor and edit the config file.
+        Otherwise returns.
+
+    load_config : None or str, optional
+        Path to the config file, which will be placed to the first in the
+        search order.
+
+    kwargs : dict
+        Other keyword arguments.
+
+    Returns
+    -------
+    bool
+        ``True`` is a config file is found and an editor is opened. ``False``
+        if ``edit_config`` is False.
+
     """
-    # raise NotImplementedError("Not implemented")
     ret = False
 
     if edit_config is False:
         return ret
 
-    conf_path = get_config_load_path()
+    conf_path = get_config_load_path(load_config)
 
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
         if platform.system() == 'Linux':
             editor = os.environ.get('EDITOR', 'gedit')
-            call([editor, conf_path])
+        elif platform.system() == 'Darwin':
+            editor = os.environ.get('EDITOR', 'vim')
         elif platform.system() == 'Windows':
             editor = 'notepad.exe'
-            call([editor, conf_path])
 
+        call([editor, conf_path])
+
+    else:
+        logger.info('Config file does not exist. Save config with \'andes '
+                    '--save-config\'')
         ret = True
 
     return ret
 
 
 def remove_output(clean=False, **kwargs):
-    """Clean up function for generated files"""
+    """
+    Remove the outputs generated by Andes, including power flow reports
+    ``_pfr.txt``, time-domain list ``_out.lst`` and data ``_out.dat``,
+    eigenvalue analysis report ``_eig.txt``.
+
+    Parameters
+    ----------
+    clean : bool
+        If ``True``, execute the function body. Returns otherwise.
+
+    kwargs : dict
+        Other keyword arguments
+
+    Returns
+    -------
+    bool
+        ``True`` is the function body executes with success. ``False``
+        otherwise.
+    """
     if not clean:
         return False
 
@@ -403,11 +499,24 @@ def remove_output(clean=False, **kwargs):
 
 def search(search, **kwargs):
     """
-    TODO: merge to ``andeshelp``
-    Search for models whose names contain ``keyword``
+    Search for models whose names matches the given pattern. Print the
+    results to stdout.
 
-    :param str search: partial or full model name
-    :return: a list of model names in <file.model> format
+    .. deprecated :: 1.0.0
+        `search` will be moved to ``andeshelp`` in future versions.
+
+    Parameters
+    ----------
+    search : str
+        Partial or full name of the model to search for
+
+    kwargs : dict
+        Other keyword arguments.
+
+    Returns
+    -------
+    list
+        The list of model names that match the given pattern.
     """
 
     from .models import all_models
@@ -428,29 +537,37 @@ def search(search, **kwargs):
                 out.append(key + '.' + item)
 
     if out:
-        print('Search result: <file.model> containing <{}>'.format(search))
-        print(' '.join(out))
+        logger.info('Search result: <file.model> containing <{}>'
+                    .format(search))
+        logger.info(' '.join(out))
     else:
-        print('No model containing <{:s}> found'.format(search))
+        logger.info('No model containing <{:s}> found'.format(search))
 
     return out
 
 
-def save_config(**kwargs):
+def save_config(save_config='', **kwargs):
     """
-    Save configuration to kwargs['save_config']
+    Save the Andes config to a file at the path specified by ``save_config``.
+    The save action will not run if `save_config = ''`.
 
     Parameters
     ----------
-    kwargs
+    save_config : None or str, optional, ('' by default)
+        Path to the file to save the config file. If the path is an emtpy
+        string, the save action will not run. Save to
+        `~/.andes/andes.conf` if ``None``.
+
+    kwargs : dict, optional
+        Other keyword arguments
 
     Returns
     -------
     bool
-        True is executed
+        ``True`` is the save action is run. ``False`` otherwise.
     """
     ret = False
-    cf_path = kwargs['save_config']
+    cf_path = save_config
 
     # no ``--save-config ``
     if cf_path == '':
@@ -475,7 +592,17 @@ def save_config(**kwargs):
 
 def main():
     """
-    The new main function
+    The main function of the Andes command-line tool.
+
+    This function executes the following workflow:
+
+     * Parse the command line inputs
+     * Show the tool preamble
+     * Output the requested helps, edit/save configs or remove outputs. Exit
+       the main program if any of the above is executed
+     * Process the input files and call ``main.run()`` using single- or
+       multi-processing
+     * Show the execution time and exit
 
     Returns
     -------
@@ -572,28 +699,46 @@ def main():
     return
 
 
-def run(case, **kwargs):
+def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
+        **kwargs):
     """
-    Run a single case study
+    Entry function to run a single case study. This function executes the
+    following workflow:
+
+     * Turn on cProfile if requested
+     * Populate a ``PowerSystem`` object
+     * Parse the input files using filters
+     * Dump the case file is requested
+     * Set up the system
+     * Run the specified routine(s)
 
     Parameters
     ----------
-    case
-        case file path
-    kwargs
-        keyword arguments
+    case : str
+        Path to the case file
+
+    profile : bool, optional
+        Enable cProfile if ``True``.
+
+    dump_raw : ``False`` or str, optional
+        Path to the file to dump the system parameters in the dm format
+
+    routine : Iterable, optional
+        A list of routines to run in sequence (``('pflow')`` as default)
+
+    pid : idx, optional
+        Process idx of the current run
+
+    kwargs : dict, optional
+        Other keyword arguments
 
     Returns
     -------
-    None
+    PowerSystem
+        Andes PowerSystem object
 
     """
     t0, _ = elapsed()
-
-    profile = kwargs.pop('profile', False)
-    dump_raw = kwargs.get('dump_raw', False)
-    pid = kwargs.get('pid', -1)
-    routine = kwargs.get('run')
 
     # enable profiler if requested
     pr = cProfile.Profile()
@@ -650,6 +795,8 @@ def run(case, **kwargs):
         msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
         logger.info(msg_finish)
         print(msg_finish)
+
+    return system
 
 
 if __name__ == '__main__':
