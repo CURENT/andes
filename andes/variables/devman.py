@@ -1,11 +1,20 @@
-from ..models import order, jits, non_jits
+from ..models import order, all_models
 from numpy import ndarray
 from cvxopt import matrix
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class DevMan(object):
-    """Device Manager class. Maintains the loaded model list, groups and categories"""
+    """
+    Device Manager class.
+    Maintains the loaded model list, groups and categories
+
+    """
+
     def __init__(self, system=None):
-        """constructor for DevMan class"""
+        """constructor for devman class"""
         self.system = system
         self.devices = []
         self.group = {}
@@ -19,16 +28,25 @@ class DevMan(object):
             self.group[group_name] = {}
 
     def register_element(self, dev_name, idx=None):
-        """register a device element to the group list
-        Args:
-            dev_name: model name
-            idx (optional): element external idx
+        """
+        Register a device element to the group list
 
-        Returns:
-            idx: assigned element index
-            """
+        Parameters
+        ----------
+        dev_name : str
+            model name
+        idx : str
+            element idx
+
+        Returns
+        -------
+        str
+            assigned idx
+        """
         if dev_name not in self.devices:
-            self.system.Log.error('Device {} missing. Call add_device before adding elements'.format(dev_name))
+            logger.error(
+                'Device {} missing. call add_device before adding elements'.
+                format(dev_name))
             return
         group_name = self.system.__dict__[dev_name]._group
         if idx is None:  # "if not idx" will fail for idx==0.0
@@ -37,19 +55,28 @@ class DevMan(object):
         return idx
 
     def sort_device(self):
-        """sort device to meet device prerequisites (initialize devices before controllers)"""
+        """
+        Sort device to follow the order of initialization
+
+        :return: None
+        """
+
         self.devices.sort()
-        mapping = non_jits
-        mapping.update(jits)
+        # idx: the indices of order-sensitive models
+        # names: an ordered list of order-sensitive models
         idx = []
         names = []
         for dev in order:
-            if dev in mapping.keys():
-                all_dev = list(sorted(mapping[dev].keys()))
+            # if ``dev`` in ``order`` is a model file name:
+            #   initialize the models in alphabet order
+            if dev in all_models:
+                all_dev = list(sorted(all_models[dev].keys()))
                 for item in all_dev:
                     if item in self.devices:
                         idx.append(self.devices.index(item))
                         names.append(item)
+
+            # if ``dev`` presents as a model name
             elif dev in self.devices:
                 idx.append(self.devices.index(dev))
                 names.append(dev)
@@ -57,14 +84,6 @@ class DevMan(object):
         idx = sorted(idx)
         for id, name in zip(idx, names):
             self.devices[id] = name
-
-    def swap_device(self, front, back):
-        if front in self.devices and back in self.devices:
-            m = self.devices.index(front)
-            n = self.devices.index(back)
-            if m > n:
-                self.devices[n] = front
-                self.devices[m] = back
 
     def get_param(self, group, param, fkey):
         ret = []
@@ -74,7 +93,7 @@ class DevMan(object):
         elif type(fkey) == ndarray:
             fkey = fkey.tolist()
 
-        for key, item in self.system.DevMan.group.items():
+        for key, item in self.group.items():
             if key != group:
                 continue
             if type(fkey) != list:
@@ -85,8 +104,9 @@ class DevMan(object):
             for k in fkey:
                 for name, dev in item.items():
                     if name == k:
-                        int_id = self.system.__dict__[dev].int[name]
-                        ret.append(self.system.__dict__[dev].__dict__[param][int_id])
+                        int_id = self.system.__dict__[dev].uid[name]
+                        ret.append(
+                            self.system.__dict__[dev].__dict__[param][int_id])
                         continue
             if not ret_list:
                 ret = ret[0]

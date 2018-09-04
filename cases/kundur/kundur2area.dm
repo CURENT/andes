@@ -1,27 +1,27 @@
 # DOME format version 1.0
 
 Syn6a, M = 13.0, Sn = 900.0, Taa = 0.002, Td20 = 0.03, Tq10 = 0.4, Td10 = 8,
-       Tq20 = 0.05, Vn = 20.0, bus = 1, gen = 1,
+       Tq20 = 0.05, Vn = 20.0, bus = 1, gen = 1, D = 2,
        idx = 1, name = "Syn6a 1", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3,
        xd2 = 0.25, xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
 Syn6a, M = 13.0, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8,
-       Vn = 20.0, bus = 2, gen = 2, idx = 2,
+       Vn = 20.0, bus = 2, gen = 2, idx = 2, D = 2,
        name = "Syn6a 2", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
 #WTG3, bus = 1, gen = 1, wind = 1, Vn = 20, Sn = 400, qmax = 0.7, qmin = -0.7
 #WTG3, bus = 2, gen = 2, wind = 2, Vn = 20, Sn = 400, qmax = 0.7, qmin = -0.7
-#
+
 #ConstWind, idx = 1, Vwn = 15
 #ConstWind, idx = 2, Vwn = 15
 
 Syn6a, M = 12.35, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8,
-       Vn = 20.0, bus = 3, gen = 3, idx = 3,
+       Vn = 20.0, bus = 3, gen = 3, idx = 3, D = 2,
        name = "Syn6a 3", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 Syn6a, M = 12.35, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8, 
-       Vn = 20.0, bus = 4, gen = 4, idx = 4,
+       Vn = 20.0, bus = 4, gen = 4, idx = 4, D = 2,
        name = "Syn6a 4", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
@@ -42,6 +42,13 @@ BusFreq, idx = 1, bus = 1
 BusFreq, idx = 2, bus = 2
 BusFreq, idx = 3, bus = 3
 BusFreq, idx = 4, bus = 4
+BusFreq, idx = 5, bus = 5
+BusFreq, idx = 6, bus = 6
+BusFreq, idx = 7, bus = 7
+BusFreq, idx = 8, bus = 8
+BusFreq, idx = 9, bus = 9
+BusFreq, idx = 10, bus = 10
+BusFreq, idx = 11, bus = 11
 
 PSS1, idx = 1, avr = 3
 

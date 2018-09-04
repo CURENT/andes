@@ -1,13 +1,14 @@
 """Control blocks"""
-from cvxopt import matrix, sparse, spmatrix
-from cvxopt import mul, div, log, sin, cos
-from .base import ModelBase
-from ..consts import *
-from ..utils.math import *
+from cvxopt import matrix, sparse, spmatrix  ## NOQA
+from cvxopt import mul, div, log, sin, cos  ## NOQA
+from .base import ModelBase  ## NOQA
+# from ..consts import *
+# from ..utils.math import *
 
 
 class PI1(object):
     """PI controller class as addon base class"""
+
     def __init__(self, params=None, inputs=None, outputs=None):
 
         assert type(outputs) == list
@@ -25,17 +26,13 @@ class PI1(object):
         if params:
             assert type(params) == dict
         else:
-            params = {'Kp' + str(self.nPI1): 0.1,
-                      'Ki' + str(self.nPI1): 0,
-                      }
+            params = {
+                'Kp' + str(self.nPI1): 0.1,
+                'Ki' + str(self.nPI1): 0,
+            }
 
         self._algebs = ['']
         if inputs:
             assert type(inputs) == list
         else:
             inputs = ['PI_IN_']
-
-
-
-
-

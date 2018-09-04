@@ -1,4 +1,7 @@
 import importlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class JIT(object):
@@ -13,22 +16,35 @@ class JIT(object):
         self.loaded = 0
 
     def jit_load(self):
-        """import and instantiate this JIT object"""
+        """
+        Import and instantiate this JIT object
+
+        Returns
+        -------
+
+        """
         try:
-            model = importlib.import_module('.'+self.model, 'andes.models')
+            model = importlib.import_module('.' + self.model, 'andes.models')
             device = getattr(model, self.device)
             self.system.__dict__[self.name] = device(self.system, self.name)
-            self.system.DevMan.register_device(self.name)  # register device after loading
+
+            g = self.system.__dict__[self.name]._group
+            self.system.group_add(g)
+            self.system.__dict__[g].register_model(self.name)
+
+            # register device after loading
+            self.system.devman.register_device(self.name)
             self.loaded = 1
-            self.system.Log.debug('Imported model <{:s}.{:s}>.'.format(self.model, self.device))
+            logger.debug('Imported model <{:s}.{:s}>.'.format(
+                self.model, self.device))
         except ImportError:
-            self.system.Log.error('Error importing non-JIT model <{:s}.{:s}> while instantiating powersystem class'
-                                  .format(self.model, self.device))
+            logger.error(
+                'non-JIT model <{:s}.{:s}> import error'
+                .format(self.model, self.device))
         except AttributeError:
-            self.system.Log.error('Error importing a non-existent model <{:s}.{:s}>. Check __init__.py in models'
-                                  .format(self.model, self.device))
-        except:
-            self.system.Log.error('Unknown error importing <{:s}.{:s}>.'.format(self.model, self.device))
+            logger.error(
+                'model <{:s}.{:s}> not exist. Check models/__init__.py'
+                .format(self.model, self.device))
 
     def __getattr__(self, attr):
         if not self.loaded:
@@ -36,16 +52,18 @@ class JIT(object):
         if attr in self.system.__dict__[self.name].__dict__:
             return self.system.__dict__[self.name].__dict__[attr]
         else:
-            self.system.Log.warning('Instance <{:s}> does not have <{:s}> attribute.'.format(self.name, attr))
+            logger.warning(
+                'Instance <{:s}> does not have <{:s}> attribute.'.format(
+                    self.name, attr))
 
-    def add(self, idx=None, name=None, **kwargs):
-        """overloading add function of a JIT class"""
+    def elem_add(self, idx=None, name=None, **kwargs):
+        """overloading elem_add function of a JIT class"""
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].add(idx, name, **kwargs)
+            return self.system.__dict__[self.name].elem_add(
+                idx, name, **kwargs)
 
-    def help_doc(self, **kwargs):
+    def doc(self, **kwargs):
         self.jit_load()
         if self.loaded:
-            self.system.__dict__[self.name].help_doc(**kwargs)
-
+            return self.system.__dict__[self.name].doc(**kwargs)

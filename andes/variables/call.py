@@ -1,46 +1,43 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 SHOW_PF_CALL = False
 SHOW_INT_CALL = False
 
-all_calls = ['gcall',
-             'gycall',
-             'fcall',
-             'fxcall',
-             'init0',
-             'pflow',
-             'windup',
-             'jac0',
-             'init1',
-             'shunt',
-             'series',
-             'flows',
-             'connection',
-             'times',
-             'stagen',
-             'dyngen',
-             'gmcall',
-             'fmcall',
-             'dcseries',
-             'opf',
-             'obj']
+all_calls = [
+    'gcall', 'gycall', 'fcall', 'fxcall', 'init0', 'pflow', 'windup', 'jac0',
+    'init1', 'shunt', 'series', 'flows', 'connection', 'times', 'stagen',
+    'dyngen', 'gmcall', 'fmcall', 'dcseries', 'opf', 'obj'
+]
 
 
 class Call(object):
     """ Equation call mamager class for andes routines"""
+
     def __init__(self, system):
         self.system = system
         self.ndevice = 0
         self.devices = []
-        call_strings = ['gcalls', 'fcalls', 'gycalls', 'fxcalls', 'jac0s',]
+        call_strings = [
+            'gcalls',
+            'fcalls',
+            'gycalls',
+            'fxcalls',
+            'jac0s',
+        ]
 
-        self.gisland = 'system.Bus.gisland(system.DAE)\n'
-        self.gyisland = 'system.Bus.gyisland(system.DAE)\n'
+        self.gisland = 'system.Bus.gisland(system.dae)\n'
+        self.gyisland = 'system.Bus.gyisland(system.dae)\n'
 
         for item in all_calls + call_strings:
             self.__dict__[item] = []
 
     def setup(self):
-        """setup the call list after case file is parsed and jit models are loaded"""
-        self.devices = self.system.DevMan.devices
+        """
+        setup the call list after case file is parsed and jit models are loaded
+        """
+        self.devices = self.system.devman.devices
         self.ndevice = len(self.devices)
 
         self.gcalls = [''] * self.ndevice
@@ -78,21 +75,11 @@ class Call(object):
         """build call string for each device"""
         for idx, dev in enumerate(self.devices):
             header = 'system.' + dev
-            self.gcalls[idx] = header + '.gcall(system.DAE)\n'
-            self.fcalls[idx] = header + '.fcall(system.DAE)\n'
-            self.gycalls[idx] = header + '.gycall(system.DAE)\n'
-            self.fxcalls[idx] = header + '.fxcall(system.DAE)\n'
-            self.jac0s[idx] = header + '.jac0(system.DAE)\n'
-
-    def get_times(self):
-        """return event times of Fault and Breaker"""
-        times = []
-        times.extend(self.system.Fault.get_times())
-        times.extend(self.system.Breaker.get_times())
-        if times:
-            times = sorted(list(set(times)))
-
-        return times
+            self.gcalls[idx] = header + '.gcall(system.dae)\n'
+            self.fcalls[idx] = header + '.fcall(system.dae)\n'
+            self.gycalls[idx] = header + '.gycall(system.dae)\n'
+            self.fxcalls[idx] = header + '.fxcall(system.dae)\n'
+            self.jac0s[idx] = header + '.jac0(system.dae)\n'
 
     def _compile_newton(self):
         """Newton power flow execution
@@ -105,30 +92,31 @@ class Call(object):
         string = '"""\n'
 
         # evaluate algebraic equations g and differential equations f
-        string += 'system.DAE.init_fg()\n'
+        string += 'system.dae.init_fg()\n'
         for pflow, gcall, call in zip(self.pflow, self.gcall, self.gcalls):
             if pflow and gcall:
                 string += call
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
         string += '\n'
         for pflow, fcall, call in zip(self.pflow, self.fcall, self.fcalls):
             if pflow and fcall:
                 string += call
-        string += 'system.DAE.reset_small_f()\n'
+        string += 'system.dae.reset_small_f()\n'
 
         # handle islanded buses in algebraic equations
         string += self.gisland
         string += '\n'
 
         # rebuild constant Jacobian elements if factorization needed
-        string += 'if system.DAE.factorize:\n'
-        string += '    system.DAE.init_jac0()\n'
+        string += 'if system.dae.factorize:\n'
+        string += '    system.dae.init_jac0()\n'
         for pflow, jac0, call in zip(self.pflow, self.jac0, self.jac0s):
             if pflow and jac0:
                 string += '    ' + call
+        string += '    system.dae.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy and Fx
-        string += 'system.DAE.setup_FxGy()\n'
+        string += 'system.dae.setup_FxGy()\n'
         for pflow, gycall, call in zip(self.pflow, self.gycall, self.gycalls):
             if pflow and gycall:
                 string += call
@@ -138,21 +126,22 @@ class Call(object):
 
         # handle islanded buses in the Jacobian
         string += self.gyisland
+        string += 'system.dae.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         if SHOW_PF_CALL:
-            self.system.Log.debug(string)
+            logger.debug(string)
         self.newton = compile(eval(string), '', 'exec')
 
     def _compile_fdpf(self):
         """Fast Decoupled Power Flow execution: Implement g(y)
         """
         string = '"""\n'
-        string += 'system.DAE.init_g()\n'
+        string += 'system.dae.init_g()\n'
         for pflow, gcall, call in zip(self.pflow, self.gcall, self.gcalls):
             if pflow and gcall:
                 string += call
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
         string += '\n'
         string += '"""'
         self.fdpf = compile(eval(string), '', 'exec')
@@ -162,25 +151,27 @@ class Call(object):
                   S_gen  + S_line + [S_shunt  - S_load] = 0
         """
         string = '"""\n'
-        string += 'system.DAE.init_g()\n'
-        for gcall, pflow, shunt, stagen, call in zip(self.gcall, self.pflow, self.shunt, self.stagen, self.gcalls):
+        string += 'system.dae.init_g()\n'
+        for gcall, pflow, shunt, stagen, call in zip(
+                self.gcall, self.pflow, self.shunt, self.stagen, self.gcalls):
             if gcall and pflow and shunt and not stagen:
                 string += call
         string += '\n'
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
         string += '"""'
         self.pfload = compile(eval(string), '', 'exec')
 
     def _compile_pfgen(self):
         """Post power flow computation for PV and SW"""
         string = '"""\n'
-        string += 'system.DAE.init_g()\n'
-        for gcall, pflow, shunt, series, stagen, call in zip(self.gcall, self.pflow, self.shunt,
-                                                             self.series, self.stagen, self.gcalls):
+        string += 'system.dae.init_g()\n'
+        for gcall, pflow, shunt, series, stagen, call in zip(
+                self.gcall, self.pflow, self.shunt, self.series, self.stagen,
+                self.gcalls):
             if gcall and pflow and (shunt or series) and not stagen:
                 string += call
         string += '\n'
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
         string += '"""'
         self.pfgen = compile(eval(string), '', 'exec')
 
@@ -189,9 +180,9 @@ class Call(object):
         string = '"""\n'
         for device, series in zip(self.devices, self.series):
             if series:
-                string += 'system.' + device + '.gcall(system.DAE)\n'
+                string += 'system.' + device + '.gcall(system.dae)\n'
         string += '\n'
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
         string += self.gisland
         string += '"""'
         self.bus_injection = compile(eval(string), '', 'exec')
@@ -199,9 +190,10 @@ class Call(object):
     def _compile_seriesflow(self):
         """Post power flow computation of series device flow"""
         string = '"""\n'
-        for device, pflow, series in zip(self.devices, self.pflow, self.series):
+        for device, pflow, series in zip(self.devices, self.pflow,
+                                         self.series):
             if pflow and series:
-                string += 'system.'+device+'.seriesflow(system.DAE)\n'
+                string += 'system.' + device + '.seriesflow(system.dae)\n'
         string += '\n'
         string += '"""'
         self.seriesflow = compile(eval(string), '', 'exec')
@@ -211,12 +203,12 @@ class Call(object):
         string = '"""\n'
 
         # evaluate the algebraic equations g
-        string += 'system.DAE.init_fg()\n'
+        string += 'system.dae.init_fg(resetz=False)\n'
         for gcall, call in zip(self.gcall, self.gcalls):
             if gcall:
                 string += call
         string += '\n'
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
 
         # handle islands
         string += self.gisland
@@ -225,21 +217,22 @@ class Call(object):
         for fcall, call in zip(self.fcall, self.fcalls):
             if fcall:
                 string += call
-        string += 'system.DAE.reset_small_f()\n'
+        string += 'system.dae.reset_small_f()\n'
         string += '\n'
 
         fg_string = string + '"""'
         self.int_fg = compile(eval(fg_string), '', 'exec')
 
         # rebuild constant Jacobian elements if needed
-        string += 'if system.DAE.factorize:\n'
-        string += '    system.DAE.init_jac0()\n'
+        string += 'if system.dae.factorize:\n'
+        string += '    system.dae.init_jac0()\n'
         for jac0, call in zip(self.jac0, self.jac0s):
             if jac0:
                 string += '    ' + call
+        string += '    system.dae.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy and Fx
-        string += 'system.DAE.setup_FxGy()\n'
+        string += 'system.dae.setup_FxGy()\n'
         for gycall, call in zip(self.gycall, self.gycalls):
             if gycall:
                 string += call
@@ -248,23 +241,24 @@ class Call(object):
             if fxcall:
                 string += call
         string += self.gyisland
+        string += 'system.dae.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         if SHOW_INT_CALL:
-            self.system.Log.debug(string)
+            logger.debug(string)
 
         self.int = compile(eval(string), '', 'exec')
 
     def _compile_int_f(self):
         """Time Domain Simulation - update differential equations"""
         string = '"""\n'
-        string += 'system.DAE.init_f()\n'
+        string += 'system.dae.init_f()\n'
 
         # evaluate differential equations f
         for fcall, call in zip(self.fcall, self.fcalls):
             if fcall:
                 string += call
-        string += 'system.DAE.reset_small_f()\n'
+        string += 'system.dae.reset_small_f()\n'
         string += '"""'
         self.int_f = compile(eval(string), '', 'exec')
 
@@ -273,31 +267,32 @@ class Call(object):
         string = '"""\n'
 
         # evaluate the algebraic equations g
-        string += 'system.DAE.init_g()\n'
+        string += 'system.dae.init_g()\n'
         for gcall, call in zip(self.gcall, self.gcalls):
             if gcall:
                 string += call
         string += '\n'
-        string += 'system.DAE.reset_small_g()\n'
+        string += 'system.dae.reset_small_g()\n'
 
         # handle islands
         string += self.gisland
 
         # rebuild constant Jacobian elements if needed
-        string += 'if system.DAE.factorize:\n'
-        string += '    system.DAE.init_jac0()\n'
+        string += 'if system.dae.factorize:\n'
+        string += '    system.dae.init_jac0()\n'
         for jac0, call in zip(self.jac0, self.jac0s):
             if jac0:
                 string += '    ' + call
+        string += '    system.dae.temp_to_spmatrix(\'jac0\')\n'
 
         # evaluate Jacobians Gy
-        string += 'system.DAE.setup_Gy()\n'
+        string += 'system.dae.setup_Gy()\n'
         for gycall, call in zip(self.gycall, self.gycalls):
             if gycall:
                 string += call
         string += '\n'
         string += self.gyisland
+        string += 'system.dae.temp_to_spmatrix(\'jac\')\n'
 
         string += '"""'
         self.int_g = compile(eval(string), '', 'exec')
-

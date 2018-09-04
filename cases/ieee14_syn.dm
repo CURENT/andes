@@ -90,6 +90,27 @@ BusFreq, idx = 14, bus = 14
 #PMU, idx = 1, bus = 1
 #PMU, idx = 1, bus = 2
 
+#BusLine, line = "Line_1", busf = 1
+#BusLine, line = "Line_2", busf = 1
+#BusLine, line = "Line_3", busf = 2
+##BusLine, line = "Line_4"
+#BusLine, line = "Line_5", busf = 2
+#BusLine, line = "Line_6", busf = 3
+#BusLine, line = "Line_7", busf = 4
+#BusLine, line = "Line_8"
+#BusLine, line = "Line_9"
+#BusLine, line = "Line_10"
+#BusLine, line = "Line_11", busf = 6
+#BusLine, line = "Line_12", busf = 6
+#BusLine, line = "Line_13", busf = 6
+#BusLine, line = "Line_14"
+#BusLine, line = "Line_15", busf = 7
+#BusLine, line = "Line_16", busf = 9
+#BusLine, line = "Line_17", busf = 9
+#BusLine, line = "Line_18", busf = 10
+#BusLine, line = "Line_19", busf = 12
+#BusLine, line = "Line_20", busf = 13
+
 PQ, Vn = 69.0, bus = 2, idx = "PQ load_1", name = "PQ Bus 2", p = 0.217,
     q = 0.127
 PQ, Vn = 69.0, bus = 3, idx = "PQ load_2", name = "PQ Bus 3", p = 0.942,
@@ -180,3 +201,5 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
       vrmin = 1.395
 
 #PSS2, avr = 1, Ic = 1
+
+# Recorder, model = "Syn6a"

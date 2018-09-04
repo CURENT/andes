@@ -3,14 +3,21 @@ from texttable import Texttable
 
 class Tab(Texttable):
     """
-    Use package texttable to create fine-formatted tables for setting helps and device helps.
-    Avoid using this class for static report formatting as it may be rather slow.
+    Use package texttable to create fine-formatted tables for setting helps
+    and device helps. Avoid using this class for static report formatting as
+    it may be slow.
     """
 
-    def __init__(self, title=None, header=None, descr=None, data=None, export='plain'):
+    def __init__(self,
+                 title=None,
+                 header=None,
+                 descr=None,
+                 data=None,
+                 export='plain'):
         Texttable.__init__(self)
         self.set_chars(['-', '|', '+', '-'])
-        self.set_deco(Texttable.HEADER | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
+        self.set_deco(Texttable.HEADER
+                      | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
         self.set_precision(3)
 
         self._title = title
@@ -22,7 +29,7 @@ class Tab(Texttable):
             self.add_rows(data, header=False)
 
     def header(self, array):
-        Texttable.header(self,array)
+        Texttable.header(self, array)
         self.auto_style()
 
     def guess_header(self):
@@ -56,7 +63,7 @@ class Tab(Texttable):
         self._title = val
 
     def add_left_space(self, nspace=1):
-        """add n cols of spaces before the first col.
+        """elem_add n cols of spaces before the first col.
            (for texttable 0.8.3)"""
         sp = ' ' * nspace
         for item in self._rows:
@@ -65,7 +72,10 @@ class Tab(Texttable):
     def draw(self):
         """generate texttable formatted string"""
         self.guess_header()
-        self.add_left_space()  # for Texttable, add a column of whitespace on the left for better visual effect
+        self.add_left_space(
+        )
+        # for Texttable, elem_add a column of whitespace on the left for
+        # better visual effect
         if self._title and self._descr:
             pre = self._title + '\n' + self._descr + '\n\n'
         elif self._title:
@@ -81,7 +91,7 @@ class Tab(Texttable):
 class simpletab(object):
     """A simple and faster table class for static report output"""
 
-    def __init__(self, header=None, title=None, data = None, side=None):
+    def __init__(self, header=None, title=None, data=None, side=None):
         """header: a list of strings,
         title: an str
         data: a list of list of numbers or str"""
@@ -130,7 +140,8 @@ class simpletab(object):
 
         # header first
         for item, width in zip(self.header, self._width):
-            out += '{text:<{width}{fmt}}'.format(text=str(item), width=width, fmt=fmt)
+            out += '{text:<{width}{fmt}}'.format(
+                text=str(item), width=width, fmt=fmt)
         data.append(out)
 
         for line in self.data:
@@ -139,10 +150,12 @@ class simpletab(object):
                 if isinstance(item, (int, float)):
                     # item = round(item, 4)
                     fmt = 'g'
-                    out += '{val:< {width}.{dec}{fmt}}'.format(val=item, width=width, dec=5, fmt=fmt)
+                    out += '{val:< {width}.{dec}{fmt}}'.format(
+                        val=item, width=width, dec=5, fmt=fmt)
 
                 elif isinstance(item, str):
                     fmt = 's'
-                    out += '{val:<{width}{fmt}}'.format(val=item, width=width, fmt=fmt)
+                    out += '{val:<{width}{fmt}}'.format(
+                        val=item, width=width, fmt=fmt)
             data.append(out)
         return data

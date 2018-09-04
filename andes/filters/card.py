@@ -2,11 +2,14 @@ import sys
 
 import pprint
 try:
-    from sympy import Symbol, diff, sin, cos, exp, Integer
+    from sympy import Symbol, diff, sin, cos, exp, Integer  # NOQA
 except ImportError:
-     raise ImportError('Please install sympy to parse ANDES cards.')
-from andes.main import elapsed
+    raise ImportError('Please install sympy to parse ANDES cards.')
+
 from andes.utils.math import to_number
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
@@ -60,8 +63,9 @@ def read(file, system):
             continue
         if type(val) == list:
             if ':' in val[0]:
-                new_val = {}         # return in a dictionary
-                new_val_ord = []     # return in an ordered list with the dict keys at 0
+                new_val = {}  # return in a dictionary
+                new_val_ord = [
+                ]  # return in an ordered list with the dict keys at 0
                 for item in val:
                     try:
                         m, n = item.split(':')
@@ -84,7 +88,8 @@ def read(file, system):
     ret_dict['doc_string'] = ret_dict['doc_string'][0]
     ret_dict['group'] = ret_dict['group'][0]
     ret_dict['service_keys'] = list(ret_dict['service_eq'].keys())
-    ret_dict['consts'] = list(ret_dict['data'].keys()) + list(ret_dict['service_eq'].keys())
+    ret_dict['consts'] = list(ret_dict['data'].keys()) + list(
+        ret_dict['service_eq'].keys())
     ret_dict['init1_eq'] = ret_dict_ord['init1_eq']
     ret_dict['service_eq'] = ret_dict_ord['service_eq']
     ret_dict['ctrl'] = ret_dict_ord['ctrl']
@@ -121,31 +126,66 @@ def de_blank(val):
     return ret
 
 
-def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
-        units={}, params=[], fnamex=[], fnamey=[], mandatory=[], zeros=[],
-        powers=[], currents=[], voltages=[], z=[], y=[], dccurrents=[],
-        dcvoltages=[], r=[], g=[], times=[], ac={}, dc={}, ctrl={},
-        consts=[], algebs=[], interfaces=[], states=[], init1_eq={}, service_eq={},
-        algeb_eq=[], windup={}, hard_limit={}, diff_eq=[], anti_windup={}, copy_algebs=[],
-        copy_states=[], service_keys=[], **kwargs):
+def run(system,
+        outfile='',
+        name='',
+        doc_string='',
+        group='',
+        data={},
+        descr={},
+        units={},
+        params=[],
+        fnamex=[],
+        fnamey=[],
+        mandatory=[],
+        zeros=[],
+        powers=[],
+        currents=[],
+        voltages=[],
+        z=[],
+        y=[],
+        dccurrents=[],
+        dcvoltages=[],
+        r=[],
+        g=[],
+        times=[],
+        ac={},
+        dc={},
+        ctrl={},
+        consts=[],
+        algebs=[],
+        interfaces=[],
+        states=[],
+        init1_eq={},
+        service_eq={},
+        algeb_eq=[],
+        windup={},
+        hard_limit={},
+        diff_eq=[],
+        anti_windup={},
+        copy_algebs=[],
+        copy_states=[],
+        service_keys=[],
+        **kwargs):
     retval = True
     space4 = '    '
     space8 = space4 * 2
     """Input data consistency check"""
-    to_check = {'param': params,
-                'mandatory': mandatory,
-                'zero': zeros,
-                'power': powers,
-                'voltage': voltages,
-                'currents': currents,
-                'z': z,
-                'y': y,
-                'dccurrent': dccurrents,
-                'dcvoltage': dcvoltages,
-                'r': r,
-                'g': g,
-                'times': times,
-                }
+    to_check = {
+        'param': params,
+        'mandatory': mandatory,
+        'zero': zeros,
+        'power': powers,
+        'voltage': voltages,
+        'currents': currents,
+        'z': z,
+        'y': y,
+        'dccurrent': dccurrents,
+        'dcvoltage': dcvoltages,
+        'r': r,
+        'g': g,
+        'times': times,
+    }
 
     if not data:
         print('* Error: <data> dictionary is not defined.')
@@ -164,45 +204,55 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
 
     for key, val in hard_limit.items():
         if key not in algebs:
-            print('* Warning: variable <{}> in hard_limit not defined.'.format(key))
+            print('* Warning: variable <{}> in hard_limit not defined.'.format(
+                key))
         for item in val:
             if type(item) in (int, float):
                 pass
             elif item not in consts:
-                print('* Warning: const <{}> in hard_limit not defined.'.format(item))
+                print(
+                    '* Warning: const <{}> in hard_limit not defined.'.format(
+                        item))
 
     for key, val in windup.items():
         if key not in algebs:
-            print('* Warning: variable <{}> in windup not defined.'.format(key))
+            print(
+                '* Warning: variable <{}> in windup not defined.'.format(key))
         for item in val:
             if type(item) in (int, float):
                 continue
             elif item not in consts:
-                print('* Warning: const <{}> in windup not defined.'.format(item))
+                print('* Warning: const <{}> in windup not defined.'.format(
+                    item))
 
     for key, val in anti_windup.items():
         if key not in states:
-            print('* Warning: variable <{}> in anti_windup not defined.'.format(key))
+            print(
+                '* Warning: variable <{}> in anti_windup not defined.'.format(
+                    key))
         for item in val:
             if type(item) in (int, float):
                 continue
             elif item not in consts:
-                print('* Warning: const <{}> in anti_windup not defined.'.format(item))
-
+                print(
+                    '* Warning: const <{}> in anti_windup not defined.'.format(
+                        item))
     """Equation and variable number check"""
-    nalgebs, nalgeb_eq, nstates, ndiff_eq, ninterfaces = len(algebs), len(algeb_eq), len(states), len(diff_eq), len(interfaces)
+    nalgebs, nalgeb_eq, nstates, ndiff_eq, ninterfaces = len(algebs), len(
+        algeb_eq), len(states), len(diff_eq), len(interfaces)
 
     if nalgebs + ninterfaces != nalgeb_eq:
-        print('* Warning: there are {} algebs and {} algeb equations.'.format(nalgebs, nalgeb_eq))
+        print('* Warning: there are {} algebs and {} algeb equations.'.format(
+            nalgebs, nalgeb_eq))
 
     if nstates != ndiff_eq:
-        print('* Warning: there are {} states and {} differential equations.'.format(nstates, ndiff_eq))
+        print('* Warning: there are {} states and {} differential equations.'.
+              format(nstates, ndiff_eq))
 
     # check for duplicate names
     var_names = consts + algebs + states + copy_algebs + copy_states
     if len(set(var_names)) != len(var_names):
         raise NameError('Duplicated names are declared!')
-
     """Set up sympy symbols for variables, constants and equations"""
     sym_consts, sym_algebs, sym_states, sym_interfaces = [], [], [], []
     sym_algebs_ext, sym_states_ext = [], []
@@ -210,16 +260,16 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     sym_hard_limit, sym_windup, sym_anti_windup = [], [], []
 
     states_anti_windup = list(anti_windup.keys())
-    algebs_windup = list(windup.keys())
-    algebs_hard_limit = list(hard_limit.keys())
+    # algebs_windup = list(windup.keys())
+    # algebs_hard_limit = list(hard_limit.keys())
 
     # remove interface variables in copy_algebs
     for item in interfaces:
         if item in copy_algebs:
             copy_algebs.remove(item)
 
-    algebs_ext = algebs + interfaces + copy_algebs
-    states_ext = states + copy_states
+    # algebs_ext = algebs + interfaces + copy_algebs
+    # states_ext = states + copy_states
 
     for idx, var in enumerate(states):
         if var in states_anti_windup:
@@ -227,16 +277,17 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             diff_eq[idx] = tpl.format(diff_eq[idx], var, anti_windup[var][0])
 
     # convert consts and variables into sympy.Symbol
-    sym_maping = {'consts': sym_consts,
-                  'algebs': sym_algebs,
-                  'states': sym_states,
-                  'algebs_ext': sym_algebs_ext,
-                  'states_ext': sym_states_ext,
-                  'interfaces': sym_interfaces,
-                  'states_anti_windup': sym_anti_windup,
-                  'algebs_windup': sym_windup,
-                  'algebs_hard_limit': sym_hard_limit,
-                  }
+    sym_maping = {
+        'consts': sym_consts,
+        'algebs': sym_algebs,
+        'states': sym_states,
+        'algebs_ext': sym_algebs_ext,
+        'states_ext': sym_states_ext,
+        'interfaces': sym_interfaces,
+        'states_anti_windup': sym_anti_windup,
+        'algebs_windup': sym_windup,
+        'algebs_hard_limit': sym_hard_limit,
+    }
     for key, val in sym_maping.items():
         for item in eval(key):
             call = '{} = Symbol(item)'.format(item)
@@ -250,7 +301,8 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             var = item[0]
             eq = item[1]
             if var not in consts:
-                print('* Warning: declaring undefined service variable <{}>'.format(var))
+                print('* Warning: declaring undefined service variable <{}>'.
+                      format(var))
             call = '{} = Symbol(var)'.format(var)
             exec(call)
             expr = eval('{}'.format(eq))
@@ -261,7 +313,8 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             var = item[0]
             eq = item[1]
             if var not in states + algebs:
-                print('* Warning: initializing undefined variable <{}>'.format(var))
+                print('* Warning: initializing undefined variable <{}>'.format(
+                    var))
             call = '{} = Symbol(var)'.format(var)
             exec(call)
             expr = eval('{}'.format(eq))
@@ -275,7 +328,6 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     for item in diff_eq:
         expr = eval('{}'.format(item))
         sym_f.append(expr)
-
     """Derive the jacobians of equation f and g.
     Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]"""
     Fx, Fy, Gx, Gy = list(), list(), list(), list()
@@ -310,7 +362,6 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             elif sym in sym_states_ext:
                 sym_idx = sym_states_ext.index(sym)
                 Fx.append([eq_idx, sym_idx, expr.diff(sym)])
-
     """Save equations into callable CVXOPT functions"""
     fcall, gcall = [], []
     gycall, fxcall, jac0 = [], [], []
@@ -355,11 +406,14 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
                     pass
                 else:
                     val_formatted[idx] = 'self.{}'.format(item)
-            gcall.append(gcall_hard_limit.format(sym, val_formatted[0], val_formatted[1]))
+            gcall.append(
+                gcall_hard_limit.format(sym, val_formatted[0],
+                                        val_formatted[1]))
 
     # format Jacobians
     jacobians = ['Gy', 'Gx', 'Fx', 'Fy']
-    mapping = dict(F=sym_states_ext, G=sym_algebs_ext, y=sym_algebs_ext, x=sym_states_ext)
+    mapping = dict(
+        F=sym_states_ext, G=sym_algebs_ext, y=sym_algebs_ext, x=sym_states_ext)
 
     for jac in jacobians:
         for item in eval(jac):
@@ -371,7 +425,8 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             except AttributeError:
                 free_syms = []
 
-            string_eq = stringfy(equation, sym_consts, sym_states_ext, sym_algebs_ext)
+            string_eq = stringfy(equation, sym_consts, sym_states_ext,
+                                 sym_algebs_ext)
 
             isjac0 = 1
             for sym in free_syms:
@@ -387,10 +442,11 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
                 jac0.append(jac0_line.format(jac, string_eq, eqname, varname))
             else:
                 if jac == 'Gy':
-                    gycall.append(call_line.format(jac, string_eq, eqname, varname))
+                    gycall.append(
+                        call_line.format(jac, string_eq, eqname, varname))
                 else:
-                    fxcall.append(call_line.format(jac, string_eq, eqname, varname))
-
+                    fxcall.append(
+                        call_line.format(jac, string_eq, eqname, varname))
     """Format initialization and service calls"""
     init1call = []
     for item in sym_init1:
@@ -406,21 +462,22 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     servcall = []
     for item in ctrl:
         key, val = item
-        out = 'self.copy_param(\'{}\', \'{}\', \'{}\', self.{})'.format(val[0], val[1], key, val[2])
+        out = 'self.copy_data_ext(\'{}\', \'{}\', \'dest={}\', idx=self.{})'.format(
+            val[0], val[1], key, val[2])
         servcall.append(out)
     for item in sym_serv:
         rhs = stringfy(item[1], sym_consts, sym_states_ext, sym_algebs_ext)
         out = 'self.{} = {}'.format(item[0], rhs)
         servcall.append(out)
 
-    calls = {'gcall': not not gcall,
-             'fcall': not not fcall,
-             'gycall': not not gycall,
-             'fxcall': not not fxcall,
-             'jac0': (not not jac0) or (not not sym_algebs),
-             'init1': (not not init1call) or (not not servcall),
-             }
-
+    calls = {
+        'gcall': not not gcall,
+        'fcall': not not fcall,
+        'gycall': not not gycall,
+        'fxcall': not not fxcall,
+        'jac0': (not not jac0) or (not not sym_algebs),
+        'init1': (not not init1call) or (not not servcall),
+    }
     """Build function call strings"""
     out_calls = []
     if servcall:
@@ -466,7 +523,6 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             out_calls.append(space8 + item)
         for item in sym_algebs:
             out_calls.append(space8 + tinyGy.format(item))
-
     """Class definitions in out_init"""
     # bulk update or extend of dict and list
     param_assign = space8 + 'self._{} = {}'
@@ -490,32 +546,34 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     if name:
         out_init.append(param_assign.format('name', add_quotes(name)))
 
-    meta_dict_upd = {'data': data,
-                     'units': units,
-                     'descr': descr,
-                     'ac': ac,
-                     'dc': dc,
-                     # 'ctrl': ctrl,
-                     }
-    meta_list_ext = {'params': params,
-                     'algebs': algebs,
-                     'states': states,
-                     'fnamex': fnamex,
-                     'fnamey': fnamey,
-                     'service': service_keys,
-                     'mandatory': mandatory,
-                     'zeros': zeros,
-                     'powers': powers,
-                     'voltages': voltages,
-                     'currents': currents,
-                     'z': z,
-                     'y': y,
-                     'dccurrents': dccurrents,
-                     'dcvoltages': dcvoltages,
-                     'r': r,
-                     'g': g,
-                     'times': times,
-                     }
+    meta_dict_upd = {
+        'data': data,
+        'units': units,
+        'config_descr': descr,
+        'ac': ac,
+        'dc': dc,
+        # 'ctrl': ctrl,
+    }
+    meta_list_ext = {
+        'params': params,
+        'algebs': algebs,
+        'states': states,
+        'fnamex': fnamex,
+        'fnamey': fnamey,
+        'service': service_keys,
+        'mandatory': mandatory,
+        'zeros': zeros,
+        'powers': powers,
+        'voltages': voltages,
+        'currents': currents,
+        'z': z,
+        'y': y,
+        'dccurrents': dccurrents,
+        'dcvoltages': dcvoltages,
+        'r': r,
+        'g': g,
+        'times': times,
+    }
 
     for key in sorted(meta_list_ext.keys()):
         val = meta_list_ext[key]
@@ -524,11 +582,12 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
     for key in sorted(meta_dict_upd.keys()):
         val = meta_dict_upd[key]
         if val:
-            out_init.append(dict_update.format(key, pprint.pformat(val, indent=12)))
+            out_init.append(
+                dict_update.format(key, pprint.pformat(val, indent=12)))
 
     out_init.append(space8 + 'self.calls.update({})'.format(calls))
 
-    out_init.append(space8 + 'self._inst_meta()')
+    out_init.append(space8 + 'self._init()')
     out_init.append('')
 
     # write to file
@@ -540,14 +599,20 @@ def run(system, outfile='', name='', doc_string='', group='', data={}, descr={},
             fid.write(line + '\n')
         fid.close()
     except IOError:
-        system.Log.error('IOError while writing card output.')
+        logger.error('IOError while writing card output.')
         retval = False
 
     if retval:
-        system.Log.info('Card file successfully saved to <{}> with'.format(outfile))
-        system.Log.info('* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(len(sym_consts), len(sym_algebs), len(interfaces), len(sym_states)))
-        system.Log.info('* diff equations: {}, algeb equations: {}'.format(len(fcall), len(gcall)))
-        system.Log.info('* fxcall: {}, gycall: {}, jac0: {}'.format(len(fxcall), len(gycall), len(jac0)))
+        logger.info(
+            'Card file successfully saved to <{}> with'.format(outfile))
+        logger.info(
+            '* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(
+                len(sym_consts), len(sym_algebs), len(interfaces),
+                len(sym_states)))
+        logger.info('* diff equations: {}, algeb equations: {}'.format(
+            len(fcall), len(gcall)))
+        logger.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
+            len(fxcall), len(gycall), len(jac0)))
 
     sys.exit(0)
     # return retval

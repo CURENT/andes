@@ -1,0 +1,10 @@
+# List required packages in this file, one per line.
+numpy
+cvxopt
+scipy
+texttable
+matplotlib
+pandas
+pyzmq
+sympy
+progressbar

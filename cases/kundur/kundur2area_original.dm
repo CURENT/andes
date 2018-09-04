@@ -66,6 +66,18 @@ Bus, Vn = 230.0, angle = -0.41778, area = 2.0, idx = 10, name = "Bus 10 G4", own
 Bus, Vn = 230.0, angle = -0.23784, area = 2.0, idx = 11, name = "Bus 11 G3", owner = 0, region = 1.0,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00826, xcoord = 0, ycoord = 0, zone = 0
 
+BusFreq, idx = 1, bus = 1
+BusFreq, idx = 2, bus = 2
+BusFreq, idx = 3, bus = 3
+BusFreq, idx = 4, bus = 4
+BusFreq, idx = 5, bus = 5
+BusFreq, idx = 6, bus = 6
+BusFreq, idx = 7, bus = 7
+BusFreq, idx = 8, bus = 8
+BusFreq, idx = 9, bus = 9
+BusFreq, idx = 10, bus = 10
+BusFreq, idx = 11, bus = 11
+
 Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.02187, b1 = 0.0, b2 = 0.0, bus1 = 5.0,
       bus2 = 6.0, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_0", name = "Line 1",
       owner = 0, phi = 0, r = 0.005, rate_a = 0, tap = 1, trasf = False, u = 1,
@@ -163,7 +175,7 @@ Shunt, Sn = 100.0, Vn = 230.0, b = 2.0, bus = 7, fn = 60.0, g = 0.0, idx = "Shun
 Shunt, Sn = 100.0, Vn = 230.0, b = 3.5, bus = 9, fn = 60.0, g = 0.0, idx = "Shunt_1",
        name = "Shunt 9", u = 1
 
-TG1, idx = 1, gen = 1, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 2, gen = 2, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 3, gen = 3, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 4, gen = 4, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
+#TG1, idx = 1, gen = 1, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 2, gen = 2, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 3, gen = 3, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 4, gen = 4, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05

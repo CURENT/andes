@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
+
+# ANDES, a power system simulation tool for research.
+#
+# Copyright 2015-2018 Hantao Cui
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
-ANDES, a power system simulation tool for research.
-
-Copyright 2015-2017 Hantao Cui
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Andes plotting tool
 """
+
 import os
 import re
 from argparse import ArgumentParser
 from distutils.spawn import find_executable
 
-from matplotlib import pyplot, rc
+from matplotlib import rc
+from matplotlib import pyplot as plt
 
 lfile = []
 dfile = []
@@ -37,14 +42,27 @@ def cli_parse():
     parser.add_argument('--ymax', type=float, help='y axis maximum value')
     parser.add_argument('--ymin', type=float, help='y axis minimum value')
     parser.add_argument('--xmin', type=float, help='x axis minimum value')
-    parser.add_argument('--checkinit', action='store_true', help='check initialization value')
-    parser.add_argument('-x', '--xlabel', type=str, help='manual set x-axis text label')
+    parser.add_argument(
+        '--checkinit', action='store_true', help='check initialization value')
+    parser.add_argument(
+        '-x', '--xlabel', type=str, help='manual set x-axis text label')
     parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
-    parser.add_argument('-s', '--save', action='store_true', help='save to file')
+    parser.add_argument(
+        '-s', '--save', action='store_true', help='save to file')
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
-    parser.add_argument('-d', '--no_latex', action='store_true', help='disable LaTex formatting')
-    parser.add_argument('-u', '--unattended', action='store_true', help='do not show the plot window')
+    parser.add_argument(
+        '-d',
+        '--no_latex',
+        action='store_true',
+        help='disable LaTex formatting')
+    parser.add_argument(
+        '-u',
+        '--unattended',
+        action='store_true',
+        help='do not show the plot window')
     parser.add_argument('--ytimes', type=str, help='y times')
+    parser.add_argument(
+        '--dpi', type=int, help='image resolution in dot per inch (DPI)')
     args = parser.parse_args()
     return vars(args)
 
@@ -172,51 +190,67 @@ def read_label(lst, x, y):
     return xl, yl
 
 
-def do_plot(x, y, xl, yl, args, fig=None, ax=None):
-    xmin = args.pop('xmin', None)
-    xmax = args.pop('xmax', None)
-    ymax = args.pop('ymax', None)
-    ymin = args.pop('ymin', None)
-    xlabel = args.pop('xlabel', None)
-    ylabel = args.pop('ylabel', None)
-    no_latex = args.pop('no_latex', None)
+def do_plot(xdata,
+            ydata,
+            xname=None,
+            yname=None,
+            fig=None,
+            ax=None,
+            dpi=200,
+            xmin=None,
+            xmax=None,
+            ymin=None,
+            ymax=None,
+            xlabel=None,
+            ylabel=None,
+            no_latex=False,
+            legend=True,
+            grid=False,
+            save=False,
+            unattended=False,
+            datfile='',
+            noshow=False,
+            **kwargs):
 
-    LATEX = False
-    if no_latex:
-        LATEX = False
-    elif find_executable('dvipng'):
+    # set styles and LaTex
+    rc('font', family='Arial', size=12)
+    linestyles = ['-', '--', '-.', ':'] * len(ydata)
+    if not no_latex and find_executable('dvipng'):
+        # use LaTex
         LATEX = True
-
-    if LATEX:
         rc('text', usetex=True)
     else:
+        LATEX = False
         rc('text', usetex=False)
-    rc('font', family='Arial', size=12)
 
-    if not y:
-        return
-    style = ['-', '--', '-.', ':'] * len(y)
+    # get variable names from lst
+    def get_lst_name(lst, LATEX):
+        idx = 1 if LATEX else 0
+        if lst is not None:
+            return lst[idx]
+        else:
+            return None
 
+    xl_data = get_lst_name(xname, LATEX)
+    yl_data = get_lst_name(yname, LATEX)
+
+    # set default x min based on simulation time
     if not xmin:
-        xmin = x[0] - 1e-6
+        xmin = xdata[0] - 1e-6
     if not xmax:
-        xmax = x[-1] + 1e-6
-
-    if LATEX:
-        xl_data = xl[1]
-        yl_data = yl[1]
-    else:
-        xl_data = xl[0]
-        yl_data = yl[0]
+        xmax = xdata[-1] + 1e-6
 
     if not (fig and ax):
-        fig, ax = pyplot.subplots()
+        fig = plt.figure(dpi=dpi)
+        ax = plt.gca()
 
-    for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx], ls=style[idx])
+    for idx in range(len(ydata)):
+        yl_data_idx = yl_data[idx] if yl_data else None
+        ax.plot(xdata, ydata[idx], label=yl_data_idx, ls=linestyles[idx])
 
     if not xlabel:
-        ax.set_xlabel(xl_data)
+        if xl_data is not None:
+            ax.set_xlabel(xl_data)
     else:
         if LATEX:
             xlabel = '$' + xlabel.replace(' ', '\ ') + '$'
@@ -234,16 +268,17 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
     ax.set_ylim(ymax=ymax)
     ax.set_ylim(ymin=ymin)
 
-    if args.pop('grid', None):
+    if grid:
         ax.grid(b=True, linestyle='--')
-    legend = ax.legend(loc='upper right')
+    if legend and yl_data:
+        legend = ax.legend(loc='upper right')
 
-    pyplot.draw()
+    plt.draw()
 
     # output to file
 
-    if args.pop('save', None) or args.pop('unattended', None):
-        name, _ = os.path.splitext(args['datfile'])
+    if save or unattended:
+        name, _ = os.path.splitext(datfile[0])
         count = 1
         cwd = os.getcwd()
         for file in os.listdir(cwd):
@@ -253,36 +288,36 @@ def do_plot(x, y, xl, yl, args, fig=None, ax=None):
         outfile = name + '_' + str(count) + '.png'
 
         try:
-            fig.savefig(outfile, dpi=300)
+            fig.savefig(outfile, dpi=1200)
             print('Figure saved to file {}'.format(outfile))
-        except:
-            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
+        except IOError:
+            print('* Error occurred. Try disabling LaTex with "-d".')
             return
 
-    if not args.pop('unattended', None):
-        try:
-            pyplot.show()
-        except:
-            print('* Error occurred while rendering. Please try disabling LaTex with "-d".')
-            return
+    if unattended:
+        noshow = True
+
+    if not noshow:
+        plt.show()
 
     return fig, ax
 
 
-def add_plot(x, y, xl, yl, fig, ax, LATEX=False):
+def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
-        xl_data = xl[1]
+        xl_data = xl[1]  # NOQA
         yl_data = yl[1]
     else:
-        xl_data = xl[0]
+        xl_data = xl[0]  # NOQA
         yl_data = yl[0]
 
     for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx])
+        ax.plot(x, y[idx], label=yl_data[idx], linestyle=linestyle)
 
-    legend = ax.legend(loc='upper right')
+    ax.legend(loc='upper right')
     ax.set_ylim(auto=True)
+
 
 def isfloat(value):
     try:
@@ -303,7 +338,6 @@ def isint(value):
 def main(cli=True, **args):
     if cli:
         args = cli_parse()
-
     name, ext = os.path.splitext(args['datfile'][0])
     if 'out' in name:
         tds_plot(name, args)
@@ -329,7 +363,9 @@ def eig_plot(name, args):
     fid.close()
 
     for line in raw_data:
-        data = line.split()
+        # data = line.split()
+        # TODO: complete this function
+        pass
 
 
 def tds_plot(name, args):
@@ -348,13 +384,17 @@ def tds_plot(name, args):
     if args.pop('checkinit', False):
         check_init(yval, yl[0])
         return
-    if args.pop('ytimes', False):
-        times = float(args['ytimes'])
+    ytimes = args.pop('ytimes', False)
+    if ytimes:
+        times = float(ytimes)
         new_yval = []
         for val in yval:
-            new_yval.append([i*times for i in val])
+            new_yval.append([i * times for i in val])
         yval = new_yval
-    do_plot(xval, yval, xl, yl, args)
+
+    args.pop('x')
+    args.pop('y')
+    do_plot(xval, yval, xl, yl, **args)
 
 
 def check_init(yval, yl):
