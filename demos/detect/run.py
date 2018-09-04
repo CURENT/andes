@@ -1,5 +1,5 @@
 from andes import system, filters
-from andes.routines import powerflow, timedomain
+# from andes.routines import powerflow, timedomain
 import os
 
 # os.chdir('/home/hcui7/repos/andes_github/cases')
@@ -12,10 +12,10 @@ sys = system.PowerSystem(case)
 assert filters.guess(sys)
 assert filters.parse(sys)
 sys.setup()
-sys.pf_init()
-powerflow.run(sys)
+sys.pflow.run()
 
-sys.td_init()
+sys.tds.init()
+
 # timedomain.run(sys)
 
 # bus list in NPCC
