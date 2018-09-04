@@ -24,3 +24,7 @@ pipelines:
           - flake8 --max-line-length=115
           # Build the documentation.
           - make -C docs html
+          # Run the ieee14_syn.dm tds
+          - andes cases/ieee14_syn.dm -r tds -v 10 --no-output
+          # Run the CURENT test system
+          - andes cases/curent/NA_50_50_50.dm -r tds -v 10 --no-output
