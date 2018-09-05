@@ -158,7 +158,7 @@ def cli_new():
     group_help = parser.add_argument_group('Help and documentation',
                                            'Optional arguments for usage, model and config documentation')
     group_help.add_argument(
-        '-G', '--group', help='Show the models in the group.')
+        '-g', '--group', help='Show the models in the group.')
     group_help.add_argument(
         '-q', '--quick-help', help='Show a quick help of model format.')
     group_help.add_argument(
