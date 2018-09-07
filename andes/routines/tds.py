@@ -332,6 +332,7 @@ class TDS(RoutineBase):
             logger.info(' Time domain simulation failed in {:s}.'.format(s))
 
         self.success = ret
+        self.dump_results()
 
         return ret
 
