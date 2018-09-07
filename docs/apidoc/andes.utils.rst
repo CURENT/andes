@@ -20,6 +20,14 @@ andes.utils.cached module
     :undoc-members:
     :show-inheritance:
 
+andes.utils.dime module
+-----------------------
+
+.. automodule:: andes.utils.dime
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 andes.utils.math module
 -----------------------
 
@@ -36,10 +44,26 @@ andes.utils.misc module
     :undoc-members:
     :show-inheritance:
 
+andes.utils.pymatbridge module
+------------------------------
+
+.. automodule:: andes.utils.pymatbridge
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 andes.utils.solver module
 -------------------------
 
 .. automodule:: andes.utils.solver
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+andes.utils.streaming module
+----------------------------
+
+.. automodule:: andes.utils.streaming
     :members:
     :undoc-members:
     :show-inheritance:

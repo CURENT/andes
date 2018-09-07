@@ -9,7 +9,7 @@ import versioneer
 if sys.version_info < (3, 4):
     error = """
 andes does not support Python {0}.{1}.
-Python 3.5 and above is required. Check your Python version like so:
+Python 3.4 and above is required. Check your Python version like so:
 
 python3 --version
 
@@ -57,10 +57,9 @@ setup(
         ]
     },
     install_requires=requirements,
-    license="Apache",
+    license="BSD (3-clause)",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Topic :: Scientific/Engineering',
+        'Development Status :: 2 - Pre-Alpha',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: Apache Software License',
