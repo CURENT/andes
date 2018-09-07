@@ -236,6 +236,20 @@ The Andes Python APIs are loaded into an interactive Python environment
 whole package and set up the global logger using
 
     >>> import andes
+    >>> andes.main.config_logger(log_file=None)
+
+Create an instance of Power System from the case file, for example, at ``
+ieee14_syn.dm``
+whole package and set up the global logger using
+
+    >>> import andes
+    >>> andes.main.config_logger(log_file=None)
+
+Create an instance of Power System from the case file, for example, at ``
+ieee14_syn.dm``
+whole package and set up the global logger using
+
+    >>> import andes
     >>> andes.main.config_logger(logfile=None)
 
 Create an instance of Power System from the case file, for example, at ``
