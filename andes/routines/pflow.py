@@ -77,12 +77,14 @@ class PFLOW(RoutineBase):
         """
         ret = None
 
-        self.pre()
+        self.pre() #initialization Y matrix and inital guess
         t, _ = elapsed()
 
         # call solution methods
         if self.config.method == 'NR':
             ret = self.newton()
+        elif self.config.method=='DCPF':
+            ret=self.DCPF()
         elif self.config.method in ('FDPF', 'FDBX', 'FDXB'):
             ret = self.fdpf()
 
@@ -130,6 +132,44 @@ class PFLOW(RoutineBase):
 
         return self.solved, self.niter
 
+    def DCPF(self):
+        dae = self.system.dae
+        Bp=self.system.Line.Bp
+        Bp=Bp[1:Bp.size[0],1:Bp.size[1]]
+        # bus_count=self.system.Bus.n
+        ang_idx=self.system.Line.a
+        vol_idx=self.system.Line.v
+        for index in vol_idx:
+            dae.y[index]=1
+        for index in ang_idx:
+            dae.y[index]=0
+        # no_sw = self.system.Bus.a[:]
+        # no_swv = self.system.Bus.v[:]
+        i_PQ=self.system.PQ.p
+        PQ_idx=self.system.PQ.bus
+        i_PV=-self.system.PV.pg
+        PV_idx=self.system.PV.bus
+        # aSW=[0]
+        SW_idx = self.system.SW.bus
+        p=list(i_PV)+list(i_PQ)
+        p_idx=PV_idx+PQ_idx
+        p=[p for _, p in sorted(zip(p_idx, p))]
+        p=matrix(p,(p.__len__(),1))
+        # self.solver.linsolve(Bp,p)
+
+        Sp = self.solver.symbolic(Bp)
+        N = self.solver.numeric(Bp, Sp)
+        self.solver.solve(Bp,Sp,N,p)
+        theta_idx=p_idx+SW_idx
+        theta=list(p)
+        theta=theta+[0]
+        p_idx=PV_idx+PQ_idx
+        theta=[theta for _, theta in sorted(zip(theta_idx, theta))]
+        theta=matrix(theta,(theta.__len__(),1))
+        self.system.dae.y[self.system.Bus.a]=theta
+        self.solved=True
+        self.niter=1
+        return self.solved, self.niter
     def _iter_info(self, niter, level=logging.INFO):
         """
         Log iteration number and mismatch
