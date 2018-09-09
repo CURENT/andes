@@ -165,6 +165,8 @@ class PFLOW(RoutineBase):
         N = self.solver.numeric(Bp, Sp)
         self.solver.solve(Bp, Sp, N, p)
         self.system.dae.y[no_sw] =p
+        self.solved=True
+        self.niter=1
         return self.solved, self.niter
 
         # ang_idx=self.system.Line.a
