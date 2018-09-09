@@ -134,9 +134,6 @@ class PFLOW(RoutineBase):
 
     def DCPF(self):
         dae = self.system.dae
-        Bp=self.system.Line.Bp
-        Bp=Bp[1:Bp.size[0],1:Bp.size[1]]
-        # bus_count=self.system.Bus.n
         ang_idx=self.system.Line.a
         vol_idx=self.system.Line.v
         for index in vol_idx:
@@ -150,13 +147,25 @@ class PFLOW(RoutineBase):
         i_PV=-self.system.PV.pg
         PV_idx=self.system.PV.bus
         # aSW=[0]
-        SW_idx = self.system.SW.bus
+        SW_idx = self.system.SW.bus[0]-1
+        Bp=self.system.Line.Bp
+        if SW_idx==0:
+            Bp=Bp[1:Bp.size[0],1:Bp.size[1]]
+        else:
+            Bp1=Bp[0:SW_idx,0:SW_idx]
+            Bp2=Bp[SW_idx+1:Bp.size[0],SW_idx+1:Bp.size[1]]
+            Bp3=Bp[0:SW_idx,SW_idx+1:Bp.size[0]]
+            Bp4=Bp[SW_idx+1:Bp.size[0],0:SW_idx]
+            Bpa=matrix([[Bp1], [Bp3]])
+            Bpb=matrix([[Bp4], [Bp2]])
+            Bp=matrix([Bpa, Bpb])
+        # bus_count=1self.system.Bus.n
         p=list(i_PV)+list(i_PQ)
         p_idx=PV_idx+PQ_idx
         p=[p for _, p in sorted(zip(p_idx, p))]
         p=matrix(p,(p.__len__(),1))
         # self.solver.linsolve(Bp,p)
-
+        SW_idx=[SW_idx]
         Sp = self.solver.symbolic(Bp)
         N = self.solver.numeric(Bp, Sp)
         self.solver.solve(Bp,Sp,N,p)
