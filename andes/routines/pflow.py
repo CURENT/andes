@@ -1,5 +1,5 @@
 import logging
-from cvxopt import matrix, sparse, div
+from cvxopt import matrix, sparse, div, printing
 from .base import RoutineBase
 from andes.config.pflow import Pflow
 from andes.utils import elapsed
@@ -137,7 +137,9 @@ class PFLOW(RoutineBase):
         self.system.Bus.init0(dae)
         self.system.dae.init_g()
         pflg=self.system.call.pflow
-        pflg[3]=False
+        for idx,device in enumerate(self.system.devman.devices):
+            if device=='Line':
+                pflg[idx]=False
         for model, pflow, gcall in zip(self.system.devman.devices, pflg, self.system.call.gcall):
             if pflow and gcall:
                 self.system.__dict__[model].gcall(dae)
@@ -148,7 +150,7 @@ class PFLOW(RoutineBase):
         for item in sw:
             no_sw.pop(item)
             no_swv.pop(item)
-        Bp = self.system.Line.Bp[no_sw, no_sw]
+        Bp=self.system.Line.Bp[no_sw,no_sw]
         p= matrix(self.system.dae.g[no_sw],(no_sw.__len__(),1))
         Sp = self.solver.symbolic(Bp)
         N = self.solver.numeric(Bp, Sp)
@@ -157,6 +159,8 @@ class PFLOW(RoutineBase):
         self.solved=True
         self.niter=1
         return self.solved, self.niter
+
+
 
     def _iter_info(self, niter, level=logging.INFO):
         """
@@ -223,7 +227,7 @@ class PFLOW(RoutineBase):
         dae = self.system.dae
 
         system.dae.init_fg()
-
+        system.dae.reset_small_g()
         # evaluate algebraic equation mismatches
         for model, pflow, gcall in zip(system.devman.devices, system.call.pflow, system.call.gcall):
             if pflow and gcall:
