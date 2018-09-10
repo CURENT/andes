@@ -45,7 +45,7 @@ logger.setLevel(logging.INFO)
 
 def config_logger(name='andes',
                   log_file='andes.log',
-                  log_path=misc.get_log_dir(),
+                  log_path='',
                   stream=True,
                   stream_level=logging.INFO
                   ):
@@ -86,7 +86,8 @@ def config_logger(name='andes',
 
     # file handler which logs debug messages
     if log_file is not None:
-        fh = logging.FileHandler(os.path.join(log_path, log_file))
+        log_full_path = os.path.join(log_path, log_file)
+        fh = logging.FileHandler(log_full_path)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fh_formatter)
         logger.addHandler(fh)
@@ -621,13 +622,13 @@ def main():
     args = vars(cli_new())
 
     # configure stream handler verbose level
-    config_logger(stream_level=args['verbose'])
-
-    logger.debug('command line arguments:')
-    logger.debug(pprint.pformat(args))
+    config_logger(log_path=misc.get_log_dir(), stream_level=args['verbose'])
 
     # show preamble
     preamble()
+
+    logger.debug('command line arguments:')
+    logger.debug(pprint.pformat(args))
 
     if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) \
             or save_config(**args):
