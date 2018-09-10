@@ -141,18 +141,6 @@ class PFLOW(RoutineBase):
         for model, pflow, gcall in zip(self.system.devman.devices, pflg, self.system.call.gcall):
             if pflow and gcall:
                 self.system.__dict__[model].gcall(dae)
-        SW_idx = self.system.SW.bus[0]-1
-        Bp=self.system.Line.Bp
-        if SW_idx==0:
-            Bp=Bp[1:Bp.size[0],1:Bp.size[1]]
-        else:
-            Bp1=Bp[0:SW_idx,0:SW_idx]
-            Bp2=Bp[SW_idx+1:Bp.size[0],SW_idx+1:Bp.size[1]]
-            Bp3=Bp[0:SW_idx,SW_idx+1:Bp.size[0]]
-            Bp4=Bp[SW_idx+1:Bp.size[0],0:SW_idx]
-            Bpa=matrix([[Bp1], [Bp3]])
-            Bpb=matrix([[Bp4], [Bp2]])
-            Bp=matrix([Bpa, Bpb])
         sw = self.system.SW.a
         sw.sort(reverse=True)
         no_sw = self.system.Bus.a[:]
@@ -160,6 +148,7 @@ class PFLOW(RoutineBase):
         for item in sw:
             no_sw.pop(item)
             no_swv.pop(item)
+        Bp = self.system.Line.Bp[no_sw, no_sw]
         p= matrix(self.system.dae.g[no_sw],(no_sw.__len__(),1))
         Sp = self.solver.symbolic(Bp)
         N = self.solver.numeric(Bp, Sp)
@@ -168,36 +157,6 @@ class PFLOW(RoutineBase):
         self.solved=True
         self.niter=1
         return self.solved, self.niter
-
-        # ang_idx=self.system.Line.a
-        # vol_idx=self.system.Line.v
-        # for index in vol_idx:
-        #     dae.y[index]=1
-        # for index in ang_idx:
-        #     dae.y[index]=0
-        # i_PQ=self.system.PQ.p
-        # PQ_idx=self.system.PQ.bus
-        # i_PV=-self.system.PV.pg
-        # PV_idx=self.system.PV.bus
-        #
-        # p=list(i_PV)+list(i_PQ)
-        # p_idx=PV_idx+PQ_idx
-        # p=[p for _, p in sorted(zip(p_idx, p))]
-        # p=matrix(p,(p.__len__(),1))
-        # # self.solver.linsolve(Bp,p)
-        # SW_idx=[SW_idx]
-        # Sp = self.solver.symbolic(Bp)
-        # N = self.solver.numeric(Bp, Sp)
-        # self.solver.solve(Bp,Sp,N,p)
-        # theta_idx=p_idx+SW_idx
-        # theta=list(p)
-        # theta=theta+[0]
-        # p_idx=PV_idx+PQ_idx
-        # theta=[theta for _, theta in sorted(zip(theta_idx, theta))]
-        # theta=matrix(theta,(theta.__len__(),1))
-        # self.system.dae.y[self.system.Bus.a]=theta
-        # self.solved=True
-        # self.niter=1
 
     def _iter_info(self, niter, level=logging.INFO):
         """
