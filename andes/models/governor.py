@@ -46,12 +46,12 @@ class GovernorBase(ModelBase):
             'jac0': True,
         })
 
-    def base(self):
+    def data_to_sys_base(self):
         if not self.n:
             return
         self.copy_data_ext(
             model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
-        super(GovernorBase, self).base()
+        super(GovernorBase, self).data_to_sys_base()
         self.R = self.system.mva * div(self.R, self.Sn)
 
     def init1(self, dae):
