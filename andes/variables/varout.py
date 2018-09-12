@@ -184,7 +184,7 @@ class VarOut(object):
         # output variable indices
         if system.Recorder.n == 0:
             state_idx = list(range(dae.n))
-            algeb_idx = list(range(dae.n, dae.m + nflows))
+            algeb_idx = list(range(dae.n, dae.n + dae.m + nflows))
             idx = state_idx + algeb_idx
         else:
             idx = system.Recorder.varout_idx
