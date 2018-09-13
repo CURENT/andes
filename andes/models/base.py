@@ -1090,7 +1090,7 @@ class ModelBase(object):
         """
         group_by = self._config['address_group_by']
 
-        assert not self._flags['address']
+        assert not self._flags['address'], "{} address already assigned".format(self._name)
         assert group_by in ('element', 'variable')
 
         m0 = self.system.dae.m

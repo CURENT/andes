@@ -5,9 +5,10 @@ import os
 # os.chdir('/home/hcui7/repos/andes_github/cases')
 # case = 'ieee14_syn.dm'
 
-os.chdir('../../cases/curent')
-case = 'NA_50_50_50_HVDC3.dm'
-
+# os.chdir('../../cases/curent')
+# case = 'NA_50_50_50_HVDC3.dm'
+os.chdir('../../cases/npcc')
+case = 'npcc48.dm'
 sys = system.PowerSystem(case)
 assert filters.guess(sys)
 assert filters.parse(sys)
@@ -31,8 +32,8 @@ npcc_bus = list(range(100114, 100124)) + list(range(101001, 101120))
 npcc_gen = sys.Syn2.on_bus(npcc_bus)
 
 # save Andes cases to folder
-save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/GT'
-
+# save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/GT'
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/NPCC/GT'
 file_name_tpl = '{event}_{bus}_{element}.dm'
 
 header = """# DOME format version 1.0
@@ -71,8 +72,8 @@ for bus_idx, gen_idx in zip(npcc_bus, npcc_gen):
 npcc_load = sys.PQ.on_bus(npcc_bus)
 
 # save Andes cases to folder
-save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LS'
-
+# save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LS'
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/NPCC/LS'
 file_name_tpl = '{event}_{bus}_{element}.dm'
 
 header = """# DOME format version 1.0
@@ -122,8 +123,8 @@ print(sys.Line.idx)
 
 
 # save Andes cases to folder
-save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LT'
-
+# save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/LT'
+save_path = 'C:/Users/zhan2/PycharmProjects/andes_github/demos/NPCC/LT'
 file_name_tpl = '{event}_{bus}_{element}.dm'
 
 header = """# DOME format version 1.0

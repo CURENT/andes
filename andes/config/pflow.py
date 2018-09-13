@@ -15,7 +15,7 @@ class Pflow(ConfigBase):
         self.show = True
         self.method = 'NR'
         # self.method = 'DCPF'
-        self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB','DCPF']
+        self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB', 'DCPF']
         self.sortbuses = 'data'
         self.sortbuses_alt = ['data', 'idx']
         self.static = False

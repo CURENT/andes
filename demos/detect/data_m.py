@@ -7,7 +7,7 @@ import numpy as np
 os.system('andes -C')
 os.system('python run.py')
 # ==================== Generator trip ========================#
-os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/detect/GT')
+os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/NPCC/GT')
 os.system('andes GT_*.dm -r tds --tf 10 --ncpu=8')
 bus_count=995
 for filename in glob.glob('*.dat'):
