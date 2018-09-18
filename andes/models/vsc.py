@@ -118,9 +118,6 @@ class VSC(DCBase):
         self.ylim = []
         self.vio = {}
 
-    def base(self):
-        super(VSC, self).base()
-
     def setup(self):
         super().setup()
         self.K = mul(self.K, self.droop)
@@ -1077,9 +1074,6 @@ class VSC1(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power0):
         Power0.__init__(self, system, name)
         self._init()
 
-    def base(self):
-        super(VSC1, self).base()
-
 
 class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
     """VSC1 with Inertia Emulation with frequency sensor at local bus"""
@@ -1092,9 +1086,6 @@ class VSC1_IE(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power1):
         Power1.__init__(self, system, name)
         self._init()
 
-    def base(self):
-        super(VSC1_IE, self).base()
-
 
 class VSC1_IE2(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power2):
     """VSC1 with Inertia Emulation with frequency sensor at remote bus"""
@@ -1106,9 +1097,6 @@ class VSC1_IE2(VSC1_Common, VSC1_Outer1, Current1, PLL1, Power2):
         PLL1.__init__(self, system, name)
         Power2.__init__(self, system, name)
         self._init()
-
-    def base(self):
-        super(VSC1_IE2, self).base()
 
 
 class VSC2_Voltage1(object):

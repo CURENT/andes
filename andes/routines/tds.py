@@ -249,6 +249,9 @@ class TDS(RoutineBase):
             self.calc_time_step()
             self.check_fixed_times()
 
+            if self.callpert is not None:
+                self.callpert(self.t, self.system)
+
             if self.h == 0:
                 break
             # progress time and set time in dae
@@ -332,6 +335,7 @@ class TDS(RoutineBase):
             logger.info(' Time domain simulation failed in {:s}.'.format(s))
 
         self.success = ret
+        self.dump_results()
 
         return ret
 

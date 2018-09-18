@@ -6,7 +6,7 @@ from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 
 class Bus(ModelBase):
-    """ac bus model written in the modernized way
+    """ac bus model for defining topology definition
     """
 
     def define(self):

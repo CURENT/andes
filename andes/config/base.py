@@ -60,7 +60,7 @@ class ConfigBase(object):
         Dump help document for setting classes
         """
         rows = []
-        title = 'Setting <{:s}>'.format(self.__class__.__name__)
+        title = '<{:s}> config options'.format(self.__class__.__name__)
         table = Tab(export=export, title=title)
 
         for opt in sorted(self.config_descr):
@@ -122,12 +122,13 @@ class ConfigBase(object):
         section = self.__class__.__name__
 
         if section not in conf.sections():
-            logger.warning('Config section {} not in rc file'.format(self.__class__.__name__))
+            logger.debug('Config section {} not in rc file'.format(
+                self.__class__.__name__))
             return
 
         for key in conf[section].keys():
             if not hasattr(self, key):
-                logger.warning('Config key {}.{} skipped'.format(section, key))
+                logger.debug('Config key {}.{} skipped'.format(section, key))
                 continue
 
             val = conf[section].get(key)
