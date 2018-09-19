@@ -9,6 +9,7 @@ __pycache__/
 # VS 2017 Project Files
 *.pyproj
 *.sln
+.vs/
 
 # Distribution / packaging
 .Python
