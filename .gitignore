@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# VS 2017 Project Files
+*.pyproj
+*.sln
+
 # Distribution / packaging
 .Python
 env/
