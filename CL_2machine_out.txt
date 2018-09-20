@@ -1,0 +1,92 @@
+ANDES 0.5.7.post8+g6d7ab8f
+Copyright (C) 2015-2018 Hantao Cui
+
+ANDES comes with ABSOLUTELY NO WARRANTY
+Use this software AT YOUR OWN RISK
+
+Case file: .\cases\5bus\CL_2machine.dm
+report Time: 09/20/2018 09:57:07 AM
+
+Power flow method: NR
+Number of iterations: 0
+Flat-start: No
+
+SUMMARY:
+Buses                      5
+Generators                 2
+Committed Gens             0
+Loads                      3
+Shunts                     0
+Lines                      4
+Transformers               0
+Areas                      1
+
+EXTENDED SUMMARY:
+                      P (pu)        Q (pu)
+
+Generation                 8       -0.7607
+Load                       8             0
+Shunt Inj                  0             0
+Losses                     0       -0.7607
+Line Charging             -0             0
+
+BUS DATA:
+                      Vm(pu)       Va(deg)       Pg (pu)       Qg (pu)       Pl (pu)       Ql (pu)
+
+1.0-Bus 1               1.05    -7.065e-21             4       -0.3309             0             0
+2.0-Bus 2               1.05        -3.681             4       -0.4298             0             0
+3.0-Bus 3              1.045         4.704    -8.882e-16     1.055e-14             4             0
+4.0-Bus 4              1.044         2.603     8.882e-16      8.16e-15             3             0
+5.0-Bus 5              1.049         2.081      1.11e-16      3.92e-15             1             0
+
+LINE DATA:
+                    From Bus        To Bus   P From (pu)   Q From (pu)     P To (pu)      Q To(pu)    P Loss(pu)    Q Loss(pu)
+
+Line_1                     1             3             3       -0.2946            -3       0.04732     8.242e-10       -0.2473
+Line_2                     1             5             1      -0.03633            -1      3.92e-15     9.082e-11      -0.03633
+Line_3                     3             4            -1      -0.04732             1       0.01062     9.176e-11       -0.0367
+Line_4                     4             2            -4      -0.01062             4       -0.4298     1.468e-09       -0.4404
+
+OTHER ALGEBRAIC VARIABLES:
+                            
+
+Q PV Bus 2           -0.4298
+Q SW Bus 1           -0.3309
+P SW Bus 1                 4
+p Syn 1                    4
+q Syn 1              -0.3309
+pm Syn 1               3.585
+vf Syn 1               1.117
+Id Syn 1               1.528
+Iq Syn 1               4.302
+vd Syn 1               0.923
+vq Syn 1              0.5056
+psid Syn 1            0.5056
+psiq Syn 1            -0.923
+p Syn 2                    4
+q Syn 2              -0.4298
+pm Syn 2               3.063
+vf Syn 2              0.9365
+Id Syn 2                1.33
+Iq Syn 2               4.379
+vd Syn 2              0.9715
+vq Syn 2              0.4045
+psid Syn 2            0.4045
+psiq Syn 2           -0.9715
+
+OTHER STATE VARIABLES:
+                            
+
+delta Syn 1            1.002
+omega Syn 1                1
+e1d Syn 1              1.067
+e1q Syn 1             0.5837
+e2d Syn 1             0.7939
+e2q Syn 1             0.5514
+delta Syn 2            1.045
+omega Syn 2                1
+e1d Syn 2              1.086
+e1q Syn 2             0.4726
+e2d Syn 2             0.8402
+e2q Syn 2             0.4444
+
