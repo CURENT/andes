@@ -12,6 +12,9 @@ Area, idx = 2, name = "Area 2"
 BArea, idx=1, name = "BArea 1", area = 1, syn = [1], beta = 74.627
 BArea, idx=2, name = "BArea 2", area = 2, syn = [2], beta = 74.627
 
+AGC, idx = 1, name = "AGC 1", BArea = 1, syn = [1], Ki = 1.0
+AGC, idx = 2, name = "AGC 2", BArea = 2, syn = [2], Ki = 1.0
+
 Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0
 
 # Parameter 'phi' of phase changer has unit 'Deg'
