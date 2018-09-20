@@ -33,10 +33,10 @@ from multiprocessing import Process
 from time import sleep, strftime
 
 import pathlib
-from . import filters
-from . import routines
-from .system import PowerSystem
-from .utils import elapsed, get_config_load_path
+from andes import filters
+from andes import routines
+from andes.system import PowerSystem
+from andes.utils import elapsed, get_config_load_path
 from subprocess import call
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ def preamble():
     -------
     None
     """
-    from . import __version__ as version
+    from andes import __version__ as version
     logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'
                 .format(ver=version[:5], b=version[-8:],
                         p=platform.python_version(),
@@ -287,7 +287,7 @@ def andeshelp(group=None,
             or model_var or quick_help or help_option or help_config):
         return False
 
-    from .models import all_models_list
+    from andes.models import all_models_list
 
     if category:
         raise NotImplementedError
@@ -522,7 +522,7 @@ def search(search, **kwargs):
         The list of model names that match the given pattern.
     """
 
-    from .models import all_models
+    from andes.models import all_models
     out = []
 
     if not search:

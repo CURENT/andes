@@ -20,7 +20,7 @@ Andes main entry point Redirection to main.py
 This makes the packacke callable with py -m andes
 """
 
-from . import main
+from andes import main
 
 if __name__ == '__main__':
     main.main()
