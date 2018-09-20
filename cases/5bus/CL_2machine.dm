@@ -9,6 +9,9 @@ Bus, Vn = 345.0, idx = 5, name = "Bus 5", xcoord = [1; 3], ycoord = [2; 3], area
 Area, idx = 1, name = "Area 1"
 Area, idx = 2, name = "Area 2"
 
+BArea, idx=1, name = "BArea 1", area = 1, syn = [1], beta = 74.627
+BArea, idx=2, name = "BArea 2", area = 2, syn = [2], beta = 74.627
+
 Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0
 
 # Parameter 'phi' of phase changer has unit 'Deg'
@@ -58,3 +61,15 @@ Syn6a, D = 10.0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
        Tq10 = 0.12, Tq20 = 0.05, Vn = 345.0, bus = 2, fn = 60.0,
        gen = 2, idx = 2, name = "Syn 2", ra = 0, xd = 2.0,
        xd1 = 0.245, xd2 = 0.150, xq = 1.91, xq1 = 0.245, xq2 = 0.150
+
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.19, Tf = 1.0,
+      idx = 1, name = "AVR 1", syn = 1, vrmax = 10,
+      vrmin = -0
+AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.19, Tf = 1.0,
+      idx = 2, name = "AVR 2", syn = 2, vrmax = 10,
+      vrmin = 0.0
+
+TG1, gen = 1, pmax = 5, pmin = 0, R = 0.04, wref0 = 1.0,
+   T3 = 0, T4 = 1.25, T5 = 5.0, Tc = 0.4, Ts = 0.1
+TG1, gen = 2, pmax = 5, pmin = 0, R = 0.04, wref0 = 1.0,
+	T3 = 0, T4 = 1.25, T5 = 5.0, Tc = 0.4, Ts = 0.1
