@@ -9,7 +9,7 @@ Bus, Vn = 345.0, idx = 5, name = "Bus 5", xcoord = [1; 3], ycoord = [2; 3], area
 Area, idx = 1, name = "Area 1"
 Area, idx = 2, name = "Area 2"
 
-Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0'
+Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0
 
 # Parameter 'phi' of phase changer has unit 'Deg'
 Line, Vn = 345.0, Vn2 = 345.0, b = 0.0, bus1 = 1, bus2 = 3,
