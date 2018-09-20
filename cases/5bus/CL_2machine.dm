@@ -42,12 +42,19 @@ SW, Vn=345.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1", pmax = 6.0,
 Breaker, Vn = 345.0, bus = 1, fn = 60.0, idx = 1, line = "Line_2",
          name = "Breaker 1", t1 = 1.0, u1 = 1, t2 = 200.0, u2=1
     
-Syn6a, D = 0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
+#Syn2, D = 10.0, M = 10.0, Sn = 500.0, Vn = 345.0, bus = 1, fn = 60.0,
+#       gen = 1, idx = 1, name = "Syn 1", xd1 = 0.302
+
+#Syn2, D = 10.0, M = 10.0, Sn = 500.0, Vn = 345.0, bus = 2, fn = 60.0,
+#       gen = 2, idx = 2, name = "Syn 2", xd1 = 0.302
+
+
+Syn6a, D = 10.0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
        Tq10 = 0.12, Tq20 = 0.05, Vn = 345.0, bus = 1, fn = 60.0,
        gen = 1, idx = 1, name = "Syn 1", ra = 0, xd = 2.0,
        xd1 = 0.245, xd2 = 0.150, xq = 1.91, xq1 = 0.245, xq2 = 0.150
 
-Syn6a, D = 0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
+Syn6a, D = 10.0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
        Tq10 = 0.12, Tq20 = 0.05, Vn = 345.0, bus = 2, fn = 60.0,
        gen = 2, idx = 2, name = "Syn 2", ra = 0, xd = 2.0,
        xd1 = 0.245, xd2 = 0.150, xq = 1.91, xq1 = 0.245, xq2 = 0.150
