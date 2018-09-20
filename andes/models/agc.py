@@ -86,16 +86,22 @@ class AGC(ModelBase):
 					   'jac0': True,
 					   'fcall': True,
                       })
-		self._service.extend(['ace','pm'])
+		self._service.extend(['ace','pm','M','usyn','Mtot'])
 		self._fnamex.extend(['P_{agc tot}'])
 		self._params.extend(['Ki'])
 		self._init()
 
 	def init1(self, dae):
 		self.pm = [[]] * self.n
-		
+		self.M = [[]] * self.n
+		self.usyn = [[]] * self.n
+		self.Mtot = [[]] * self.n
+
 		for idx, item in enumerate(self.syn):
 				self.pm[idx] = self.read_data_ext('Synchronous', field='pm', idx=item)
+				self.usyn[idx] = self.read_data_ext('Synchronous', field='u', idx=item)
+				self.M[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
+				self.Mtot[idx] = sum(mul(self.usyn[idx],self.M[idx]))
 
 		self.copy_data_ext('BArea', field='ace', idx=self.BArea)
 
@@ -104,14 +110,18 @@ class AGC(ModelBase):
 
 	def gcall(self, dae):
 		for idx, item in enumerate(self.syn):
-			dae.g[self.pm[idx]] -=  dae.x[self.Pagc[idx]]
+			Kgen = div(self.M[idx],self.Mtot[idx])
+			dae.g[self.pm[idx]] -= mul(self.usyn[idx],Kgen, dae.x[self.Pagc[idx]])
 
 	def jac0(self, dae):
 		dae.add_jac(Fy0, self.Ki, self.Pagc, self.ace)
 
 	def gycall(self, dae):
 		for idx, item in enumerate(self.syn):
-			dae.add_jac(Gx, -1, self.pm[idx],self.Pagc[idx])
+			Kgen = div(self.M[idx],self.Mtot[idx])
+			dae.add_jac(Gx, -mul(self.usyn[idx],Kgen), self.pm[idx],self.Pagc[idx])
+
+class eAGC(ModelBase):
 
 #		for idx, item in enumerate(self.syn):
 #			Kgen = div(self.M[idx],self.Mtot[idx])
