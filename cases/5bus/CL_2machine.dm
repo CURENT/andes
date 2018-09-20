@@ -1,14 +1,15 @@
 # DOME format version 1.0
 
-Bus, Vn = 345.0, idx = 1, name = "Bus 1", xcoord = [1; 1], ycoord = [1; 2]
-Bus, Vn = 345.0, idx = 2, name = "Bus 2", xcoord = [4; 1], ycoord = [4; 2]
-Bus, Vn = 345.0, idx = 3, name = "Bus 3", xcoord = [2; 1], ycoord = [2; 2]
-Bus, Vn = 345.0, idx = 4, name = "Bus 4", xcoord = [3; 1], ycoord = [3; 2]
-Bus, Vn = 345.0, idx = 5, name = "Bus 5", xcoord = [1; 3], ycoord = [2; 3]
+Bus, Vn = 345.0, idx = 1, name = "Bus 1", xcoord = [1; 1], ycoord = [1; 2], area = 1
+Bus, Vn = 345.0, idx = 2, name = "Bus 2", xcoord = [4; 1], ycoord = [4; 2], area = 2
+Bus, Vn = 345.0, idx = 3, name = "Bus 3", xcoord = [2; 1], ycoord = [2; 2], area = 1
+Bus, Vn = 345.0, idx = 4, name = "Bus 4", xcoord = [3; 1], ycoord = [3; 2], area = 2
+Bus, Vn = 345.0, idx = 5, name = "Bus 5", xcoord = [1; 3], ycoord = [2; 3], area = 1
 
-Area, idx = 1, name = "5-Bus"
+Area, idx = 1, name = "Area 1"
+Area, idx = 2, name = "Area 2"
 
-Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0
+Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0'
 
 # Parameter 'phi' of phase changer has unit 'Deg'
 Line, Vn = 345.0, Vn2 = 345.0, b = 0.0, bus1 = 1, bus2 = 3,
@@ -38,8 +39,6 @@ PV, Vn = 345.0, bus = 2, busr = 2, idx = 2, name = "PV Bus 2",
 SW, Vn=345.0, bus = 1, busr = 1, idx = 1, name = "SW Bus 1", pmax = 6.0,
      pmin = -6.0, qmax = 100.0, qmin = -100.0, v0 = 1.05
 
-Fault, bus=5, tf=1.0, tc = 1.01, rf = 0, xf = 0.01
-
 Breaker, Vn = 345.0, bus = 1, fn = 60.0, idx = 1, line = "Line_2",
          name = "Breaker 1", t1 = 1.0, u1 = 1, t2 = 200.0, u2=1
     
@@ -52,14 +51,3 @@ Syn6a, D = 0, M = 5.7512, Sn = 500.0, Td10 = 5.0, Td20 = 0.05,
        Tq10 = 0.12, Tq20 = 0.05, Vn = 345.0, bus = 2, fn = 60.0,
        gen = 2, idx = 2, name = "Syn 2", ra = 0, xd = 2.0,
        xd1 = 0.245, xd2 = 0.150, xq = 1.91, xq1 = 0.245, xq2 = 0.150
-
-
-
-#Avr1, Ka = 200.0, Kf = 0.0012, Ta = 0.02, Te = 0.19, Tf = 1.0,
-#      bus = 1, idx = 1, name = "AVR 1", syn = 1, vmax = 9.99,
-#      vmin = 0.0
-#Avr1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 1.98, Tf = 1.0,
-#      bus = 2, idx = 2, name = "AVR 2", syn = 2, vmax = 2.05,
-#      vmin = 0.0
-
-
