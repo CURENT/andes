@@ -327,6 +327,8 @@ class TDS(RoutineBase):
 
         self.success = ret
 
+        self.dump_results()
+
         return ret
 
     def restore_values(self):

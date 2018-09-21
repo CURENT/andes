@@ -773,9 +773,6 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
     for r in routine:
         system.__dict__[r.lower()].run()
 
-	# Write Tiem Domain Output Simulation
-    if 'tds' in routine:
-        system.tds.dump_results()
     # Disable profiler and output results
     if profile:
         pr.disable()
