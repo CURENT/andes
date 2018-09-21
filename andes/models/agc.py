@@ -45,10 +45,10 @@ class BArea(ModelBase):
 		#Get BA Export Power
         self.copy_data_ext('Area', field='area_P0', dest='P0', idx=self.area)
         dae.y[self.Pexp] = self.P0
-
         dae.y[self.ace] = 0
 
     def gcall(self, dae):
+
         P = self.read_data_ext('Area', field='area_P0', idx=self.area)
         dae.g[self.Pexp] = dae.y[self.Pexp] - P
 
@@ -67,8 +67,6 @@ class BArea(ModelBase):
         dae.add_jac(Gy0, 1, self.ace, self.ace)
         dae.add_jac(Gy0, 1, self.ace, self.Pexp)
         dae.add_jac(Gy0, self.beta, self.ace, self.fcoi)
-
-
 
 class AGC(ModelBase):
 
@@ -122,8 +120,50 @@ class AGC(ModelBase):
 			dae.add_jac(Gx, -mul(self.usyn[idx],Kgen), self.pm[idx],self.Pagc[idx])
 
 class eAGC(ModelBase):
+    def __init__(self, system, name):
+        super(eAGC, self).__init__(system, name)
+        self._group = 'Control'
+        self._data.update({'cl': None,
+						   'tl': 0,
+						   'Pl': None,
+						   'BA' : None,
+                          })
+        self._descr.update({
+            'cl': 'Loss sharing coefficient (vector)',
+            'tl': 'Time of generator loss',
+            'Pl': 'Loss of power generation in pu (vector)',
+			'BA': 'Balancing Area that support the Gen loss',
+        })
+        self._mandatory.extend(['cl','tl','Pl','BA'])
+        self.calls.update({'gcall': True, 
+					   'init1': True,
+					   'jac0': False,
+					   'fcall': False,
+                      })
+        self._service.extend(['ace','en'])
+        self._params.extend(['cl','tl','Pl'])
+        self._init()
 
-#		for idx, item in enumerate(self.syn):
-#			Kgen = div(self.M[idx],self.Mtot[idx])
-#			dae.add_jac(Gx, -Kgen, self.pm[idx], self.Pagc)	
-#
+    def init1(self, dae):
+        self.ace = [[]] * self.n
+        for idx, item in enumerate(self.BA):
+            self.ace[idx] = self.read_data_ext('BArea', field='ace', idx=item)
+
+        self.en = zeros(self.n,1)
+        
+
+    def switch(self):
+        """Switch if time for eAgc has come"""
+        t = self.system.dae.t
+        for idx in range(0,self.n):
+            if t >= self.tl[idx]:
+                if self.en[idx] == 0:
+                    self.en[idx] = 1
+                    logger.info('Extended ACE <{}> activated at t = {}.'.format(self.idx[idx], t))
+
+    def gcall(self, dae):
+        self.switch()
+        
+        for idx in range(0,self.n):
+            dae.g[self.ace[idx]] -= mul(self.en[idx],self.cl[:,idx],self.Pl[idx])
+            
