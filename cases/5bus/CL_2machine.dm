@@ -9,8 +9,14 @@ Bus, Vn = 345.0, idx = 5, name = "Bus 5", xcoord = [1; 3], ycoord = [2; 3], area
 Area, idx = 1, name = "Area 1"
 Area, idx = 2, name = "Area 2"
 
-BArea, idx=1, name = "BArea 1", area = 1, syn = [1], beta = 74.627
-BArea, idx=2, name = "BArea 2", area = 2, syn = [2], beta = 74.627
+BArea, idx=1, name = "BArea 1", area = 1, syn = [1], beta = 74.627, tl = 1, Pl = 0.0
+BArea, idx=2, name = "BArea 2", area = 2, syn = [2], beta = 74.627, tl = 1, Pl = 0.0
+
+AGC, idx = 1, name = "AGC 1", BArea = 1, syn = [1], Ki = 0.5
+AGC, idx = 2, name = "AGC 2", BArea = 2, syn = [2], Ki = 0.5
+
+eAGC, idx=1, name = "EAGC 1", tl = 1.0, Pl = 1.0, BA = [1; 2], cl = [0.5; -0.5]
+#eAGC, idx=2, name = "EAGC 2", tl = 1.0, Pl = 0.5, BA = [1; 2], cl = [0.5; -0.5]
 
 Region, Ptol = 9.9999, idx = 1, name = "5Bus   5", slack = 1.0
 
