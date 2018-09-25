@@ -90,7 +90,7 @@ def read(file, system):
     for data in raw['bus']:
         """version 32:
           0,   1,      2,     3,    4,   5,  6,   7,  8
-          ID, NAME, BasekV, Type, Area Zone Owner Va, Vm
+          ID, NAME, BasekV, Type, Area Zone Owner Vm, Va
         """
         idx = data[0]
         ty = data[3]
