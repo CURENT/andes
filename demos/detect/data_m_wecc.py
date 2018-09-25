@@ -9,7 +9,7 @@ os.system('python run_wecc.py')
 # ==================== Generator trip ========================#
 os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/WECC/GT')
 os.system('andes GT_*.dm -r tds --tf 10 --ncpu=8')
-bus_count=189
+bus_count=191
 for filename in glob.glob('*.dat'):
     with open (filename) as f:
         reader = csv.reader(f, delimiter="\t")
@@ -21,10 +21,10 @@ for filename in glob.glob('*.dat'):
     for idx,line in enumerate(raw_data):
             ddc=line[0].split()
             time[idx,0]=ddc[0]
-            for idx_2,freq_idx in enumerate(range(996,1991)):
-                frequency[idx,idx_2]=ddc[freq_idx]
-            for idx_3, vol_idx in enumerate(range(3981, 4976)):
-                voltage[idx, idx_3] = ddc[vol_idx]
+            for idx_2,freq_idx in enumerate(range(1,192)):
+                frequency[idx,idx_2]=ddc[3*(freq_idx-1)+2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574+(vol_idx-1)*2]
     voltage=np.concatenate((time,voltage),axis=1)
     frequency=np.concatenate((time,frequency),axis=1)
 
@@ -36,8 +36,8 @@ for filename in glob.glob('*.dat'):
     os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/WECC/GT')
 # ==================== Load shedding ========================
 os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/WECC/LS')
-os.system('andes LS_*.dm -r t --tf 0.1 --ncpu=8')
-bus_count=995
+os.system('andes LS_*.dm -r tds --tf 10 --ncpu=8')
+bus_count=191
 for filename in glob.glob('*.dat'):
     with open (filename) as f:
         reader = csv.reader(f, delimiter="\t")
@@ -49,10 +49,10 @@ for filename in glob.glob('*.dat'):
     for idx,line in enumerate(raw_data):
             ddc=line[0].split()
             time[idx,0]=ddc[0]
-            for idx_2,freq_idx in enumerate(range(996,1991)):
-                frequency[idx,idx_2]=ddc[freq_idx]
-            for idx_3, vol_idx in enumerate(range(3981, 4976)):
-                voltage[idx, idx_3] = ddc[vol_idx]
+            for idx_2, freq_idx in enumerate(range(1, 192)):
+                frequency[idx, idx_2] = ddc[3 * (freq_idx - 1) + 2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574 + (vol_idx - 1) * 2]
     voltage=np.concatenate((time,voltage),axis=1)
     frequency=np.concatenate((time,frequency),axis=1)
 
@@ -65,8 +65,8 @@ for filename in glob.glob('*.dat'):
 
 # ==================== Line trip ========================
 os.chdir('C:/Users/zhan2/PycharmProjects/andes_github/demos/WECC/LT')
-os.system('andes LT_*.dm -r t --tf 0.1 --ncpu=8')
-bus_count=995
+os.system('andes LT_*.dm -r tds --tf 10 --ncpu=8')
+bus_count=191
 for filename in glob.glob('*.dat'):
     with open (filename) as f:
         reader = csv.reader(f, delimiter="\t")
@@ -78,10 +78,10 @@ for filename in glob.glob('*.dat'):
     for idx,line in enumerate(raw_data):
             ddc=line[0].split()
             time[idx,0]=ddc[0]
-            for idx_2,freq_idx in enumerate(range(996,1991)):
-                frequency[idx,idx_2]=ddc[freq_idx]
-            for idx_3, vol_idx in enumerate(range(3981, 4976)):
-                voltage[idx, idx_3] = ddc[vol_idx]
+            for idx_2, freq_idx in enumerate(range(1, 192)):
+                frequency[idx, idx_2] = ddc[3 * (freq_idx - 1) + 2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574 + (vol_idx - 1) * 2]
     voltage=np.concatenate((time,voltage),axis=1)
     frequency=np.concatenate((time,frequency),axis=1)
 
