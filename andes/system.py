@@ -33,7 +33,7 @@ from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 try:
-    from .utils.streaming import Streaming
+    from andes_addon.streaming import Streaming
     STREAMING = True
 except ImportError:
     STREAMING = False
