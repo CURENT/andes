@@ -104,7 +104,7 @@ def read(file, system):
 
     # add device elements to system
     sw = {}  # idx:a0
-    max_bus=[]
+    max_bus = []
     for data in raw['bus']:
         """version 32:
           0,   1,      2,     3,    4,   5,  6,   7,  8
@@ -216,9 +216,9 @@ def read(file, system):
         system.Line.elem_add(**param)
 
     xf_3_count = 1
-    temp=[]
+    # temp = []
     for data in raw['transf']:
-        if len(data) ==4:
+        if len(data) == 4:
             """
             I,J,K,CKT,CW,CZ,CM,MAG1,MAG2,NMETR,'NAME',STAT,O1,F1,...,O4,F4
             R1-2,X1-2,SBASE1-2
@@ -249,7 +249,7 @@ def read(file, system):
             }
             system.Line.elem_add(**param)
         else:
-
+            print('3 winding works')
             """
             I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
             R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
@@ -266,16 +266,16 @@ def read(file, system):
             }
             system.Bus.elem_add(**param)
 
-            r=[]
-            x=[]
+            r = []
+            x = []
             r.append((data[1][0]+data[1][6]-data[1][3])/2)
             r.append((data[1][3]+data[1][0]-data[1][6])/2)
             r.append((data[1][6]+data[1][3]-data[1][0])/2)
             x.append((data[1][1]+data[1][7]-data[1][4])/2)
             x.append((data[1][4]+data[1][1]-data[1][7])/2)
             x.append((data[1][7]+data[1][4]-data[1][1])/2)
-            for i in range(0,3):
-                param={
+            for i in range(0, 3):
+                param = {
                     'trasf': True,
                     'bus1': data[0][i],
                     'bus2': max_bus+xf_3_count,
@@ -290,15 +290,11 @@ def read(file, system):
                     'Vn2': system.Bus.get_field('Vn', data[0][0]),
                 }
                 system.Line.elem_add(**param)
-            xf_3_count+=1
-            # raise NotImplementedError(
-            #     'Three-winding transformer not implemented')
-
+            xf_3_count += 1
 
     for data in raw['swshunt']:
         # I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
         # BINIT, N1, B1, N2, B2, ... N8, B8
-
         bus = data[0]
         vn = system.Bus.get_field('Vn', bus)
         param = {

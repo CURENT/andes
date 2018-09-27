@@ -134,7 +134,7 @@ header = """# DOME format version 1.0
 INCLUDE, WECC_WIND0.dm
 
 """
-event_tpl = 'Breaker, bus={bus}, t1 = 1, line = \"{line}\"'
+event_tpl = 'Breaker, bus={bus}, t1 = 1, u1=1 , line = \"{line}\"'
 
 
 for idx_count, line_idx in enumerate(sys.Line.idx):

@@ -169,7 +169,7 @@ class PFLOW(RoutineBase):
 
         # self.solver.linsolve(Bp, p)
         self.system.dae.y[no_sw] = p
-        deg=p/3.14*180
+        # deg = p/3.14*180
 
         self.solved = True
         self.niter = 1
