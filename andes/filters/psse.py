@@ -262,7 +262,7 @@ def read(file, system):
                 'name': '_'.join(str(data[0][:3])),
                 'Vn': system.Bus.get_field('Vn', data[0][0]),
                 'voltage': data[1][-2],
-                'angle': data[1][-1]
+                'angle': data[1][-1]/180*3.14
             }
             system.Bus.elem_add(**param)
 
