@@ -1,4 +1,7 @@
 import importlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class JIT(object):
@@ -13,7 +16,13 @@ class JIT(object):
         self.loaded = 0
 
     def jit_load(self):
-        """import and instantiate this JIT object"""
+        """
+        Import and instantiate this JIT object
+
+        Returns
+        -------
+
+        """
         try:
             model = importlib.import_module('.' + self.model, 'andes.models')
             device = getattr(model, self.device)
@@ -23,17 +32,17 @@ class JIT(object):
             self.system.group_add(g)
             self.system.__dict__[g].register_model(self.name)
 
-            self.system.DevMan.register_device(
-                self.name)  # register device after loading
+            # register device after loading
+            self.system.devman.register_device(self.name)
             self.loaded = 1
-            self.system.Log.debug('Imported model <{:s}.{:s}>.'.format(
+            logger.debug('Imported model <{:s}.{:s}>.'.format(
                 self.model, self.device))
         except ImportError:
-            self.system.Log.error(
+            logger.error(
                 'non-JIT model <{:s}.{:s}> import error'
                 .format(self.model, self.device))
         except AttributeError:
-            self.system.Log.error(
+            logger.error(
                 'model <{:s}.{:s}> not exist. Check models/__init__.py'
                 .format(self.model, self.device))
 
@@ -43,7 +52,7 @@ class JIT(object):
         if attr in self.system.__dict__[self.name].__dict__:
             return self.system.__dict__[self.name].__dict__[attr]
         else:
-            self.system.Log.warning(
+            logger.warning(
                 'Instance <{:s}> does not have <{:s}> attribute.'.format(
                     self.name, attr))
 

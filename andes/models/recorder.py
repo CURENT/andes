@@ -48,7 +48,7 @@ class Recorder(ModelBase):
 
         # include line flow variables in algebraic variables
         nflows = 0
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
                      4 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
@@ -64,18 +64,18 @@ class Recorder(ModelBase):
 
             # for each model
             for m in model:
-                assert m in self.system.DevMan.devices
+                assert m in self.system.devman.devices
 
                 m_instance = self.system.__dict__[m]
                 offset = [0]
                 if variable == 'ALL':
                     variable = m_instance._states + m_instance._algebs
                     offset = [0] * len(m_instance._states) + [
-                        self.system.DAE.n
+                        self.system.dae.n
                     ] * len(m_instance._algebs)
                 elif isinstance(variable, str):
                     if variable in m_instance._algebs:
-                        offset = [self.system.DAE.n]
+                        offset = [self.system.dae.n]
                     variable = [variable]
 
                 # for each variable

@@ -4,4 +4,4 @@ from .dae import DAE  # NOQA
 from .varname import VarName  # NOQA
 from .varout import VarOut  # NOQA
 from .call import Call  # NOQA
-from .report import preamble, Report  # NOQA
+from .report import Report  # NOQA

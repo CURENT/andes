@@ -1,11 +1,16 @@
 import numpy as np
 
 from cvxopt import matrix
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VarOut(object):
     """
     Output variable value recorder
+
+    TODO: merge in tds.py
     """
 
     def __init__(self, system):
@@ -21,23 +26,23 @@ class VarOut(object):
         """
         Record the state/algeb values at time t to self.vars
         """
-        max_cache = int(self.system.TDS.max_cache)
+        max_cache = int(self.system.tds.config.max_cache)
         if len(self.vars) >= max_cache > 0:
             self.dump()
             self.vars = list()
             self.t = list()
             self.k = list()
-            self.system.Log.debug(
-                'VarOut cache cleared at simulation t = {:g}.'.format(
-                    self.system.DAE.t))
+            logger.debug(
+                'varout cache cleared at simulation t = {:g}.'.format(
+                    self.system.dae.t))
             self._mode = 'a'
 
         self.t.append(t)
         self.k.append(step)
-        self.vars.append(matrix([self.system.DAE.x, self.system.DAE.y]))
+        self.vars.append(matrix([self.system.dae.x, self.system.dae.y]))
 
-        if self.system.TDS.compute_flows:
-            self.system.DAE.y = self.system.DAE.y[:self.system.DAE.m]
+        if self.system.tds.config.compute_flows:
+            self.system.dae.y = self.system.dae.y[:self.system.dae.m]
 
         # self.system.EAGC_module.stream_to_geovis()
 
@@ -105,7 +110,7 @@ class VarOut(object):
         """
         ret = False
 
-        if self.system.Files.no_output:
+        if self.system.files.no_output:
             # return ``True`` because it did not fail
             return True
 
@@ -124,8 +129,8 @@ class VarOut(object):
 
         # compute the total number of columns, excluding time
         if not system.Recorder.n:
-            n_vars = system.DAE.m + system.DAE.n
-            if system.TDS.compute_flows:
+            n_vars = system.dae.m + system.dae.n
+            if system.tds.config.compute_flows:
                 n_vars += 2 * system.Bus.n + 4 * system.Line.n
             idx = list(range(n_vars))
 
@@ -143,12 +148,12 @@ class VarOut(object):
             out += template.format(*values) + '\n'
 
         try:
-            with open(system.Files.dat, self._mode) as f:
+            with open(system.files.dat, self._mode) as f:
                 f.write(out)
             ret = True
 
         except IOError:
-            system.Log.error('I/O Error while writing the dat file.')
+            logger.error('I/O Error while writing the dat file.')
 
         return ret
 
@@ -162,8 +167,8 @@ class VarOut(object):
         ret = False
         out = ''
         system = self.system
-        dae = self.system.DAE
-        varname = self.system.VarName
+        dae = self.system.dae
+        varname = self.system.varname
         template = '{:>6g}, {:>25s}, {:>25s}\n'
 
         # header line
@@ -171,7 +176,7 @@ class VarOut(object):
 
         # include line flow variables in algebraic variables
         nflows = 0
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
                      4 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
@@ -179,7 +184,7 @@ class VarOut(object):
         # output variable indices
         if system.Recorder.n == 0:
             state_idx = list(range(dae.n))
-            algeb_idx = list(range(dae.n, dae.m + nflows))
+            algeb_idx = list(range(dae.n, dae.n + dae.m + nflows))
             idx = state_idx + algeb_idx
         else:
             idx = system.Recorder.varout_idx
@@ -192,10 +197,10 @@ class VarOut(object):
             out += template.format(e + 1, uname[i], fname[i])
 
         try:
-            with open(self.system.Files.lst, 'w') as f:
+            with open(self.system.files.lst, 'w') as f:
                 f.write(out)
             ret = True
         except IOError:
-            self.system.Log.error('I/O Error while writing the lst file.')
+            logger.error('I/O Error while writing the lst file.')
 
         return ret

@@ -53,12 +53,12 @@ class WindBase(ModelBase):
         super(WindBase, self).setup()
         # self.vwa = ones(self.n, 1)
         #   todo: remove this after wind turbine _init
-        # self.system.DAE.x[self.vw] = ones(self.n, 1)
+        # self.system.dae.x[self.vw] = ones(self.n, 1)
 
     def servcall(self, dae):
         self.iT = div(1, self.T)
-        self.t0 = self.system.TDS.t0
-        self.tf = self.system.TDS.tf
+        self.t0 = self.system.tds.config.t0
+        self.tf = self.system.tds.config.tf
 
     def init1(self, dae):
         self.servcall(dae)

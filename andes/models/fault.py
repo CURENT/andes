@@ -3,6 +3,9 @@ from .base import ModelBase
 from ..utils.math import zeros
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Fault(ModelBase):
@@ -70,24 +73,24 @@ class Fault(ModelBase):
 
         for i in range(self.n):
             if self.tf[i] == self.time:
-                self.system.Log.info(
+                logger.info(
                     ' <Fault> Applying fault on Bus <{}> at t={}.'.format(
                         self.bus[i], self.tf[i]))
                 self.u[i] = 1
                 self.active += 1
-                self.angle0 = self.system.DAE.y[self.system.Bus.a]
-                self.volt0 = self.system.DAE.y[self.system.Bus.n:]
-                self.system.DAE.factorize = True
+                self.angle0 = self.system.dae.y[self.system.Bus.a]
+                self.volt0 = self.system.dae.y[self.system.Bus.n:]
+                self.system.dae.factorize = True
 
             elif self.tc[i] == self.time:
-                self.system.Log.info(
+                logger.info(
                     ' <Fault> Clearing fault on Bus <{}> at t={}.'.format(
                         self.bus[i], self.tc[i]))
                 self.u[i] = 0
                 self.active -= 1
-                self.system.DAE.y[self.system.Bus.n:] = self.volt0
-                # self.system.DAE.y[self.a] = self.anglepre
-                self.system.DAE.factorize = True
+                self.system.dae.y[self.system.Bus.n:] = self.volt0
+                # self.system.dae.y[self.a] = self.anglepre
+                self.system.dae.factorize = True
 
     def gcall(self, dae):
         if not self.active:

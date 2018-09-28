@@ -3,10 +3,13 @@ from ..utils.math import zeros, ones
 from ..utils.math import ageb, aleb, aandb, agtb  # NOQA
 from ..utils.math import index, altb  # NOQA
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DAE(object):
-    """Class for numerical Differential Algebraic Equations (DAE)"""
+    """Class for numerical Differential Algebraic Equations (dae)"""
 
     def __init__(self, system):
         self.system = system
@@ -351,7 +354,7 @@ class DAE(object):
         self.init_jac0()
 
     def resize(self):
-        """Resize DAE and and extend for init1 variables
+        """Resize dae and and extend for init1 variables
         """
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
@@ -529,7 +532,7 @@ class DAE(object):
 
     def reset_Ac(self):
         """
-        Reset ``DAE.Ac`` sparse matrix for disabled equations
+        Reset ``dae.Ac`` sparse matrix for disabled equations
         due to hard_limit and anti_windup limiters.
 
         :return: None
@@ -674,7 +677,7 @@ class DAE(object):
             value = list(self.__dict__[eq])
 
         out = ''
-        for name, val, idx in zip(self.system.VarName.__dict__[key], value,
+        for name, val, idx in zip(self.system.varname.__dict__[key], value,
                                   range(len(value))):
             out += '{:20s} [{:>12.4f}] {:g}\n'.format(name, val, idx)
         return out
@@ -688,7 +691,7 @@ class DAE(object):
         elif eq == 'g':
             key = 'unamey'
         idx = 0
-        for m, n in zip(self.system.VarName.__dict__[key], self.__dict__[eq]):
+        for m, n in zip(self.system.varname.__dict__[key], self.__dict__[eq]):
             if n == val:
                 return m, idx
             idx += 1
@@ -706,6 +709,30 @@ class DAE(object):
 
     def reset_small_g(self):
         pass
+
+    def check_diag(self, jac, name):
+        """
+        Check matrix ``jac`` for diagonal elements that equals 0
+        """
+        system = self.system
+        pos = []
+        names = []
+        pairs = ''
+        size = jac.size
+        diag = jac[0:size[0] ** 2:size[0] + 1]
+
+        for idx in range(size[0]):
+            if abs(diag[idx]) <= 1e-8:
+                pos.append(idx)
+
+        for idx in pos:
+            names.append(system.varname.__dict__[name][idx])
+
+        if len(names) > 0:
+            for i, j in zip(pos, names):
+                pairs += '{0}: {1}\n'.format(i, j)
+            logger.debug('Jacobian diagonal check:')
+            logger.debug(pairs)
 
     # def add_jac(self, m, val, row, col):
     #     """Add values (val, row, col) to Jacobian m
@@ -738,10 +765,10 @@ class DAE(object):
     #     if type(col) is range:
     #         col = list(col)
     #     for i, j in zip(row, col):
-    #         old_val.append(self.system.DAE.__dict__[m][i, j])
+    #         old_val.append(self.system.dae.__dict__[m][i, j])
     #     size = self.__dict__[m].size
-    #     self.system.DAE.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
-    #     self.system.DAE.__dict__[m] += spmatrix(val, row, col, size, 'd')
+    #     self.system.dae.__dict__[m] -= spmatrix(old_val, row, col, size, 'd')
+    #     self.system.dae.__dict__[m] += spmatrix(val, row, col, size, 'd')
     #
     #
     # def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):

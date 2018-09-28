@@ -132,7 +132,7 @@ class PSS1(ModelBase):
         self.set_flag('T6', 'd1', reset_val=True)
         self.set_flag('T8', 'd2', reset_val=True)
         self.set_flag('T10', 'd3', reset_val=True)
-        self.toSg = div(self.system.Settings.mva, self.Sg)
+        self.toSg = div(self.system.mva, self.Sg)
         self.v0 = dae.y[self.v]
         self.update_ctrl()
 
@@ -444,7 +444,7 @@ class PSS2(ModelBase):
         self.T34 = mul(self.T3, div(1, self.T4))
         self.T56 = mul(self.T5, div(1, self.T6))
         self.KsT56 = mul(self.Ks, self.T5, div(1, self.T6))
-        self.toSg = self.system.Settings.mva * div(1, self.Sg)
+        self.toSg = self.system.mva * div(1, self.Sg)
         self.update_ctrl()
 
     def update_ctrl(self):

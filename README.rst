@@ -2,8 +2,8 @@
 Andes
 ===============================
 
-.. image:: https://img.shields.io/travis/cuihantao/andes.svg
-        :target: https://travis-ci.org/cuihantao/andes
+.. image:: https://img.shields.io/travis/cuihantao/Andes.svg
+        :target: https://travis-ci.org/cuihantao/Andes
 
 .. image:: https://img.shields.io/pypi/v/andes.svg
         :target: https://pypi.python.org/pypi/andes
@@ -11,7 +11,7 @@ Andes
 
 A Python package for power system research
 
-* Free software: 3-clause BSD license
+* Open-source software: Apache License
 * Documentation: (COMING SOON!) https://cuihantao.github.io/andes.
 
 Features

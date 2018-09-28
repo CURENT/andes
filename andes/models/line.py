@@ -7,8 +7,9 @@ from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 from ..utils.math import polar, conj
-from ..consts import DEBUG
 from ..consts import deg2rad
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Line(ModelBase):
@@ -113,7 +114,7 @@ class Line(ModelBase):
         self._param_to_matrix()
 
         self.nb = int(self.system.Bus.n)
-        self.system.Settings.nseries += self.n
+        self.system.config.nseries += self.n
 
         self.r += 1e-10
         self.b += 1e-10
@@ -155,7 +156,7 @@ class Line(ModelBase):
         """build Bp and Bpp for fast decoupled method"""
         if not self.n:
             return
-        solver = self.system.SPF.solver.lower()
+        method = self.system.pflow.config.method.lower()
 
         # Build B prime matrix
         y1 = mul(
@@ -167,7 +168,7 @@ class Line(ModelBase):
         m = polar(1.0, self.phi * deg2rad)  # neglected tap ratio
         self.mconj = conj(m)
         m2 = matrix(1.0, (self.n, 1), 'z')
-        if solver is 'fdxb':
+        if method == 'fdxb':
             # neglect line resistance in Bp in XB method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -191,7 +192,8 @@ class Line(ModelBase):
         )  # y2 neglected line charging shunt, and g2 is usually 0 in HV lines
         m = self.tap + 0j  # neglected phase shifter
         m2 = abs(m)**2 + 0j
-        if solver is 'fdbx' or 'fdpf':
+
+        if method in ('fdbx', 'fdpf'):
             # neglect line resistance in Bpp in BX method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -282,10 +284,10 @@ class Line(ModelBase):
         self.copy_data_ext('Bus', 'a', dest='a', idx=None, astype=list)
         self.copy_data_ext('Bus', 'v', dest='v', idx=None, astype=list)
 
-        solver = self.system.SPF.solver.lower()
+        method = self.system.pflow.config.method.lower()
         self.build_y()
         self.incidence()
-        if solver in ('fdpf', 'fdbx', 'fdxb'):
+        if method in ('fdpf', 'fdbx', 'fdxb'):
             self.build_b()
 
     def gcall(self, dae):
@@ -367,8 +369,8 @@ class Line(ModelBase):
         """switch the status of Line idx"""
         self.u[self.uid[idx]] = u
         self.rebuild = True
-        self.system.DAE.factorize = True
-        self.log('<Line> Status switch to {} on idx {}.'.format(u, idx), DEBUG)
+        self.system.dae.factorize = True
+        logger.debug('<Line> Status switch to {} on idx {}.'.format(u, idx))
 
     def build_name_from_bus(self):
         """Rebuild line names from bus names"""
@@ -379,17 +381,17 @@ class Line(ModelBase):
         if not self.n:
             return
 
-        mpq = self.system.DAE.m + 2 * self.system.Bus.n
+        mpq = self.system.dae.m + 2 * self.system.Bus.n
         nl = self.n
 
         # Pij
         xy_idx = range(mpq, mpq + nl)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Pij',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='P_{ij}',
@@ -397,12 +399,12 @@ class Line(ModelBase):
 
         # Pji
         xy_idx = range(mpq + nl, mpq + 2 * nl)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Pji',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='P_{ji}',
@@ -410,12 +412,12 @@ class Line(ModelBase):
 
         # Qij
         xy_idx = range(mpq + 2 * nl, mpq + 3 * nl)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Qij',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='Q_{ij}',
@@ -423,12 +425,12 @@ class Line(ModelBase):
 
         # Qji
         xy_idx = range(mpq + 3 * nl, mpq + 4 * nl)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='unamey',
             xy_idx=xy_idx,
             var_name='Qji',
             element_name=self.name)
-        self.system.VarName.append(
+        self.system.varname.append(
             listname='fnamey',
             xy_idx=xy_idx,
             var_name='Q_{ji}',
@@ -436,12 +438,12 @@ class Line(ModelBase):
 
         # # Sij
         # xy_idx = range(mpq + 4 * nl, mpq + 5 * nl)
-        # self.system.VarName.append(
+        # self.system.varname.append(
         #     listname='unamey',
         #     xy_idx=xy_idx,
         #     var_name='Sij',
         #     element_name=self.name)
-        # self.system.VarName.append(
+        # self.system.varname.append(
         #     listname='fnamey',
         #     xy_idx=xy_idx,
         #     var_name='S_{ij}',
@@ -449,12 +451,12 @@ class Line(ModelBase):
         #
         # # Qji
         # xy_idx = range(mpq + 5 * nl, mpq + 6 * nl)
-        # self.system.VarName.append(
+        # self.system.varname.append(
         #     listname='unamey',
         #     xy_idx=xy_idx,
         #     var_name='Sji',
         #     element_name=self.name)
-        # self.system.VarName.append(
+        # self.system.varname.append(
         #     listname='fnamey',
         #     xy_idx=xy_idx,
         #     var_name='S_{ji}',
