@@ -5,6 +5,5 @@ scipy
 texttable
 matplotlib
 pandas
-pyzmq
 sympy
 progressbar
