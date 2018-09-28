@@ -128,8 +128,6 @@ def read_dat(dat, x, y):
         return None, None
 
     for num, line in enumerate(dfile_raw):
-        if num == 0:
-            continue
         thisline = line.rstrip('\n').split()
         if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
             errid = 1
