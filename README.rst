@@ -12,7 +12,7 @@ Andes
 A Python package for power system research
 
 * Open-source software: Apache License
-* Documentation: (COMING SOON!) https://cuihantao.github.io/andes.
+* Documentation: https://andes.readthedocs.io.
 
 Features
 --------
