@@ -4,6 +4,9 @@ import re
 
 from ..consts import deg2rad
 from ..utils.math import to_number
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
@@ -48,18 +51,18 @@ def read(file, system):
             data = data.split(',')
 
             mva = float(data[1])
-            system.Settings.mva = mva
-            system.Settings.freq = float(data[5])
+            system.config.mva = mva
+            system.config.freq = float(data[5])
             version = int(data[2])
 
             if not version:
                 version = int(rawd.search(line).group(0).strip('rawd'))
             if version < 32 or version > 33:
-                system.Log.warning(
+                logger.warning(
                     'RAW file version is not 32 or 33. Error may occur.')
             continue
         elif num == 1:  # store the case info line
-            system.Log.info(line)
+            logger.info(line)
             continue
         elif num == 2:
             continue
@@ -67,7 +70,7 @@ def read(file, system):
             if line[0:2] == '0 ' or line[0:3] == ' 0 ':  # end of block
                 b += 1
                 continue
-            elif line[0] is 'Q':  # end of file
+            elif line[0] == 'Q':  # end of file
                 break
             data = line.split(',')
 
@@ -322,7 +325,7 @@ def readadd(file, system):
         if i in needed:
             needed.remove(i)
 
-    system.Log.warning('Models currently unsupported: {}'.format(
+    logger.warning('Models currently unsupported: {}'.format(
         ', '.join(needed)))
 
     return retval
@@ -549,13 +552,13 @@ def add_dyn(system, model, data):
         system.PSS2.elem_add(**param)
 
     else:
-        system.Log.warning('Skipping unsupported model <{}> on bus {}'.format(
+        logger.warning('Skipping unsupported model <{}> on bus {}'.format(
             model, data[0]))
 
 
 def get_idx(system, group, param, fkey):
     ret = None
-    for key, item in system.DevMan.group.items():
+    for key, item in system.devman.group.items():
         if key != group:
             continue
         for name, dev in item.items():
@@ -568,7 +571,7 @@ def get_idx(system, group, param, fkey):
 
 def get_param(system, group, param, fkey):
     ret = None
-    for key, item in system.DevMan.group.items():
+    for key, item in system.devman.group.items():
         if key != group:
             continue
         for name, dev in item.items():

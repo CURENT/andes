@@ -1,4 +1,3 @@
-import platform
 import importlib
 from time import strftime
 
@@ -8,26 +7,14 @@ from ..formats import all_formats
 from ..utils import elapsed
 from andes import __version__ as version
 
-year = '2018'
-
-
-def preamble(disable=False):
-    """Return preamble string for command line use"""
-    if disable:
-        return ''
-
-    message = '\n'
-    message += 'ANDES ' + version + '\n'
-    message += 'Copyright (C) 2015-' + year + ' Hantao Cui\n'
-    message += 'ANDES comes with ABSOLUTELY NO WARRANTY\n\n'
-    message += 'Platform:    ' + platform.system() + '\n'
-    message += 'Interpreter: ' + 'Python ' + platform.python_version() + '\n'
-    message += 'Session:     ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n'
-    return message
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Report(object):
-    """Report class to store system static analysis reports"""
+    """
+    Report class to store system static analysis reports
+    """
 
     def __init__(self, system):
         self.system = system
@@ -57,24 +44,34 @@ class Report(object):
     def info(self):
         info = list()
         info.append('ANDES' + ' ' + version + '\n')
-        info.append('Copyright (C) 2015-' + year + ' Hantao Cui\n\n')
+        info.append('Copyright (C) 2015-2018 Hantao Cui\n\n')
         info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
         info.append('Use this software AT YOUR OWN RISK\n\n')
-        info.append('Case file: ' + self.system.Files.case + '\n')
-        info.append('Report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") +
+        info.append('Case file: ' + self.system.files.case + '\n')
+        info.append('report Time: ' + strftime("%m/%d/%Y %I:%M:%S %p") +
                     '\n\n')
-        if self.system.status['pf_solved'] is True:
+        if self.system.pflow.solved is True:
             info.append('Power flow method: ' +
-                        self.system.SPF.solver.upper() + '\n')
-            info.append('Number of iterations: ' + str(self.system.SPF.iter) +
+                        self.system.pflow.config.method.upper() + '\n')
+            info.append('Number of iterations: ' + str(self.system.pflow.config.iter) +
                         '\n')
             info.append('Flat-start: ' +
-                        ('Yes' if self.system.SPF.flatstart else 'No') + '\n')
+                        ('Yes' if self.system.pflow.config.flatstart else 'No') + '\n')
 
         return info
 
     def _update_summary(self, system):
-        """Update the summary data"""
+        """
+        Update the summary data
+
+        Parameters
+        ----------
+        system
+
+        Returns
+        -------
+        None
+        """
         self.basic.update({
             'nbus': system.Bus.n,
             'ngen': system.PV.n + system.SW.n,
@@ -88,8 +85,8 @@ class Report(object):
 
     def _update_extended(self, system):
         """Update the extended data"""
-        if self.system.status['pf_solved'] is False:
-            self.system.Log.warning(
+        if self.system.pflow.solved is False:
+            logger.warning(
                 'Cannot update extended summary. Power flow not solved.')
             return
 
@@ -130,7 +127,17 @@ class Report(object):
         })
 
     def update(self, content=None):
-        """Update values based on requested content"""
+        """
+        Update values based on the requested content
+
+        Parameters
+        ----------
+        content
+
+        Returns
+        -------
+
+        """
         if not content:
             return
         if content == 'summary' or 'extended' or 'powerflow':
@@ -148,20 +155,20 @@ class Report(object):
             'summary', 'extended', 'powerflow'
 
         """
-        if self.system.Files.no_output is True:
+        if self.system.files.no_output is True:
             return
 
         t, _ = elapsed()
 
         if not content:
-            self.system.Log.warning('Report content not specified.')
+            logger.warning('report content not specified.')
             return
 
         self.update(content)
 
         system = self.system
-        file = system.Files.output
-        export = all_formats.get(system.Settings.export, 'txt')
+        file = system.files.output
+        export = all_formats.get(system.config.export, 'txt')
         module = importlib.import_module('andes.formats.' + export)
         dump_data = getattr(module, 'dump_data')
 
@@ -204,11 +211,11 @@ class Report(object):
 
             data.append([Pcol, Qcol])
 
-        if content == 'powerflow':
+        if content == 'powerflow' and system.pflow.solved:
             idx, name, Vm, Va, Pg, Qg, Pl, Ql = system.get_busdata()
-            Va_unit = 'deg' if system.SPF.usedegree else 'rad'
+            Va_unit = 'deg' if system.pflow.config.usedegree else 'rad'
             text.append(['BUS DATA:\n'])
-            # todo: consider system.SPF.units
+            # todo: consider system.pflow.config.units
             header.append([
                 'Vm(pu)', 'Va({:s})'.format(Va_unit), 'Pg (pu)', 'Qg (pu)',
                 'Pl (pu)', 'Ql (pu)'
@@ -240,18 +247,17 @@ class Report(object):
             text.append(['OTHER ALGEBRAIC VARIABLES:\n'])
             header.append([''])
             rowname.append(
-                system.VarName.unamey[2 * system.Bus.n:system.DAE.m])
-            data.append([round(i, 5) for i in system.DAE.y[2 * system.Bus.n:]])
+                system.varname.unamey[2 * system.Bus.n:system.dae.m])
+            data.append([round(i, 5) for i in system.dae.y[2 * system.Bus.n:]])
 
             # Additional State variable data
-            if system.DAE.n:
+            if system.dae.n:
                 text.append(['OTHER STATE VARIABLES:\n'])
                 header.append([''])
-                rowname.append(system.VarName.unamex[:])
-                data.append([round(i, 5) for i in system.DAE.x[:]])
+                rowname.append(system.varname.unamex[:])
+                data.append([round(i, 5) for i in system.dae.x[:]])
 
         dump_data(text, header, rowname, data, file)
 
         _, s = elapsed(t)
-        system.Log.info('{} report written to <{:s}> in {:s}.'.format(
-            content.capitalize(), system.Files.output, s))
+        logger.info('report written to <{:s}> in {:s}.'.format(system.files.output, s))

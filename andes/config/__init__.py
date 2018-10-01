@@ -1,14 +1,14 @@
-from .base import SettingsBase  # NOQA
-from .settings import Settings  # NOQA
-from .spf import SPF  # NOQA
+from .base import ConfigBase  # NOQA
+from .system import System  # NOQA
+from .pflow import Pflow  # NOQA
 from .cpf import CPF  # NOQA
-from .tds import TDS  # NOQA
-from .sssa import SSSA  # NOQA
+from .tds import Tds  # NOQA
+from .eig import Eig  # NOQA
 
 __all__ = [
-    'settings',
-    'spf',
+    'system',
+    'pflow',
     'tds',
-    'sssa',
+    'eig',
     'cpf',
 ]

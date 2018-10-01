@@ -102,15 +102,15 @@ class PV(Stagen):
         dae.y[self.q] = mul(self.u, self.qg)
 
     def gcall(self, dae):
-        if self.system.SPF.pv2pq and \
-                self.system.SPF.iter >= self.system.SPF.ipv2pq:
+        if self.system.pflow.config.pv2pq and \
+                self.system.pflow.config.iter >= self.system.pflow.config.ipv2pq:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)
             idx_desc = sort_idx(d_max, reverse=True)
 
-            nabove = nbelow = self.system.SPF.npv2pq
-            nconv = min(self.system.SPF.npv2pq, self.n)
+            nabove = nbelow = self.system.pflow.config.npv2pq
+            nconv = min(self.system.pflow.config.npv2pq, self.n)
 
             for i in range(nconv - 1, -1, -1):
                 if d_min[idx_asc[i]] >= 0:
@@ -161,9 +161,19 @@ class PV(Stagen):
         dae.set_jac('Gy0', -1e-6, self.q, self.q)
 
     def disable_gen(self, idx):
-        """Disable a PV element for TDS"""
+        """
+        Disable a PV element for TDS
+
+        Parameters
+        ----------
+        idx
+
+        Returns
+        -------
+
+        """
         self.u[self.uid[idx]] = 0
-        self.system.DAE.factorize = True
+        self.system.dae.factorize = True
 
 
 class Slack(PV):

@@ -30,6 +30,9 @@ from ..utils.tab import Tab
 import pandas as pd
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class ModelBase(object):
     """base class for power system device models"""
@@ -392,10 +395,10 @@ class ModelBase(object):
 
     def get_idx(self, uid):
         """
-        Return the ``idx`` of the elements whose internal indices are ``uid
+        Return the ``idx`` of the elements whose internal indices are ``uid``
 
-        :param uid:
-        :return:
+        :param uid: uid of elements to query
+        :return: idx of the elements
         """
         return [self.idx[i] for i in uid]
 
@@ -414,7 +417,7 @@ class ModelBase(object):
 
         # ===================disable warning ==============================
         # if field in self._service:
-        # self.system.Log.warning(
+        # logger.warning(
         #     'Reading service variable <{model}.{field}> could be unsafe.'
         #         .format(field=field, model=self._name)
         # )
@@ -433,7 +436,7 @@ class ModelBase(object):
 
     def _alloc(self):
         """
-        Allocate empty memory for DAE variable indices.
+        Allocate empty memory for dae variable indices.
         Called in device setup phase.
 
         :return: None
@@ -472,6 +475,7 @@ class ModelBase(object):
     def n(self):
         """
         Return the count of elements
+
         Returns
         -------
         int:
@@ -590,10 +594,10 @@ class ModelBase(object):
 
         for x in self._states:
             idx = self.__dict__[x]
-            ret.update({x: self.system.DAE.x[idx]})
+            ret.update({x: self.system.dae.x[idx]})
         for y in self._algebs:
             idx = self.__dict__[y]
-            ret.update({y: self.system.DAE.y[idx]})
+            ret.update({y: self.system.dae.y[idx]})
 
         return pd.DataFrame.from_dict(ret)
 
@@ -736,12 +740,12 @@ class ModelBase(object):
         """
         ret = list()
 
-        if model in self.system.DevMan.devices:
+        if model in self.system.devman.devices:
             ret = self.system.__dict__[model].get_field(field, idx)
 
-        elif model in self.system.DevMan.group.keys():
+        elif model in self.system.devman.group.keys():
             # ===============================================================
-            # Since ``self.system.DevMan.group`` is an unordered dictionary,
+            # Since ``self.system.devman.group`` is an unordered dictionary,
             #   ``idx`` must be given to retrieve ``field`` across models.
             #
             # Returns a matrix by default
@@ -751,7 +755,7 @@ class ModelBase(object):
             astype = matrix
 
             for item in idx:
-                dev_name = self.system.DevMan.group[model].get(item, None)
+                dev_name = self.system.devman.group[model].get(item, None)
                 ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
@@ -769,8 +773,7 @@ class ModelBase(object):
         """
         Retrieve the field of another model and store it as a field.
 
-        :param model: name of the source model being a model name or a group
-        name
+        :param model: name of the source model being a model name or a group name
         :param field: name of the field to retrieve
         :param dest: name of the destination field in ``self``
         :param idx: idx of elements to access
@@ -804,7 +807,7 @@ class ModelBase(object):
         :return: allocated idx
         """
 
-        idx = self.system.DevMan.register_element(dev_name=self._name, idx=idx)
+        idx = self.system.devman.register_element(dev_name=self._name, idx=idx)
         self.system.__dict__[self._group].register_element(self._name, idx)
 
         self.uid[idx] = self.n
@@ -840,9 +843,9 @@ class ModelBase(object):
             # check data consistency
             if not value and key in self._zeros:
                 if key == 'Sn':
-                    default = self.system.Settings.mva
+                    default = self.system.mva
                 elif key == 'fn':
-                    default = self.system.Settings.freq
+                    default = self.system.config.freq
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
@@ -926,7 +929,7 @@ class ModelBase(object):
         """
         if (not self.n) or self._flags['sysbase']:
             return
-        Sb = self.system.Settings.mva
+        Sb = self.system.mva
         Vb = matrix([])
         if 'bus' in self._ac.keys():
             Vb = self.read_data_ext('Bus', 'Vn', idx=self.bus)
@@ -1075,10 +1078,10 @@ class ModelBase(object):
 
     def _addr(self):
         """
-        Assign DAE addresses for algebraic and state variables.
+        Assign dae addresses for algebraic and state variables.
 
         Addresses are stored in ``self.__dict__[var]``.
-        ``DAE.m`` and ``DAE.n`` are updated accordingly.
+        ``dae.m`` and ``dae.n`` are updated accordingly.
 
         Returns
         -------
@@ -1090,8 +1093,8 @@ class ModelBase(object):
         assert not self._flags['address']
         assert group_by in ('element', 'variable')
 
-        m0 = self.system.DAE.m
-        n0 = self.system.DAE.n
+        m0 = self.system.dae.m
+        n0 = self.system.dae.n
         mend = m0 + len(self._algebs) * self.n
         nend = n0 + len(self._states) * self.n
 
@@ -1110,14 +1113,14 @@ class ModelBase(object):
                 self.__dict__[item] = list(
                     range(n0 + idx, nend, len(self._states)))
 
-        self.system.DAE.m = mend
-        self.system.DAE.n = nend
+        self.system.dae.m = mend
+        self.system.dae.n = nend
 
         self._flags['address'] = True
 
     def _varname(self):
         """
-        Set up variable names in ``self.system.VarName``.
+        Set up variable names in ``self.system.varname``.
 
         Variable names follows the convention ``VariableName,Model Name``.
         A maximum of 24 characters are allowed for each variable.
@@ -1129,7 +1132,7 @@ class ModelBase(object):
                      ERROR)
             return
 
-        varname = self.system.VarName
+        varname = self.system.varname
         for i in range(self.n):
             iname = str(self.name[i])
 
@@ -1178,10 +1181,7 @@ class ModelBase(object):
         :return: None
 
         """
-        if level not in (DEBUG, INFO, WARNING, ERROR, CRITICAL):
-            self.system.Log.error('Message logging level does not exist.')
-            return
-        self.system.Log.message('[{}] - '.format(self._name) + msg, level)
+        logger.log(level, '<{}> - '.format(self._name) + msg)
 
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
@@ -1283,15 +1283,12 @@ class ModelBase(object):
 
         """
         retval = True
-        if varname not in self.__dict__.keys():
-            self.system.Log.error(
-                'Model <{}> does not have attribute <{}>'.format(
-                    self._name, varname))
-            return
-        elif varname in self._algebs:
-            val = self.system.DAE.y[self.__dict__[varname]]
+        assert varname in self.__dict__
+
+        if varname in self._algebs:
+            val = self.system.dae.y[self.__dict__[varname]]
         elif varname in self._states:
-            val = self.system.DAE.x[self.__dict__[varname]]
+            val = self.system.dae.x[self.__dict__[varname]]
         else:  # service or temporary variable
             val = matrix(self.__dict__[varname])
 
@@ -1380,7 +1377,7 @@ class ModelBase(object):
             for i in range(self.n):
                 for j in range(nfkey):
                     if fkey_val[j][i] == item:
-                        idx.append(i)
+                        idx.append(self.idx[i])
                         key.append(fkey[j])
                         # <= 1 terminal should connect to the same bus
                         break
@@ -1396,16 +1393,15 @@ class ModelBase(object):
 
     def elem_find(self, field, value):
         """
-        Return the indices of elements whose field first satisfies the given
-        values
+        Return the indices of elements whose field first satisfies the given values
 
         ``value`` should be unique in self.field.
         This function does not check the uniqueness.
 
         :param field: name of the supplied field
         :param value: value of field of the elemtn to find
-        :return idx of the elements
-        :rtype list, int, float, str
+        :return: idx of the elements
+        :rtype: list, int, float, str
         """
         if isinstance(value, (int, float, str)):
             value = [value]
@@ -1450,7 +1446,7 @@ class ModelBase(object):
     #     # equation name is in ('x', 'y')
     #
     #     var_eq_pairs = []
-    #     dae = self.system.DAE
+    #     dae = self.system.dae
     #     if variable != 'all':
     #         if variable in self._states:
     #             var_eq_pairs.append((variable, 'x'))

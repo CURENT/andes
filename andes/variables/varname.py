@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class VarName(object):
     """Variable name manager class"""
@@ -11,8 +15,8 @@ class VarName(object):
 
     def resize(self):
         """Resize (extend) the list for variable names"""
-        yext = self.system.DAE.m - len(self.unamey)
-        xext = self.system.DAE.n - len(self.unamex)
+        yext = self.system.dae.m - len(self.unamey)
+        xext = self.system.dae.n - len(self.unamex)
         if yext > 0:
             self.unamey.extend([''] * yext)
             self.fnamey.extend([''] * yext)
@@ -22,10 +26,10 @@ class VarName(object):
 
     def resize_for_flows(self):
         """Extend `unamey` and `fnamey` for bus injections and line flows"""
-        if self.system.Settings.dime_enable:
-            self.system.TDS.compute_flows = True
+        if self.system.config.dime_enable:
+            self.system.tds.config.compute_flows = True
 
-        if self.system.TDS.compute_flows:
+        if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
                      4 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
@@ -37,7 +41,7 @@ class VarName(object):
         self.resize()
         string = '{0} {1}'
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
-            self.system.Log.error('Wrong list name for VarName.')
+            logger.error('Wrong list name for varname.')
             return
         elif listname in ['fnamex', 'fnamey']:
             string = '${0}\ {1}$'
@@ -52,12 +56,12 @@ class VarName(object):
             self.__dict__[listname][xy_idx] = string.format(
                 var_name, element_name)
         else:
-            self.system.Log.warning(
-                'Unknown element_name type while building VarName')
+            logger.warning(
+                'Unknown element_name type while building varname')
 
     def bus_line_names(self):
-        """Append bus injection and line flow names to `VarName`"""
-        if self.system.TDS.compute_flows:
+        """Append bus injection and line flow names to `varname`"""
+        if self.system.tds.config.compute_flows:
             self.system.Bus._varname_inj()
             self.system.Line._varname_flow()
             self.system.Area._varname_inter()

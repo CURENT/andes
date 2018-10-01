@@ -3,7 +3,6 @@ from cvxopt import mul, div, sin, cos, exp
 
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
-from ..consts import ERROR
 from ..consts import pi
 from .base import ModelBase
 
@@ -14,6 +13,9 @@ except ImportError:
 
 from ..utils.math import zeros, ones, agtb, ageb, altb, aleb, aandb, aneb
 from ..utils.math import mfloor, mround, mmax, mmin, not0
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MPPT(object):
@@ -90,7 +92,7 @@ class Turbine(object):
     @property
     def phi(self):
         deg1 = pi / 180
-        dae = self.system.DAE
+        dae = self.system.dae
         above = agtb(dae.x[self.omega_m], 1)
         phi_degree_step = mfloor((dae.x[self.omega_m] - 1) / deg1) * deg1
         return mul(phi_degree_step, above)
@@ -102,7 +104,7 @@ class Turbine(object):
         self.mva_mega = 100e6
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.Settings.mva * 1e6
+        mva_mega = self.system.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -135,9 +137,8 @@ class Turbine(object):
 
         for i in range(self.n):
             if self.te0[i] < 0:
-                self.message(
-                    'Pe < 0 on bus <{}>. Wind speed initialize failed.'.format(
-                        self.bus[i]), ERROR)
+                logger.error('Pe < 0 on bus <{}>. Wind speed initialize failed.'
+                             .format(self.bus[i]))
 
         # wind power in pu
         omega = dae.x[self.omega_m]
@@ -147,15 +148,15 @@ class Turbine(object):
 
         # wind speed initialization loop
 
-        R = 4 * pi * self.system.Settings.freq * mul(self.R, self.ngb,
-                                                     div(1, self.npole[i]))
+        R = 4 * pi * self.system.config.freq * mul(self.R, self.ngb,
+                                                   div(1, self.npole))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
 
         for i in range(self.n):
             mis = 1
             iter = 0
-            while abs(mis) > self.system.TDS.tol:
+            while abs(mis) > self.system.tds.config.tol:
                 if iter > 50:
                     self.message(
                         'Wind <{}> init failed. '
@@ -376,9 +377,6 @@ class WTG4DC(ModelBase, Turbine, MPPT):
     def _init(self):
         super(WTG4DC, self)._init()
 
-    def base(self):
-        super(WTG4DC, self).base()
-
     def servcall(self, dae):
         self.copy_data_ext('DCgen', 'u', 'u0', self.dcgen)
         self.copy_data_ext('DCgen', 'P', 'p0', self.dcgen)
@@ -401,7 +399,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
     def init1(self, dae):
         self.servcall(dae)
-        mva = self.system.Settings.mva
+        mva = self.system.mva
         self.p0 = mul(self.p0, 1)
         self.v120 = self.v12
 
@@ -439,11 +437,11 @@ class WTG4DC(ModelBase, Turbine, MPPT):
             mis = ones(4, 1)
             jac = sparse(matrix(0, (4, 4), 'd'))
             iter = 0
-            while (max(abs(mis))) > self.system.TDS.tol:
+            while (max(abs(mis))) > self.system.tds.config.tol:
                 if iter > 40:
-                    self.log(
+                    logger.error(
                         'Initialization of WTG4DC <{}> failed.'.format(
-                            self.name[i]), ERROR)
+                            self.name[i]))
                     break
                 mis[0] = x[0] * x[2] + x[1] * x[3] - Pg[i]
                 # mis[1] = omega[i]*x[3] * (psip[i] + (xq[i] - xd[i]) * x[2])\
@@ -546,7 +544,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
     @property
     def v12(self):
-        dae = self.system.DAE
+        dae = self.system.dae
         return dae.y[self.v1] - dae.y[self.v2]
 
     def gycall(self, dae):
@@ -795,7 +793,7 @@ class WTG3(ModelBase):
         self.servcall(dae)
         retval = True
 
-        mva = self.system.Settings.mva
+        mva = self.system.mva
         self.p0 = mul(self.p0, self.gammap)
         self.q0 = mul(self.q0, self.gammaq)
 
@@ -863,11 +861,11 @@ class WTG3(ModelBase):
             jac0 = spmatrix(vals, rows, cols, (6, 6), 'd')
             iter = 0
 
-            while max(abs(mis)) > self.system.TDS.tol:
+            while max(abs(mis)) > self.system.tds.config.tol:
                 if iter > 20:
-                    self.log(
+                    logger.error(
                         'Initialization of DFIG <{}> failed.'.format(
-                            self.name[i]), ERROR)
+                            self.name[i]))
                     retval = False
                     break
 
@@ -929,9 +927,9 @@ class WTG3(ModelBase):
 
         for i in range(self.n):
             if te[i] < 0:
-                self.log(
+                logger.error(
                     'Pe < 0 on bus <{}>. Wind speed initialize failed.'.
-                    format(self.bus[i]), ERROR)
+                    format(self.bus[i]))
                 retval = False
 
         # wind power in pu
@@ -940,17 +938,17 @@ class WTG3(ModelBase):
 
         # wind speed initialization loop
 
-        R = 4 * pi * self.system.Settings.freq * mul(self.R, self.ngb,
-                                                     div(1, self.npole[i]))
+        R = 4 * pi * self.system.freq * mul(self.R, self.ngb,
+                                            div(1, self.npole))
         AA = pi * self.R**2
         vw = 0.9 * self.Vwn
 
         for i in range(self.n):
             mis = 1
             iter = 0
-            while abs(mis) > self.system.TDS.tol:
+            while abs(mis) > self.system.tds.config.tol:
                 if iter > 50:
-                    self.log(
+                    logger.error(
                         'Wind <{}> init failed. '
                         'Try increasing the nominal wind speed.'.
                         format(self.wind[i]))
@@ -981,12 +979,12 @@ class WTG3(ModelBase):
         self.system.rmgen(self.gen)
 
         if not retval:
-            self.log('DFIG initialization failed', ERROR)
+            logger.error('DFIG initialization failed')
 
         return retval
 
     def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
-        mva_mega = self.system.Settings.mva * 1e6
+        mva_mega = self.system.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
         cp = 0.22 * (116 / ilamb - 0.4 * theta - 5) * exp(-12.5 / ilamb)
@@ -1013,7 +1011,7 @@ class WTG3(ModelBase):
     @property
     def phi(self):
         deg1 = pi / 180
-        dae = self.system.DAE
+        dae = self.system.dae
         above = agtb(dae.x[self.omega_m], 1)
         phi_degree_step = mfloor((dae.x[self.omega_m] - 1) / deg1) * deg1
         return mul(phi_degree_step, above)
@@ -1072,7 +1070,7 @@ class WTG3(ModelBase):
                         1, self.x0))), self.v, [0] * self.n, (dae.m, 1), 'd')
 
     def fcall(self, dae):
-        toSb = self.Sn / self.system.Settings.mva
+        toSb = self.Sn / self.system.mva
         omega = not0(dae.x[self.omega_m])
         dae.f[self.theta_p] = mul(
             div(1, self.Tp), -dae.x[self.theta_p] + mul(
@@ -1144,7 +1142,7 @@ class WTG3(ModelBase):
 
     def fxcall(self, dae):
         omega = not0(dae.x[self.omega_m])
-        toSb = div(self.Sn, self.system.Settings.mva)
+        toSb = div(self.Sn, self.system.mva)
         dae.add_jac(Gx, mul(self.x1, 1 - dae.x[self.omega_m]), self.vrd,
                     self.irq)
         dae.add_jac(

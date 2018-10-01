@@ -71,10 +71,10 @@ class PQ(ModelBase):
     def gcall(self, dae):
         k = ones(self.n, 1)
 
-        if self.system.Settings.forcez:
+        if self.system.config.forcez:
             if self.v0:
                 k = div(dae.y[self.v]**2, self.v0**2)
-        elif self.system.Settings.forcepq:
+        elif self.system.config.forcepq:
             pass
         else:
             k = zeros(self.n, 1)
@@ -111,9 +111,9 @@ class PQ(ModelBase):
 
     def gycall(self, dae):
         k = zeros(self.n, 1)
-        if self.system.Settings.forcepq:
+        if self.system.config.forcepq:
             return
-        elif self.system.Settings.forcez:
+        elif self.system.config.forcez:
             if self.v0:
                 k = div(2 * dae.y[self.v], self.v0**2)
         else:

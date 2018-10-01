@@ -1,6 +1,12 @@
 ## Modular Refactorization
- - Move elapsed time from `main.py` to routines
+ - [x] Move elapsed time from `main.py` to routines
  - create ``andes.help`` 
  - quick edit configuration from ``andes conf``
- - data recorder class
- 
+ - [x] data recorder class
+ - fix: dome raw dump not solveable
+ - fix the messy `system.FileMan`
+ - refactor `main.run()`
+ - Varout to DataFrame
+ - Move `andes.log` to andes_dir
+ - Optimize `_varname()` in models
+ - Perturbation files can be used for computations

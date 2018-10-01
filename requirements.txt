@@ -1,9 +1,8 @@
-# List required packages in this file, one per line.
-numpy>=1.15.0
-cvxopt==1.1.9
-scipy==1.1.0
-texttable==1.4.0
-matplotlib>=2.0.0
-pandas==0.23.4
-pyzmq>=17.0.0
-sympy>=1.2
+numpy
+cvxopt
+scipy
+texttable
+matplotlib
+pandas
+progressbar
+# sympy
