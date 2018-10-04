@@ -56,7 +56,8 @@ class PFLOW(RoutineBase):
 
         system.dae.init_xy()
 
-        for device, pflow, init0 in zip(system.devman.devices, system.call.pflow, system.call.init0):
+        for device, pflow, init0 in zip(system.devman.devices,
+                                        system.call.pflow, system.call.init0):
             if pflow and init0:
                 system.__dict__[device].init0(dae)
 
@@ -72,7 +73,7 @@ class PFLOW(RoutineBase):
 
         Returns
         -------
-        bool:
+        bool
             True for success, False for fail
         """
         ret = None
@@ -153,7 +154,7 @@ class PFLOW(RoutineBase):
         Returns
         -------
         matrix
-            The solution to ``x = -A\b``
+            The solution to ``x = -A\\b``
         """
         system = self.system
         self.newton_call()
@@ -197,12 +198,14 @@ class PFLOW(RoutineBase):
         system.dae.init_fg()
 
         # evaluate algebraic equation mismatches
-        for model, pflow, gcall in zip(system.devman.devices, system.call.pflow, system.call.gcall):
+        for model, pflow, gcall in zip(system.devman.devices,
+                                       system.call.pflow, system.call.gcall):
             if pflow and gcall:
                 system.__dict__[model].gcall(dae)
 
         # eval differential equations
-        for model, pflow, fcall in zip(system.devman.devices, system.call.pflow, system.call.fcall):
+        for model, pflow, fcall in zip(system.devman.devices,
+                                       system.call.pflow, system.call.fcall):
             if pflow and fcall:
                 system.__dict__[model].fcall(dae)
 
@@ -212,7 +215,8 @@ class PFLOW(RoutineBase):
         if system.dae.factorize:
             system.dae.init_jac0()
             # evaluate constant Jacobian elements
-            for model, pflow, jac0 in zip(system.devman.devices, system.call.pflow, system.call.jac0):
+            for model, pflow, jac0 in zip(system.devman.devices,
+                                          system.call.pflow, system.call.jac0):
                 if pflow and jac0:
                     system.__dict__[model].jac0(dae)
             dae.temp_to_spmatrix('jac0')
@@ -220,12 +224,14 @@ class PFLOW(RoutineBase):
         dae.setup_FxGy()
 
         # evaluate Gy
-        for model, pflow, gycall in zip(system.devman.devices, system.call.pflow, system.call.gycall):
+        for model, pflow, gycall in zip(system.devman.devices,
+                                        system.call.pflow, system.call.gycall):
             if pflow and gycall:
                 system.__dict__[model].gycall(dae)
 
         # evaluate Fx
-        for model, pflow, fxcall in zip(system.devman.devices, system.call.pflow, system.call.fxcall):
+        for model, pflow, fxcall in zip(system.devman.devices,
+                                        system.call.pflow, system.call.fxcall):
             if pflow and fxcall:
                 system.__dict__[model].fxcall(dae)
 
@@ -238,8 +244,10 @@ class PFLOW(RoutineBase):
         """
         Post processing for solved systems.
 
-        Store load, generation data on buses. Store reactive power generation on PVs and slack generators.
+        Store load, generation data on buses.
+        Store reactive power generation on PVs and slack generators.
         Calculate series flows and area flows.
+
         Returns
         -------
         None

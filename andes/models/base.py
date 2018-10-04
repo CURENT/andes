@@ -528,7 +528,7 @@ class ModelBase(object):
 
         Parameters
         ----------
-        data: list
+        data : list
             List of parameter dictionaries
 
         Returns
@@ -544,7 +544,7 @@ class ModelBase(object):
 
         Parameters
         ----------
-        data: list
+        data : dict
             List of parameter dictionaries
 
         Returns

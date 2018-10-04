@@ -103,7 +103,7 @@ class PV(Stagen):
 
     def gcall(self, dae):
         if self.system.pflow.config.pv2pq and \
-                self.system.pflow.config.iter >= self.system.pflow.config.ipv2pq:
+                self.system.pflow.niter >= self.system.pflow.config.ipv2pq:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)

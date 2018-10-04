@@ -10,7 +10,6 @@ class Pflow(ConfigBase):
         self.pv2pq = False
         self.ipv2pq = 4
         self.npv2pq = 1
-        self.iter = 0
         self.report = 'default'
         self.show = True
         self.method = 'NR'
