@@ -2,6 +2,10 @@ import logging
 from math import ceil
 
 import numpy.linalg
+
+import scipy.sparse.linalg  # NOQA
+from scipy.sparse import csr_matrix  # NOQA
+
 from cvxopt import matrix, spmatrix, mul, div
 from cvxopt.lapack import gesv
 from matplotlib import pyplot as plt
@@ -47,6 +51,15 @@ class EIG(RoutineBase):
         self.solver.linsolve(system.dae.Gy, Gyx)
 
         self.As = matrix(system.dae.Fx - system.dae.Fy * Gyx)
+
+        # ------------------------------------------------------
+        # TODO: use scipy eigs
+        # self.As = sparse(self.As)
+        # I = np.array(self.As.I).reshape((-1,))
+        # J = np.array(self.As.J).reshape((-1,))
+        # V = np.array(self.As.V).reshape((-1,))
+        # self.As = csr_matrix((V, (I, J)), shape=self.As.size)
+        # ------------------------------------------------------
         return self.As
 
     def calc_eigvals(self):
@@ -58,6 +71,7 @@ class EIG(RoutineBase):
         None
         """
         self.eigs = numpy.linalg.eigvals(self.As)
+        # TODO: use scipy.sparse.linalg.eigs(self.As)
 
         return self.eigs
 
@@ -70,6 +84,8 @@ class EIG(RoutineBase):
 
         """
         mu, N = numpy.linalg.eig(self.As)
+        # TODO: use scipy.sparse.linalg.eigs(self.As)
+
         N = matrix(N)
         n = len(mu)
         idx = range(n)
