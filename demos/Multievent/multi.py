@@ -60,26 +60,34 @@ class case_g:
     def make_e(self):
         save_path = self.save_file
         # To Do: doc string, file name
-        file_name = '{event}_{bus}.dm'
+        file_name = '{event}_{event_place}.dm'
         e_string = g.e_string
-        event1 = ''
-        bus1 = ''
-        # element = ''
+        event = ''
+        event_place = ''
+        header_type="""# This case implements {event} event on {place} at t={t}s"""
         header = """# DOME format version 1.0
-        INCLUDE, {}
-        """
+INCLUDE, {} \n """
         out = header.format(self.case)
         for i in range(self.e_count):
             if i == 0:
+                out += header_type.format(event=self.event[i],place=self.e_idx[i], t=self.t[i])
+            else:
+                out += "\n"
+                out += header_type.format(event=self.event[i], place=self.e_idx[i], t=self.t[i])
+        out+="\n"
+        for i in range(self.e_count):
+            if i == 0:
+                event += self.event[i]
+                event_place += str(self.e_idx[i])
                 out += e_string[i]
-                event1 += self.event[i]
-                bus1 += str(self.e_idx[i])
             else:
                 out += "\n"
                 out += e_string[i]
-                event1 += self.event[i]
-                bus1 += str(self.e_idx[i])
-                file_name = file_name.format(event=event1, bus=bus1)
+                event+=' '
+                event_place+=' '
+                event += self.event[i]
+                event_place += str(self.e_idx[i])
+        file_name = file_name.format(event=event, event_place=event_place)
         with open(os.path.join(save_path, file_name), 'w') as f:
             f.write(out)
 
