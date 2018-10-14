@@ -1,7 +1,10 @@
 import os
 from andes import system, filters
 import numpy as np
-
+import csv
+import glob
+import pandas as pd
+from numpy import *
 
 class case_g:
     def __init__(self, event, t, case, save_file, e_idx):
@@ -44,9 +47,9 @@ class case_g:
             event.append(all_event[rand_event])
             t.append(rand_t)
             if rand_event == 0:  # GT
-                n = self.sys.Bus.idx.__len__()
+                n = self.sys.Syn6a.idx.__len__()
                 rand_bus = np.random.randint(0, n)
-                e_idx.append(self.sys.Bus.idx[rand_bus])
+                e_idx.append(self.sys.Syn6a.idx[rand_bus])
             if rand_event == 1:  # LS
                 n = self.sys.PQ.bus.__len__()
                 rand_load = np.random.randint(0, n)
@@ -126,13 +129,12 @@ INCLUDE, {} \n """
 
 
 # parameter specification
-# TO DO auto_gen
 os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\cases\\curent')
 save_file = 'C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E'
 case = 'WECC_WIND0.dm'
-Event_list = [["GT", "LS", "LT"], ["LS", "LT"]]
-t_list = [[1, 2, 3], [2, 3]]
-e_idx_list = [[1, 3, "Line_0"], [3, "Line_0"]]
+Event_list = [["GT", "LS", "LT"], ["GT", "LT"]]
+t_list = [[1, 2, 3], [1, 3]]
+e_idx_list = [[1, 3, "Line_0"], [20, "Line_0"]]
 flag_autog = 1  # 1 indicate use random generation
 case_count = 5  # define how many cases you want from random generation
 if flag_autog == 1:
@@ -150,3 +152,96 @@ else:
         g.get_idx()
         g.get_e_string()
         g.make_e()
+
+
+
+# post porcess
+# ==================== Generator trip ========================#
+os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+os.system('andes -C')
+os.system('andes GT_*.dm -r tds --tf 20 --ncpu=8')
+bus_count=191
+for filename in glob.glob('*.dat'):
+    with open (filename) as f:
+        reader = csv.reader(f, delimiter="\t")
+        raw_data = list(reader)
+    row_count = sum(1 for row in raw_data)
+    frequency = mat(zeros((row_count, bus_count)))
+    voltage = mat(zeros((row_count, bus_count)))
+    time = mat(zeros((row_count,1)))
+    for idx,line in enumerate(raw_data):
+            ddc = line[0].split()
+            time[idx, 0] = ddc[0]
+            for idx_2, freq_idx in enumerate(range(1, 192)):
+                frequency[idx, idx_2] = ddc[3*(freq_idx - 1) + 2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574 + (vol_idx - 1) * 2]
+    voltage=np.concatenate((time, voltage),axis = 1)
+    frequency=np.concatenate((time, frequency),axis = 1)
+
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\output')
+    df=pd.DataFrame(voltage)
+    df.to_csv('%s_voltage.csv' % filename,index = False)
+    df=pd.DataFrame(frequency)
+    df.to_csv('%s_frequency.csv' % filename,index = False)
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+# ==================== Load shedding ========================
+os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+os.system('andes -C')
+os.system('andes LS_*.dm -r tds --tf 20 --ncpu=8')
+bus_count = 191
+for filename in glob.glob('*.dat'):
+    with open (filename) as f:
+        reader = csv.reader(f, delimiter="\t")
+        raw_data = list(reader)
+    row_count = sum(1 for row in raw_data)
+    frequency = mat(zeros((row_count, bus_count)))
+    voltage = mat(zeros((row_count, bus_count)))
+    time = mat(zeros((row_count, 1)))
+    for idx,line in enumerate(raw_data):
+            ddc=line[0].split()
+            time[idx, 0] = ddc[0]
+            for idx_2, freq_idx in enumerate(range(1, 192)):
+                frequency[idx, idx_2] = ddc[3 * (freq_idx - 1) + 2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574 + (vol_idx - 1) * 2]
+    voltage=np.concatenate((time, voltage),axis = 1)
+    frequency=np.concatenate((time, frequency),axis = 1)
+
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\output')
+    df=pd.DataFrame(voltage)
+    df.to_csv('%s_voltage.csv' % filename, index=False)
+    df=pd.DataFrame(frequency)
+    df.to_csv('%s_frequency.csv' % filename, index=False)
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+# ==================== Line trip ========================
+os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+os.system('andes -C')
+os.system('andes LT_*.dm -r tds --tf 20 --ncpu=8')
+bus_count = 191
+for filename in glob.glob('*.dat'):
+    with open (filename) as f:
+        reader = csv.reader(f, delimiter="\t")
+        raw_data = list(reader)
+    row_count = sum(1 for row in raw_data)
+    frequency = mat(zeros((row_count, bus_count)))
+    voltage = mat(zeros((row_count, bus_count)))
+    time = mat(zeros((row_count,1)))
+    for idx, line in enumerate(raw_data):
+            ddc = line[0].split()
+            time[idx, 0] = ddc[0]
+            for idx_2, freq_idx in enumerate(range(1, 192)):
+                frequency[idx, idx_2] = ddc[3 * (freq_idx - 1) + 2]
+            for idx_3, vol_idx in enumerate(range(1, 192)):
+                voltage[idx, idx_3] = ddc[574 + (vol_idx - 1) * 2]
+    voltage=np.concatenate((time,voltage),axis = 1)
+    frequency=np.concatenate((time,frequency),axis = 1)
+
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\output')
+    df=pd.DataFrame(voltage)
+    df.to_csv('%s_voltage.csv' % filename,index = False)
+    df=pd.DataFrame(frequency)
+    df.to_csv('%s_frequency.csv' % filename,index = False)
+    os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+os.chdir('C:\\Users\\zhan2\\PycharmProjects\\andes_github\\demos\\Multievent\\multi_E')
+os.system('andes -C')
