@@ -136,7 +136,7 @@ Event_list = [["GT", "LS", "LT"], ["GT", "LT"]]
 t_list = [[1, 2, 3], [1, 3]]
 e_idx_list = [[1, 3, "Line_0"], [20, "Line_0"]]
 flag_autog = 1  # 1 indicate use random generation
-case_count = 5  # define how many cases you want from random generation
+case_count = 500  # define how many cases you want from random generation
 if flag_autog == 1:
     for idx in range(case_count):
         g = case_g([], [], case, save_file, [])
