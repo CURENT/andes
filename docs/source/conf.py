@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Andes documentation build configuration file, created by
+# ANDES documentation build configuration file, created by
 # sphinx-quickstart on Thu Jun 28 12:35:56 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -67,7 +67,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Andes'
+project = 'ANDES'
 copyright = '2018, Hantao Cui'
 author = 'Hantao Cui'
 
@@ -163,8 +163,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'andes.tex', 'Andes Documentation',
-     'Contributors', 'manual'),
+    (master_doc, 'andes.tex', 'ANDES Documentation',
+     'Hantao Cui', 'manual'),
 ]
 
 
@@ -173,7 +173,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'andes', 'Andes Documentation',
+    (master_doc, 'andes', 'ANDES Documentation',
      [author], 1)
 ]
 
@@ -184,7 +184,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'andes', 'Andes Documentation',
+    (master_doc, 'andes', 'ANDES Documentation',
      author, 'andes', 'A Python package for power system simulation',
      'Miscellaneous'),
 ]
