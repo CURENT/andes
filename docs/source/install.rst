@@ -13,7 +13,7 @@ from https://conda.io/miniconda.html.
 Open the Anaconda Prompt and create an environment for ANDES (optional) ::
 
      conda create --name andes python=3.6
-     activate ances
+     activate andes
 
 Install ANDES using pip ::
 
