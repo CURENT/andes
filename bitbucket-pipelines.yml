@@ -28,3 +28,4 @@ pipelines:
           - andes cases/ieee14/ieee14_syn.dm -r tds -v 10 --no-output --tf 0.1
           # Run the CURENT test system
           - andes cases/curent/NA_50_50_50.dm -r tds -v 10 --no-output --tf 0.1
+
