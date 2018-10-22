@@ -1,6 +1,7 @@
 import os
 import pathlib
 import logging
+import platform
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +36,29 @@ def get_config_load_path(conf_path=None):
         logger.debug('Found config file at {}.'.format(conf_path))
 
     return conf_path
+
+
+def get_log_dir():
+    """
+    Get a directory for logging
+
+    On Linux or macOS, '/tmp/andes' is the default. On Windows,
+    '%APPDATA%/andes' is the default.
+
+    Returns
+    -------
+    str
+        Path to the logging directory
+    """
+    PATH = ''
+    if platform.system() in ('Linux', 'Darwin'):
+        ret = '/tmp'
+        PATH = os.path.join(ret, 'andes')
+
+    elif platform.system() == 'Windows':
+        APPDATA = os.getenv('APPDATA')
+        PATH = os.path.join(APPDATA, 'andes')
+
+    if not os.path.exists(PATH):
+        os.makedirs(PATH)
+    return PATH

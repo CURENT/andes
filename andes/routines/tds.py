@@ -233,6 +233,8 @@ class TDS(RoutineBase):
             return ret
         t0, _ = elapsed()
 
+        self.streaming_init()
+
         logger.info('-> Time Domain Simulation: {} method, t={} s'
                     .format(self.config.method, self.config.tf))
 
@@ -246,6 +248,9 @@ class TDS(RoutineBase):
         while self.t < config.tf:
             self.calc_time_step()
             self.check_fixed_times()
+
+            if self.callpert is not None:
+                self.callpert(self.t, self.system)
 
             if self.h == 0:
                 break
@@ -275,6 +280,7 @@ class TDS(RoutineBase):
             self.step += 1
             self.compute_flows()
             system.varout.store(self.t, self.step)
+            self.streaming_step()
 
             # plot variables and display iteration status
             perc = max(min((self.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
@@ -318,6 +324,9 @@ class TDS(RoutineBase):
         else:
             ret = True
 
+        if system.config.dime_enable:
+            system.streaming.finalize()
+
         _, s = elapsed(t0)
 
         if ret is True:
@@ -326,7 +335,6 @@ class TDS(RoutineBase):
             logger.info(' Time domain simulation failed in {:s}.'.format(s))
 
         self.success = ret
-
         self.dump_results()
 
         return ret
@@ -504,6 +512,39 @@ class TDS(RoutineBase):
 
         self.inc = zeros(dae.m + dae.n, 1)
         system.varout.store(self.t, self.step)
+
+        self.streaming_step()
+
+    def streaming_step(self):
+        """
+        Sync, handle and streaming for each integration step
+
+        Returns
+        -------
+        None
+        """
+        system = self.system
+        if system.config.dime_enable:
+            system.streaming.sync_and_handle()
+            system.streaming.vars_to_modules()
+            system.streaming.vars_to_pmu()
+
+    def streaming_init(self):
+        """
+        Send out initialization variables and process init from modules
+
+        Returns
+        -------
+        None
+        """
+        system = self.system
+        config = self.config
+        if system.config.dime_enable:
+            config.compute_flows = True
+            system.streaming.send_init(recepient='all')
+            logger.info('Waiting for modules to send init info...')
+            sleep(0.5)
+            system.streaming.sync_and_handle()
 
     def angle_diff(self):
         """

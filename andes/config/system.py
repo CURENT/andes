@@ -27,6 +27,9 @@ class System(ConfigBase):
         self.forcepq = False
         self.forcez = False
         self.base = True
+        self.dime_enable = False
+        self.dime_name = 'sim'
+        self.dime_server = 'ipc:///tmp/dime'
         super(System, self).__init__(**kwargs)
 
     @cached

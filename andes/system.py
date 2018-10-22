@@ -26,11 +26,16 @@ from operator import itemgetter
 
 from . import routines
 from .config import System
-from .consts import pi
-from .consts import rad2deg
+from .consts import pi, rad2deg
 from .models import non_jits, jits, JIT
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
+
+try:
+    from andes_addon.streaming import Streaming
+    STREAMING = True
+except ImportError:
+    STREAMING = False
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +58,7 @@ class PowerSystem(object):
                  input_format=None,
                  output_format=None,
                  gis=None,
+                 dime=None,
                  tf=None,
                  **kwargs):
         """
@@ -93,6 +99,9 @@ class PowerSystem(object):
         gis : None or str, optional
             Path to the GIS file
 
+        dime : None or str, optional
+            DiME server address
+
         tf : None or float, optional
             Time-domain simulation end time
 
@@ -124,8 +133,22 @@ class PowerSystem(object):
         self.varout = VarOut(self)
         self.report = Report(self)
 
+        if dime:
+            self.config.dime_enable = True
+            self.config.dime_server = dime
+
         if tf:
             self.tds.config.tf = tf
+
+        self.streaming = None
+        if not STREAMING:
+            if self.config.dime_enable:
+                self.config.dime_enable = False
+                logger.warning('Missing andes_addon for DiME streaming.')
+        else:
+            if self.config.dime_enable:
+                logger.info('Connecting to DiME at {}'.format(self.config.dime_server))
+                self.streaming = Streaming(self)
 
         self.model_import()
 

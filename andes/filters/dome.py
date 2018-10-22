@@ -95,7 +95,7 @@ def read(file, system, header=True):
             if not os.path.isfile(newpath):
                 newpath = os.path.join(system.files.path, data[0])
                 if not os.path.isfile(newpath):
-                    logger.warning(
+                    raise FileNotFoundError(
                         'Unable to locate file in {}'.format(newpath))
                     retval = False
                     continue

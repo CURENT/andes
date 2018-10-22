@@ -22,11 +22,20 @@ Andes plotting tool
 
 import os
 import re
+import sys
+
+import logging
 from argparse import ArgumentParser
 from distutils.spawn import find_executable
 
-from matplotlib import rc
-from matplotlib import pyplot as plt
+logger = logging.getLogger(__name__)
+
+try:
+    from matplotlib import rc
+    from matplotlib import pyplot as plt
+except ImportError:
+    logger.critical('Package <matplotlib> not found')
+    sys.exit(1)
 
 lfile = []
 dfile = []
@@ -128,8 +137,6 @@ def read_dat(dat, x, y):
         return None, None
 
     for num, line in enumerate(dfile_raw):
-        if num == 0:
-            continue
         thisline = line.rstrip('\n').split()
         if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
             errid = 1
@@ -263,10 +270,8 @@ def do_plot(xdata,
 
     ax.ticklabel_format(useOffset=False)
 
-    ax.set_xlim(xmin=xmin)
-    ax.set_xlim(xmax=xmax)
-    ax.set_ylim(ymax=ymax)
-    ax.set_ylim(ymin=ymin)
+    ax.set_xlim(left=xmin, right=xmax)
+    ax.set_ylim(ymin=ymin, ymax=ymax)
 
     if grid:
         ax.grid(b=True, linestyle='--')

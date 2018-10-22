@@ -377,9 +377,6 @@ class WTG4DC(ModelBase, Turbine, MPPT):
     def _init(self):
         super(WTG4DC, self)._init()
 
-    def base(self):
-        super(WTG4DC, self).base()
-
     def servcall(self, dae):
         self.copy_data_ext('DCgen', 'u', 'u0', self.dcgen)
         self.copy_data_ext('DCgen', 'P', 'p0', self.dcgen)

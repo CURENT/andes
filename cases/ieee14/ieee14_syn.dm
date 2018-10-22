@@ -87,6 +87,8 @@ BusFreq, idx = 12, bus = 12
 BusFreq, idx = 13, bus = 13
 BusFreq, idx = 14, bus = 14
 
+#PMU, idx = 1, bus = 1
+#PMU, idx = 1, bus = 2
 
 #BusLine, line = "Line_1", busf = 1
 #BusLine, line = "Line_2", busf = 1
@@ -132,7 +134,7 @@ PQ, Vn = 13.8, bus = 13, idx = "PQ load_10", name = "PQ Bus 13", p = 0.135,
 PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
-Fault, bus = 3, Vn = 69, tf = 2.0, tc = 2.1, rf = 0.0, xf = 0.00001
+Fault, bus = 4, Vn = 69, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.00001
 
 #Breaker, Vn = 69.0, bus = 2, fn = 60.0, idx = 1, line = "Line_4",
 #         name = "Breaker 1", t1 = 1.0, t2 = 200.0, u1 = 1, u2 = 1
@@ -177,16 +179,10 @@ Syn6a, D = 2.0, M = 10.12, Sn = 25.0, Td10 = 4.75, Td20 = 0.06,
        xd1 = 0.232, xd2 = 0.12, xl = 0.134, xq = 1.22, xq1 = 0.715,
        xq2 = 0.12
 
-TG1, gen = 1, pmax = 999, pmin = 0, R = 0.01, wref0 = 1.0,
+TG1, gen = 1, pmax = 5, pmin = 0, R = 0.01, wref0 = 1.0,
      T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
-TG1, gen = 2, pmax = 999, pmin = 0, R = 0.01, wref0 = 1.0,
+TG1, gen = 2, pmax = 2, pmin = 0, R = 0.01, wref0 = 1.0,
      T3 = 0, T4 = 12.0, T5 = 50.0, Tc = 0.56, Ts = 0.1
-
-#TG2, gen = 1, pmax = 999, pmin = 0, R = 0.01, wref0 = 1,
-#     T1 = 0.2, T2 = 10
-#TG2, gen = 2, pmax = 999, pmin = 0, R = 0.01, wref0 = 1,
-#     T1 = 0.2, T2 = 10
-
 
 AVR1, Ka = 200.0, Kf = 0.002, Ta = 0.02, Te = 0.2, Tf = 1.0, Tr = 0.001,
       idx = 1, name = "AVR 1", syn = 1, vrmax = 7.32,
@@ -206,17 +202,4 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
 
 #PSS2, avr = 1, Ic = 1
 
-PMU, idx = 1, bus = 1, Vn = 69
-PMU, idx = 2, bus = 2, Vn = 69
-PMU, idx = 3, bus = 3, Vn = 69
-PMU, idx = 4, bus = 4, Vn = 69
-PMU, idx = 5, bus = 5, Vn = 69
-PMU, idx = 6, bus = 6, Vn = 13.8
-PMU, idx = 7, bus = 7, Vn = 13.8
-PMU, idx = 8, bus = 8, Vn = 18
-PMU, idx = 9, bus = 9, Vn = 13.8
-PMU, idx = 10, bus = 10, Vn = 13.8
-PMU, idx = 11, bus = 11, Vn = 13.8
-PMU, idx = 12, bus = 12, Vn = 13.8
-PMU, idx = 13, bus = 13, Vn = 13.8
-PMU, idx = 14, bus = 14, Vn = 13.8
+# Recorder, model = "Syn6a"

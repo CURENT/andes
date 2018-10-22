@@ -236,6 +236,20 @@ The Andes Python APIs are loaded into an interactive Python environment
 whole package and set up the global logger using
 
     >>> import andes
+    >>> andes.main.config_logger(log_file=None)
+
+Create an instance of Power System from the case file, for example, at ``
+ieee14_syn.dm``
+whole package and set up the global logger using
+
+    >>> import andes
+    >>> andes.main.config_logger(log_file=None)
+
+Create an instance of Power System from the case file, for example, at ``
+ieee14_syn.dm``
+whole package and set up the global logger using
+
+    >>> import andes
     >>> andes.main.config_logger(logfile=None)
 
 Create an instance of Power System from the case file, for example, at ``
@@ -289,3 +303,32 @@ Save the results to list and data files with
 
     >>> ps.tds.dump_results()
     Simulation data sumped in 0.0978 seconds.
+
+
+Plotting Results
+----------------
+
+The ``andes.plot`` package can be used interactively for plotting time-domain
+simulation results. Import functions from the package using
+
+    >>> from andes.plot import read_dat, read_label, do_plot
+
+Specify the files and the indices to plot using
+
+    >>> dat_file = 'ieee14_syn_out.dat'
+    >>> lst_file = 'ieee14_syn_out.lst'
+    >>> x_idx = [0]
+    >>> y_idx = [44, 50, 56]
+
+Call functions `read_dat` and `read_label` to read out the values and names based on the variable indices.
+
+    >>> x_dat, y_dat = read_dat(dat_file, x_idx, y_idx)
+    >>> x_name, y_name = read_label(lst_file, x_idx, y_idx)
+
+Call function `do_plot` to plot the curves
+
+    >>> fig, ax = do_plot(xdata=x_dat, ydata=y_dat, 
+                          xname=x_name, yname=y_name, 
+                          ylabel='Generator Speed [pu]', grid=True)
+
+

@@ -1344,6 +1344,9 @@ class ModelBase(object):
 
             ret.append(idx)
 
+        if len(ret) == 1:
+            ret = ret[0]
+
         return ret
 
     def link_bus(self, bus_idx):

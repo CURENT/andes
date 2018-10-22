@@ -283,9 +283,6 @@ class RLs(DCBase):
         self._service.extend(['iR', 'iL'])
         self._init()
 
-    def base(self):
-        super(RLs, self).base()
-
     def servcall(self, dae):
         self.iR = div(self.u, self.R)
         self.iL = div(self.u, self.L)
