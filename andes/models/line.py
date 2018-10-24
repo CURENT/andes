@@ -339,23 +339,31 @@ class Line(ModelBase):
         Compute terminal injections, line losses
         """
 
-        Vm = dae.y[self.v]
-        Va = dae.y[self.a]
-        V1 = polar(Vm[self.a1], Va[self.a1])
-        V2 = polar(Vm[self.a2], Va[self.a2])
+        # Vm = dae.y[self.v]
+        # Va = dae.y[self.a]
+        # V1 = polar(Vm[self.a1], Va[self.a1])
+        # V2 = polar(Vm[self.a2], Va[self.a2])
 
-        I1 = mul(V1, div(self.y12 + self.y1, self.m2)) - mul(
-            V2, div(self.y12, self.mconj))
-        I2 = mul(V2, self.y12 + self.y2) - mul(V1, div(self.y12, self.m))
-        self.S1 = mul(V1, conj(I1))
-        self.S2 = mul(V2, conj(I2))
+        I1 = mul(self.v1, div(self.y12 + self.y1, self.m2)) - \
+            mul(self.v2, div(self.y12, self.mconj))
+        I2 = mul(self.v2, self.y12 + self.y2) - \
+            mul(self.v2, div(self.y12, self.m))
+
+        self.I1_real = I1.real()
+        self.I1_imag = I1.imag()
+        self.I2_real = I2.real()
+        self.I2_imag = I2.imag()
+
+        self.S1 = mul(self.v1, conj(I1))
+        self.S2 = mul(self.v2, conj(I2))
+
         self.P1 = self.S1.real()
         self.P2 = self.S2.real()
         self.Q1 = self.S1.imag()
         self.Q2 = self.S2.imag()
 
-        self.chg1 = mul(self.g1 + 1j * self.b1, div(V1**2, self.m2))
-        self.chg2 = mul(self.g2 + 1j * self.b2, V2**2)
+        self.chg1 = mul(self.g1 + 1j * self.b1, div(self.v1**2, self.m2))
+        self.chg2 = mul(self.g2 + 1j * self.b2, self.v2**2)
 
         self.Pchg1 = self.chg1.real()
         self.Pchg2 = self.chg2.real()
@@ -363,7 +371,23 @@ class Line(ModelBase):
         self.Qchg1 = self.chg1.imag()
         self.Qchg2 = self.chg2.imag()
 
-        self._line_flows = matrix([self.P1, self.P2, self.Q1, self.Q2])
+        self._line_flows = matrix([self.P1, self.P2, self.Q1, self.Q2,
+                                   self.I1_real, self.I1_imag,
+                                   self.I2_real, self.I2_imag])
+
+    @property
+    def v1(self):
+        """Return voltage phasors at the "from buses" (bus1)"""
+        Vm = self.system.dae.y[self.v]
+        Va = self.system.dae.y[self.a]
+        return polar(Vm[self.a1], Va[self.a1])
+
+    @property
+    def v2(self):
+        """Return voltage phasors at the "to buses" (bus2)"""
+        Vm = self.system.dae.y[self.v]
+        Va = self.system.dae.y[self.a]
+        return polar(Vm[self.a1], Va[self.a1])
 
     def switch(self, idx, u):
         """switch the status of Line idx"""
@@ -436,31 +460,57 @@ class Line(ModelBase):
             var_name='Q_{ji}',
             element_name=self.name)
 
-        # # Sij
-        # xy_idx = range(mpq + 4 * nl, mpq + 5 * nl)
-        # self.system.varname.append(
-        #     listname='unamey',
-        #     xy_idx=xy_idx,
-        #     var_name='Sij',
-        #     element_name=self.name)
-        # self.system.varname.append(
-        #     listname='fnamey',
-        #     xy_idx=xy_idx,
-        #     var_name='S_{ij}',
-        #     element_name=self.name)
-        #
-        # # Qji
-        # xy_idx = range(mpq + 5 * nl, mpq + 6 * nl)
-        # self.system.varname.append(
-        #     listname='unamey',
-        #     xy_idx=xy_idx,
-        #     var_name='Sji',
-        #     element_name=self.name)
-        # self.system.varname.append(
-        #     listname='fnamey',
-        #     xy_idx=xy_idx,
-        #     var_name='S_{ji}',
-        #     element_name=self.name)
+        # Iij Real
+        xy_idx = range(mpq + 4 * nl, mpq + 5 * nl)
+        self.system.varname.append(
+            listname='unamey',
+            xy_idx=xy_idx,
+            var_name='Iij_Re',
+            element_name=self.name)
+        self.system.varname.append(
+            listname='fnamey',
+            xy_idx=xy_idx,
+            var_name='\\Re(I_{ij})',
+            element_name=self.name)
+
+        # Iij Imag
+        xy_idx = range(mpq + 5 * nl, mpq + 6 * nl)
+        self.system.varname.append(
+            listname='unamey',
+            xy_idx=xy_idx,
+            var_name='Iij_Im',
+            element_name=self.name)
+        self.system.varname.append(
+            listname='fnamey',
+            xy_idx=xy_idx,
+            var_name='\\Im(I_{ij})',
+            element_name=self.name)
+
+        # Iji Real
+        xy_idx = range(mpq + 6 * nl, mpq + 7 * nl)
+        self.system.varname.append(
+            listname='unamey',
+            xy_idx=xy_idx,
+            var_name='Iji_Re',
+            element_name=self.name)
+        self.system.varname.append(
+            listname='fnamey',
+            xy_idx=xy_idx,
+            var_name='\\Re(I_{ji})',
+            element_name=self.name)
+
+        # Iji Imag
+        xy_idx = range(mpq + 7 * nl, mpq + 8 * nl)
+        self.system.varname.append(
+            listname='unamey',
+            xy_idx=xy_idx,
+            var_name='Iji_Im',
+            element_name=self.name)
+        self.system.varname.append(
+            listname='fnamey',
+            xy_idx=xy_idx,
+            var_name='\\Im(I_{ji})',
+            element_name=self.name)
 
     def get_flow_by_idx(self, idx, bus):
         """Return seriesflow based on the external idx on the `bus` side"""

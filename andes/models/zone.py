@@ -152,8 +152,7 @@ class Zone(ModelBase):
     def _varname_inter(self):
         if not self.n:
             return
-        mpql = self.system.dae.m + 2 * self.system.Bus.n + \
-            4 * self.system.Line.n
+        mpql = self.system.dae.m + 2 * self.system.Bus.n + 8 * self.system.Line.n
 
         # P_ic
         xy_idx = range(mpql, mpql + self.n_combination)

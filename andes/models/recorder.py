@@ -50,7 +50,7 @@ class Recorder(ModelBase):
         nflows = 0
         if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
-                     4 * self.system.Line.n + \
+                     8 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
 
         if 'ALL' in self.model:

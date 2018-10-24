@@ -41,10 +41,9 @@ class VarOut(object):
         self.k.append(step)
         self.vars.append(matrix([self.system.dae.x, self.system.dae.y]))
 
+        # remove the post-computed variables from the variable list
         if self.system.tds.config.compute_flows:
             self.system.dae.y = self.system.dae.y[:self.system.dae.m]
-
-        # self.system.EAGC_module.stream_to_geovis()
 
     def show(self):
         """
@@ -130,8 +129,11 @@ class VarOut(object):
         # compute the total number of columns, excluding time
         if not system.Recorder.n:
             n_vars = system.dae.m + system.dae.n
+            # post-computed power flows include:
+            #   bus   - (Pi, Qi)
+            #   line  - (Pij, Pji, Qij, Qji, Iij_Real, Iij_Imag, Iji_real, Iji_Imag)
             if system.tds.config.compute_flows:
-                n_vars += 2 * system.Bus.n + 4 * system.Line.n
+                n_vars += 2 * system.Bus.n + 8 * system.Line.n + 2 * system.Area.n_combination
             idx = list(range(n_vars))
 
         else:
@@ -178,7 +180,7 @@ class VarOut(object):
         nflows = 0
         if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
-                     4 * self.system.Line.n + \
+                     8 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
 
         # output variable indices
