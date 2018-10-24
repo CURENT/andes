@@ -5,7 +5,9 @@ logger = logging.getLogger(__name__)
 
 
 class JIT(object):
-    """Dummy Just-in-Time initialization class"""
+    """
+    Dummy Just-in-Time initialization class
+    """
 
     def __init__(self, system, model, device, name):
         """constructor of a dummy JIT class with basic information"""
@@ -49,12 +51,7 @@ class JIT(object):
     def __getattr__(self, attr):
         if not self.loaded:
             self.jit_load()
-        if attr in self.system.__dict__[self.name].__dict__:
-            return self.system.__dict__[self.name].__dict__[attr]
-        else:
-            logger.warning(
-                'Instance <{:s}> does not have <{:s}> attribute.'.format(
-                    self.name, attr))
+        return self.system.__dict__[self.name].__getattribute__(attr)
 
     def elem_add(self, idx=None, name=None, **kwargs):
         """overloading elem_add function of a JIT class"""

@@ -18,4 +18,4 @@ script:
   - codecov  # Upload the report to codecov.
   - flake8 --max-line-length=115  # Enforce code style (but relax line length limit a bit).
   - make -C docs html  # Build the documentation.
-  - andes cases/ieee14_syn.dm -r tds -v 10 --no-output --tf 0.1
+  - andes cases/ieee14/ieee14_syn.dm -r tds -v 10 --no-output --tf 0.1
