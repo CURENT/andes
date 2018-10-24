@@ -29,7 +29,7 @@ def read(file, system):
         'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q'
     ]
     nol = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
-    rawd = re.compile('rawd\d\d')
+    rawd = re.compile(r'rawd\d\d')
 
     retval = True
     version = 0
@@ -53,14 +53,18 @@ def read(file, system):
             mva = float(data[1])
             system.config.mva = mva
             system.config.freq = float(data[5])
-            version = int(data[2])
 
+            # get raw file version
+            version = int(data[2])
             if not version:
                 version = int(rawd.search(line).group(0).strip('rawd'))
+            logger.debug('PSSE raw version {} detected'.format(version))
+
             if version < 32 or version > 33:
                 logger.warning(
                     'RAW file version is not 32 or 33. Error may occur.')
             continue
+
         elif num == 1:  # store the case info line
             logger.info(line)
             continue
