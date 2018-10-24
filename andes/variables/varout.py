@@ -172,7 +172,7 @@ class VarOut(object):
         template = '{:>6g}, {:>25s}, {:>25s}\n'
 
         # header line
-        out += template.format(0, 'Time [s]', '$Time\ [s]$')
+        out += template.format(0, 'Time [s]', '$Time\\ [s]$')
 
         # include line flow variables in algebraic variables
         nflows = 0

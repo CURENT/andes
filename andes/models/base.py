@@ -1142,7 +1142,7 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamex[idx] = '{} {}'.format(unamex, iname)[:24]
-                varname.fnamex[idx] = '$' + '{}\ {}'.format(
+                varname.fnamex[idx] = '$' + '{}\\ {}'.format(
                     fnamex, iname.replace(' ', '\\ '))[:24] + '$'
 
             for e, var in enumerate(self._algebs):
@@ -1151,7 +1151,7 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamey[idx] = '{} {}'.format(unamey, iname)[:24]
-                varname.fnamey[idx] = '$' + '{}\ {}'.format(
+                varname.fnamey[idx] = '$' + '{}\\ {}'.format(
                     fnamey, iname.replace(' ', '\\ '))[:24] + '$'
 
     def _param_to_matrix(self):
