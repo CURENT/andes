@@ -529,7 +529,7 @@ class PowerSystem(object):
                     'Each island has a slack bus correctly defined.'.format(
                         nosw_island))
 
-    def get_busdata(self, dec=5):
+    def get_busdata(self, sort_names=False):
         """
         get ac bus data from solved power flow
         """
@@ -548,10 +548,16 @@ class PowerSystem(object):
         Qg = [self.Bus.Qg[x] for x in range(self.Bus.n)]
         Pl = [self.Bus.Pl[x] for x in range(self.Bus.n)]
         Ql = [self.Bus.Ql[x] for x in range(self.Bus.n)]
-        return (list(x) for x in zip(*sorted(
-            zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
 
-    def get_nodedata(self, dec=5):
+        if sort_names:
+            ret = (list(x) for x in zip(*sorted(
+                zip(idx, names, Vm, Va, Pg, Qg, Pl, Ql), key=itemgetter(0))))
+        else:
+            ret = idx, names, Vm, Va, Pg, Qg, Pl, Ql
+
+        return ret
+
+    def get_nodedata(self, sort_names=False):
         """
         get dc node data from solved power flow
         """
@@ -563,26 +569,44 @@ class PowerSystem(object):
         idx = self.Node.idx
         names = self.Node.name
         V = [self.dae.y[x] for x in self.Node.v]
-        return (list(x)
-                for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
 
-    def get_linedata(self, dec=5):
-        """get line data from solved power flow"""
+        if sort_names:
+            ret = (list(x)
+                   for x in zip(*sorted(zip(idx, names, V), key=itemgetter(0))))
+        else:
+            ret = idx, names, V
+
+        return ret
+
+    def get_linedata(self, sort_names=False):
+        """
+        get line data from solved power flow
+        """
         if not self.pflow.solved:
             logger.error('Power flow not solved when getting line data.')
             return tuple([False] * 7)
         idx = self.Line.idx
         fr = self.Line.bus1
         to = self.Line.bus2
-        Pfr = [self.Line.S1[x].real for x in range(self.Line.n)]
-        Qfr = [self.Line.S1[x].imag for x in range(self.Line.n)]
-        Pto = [self.Line.S2[x].real for x in range(self.Line.n)]
-        Qto = [self.Line.S2[x].imag for x in range(self.Line.n)]
-        Ploss = [i + j for i, j in zip(Pfr, Pto)]
-        Qloss = [i + j for i, j in zip(Qfr, Qto)]
-        return (list(x) for x in zip(*sorted(
-            zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss),
-            key=itemgetter(0))))
+
+        Sloss = self.Line.S1 + self.Line.S2
+
+        Pfr = list(self.Line.S1.real())
+        Qfr = list(self.Line.S1.imag())
+        Pto = list(self.Line.S2.real())
+        Qto = list(self.Line.S2.imag())
+
+        Ploss = list(Sloss.real())
+        Qloss = list(Sloss.imag())
+
+        if sort_names:
+            ret = (list(x) for x in zip(*sorted(
+                zip(idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss),
+                key=itemgetter(0))))
+        else:
+            ret = idx, fr, to, Pfr, Qfr, Pto, Qto, Ploss, Qloss
+
+        return ret
 
 
 class GroupMeta(type):
