@@ -253,7 +253,6 @@ def read(file, system):
             }
             system.Line.elem_add(**param)
         else:
-            print('3 winding works')
             """
             I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
             R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
@@ -272,12 +271,12 @@ def read(file, system):
 
             r = []
             x = []
-            r.append((data[1][0]+data[1][6]-data[1][3])/2)
-            r.append((data[1][3]+data[1][0]-data[1][6])/2)
-            r.append((data[1][6]+data[1][3]-data[1][0])/2)
-            x.append((data[1][1]+data[1][7]-data[1][4])/2)
-            x.append((data[1][4]+data[1][1]-data[1][7])/2)
-            x.append((data[1][7]+data[1][4]-data[1][1])/2)
+            r.append((data[1][0] + data[1][6] - data[1][3])/2)
+            r.append((data[1][3] + data[1][0] - data[1][6])/2)
+            r.append((data[1][6] + data[1][3] - data[1][0])/2)
+            x.append((data[1][1] + data[1][7] - data[1][4])/2)
+            x.append((data[1][4] + data[1][1] - data[1][7])/2)
+            x.append((data[1][7] + data[1][4] - data[1][1])/2)
             for i in range(0, 3):
                 param = {
                     'trasf': True,

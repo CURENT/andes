@@ -135,18 +135,20 @@ class PFLOW(RoutineBase):
         return self.solved, self.niter
 
     def dcpf(self):
+        """
+        Calculate linearized power flow
+
+        Returns
+        -------
+        (bool, int)
+            success flag, number of iterations
+        """
         dae = self.system.dae
 
         self.system.Bus.init0(dae)
         self.system.dae.init_g()
 
         Va0 = self.system.Bus.angle
-        # pflg = self.system.call.pflow
-        #
-        # for idx, device in enumerate(self.system.devman.devices):
-        #     if device == 'Line':
-        #         pflg[idx] = False
-
         for model, pflow, gcall in zip(self.system.devman.devices, self.system.call.pflow, self.system.call.gcall):
             if pflow and gcall:
                 self.system.__dict__[model].gcall(dae)
@@ -167,10 +169,7 @@ class PFLOW(RoutineBase):
         Sp = self.solver.symbolic(Bp)
         N = self.solver.numeric(Bp, Sp)
         self.solver.solve(Bp, Sp, N, p)
-
-        # self.solver.linsolve(Bp, p)
         self.system.dae.y[no_sw] = p
-        # deg = p/3.14*180
 
         self.solved = True
         self.niter = 1
