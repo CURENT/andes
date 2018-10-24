@@ -168,7 +168,7 @@ class Line(ModelBase):
         m = polar(1.0, self.phi * deg2rad)  # neglected tap ratio
         self.mconj = conj(m)
         m2 = matrix(1.0, (self.n, 1), 'z')
-        if method == 'fdxb':
+        if method in ('fdxb', 'dcpf'):
             # neglect line resistance in Bp in XB method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -193,7 +193,7 @@ class Line(ModelBase):
         m = self.tap + 0j  # neglected phase shifter
         m2 = abs(m)**2 + 0j
 
-        if method in ('fdbx', 'fdpf'):
+        if method in ('fdbx', 'fdpf', 'dcpf'):
             # neglect line resistance in Bpp in BX method
             y12 = div(self.u, self.x * 1j)
         else:
@@ -287,10 +287,12 @@ class Line(ModelBase):
         method = self.system.pflow.config.method.lower()
         self.build_y()
         self.incidence()
-        if method in ('fdpf', 'fdbx', 'fdxb'):
+        if method in ('fdpf', 'fdbx', 'fdxb', 'dcpf'):
             self.build_b()
 
     def gcall(self, dae):
+        if self.system.pflow.config.method == 'DCPF':
+            return
         if self.rebuild:
             self.build_y()
             self.rebuild = False

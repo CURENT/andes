@@ -442,6 +442,8 @@ class PowerSystem(object):
             self.__dict__[r.lower()].config.load_config(conf)
 
         logger.debug('Loaded config file from {}.'.format(conf_path))
+        if self.pflow.config.method == 'DCPF':
+            self.pflow.config.flatstart = True
 
     def dump_config(self, file_path):
         """
