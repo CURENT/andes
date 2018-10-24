@@ -13,7 +13,6 @@ class Pflow(ConfigBase):
         self.report = 'default'
         self.show = True
         self.method = 'NR'
-        # self.method = 'DCPF'
         self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB', 'DCPF']
         self.sortbuses = 'data'
         self.sortbuses_alt = ['data', 'idx']
