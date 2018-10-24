@@ -12,6 +12,9 @@ supports power flow calculation, time domain simulation, and full eigenvalue
 analysis for transmission networks. ANDES is currently under active development.
 
 .. toctree::
+   :caption: ANDES Tutorial
+   :maxdepth: 2
+
    copyright.rst
    intro.rst
    install.rst
@@ -20,6 +23,13 @@ analysis for transmission networks. ANDES is currently under active development.
    cases.rst
    modeling.rst
    release-history.rst
+
+.. toctree::
+   :caption: ANDES Package References
+   :maxdepth: 1
+
+   andes.rst
+
 
 Indices and tables
 ==================

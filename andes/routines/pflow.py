@@ -153,7 +153,7 @@ class PFLOW(RoutineBase):
         Returns
         -------
         matrix
-            The solution to ``x = -A\b``
+            The solution to ``x = -A\\b``
         """
         system = self.system
         self.newton_call()

@@ -26,8 +26,7 @@ from operator import itemgetter
 
 from . import routines
 from .config import System
-from .consts import pi
-from .consts import rad2deg
+from .consts import pi, rad2deg
 from .models import non_jits, jits, JIT
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
@@ -141,11 +140,15 @@ class PowerSystem(object):
         if tf:
             self.tds.config.tf = tf
 
+        self.streaming = None
         if not STREAMING:
-            self.streaming = None
-            self.config.dime_enable = False
+            if self.config.dime_enable:
+                self.config.dime_enable = False
+                logger.warning('Missing andes_addon for DiME streaming.')
         else:
-            self.streaming = Streaming(self)
+            if self.config.dime_enable:
+                logger.info('Connecting to DiME at {}'.format(self.config.dime_server))
+                self.streaming = Streaming(self)
 
         self.model_import()
 

@@ -1,5 +1,6 @@
 # These are required for developing the package (running the tests, building
 # the documentation) but not necessarily required for _using_ it.
+andes
 codecov
 coverage
 flake8
