@@ -220,7 +220,6 @@ def read(file, system):
         system.Line.elem_add(**param)
 
     xf_3_count = 1
-    # temp = []
     for data in raw['transf']:
         if len(data) == 4:
             """
