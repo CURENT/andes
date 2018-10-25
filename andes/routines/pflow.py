@@ -78,12 +78,15 @@ class PFLOW(RoutineBase):
         """
         ret = None
 
+        # initialization Y matrix and inital guess
         self.pre()
         t, _ = elapsed()
 
         # call solution methods
         if self.config.method == 'NR':
             ret = self.newton()
+        elif self.config.method == 'DCPF':
+            ret = self.dcpf()
         elif self.config.method in ('FDPF', 'FDBX', 'FDXB'):
             ret = self.fdpf()
 
@@ -128,6 +131,48 @@ class PFLOW(RoutineBase):
             if self.niter > self.config.maxit:
                 logger.warning('Reached maximum number of iterations.')
                 break
+
+        return self.solved, self.niter
+
+    def dcpf(self):
+        """
+        Calculate linearized power flow
+
+        Returns
+        -------
+        (bool, int)
+            success flag, number of iterations
+        """
+        dae = self.system.dae
+
+        self.system.Bus.init0(dae)
+        self.system.dae.init_g()
+
+        Va0 = self.system.Bus.angle
+        for model, pflow, gcall in zip(self.system.devman.devices, self.system.call.pflow, self.system.call.gcall):
+            if pflow and gcall:
+                self.system.__dict__[model].gcall(dae)
+
+        sw = self.system.SW.a
+        sw.sort(reverse=True)
+        no_sw = self.system.Bus.a[:]
+        no_swv = self.system.Bus.v[:]
+
+        for item in sw:
+            no_sw.pop(item)
+            no_swv.pop(item)
+
+        Bp = self.system.Line.Bp[no_sw, no_sw]
+        p = matrix(self.system.dae.g[no_sw], (no_sw.__len__(), 1))
+        p = p-self.system.Line.Bp[no_sw, sw]*Va0[sw]
+
+        Sp = self.solver.symbolic(Bp)
+        N = self.solver.numeric(Bp, Sp)
+        self.solver.solve(Bp, Sp, N, p)
+        self.system.dae.y[no_sw] = p
+
+        self.solved = True
+        self.niter = 1
 
         return self.solved, self.niter
 
@@ -196,7 +241,7 @@ class PFLOW(RoutineBase):
         dae = self.system.dae
 
         system.dae.init_fg()
-
+        system.dae.reset_small_g()
         # evaluate algebraic equation mismatches
         for model, pflow, gcall in zip(system.devman.devices,
                                        system.call.pflow, system.call.gcall):
