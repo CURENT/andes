@@ -26,4 +26,3 @@ pipelines:
           - make -C docs html
           # Run the ieee14_syn.dm tds
           - andes cases/ieee14/ieee14_syn.dm -r tds -v 10 --no-output --tf 0.1
-
