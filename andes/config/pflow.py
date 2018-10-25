@@ -42,4 +42,6 @@ class Pflow(ConfigBase):
     def check(self):
         if self.method not in self.method_alt:
             self.method = 'NR'
+        if self.pflow.config.method == 'DCPF':
+            self.pflow.config.flatstart = True
         return True
