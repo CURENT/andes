@@ -24,7 +24,7 @@ class PI1(object):
             self.PI1_label = ['PI1' + str(self.nPI1)]
 
         if params:
-            assert type(params) == dict
+            assert isinstance(params, dict)
         else:
             params = {
                 'Kp' + str(self.nPI1): 0.1,

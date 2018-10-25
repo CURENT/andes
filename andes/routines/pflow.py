@@ -96,7 +96,8 @@ class PFLOW(RoutineBase):
         if self.solved:
             logger.info(' Solution converged in {} in {} iterations'.format(s, self.niter))
         else:
-            logger.warn(' Solution failed in {} in {} iterations'.format(s, self.niter))
+            logger.warning(' Solution failed in {} in {} iterations'.format(s,
+                           self.niter))
         return ret
 
     def newton(self):

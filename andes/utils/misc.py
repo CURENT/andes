@@ -2,6 +2,7 @@ import os
 import pathlib
 import logging
 import platform
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +53,7 @@ def get_log_dir():
     """
     PATH = ''
     if platform.system() in ('Linux', 'Darwin'):
-        ret = '/tmp'
-        PATH = os.path.join(ret, 'andes')
+        PATH = tempfile.mkdtemp(prefix='andes-')
 
     elif platform.system() == 'Windows':
         APPDATA = os.getenv('APPDATA')
