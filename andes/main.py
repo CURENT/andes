@@ -366,7 +366,7 @@ def andeshelp(group=None,
         if len(match) == 0:
             out.append('Group <{:s}> not found.'.format(group[0]))
 
-        for idx, item in enumerate(match):
+        for item in match:
             group_models = sorted(list(group_dict[item]))
             out.append('<{:s}>'.format(item))
             out.append(', '.join(group_models))
@@ -799,7 +799,7 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
                 ' ' + str(pid) if pid >= 0 else ''))
 
     if pid >= 0:
-        t3, s = elapsed(t0)
+        _, s = elapsed(t0)
         msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
         logger.info(msg_finish)
         print(msg_finish)

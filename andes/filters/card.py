@@ -253,7 +253,7 @@ def run(system,
     var_names = consts + algebs + states + copy_algebs + copy_states
     if len(set(var_names)) != len(var_names):
         raise NameError('Duplicated names are declared!')
-    """Set up sympy symbols for variables, constants and equations"""
+    # Set up sympy symbols for variables, constants and equations
     sym_consts, sym_algebs, sym_states, sym_interfaces = [], [], [], []
     sym_algebs_ext, sym_states_ext = [], []
     sym_f, sym_g, sym_serv, sym_init1 = [], [], [], []
@@ -362,7 +362,7 @@ def run(system,
             elif sym in sym_states_ext:
                 sym_idx = sym_states_ext.index(sym)
                 Fx.append([eq_idx, sym_idx, expr.diff(sym)])
-    """Save equations into callable CVXOPT functions"""
+    # Save equations into callable CVXOPT functions
     fcall, gcall = [], []
     gycall, fxcall, jac0 = [], [], []
     jac0_line = 'dae.add_jac({}0, {}, self.{}, self.{})'

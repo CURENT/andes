@@ -103,7 +103,11 @@ class Zone(ModelBase):
             int_code1 = self.uid[code1]
             int_code2 = self.uid[code2]
 
-            x.append(0.5) if int_code1 == int_code2 else x.append(1)
+            if int_code1 == int_code2:
+                x.append(0.5)
+            else:
+                x.append(1)
+
             a.append(int_code1)
             b.append(int_code2)
 

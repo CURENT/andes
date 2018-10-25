@@ -526,8 +526,7 @@ class PowerSystem(object):
                     format(len(nosw_island)))
             else:
                 logger.debug(
-                    'Each island has a slack bus correctly defined.'.format(
-                        nosw_island))
+                    'Each island has a slack bus correctly defined.')
 
     def get_busdata(self, dec=5):
         """

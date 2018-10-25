@@ -97,7 +97,6 @@ def read(file, system, header=True):
                 if not os.path.isfile(newpath):
                     raise FileNotFoundError(
                         'Unable to locate file in {}'.format(newpath))
-                    retval = False
                     continue
             read(newpath, system, header=False)  # recursive call
             logger.debug('Parsing of include file <{}> completed.'.format(
@@ -185,11 +184,11 @@ def write(file, system):
                 else:
                     val = model.__dict__[key][elem]
 
-                if type(val) == float:
+                if isinstance(val, float):
                     val = round(val, 5)
-                elif type(val) == str:
+                elif isinstance(val, str):
                     val = '"{}"'.format(val)
-                elif type(val) == map:
+                elif isinstance(val, map):
                     val = list(val)
                     val = '; '.join(str(i) for i in val)
                     val = '[{}]'.format(val)
