@@ -424,15 +424,21 @@ class ModelBase(object):
         # =================================================================
 
         uid = self.get_uid(idx)
-        if not astype:
-            astype = type(self.__dict__[field])
 
-        ret = matrix(self.__dict__[field])[uid]
+        field_data = self.__dict__[field]
 
-        if isinstance(idx, (float, int, str)):
-            return ret
-        else:
-            return astype(ret)
+        if isinstance(field_data, matrix):
+            ret = field_data[uid]
+        elif isinstance(field_data, list):
+            if isinstance(idx, (float, int, str)):
+                ret = field_data[uid]
+            else:
+                ret = [field_data[x] for x in uid]
+
+        if astype is not None:
+            ret = astype(ret)
+
+        return ret
 
     def _alloc(self):
         """

@@ -208,6 +208,7 @@ class Area(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Area'
+        self._group = 'Collection'
         self._init()
 
     def setup(self):
@@ -221,6 +222,7 @@ class Region(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Region'
+        self._group = 'Balancing'
         self._params.extend(['Ptol', 'slack'])
         self._descr.update({
             'Ptol': 'Total transfer capacity',

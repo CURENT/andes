@@ -625,6 +625,7 @@ class Group(metaclass=GroupMeta):
         self.name = name
         self.all_models = []
         self._idx_model = {}
+        self._idx = []
 
     def register_model(self, model):
         """
@@ -650,9 +651,14 @@ class Group(metaclass=GroupMeta):
         if idx is None:
             idx = model + '_' + str(len(self._idx_model))
 
-        assert idx not in self._idx_model.values()
+        # TODO: `in` a list test is slow for large lists. Consider `bisect`
+        if idx in self._idx:
+            raise IndexError("Model {} idx {} already exist in model {}".
+                             format(model, idx, self._idx_model[idx]))
 
         self._idx_model[idx] = model
+        self._idx.append(idx)
+
         return idx
 
     def get_field(self, field, idx):
