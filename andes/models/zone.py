@@ -11,7 +11,7 @@ class Zone(ModelBase):
 
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._group = 'Topology'
+        self._group = 'Topo_Zone'
         self._name = 'Zone'
         self._params.extend(['pdes', 'ptol', 'isw'])
         self._descr.update({
@@ -208,7 +208,7 @@ class Area(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Area'
-        self._group = 'Collection'
+        self._group = 'Topo_Area'
         self._init()
 
     def setup(self):
@@ -222,7 +222,7 @@ class Region(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Region'
-        self._group = 'Balancing'
+        self._group = 'Topo_Region'
         self._params.extend(['Ptol', 'slack'])
         self._descr.update({
             'Ptol': 'Total transfer capacity',
