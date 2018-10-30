@@ -538,7 +538,6 @@ class Line(ModelBase):
     def leaf_bus(self, df=False):
         """
         Return leaf bus idx, line idx, and the line foreign key
-        -------
 
         Returns
         -------
