@@ -2,9 +2,10 @@
 numpy
 cvxopt
 scipy
-texttable
 matplotlib
 pandas
-progressbar
-pathlib
 sympy
+texttable
+pathlib
+progressbar
+colorlog

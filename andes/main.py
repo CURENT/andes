@@ -28,11 +28,17 @@ import platform
 import pprint
 import pstats
 import sys
+import pathlib
+
+try:
+    import colorlog
+except ImportError:
+    colorlog = None
+
 from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep, strftime
 
-import pathlib
 from . import filters
 from . import routines
 from .system import PowerSystem
@@ -80,23 +86,41 @@ def config_logger(name='andes',
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    # logging formatter
-    fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    sh_formatter = logging.Formatter('%(message)s')
-
-    # file handler which logs debug messages
+    # file handler for level DEBUG and up
     if log_file is not None:
+        fh_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         log_full_path = os.path.join(log_path, log_file)
         fh = logging.FileHandler(log_full_path)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fh_formatter)
         logger.addHandler(fh)
 
-    # stream handler for errors
+    # stream handler using `colorlog` if available
     if stream is True:
-        sh = logging.StreamHandler()
-        sh.setLevel(stream_level)
+        if colorlog is not None:
+            sh_formatter = colorlog.ColoredFormatter(
+                "%(log_color)s%(message)s",
+                datefmt=None,
+                reset=True,
+                log_colors={
+                    'DEBUG': 'cyan',
+                    'INFO': 'white',
+                    'WARNING': 'yellow',
+                    'ERROR': 'red',
+                    'CRITICAL': 'red,bg_white',
+                },
+                secondary_log_colors={},
+                style='%'
+            )
+
+            sh = colorlog.StreamHandler()
+        else:
+            sh_formatter = logging.Formatter('%(message)s')
+            sh = logging.StreamHandler()
+
         sh.setFormatter(sh_formatter)
+        sh.setLevel(stream_level)
         logger.addHandler(sh)
 
     globals()['logger'] = logger
