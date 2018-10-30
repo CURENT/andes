@@ -8,6 +8,9 @@ from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 from ..utils.math import polar, conj
 from ..consts import deg2rad
+
+import pandas as pd
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -531,3 +534,41 @@ class Line(ModelBase):
                 P.append(self.P2[line_int])
                 Q.append(self.Q2[line_int])
         return matrix(P), matrix(Q)
+
+    def leaf_bus(self, df=False):
+        """
+        Return leaf bus idx, line idx, and the line foreign key
+        -------
+
+        Returns
+        -------
+        (list, list, list) or DataFrame
+
+        """
+        # leafs - leaf bus idx
+        # lines - line idx
+        # fkey - the foreign key of Line, in 'bus1' or 'bus2', linking the bus
+
+        leafs, lines, fkeys = list(), list(), list()
+
+        # convert to unique, ordered list
+        buses = sorted(list(set(self.bus1 + self.bus2)))
+
+        links = self.link_bus(buses)
+
+        for bus, link in zip(buses, links):
+            line = link[0]
+            fkey = link[1]
+            if line is None:
+                continue
+            if len(line) == 1:
+                leafs.append(bus)
+                lines.extend(line)
+                fkeys.extend(fkey)
+
+        # output formatting
+        if df is False:
+            return leafs, lines, fkeys
+        else:
+            _data = {'Bus idx': leafs, 'Line idx': lines, 'fkey': fkeys}
+            return pd.DataFrame(data=_data)
