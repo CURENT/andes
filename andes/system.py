@@ -652,9 +652,9 @@ class Group(metaclass=GroupMeta):
             idx = model + '_' + str(len(self._idx_model))
 
         # TODO: `in` a list test is slow for large lists. Consider `bisect`
-        if idx in self._idx:
-            raise IndexError("Model {} idx {} already exist in model {}".
-                             format(model, idx, self._idx_model[idx]))
+        # if idx in self._idx:
+        #     raise IndexError("Model {} idx {} already exist in model {}".
+        #                      format(model, idx, self._idx_model[idx]))
 
         self._idx_model[idx] = model
         self._idx.append(idx)
@@ -671,6 +671,8 @@ class Group(metaclass=GroupMeta):
         """
         ret = []
         scalar = False
+
+        # TODO: ensure idx is unique in this Group
 
         if isinstance(idx, (int, float, str)):
             scalar = True
