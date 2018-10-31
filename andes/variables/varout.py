@@ -19,6 +19,7 @@ class VarOut(object):
         self.t = []
         self.k = []
         self.vars = []
+        self.vars_array = None
         self.dat = None
         self._mode = 'w'
 
@@ -206,3 +207,21 @@ class VarOut(object):
             logger.error('I/O Error while writing the lst file.')
 
         return ret
+
+    def vars_to_array(self):
+        """
+        Convert `self.vars` to a numpy array
+
+        Returns
+        -------
+        numpy.array
+        """
+        if not self.vars:
+            return None
+
+        vars_matrix = matrix(self.vars, size=(self.vars[0].size[0],
+                                              len(self.vars))).trans()
+
+        self.vars_array = np.array(vars_matrix)
+
+        return self.vars_array
