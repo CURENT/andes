@@ -9,10 +9,11 @@ from ..consts import Fx, Fy, Gx, Gy  # NOQA
 from ..utils.math import polar, conj
 from ..consts import deg2rad
 
-import pandas as pd
-
 import logging
+import importlib
 logger = logging.getLogger(__name__)
+
+pd = None
 
 
 class Line(ModelBase):
@@ -570,4 +571,6 @@ class Line(ModelBase):
             return leafs, lines, fkeys
         else:
             _data = {'Bus idx': leafs, 'Line idx': lines, 'fkey': fkeys}
+            if globals()['pd'] is None:
+                globals()['pd'] = importlib.import_module('pandas')
             return pd.DataFrame(data=_data)

@@ -18,20 +18,21 @@ Base class for building ANDES models
 """
 
 import sys
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
+import importlib
+import numpy as np
+import logging
 
 from cvxopt import matrix, spmatrix  # NOQA
 from cvxopt import mul, div
 
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
+
 from ..utils.math import agtb, altb, index, zeros  # NOQA
 from ..utils.tab import Tab
 
-# pandas import slows down the program startup by 0.3 seconds
-import pandas as pd
-import numpy as np
-
-import logging
 logger = logging.getLogger(__name__)
+
+pd = None
 
 
 class ModelBase(object):
@@ -580,7 +581,9 @@ class ModelBase(object):
         """
 
         p_dict_comp = self.data_to_dict(sysbase=sysbase)
-        self.param_df = pd.DataFrame(data=p_dict_comp)
+        self._check_pd()
+
+        self.param_df = pd.DataFrame(data=p_dict_comp).set_index('idx')
 
         return self.param_df
 
@@ -591,6 +594,7 @@ class ModelBase(object):
         :return: pandas.DataFrame
         """
         ret = {}
+        self._check_pd()
 
         if self._flags['address'] is False:
             return pd.DataFrame.from_dict(ret)
@@ -605,7 +609,19 @@ class ModelBase(object):
             idx = self.__dict__[y]
             ret.update({y: self.system.dae.y[idx]})
 
-        return pd.DataFrame.from_dict(ret)
+        var_df = pd.DataFrame.from_dict(ret).set_index('idx')
+
+        return var_df
+
+    @staticmethod
+    def _check_pd():
+        """
+        Import pandas to globals() if not exist
+        """
+        if globals()['pd'] is None:
+            globals()['pd'] = importlib.import_module('pandas')
+
+        return
 
     def param_remove(self, param: 'str') -> None:
         """
@@ -1214,6 +1230,7 @@ class ModelBase(object):
                 self.__dict__[key][idx] = minval
 
     def __repr__(self):
+
         ret = ''
         ret += '\n'
         ret += 'Model <{:s}> parameters in element base\n'.format(self._name)
@@ -1442,7 +1459,6 @@ class ModelBase(object):
                         '<{}> has Vdcn={} different from node <{}> Vdcn={}.'
                         .format(name, Vdcn, node, Vdcn0), WARNING)
 
-    #
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.
