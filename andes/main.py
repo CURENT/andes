@@ -117,8 +117,12 @@ def preamble():
                 .format(ver=version[:5], b=version[-8:],
                         p=platform.python_version(),
                         os=platform.system()))
+    try:
+        username = os.getlogin() + ', '
+    except OSError:
+        username = ''
 
-    logger.info('Session: {}, {}'.format(os.getlogin(),
+    logger.info('Session: {}{}'.format(username,
                 strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('')
 
