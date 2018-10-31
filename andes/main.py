@@ -118,7 +118,8 @@ def preamble():
                         p=platform.python_version(),
                         os=platform.system()))
 
-    logger.info('Session: ' + strftime("%m/%d/%Y %I:%M:%S %p"))
+    logger.info('Session: {}, {}'.format(os.getlogin(),
+                strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('')
 
 
