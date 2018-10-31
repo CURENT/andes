@@ -87,10 +87,10 @@ def config_logger(name='andes',
     logger.setLevel(logging.DEBUG)
 
     # file handler for level DEBUG and up
+    log_full_path = os.path.join(log_path, log_file)
     if log_file is not None:
         fh_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        log_full_path = os.path.join(log_path, log_file)
         fh = logging.FileHandler(log_full_path)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fh_formatter)
@@ -124,6 +124,8 @@ def config_logger(name='andes',
         logger.addHandler(sh)
 
     globals()['logger'] = logger
+
+    logger.debug('Writing log to {}'.format(log_full_path))
 
 
 def preamble():
