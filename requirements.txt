@@ -7,5 +7,3 @@ pandas
 sympy
 texttable
 pathlib
-progressbar
-colorlog

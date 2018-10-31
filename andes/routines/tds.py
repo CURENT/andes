@@ -1,17 +1,17 @@
 import logging
-from math import isnan
-from time import monotonic as time, sleep
 import importlib
 import sys
 
-import progressbar
-from cvxopt import matrix, sparse, spdiag
-
-from .base import RoutineBase
 from andes.config.tds import Tds
 from andes.utils import elapsed
 from andes.utils.math import zeros
 from andes.utils.solver import Solver
+
+from .base import RoutineBase
+
+from cvxopt import matrix, sparse, spdiag
+from math import isnan
+from time import monotonic as time, sleep
 
 logger = logging.getLogger(__name__)
 __cli__ = 'tds'
@@ -28,13 +28,6 @@ class TDS(RoutineBase):
 
         # internal states
         self.F = None
-        self.bar = progressbar.ProgressBar(maxval=100,
-                                           widgets=[
-                                               ' [',
-                                               progressbar.Percentage(),
-                                               progressbar.Bar(),
-                                               progressbar.AdaptiveETA(), '] '
-                                           ])
 
         self.switch = False
         self.next_pc = 0.1
@@ -232,6 +225,7 @@ class TDS(RoutineBase):
             logger.warning('Power flow not solved. Simulation cannot continue.')
             return ret
         t0, _ = elapsed()
+        t1 = t0
 
         self.streaming_init()
 
@@ -243,7 +237,6 @@ class TDS(RoutineBase):
         self.run_step0()
 
         config.qrtstart = time()
-        self.bar.start()
 
         while self.t < config.tf:
             self.calc_time_step()
@@ -285,14 +278,19 @@ class TDS(RoutineBase):
             # plot variables and display iteration status
             perc = max(min((self.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
 
-            if self.bar is not None:
-                self.bar.update(perc)
+            # show iteration info every 30 seconds or every 20%
+
+            t2, _ = elapsed(t1)
+            if t2 - t1 >= 30:
+                t1 = t2
+                logger.info(' ({:.0f}%) time = {:.4f}s, step = {}, niter = {}'
+                            .format(100 * self.t / config.tf, self.t, self.step,
+                                    self.niter))
 
             if perc > self.next_pc or self.t == config.tf:
                 self.next_pc += 20
-                if self.bar is None:
-                    logger.info(' ({:.0f}%) time = {:.4f}s, step = {}, niter = {}'
-                                .format(100 * self.t / config.tf, self.t, self.step, self.niter))
+                logger.info(' ({:.0f}%) time = {:.4f}s, step = {}, niter = {}'
+                            .format(100 * self.t / config.tf, self.t, self.step, self.niter))
 
             # compute max rotor angle difference
             # diff_max = anglediff()
@@ -311,9 +309,6 @@ class TDS(RoutineBase):
                     self.headroom += (rt_end - time())
                     while time() - rt_end < 0:
                         sleep(1e-5)
-
-        if self.bar is not None:
-            self.bar.finish()
 
         if config.qrt:
             logger.debug('RT headroom time: {} s.'.format(str(self.headroom)))

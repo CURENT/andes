@@ -30,11 +30,6 @@ import pstats
 import sys
 import pathlib
 
-try:
-    import colorlog
-except ImportError:
-    colorlog = None
-
 from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep, strftime
@@ -96,28 +91,9 @@ def config_logger(name='andes',
         fh.setFormatter(fh_formatter)
         logger.addHandler(fh)
 
-    # stream handler using `colorlog` if available
     if stream is True:
-        if colorlog is not None:
-            sh_formatter = colorlog.ColoredFormatter(
-                "%(log_color)s%(message)s",
-                datefmt=None,
-                reset=True,
-                log_colors={
-                    'DEBUG': 'cyan',
-                    'INFO': 'white',
-                    'WARNING': 'yellow',
-                    'ERROR': 'red',
-                    'CRITICAL': 'red,bg_white',
-                },
-                secondary_log_colors={},
-                style='%'
-            )
-
-            sh = colorlog.StreamHandler()
-        else:
-            sh_formatter = logging.Formatter('%(message)s')
-            sh = logging.StreamHandler()
+        sh_formatter = logging.Formatter('%(message)s')
+        sh = logging.StreamHandler()
 
         sh.setFormatter(sh_formatter)
         sh.setLevel(stream_level)
@@ -733,7 +709,7 @@ def main():
     return
 
 
-def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
+def run(case, routine=None, profile=False, dump_raw=False, pid=-1,
         **kwargs):
     """
     Entry function to run a single case study. This function executes the
@@ -794,15 +770,21 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
     system.setup()
 
     # run power flow study by default
-    if 'pflow' in routine:
-        routine.remove('pflow')
 
-    system.pflow.run()
-    system.tds.init()
-    system.report.write(content='powerflow')
+    if routine is None:
+        pass
+    else:
+        # run power flow first
+        if 'pflow' in routine:
+            routine.remove('pflow')
 
-    for r in routine:
-        system.__dict__[r.lower()].run()
+        system.pflow.run()
+        system.tds.init()
+        system.report.write(content='powerflow')
+
+        # run the rest of the routines
+        for r in routine:
+            system.__dict__[r.lower()].run()
 
     # Disable profiler and output results
     if profile:
@@ -810,7 +792,7 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
 
         if system.files.no_output:
             s = io.StringIO()
-            nlines = 20
+            nlines = 40
             ps = pstats.Stats(pr, stream=sys.stdout).sort_stats('cumtime')
             ps.print_stats(nlines)
             logger.info(s.getvalue())
