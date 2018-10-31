@@ -133,6 +133,8 @@ class PowerSystem(object):
         self.varout = VarOut(self)
         self.report = Report(self)
 
+        self.loaded_groups = []
+
         if dime:
             self.config.dime_enable = True
             self.config.dime_server = dime
@@ -232,6 +234,7 @@ class PowerSystem(object):
         """
         if not hasattr(self, name):
             self.__dict__[name] = Group(self, name)
+            self.loaded_groups.append(name)
 
     def model_import(self):
         """
@@ -650,11 +653,6 @@ class Group(metaclass=GroupMeta):
 
         if idx is None:
             idx = model + '_' + str(len(self._idx_model))
-
-        # TODO: `in` a list test is slow for large lists. Consider `bisect`
-        # if idx in self._idx:
-        #     raise IndexError("Model {} idx {} already exist in model {}".
-        #                      format(model, idx, self._idx_model[idx]))
 
         self._idx_model[idx] = model
         self._idx.append(idx)

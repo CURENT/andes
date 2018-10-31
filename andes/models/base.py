@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Base class for building ANDES models
 """
@@ -78,6 +79,16 @@ class ModelBase(object):
         self._unamey = []
         self._fnamex = []
         self._fnamey = []
+
+        # `self.mdl_from`:
+        #    a list of lists, which contain tuples of (model, idx)
+        #    of elements connected to the corresponding element
+        # `self.mdl_to`:
+        #    a list of lists, which contain tuples of (model, idx) of
+        #    elements the corresponding element connects to
+
+        self.mdl_from = []
+        self.mdl_to = []
 
         # parameters to be converted to matrix
         self._params = ['u', 'Sn', 'Vn']
@@ -413,6 +424,8 @@ class ModelBase(object):
         :return: field values
         """
         assert astype in (None, list, matrix)
+        ret = None
+
         if idx is None:
             idx = self.idx
 
@@ -819,6 +832,10 @@ class ModelBase(object):
         self.__dict__[dest] = self.read_data_ext(
             model, field, idx, astype=astype)
 
+        if idx is not None:
+            if len(idx) == self.n:
+                self.link_to(model, idx, self.idx)
+
     def elem_add(self, idx=None, name=None, **kwargs):
         """
         Add an element of this model
@@ -834,6 +851,10 @@ class ModelBase(object):
 
         self.uid[idx] = self.n
         self.idx.append(idx)
+
+        self.mdl_to.append(list())
+        self.mdl_from.append(list())
+
         # self.n += 1
 
         if name is None:
@@ -902,6 +923,8 @@ class ModelBase(object):
         # self.n -= 1
         self.uid.pop(key, '')
         self.idx.pop(item)
+        self.mdl_from.pop(item)
+        self.mdl_to.pop(item)
 
         for x, y in self.uid.items():
             if y > item:
@@ -1458,6 +1481,53 @@ class ModelBase(object):
                     self.log(
                         '<{}> has Vdcn={} different from node <{}> Vdcn={}.'
                         .format(name, Vdcn, node, Vdcn0), WARNING)
+
+    def link_from(self):
+        """
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def link_to(self, model, idx, self_idx):
+        """
+        Register (self.name, self.idx) in `model._from`
+
+        Returns
+        -------
+
+        """
+        if model in self.system.loaded_groups:
+
+            # access group instance
+            grp = self.system.__dict__[model]
+
+            # doing it one by one
+            for i, self_i in zip(idx, self_idx):
+                # query model name and access model instance
+                mdl_name = grp._idx_model[i]
+                mdl = self.system.__dict__[mdl_name]
+
+                # query the corresponding uid
+                u = mdl.get_uid(i)
+
+                # update `mdl_from`
+                name_idx_pair = (self._name, self_i)
+                if name_idx_pair not in mdl.mdl_from[u]:
+                    mdl.mdl_from[u].append(name_idx_pair)
+
+        else:
+            # access model instance
+            mdl = self.system.__dict__[model]
+            uid = mdl.get_uid(idx)
+
+            for u, self_i in zip(uid, self_idx):
+                name_idx_pair = (self._name, self_i)
+
+                if name_idx_pair not in mdl.mdl_from[u]:
+                    mdl.mdl_from[u].append(name_idx_pair)
 
     # def var_store_snapshot(self, variable='all'):
     #     """
