@@ -482,7 +482,7 @@ class ModelBase(object):
         ret = {}
 
         for key in self.data_keys:
-            if sysbase and (key in self._store):
+            if (not sysbase) and (key in self._store):
                 val = self._store[key]
             else:
                 val = self.__dict__[key]
