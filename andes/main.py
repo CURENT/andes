@@ -221,6 +221,12 @@ def cli_new():
         '--profile', action='store_true', help='Enable Python cProfiler')
     dev_group.add_argument(
         '--ncpu', help='Number of parallel processes', type=int, default=0)
+    dev_group.add_argument(
+        '--show-data', type=str, help='Show model data converted to system base', nargs='*'
+    )
+    dev_group.add_argument(
+        '-x', '--exit', help='Exit before running routine', action='store_true'
+    )
 
     args = parser.parse_args()
 
@@ -714,7 +720,7 @@ def main():
     return
 
 
-def run(case, routine=None, profile=False, dump_raw=False, pid=-1,
+def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False,
         **kwargs):
     """
     Entry function to run a single case study. This function executes the
@@ -774,9 +780,17 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1,
 
     system.setup()
 
-    # run power flow study by default
+    # show data
+    if show_data is not None:
+        if len(show_data) == 0:
+            show_data = sorted(system.devman.devices)
 
-    if routine is None:
+        for mdl in show_data:
+            logger.info('Model <{}> data in system base'.format(mdl))
+            logger.info(system.__dict__[mdl].data_to_df(sysbase=True).to_string())
+        logger.info('')
+
+    if routine is None or exit is True:
         pass
     else:
         # run power flow first
