@@ -470,6 +470,7 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
             editor = edit_config
 
         call([editor, conf_path])
+        ret = True
 
     else:
         logger.info('Config file does not exist. Save config with \'andes '
