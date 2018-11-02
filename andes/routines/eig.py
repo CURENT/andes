@@ -175,7 +175,7 @@ class EIG(RoutineBase):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
-        if self.config.plot:
+        if self.config.plot and len(p_mu_real) > 0:
             fig, ax = plt.subplots()
             ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
             ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
