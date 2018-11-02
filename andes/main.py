@@ -145,7 +145,7 @@ def cli_new():
                                help='Routine to run', nargs='*',
                                default=['pflow'], )
     general_group.add_argument('--edit-config', help='Quick edit of the config file',
-                               action='store_true')
+                               default='', nargs='?', type=str)
     general_group.add_argument('--license', action='store_true', help='Display software license')
 
     # I/O
@@ -448,7 +448,8 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
     """
     ret = False
 
-    if edit_config is False:
+    # no `edit-config` supplied
+    if edit_config == '':
         return ret
 
     conf_path = misc.get_config_load_path(load_config)
@@ -456,13 +457,17 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
 
-        editor = ''
-        if platform.system() == 'Linux':
-            editor = os.environ.get('EDITOR', 'gedit')
-        elif platform.system() == 'Darwin':
-            editor = os.environ.get('EDITOR', 'vim')
-        elif platform.system() == 'Windows':
-            editor = 'notepad.exe'
+        if edit_config is None:
+            # use the following default editors
+            if platform.system() == 'Linux':
+                editor = os.environ.get('EDITOR', 'gedit')
+            elif platform.system() == 'Darwin':
+                editor = os.environ.get('EDITOR', 'vim')
+            elif platform.system() == 'Windows':
+                editor = 'notepad.exe'
+        else:
+            # use `edit_config` as default editor
+            editor = edit_config
 
         call([editor, conf_path])
 
