@@ -6,4 +6,3 @@ matplotlib
 pandas
 sympy
 texttable
-pathlib
