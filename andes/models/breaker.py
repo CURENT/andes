@@ -59,11 +59,13 @@ class Breaker(ModelBase):
 
     def setup(self):
         super(Breaker, self).setup()
-        # check if `self.bus` is connected by `self.line`
-        self.copy_data_ext('Line', 'bus1', idx=self.line)
-        self.copy_data_ext('Line', 'bus2', idx=self.line)
+
+        self.copy_data_ext('Line', 'bus1', dest='bus1', idx=self.line)
+        self.copy_data_ext('Line', 'bus2', dest='bus2', idx=self.line)
+
+        # check if `self.bus` is connected to `self.line`
         for i in range(self.n):
-            if self.bus[i] != self.bus1[i] and self.bus[i] != self.bus2[i]:
+            if self.bus[i] not in (self.bus1[i], self.bus2[i]):
                 logger.warning(
                     '<Breaker> {} on line {} and bus {} is incorrect '
                     'and is thus disabled.'.

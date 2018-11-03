@@ -121,11 +121,13 @@ def sort_idx(m, reverse=False):
 
 
 def index(m, val):
-    """Return the indices of all ``val`` in m"""
-    m = list(m)
-    idx = []
-    if m.count(val) > 0:
-        idx = [i for i, j in enumerate(m) if j == val]
+    """
+    Return the indices of all the ``val`` in ``m``
+    """
+    mm = np.array(m)
+    idx_tuple = np.where(mm == val)
+    idx = idx_tuple[0].tolist()
+
     return idx
 
 

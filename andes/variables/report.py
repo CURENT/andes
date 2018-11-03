@@ -53,7 +53,8 @@ class Report(object):
         if self.system.pflow.solved is True:
             info.append('Power flow method: ' +
                         self.system.pflow.config.method.upper() + '\n')
-            info.append('Number of iterations: ' + str(self.system.pflow.config.iter) +
+            info.append('Number of iterations: ' + str(
+                self.system.pflow.niter) +
                         '\n')
             info.append('Flat-start: ' +
                         ('Yes' if self.system.pflow.config.flatstart else 'No') + '\n')

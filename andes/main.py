@@ -28,11 +28,12 @@ import platform
 import pprint
 import pstats
 import sys
+import pathlib
+
 from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep, strftime
 
-import pathlib
 from . import filters
 from . import routines
 from .system import PowerSystem
@@ -80,26 +81,27 @@ def config_logger(name='andes',
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    # logging formatter
-    fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    sh_formatter = logging.Formatter('%(message)s')
-
-    # file handler which logs debug messages
+    # file handler for level DEBUG and up
+    log_full_path = os.path.join(log_path, log_file)
     if log_file is not None:
-        log_full_path = os.path.join(log_path, log_file)
+        fh_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh = logging.FileHandler(log_full_path)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fh_formatter)
         logger.addHandler(fh)
 
-    # stream handler for errors
     if stream is True:
+        sh_formatter = logging.Formatter('%(message)s')
         sh = logging.StreamHandler()
-        sh.setLevel(stream_level)
+
         sh.setFormatter(sh_formatter)
+        sh.setLevel(stream_level)
         logger.addHandler(sh)
 
     globals()['logger'] = logger
+
+    logger.debug('Writing log to {}'.format(log_full_path))
 
 
 def preamble():
@@ -115,8 +117,13 @@ def preamble():
                 .format(ver=version[:5], b=version[-8:],
                         p=platform.python_version(),
                         os=platform.system()))
+    try:
+        username = os.getlogin() + ', '
+    except OSError:
+        username = ''
 
-    logger.info('Session: ' + strftime("%m/%d/%Y %I:%M:%S %p"))
+    logger.info('Session: {}{}'.format(username,
+                strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('')
 
 
@@ -138,7 +145,7 @@ def cli_new():
                                help='Routine to run', nargs='*',
                                default=['pflow'], )
     general_group.add_argument('--edit-config', help='Quick edit of the config file',
-                               action='store_true')
+                               default='', nargs='?', type=str)
     general_group.add_argument('--license', action='store_true', help='Display software license')
 
     # I/O
@@ -214,6 +221,12 @@ def cli_new():
         '--profile', action='store_true', help='Enable Python cProfiler')
     dev_group.add_argument(
         '--ncpu', help='Number of parallel processes', type=int, default=0)
+    dev_group.add_argument(
+        '--show-data', type=str, help='Show model data converted to system base', nargs='*'
+    )
+    dev_group.add_argument(
+        '-x', '--exit', help='Exit before running routine', action='store_true'
+    )
 
     args = parser.parse_args()
 
@@ -366,7 +379,7 @@ def andeshelp(group=None,
         if len(match) == 0:
             out.append('Group <{:s}> not found.'.format(group[0]))
 
-        for idx, item in enumerate(match):
+        for item in match:
             group_models = sorted(list(group_dict[item]))
             out.append('<{:s}>'.format(item))
             out.append(', '.join(group_models))
@@ -435,7 +448,8 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
     """
     ret = False
 
-    if edit_config is False:
+    # no `edit-config` supplied
+    if edit_config == '':
         return ret
 
     conf_path = misc.get_config_load_path(load_config)
@@ -443,15 +457,20 @@ def edit_conf(edit_config=False, load_config=None, **kwargs):
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
 
-        editor = ''
-        if platform.system() == 'Linux':
-            editor = os.environ.get('EDITOR', 'gedit')
-        elif platform.system() == 'Darwin':
-            editor = os.environ.get('EDITOR', 'vim')
-        elif platform.system() == 'Windows':
-            editor = 'notepad.exe'
+        if edit_config is None:
+            # use the following default editors
+            if platform.system() == 'Linux':
+                editor = os.environ.get('EDITOR', 'gedit')
+            elif platform.system() == 'Darwin':
+                editor = os.environ.get('EDITOR', 'vim')
+            elif platform.system() == 'Windows':
+                editor = 'notepad.exe'
+        else:
+            # use `edit_config` as default editor
+            editor = edit_config
 
         call([editor, conf_path])
+        ret = True
 
     else:
         logger.info('Config file does not exist. Save config with \'andes '
@@ -707,7 +726,7 @@ def main():
     return
 
 
-def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
+def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False,
         **kwargs):
     """
     Entry function to run a single case study. This function executes the
@@ -767,16 +786,30 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
 
     system.setup()
 
-    # run power flow study by default
-    if 'pflow' in routine:
-        routine.remove('pflow')
+    # show data
+    if show_data is not None:
+        if len(show_data) == 0:
+            show_data = sorted(system.devman.devices)
 
-    system.pflow.run()
-    system.tds.init()
-    system.report.write(content='powerflow')
+        for mdl in show_data:
+            logger.info('Model <{}> data in system base'.format(mdl))
+            logger.info(system.__dict__[mdl].data_to_df(sysbase=True).to_string())
+        logger.info('')
 
-    for r in routine:
-        system.__dict__[r.lower()].run()
+    if routine is None or exit is True:
+        pass
+    else:
+        # run power flow first
+        if 'pflow' in routine:
+            routine.remove('pflow')
+
+        system.pflow.run()
+        system.tds.init()
+        system.report.write(content='powerflow')
+
+        # run the rest of the routines
+        for r in routine:
+            system.__dict__[r.lower()].run()
 
     # Disable profiler and output results
     if profile:
@@ -784,7 +817,7 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
 
         if system.files.no_output:
             s = io.StringIO()
-            nlines = 20
+            nlines = 40
             ps = pstats.Stats(pr, stream=sys.stdout).sort_stats('cumtime')
             ps.print_stats(nlines)
             logger.info(s.getvalue())
@@ -799,7 +832,7 @@ def run(case, profile=False, dump_raw=False, routine=('pflow',), pid=-1,
                 ' ' + str(pid) if pid >= 0 else ''))
 
     if pid >= 0:
-        t3, s = elapsed(t0)
+        _, s = elapsed(t0)
         msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
         logger.info(msg_finish)
         print(msg_finish)

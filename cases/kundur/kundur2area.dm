@@ -1,27 +1,27 @@
 # DOME format version 1.0
 
 Syn6a, M = 13.0, Sn = 900.0, Taa = 0.002, Td20 = 0.03, Tq10 = 0.4, Td10 = 8,
-       Tq20 = 0.05, Vn = 20.0, bus = 1, gen = 1, D = 2,
+       Tq20 = 0.05, Vn = 20.0, bus = 1, gen = 1,
        idx = 1, name = "Syn6a 1", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3,
        xd2 = 0.25, xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
 Syn6a, M = 13.0, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8,
-       Vn = 20.0, bus = 2, gen = 2, idx = 2, D = 2,
+       Vn = 20.0, bus = 2, gen = 2, idx = 2,
        name = "Syn6a 2", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
 #WTG3, bus = 1, gen = 1, wind = 1, Vn = 20, Sn = 400, qmax = 0.7, qmin = -0.7
 #WTG3, bus = 2, gen = 2, wind = 2, Vn = 20, Sn = 400, qmax = 0.7, qmin = -0.7
-
+#
 #ConstWind, idx = 1, Vwn = 15
 #ConstWind, idx = 2, Vwn = 15
 
 Syn6a, M = 12.35, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8,
-       Vn = 20.0, bus = 3, gen = 3, idx = 3, D = 2,
+       Vn = 20.0, bus = 3, gen = 3, idx = 3,
        name = "Syn6a 3", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 Syn6a, M = 12.35, Sn = 900.0, Td20 = 0.03, Tq10 = 0.4, Tq20 = 0.05, Td10 = 8, 
-       Vn = 20.0, bus = 4, gen = 4, idx = 4, D = 2,
+       Vn = 20.0, bus = 4, gen = 4, idx = 4,
        name = "Syn6a 4", ra = 0.0025, xd = 1.8, xq = 1.8, xd1 = 0.3, xd2 = 0.25,
        xl = 0.2, xq1 = 0.55, xq2 = 0.25
 
@@ -37,20 +37,6 @@ AVR1, Ae = 0.0056, Be = 1.075, Ka = 20.0, Kf = 0.125, Ta = 0.055,
 AVR1, Ae = 0.0056, Be = 1.075, Ka = 20.0, Kf = 0.125, Ta = 0.055,
       Te = 0.36, Tf = 1.8, Tr = 0.05, idx = 4, name = "AVR1 4",
       syn = 3
-
-BusFreq, idx = 1, bus = 1
-BusFreq, idx = 2, bus = 2
-BusFreq, idx = 3, bus = 3
-BusFreq, idx = 4, bus = 4
-BusFreq, idx = 5, bus = 5
-BusFreq, idx = 6, bus = 6
-BusFreq, idx = 7, bus = 7
-BusFreq, idx = 8, bus = 8
-BusFreq, idx = 9, bus = 9
-BusFreq, idx = 10, bus = 10
-BusFreq, idx = 11, bus = 11
-
-PSS1, idx = 1, avr = 3
 
 #Breaker, bus = 1, idx = "Breaker_1", line = "Line_14", name = "Breaker 1", t1 = 1.1,
 #         t2 = 999999.0, u1 = 1
@@ -79,6 +65,18 @@ Bus, Vn = 230.0, angle = -0.41778, area = 2.0, idx = 10, name = "Bus 10 G4", own
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 0.98346, xcoord = 0, ycoord = 0, zone = 0
 Bus, Vn = 230.0, angle = -0.23784, area = 2.0, idx = 11, name = "Bus 11 G3", owner = 0, region = 1.0,
      u = 1, vmax = 1.1, vmin = 0.9, voltage = 1.00826, xcoord = 0, ycoord = 0, zone = 0
+
+BusFreq, idx = 1, bus = 1
+BusFreq, idx = 2, bus = 2
+BusFreq, idx = 3, bus = 3
+BusFreq, idx = 4, bus = 4
+BusFreq, idx = 5, bus = 5
+BusFreq, idx = 6, bus = 6
+BusFreq, idx = 7, bus = 7
+BusFreq, idx = 8, bus = 8
+BusFreq, idx = 9, bus = 9
+BusFreq, idx = 10, bus = 10
+BusFreq, idx = 11, bus = 11
 
 Line, Sn = 100.0, Vn = 230.0, Vn2 = 230.0, b = 0.02187, b1 = 0.0, b2 = 0.0, bus1 = 5.0,
       bus2 = 6.0, fn = 60, g = 0.0, g1 = 0.0, g2 = 0.0, idx = "Line_0", name = "Line 1",
@@ -177,7 +175,7 @@ Shunt, Sn = 100.0, Vn = 230.0, b = 2.0, bus = 7, fn = 60.0, g = 0.0, idx = "Shun
 Shunt, Sn = 100.0, Vn = 230.0, b = 3.5, bus = 9, fn = 60.0, g = 0.0, idx = "Shunt_1",
        name = "Shunt 9", u = 1
 
-TG1, idx = 1, gen = 1, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 2, gen = 2, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 3, gen = 3, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
-TG1, idx = 4, gen = 4, R = 0.02, T5 = 50, Tc = 0.56, Ts = 0.1
+#TG1, idx = 1, gen = 1, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 2, gen = 2, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 3, gen = 3, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05
+#TG1, idx = 4, gen = 4, R = 0.01, T5 = 40, Tc = 0.56, Ts = 0.05

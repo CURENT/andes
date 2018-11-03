@@ -68,10 +68,10 @@ class AVR1(ModelBase):
         self._init()
 
     def servcall(self, dae):
-        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
-        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
+        self.copy_data_ext('Synchronous', 'u', dest='usyn', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', dest='vf0', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf', dest='vf', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn)
         self.KfTf = mul(self.Kf, div(1, self.Tf))
         self.iTa = div(self.u, self.Ta)
         self.u0 = mul(self.u, self.usyn)
@@ -197,11 +197,11 @@ class AVR2(ModelBase):
         self._init()
 
     def servcall(self, dae):
-        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
-        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
-        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
+        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'u', dest='usyn', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf', dest='vf', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', dest='vf0', idx=self.syn)
         self.T43 = mul(self.T4, div(1, self.T3))
         self.T21 = mul(self.T2, div(1, self.T1))
         self.u0 = mul(self.u, self.usyn)
@@ -343,10 +343,10 @@ class AVR3(ModelBase):
         self._init()
 
     def servcall(self, dae):
-        self.copy_data_ext('Synchronous', 'u', 'usyn', self.syn)
-        self.copy_data_ext('Synchronous', 'v', 'v', self.syn)
-        self.copy_data_ext('Synchronous', 'vf', 'vf', self.syn)
-        self.copy_data_ext('Synchronous', 'vf0', 'vf0', self.syn)
+        self.copy_data_ext('Synchronous', 'u', dest='usyn', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf', dest='vf', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'vf0', dest='vf0', idx=self.syn)
         self.T1T2 = mul(self.T1, div(1, self.T2))
         self.iTe = div(self.u, self.Te)
         self.u0 = mul(self.u, self.usyn)

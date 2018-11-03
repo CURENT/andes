@@ -3,7 +3,7 @@ class RoutineBase(object):
     Base class for Routines
     """
 
-    def run(self):
+    def run(self, **kwargs):
         """
         Entry function for power flow routine
 
@@ -13,7 +13,7 @@ class RoutineBase(object):
             Success flag
         """
 
-        raise(NotImplementedError, 'Must be overloaded by routines')
+        raise NotImplementedError('Must be overloaded by routines')
 
     def reset(self):
         """

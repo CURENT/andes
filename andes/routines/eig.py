@@ -1,19 +1,14 @@
 import logging
-from math import ceil
-
+import importlib
+import scipy.sparse.linalg  # NOQA
 import numpy.linalg
 
-import scipy.sparse.linalg  # NOQA
+from math import ceil
+
 from scipy.sparse import csr_matrix  # NOQA
 
 from cvxopt import matrix, spmatrix, mul, div
-
 from cvxopt.lapack import gesv
-
-try:
-    from matplotlib import pyplot as plt
-except ImportError:
-    plt = None
 
 from .base import RoutineBase
 from andes.config.eig import Eig
@@ -147,7 +142,13 @@ class EIG(RoutineBase):
         return ret
 
     def plot_results(self):
+        try:
+            plt = importlib.import_module('matplotlib.pyplot')
+        except ImportError:
+            plt = None
+
         if plt is None:
+            logger.warning('Install matplotlib to plot eigenvalue map.')
             return
 
         mu_real = self.mu.real()
@@ -175,7 +176,7 @@ class EIG(RoutineBase):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
-        if self.config.plot:
+        if self.config.plot and len(p_mu_real) > 0:
             fig, ax = plt.subplots()
             ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
             ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')

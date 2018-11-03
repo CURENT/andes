@@ -13,25 +13,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Base class for building ANDES models
 """
 
 import sys
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
+import importlib
+import numpy as np
+import logging
 
 from cvxopt import matrix, spmatrix  # NOQA
 from cvxopt import mul, div
 
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
+
 from ..utils.math import agtb, altb, index, zeros  # NOQA
 from ..utils.tab import Tab
 
-# pandas import slows down the program startup by 0.3 seconds
-import pandas as pd
-import numpy as np
-
-import logging
 logger = logging.getLogger(__name__)
+
+pd = None
 
 
 class ModelBase(object):
@@ -77,6 +79,16 @@ class ModelBase(object):
         self._unamey = []
         self._fnamex = []
         self._fnamey = []
+
+        # `self.mdl_from`:
+        #    a list of lists, which contain tuples of (model, idx)
+        #    of elements connected to the corresponding element
+        # `self.mdl_to`:
+        #    a list of lists, which contain tuples of (model, idx) of
+        #    elements the corresponding element connects to
+
+        self.mdl_from = []
+        self.mdl_to = []
 
         # parameters to be converted to matrix
         self._params = ['u', 'Sn', 'Vn']
@@ -412,6 +424,8 @@ class ModelBase(object):
         :return: field values
         """
         assert astype in (None, list, matrix)
+        ret = None
+
         if idx is None:
             idx = self.idx
 
@@ -424,15 +438,21 @@ class ModelBase(object):
         # =================================================================
 
         uid = self.get_uid(idx)
-        if not astype:
-            astype = type(self.__dict__[field])
 
-        ret = matrix(self.__dict__[field])[uid]
+        field_data = self.__dict__[field]
 
-        if isinstance(idx, (float, int, str)):
-            return ret
-        else:
-            return astype(ret)
+        if isinstance(field_data, matrix):
+            ret = field_data[uid]
+        elif isinstance(field_data, list):
+            if isinstance(idx, (float, int, str)):
+                ret = field_data[uid]
+            else:
+                ret = [field_data[x] for x in uid]
+
+        if astype is not None:
+            ret = astype(ret)
+
+        return ret
 
     def _alloc(self):
         """
@@ -462,7 +482,7 @@ class ModelBase(object):
         ret = {}
 
         for key in self.data_keys:
-            if sysbase and (key in self._store):
+            if (not sysbase) and (key in self._store):
                 val = self._store[key]
             else:
                 val = self.__dict__[key]
@@ -528,7 +548,7 @@ class ModelBase(object):
 
         Parameters
         ----------
-        data: list
+        data : list
             List of parameter dictionaries
 
         Returns
@@ -544,7 +564,7 @@ class ModelBase(object):
 
         Parameters
         ----------
-        data: list
+        data : dict
             List of parameter dictionaries
 
         Returns
@@ -574,7 +594,9 @@ class ModelBase(object):
         """
 
         p_dict_comp = self.data_to_dict(sysbase=sysbase)
-        self.param_df = pd.DataFrame(data=p_dict_comp)
+        self._check_pd()
+
+        self.param_df = pd.DataFrame(data=p_dict_comp).set_index('idx')
 
         return self.param_df
 
@@ -585,6 +607,7 @@ class ModelBase(object):
         :return: pandas.DataFrame
         """
         ret = {}
+        self._check_pd()
 
         if self._flags['address'] is False:
             return pd.DataFrame.from_dict(ret)
@@ -599,7 +622,19 @@ class ModelBase(object):
             idx = self.__dict__[y]
             ret.update({y: self.system.dae.y[idx]})
 
-        return pd.DataFrame.from_dict(ret)
+        var_df = pd.DataFrame.from_dict(ret).set_index('idx')
+
+        return var_df
+
+    @staticmethod
+    def _check_pd():
+        """
+        Import pandas to globals() if not exist
+        """
+        if globals()['pd'] is None:
+            globals()['pd'] = importlib.import_module('pandas')
+
+        return
 
     def param_remove(self, param: 'str') -> None:
         """
@@ -797,6 +832,10 @@ class ModelBase(object):
         self.__dict__[dest] = self.read_data_ext(
             model, field, idx, astype=astype)
 
+        if idx is not None:
+            if len(idx) == self.n:
+                self.link_to(model, idx, self.idx)
+
     def elem_add(self, idx=None, name=None, **kwargs):
         """
         Add an element of this model
@@ -812,6 +851,10 @@ class ModelBase(object):
 
         self.uid[idx] = self.n
         self.idx.append(idx)
+
+        self.mdl_to.append(list())
+        self.mdl_from.append(list())
+
         # self.n += 1
 
         if name is None:
@@ -880,6 +923,8 @@ class ModelBase(object):
         # self.n -= 1
         self.uid.pop(key, '')
         self.idx.pop(item)
+        self.mdl_from.pop(item)
+        self.mdl_to.pop(item)
 
         for x, y in self.uid.items():
             if y > item:
@@ -1090,7 +1135,7 @@ class ModelBase(object):
         """
         group_by = self._config['address_group_by']
 
-        assert not self._flags['address']
+        assert not self._flags['address'], "{} address already assigned".format(self._name)
         assert group_by in ('element', 'variable')
 
         m0 = self.system.dae.m
@@ -1142,7 +1187,7 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamex[idx] = '{} {}'.format(unamex, iname)[:24]
-                varname.fnamex[idx] = '$' + '{}\ {}'.format(
+                varname.fnamex[idx] = '$' + '{}\\ {}'.format(
                     fnamex, iname.replace(' ', '\\ '))[:24] + '$'
 
             for e, var in enumerate(self._algebs):
@@ -1151,7 +1196,7 @@ class ModelBase(object):
                 idx = self.__dict__[var][i]
 
                 varname.unamey[idx] = '{} {}'.format(unamey, iname)[:24]
-                varname.fnamey[idx] = '$' + '{}\ {}'.format(
+                varname.fnamey[idx] = '$' + '{}\\ {}'.format(
                     fnamey, iname.replace(' ', '\\ '))[:24] + '$'
 
     def _param_to_matrix(self):
@@ -1208,6 +1253,7 @@ class ModelBase(object):
                 self.__dict__[key][idx] = minval
 
     def __repr__(self):
+
         ret = ''
         ret += '\n'
         ret += 'Model <{:s}> parameters in element base\n'.format(self._name)
@@ -1436,7 +1482,53 @@ class ModelBase(object):
                         '<{}> has Vdcn={} different from node <{}> Vdcn={}.'
                         .format(name, Vdcn, node, Vdcn0), WARNING)
 
-    #
+    def link_from(self):
+        """
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def link_to(self, model, idx, self_idx):
+        """
+        Register (self.name, self.idx) in `model._from`
+
+        Returns
+        -------
+
+        """
+        if model in self.system.loaded_groups:
+
+            # access group instance
+            grp = self.system.__dict__[model]
+
+            # doing it one by one
+            for i, self_i in zip(idx, self_idx):
+                # query model name and access model instance
+                mdl_name = grp._idx_model[i]
+                mdl = self.system.__dict__[mdl_name]
+
+                # query the corresponding uid
+                u = mdl.get_uid(i)
+
+                # update `mdl_from`
+                name_idx_pair = (self._name, self_i)
+                if name_idx_pair not in mdl.mdl_from[u]:
+                    mdl.mdl_from[u].append(name_idx_pair)
+
+        else:
+            # access model instance
+            mdl = self.system.__dict__[model]
+            uid = mdl.get_uid(idx)
+
+            for u, self_i in zip(uid, self_idx):
+                name_idx_pair = (self._name, self_i)
+
+                if name_idx_pair not in mdl.mdl_from[u]:
+                    mdl.mdl_from[u].append(name_idx_pair)
+
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.

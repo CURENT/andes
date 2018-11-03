@@ -2,9 +2,7 @@
 numpy
 cvxopt
 scipy
-texttable
 matplotlib
 pandas
-progressbar
-pathlib
 sympy
+texttable

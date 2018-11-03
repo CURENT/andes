@@ -19,6 +19,7 @@ class VarOut(object):
         self.t = []
         self.k = []
         self.vars = []
+        self.vars_array = None
         self.dat = None
         self._mode = 'w'
 
@@ -41,10 +42,9 @@ class VarOut(object):
         self.k.append(step)
         self.vars.append(matrix([self.system.dae.x, self.system.dae.y]))
 
+        # remove the post-computed variables from the variable list
         if self.system.tds.config.compute_flows:
             self.system.dae.y = self.system.dae.y[:self.system.dae.m]
-
-        # self.system.EAGC_module.stream_to_geovis()
 
     def show(self):
         """
@@ -130,8 +130,11 @@ class VarOut(object):
         # compute the total number of columns, excluding time
         if not system.Recorder.n:
             n_vars = system.dae.m + system.dae.n
+            # post-computed power flows include:
+            #   bus   - (Pi, Qi)
+            #   line  - (Pij, Pji, Qij, Qji, Iij_Real, Iij_Imag, Iji_real, Iji_Imag)
             if system.tds.config.compute_flows:
-                n_vars += 2 * system.Bus.n + 4 * system.Line.n
+                n_vars += 2 * system.Bus.n + 8 * system.Line.n + 2 * system.Area.n_combination
             idx = list(range(n_vars))
 
         else:
@@ -172,13 +175,13 @@ class VarOut(object):
         template = '{:>6g}, {:>25s}, {:>25s}\n'
 
         # header line
-        out += template.format(0, 'Time [s]', '$Time\ [s]$')
+        out += template.format(0, 'Time [s]', '$Time\\ [s]$')
 
         # include line flow variables in algebraic variables
         nflows = 0
         if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
-                     4 * self.system.Line.n + \
+                     8 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
 
         # output variable indices
@@ -204,3 +207,21 @@ class VarOut(object):
             logger.error('I/O Error while writing the lst file.')
 
         return ret
+
+    def vars_to_array(self):
+        """
+        Convert `self.vars` to a numpy array
+
+        Returns
+        -------
+        numpy.array
+        """
+        if not self.vars:
+            return None
+
+        vars_matrix = matrix(self.vars, size=(self.vars[0].size[0],
+                                              len(self.vars))).trans()
+
+        self.vars_array = np.array(vars_matrix)
+
+        return self.vars_array

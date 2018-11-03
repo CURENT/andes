@@ -10,11 +10,10 @@ class Pflow(ConfigBase):
         self.pv2pq = False
         self.ipv2pq = 4
         self.npv2pq = 1
-        self.iter = 0
         self.report = 'default'
         self.show = True
         self.method = 'NR'
-        self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB']
+        self.method_alt = ['NR', 'FDPF', 'FDBX', 'FDXB', 'DCPF']
         self.sortbuses = 'data'
         self.sortbuses_alt = ['data', 'idx']
         self.static = False
@@ -43,4 +42,6 @@ class Pflow(ConfigBase):
     def check(self):
         if self.method not in self.method_alt:
             self.method = 'NR'
+        if self.method == 'DCPF':
+            self.flatstart = True
         return True

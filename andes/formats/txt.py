@@ -69,7 +69,7 @@ def dump_data(text, header, rowname, data, file):
 
                 s = '{:{width}s}'  # for row header
                 for col in out:
-                    if type(col) in (int, float):
+                    if isinstance(col, (int, float)):
                         s += '{:{width}.{precision}g}'
                     elif type(col) == str:
                         if len(col) > width:

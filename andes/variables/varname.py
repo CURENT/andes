@@ -31,7 +31,7 @@ class VarName(object):
 
         if self.system.tds.config.compute_flows:
             nflows = 2 * self.system.Bus.n + \
-                     4 * self.system.Line.n + \
+                     8 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
             self.unamey.extend([''] * nflows)
             self.fnamey.extend([''] * nflows)
@@ -44,13 +44,13 @@ class VarName(object):
             logger.error('Wrong list name for varname.')
             return
         elif listname in ['fnamex', 'fnamey']:
-            string = '${0}\ {1}$'
+            string = '${0}\\ {1}$'
 
         if isinstance(element_name, list):
             for i, j in zip(xy_idx, element_name):
                 # manual elem_add LaTex space for auto-generated element name
                 if listname == 'fnamex' or listname == 'fnamey':
-                    j = j.replace(' ', '\ ')
+                    j = j.replace(' ', '\\ ')
                 self.__dict__[listname][i] = string.format(var_name, j)
         elif isinstance(element_name, int):
             self.__dict__[listname][xy_idx] = string.format(
@@ -99,7 +99,7 @@ class VarName(object):
             yidx = [yidx]
 
         uname = ['Time [s]'] + self.uname
-        fname = ['$Time\ [s]$'] + self.fname
+        fname = ['$Time\\ [s]$'] + self.fname
 
         xname = [list(), list()]
         yname = [list(), list()]

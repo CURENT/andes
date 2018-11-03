@@ -179,7 +179,7 @@ class VSC(DCBase):
         vlower = list(abs(Vsh) - self.vshmin)
         iupper = list(abs(IshC) - self.Ishmax)
         # check for Vsh and Ish limit violations
-        if self.system.pflow.config.iter >= self.system.pflow.config.ipv2pq:
+        if self.system.pflow.niter >= self.system.pflow.config.ipv2pq:
             for i in range(self.n):
                 if self.u[i] and (vupper[i] > 0 or vlower[i] < 0
                                   or iupper[i] > 0):

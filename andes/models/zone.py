@@ -11,7 +11,7 @@ class Zone(ModelBase):
 
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._group = 'Topology'
+        self._group = 'Topo_Zone'
         self._name = 'Zone'
         self._params.extend(['pdes', 'ptol', 'isw'])
         self._descr.update({
@@ -103,7 +103,11 @@ class Zone(ModelBase):
             int_code1 = self.uid[code1]
             int_code2 = self.uid[code2]
 
-            x.append(0.5) if int_code1 == int_code2 else x.append(1)
+            if int_code1 == int_code2:
+                x.append(0.5)
+            else:
+                x.append(1)
+
             a.append(int_code1)
             b.append(int_code2)
 
@@ -152,8 +156,7 @@ class Zone(ModelBase):
     def _varname_inter(self):
         if not self.n:
             return
-        mpql = self.system.dae.m + 2 * self.system.Bus.n + \
-            4 * self.system.Line.n
+        mpql = self.system.dae.m + 2 * self.system.Bus.n + 8 * self.system.Line.n
 
         # P_ic
         xy_idx = range(mpql, mpql + self.n_combination)
@@ -205,6 +208,7 @@ class Area(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Area'
+        self._group = 'Topo_Area'
         self._init()
 
     def setup(self):
@@ -218,6 +222,7 @@ class Region(Zone):
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'Region'
+        self._group = 'Topo_Region'
         self._params.extend(['Ptol', 'slack'])
         self._descr.update({
             'Ptol': 'Total transfer capacity',

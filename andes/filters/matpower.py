@@ -80,9 +80,9 @@ def read(file, system):
             if line.find('=') >= 0:
                 line = line.split('=')[1]
             if line.find('[') >= 0:
-                line = re.sub('\[', '', line)
+                line = re.sub(r'\[', '', line)
             elif line.find('{') >= 0:
-                line = re.sub('\{', '', line)
+                line = re.sub(r'{', '', line)
 
             if line.find('\'') >= 0:  # bus_name
                 line = line.split(';')

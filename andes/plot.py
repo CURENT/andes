@@ -260,12 +260,12 @@ def do_plot(xdata,
             ax.set_xlabel(xl_data)
     else:
         if LATEX:
-            xlabel = '$' + xlabel.replace(' ', '\ ') + '$'
+            xlabel = '$' + xlabel.replace(' ', '\\ ') + '$'
         ax.set_xlabel(xlabel)
 
     if ylabel:
         if LATEX:
-            ylabel = '$' + ylabel.replace(' ', '\ ') + '$'
+            ylabel = '$' + ylabel.replace(' ', '\\ ') + '$'
         ax.set_ylabel(ylabel)
 
     ax.ticklabel_format(useOffset=False)
