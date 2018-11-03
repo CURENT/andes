@@ -27,3 +27,8 @@ Acknowledgement
 This work was supported in part by the Engineering Research Center Program of
 the National Science Foundation and the Department of Energy under NSF Award
 Number EEC-1041877 and the CURENT Industry Partnership Program.
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard
