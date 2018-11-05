@@ -8,6 +8,9 @@ ANDES: ANother Dynamic Energy System simulator
 .. image:: https://img.shields.io/pypi/v/andes.svg
         :target: https://pypi.python.org/pypi/andes
 
+.. image:: https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard
 
 A Python package for power system research
 
