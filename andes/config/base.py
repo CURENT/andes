@@ -143,6 +143,8 @@ class ConfigBase(object):
 
             self.__dict__.update({key: val})
 
+        self.check()
+
     def check(self):
         """
         Check for consistency
