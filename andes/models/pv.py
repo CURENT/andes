@@ -109,8 +109,8 @@ class PV(Stagen):
             idx_asc = sort_idx(d_min)
             idx_desc = sort_idx(d_max, reverse=True)
 
-            nabove = nbelow = self.system.pflow.config.npv2pq
-            nconv = min(self.system.pflow.config.npv2pq, self.n)
+            nabove = nbelow = int(self.system.pflow.config.npv2pq)
+            nconv = int(min(self.system.pflow.config.npv2pq, self.n))
 
             for i in range(nconv - 1, -1, -1):
                 if d_min[idx_asc[i]] >= 0:
@@ -124,6 +124,10 @@ class PV(Stagen):
             dae.y[mq[self.below]] = self.qmin[self.below]
             dae.y[mq[self.above]] = self.qmax[self.above]
             self.qlim = list(set(list(mq[self.below]) + list(mq[self.above])))
+
+            if self.qlim:
+                # refactorize the DAE when limit is hit. It allow resetting the Jacobian elements
+                self.system.dae.factorize = True
 
         p_inj = -mul(self.u, self.pg)
         q_inj = -mul(self.u, dae.y[self.q])
@@ -148,17 +152,19 @@ class PV(Stagen):
             dae.g[self.qlim] = 0
 
     def gycall(self, dae):
-        for q in self.qlim:
-            v = self.v[self.q.index(q)]
-            self.set_jac('Gy0', 0.0, q, v)
-            self.set_jac('Gy0', 0.0, v, q)
-            self.set_jac('Gy0', 1.0, q, q)
+        pass
 
     def jac0(self, dae):
         dae.set_jac('Gy0', -1e-6, self.v, self.v)
         dae.set_jac('Gy0', -self.u, self.v, self.q)
         dae.set_jac('Gy0', self.u, self.q, self.v)
         dae.set_jac('Gy0', -1e-6, self.q, self.q)
+
+        for q in self.qlim:
+            v = self.v[self.q.index(q)]
+            dae.set_jac('Gy0', 0.0, q, v)
+            dae.set_jac('Gy0', 0.0, v, q)
+            dae.set_jac('Gy0', 1.0, q, q)
 
     def disable_gen(self, idx):
         """
