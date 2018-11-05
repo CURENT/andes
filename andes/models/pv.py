@@ -7,6 +7,9 @@ from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 from ..utils.math import sort_idx
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class Stagen(ModelBase):
     """Static generator base class"""
@@ -102,8 +105,15 @@ class PV(Stagen):
         dae.y[self.q] = mul(self.u, self.qg)
 
     def gcall(self, dae):
-        if self.system.pflow.config.pv2pq and \
-                self.system.pflow.niter >= self.system.pflow.config.ipv2pq:
+        update_qlim = False
+        if self.system.pflow.config.pv2pq:
+            pflow = self.system.pflow
+            if pflow.niter >= pflow.config.ipv2pq:
+                update_qlim = True
+            elif len(pflow.iter_mis) > 0 and pflow.iter_mis[-1] <= min(0.01, 1e4 * pflow.config.tol):
+                update_qlim = True
+
+        if update_qlim is True:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
             idx_asc = sort_idx(d_min)

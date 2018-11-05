@@ -1,5 +1,7 @@
 from . import ConfigBase
 from ..utils.cached import cached
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Pflow(ConfigBase):
@@ -44,4 +46,7 @@ class Pflow(ConfigBase):
             self.method = 'NR'
         if self.method == 'DCPF':
             self.flatstart = True
+        if self.pv2pq is True:
+            logger.info('Check PV reactive power if iter>={} or mismatch<={}'.
+                        format(int(self.ipv2pq), 1e4*self.tol))
         return True
