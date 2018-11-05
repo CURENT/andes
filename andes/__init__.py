@@ -2,6 +2,8 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
+from . import main  # NOQA
+from . import filters  # NOQA
 
 __author__ = 'Hantao Cui'
 
