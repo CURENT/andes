@@ -229,6 +229,7 @@ class TDS(RoutineBase):
 
         self.streaming_init()
 
+        logger.info('')
         logger.info('-> Time Domain Simulation: {} method, t={} s'
                     .format(self.config.method, self.config.tf))
 
