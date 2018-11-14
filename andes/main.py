@@ -82,8 +82,8 @@ def config_logger(name='andes',
     logger.setLevel(logging.DEBUG)
 
     # file handler for level DEBUG and up
-    log_full_path = os.path.join(log_path, log_file)
     if log_file is not None:
+        log_full_path = os.path.join(log_path, log_file)
         fh_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh = logging.FileHandler(log_full_path)

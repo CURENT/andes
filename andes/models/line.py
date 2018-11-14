@@ -393,7 +393,7 @@ class Line(ModelBase):
         """Return voltage phasors at the "to buses" (bus2)"""
         Vm = self.system.dae.y[self.v]
         Va = self.system.dae.y[self.a]
-        return polar(Vm[self.a1], Va[self.a1])
+        return polar(Vm[self.a2], Va[self.a2])
 
     def switch(self, idx, u):
         """switch the status of Line idx"""
