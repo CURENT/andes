@@ -113,6 +113,7 @@ class PV(Stagen):
             elif len(pflow.iter_mis) > 0 and pflow.iter_mis[-1] <= min(0.01, 1e4 * pflow.config.tol):
                 update_qlim = True
 
+        # TODO: fix PV2PQ error for MATPOWER case118 and case 300
         if update_qlim is True:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
