@@ -114,7 +114,7 @@ class Breaker(ModelBase):
                           'at t = {}.'.format(
                               self.idx[i], self.line[i], actual_time)
                 logger.info(inf)
-        self.system.check_islands()
+        self.system.check_islands(show_info=True)
 
     def insert(self, idx=None, name=None, **kwargs):
         if self.n:

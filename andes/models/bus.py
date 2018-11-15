@@ -98,6 +98,7 @@ class Bus(ModelBase):
     def gisland(self, dae):
         """Reset g(x) for islanded buses and areas"""
         if not (self.islanded_buses and self.island_sets):
+        # if (not self.islanded_buses) and (not self.island_sets):
             return
 
         a, v = list(), list()
