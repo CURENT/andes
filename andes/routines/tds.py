@@ -268,8 +268,13 @@ class TDS(RoutineBase):
             self.implicit_step()
 
             if self.convergence is False:
-                self.restore_values()
-                continue
+                try:
+                    self.restore_values()
+                    continue
+                except ValueError:
+                    self.t = config.tf
+                    ret = False
+                    break
 
             self.step += 1
             self.compute_flows()
@@ -331,7 +336,7 @@ class TDS(RoutineBase):
             logger.info(' Time domain simulation failed in {:s}.'.format(s))
 
         self.success = ret
-        self.dump_results()
+        self.dump_results(success=self.success)
 
         return ret
 
@@ -578,7 +583,7 @@ class TDS(RoutineBase):
                 dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout
             ])
 
-    def dump_results(self):
+    def dump_results(self, success):
         """
         Dump simulation results to ``dat`` and ``lst`` files
 
@@ -590,7 +595,7 @@ class TDS(RoutineBase):
 
         t, _ = elapsed()
 
-        if self.success and (not system.files.no_output):
+        if success and (not system.files.no_output):
             system.varout.dump()
             _, s = elapsed(t)
             logger.info('Simulation data dumped in {:s}.'.format(s))
