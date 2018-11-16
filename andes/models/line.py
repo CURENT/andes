@@ -258,11 +258,11 @@ class Line(ModelBase):
         while 1:
             while 1:
                 cons = cons * temp
+                cons = sparse(cons)  # remove zero values
                 new_nelm = len(cons.J)
                 if new_nelm == nelm:
                     break
                 nelm = new_nelm
-            cons = sparse(cons)  # remove zero values
             if len(cons.J) == n:  # all buses are interconnected
                 return
             bus.island_sets.append(list(cons.J))
