@@ -1,6 +1,7 @@
 import logging
 import importlib
 import sys
+import numpy as np
 
 from andes.config.tds import Tds
 from andes.utils import elapsed
@@ -443,7 +444,7 @@ class TDS(RoutineBase):
                 dae.y += inc_y
 
             self.err = max(abs(self.inc))
-            if isnan(config.error):
+            if np.isnan(self.inc).any():
                 logger.error('Iteration error: NaN detected.')
                 self.niter = config.maxit + 1
                 break
