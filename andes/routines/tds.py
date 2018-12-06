@@ -150,7 +150,7 @@ class TDS(RoutineBase):
 
         # reduce time step for fixed_times events
         for fixed_t in self.fixed_times:
-            if (fixed_t > self.t) and (fixed_t < self.t + config.deltat):
+            if (fixed_t > self.t) and (fixed_t <= self.t + config.deltat):
                 config.deltat = fixed_t - self.t
                 self.switch = True
                 break
@@ -241,8 +241,8 @@ class TDS(RoutineBase):
         config.qrtstart = time()
 
         while self.t < config.tf:
-            self.calc_time_step()
             self.check_fixed_times()
+            self.calc_time_step()
 
             if self.callpert is not None:
                 self.callpert(self.t, self.system)
