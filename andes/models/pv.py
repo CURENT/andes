@@ -113,7 +113,7 @@ class PV(Stagen):
             elif len(pflow.iter_mis) > 0 and pflow.iter_mis[-1] <= min(0.01, 1e4 * pflow.config.tol):
                 update_qlim = True
 
-        # TODO: fix PV2PQ error for MATPOWER case118 and case 300
+        qlim_new = []
         if update_qlim is True:
             d_min = dae.y[self.q] - self.qmin
             d_max = dae.y[self.q] - self.qmax
@@ -134,11 +134,13 @@ class PV(Stagen):
             mq = matrix(self.q)
             dae.y[mq[self.below]] = self.qmin[self.below]
             dae.y[mq[self.above]] = self.qmax[self.above]
-            self.qlim = list(set(list(mq[self.below]) + list(mq[self.above])))
+            qlim_new = list(set(list(mq[self.below]) + list(mq[self.above])))
 
-            if self.qlim:
+            if qlim_new:
                 # refactorize the DAE when limit is hit. It allow resetting the Jacobian elements
                 self.system.dae.factorize = True
+
+        self.qlim = list(set(list(self.qlim) + qlim_new))
 
         p_inj = -mul(self.u, self.pg)
         q_inj = -mul(self.u, dae.y[self.q])
@@ -151,31 +153,21 @@ class PV(Stagen):
             dae.g[v] += qi
             dae.g[q] = dv  # not an interface equation
 
-        # dae.g -= spmatrix(
-        #     mul(self.u, self.pg), self.a, [0] * self.n, (dae.m, 1), 'd')
-        # dae.g -= spmatrix(
-        #     mul(self.u, dae.y[self.q]), self.v, [0]*self.n, (dae.m, 1), 'd')
-        # dae.g += spmatrix(
-        #     mul(self.u, dae.y[self.v] - self.v0), self.q, [0] * self.n,
-        #     (dae.m, 1), 'd')
-
         if self.qlim:
             dae.g[self.qlim] = 0
 
     def gycall(self, dae):
-        pass
+        for q in self.qlim:
+            v = self.v[self.q.index(q)]
+            dae.set_jac('Gy', 0.0, q, v)
+            dae.set_jac('Gy', 0.0, v, q)
+            dae.set_jac('Gy', 1.0, q, q)
 
     def jac0(self, dae):
         dae.set_jac('Gy0', -1e-6, self.v, self.v)
         dae.set_jac('Gy0', -self.u, self.v, self.q)
         dae.set_jac('Gy0', self.u, self.q, self.v)
         dae.set_jac('Gy0', -1e-6, self.q, self.q)
-
-        for q in self.qlim:
-            v = self.v[self.q.index(q)]
-            dae.set_jac('Gy0', 0.0, q, v)
-            dae.set_jac('Gy0', 0.0, v, q)
-            dae.set_jac('Gy0', 1.0, q, q)
 
     def disable_gen(self, idx):
         """
