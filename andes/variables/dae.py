@@ -537,7 +537,7 @@ class DAE(object):
 
         :return: None
         """
-        if self.ac_reset is False and not self.rebuild:
+        if self.ac_reset is False:
             return
 
         mn = self.m + self.n

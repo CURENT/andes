@@ -1,5 +1,4 @@
 import os
-import pathlib
 import logging
 import platform
 import tempfile
@@ -30,8 +29,9 @@ def get_config_load_path(conf_path=None):
         if os.path.isfile('andes.conf'):
             conf_path = 'andes.conf'
         # test ~/andes.conf
-        if os.path.isfile(os.path.join(str(pathlib.Path.home()), '.andes', 'andes.conf')):
-            conf_path = os.path.join(str(pathlib.Path.home()), '.andes', 'andes.conf')
+        home_dir = os.path.expanduser('~')
+        if os.path.isfile(os.path.join(home_dir, '.andes', 'andes.conf')):
+            conf_path = os.path.join(home_dir, '.andes', 'andes.conf')
 
     if conf_path is not None:
         logger.debug('Found config file at {}.'.format(conf_path))

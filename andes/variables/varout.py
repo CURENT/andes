@@ -172,7 +172,7 @@ class VarOut(object):
         system = self.system
         dae = self.system.dae
         varname = self.system.varname
-        template = '{:>6g}, {:>25s}, {:>25s}\n'
+        template = '{:>6g}, {:>25s}, {:>35s}\n'
 
         # header line
         out += template.format(0, 'Time [s]', '$Time\\ [s]$')

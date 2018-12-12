@@ -7,6 +7,7 @@ from .base import ModelBase
 
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from math import ceil
 
 
 class WindBase(ModelBase):
@@ -83,7 +84,7 @@ class WindBase(ModelBase):
         ws = [0] * self.n
 
         for i in range(self.n):
-            q = int(t / self.dt[i])
+            q = ceil(t / self.dt[i])
             q_prev = 0 if q == 0 else q - 1
 
             r = t % self.dt[i]
