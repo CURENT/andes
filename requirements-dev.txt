@@ -12,3 +12,4 @@ matplotlib
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
+collective.checkdocs
