@@ -527,7 +527,8 @@ class PowerSystem(object):
                 logger.warning(
                     'Multiple slack buses are defined for {:g} island(s).'.
                     format(len(nosw_island)))
-            else:
+
+            if (not nosw_island) and (not msw_island):
                 logger.debug(
                     'Each island has a slack bus correctly defined.')
 

@@ -258,11 +258,11 @@ class Line(ModelBase):
         while 1:
             while 1:
                 cons = cons * temp
+                cons = sparse(cons)  # remove zero values
                 new_nelm = len(cons.J)
                 if new_nelm == nelm:
                     break
                 nelm = new_nelm
-            cons = sparse(cons)  # remove zero values
             if len(cons.J) == n:  # all buses are interconnected
                 return
             bus.island_sets.append(list(cons.J))
@@ -393,7 +393,7 @@ class Line(ModelBase):
         """Return voltage phasors at the "to buses" (bus2)"""
         Vm = self.system.dae.y[self.v]
         Va = self.system.dae.y[self.a]
-        return polar(Vm[self.a1], Va[self.a1])
+        return polar(Vm[self.a2], Va[self.a2])
 
     def switch(self, idx, u):
         """switch the status of Line idx"""
