@@ -1,16 +1,23 @@
-===============================
+==============================================
 ANDES: ANother Dynamic Energy System simulator
-===============================
+==============================================
 
 .. image:: https://img.shields.io/travis/cuihantao/andes.svg
-        :target: https://travis-ci.org/cuihantao/andes
+    :alt: Travis CI Build Status
+    :target: https://travis-ci.org/cuihantao/andes
 
-.. image:: https://img.shields.io/pypi/v/andes.svg
-        :target: https://pypi.python.org/pypi/andes
+.. image:: https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg
+    :alt: Codecov Coverage
+    :target: https://codecov.io/gh/cuihantao/andes
 
 .. image:: https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da
-   :alt: Codacy Badge
-   :target: https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard
+    :alt: Codacy Badge
+    :target: https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard
+
+.. image:: https://img.shields.io/pypi/v/andes.svg
+    :alt: PyPI Version
+    :target: https://pypi.python.org/pypi/andes
+
 
 A Python package for power system research
 
