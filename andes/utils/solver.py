@@ -122,10 +122,12 @@ class Solver(object):
         None
         """
         if self.sparselib == 'umfpack':
-            return umfpack.linsolve(A, b)
+            umfpack.linsolve(A, b)
+            return b
 
         elif self.sparselib == 'klu':
-            return klu.linsolve(A, b)
+            klu.linsolve(A, b)
+            return b
 
         elif self.sparselib in ('spsolve', 'cupy'):
             ccs = A.CCS

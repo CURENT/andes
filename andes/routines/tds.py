@@ -418,8 +418,12 @@ class TDS(RoutineBase):
             dae.reset_Ac()
 
             if dae.factorize:
-                self.F = self.solver.symbolic(dae.Ac)
-                dae.factorize = False
+                try:
+                    self.F = self.solver.symbolic(dae.Ac)
+                    dae.factorize = False
+                except NotImplementedError:
+                    pass
+
             self.inc = -matrix([dae.q, dae.g])
 
             try:
@@ -436,6 +440,9 @@ class TDS(RoutineBase):
                 logger.warning('Unexpected symbolic factorization')
                 dae.factorize = True
                 continue
+            except NotImplementedError:
+                self.inc = self.solver.linsolve(dae.Ac, self.inc)
+
             else:
                 inc_x = self.inc[:dae.n]
                 inc_y = self.inc[dae.n:dae.m + dae.n]
