@@ -1,9 +1,12 @@
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix
 
-import cupy as cp
-from cupyx.scipy.sparse import csc_matrix as csc_cu
-from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr
+try:
+    import cupy as cp
+    from cupyx.scipy.sparse import csc_matrix as csc_cu
+    from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr
+except ImportError:
+    CP = False
 
 from cvxopt import umfpack, matrix
 

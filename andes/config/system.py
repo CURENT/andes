@@ -9,6 +9,14 @@ try:
 except ImportError:
     KLU = False
 
+try:
+    import cupy as cp  # NOQA
+    from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
+    from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
+    CP = True
+except ImportError:
+    CP = False
+
 
 class System(ConfigBase):
     def __init__(self, **kwargs):
@@ -61,7 +69,11 @@ class System(ConfigBase):
             self.sparselib = 'umfpack'
 
         if self.sparselib == 'klu' and not KLU:
-            logger.info("Optional package \"cvxoptklu\" available for speed up")
+            logger.info("KLU not found. Install with \"pip install cvxoptklu\" ")
+            self.sparselib = 'umfpack'
+
+        elif self.sparselib == 'cupy' and not CP:
+            logger.info("CuPy not found. Fall back to UMFPACK.")
             self.sparselib = 'umfpack'
 
         logger.info('Using {} sparse solver'.format(self.sparselib))
