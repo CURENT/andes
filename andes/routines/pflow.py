@@ -211,8 +211,11 @@ class PFLOW(RoutineBase):
         inc = matrix([system.dae.f, system.dae.g])
 
         if system.dae.factorize:
-            self.F = self.solver.symbolic(A)
-            system.dae.factorize = False
+            try:
+                self.F = self.solver.symbolic(A)
+                system.dae.factorize = False
+            except NotImplementedError:
+                pass
 
         try:
             N = self.solver.numeric(A, self.F)
@@ -223,6 +226,8 @@ class PFLOW(RoutineBase):
         except ArithmeticError:
             logger.warning('Jacobian matrix is singular.')
             system.dae.check_diag(system.dae.Gy, 'unamey')
+        except NotImplementedError:
+            inc = self.solver.linsolve(A, inc)
 
         return -inc
 

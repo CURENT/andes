@@ -122,9 +122,12 @@ class PowerSystem(object):
                              **kwargs)
 
         self.config = System()
-        self.routine_import()
 
-        self.load_config(get_config_load_path(self.files.config))
+        conf_path = get_config_load_path(self.files.config)
+        self.load_config(conf_path=conf_path, sys_only=True)
+
+        self.routine_import()
+        self.load_config(conf_path=conf_path, routine_only=True)
 
         self.devman = DevMan(self)
         self.call = Call(self)
@@ -416,7 +419,7 @@ class PowerSystem(object):
 
         return times
 
-    def load_config(self, conf_path):
+    def load_config(self, conf_path, sys_only=False, routine_only=False):
         """
         Load config from an ``andes.conf`` file.
 
@@ -439,10 +442,12 @@ class PowerSystem(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-
-        self.config.load_config(conf)
-        for r in routines.__all__:
-            self.__dict__[r.lower()].config.load_config(conf)
+        if sys_only:
+            self.config.load_config(conf)
+            return
+        if routine_only:
+            for r in routines.__all__:
+                self.__dict__[r.lower()].config.load_config(conf)
 
         logger.debug('Loaded config file from {}.'.format(conf_path))
 

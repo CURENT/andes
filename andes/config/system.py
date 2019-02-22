@@ -16,7 +16,7 @@ class System(ConfigBase):
         self.mva = 100.0
         self.distrsw = False
         self.sparselib = 'klu'
-        self.sparselib_alt = ['klu', 'umfpack']
+        self.sparselib_alt = ['klu', 'umfpack', 'spsolve', 'cupy']
         self.export = 'txt'
         self.export_alt = ['txt', 'latex']
         self.coi = False
@@ -63,5 +63,7 @@ class System(ConfigBase):
         if self.sparselib == 'klu' and not KLU:
             logger.info("Optional package \"cvxoptklu\" available for speed up")
             self.sparselib = 'umfpack'
+
+        logger.info('Using {} sparse solver'.format(self.sparselib))
 
         return True
