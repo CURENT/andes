@@ -96,6 +96,7 @@ class Breaker(ModelBase):
         else:
             return
 
+        n_applied = 0
         for i in range(self.n):
             tn = matrix([self.t1[i], self.t2[i], self.t3[i], self.t4[i]])
             tn = mul(self.u[i], tn)
@@ -109,12 +110,15 @@ class Breaker(ModelBase):
                     inf = ' Breaker <{}>: Line <{}> disconnected ' \
                           'at t = {}.'.format(
                               self.idx[i], self.line[i], actual_time)
+                    n_applied += 1
                 elif u0 == 0:
                     inf = ' Breaker <{}>: Line <{}> reconnected ' \
                           'at t = {}.'.format(
                               self.idx[i], self.line[i], actual_time)
+                    n_applied += 1
                 logger.info(inf)
-        self.system.check_islands(show_info=True)
+        if n_applied > 0:
+            self.system.check_islands(show_info=True)
 
     def insert(self, idx=None, name=None, **kwargs):
         if self.n:
