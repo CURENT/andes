@@ -443,11 +443,10 @@ class TDS(RoutineBase):
             except NotImplementedError:
                 self.inc = self.solver.linsolve(dae.Ac, self.inc)
 
-            else:
-                inc_x = self.inc[:dae.n]
-                inc_y = self.inc[dae.n:dae.m + dae.n]
-                dae.x += inc_x
-                dae.y += inc_y
+            inc_x = self.inc[:dae.n]
+            inc_y = self.inc[dae.n:dae.m + dae.n]
+            dae.x += inc_x
+            dae.y += inc_y
 
             self.err = max(abs(self.inc))
             if np.isnan(self.inc).any():

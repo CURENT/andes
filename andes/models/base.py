@@ -517,6 +517,17 @@ class ModelBase(object):
         keys = ['idx', 'name', 'u'] + sorted(self._data.keys())
         return set(keys)
 
+    def fxcall_idx(self):
+        """
+        Precompute the row and column indices of the non-zero elements in the df/dx matrix
+
+        Returns
+        -------
+        (row indices, col indices)
+        """
+
+        pass
+
     def data_to_list(self, sysbase=False):
         """
         Return the loaded model data as a list of dictionaries.
