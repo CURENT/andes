@@ -1049,7 +1049,7 @@ class ModelBase(object):
         if self._flags['sysbase'] is False:
             return
 
-        for key, val in self._store:
+        for key, val in self._store.items():
             self.__dict__[key] = val
 
         self._flags['sysbase'] = False

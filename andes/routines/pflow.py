@@ -36,6 +36,7 @@ class PFLOW(RoutineBase):
         self.niter = 0
         self.iter_mis = []
         self.F = None
+        self.system.dae.factorize = True
 
     def pre(self):
         """

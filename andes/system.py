@@ -219,6 +219,19 @@ class PowerSystem(object):
             for item in self.devman.devices:
                 self.__dict__[item].data_to_sys_base()
 
+    def to_elembase(self):
+        """
+        Convert parameters back to element base. This function calls the
+        ```data_to_elem_base``` function.
+
+        Returns
+        -------
+        None
+        """
+        if self.config.base:
+            for item in self.devman.devices:
+                self.__dict__[item].data_to_elem_base()
+
     def group_add(self, name='Ungrouped'):
         """
         Dynamically add a group instance to the system if not exist.
