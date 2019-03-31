@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from cvxopt import matrix
 import logging
@@ -151,6 +152,7 @@ class VarOut(object):
             out += template.format(*values) + '\n'
 
         try:
+            os.makedirs(os.path.dirname(system.files.dat), exist_ok=True)
             with open(system.files.dat, self._mode) as f:
                 f.write(out)
             ret = True

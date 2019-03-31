@@ -1,5 +1,6 @@
 from andes.utils.tab import simpletab
 from cvxopt import matrix
+import os
 
 
 def format_newline():
@@ -28,60 +29,60 @@ def dump_data(text, header, rowname, data, file):
     precision = 4
     s = ''
     out = ''
-    fid = open(file, 'w')
 
-    for Text, Header, Rowname, Data in zip(text, header, rowname, data):
-        # Write Text
-        if Text:
-            fid.writelines(
-                Text
-            )
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    with open(file, 'w') as fid:
 
-        # Write Header
-        if Header:
-            ncol = len(Header)
-            s = ' ' * width
-            s += '{:>{width}s}' * ncol + '\n'
-            fid.writelines(s.format(*Header, width=width))  # Mind the asterisk
-            fid.write('\n')
+        for Text, Header, Rowname, Data in zip(text, header, rowname, data):
+            # Write Text
+            if Text:
+                fid.writelines(
+                    Text
+                )
 
-        # Append Rowname to Data
-        # Data is a list of column lists
-        if Rowname:
-            ncol = 0
-            for idx, item in enumerate(Rowname):  # write by row as always
-                if not Data:
-                    out = ''
-                elif isinstance(Data[0], list):  # list of list in Data
-                    ncol = len(Data)
-                    out = [Data[i][idx] for i in range(ncol)]
-                elif isinstance(Data[0],
-                                (int, float)):  # Is just a list of numbers
-                    ncol = 1
-                    out = [Data[idx]]
-                elif isinstance(Data, (int, float)):
-                    ncol = 1
-                    out = [Data]
-                elif isinstance(Data, matrix):  # Data is a matrix
-                    pass
-                else:
-                    print('Unexpected Data during output, in formats/txt.py')
+            # Write Header
+            if Header:
+                ncol = len(Header)
+                s = ' ' * width
+                s += '{:>{width}s}' * ncol + '\n'
+                fid.writelines(s.format(*Header, width=width))  # Mind the asterisk
+                fid.write('\n')
 
-                s = '{:{width}s}'  # for row header
-                for col in out:
-                    if isinstance(col, (int, float)):
-                        s += '{:{width}.{precision}g}'
-                    elif type(col) == str:
-                        if len(col) > width:
-                            col = col[:width]
-                        s += '{:{width}s}'
-                    else:
+            # Append Rowname to Data
+            # Data is a list of column lists
+            if Rowname:
+                ncol = 0
+                for idx, item in enumerate(Rowname):  # write by row as always
+                    if not Data:
+                        out = ''
+                    elif isinstance(Data[0], list):  # list of list in Data
+                        ncol = len(Data)
+                        out = [Data[i][idx] for i in range(ncol)]
+                    elif isinstance(Data[0],
+                                    (int, float)):  # Is just a list of numbers
+                        ncol = 1
+                        out = [Data[idx]]
+                    elif isinstance(Data, (int, float)):
+                        ncol = 1
+                        out = [Data]
+                    elif isinstance(Data, matrix):  # Data is a matrix
                         pass
-                s += '\n'
+                    else:
+                        print('Unexpected Data during output, in formats/txt.py')
 
-                fid.write(
-                    s.format(
-                        str(item), *out, width=width, precision=precision))
-        fid.write('\n')
+                    s = '{:{width}s}'  # for row header
+                    for col in out:
+                        if isinstance(col, (int, float)):
+                            s += '{:{width}.{precision}g}'
+                        elif type(col) == str:
+                            if len(col) > width:
+                                col = col[:width]
+                            s += '{:{width}s}'
+                        else:
+                            pass
+                    s += '\n'
 
-    fid.close()
+                    fid.write(
+                        s.format(
+                            str(item), *out, width=width, precision=precision))
+            fid.write('\n')

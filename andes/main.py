@@ -158,6 +158,7 @@ def cli_new():
     io_group.add_argument('-n', '--no-output', help='Force no output of any '
                                                     'kind',
                           action='store_true')
+    io_group.add_argument('-o', '--output_path', help='Output path prefix', type=str, default='')
     io_group.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
     config_exclusive = parser.add_mutually_exclusive_group()

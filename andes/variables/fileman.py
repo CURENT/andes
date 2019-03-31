@@ -13,7 +13,8 @@ class FileMan(object):
                  dynfile=None,
                  dump_raw=None,
                  output_format=None,
-                 output=None,
+                 output_path='',
+                 output=None,  # base file name for the output
                  pert=None,
                  **kwargs):
         """initialize the output file names
@@ -34,10 +35,10 @@ class FileMan(object):
         else:
             self.output_format = None
 
-        self.case = case
-        path, fullname = os.path.split(case)
+        self.case = case  # user-specified input file
+        path, fullname = os.path.split(case)  # attempt to derive path and full name from the input
         self.fullname = fullname
-        self.name, self.ext = os.path.splitext(fullname)
+        self.name, self.ext = os.path.splitext(fullname)  # `self.name` is the name part without extension
         if not path:
             self.path = os.getcwd()
         else:
@@ -49,6 +50,7 @@ class FileMan(object):
         self.config = self.get_fullpath(config)
         self.add_format = None
 
+        self.output_path = '' if not output_path else output_path
         if no_output:
             self.no_output = True
             self.log = None
@@ -67,35 +69,32 @@ class FileMan(object):
             prof = add_suffix(self.name, 'prof')
             eig = add_suffix(self.name, 'eig')
 
-            self.lst = add_ext(output, 'lst')
-            self.eig = add_ext(eig, 'txt')
-            self.dat = add_ext(output, 'dat')
-            self.output = add_ext(output, 'txt')
-            self.dump_raw = add_ext(dump_raw, 'dm')
-            self.prof = add_ext(prof, 'txt')
+            self.lst = os.path.join(self.output_path, output + '.lst')
+            self.dat = os.path.join(self.output_path, output + '.dat')
+            self.output = os.path.join(self.output_path, output + '.txt')
+
+            self.eig = os.path.join(self.output_path, eig + '.txt')
+            self.dump_raw = os.path.join(self.output_path, dump_raw + '.dm')
+            self.prof = os.path.join(self.output_path, prof + '.txt')
 
     def get_fullpath(self, fullname=None):
         """
         Return the original full path if full path is specified, otherwise
         search in the case file path
         """
+        # if is an empty path
         if not fullname:
-            return None
+            return fullname
 
         path, name = os.path.split(fullname)
-        if not name:
+
+        if not name:  # path to a folder
             return None
-        else:
-            if not path:
+        else:  # path to a file
+            if not path:  # relative path to file
                 return os.path.join(self.path, name)
-            else:
+            else:  # full path to file
                 return os.path.join(path, name)
-
-
-def add_ext(name, extension):
-    """Add extension to a name, discard the previos extension if exists"""
-    name, ext = os.path.splitext(name)
-    return name + '.' + extension
 
 
 def add_suffix(fullname, suffix):

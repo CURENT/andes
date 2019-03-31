@@ -57,6 +57,7 @@ class PowerSystem(object):
                  config=None,
                  input_format=None,
                  output_format=None,
+                 output_path='',
                  gis=None,
                  dime=None,
                  tf=None,
@@ -117,6 +118,7 @@ class PowerSystem(object):
                              no_output=no_output,
                              dynfile=dynfile,
                              dump_raw=dump_raw,
+                             output_path=output_path,
                              output_format=output_format,
                              output=output,
                              **kwargs)
