@@ -30,7 +30,7 @@ def dump_data(text, header, rowname, data, file):
     s = ''
     out = ''
 
-    os.makedirs(os.path.dirname(file), exist_ok=True)
+    os.makedirs(os.path.abspath(os.path.dirname(file)), exist_ok=True)
     with open(file, 'w') as fid:
 
         for Text, Header, Rowname, Data in zip(text, header, rowname, data):
