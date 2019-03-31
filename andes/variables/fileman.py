@@ -44,7 +44,7 @@ class FileMan(object):
             self.output_format = None
 
         if input_path is not None:
-            logger.debug('input_path provided. Absolute paths of the input will be ignored')
+            logger.debug('input_path provided as {}.'.format(input_path))
             self.case_path = input_path
         else:
             self.case_path = os.getcwd()  # default to current directory
@@ -53,6 +53,7 @@ class FileMan(object):
             self.case = case
         else:
             self.case = self.get_fullpath(case)
+            logger.debug(self.case)
 
         # update `self.case_path` if `case` contains a path
         self.case_path, self.fullname = os.path.split(self.case)
@@ -112,9 +113,7 @@ class FileMan(object):
             if isabs:
                 return fullname
             else:
-                return os.path.abspath(
-                    os.path.join(self.case_path, path, name)
-                )
+                return os.path.join(self.case_path, path, name)
 
 
 def add_suffix(fullname, suffix):

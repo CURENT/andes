@@ -90,6 +90,7 @@ def config_logger(name='andes',
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fh_formatter)
         logger.addHandler(fh)
+        logger.debug('Writing log to {}'.format(log_full_path))
 
     if stream is True:
         sh_formatter = logging.Formatter('%(message)s')
@@ -100,8 +101,6 @@ def config_logger(name='andes',
         logger.addHandler(sh)
 
     globals()['logger'] = logger
-
-    logger.debug('Writing log to {}'.format(log_full_path))
 
 
 def preamble():
@@ -150,7 +149,7 @@ def cli_new():
 
     # I/O
     io_group = parser.add_argument_group('I/O options', 'Optional arguments for managing I/Os')
-    io_group.add_argument('-p', '--path', help='Path to case files', type=str, default='')
+    io_group.add_argument('-p', '--path', help='Path to case files', type=str, default='', dest='input_path')
     io_group.add_argument('-a', '--addfile', help='Additional files used by some formats.')
     io_group.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')
     io_group.add_argument('-P', '--pert', help='Perturbation file path', default='')
@@ -659,7 +658,7 @@ def main():
         logger.info('error: no input file. Try \'andes -h\' for help.')
 
     # preprocess cli args
-    path = args.get('path', os.getcwd())
+    path = args.get('input_path', os.getcwd())
     ncpu = args['ncpu']
     if ncpu == 0 or ncpu > os.cpu_count():
         ncpu = os.cpu_count()
@@ -667,7 +666,8 @@ def main():
     cases = []
 
     for file in args['filename']:
-        full_paths = os.path.join(path, file)
+        # use absolute path for cases which will be respected by FileMan
+        full_paths = os.path.abspath(os.path.join(path, file))
         found = glob.glob(full_paths)
         if len(found) == 0:
             logger.info('error: file {} does not exist.'.format(full_paths))

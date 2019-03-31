@@ -23,11 +23,17 @@ class TestVariablesFileMan(unittest.TestCase):
         file_name, file_ext = os.path.splitext(full_file_name)
 
         # test input file paths
-        self.assertEqual(self.fileman.case, case_abs_path)
+        self.assertEqual(os.path.abspath(self.fileman.case),
+                         case_abs_path)
+
         self.assertEqual(self.fileman.addfile, None)
-        self.assertEqual(self.fileman.dynfile, os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
+
+        self.assertEqual(os.path.abspath(self.fileman.dynfile),
+                         os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
+
         self.assertEqual(self.fileman.pert, None)
-        self.assertEqual(self.fileman.config, os.path.join(os.path.expanduser('~'), '.andes', 'andes.conf'))
+        self.assertEqual(self.fileman.config,
+                         os.path.join(os.path.expanduser('~'), '.andes', 'andes.conf'))
 
         # test output file paths
 
@@ -88,7 +94,8 @@ class TestVariablesFileManWithInputPath(unittest.TestCase):
         # test input file paths
         self.assertEqual(self.fileman.case, case_abs_path)
         self.assertEqual(self.fileman.addfile, None)
-        self.assertEqual(self.fileman.dynfile, os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
+        self.assertEqual(os.path.abspath(self.fileman.dynfile),
+                         os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
         self.assertEqual(self.fileman.pert, None)
         self.assertEqual(self.fileman.config, os.path.join(os.path.expanduser('~'), '.andes', 'andes.conf'))
 
