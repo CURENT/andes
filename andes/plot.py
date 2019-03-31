@@ -116,13 +116,18 @@ def get_nvars(dat):
     try:
         with open(dat, 'r') as f:
             line1 = f.readline()
-        line1 = line1.strip().split()
-        return len(line1)
+
+        delim = ' '
+        if ',' in line1:
+            delim = ','
+
+        line1 = line1.strip().split(delim)
+        return len(line1), delim
     except IOError:
         print('* Error while opening the dat file')
 
 
-def read_dat(dat, x, y):
+def read_dat(dat, x, y, delim=','):
     global dfile
     errid = 0
     xv = []
@@ -137,7 +142,7 @@ def read_dat(dat, x, y):
         return None, None
 
     for num, line in enumerate(dfile_raw):
-        thisline = line.rstrip('\n').split()
+        thisline = line.rstrip('\n').split(delim)
         if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
             errid = 1
             break
@@ -377,9 +382,11 @@ def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
-    y = parse_y(args['y'], get_nvars(dat))
+    nvars, delim = get_nvars(dat)
+
+    y = parse_y(args['y'], nvars)
     try:
-        xval, yval = read_dat(dat, args['x'], y)
+        xval, yval = read_dat(dat, args['x'], y, delim=delim)
     except IndexError:
         print('* Error: X or Y index out of bound')
         return

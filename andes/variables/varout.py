@@ -21,6 +21,16 @@ class VarOut(object):
         self.k = []
         self.vars = []
         self.vars_array = None
+
+        self._np_block_rows = 600
+        self._np_block_shape = (0, 0)
+        self.np_vars = np.ndarray(shape=(0, 0))
+        self.np_t = np.ndarray(shape=(0,))
+        self.np_k = np.ndarray(shape=(0,))
+
+        self.np_nrows = 0
+        self.np_ncols = 0
+
         self.dat = None
         self._mode = 'w'
 
@@ -39,9 +49,46 @@ class VarOut(object):
                     self.system.dae.t))
             self._mode = 'a'
 
+        var_data = matrix([self.system.dae.x, self.system.dae.y])
+
+        # ===== This code block is deprecated =====
         self.t.append(t)
         self.k.append(step)
-        self.vars.append(matrix([self.system.dae.x, self.system.dae.y]))
+        self.vars.append(var_data)
+        # =========================================
+
+        # clear data cache if written to disk
+        if self.np_nrows >= max_cache > 0:
+            self.dump_np_vars()
+            self.np_vars = np.zeros(self._np_block_shape)
+            self.np_nrows = 0
+            self.np_t = np.zeros((self._np_block_rows,))
+            self.np_k = np.zeros((self._np_block_rows,))
+            logger.debug(
+                'np_vars cache cleared at simulation t = {:g}.'.format(
+                    self.system.dae.t))
+            self._mode = 'a'
+
+        # initialize before first-time adding data
+        if self.np_nrows == 0:
+            self.np_ncols = len(var_data)
+            self._np_block_shape = (self._np_block_rows, self.np_ncols)
+            self.np_vars = np.zeros(self._np_block_shape)
+            self.np_t = np.zeros((self._np_block_rows,))
+            self.np_k = np.zeros((self._np_block_rows,))
+
+        # adding data to the matrix
+        # self.np_vars[self.np_nrows, 0] = t
+        self.np_t[self.np_nrows] = t
+        self.np_k[self.np_nrows] = step
+        self.np_vars[self.np_nrows, :] = np.array(var_data).reshape((-1))
+        self.np_nrows += 1
+
+        # check if matrix extension is needed
+        if self.np_nrows >= self.np_vars.shape[0]:
+            self.np_vars = np.concatenate([self.np_vars, np.zeros(self._np_block_shape)], axis=0)
+            self.np_t = np.concatenate([self.np_t, np.zeros((self._np_block_rows,))], axis=0)
+            self.np_k = np.concatenate([self.np_k, np.zeros((self._np_block_rows,))], axis=0)
 
         # remove the post-computed variables from the variable list
         if self.system.tds.config.compute_flows:
@@ -68,6 +115,7 @@ class VarOut(object):
 
         :return matrix: concatenated matrix with ``self.t`` as the 0-th column
         """
+        logger.warning('This function is deprecated and replaced by `concat_t_vars_np`.')
         out = np.array([])
 
         if len(self.t) == 0:
@@ -81,6 +129,23 @@ class VarOut(object):
             out = np.append(out, line, axis=0)
 
         return out
+
+    def concat_t_vars_np(self, vars_idx=None):
+        """
+        Concatenate `self.np_t` with `self.np_vars` and return a single matrix.
+        The first column corresponds to time, and the rest of the matrix is the variables.
+
+        Returns
+        -------
+        np.array : concatenated matrix
+
+        """
+        selected_np_vars = self.np_vars
+        if vars_idx is not None:
+            selected_np_vars = self.np_vars[:, vars_idx]
+
+        return np.concatenate([self.np_t[:self.np_nrows].reshape((-1, 1)),
+                               selected_np_vars[:self.np_nrows, :]], axis=1)
 
     def get_xy(self, yidx, xidx=0):
         """
@@ -101,14 +166,44 @@ class VarOut(object):
 
         return xdata.tolist(), ydata.transpose().tolist()
 
+    def dump_np_vars(self, store_format='csv', delimiter=','):
+        """
+        Dump the TDS simulation data to files by calling subroutines `write_lst` and
+        `write_np_dat`.
+
+        Parameters
+        -----------
+
+        store_format : str
+            dump format in `('csv', 'txt', 'hdf5')`
+
+        delimiter : str
+            delimiter for the `csv` and `txt` format
+
+        Returns
+        -------
+        bool: success flag
+        """
+
+        ret = False
+
+        if self.system.files.no_output is True:
+            logger.debug('no_output is True, thus no TDS dump saved ')
+            return True
+
+        if self.write_lst() and self.write_np_dat(store_format=store_format, delimiter=delimiter):
+            ret = True
+
+        return ret
+
     def dump(self):
         """
         Dump the TDS results to the output `dat` file
 
-        :param lst: dump ``.lst`` file
-
         :return: succeed flag
         """
+        logger.warn('This function is deprecated and replaced by `dump_np_vars`.')
+
         ret = False
 
         if self.system.files.no_output:
@@ -120,11 +215,64 @@ class VarOut(object):
 
         return ret
 
+    def write_np_dat(self, store_format='csv', delimiter=',', fmt='%.12g'):
+        """
+        Write TDS data stored in `self.np_vars` to the output file
+
+        Parameters
+        ----------
+        store_format : str
+            dump format in ('csv', 'txt', 'hdf5')
+
+        delimiter : str
+            delimiter for the `csv` and `txt` format
+
+        fmt : str
+            output formatting template
+
+        Returns
+        -------
+        bool : success flag
+
+        """
+        ret = False
+        system = self.system
+
+        # compute the total number of columns, excluding time
+        if not system.Recorder.n:
+            n_vars = system.dae.m + system.dae.n
+            # post-computed power flows include:
+            #   bus   - (Pi, Qi)
+            #   line  - (Pij, Pji, Qij, Qji, Iij_Real, Iij_Imag, Iji_real, Iji_Imag)
+            if system.tds.config.compute_flows:
+                n_vars += 2 * system.Bus.n + 8 * system.Line.n + 2 * system.Area.n_combination
+            idx = list(range(n_vars))
+
+        else:
+            n_vars = len(system.Recorder.varout_idx)
+            idx = system.Recorder.varout_idx
+
+        if store_format in ('csv', 'txt'):
+            try:
+                os.makedirs(os.path.abspath(os.path.dirname(system.files.dat)), exist_ok=True)
+                with open(system.files.dat, self._mode) as f:
+                    t_vars_concatenated = self.concat_t_vars_np(vars_idx=idx)
+                    np.savetxt(f, t_vars_concatenated, fmt=fmt, delimiter=delimiter)
+                    ret = True
+                    logger.info('TDS data dumped to <{}>'.format(system.files.dat))
+
+            except IOError:
+                logger.error('I/O Error while writing the dat file.')
+
+            return ret
+
     def write_dat(self):
         """
         Write ``system.Varout.vars`` to a ``.dat`` file
         :return:
         """
+        logger.warn('This function is deprecated and replaced by `write_np_dat`.')
+
         ret = False
         system = self.system
 
@@ -218,6 +366,9 @@ class VarOut(object):
         -------
         numpy.array
         """
+
+        logger.warn('This function is deprecated. You can inspect `self.np_vars` directly as NumPy arrays '
+                    'without conversion.')
         if not self.vars:
             return None
 

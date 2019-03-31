@@ -596,6 +596,8 @@ class TDS(RoutineBase):
         t, _ = elapsed()
 
         if success and (not system.files.no_output):
-            system.varout.dump()
+
+            # system.varout.dump()
+            system.varout.dump_np_vars()
             _, s = elapsed(t)
             logger.info('Simulation data dumped in {:s}.'.format(s))

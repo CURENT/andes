@@ -1,6 +1,7 @@
 ## Modular Refactorization
 
-* fix: dome raw dump not solveable
-* fix the messy `system.FileMan`
+* Use numpy.array for storing VarOut.store()
+
 * Varout to DataFrame
+
 * Optimize `_varname()` in models
