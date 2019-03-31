@@ -1,4 +1,7 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FileMan(object):
@@ -7,6 +10,7 @@ class FileMan(object):
     def __init__(self,
                  case,
                  input_format=None,
+                 input_path=None,
                  addfile=None,
                  config=None,
                  no_output=False,
@@ -17,7 +21,9 @@ class FileMan(object):
                  output=None,  # base file name for the output
                  pert=None,
                  **kwargs):
-        """initialize the output file names
+        """
+        Initialize the output file names. All absolute paths will be respected.
+        All relative paths are relative to `input_path`.
 
         case: must be full path to case
         fullname: full name of case only
@@ -25,6 +31,8 @@ class FileMan(object):
 
         dump: desired simulation result file name
         output: desired name for format conversion output
+        input_path: default path for input files that only contains file name. If not present,
+                    it will be derived from the path of `case`.
         """
         if isinstance(input_format, str):
             self.input_format = input_format.lower()
@@ -35,25 +43,33 @@ class FileMan(object):
         else:
             self.output_format = None
 
-        self.case = case  # user-specified input file
-        path, fullname = os.path.split(case)  # attempt to derive path and full name from the input
-        self.fullname = fullname
-        self.name, self.ext = os.path.splitext(fullname)  # `self.name` is the name part without extension
-        if not path:
-            self.path = os.getcwd()
+        if input_path is not None:
+            logger.debug('input_path provided. Absolute paths of the input will be ignored')
+            self.case_path = input_path
         else:
-            self.path = path
+            self.case_path = os.getcwd()  # default to current directory
+
+        if os.path.isabs(case):
+            self.case = case
+        else:
+            self.case = self.get_fullpath(case)
+
+        # update `self.case_path` if `case` contains a path
+        self.case_path, self.fullname = os.path.split(self.case)
+
+        # `self.name` is the name part without extension
+        self.name, self.ext = os.path.splitext(self.fullname)
 
         self.addfile = self.get_fullpath(addfile)
-        self.pert = pert
+        self.pert = self.get_fullpath(pert)
         self.dynfile = self.get_fullpath(dynfile)
         self.config = self.get_fullpath(config)
         self.add_format = None
 
-        self.output_path = '' if not output_path else output_path
+        # use the path where andes is executed as the default output path
+        self.output_path = os.getcwd() if not output_path else output_path
         if no_output:
             self.no_output = True
-            self.log = None
             self.output = None
             self.lst = None
             self.eig = None
@@ -77,24 +93,28 @@ class FileMan(object):
             self.dump_raw = os.path.join(self.output_path, dump_raw + '.dm')
             self.prof = os.path.join(self.output_path, prof + '.txt')
 
-    def get_fullpath(self, fullname=None):
+    def get_fullpath(self, fullname=None, relative_to=None):
         """
         Return the original full path if full path is specified, otherwise
         search in the case file path
         """
         # if is an empty path
         if not fullname:
-            return fullname
+            return None
+
+        isabs = os.path.isabs(fullname)
 
         path, name = os.path.split(fullname)
 
         if not name:  # path to a folder
             return None
         else:  # path to a file
-            if not path:  # relative path to file
-                return os.path.join(self.path, name)
-            else:  # full path to file
-                return os.path.join(path, name)
+            if isabs:
+                return fullname
+            else:
+                return os.path.abspath(
+                    os.path.join(self.case_path, path, name)
+                )
 
 
 def add_suffix(fullname, suffix):
