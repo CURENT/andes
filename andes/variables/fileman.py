@@ -22,17 +22,19 @@ class FileMan(object):
                  pert=None,
                  **kwargs):
         """
-        Initialize the output file names. All absolute paths will be respected.
-        All relative paths are relative to `input_path`.
+        Initialize the output file names.
+        For inputs, all absolute paths will be respected; and all relative paths are relative to `input_path`.
 
         case: must be full path to case
-        fullname: full name of case only
-        name: name of case WITHOUT extension
 
-        dump: desired simulation result file name
+        dump_raw: desired simulation result file name
+
         output: desired name for format conversion output
-        input_path: default path for input files that only contains file name. If not present,
+
+        input_path: default path for input files that only contains file name. If `input_path` is not provided,
                     it will be derived from the path of `case`.
+
+        output_path: path for output files. Default to current working directory where `andes` is invoked.
         """
         if isinstance(input_format, str):
             self.input_format = input_format.lower()
