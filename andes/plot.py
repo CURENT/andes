@@ -23,6 +23,7 @@ Andes plotting tool
 import os
 import re
 import sys
+import numpy as np
 
 import logging
 from argparse import ArgumentParser
@@ -39,6 +40,170 @@ except ImportError:
 
 lfile = []
 dfile = []
+
+
+class TDSData(object):
+    """
+    A time-domain simulation data container for loading, extracing and
+    plotting data
+    """
+
+    def __init__(self, file_name_full, path=None):
+        # paths and file names
+        self._path = path if path else os.getcwd()
+
+        file_name, ext = os.path.splitext(file_name_full)
+
+        self._dat_file = os.path.join(self._path, file_name + '.dat')
+        self._lst_file = os.path.join(self._path, file_name + '.lst')
+
+        # data members for raw data
+        self._idx = []  # indices of variables
+        self._uname = []  # unformatted variable names
+        self._fname = []  # formatted variable names
+        self._data = []  # data loaded from dat file
+
+        # auxillary data members for fast query
+        self.t = []
+
+        # TODO: consider moving the loading calls outside __init__
+        self.load_lst()
+        self.load_dat()
+
+    def load_lst(self):
+        """
+        Load the lst file into internal data structures
+
+        """
+        with open(self._lst_file, 'r') as fd:
+            lines = fd.readlines()
+
+        idx, uname, fname = list(), list(), list()
+
+        for line in lines:
+            values = line.split(',')
+            values = [x.strip() for x in values]
+
+            # preserve the idx ordering here in case variables are not
+            # ordered by idx
+            idx.append(int(values[0]))  # convert to integer
+            uname.append(values[1])
+            fname.append(values[2])
+
+        self._idx = idx
+        self._fname = fname
+        self._uname = uname
+
+    def find_var(self, query, formatted=False):
+        """
+        Return variable names and indices matching ``query``
+        """
+
+        # load the variable list to search in
+        names = self._uname if formatted is False else self._fname
+
+        found_idx, found_names = list(), list()
+
+        for idx, name in zip(self._idx, names):
+            if re.search(query, name):
+                found_idx.append(idx)
+                found_names.append(name)
+
+        return found_idx, found_names
+
+    def load_dat(self, delimiter=','):
+        """
+        Load the dat file into internal data structures, ``self._data``
+        """
+        try:
+            data = np.loadtxt(self._dat_file, delimiter=',')
+        except ValueError:
+            data = np.loadtxt(self._dat_file)
+
+        self._data = data
+
+    def get_values(self, idx):
+        """
+        Return the variable values at the given indices
+        """
+        if isinstance(idx, list):
+            idx = np.array(idx, dtype=int)
+
+        return self._data[:, idx]
+
+    def get_header(self, idx, formatted=False):
+        """
+        Return a list of the variable names at the given indices
+        """
+        header = self._uname if not formatted else self._fname
+        return [header[x] for x in idx]
+
+    def export_csv(self, path, idx=None, header=None, formatted=False,
+                   sort_idx=True, fmt='%.18e'):
+        """
+        Export to a csv file
+
+        Parameters
+        ----------
+        path : str
+            path of the csv file to save
+        idx : None or array-like, optional
+            the indices of the variables to export. Export all by default
+        header : None or array-like, optional
+            customized header if not `None`. Use the names from the lst file
+            by default
+        formatted : bool, optional
+            Use LaTeX-formatted header. Does not apply when using customized
+            header
+        sort_idx : bool, optional
+            Sort by idx or not, # TODO: implement sort
+        fmt : str
+            cell formatter
+        """
+        if not idx:
+            idx = self._idx
+        if not header:
+            header = self.get_header(idx, formatted=formatted)
+
+        assert len(idx) == len(header), \
+            "Idx length does not match header length"
+
+        body = self.get_values(idx)
+
+        with open(path, 'w') as fd:
+            fd.write(','.join(header) + '\n')
+            np.savetxt(fd, body, fmt=fmt, delimiter=',')
+
+    def plot(self, xidx, yidx, xname=None, yname=None, xlabel=None, ylabel=None,
+             left=None, right=None, ytimes=1, yoffset=0,
+             legend=True, grid=False, fig=None, ax=None,
+             latex=True, dpi=200, save=None, exit=False
+             ):
+        # TODO: split this function into multiple so that manipulated data
+        # can be used
+        pass
+
+    def _data_calc(self):
+        """
+        Manipulate the data such as adding, multiplying, differencing,
+        and calculating rate of change
+        """
+        # TODO: split this function into multiple
+        pass
+
+    def _check_latex(self):
+        """Check if latex is available"""
+        pass
+
+    def data_to_df(self):
+        """Convert to pandas.DataFrame"""
+        pass
+
+    def guess_event_time(self):
+        """Guess the event starting time from the input data by checking
+        when the values start to change
+        """
+        pass
 
 
 def cli_parse():
