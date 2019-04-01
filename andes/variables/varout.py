@@ -252,19 +252,23 @@ class VarOut(object):
             n_vars = len(system.Recorder.varout_idx)
             idx = system.Recorder.varout_idx
 
-        if store_format in ('csv', 'txt'):
-            try:
-                os.makedirs(os.path.abspath(os.path.dirname(system.files.dat)), exist_ok=True)
-                with open(system.files.dat, self._mode) as f:
-                    t_vars_concatenated = self.concat_t_vars_np(vars_idx=idx)
+        # prepare data
+        t_vars_concatenated = self.concat_t_vars_np(vars_idx=idx)
+
+        try:
+            os.makedirs(os.path.abspath(os.path.dirname(system.files.dat)), exist_ok=True)
+            with open(system.files.dat, self._mode) as f:
+                if store_format in ('csv', 'txt'):
                     np.savetxt(f, t_vars_concatenated, fmt=fmt, delimiter=delimiter)
-                    ret = True
-                    logger.info('TDS data dumped to <{}>'.format(system.files.dat))
+                elif store_format == 'hdf5':
+                    pass
+                ret = True
+                logger.info('TDS data dumped to <{}>'.format(system.files.dat))
 
-            except IOError:
-                logger.error('I/O Error while writing the dat file.')
+        except IOError:
+            logger.error('I/O Error while writing the dat file.')
 
-            return ret
+        return ret
 
     def write_dat(self):
         """
