@@ -3,6 +3,16 @@ import os
 from andes.variables import fileman
 
 
+class TestVariablesFileManEmpty(unittest.TestCase):
+    def setUp(self):
+        self.fileman = fileman.FileMan(case='')
+
+    def runTest(self):
+        self.assertEqual(self.fileman.case, '')
+        self.assertEqual(self.fileman.fullname, '')
+        self.assertEqual(self.fileman.case_path, '')
+
+
 class TestVariablesFileMan(unittest.TestCase):
 
     def setUp(self):
@@ -31,7 +41,7 @@ class TestVariablesFileMan(unittest.TestCase):
         self.assertEqual(os.path.abspath(self.fileman.dynfile),
                          os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
 
-        self.assertEqual(self.fileman.pert, None)
+        self.assertEqual(self.fileman.pert, '')
         self.assertEqual(self.fileman.config,
                          os.path.join(os.path.expanduser('~'), '.andes', 'andes.conf'))
 
@@ -96,7 +106,7 @@ class TestVariablesFileManWithInputPath(unittest.TestCase):
         self.assertEqual(self.fileman.addfile, None)
         self.assertEqual(os.path.abspath(self.fileman.dynfile),
                          os.path.join(path_to_case_folder, 'ieee14_syn2.dm'))
-        self.assertEqual(self.fileman.pert, None)
+        self.assertEqual(self.fileman.pert, '')
         self.assertEqual(self.fileman.config, os.path.join(os.path.expanduser('~'), '.andes', 'andes.conf'))
 
         # test output file paths

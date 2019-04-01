@@ -103,7 +103,7 @@ class FileMan(object):
         """
         # if is an empty path
         if not fullname:
-            return None
+            return fullname
 
         isabs = os.path.isabs(fullname)
 
