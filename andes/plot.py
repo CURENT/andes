@@ -65,6 +65,7 @@ class TDSData(object):
 
         # auxillary data members for fast query
         self.t = []
+        self.nvars = 0  # total number of variables including `t`
 
         # TODO: consider moving the loading calls outside __init__
         self.load_lst()
@@ -93,6 +94,7 @@ class TDSData(object):
         self._idx = idx
         self._fname = fname
         self._uname = uname
+        self.nvars = len(uname)
 
     def find_var(self, query, formatted=False):
         """
@@ -239,6 +241,43 @@ def cli_parse():
         '--dpi', type=int, help='image resolution in dot per inch (DPI)')
     args = parser.parse_args()
     return vars(args)
+
+
+def parse_y_new(y, nvars):
+    """
+    Parse command-line input for Y indices and return a list of indices
+
+    Parameters
+    ----------
+    y : Iterable
+        Input for Y indices. Could be single item (with or without colon), or
+         multiple items
+
+    nvars : int
+        Number of total variables
+
+    Returns
+    -------
+
+    """
+    ret = False
+
+    colon = re.compile(r'\d*:\d*:?\d?')
+    if len(y) == 1:
+        if isint(y[0]):
+            y[0] = int(y[0])
+        elif colon.search(y[0]):
+            y = y[0].split(':')
+
+            try:
+                y = [int(i) for i in y]
+            except TypeError:
+                logger.error('y input contains non numerical values.')
+                return ret
+
+            # test range
+
+            y = range(*y)
 
 
 def parse_y(y, nvars):

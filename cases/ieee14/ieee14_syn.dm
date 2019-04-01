@@ -202,4 +202,4 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
 
 #PSS2, avr = 1, Ic = 1
 
-# Recorder, model = "Syn6a"
+Recorder, model = "Syn6a"

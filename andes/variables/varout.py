@@ -351,6 +351,7 @@ class VarOut(object):
         fname = varname.fnamex + varname.fnamey
 
         for e, i in enumerate(idx):
+            # `idx` in the lst file is always consecutive
             out += template.format(e + 1, uname[i], fname[i])
 
         try:
