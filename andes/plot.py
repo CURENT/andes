@@ -243,77 +243,71 @@ def cli_parse():
     return vars(args)
 
 
-def parse_y_new(y, nvars):
+def parse_y(y, upper, lower=0):
     """
     Parse command-line input for Y indices and return a list of indices
 
     Parameters
     ----------
-    y : Iterable
+    y : Union[List, Set, Tuple]
         Input for Y indices. Could be single item (with or without colon), or
          multiple items
 
-    nvars : int
-        Number of total variables
+    upper : int
+        Upper limit. In the return list y, y[i] <= uppwer.
+
+    lower : int
+        Lower limit. In the return list y, y[i] >= lower.
 
     Returns
     -------
 
     """
-    ret = False
-
-    colon = re.compile(r'\d*:\d*:?\d?')
     if len(y) == 1:
         if isint(y[0]):
             y[0] = int(y[0])
-        elif colon.search(y[0]):
+            return y
+        elif ':' in y[0]:
             y = y[0].split(':')
 
+            # convert to integers
+            for i in range(len(y)):
+                if y[i] == '':
+                    continue
+                try:
+                    y[i] = int(y[i])
+                except ValueError:
+                    logger.warning('y[{}] contains non-empty, non-numerical values {}.'.format(i, y[i]))
+                    return []
+
+            if y[0] == '':
+                y[0] = 1
+            elif not (lower <= y[0] <= upper + 1):
+                logger.warning('y[0]={} out of limit. Reset to 1.'.format(y[0]))
+                y[0] = 1
+
+            if y[1] == '':
+                y[1] = upper + 1
+            elif not (lower <= y[1] <= upper + 1):
+                logger.warning('y[1]={} out of limit. Reset to maximum={}'.format(y[1], upper + 1))
+                y[1] = upper + 1
+
+            # y may contain a third field in the list
+            if len(y) == 3:
+                if y[2] == '':
+                    y[2] = 1
+            return list(range(*y))
+    else:
+        for i in range(len(y)):
             try:
-                y = [int(i) for i in y]
-            except TypeError:
-                logger.error('y input contains non numerical values.')
-                return ret
+                y[i] = int(y[i])
 
-            # test range
+            except ValueError:
+                logger.warning('y contains non-numerical values. Parsing could not proceed.')
+                return []
 
-            y = range(*y)
-
-
-def parse_y(y, nvars):
-    ylist = y
-    colon = re.compile('\\d*:\\d*:?\\d?')
-    if len(y) == 1:
-        if isint(ylist[0]):
-            ylist[0] = int(ylist[0])
-        elif colon.search(y[0]):
-            ylist = y[0].split(':')
-            ylist = [int(i) for i in ylist]
-            if len(ylist) == 2:
-                ylist.append(1)
-
-            if ylist[0] > nvars or ylist[0] < 1:
-                print('* Warning: Check the starting Y range')
-            if ylist[1] > nvars or ylist[1] < 0:
-                print('* Warning: Check the ending Y range')
-
-            if ylist[0] < 1:
-                ylist[0] = 1
-            elif ylist[0] > nvars:
-                ylist[0] = nvars
-
-            if ylist[1] < 0:
-                ylist[1] = 0
-            elif ylist[1] > nvars:
-                ylist[1] = nvars
-
-            # ylist = eval('range({}, {}, {})'.format(*ylist))
-            ylist = range(*ylist)
-        else:
-            print('* Error: Wrong format for y range')
-    elif len(y) > 1:
-        ylist = [int(i) for i in y]
-    return ylist
+        y = [i for i in y if lower <= i <= upper]
+        return list(y)
 
 
 def get_nvars(dat):
@@ -321,10 +315,7 @@ def get_nvars(dat):
         with open(dat, 'r') as f:
             line1 = f.readline()
 
-        delim = ' '
-        if ',' in line1:
-            delim = ','
-
+        delim = ',' if ',' in line1 else ' '
         line1 = line1.strip().split(delim)
         return len(line1), delim
     except IOError:
@@ -588,7 +579,7 @@ def tds_plot(name, args):
 
     nvars, delim = get_nvars(dat)
 
-    y = parse_y(args['y'], nvars)
+    y = parse_y(args['y'], nvars, lower=0)
     try:
         xval, yval = read_dat(dat, args['x'], y, delim=delim)
     except IndexError:
