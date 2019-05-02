@@ -44,8 +44,8 @@ class VSC(DCBase):
             'vlow': 0.0,
         })
         self._units.update({
-            'rsh': 'omh',
-            'xsh': 'omh',
+            'rsh': 'ohm',
+            'xsh': 'ohm',
             'vshmax': 'pu',
             'vshmin': 'pu',
             'Ishmax': 'pu',

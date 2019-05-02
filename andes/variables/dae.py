@@ -4,6 +4,7 @@ from ..utils.math import ageb, aleb, aandb, agtb  # NOQA
 from ..utils.math import index, altb  # NOQA
 import numpy as np
 import logging
+import scipy.sparse as sps  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -46,58 +47,6 @@ class DAE(object):
         self.__dict__.update(self._data)
         self.__dict__.update(self._scalars)
         self.__dict__.update(self._flags)
-
-        # self._temp = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #               'Fy': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #               'Gx': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #               'Gy': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #               'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                       'J': np.ndarray((0, 1), dtype=np.int32),
-        #                       'V': np.ndarray((0, 1))},
-        #               'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                       'J': np.ndarray((0, 1), dtype=np.int32),
-        #                       'V': np.ndarray((0, 1))},
-        #               'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                       'J': np.ndarray((0, 1), dtype=np.int32),
-        #                       'V': np.ndarray((0, 1))},
-        #               'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                       'J': np.ndarray((0, 1), dtype=np.int32),
-        #                       'V': np.ndarray((0, 1))},
-        #               }
-        #
-        # self._set = {'Fx': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                     'J': np.ndarray((0, 1), dtype=np.int32),
-        #                     'V': np.ndarray((0, 1))},
-        #              'Fy': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                     'J': np.ndarray((0, 1), dtype=np.int32),
-        #                     'V': np.ndarray((0, 1))},
-        #              'Gx': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                     'J': np.ndarray((0, 1), dtype=np.int32),
-        #                     'V': np.ndarray((0, 1))},
-        #              'Gy': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                     'J': np.ndarray((0, 1), dtype=np.int32),
-        #                     'V': np.ndarray((0, 1))},
-        #              'Fx0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #              'Fy0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #              'Gx0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #              'Gy0': {'I': np.ndarray((0, 1), dtype=np.int32),
-        #                      'J': np.ndarray((0, 1), dtype=np.int32),
-        #                      'V': np.ndarray((0, 1))},
-        #              }
 
         self._temp = {
             'Fx': {
@@ -544,6 +493,7 @@ class DAE(object):
 
         x = index(aandb(self.zxmin, self.zxmax), 0.)
         y = [i + self.n for i in index(aandb(self.zymin, self.zymax), 0.)]
+
         xy = list(x) + y
 
         eye = spdiag([1.0] * mn)

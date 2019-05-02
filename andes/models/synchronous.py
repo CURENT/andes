@@ -82,8 +82,8 @@ class SynBase(ModelBase):
             'M': 'MWs/MVA',
             'D': 'pu',
             'fn': 'Hz',
-            'ra': 'omh',
-            'xd': 'omh',
+            'ra': 'ohm',
+            'xd': 'ohm',
             'gammap': 'pu',
             'gammaq': 'pu',
         })
@@ -231,7 +231,7 @@ class Ord2(SynBase):
         self._data.update({'xd1': 1.9})
         self._params.extend(['xd1'])
         self._descr.update({'xd1': 'synchronous reactance'})
-        self._units.update({'xd1': 'omh'})
+        self._units.update({'xd1': 'ohm'})
         self._z.extend(['xd1'])
 
     def build_service(self):
@@ -298,11 +298,11 @@ class Ord6a(SynBase):
             'Taa': 'd-axis additional leakage time constant',
         })
         self._units.update({
-            'xd': 'omh',
-            'xd1': 'omh',
-            'xd2': 'omh',
-            'xq1': 'omh',
-            'xq2': 'omh',
+            'xd': 'ohm',
+            'xd1': 'ohm',
+            'xd2': 'ohm',
+            'xq1': 'ohm',
+            'xq2': 'ohm',
             'Td10': 's',
             'Tq10': 's',
             'Td20': 's',

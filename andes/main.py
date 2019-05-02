@@ -646,8 +646,10 @@ def main():
     # show preamble
     preamble()
 
-    logger.debug('command line arguments:')
-    logger.debug(pprint.pformat(args))
+    # ----- Debug only -----
+    # logger.debug('command line arguments:')
+    # logger.debug(pprint.pformat(args))
+    # ----------------------
 
     if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) \
             or save_config(**args):

@@ -211,8 +211,11 @@ class PFLOW(RoutineBase):
         inc = matrix([system.dae.f, system.dae.g])
 
         if system.dae.factorize:
-            self.F = self.solver.symbolic(A)
-            system.dae.factorize = False
+            try:
+                self.F = self.solver.symbolic(A)
+                system.dae.factorize = False
+            except NotImplementedError:
+                pass
 
         try:
             N = self.solver.numeric(A, self.F)
@@ -223,6 +226,8 @@ class PFLOW(RoutineBase):
         except ArithmeticError:
             logger.warning('Jacobian matrix is singular.')
             system.dae.check_diag(system.dae.Gy, 'unamey')
+        except NotImplementedError:
+            inc = self.solver.linsolve(A, inc)
 
         return -inc
 
@@ -362,17 +367,18 @@ class PFLOW(RoutineBase):
         Bp = system.Line.Bp[no_sw, no_sw]
         Bpp = system.Line.Bpp[no_g, no_g]
 
-        Fp = self.solver.symbolic(Bp)
-        Fpp = self.solver.symbolic(Bpp)
-        Np = self.solver.numeric(Bp, Fp)
-        Npp = self.solver.numeric(Bpp, Fpp)
+        # Fp = self.solver.symbolic(Bp)
+        # Fpp = self.solver.symbolic(Bpp)
+        # Np = self.solver.numeric(Bp, Fp)
+        # Npp = self.solver.numeric(Bpp, Fpp)
         exec(system.call.fdpf)
 
         # main loop
         while error > tol:
             # P-theta
             da = matrix(div(system.dae.g[no_sw], system.dae.y[no_swv]))
-            self.solver.solve(Bp, Fp, Np, da)
+            # self.solver.solve(Bp, Fp, Np, da)
+            da = self.solver.linsolve(Bp, da)
             system.dae.y[no_sw] += da
 
             exec(system.call.fdpf)
@@ -380,7 +386,8 @@ class PFLOW(RoutineBase):
 
             # Q-V
             dV = matrix(div(system.dae.g[no_gv], system.dae.y[no_gv]))
-            self.solver.solve(Bpp, Fpp, Npp, dV)
+            # self.solver.solve(Bpp, Fpp, Npp, dV)
+            dV = self.solver.linsolve(Bpp, dV)
             system.dae.y[no_gv] += dV
 
             exec(system.call.fdpf)

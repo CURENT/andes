@@ -1,4 +1,16 @@
-from cvxopt import umfpack
+from scipy.sparse.linalg import spsolve
+from scipy.sparse import csc_matrix
+
+try:
+    import cupy as cp
+    from cupyx.scipy.sparse import csc_matrix as csc_cu
+    from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr
+except ImportError:
+    CP = False
+
+from cvxopt import umfpack, matrix
+
+import numpy as np
 
 try:
     from cvxoptklu import klu
@@ -37,6 +49,9 @@ class Solver(object):
         elif self.sparselib == 'klu':
             return klu.symbolic(A)
 
+        elif self.sparselib in ('spsolve', 'cupy'):
+            raise NotImplementedError
+
     def numeric(self, A, F):
         """
         Return the numeric factorization of sparse matrix ``A`` using symbolic factorization ``F``
@@ -58,6 +73,9 @@ class Solver(object):
 
         elif self.sparselib == 'klu':
             return klu.numeric(A, F)
+
+        elif self.sparselib in ('spsolve', 'cupy'):
+            raise NotImplementedError
 
     def solve(self, A, F, N, b):
         """
@@ -81,9 +99,14 @@ class Solver(object):
         """
         if self.sparselib == 'umfpack':
             umfpack.solve(A, N, b)
+            return b
 
         elif self.sparselib == 'klu':
             klu.solve(A, F, N, b)
+            return b
+
+        elif self.sparselib in ('spsolve', 'cupy'):
+            raise NotImplementedError
 
     def linsolve(self, A, b):
         """
@@ -102,7 +125,29 @@ class Solver(object):
         None
         """
         if self.sparselib == 'umfpack':
-            return umfpack.linsolve(A, b)
+            umfpack.linsolve(A, b)
+            return b
 
         elif self.sparselib == 'klu':
-            return klu.linsolve(A, b)
+            klu.linsolve(A, b)
+            return b
+
+        elif self.sparselib in ('spsolve', 'cupy'):
+            ccs = A.CCS
+            size = A.size
+            data = np.array(ccs[2]).reshape((-1,))
+            indices = np.array(ccs[1]).reshape((-1,))
+            indptr = np.array(ccs[0]).reshape((-1,))
+
+            A = csc_matrix((data, indices, indptr), shape=size)
+
+            if self.sparselib == 'spsolve':
+                x = spsolve(A, b)
+                return matrix(x)
+
+            elif self.sparselib == 'cupy':
+                cu_A = csc_cu(A)
+                cu_b = cp.array(np.array(b).reshape((-1,)))
+                x = cu_lsqr(cu_A, cu_b)
+
+                return matrix(cp.asnumpy(x[0]))

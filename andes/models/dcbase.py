@@ -81,7 +81,7 @@ class Node(ModelBase):
         dae.y[self.v] = matrix(self.voltage, (self.n, 1), 'd')
 
     def jac0(self, dae):
-        if self.n is 0:
+        if self.n == 0:
             return
         dae.add_jac(Gy0, -1e-6, self.v, self.v)
 
