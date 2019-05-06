@@ -168,7 +168,7 @@ class AVR2(ModelBase):
             'syn': 0,
             'vrmin': -5,
             'vrmax': 5,
-            'Tr': 0.001,
+            'Tr': 0.02,
             'T1': 0.01,
             'T4': 1,
             'Be': 0.9,
