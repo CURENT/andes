@@ -350,10 +350,8 @@ class Line(ModelBase):
         # V1 = polar(Vm[self.a1], Va[self.a1])
         # V2 = polar(Vm[self.a2], Va[self.a2])
 
-        I1 = mul(self.v1, div(self.y12 + self.y1, self.m2)) - \
-            mul(self.v2, div(self.y12, self.mconj))
-        I2 = mul(self.v2, self.y12 + self.y2) - \
-            mul(self.v2, div(self.y12, self.m))
+        I1 = mul(self.v1, div(self.y12 + self.y1, self.m2)) - mul(self.v2, div(self.y12, self.mconj))
+        I2 = mul(self.v2, self.y12 + self.y2) - mul(self.v1, div(self.y12, self.m))
 
         self.I1_real = I1.real()
         self.I1_imag = I1.imag()
