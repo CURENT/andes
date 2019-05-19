@@ -34,6 +34,9 @@ class VarOut(object):
         self.dat = None
         self._mode = 'w'
 
+        self._last_t = 0
+        self._last_vars = []
+
     def store(self, t, step):
         """
         Record the state/algeb values at time t to self.vars
@@ -56,6 +59,12 @@ class VarOut(object):
         self.k.append(step)
         self.vars.append(var_data)
         # =========================================
+
+        # temporary storage
+        self._last_t = t
+        self._last_vars = list(var_data)
+
+        #
 
         # clear data cache if written to disk
         if self.np_nrows >= max_cache > 0:
@@ -93,6 +102,16 @@ class VarOut(object):
         # remove the post-computed variables from the variable list
         if self.system.tds.config.compute_flows:
             self.system.dae.y = self.system.dae.y[:self.system.dae.m]
+
+    def get_latest_data(self):
+        """
+        Get the latest data and simulation time
+
+        Returns
+        -------
+        dict : a dictionary containing `t` and `vars`
+        """
+        return {'t': float(self._last_t), 'var': self._last_vars}
 
     def show(self):
         """
@@ -202,7 +221,7 @@ class VarOut(object):
 
         :return: succeed flag
         """
-        logger.warn('This function is deprecated and replaced by `dump_np_vars`.')
+        logger.warning('This function is deprecated and replaced by `dump_np_vars`.')
 
         ret = False
 

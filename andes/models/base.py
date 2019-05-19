@@ -1529,6 +1529,35 @@ class ModelBase(object):
                 if name_idx_pair not in mdl.mdl_from[u]:
                     mdl.mdl_from[u].append(name_idx_pair)
 
+    def get_element_data(self, idx):
+        """
+        Get all data associated with an element whose index is `idx` in a dict.
+
+        Returns
+        -------
+        dict : param, value pairs
+        """
+        out = {}
+        if idx not in self.idx:
+            logger.debug('Model {} does not have element {}'.format(self.name, idx))
+            return out
+
+        idx_int = self.get_uid(idx)
+
+        out['idx'] = self.idx[idx_int]
+        out['name'] = self.name[idx_int]
+
+        for item in self._data.keys():
+            out[item] = self.__dict__[item][idx_int]
+
+        for item in self._algebs:
+            out[item] = self.__dict__[item][idx_int]
+
+        for item in self._states:
+            out[item] = self.__dict__[item][idx_int]
+
+        return out
+
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.
