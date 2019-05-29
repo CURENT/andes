@@ -3,6 +3,7 @@ import andes
 import threading  # NOQA
 
 from andes.utils.math import to_number
+import flask
 from flask import Flask, request  # NOQA
 from flask_restful import Resource, Api  # NOQA
 from flask.json import jsonify  # NOQA
@@ -13,20 +14,19 @@ api = Api(app)
 
 andes.main.config_logger()
 system = None
-
-
-default_path = '/home/hcui7/repos/andes_github/cases/ieee14'
+sim_thread = None
 
 
 @app.route('/load')
 def load():
+    default_path = os.getcwd()
     name = request.args.get('name', '')
     path = os.path.join(default_path, name)
 
     try:
         globals()['system'] = andes.main.run(case=path)
     except FileNotFoundError:
-        return 'Error: system not loaded'
+        flask.abort(404)
 
     return jsonify(system.devman.devices)
 
@@ -37,9 +37,9 @@ def run():
     # routine = request.args.get('routine', None)
 
     if system is None:
-        return "Error: system not loaded."
+        flask.abort(400)
     if simulation_time == 0:
-        return "Error: simulation time not specified"
+        flask.abort(400)
 
     if request.method == "GET":
         system.pflow.run()
@@ -48,46 +48,65 @@ def run():
         system.tds.config.qrt = True
         system.tds.config.tf = float(simulation_time)
 
-        system.tds.run()
+        sim_thread = threading.Thread(target=system.tds.run)
+        sim_thread.start()
 
-    return 'Success'
+    return jsonify({'response': 'success'})
 
 
-@app.route('/param')
+@app.route('/param', methods=['GET', 'POST'])
 def get_model_param():
     model_name = request.args.get('name', None)
     var_name = request.args.get('var', None)
     idx = request.args.get('idx', None)
+    value = request.args.get('value', None)
 
     if not system:
-        return 'Error: system not loaded'
-
-    if idx is not None:
-        idx = to_number(idx)
+        flask.abort(400)
 
     if request.method == 'GET':
-        if not model_name or (model_name not in system.devman.devices):
-            return 'Model name <{}> invalid or not loaded in system'.format(model_name)
 
-        else:  # with model_name
+        if idx is not None:
+            idx = to_number(idx)
 
-            model_ref = system.__dict__[model_name]
-            if var_name:  # with `var_name`
-                if var_name not in model_ref.__dict__:
-                    return 'Error: variable <{}> not exist in <{}>'.format(var_name, model_name)
+        if request.method == 'GET':
+            if not model_name or (model_name not in system.devman.devices):
+                return 'Model name <{}> invalid or not loaded in system'.format(model_name)
 
-                if idx:
-                    return jsonify(model_ref.get_field(field=var_name, idx=idx))
-                elif not idx:
-                    return jsonify(list(model_ref.__dict__[var_name]))
+            else:  # with model_name
 
-            elif not var_name:  # without `var_name`
-                if idx:
-                    if idx not in model_ref.idx:
-                        return 'Error: idx <{}> not exist in <{}>'.format(idx, model_name)
-                    return jsonify(model_ref.get_element_data(idx))
-                elif not idx:
-                    return jsonify(model_ref.data_to_list())
+                model_ref = system.__dict__[model_name]
+                if var_name:  # with `var_name`
+                    if var_name not in model_ref.__dict__:
+                        return 'Error: variable <{}> not exist in <{}>'.format(var_name, model_name)
+
+                    if idx:
+                        return jsonify(model_ref.get_field(field=var_name, idx=idx))
+                    elif not idx:
+                        return jsonify(list(model_ref.__dict__[var_name]))
+
+                elif not var_name:  # without `var_name`
+                    if idx:
+                        if idx not in model_ref.idx:
+                            return 'Error: idx <{}> not exist in <{}>'.format(idx, model_name)
+                        return jsonify(model_ref.get_element_data(idx))
+                    elif not idx:
+                        return jsonify(model_ref.data_to_list())
+
+    elif request.method == 'POST':
+        if any([model_name, var_name, idx, value]) is None:
+            flask.abort(400)
+
+        model_ref = system.__dict__[model_name]
+
+        if var_name not in model_ref.__dict__:
+            flask.abort(404)
+
+        if idx not in model_ref.idx:
+            flask.abort(404)
+
+        model_ref.set_field(var_name, idx, value)
+        return jsonify(model_ref.get_field(var_name, idx))
 
 
 @app.route('/sim_time')

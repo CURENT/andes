@@ -454,6 +454,32 @@ class ModelBase(object):
 
         return ret
 
+    def set_field(self, field, idx, value):
+        """
+        Set the field of an element to the given value
+
+        Parameters
+        ----------
+        field
+        idx
+        value
+
+        Returns
+        -------
+
+        """
+        if field not in self.__dict__:
+            logger.error('Field <{}> does not exist.'.format(field))
+            return
+
+        if idx not in self.idx:
+            logger.error('Idx <{}> is not valid'.format(field))
+
+        uid = self.get_uid(idx)
+        old_type = type(self.__dict__[field][uid])
+
+        self._param_attr_dicts[field][uid] = old_type(value)
+
     def _alloc(self):
         """
         Allocate empty memory for dae variable indices.
