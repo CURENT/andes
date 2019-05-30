@@ -44,6 +44,37 @@ def load():
     return jsonify(len(systems))
 
 
+@app.route('/unload')
+def unload():
+    """
+    Unload a system
+
+    Returns
+    -------
+
+    """
+    sysid = request.args.get('sysid', None)
+    force = request.args.get('force', False)
+    if force == 'True':
+        force = True
+
+    if not sysid or sysid not in systems:
+        flask.abort(404)
+
+    if sysid in sim_thread:
+        if force:
+            sim_thread[sysid].join(1)
+        else:
+            sim_thread[sysid].join()
+
+    sim_thread.pop(sysid)
+    systems.pop(sysid)
+
+    print('System <{}> unload requested'.format(sysid))
+
+    return jsonify({'response': 'success'})
+
+
 @app.route('/run')
 def run():
     sysid = request.args.get('sysid', None)
