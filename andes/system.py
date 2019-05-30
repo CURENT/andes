@@ -55,8 +55,10 @@ class PowerSystem(object):
                  dynfile=None,
                  addfile=None,
                  config=None,
+                 input_path=None,
                  input_format=None,
                  output_format=None,
+                 output_path='',
                  gis=None,
                  dime=None,
                  tf=None,
@@ -114,9 +116,11 @@ class PowerSystem(object):
                              input_format=input_format,
                              addfile=addfile,
                              config=config,
+                             input_path=input_path,
                              no_output=no_output,
                              dynfile=dynfile,
                              dump_raw=dump_raw,
+                             output_path=output_path,
                              output_format=output_format,
                              output=output,
                              **kwargs)
@@ -221,6 +225,19 @@ class PowerSystem(object):
         if self.config.base:
             for item in self.devman.devices:
                 self.__dict__[item].data_to_sys_base()
+
+    def to_elembase(self):
+        """
+        Convert parameters back to element base. This function calls the
+        ```data_to_elem_base``` function.
+
+        Returns
+        -------
+        None
+        """
+        if self.config.base:
+            for item in self.devman.devices:
+                self.__dict__[item].data_to_elem_base()
 
     def group_add(self, name='Ungrouped'):
         """

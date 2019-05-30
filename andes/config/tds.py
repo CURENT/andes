@@ -20,6 +20,8 @@ class Tds(ConfigBase):
         self.qrt = False
         self.kqrt = 1
         self.compute_flows = True
+        self.saveformat = 'csv'
+        self.saveformat_alt = ['csv', 'hdf5']
         self.max_cache = 0
         super(Tds, self).__init__(**kwargs)
 
@@ -49,5 +51,6 @@ class Tds(ConfigBase):
             'max_cache':
             'maximum allowed steps in varout memory, save to disk if reached, '
             '0 for unlimited memory cache',
+            'saveformat': 'format of the simulation data dump'
         }
         return descriptions

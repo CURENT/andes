@@ -23,6 +23,7 @@ Andes plotting tool
 import os
 import re
 import sys
+import numpy as np
 
 import logging
 from argparse import ArgumentParser
@@ -39,6 +40,172 @@ except ImportError:
 
 lfile = []
 dfile = []
+
+
+class TDSData(object):
+    """
+    A time-domain simulation data container for loading, extracing and
+    plotting data
+    """
+
+    def __init__(self, file_name_full, path=None):
+        # paths and file names
+        self._path = path if path else os.getcwd()
+
+        file_name, ext = os.path.splitext(file_name_full)
+
+        self._dat_file = os.path.join(self._path, file_name + '.dat')
+        self._lst_file = os.path.join(self._path, file_name + '.lst')
+
+        # data members for raw data
+        self._idx = []  # indices of variables
+        self._uname = []  # unformatted variable names
+        self._fname = []  # formatted variable names
+        self._data = []  # data loaded from dat file
+
+        # auxillary data members for fast query
+        self.t = []
+        self.nvars = 0  # total number of variables including `t`
+
+        # TODO: consider moving the loading calls outside __init__
+        self.load_lst()
+        self.load_dat()
+
+    def load_lst(self):
+        """
+        Load the lst file into internal data structures
+
+        """
+        with open(self._lst_file, 'r') as fd:
+            lines = fd.readlines()
+
+        idx, uname, fname = list(), list(), list()
+
+        for line in lines:
+            values = line.split(',')
+            values = [x.strip() for x in values]
+
+            # preserve the idx ordering here in case variables are not
+            # ordered by idx
+            idx.append(int(values[0]))  # convert to integer
+            uname.append(values[1])
+            fname.append(values[2])
+
+        self._idx = idx
+        self._fname = fname
+        self._uname = uname
+        self.nvars = len(uname)
+
+    def find_var(self, query, formatted=False):
+        """
+        Return variable names and indices matching ``query``
+        """
+
+        # load the variable list to search in
+        names = self._uname if formatted is False else self._fname
+
+        found_idx, found_names = list(), list()
+
+        for idx, name in zip(self._idx, names):
+            if re.search(query, name):
+                found_idx.append(idx)
+                found_names.append(name)
+
+        return found_idx, found_names
+
+    def load_dat(self, delimiter=','):
+        """
+        Load the dat file into internal data structures, ``self._data``
+        """
+        try:
+            data = np.loadtxt(self._dat_file, delimiter=',')
+        except ValueError:
+            data = np.loadtxt(self._dat_file)
+
+        self._data = data
+
+    def get_values(self, idx):
+        """
+        Return the variable values at the given indices
+        """
+        if isinstance(idx, list):
+            idx = np.array(idx, dtype=int)
+
+        return self._data[:, idx]
+
+    def get_header(self, idx, formatted=False):
+        """
+        Return a list of the variable names at the given indices
+        """
+        header = self._uname if not formatted else self._fname
+        return [header[x] for x in idx]
+
+    def export_csv(self, path, idx=None, header=None, formatted=False,
+                   sort_idx=True, fmt='%.18e'):
+        """
+        Export to a csv file
+
+        Parameters
+        ----------
+        path : str
+            path of the csv file to save
+        idx : None or array-like, optional
+            the indices of the variables to export. Export all by default
+        header : None or array-like, optional
+            customized header if not `None`. Use the names from the lst file
+            by default
+        formatted : bool, optional
+            Use LaTeX-formatted header. Does not apply when using customized
+            header
+        sort_idx : bool, optional
+            Sort by idx or not, # TODO: implement sort
+        fmt : str
+            cell formatter
+        """
+        if not idx:
+            idx = self._idx
+        if not header:
+            header = self.get_header(idx, formatted=formatted)
+
+        assert len(idx) == len(header), \
+            "Idx length does not match header length"
+
+        body = self.get_values(idx)
+
+        with open(path, 'w') as fd:
+            fd.write(','.join(header) + '\n')
+            np.savetxt(fd, body, fmt=fmt, delimiter=',')
+
+    def plot(self, xidx, yidx, xname=None, yname=None, xlabel=None, ylabel=None,
+             left=None, right=None, ytimes=1, yoffset=0,
+             legend=True, grid=False, fig=None, ax=None,
+             latex=True, dpi=200, save=None, exit=False
+             ):
+        # TODO: split this function into multiple so that manipulated data
+        # can be used
+        pass
+
+    def _data_calc(self):
+        """
+        Manipulate the data such as adding, multiplying, differencing,
+        and calculating rate of change
+        """
+        # TODO: split this function into multiple
+        pass
+
+    def _check_latex(self):
+        """Check if latex is available"""
+        pass
+
+    def data_to_df(self):
+        """Convert to pandas.DataFrame"""
+        pass
+
+    def guess_event_time(self):
+        """Guess the event starting time from the input data by checking
+        when the values start to change
+        """
+        pass
 
 
 def cli_parse():
@@ -76,53 +243,86 @@ def cli_parse():
     return vars(args)
 
 
-def parse_y(y, nvars):
-    ylist = y
-    colon = re.compile('\\d*:\\d*:?\\d?')
+def parse_y(y, upper, lower=0):
+    """
+    Parse command-line input for Y indices and return a list of indices
+
+    Parameters
+    ----------
+    y : Union[List, Set, Tuple]
+        Input for Y indices. Could be single item (with or without colon), or
+         multiple items
+
+    upper : int
+        Upper limit. In the return list y, y[i] <= uppwer.
+
+    lower : int
+        Lower limit. In the return list y, y[i] >= lower.
+
+    Returns
+    -------
+
+    """
     if len(y) == 1:
-        if isint(ylist[0]):
-            ylist[0] = int(ylist[0])
-        elif colon.search(y[0]):
-            ylist = y[0].split(':')
-            ylist = [int(i) for i in ylist]
-            if len(ylist) == 2:
-                ylist.append(1)
+        if isint(y[0]):
+            y[0] = int(y[0])
+            return y
+        elif ':' in y[0]:
+            y = y[0].split(':')
 
-            if ylist[0] > nvars or ylist[0] < 1:
-                print('* Warning: Check the starting Y range')
-            if ylist[1] > nvars or ylist[1] < 0:
-                print('* Warning: Check the ending Y range')
+            # convert to integers
+            for i in range(len(y)):
+                if y[i] == '':
+                    continue
+                try:
+                    y[i] = int(y[i])
+                except ValueError:
+                    logger.warning('y[{}] contains non-empty, non-numerical values {}.'.format(i, y[i]))
+                    return []
 
-            if ylist[0] < 1:
-                ylist[0] = 1
-            elif ylist[0] > nvars:
-                ylist[0] = nvars
+            if y[0] == '':
+                y[0] = 1
+            elif not (lower <= y[0] <= upper + 1):
+                logger.warning('y[0]={} out of limit. Reset to 1.'.format(y[0]))
+                y[0] = 1
 
-            if ylist[1] < 0:
-                ylist[1] = 0
-            elif ylist[1] > nvars:
-                ylist[1] = nvars
+            if y[1] == '':
+                y[1] = upper + 1
+            elif not (lower <= y[1] <= upper + 1):
+                logger.warning('y[1]={} out of limit. Reset to maximum={}'.format(y[1], upper + 1))
+                y[1] = upper + 1
 
-            # ylist = eval('range({}, {}, {})'.format(*ylist))
-            ylist = range(*ylist)
-        else:
-            print('* Error: Wrong format for y range')
-    elif len(y) > 1:
-        ylist = [int(i) for i in y]
-    return ylist
+            # y may contain a third field in the list
+            if len(y) == 3:
+                if y[2] == '':
+                    y[2] = 1
+            return list(range(*y))
+    else:
+        for i in range(len(y)):
+            try:
+                y[i] = int(y[i])
+
+            except ValueError:
+                logger.warning('y contains non-numerical values. Parsing could not proceed.')
+                return []
+
+        y = [i for i in y if lower <= i <= upper]
+        return list(y)
 
 
 def get_nvars(dat):
     try:
         with open(dat, 'r') as f:
             line1 = f.readline()
-        line1 = line1.strip().split()
-        return len(line1)
+
+        delim = ',' if ',' in line1 else ' '
+        line1 = line1.strip().split(delim)
+        return len(line1), delim
     except IOError:
         print('* Error while opening the dat file')
 
 
-def read_dat(dat, x, y):
+def read_dat(dat, x, y, delim=','):
     global dfile
     errid = 0
     xv = []
@@ -137,7 +337,7 @@ def read_dat(dat, x, y):
         return None, None
 
     for num, line in enumerate(dfile_raw):
-        thisline = line.rstrip('\n').split()
+        thisline = line.rstrip('\n').split(delim)
         if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
             errid = 1
             break
@@ -377,9 +577,11 @@ def tds_plot(name, args):
     dat = os.path.join(os.getcwd(), name + '.dat')
     lst = os.path.join(os.getcwd(), name + '.lst')
 
-    y = parse_y(args['y'], get_nvars(dat))
+    nvars, delim = get_nvars(dat)
+
+    y = parse_y(args['y'], nvars, lower=0)
     try:
-        xval, yval = read_dat(dat, args['x'], y)
+        xval, yval = read_dat(dat, args['x'], y, delim=delim)
     except IndexError:
         print('* Error: X or Y index out of bound')
         return

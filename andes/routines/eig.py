@@ -146,10 +146,8 @@ class EIG(RoutineBase):
             plt = importlib.import_module('matplotlib.pyplot')
         except ImportError:
             plt = None
-
-        if plt is None:
             logger.warning('Install matplotlib to plot eigenvalue map.')
-            return
+            return False
 
         mu_real = self.mu.real()
         mu_imag = self.mu.imag()
@@ -176,7 +174,7 @@ class EIG(RoutineBase):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
-        if self.config.plot and len(p_mu_real) > 0:
+        if self.config.plot:
             fig, ax = plt.subplots()
             ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
             ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')

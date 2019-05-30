@@ -39,6 +39,9 @@ class GovernorBase(ModelBase):
         self._service.extend(['pm0', 'gain'])
         self._mandatory.extend(['gen', 'R'])
         self._powers.extend(['pmax', 'pmin'])
+        # Need to retrieve generator Sn before the system base conversion
+        #   However, self._ctrl is called after base conversion. Need to define a new parameter reference func.
+        # self._ctrl = {'gen': ('Synchronous', 'Sn', 'Sn', matrix)}
         self.calls.update({
             'init1': True,
             'gcall': True,
@@ -47,12 +50,22 @@ class GovernorBase(ModelBase):
         })
 
     def data_to_sys_base(self):
-        if not self.n:
+        """Custom system base conversion function"""
+        if not self.n or self._flags['sysbase'] is True:
             return
-        self.copy_data_ext(
-            model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
+
+        self.copy_data_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
         super(GovernorBase, self).data_to_sys_base()
+        self._store['R'] = self.R
+
         self.R = self.system.mva * div(self.R, self.Sn)
+
+    def data_to_elem_base(self):
+        """Custom system base unconversion function"""
+        if not self.n or self._flags['sysbase'] is False:
+            return
+        self.R = mul(self.R, self.Sn) / self.system.mva
+        super(GovernorBase, self).data_to_elem_base()
 
     def init1(self, dae):
         self.gain = div(1.0, self.R)

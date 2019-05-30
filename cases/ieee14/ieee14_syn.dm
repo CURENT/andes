@@ -134,7 +134,7 @@ PQ, Vn = 13.8, bus = 13, idx = "PQ load_10", name = "PQ Bus 13", p = 0.135,
 PQ, Vn = 13.8, bus = 14, idx = "PQ load_11", name = "PQ Bus 14", p = 0.149,
     q = 0.05
 
-Fault, bus = 4, Vn = 69, tf = 2.0, tc = 2.05, rf = 0.0, xf = 0.00001
+Fault, idx = 1, bus = 4, Vn = 69, tf = 2.0, tc = 2.05, xf = 0.00001, u = 0
 
 #Breaker, Vn = 69.0, bus = 2, fn = 60.0, idx = 1, line = "Line_4",
 #         name = "Breaker 1", t1 = 1.0, t2 = 200.0, u1 = 1, u2 = 1
@@ -202,4 +202,4 @@ AVR1, Ka = 20.0, Kf = 0.001, Ta = 0.02, Te = 0.7, Tf = 1.0, Tr = 0.001,
 
 #PSS2, avr = 1, Ic = 1
 
-# Recorder, model = "Syn6a"
+Recorder, model = "Syn6a"

@@ -454,6 +454,40 @@ class ModelBase(object):
 
         return ret
 
+    def set_field(self, field, idx, value, sysbase=False):
+        """
+        Set the field of an element to the given value
+
+        Parameters
+        ----------
+        field
+        idx
+        value
+        sysbase
+
+        Returns
+        -------
+
+        """
+        if field not in self.__dict__:
+            logger.error('Field <{}> does not exist.'.format(field))
+            return
+
+        if idx not in self.idx:
+            logger.error('Idx <{}> is not valid'.format(field))
+
+        uid = self.get_uid(idx)
+        old_type = type(self.__dict__[field][uid])
+
+        in_store = True if field in self._store else False
+
+        if (not sysbase) and in_store:
+            self._store[field][uid] = old_type(value)
+            logger.info('<{}> set field <{}> of <{}> to {} in _store'.format(self._name, field, idx, value))
+        else:
+            self.__dict__[field][uid] = old_type(value)
+            logger.info('<{}> set field <{}> of <{}> to {} in class dict'.format(self._name, field, idx, value))
+
     def _alloc(self):
         """
         Allocate empty memory for dae variable indices.
@@ -976,6 +1010,24 @@ class ModelBase(object):
         if convert and self.n:
             self._param_to_matrix()
 
+    def reload_new_param(self):
+        """
+        Reload the new params modified in `self._store` and then convert to sysbase and store in class.
+
+        Returns
+        -------
+
+        """
+        if not self._flags['sysbase']:  # parameters have not been converted to sys base
+            self.data_to_sys_base()
+        else:  # parameters are in sys base. `self._store` has the parameters in elem base
+
+            for key, val in self._store:
+                self.__dict__[key] = val
+            self._flags['sysbase'] = False
+            self.data_to_sys_base()
+            logger.debug('Reloaded system parameter for _store.')
+
     def data_to_sys_base(self):
         """
         Converts parameters to system base. Stores a copy in ``self._store``.
@@ -1060,7 +1112,7 @@ class ModelBase(object):
         if self._flags['sysbase'] is False:
             return
 
-        for key, val in self._store:
+        for key, val in self._store.items():
             self.__dict__[key] = val
 
         self._flags['sysbase'] = False
@@ -1539,6 +1591,35 @@ class ModelBase(object):
 
                 if name_idx_pair not in mdl.mdl_from[u]:
                     mdl.mdl_from[u].append(name_idx_pair)
+
+    def get_element_data(self, idx):
+        """
+        Get all data associated with an element whose index is `idx` in a dict.
+
+        Returns
+        -------
+        dict : param, value pairs
+        """
+        out = {}
+        if idx not in self.idx:
+            logger.debug('Model {} does not have element {}'.format(self.name, idx))
+            return out
+
+        idx_int = self.get_uid(idx)
+
+        out['idx'] = self.idx[idx_int]
+        out['name'] = self.name[idx_int]
+
+        for item in self._data.keys():
+            out[item] = self.__dict__[item][idx_int]
+
+        for item in self._algebs:
+            out[item] = self.__dict__[item][idx_int]
+
+        for item in self._states:
+            out[item] = self.__dict__[item][idx_int]
+
+        return out
 
     # def var_store_snapshot(self, variable='all'):
     #     """
