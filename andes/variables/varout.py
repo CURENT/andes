@@ -1,6 +1,6 @@
 import numpy as np
 import os
-
+import time
 from cvxopt import matrix
 import logging
 
@@ -17,6 +17,7 @@ class VarOut(object):
     def __init__(self, system):
         """Constructor of empty Varout object"""
         self.system = system
+        self.epoch_t = []
         self.t = []
         self.k = []
         self.vars = []
@@ -26,6 +27,7 @@ class VarOut(object):
         self._np_block_shape = (0, 0)
         self.np_vars = np.ndarray(shape=(0, 0))
         self.np_t = np.ndarray(shape=(0,))
+        self.np_epoch_t = np.ndarray(shape=(0,))
         self.np_k = np.ndarray(shape=(0,))
 
         self.np_nrows = 0
@@ -35,17 +37,20 @@ class VarOut(object):
         self._mode = 'w'
 
         self._last_t = 0
+        self._last_epoch_t = 0
         self._last_vars = []
 
     def store(self, t, step):
         """
         Record the state/algeb values at time t to self.vars
         """
+        epoch_time = time.time()
         max_cache = int(self.system.tds.config.max_cache)
         if len(self.vars) >= max_cache > 0:
             self.dump()
             self.vars = list()
             self.t = list()
+            self.epoch_t = list()
             self.k = list()
             logger.debug(
                 'varout cache cleared at simulation t = {:g}.'.format(
@@ -56,12 +61,14 @@ class VarOut(object):
 
         # ===== This code block is deprecated =====
         self.t.append(t)
+        self.epoch_t.append(epoch_time)
         self.k.append(step)
         self.vars.append(var_data)
         # =========================================
 
         # temporary storage
         self._last_t = t
+        self._last_epoch_t = epoch_time
         self._last_vars = list(var_data)
 
         #
@@ -72,6 +79,7 @@ class VarOut(object):
             self.np_vars = np.zeros(self._np_block_shape)
             self.np_nrows = 0
             self.np_t = np.zeros((self._np_block_rows,))
+            self.np_epoch_t = np.zeros((self._np_block_rows,))
             self.np_k = np.zeros((self._np_block_rows,))
             logger.debug(
                 'np_vars cache cleared at simulation t = {:g}.'.format(
@@ -84,11 +92,13 @@ class VarOut(object):
             self._np_block_shape = (self._np_block_rows, self.np_ncols)
             self.np_vars = np.zeros(self._np_block_shape)
             self.np_t = np.zeros((self._np_block_rows,))
+            self.np_epoch_t = np.zeros((self._np_block_rows,))
             self.np_k = np.zeros((self._np_block_rows,))
 
         # adding data to the matrix
         # self.np_vars[self.np_nrows, 0] = t
         self.np_t[self.np_nrows] = t
+        self.np_epoch_t[self.np_nrows] = epoch_time
         self.np_k[self.np_nrows] = step
         self.np_vars[self.np_nrows, :] = np.array(var_data).reshape((-1))
         self.np_nrows += 1
@@ -97,6 +107,7 @@ class VarOut(object):
         if self.np_nrows >= self.np_vars.shape[0]:
             self.np_vars = np.concatenate([self.np_vars, np.zeros(self._np_block_shape)], axis=0)
             self.np_t = np.concatenate([self.np_t, np.zeros((self._np_block_rows,))], axis=0)
+            self.np_epoch_t = np.concatenate([self.np_epoch_t, np.zeros((self._np_block_rows,))], axis=0)
             self.np_k = np.concatenate([self.np_k, np.zeros((self._np_block_rows,))], axis=0)
 
         # remove the post-computed variables from the variable list
@@ -111,7 +122,7 @@ class VarOut(object):
         -------
         dict : a dictionary containing `t` and `vars`
         """
-        return {'t': float(self._last_t), 'var': self._last_vars}
+        return {'epoch_time': float(self._last_epoch_t), 't': float(self._last_t), 'var': self._last_vars}
 
     def show(self):
         """

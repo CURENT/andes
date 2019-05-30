@@ -61,16 +61,21 @@ def unload():
     if not sysid or sysid not in systems:
         flask.abort(404)
 
+    print('System <{}> unload requested'.format(sysid))
+
     if sysid in sim_thread:
         if force:
             sim_thread[sysid].join(1)
         else:
             sim_thread[sysid].join()
 
-    sim_thread.pop(sysid)
-    systems.pop(sysid)
+    # while sim_thread[sysid].isAlive():
+    #     pass
+    #
+    # sim_thread.pop(sysid)
+    # systems.pop(sysid)
 
-    print('System <{}> unload requested'.format(sysid))
+    print('System <{}> join called successfully'.format(sysid))
 
     return jsonify({'response': 'success'})
 
@@ -88,6 +93,13 @@ def run():
     system = systems[sysid]
 
     if request.method == "GET":
+
+        if sysid in sim_thread:
+            if sim_thread[sysid].isAlive():
+                flask.abort(500)
+            else:
+                sim_thread.pop(sysid)
+
         system.pflow.run()
         system.tds.init()
 
@@ -200,7 +212,7 @@ def get_streaming_data():
 
     """
     sysid = request.args.get('sysid', None)
-    if sysid is None:
+    if sysid is None or sysid not in systems:
         flask.abort(400)
 
     system = systems[sysid]

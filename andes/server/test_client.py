@@ -71,7 +71,7 @@ class ANDESClient(object):
             return False
         else:
             self.sysid = None
-            logger.info('Unload successful')
+            logger.info('Unload sent successful')
             return True
 
     def run_case(self, simulation_time):
@@ -197,7 +197,7 @@ class ANDESClient(object):
             logger.error('Unknown status {}'.format(status))
 
 
-def test_fault(client):
+def fault_test(client):
 
     if client.param_get(model='Fault', var_name='u', idx=1) is not False:
         logger.info('Fault.1.u before: {}'.format(client.r.text))
@@ -208,7 +208,7 @@ def test_fault(client):
         logger.info('Fault.1.u after: {}'.format(client.r.text))
 
 
-def test_avr_ka(client):
+def avr_ka_test(client):
     if client.param_get(model='AVR1', var_name='Ka', idx=1) is not False:
         logger.info('AVR1.1.Ka before: {}'.format(client.r.text))
 
@@ -229,6 +229,6 @@ if __name__ == '__main__':
         if client.is_loaded() is not False:
             client.run_case(20)
 
-        test_fault(client)
+        fault_test(client)
 
-        test_avr_ka(client)
+        avr_ka_test(client)
