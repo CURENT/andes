@@ -13,8 +13,18 @@ api = Api(app)
 
 
 andes.main.config_logger()
-system = None
-sim_thread = None
+systems = {}
+sim_thread = {}
+
+
+@app.route('/status')
+def get_status():
+    sysid = request.args.get('sysid', None)
+
+    if sysid not in systems:
+        return jsonify('0')
+    else:
+        return jsonify('1')
 
 
 @app.route('/load')
@@ -23,23 +33,28 @@ def load():
     name = request.args.get('name', '')
     path = os.path.join(default_path, name)
 
+    n_system = len(systems)
     try:
-        globals()['system'] = andes.main.run(case=path)
+        system_instance = andes.main.run(case=path)
+        globals()['systems'][str(n_system + 1)] = system_instance
+
     except FileNotFoundError:
         flask.abort(404)
 
-    return jsonify(system.devman.devices)
+    return jsonify(len(systems))
 
 
 @app.route('/run')
 def run():
+    sysid = request.args.get('sysid', None)
     simulation_time = request.args.get('time', 0)
-    # routine = request.args.get('routine', None)
 
-    if system is None:
+    if sysid not in systems:
         flask.abort(400)
     if simulation_time == 0:
         flask.abort(400)
+
+    system = systems[sysid]
 
     if request.method == "GET":
         system.pflow.run()
@@ -48,21 +63,31 @@ def run():
         system.tds.config.qrt = True
         system.tds.config.tf = float(simulation_time)
 
-        sim_thread = threading.Thread(target=system.tds.run)
-        sim_thread.start()
+        thread = threading.Thread(target=system.tds.run)
+        sim_thread[sysid] = thread
+        thread.start()
 
     return jsonify({'response': 'success'})
 
 
 @app.route('/param', methods=['GET', 'POST'])
 def get_model_param():
+
+    sysid = request.args.get('sysid', None)
     model_name = request.args.get('name', None)
     var_name = request.args.get('var', None)
     idx = request.args.get('idx', None)
     value = request.args.get('value', None)
+    sysbase = request.args.get('sysbase', 'False')
 
-    if not system:
+    if not sysid:
         flask.abort(400)
+    if sysbase == 'False':
+        sysbase = False
+    elif sysbase == 'True':
+        sysbase = True
+
+    system = systems[sysid]
 
     if request.method == 'GET':
 
@@ -83,7 +108,7 @@ def get_model_param():
                     if idx:
                         return jsonify(model_ref.get_field(field=var_name, idx=idx))
                     elif not idx:
-                        return jsonify(list(model_ref.__dict__[var_name]))
+                        return jsonify(list(model_ref.get_field(field=var_name)))
 
                 elif not var_name:  # without `var_name`
                     if idx:
@@ -102,10 +127,17 @@ def get_model_param():
         if var_name not in model_ref.__dict__:
             flask.abort(404)
 
+        idx = to_number(idx)
         if idx not in model_ref.idx:
             flask.abort(404)
 
-        model_ref.set_field(var_name, idx, value)
+        if sysbase == 'False':
+            sysbase = False
+        elif sysbase == 'True':
+            sysbase = True
+
+        model_ref.set_field(var_name, idx, value, sysbase)
+        model_ref.reload_new_param()
         return jsonify(model_ref.get_field(var_name, idx))
 
 
@@ -118,8 +150,12 @@ def get_simulation_time():
     -------
     str : time
     """
-    if system is None:
-        return 'Error: system not loaded'
+    sysid = request.args.get('sysid', None)
+    if sysid is None:
+        flask.abort(400)
+
+    system = systems['sysid']
+
     return jsonify(system.tds.t)
 
 
@@ -132,8 +168,12 @@ def get_streaming_data():
     -------
 
     """
-    if system is None:
-        return 'Error: system not loaded'
+    sysid = request.args.get('sysid', None)
+    if sysid is None:
+        flask.abort(400)
+
+    system = systems[sysid]
+
     return jsonify(system.varout.get_latest_data())
 
 

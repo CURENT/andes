@@ -454,7 +454,7 @@ class ModelBase(object):
 
         return ret
 
-    def set_field(self, field, idx, value):
+    def set_field(self, field, idx, value, sysbase=False):
         """
         Set the field of an element to the given value
 
@@ -463,6 +463,7 @@ class ModelBase(object):
         field
         idx
         value
+        sysbase
 
         Returns
         -------
@@ -478,7 +479,14 @@ class ModelBase(object):
         uid = self.get_uid(idx)
         old_type = type(self.__dict__[field][uid])
 
-        self._param_attr_dicts[field][uid] = old_type(value)
+        in_store = True if field in self._store else False
+
+        if (not sysbase) and in_store:
+            self._store[field][uid] = old_type(value)
+            logger.info('<{}> set field <{}> of <{}> to {} in _store'.format(self._name, field, idx, value))
+        else:
+            self.__dict__[field][uid] = old_type(value)
+            logger.info('<{}> set field <{}> of <{}> to {} in class dict'.format(self._name, field, idx, value))
 
     def _alloc(self):
         """
@@ -990,6 +998,24 @@ class ModelBase(object):
         self.name.pop(item)
         if convert and self.n:
             self._param_to_matrix()
+
+    def reload_new_param(self):
+        """
+        Reload the new params modified in `self._store` and then convert to sysbase and store in class.
+
+        Returns
+        -------
+
+        """
+        if not self._flags['sysbase']:  # parameters have not been converted to sys base
+            self.data_to_sys_base()
+        else:  # parameters are in sys base. `self._store` has the parameters in elem base
+
+            for key, val in self._store:
+                self.__dict__[key] = val
+            self._flags['sysbase'] = False
+            self.data_to_sys_base()
+            logger.debug('Reloaded system parameter for _store.')
 
     def data_to_sys_base(self):
         """
