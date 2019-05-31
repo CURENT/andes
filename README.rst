@@ -6,6 +6,10 @@ ANDES: ANother Dynamic Energy System simulator
     :alt: Travis CI Build Status
     :target: https://travis-ci.org/cuihantao/andes
 
+.. image:: https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master
+    :alt: Azure Pipeline build status
+    :target: https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master
+
 .. image:: https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg
     :alt: Codecov Coverage
     :target: https://codecov.io/gh/cuihantao/andes

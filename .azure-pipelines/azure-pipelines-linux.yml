@@ -1,0 +1,42 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+jobs:
+- job: linux
+  pool:
+    vmImage: ubuntu-16.04
+  timeoutInMinutes: 360
+  strategy:
+    matrix:
+      linux_python3.5:
+        python.version: '3.5'
+      linux_python3.6:
+        python.version: '3.6'
+      linux_python3.7:
+        python.version: '3.7'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install -r requirements-dev.txt
+      pip install .
+    displayName: 'Install dependencies'
+
+  - script: |
+      pip install pytest pytest-azurepipelines
+      pytest
+      coverage run -m pytest  # Run the tests and check for test coverage.
+      coverage report -m  # Generate test coverage report.
+      codecov  # Upload the report to codecov.
+      flake8 --max-line-length=115  # Enforce code style (but relax line length limit a bit).
+      python setup.py checkdocs  # check documentation (README.rst)
+      make -C docs html  # Build the documentation.
+    displayName: 'pytest'

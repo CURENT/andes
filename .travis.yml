@@ -2,7 +2,6 @@ language: python
 
 python:
   - 3.5
-  - 3.6
 
 cache:
   directories:
@@ -23,7 +22,3 @@ script:
   - python setup.py checkdocs  # check documentation (README.rst)
   - make -C docs html  # Build the documentation.
 
-cases:
-  - andes -p cases/ieee14 ieee14_syn.dm -r tds -v 10 --tf 0.1
-  - andes -p cases/curent WECC_WIND50.dm -r tds -v 10 --tf 0.1
-  - andes -p cases/npcc npcc48.raw --addfile npcc48.dyr -r tds -v 10 --rf 0.1

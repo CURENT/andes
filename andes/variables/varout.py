@@ -247,7 +247,7 @@ class VarOut(object):
 
         return ret
 
-    def write_np_dat(self, store_format='csv', delimiter=',', fmt='%.12g'):
+    def write_np_dat(self, store_format='csv', delimiter=',', fmt='%.18e'):
         """
         Write TDS data stored in `self.np_vars` to the output file
 
