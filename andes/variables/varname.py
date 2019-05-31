@@ -14,9 +14,12 @@ class VarName(object):
         self.fnamey = []  # formatted algeb variable names
 
     def resize(self):
-        """Resize (extend) the list for variable names"""
+        """
+        Resize (extend) the list for variable names
+        """
         yext = self.system.dae.m - len(self.unamey)
         xext = self.system.dae.n - len(self.unamex)
+
         if yext > 0:
             self.unamey.extend([''] * yext)
             self.fnamey.extend([''] * yext)
@@ -25,39 +28,52 @@ class VarName(object):
             self.fnamex.extend([''] * xext)
 
     def resize_for_flows(self):
-        """Extend `unamey` and `fnamey` for bus injections and line flows"""
+        """
+        Extend `unamey` and `fnamey` for bus injections and line flows
+        """
         if self.system.config.dime_enable:
             self.system.tds.config.compute_flows = True
 
         if self.system.tds.config.compute_flows:
-            nflows = 2 * self.system.Bus.n + \
-                     8 * self.system.Line.n + \
+            nflows = 2 * self.system.Bus.n + 8 * self.system.Line.n + \
                      2 * self.system.Area.n_combination
-            self.unamey.extend([''] * nflows)
-            self.fnamey.extend([''] * nflows)
+
+            if len(self.unamey) == self.system.dae.m:
+                self.unamey.extend([''] * nflows)
+            else:
+                logger.warning('Skip resizing `unamey`. Did you call `tds.init()` more than once?')
+            if len(self.fnamey) == self.system.dae.m:
+                self.fnamey.extend([''] * nflows)
+            else:
+                logger.warning('Skip resizing `fname`. Did you call `tds.init()` more than once?')
 
     def append(self, listname, xy_idx, var_name, element_name):
-        """Append variable names to the name lists"""
+        """
+        Append variable names to the name lists
+        """
+
         self.resize()
         string = '{0} {1}'
+
         if listname not in ['unamex', 'unamey', 'fnamex', 'fnamey']:
             logger.error('Wrong list name for varname.')
             return
         elif listname in ['fnamex', 'fnamey']:
-            string = '${0}\\ {1}$'
+            string = r'${0}\ {1}$'
 
         if isinstance(element_name, list):
             for i, j in zip(xy_idx, element_name):
                 # manual elem_add LaTex space for auto-generated element name
                 if listname == 'fnamex' or listname == 'fnamey':
-                    j = j.replace(' ', '\\ ')
+                    j = j.replace(' ', r'\ ')
                 self.__dict__[listname][i] = string.format(var_name, j)
+
         elif isinstance(element_name, int):
             self.__dict__[listname][xy_idx] = string.format(
                 var_name, element_name)
+
         else:
-            logger.warning(
-                'Unknown element_name type while building varname')
+            logger.warning('Unknown element_name type while building varname')
 
     def bus_line_names(self):
         """Append bus injection and line flow names to `varname`"""

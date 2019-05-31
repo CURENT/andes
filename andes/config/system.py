@@ -76,6 +76,4 @@ class System(ConfigBase):
             logger.info("CuPy not found. Fall back to UMFPACK.")
             self.sparselib = 'umfpack'
 
-        logger.info('Using {} sparse solver'.format(self.sparselib))
-
         return True

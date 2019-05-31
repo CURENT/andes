@@ -44,12 +44,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def config_logger(name='andes',
-                  log_file='andes.log',
-                  log_path='',
-                  stream=True,
-                  stream_level=logging.INFO
-                  ):
+def config_logger(name='andes', log_file='andes.log', log_path='', stream=True, file=False,
+                  stream_level=logging.INFO, file_level=logging.DEBUG):
     """
     Configure a logger for the andes package with options for a `FileHandler`
     and a `StreamHandler`. This function is called at the beginning of
@@ -81,17 +77,6 @@ def config_logger(name='andes',
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    # file handler for level DEBUG and up
-    if log_file is not None:
-        log_full_path = os.path.join(log_path, log_file)
-        fh_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh = logging.FileHandler(log_full_path)
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(fh_formatter)
-        logger.addHandler(fh)
-        logger.debug('Writing log to {}'.format(log_full_path))
-
     if stream is True:
         sh_formatter = logging.Formatter('%(message)s')
         sh = logging.StreamHandler()
@@ -99,6 +84,17 @@ def config_logger(name='andes',
         sh.setFormatter(sh_formatter)
         sh.setLevel(stream_level)
         logger.addHandler(sh)
+
+    # file handler for level DEBUG and up
+    if file is True and (log_file is not None):
+        log_full_path = os.path.join(log_path, log_file)
+        fh_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh = logging.FileHandler(log_full_path)
+        fh.setLevel(file_level)
+        fh.setFormatter(fh_formatter)
+        logger.addHandler(fh)
+        logger.debug('Logging to file {}'.format(log_full_path))
 
     globals()['logger'] = logger
 

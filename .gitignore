@@ -80,6 +80,8 @@ target/
 #pycharm
 .idea/*
 
+#vscode
+.vscode/*
 
 #Ipython Notebook
 .ipynb_checkpoints
@@ -87,4 +89,3 @@ target/
 #Andes dat and lst files
 *.dat
 *.lst
-

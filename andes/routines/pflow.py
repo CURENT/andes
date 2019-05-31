@@ -65,6 +65,9 @@ class PFLOW(RoutineBase):
         # check for islands
         system.check_islands(show_info=True)
 
+        # reset internal storage
+        self.reset()
+
         t, s = elapsed(t)
         logger.debug('Power flow initialized in {:s}.'.format(s))
 

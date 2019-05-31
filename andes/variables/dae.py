@@ -307,6 +307,7 @@ class DAE(object):
         """
         yext = self.m - len(self.y)
         xext = self.n - len(self.x)
+
         if yext > 0:
             yzeros = zeros(yext, 1)
             yones = ones(yext, 1)
@@ -315,6 +316,9 @@ class DAE(object):
             self.uy = matrix([self.uy, yones], (self.m, 1), 'd')
             self.zymin = matrix([self.zymin, yones], (self.m, 1), 'd')
             self.zymax = matrix([self.zymax, yones], (self.m, 1), 'd')
+        else:
+            logger.info('Skip extending DAE algeb arrays. Did you call `tds.init()` more than once or '
+                        'have no dynamic components?')
         if xext > 0:
             xzeros = zeros(xext, 1)
             xones = ones(xext, 1)
@@ -323,6 +327,9 @@ class DAE(object):
             self.ux = matrix([self.ux, xones], (self.n, 1), 'd')
             self.zxmin = matrix([self.zxmin, xones], (self.n, 1), 'd')
             self.zxmax = matrix([self.zxmax, xones], (self.n, 1), 'd')
+        else:
+            logger.info('Skip extending DAE state arrays. Did you call `tds.init()` more than once or '
+                        'have no dynamic components?')
 
     def hard_limit(self, yidx, ymin, ymax, min_set=None, max_set=None):
         """Set hard limits for algebraic variables and reset the equation mismatches
@@ -383,17 +390,10 @@ class DAE(object):
             self.g[yidx[idx]] = 0
             self.ac_reset = True
 
-    def hard_limit_remote(self,
-                          yidx,
-                          ridx,
-                          rtype='y',
-                          rmin=None,
-                          rmax=None,
-                          min_yset=0,
-                          max_yset=0):
+    def hard_limit_remote(self, yidx, ridx, rtype='y', rmin=None, rmax=None, min_yset=0, max_yset=0):
         """Limit the output of yidx if the remote y is not within the limits
 
-        This function needs to be modernized.
+        TODO: This function needs to be refactored for clearliness.
         """
         ny = len(yidx)
         assert ny == len(

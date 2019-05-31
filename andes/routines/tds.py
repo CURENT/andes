@@ -29,6 +29,30 @@ class TDS(RoutineBase):
         # internal states
         self.F = None
 
+        self.initialized = False
+        self.switch = False
+        self.next_pc = 0.1
+        self.step = 0
+        self.t = self.config.t0
+        self.h = 0
+        self.headroom = 0
+        self.t_jac = 0
+        self.inc = None
+        self.callpert = None
+        self.solved = False
+        self.fixed_times = []
+        self.convergence = True
+        self.niter = 0
+        self.err = 1
+        self.x0 = None
+        self.y0 = None
+        self.f0 = None
+        self.success = False
+
+    def reset(self):
+        self.F = None
+
+        self.initialized = False
         self.switch = False
         self.next_pc = 0.1
         self.step = 0
@@ -165,10 +189,16 @@ class TDS(RoutineBase):
         None
         """
         system = self.system
-        config = self.config
-        dae = self.system.dae
+
+        if self.t != self.config.t0:
+            logger.warning('TDS has been previously run and cannot be re-initialized. Please reload the system.')
+            return False
+
         if system.pflow.solved is False:
-            return
+            logger.info('Attempting to solve power flow before TDS.')
+            solved, niter = system.pflow.run()
+            if not solved:
+                return False
 
         t, s = elapsed()
 
@@ -187,11 +217,6 @@ class TDS(RoutineBase):
             if init1:
                 system.__dict__[device].init1(system.dae)
 
-        # compute line and area flow
-        if config.compute_flows:
-            dae.init_fg()
-            self.compute_flows()  # TODO: move to PowerSystem
-
         t, s = elapsed(t)
 
         if system.dae.n:
@@ -204,6 +229,10 @@ class TDS(RoutineBase):
         system.dae.mu = 1.0
         system.dae.kg = 0.0
 
+        self.initialized = True
+
+        return True
+
     def run(self):
         """
         Run time domain simulation
@@ -213,6 +242,12 @@ class TDS(RoutineBase):
         bool
             Success flag
         """
+
+        # check if initialized
+        if not self.initialized:
+            if self.init() is False:
+                logger.info('Call to TDS initialization failed in `tds.run()`.')
+
         ret = False
         system = self.system
         config = self.config
@@ -516,6 +551,12 @@ class TDS(RoutineBase):
         """
         dae = self.system.dae
         system = self.system
+        config = self.config
+
+        # compute line and area flow
+        if config.compute_flows:
+            dae.init_fg()
+            self.compute_flows()  # TODO: move to PowerSystem
 
         self.inc = zeros(dae.m + dae.n, 1)
         system.varout.store(self.t, self.step)
@@ -585,8 +626,9 @@ class TDS(RoutineBase):
             exec(system.call.seriesflow)
             system.Area.seriesflow(system.dae)
             system.Area.interchange_varout()
+
             dae.y = matrix([
-                dae.y, bus_inj, system.Line._line_flows, system.Area.inter_varout
+                dae.y[:system.dae.m], bus_inj, system.Line._line_flows, system.Area.inter_varout
             ])
 
     def dump_results(self, success):
