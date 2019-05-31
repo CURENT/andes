@@ -41,3 +41,8 @@ Acknowledgement
 This work was supported in part by the Engineering Research Center Program of
 the National Science Foundation and the Department of Energy under NSF Award
 Number EEC-1041877 and the CURENT Industry Partnership Program.
+
+This project is inspired by the book `Power System Modelling and Scripting`_
+by Federico Milano.
+
+.. _`Power System Modelling and Scripting`: http://www.python.org/
