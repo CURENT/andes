@@ -1,6 +1,5 @@
-# Requires CVXOPT>=1.2.2 on Microsoft Windows
 numpy
-cvxopt
+cvxopt>=1.2.2
 scipy
 matplotlib
 pandas
