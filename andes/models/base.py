@@ -200,8 +200,10 @@ class ModelBase(object):
 
         :return: None
         """
-        assert self._name
-        assert self._group
+        if not self._name:
+            raise ValueError("Must specify a name for class {}".format(self.__class__.__name__))
+        if not self._group:
+            raise ValueError("Must specify a group name for {}".format(self._name))
 
         # self.n = 0
         self.u = []
@@ -211,13 +213,9 @@ class ModelBase(object):
 
         if not self._unamey:
             self._unamey = self._algebs
-        else:
-            assert len(self._unamey) == len(self._algebs)
 
         if not self._unamex:
             self._unamex = self._states
-        else:
-            assert len(self._unamex) == len(self._states)
 
         for item in self._data.keys():
             self.__dict__[item] = []
@@ -297,10 +295,14 @@ class ModelBase(object):
         :type time: bool
         :type event_time: bool
         """
-        assert param not in self._data
-        assert param not in self._algebs
-        assert param not in self._states
-        assert param not in self._service
+        if param in self._data:
+            raise KeyError('Param <{}> already defined in _data'.format(param))
+        if param in self._algebs:
+            raise KeyError('Param <{}> already defined in _algebs'.format(param))
+        if param in self._states:
+            raise KeyError('Param <{}> already defined in _states'.format(param))
+        if param in self._service:
+            raise KeyError('Param <{}> already defined in _service'.format(param))
 
         self._data.update({param: default})
         if unit:
@@ -351,7 +353,9 @@ class ModelBase(object):
         :type descr: str
         :return:
         """
-        assert ty in ('x', 'y')
+        if ty not in ('x', 'y'):
+            raise ValueError('Type <{}> of the variable <{}> is invalid'.format(ty, variable))
+
         if not uname:
             uname = variable
 
@@ -377,8 +381,12 @@ class ModelBase(object):
         :return: None
         """
 
-        assert service not in self._data
-        assert service not in self._algebs + self._states
+        if service in self._data:
+            raise NameError('Service variable <{}> already defined in _data'.format(service))
+        if service in self._algebs:
+            raise NameError('Service variable <{}> already defined in _algebs'.format(service))
+        if service in self._states:
+            raise NameError('Service variable <{}> already defined in _states'.format(service))
 
         self._service.append(service)
         self._service_ty.append(ty)
@@ -391,7 +399,8 @@ class ModelBase(object):
         :type idx: list, matrix
         :return: a matrix of uid
         """
-        assert idx is not None
+        if idx is None:
+            raise IndexError('get_uid cannot take None as idx')
 
         if isinstance(idx, (int, float, str)):
             return self.uid[idx]
@@ -399,8 +408,9 @@ class ModelBase(object):
         ret = []
         for i in idx:
             tmp = self.uid.get(i, None)
-            assert tmp is not None, (
-                'Model <{}> does not have element <{}>'.format(self._name, i))
+            if tmp is None:
+                raise IndexError('Model <{}> does not have element <{}>'.format(self._name, i))
+
             ret.append(self.uid[i])
 
         return ret
@@ -423,7 +433,9 @@ class ModelBase(object):
         :param idx: element indices, will be the whole list if not specified
         :return: field values
         """
-        assert astype in (None, list, matrix)
+        if astype not in (None, list, matrix):
+            raise TypeError("Unsupported return type {}".format(astype))
+
         ret = None
 
         if idx is None:
@@ -512,7 +524,8 @@ class ModelBase(object):
         :param sysbase: use system base quantities
         :type sysbase: bool
         """
-        assert isinstance(sysbase, bool)
+        if not isinstance(sysbase, bool):
+            raise TypeError('Argument <sysbase> must be True or False')
 
         ret = {}
 
@@ -722,8 +735,10 @@ class ModelBase(object):
 
         See .. self.param_define for argument descriptions.
         """
-        assert param in self._data, \
-            'parameter <{}> does not exist in {}'.format(param, self._name)
+        if param not in self._data:
+            logger.error('Param <{}> does not exist in {}._data. '
+                         'param_alter cannot continue'.format(param, self.name))
+            return False
 
         def alter_attr(p, attr, value):
             """Set self.__dict__[attr] for param based on value
@@ -831,8 +846,9 @@ class ModelBase(object):
             #
             # Returns a matrix by default
             # ===============================================================
-            assert idx is not None, \
-                'idx must be specified when accessing group fields'
+            if idx is None:
+                raise IndexError('idx must be provided when accessing <{}> group field'.format(model))
+
             astype = matrix
 
             for item in idx:
@@ -840,8 +856,7 @@ class ModelBase(object):
                 ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
-            raise NameError(
-                'Model or Group <{0}> does not exist.'.format(model))
+            raise NameError('Model or Group <{0}> does not exist.'.format(model))
 
         if (ret is None) or isinstance(ret, (int, float, str)):
             return ret
@@ -873,7 +888,9 @@ class ModelBase(object):
 
         if not dest:
             dest = field
-        assert dest not in self._states + self._algebs
+        if dest in self._states + self._algebs:
+            raise KeyError('Destination field <{}> already exist in <{}>. '
+                           'copy_data_ext cannot continue'.format(field, model))
 
         self.__dict__[dest] = self.read_data_ext(
             model, field, idx, astype=astype)
@@ -1198,7 +1215,9 @@ class ModelBase(object):
 
         """
         group_by = self._config['address_group_by']
-        assert group_by in ('element', 'variable')
+
+        if group_by not in ('element', 'variable'):
+            raise KeyError('Argument group_by value <{}> is not element or variable'.format(group_by))
 
         if self._flags['address'] is True:
             logger.debug('{} addresses exist. Skipped.'.format(self._name))
@@ -1395,7 +1414,9 @@ class ModelBase(object):
 
         """
         retval = True
-        assert varname in self.__dict__
+
+        if varname not in self.__dict__:
+            logger.error('Variable <{}> invalid. check_limit cannot continue.'.format(varname))
 
         if varname in self._algebs:
             val = self.system.dae.y[self.__dict__[varname]]
@@ -1438,7 +1459,9 @@ class ModelBase(object):
         :return: idx of elements connected to bus_idx
 
         """
-        assert hasattr(self, 'bus')
+        if not hasattr(self, 'bus'):
+            logger.warning('Model <{}> does not have the bus field. '
+                           'on_bus() cannot continue.'.format(self._name))
 
         ret = []
         if isinstance(bus_idx, (int, float, str)):

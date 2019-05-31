@@ -185,7 +185,9 @@ class VarOut(object):
         :param xidx: the index of the x-axis variables
         :return: None
         """
-        assert isinstance(xidx, int)
+        if not isinstance(xidx, int):
+            logger.error('Argument xidx must be an integer. get_xy() cannot continue')
+
         if isinstance(yidx, int):
             yidx = [yidx]
 

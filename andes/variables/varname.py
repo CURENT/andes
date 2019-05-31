@@ -110,7 +110,9 @@ class VarName(object):
         :param xidx:
         :return:
         """
-        assert isinstance(xidx, int)
+        if not isinstance(xidx, int):
+            raise TypeError('Argument xidx must be an integer')
+
         if isinstance(yidx, int):
             yidx = [yidx]
 

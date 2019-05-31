@@ -1,4 +1,6 @@
 from .base import ModelBase
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Recorder(ModelBase):
@@ -64,7 +66,9 @@ class Recorder(ModelBase):
 
             # for each model
             for m in model:
-                assert m in self.system.devman.devices
+                if m not in self.system.devman.devices:
+                    logger.warning('Skipping invalid model <{}>'.format(m))
+                    continue
 
                 m_instance = self.system.__dict__[m]
                 offset = [0]

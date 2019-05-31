@@ -11,7 +11,8 @@ class PI1(object):
 
     def __init__(self, params=None, inputs=None, outputs=None):
 
-        assert isinstance(outputs, list)
+        if not isinstance(outputs, list):
+            raise TypeError
 
         if hasattr(self, 'nPI1'):
             self.nPI1 += 1
@@ -24,7 +25,8 @@ class PI1(object):
             self.PI1_label = ['PI1' + str(self.nPI1)]
 
         if params:
-            assert isinstance(params, dict)
+            if not isinstance(params, dict):
+                raise TypeError
         else:
             params = {
                 'Kp' + str(self.nPI1): 0.1,
@@ -33,6 +35,7 @@ class PI1(object):
 
         self._algebs = ['']
         if inputs:
-            assert isinstance(inputs, list)
+            if not isinstance(inputs, list):
+                raise TypeError
         else:
             inputs = ['PI_IN_']

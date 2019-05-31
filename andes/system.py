@@ -661,7 +661,9 @@ class Group(metaclass=GroupMeta):
         :return: None
         """
 
-        assert isinstance(model, str)
+        if not isinstance(model, str):
+            # TODO: consider removing this constrain
+            raise KeyError("Name of the model must be a string")
         if model not in self.all_models:
             self.all_models.append(model)
 
@@ -729,7 +731,8 @@ class Group(metaclass=GroupMeta):
         models = [self._idx_model[i] for i in idx]
 
         for i, m, v in zip(idx, models, value):
-            assert hasattr(self.system.__dict__[m], field)
+            if not hasattr(self.system.__dict__[m], field):
+                raise KeyError('Field <{}> is not valid for model <{}>'.format(field, m))
 
             uid = self.system.__dict__[m].get_uid(idx)
             self.system.__dict__[m].__dict__[field][uid] = v

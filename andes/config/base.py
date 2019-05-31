@@ -48,7 +48,9 @@ class ConfigBase(object):
             a string of alternative options
 
         """
-        assert hasattr(self, option)
+        if not hasattr(self, option):
+            logger.error('Option <{}> is not valid'.format(option))
+            return ''
 
         alt = option + '_alt'
         if not hasattr(self, alt):

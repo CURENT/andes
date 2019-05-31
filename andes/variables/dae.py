@@ -396,10 +396,11 @@ class DAE(object):
         TODO: This function needs to be refactored for clearliness.
         """
         ny = len(yidx)
-        assert ny == len(
-            ridx), "Length of output vars and remote vars does not match"
-        assert rtype in ('x',
-                         'y'), "ridx must be either y (algeb) or x (state)"
+
+        if ny != len(ridx):
+            raise IndexError("len() of output vars and remote vars does not match")
+        if rtype not in ('x', 'y'):
+            raise TypeError('ridx has invalid type <{}>. Must be literal x or y'.format(rtype))
 
         if isinstance(min_yset, (int, float)):
             min_yset = matrix(min_yset, (ny, 1), 'd')
@@ -534,8 +535,8 @@ class DAE(object):
 
         Implemented in numpy.arrays for temporary storage.
         """
-        assert m in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'), \
-            'Wrong Jacobian matrix name <{0}>'.format(m)
+        if m not in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'):
+            raise KeyError('Wrong Jacobian matrix name <{0}>'.format(m))
 
         if isinstance(val, (int, float)):
             val = val * ones(len(row), 1)
@@ -552,7 +553,8 @@ class DAE(object):
 
         :return: None
         """
-        assert ty in ('jac0', 'jac')
+        if ty not in ('jac0', 'jac'):
+            raise KeyError('Wrong type name <{}>. Must be literal jac0 or jac'.format(ty))
 
         jac0s = ['Fx0', 'Fy0', 'Gx0', 'Gy0']
         jacs = ['Fx', 'Fy', 'Gx', 'Gy']
@@ -581,12 +583,10 @@ class DAE(object):
         :param col: col indices
         :return: None
         """
-        assert m in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'), \
-            'Wrong Jacobian matrix name <{0}>'.format(m)
+        if m not in ('Fx', 'Fy', 'Gx', 'Gy', 'Fx0', 'Fy0', 'Gx0', 'Gy0'):
+            raise KeyError('Wrong Jacobian matrix name <{0}>'.format(m))
 
-        if isinstance(val,
-                      (int, float)) and isinstance(row,
-                                                   (np.ndarray, matrix, list)):
+        if isinstance(val, (int, float)) and isinstance(row, (np.ndarray, matrix, list)):
             val = val * ones(len(row), 1)
 
         self._set[m]['I'] = matrix([self._set[m]['I'], matrix(row)])
@@ -600,7 +600,8 @@ class DAE(object):
         :param ty: Jacobian type in ``('jac0', 'jac')``
         :return:
         """
-        assert ty in ('jac0', 'jac')
+        if ty not in ('jac0', 'jac'):
+            raise KeyError("Wrong jacobian type name. Must be literal jac0 or jac".format(ty))
 
         if ty == 'jac0':
             todo = ['Fx0', 'Fy0', 'Gx0', 'Gy0']
@@ -649,7 +650,9 @@ class DAE(object):
 
     def reset_small(self, eq):
         """Reset numbers smaller than 1e-12 in f and g equations"""
-        assert eq in ('f', 'g')
+        if eq not in ('f', 'g'):
+            raise KeyError('Wrong equation type <{}>. Must be literal f or g'.format(eq))
+
         for idx, var in enumerate(self.__dict__[eq]):
             if abs(var) <= 1e-12:
                 self.__dict__[eq][idx] = 0
