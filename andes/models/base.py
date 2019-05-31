@@ -475,6 +475,7 @@ class ModelBase(object):
 
         if idx not in self.idx:
             logger.error('Idx <{}> is not valid'.format(field))
+            logger.error('Available idx are: {}'.format(self.idx))
 
         uid = self.get_uid(idx)
         old_type = type(self.__dict__[field][uid])
@@ -483,10 +484,10 @@ class ModelBase(object):
 
         if (not sysbase) and in_store:
             self._store[field][uid] = old_type(value)
-            logger.info('<{}> set field <{}> of <{}> to {} in _store'.format(self._name, field, idx, value))
+            logger.info('{}: set field <{}> of <{}> to {} in _store'.format(self._name, field, idx, value))
         else:
             self.__dict__[field][uid] = old_type(value)
-            logger.info('<{}> set field <{}> of <{}> to {} in class dict'.format(self._name, field, idx, value))
+            logger.info('{}: set field <{}> of <{}> to {} in class dict'.format(self._name, field, idx, value))
 
     def _alloc(self):
         """

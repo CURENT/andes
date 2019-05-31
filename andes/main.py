@@ -54,7 +54,7 @@ def config_logger(name='andes', log_file='andes.log', log_path='', stream=True, 
     Parameters
     ----------
     name : str, optional
-        Base logger name, ``'andes'`` by default. Changing this
+        Base logger name, ``andes`` by default. Changing this
         parameter will affect the loggers in modules and
         cause unexpected behaviours.
     log_file : str, optional
@@ -77,26 +77,27 @@ def config_logger(name='andes', log_file='andes.log', log_path='', stream=True, 
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    if stream is True:
-        sh_formatter = logging.Formatter('%(message)s')
-        sh = logging.StreamHandler()
+    if not len(logger.handlers):
+        if stream is True:
+            sh_formatter = logging.Formatter('%(message)s')
+            sh = logging.StreamHandler()
 
-        sh.setFormatter(sh_formatter)
-        sh.setLevel(stream_level)
-        logger.addHandler(sh)
+            sh.setFormatter(sh_formatter)
+            sh.setLevel(stream_level)
+            logger.addHandler(sh)
 
-    # file handler for level DEBUG and up
-    if file is True and (log_file is not None):
-        log_full_path = os.path.join(log_path, log_file)
-        fh_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh = logging.FileHandler(log_full_path)
-        fh.setLevel(file_level)
-        fh.setFormatter(fh_formatter)
-        logger.addHandler(fh)
-        logger.debug('Logging to file {}'.format(log_full_path))
+        # file handler for level DEBUG and up
+        if file is True and (log_file is not None):
+            log_full_path = os.path.join(log_path, log_file)
+            fh_formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            fh = logging.FileHandler(log_full_path)
+            fh.setLevel(file_level)
+            fh.setFormatter(fh_formatter)
+            logger.addHandler(fh)
+            logger.debug('Logging to file {}'.format(log_full_path))
 
-    globals()['logger'] = logger
+        globals()['logger'] = logger
 
 
 def preamble():
@@ -122,7 +123,7 @@ def preamble():
     logger.info('')
 
 
-def cli_new():
+def cli_parser():
     """
     Construct a CLI argument parser and return the parsed arguments.
 
@@ -224,8 +225,11 @@ def cli_new():
         '-x', '--exit', help='Exit before running routine', action='store_true'
     )
 
-    args = parser.parse_args()
+    return parser
 
+
+def cli_new(parser):
+    args = parser.parse_args()
     return args
 
 
@@ -613,7 +617,7 @@ def save_config(save_config='', **kwargs):
     return ret
 
 
-def main():
+def main(args=None):
     """
     The main function of the Andes command-line tool.
 
@@ -634,7 +638,11 @@ def main():
     t0, _ = elapsed()
 
     # parser command line arguments
-    args = vars(cli_new())
+    if args is None:
+        parser = cli_parser()
+        args = vars(cli_new(parser))
+    elif not isinstance(args, dict):
+        args = vars(args)
 
     # configure stream handler verbose level
     config_logger(log_path=misc.get_log_dir(), stream_level=args['verbose'])
@@ -647,8 +655,7 @@ def main():
     # logger.debug(pprint.pformat(args))
     # ----------------------
 
-    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) \
-            or save_config(**args):
+    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) or save_config(**args):
         return
 
     # process input files

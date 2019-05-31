@@ -11,7 +11,7 @@ class Eig(ConfigBase):
         self.report = ''
         self.eigs = ''
         self.pf = ''
-        self.plot = True
+        self.plot = False
         super(Eig, self).__init__(**kwargs)
 
     @cached

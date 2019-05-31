@@ -534,7 +534,7 @@ class TDS(RoutineBase):
 
         if system.files.pert:
             try:
-                sys.path.append(system.files.path)
+                sys.path.append(system.files.case_path)
                 module = importlib.import_module(system.files.pert[:-3])
                 self.callpert = getattr(module, 'pert')
             except ImportError:

@@ -93,7 +93,7 @@ def read(file, system, header=True):
             logger.debug('Parsing include file <{}>'.format(data[0]))
             newpath = data[0]
             if not os.path.isfile(newpath):
-                newpath = os.path.join(system.files.path, data[0])
+                newpath = os.path.join(system.files.case_path, data[0])
                 if not os.path.isfile(newpath):
                     raise FileNotFoundError(
                         'Unable to locate file in {}'.format(newpath))

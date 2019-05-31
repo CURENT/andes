@@ -385,8 +385,8 @@ def readadd(file, system):
         if i in needed:
             needed.remove(i)
 
-    logger.warning('Models currently unsupported: {}'.format(
-        ', '.join(needed)))
+    if len(needed) > 0:
+        logger.warning('Models currently unsupported: {}'.format(', '.join(needed)))
 
     return retval
 
