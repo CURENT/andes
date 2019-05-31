@@ -233,7 +233,7 @@ class TDS(RoutineBase):
 
         return True
 
-    def run(self):
+    def run(self, **kwargs):
         """
         Run time domain simulation
 

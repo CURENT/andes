@@ -111,7 +111,7 @@ class EIG(RoutineBase):
 
         return self.mu, self.part_fact
 
-    def run(self):
+    def run(self, **kwargs):
         ret = False
         system = self.system
 

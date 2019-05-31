@@ -167,6 +167,57 @@ def run(system,
         copy_states=[],
         service_keys=[],
         **kwargs):
+    """
+    TODO: Fix the mutable default argument
+
+    Parameters
+    ----------
+    system
+    outfile
+    name
+    doc_string
+    group
+    data
+    descr
+    units
+    params
+    fnamex
+    fnamey
+    mandatory
+    zeros
+    powers
+    currents
+    voltages
+    z
+    y
+    dccurrents
+    dcvoltages
+    r
+    g
+    times
+    ac
+    dc
+    ctrl
+    consts
+    algebs
+    interfaces
+    states
+    init1_eq
+    service_eq
+    algeb_eq
+    windup
+    hard_limit
+    diff_eq
+    anti_windup
+    copy_algebs
+    copy_states
+    service_keys
+    kwargs
+
+    Returns
+    -------
+
+    """
     retval = True
     space4 = '    '
     space8 = space4 * 2
@@ -449,7 +500,7 @@ def run(system,
                 else:
                     fxcall.append(
                         call_line.format(jac, string_eq, eqname, varname))
-    """Format initialization and service calls"""
+    # === Format initialization and service calls ===
     init1call = []
     for item in sym_init1:
         rhs = stringfy(item[1], sym_consts, sym_states_ext, sym_algebs_ext)
@@ -480,7 +531,7 @@ def run(system,
         'jac0': (not not jac0) or (not not sym_algebs),
         'init1': (not not init1call) or (not not servcall),
     }
-    """Build function call strings"""
+    # === Build function call strings ===
     out_calls = []
     if servcall:
         out_calls.append(space4 + 'def servcall(self, dae):')
@@ -525,7 +576,7 @@ def run(system,
             out_calls.append(space8 + item)
         for item in sym_algebs:
             out_calls.append(space8 + tinyGy.format(item))
-    """Class definitions in out_init"""
+    # ===Class definitions in out_init ===
     # bulk update or extend of dict and list
     param_assign = space8 + 'self._{} = {}'
     list_extend = space8 + 'self._{}.extend({})'

@@ -155,9 +155,9 @@ class Turbine(object):
 
         for i in range(self.n):
             mis = 1
-            iter = 0
+            niter = 0
             while abs(mis) > self.system.tds.config.tol:
-                if iter > 50:
+                if niter > 50:
                     self.message(
                         'Wind <{}> init failed. '
                         'Try increasing the nominal wind speed.'.format(
@@ -170,7 +170,7 @@ class Turbine(object):
                 mis = pw_iter - pw[i]
                 inc = -mis / jac[1]
                 vw[i] += inc
-                iter += 1
+                niter += 1
 
         # set wind speed
         dae.x[self.vw] = div(vw, self.Vwn)

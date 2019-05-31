@@ -23,7 +23,7 @@ class RoutineBase(object):
         -------
         None
         """
-        raise(NotImplementedError, 'Must be overloaded by routines')
+        raise NotImplementedError('Must be overloaded by routines')
 
     def report(self):
         """
@@ -34,7 +34,7 @@ class RoutineBase(object):
         str
             Output string
         """
-        raise(NotImplementedError, 'Must be overloaded by routines')
+        raise NotImplementedError('Must be overloaded by routines')
 
     def pre(self):
         """

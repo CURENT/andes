@@ -534,8 +534,6 @@ def add_dyn(system, model, data):
         data = data[3:]
         syn = get_idx(system, 'Synchronous', 'bus', bus)
 
-        pass
-
     elif model == 'TGOV1':
         bus = data[0]
         data = data[3:]
