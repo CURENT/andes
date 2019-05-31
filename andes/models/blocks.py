@@ -11,7 +11,7 @@ class PI1(object):
 
     def __init__(self, params=None, inputs=None, outputs=None):
 
-        assert type(outputs) == list
+        assert isinstance(outputs, list)
 
         if hasattr(self, 'nPI1'):
             self.nPI1 += 1
@@ -33,6 +33,6 @@ class PI1(object):
 
         self._algebs = ['']
         if inputs:
-            assert type(inputs) == list
+            assert isinstance(inputs, list)
         else:
             inputs = ['PI_IN_']

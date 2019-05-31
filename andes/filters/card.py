@@ -35,7 +35,7 @@ def read(file, system):
     ret_dict = dict()
     ret_dict['outfile'] = file.split('.')[0].lower() + '.py'
     key, val = None, None
-    for idx, line in enumerate(raw_file):
+    for line in raw_file:
         line = line.strip()
         if not line:
             continue
@@ -61,7 +61,7 @@ def read(file, system):
     for key, val in ret_dict.items():
         if not val:
             continue
-        if type(val) == list:
+        if isinstance(val, list):
             if ':' in val[0]:
                 new_val = {}  # return in a dictionary
                 new_val_ord = [
@@ -117,7 +117,7 @@ def add_quotes(string):
 def de_blank(val):
     """Remove blank elements in `val` and return `ret`"""
     ret = list(val)
-    if type(val) == list:
+    if isinstance(val, list):
         for idx, item in enumerate(val):
             if item.strip() == '':
                 ret.remove(item)
@@ -170,7 +170,7 @@ def run(system,
     retval = True
     space4 = '    '
     space8 = space4 * 2
-    """Input data consistency check"""
+    # === Input data consistency check ===
     to_check = {
         'param': params,
         'mandatory': mandatory,
@@ -207,7 +207,7 @@ def run(system,
             print('* Warning: variable <{}> in hard_limit not defined.'.format(
                 key))
         for item in val:
-            if type(item) in (int, float):
+            if isinstance(item, (int, float)):
                 pass
             elif item not in consts:
                 print(
@@ -219,7 +219,7 @@ def run(system,
             print(
                 '* Warning: variable <{}> in windup not defined.'.format(key))
         for item in val:
-            if type(item) in (int, float):
+            if isinstance(item, (int, float)):
                 continue
             elif item not in consts:
                 print('* Warning: const <{}> in windup not defined.'.format(
@@ -231,13 +231,13 @@ def run(system,
                 '* Warning: variable <{}> in anti_windup not defined.'.format(
                     key))
         for item in val:
-            if type(item) in (int, float):
+            if isinstance(item, (int, float)):
                 continue
             elif item not in consts:
                 print(
                     '* Warning: const <{}> in anti_windup not defined.'.format(
                         item))
-    """Equation and variable number check"""
+    # === Equation and variable number check ===
     nalgebs, nalgeb_eq, nstates, ndiff_eq, ninterfaces = len(algebs), len(
         algeb_eq), len(states), len(diff_eq), len(interfaces)
 
@@ -328,8 +328,10 @@ def run(system,
     for item in diff_eq:
         expr = eval('{}'.format(item))
         sym_f.append(expr)
-    """Derive the jacobians of equation f and g.
-    Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]"""
+    """
+    Derive the jacobians of equation f and g.
+    Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]
+    """
     Fx, Fy, Gx, Gy = list(), list(), list(), list()
     for eq_idx, expr in enumerate(sym_g):
         try:
@@ -378,9 +380,9 @@ def run(system,
         fcall.append(template.format(sym, string_eq))
         if sym in sym_anti_windup:
             val = eval('anti_windup[\'{}\']'.format(sym))
-            if type(val[1]) not in (int, float):
+            if not isinstance(val[1], (int, float)):
                 val[1] = 'self.' + val[1]
-            if type(val[2]) not in (int, float):
+            if not isinstance(val[2], (int, float)):
                 val[2] = 'self.' + val[2]
             fcall.append(fcall_anti_windup.format(sym, val[1], val[2]))
 
@@ -402,7 +404,7 @@ def run(system,
             val = eval('hard_limit[\'{}\']'.format(sym))
             val_formatted = list(val)
             for idx, item in enumerate(val):
-                if type(item) in (int, float):
+                if isinstance(item, (int, float)):
                     pass
                 else:
                     val_formatted[idx] = 'self.{}'.format(item)
@@ -627,7 +629,7 @@ def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):
     if not sym_algebs:
         sym_algebs = []
     expr_str = []
-    if type(expr) in (int, float):
+    if isinstance(expr, (int, float)):
         return expr
     if expr.is_Atom:
         if expr in sym_const:

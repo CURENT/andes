@@ -52,7 +52,7 @@ class TDSData(object):
         # paths and file names
         self._path = path if path else os.getcwd()
 
-        file_name, ext = os.path.splitext(file_name_full)
+        file_name, _ = os.path.splitext(file_name_full)
 
         self._dat_file = os.path.join(self._path, file_name + '.dat')
         self._lst_file = os.path.join(self._path, file_name + '.lst')
@@ -336,7 +336,7 @@ def read_dat(dat, x, y, delim=','):
         print('* Error while opening the dat file')
         return None, None
 
-    for num, line in enumerate(dfile_raw):
+    for _, line in enumerate(dfile_raw):
         thisline = line.rstrip('\n').split(delim)
         if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
             errid = 1
@@ -511,10 +511,10 @@ def do_plot(xdata,
 def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
-        xl_data = xl[1]  # NOQA
+        # xl_data = xl[1]  # NOQA
         yl_data = yl[1]
     else:
-        xl_data = xl[0]  # NOQA
+        # xl_data = xl[0]  # NOQA
         yl_data = yl[0]
 
     for idx in range(len(y)):
@@ -543,7 +543,7 @@ def isint(value):
 def main(cli=True, **args):
     if cli:
         args = cli_parse()
-    name, ext = os.path.splitext(args['datfile'][0])
+    name, _ = os.path.splitext(args['datfile'][0])
     if 'out' in name:
         tds_plot(name, args)
     elif 'eig' in name:

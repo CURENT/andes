@@ -136,7 +136,7 @@ class EIG(RoutineBase):
         self.plot_results()
         ret = True
 
-        t2, s = elapsed(t1)
+        _, s = elapsed(t1)
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
         return ret

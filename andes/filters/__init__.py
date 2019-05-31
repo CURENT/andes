@@ -39,7 +39,7 @@ def guess(system):
         maybe.append(files.input_format)
     # first, guess by extension
     for key, val in input_formats.items():
-        if type(val) == list:
+        if isinstance(val, list):
             for item in val:
                 if files.ext.strip('.').lower() == item:
                     maybe.append(key)
@@ -75,7 +75,7 @@ def guess(system):
     if files.addfile:
         _, add_ext = os.path.splitext(files.addfile)
         for key, val in input_formats.items():
-            if type(val) == list:
+            if isinstance(val, list):
                 if add_ext[1:] in val:
                     files.add_format = key
             else:

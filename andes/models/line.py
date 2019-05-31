@@ -519,9 +519,9 @@ class Line(ModelBase):
     def get_flow_by_idx(self, idx, bus):
         """Return seriesflow based on the external idx on the `bus` side"""
         P, Q = [], []
-        if type(idx) is not list:
+        if not isinstance(idx, list):
             idx = [idx]
-        if type(bus) is not list:
+        if not isinstance(bus, list):
             bus = [bus]
 
         for line_idx, bus_idx in zip(idx, bus):

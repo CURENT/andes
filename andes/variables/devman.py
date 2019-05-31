@@ -81,9 +81,9 @@ class DevMan(object):
                 idx.append(self.devices.index(dev))
                 names.append(dev)
 
-        idx = sorted(idx)
-        for id, name in zip(idx, names):
-            self.devices[id] = name
+        idx_sorted = sorted(idx)
+        for item, name in zip(idx_sorted, names):
+            self.devices[item] = name
 
     def get_param(self, group, param, fkey):
         ret = []

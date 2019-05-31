@@ -631,7 +631,7 @@ def main():
     -------
     None
     """
-    t0, s = elapsed()
+    t0, _ = elapsed()
 
     # parser command line arguments
     args = vars(cli_new())
