@@ -4,6 +4,8 @@ del get_versions
 
 from . import main  # NOQA
 from . import filters  # NOQA
+from .main import run, run_stock  # NOQA
+
 
 __author__ = 'Hantao Cui'
 

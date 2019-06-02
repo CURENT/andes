@@ -36,6 +36,7 @@ from time import sleep, strftime
 
 from . import filters
 from . import routines
+from . import utils
 from .system import PowerSystem
 from .utils import elapsed, misc
 from subprocess import call
@@ -182,7 +183,7 @@ def cli_parser():
     group_help.add_argument(
         '-f',
         '--model-format',
-        help='Show the format definition of models.', nargs='*', default=[])
+        help='Show the format definition of models.', type=str)
     group_help.add_argument(
         '-Q',
         '--model-var',
@@ -422,7 +423,7 @@ def andeshelp(group=None,
     return True
 
 
-def edit_conf(edit_config=False, load_config=None, **kwargs):
+def edit_conf(edit_config='', load_config=None, **kwargs):
     """
     Edit the Andes config file which occurs first in the search path.
 
@@ -524,7 +525,7 @@ def remove_output(clean=False, **kwargs):
     return True
 
 
-def search(search, **kwargs):
+def search(**kwargs):
     """
     Search for models whose names matches the given pattern. Print the
     results to stdout.
@@ -549,7 +550,8 @@ def search(search, **kwargs):
     from .models import all_models
     out = []
 
-    if not search:
+    search_str = kwargs.get('search', None)
+    if not search_str:
         return out
 
     keys = sorted(list(all_models.keys()))
@@ -560,15 +562,14 @@ def search(search, **kwargs):
         val = sorted(val)
 
         for item in val:
-            if search.lower() in item.lower():
+            if search_str.lower() in item.lower():
                 out.append(key + '.' + item)
 
     if out:
-        print('Search result: <file.model> containing <{}>'
-              .format(search))
+        print('Search result: <file.model> containing <{}>'.format(search_str))
         print(' '.join(out))
     else:
-        print('No model containing <{:s}> found'.format(search))
+        print('No model containing <{:s}> found'.format(search_str))
 
     return out
 
@@ -645,7 +646,7 @@ def main(args=None):
         args = vars(args)
 
     # configure stream handler verbose level
-    config_logger(log_path=misc.get_log_dir(), stream_level=args['verbose'])
+    config_logger(log_path=misc.get_log_dir(), stream_level=args.get('verbose', logging.INFO))
 
     # show preamble
     preamble()
@@ -659,18 +660,22 @@ def main(args=None):
         return
 
     # process input files
-    if len(args['filename']) == 0:
+    filename = args.get('filename', ())
+    if isinstance(filename, str):
+        filename = [filename]
+
+    if len(filename) == 0:
         logger.info('error: no input file. Try \'andes -h\' for help.')
 
     # preprocess cli args
     path = args.get('input_path', os.getcwd())
-    ncpu = args['ncpu']
+    ncpu = args.get('ncpu', 0)
     if ncpu == 0 or ncpu > os.cpu_count():
         ncpu = os.cpu_count()
 
     cases = []
 
-    for file in args['filename']:
+    for file in filename:
         # use absolute path for cases which will be respected by FileMan
         full_paths = os.path.abspath(os.path.join(path, file))
         found = glob.glob(full_paths)
@@ -732,8 +737,7 @@ def main(args=None):
     return
 
 
-def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False,
-        **kwargs):
+def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False, **kwargs):
     """
     Entry function to run a single case study. This function executes the
     following workflow:
@@ -803,8 +807,11 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
         logger.info('')
 
     if routine is None or exit is True:
-        pass
+        logger.info('No routine provided. Set argument `routine` to continue')
     else:
+        if isinstance(routine, str):
+            routine = [routine]
+
         # run power flow first
         if 'pflow' in routine:
             routine.remove('pflow')
@@ -844,6 +851,14 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
         print(msg_finish)
 
     return system
+
+
+def run_stock(rpath, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False, **kwargs):
+    """Run a stock case distributed with andes"""
+    case_path = utils.stock_case.get_stock_case(rpath)
+
+    return run(case_path, routine=routine, profile=profile, dump_raw=dump_raw, pid=pid,
+               show_data=show_data, exit=exit, **kwargs)
 
 
 if __name__ == '__main__':
