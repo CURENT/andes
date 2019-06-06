@@ -602,30 +602,53 @@ class Ground(DCBase):
 
 
 class DCgen(DCBase):
-    """DC generator to impose active power injection"""
+    """A simple DC generator to impose constantactive power injection"""
 
     def __init__(self, system, name):
         super().__init__(system, name)
         self._name = 'DCgen'
         self._params.extend(['P', 'Sn'])
-        self._data.update({
-            'P': 0.0,
-        })
+        self._data.update({'P': 0.0,
+                           })
+        self._descr.update({'P': 'Active power generation'})
+        self._units.update({'P': 'pu'})
         self._powers.extend(['P'])
-        self.calls.update({
-            'pflow': True,
-            'gcall': True,
-            'stagen': True,
-        })
+        self.calls.update({'pflow': True,
+                           'gcall': True,
+                           'stagen': True,
+                           })
         self._init()
 
     def gcall(self, dae):
-        dae.g -= spmatrix(
-            div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n,
-            (dae.m, 1), 'd')
-        dae.g -= spmatrix(-div(mul(self.u, self.P), self.v12), self.v2,
-                          [0] * self.n, (dae.m, 1), 'd')
+        dae.g -= spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g -= spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
 
     def disable_gen(self, idx):
+        self.u[self.uid[idx]] = 0
+        self.system.dae.factorize = True
+
+
+class DCload(DCBase):
+    """A simple DC load to impose constant active power consumption"""
+
+    def __init__(self, system, name):
+        super().__init__(system, name)
+        self._name = 'DCload'
+        self._params.extend(['P', 'Sn'])
+        self._data.update({'P': 0.0,
+                           })
+        self._powers.extend(['P'])
+        self._descr.update({'P': 'Active power load'})
+        self._units.update({'P': 'pu'})
+        self.calls.update({'pflow': True,
+                           'gcall': True,
+                           })
+        self._init()
+
+    def gcall(self, dae):
+        dae.g += spmatrix(div(mul(self.u, self.P), self.v12), self.v1, [0] * self.n, (dae.m, 1), 'd')
+        dae.g += spmatrix(-div(mul(self.u, self.P), self.v12), self.v2, [0] * self.n, (dae.m, 1), 'd')
+
+    def disable(self, idx):
         self.u[self.uid[idx]] = 0
         self.system.dae.factorize = True

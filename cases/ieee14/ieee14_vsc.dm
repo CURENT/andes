@@ -154,3 +154,6 @@ C, idx = "C1", name = "C 1", node1 = 1, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C4", name = "C 3", node1 = 4, node2 = 0, Vdcn = 100, C = 10
+
+DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 0.5
+DCload, idx = "DCload_1", Vdcn = 100, node1 = 3, node2 = 0, P = 1

@@ -111,7 +111,7 @@ class ModelBase(object):
         self._descr = {
             'u': 'Connection status',
             'Sn': 'Power rating',
-            'Vn': 'Ac Voltage rating',
+            'Vn': 'AC voltage rating',
         }
         # non-zero parameters
         self._zeros = ['Sn', 'Vn']
