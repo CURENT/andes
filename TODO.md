@@ -9,3 +9,8 @@
     
 *   Reduce the overhead in `DAE.reset_Ac()`
     *   Impact: High
+
+
+## New Functions
+*   Root loci plots
+*   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue

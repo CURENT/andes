@@ -234,26 +234,9 @@ class ModelBase(object):
         self._flags['allocate'] = False
         self._flags['address'] = False
 
-    def param_define(self,
-                     param,
-                     default,
-                     unit='',
-                     descr='',
-                     tomatrix=True,
-                     nonzero=False,
-                     mandatory=False,
-                     power=False,
-                     voltage=False,
-                     current=False,
-                     z=False,
-                     y=False,
-                     r=False,
-                     g=False,
-                     dccurrent=False,
-                     dcvoltage=False,
-                     time=False,
-                     event_time=False,
-                     **kwargs):
+    def param_define(self, param, default, unit='', descr='', tomatrix=True, nonzero=False, mandatory=False,
+                     power=False, voltage=False, current=False, z=False, y=False, r=False, g=False,
+                     dccurrent=False, dcvoltage=False, time=False, event_time=False, **kwargs):
         """
         Define a parameter in the model
 
@@ -486,8 +469,9 @@ class ModelBase(object):
             return
 
         if idx not in self.idx:
-            logger.error('Idx <{}> is not valid'.format(field))
+            logger.error('Idx <{}> is not valid for model <{}>'.format(idx, self._name))
             logger.error('Available idx are: {}'.format(self.idx))
+            raise IndexError
 
         uid = self.get_uid(idx)
         old_type = type(self.__dict__[field][uid])
@@ -710,25 +694,9 @@ class ModelBase(object):
             if param in self.__dict__[attr]:
                 self.__dict__[attr].remove(param)
 
-    def param_alter(self,
-                    param,
-                    default=None,
-                    unit=None,
-                    descr=None,
-                    tomatrix=None,
-                    nonzero=None,
-                    mandatory=None,
-                    power=None,
-                    voltage=None,
-                    current=None,
-                    z=None,
-                    y=None,
-                    r=None,
-                    g=None,
-                    dccurrent=None,
-                    dcvoltage=None,
-                    time=None,
-                    **kwargs):
+    def param_alter(self, param, default=None, unit=None, descr=None, tomatrix=None, nonzero=None, mandatory=None,
+                    power=None, voltage=None, current=None, z=None, y=None, r=None, g=None, dccurrent=None,
+                    dcvoltage=None, time=None, **kwargs):
         """
         Set attribute of an existing parameter.
         To be used to alter an attribute inherited from parent models.
@@ -903,10 +871,20 @@ class ModelBase(object):
         """
         Add an element of this model
 
-        :param idx: element idx
-        :param name: element name
-        :param kwargs: keyword arguments of the parameters
-        :return: allocated idx
+        Parameters
+        ----------
+        idx : str, int or float, optional
+            The unique external reference to this element.
+        name : str, optional
+            The name of this element. Automatically assigned if not provided.
+
+        kwargs
+            A dictionary containing the (field, value) pairs of the element parameters
+
+        Returns
+        -------
+        str or int
+            The allocated `idx` of the added element
         """
 
         idx = self.system.devman.register_element(dev_name=self._name, idx=idx)
@@ -1053,8 +1031,12 @@ class ModelBase(object):
 
         :return: None
         """
-        if (not self.n) or self._flags['sysbase']:
+        if (not self.n):
             return
+        if self._flags['sysbase']:
+            logger.debug('Model <{}> is not in sysbase. data_to_elem_base() aborted.'.format(self._name))
+            return
+
         Sb = self.system.mva
         Vb = matrix([])
         if 'bus' in self._ac.keys():
@@ -1127,7 +1109,10 @@ class ModelBase(object):
         -------
         None
         """
+        if not self.n:
+            return
         if self._flags['sysbase'] is False:
+            logger.debug('Model <{}> is not in sysbase. data_to_elem_base() aborted.'.format(self._name))
             return
 
         for key, val in self._store.items():

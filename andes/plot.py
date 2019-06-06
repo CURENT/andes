@@ -128,9 +128,6 @@ class TDSData(object):
         """
         Return the variable values at the given indices
         """
-        if isinstance(idx, list):
-            idx = np.array(idx, dtype=int)
-
         return self._data[:, idx]
 
     def get_header(self, idx, formatted=False):

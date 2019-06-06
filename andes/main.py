@@ -34,11 +34,11 @@ from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep, strftime
 
-from . import filters
-from . import routines
-from . import utils
-from .system import PowerSystem
-from .utils import elapsed, misc
+from andes import filters
+from andes import routines
+from andes import utils
+from andes.system import PowerSystem
+from andes.utils import elapsed, misc
 from subprocess import call
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ def preamble():
     -------
     None
     """
-    from . import __version__ as version
+    from andes import __version__ as version
     logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'
                 .format(ver=version[:5], b=version[-8:],
                         p=platform.python_version(),
@@ -130,8 +130,8 @@ def cli_parser():
 
     Returns
     -------
-    Namespace
-        A namespace object containing the parsed command-line arguments
+    ArgumentParser
+        An argument parser for parsing command-line arguments
     """
     parser = ArgumentParser()
     parser.add_argument('filename', help='Case file name', nargs='*')
@@ -230,20 +230,26 @@ def cli_parser():
 
 
 def cli_new(parser):
+    """
+    Do parse with the provided CLI parser
+
+    Parameters
+    ----------
+    parser : ArgumentParser
+        An ArgumentParser instance for parsing the command line arguments
+
+    Returns
+    -------
+    Namespace
+        A namespace containing the parsed arguments
+
+    """
     args = parser.parse_args()
     return args
 
 
-def andeshelp(group=None,
-              category=None,
-              model_list=None,
-              model_format=None,
-              model_var=None,
-              quick_help=None,
-              help_option=None,
-              help_config=None,
-              export='plain',
-              **kwargs):
+def andeshelp(group=None, category=None, model_list=None, model_format=None, model_var=None,
+              quick_help=None, help_option=None, help_config=None, export='plain', **kwargs):
     """
     Print the requested help and documentation to stdout.
 
@@ -547,7 +553,7 @@ def search(**kwargs):
         The list of model names that match the given pattern.
     """
 
-    from .models import all_models
+    from andes.models import all_models
     out = []
 
     search_str = kwargs.get('search', None)

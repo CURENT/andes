@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigBase(object):
-    """base setting class"""
+    """
+    Base class for routine configurations. This class provides functions for storing,
+    accessing, exporting configurations for Andes routines.
+    """
     def __init__(self, conf=None, **kwargs):
 
         if conf is not None:
@@ -28,24 +31,26 @@ class ConfigBase(object):
         Returns
         -------
         str
-            value of `option`
+            the current value for the option
         """
 
         return self.__dict__[option]
 
     def get_alt(self, option):
         """
-        Return the alternative values of an option
+        Return the available alternative values for an option
 
         Parameters
         ----------
         option: str
-            option name
+            Name of the option to query
 
         Returns
         -------
         str
-            a string of alternative options
+            A comma-separated string containing all the acceptable alternative values.
+            If `option` is not valid or no alternative value is on file,
+            return an empty string.
 
         """
         if not hasattr(self, option):
@@ -55,11 +60,22 @@ class ConfigBase(object):
         alt = option + '_alt'
         if not hasattr(self, alt):
             return ''
-        return ', '.join(self.__dict__[alt])
+        return ','.join(self.__dict__[alt])
 
     def doc(self, export='plain'):
         """
         Dump help document for setting classes
+
+        Parameters
+        ----------
+        export : {'plain'}, optional
+            The format of the exported config help docs.
+
+        Returns
+        -------
+        str
+            A string containing the formattted config help docs
+
         """
         rows = []
         title = '<{:s}> config options'.format(self.__class__.__name__)
@@ -73,8 +89,8 @@ class ConfigBase(object):
                 c4 = self.get_alt(opt)
                 rows.append([c1, c2, c3, c4])
             else:
-                print('Setting {:s} has no {:s} option. Correct in config_descr.'.
-                      format(self.__class__.__name__, opt))
+                logger.error('Setting {:s} has no {:s} option. Correct in config_descr.'.
+                             format(self.__class__.__name__, opt))
 
         table.add_rows(rows, header=False)
         table.header(['Option', 'Description', 'Value', 'Alt.'])
@@ -83,16 +99,18 @@ class ConfigBase(object):
 
     def dump_conf(self, conf=None):
         """
-        Dump settings to an rc config file
+        Dump routine configuration to an rc config file
 
         Parameters
         ----------
-        conf
-            configparser.ConfigParser() object
+        conf : configparser.ConfigParser, optional
+            A config parser object to which this class will be exported. A new object
+            will be created if `conf` is `None`.
 
         Returns
         -------
-        None
+        configparser.ConfigParser
+            A config parser object with the values appended
         """
         if conf is None:
             conf = configparser.ConfigParser()

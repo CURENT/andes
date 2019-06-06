@@ -49,20 +49,17 @@ def guess(system):
 
     # second, guess by lines
     true_format = ''
-    fid = open(files.case, 'r')
-    for item in maybe:
-        try:
-            parser = importlib.import_module('.' + item, __name__)
-            testlines = getattr(parser, 'testlines')
-            if testlines(fid):
-                true_format = item
-                break
-        except ImportError:
-            logger.debug(
-                'Parser for {:s} format is not found. '
-                'Format guess will continue.'.
-                format(item))
-    fid.close()
+    with open(files.case, 'r') as fid:
+        for item in maybe:
+            try:
+                parser = importlib.import_module('.' + item, __name__)
+                testlines = getattr(parser, 'testlines')
+                if testlines(fid):
+                    true_format = item
+                    break
+            except ImportError:
+                logger.debug('Parser for {:s} format is not found. '
+                             'Format guess will continue.'.format(item))
 
     if true_format:
         logger.debug('Input format guessed as {:s}.'.format(true_format))
