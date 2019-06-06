@@ -392,7 +392,8 @@ class ModelBase(object):
         for i in idx:
             tmp = self.uid.get(i, None)
             if tmp is None:
-                raise IndexError('Model <{}> does not have element <{}>'.format(self._name, i))
+                raise IndexError('Model <{}> does not contain any element with idx={}.'
+                                 'Check the definitions in your case file.'.format(self._name, i))
 
             ret.append(self.uid[i])
 

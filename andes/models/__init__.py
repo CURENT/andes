@@ -52,6 +52,7 @@ non_jits = {
         'RLCp': 'RLCp',
         'RLCs': 'RLCs',
         'DCgen': 'DCgen',
+        'DCload': 'DCload',
     },
     'synchronous': {
         'Syn2': 'Syn2',
