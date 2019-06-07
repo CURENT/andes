@@ -196,8 +196,7 @@ class TDS(RoutineBase):
 
         if system.pflow.solved is False:
             logger.info('Attempting to solve power flow before TDS.')
-            solved, niter = system.pflow.run()
-            if not solved:
+            if not system.pflow.run():
                 return False
 
         t, s = elapsed()

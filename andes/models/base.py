@@ -1633,6 +1633,17 @@ class ModelBase(object):
 
         return out
 
+    def build_service(self):
+        """
+        Prototype function for building service variables. This function is to be called during `init0`
+        or `init1`. Must be overloaded by derived classes.
+
+        Returns
+        -------
+
+        """
+        pass
+
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.

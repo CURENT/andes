@@ -78,19 +78,17 @@ class AGC(ModelBase):
     def __init__(self, system, name):
         super(AGC, self).__init__(system, name)
         self._group = 'Control'
-        self._data.update({
-            'BArea': None,
-            'syn': None,
-            'Ki': 0.05,
-        })
+        self._data.update({'BArea': None,
+                           'syn': None,
+                           'Ki': 0.05,
+                           })
         self._mandatory.extend(['BArea', 'syn', 'Ki'])
         self._states.extend(['Pagc'])
-        self.calls.update({
-            'gcall': True,
-            'init1': True,
-            'jac0': True,
-            'fcall': True,
-        })
+        self.calls.update({'gcall': True,
+                           'init1': True,
+                           'jac0': True,
+                           'fcall': True,
+                           })
         self._service.extend(['ace', 'pm', 'M', 'usyn', 'Mtot'])
         self._fnamex.extend(['P_{agc tot}'])
         self._params.extend(['Ki'])
@@ -103,12 +101,9 @@ class AGC(ModelBase):
         self.Mtot = [[]] * self.n
 
         for idx, item in enumerate(self.syn):
-            self.pm[idx] = self.read_data_ext(
-                'Synchronous', field='pm', idx=item)
-            self.usyn[idx] = self.read_data_ext(
-                'Synchronous', field='u', idx=item)
-            self.M[idx] = self.read_data_ext(
-                'Synchronous', field='M', idx=item)
+            self.pm[idx] = self.read_data_ext('Synchronous', field='pm', idx=item)
+            self.usyn[idx] = self.read_data_ext('Synchronous', field='u', idx=item)
+            self.M[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
             self.Mtot[idx] = sum(mul(self.usyn[idx], self.M[idx]))
 
         self.copy_data_ext('BArea', field='ace', idx=self.BArea)
@@ -117,19 +112,20 @@ class AGC(ModelBase):
         dae.f[self.Pagc] = mul(self.Ki, dae.y[self.ace])
 
     def gcall(self, dae):
+        # Kgen and each item in `self.pm`, `self.usyn`, and `self.Pagc` is a list
+        #   Do not get rid of the `for` loop, since each of them is a matrix operation
         for idx, item in enumerate(self.syn):
             Kgen = div(self.M[idx], self.Mtot[idx])
-            dae.g[self.pm[idx]] -= mul(self.usyn[idx], Kgen,
-                                       dae.x[self.Pagc[idx]])
+            dae.g[self.pm[idx]] -= mul(self.usyn[idx], Kgen, dae.x[self.Pagc[idx]])
 
     def jac0(self, dae):
         dae.add_jac(Fy0, self.Ki, self.Pagc, self.ace)
 
     def gycall(self, dae):
+        # Do not get rid of the for loop; for each `idx` it is a matrix operation
         for idx, item in enumerate(self.syn):
             Kgen = div(self.M[idx], self.Mtot[idx])
-            dae.add_jac(Gx, -mul(self.usyn[idx], Kgen), self.pm[idx],
-                        self.Pagc[idx])
+            dae.add_jac(Gx, -mul(self.usyn[idx], Kgen), self.pm[idx], self.Pagc[idx])
 
 
 class eAGC(ModelBase):

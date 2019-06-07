@@ -46,6 +46,11 @@ class PFLOW(RoutineBase):
         -------
         None
         """
+
+        if self.solved and self.system.tds.initialized:
+            logger.error('TDS has been initialized. Cannot solve power flow again.')
+            return False
+
         logger.info('-> Power flow study: {} method, {} start'.format(
             self.config.method.upper(), 'flat' if self.config.flatstart else 'non-flat')
         )
@@ -71,6 +76,8 @@ class PFLOW(RoutineBase):
         t, s = elapsed(t)
         logger.debug('Power flow initialized in {:s}.'.format(s))
 
+        return True
+
     def run(self, **kwargs):
         """
         call the power flow solution routine
@@ -83,7 +90,9 @@ class PFLOW(RoutineBase):
         ret = None
 
         # initialization Y matrix and inital guess
-        self.pre()
+        if not self.pre():
+            return False
+
         t, _ = elapsed()
 
         # call solution methods
@@ -110,8 +119,8 @@ class PFLOW(RoutineBase):
 
         Returns
         -------
-        (bool, int)
-            success flag, number of iterations
+        bool
+            success flag
         """
         dae = self.system.dae
 
@@ -137,7 +146,7 @@ class PFLOW(RoutineBase):
                 logger.warning('Reached maximum number of iterations.')
                 break
 
-        return self.solved, self.niter
+        return self.solved
 
     def dcpf(self):
         """
@@ -145,7 +154,7 @@ class PFLOW(RoutineBase):
 
         Returns
         -------
-        (bool, int)
+        bool
             success flag, number of iterations
         """
         dae = self.system.dae
@@ -179,7 +188,7 @@ class PFLOW(RoutineBase):
         self.solved = True
         self.niter = 1
 
-        return self.solved, self.niter
+        return self.solved
 
     def _iter_info(self, niter, level=logging.INFO):
         """
@@ -336,8 +345,8 @@ class PFLOW(RoutineBase):
 
         Returns
         -------
-        bool, int
-            Success flag, number of iterations
+        bool
+            Success flag
         """
         system = self.system
 
@@ -414,4 +423,4 @@ class PFLOW(RoutineBase):
                 self.solved = False
                 break
 
-        return self.solved, self.niter
+        return self.solved
