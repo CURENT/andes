@@ -1,13 +1,12 @@
 """Wind power classes"""
-from numpy.random import weibull, uniform  # NOQA
-from numpy import arange, log
-
-from cvxopt import matrix, mul, spmatrix, div  # NOQA
-from .base import ModelBase
-
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
 from math import ceil
+
+from cvxopt import matrix, mul, div  # NOQA
+from numpy import arange, log
+from numpy.random import uniform  # NOQA
+
+from .base import ModelBase
+from ..consts import Fx0, Fy0, Gy0  # NOQA
 
 
 class WindBase(ModelBase):

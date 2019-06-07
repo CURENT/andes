@@ -1,12 +1,13 @@
 import os
-import andes
 import threading  # NOQA
 
-from andes.utils.math import to_number
 import flask
 from flask import Flask, request  # NOQA
-from flask_restful import Resource, Api  # NOQA
 from flask.json import jsonify  # NOQA
+from flask_restful import Api  # NOQA
+
+import andes
+from andes.utils.math import to_number
 
 app = Flask(__name__)
 api = Api(app)

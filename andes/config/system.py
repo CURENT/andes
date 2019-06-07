@@ -1,21 +1,23 @@
+import importlib
+import logging
+
 from . import ConfigBase
 from ..utils.cached import cached
-import logging
 
 logger = logging.getLogger(__name__)
 try:
-    from cvxoptklu import klu  # NOQA
-    KLU = True
+    klu = importlib.import_module('cvxoptklu.klu')
 except ImportError:
-    KLU = False
+    klu = None
 
 try:
-    import cupy as cp  # NOQA
-    from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
-    from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
-    CP = True
-except ImportError:
-    CP = False
+    cupy_sparse = importlib.import_module('cupyx.scipy.sparse')
+    cupy_solve = importlib.import_module('cupyx.scipy.sparse.linalg.solve')
+    cu_csc = getattr(cupy_sparse, 'csc_matrix')
+    cu_lsqr = getattr(cupy_solve, 'lsqr')
+except AttributeError:
+    cu_csc = None
+    cu_lsqr = None
 
 
 class System(ConfigBase):
@@ -68,11 +70,11 @@ class System(ConfigBase):
             logger.warning("Invalid sparse library <{}>".format(self.sparselib))
             self.sparselib = 'umfpack'
 
-        if self.sparselib == 'klu' and not KLU:
+        if self.sparselib == 'klu' and (klu is None):
             logger.info("KLU not found. Install with \"pip install cvxoptklu\" ")
             self.sparselib = 'umfpack'
 
-        elif self.sparselib == 'cupy' and not CP:
+        elif self.sparselib == 'cupy' and (any((cu_csc, cu_lsqr)) is None):
             logger.info("CuPy not found. Fall back to UMFPACK.")
             self.sparselib = 'umfpack'
 

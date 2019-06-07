@@ -1,16 +1,14 @@
+import importlib
+import logging
+
 from cvxopt import matrix, spmatrix, sparse, spdiag  # NOQA
 from cvxopt import mul, div  # NOQA
 
 from .base import ModelBase
-
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
-
-from ..utils.math import polar, conj
+from ..consts import Gy  # NOQA
 from ..consts import deg2rad
+from ..utils.math import polar, conj
 
-import logging
-import importlib
 logger = logging.getLogger(__name__)
 
 pd = None

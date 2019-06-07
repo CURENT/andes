@@ -1,5 +1,7 @@
-from .base import ModelBase
 import logging
+
+from .base import ModelBase
+
 logger = logging.getLogger(__name__)
 
 

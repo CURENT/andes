@@ -1,7 +1,9 @@
-from ..models import order, all_models
-from numpy import ndarray
-from cvxopt import matrix
 import logging
+
+from cvxopt import matrix
+from numpy import ndarray
+
+from ..models import order, all_models
 
 logger = logging.getLogger(__name__)
 

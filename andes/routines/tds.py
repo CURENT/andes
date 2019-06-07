@@ -1,17 +1,16 @@
-import logging
 import importlib
+import logging
 import sys
+from time import monotonic as time, sleep
+
 import numpy as np
+from cvxopt import matrix, sparse, spdiag
 
 from andes.config.tds import Tds
 from andes.utils import elapsed
 from andes.utils.math import zeros
 from andes.utils.solver import Solver
-
 from .base import RoutineBase
-
-from cvxopt import matrix, sparse, spdiag
-from time import monotonic as time, sleep
 
 logger = logging.getLogger(__name__)
 __cli__ = 'tds'

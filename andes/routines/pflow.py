@@ -1,9 +1,11 @@
 import logging
+
 from cvxopt import matrix, sparse, div
-from .base import RoutineBase
+
 from andes.config.pflow import Pflow
 from andes.utils import elapsed
 from andes.utils.solver import Solver
+from .base import RoutineBase
 
 logger = logging.getLogger(__name__)
 __cli__ = 'pflow'

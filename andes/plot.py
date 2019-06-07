@@ -20,14 +20,14 @@
 Andes plotting tool
 """
 
+import logging
 import os
 import re
 import sys
-import numpy as np
-
-import logging
 from argparse import ArgumentParser
 from distutils.spawn import find_executable
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -576,14 +576,15 @@ def tds_plot(name, args):
 
     nvars, delim = get_nvars(dat)
 
-    y = parse_y(args['y'], nvars, lower=0)
+    y = parse_y(args.pop('y', None), nvars, lower=0)
+    x = args.pop('x')
     try:
-        xval, yval = read_dat(dat, args['x'], y, delim=delim)
+        xval, yval = read_dat(dat, x, y, delim=delim)
     except IndexError:
         print('* Error: X or Y index out of bound')
         return
 
-    xl, yl = read_label(lst, args['x'], y)
+    xl, yl = read_label(lst, x, y)
 
     if args.pop('checkinit', False):
         check_init(yval, yl[0])
@@ -596,8 +597,6 @@ def tds_plot(name, args):
             new_yval.append([i * times for i in val])
         yval = new_yval
 
-    args.pop('x')
-    args.pop('y')
     do_plot(xval, yval, xl, yl, **args)
 
 

@@ -1,11 +1,11 @@
 """Synchronous generator classes"""
 
-from cvxopt import matrix, sparse, spmatrix  # NOQA
+from cvxopt import matrix, spmatrix  # NOQA
 from cvxopt import mul, div, log, sin, cos  # NOQA
-from .base import ModelBase
 
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
+from .base import ModelBase
 from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
 from ..consts import jpi2
 from ..utils.math import polar, conj, exp
 

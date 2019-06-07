@@ -1,8 +1,7 @@
+from cvxopt import matrix, uniform  # NOQA
+
 from .base import ModelBase
-from cvxopt import matrix, spmatrix, uniform  # NOQA
-from ..consts import *  # NOQA
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..consts import Gy  # NOQA
 
 
 class Bus(ModelBase):

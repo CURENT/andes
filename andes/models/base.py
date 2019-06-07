@@ -18,17 +18,16 @@
 Base class for building ANDES models
 """
 
-import sys
 import importlib
-import numpy as np
 import logging
+import sys
+from logging import DEBUG, INFO, WARNING, ERROR
 
-from cvxopt import matrix, spmatrix  # NOQA
+import numpy as np
+from cvxopt import matrix
 from cvxopt import mul, div
 
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL  # NOQA
-
-from ..utils.math import agtb, altb, index, zeros  # NOQA
+from ..utils.math import agtb, altb
 from ..utils.tab import Tab
 
 logger = logging.getLogger(__name__)

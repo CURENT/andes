@@ -2,10 +2,11 @@
 Parser for DOME RAW format 0.1
 From Book "Power System Modeling and Scripting" by Dr. Federico Milano
 """
-import re
-import os
-from math import ceil
 import logging
+import os
+import re
+from math import ceil
+
 logger = logging.getLogger(__name__)
 
 

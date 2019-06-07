@@ -2,12 +2,8 @@ from cvxopt import matrix, spmatrix
 from cvxopt import mul, div
 
 from .base import ModelBase
-from .measurement import BusFreq  # NOQA
-
-from ..utils.math import aeqb, sdiv
-
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..utils.math import aeqb, sdiv
 
 
 class PSS1(ModelBase):

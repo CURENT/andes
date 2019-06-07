@@ -1,8 +1,9 @@
-import numpy as np
+import logging
 import os
 import time
+
+import numpy as np
 from cvxopt import matrix
-import logging
 
 logger = logging.getLogger(__name__)
 

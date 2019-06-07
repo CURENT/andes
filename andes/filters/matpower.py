@@ -1,9 +1,10 @@
 """ Simple MATPOWER format parser
 """
+import logging
 import re
+
 from ..consts import deg2rad
 
-import logging
 logger = logging.getLogger(__name__)
 
 

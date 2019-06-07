@@ -1,10 +1,9 @@
+import numpy as np
 from cvxopt import matrix, mul, spmatrix
 from scipy.sparse import coo_matrix
-import numpy as np
 
 from .base import ModelBase
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..consts import Gy  # NOQA
 
 
 class Shunt(ModelBase):

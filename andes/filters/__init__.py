@@ -1,8 +1,8 @@
 import importlib
+import logging
 import os
 
 from ..utils import elapsed
-import logging
 
 logger = logging.getLogger(__name__)
 #

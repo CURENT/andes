@@ -1,5 +1,5 @@
-from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix
+from scipy.sparse.linalg import spsolve
 
 try:
     import cupy as cp

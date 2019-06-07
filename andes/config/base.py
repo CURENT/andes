@@ -1,8 +1,8 @@
 import configparser
+import logging
 
 from ..utils.cached import cached
 from ..utils.tab import Tab
-import logging
 
 logger = logging.getLogger(__name__)
 

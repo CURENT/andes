@@ -1,6 +1,6 @@
+import pprint
 import sys
 
-import pprint
 try:
     from sympy import Symbol, diff, sin, cos, exp, Integer  # NOQA
 except ImportError:

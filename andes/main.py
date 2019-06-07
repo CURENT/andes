@@ -24,14 +24,14 @@ import glob
 import io
 import logging
 import os
+import pathlib
 import platform
 import pprint
 import pstats
 import sys
-import pathlib
-
 from argparse import ArgumentParser
 from multiprocessing import Process
+from subprocess import call
 from time import sleep, strftime
 
 from andes import filters
@@ -39,7 +39,6 @@ from andes import routines
 from andes import utils
 from andes.system import PowerSystem
 from andes.utils import elapsed, misc
-from subprocess import call
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -120,7 +119,7 @@ def preamble():
         username = ''
 
     logger.info('Session: {}{}'.format(username,
-                strftime("%m/%d/%Y %I:%M:%S %p")))
+                                       strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('')
 
 
@@ -212,8 +211,8 @@ def cli_parser():
         '-v',
         '--verbose',
         help='Program logging level.'
-        'Available levels are 10-DEBUG, 20-INFO, 30-WARNING, '
-        '40-ERROR or 50-CRITICAL. The default level is 20-INFO',
+             'Available levels are 10-DEBUG, 20-INFO, 30-WARNING, '
+             '40-ERROR or 50-CRITICAL. The default level is 20-INFO',
         type=int, default=20, choices=(10, 20, 30, 40, 50))
     dev_group.add_argument(
         '--profile', action='store_true', help='Enable Python cProfiler')
@@ -715,7 +714,7 @@ def main(args=None):
             job = Process(
                 name='Process {0:d}'.format(idx),
                 target=run,
-                args=(file, ),
+                args=(file,),
                 kwargs=args)
             jobs.append(job)
             job.start()

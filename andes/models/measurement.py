@@ -1,10 +1,7 @@
-from cvxopt import matrix, sparse, spmatrix  # NOQA
-from cvxopt import mul, div, log, sin, cos  # NOQA
+from cvxopt import mul, div  # NOQA
+
 from .base import ModelBase
-
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
-
 from ..utils.math import zeros, ones
 
 

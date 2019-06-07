@@ -1,7 +1,9 @@
-from .base import ModelBase
-from cvxopt import spmatrix, spdiag, matrix
-from ..utils.math import zeros
 import logging
+
+from cvxopt import spmatrix, spdiag, matrix
+
+from .base import ModelBase
+from ..utils.math import zeros
 
 logger = logging.getLogger(__name__)
 

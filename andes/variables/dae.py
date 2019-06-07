@@ -1,10 +1,11 @@
-from cvxopt import matrix, spmatrix, sparse, spdiag
-from ..utils.math import zeros, ones
-from ..utils.math import ageb, aleb, aandb, agtb  # NOQA
-from ..utils.math import index, altb  # NOQA
-import numpy as np
 import logging
-import scipy.sparse as sps  # NOQA
+
+import numpy as np
+from cvxopt import matrix, spmatrix, sparse, spdiag
+
+from ..utils.math import ageb, aleb, aandb  # NOQA
+from ..utils.math import index  # NOQA
+from ..utils.math import zeros, ones
 
 logger = logging.getLogger(__name__)
 

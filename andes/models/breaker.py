@@ -1,9 +1,10 @@
-from cvxopt import matrix, spmatrix  # NOQA
-from cvxopt import mul, div, exp  # NOQA
-from ..consts import *  # NOQA
-from ..utils.math import neg
-from .base import ModelBase
 import logging
+
+from cvxopt import matrix  # NOQA
+from cvxopt import mul  # NOQA
+
+from .base import ModelBase
+from ..utils.math import neg
 
 logger = logging.getLogger(__name__)
 

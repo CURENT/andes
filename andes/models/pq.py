@@ -1,16 +1,12 @@
-from cvxopt import matrix, spdiag, spmatrix  # NOQA
-from cvxopt import mul, div, log, exp  # NOQA
-
-from scipy.sparse import coo_matrix
 import numpy as np
+from cvxopt import matrix  # NOQA
+from cvxopt import mul, div  # NOQA
+from scipy.sparse import coo_matrix
 
 from .base import ModelBase
-
-from ..utils.math import zeros, ones
+from ..consts import Gy  # NOQA
 from ..utils.math import altb, agtb, aorb, nota
-
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..utils.math import zeros, ones
 
 
 class PQ(ModelBase):

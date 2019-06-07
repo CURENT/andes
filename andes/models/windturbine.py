@@ -1,10 +1,10 @@
 from cvxopt import matrix, spmatrix, sparse
 from cvxopt import mul, div, sin, cos, exp
 
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
-from ..consts import pi
 from .base import ModelBase
+from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
+from ..consts import pi
 
 try:
     from cvxoptklu.klu import linsolve

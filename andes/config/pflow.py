@@ -1,6 +1,8 @@
+import logging
+
 from . import ConfigBase
 from ..utils.cached import cached
-import logging
+
 logger = logging.getLogger(__name__)
 
 

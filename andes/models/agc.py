@@ -1,9 +1,10 @@
-from cvxopt import matrix, spmatrix  # NOQA
-from cvxopt import mul, div, exp  # NOQA
-from andes.consts import Fx, Fy, Gx, Gy, Fx0, Fy0, Gx0, Gy0  # NOQA
-from .base import ModelBase
-from andes.utils.math import zeros
 import logging
+
+from cvxopt import mul, div
+
+from andes.consts import Gx, Fy0, Gy0
+from andes.utils.math import zeros
+from andes.models.base import ModelBase
 
 logger = logging.getLogger(__name__)
 

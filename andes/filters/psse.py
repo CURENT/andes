@@ -1,10 +1,10 @@
 """PSS/E file parser"""
 
+import logging
 import re
 
 from ..consts import deg2rad
 from ..utils.math import to_number
-import logging
 
 logger = logging.getLogger(__name__)
 

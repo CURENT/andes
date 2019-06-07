@@ -1,13 +1,13 @@
 import importlib
+import logging
 from time import strftime
 
 from cvxopt import mul
 
+from andes import __version__ as version
 from ..formats import all_formats
 from ..utils import elapsed
-from andes import __version__ as version
 
-import logging
 logger = logging.getLogger(__name__)
 
 

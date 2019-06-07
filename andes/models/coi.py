@@ -1,9 +1,7 @@
-from cvxopt import matrix, spmatrix  # NOQA
-from cvxopt import mul, div, exp  # NOQA
+from cvxopt import mul, div  # NOQA
 
 from .base import ModelBase
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
 
 
 class COI(ModelBase):

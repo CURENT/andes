@@ -1,10 +1,11 @@
-from cvxopt import matrix, mul, spmatrix, div, sin, cos
-from .dcbase import DCBase
-from ..utils.math import zeros, conj, polar
-
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
 import logging
+
+from cvxopt import matrix, mul, spmatrix, div, sin, cos
+
+from .dcbase import DCBase
+from ..consts import Fx, Fy, Gx, Gy  # NOQA
+from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
+from ..utils.math import zeros, conj, polar
 
 logger = logging.getLogger(__name__)
 

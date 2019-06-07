@@ -1,9 +1,10 @@
-from cvxopt import matrix, mul, spmatrix, div
-from .base import ModelBase
-from ..utils.math import zeros
-from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
-from ..consts import Fx, Fy, Gx, Gy  # NOQA
 import logging
+
+from cvxopt import matrix, mul, spmatrix, div
+
+from .base import ModelBase
+from ..consts import Gy  # NOQA
+from ..utils.math import zeros
 
 logger = logging.getLogger(__name__)
 

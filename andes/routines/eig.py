@@ -1,21 +1,17 @@
-import logging
 import importlib
-import scipy.sparse.linalg  # NOQA
-import numpy.linalg
-
+import logging
 from math import ceil
 
-from scipy.sparse import csr_matrix  # NOQA
-
+import numpy.linalg
 from cvxopt import matrix, spmatrix, mul, div
 from cvxopt.lapack import gesv
 
-from .base import RoutineBase
 from andes.config.eig import Eig
 from andes.consts import pi
 from andes.formats.txt import dump_data
-from andes.utils.solver import Solver
 from andes.utils import elapsed
+from andes.utils.solver import Solver
+from .base import RoutineBase
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'

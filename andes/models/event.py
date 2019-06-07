@@ -2,8 +2,9 @@
 Timed event base class
 """
 
-from .base import ModelBase
 from cvxopt import matrix
+
+from .base import ModelBase
 
 
 class EventBase(ModelBase):

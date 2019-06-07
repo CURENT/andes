@@ -1,5 +1,5 @@
-from time import time
 from decimal import Decimal, ROUND_DOWN
+from time import time
 
 
 def elapsed(t0=0.0):
