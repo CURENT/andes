@@ -15,7 +15,7 @@ try:
     cupy_solve = importlib.import_module('cupyx.scipy.sparse.linalg.solve')
     cu_csc = getattr(cupy_sparse, 'csc_matrix')
     cu_lsqr = getattr(cupy_solve, 'lsqr')
-except AttributeError:
+except ImportError:
     cu_csc = None
     cu_lsqr = None
 

@@ -52,10 +52,10 @@ class TDSData(object):
         # paths and file names
         self._path = path if path else os.getcwd()
 
-        file_name, _ = os.path.splitext(file_name_full)
+        self.file_name, _ = os.path.splitext(file_name_full)
 
-        self._dat_file = os.path.join(self._path, file_name + '.dat')
-        self._lst_file = os.path.join(self._path, file_name + '.lst')
+        self._dat_file = os.path.join(self._path, self.file_name + '.dat')
+        self._lst_file = os.path.join(self._path, self.file_name + '.lst')
 
         # data members for raw data
         self._idx = []  # indices of variables
@@ -73,7 +73,12 @@ class TDSData(object):
 
     def load_lst(self):
         """
-        Load the lst file into internal data structures
+        Load the lst file into internal data structures `_idx`, `_fname`, `_uname`, and counts the number of
+        variables to `nvars`
+
+        Returns
+        -------
+        None
 
         """
         with open(self._lst_file, 'r') as fd:
@@ -96,9 +101,20 @@ class TDSData(object):
         self._uname = uname
         self.nvars = len(uname)
 
-    def find_var(self, query, formatted=False):
+    def find_var_idx(self, query, formatted=False):
         """
-        Return variable names and indices matching ``query``
+        Return variable names and indices matching `query`
+
+        Parameters
+        ----------
+        query : str
+            The string for querying variables
+        formatted : bool
+            True to return formatted names, False otherwise
+
+        Returns
+        (list, list)
+            (List of found indices, list of found names)
         """
 
         # load the variable list to search in
@@ -115,7 +131,16 @@ class TDSData(object):
 
     def load_dat(self, delimiter=','):
         """
-        Load the dat file into internal data structures, ``self._data``
+        Load the dat file into internal data structures `self._data`
+
+        Parameters
+        ----------
+        delimiter : str, optional
+            The delimiter for the case file. Default to comma.
+
+        Returns
+        -------
+        None
         """
         try:
             data = np.loadtxt(self._dat_file, delimiter=',')
@@ -127,13 +152,39 @@ class TDSData(object):
     def get_values(self, idx):
         """
         Return the variable values at the given indices
+
+        Parameters
+        ----------
+        idx : list
+            The indicex of the variables to retrieve. `idx=0` is for Time. Variable indices start at 1.
+
+        Returns
+        -------
+        np.ndarray
+            Variable data
         """
         return self._data[:, idx]
 
     def get_header(self, idx, formatted=False):
         """
         Return a list of the variable names at the given indices
+
+        Parameters
+        ----------
+        idx : list or int
+            The indices of the variables to retrieve
+        formatted : bool
+            True to retrieve latex-formatted names, False for unformatted names
+
+        Returns
+        -------
+        list
+            A list of variable names (headers)
+
         """
+
+        if isinstance(idx, int):
+            idx = [idx]
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
 
@@ -173,26 +224,42 @@ class TDSData(object):
             fd.write(','.join(header) + '\n')
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
-    def plot(self, xidx, yidx, xname=None, yname=None, xlabel=None, ylabel=None,
-             left=None, right=None, ytimes=1, yoffset=0,
-             legend=True, grid=False, fig=None, ax=None,
-             latex=True, dpi=200, save=None, exit=False
-             ):
-        # TODO: split this function into multiple so that manipulated data
-        # can be used
-        pass
-
-    def _data_calc(self):
+    def plot(self, xidx, yidx, y_calc=None, left=None, right=None, ymin=None, ymax=None,
+             xlabel=None, ylabel=None, legend=True, grid=False,
+             latex=True, dpi=200, save=None, show=True, **kwargs):
         """
-        Manipulate the data such as adding, multiplying, differencing,
-        and calculating rate of change
-        """
-        # TODO: split this function into multiple
-        pass
+        Entery function for plot scripting. This function retrieves the x and y values based
+        on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
 
-    def _check_latex(self):
-        """Check if latex is available"""
-        pass
+        Refer to `plot_data()` for the definition of arguments.
+
+        Parameters
+        ----------
+        xidx : list or int
+            The index for the x-axis variable
+
+        yidx : list or int
+            The indices for the y-axis variables
+
+        Returns
+        -------
+        (fig, ax)
+            Figure and axis handles
+        """
+        x_value = self.get_values(xidx)
+        y_value = self.get_values(yidx)
+
+        x_header = self.get_header(xidx, formatted=latex)
+        y_header = self.get_header(yidx, formatted=latex)
+
+        # `y_calc` is a callback function for manipulating data
+        if y_calc is not None:
+            y_value = y_calc(y_value)
+
+        return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
+                              left=left, right=right, ymin=ymin, ymax=ymax,
+                              xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
+                              latex=latex, dpi=dpi, save=save, show=show, **kwargs)
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
@@ -204,38 +271,188 @@ class TDSData(object):
         """
         pass
 
+    def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
+                  left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
+                  latex=True, dpi=150, greyscale=False, save=None, show=True, **kwargs):
+        """
+        Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
+        you provide variable indices instead of values, use `plot()`.
 
-def cli_parse():
-    """command line input parser"""
-    parser = ArgumentParser(prog='andesplot')
+        Parameters
+        ----------
+        xdata : array-like
+            An array-like object containing the values for the x-axis variable
+
+        ydata : array
+            An array containing the values of each variables for the y-axis variable. The row
+            of `ydata` must match the row of `xdata`. Each column correspondings to a variable.
+
+        xheader : list
+            A list containing the variable names for the x-axis variable
+
+        yheader : list
+            A list containing the variable names for the y-axis variable
+
+        xlabel : str
+            A label for the x axis
+
+        ylabel : str
+            A label for the y axis
+
+        left : float
+            The starting value of the x axis
+
+        right : float
+            The ending value of the x axis
+
+        ymin : float
+            The minimum value of the y axis
+        ymax : float
+            The maximum value of the y axis
+
+        legend : bool
+            True to show legend and False otherwise
+        grid : bool
+            True to show grid and False otherwise
+        fig
+            Matplotlib fig object to draw the axis on
+        ax
+            Matplotlib axis object to draw the lines on
+        latex : bool
+            True to enable latex and False to disable
+
+        dpi : int
+            Dots per inch for the screen print (interactive). DPI is set to 1200 for saved figures.
+        greyscale : bool
+            True to use greyscale, False otherwise
+        save : bool
+            True to save to png file
+        show : bool
+            True to show the image
+
+        kwargs
+            Optional kwargs
+
+        Returns
+        -------
+        (fig, ax)
+            The figure and axis handles
+        """
+
+        if not isinstance(ydata, np.ndarray):
+            TypeError("ydata must be numpy array. Retrieve with get_values().")
+
+        if ydata.ndim == 1:
+            ydata = ydata.reshape((-1, 1))
+
+        n_lines = ydata.shape[1]
+
+        rc('font', family='Arial', size=12)
+
+        using_latex = set_latex(latex)
+
+        # set default x min based on simulation time
+        if not left:
+            left = xdata[0] - 1e-6
+        if not right:
+            right = xdata[-1] + 1e-6
+
+        linestyles = ['-', '--', '-.', ':'] * len(ydata)
+
+        if not (fig and ax):
+            fig = plt.figure(dpi=dpi)
+            ax = plt.gca()
+
+        for i in range(n_lines):
+            ax.plot(xdata, ydata[:, i],
+                    ls=linestyles[i],
+                    label=(yheader[i] if yheader else None),
+                    linewidth=1,
+                    )
+
+        # for line, label in zip(line_objects, yheader):
+        #     plt.legend(line, label)
+
+        if xlabel:
+            if using_latex:
+                ax.set_xlabel(label_texify(xlabel))
+        else:
+            ax.set_xlabel(xheader[0])
+
+        if ylabel:
+            if using_latex:
+                ax.set_ylabel(label_texify(ylabel))
+            else:
+                ax.set_ylabel(ylabel)
+
+        ax.ticklabel_format(useOffset=False)
+
+        ax.set_xlim(left=left, right=right)
+        ax.set_ylim(ymin=ymin, ymax=ymax)
+
+        if grid:
+            ax.grid(b=True, linestyle='--')
+
+        if legend:
+            if yheader:
+                ax.legend()
+
+        plt.draw()
+
+        if save:
+            count = 1
+            cwd = os.getcwd()
+            for file in os.listdir(cwd):
+                if file.startswith(self.file_name) and file.endswith('.png'):
+                    count += 1
+
+            outfile = self.file_name + '_' + str(count) + '.png'
+
+            try:
+                fig.savefig(outfile, dpi=1200)
+                logger.info('Figure saved to file {}'.format(outfile))
+            except IOError:
+                logger.info('* Error occurred. Try disabling LaTex with "-d".')
+                return
+
+        if show:
+            plt.show()
+
+        return fig, ax
+
+
+def tdsplot_parse():
+    """
+    command line input parser for tdsplot
+
+    Returns
+    -------
+    dict
+        A dict of the command line arguments
+    """
+    parser = ArgumentParser(prog='tdsplot')
     parser.add_argument('datfile', nargs=1, default=[], help='dat file name.')
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
-    parser.add_argument('--xmax', type=float, help='x axis maximum value')
+    parser.add_argument('--xmin', type=float, help='x axis minimum value', dest='left')
+    parser.add_argument('--xmax', type=float, help='x axis maximum value', dest='right')
     parser.add_argument('--ymax', type=float, help='y axis maximum value')
     parser.add_argument('--ymin', type=float, help='y axis minimum value')
-    parser.add_argument('--xmin', type=float, help='x axis minimum value')
-    parser.add_argument(
-        '--checkinit', action='store_true', help='check initialization value')
-    parser.add_argument(
-        '-x', '--xlabel', type=str, help='manual set x-axis text label')
+
+    parser.add_argument('--checkinit', action='store_true', help='check initialization value')
+
+    parser.add_argument('-x', '--xlabel', type=str, help='manual x-axis text label')
     parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
-    parser.add_argument(
-        '-s', '--save', action='store_true', help='save to file')
+
+    parser.add_argument('-s', '--save', action='store_true', help='save to file')
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
-    parser.add_argument(
-        '-d',
-        '--no_latex',
-        action='store_true',
-        help='disable LaTex formatting')
-    parser.add_argument(
-        '-u',
-        '--unattended',
-        action='store_true',
-        help='do not show the plot window')
+    parser.add_argument('-d', '--no_latex', action='store_false', dest='latex', help='disable LaTex formatting')
+
+    parser.add_argument('-n', '--no_show', action='store_false', dest='show', help='do not show the plot window')
+
     parser.add_argument('--ytimes', type=str, help='y times')
-    parser.add_argument(
-        '--dpi', type=int, help='image resolution in dot per inch (DPI)')
+    parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
+
     args = parser.parse_args()
     return vars(args)
 
@@ -307,204 +524,6 @@ def parse_y(y, upper, lower=0):
         return list(y)
 
 
-def get_nvars(dat):
-    try:
-        with open(dat, 'r') as f:
-            line1 = f.readline()
-
-        delim = ',' if ',' in line1 else ' '
-        line1 = line1.strip().split(delim)
-        return len(line1), delim
-    except IOError:
-        print('* Error while opening the dat file')
-
-
-def read_dat(dat, x, y, delim=','):
-    global dfile
-    errid = 0
-    xv = []
-    yv = [list() for _ in range(len(y))]
-
-    try:
-        dfile = open(dat)
-        dfile_raw = dfile.readlines()
-        dfile.close()
-    except IOError:
-        print('* Error while opening the dat file')
-        return None, None
-
-    for _, line in enumerate(dfile_raw):
-        thisline = line.rstrip('\n').split(delim)
-        if not (x[0] <= len(thisline) and max(y) <= len(thisline)):
-            errid = 1
-            break
-
-        xv.append(float(thisline[x[0]]))
-
-        for idx, item in enumerate(y):
-            yv[idx].append(float(thisline[item]))
-
-    if errid:
-        raise IndexError('x or y index out of bound')
-
-    return xv, yv
-
-
-def read_label(lst, x, y):
-    global lfile
-    xl = [list() for _ in range(2)]
-    yl = [list() for _ in range(2)]
-    yl[0] = [''] * len(y)
-    yl[1] = [''] * len(y)
-
-    xy = list(x)
-    xy.extend(y)
-
-    try:
-        lfile = open(lst)
-        lfile_raw = lfile.readlines()
-        lfile.close()
-    except IOError:
-        print('* Error while opening the lst file')
-        return None, None
-
-    xidx = sorted(range(len(xy)), key=lambda i: xy[i])
-    xsorted = sorted(xy)
-    at = 0
-
-    for line in lfile_raw:
-        thisline = line.rstrip('\n').split(',')
-        thisline = [item.lstrip() for item in thisline]
-        if not isfloat(thisline[0].strip()):
-            continue
-
-        varid = int(thisline[0])
-        if varid == xsorted[at]:
-            if xsorted[at] == xy[0]:
-                xl[0] = thisline[1]
-                xl[1] = thisline[2].strip('#')
-            else:
-                yl[0][xidx[at] - 1] = thisline[1]
-                yl[1][xidx[at] - 1] = thisline[2].strip('#')
-            at += 1
-
-        if at >= len(xy):
-            break
-
-    return xl, yl
-
-
-def do_plot(xdata,
-            ydata,
-            xname=None,
-            yname=None,
-            fig=None,
-            ax=None,
-            dpi=200,
-            xmin=None,
-            xmax=None,
-            ymin=None,
-            ymax=None,
-            xlabel=None,
-            ylabel=None,
-            no_latex=False,
-            legend=True,
-            grid=False,
-            save=False,
-            unattended=False,
-            datfile='',
-            noshow=False,
-            **kwargs):
-
-    # set styles and LaTex
-    rc('font', family='Arial', size=12)
-    linestyles = ['-', '--', '-.', ':'] * len(ydata)
-    if not no_latex and find_executable('dvipng'):
-        # use LaTex
-        LATEX = True
-        rc('text', usetex=True)
-    else:
-        LATEX = False
-        rc('text', usetex=False)
-
-    # get variable names from lst
-    def get_lst_name(lst, LATEX):
-        idx = 1 if LATEX else 0
-        if lst is not None:
-            return lst[idx]
-        else:
-            return None
-
-    xl_data = get_lst_name(xname, LATEX)
-    yl_data = get_lst_name(yname, LATEX)
-
-    # set default x min based on simulation time
-    if not xmin:
-        xmin = xdata[0] - 1e-6
-    if not xmax:
-        xmax = xdata[-1] + 1e-6
-
-    if not (fig and ax):
-        fig = plt.figure(dpi=dpi)
-        ax = plt.gca()
-
-    for idx in range(len(ydata)):
-        yl_data_idx = yl_data[idx] if yl_data else None
-        ax.plot(xdata, ydata[idx], label=yl_data_idx, ls=linestyles[idx])
-
-    if not xlabel:
-        if xl_data is not None:
-            ax.set_xlabel(xl_data)
-    else:
-        if LATEX:
-            xlabel = '$' + xlabel.replace(' ', '\\ ') + '$'
-        ax.set_xlabel(xlabel)
-
-    if ylabel:
-        if LATEX:
-            ylabel = '$' + ylabel.replace(' ', '\\ ') + '$'
-        ax.set_ylabel(ylabel)
-
-    ax.ticklabel_format(useOffset=False)
-
-    ax.set_xlim(left=xmin, right=xmax)
-    ax.set_ylim(ymin=ymin, ymax=ymax)
-
-    if grid:
-        ax.grid(b=True, linestyle='--')
-    if legend and yl_data:
-        legend = ax.legend(loc='upper right')
-
-    plt.draw()
-
-    # output to file
-
-    if save or unattended:
-        name, _ = os.path.splitext(datfile[0])
-        count = 1
-        cwd = os.getcwd()
-        for file in os.listdir(cwd):
-            if file.startswith(name) and file.endswith('.png'):
-                count += 1
-
-        outfile = name + '_' + str(count) + '.png'
-
-        try:
-            fig.savefig(outfile, dpi=1200)
-            print('Figure saved to file {}'.format(outfile))
-        except IOError:
-            print('* Error occurred. Try disabling LaTex with "-d".')
-            return
-
-    if unattended:
-        noshow = True
-
-    if not noshow:
-        plt.show()
-
-    return fig, ax
-
-
 def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
     """Add plots to an existing plot"""
     if LATEX:
@@ -519,32 +538,6 @@ def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
 
     ax.legend(loc='upper right')
     ax.set_ylim(auto=True)
-
-
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-
-def isint(value):
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
-
-
-def main(cli=True, **args):
-    if cli:
-        args = cli_parse()
-    name, _ = os.path.splitext(args['datfile'][0])
-    if 'out' in name:
-        tds_plot(name, args)
-    elif 'eig' in name:
-        eig_plot(name, args)
 
 
 def eig_plot(name, args):
@@ -570,34 +563,52 @@ def eig_plot(name, args):
         pass
 
 
-def tds_plot(name, args):
-    dat = os.path.join(os.getcwd(), name + '.dat')
-    lst = os.path.join(os.getcwd(), name + '.lst')
+def tdsplot(datfile, y, x=(0,), **kwargs):
+    """
+    TDS plot main function based on the new TDSData class
 
-    nvars, delim = get_nvars(dat)
+    Parameters
+    ----------
+    datfile : str
+        Path to the andes tds output data file (.dat or .lst file)
+    x : list or int, optional
+        The index for the x-axis variable. x=0 by default for time
+    y : list or int
+        The indices for the y-axis variable
 
-    y = parse_y(args.pop('y', None), nvars, lower=0)
-    x = args.pop('x')
-    try:
-        xval, yval = read_dat(dat, x, y, delim=delim)
-    except IndexError:
-        print('* Error: X or Y index out of bound')
-        return
+    Returns
+    -------
+    TDSData object
+    """
 
-    xl, yl = read_label(lst, x, y)
+    ytimes = kwargs.pop('ytimes', 1)
 
-    if args.pop('checkinit', False):
-        check_init(yval, yl[0])
-        return
-    ytimes = args.pop('ytimes', False)
-    if ytimes:
-        times = float(ytimes)
-        new_yval = []
-        for val in yval:
-            new_yval.append([i * times for i in val])
-        yval = new_yval
+    if ytimes is not None and (ytimes != 1):
+        y_scale_func = scale_func(ytimes)
+    else:
+        y_scale_func = None
 
-    do_plot(xval, yval, xl, yl, **args)
+    # single data file
+    if len(datfile) == 1:
+        tds_data = TDSData(datfile[0])
+        y_num = parse_y(y, lower=0, upper=tds_data.nvars)
+        tds_data.plot(xidx=x, yidx=y_num, y_calc=y_scale_func, **kwargs)
+        return tds_data
+    else:
+        raise NotImplementedError("Plotting multiple data files are not supported yet")
+
+
+def tdsplot_main():
+    """
+    Entry function for tds plot. Parses command line arguments and calls `tdsplog`
+
+    Returns
+    -------
+    None
+
+    """
+    args = tdsplot_parse()
+    tdsplot(**args)
 
 
 def check_init(yval, yl):
@@ -607,10 +618,90 @@ def check_init(yval, yl):
         if abs(var[0] - var[-1]) >= 1e-6:
             suspect.append(label)
     if suspect:
-        print('Initialization failure:')
-        print(', '.join(suspect))
+        logger.error('Initialization failure:')
+        logger.error(', '.join(suspect))
     else:
-        print('Initialization is correct.')
+        logger.error('Initialization is correct.')
+
+
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
+def isint(value):
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False
+
+
+def scale_func(k):
+    """
+    Return a lambda function that scales its input by k
+
+    Parameters
+    ----------
+    k : float
+        The scaling factor of the returned lambda function
+    Returns
+    -------
+    Lambda function
+
+    """
+    return lambda y_values_input: k * y_values_input
+
+
+def label_texify(label):
+    """
+    Convert a label to latex format by appending surrounding $ and escaping spaces
+
+    Parameters
+    ----------
+    label : str
+        The label string to be converted to latex expression
+
+    Returns
+    -------
+    str
+        A string with $ surrounding
+    """
+    return '$' + label.replace(' ', r'\ ') + '$'
+
+
+def set_latex(with_latex=True):
+    """
+    Enables latex for matplotlib based on the `with_latex` option and `dvipng` availability
+
+    Parameters
+    ----------
+    with_latex : bool, optional
+        True for latex on and False for off
+
+    Returns
+    -------
+    bool
+        True for latex on and False for off
+    """
+
+    has_dvipng = find_executable('dvipng')
+
+    if has_dvipng and with_latex:
+        rc('text', usetex=True)
+        return True
+    else:
+        rc('text', usetex=False)
+        return False
+
+
+def main(cli=True, **args):
+    logger.warning('andesplot is deprecated and will be remove in future versions. '
+                   'Use "tdsplot" for TDS data or "eigplot" for EIG data.')
+    tdsplot_main()
 
 
 if __name__ == "__main__":

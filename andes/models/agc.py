@@ -3,8 +3,8 @@ import logging
 from cvxopt import mul, div
 
 from andes.consts import Gx, Fy0, Gy0
-from andes.utils.math import zeros
 from andes.models.base import ModelBase
+from andes.utils.math import zeros
 
 logger = logging.getLogger(__name__)
 
