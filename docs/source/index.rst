@@ -26,9 +26,9 @@ analysis for transmission networks. ANDES is currently under active development.
 
 .. toctree::
    :caption: ANDES Package References
-   :maxdepth: 1
+   :maxdepth: 2
 
-   andes.rst
+   modules.rst
 
 
 Indices and tables

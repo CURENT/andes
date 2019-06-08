@@ -113,6 +113,7 @@ class TDSData(object):
             True to return formatted names, False otherwise
 
         Returns
+        -------
         (list, list)
             (List of found indices, list of found names)
         """

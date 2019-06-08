@@ -44,6 +44,14 @@ andes.utils.solver module
     :undoc-members:
     :show-inheritance:
 
+andes.utils.stock\_case module
+------------------------------
+
+.. automodule:: andes.utils.stock_case
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 andes.utils.tab module
 ----------------------
 

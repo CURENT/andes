@@ -28,14 +28,6 @@ andes.models.base module
     :undoc-members:
     :show-inheritance:
 
-andes.models.blocks module
---------------------------
-
-.. automodule:: andes.models.blocks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 andes.models.breaker module
 ---------------------------
 
@@ -168,14 +160,6 @@ andes.models.synchronous module
 -------------------------------
 
 .. automodule:: andes.models.synchronous
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-andes.models.template module
-----------------------------
-
-.. automodule:: andes.models.template
     :members:
     :undoc-members:
     :show-inheritance:
