@@ -110,10 +110,10 @@ def read(file, system):
     sw = {}  # idx:a0
     max_bus = []
     for data in raw['bus']:
-        """version 32:
-          0,   1,      2,     3,    4,   5,  6,   7,  8
-          ID, NAME, BasekV, Type, Area Zone Owner Vm, Va
-        """
+        # version 32:
+        #   0,   1,      2,     3,    4,   5,  6,   7,  8
+        #   ID, NAME, BasekV, Type, Area Zone Owner Vm, Va
+        #
         idx = data[0]
         max_bus.append(idx)
         ty = data[3]
@@ -134,10 +134,10 @@ def read(file, system):
         system.Bus.elem_add(**param)
     max_bus = max(max_bus)
     for data in raw['load']:
-        """version 32:
-          0,  1,      2,    3,    4,    5,    6,      7,   8,  9, 10,   11
-        Bus, Id, Status, Area, Zone, PL(MW), QL (MW), IP, IQ, YP, YQ, OWNER
-        """
+        # version 32:
+        #  0,  1,      2,    3,    4,    5,    6,      7,   8,  9, 10,   11
+        # Bus, Id, Status, Area, Zone, PL(MW), QL (MW), IP, IQ, YP, YQ, OWNER
+        #
         bus = data[0]
         vn = system.Bus.get_field('Vn', bus)
         voltage = system.Bus.get_field('voltage', bus)
@@ -152,10 +152,10 @@ def read(file, system):
         system.PQ.elem_add(**param)
 
     for data in raw['fshunt']:
-        """
-        0,    1,      2,      3,      4
-        Bus, name, Status, g (MW), b (Mvar)
-        """
+        #
+        # 0,    1,      2,      3,      4
+        # Bus, name, Status, g (MW), b (Mvar)
+        #
         bus = data[0]
         vn = system.Bus.get_field('Vn', bus)
         param = {
@@ -170,10 +170,10 @@ def read(file, system):
 
     gen_idx = 0
     for data in raw['gen']:
-        """
-         0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
-         I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
-        """
+        #
+        #  0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
+        #  I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
+        #
         bus = data[0]
         vn = system.Bus.get_field('Vn', bus)
         gen_mva = data[8]  # unused yet
@@ -204,9 +204,9 @@ def read(file, system):
             system.PV.elem_add(**param)
 
     for data in raw['branch']:
-        """
-        I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...,O4,F4
-        """
+        #
+        # I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...,O4,F4
+        #
         param = {
             'bus1': data[0],
             'bus2': data[1],
@@ -222,12 +222,12 @@ def read(file, system):
     xf_3_count = 1
     for data in raw['transf']:
         if len(data) == 4:
-            """
-            I,J,K,CKT,CW,CZ,CM,MAG1,MAG2,NMETR,'NAME',STAT,O1,F1,...,O4,F4
-            R1-2,X1-2,SBASE1-2
-            WINDV1,NOMV1,ANG1,RATA1,RATB1,RATC1,COD1,CONT1,RMA1,RMI1,VMA1,VMI1,NTP1,TAB1,CR1,CX1
-            WINDV2,NOMV2
-            """
+            # """
+            # I,J,K,CKT,CW,CZ,CM,MAG1,MAG2,NMETR,'NAME',STAT,O1,F1,...,O4,F4
+            # R1-2,X1-2,SBASE1-2
+            # WINDV1,NOMV1,ANG1,RATA1,RATB1,RATC1,COD1,CONT1,RMA1,RMI1,VMA1,VMI1,NTP1,TAB1,CR1,CX1
+            # WINDV2,NOMV2
+            # """
 
             tap = data[2][0]
             phi = data[2][2]
@@ -252,13 +252,13 @@ def read(file, system):
             }
             system.Line.elem_add(**param)
         else:
-            """
-            I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
-            R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
-            WINDV1, NOMV1, ANG1, RATA1, BATB1, RATC1, COD1, CONT1, RMA1, RMI1, VMA1, VMI1, NTP1, TAB1, CR1, CX1
-            WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
-            WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
-            """
+            # """
+            # I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
+            # R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
+            # WINDV1, NOMV1, ANG1, RATA1, BATB1, RATC1, COD1, CONT1, RMA1, RMI1, VMA1, VMI1, NTP1, TAB1, CR1, CX1
+            # WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
+            # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
+            # """
             param = {
                 'idx': max_bus+xf_3_count,
                 'name': '_'.join(str(data[0][:3])),
@@ -309,7 +309,7 @@ def read(file, system):
         system.Shunt.elem_add(**param)
 
     for data in raw['area']:
-        """ID, ISW, PDES, PTOL, ARNAME"""
+        # ID, ISW, PDES, PTOL, ARNAME
         param = {
             'idx': data[0],
             'isw': data[1],
@@ -320,7 +320,7 @@ def read(file, system):
         system.Area.elem_add(**param)
 
     for data in raw['zone']:
-        """ID, NAME"""
+        # """ID, NAME"""
         param = {
             'idx': data[0],
             'name': data[1],

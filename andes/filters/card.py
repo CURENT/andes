@@ -379,10 +379,10 @@ def run(system,
     for item in diff_eq:
         expr = eval('{}'.format(item))
         sym_f.append(expr)
-    """
-    Derive the jacobians of equation f and g.
-    Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]
-    """
+    #
+    # Derive the jacobians of equation f and g.
+    # Save to Fx, Fy and Gx Gy in a list of three elements: [equation_idx, var_idx, expression]
+    #
     Fx, Fy, Gx, Gy = list(), list(), list(), list()
     for eq_idx, expr in enumerate(sym_g):
         try:

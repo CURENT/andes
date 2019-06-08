@@ -222,7 +222,7 @@ def cli_parser():
         '--show-data', type=str, help='Show model data converted to system base', nargs='*'
     )
     dev_group.add_argument(
-        '-x', '--exit', help='Exit before running routine', action='store_true'
+        '-x', '--exit', help='Exit before running routine', action='store_true', dest='exit_now'
     )
 
     return parser
@@ -742,7 +742,7 @@ def main(args=None):
     return
 
 
-def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False, **kwargs):
+def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit_now=False, **kwargs):
     """
     Entry function to run a single case study. This function executes the
     following workflow:
@@ -807,11 +807,13 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
             show_data = sorted(system.devman.devices)
 
         for mdl in show_data:
+            if system.__dict__[mdl].n == 0:
+                continue
             logger.info('Model <{}> data in system base'.format(mdl))
             logger.info(system.__dict__[mdl].data_to_df(sysbase=True).to_string())
         logger.info('')
 
-    if routine is None or exit is True:
+    if routine is None or exit_now is True:
         logger.info('No routine provided. Set argument `routine` to continue')
     else:
         if isinstance(routine, str):
@@ -858,12 +860,13 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
     return system
 
 
-def run_stock(rpath, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit=False, **kwargs):
+def run_stock(rpath, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit_now=False,
+              **kwargs):
     """Run a stock case distributed with andes"""
     case_path = utils.stock_case.get_stock_case(rpath)
 
     return run(case_path, routine=routine, profile=profile, dump_raw=dump_raw, pid=pid,
-               show_data=show_data, exit=exit, **kwargs)
+               show_data=show_data, exit_now=exit_now, **kwargs)
 
 
 if __name__ == '__main__':

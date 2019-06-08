@@ -112,9 +112,9 @@ def read(file, system, header=True):
             elif value.startswith('['):
                 array = value[1:-1].split(';')
                 if math.search(value):  # execute simple operations
-                    value = list(map(lambda x: eval(x), array))
+                    value = list(map(eval, array))
                 else:
-                    value = list(map(lambda x: float(x), array))
+                    value = list(map(float, array))
             elif double.search(value):
                 if math.search(value):  # execute simple operations
                     value = eval(value)

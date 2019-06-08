@@ -90,15 +90,15 @@ class DevMan(object):
     def get_param(self, group, param, fkey):
         ret = []
         ret_list = False
-        if type(fkey) == matrix:
+        if isinstance(fkey, matrix):
             fkey = list(fkey)
-        elif type(fkey) == ndarray:
+        elif isinstance(fkey, ndarray):
             fkey = fkey.tolist()
 
         for key, item in self.group.items():
             if key != group:
                 continue
-            if type(fkey) != list:
+            if not isinstance(fkey, list):
                 fkey = [fkey]
             else:
                 ret_list = True
