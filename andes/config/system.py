@@ -10,15 +10,6 @@ try:
 except ImportError:
     klu = None
 
-try:
-    cupy_sparse = importlib.import_module('cupyx.scipy.sparse')
-    cupy_solve = importlib.import_module('cupyx.scipy.sparse.linalg.solve')
-    cu_csc = getattr(cupy_sparse, 'csc_matrix')
-    cu_lsqr = getattr(cupy_solve, 'lsqr')
-except ImportError:
-    cu_csc = None
-    cu_lsqr = None
-
 
 class System(ConfigBase):
     def __init__(self, **kwargs):
@@ -74,8 +65,14 @@ class System(ConfigBase):
             logger.info("KLU not found. Install with \"pip install cvxoptklu\" ")
             self.sparselib = 'umfpack'
 
-        elif self.sparselib == 'cupy' and (any((cu_csc, cu_lsqr)) is None):
-            logger.info("CuPy not found. Fall back to UMFPACK.")
-            self.sparselib = 'umfpack'
+        elif self.sparselib == 'cupy':
+            try:
+                cupy_sparse = importlib.import_module('cupyx.scipy.sparse')
+                cupy_solve = importlib.import_module('cupyx.scipy.sparse.linalg.solve')
+                _ = getattr(cupy_sparse, 'csc_matrix')  # NOQA
+                _ = getattr(cupy_solve, 'lsqr')  # NOQA
+            except (ImportError, AttributeError):
+                logger.info("CuPy not found. Fall back to UMFPACK.")
+                self.sparselib = 'umfpack'
 
         return True

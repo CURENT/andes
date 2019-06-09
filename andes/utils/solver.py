@@ -1,12 +1,6 @@
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
 
-try:
-    import cupy as cp
-    from cupyx.scipy.sparse import csc_matrix as csc_cu
-    from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr
-except ImportError:
-    CP = False
 
 from cvxopt import umfpack, matrix
 
@@ -146,6 +140,11 @@ class Solver(object):
                 return matrix(x)
 
             elif self.sparselib == 'cupy':
+                # delayed import for startup speed
+                import cupy as cp  # NOQA
+                from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
+                from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
+
                 cu_A = csc_cu(A)
                 cu_b = cp.array(np.array(b).reshape((-1,)))
                 x = cu_lsqr(cu_A, cu_b)
