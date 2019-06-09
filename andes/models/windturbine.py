@@ -859,10 +859,10 @@ class WTG3(ModelBase):
                 -rr[i], -1, vsd[i], vsq[i], -xmu[i] * Vc[i] / x1[i]
             ]
             jac0 = spmatrix(vals, rows, cols, (6, 6), 'd')
-            iter = 0
+            niter = 0
 
             while max(abs(mis)) > self.system.tds.config.tol:
-                if iter > 20:
+                if niter > 20:
                     logger.error(
                         'Initialization of DFIG <{}> failed.'.format(
                             self.name[i]))
@@ -892,7 +892,7 @@ class WTG3(ModelBase):
                 linsolve(jac, mis)
 
                 x -= mis
-                iter += 1
+                niter += 1
 
             isd[i] = x[0]
             isq[i] = x[1]
@@ -945,9 +945,9 @@ class WTG3(ModelBase):
 
         for i in range(self.n):
             mis = 1
-            iter = 0
+            niter = 0
             while abs(mis) > self.system.tds.config.tol:
-                if iter > 50:
+                if niter > 50:
                     logger.error(
                         'Wind <{}> init failed. '
                         'Try increasing the nominal wind speed.'.
@@ -961,7 +961,7 @@ class WTG3(ModelBase):
                 mis = pw_iter - pw[i]
                 inc = -mis / jac[1]
                 vw[i] += inc
-                iter += 1
+                niter += 1
 
         # set wind speed
         dae.x[self.vw] = div(vw, self.Vwn)

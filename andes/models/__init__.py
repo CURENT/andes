@@ -35,6 +35,7 @@ non_jits = {
     'agc': {
         'BArea': 'BArea',
         'AGC': 'AGC',
+        'AGC_VSC': 'AGC_VSC',
         'eAGC': 'eAGC',
     },
     'coi': {

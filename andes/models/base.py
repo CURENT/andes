@@ -210,10 +210,10 @@ class ModelBase(object):
         self.idx = []
         self.uid = {}
 
-        if not self._unamey:
+        if (not self._unamey) or (len(self._unamey) != len(self._algebs)):  # allow multiple calls to `_init`
             self._unamey = self._algebs
 
-        if not self._unamex:
+        if (not self._unamex) or (len(self._unamex) != len(self._states)):  # allow multiple calls
             self._unamex = self._states
 
         for item in self._data.keys():

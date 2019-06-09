@@ -37,15 +37,11 @@ class BArea(ModelBase):
 
         # Start with frequency
         for idx, item in enumerate(self.syn):
-            self.M[idx] = self.read_data_ext(
-                'Synchronous', field='M', idx=item)
+            self.M[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
             self.Mtot[idx] = sum(self.M[idx])
-            self.usyn[idx] = self.read_data_ext(
-                'Synchronous', field='u', idx=item)
-            self.wsyn[idx] = self.read_data_ext(
-                'Synchronous', field='omega', idx=item)
-            dae.y[self.fcoi[idx]] = sum(
-                mul(self.M[idx], dae.x[self.wsyn[idx]])) / self.Mtot[idx]
+            self.usyn[idx] = self.read_data_ext('Synchronous', field='u', idx=item)
+            self.wsyn[idx] = self.read_data_ext('Synchronous', field='omega', idx=item)
+            dae.y[self.fcoi[idx]] = sum(mul(self.M[idx], dae.x[self.wsyn[idx]])) / self.Mtot[idx]
 
         # Get BA Export Power
         self.copy_data_ext('Area', field='area_P0', dest='P0', idx=self.area)
@@ -54,14 +50,14 @@ class BArea(ModelBase):
 
     def gcall(self, dae):
 
+        # the value below gets updated at each iteration in `seriesflow`
         P = self.read_data_ext('Area', field='area_P0', idx=self.area)
         dae.g[self.Pexp] = dae.y[self.Pexp] - P
 
         for idx, item in enumerate(self.syn):
-            self.wsyn[idx] = self.read_data_ext(
-                'Synchronous', field='omega', idx=item)
-            dae.g[self.fcoi[idx]] = dae.y[self.fcoi[idx]] - sum(
-                mul(self.M[idx], dae.x[self.wsyn[idx]])) / self.Mtot[idx]
+            self.wsyn[idx] = self.read_data_ext('Synchronous', field='omega', idx=item)
+            dae.g[self.fcoi[idx]] = dae.y[self.fcoi[idx]] - \
+                sum(mul(self.M[idx], dae.x[self.wsyn[idx]])) / self.Mtot[idx]
 
         ACE = (P - self.P0) - mul(self.beta, (1 - dae.y[self.fcoi]))
 
@@ -91,7 +87,7 @@ class AGC(ModelBase):
                            'fcall': True,
                            })
         self._service.extend(['ace', 'pm', 'M', 'usyn', 'Mtot'])
-        self._fnamex.extend(['P_{agc tot}'])
+        self._fnamex.extend(['P_{agc}^{total}'])
         self._params.extend(['Ki'])
         self._init()
 
@@ -115,6 +111,7 @@ class AGC(ModelBase):
     def gcall(self, dae):
         # Kgen and each item in `self.pm`, `self.usyn`, and `self.Pagc` is a list
         #   Do not get rid of the `for` loop, since each of them is a matrix operation
+        #
         for idx, item in enumerate(self.syn):
             Kgen = div(self.M[idx], self.Mtot[idx])
             dae.g[self.pm[idx]] -= mul(self.usyn[idx], Kgen, dae.x[self.Pagc[idx]])
@@ -127,6 +124,66 @@ class AGC(ModelBase):
         for idx, item in enumerate(self.syn):
             Kgen = div(self.M[idx], self.Mtot[idx])
             dae.add_jac(Gx, -mul(self.usyn[idx], Kgen), self.pm[idx], self.Pagc[idx])
+
+
+class AGC_VSC(AGC):
+    def __init__(self, system, name):
+        super(AGC_VSC, self).__init__(system, name)
+        self._group = 'Control'
+        self._data.update({'vsc': None,
+                           'Mvsc': None,
+                           })
+        self._mandatory.extend(['vsc', 'Mvsc'])
+        self._service.extend(['uvsc', 'ref1'])
+        self._init()
+
+    def init1(self, dae):
+        super(AGC_VSC, self).init1(dae)
+        self.ref1 = [[]] * self.n
+        self.uvsc = [[]] * self.n
+
+        # Only PV or PQ-controlled VSCs are acceptable
+        for agc_idx, item in enumerate(self.vsc[:]):
+            pv_or_pq = self.read_data_ext('VSC', field="PV", idx=item) + \
+                        self.read_data_ext('VSC', field='PQ', idx=item)
+
+            valid_vsc_list = list()
+            valid_vsc_M = list()
+            for vsc_idx, valid in zip(item, pv_or_pq):
+                vsc_idx = int(vsc_idx)
+                if valid:
+                    valid_vsc_list.append(vsc_idx)
+                    # TODO: fix the hard-coded `vsc_Idx` below
+                    valid_vsc_M.append(self.Mvsc[agc_idx][vsc_idx])
+                else:
+                    logger.warning('VSC <{}> is not a PV or PQ type, thus cannot be used for AGC.'.format(vsc_idx))
+            self.vsc[agc_idx] = valid_vsc_list
+
+        for agc_idx, item in enumerate(self.vsc):
+            # retrieve status `uvsc`
+            self.uvsc[agc_idx] = self.read_data_ext('VSC', field='u', idx=item)
+            self.ref1[agc_idx] = self.read_data_ext('VSC', field='ref1', idx=item)
+            # Add `Mvsc` to Mtot
+            self.Mtot[agc_idx] += sum(mul(self.uvsc, self.Mvsc[agc_idx]))
+
+    def fcall(self, dae):
+        super(AGC_VSC, self).fcall(dae)
+
+    def gcall(self, dae):
+        super(AGC_VSC, self).gcall(dae)
+        for agc_idx, item in enumerate(self.vsc):
+            Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
+            dae.g[self.ref1[agc_idx]] -= mul(self.uvsc[agc_idx], Kvsc, dae.x[self.Pagc[agc_idx]])
+
+    def jac0(self, dae):
+        super(AGC_VSC, self).jac0(dae)
+
+    def gycall(self, dae):
+        super(AGC_VSC, self).gycall(dae)
+
+        for agc_idx, item in enumerate(self.syn):
+            Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
+            dae.add_jac(Gx, -mul(self.uvsc[agc_idx], Kvsc), self.ref1[agc_idx], self.Pagc[agc_idx])
 
 
 class eAGC(ModelBase):
