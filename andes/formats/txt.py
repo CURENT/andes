@@ -26,10 +26,7 @@ def format_table(header, data, title=None):
     # pass
 
 
-def dump_data(text, header, rowname, data, file):
-    width = 14
-    precision = 4
-    s = ''
+def dump_data(text, header, rowname, data, file, width=14, precision=5):
     out = ''
 
     os.makedirs(os.path.abspath(os.path.dirname(file)), exist_ok=True)

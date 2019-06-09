@@ -108,23 +108,23 @@ class Report(object):
             'Qon_max':
             sum(mul(system.PV.u, system.PV.qmax)),
             'Qg':
-            round(sum(system.Bus.Qg), 5),
+            round(sum(system.Bus.Qg), 6),
             'Pl':
-            round(sum(system.PQ.p), 5),
+            round(sum(system.PQ.p), 6),
             'Ql':
-            round(sum(system.PQ.q), 5),
+            round(sum(system.PQ.q), 6),
             'Psh':
             0.0,
             'Qsh':
-            round(sum(system.PQ.q) - sum(system.Bus.Ql), 5),
+            round(sum(system.PQ.q) - sum(system.Bus.Ql), 6),
             'Ploss':
-            round(Sloss.real, 5),
+            round(Sloss.real, 6),
             'Qloss':
-            round(Sloss.imag, 5),
+            round(Sloss.imag, 6),
             'Pch':
-            round(sum(system.Line.Pchg1 + system.Line.Pchg2), 5),
+            round(sum(system.Line.Pchg1 + system.Line.Pchg2), 6),
             'Qch':
-            round(sum(system.Line.Qchg1 + system.Line.Qchg2), 5),
+            round(sum(system.Line.Qchg1 + system.Line.Qchg2), 6),
         })
 
     def update(self, content=None):
@@ -249,14 +249,14 @@ class Report(object):
             header.append([''])
             rowname.append(
                 system.varname.unamey[2 * system.Bus.n:system.dae.m])
-            data.append([round(i, 5) for i in system.dae.y[2 * system.Bus.n:]])
+            data.append([round(i, 6) for i in system.dae.y[2 * system.Bus.n:]])
 
             # Additional State variable data
             if system.dae.n:
                 text.append(['OTHER STATE VARIABLES:\n'])
                 header.append([''])
                 rowname.append(system.varname.unamex[:])
-                data.append([round(i, 5) for i in system.dae.x[:]])
+                data.append([round(i, 6) for i in system.dae.x[:]])
 
         dump_data(text, header, rowname, data, file)
 
