@@ -1,5 +1,4 @@
 import pprint
-import sys
 
 try:
     from sympy import Symbol, diff, sin, cos, exp, Integer  # NOQA
@@ -667,8 +666,7 @@ def run(system,
         logger.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
             len(fxcall), len(gycall), len(jac0)))
 
-    sys.exit(0)
-    # return retval
+    return retval
 
 
 def stringfy(expr, sym_const=None, sym_states=None, sym_algebs=None):

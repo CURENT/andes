@@ -196,6 +196,7 @@ def cli_parser():
         '-s',
         '--search',
         help='Search for models that match the pattern.')
+    group_help.add_argument('-e', '--data_example', help='print example parameter of a given model')
 
     # simulation control
     sim_options = parser.add_argument_group('Simulation control options',
@@ -248,7 +249,7 @@ def cli_new(parser):
 
 
 def andeshelp(group=None, category=None, model_list=None, model_format=None, model_var=None,
-              quick_help=None, help_option=None, help_config=None, export='plain', **kwargs):
+              quick_help=None, help_option=None, help_config=None, export='plain', data_example=None, **kwargs):
     """
     Print the requested help and documentation to stdout.
 
@@ -289,6 +290,10 @@ def andeshelp(group=None, category=None, model_list=None, model_format=None, mod
         Formatting style available in plain text or LaTex format. This option
         has not been implemented.
 
+    data_example : str, optional
+        Print example data for a specified model. The data can be used to construct
+        a dm data file.
+
     kwargs : None or dict
         Other keyword arguments
 
@@ -308,10 +313,10 @@ def andeshelp(group=None, category=None, model_list=None, model_format=None, mod
     out = []
 
     if not (group or category or model_list or model_format
-            or model_var or quick_help or help_option or help_config):
+            or model_var or quick_help or help_option or help_config or data_example):
         return False
 
-    from .models import all_models_list
+    from andes.models import all_models_list
 
     if category:
         raise NotImplementedError
@@ -320,6 +325,10 @@ def andeshelp(group=None, category=None, model_list=None, model_format=None, mod
         raise NotImplementedError
 
     system = PowerSystem()
+
+    # print example data
+    if data_example is not None:
+        out.append(system.get_data_example(data_example))
 
     if model_format:
         if model_format.lower() == 'all':
@@ -789,6 +798,7 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
 
     system = PowerSystem(case, **kwargs)
 
+    # guess format and parse data
     if not filters.guess(system):
         return
 

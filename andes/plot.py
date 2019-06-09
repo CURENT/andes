@@ -101,7 +101,7 @@ class TDSData(object):
         self._uname = uname
         self.nvars = len(uname)
 
-    def find_var_idx(self, query, formatted=False):
+    def find_var_idx(self, query, exclude=None, formatted=False):
         """
         Return variable names and indices matching `query`
 
@@ -109,7 +109,9 @@ class TDSData(object):
         ----------
         query : str
             The string for querying variables
-        formatted : bool
+        exclude  : str, optional
+            A string pattern to be excluded
+        formatted : bool, optional
             True to return formatted names, False otherwise
 
         Returns
@@ -125,6 +127,9 @@ class TDSData(object):
 
         for idx, name in zip(self._idx, names):
             if re.search(query, name):
+                if exclude and re.search(exclude, name):
+                    continue
+
                 found_idx.append(idx)
                 found_names.append(name)
 
@@ -225,12 +230,14 @@ class TDSData(object):
             fd.write(','.join(header) + '\n')
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
-    def plot(self, xidx, yidx, y_calc=None, left=None, right=None, ymin=None, ymax=None,
+    def plot(self, yidx, xidx=(0,), y_calc=None, left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
              latex=True, dpi=200, save=None, show=True, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
+
+        Note that `ytimes` and `y_calc` are applied sequentially if apply.
 
         Refer to `plot_data()` for the definition of arguments.
 
@@ -252,6 +259,15 @@ class TDSData(object):
 
         x_header = self.get_header(xidx, formatted=latex)
         y_header = self.get_header(yidx, formatted=latex)
+
+        if ytimes and (ytimes != 1):
+            y_scale_func = scale_func(ytimes)
+        else:
+            y_scale_func = None
+
+        # apply `ytimes` first
+        if y_scale_func:
+            y_value = y_scale_func(y_value)
 
         # `y_calc` is a callback function for manipulating data
         if y_calc is not None:
@@ -582,18 +598,11 @@ def tdsplot(datfile, y, x=(0,), **kwargs):
     TDSData object
     """
 
-    ytimes = kwargs.pop('ytimes', 1)
-
-    if ytimes is not None and (ytimes != 1):
-        y_scale_func = scale_func(ytimes)
-    else:
-        y_scale_func = None
-
     # single data file
     if len(datfile) == 1:
         tds_data = TDSData(datfile[0])
         y_num = parse_y(y, lower=0, upper=tds_data.nvars)
-        tds_data.plot(xidx=x, yidx=y_num, y_calc=y_scale_func, **kwargs)
+        tds_data.plot(xidx=x, yidx=y_num, **kwargs)
         return tds_data
     else:
         raise NotImplementedError("Plotting multiple data files are not supported yet")

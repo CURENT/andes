@@ -7,6 +7,10 @@ class TestTDSCases(unittest.TestCase):
         andes.main.config_logger(file=False)
 
     @staticmethod
+    def test_5bus_tds():
+        andes.main.run('cases/5bus/CL_2machine.dm', routine=['pflow', 'tds'], tf=0.1)
+
+    @staticmethod
     def test_ieee14_tds():
         andes.main.run('cases/ieee14/ieee14_syn.dm', routine=['pflow', 'tds'], tf=0.1)
 

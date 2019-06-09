@@ -27,7 +27,7 @@ from operator import itemgetter
 from . import routines
 from .config import System
 from .consts import pi, rad2deg
-from .models import non_jits, jits, JIT
+from .models import non_jits, jits, JIT, all_models_list
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
@@ -414,6 +414,35 @@ class PowerSystem(object):
             ret.append('Breaker')
 
         return ret
+
+    def get_data_example(self, model, n_per_line=5):
+        """
+        Return a string of example data entry that can be used in a dm input file
+
+        Returns
+        -------
+        str
+            A string containing the example data
+        """
+        if model not in all_models_list:
+            raise KeyError('Model <{}> is invalid'.format(model))
+
+        data = self.__dict__[model]._data
+        model_name = self.__dict__[model]._name
+
+        out = '{}, '.format(model_name)
+        nspace = len(out)
+        n_param = len(data)
+
+        for idx, (key, val) in enumerate(sorted(data.items())):
+            if (idx > 0) and (divmod(idx, n_per_line)[1] == 0):
+                out += '\n' + ' ' * nspace
+            if idx == n_param - 1:
+                out += '{} = {}'.format(key, val)
+            else:
+                out += '{} = {}, '.format(key, val)
+
+        return out
 
     def get_event_times(self):
         """
