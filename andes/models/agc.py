@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class BArea(ModelBase):
+    """
+    Balancing area class. This class defines power balancing area on top of the `Area` class for calculating
+    center of inertia frequency, total inertia, expected power and area control error.
+    """
     def __init__(self, system, name):
         super(BArea, self).__init__(system, name)
         self._group = 'Calculation'
@@ -72,6 +76,9 @@ class BArea(ModelBase):
 
 
 class AGC(ModelBase):
+    """
+    AGC class for synchronous generators. This class changes the setpoints by modifying the generator pm.
+    """
     def __init__(self, system, name):
         super(AGC, self).__init__(system, name)
         self._group = 'Control'
