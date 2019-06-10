@@ -341,7 +341,7 @@ class TDSData(object):
             True to enable latex and False to disable
 
         dpi : int
-            Dots per inch for the screen print (interactive). DPI is set to 1200 for saved figures.
+            Dots per inch for screen print or save
         greyscale : bool
             True to use greyscale, False otherwise
         save : bool
@@ -420,18 +420,18 @@ class TDSData(object):
 
         if save:
             count = 1
-            cwd = os.getcwd()
-            for file in os.listdir(cwd):
-                if file.startswith(self.file_name) and file.endswith('.png'):
-                    count += 1
 
-            outfile = self.file_name + '_' + str(count) + '.png'
+            while True:
+                outfile = self.file_name + '_' + str(count) + '.png'
+                if not os.path.isfile(outfile):
+                    break
+                count += 1
 
             try:
-                fig.savefig(outfile, dpi=1200)
+                fig.savefig(outfile, dpi=dpi)
                 logger.info('Figure saved to file {}'.format(outfile))
             except IOError:
-                logger.info('* Error occurred. Try disabling LaTex with "-d".')
+                logger.error('* Error occurred. Try disabling LaTex with "-d".')
                 return
 
         if show:
@@ -497,50 +497,59 @@ def parse_y(y, upper, lower=0):
 
     """
     if len(y) == 1:
-        if isint(y[0]):
-            y[0] = int(y[0])
-            return y
-        elif ':' in y[0]:
-            y = y[0].split(':')
+        if y[0].count(':') >= 3:
+            logger.error('Index format not acceptable. Must not contain more than three colons.')
+            return []
 
-            # convert to integers
-            for i in range(len(y)):
-                if y[i] == '':
-                    continue
-                try:
-                    y[i] = int(y[i])
-                except ValueError:
-                    logger.warning('y[{}] contains non-empty, non-numerical values {}.'.format(i, y[i]))
-                    return []
+        elif y[0].count(':') == 0:
+            if isint(y[0]):
+                y[0] = int(y[0])
+                return y
+        elif y[0].count(':') == 1:
+            if y[0].endswith(':'):
+                y[0] += str(upper)
+            if y[0].startswith(':'):
+                y[0] = str(lower) + y[0]
 
-            if y[0] == '':
-                y[0] = 1
-            elif not (lower <= y[0] <= upper + 1):
-                logger.warning('y[0]={} out of limit. Reset to 1.'.format(y[0]))
-                y[0] = 1
+        elif y[0].count(':') == 2:
+            if y[0].endswith(':'):
+                y[0] += str(1)
+            if y[0].startswith(':'):
+                y[0] = str(lower) + y[0]
 
-            if y[1] == '':
-                y[1] = upper
-            elif not (lower <= y[1] <= upper + 1):
-                logger.warning('y[1]={} out of limit. Reset to maximum={}'.format(y[1], upper + 1))
-                y[1] = upper
+            if y[0].count('::') == 1:
+                y[0] = y[0].replace('::', ':{}:'.format(upper))
+                print(y)
 
-            # y may contain a third field in the list
-            if len(y) == 3:
-                if y[2] == '':
-                    y[2] = 1
-            return list(range(*y))
-    else:
-        for i in range(len(y)):
+        y = y[0].split(':')
+
+        for idx, item in enumerate(y[:]):
             try:
-                y[i] = int(y[i])
-
+                y[idx] = int(item)
             except ValueError:
-                logger.warning('y contains non-numerical values. Parsing could not proceed.')
+                logger.warning('y contains non-numerical values <{}>. Parsing could not proceed.'.format(item))
                 return []
 
-        y = [i for i in y if lower <= i <= upper]
-        return list(y)
+        y_from_range = list(range(*y))
+
+        y_in_range = []
+
+        for item in y_from_range:
+            if lower <= item < upper:
+                y_in_range.append(item)
+
+        return y_in_range
+
+    else:
+        y_to_int = []
+        for idx, val in enumerate(y):
+            try:
+                y_to_int.append(int(val))
+            except ValueError:
+                logger.warning('Y indices contains non-numerical values. Skipped <{}>.'.format(val))
+
+        y_in_range = [item for item in y_to_int if lower <= item < upper]
+        return list(y_in_range)
 
 
 def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
