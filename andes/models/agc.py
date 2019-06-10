@@ -1,6 +1,6 @@
 import logging
 
-from cvxopt import mul, div
+from cvxopt import mul, div, matrix
 
 from andes.consts import Gx, Fy0, Gy0
 from andes.models.base import ModelBase
@@ -214,29 +214,35 @@ class AGCVSC(AGCSyn):
         self.ref1 = [[]] * self.n
         self.uvsc = [[]] * self.n
 
+        # manually convert self.Mvsc to a list of matrices
+        self.Mvsc = [matrix(item) for item in self.Mvsc]
+
         # Only PV or PQ-controlled VSCs are acceptable
         for agc_idx, item in enumerate(self.vsc[:]):
-            pv_or_pq = self.read_data_ext('VSC', field="PV", idx=item) + \
-                        self.read_data_ext('VSC', field='PQ', idx=item)
+            pv_or_pq = self.read_data_ext('VSCgroup', field="PV", idx=item) + \
+                        self.read_data_ext('VSCgroup', field='PQ', idx=item)
 
             valid_vsc_list = list()
             valid_vsc_M = list()
-            for vsc_idx, valid in zip(item, pv_or_pq):
-                vsc_idx = int(vsc_idx)
+            for i, (vsc_idx, valid) in enumerate(zip(item, pv_or_pq)):
                 if valid:
                     valid_vsc_list.append(vsc_idx)
                     # TODO: fix the hard-coded `vsc_Idx` below
-                    valid_vsc_M.append(self.Mvsc[agc_idx][vsc_idx])
+                    valid_vsc_M.append(self.Mvsc[agc_idx][i])
                 else:
                     logger.warning('VSC <{}> is not a PV or PQ type, thus cannot be used for AGC.'.format(vsc_idx))
             self.vsc[agc_idx] = valid_vsc_list
 
         for agc_idx, item in enumerate(self.vsc):
+            # skip elements that contain no valid VSC index
+            if len(item) == 0:
+                continue
+
             # retrieve status `uvsc`
-            self.uvsc[agc_idx] = self.read_data_ext('VSC', field='u', idx=item)
-            self.ref1[agc_idx] = self.read_data_ext('VSC', field='ref1', idx=item)
+            self.uvsc[agc_idx] = self.read_data_ext('VSCgroup', field='u', idx=item)
+            self.ref1[agc_idx] = self.read_data_ext('VSCgroup', field='ref1', idx=item)
             # Add `Mvsc` to Mtot
-            self.Mtot[agc_idx] += sum(mul(self.uvsc, self.Mvsc[agc_idx]))
+            self.Mtot[agc_idx] = sum(mul(self.uvsc[agc_idx], self.Mvsc[agc_idx]))
 
     def fcall(self, dae):
         super(AGCVSC, self).fcall(dae)
@@ -244,6 +250,9 @@ class AGCVSC(AGCSyn):
     def gcall(self, dae):
         super(AGCVSC, self).gcall(dae)
         for agc_idx, item in enumerate(self.vsc):
+            if len(item) == 0:
+                continue
+
             Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
             dae.g[self.ref1[agc_idx]] -= mul(self.uvsc[agc_idx], Kvsc, dae.x[self.Pagc[agc_idx]])
 
@@ -253,7 +262,10 @@ class AGCVSC(AGCSyn):
     def gycall(self, dae):
         super(AGCVSC, self).gycall(dae)
 
-        for agc_idx, item in enumerate(self.syn):
+        for agc_idx, item in enumerate(self.vsc):
+            if len(item) == 0:
+                continue
+
             Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
             dae.add_jac(Gx, -mul(self.uvsc[agc_idx], Kvsc), self.ref1[agc_idx], self.Pagc[agc_idx])
 
