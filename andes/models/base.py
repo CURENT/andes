@@ -821,6 +821,8 @@ class ModelBase(object):
 
             for item in idx:
                 dev_name = self.system.devman.group[model].get(item, None)
+                if dev_name is None:
+                    raise KeyError('Group <{}> does not contain element whose idx={}'.format(model, item))
                 ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
