@@ -518,10 +518,10 @@ def parse_y(y, upper, lower=0):
                 y[0] = 1
 
             if y[1] == '':
-                y[1] = upper + 1
+                y[1] = upper
             elif not (lower <= y[1] <= upper + 1):
                 logger.warning('y[1]={} out of limit. Reset to maximum={}'.format(y[1], upper + 1))
-                y[1] = upper + 1
+                y[1] = upper
 
             # y may contain a third field in the list
             if len(y) == 3:
