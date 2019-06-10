@@ -15,7 +15,7 @@ class VSC(DCBase):
 
     def __init__(self, system, name):
         super().__init__(system, name)
-        self._group = 'VSCDevice'  # group name cannot collide with the model name
+        self._group = 'VSCgroup'  # group name cannot collide with the model name
         self._name = 'VSC'
         self._ac = {'bus': ['a', 'v']}
         self._params.extend([
@@ -401,7 +401,7 @@ class VSC1_Common(DCBase):
 
     def __init__(self, system, name):
         super(VSC1_Common, self).__init__(system, name)
-        self._group = 'VSCDevice'
+        self._group = 'VSCgroup'
         self._data.update({
             'vsc': None,
             'Kdc': 0,
@@ -1225,7 +1225,7 @@ class VSC2_Common(DCBase):
 
     def __init__(self, system, name):
         super(VSC2_Common, self).__init__(system, name)
-        self._group = 'VSCDevice'
+        self._group = 'VSCgroup'
         self._data.update({
             'vsc': None,
         })
