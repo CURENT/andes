@@ -2,7 +2,7 @@
 
 # ANDES, a power system simulation tool for research.
 #
-# Copyright 2015-2018 Hantao Cui
+# Copyright 2015-2019 Hantao Cui
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -259,6 +259,8 @@ class TDSData(object):
 
         x_header = self.get_header(xidx, formatted=latex)
         y_header = self.get_header(yidx, formatted=latex)
+
+        ytimes = float(ytimes) if ytimes is not None else ytimes
 
         if ytimes and (ytimes != 1):
             y_scale_func = scale_func(ytimes)
