@@ -114,7 +114,10 @@ def read(file, system, header=True):
                 if math.search(value):  # execute simple operations
                     value = list(map(eval, array))
                 else:
-                    value = list(map(float, array))
+                    try:
+                        value = list(map(float, array))
+                    except ValueError:
+                        value = list(map(eval, array))
             elif double.search(value):
                 if math.search(value):  # execute simple operations
                     value = eval(value)

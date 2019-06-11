@@ -210,10 +210,10 @@ class ModelBase(object):
         self.idx = []
         self.uid = {}
 
-        if not self._unamey:
+        if (not self._unamey) or (len(self._unamey) != len(self._algebs)):  # allow multiple calls to `_init`
             self._unamey = self._algebs
 
-        if not self._unamex:
+        if (not self._unamex) or (len(self._unamex) != len(self._states)):  # allow multiple calls
             self._unamex = self._states
 
         for item in self._data.keys():
@@ -391,7 +391,7 @@ class ModelBase(object):
         for i in idx:
             tmp = self.uid.get(i, None)
             if tmp is None:
-                raise IndexError('Model <{}> does not contain any element with idx={}.'
+                raise IndexError('Model <{}> does not contain any element with idx={}. '
                                  'Check the definitions in your case file.'.format(self._name, i))
 
             ret.append(self.uid[i])
@@ -821,6 +821,8 @@ class ModelBase(object):
 
             for item in idx:
                 dev_name = self.system.devman.group[model].get(item, None)
+                if dev_name is None:
+                    raise KeyError('Group <{}> does not contain element whose idx={}'.format(model, item))
                 ret.append(self.read_data_ext(dev_name, field, idx=item))
 
         else:
@@ -1641,6 +1643,21 @@ class ModelBase(object):
         -------
 
         """
+        pass
+
+    def init1(self, dae):
+        pass
+
+    def gcall(self, dae):
+        pass
+
+    def fcall(self, dae):
+        pass
+
+    def fxcall(self, dae):
+        pass
+
+    def gycall(self, dae):
         pass
 
     # def var_store_snapshot(self, variable='all'):

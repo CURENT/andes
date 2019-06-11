@@ -23,6 +23,7 @@ import importlib
 import logging
 import os
 from operator import itemgetter
+from collections import OrderedDict
 
 from . import routines
 from .config import System
@@ -427,14 +428,17 @@ class PowerSystem(object):
         if model not in all_models_list:
             raise KeyError('Model <{}> is invalid'.format(model))
 
-        data = self.__dict__[model]._data
         model_name = self.__dict__[model]._name
+
+        data = OrderedDict()
+        data.update({'idx': None, 'name': '"{}"'.format(model_name)})
+        data.update(self.__dict__[model]._data)
 
         out = '{}, '.format(model_name)
         nspace = len(out)
         n_param = len(data)
 
-        for idx, (key, val) in enumerate(sorted(data.items())):
+        for idx, (key, val) in enumerate(data.items()):
             if (idx > 0) and (divmod(idx, n_per_line)[1] == 0):
                 out += '\n' + ' ' * nspace
             if idx == n_param - 1:

@@ -5,9 +5,9 @@ __all__ = ['jits', 'non_jits', 'all_models', 'all_models_list']
 order = [
     'Bus', 'Node', 'Ground', 'line', 'pq', 'pv', 'zone', 'shunt',
     'measurement', 'synchronous', 'governor', 'avr', 'pss', 'windturbine',
-    'wind', 'coi', 'BArea', 'eAGC', 'AGC',
+    'wind', 'coi', 'BArea', 'eAGC', 'AGC', 'AGCSyn', 'AGCTG',
     'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs',
-    'DCgen', 'vsc', 'Recorder'
+    'DCgen', 'vsc', 'AGCTGVSC', 'AGCSynVSC', 'Recorder'
 ]
 
 non_jits = {
@@ -35,6 +35,10 @@ non_jits = {
     'agc': {
         'BArea': 'BArea',
         'AGC': 'AGC',
+        'AGCSyn': 'AGCSyn',
+        'AGCTG': 'AGCTG',
+        'AGCTGVSC': 'AGCTGVSC',
+        'AGCSynVSC': 'AGCSynVSC',
         'eAGC': 'eAGC',
     },
     'coi': {

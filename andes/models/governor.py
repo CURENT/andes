@@ -146,24 +146,18 @@ class TG1(GovernorBase):
         dae.y[self.pin] = self.pm0
 
     def fcall(self, dae):
-        dae.f[self.xg1] = mul(self.u, dae.y[self.pin] - dae.x[self.xg1],
-                              self.iTs)
-        dae.f[self.xg2] = mul(self.u,
-                              mul(self.k2, dae.x[self.xg1]) - dae.x[self.xg2],
-                              self.iTc)
-        dae.f[self.xg3] = mul(
-            self.u,
-            mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) -
-            dae.x[self.xg3], self.iT5)
+        dae.f[self.xg1] = mul(self.u, dae.y[self.pin] - dae.x[self.xg1], self.iTs)
+        dae.f[self.xg2] = mul(self.u, mul(self.k2, dae.x[self.xg1]) - dae.x[self.xg2], self.iTc)
+        dae.f[self.xg3] = mul(self.u,
+                              mul(self.k4, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) -
+                              dae.x[self.xg3], self.iT5)
 
     def gcall(self, dae):
-        dae.g[self.pin] = self.pm0 + mul(
-            self.gain, dae.y[self.wref] - dae.x[self.omega]) - dae.y[self.pin]
+        dae.g[self.pin] = self.pm0 + mul(self.gain, dae.y[self.wref] - dae.x[self.omega]) - dae.y[self.pin]
         dae.hard_limit(self.pin, self.pmin, self.pmax)
 
-        dae.g[self.pout] = dae.x[self.xg3] + mul(
-            self.k3,
-            dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1])) - dae.y[self.pout]
+        dae.g[self.pout] = dae.x[self.xg3] - dae.y[self.pout] + \
+            mul(self.k3, dae.x[self.xg2] + mul(self.k1, dae.x[self.xg1]))
         super(TG1, self).gcall(dae)
 
     def jac0(self, dae):
