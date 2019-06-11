@@ -7,7 +7,7 @@ order = [
     'measurement', 'synchronous', 'governor', 'avr', 'pss', 'windturbine',
     'wind', 'coi', 'BArea', 'eAGC', 'AGC', 'AGCSyn', 'AGCTG',
     'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs',
-    'DCgen', 'vsc', 'AGCVSC', 'Recorder'
+    'DCgen', 'vsc', 'AGCTGVSC', 'AGCSynVSC', 'Recorder'
 ]
 
 non_jits = {
@@ -37,7 +37,8 @@ non_jits = {
         'AGC': 'AGC',
         'AGCSyn': 'AGCSyn',
         'AGCTG': 'AGCTG',
-        'AGCVSC': 'AGCVSC',
+        'AGCTGVSC': 'AGCTGVSC',
+        'AGCSynVSC': 'AGCSynVSC',
         'eAGC': 'eAGC',
     },
     'coi': {

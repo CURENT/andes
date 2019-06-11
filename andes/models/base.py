@@ -1645,6 +1645,21 @@ class ModelBase(object):
         """
         pass
 
+    def init1(self, dae):
+        pass
+
+    def gcall(self, dae):
+        pass
+
+    def fcall(self, dae):
+        pass
+
+    def fxcall(self, dae):
+        pass
+
+    def gycall(self, dae):
+        pass
+
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.

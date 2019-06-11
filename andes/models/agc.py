@@ -22,6 +22,11 @@ class BArea(ModelBase):
             'syn': None,
             'beta': 0,
         })
+        self._descr.update({'area': 'Idx of Area',
+                            'beta': 'Beta coefot multiply by the pu freq. deviation',
+                            'syn': 'Indices of generators for computing COI'
+                            })
+        self._units.update({'syn': 'list'})
         self._mandatory.extend(['area', 'syn', 'beta'])
         self._algebs.extend(['Pexp', 'fcoi', 'ace'])
         self.calls.update({
@@ -77,7 +82,7 @@ class BArea(ModelBase):
 
 class AGCBase(ModelBase):
     """
-    Base AGC class
+    Base AGC class. The allocation of Pagc will be based on inverse droop (iR)
     """
     def __init__(self, system, name):
         super(AGCBase, self).__init__(system, name)
@@ -85,6 +90,9 @@ class AGCBase(ModelBase):
         self._data.update({'BArea': None,
                            'Ki': 0.05,
                            })
+        self._descr.update({'BArea': 'Idx of BArea',
+                            'Ki': 'Integral gain of ACE',
+                            })
         self._mandatory.extend(['BArea', 'Ki'])
         self._states.extend(['Pagc'])
         self.calls.update({'init1': True,
@@ -93,7 +101,7 @@ class AGCBase(ModelBase):
                            'jac0': True,
                            'gycall': True
                            })
-        self._service.extend(['ace'])
+        self._service.extend(['ace', 'iR', 'iRtot'])
         self._fnamex.extend(['P_{agc}^{total}'])
         self._params.extend(['Ki'])
 
@@ -118,23 +126,24 @@ class AGCSyn(AGCBase):
     def __init__(self, system, name):
         super(AGCSyn, self).__init__(system, name)
         self._data.update({'syn': None})
+        self._descr.update({'syn': 'Indices of synchronous generators for AGC'})
+        self._units.update({'syn': 'list'})
         self._mandatory.extend(['syn'])
-        self._service.extend(['pm', 'M', 'usyn', 'Mtot'])
-
+        self._service.extend(['pm', 'usyn'])
         self._init()
 
     def init1(self, dae):
         super(AGCSyn, self).init1(dae)
         self.pm = [[]] * self.n
-        self.M = [[]] * self.n
+        self.iR = [[]] * self.n
         self.usyn = [[]] * self.n
-        self.Mtot = [[]] * self.n
+        self.iRtot = [[]] * self.n
 
         for idx, item in enumerate(self.syn):
             self.pm[idx] = self.read_data_ext('Synchronous', field='pm', idx=item)
             self.usyn[idx] = self.read_data_ext('Synchronous', field='u', idx=item)
-            self.M[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
-            self.Mtot[idx] = sum(mul(self.usyn[idx], self.M[idx]))
+            self.iR[idx] = self.read_data_ext('Synchronous', field='M', idx=item)
+            self.iRtot[idx] = sum(mul(self.usyn[idx], self.iR[idx]))
 
     def gcall(self, dae):
         super(AGCSyn, self).gcall(dae)
@@ -143,7 +152,7 @@ class AGCSyn(AGCBase):
         #   Do not get rid of the `for` loop, since each of them is a matrix operation
 
         for idx, item in enumerate(self.syn):
-            Kgen = div(self.M[idx], self.Mtot[idx])
+            Kgen = div(self.iR[idx], self.iRtot[idx])
             dae.g[self.pm[idx]] -= mul(self.usyn[idx], Kgen, dae.x[self.Pagc[idx]])
 
     def gycall(self, dae):
@@ -152,7 +161,7 @@ class AGCSyn(AGCBase):
         # Do not get rid of the for loop; for each `idx` it is a matrix operation
 
         for idx, item in enumerate(self.syn):
-            Kgen = div(self.M[idx], self.Mtot[idx])
+            Kgen = div(self.iR[idx], self.iRtot[idx])
             dae.add_jac(Gx, -mul(self.usyn[idx], Kgen), self.pm[idx], self.Pagc[idx])
 
 
@@ -167,6 +176,8 @@ class AGCTG(AGCBase):
         super(AGCTG, self).__init__(system, name)
         self._data.update({'tg': None})
         self._mandatory.extend(['tg'])
+        self._descr.update({'tg': 'Indices of turbine governors for AGC'})
+        self._units.update({'tg': 'list'})
         self._service.extend(['pin', 'R', 'iR', 'iRtot'])
 
         self._init()
@@ -197,25 +208,31 @@ class AGCTG(AGCBase):
             dae.add_jac(Gx, Ktg, self.pin[idx], self.Pagc[idx])
 
 
-class AGCVSC(AGCSyn):
-    """AGC using VSC"""
+class AGCVSCBase(object):
+    """
+    Base class for AGC using VSC. Modifies the ref1 for PV or PQ-controlled VSCs. This class must be
+    inherited with subclasses of AGCBase
+    """
     def __init__(self, system, name):
-        super(AGCVSC, self).__init__(system, name)
-        self._group = 'Control'
+        self.system = system
         self._data.update({'vsc': None,
-                           'Mvsc': None,
+                           'Rvsc': None,
                            })
-        self._mandatory.extend(['vsc', 'Mvsc'])
+        self._descr.update({'vsc': 'Indices of VSCs to control',
+                            'Rvsc': 'Droop coefficients for the VSCs'})
+        self._units.update({'tg': 'list',
+                            'Rvsc': 'list'})
+        self._mandatory.extend(['vsc', 'Rvsc'])
         self._service.extend(['uvsc', 'ref1'])
         self._init()
 
     def init1(self, dae):
-        super(AGCVSC, self).init1(dae)
         self.ref1 = [[]] * self.n
         self.uvsc = [[]] * self.n
 
-        # manually convert self.Mvsc to a list of matrices
-        self.Mvsc = [matrix(item) for item in self.Mvsc]
+        # manually convert self.Rvsc to a list of matrices
+        self.Rvsc = [matrix(item) for item in self.Rvsc]
+        self.iRvsc = [div(1, item) for item in self.Rvsc]
 
         # Only PV or PQ-controlled VSCs are acceptable
         for agc_idx, item in enumerate(self.vsc[:]):
@@ -223,12 +240,12 @@ class AGCVSC(AGCSyn):
                         self.read_data_ext('VSCgroup', field='PQ', idx=item)
 
             valid_vsc_list = list()
-            valid_vsc_M = list()
+            valid_vsc_R = list()
             for i, (vsc_idx, valid) in enumerate(zip(item, pv_or_pq)):
                 if valid:
                     valid_vsc_list.append(vsc_idx)
                     # TODO: fix the hard-coded `vsc_Idx` below
-                    valid_vsc_M.append(self.Mvsc[agc_idx][i])
+                    valid_vsc_R.append(self.Rvsc[agc_idx][i])
                 else:
                     logger.warning('VSC <{}> is not a PV or PQ type, thus cannot be used for AGC.'.format(vsc_idx))
             self.vsc[agc_idx] = valid_vsc_list
@@ -241,33 +258,77 @@ class AGCVSC(AGCSyn):
             # retrieve status `uvsc`
             self.uvsc[agc_idx] = self.read_data_ext('VSCgroup', field='u', idx=item)
             self.ref1[agc_idx] = self.read_data_ext('VSCgroup', field='ref1', idx=item)
-            # Add `Mvsc` to Mtot
-            self.Mtot[agc_idx] = sum(mul(self.uvsc[agc_idx], self.Mvsc[agc_idx]))
-
-    def fcall(self, dae):
-        super(AGCVSC, self).fcall(dae)
+            # Add `Rvsc` to Mtot
+            self.iRtot[agc_idx] += sum(mul(self.uvsc[agc_idx], self.iRvsc[agc_idx]))
 
     def gcall(self, dae):
-        super(AGCVSC, self).gcall(dae)
         for agc_idx, item in enumerate(self.vsc):
             if len(item) == 0:
                 continue
 
-            Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
+            Kvsc = div(self.iRvsc[agc_idx], self.iRtot[agc_idx])
             dae.g[self.ref1[agc_idx]] -= mul(self.uvsc[agc_idx], Kvsc, dae.x[self.Pagc[agc_idx]])
 
-    def jac0(self, dae):
-        super(AGCVSC, self).jac0(dae)
-
     def gycall(self, dae):
-        super(AGCVSC, self).gycall(dae)
 
         for agc_idx, item in enumerate(self.vsc):
             if len(item) == 0:
                 continue
 
-            Kvsc = div(self.Mvsc[agc_idx], self.Mtot[agc_idx])
+            Kvsc = div(self.iRvsc[agc_idx], self.iRtot[agc_idx])
             dae.add_jac(Gx, -mul(self.uvsc[agc_idx], Kvsc), self.ref1[agc_idx], self.Pagc[agc_idx])
+
+
+class AGCTGVSC(AGCTG, AGCVSCBase):
+    """AGC class that modifies the turbine governor and VSC pref"""
+    def __init__(self, system, name):
+        AGCTG.__init__(self, system, name)
+        AGCVSCBase.__init__(self, system, name)
+        self._init()
+
+    def init1(self, dae):
+        AGCTG.init1(self, dae)
+        AGCVSCBase.init1(self, dae)
+
+    def jac0(self, dae):
+        AGCTG.jac0(self, dae)
+
+    def gcall(self, dae):
+        AGCTG.gcall(self, dae)
+        AGCVSCBase.gcall(self, dae)
+
+    def gycall(self, dae):
+        AGCTG.gycall(self, dae)
+        AGCVSCBase.gycall(self, dae)
+
+    def fcall(self, dae):
+        AGCTG.fcall(self, dae)
+
+
+class AGCSynVSC(AGCSyn, AGCVSCBase):
+    """AGC class that modifies Synchronous pm and VSC pref"""
+    def __init__(self, system, name):
+        AGCSyn.__init__(self, system, name)
+        AGCVSCBase.__init__(self, system, name)
+        self._init()
+
+    def init1(self, dae):
+        AGCSyn.init1(self, dae)
+        AGCVSCBase.init1(self, dae)
+
+    def jac0(self, dae):
+        AGCSyn.jac0(self, dae)
+
+    def gcall(self, dae):
+        AGCSyn.gcall(self, dae)
+        AGCVSCBase.gcall(self, dae)
+
+    def gycall(self, dae):
+        AGCSyn.gycall(self, dae)
+        AGCVSCBase.gycall(self, dae)
+
+    def fcall(self, dae):
+        AGCSyn.fcall(self, dae)
 
 
 class eAGC(ModelBase):
