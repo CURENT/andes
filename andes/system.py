@@ -276,6 +276,8 @@ class PowerSystem(object):
                 self.__dict__[name] = theclass(self, name)
 
                 group = self.__dict__[name]._group
+                if group is None:
+                    raise ValueError("Class definition incomplete. Group not defined for class {}".format(name))
                 self.group_add(group)
                 self.__dict__[group].register_model(name)
 

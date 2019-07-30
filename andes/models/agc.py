@@ -305,6 +305,16 @@ class AGCTGVSC(AGCTG, AGCVSCBase):
         AGCTG.fcall(self, dae)
 
 
+class AGCMPC(ModelBase):
+    """MPC based AGC using TG and VSC"""
+    def __init__(self, system, name):
+        super(AGCMPC, self).__init__(system, name)
+        self._group = "AGCGroup"
+        self._name = "AGCMPC"
+
+        # self.param_define()
+
+
 class AGCSynVSC(AGCSyn, AGCVSCBase):
     """AGC class that modifies Synchronous pm and VSC pref"""
     def __init__(self, system, name):

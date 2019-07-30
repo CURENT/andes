@@ -127,6 +127,7 @@ Node, idx = 1, name = "Node 1", Vdcn = 100.0
 Node, idx = 2, name = "Node 2", Vdcn = 100.0
 Node, idx = 3, name = "Node 3", Vdcn = 100.0
 Node, idx = 4, name = "Node 4", Vdcn = 100.0
+Node, idx = 5, name = "Node 5", Vdcn = 100.0
 
 Ground, idx = 0, name = "Ground 1", node = 0, Vdcn = 100.0, voltage = 0
 
@@ -149,11 +150,12 @@ R, idx = "R1", name = "R 1-2", node1 = 1, node2 = 2, Vdcn = 100, R = 10
 R, idx = "R2", name = "R 2-3", node1 = 2, node2 = 3, Vdcn = 100, R = 10
 R, idx = "R3", name = "R 3-4", node1 = 3, node2 = 4, Vdcn = 100, R = 10
 R, idx = "R4", name = "R 1-4", node1 = 1, node2 = 4, Vdcn = 100, R = 10
+R, idx = "R5", name = "R 1-5", node1 = 1, node2 = 5, Vdcn = 100, R = 10
 
 C, idx = "C1", name = "C 1", node1 = 1, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C2", name = "C 2", node1 = 2, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C3", name = "C 3", node1 = 3, node2 = 0, Vdcn = 100, C = 10
 C, idx = "C4", name = "C 3", node1 = 4, node2 = 0, Vdcn = 100, C = 10
 
-DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 1, node2 = 0, P = 0.5
-DCload, idx = "DCload_1", Vdcn = 100, node1 = 3, node2 = 0, P = 1
+# DCgen, idx = "DCgen_1", Vdcn = 100, node1 = 5, node2 = 0, P = 0.5
+DCload, idx = "DCload_1", Vdcn = 100, node1 = 5, node2 = 0, P = 0.1
