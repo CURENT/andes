@@ -584,6 +584,7 @@ class DAE(object):
             self.__dict__[m] = spmatrix(self._temp[m]['V'],
                                         self._temp[m]['I'], self._temp[m]['J'],
                                         self.get_size(m), 'd')
+            # add the jac0 elements
             if ty == 'jac':
                 self.__dict__[m] += self.__dict__[m + '0']
 
