@@ -123,7 +123,7 @@ class EIG(RoutineBase):
         logger.info('-> Eigenvalue Analysis:')
 
         system.dae.factorize = True
-        exec(system.call.int)
+        system.call.int()
 
         self.calc_state_matrix()
         self.calc_part_factor()

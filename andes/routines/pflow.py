@@ -255,9 +255,6 @@ class PFLOW(RoutineBase):
         None
 
         """
-        # system = self.system
-        # exec(system.call.newton)
-
         system = self.system
         dae = self.system.dae
 
@@ -323,11 +320,11 @@ class PFLOW(RoutineBase):
 
         system = self.system
 
-        exec(system.call.pfload)
+        system.call.pfload()
         system.Bus.Pl = system.dae.g[system.Bus.a]
         system.Bus.Ql = system.dae.g[system.Bus.v]
 
-        exec(system.call.pfgen)
+        system.call.pfgen()
         system.Bus.Pg = system.dae.g[system.Bus.a]
         system.Bus.Qg = system.dae.g[system.Bus.v]
 
@@ -337,7 +334,7 @@ class PFLOW(RoutineBase):
             system.SW.pg = system.dae.y[system.SW.p]
             system.SW.qg = system.dae.y[system.SW.q]
 
-        exec(system.call.seriesflow)
+        system.call.seriesflow()
 
         system.Area.seriesflow(system.dae)
 
@@ -386,7 +383,7 @@ class PFLOW(RoutineBase):
         # Fpp = self.solver.symbolic(Bpp)
         # Np = self.solver.numeric(Bp, Fp)
         # Npp = self.solver.numeric(Bpp, Fpp)
-        exec(system.call.fdpf)
+        system.call.fdpf()
 
         # main loop
         while error > tol:
@@ -396,7 +393,7 @@ class PFLOW(RoutineBase):
             da = self.solver.linsolve(Bp, da)
             system.dae.y[no_sw] += da
 
-            exec(system.call.fdpf)
+            system.call.fdpf()
             normP = max(abs(system.dae.g[no_sw]))
 
             # Q-V
@@ -405,7 +402,7 @@ class PFLOW(RoutineBase):
             dV = self.solver.linsolve(Bpp, dV)
             system.dae.y[no_gv] += dV
 
-            exec(system.call.fdpf)
+            system.call.fdpf()
             normQ = max(abs(system.dae.g[no_gv]))
 
             err = max([normP, normQ])

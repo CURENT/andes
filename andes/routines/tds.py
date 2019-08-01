@@ -430,10 +430,10 @@ class TDS(RoutineBase):
 
             # rebuild Jacobian
             if dae.rebuild:
-                exec(system.call.int)
+                system.call.int()
                 dae.rebuild = False
             else:
-                exec(system.call.int_fg)
+                system.call.int_fg()
 
             # complete Jacobian matrix dae.Ac
             if config.method == 'euler':
@@ -618,10 +618,10 @@ class TDS(RoutineBase):
         if config.compute_flows:
             # compute and append series injections on buses
 
-            exec(system.call.bus_injection)
+            system.call.bus_injection()
             bus_inj = dae.g[:2 * system.Bus.n]
 
-            exec(system.call.seriesflow)
+            system.call.seriesflow()
             system.Area.seriesflow(system.dae)
             system.Area.interchange_varout()
 

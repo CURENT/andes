@@ -496,20 +496,35 @@ class DAE(object):
         x = index(aandb(self.zxmin, self.zxmax), 0.)
         y = [i + self.n for i in index(aandb(self.zymin, self.zymax), 0.)]
 
-        xy = list(x) + y
+        xy = matrix(list(x) + y)
 
-        eye = spdiag([1.0] * mn)
-        H = spmatrix(1.0, xy, xy, (mn, mn), 'd')
-
-        # Modifying ``eye`` is more efficient than ``eye = eye - H``.
-        # CVXOPT modifies eye in place because all the accessed elements exist.
+        n_xy = len(xy)
+        rows = matrix([])
+        cols = matrix([])
 
         for idx in xy:
-            eye[idx, idx] = 0
+            # rows first
+            mn_idx = matrix([idx] * mn)
+            mn_arange = matrix(list(range(mn)))
+            rows = matrix([rows, mn_idx])
+            cols = matrix([cols, mn_arange])
+            rows = matrix([rows, mn_arange])
+            cols = matrix([cols, mn_idx])
 
-        if len(xy) > 0:
-            self.Ac = eye * (self.Ac * eye) - H
+        if n_xy > 0:
             self.q[x] = 0
+
+            if hasattr(self.Ac, 'ipset'):
+                self.Ac.ipset(zeros(2*mn*n_xy, 1), rows, cols)  # reset all associated rows and cols
+                self.Ac.ipset(matrix(1, (n_xy, 1), 'd'), xy, xy)  # set the diagonals to 1
+            else:
+                eye = spdiag([1.0] * mn)
+                # Modifying ``eye`` is more efficient than ``eye = eye - H``.
+                # CVXOPT modifies eye in place because all the accessed elements exist.
+                for idx in xy:
+                    eye[idx, idx] = 0
+                H = spmatrix(1.0, xy, xy, (mn, mn), 'd')
+                self.Ac = eye * (self.Ac * eye) - H
 
         self.ac_reset = False
         self.factorize = True
@@ -569,6 +584,7 @@ class DAE(object):
             self.__dict__[m] = spmatrix(self._temp[m]['V'],
                                         self._temp[m]['I'], self._temp[m]['J'],
                                         self.get_size(m), 'd')
+            # add the jac0 elements
             if ty == 'jac':
                 self.__dict__[m] += self.__dict__[m + '0']
 
