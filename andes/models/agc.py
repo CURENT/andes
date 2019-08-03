@@ -1,10 +1,12 @@
 import logging
+import numpy as np
 
-from cvxopt import mul, div, matrix
+from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
 
 from andes.consts import Gx, Fy0, Gy0
 from andes.models.base import ModelBase
 from andes.utils.math import zeros
+from andes.utils.solver import Solver
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ class BArea(ModelBase):
             'beta': 0,
         })
         self._descr.update({'area': 'Idx of Area',
-                            'beta': 'Beta coefot multiply by the pu freq. deviation',
+                            'beta': 'Beta coefficient to multiply by the pu freq. deviation',
                             'syn': 'Indices of generators for computing COI'
                             })
         self._units.update({'syn': 'list'})
@@ -311,8 +313,99 @@ class AGCMPC(ModelBase):
         super(AGCMPC, self).__init__(system, name)
         self._group = "AGCGroup"
         self._name = "AGCMPC"
+        self.param_remove('Vn')
+        self.param_remove('Sn')
 
-        # self.param_define()
+        self._data.update({'tg': None,
+                           'vsc': None,
+                           })
+        self._descr.update({'tg': 'idx for turbine governors',
+                            'vsc': 'idx for VSC dynamic models',
+                            })
+        self._units.update({'tg': 'list', 'vsc': 'list'})
+        self._mandatory.extend(['tg'])
+        self.calls.update({'init1': True,
+                           'gcall': True,
+                           'jac0': True,
+                           'fxcall': True})
+
+        self._service.extend(['xg10', 'pin0', 'delta0', 'omega0', 't', 'dpin0',
+                              'xidx', 'uidx', 'yxidx', 'sfx', 'sfu', 'sfy', 'sgx', 'sgu', 'sgy',
+                              'A', 'B', 'Aa', 'Ba'])
+
+        self._algebs.extend(['dpin'])
+        self._fnamey.extend(r'\Delta P_{in}')
+        self.solver = Solver(system.config.sparselib)
+        self._init()
+
+    def init1(self, dae):
+        self.t = -1
+        # state array x = [delta, omega, xg1]
+        # input array u = [dpin]
+        self.copy_data_ext('Governor', field='gen', dest='syn', idx=self.tg)
+        self.copy_data_ext('Synchronous', field='delta', dest='delta', idx=self.syn)
+        self.copy_data_ext('Synchronous', field='omega', dest='omega', idx=self.syn)
+        self.copy_data_ext('Governor', field='xg1', dest='xg1', idx=self.tg)
+        self.copy_data_ext('Governor', field='pin', dest='pin', idx=self.tg)
+
+        dae.y[self.dpin] = 0
+        self.dpin0 = zeros(self.n, 1)
+
+        # build state/ input /other algebraic idx array
+        self.xidx = matrix([self.delta, self.omega, self.xg1])
+        self.uidx = matrix([self.dpin])
+
+        yidx = np.delete(np.arange(dae.m), np.array(self.uidx))
+        self.yxidx = matrix(yidx)
+
+    def gcall(self, dae):
+        if self.t != dae.t:
+            # update the linearization points
+            self.t = dae.t
+
+            self.xg10 = dae.x[self.xg1]
+            self.pin0 = dae.y[self.pin]
+
+            self.delta0 = dae.x[self.delta]
+            self.omega0 = dae.x[self.omega]
+
+        dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
+        dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
+
+    def jac0(self, dae):
+        dae.add_jac(Gy0, 1e-6, self.dpin, self.dpin)
+
+    def fxcall(self, dae):
+
+        # convert jacobian matrices to spmatrix before slicing
+        dae.temp_to_spmatrix('jac')
+
+        self.sfx = dae.Fx[self.xidx, self.xidx]
+        self.sfu = dae.Fy[self.xidx, self.uidx]
+        self.sfy = dae.Fy[self.xidx, self.yxidx]
+
+        self.sgx = dae.Gx[self.yxidx, self.xidx]
+        self.sgu = dae.Gy[self.yxidx, self.uidx]
+        self.sgy = dae.Gy[self.yxidx, self.yxidx]
+
+        gyigx = matrix(self.sgx)
+        gyigu = matrix(self.sgu)
+        try:
+            self.solver.linsolve(self.sgy, gyigx)
+            self.solver.linsolve(self.sgy, gyigu)
+        except ArithmeticError:
+            logger.warning("Singular matrix in MPC")
+            return
+
+        self.A = (self.sfx - self.sfy * gyigx)
+        self.B = (self.sfu - self.sfy * gyigu)
+
+        self.Aa = sparse([[self.A, spmatrix([], [], [], (self.A.size[0], self.A.size[1]))],
+                          [self.A, spdiag([1] * len(self.xidx))]])
+        self.Ba = sparse([[self.B], [self.B]])
+
+        # TODO: check why fxcall is not called at every step
+        # print(self.Aa)
 
 
 class AGCSynVSC(AGCSyn, AGCVSCBase):
