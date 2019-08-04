@@ -207,7 +207,7 @@ class TDS(RoutineBase):
         system.varname.resize_for_flows()
         system.varname.bus_line_names()
 
-        # Reshape dae to retain power flow solutions
+        # Reshape dae to retain psstower flow solutions
         system.dae.init1()
 
         # Initialize post-powerflow device variables
@@ -215,6 +215,7 @@ class TDS(RoutineBase):
             if init1:
                 system.__dict__[device].init1(system.dae)
 
+        system.call.int()
         t, s = elapsed(t)
 
         if system.dae.n:
@@ -427,9 +428,12 @@ class TDS(RoutineBase):
                 dae.rebuild = True
             elif dae.factorize:
                 dae.rebuild = True
+            elif self.config.honest is True:
+                dae.rebuild = True
 
             # rebuild Jacobian
             if dae.rebuild:
+                dae.factorize = True
                 system.call.int()
                 dae.rebuild = False
             else:

@@ -2,10 +2,10 @@ import logging
 import numpy as np
 
 from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
-
+from cvxopt.modeling import variable, op  # NOQA
 from andes.consts import Gx, Fy0, Gy0
 from andes.models.base import ModelBase
-from andes.utils.math import zeros
+from andes.utils.math import zeros, index
 from andes.utils.solver import Solver
 
 logger = logging.getLogger(__name__)
@@ -318,9 +318,14 @@ class AGCMPC(ModelBase):
 
         self._data.update({'tg': None,
                            'vsc': None,
+                           'qw': 1e8,
+                           'qu': 1e4
                            })
+        self._params.extend(['qw', 'qu'])
         self._descr.update({'tg': 'idx for turbine governors',
                             'vsc': 'idx for VSC dynamic models',
+                            'qw': 'the coeff for minimizing frequency deviation',
+                            'qu': 'the coeff for minimizing input deviation'
                             })
         self._units.update({'tg': 'list', 'vsc': 'list'})
         self._mandatory.extend(['tg'])
@@ -329,13 +334,18 @@ class AGCMPC(ModelBase):
                            'jac0': True,
                            'fxcall': True})
 
-        self._service.extend(['xg10', 'pin0', 'delta0', 'omega0', 't', 'dpin0',
+        self._service.extend(['xg10', 'pin0', 'delta0', 'omega0', 't', 'dpin0', 'x0', 'xlast'
                               'xidx', 'uidx', 'yxidx', 'sfx', 'sfu', 'sfy', 'sgx', 'sgu', 'sgy',
-                              'A', 'B', 'Aa', 'Ba'])
+                              'A', 'B', 'Aa', 'Ba',
+                              'obj', 'domega', 'du', 'dx', 'x', 'xpred'
+                              'xa'])
 
         self._algebs.extend(['dpin'])
         self._fnamey.extend(r'\Delta P_{in}')
         self.solver = Solver(system.config.sparselib)
+        self.H = 10
+        self.uvar = None
+        self.op = None
         self._init()
 
     def init1(self, dae):
@@ -353,59 +363,93 @@ class AGCMPC(ModelBase):
 
         # build state/ input /other algebraic idx array
         self.xidx = matrix([self.delta, self.omega, self.xg1])
+        self.omegaidx = [index(self.xidx, x)[0] for x in self.omega]
+
         self.uidx = matrix([self.dpin])
+
+        self.dx = zeros(len(self.xidx), 1)
+        self.x = dae.x[self.xidx]
+        self.xlast = matrix(self.x)
+
+        self.xg10 = dae.x[self.xg1]
+        self.pin0 = dae.y[self.pin]
+
+        self.delta0 = dae.x[self.delta]
+        self.omega0 = dae.x[self.omega]
+
+        self.x0 = dae.x[self.xidx]
 
         yidx = np.delete(np.arange(dae.m), np.array(self.uidx))
         self.yxidx = matrix(yidx)
 
+        # optimization problem
+        # self.uvar = [variable() for i in range(len(self.uidx))]
+        self.uvar = variable(len(self.uidx), 'u')
+
     def gcall(self, dae):
-        if self.t != dae.t:
+        if self.t == dae.t:
+            return
+
+        elif self.t == -1:
             # update the linearization points
             self.t = dae.t
+            self.xlast = matrix(self.x)
+            self.sfx = dae.Fx[self.xidx, self.xidx]
+            self.sfu = dae.Fy[self.xidx, self.uidx]
+            self.sfy = dae.Fy[self.xidx, self.yxidx]
 
-            self.xg10 = dae.x[self.xg1]
-            self.pin0 = dae.y[self.pin]
+            self.sgx = dae.Gx[self.yxidx, self.xidx]
+            self.sgu = dae.Gy[self.yxidx, self.uidx]
+            self.sgy = dae.Gy[self.yxidx, self.yxidx]
 
-            self.delta0 = dae.x[self.delta]
-            self.omega0 = dae.x[self.omega]
+            # create state matrices
+            self.gyigx = matrix(self.sgx)
+            self.gyigu = matrix(self.sgu)
+
+            self.solver.linsolve(self.sgy, self.gyigx)
+            self.solver.linsolve(self.sgy, self.gyigu)
+
+            # ToDO: double check the correctness
+            self.A = (self.sfx - self.sfy * self.gyigx)
+            self.B = (self.sfu - self.sfy * self.gyigu)
+
+            self.Aa = sparse([[self.A, self.A],
+                              [spmatrix([], [], [], (self.A.size[0], self.A.size[1])),
+                               spdiag([1] * len(self.xidx))]])
+            self.Ba = sparse([self.B, self.B])
+        else:
+            self.t = dae.t
+
+        self.domega = dae.x[self.omega] - self.omega0
+        self.du = self.uvar - self.dpin0
+
+        # update Delta x and x for current step
+        self.xlast = self.x
+        self.x = dae.x[self.xidx] - self.x0
+        self.dx = self.x - self.xlast
+        self.xa = matrix([self.dx, self.x])
+
+        nx = len(self.xidx)
+        tmp = 0
+        xa_0 = self.xa
+        for i in range(self.H):
+            xa_i = self.Aa * xa_0 + self.Ba * self.du
+            tmp += xa_i
+            xa_0 = xa_i
+
+        self.xpred = tmp[nx:][self.omegaidx]
+
+        # construct the optimization problem
+
+        # self.obj = self.domega.trans() * spdiag(self.qw) * self.domega + \
+        #            self.du.trans() * spdiag(self.qu) * self.du
 
         dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
         dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
 
     def jac0(self, dae):
-        dae.add_jac(Gy0, 1e-6, self.dpin, self.dpin)
-
-    def fxcall(self, dae):
-
-        # convert jacobian matrices to spmatrix before slicing
-        dae.temp_to_spmatrix('jac')
-
-        self.sfx = dae.Fx[self.xidx, self.xidx]
-        self.sfu = dae.Fy[self.xidx, self.uidx]
-        self.sfy = dae.Fy[self.xidx, self.yxidx]
-
-        self.sgx = dae.Gx[self.yxidx, self.xidx]
-        self.sgu = dae.Gy[self.yxidx, self.uidx]
-        self.sgy = dae.Gy[self.yxidx, self.yxidx]
-
-        gyigx = matrix(self.sgx)
-        gyigu = matrix(self.sgu)
-        try:
-            self.solver.linsolve(self.sgy, gyigx)
-            self.solver.linsolve(self.sgy, gyigu)
-        except ArithmeticError:
-            logger.warning("Singular matrix in MPC")
-            return
-
-        self.A = (self.sfx - self.sfy * gyigx)
-        self.B = (self.sfu - self.sfy * gyigu)
-
-        self.Aa = sparse([[self.A, spmatrix([], [], [], (self.A.size[0], self.A.size[1]))],
-                          [self.A, spdiag([1] * len(self.xidx))]])
-        self.Ba = sparse([[self.B], [self.B]])
-
-        # TODO: check why fxcall is not called at every step
-        # print(self.Aa)
+        dae.add_jac(Gy0, 1, self.dpin, self.dpin)
+        dae.add_jac(Gy0, 1, self.pin, self.dpin)
 
 
 class AGCSynVSC(AGCSyn, AGCVSCBase):

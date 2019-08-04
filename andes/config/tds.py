@@ -15,6 +15,7 @@ class Tds(ConfigBase):
         self.deltatmin = 0.0002
         self.maxit = 30
         self.tol = 1e-4
+        self.honest = False
         self.disturbance = False
         self.error = 1
         self.qrt = False
@@ -28,28 +29,18 @@ class Tds(ConfigBase):
     @cached
     def config_descr(self):
         descriptions = {
-            'fixt':
-            'use fixed time step size',
-            'tstep':
-            'time step size',
-            'method':
-            'time domain integration method',
-            't0':
-            'starting simulation time',
-            'tf':
-            'ending simulation time',
-            'maxit':
-            'maximum iteration number for each integration step',
-            'tol':
-            'iteration error tolerance',
-            'qrt':
-            'quasi-real-time simulation speed',
-            'kqrt':
-            'quasi-rt runs at kqrt seconds per simulated second',
-            'compute_flows':
-            'post-compute bus injections and line flows at each step',
-            'max_cache':
-            'maximum allowed steps in varout memory, save to disk if reached, '
+            'fixt': 'use fixed time step size',
+            'tstep': 'time step size',
+            'method': 'time domain integration method',
+            't0': 'starting simulation time',
+            'tf': 'ending simulation time',
+            'maxit': 'maximum iteration number for each integration step',
+            'honest': 'force honest Newton method (update at each iteration)',
+            'tol': 'iteration error tolerance',
+            'qrt': 'quasi-real-time simulation speed',
+            'kqrt': 'quasi-rt runs at kqrt seconds per simulated second',
+            'compute_flows': 'post-compute bus injections and line flows at each step',
+            'max_cache': 'maximum allowed steps in varout memory, save to disk if reached, '
             '0 for unlimited memory cache',
             'saveformat': 'format of the simulation data dump'
         }
