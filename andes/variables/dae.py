@@ -492,30 +492,17 @@ class DAE(object):
             return
 
         mn = self.m + self.n
-
         x = index(aandb(self.zxmin, self.zxmax), 0.)
         y = [i + self.n for i in index(aandb(self.zymin, self.zymax), 0.)]
-
         xy = matrix(list(x) + y)
-
         n_xy = len(xy)
-        rows = matrix([])
-        cols = matrix([])
-
-        for idx in xy:
-            # rows first
-            mn_idx = matrix([idx] * mn)
-            mn_arange = matrix(list(range(mn)))
-            rows = matrix([rows, mn_idx])
-            cols = matrix([cols, mn_arange])
-            rows = matrix([rows, mn_arange])
-            cols = matrix([cols, mn_idx])
 
         if n_xy > 0:
             self.q[x] = 0
 
             if hasattr(self.Ac, 'ipset'):
-                self.Ac.ipset(zeros(2*mn*n_xy, 1), rows, cols)  # reset all associated rows and cols
+                self.Ac[xy, :] = 0
+                self.Ac[:, xy] = 0
                 self.Ac.ipset(matrix(1, (n_xy, 1), 'd'), xy, xy)  # set the diagonals to 1
             else:
                 eye = spdiag([1.0] * mn)
