@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import cvxpy as cp
 
 from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
 from cvxopt.modeling import variable, op  # NOQA
@@ -317,9 +318,10 @@ class AGCMPC(ModelBase):
         self.param_remove('Sn')
 
         self._data.update({'tg': None,
+                           'avr': None,
                            'vsc': None,
-                           'qw': 1e8,
-                           'qu': 1e4
+                           'qw': 100,
+                           'qu': 100,
                            })
         self._params.extend(['qw', 'qu'])
         self._descr.update({'tg': 'idx for turbine governors',
@@ -328,7 +330,7 @@ class AGCMPC(ModelBase):
                             'qu': 'the coeff for minimizing input deviation'
                             })
         self._units.update({'tg': 'list', 'vsc': 'list'})
-        self._mandatory.extend(['tg'])
+        self._mandatory.extend(['tg', 'avr'])
         self.calls.update({'init1': True,
                            'gcall': True,
                            'jac0': True,
@@ -343,7 +345,7 @@ class AGCMPC(ModelBase):
         self._algebs.extend(['dpin'])
         self._fnamey.extend(r'\Delta P_{in}')
         self.solver = Solver(system.config.sparselib)
-        self.H = 10
+        self.H = 5
         self.uvar = None
         self.op = None
         self._init()
@@ -355,21 +357,36 @@ class AGCMPC(ModelBase):
         self.copy_data_ext('Governor', field='gen', dest='syn', idx=self.tg)
         self.copy_data_ext('Synchronous', field='delta', dest='delta', idx=self.syn)
         self.copy_data_ext('Synchronous', field='omega', dest='omega', idx=self.syn)
+        self.copy_data_ext('Synchronous', field='e1d', dest='e1d', idx=self.syn)
+        self.copy_data_ext('Synchronous', field='e1q', dest='e1q', idx=self.syn)
+        self.copy_data_ext('Synchronous', field='e2d', dest='e2d', idx=self.syn)
+        self.copy_data_ext('Synchronous', field='e2q', dest='e2q', idx=self.syn)
+
         self.copy_data_ext('Governor', field='xg1', dest='xg1', idx=self.tg)
+        self.copy_data_ext('Governor', field='xg2', dest='xg2', idx=self.tg)
+        self.copy_data_ext('Governor', field='xg3', dest='xg3', idx=self.tg)
         self.copy_data_ext('Governor', field='pin', dest='pin', idx=self.tg)
+
+        self.copy_data_ext('AVR', field='vm', dest='vm', idx=self.avr)
+        self.copy_data_ext('AVR', field='vr1', dest='vr1', idx=self.avr)
+        self.copy_data_ext('AVR', field='vr2', dest='vr2', idx=self.avr)
+        self.copy_data_ext('AVR', field='vfout', dest='vfout', idx=self.avr)
 
         dae.y[self.dpin] = 0
         self.dpin0 = zeros(self.n, 1)
 
         # build state/ input /other algebraic idx array
-        self.xidx = matrix([self.delta, self.omega, self.xg1])
-        self.omegaidx = [index(self.xidx, x)[0] for x in self.omega]
+        self.xidx = matrix([self.delta, self.omega, self.e1d, self.e1q, self.e2d, self.e2q, self.xg1, self.xg2,
+                            self.xg3, self.vm, self.vr1, self.vr2, self.vfout])
+
+        self.yidx = self.omega
+        self.yidx_in_x = [index(self.xidx, y)[0] for y in self.yidx]
 
         self.uidx = matrix([self.dpin])
 
         self.dx = zeros(len(self.xidx), 1)
-        self.x = dae.x[self.xidx]
-        self.xlast = matrix(self.x)
+        self.x = zeros(len(self.xidx), 1)
+        self.xlast = zeros(len(self.xidx), 1)
 
         self.xg10 = dae.x[self.xg1]
         self.pin0 = dae.y[self.pin]
@@ -384,7 +401,8 @@ class AGCMPC(ModelBase):
 
         # optimization problem
         # self.uvar = [variable() for i in range(len(self.uidx))]
-        self.uvar = variable(len(self.uidx), 'u')
+        self.uvar = cp.Variable((len(self.uidx), 1), 'u')
+        self.prob = None
 
     def gcall(self, dae):
         if self.t == dae.t:
@@ -393,7 +411,6 @@ class AGCMPC(ModelBase):
         elif self.t == -1:
             # update the linearization points
             self.t = dae.t
-            self.xlast = matrix(self.x)
             self.sfx = dae.Fx[self.xidx, self.xidx]
             self.sfu = dae.Fy[self.xidx, self.uidx]
             self.sfy = dae.Fy[self.xidx, self.yxidx]
@@ -409,7 +426,6 @@ class AGCMPC(ModelBase):
             self.solver.linsolve(self.sgy, self.gyigx)
             self.solver.linsolve(self.sgy, self.gyigu)
 
-            # ToDO: double check the correctness
             self.A = (self.sfx - self.sfy * self.gyigx)
             self.B = (self.sfu - self.sfy * self.gyigu)
 
@@ -430,19 +446,23 @@ class AGCMPC(ModelBase):
         self.xa = matrix([self.dx, self.x])
 
         nx = len(self.xidx)
-        tmp = 0
+        cumulative_obj = 0
         xa_0 = self.xa
         for i in range(self.H):
-            xa_i = self.Aa * xa_0 + self.Ba * self.du
-            tmp += xa_i
+            # calculate Xa for each step in horizon H
+            xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * self.du
+            cumulative_obj += xa_i
             xa_0 = xa_i
 
-        self.xpred = tmp[nx:][self.omegaidx]
+        self.xpred = cumulative_obj[nx:][self.yidx_in_x]
 
         # construct the optimization problem
+        self.obj_x = self.qw * cp.sum(cp.square(self.xpred))
+        self.obj_u = self.qu * cp.sum(cp.square(self.du))
 
-        # self.obj = self.domega.trans() * spdiag(self.qw) * self.domega + \
-        #            self.du.trans() * spdiag(self.qu) * self.du
+        self.prob = cp.Problem(cp.Minimize(cp.sum(self.obj_x + self.obj_u)))
+        self.prob.solve()
+        self.dpin0 = matrix(self.prob.solution.primal_vars[0])
 
         dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
         dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
