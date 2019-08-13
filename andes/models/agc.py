@@ -373,7 +373,7 @@ class AGCMPC(ModelBase):
         self.copy_data_ext('AVR', field='vfout', dest='vfout', idx=self.avr)
 
         dae.y[self.dpin] = 0
-        self.dpin0 = zeros(self.n, 1)
+        self.ulast = zeros(self.n, 1)
 
         # build state/ input /other algebraic idx array
         self.xidx = matrix([self.delta, self.omega, self.e1d, self.e1q, self.e2d, self.e2q, self.xg1, self.xg2,
@@ -401,7 +401,7 @@ class AGCMPC(ModelBase):
 
         # optimization problem
         # self.uvar = [variable() for i in range(len(self.uidx))]
-        self.uvar = cp.Variable((len(self.uidx), 1), 'u')
+        self.uvar = cp.Variable((len(self.uidx), self.H), 'u')
         self.prob = None
 
     def gcall(self, dae):
@@ -436,9 +436,6 @@ class AGCMPC(ModelBase):
         else:
             self.t = dae.t
 
-        self.domega = dae.x[self.omega] - self.omega0
-        self.du = self.uvar - self.dpin0
-
         # update Delta x and x for current step
         self.xlast = self.x
         self.x = dae.x[self.xidx] - self.x0
@@ -448,21 +445,26 @@ class AGCMPC(ModelBase):
         nx = len(self.xidx)
         cumulative_obj = 0
         xa_0 = self.xa
+        u_0 = self.ulast
         for i in range(self.H):
             # calculate Xa for each step in horizon H
-            xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * self.du
+            du = cp.reshape(self.uvar[:, i], (len(self.uidx), 1)) - u_0
+            xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du
             cumulative_obj += xa_i
             xa_0 = xa_i
+            u_0 = cp.reshape(self.uvar[:len(self.uidx), i], (len(self.uidx), 1))
 
         self.xpred = cumulative_obj[nx:][self.yidx_in_x]
 
         # construct the optimization problem
         self.obj_x = self.qw * cp.sum(cp.square(self.xpred))
-        self.obj_u = self.qu * cp.sum(cp.square(self.du))
+        # self.obj_u = self.qu * cp.sum(cp.square(self.uvar))
+        self.obj_u = 0
 
         self.prob = cp.Problem(cp.Minimize(cp.sum(self.obj_x + self.obj_u)))
         self.prob.solve()
-        self.dpin0 = matrix(self.prob.solution.primal_vars[0])
+        self.dpin0 = matrix(self.prob.solution.primal_vars[0])[:, 0]
+        # self.ulast = self.dpin0
 
         dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
         dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
