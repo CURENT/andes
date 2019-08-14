@@ -320,8 +320,8 @@ class AGCMPC(ModelBase):
         self._data.update({'tg': None,
                            'avr': None,
                            'vsc': None,
-                           'qw': 100,
-                           'qu': 100,
+                           'qw': 1,
+                           'qu': 1,
                            })
         self._params.extend(['qw', 'qu'])
         self._descr.update({'tg': 'idx for turbine governors',
@@ -373,41 +373,33 @@ class AGCMPC(ModelBase):
         self.copy_data_ext('AVR', field='vfout', dest='vfout', idx=self.avr)
 
         dae.y[self.dpin] = 0
-        self.ulast = zeros(self.n, 1)
+        self.dpin0 = zeros(self.n, 1)
 
         # build state/ input /other algebraic idx array
         self.xidx = matrix([self.delta, self.omega, self.e1d, self.e1q, self.e2d, self.e2q, self.xg1, self.xg2,
                             self.xg3, self.vm, self.vr1, self.vr2, self.vfout])
+        self.x0 = dae.x[self.xidx]
+        self.x = zeros(len(self.xidx), 1)
+        self.dx = zeros(len(self.xidx), 1)
+        self.xlast = dae.x[self.xidx]
+
+        self.uidx = matrix([self.dpin])
+        self.ulast = zeros(self.n, 1)
 
         self.yidx = self.omega
         self.yidx_in_x = [index(self.xidx, y)[0] for y in self.yidx]
-
-        self.uidx = matrix([self.dpin])
-
-        self.dx = zeros(len(self.xidx), 1)
-        self.x = zeros(len(self.xidx), 1)
-        self.xlast = zeros(len(self.xidx), 1)
-
-        self.xg10 = dae.x[self.xg1]
-        self.pin0 = dae.y[self.pin]
-
-        self.delta0 = dae.x[self.delta]
-        self.omega0 = dae.x[self.omega]
-
-        self.x0 = dae.x[self.xidx]
-
         yidx = np.delete(np.arange(dae.m), np.array(self.uidx))
         self.yxidx = matrix(yidx)
 
         # optimization problem
-        # self.uvar = [variable() for i in range(len(self.uidx))]
         self.uvar = cp.Variable((len(self.uidx), self.H), 'u')
         self.prob = None
 
     def gcall(self, dae):
         if self.t == dae.t:
+            dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
+            dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
             return
-
         elif self.t == -1:
             # update the linearization points
             self.t = dae.t
@@ -437,34 +429,58 @@ class AGCMPC(ModelBase):
             self.t = dae.t
 
         # update Delta x and x for current step
-        self.xlast = self.x
-        self.x = dae.x[self.xidx] - self.x0
+        self.x = dae.x[self.xidx]
         self.dx = self.x - self.xlast
         self.xa = matrix([self.dx, self.x])
 
         nx = len(self.xidx)
-        cumulative_obj = 0
+        nu = len(self.uidx)
+        obj_x = 0
         xa_0 = self.xa
         u_0 = self.ulast
         for i in range(self.H):
             # calculate Xa for each step in horizon H
-            du = cp.reshape(self.uvar[:, i], (len(self.uidx), 1)) - u_0
+            du = cp.reshape(self.uvar[:, i], (nu, 1)) - u_0
             xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du
-            cumulative_obj += xa_i
+            obj_x += cp.multiply(self.qw, cp.square(xa_i[nx:][self.yidx_in_x] - self.x0[self.yidx_in_x]))
             xa_0 = xa_i
-            u_0 = cp.reshape(self.uvar[:len(self.uidx), i], (len(self.uidx), 1))
-
-        self.xpred = cumulative_obj[nx:][self.yidx_in_x]
+            u_0 = cp.reshape(self.uvar[:, i], (nu, 1))
 
         # construct the optimization problem
-        self.obj_x = self.qw * cp.sum(cp.square(self.xpred))
-        # self.obj_u = self.qu * cp.sum(cp.square(self.uvar))
-        self.obj_u = 0
+        self.obj_x = cp.sum(obj_x)
+        self.obj_u = cp.sum(cp.multiply(np.array(self.qu).reshape((nu, )), cp.sum(cp.square(self.uvar), axis=1)))
 
-        self.prob = cp.Problem(cp.Minimize(cp.sum(self.obj_x + self.obj_u)))
+        self.prob = cp.Problem(cp.Minimize(self.obj_x + self.obj_u))
         self.prob.solve()
-        self.dpin0 = matrix(self.prob.solution.primal_vars[0])[:, 0]
-        # self.ulast = self.dpin0
+        self.dpin0 = matrix(self.uvar.value)[:, 0]
+        opt_val = self.prob.solution.opt_val
+        print("MPC optimization obj = {}, du = {}, {}".format(opt_val,
+                                                              self.uvar.value[0, 0], self.uvar.value[1, 0]))
+        print("    obj_x = {}, obj_u = {}".format(self.obj_x.value, self.obj_u.value))
+
+        # # post-optimization evaluator
+        # u_val = matrix(self.uvar.value)
+        # obj_x = 0
+        # xa_0 = self.xa
+        # u_0 = self.ulast
+        # for i in range(self.H):
+        #     # calculate Xa for each step in horizon H
+        #     du = np.reshape(u_val[:, i], (-1, 1)) - u_0
+        #     xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * matrix(du)
+        #     obj_x += mul(self.qw, (xa_i[nx:][self.yidx_in_x] - self.x0[self.yidx_in_x]) ** 2)
+        #     xa_0 = xa_i
+        #     u_0 = np.reshape(u_val[:, i], (-1, 1))
+        # self.obj_x = sum(obj_x)
+        # u2 = np.array(mul(u_val, u_val))
+        # self.obj_u = sum(mul(self.qu, matrix(np.sum(u2, 1))))
+        #
+        # eval_obj = self.obj_x + self.obj_u
+        # print("MPC post evaluation obj = {}, u = {}, {}".format(eval_obj, u_val[0, 0], u_val[1, 0]))
+        # print("    obj_x = {}, obj_u = {}".format(self.obj_x, self.obj_u))
+
+        # record data for the current step
+        self.ulast = self.dpin0
+        self.xlast = dae.x[self.xidx]
 
         dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
         dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
