@@ -320,7 +320,7 @@ class AGCMPC(ModelBase):
         self._data.update({'tg': None,
                            'avr': None,
                            'vsc': None,
-                           'qw': 1,
+                           'qw': 2000000,
                            'qu': 1,
                            })
         self._params.extend(['qw', 'qu'])
@@ -421,6 +421,7 @@ class AGCMPC(ModelBase):
             self.A = (self.sfx - self.sfy * self.gyigx)
             self.B = (self.sfu - self.sfy * self.gyigu)
 
+            self.A = self.system.tds.h * self.A
             self.Aa = sparse([[self.A, self.A],
                               [spmatrix([], [], [], (self.A.size[0], self.A.size[1])),
                                spdiag([1] * len(self.xidx))]])
@@ -454,11 +455,11 @@ class AGCMPC(ModelBase):
         self.prob.solve()
         self.dpin0 = matrix(self.uvar.value)[:, 0]
         opt_val = self.prob.solution.opt_val
-        print("MPC optimization obj = {}, du = {}, {}".format(opt_val,
-                                                              self.uvar.value[0, 0], self.uvar.value[1, 0]))
-        print("    obj_x = {}, obj_u = {}".format(self.obj_x.value, self.obj_u.value))
+        print("t = {:.4f}, MPC obj = {:.8f}, u = {:.8f}, {:.8f}".format(self.t, opt_val, self.uvar.value[0, 0],
+                                                                        self.uvar.value[1, 0]))
 
-        # # post-optimization evaluator
+        # post-optimization evaluator
+        # u_val = matrix([[0.1, 0.1], [0.1, 0.1], [0.1, 0.1]])
         # u_val = matrix(self.uvar.value)
         # obj_x = 0
         # xa_0 = self.xa
