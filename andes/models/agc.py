@@ -320,7 +320,7 @@ class AGCMPC(ModelBase):
         self._data.update({'tg': None,
                            'avr': None,
                            'vsc': None,
-                           'qw': 2000000,
+                           'qw': 1000000,
                            'qu': 1,
                            })
         self._params.extend(['qw', 'qu'])
@@ -455,8 +455,8 @@ class AGCMPC(ModelBase):
         self.prob.solve()
         self.dpin0 = matrix(self.uvar.value)[:, 0]
         opt_val = self.prob.solution.opt_val
-        print("t = {:.4f}, MPC obj = {:.8f}, u = {:.8f}, {:.8f}".format(self.t, opt_val, self.uvar.value[0, 0],
-                                                                        self.uvar.value[1, 0]))
+        logger.info("t = {:.4f}, obj = {:.6f}, u = {:.6f}, {:.6f}".format(self.t, opt_val, self.uvar.value[0, 0],
+                                                                          self.uvar.value[1, 0]))
 
         # post-optimization evaluator
         # u_val = matrix([[0.1, 0.1], [0.1, 0.1], [0.1, 0.1]])

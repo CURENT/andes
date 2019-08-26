@@ -1,7 +1,7 @@
 import importlib
 import logging
 
-from cvxopt import matrix, spmatrix, sparse, spdiag  # NOQA
+from cvxopt import matrix, spmatrix, sparse, spdiag, printing  # NOQA
 from cvxopt import mul, div  # NOQA
 
 from .base import ModelBase
@@ -12,6 +12,8 @@ from ..utils.math import polar, conj
 logger = logging.getLogger(__name__)
 
 pd = None
+printing.options['dformat'] = '%.3f'
+printing.options['width'] = -1
 
 
 class Line(ModelBase):
@@ -333,7 +335,6 @@ class Line(ModelBase):
 
         self.gy_store = sparse([[dR.imag(), dR.real()], [dS.real(),
                                                          dS.imag()]])
-
         return self.gy_store
 
     def seriesflow(self, dae):

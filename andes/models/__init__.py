@@ -89,6 +89,7 @@ non_jits = {
     'event': {
         'GenTrip': 'GenTrip',
         'LoadShed': 'LoadShed',
+        'LoadScale': 'LoadScale',
     },
     'recorder': {
         'Recorder': 'Recorder'
