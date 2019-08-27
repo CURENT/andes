@@ -320,8 +320,8 @@ class AGCMPC(ModelBase):
         self._data.update({'tg': None,
                            'avr': None,
                            'vsc': None,
-                           'qw': 1000000,
-                           'qu': 1,
+                           'qw': 20000,
+                           'qu': 10,
                            })
         self._params.extend(['qw', 'qu'])
         self._descr.update({'tg': 'idx for turbine governors',
@@ -348,10 +348,12 @@ class AGCMPC(ModelBase):
         self.H = 5
         self.uvar = None
         self.op = None
+        self._linearized = False
         self._init()
 
     def init1(self, dae):
         self.t = -1
+        self.tlast = -1
         # state array x = [delta, omega, xg1]
         # input array u = [dpin]
         self.copy_data_ext('Governor', field='gen', dest='syn', idx=self.tg)
@@ -386,6 +388,10 @@ class AGCMPC(ModelBase):
         self.uidx = matrix([self.dpin])
         self.ulast = zeros(self.n, 1)
 
+        self.widx = self.system.PQ.a
+        self.w0 = self.system.PQ.p0
+        self.wlast = matrix(self.w0)
+
         self.yidx = self.omega
         self.yidx_in_x = [index(self.xidx, y)[0] for y in self.yidx]
         yidx = np.delete(np.arange(dae.m), np.array(self.uidx))
@@ -395,44 +401,64 @@ class AGCMPC(ModelBase):
         self.uvar = cp.Variable((len(self.uidx), self.H), 'u')
         self.prob = None
 
+        self.t_store = []
+        self.xpred_store = []
+
     def gcall(self, dae):
-        if self.t == dae.t:
-            dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
-            dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
-            return
-        elif self.t == -1:
-            # update the linearization points
+
+        if self.t == -1:
             self.t = dae.t
+            return
+
+        if not self._linearized:
+            # update the linearization points
+            self._linearized = True
+            self.t = dae.t
+            self.tlast = dae.t
             self.sfx = dae.Fx[self.xidx, self.xidx]
             self.sfu = dae.Fy[self.xidx, self.uidx]
             self.sfy = dae.Fy[self.xidx, self.yxidx]
 
             self.sgx = dae.Gx[self.yxidx, self.xidx]
             self.sgu = dae.Gy[self.yxidx, self.uidx]
+            self.sgw = spmatrix(1, self.widx, list(range(len(self.widx))), (len(self.yxidx), len(self.widx)))
             self.sgy = dae.Gy[self.yxidx, self.yxidx]
 
             # create state matrices
             self.gyigx = matrix(self.sgx)
             self.gyigu = matrix(self.sgu)
+            self.gyigw = matrix(self.sgw)
 
             self.solver.linsolve(self.sgy, self.gyigx)
             self.solver.linsolve(self.sgy, self.gyigu)
+            self.solver.linsolve(self.sgy, self.gyigw)
 
             self.A = (self.sfx - self.sfy * self.gyigx)
             self.B = (self.sfu - self.sfy * self.gyigu)
+            self.C = -(self.sfy * self.gyigw)
 
             self.A = self.system.tds.h * self.A
             self.Aa = sparse([[self.A, self.A],
                               [spmatrix([], [], [], (self.A.size[0], self.A.size[1])),
                                spdiag([1] * len(self.xidx))]])
             self.Ba = sparse([self.B, self.B])
-        else:
-            self.t = dae.t
+            self.Ca = sparse([self.C, self.C])
 
-        # update Delta x and x for current step
+        if (dae.t - self.tlast) / 4 < 1:
+            # no new agc signal yet
+            dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0
+            dae.g[self.pin] += dae.y[self.dpin]  # positive `dpin` increases the `pin` reference
+            return
+        else:
+            # new agc signal!
+            self.tlast = dae.t
+
+        # # update Delta x and x for current step
         self.x = dae.x[self.xidx]
         self.dx = self.x - self.xlast
         self.xa = matrix([self.dx, self.x])
+
+        self.dw = self.system.PQ.p0 - self.w0
 
         nx = len(self.xidx)
         nu = len(self.uidx)
@@ -442,32 +468,58 @@ class AGCMPC(ModelBase):
         for i in range(self.H):
             # calculate Xa for each step in horizon H
             du = cp.reshape(self.uvar[:, i], (nu, 1)) - u_0
-            xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du
+            xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du  # + matrix(self.Ca) * self.dw
             obj_x += cp.multiply(self.qw, cp.square(xa_i[nx:][self.yidx_in_x] - self.x0[self.yidx_in_x]))
             xa_0 = xa_i
             u_0 = cp.reshape(self.uvar[:, i], (nu, 1))
 
         # construct the optimization problem
         self.obj_x = cp.sum(obj_x)
-        self.obj_u = cp.sum(cp.multiply(np.array(self.qu).reshape((nu, )), cp.sum(cp.square(self.uvar), axis=1)))
 
-        self.prob = cp.Problem(cp.Minimize(self.obj_x + self.obj_u))
+        self.obj_u = 0
+        self.obj_u += cp.sum(
+            cp.multiply(
+                np.array(self.qu).reshape(nu, ),
+                cp.square(self.uvar[:, 0] - np.array(self.ulast).reshape((nu, )))
+            )
+        )
+
+        self.obj_u += cp.sum(
+            cp.multiply(
+                np.array(self.qu).reshape((nu, )),
+                cp.sum(cp.square(self.uvar[:, 1:] - self.uvar[:, :-1]), axis=1)
+            )
+        )
+
+        constraints = [cp.reshape(self.uvar[:, 0], (nu, 1)) - self.ulast <= 0.05,
+                       cp.reshape(self.uvar[:, 0], (nu, 1)) - self.ulast >= -0.05,
+                       self.uvar[:, 1:] - self.uvar[:, :-1] <= 0.05,
+                       self.uvar[:, 1:] - self.uvar[:, :-1] >= -0.05
+                       ]
+
+        self.prob = cp.Problem(cp.Minimize(self.obj_x + self.obj_u), constraints)
         self.prob.solve()
         self.dpin0 = matrix(self.uvar.value)[:, 0]
         opt_val = self.prob.solution.opt_val
-        logger.info("t = {:.4f}, obj = {:.6f}, u = {:.6f}, {:.6f}".format(self.t, opt_val, self.uvar.value[0, 0],
+        logger.info("t = {:.4f}, obj = {:.6f}, u = {:.6f}, {:.6f}".format(dae.t, opt_val, self.uvar.value[0, 0],
                                                                           self.uvar.value[1, 0]))
 
-        # post-optimization evaluator
-        # u_val = matrix([[0.1, 0.1], [0.1, 0.1], [0.1, 0.1]])
+        self.t_store.append(self.t)
+        xa_post = matrix(self.Aa) * self.xa + matrix(self.Ba) * (matrix(self.uvar.value[:, 0]) - self.ulast)
+        # + matrix(self.Ca) * self.dw
+        self.xpred_store.append(xa_post[nx:][self.yidx_in_x][0])
+
+        # # post-optimization evaluator
+        # # u_val = matrix([[0, 0], [0, 0], [0, 0]])
         # u_val = matrix(self.uvar.value)
+        # u_val = zeros(2, self.H)
         # obj_x = 0
         # xa_0 = self.xa
         # u_0 = self.ulast
         # for i in range(self.H):
         #     # calculate Xa for each step in horizon H
         #     du = np.reshape(u_val[:, i], (-1, 1)) - u_0
-        #     xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * matrix(du)
+        #     xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * matrix(du) #+ matrix(self.Ca) * self.dw
         #     obj_x += mul(self.qw, (xa_i[nx:][self.yidx_in_x] - self.x0[self.yidx_in_x]) ** 2)
         #     xa_0 = xa_i
         #     u_0 = np.reshape(u_val[:, i], (-1, 1))
@@ -476,7 +528,8 @@ class AGCMPC(ModelBase):
         # self.obj_u = sum(mul(self.qu, matrix(np.sum(u2, 1))))
         #
         # eval_obj = self.obj_x + self.obj_u
-        # print("MPC post evaluation obj = {}, u = {}, {}".format(eval_obj, u_val[0, 0], u_val[1, 0]))
+        # print("Post eval, t={:.4f} obj = {:.6f}, u = {:.6f}, {:.6f}".format(self.t, eval_obj, u_val[0, 0],
+        #                                                                     u_val[1, 0]))
         # print("    obj_x = {}, obj_u = {}".format(self.obj_x, self.obj_u))
 
         # record data for the current step
