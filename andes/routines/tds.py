@@ -3,6 +3,7 @@ import logging
 import sys
 from time import monotonic as time, sleep
 
+from matplotlib import pyplot as plt
 import numpy as np
 from cvxopt import matrix, sparse, spdiag
 
@@ -372,6 +373,10 @@ class TDS(RoutineBase):
         self.success = ret
         self.dump_results(success=self.success)
 
+        plt.plot(system.AGCMPC.t_store, system.AGCMPC.xpred_store)
+        # plt.ylim(0.9997, 1.0002)
+        plt.xlim(0, self.t)
+        plt.show()
         return ret
 
     def restore_values(self):
