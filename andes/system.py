@@ -319,11 +319,10 @@ class PowerSystem(object):
         None
         """
         for device in self.devman.devices:
-            if self.__dict__[device].n:
-                try:
-                    self.__dict__[device].setup()
-                except Exception as e:
-                    raise e
+            try:
+                self.__dict__[device].setup()
+            except Exception as e:
+                raise e
 
     def xy_addr0(self):
         """

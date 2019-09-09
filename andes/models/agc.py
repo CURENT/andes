@@ -349,6 +349,7 @@ class AGCMPC(ModelBase):
         self.uvar = None
         self.op = None
         self._linearized = False
+        self._interval = 0  # AGC apply interval in seconds. 0 - continuous
         self._init()
 
     def init1(self, dae):
@@ -387,6 +388,7 @@ class AGCMPC(ModelBase):
 
         self.uidx = matrix([self.dpin])
         self.ulast = zeros(self.n, 1)
+        self.dpin_calc = zeros(self.n, 1)
 
         self.widx = self.system.PQ.a
         self.w0 = self.system.PQ.p0
@@ -494,14 +496,17 @@ class AGCMPC(ModelBase):
             self.prob = cp.Problem(cp.Minimize(self.obj_x + self.obj_u), constraints)
             self.prob.solve()
 
-            # update every 4 seconds??
-            # if (self.t - self.tlast) /4 >= 1:
-            #     self.tlast = self.t
-            self.dpin0 = matrix(self.uvar.value)[:, 0]
+            self.dpin_calc = matrix(self.uvar.value)[:, 0]
+
+            # update every interval
+            if (self.t - self.tlast) >= self._interval:
+                self.tlast = self.t
+                self.dpin0 = self.dpin_calc
+
             opt_val = self.prob.solution.opt_val
-            logger.info("t = {:.4f}, obj = {:.6f}, u = {:.6f}, {:.6f}".format(dae.t, opt_val,
-                                                                              self.uvar.value[0, 0],
-                                                                              self.uvar.value[1, 0]))
+            logger.debug("t={:.4f}, obj={:.6f}, u={:.6f}, {:.6f}".format(dae.t, opt_val,
+                                                                         self.uvar.value[0, 0],
+                                                                         self.uvar.value[1, 0]))
 
             self.t_store.append(self.t)
             xa_post = matrix(self.Aa) * self.xa + matrix(self.Ba) * (matrix(self.uvar.value[:, 0]) - self.ulast)
@@ -532,7 +537,7 @@ class AGCMPC(ModelBase):
             # print("    obj_x = {}, obj_u = {}".format(self.obj_x, self.obj_u))
 
             # record data for the current step
-            self.ulast = self.dpin0
+            self.ulast = self.dpin_calc
             self.xlast = dae.x[self.xidx]
 
         dae.g[self.dpin] = dae.y[self.dpin] - self.dpin0

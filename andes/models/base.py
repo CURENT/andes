@@ -935,9 +935,8 @@ class ModelBase(object):
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
-                self.log(
-                    'Using default value for <{:s}.{:s}>'.format(
-                        self.name[-1], key), WARNING)
+                logger.debug('Using default value for <{:s}.{:s}>'.format(
+                    self.name[-1], key))
 
         return idx
 
@@ -1129,10 +1128,7 @@ class ModelBase(object):
 
         :return: None
         """
-        if not self.n:
-            return
-
-        self._param_to_matrix()
+        self._param_to_matrix()  # fixes an issue when PV.n=0
         self._alloc()
 
     def _intf_network(self):

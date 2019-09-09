@@ -10,7 +10,7 @@ from cvxopt import matrix, spmatrix, sparse  # NOQA
 class TestCVXOPTBenchmark(unittest.TestCase):
     def setUp(self):
         # configurable stuff
-        self.shape = 10000
+        self.shape = 1000
         self.sparsity = 0.01
         self.n_loops = 1
         # computed

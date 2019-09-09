@@ -59,6 +59,8 @@ class Zone(ModelBase):
         self.n_combination = 0
 
     def setup(self):
+        if not self.n:
+            return
         # TODO: account for >1 area/region/zone
         super().setup()
         var = self._name.lower()

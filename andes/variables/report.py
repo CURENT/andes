@@ -94,7 +94,7 @@ class Report(object):
         Sloss = sum(system.Line.S1 + system.Line.S2)
         self.extended.update({
             'Ptot':
-            sum(system.PV.pmax) + sum(system.SW.pmax),  # + sum(system.SW.pmax)
+            sum(system.PV.pmax) + sum(system.SW.pmax),
             'Pon':
             sum(mul(system.PV.u, system.PV.pmax)),
             'Pg':

@@ -643,28 +643,29 @@ def run(system,
     out_init.append('')
 
     # write to file
-    try:
-        fid = open(outfile, 'w')
-        for line in out_init:
-            fid.write(line + '\n')
-        for line in out_calls:
-            fid.write(line + '\n')
-        fid.close()
-    except IOError:
-        logger.error('IOError while writing card output.')
-        retval = False
+    if not system.files.no_output:
+        try:
+            fid = open(outfile, 'w')
+            for line in out_init:
+                fid.write(line + '\n')
+            for line in out_calls:
+                fid.write(line + '\n')
+            fid.close()
+        except IOError:
+            logger.error('IOError while writing card output.')
+            retval = False
 
-    if retval:
-        logger.info(
-            'Card file successfully saved to <{}> with'.format(outfile))
-        logger.info(
-            '* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(
-                len(sym_consts), len(sym_algebs), len(interfaces),
-                len(sym_states)))
-        logger.info('* diff equations: {}, algeb equations: {}'.format(
-            len(fcall), len(gcall)))
-        logger.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
-            len(fxcall), len(gycall), len(jac0)))
+        if retval:
+            logger.info(
+                'Card file successfully saved to <{}> with'.format(outfile))
+            logger.info(
+                '* constants: {}, algebs: {}, interfaces: {}, states: {}'.format(
+                    len(sym_consts), len(sym_algebs), len(interfaces),
+                    len(sym_states)))
+            logger.info('* diff equations: {}, algeb equations: {}'.format(
+                len(fcall), len(gcall)))
+            logger.info('* fxcall: {}, gycall: {}, jac0: {}'.format(
+                len(fxcall), len(gycall), len(jac0)))
 
     return retval
 

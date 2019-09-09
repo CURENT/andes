@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def config_logger(name='andes', log_file='andes.log', log_path='', stream=True, file=False,
+def config_logger(logger=None, name='andes', log_file='andes.log', log_path='', stream=True, file=False,
                   stream_level=logging.INFO, file_level=logging.DEBUG):
     """
     Configure a logger for the andes package with options for a `FileHandler`
@@ -74,8 +74,9 @@ def config_logger(name='andes', log_file='andes.log', log_path='', stream=True, 
     None
 
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    if not logger:
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.DEBUG)
 
     if not len(logger.handlers):
         if stream is True:
@@ -660,7 +661,8 @@ def main(args=None):
         args = vars(args)
 
     # configure stream handler verbose level
-    config_logger(log_path=misc.get_log_dir(), stream_level=args.get('verbose', logging.INFO))
+    config_logger(log_path=misc.get_log_dir(), file=True, stream=True,
+                  stream_level=args.get('verbose', logging.INFO))
 
     # show preamble
     preamble()
