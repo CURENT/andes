@@ -2,7 +2,7 @@
 Timed event base class
 """
 
-from cvxopt import matrix
+from cvxopt import matrix, mul
 
 from .base import ModelBase
 
@@ -155,3 +155,48 @@ class LoadShed(EventBase):
                 self.log('Applying Gen reconnect on <{}> at t={}'.format(
                     load_idx, sim_time))
                 self.system.__dict__[group].set_field('u', load_idx, 1)
+
+
+class LoadScale(EventBase):
+    """
+    Timed load scaling
+    """
+
+    def define(self):
+        super(LoadScale, self).define()
+        self.param_define(
+            'load',
+            default=None,
+            mandatory=True,
+            descr='load idx',
+            tomatrix=False)
+        self.param_define(
+            'group',
+            default='StaticLoad',
+            mandatory=True,
+            descr='load group, StaticLoad or DynLoad',
+            tomatrix=False)
+        self.param_define(
+            't1',
+            default=-1,
+            mandatory=False,
+            descr='load scaling time',
+            event_time=True)
+        self.param_define('scale', default=1, mandatory=False, descr='load scaling factor', to_matrix=True)
+        self.param_define('inc', default=0, mandatory=False, descr='load increment value', to_matrix=True)
+
+        self._init()
+
+    def apply(self, sim_time):
+        super(LoadScale, self).apply(sim_time)
+
+        for i in range(self.n):
+            load_idx = self.load[i]
+            group = self.group[i]
+
+            if self.t1[i] == sim_time:
+                self.log('Applying load scaling on <{}> at t={}'.format(
+                    load_idx, sim_time))
+                old_load = self.system.__dict__[group].get_field('p', load_idx)
+
+                self.system.__dict__[group].set_field('p', load_idx, mul(old_load, self.scale) + self.inc)

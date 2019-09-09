@@ -69,17 +69,13 @@ class GovernorBase(ModelBase):
         self.gain = div(1.0, self.R)
 
         # values
-        self.copy_data_ext(
-            model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
 
         # indices
-        self.copy_data_ext(
-            model='Synchronous', field='omega', dest='omega', idx=self.gen)
-        self.copy_data_ext(
-            model='Synchronous', field='pm', dest='pm', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='omega', dest='omega', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='pm', dest='pm', idx=self.gen)
 
-        self.init_limit(
-            key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
+        self.init_limit(key='pm0', lower=self.pmin, upper=self.pmax, limit=True)
         dae.y[self.wref] = self.wref0
         dae.y[self.pout] = self.pm0
 

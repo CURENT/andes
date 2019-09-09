@@ -413,7 +413,7 @@ class PFLOW(RoutineBase):
             self.niter += 1
 
             if self.niter > 4 and self.iter_mis[-1] > 1000 * self.iter_mis[0]:
-                logger.warning('Blown up in {0} iterations.'.format(self.niter))
+                logger.error('Blown up in {0} iterations.'.format(self.niter))
                 self.solved = False
                 break
 

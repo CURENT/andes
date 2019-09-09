@@ -116,6 +116,8 @@ class Call(object):
             system.dae.temp_to_spmatrix('jac0')
 
         system.dae.setup_FxGy()
+
+        self.gyisland()
         for device, gycall in zip(self.devices, self.gycall):
             if gycall:
                 system.__dict__[device].gycall(system.dae)
@@ -124,7 +126,6 @@ class Call(object):
             if fxcall:
                 system.__dict__[device].fxcall(system.dae)
 
-        self.gyisland()
         system.dae.temp_to_spmatrix('jac')
 
     def int(self):

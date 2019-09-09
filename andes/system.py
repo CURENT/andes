@@ -276,6 +276,8 @@ class PowerSystem(object):
                 self.__dict__[name] = theclass(self, name)
 
                 group = self.__dict__[name]._group
+                if group is None:
+                    raise ValueError("Class definition incomplete. Group not defined for class {}".format(name))
                 self.group_add(group)
                 self.__dict__[group].register_model(name)
 
@@ -317,11 +319,10 @@ class PowerSystem(object):
         None
         """
         for device in self.devman.devices:
-            if self.__dict__[device].n:
-                try:
-                    self.__dict__[device].setup()
-                except Exception as e:
-                    raise e
+            try:
+                self.__dict__[device].setup()
+            except Exception as e:
+                raise e
 
     def xy_addr0(self):
         """
