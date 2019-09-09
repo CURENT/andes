@@ -221,7 +221,7 @@ class TDSData(object):
         if not header:
             header = self.get_header(idx, formatted=formatted)
 
-        if len(idx) == len(header):
+        if len(idx) != len(header):
             raise ValueError("Idx length does not match header length")
 
         body = self.get_values(idx)
