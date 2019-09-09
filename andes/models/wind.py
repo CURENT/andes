@@ -90,9 +90,6 @@ class WindBase(ModelBase):
             r = t % self.dt[i]
             r = 0 if abs(r) < 1e-6 else r
 
-            print(self.speed)
-            print(ws[i])
-            print(q)
             if r == 0:
                 ws[i] = self.speed[i][q]
             else:
