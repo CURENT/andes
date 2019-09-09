@@ -1,5 +1,4 @@
 # DOME format version 1.0
-INCLUDE, vsc39.dm
 
 Fault, bus = 35, Sn = 100, Vn = 1.0, fn = 60, tf = 2.0, tc = 2.04, xf = 0.00001
 
