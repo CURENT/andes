@@ -1,13 +1,18 @@
+import sys
 import os
 import threading  # NOQA
-
-import flask
-from flask import Flask, request  # NOQA
-from flask.json import jsonify  # NOQA
-from flask_restful import Api  # NOQA
-
 import andes
 from andes.utils.math import to_number
+
+try:
+    import flask
+    from flask import Flask, request  # NOQA
+    from flask.json import jsonify  # NOQA
+    from flask_restful import Api  # NOQA
+except ImportError:
+    print("Flask import error. Install optional package `flask` and `requests`")
+    sys.exit(1)
+
 
 app = Flask(__name__)
 api = Api(app)

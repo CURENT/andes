@@ -1,11 +1,16 @@
 import json
 import logging
 import os
+import sys
 import time  # NOQA
-
-import requests
-
 from andes.utils.math import to_number
+
+try:
+    import requests
+except ImportError:
+    print("Requests import error. Install optional package `requests`")
+    sys.exit(1)
+
 
 logger = logging.getLogger(__name__)
 sh = logging.StreamHandler()

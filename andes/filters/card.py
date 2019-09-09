@@ -1,12 +1,14 @@
 import pprint
+import logging
+
+from andes.utils.math import to_number
+SYMPY = False
 
 try:
     from sympy import Symbol, diff, sin, cos, exp, Integer  # NOQA
+    SYMPY = True
 except ImportError:
-    raise ImportError('Please install sympy to parse ANDES cards.')
-
-from andes.utils.math import to_number
-import logging
+    print('Import sympy error. Install optional package `sympy` to parse card``')
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +26,15 @@ def testlines(fid):
 
 def read(file, system):
     """Parse an ANDES card file into internal variables"""
+
     try:
         fid = open(file, 'r')
         raw_file = fid.readlines()
     except IOError:
         print('* IOError while reading input card file.')
         return
+    if not SYMPY:
+        return False
 
     ret_dict = dict()
     ret_dict['outfile'] = file.split('.')[0].lower() + '.py'

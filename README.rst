@@ -35,6 +35,9 @@ ANDES is a Python-based power system simulation tool for research. It
 supports power flow calculation, time domain simulation, and full eigenvalue
 analysis for transmission networks. ANDES is currently under active development.
 
+Optional Packages
+-----------------
+The following packages are optional but recommended: matplotlib, pandas, sympy, cvxpy, flask, requests
 
 Acknowledgement
 ---------------

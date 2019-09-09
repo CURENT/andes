@@ -1,14 +1,19 @@
 # These are required for developing the package (running the tests, building
 # the documentation) but not necessarily required for _using_ it.
 andes
+matplotlib
+pandas
+sympy
+cvxpy
+flask
+requests
 codecov
 coverage
-flake8
 pytest
+flake8
 sphinx
 # These are dependencies of various sphinx extensions for documentation.
 ipython
-matplotlib
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme

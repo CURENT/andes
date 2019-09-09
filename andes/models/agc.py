@@ -1,6 +1,7 @@
+import sys
 import logging
 import numpy as np
-import cvxpy as cp
+import importlib
 
 from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
 from cvxopt.modeling import variable, op  # NOQA
@@ -10,6 +11,7 @@ from andes.utils.math import zeros, index
 from andes.utils.solver import Solver
 
 logger = logging.getLogger(__name__)
+cp = None
 
 
 class BArea(ModelBase):
@@ -353,6 +355,13 @@ class AGCMPC(ModelBase):
         self._init()
 
     def init1(self, dae):
+        if globals()['cp'] is None:
+            try:
+                globals()['cp'] = importlib.import_module('cvxpy')
+            except ImportError:
+                logger.error('CVXPY import error. Install optional package `cvxpy` to use AGCMPC')
+                sys.exit(1)
+
         self.t = -1
         self.tlast = -1
         # state array x = [delta, omega, xg1]

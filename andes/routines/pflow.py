@@ -128,6 +128,9 @@ class PFLOW(RoutineBase):
 
         while True:
             inc = self.calc_inc()
+            if inc is None:
+                break
+
             dae.x += inc[:dae.n]
             dae.y += inc[dae.n:dae.n + dae.m]
 
@@ -231,6 +234,10 @@ class PFLOW(RoutineBase):
                 system.dae.factorize = False
             except NotImplementedError:
                 pass
+            except ValueError:
+                if A.size == (0, 0):
+                    logger.error("Loaded case file contains no element.")
+                    return None
 
         try:
             N = self.solver.numeric(A, self.F)

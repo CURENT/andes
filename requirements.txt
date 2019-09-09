@@ -1,9 +1,3 @@
-numpy
 cvxopt>=1.2.2
+numpy
 scipy
-matplotlib
-pandas
-sympy
-texttable
-flask
-requests

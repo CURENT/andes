@@ -637,11 +637,9 @@ class ModelBase(object):
         """
 
         p_dict_comp = self.data_to_dict(sysbase=sysbase)
-        self._check_pd()
-
-        self.param_df = pd.DataFrame(data=p_dict_comp).set_index('idx')
-
-        return self.param_df
+        if self._check_pd():
+            self.param_df = pd.DataFrame(data=p_dict_comp).set_index('idx')
+            return self.param_df
 
     def var_to_df(self):
         """
@@ -675,9 +673,13 @@ class ModelBase(object):
         Import pandas to globals() if not exist
         """
         if globals()['pd'] is None:
-            globals()['pd'] = importlib.import_module('pandas')
+            try:
+                globals()['pd'] = importlib.import_module('pandas')
+            except ImportError:
+                logger.warning("Pandas import error.")
+                return False
 
-        return
+        return True
 
     def param_remove(self, param: 'str') -> None:
         """
@@ -1343,7 +1345,7 @@ class ModelBase(object):
 
     def doc(self, export='plain'):
         """
-        Build help document into a Texttable table
+        Build help document into a table
 
         :param ('plain', 'latex') export: export format
         :param save: save to file ``help_model.extension`` or not

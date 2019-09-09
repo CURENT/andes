@@ -1,4 +1,4 @@
-from texttable import Texttable
+from andes.utils.texttable import Texttable
 
 
 class Tab(Texttable):
