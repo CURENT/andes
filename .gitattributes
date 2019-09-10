@@ -1,2 +1,5 @@
 andes/_version.py export-subst
-cases/* linguist-vendored=true
+
+# linguist
+cases/ linguist-detectable=false
+docs/* linguist-documentation
