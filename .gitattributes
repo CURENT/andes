@@ -2,5 +2,5 @@ andes/_version.py export-subst
 
 # linguist
 cases/matpower/* linguist-detectable=false
-cases/ linguist-detectable=false
+cases/ linguist-vendored=true
 docs/* linguist-documentation
