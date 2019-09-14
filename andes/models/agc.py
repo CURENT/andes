@@ -506,7 +506,7 @@ class AGCMPC(ModelBase):
 
             self.prob.solve()
 
-            self.dpin_calc = matrix(self.uvar.value)[:, 0]
+            self.dpin_calc = matrix(self.uvar.value[:, 1])
 
             # update every interval
             if (self.t - self.tlast) >= self._interval:
