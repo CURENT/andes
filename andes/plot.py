@@ -561,8 +561,8 @@ def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
         # xl_data = xl[0]  # NOQA
         yl_data = yl[0]
 
-    for idx in range(len(y)):
-        ax.plot(x, y[idx], label=yl_data[idx], linestyle=linestyle)
+    for idx, y_val in enumerate(y):
+        ax.plot(x, y_val, label=yl_data[idx], linestyle=linestyle)
 
     ax.legend(loc='upper right')
     ax.set_ylim(auto=True)

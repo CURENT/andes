@@ -134,6 +134,7 @@ class DAE(object):
                 'V': matrix([])
             },
         }
+        self.Ac = []
 
     def init_xy(self):
         self.init_x()
@@ -605,7 +606,7 @@ class DAE(object):
         :return:
         """
         if ty not in ('jac0', 'jac'):
-            raise KeyError("Wrong jacobian type name. Must be literal jac0 or jac".format(ty))
+            raise KeyError("Wrong jacobian type {}. Must be literal jac0 or jac".format(ty))
 
         if ty == 'jac0':
             todo = ['Fx0', 'Fy0', 'Gx0', 'Gy0']

@@ -4,7 +4,7 @@ import cvxopt
 import numpy as np
 import time
 
-from cvxopt import matrix, spmatrix, sparse  # NOQA
+from cvxopt import matrix, spmatrix  # NOQA
 
 
 class TestCVXOPTBenchmark(unittest.TestCase):
@@ -148,7 +148,7 @@ class TestCVXOPTBenchmark(unittest.TestCase):
         id0 = id(self.spmat1)
         identity = cvxopt.spdiag(matrix(1, (self.shape, 1), 'd'))
 
-        for i in range(self.n_loops):
+        for _ in range(self.n_loops):
             self.spmat1 = self.spmat1 * identity
 
         t_elapsed = (time.time() - t0) / self.n_loops

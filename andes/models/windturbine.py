@@ -436,9 +436,9 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
             mis = ones(4, 1)
             jac = sparse(matrix(0, (4, 4), 'd'))
-            iter = 0
+            niter = 0
             while (max(abs(mis))) > self.system.tds.config.tol:
-                if iter > 40:
+                if niter > 40:
                     logger.error(
                         'Initialization of WTG4DC <{}> failed.'.format(
                             self.name[i]))
@@ -468,7 +468,7 @@ class WTG4DC(ModelBase, Turbine, MPPT):
 
                 linsolve(jac, mis)
                 x -= mis
-                iter += 1
+                niter += 1
 
             vsd[i] = x[0]
             vsq[i] = x[1]
