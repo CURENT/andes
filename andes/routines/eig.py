@@ -86,6 +86,7 @@ class EIG(RoutineBase):
         n = len(mu)
         idx = range(n)
 
+        mu_complex = numpy.array([0] * n, dtype=complex)
         W = matrix(spmatrix(1.0, idx, idx, (n, n), N.typecode))
         gesv(N, W)
 
@@ -96,13 +97,13 @@ class EIG(RoutineBase):
         partfact = partfact.T
 
         for item in idx:
-            mu_real = mu[item].real
-            mu_imag = mu[item].imag
-            mu[item] = complex(round(mu_real, 4), round(mu_imag, 4))
+            mu_real = float(mu[item].real)
+            mu_imag = float(mu[item].imag)
+            mu_complex[item] = complex(round(mu_real, 4), round(mu_imag, 4))
             partfact[item, :] /= WN[item]
 
         # participation factor
-        self.mu = matrix(mu)
+        self.mu = matrix(mu_complex)
         self.part_fact = matrix(partfact)
 
         return self.mu, self.part_fact
