@@ -504,7 +504,11 @@ class AGCMPC(ModelBase):
             self.uzero.value = np.array(self.ulast).reshape((-1, ))
             self.xazero.value = np.array(self.xa).reshape((-1, 1))
 
-            self.prob.solve()
+            # use warm_start when possible
+            if dae.t == 0:
+                self.prob.solve()
+            else:
+                self.prob.solve(warm_start=1)
 
             self.dpin_calc = matrix(self.uvar.value[:, 1])
 
@@ -514,9 +518,7 @@ class AGCMPC(ModelBase):
                 self.dpin0 = self.dpin_calc
 
             opt_val = self.prob.solution.opt_val
-            logger.debug("t={:.4f}, obj={:.6f}, u={:.6f}, {:.6f}".format(dae.t, opt_val,
-                                                                         self.uvar.value[0, 0],
-                                                                         self.uvar.value[1, 0]))
+            logger.debug("t={:.4f}, obj={:.6f}, u[0]={:.6f}".format(dae.t, opt_val, self.uvar.value[0, 0]))
 
             self.t_store.append(self.t)
             xa_post = matrix(self.Aa) * self.xa + matrix(self.Ba) * (matrix(self.uvar.value[:, 0]) - self.ulast)

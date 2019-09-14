@@ -1,17 +1,8 @@
 # DOME format version 1.0
 
-AGCMPC, tg = 1, avr = 1
-AGCMPC, tg = 2, avr = 2
-AGCMPC, tg = 3, avr = 3
-AGCMPC, tg = 4, avr = 4
-AGCMPC, tg = 5, avr = 5
-AGCMPC, tg = 6, avr = 6
-AGCMPC, tg = 7, avr = 7
-AGCMPC, tg = 8, avr = 8
-AGCMPC, tg = 9, avr = 9
-AGCMPC, tg = 10, avr = 10
-
-Fault, bus = 35, Sn = 100, Vn = 1.0, fn = 60, tf = 2.0, tc = 2.04, xf = 0.00001
+LoadScale, group="StaticLoad", load="PQ_2", inc = 0.5, t1=2
+LoadScale, group="StaticLoad", load="PQ_3", inc = 0.5, t1=4
+LoadScale, group="StaticLoad", load="PQ_6", inc = 0.5, t1=6
 
 Syn6a, D = 0.0, M = 8.4, S10 = 0, S12 = 0, Sn = 1000.0, Taa = 0.0, Td10 = 10.2,
        Td20 = 0.03, Tq10 = 1.5, Tq20 = 0.04, Vn = 1.0, bus = 30, coi = 0, fn = 60.0,
