@@ -475,12 +475,6 @@ class AGCMPC(ModelBase):
             self.obj_x = cp.sum(obj_x)
 
             self.obj_u = 0
-            self.obj_u += cp.sum(
-                cp.multiply(
-                    np.array(self.qu).reshape(nu, ),
-                    cp.square(self.uvar[:, 1] - self.uvar[:, 0])
-                )
-            )
 
             self.obj_u += cp.sum(
                 cp.multiply(
@@ -504,7 +498,6 @@ class AGCMPC(ModelBase):
             # # update Delta x and x for current step
             self.x = dae.x[self.xidx]
             self.dx = self.x - self.xlast
-
             self.xa = matrix([self.dx, self.x])
 
             # assign values to self.uzero and self.xazero
