@@ -21,7 +21,6 @@ Base class for building ANDES models
 import importlib
 import logging
 import sys
-from logging import DEBUG, INFO, WARNING, ERROR
 
 import numpy as np
 from cvxopt import matrix

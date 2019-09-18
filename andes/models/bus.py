@@ -126,4 +126,3 @@ class Bus(ModelBase):
             v = [self.system.Bus.n + item for item in a]
             dae.set_jac(Gy, 1e-6, a, a)
             dae.set_jac(Gy, 1e-6, v, v)
-
