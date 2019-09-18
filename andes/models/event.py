@@ -159,7 +159,7 @@ class LoadShed(EventBase):
 
 class LoadScale(EventBase):
     """
-    Timed load scaling
+    Timed load scaling or increment
     """
 
     def define(self):
@@ -200,3 +200,51 @@ class LoadScale(EventBase):
                 old_load = self.system.__dict__[group].get_field('p', load_idx)
 
                 self.system.__dict__[group].set_field('p', load_idx, mul(old_load, self.scale) + self.inc)
+
+
+class LoadRamp(ModelBase):
+    """
+    Continuous load ramping
+    """
+    def define(self):
+        self.param_remove('Sn')
+        self.param_remove('Vn')
+        self._group = 'Event'
+
+        self.param_define('load', default=None, mandatory=True, descr="load idx", tomatrix=True)
+        self.param_define('group', default='StaticLoad', mandatory=True,
+                          descr="load group, StaticLoad or DynLoad", tomatrix=False)
+        self.param_define('t1', default=-1, mandatory=True, descr='start time', tomatrix=True)
+        self.param_define('t2', default=-1, mandatory=True, descr='end time', tomatrix=True)
+        self.param_define('p_rate', default=1, mandatory=False, descr='rate of ramping per hour in percentage',
+                          tomatrix=True)
+        self.param_define('p_amount', default=0, mandatory=False, descr='the amount of ramping per hour in pu',
+                          tomatrix=True)
+        self.param_define('q_rate', default=1, mandatory=False, descr='rate of ramping per hour in percentage',
+                          tomatrix=True)
+        self.param_define('q_amount', default=0, mandatory=False, descr='the amount of ramping per hour in pu',
+                          tomatrix=True)
+
+        self.service_define("p0", matrix)
+        self.service_define("q0", matrix)
+
+    def init1(self):
+        # check the exclusivity of rate and amount
+
+        # self.
+        pass
+
+    def gcall(self):
+        # obtain the p0 and q0 at the time of the start
+
+        # call the function to calculate the load (p and q) at the present time
+
+        # apply the load
+
+        pass
+
+    def calc_p(self):
+        pass
+
+    def calc_q(self):
+        pass
