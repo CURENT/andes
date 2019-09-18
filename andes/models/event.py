@@ -1,10 +1,11 @@
 """
 Timed event base class
 """
-
+import logging
 from cvxopt import matrix, mul
-
 from .base import ModelBase
+
+logger = logging.getLogger(__name__)
 
 
 class EventBase(ModelBase):
@@ -97,11 +98,11 @@ class GenTrip(EventBase):
             gen_idx = self.gen[i]
 
             if self.t1[i] == sim_time:
-                self.log('Applying generator trip on <{}> at t={}'.format(
+                logger.info('Applying generator trip on <{}> at t={}'.format(
                     gen_idx, sim_time))
                 self.system.Synchronous.set_field('u', gen_idx, 0)
             if self.t2[i] == sim_time:
-                self.log('Applying generator reconnect on <{}> at t={}'.format(
+                logger.info('Applying generator reconnect on <{}> at t={}'.format(
                     gen_idx, sim_time))
                 self.system.Synchronous.set_field('u', gen_idx, 1)
 
@@ -148,11 +149,11 @@ class LoadShed(EventBase):
             group = self.group[i]
 
             if self.t1[i] == sim_time:
-                self.log('Applying load shedding on <{}> at t={}'.format(
+                logger.info('Applying load shedding on <{}> at t={}'.format(
                     load_idx, sim_time))
                 self.system.__dict__[group].set_field('u', load_idx, 0)
             if self.t2[i] == sim_time:
-                self.log('Applying Gen reconnect on <{}> at t={}'.format(
+                logger.info('Applying Gen reconnect on <{}> at t={}'.format(
                     load_idx, sim_time))
                 self.system.__dict__[group].set_field('u', load_idx, 1)
 
@@ -195,7 +196,7 @@ class LoadScale(EventBase):
             group = self.group[i]
 
             if self.t1[i] == sim_time:
-                self.log('Applying load scaling on <{}> at t={}'.format(
+                logger.info('Applying load scaling on <{}> at t={}'.format(
                     load_idx, sim_time))
                 old_load = self.system.__dict__[group].get_field('p', load_idx)
 

@@ -720,7 +720,7 @@ class ModelBase(object):
             elif (value is False) and (p in self.__dict__[attr]):
                 self.__dict__[attr].remove(p)
             else:
-                self.log('No need to alter {} for {}'.format(attr, p))
+                logger.info('No need to alter {} for {}'.format(attr, p))
 
         if default is not None:
             self._data.update({param: default})
@@ -785,11 +785,7 @@ class ModelBase(object):
                     if intf is False:
                         intf = True
         if ty == '':
-            self.log(
-                'Equation associated with interface variable {var} '
-                'assumed as algeb'.
-                format(var=var),
-                DEBUG)
+            logger.debug('Equation associated with interface variable {var} assumed as algeb'.format(var=var))
             ty = 'g'
 
         self._equations.append((expr, var, intf, ty))
@@ -910,9 +906,7 @@ class ModelBase(object):
         # check mandatory parameters
         for key in self._mandatory:
             if key not in kwargs.keys():
-                self.log(
-                    'Mandatory parameter <{:s}.{:s}> missing'.format(
-                        self.name[-1], key), ERROR)
+                logger.error('Mandatory parameter <{:s}.{:s}> missing'.format(self.name[-1], key))
                 sys.exit(1)
 
         # set default values
@@ -922,9 +916,7 @@ class ModelBase(object):
         # overwrite custom values
         for key, value in kwargs.items():
             if key not in self._data:
-                self.log(
-                    'Parameter <{:s}.{:s}> is not used.'.format(
-                        self.name[-1], key), WARNING)
+                logger.warning('Parameter <{:s}.{:s}> is not used.'.format(self.name[-1], key))
                 continue
             self.__dict__[key][-1] = value
 
@@ -937,8 +929,7 @@ class ModelBase(object):
                 else:
                     default = self._data[key]
                 self.__dict__[key][-1] = default
-                logger.debug('Using default value for <{:s}.{:s}>'.format(
-                    self.name[-1], key))
+                logger.debug('Using default value for <{:s}.{:s}>'.format(self.name[-1], key))
 
         return idx
 
@@ -954,7 +945,7 @@ class ModelBase(object):
                 key = idx
                 item = self.uid[idx]
             else:
-                self.log('The item <{:s}> does not exist.'.format(idx), ERROR)
+                logger.error('Item <{:s}> does not exist.'.format(idx))
                 return None
         else:
             return None
@@ -1243,8 +1234,7 @@ class ModelBase(object):
         :return: None
         """
         if not self._flags['address']:
-            self.log('Unable to assign Varname before allocating address',
-                     ERROR)
+            logger.error('Unable to assign Varname before allocating address')
             return
 
         varname = self.system.varname
@@ -1287,17 +1277,6 @@ class ModelBase(object):
         for item in self._params:
             self.__dict__[item] = list(self.__dict__[item])
 
-    def log(self, msg, level=INFO):
-        """Record a line of log in logger
-
-        :param str msg: content of the messag
-
-        :param level: logging level
-        :return: None
-
-        """
-        logger.log(level, '<{}> - '.format(self._name) + msg)
-
     def init_limit(self, key, lower=None, upper=None, limit=False):
         """ check if data is within limits. reset if violates"""
         above = agtb(self.__dict__[key], upper)
@@ -1305,9 +1284,8 @@ class ModelBase(object):
             if item == 0.:
                 continue
             maxval = upper[idx]
-            self.log(
-                '{0} <{1}.{2}> above its maximum of {3}.'.format(
-                    self.name[idx], self._name, key, maxval), ERROR)
+            logger.error('{0} <{1}.{2}> above its maximum of {3}.'.format(
+                self.name[idx], self._name, key, maxval))
             if limit:
                 self.__dict__[key][idx] = maxval
 
@@ -1316,9 +1294,8 @@ class ModelBase(object):
             if item == 0.:
                 continue
             minval = lower[idx]
-            self.log(
-                '{0} <{1}.{2}> below its minimum of {3}.'.format(
-                    self.name[idx], self._name, key, minval), ERROR)
+            logger.error('{0} <{1}.{2}> below its minimum of {3}.'.format(
+                    self.name[idx], self._name, key, minval))
             if limit:
                 self.__dict__[key][idx] = minval
 
@@ -1417,9 +1394,9 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmin[idx]
-                self.log(
+                logger.error(
                     'Init of <{}.{}>={:.4g} is lower than min={:6.4g}'.format(
-                        n, varname, v, vm), ERROR)
+                        n, varname, v, vm))
                 retval = False
 
         vmax = matrix(self.__dict__[vmax])
@@ -1429,9 +1406,9 @@ class ModelBase(object):
             if c == 1:
                 v = val[idx]
                 vm = vmax[idx]
-                self.log(
+                logger.error(
                     'Init of <{}.{}>={:.4g} is higher than max={:.4g}'.format(
-                        n, varname, v, vm), ERROR)
+                        n, varname, v, vm))
                 retval = False
         return retval
 
@@ -1479,7 +1456,7 @@ class ModelBase(object):
         ret = []
 
         if not self._config['is_series']:
-            self.log(
+            logger.error(
                 'link_bus function is not valid for non-series model <{}>'.
                 format(self.name))
             return []
@@ -1543,18 +1520,18 @@ class ModelBase(object):
             for name, bus, Vn, Vn0 in zip(self.name, self.bus, self.Vn,
                                           bus_Vn):
                 if Vn != Vn0:
-                    self.log(
+                    logger.warning(
                         '<{}> has Vn={} different from bus <{}> Vn={}.'.format(
-                            name, Vn, bus, Vn0), WARNING)
+                            name, Vn, bus, Vn0))
 
         if hasattr(self, 'node') and hasattr(self, 'Vdcn'):
             node_Vdcn = self.read_data_ext('Node', field='Vdcn', idx=self.node)
             for name, node, Vdcn, Vdcn0 in zip(self.name, self.node, self.Vdcn,
                                                node_Vdcn):
                 if Vdcn != Vdcn0:
-                    self.log(
+                    logger.warning(
                         '<{}> has Vdcn={} different from node <{}> Vdcn={}.'
-                        .format(name, Vdcn, node, Vdcn0), WARNING)
+                        .format(name, Vdcn, node, Vdcn0))
 
     def link_from(self):
         """
