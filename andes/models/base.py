@@ -28,10 +28,379 @@ from cvxopt import mul, div
 
 from ..utils.math import agtb, altb
 from ..utils.tab import Tab
+from typing import Dict, Union
 
 logger = logging.getLogger(__name__)
 
 pd = None
+
+
+class Variable(object):
+    """
+    Variable class
+    """
+    def __init__(self, name, var_type: str, tex_name: str = None, descr: str = None, unit: str = None):
+        if var_type not in ('x', 'y', 'c'):
+            raise TypeError(f"var_type {var_type} is not valid")
+
+        self.name = name
+        self.type = var_type
+        self.descr = descr
+        self.unit = unit
+
+        self.tex_name = name
+        if tex_name:
+            self.tex_name = tex_name
+
+        self.count = 0
+        self.address = None
+        self.value = None
+
+        # metadata
+
+        self.property = {"intf": False,
+                         "ext": False,
+                         "limit": False,
+                         "windup": False,
+                         "anti_windup": False,
+                         "deadband": False}
+
+        # values for the limits or dead band
+        self.lower = None
+        self.upper = None
+
+        # flags for the bounds
+        self.flag_lower = None
+        self.flag_upper = None
+
+    def set_count(self, n):
+        """
+        Set the count of elements
+        Returns:
+            None
+        """
+        self.count = n
+
+    def set_property(self, property_name, value):
+        """
+        Set the variable property to the provided value
+        Args:
+            property_name: name of the property
+            value: value
+
+        Returns:
+            None
+        """
+        if property_name not in self.property:
+            raise KeyError(f'Property name {property_name} is invalid')
+
+        self.property[property_name] = value
+
+    def set_bounds(self, lower, upper):
+        """
+        Set the bounds of the limiters or deadbands
+        Args:
+            lower: lower bound value
+            upper: upper bound value
+
+        Returns:
+
+        """
+        self.lower = lower
+        self.upper = upper
+
+    def check_bounds(self):
+        """
+        Check the bounds of the variables
+        Returns:
+
+        """
+        self.flag_lower = np.less_equal(self.value, self.lower)
+        self.flag_upper = np.greater_equal(self.value, self.upper)
+
+
+class Parameter(object):
+    """
+    Parameter class
+    """
+    def __init__(self, name: str, default: Union[float, str], property_data: Dict = None, tex_name: str = None,
+                 descr: str = None, unit: str = None):
+        self.name = name
+        self.default = default
+        self.descr = descr
+        self.unit = unit
+        self.tex_name = name
+
+        self.count = 0
+
+        self.value = []
+        self.property = {'params': True,
+                         'zeros': False,
+                         'mandatory': False,
+                         'powers': False,
+                         'voltages': False,
+                         'currents': False,
+                         'z': False,
+                         'y': False,
+                         'r': False,
+                         'g': False,
+                         'dccurrents': False,
+                         'dcvoltages': False,
+                         'times': False
+                         }
+
+        if property_data:
+            self.property.update(property_data)
+        if tex_name:
+            self.tex_name = tex_name
+
+        if isinstance(default, str):
+            self.property['params'] = False
+
+    def set_property(self, property_name, value):
+        """
+        Set the variable property to the provided value
+        Args:
+            property_name: name of the property
+            value: value
+
+        Returns:
+            None
+        """
+        if property_name not in self.property:
+            raise KeyError(f'Property name {property_name} is invalid')
+        self.property[property_name] = value
+
+    def check_property(self, property_name):
+        return self.property[property_name]
+
+    def set_count(self, n):
+        self.count = n
+
+    def insert(self, value=None):
+
+        # check for mandatory
+        if value is None:
+            if self.check_property('mandatory'):
+                logger.error(f'Mandatory parameter {self.name} missing')
+                sys.exit(1)
+            else:
+                value = self.default
+
+        # check for non-zero
+        if value == 0 and self.check_property('zero'):
+            logger.warning(f'Parameter {self.name} must be non-zero')
+            value = self.default
+
+        self.value.append(value)
+        self.count += 1
+
+    def convert_to_array(self):
+        """
+        Convert to np array for speed up
+
+        Returns:
+
+        """
+        if self.check_property("params"):
+            self.value = np.array(self.value)
+
+
+class GroupBase(object):
+    """
+    Base class for groups
+    """
+
+    def __init__(self, name):
+        self.name = name
+        self.shared_parameters = []
+        self.shared_variables = []
+
+        self.models = {}  # model name, model instance
+        self.elem2model = {}  # element idx, model name
+
+    def register(self, name, model_instance):
+        if name not in self.models:
+            self.models[name] = model_instance
+        else:
+            raise KeyError(f"Duplicate model registration if {name}")
+
+    def register_element(self, idx, model_name):
+        """
+        Register an idx from model_name to the group
+
+        Args:
+            idx:
+            model_name:
+
+        Returns:
+
+        """
+        self.elem2model['idx'] = model_name
+
+    def next_idx(self, idx=None):
+        """
+        Return the auto-generated next idx
+        Returns:
+
+        """
+        need_new = False
+
+        if idx is not None:
+            if idx not in self.elem2model:
+                pass  # name is good
+            else:
+                logger.warning(f"{self.name}: conflict idx {idx}. Data may be inconsistent.")
+                need_new = True
+
+        if idx is None:
+            need_new = True
+
+        if need_new is True:
+            count = len(self.elem2model)
+            while True:
+                idx = self.name + str(count)
+                if idx not in self.elem2model:
+                    break
+                else:
+                    count += 1
+
+        return idx
+
+
+class NewModelBase(object):
+    """
+    New base model class
+
+    Subclass should define the following:
+     - Overload the `define` function to
+       - Provide the group instance
+       - Define parameters with `param_define`
+       - Define variables with `var_define`
+       - Define external parameters with `param_ext_define`
+       - Define external variables with `var_ext_define`
+       - Set proper parameter and variable properties
+
+
+    Sequence of call from the system class:
+     - `define()` of the subclass
+     - `consistency_check()`
+     - `define_finalize()` to instantiate meta data
+     -
+    """
+    def __init__(self, system, name):
+        self.system = system
+        self.name = name
+        self.group = None
+
+        # containers for parameters, variables, and etc.
+        self.attr_list = []  # name list of all parameters, variables and services
+
+        self.algebs = {}
+        self.states = {}
+        self.calcs = {}
+
+        self.parameters = {}
+
+    def define(self):
+        """
+        Hook to be provided by subclasses
+        Returns:
+
+        """
+        self.param_define(name='u', default=1, descr='status', unit='bool')
+        # self.param_define(name='name', default=)
+
+    def consistency_check(self):
+        """
+        Check data consistency requirements
+
+        Returns:
+
+        """
+        assert self.group is not None, "Must provide group class"
+
+        # check if all group parameters are defined
+
+    def _new_name(self, name):
+        """
+        Add a name to the name list and check for conflicts
+        Args:
+            name:
+
+        Returns:
+
+        """
+        if name not in self.attr_list:
+            self.attr_list.append(name)
+        else:
+            raise NameError(f"Name {name} is taken")
+
+    def set_group(self):
+        raise NotImplementedError("Must be overwritten by subclass")
+
+    def param_define(self, name, default, tex_name=None, property_data=None, descr=None, unit=None):
+        self._new_name(name)
+        self.parameters[name] = Parameter(name, default, property_data, tex_name, descr, unit)
+
+    def var_define(self, name, var_type, tex_name=None, descr=None, unit=None):
+        self._new_name(name)
+        new_var = Variable(name, var_type, tex_name, descr, unit)
+        if var_type == 'x':
+            self.states[name] = new_var
+        elif var_type == 'y':
+            self.algebs[name] = new_var
+        elif var_type == 'c':
+            self.calcs[name] = new_var
+
+    def param_ext_define(self):
+        """
+        Define external parameter
+
+        Returns:
+
+        """
+        pass
+
+    def var_ext_define(self):
+        """
+        Define external variable
+        Returns:
+
+        """
+        pass
+
+    def add(self, *args, **kwargs):
+        """
+        Add an element to the model instance
+        Args:
+            *args:
+            **kwargs:
+
+        Returns:
+
+        """
+        pass
+
+    def dump(self):
+        """
+        Dump all element data into a dictionary
+        Returns:
+
+        """
+        pass
+
+    def export(self, idx=None, fmt='json'):
+        """
+        Export element data into specified format
+        Args:
+            idx:
+            fmt:
+
+        Returns:
+
+        """
+        pass
 
 
 class ModelBase(object):
