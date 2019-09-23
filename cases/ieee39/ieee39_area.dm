@@ -1,8 +1,10 @@
 # DOME format version 1.0
 
-LoadScale, group="StaticLoad", load="PQ_2", inc = 0.5, t1=2
-LoadScale, group="StaticLoad", load="PQ_3", inc = 0.5, t1=4
-LoadScale, group="StaticLoad", load="PQ_6", inc = 0.5, t1=6
+# LoadScale, group="StaticLoad", load="PQ_2", inc = 0.5, t1=2
+# LoadScale, group="StaticLoad", load="PQ_3", inc = 0.5, t1=4
+# LoadScale, group="StaticLoad", load="PQ_6", inc = 0.5, t1=6
+
+LoadRamp, group="StaticLoad", load="PQ_2", p_rate = 10, t1=2, t2 = 10
 
 Syn6a, D = 0.0, M = 8.4, S10 = 0, S12 = 0, Sn = 1000.0, Taa = 0.0, Td10 = 10.2,
        Td20 = 0.03, Tq10 = 1.5, Tq20 = 0.04, Vn = 1.0, bus = 30, coi = 0, fn = 60.0,

@@ -2,6 +2,7 @@ import sys
 import logging
 import numpy as np
 import importlib
+import platform
 
 from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
 from cvxopt.modeling import variable, op  # NOQA
@@ -314,6 +315,9 @@ class AGCMPC(ModelBase):
     """MPC based AGC using TG and VSC"""
     def __init__(self, system, name):
         super(AGCMPC, self).__init__(system, name)
+        if platform.system() == 'Darwin':
+            logger.error("** AGCMPC optimization does not work correctly on macOS!!!")
+
         self._group = "AGCGroup"
         self._name = "AGCMPC"
         self.param_remove('Vn')
