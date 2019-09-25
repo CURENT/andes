@@ -32,16 +32,6 @@ non_jits = {
         'Area': 'Area',
         'Region': 'Region',
     },
-    'agc': {
-        'BArea': 'BArea',
-        'AGC': 'AGC',
-        'AGCSyn': 'AGCSyn',
-        'AGCTG': 'AGCTG',
-        'AGCTGVSC': 'AGCTGVSC',
-        'AGCSynVSC': 'AGCSynVSC',
-        'AGCMPC': "AGCMPC",
-        'eAGC': 'eAGC',
-    },
     'coi': {
         'COI': 'COI',
     },
@@ -98,6 +88,16 @@ non_jits = {
 }
 
 jits = {
+    'agc': {
+        'BArea': 'BArea',
+        'AGC': 'AGC',
+        'AGCSyn': 'AGCSyn',
+        'AGCTG': 'AGCTG',
+        'AGCTGVSC': 'AGCTGVSC',
+        'AGCSynVSC': 'AGCSynVSC',
+        'AGCMPC': "AGCMPC",
+        'eAGC': 'eAGC',
+    },
     'vsc': {
         'VSC': 'VSC',
         'VSC1': 'VSC1',
