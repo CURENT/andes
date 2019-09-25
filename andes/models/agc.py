@@ -2,6 +2,7 @@ import sys
 import logging
 import numpy as np
 import importlib
+import platform
 
 from cvxopt import mul, div, matrix, sparse, spdiag, spmatrix
 from cvxopt.modeling import variable, op  # NOQA
@@ -314,6 +315,9 @@ class AGCMPC(ModelBase):
     """MPC based AGC using TG and VSC"""
     def __init__(self, system, name):
         super(AGCMPC, self).__init__(system, name)
+        if platform.system() == 'Darwin':
+            logger.error("** AGCMPC optimization does not work correctly on macOS!!!")
+
         self._group = "AGCGroup"
         self._name = "AGCMPC"
         self.param_remove('Vn')
@@ -409,7 +413,9 @@ class AGCMPC(ModelBase):
         self.yxidx = matrix(yidx)
 
         # optimization problem
-        self.uvar = cp.Variable((len(self.uidx), self.H), 'u')
+        self.uvar = cp.Variable((len(self.uidx), self.H+1), 'u')
+        self.uzero = cp.Parameter((len(self.uidx), ), 'u0')
+        self.xazero = cp.Parameter((2 * len(self.xidx), 1), 'xa')
         self.prob = None
 
         self.t_store = []
@@ -455,39 +461,24 @@ class AGCMPC(ModelBase):
             self.Ba = sparse([self.B, self.B])
             self.Ca = sparse([self.C, self.C])
 
-        if dae.t != self.t:
-            self.t = dae.t
-
-            # # update Delta x and x for current step
-            self.x = dae.x[self.xidx]
-            self.dx = self.x - self.xlast
-            self.xa = matrix([self.dx, self.x])
-
-            self.dw = self.system.PQ.p0 - self.w0
-
+            # formulate optimization problem
             nx = len(self.xidx)
             nu = len(self.uidx)
             obj_x = 0
-            xa_0 = self.xa
-            u_0 = self.ulast
+
+            xa_0 = self.xazero
             for i in range(self.H):
                 # calculate Xa for each step in horizon H
-                du = cp.reshape(self.uvar[:, i], (nu, 1)) - u_0
-                xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du  # + matrix(self.Ca) * self.dw
+                # du = cp.reshape(self.uvar[:, i+1], (nu, 1)) - self.uvar[:,i]
+                du = cp.reshape(self.uvar[:, i+1] - self.uvar[:, i], (nu, 1))
+                xa_i = matrix(self.Aa) * xa_0 + matrix(self.Ba) * du
                 obj_x += cp.multiply(self.qw, cp.square(xa_i[nx:][self.yidx_in_x] - self.x0[self.yidx_in_x]))
                 xa_0 = xa_i
-                u_0 = cp.reshape(self.uvar[:, i], (nu, 1))
 
             # construct the optimization problem
             self.obj_x = cp.sum(obj_x)
 
             self.obj_u = 0
-            self.obj_u += cp.sum(
-                cp.multiply(
-                    np.array(self.qu).reshape(nu, ),
-                    cp.square(self.uvar[:, 0] - np.array(self.ulast).reshape((nu, )))
-                )
-            )
 
             self.obj_u += cp.sum(
                 cp.multiply(
@@ -496,16 +487,34 @@ class AGCMPC(ModelBase):
                 )
             )
 
-            constraints = [cp.reshape(self.uvar[:, 0], (nu, 1)) - self.ulast <= 0.5,
-                           cp.reshape(self.uvar[:, 0], (nu, 1)) - self.ulast >= -0.5,
+            constraints = [self.uvar[:, 0] == self.uzero,
                            self.uvar[:, 1:] - self.uvar[:, :-1] <= 0.5,
                            self.uvar[:, 1:] - self.uvar[:, :-1] >= -0.5
                            ]
 
             self.prob = cp.Problem(cp.Minimize(self.obj_x + self.obj_u), constraints)
-            self.prob.solve()
 
-            self.dpin_calc = matrix(self.uvar.value)[:, 0]
+        if dae.t != self.t:
+            self.t = dae.t
+            nx = len(self.xidx)
+            nu = len(self.uidx)
+
+            # # update Delta x and x for current step
+            self.x = dae.x[self.xidx]
+            self.dx = self.x - self.xlast
+            self.xa = matrix([self.dx, self.x])
+
+            # assign values to self.uzero and self.xazero
+            self.uzero.value = np.array(self.ulast).reshape((-1, ))
+            self.xazero.value = np.array(self.xa).reshape((-1, 1))
+
+            # use warm_start when possible
+            if dae.t == 0:
+                self.prob.solve()
+            else:
+                self.prob.solve(warm_start=1)
+
+            self.dpin_calc = matrix(self.uvar.value[:, 1])
 
             # update every interval
             if (self.t - self.tlast) >= self._interval:
@@ -513,13 +522,10 @@ class AGCMPC(ModelBase):
                 self.dpin0 = self.dpin_calc
 
             opt_val = self.prob.solution.opt_val
-            logger.debug("t={:.4f}, obj={:.6f}, u={:.6f}, {:.6f}".format(dae.t, opt_val,
-                                                                         self.uvar.value[0, 0],
-                                                                         self.uvar.value[1, 0]))
+            logger.debug("t={:.4f}, obj={:.6f}, u[0]={:.6f}".format(dae.t, opt_val, self.uvar.value[0, 0]))
 
             self.t_store.append(self.t)
             xa_post = matrix(self.Aa) * self.xa + matrix(self.Ba) * (matrix(self.uvar.value[:, 0]) - self.ulast)
-            # + matrix(self.Ca) * self.dw
             self.xpred_store.append(xa_post[nx:][self.yidx_in_x][0])
 
             # # post-optimization evaluator
