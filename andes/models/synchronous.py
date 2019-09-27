@@ -120,6 +120,8 @@ class SynBase(ModelBase):
         self.system.rmgen(self.gen)
         self.build_service()
 
+        # TODO: the two lines below account for all generation on this bus
+        # TODO: Causes initialization failure when only one PV is replaced
         p0 = mul(self.u, self.system.Bus.Pg[self.a], self.gammap)
         q0 = mul(self.u, self.system.Bus.Qg[self.a], self.gammaq)
         v0 = mul(1, dae.y[self.v])
