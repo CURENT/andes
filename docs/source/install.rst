@@ -19,7 +19,7 @@ Open the Anaconda Prompt and create an environment for ANDES (optional) ::
 Add the conda-forge channel and set it as default::
 
      conda config --add channels conda-forge
-     conda config --set channel_priority strict
+     conda config --set channel_priority flexible
 
 Install ANDES from conda-forge ::
 
