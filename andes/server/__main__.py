@@ -30,7 +30,10 @@ def get_status():
     if sysid not in systems:
         return jsonify('0')
     else:
-        return jsonify('1')
+        if systems[sysid].tds.t != systems[sysid].tds.config.tf:
+            return jsonify('1')
+        else:
+            return jsonify('2')
 
 
 @app.route('/load')
@@ -38,10 +41,16 @@ def load():
     default_path = os.getcwd()
     name = request.args.get('name', '')
     path = os.path.join(default_path, name)
+    with_dime = request.args.get('with_dime', 0)
+    tf = request.args.get('tf', 20)
 
     n_system = len(systems)
+    params = {"case": path, "verbose": 10, "tf": float(tf)}
+
+    if with_dime:
+        params.update({"dime": 'ipc:///tmp/dime'})
     try:
-        system_instance = andes.main.run(case=path)
+        system_instance = andes.main.run(**params)
         globals()['systems'][str(n_system + 1)] = system_instance
 
     except FileNotFoundError:
@@ -89,11 +98,8 @@ def unload():
 @app.route('/run')
 def run():
     sysid = request.args.get('sysid', None)
-    simulation_time = request.args.get('time', 0)
 
     if sysid not in systems:
-        flask.abort(400)
-    if simulation_time == 0:
         flask.abort(400)
 
     system = systems[sysid]
@@ -110,7 +116,6 @@ def run():
         system.tds.init()
 
         system.tds.config.qrt = True
-        system.tds.config.tf = float(simulation_time)
 
         thread = threading.Thread(target=system.tds.run)
         sim_thread[sysid] = thread
@@ -185,6 +190,14 @@ def get_model_param():
         elif sysbase == 'True':
             sysbase = True
 
+        if isinstance(idx, str):
+            if idx[0] == '[' and idx[-1] == ']':
+                idx = [float(i) for i in idx[1:-1].strip(',')]
+
+        if isinstance(value, str):
+            if value[0] == '[' and value[-1] == ']':
+                value = [float(i) for i in value[1:-1].strip(',')]
+
         model_ref.set_field(var_name, idx, value, sysbase)
         model_ref.reload_new_param()
         return jsonify(model_ref.get_field(var_name, idx))
@@ -200,10 +213,11 @@ def get_simulation_time():
     str : time
     """
     sysid = request.args.get('sysid', None)
+
     if sysid is None:
         flask.abort(400)
 
-    system = systems['sysid']
+    system = systems[sysid]
 
     return jsonify(system.tds.t)
 
@@ -227,4 +241,4 @@ def get_streaming_data():
 
 
 if __name__ == '__main__':
-    app.run(port='5000')
+    app.run(host='192.168.1.200', port='7000')

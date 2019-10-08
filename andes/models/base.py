@@ -468,22 +468,28 @@ class ModelBase(object):
             logger.error('Field <{}> does not exist.'.format(field))
             return
 
-        if idx not in self.idx:
-            logger.error('Idx <{}> is not valid for model <{}>'.format(idx, self._name))
-            logger.error('Available idx are: {}'.format(self.idx))
-            raise IndexError
-
-        uid = self.get_uid(idx)
-        old_type = type(self.__dict__[field][uid])
+        if not isinstance(idx, list):
+            idx = [idx]
+        if not isinstance(value, list):
+            value = [value]
 
         in_store = True if field in self._store else False
 
-        if (not sysbase) and in_store:
-            self._store[field][uid] = old_type(value)
-            logger.info('{}: set field <{}> of <{}> to {} in _store'.format(self._name, field, idx, value))
-        else:
-            self.__dict__[field][uid] = old_type(value)
-            logger.info('{}: set field <{}> of <{}> to {} in class dict'.format(self._name, field, idx, value))
+        for i in idx:
+            if i not in self.idx:
+                logger.error('Idx <{}> is not valid for model <{}>'.format(i, self._name))
+                logger.error('Available idx are: {}'.format(self.idx))
+                raise IndexError
+
+        for i, v in zip(idx, value):
+            uid = self.get_uid(i)
+            old_type = type(self.__dict__[field][uid])
+            if (not sysbase) and in_store:
+                self._store[field][uid] = old_type(v)
+                logger.debug('{}: set field <{}> of <{}> to {} in _store'.format(self._name, field, i, v))
+            else:
+                self.__dict__[field][uid] = old_type(v)
+                logger.debug('{}: set field <{}> of <{}> to {} in class'.format(self._name, field, i, v))
 
     def _alloc(self):
         """
@@ -1023,8 +1029,7 @@ class ModelBase(object):
         if not self._flags['sysbase']:  # parameters have not been converted to sys base
             self.data_to_sys_base()
         else:  # parameters are in sys base. `self._store` has the parameters in elem base
-
-            for key, val in self._store:
+            for key, val in self._store.items():
                 self.__dict__[key] = val
             self._flags['sysbase'] = False
             self.data_to_sys_base()
