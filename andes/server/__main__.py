@@ -3,6 +3,7 @@ import os
 import threading  # NOQA
 import andes
 from andes.utils.math import to_number
+import json
 
 try:
     import flask
@@ -127,12 +128,16 @@ def run():
 @app.route('/param', methods=['GET', 'POST'])
 def get_model_param():
 
-    sysid = request.args.get('sysid', None)
-    model_name = request.args.get('name', None)
-    var_name = request.args.get('var', None)
-    idx = request.args.get('idx', None)
-    value = request.args.get('value', None)
-    sysbase = request.args.get('sysbase', 'False')
+    args_json = request.args.get('args_json', '')
+
+    args = json.loads(args_json)
+
+    sysid = str(args.get('sysid', None))
+    model_name = args.get('name', None)
+    var_name = args.get('var', None)
+    idx = args.get('idx', None)
+    value = args.get('value', None)
+    sysbase = args.get('sysbase', 'False')
 
     if not sysid:
         flask.abort(400)
@@ -145,8 +150,8 @@ def get_model_param():
 
     if request.method == 'GET':
 
-        if idx is not None:
-            idx = to_number(idx)
+        # if idx is not None:
+        #     idx = to_number(idx)
 
         if request.method == 'GET':
             if not model_name or (model_name not in system.devman.devices):
@@ -179,10 +184,7 @@ def get_model_param():
         model_ref = system.__dict__[model_name]
 
         if var_name not in model_ref.__dict__:
-            flask.abort(404)
-
-        idx = to_number(idx)
-        if idx not in model_ref.idx:
+            print("var_name {} not exist".format(var_name))
             flask.abort(404)
 
         if sysbase == 'False':
@@ -200,7 +202,7 @@ def get_model_param():
 
         model_ref.set_field(var_name, idx, value, sysbase)
         model_ref.reload_new_param()
-        return jsonify(model_ref.get_field(var_name, idx))
+        return jsonify(list(model_ref.get_field(var_name, idx)))
 
 
 @app.route('/sim_time')
