@@ -1,4 +1,4 @@
-from cvxopt import mul, div  # NOQA
+from cvxopt import mul, div, matrix  # NOQA
 
 from .base import ModelBase
 from ..consts import Fx0, Fy0, Gx0, Gy0  # NOQA
@@ -52,7 +52,7 @@ class GovernorBase(ModelBase):
         if not self.n or self._flags['sysbase'] is True:
             return
 
-        self.copy_data_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='Sn', dest='Sn', idx=self.gen, astype=matrix)
         super(GovernorBase, self).data_to_sys_base()
         self._store['R'] = self.R
 
@@ -69,7 +69,7 @@ class GovernorBase(ModelBase):
         self.gain = div(1.0, self.R)
 
         # values
-        self.copy_data_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen)
+        self.copy_data_ext(model='Synchronous', field='pm0', dest='pm0', idx=self.gen, astype=matrix)
 
         # indices
         self.copy_data_ext(model='Synchronous', field='omega', dest='omega', idx=self.gen)

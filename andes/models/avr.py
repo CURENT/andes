@@ -1,5 +1,5 @@
 from cvxopt import mul, div, exp  # NOQA
-from cvxopt import spmatrix  # NOQA
+from cvxopt import spmatrix, matrix  # NOQA
 
 from .base import ModelBase
 from ..consts import Fx, Fy  # NOQA
@@ -68,10 +68,10 @@ class AVR1(ModelBase):
         self._init()
 
     def servcall(self, dae):
-        self.copy_data_ext('Synchronous', 'u', dest='usyn', idx=self.syn)
-        self.copy_data_ext('Synchronous', 'vf0', dest='vf0', idx=self.syn)
-        self.copy_data_ext('Synchronous', 'vf', dest='vf', idx=self.syn)
-        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn)
+        self.copy_data_ext('Synchronous', 'u', dest='usyn', idx=self.syn, astype=matrix)
+        self.copy_data_ext('Synchronous', 'vf0', dest='vf0', idx=self.syn, astype=matrix)
+        self.copy_data_ext('Synchronous', 'vf', dest='vf', idx=self.syn, astype=matrix)
+        self.copy_data_ext('Synchronous', 'v', dest='v', idx=self.syn, astype=matrix)
         self.KfTf = mul(self.Kf, div(1, self.Tf))
         self.iTa = div(self.u, self.Ta)
         self.u0 = mul(self.u, self.usyn)

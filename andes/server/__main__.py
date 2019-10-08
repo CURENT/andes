@@ -10,7 +10,7 @@ try:
     from flask.json import jsonify  # NOQA
     from flask_restful import Api  # NOQA
 except ImportError:
-    print("Flask import error. Install optional package `flask` and `requests`")
+    print("Flask import error. Install optional package `flask`, 'flask_restful' and `requests`")
     sys.exit(1)
 
 

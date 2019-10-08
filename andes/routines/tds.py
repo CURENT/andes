@@ -1,6 +1,7 @@
 import importlib
 import logging
 import sys
+import os
 from time import monotonic as time, sleep
 
 import numpy as np
@@ -537,7 +538,8 @@ class TDS(RoutineBase):
         if system.files.pert:
             try:
                 sys.path.append(system.files.case_path)
-                module = importlib.import_module(system.files.pert[:-3])
+                pert_path, pert_name = os.path.split(system.files.pert)
+                module = importlib.import_module(pert_name[:-3])
                 self.callpert = getattr(module, 'pert')
             except ImportError:
                 logger.warning('Pert file is discarded due to import errors.')
