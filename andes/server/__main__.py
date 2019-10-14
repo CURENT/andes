@@ -48,8 +48,10 @@ def load():
     n_system = len(systems)
     params = {"case": path, "verbose": 10, "tf": float(tf)}
 
-    if with_dime:
+    if with_dime == '1':
         params.update({"dime": 'ipc:///tmp/dime'})
+    if with_dime == '2':
+        params.update({"dime": 'ipc:///tmp/dime2'})
     try:
         system_instance = andes.main.run(**params)
         globals()['systems'][str(n_system + 1)] = system_instance
