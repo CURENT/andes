@@ -6,6 +6,7 @@ from cvxopt import matrix, mul, spmatrix
 from andes.utils.math import zeros
 
 from .base import ModelBase
+import numpy.random
 
 
 class EventBase(ModelBase):
@@ -185,11 +186,17 @@ class LoadScale(EventBase):
             event_time=True)
         self.param_define('scale', default=1, mandatory=False, descr='load scaling factor', to_matrix=True)
         self.param_define('inc', default=0, mandatory=False, descr='load increment value', to_matrix=True)
+        self.param_define('rand', default=0, mandatory=False,
+                          descr='Multiply the load change by a Gaussian (0, 0.1) rand', to_matrix=True)
 
+        self._rand_coeff = []
         self._init()
 
     def apply(self, sim_time):
         super(LoadScale, self).apply(sim_time)
+
+        if len(self._rand_coeff) == 0:
+            self._rand_coeff = numpy.random.rand(self.n)
 
         for i in range(self.n):
             load_idx = self.load[i]
@@ -200,7 +207,11 @@ class LoadScale(EventBase):
                     load_idx, sim_time))
                 old_load = self.system.__dict__[group].get_field('p', load_idx)
 
-                self.system.__dict__[group].set_field('p', load_idx, mul(old_load, self.scale) + self.inc)
+                new_load = mul(old_load, self.scale) + self.inc
+                if self.rand[i]:
+                    new_load = self._rand_coeff[i] * new_load
+
+                self.system.__dict__[group].set_field('p', load_idx, new_load)
 
 
 class LoadRamp(ModelBase):
