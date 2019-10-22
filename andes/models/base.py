@@ -1160,7 +1160,10 @@ class ModelBase(object):
 
     def read_data_ext(self, model: str, field: str, idx=None, astype=None):
         """
-        Return a field of a model or group at the given indices
+        Return a field of a model or group at the given indices.
+
+        The default return type if `cvxopt.matrix`. If returning a list is preferred,
+        use `astype=list`.
 
         :param str model: name of the group or model to retrieve
         :param str field: name of the field

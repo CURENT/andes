@@ -983,7 +983,7 @@ class WTG3(ModelBase):
 
         return retval
 
-    def windpower(self, ngen, rho, vw, Ar, R, omega, theta, derivative=False):
+    def windpower(self, ngen, rho, vw, Ar, R, omega, theta):
         mva_mega = self.system.mva * 1e6
         lamb = omega * R / vw
         ilamb = 1 / (1 / (lamb + 0.08 * theta) - 0.035 / (theta**3 + 1))
@@ -1045,7 +1045,7 @@ class WTG3(ModelBase):
             (self.Vwn)**3, div(1, self.mva_mega), (dae.x[self.vw])**3)
         dae.g[self.cp] = -dae.y[self.cp] + mul(
             -1.1 + mul(25.52, div(1, dae.y[self.ilamb])) + mul(
-                -0.08800000000000001, dae.x[self.theta_p]),
+                -0.088, dae.x[self.theta_p]),
             exp(mul(-12.5, div(1, dae.y[self.ilamb]))))
         dae.g[self.lamb] = -dae.y[self.lamb] + mul(
             4, self.R, self.fn, self.ngb, dae.x[self.omega_m], pi,
