@@ -17,47 +17,57 @@
 """
 Base class for building ANDES models
 """
+from typing import List, Set, Dict, Tuple, Optional, Union  # NOQA
 
 import importlib
 import logging
 import sys
 
 import numpy as np
+from numpy import ndarray
 from cvxopt import matrix
 from cvxopt import mul, div
+from enum import Enum
 
 from ..utils.math import agtb, altb
 from ..utils.tab import Tab
-from typing import Dict, Union
 
 logger = logging.getLogger(__name__)
 
 pd = None
 
 
+class VarType(Enum):
+    x = 0
+    y = 1
+    c = 2
+
+
 class Variable(object):
     """
     Variable class
     """
-    def __init__(self, name, var_type: str, tex_name: str = None, descr: str = None, unit: str = None):
-        if var_type not in ('x', 'y', 'c'):
-            raise TypeError(f"var_type {var_type} is not valid")
+    def __init__(self,
+                 name: str,
+                 var_type: VarType,
+                 tex_name: Optional[str] = None,
+                 descr: Optional[str] = None,
+                 unit: Optional[str] = None
+                 ):
 
         self.name = name
         self.type = var_type
         self.descr = descr
         self.unit = unit
 
-        self.tex_name = name
-        if tex_name:
-            self.tex_name = tex_name
+        self.tex_name = tex_name if tex_name else name
 
-        self.count = 0
-        self.address = None
-        self.value = None
+        self.n = 0
+        self.a: Optional[ndarray] = None
+        self.v: Optional[ndarray] = None
+        self.e: Optional[ndarray] = None
 
         # metadata
-
         self.property = {"intf": False,
                          "ext": False,
                          "limit": False,
@@ -76,10 +86,13 @@ class Variable(object):
     def set_count(self, n):
         """
         Set the count of elements
+
+        TODO: probably inferred from the address
+
         Returns:
             None
         """
-        self.count = n
+        self.n = n
 
     def set_property(self, property_name, value):
         """
@@ -115,21 +128,25 @@ class Variable(object):
         Returns:
 
         """
-        self.flag_lower = np.less_equal(self.value, self.lower)
-        self.flag_upper = np.greater_equal(self.value, self.upper)
+        self.flag_lower = np.less_equal(self.v, self.lower)
+        self.flag_upper = np.greater_equal(self.v, self.upper)
 
 
 class Parameter(object):
     """
     Parameter class
     """
-    def __init__(self, name: str, default: Union[float, str], property_data: Dict = None, tex_name: str = None,
-                 descr: str = None, unit: str = None):
+    def __init__(self, name: str,
+                 default: Union[float, str],
+                 property_data: Dict[str, bool] = None,
+                 tex_name: Optional[str] = None,
+                 descr: Optional[str] = None,
+                 unit: Optional[str] = None):
         self.name = name
         self.default = default
         self.descr = descr
         self.unit = unit
-        self.tex_name = name
+        self.tex_name = tex_name if tex_name else name
 
         self.count = 0
 
@@ -151,8 +168,6 @@ class Parameter(object):
 
         if property_data:
             self.property.update(property_data)
-        if tex_name:
-            self.tex_name = tex_name
 
         if isinstance(default, str):
             self.property['params'] = False
@@ -248,7 +263,8 @@ class GroupBase(object):
 
         if idx is not None:
             if idx not in self.elem2model:
-                pass  # name is good
+                # name is good
+                pass
             else:
                 logger.warning(f"{self.name}: conflict idx {idx}. Data may be inconsistent.")
                 need_new = True
@@ -308,8 +324,11 @@ class NewModelBase(object):
         Returns:
 
         """
-        self.param_define(name='u', default=1, descr='status', unit='bool')
+        self.define_param(name='u', default=1, descr='status', unit='bool')
         # self.param_define(name='name', default=)
+
+    def define_finalize(self):
+        pass
 
     def consistency_check(self):
         """
@@ -339,11 +358,23 @@ class NewModelBase(object):
     def set_group(self):
         raise NotImplementedError("Must be overwritten by subclass")
 
-    def param_define(self, name, default, tex_name=None, property_data=None, descr=None, unit=None):
+    def define_param(self,
+                     name: str,
+                     default: Union[str, float],
+                     tex_name: Optional[str] = None,
+                     property_data: Optional[Dict[str, bool]] = None,
+                     descr: Optional[str] = None,
+                     unit: Optional[str] = None
+                     ):
         self._new_name(name)
         self.parameters[name] = Parameter(name, default, property_data, tex_name, descr, unit)
 
-    def var_define(self, name, var_type, tex_name=None, descr=None, unit=None):
+    def define_var(self, name: str,
+                   var_type: VarType,
+                   tex_name: Optional[str] = None,
+                   descr: Optional[str] = None,
+                   unit: Optional[str] = None
+                   ):
         self._new_name(name)
         new_var = Variable(name, var_type, tex_name, descr, unit)
         if var_type == 'x':
@@ -353,7 +384,30 @@ class NewModelBase(object):
         elif var_type == 'c':
             self.calcs[name] = new_var
 
-    def param_ext_define(self):
+    def store_var(self, variable: Variable):
+        """
+        Store a Variable object to this device class
+
+        Args:
+            variable: Variable
+                A Varbaile object as part of a device
+
+        Returns:
+
+        """
+        var_type = variable.type
+        var_name = variable.name
+
+        if var_type == VarType.x:
+            self.states[var_name] = variable
+        elif var_type == VarType.y:
+            self.algebs[var_name] = variable
+        elif var_type == VarType.c:
+            self.calcs[var_name] = variable
+        else:
+            raise TypeError(f"Unknown variable type {variable.type}")
+
+    def define_param_ext(self):
         """
         Define external parameter
 
@@ -362,7 +416,7 @@ class NewModelBase(object):
         """
         pass
 
-    def var_ext_define(self):
+    def define_var_ext(self):
         """
         Define external variable
         Returns:
