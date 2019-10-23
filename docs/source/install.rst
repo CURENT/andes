@@ -4,41 +4,53 @@
 Installation instructions
 *************************
 
+User Mode Installation
+======================
 Conda Installation for Windows, macOS and Linux
-===================================================
-ANDES can be installed in Python 3.6+. We recommend the Miniconda distribution
+***********************************************
+ANDES can be installed in Python 3.7+. We recommend the Miniconda distribution
 that includes the conda package manager and Python.
 Downloaded and install the latest Miniconda (x64, with Python 3)
 from https://conda.io/miniconda.html.
 
-Open the Anaconda Prompt and create an environment for ANDES (optional) ::
+Open the Anaconda Prompt and create an environment for ANDES (optional)
+
+.. code:: bash
 
      conda create --name andes python=3.7
      activate andes
 
-Add the conda-forge channel and set it as default::
+Add the conda-forge channel and set it as default
+
+.. code:: bash
 
      conda config --add channels conda-forge
      conda config --set channel_priority flexible
 
-Install ANDES from conda-forge ::
+Install ANDES from conda-forge
+
+.. code:: bash
 
      conda install andes
 
 Existing Python Environment Installation
-============================================
+****************************************
 
 If you prefer to use an existing Python installation,
-you can install ANDES with `pip`::
+you can install ANDES with `pip`
 
-      pip install andes
+.. code:: bash
+
+      python3 -m pip install andes
 
 Pip will take care of the minimal dependency for ANDES.
-The following package installation are also recommended::
+The following package installation are also recommended
 
-      pip install matplotlib pandas sympy cvxpy flask requests
+.. code:: bash
 
-If you see a `Permission Denied` error, you may need to
+      python3 -m pip install matplotlib pandas sympy cvxpy flask requests
+
+If you see a `Permission denied` error, you may need to
 install the packages locally with `--user`
 
 Development Mode
@@ -51,12 +63,13 @@ package while preserving the dependent package with ::
 
       conda remove andes --force
 
-Next, Download the ANDES source code from
-https://github.com/cuihantao/andes/releases (or clone it with git),
-place the source code to your desired path,
-change directory to the root folder of the path and run ::
+Next, clone the ANDES source code from
+https://github.com/cuihantao/andes (or download and unzip it to the desired path).
+Change the working directory to the root folder of andes and run
 
-      pip install -e .
+.. code:: bash
+
+      python3 -m pip install -e .
 
 Pip should take care of the rest.
 
@@ -66,7 +79,7 @@ KLU is generally ~20% faster than UMFPACK.
 cvxoptklu requires a C compiler, and the `openblas` and
 `SuiteSparse` libraries. ::
 
-      pip install cvxoptklu
+      python3 -m install cvxoptklu
 
 Trouble-shooting
 ================

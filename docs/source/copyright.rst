@@ -5,7 +5,7 @@
 Copyright and License
 *********************
 
-| :raw-html:`&copy;` 2015-2018 Hantao Cui.
+| :raw-html:`&copy;` 2015-2019 Hantao Cui.
 |
 
 Licensed under the Apache License, Version 2.0 (the "License");
