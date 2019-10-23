@@ -88,21 +88,23 @@ class Variable(object):
         Set the count of elements
 
         TODO: probably inferred from the address
-
-        Returns:
-            None
         """
         self.n = n
 
     def set_property(self, property_name, value):
         """
         Set the variable property to the provided value
-        Args:
-            property_name: name of the property
-            value: value
 
-        Returns:
-            None
+        Parameters
+        ----------
+        property_name
+            name of the property
+
+        value
+            value
+
+        Returns
+        -------
         """
         if property_name not in self.property:
             raise KeyError(f'Property name {property_name} is invalid')
@@ -112,11 +114,16 @@ class Variable(object):
     def set_bounds(self, lower, upper):
         """
         Set the bounds of the limiters or deadbands
-        Args:
-            lower: lower bound value
-            upper: upper bound value
 
-        Returns:
+        Parameters
+        ----------
+        lower
+            Lower bound value
+        upper
+            Upper bound value
+
+        Returns
+        -------
 
         """
         self.lower = lower
@@ -125,8 +132,6 @@ class Variable(object):
     def check_bounds(self):
         """
         Check the bounds of the variables
-        Returns:
-
         """
         self.flag_lower = np.less_equal(self.v, self.lower)
         self.flag_upper = np.greater_equal(self.v, self.upper)
@@ -175,18 +180,35 @@ class Parameter(object):
     def set_property(self, property_name, value):
         """
         Set the variable property to the provided value
-        Args:
-            property_name: name of the property
-            value: value
 
-        Returns:
-            None
+        Parameters
+        ----------
+        property_name
+            Property name
+        value
+            Property value
+
+        Returns
+        -------
+
         """
         if property_name not in self.property:
             raise KeyError(f'Property name {property_name} is invalid')
         self.property[property_name] = value
 
     def check_property(self, property_name):
+        """
+        Check the boolean value of the given property
+
+        Parameters
+        ----------
+        property_name
+            Property name
+
+        Returns
+        -------
+        The truth value of the property
+        """
         return self.property[property_name]
 
     def set_count(self, n):
@@ -244,11 +266,16 @@ class GroupBase(object):
         """
         Register an idx from model_name to the group
 
-        Args:
-            idx:
-            model_name:
+        Parameters
+        ----------
+        idx: Union[str, float]
+            Register an element to a model
 
-        Returns:
+        model_name: str
+            Name of the model
+
+        Returns
+        -------
 
         """
         self.elem2model['idx'] = model_name
@@ -256,7 +283,13 @@ class GroupBase(object):
     def next_idx(self, idx=None):
         """
         Return the auto-generated next idx
-        Returns:
+
+        Parameters
+        ----------
+        idx
+
+        Returns
+        -------
 
         """
         need_new = False
@@ -344,10 +377,15 @@ class NewModelBase(object):
     def _new_name(self, name):
         """
         Add a name to the name list and check for conflicts
-        Args:
-            name:
 
-        Returns:
+        Parameters
+        ----------
+        name: str
+            Request new attribute name
+
+        Returns
+        -------
+        None
 
         """
         if name not in self.attr_list:
@@ -388,12 +426,14 @@ class NewModelBase(object):
         """
         Store a Variable object to this device class
 
-        Args:
-            variable: Variable
-                A Varbaile object as part of a device
+        Parameters
+        ----------
+        variable
+            Variable object to store
 
-        Returns:
-
+        Returns
+        -------
+        None
         """
         var_type = variable.type
         var_name = variable.name
@@ -427,12 +467,6 @@ class NewModelBase(object):
     def add(self, *args, **kwargs):
         """
         Add an element to the model instance
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-
         """
         pass
 
@@ -447,12 +481,19 @@ class NewModelBase(object):
     def export(self, idx=None, fmt='json'):
         """
         Export element data into specified format
-        Args:
-            idx:
-            fmt:
 
-        Returns:
+        Parameters
+        ----------
+        idx: Union[str, float, List]
+            Index of the element(s)
 
+        fmt: str
+            Export format
+
+        Returns
+        -------
+        str
+            A formatted string
         """
         pass
 
