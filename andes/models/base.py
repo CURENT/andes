@@ -18,6 +18,7 @@
 Base class for building ANDES models
 """
 from typing import List, Set, Dict, Tuple, Optional, Union, Type  # NOQA
+from collections import OrderedDict
 
 from abc import ABC, abstractmethod  # NOQA
 
@@ -54,8 +55,6 @@ class VarBase(object):
     """
     Variable class
     """
-
-    type: Optional[VarType] = None
 
     def __init__(self,
                  name: Optional[str] = None,
@@ -175,7 +174,6 @@ class ParamBase(object):
     """
     Parameter class
     """
-    type: Optional[ParamType] = None
 
     def __init__(self,
                  default: Union[float, str],
@@ -427,12 +425,12 @@ class NewModelBase(object):
         self.system = system
         self.group = None
 
-        self.algebs = {}
-        self.states = {}
-        self.calcs = {}
+        self.algebs = OrderedDict()
+        self.states = OrderedDict()
+        self.calcs = OrderedDict()
 
-        self.params_int = {}
-        self.params_ext = {}
+        self.params_int = OrderedDict()
+        self.params_ext = OrderedDict()
 
         self.u = ParamInt(default=1, descr='connection status', unit='bool')
         self.name = ParamInt(default=self.__class__.__name__, descr='element name')
