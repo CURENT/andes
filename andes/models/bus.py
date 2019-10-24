@@ -1,6 +1,9 @@
 from cvxopt import matrix, uniform  # NOQA
 
 from .base import ModelBase
+from .base import NewModelBase, VarBase, VarType, ParamBase, Algeb, State, Calc # NOQA
+from .base import ParamInt, ParamExt  # NOQA
+
 from ..consts import Gy  # NOQA
 
 
@@ -126,3 +129,14 @@ class Bus(ModelBase):
             v = [self.system.Bus.n + item for item in a]
             dae.set_jac(Gy, 1e-6, a, a)
             dae.set_jac(Gy, 1e-6, v, v)
+
+
+class BusNew(NewModelBase):
+    """
+    Bus model constructed from the NewModelBase
+    """
+
+    def __init__(self, system, *args, **kwargs):
+        super().__init__(system, *args, **kwargs)
+        self.a = Algeb(name='a', tex_name=r'\theta', descr='voltage angle', unit='radian')
+        self.v = Algeb(name='v', tex_name='V', descr='voltage magnitude', unit='pu')

@@ -17,7 +17,9 @@
 """
 Base class for building ANDES models
 """
-from typing import List, Set, Dict, Tuple, Optional, Union  # NOQA
+from typing import List, Set, Dict, Tuple, Optional, Union, Type  # NOQA
+
+from abc import ABC, abstractmethod  # NOQA
 
 import importlib
 import logging
@@ -38,25 +40,32 @@ pd = None
 
 
 class VarType(Enum):
-    x = 0
-    y = 1
-    c = 2
+    X = 0  # state
+    Y = 1  # algebraic
+    C = 2  # calculated
 
 
-class Variable(object):
+class ParamType(Enum):
+    INT = 0  # internal parameter
+    EXT = 1  # external parameter
+
+
+class VarBase(object):
     """
     Variable class
     """
+
+    type: Optional[VarType] = None
+
     def __init__(self,
-                 name: str,
-                 var_type: VarType,
+                 name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  descr: Optional[str] = None,
-                 unit: Optional[str] = None
+                 unit: Optional[str] = None,
+                 **kwargs
                  ):
 
         self.name = name
-        self.type = var_type
         self.descr = descr
         self.unit = unit
 
@@ -136,28 +145,58 @@ class Variable(object):
         self.flag_lower = np.less_equal(self.v, self.lower)
         self.flag_upper = np.greater_equal(self.v, self.upper)
 
+    def set_source(self):
+        """
+        Record the source model, source parameter, and the element indices of this external parameter
 
-class Parameter(object):
+        Returns
+        -------
+
+        """
+        pass
+
+
+class Algeb(VarBase):
+    """
+    Algebraic variable
+    """
+    pass
+
+
+class State(VarBase):
+    pass
+
+
+class Calc(VarBase):
+    pass
+
+
+class ParamBase(object):
     """
     Parameter class
     """
-    def __init__(self, name: str,
+    type: Optional[ParamType] = None
+
+    def __init__(self,
                  default: Union[float, str],
+                 name: Optional[str] = None,
                  property_data: Dict[str, bool] = None,
                  tex_name: Optional[str] = None,
                  descr: Optional[str] = None,
-                 unit: Optional[str] = None):
+                 unit: Optional[str] = None,
+                 *args: Optional[List],
+                 **kwargs: Optional[Dict]):
         self.name = name
         self.default = default
         self.descr = descr
         self.unit = unit
         self.tex_name = tex_name if tex_name else name
 
-        self.count = 0
+        self.n = 0
 
-        self.value = []
+        self.v = []
         self.property = {'params': True,
-                         'zeros': False,
+                         'nonzero': False,
                          'mandatory': False,
                          'powers': False,
                          'voltages': False,
@@ -172,7 +211,8 @@ class Parameter(object):
                          }
 
         if property_data:
-            self.property.update(property_data)
+            for key, value in property_data:
+                self.set_property(key, value)
 
         if isinstance(default, str):
             self.property['params'] = False
@@ -211,10 +251,19 @@ class Parameter(object):
         """
         return self.property[property_name]
 
-    def set_count(self, n):
-        self.count = n
+    def add(self, value=None):
+        """
+        Add a new value (from a new element) to this parameter list
 
-    def insert(self, value=None):
+        Parameters
+        ----------
+        value
+            Parameter value of the new element
+
+        Returns
+        -------
+        None
+        """
 
         # check for mandatory
         if value is None:
@@ -229,8 +278,8 @@ class Parameter(object):
             logger.warning(f'Parameter {self.name} must be non-zero')
             value = self.default
 
-        self.value.append(value)
-        self.count += 1
+        self.v.append(value)
+        self.n += 1
 
     def convert_to_array(self):
         """
@@ -240,7 +289,44 @@ class Parameter(object):
 
         """
         if self.check_property("params"):
-            self.value = np.array(self.value)
+            self.v = np.array(self.v)
+
+    def update_ext(self):
+        """
+        Update parameter values provided by external models
+        Returns
+        -------
+        """
+        pass
+
+
+class ParamInt(ParamBase):
+    pass
+
+
+class ParamExt(ParamBase):
+    """
+    External parameter, specified by other modules
+    """
+    def __init__(self, *args, **kwargs):
+        super(ParamExt, self).__init__(*args, **kwargs)
+        self._initialized = False
+        self._parent = None  # parent `ParamInt` instance
+        self._slicer = None  # absolute position indices into the `ParamInt.v`
+
+
+class VariableExt(VarBase):
+    def __init__(self,
+                 parent: str,
+                 indexer: Optional[Union[List, ndarray, ParamBase]] = None,
+                 astype: Optional[Type] = None,
+                 *args,
+                 **kwargs):
+        super(VariableExt, self).__init__(*args, **kwargs)
+        self._parent = parent
+        self._indexer = indexer
+        self._astype = astype
+        self._pos = None
 
 
 class GroupBase(object):
@@ -337,28 +423,40 @@ class NewModelBase(object):
      - `define_finalize()` to instantiate meta data
      -
     """
-    def __init__(self, system, name):
+    def __init__(self, system, *args, **kwargs):
         self.system = system
-        self.name = name
         self.group = None
-
-        # containers for parameters, variables, and etc.
-        self.attr_list = []  # name list of all parameters, variables and services
 
         self.algebs = {}
         self.states = {}
         self.calcs = {}
 
-        self.parameters = {}
+        self.params_int = {}
+        self.params_ext = {}
 
-    def define(self):
-        """
-        Hook to be provided by subclasses
-        Returns:
+        self.u = ParamInt(default=1, descr='connection status', unit='bool')
+        self.name = ParamInt(default=self.__class__.__name__, descr='element name')
 
-        """
-        self.define_param(name='u', default=1, descr='status', unit='bool')
-        # self.param_define(name='name', default=)
+    def __setattr__(self, key, value):
+        if isinstance(value, (VarBase, ParamBase)):
+            if not value.name:
+                value.name = key
+
+        if isinstance(value, Algeb):
+            self.algebs[key] = value
+        elif isinstance(value, State):
+            self.states[key] = value
+        elif isinstance(value, Calc):
+            self.calcs[key] = value
+        elif isinstance(value, ParamInt):
+            self.params_int[key] = value
+        elif isinstance(value, ParamExt):
+            self.params_ext[key] = value
+
+        if key in self.__dict__:
+            logger.warning(f"{self.__class__}: redefinition of instance member <{key}>")
+
+        super().__setattr__(key, value)
 
     def define_finalize(self):
         pass
@@ -374,95 +472,8 @@ class NewModelBase(object):
 
         # check if all group parameters are defined
 
-    def _new_name(self, name):
-        """
-        Add a name to the name list and check for conflicts
-
-        Parameters
-        ----------
-        name: str
-            Request new attribute name
-
-        Returns
-        -------
-        None
-
-        """
-        if name not in self.attr_list:
-            self.attr_list.append(name)
-        else:
-            raise NameError(f"Name {name} is taken")
-
     def set_group(self):
         raise NotImplementedError("Must be overwritten by subclass")
-
-    def define_param(self,
-                     name: str,
-                     default: Union[str, float],
-                     tex_name: Optional[str] = None,
-                     property_data: Optional[Dict[str, bool]] = None,
-                     descr: Optional[str] = None,
-                     unit: Optional[str] = None
-                     ):
-        self._new_name(name)
-        self.parameters[name] = Parameter(name, default, property_data, tex_name, descr, unit)
-
-    def define_var(self, name: str,
-                   var_type: VarType,
-                   tex_name: Optional[str] = None,
-                   descr: Optional[str] = None,
-                   unit: Optional[str] = None
-                   ):
-        self._new_name(name)
-        new_var = Variable(name, var_type, tex_name, descr, unit)
-        if var_type == 'x':
-            self.states[name] = new_var
-        elif var_type == 'y':
-            self.algebs[name] = new_var
-        elif var_type == 'c':
-            self.calcs[name] = new_var
-
-    def store_var(self, variable: Variable):
-        """
-        Store a Variable object to this device class
-
-        Parameters
-        ----------
-        variable
-            Variable object to store
-
-        Returns
-        -------
-        None
-        """
-        var_type = variable.type
-        var_name = variable.name
-
-        if var_type == VarType.x:
-            self.states[var_name] = variable
-        elif var_type == VarType.y:
-            self.algebs[var_name] = variable
-        elif var_type == VarType.c:
-            self.calcs[var_name] = variable
-        else:
-            raise TypeError(f"Unknown variable type {variable.type}")
-
-    def define_param_ext(self):
-        """
-        Define external parameter
-
-        Returns:
-
-        """
-        pass
-
-    def define_var_ext(self):
-        """
-        Define external variable
-        Returns:
-
-        """
-        pass
 
     def add(self, *args, **kwargs):
         """

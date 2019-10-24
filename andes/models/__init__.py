@@ -1,4 +1,6 @@
 from .jit import JIT  # NOQA
+from collections import OrderedDict  # NOQA
+
 
 __all__ = ['jits', 'non_jits', 'all_models', 'all_models_list']
 
@@ -9,6 +11,12 @@ order = [
     'R', 'L', 'C', 'RLs', 'RCs', 'RCp', 'RLCp', 'RLCs',
     'DCgen', 'vsc', 'AGCTGVSC', 'AGCSynVSC', 'AGCMPC', 'LoadRamp', 'Recorder',
 ]
+
+
+non_jits_new = OrderedDict([
+    ('bus', 'BusNew')
+])
+
 
 non_jits = {
     'bus': {

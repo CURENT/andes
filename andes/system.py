@@ -24,11 +24,11 @@ import logging
 import os
 from operator import itemgetter
 from collections import OrderedDict
-
+from typing import List, Dict, Tuple, Union, Optional  # NOQA
 from . import routines
 from .config import System
 from .consts import pi, rad2deg
-from .models import non_jits, jits, JIT, all_models_list
+from .models import non_jits, jits, JIT, all_models_list, non_jits_new
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
@@ -39,6 +39,67 @@ except ImportError:
     STREAMING = False
 
 logger = logging.getLogger(__name__)
+
+
+class SystemNew(object):
+    """
+    New power system class
+    """
+    def __init__(self,
+                 name: Optional[str] = None,
+                 config: Optional[System] = None,
+                 options: Optional[Dict] = None,
+                 **kwargs: Optional[Dict]
+                 ):
+        self.name = name
+        self.config = config if config else System()
+        self.options = options  # options from command line or so
+
+        self.routine_import()
+        self.model_import()
+
+    def model_import(self):
+        """
+        Import and instantiate the non-JIT models and the JIT models.
+
+        Models defined in ``jits`` and ``non_jits`` in ``models/__init__.py``
+        will be imported and instantiated accordingly.
+
+        Returns
+        -------
+        None
+        """
+        # non-JIT models
+        for file, cls in non_jits_new.items():
+            themodel = importlib.import_module('andes.models.' + file)
+            theclass = getattr(themodel, cls)
+            self.__dict__[cls.lower()] = theclass(system=self)
+
+        # import JIT models
+        # for file, pair in jits.items():
+        #     for cls, name in pair.items():
+        #         self.__dict__[name] = JIT(self, file, cls, name)
+
+    def routine_import(self):
+        """
+        Dynamically import routines as defined in ``routines/__init__.py``.
+
+        The command-line argument ``--routine`` is defined in ``__cli__`` in
+        each routine file. A routine instance will be stored in the system
+        instance with the name being all lower case.
+
+        For example, a routine for power flow study should be defined in
+        ``routines/pflow.py`` where ``__cli__ = 'pflow'``. The class name
+        for the routine should be ``Pflow``. The routine instance will be
+        saved to ``PowerSystem.pflow``.
+
+        Returns
+        -------
+        None
+        """
+        for r in routines.__all__:
+            file = importlib.import_module('.' + r.lower(), 'andes.routines')
+            self.__dict__[r.lower()] = getattr(file, r)(self)
 
 
 class PowerSystem(object):

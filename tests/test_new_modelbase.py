@@ -1,13 +1,13 @@
 import unittest
 
 
-from andes.models.base import NewModelBase, VarType, Parameter, Variable  # NOQA
-from andes.system import PowerSystem
+from andes.models.base import NewModelBase, VarType, ParamBase, VarBase  # NOQA
+from andes.system import PowerSystem, SystemNew  # NOQA
 
 
 class TestVariable(unittest.TestCase):
     def setUp(self) -> None:
-        self.var = Variable("test", var_type=VarType.y)
+        pass
 
     def test_xxx(self):
         pass
@@ -15,7 +15,7 @@ class TestVariable(unittest.TestCase):
 
 class TestNewModelBase(unittest.TestCase):
     def setUp(self) -> None:
-        self.system = PowerSystem()
+        self.system = SystemNew()
         self.new_model_base = NewModelBase(self.system, "NewModel")
 
     def test_XXX(self):
