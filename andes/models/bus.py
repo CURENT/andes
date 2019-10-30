@@ -1,8 +1,9 @@
 from cvxopt import matrix, uniform  # NOQA
 
 from .base import ModelBase
-from .base import NewModelBase, VarBase, VarType, ParamBase, Algeb, State, Calc # NOQA
-from .base import ParamInt, ParamExt  # NOQA
+from .base import NewModelBase, VarBase, VarType, NumParam, Algeb, State, Calc # NOQA
+from .base import NumParam, Data  # NOQA
+from .base import ModelData, Model
 
 from ..consts import Gy  # NOQA
 
@@ -131,12 +132,38 @@ class Bus(ModelBase):
             dae.set_jac(Gy, 1e-6, v, v)
 
 
-class BusNew(NewModelBase):
+class BusData(ModelData):
+    """
+    Class for Bus data
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Vn = NumParam(default=110, descr="AC voltage rating", unit='kV', nonzero=True)
+        self.angle = NumParam(default=0, descr="initial voltage phase angle", unit='rad')
+
+        self.area = Data(default=None, descr="Area code")
+        self.region = Data(default=None, descr="Region code")
+        self.owner = Data(default=None, descr="Owner code")
+        self.xcoord = Data(default=0, descr='x coordinate')
+        self.ycoord = Data(default=0, descr='y coordinate')
+
+        self.vmax = NumParam(default=1.1, descr="Voltage upper limit")
+        self.vmin = NumParam(default=0.9, descr="Voltage lower limit")
+        self.voltage = NumParam(default=1.0, descr="initial voltage magnitude")
+
+
+class BusNew(Model, BusData):
     """
     Bus model constructed from the NewModelBase
     """
+    group = 'StaticLoad'
+    category = 'Load'
 
-    def __init__(self, system, *args, **kwargs):
-        super().__init__(system, *args, **kwargs)
+    def __init__(self, system, name=None):
+        Model.__init__(self, system=system, name=name)
+        BusData.__init__(self)
+
+        self.config['group_by'] = 'variable'
+
         self.a = Algeb(name='a', tex_name=r'\theta', descr='voltage angle', unit='radian')
         self.v = Algeb(name='v', tex_name='V', descr='voltage magnitude', unit='pu')

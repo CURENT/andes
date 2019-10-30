@@ -31,6 +31,9 @@ from .consts import pi, rad2deg
 from .models import non_jits, jits, JIT, all_models_list, non_jits_new
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
+from .models.base import Model  # NOQA
+from .variables.dae import DAENew
+import numpy as np
 
 try:
     from andes_addon.streaming import Streaming
@@ -54,7 +57,9 @@ class SystemNew(object):
         self.name = name
         self.config = config if config else System()
         self.options = options  # options from command line or so
+        self.dae = DAENew()
 
+        self.models = []
         self.routine_import()
         self.model_import()
 
@@ -70,10 +75,12 @@ class SystemNew(object):
         None
         """
         # non-JIT models
-        for file, cls in non_jits_new.items():
-            themodel = importlib.import_module('andes.models.' + file)
-            theclass = getattr(themodel, cls)
-            self.__dict__[cls.lower()] = theclass(system=self)
+        for file, cls_name in non_jits_new.items():
+            the_model = importlib.import_module('andes.models.' + file)
+            the_class = getattr(the_model, cls_name)
+            attr_name = cls_name
+            self.__dict__[attr_name] = the_class(system=self)
+            self.models.append(attr_name)
 
         # import JIT models
         # for file, pair in jits.items():
@@ -97,9 +104,63 @@ class SystemNew(object):
         -------
         None
         """
-        for r in routines.__all__:
-            file = importlib.import_module('.' + r.lower(), 'andes.routines')
-            self.__dict__[r.lower()] = getattr(file, r)(self)
+        # for r in routines.__all__:
+        #     file = importlib.import_module('.' + r.lower(), 'andes.routines')
+        #     self.__dict__[r.lower()] = getattr(file, r)(self)
+        pass
+
+    def set_external(self):
+        for m in self.models:
+            mdl = self.__dict__[m]
+            for name, instance in mdl.vars_ext.items():
+                ext_model_name = instance.model
+                instance.set_external(self.__dict__[ext_model_name])
+
+            for name, instance in mdl.params_ext.items():
+                ext_model_name = instance.model
+                instance.set_external(self.__dict__[ext_model_name])
+
+    def finalize_add(self):
+        for m in self.models:
+            mdl = self.__dict__[m]
+            mdl.finalize_add()
+
+    def set_address(self):
+        for model_name in self.models:
+            mdl = self.__dict__[model_name]
+            n = mdl.n
+
+            if mdl.flags['address'] is True:
+                logger.debug(f'{mdl.__class__.__name__} addresses exist.')
+                continue
+
+            group_by = mdl.config['group_by']
+
+            m0 = self.dae.m
+            n0 = self.dae.n
+            m_end = m0 + len(mdl.algebs) * n
+            n_end = n0 + len(mdl.states) * n
+
+            if group_by == 'variable':
+                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                    item.set_address(np.array(range(m0 + idx * n, m0 + (idx + 1) * n)))
+                for idx, item in enumerate(mdl.states.items()):
+                    item.set_address(np.array(range(n0 + idx * n, n0 + (idx + 1) * n)))
+            elif group_by == 'element':
+                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                    item.set_address(np.array(range(m0 + idx, m_end, len(mdl.algebs))))
+                for idx, item in enumerate(mdl.states.items()):
+                    item.set_address(np.array(range(n0 + idx, n_end, len(mdl.states))))
+            else:
+                raise NotImplementedError
+
+            self.dae.m = m_end
+            self.dae.n = n_end
+
+            mdl.flags['address'] = True
+
+    def add(self, model, **kwargs):
+        self.__dict__[model].add(**kwargs)
 
 
 class PowerSystem(object):

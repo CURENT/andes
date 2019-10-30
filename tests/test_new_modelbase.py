@@ -1,7 +1,7 @@
 import unittest
 
 
-from andes.models.base import NewModelBase, VarType, ParamBase, VarBase  # NOQA
+from andes.models.base import NewModelBase, VarType, NumParam, VarBase  # NOQA
 from andes.system import PowerSystem, SystemNew  # NOQA
 
 

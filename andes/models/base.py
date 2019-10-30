@@ -17,7 +17,7 @@
 """
 Base class for building ANDES models
 """
-from typing import List, Set, Dict, Tuple, Optional, Union, Type  # NOQA
+from typing import List, Set, Dict, Tuple, Optional, Union, Type, Callable  # NOQA
 from collections import OrderedDict
 
 from abc import ABC, abstractmethod  # NOQA
@@ -40,6 +40,20 @@ logger = logging.getLogger(__name__)
 pd = None
 
 
+def load_pd():
+    """
+    Import pandas to globals() if not exist
+    """
+    if globals()['pd'] is None:
+        try:
+            globals()['pd'] = importlib.import_module('pandas')
+        except ImportError:
+            logger.warning("Pandas import error.")
+            return False
+
+    return True
+
+
 class VarType(Enum):
     X = 0  # state
     Y = 1  # algebraic
@@ -49,6 +63,174 @@ class VarType(Enum):
 class ParamType(Enum):
     INT = 0  # internal parameter
     EXT = 1  # external parameter
+
+
+class ParamBase(object):
+    """
+    Basic single data class
+    """
+    def __init__(self, default=None, name=None, tex_name=None, descr=None, mandatory=False):
+        self.name = name
+        self.default = default
+        self.tex_name = tex_name if tex_name else name
+        self.descr = descr
+        self.owner = None
+
+        self.n = 0
+        self.v = []
+        self.property = dict(mandatory=mandatory)
+
+    def add(self, value=None):
+        """
+        Add a new value (from a new element) to this parameter list
+
+        Parameters
+        ----------
+        value
+            Parameter value of the new element
+
+        Returns
+        -------
+        None
+        """
+
+        # check for mandatory
+        if value is None:
+            value = self.default
+
+        self.v.append(value)
+        self.n += 1
+
+
+class Data(ParamBase):
+    pass
+
+
+class NumParam(ParamBase):
+    """
+    Parameter class
+    """
+
+    def __init__(self,
+                 default: Optional[Union[float, str, Callable]] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 descr: Optional[str] = None,
+                 unit: Optional[str] = None,
+                 nonzero: bool = False,
+                 mandatory: bool = False,
+                 power: bool = False,
+                 voltage: bool = False,
+                 current: bool = False,
+                 z: bool = False,
+                 y: bool = False,
+                 r: bool = False,
+                 g: bool = False,
+                 dcvoltage: bool = False,
+                 dccurrent: bool = False,
+                 toarray: bool = True,
+                 ):
+        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, descr=descr)
+        self.unit = unit
+
+        self.property = dict(nonzero=nonzero, mandatory=mandatory, power=power, voltage=voltage, toarray=toarray,
+                             current=current, z=z, y=y, r=r, g=g, dccurrent=dccurrent, dcvoltage=dcvoltage)
+
+        self.pu_coeff = None
+        self.vin = None  # values from input
+
+    def get_property(self, property_name):
+        """
+        Check the boolean value of the given property
+
+        Parameters
+        ----------
+        property_name
+            Property name
+
+        Returns
+        -------
+        The truth value of the property
+        """
+        return self.property[property_name]
+
+    def add(self, value=None):
+        """
+        Add a new value (from a new element) to this parameter list
+
+        Parameters
+        ----------
+        value
+            Parameter value of the new element
+
+        Returns
+        -------
+        None
+        """
+
+        # check for mandatory
+        if value is None:
+            if self.get_property('mandatory'):
+                logger.error(f'Mandatory parameter {self.name} missing')
+                sys.exit(1)
+            else:
+                value = self.default
+
+        # check for non-zero
+        if value == 0 and self.get_property('nonzero'):
+            logger.warning(f'Parameter {self.name} must be non-zero')
+            value = self.default
+
+        super(NumParam, self).add(value)
+
+    def to_array(self):
+        """
+        Convert to np array for speed up
+
+        Returns:
+
+        """
+        self.v = np.array(self.v)
+
+
+class ParamInt(NumParam):
+    pass
+
+
+class ParamExt(NumParam):
+    """
+    External parameter, specified by other modules
+    """
+    def __init__(self, model: str, src: str, indexer=None, **kwargs):
+        super(ParamExt, self).__init__(**kwargs)
+        self.model = model
+        self.src = src
+        self.indexer = indexer
+
+        self.parent_model = None   # parent model instance
+        self.parent_instance = None
+        self.uid = None
+
+    def set_external(self, ext_model):
+        """
+        Update parameter values provided by external models
+        Returns
+        -------
+        """
+        self.parent_model = ext_model
+        self.parent_instance = ext_model.__dict__[self.src]
+
+        n_indexer = len(self.indexer.v)
+        if n_indexer == 0:
+            return
+
+        self.uid = ext_model.idx2uid(self.indexer.v)
+        # pull in values
+        self.property = dict(self.parent_instance.property)
+        self.v = self.parent_instance.v[self.uid]
+        self.vin = self.parent_instance.vin[self.uid]
+        self.pu_coeff = self.parent_instance.pu_coeff[self.uid]
+        self.n = len(self.v)
 
 
 class VarBase(object):
@@ -69,11 +251,14 @@ class VarBase(object):
         self.unit = unit
 
         self.tex_name = tex_name if tex_name else name
+        self.owner = None
 
         self.n = 0
-        self.a: Optional[ndarray] = None
+        self.a: Optional[Union[ndarray, List]] = None
         self.v: Optional[ndarray] = None
         self.e: Optional[ndarray] = None
+
+        self.equation = None
 
         # metadata
         self.property = {"intf": False,
@@ -91,13 +276,11 @@ class VarBase(object):
         self.flag_lower = None
         self.flag_upper = None
 
-    def set_count(self, n):
-        """
-        Set the count of elements
-
-        TODO: probably inferred from the address
-        """
-        self.n = n
+    def set_address(self, addr):
+        self.a = addr
+        self.n = len(self.a)
+        self.v = np.zeros(self.n)
+        self.e = np.zeros(self.n)
 
     def set_property(self, property_name, value):
         """
@@ -144,16 +327,6 @@ class VarBase(object):
         self.flag_lower = np.less_equal(self.v, self.lower)
         self.flag_upper = np.greater_equal(self.v, self.upper)
 
-    def set_source(self):
-        """
-        Record the source model, source parameter, and the element indices of this external parameter
-
-        Returns
-        -------
-
-        """
-        pass
-
 
 class Algeb(VarBase):
     """
@@ -170,235 +343,39 @@ class Calc(VarBase):
     pass
 
 
-class ParamBase(object):
-    """
-    Parameter class
-    """
-
+class VarExt(VarBase):
     def __init__(self,
-                 default: Union[float, str],
-                 name: Optional[str] = None,
-                 property_data: Dict[str, bool] = None,
-                 tex_name: Optional[str] = None,
-                 descr: Optional[str] = None,
-                 unit: Optional[str] = None,
-                 *args: Optional[List],
-                 **kwargs: Optional[Dict]):
-        self.name = name
-        self.default = default
-        self.descr = descr
-        self.unit = unit
-        self.tex_name = tex_name if tex_name else name
-
-        self.n = 0
-
-        self.v = []
-        self.property = {'params': True,
-                         'nonzero': False,
-                         'mandatory': False,
-                         'powers': False,
-                         'voltages': False,
-                         'currents': False,
-                         'z': False,
-                         'y': False,
-                         'r': False,
-                         'g': False,
-                         'dccurrents': False,
-                         'dcvoltages': False,
-                         'times': False
-                         }
-
-        if property_data:
-            for key, value in property_data:
-                self.set_property(key, value)
-
-        if isinstance(default, str):
-            self.property['params'] = False
-
-    def set_property(self, property_name, value):
-        """
-        Set the variable property to the provided value
-
-        Parameters
-        ----------
-        property_name
-            Property name
-        value
-            Property value
-
-        Returns
-        -------
-
-        """
-        if property_name not in self.property:
-            raise KeyError(f'Property name {property_name} is invalid')
-        self.property[property_name] = value
-
-    def check_property(self, property_name):
-        """
-        Check the boolean value of the given property
-
-        Parameters
-        ----------
-        property_name
-            Property name
-
-        Returns
-        -------
-        The truth value of the property
-        """
-        return self.property[property_name]
-
-    def add(self, value=None):
-        """
-        Add a new value (from a new element) to this parameter list
-
-        Parameters
-        ----------
-        value
-            Parameter value of the new element
-
-        Returns
-        -------
-        None
-        """
-
-        # check for mandatory
-        if value is None:
-            if self.check_property('mandatory'):
-                logger.error(f'Mandatory parameter {self.name} missing')
-                sys.exit(1)
-            else:
-                value = self.default
-
-        # check for non-zero
-        if value == 0 and self.check_property('zero'):
-            logger.warning(f'Parameter {self.name} must be non-zero')
-            value = self.default
-
-        self.v.append(value)
-        self.n += 1
-
-    def convert_to_array(self):
-        """
-        Convert to np array for speed up
-
-        Returns:
-
-        """
-        if self.check_property("params"):
-            self.v = np.array(self.v)
-
-    def update_ext(self):
-        """
-        Update parameter values provided by external models
-        Returns
-        -------
-        """
-        pass
-
-
-class ParamInt(ParamBase):
-    pass
-
-
-class ParamExt(ParamBase):
-    """
-    External parameter, specified by other modules
-    """
-    def __init__(self, *args, **kwargs):
-        super(ParamExt, self).__init__(*args, **kwargs)
-        self._initialized = False
-        self._parent = None  # parent `ParamInt` instance
-        self._slicer = None  # absolute position indices into the `ParamInt.v`
-
-
-class VariableExt(VarBase):
-    def __init__(self,
-                 parent: str,
-                 indexer: Optional[Union[List, ndarray, ParamBase]] = None,
-                 astype: Optional[Type] = None,
+                 model: str,
+                 src: str,
+                 indexer: Optional[Union[List, ndarray, Data]] = None,
                  *args,
                  **kwargs):
-        super(VariableExt, self).__init__(*args, **kwargs)
-        self._parent = parent
-        self._indexer = indexer
-        self._astype = astype
-        self._pos = None
+        super(VarExt, self).__init__(*args, **kwargs)
+        self.initialized = False
+        self.model = model
+        self.src = src
+        self.indexer = indexer
 
+        self.parent_model = None
+        self.parent_instance = None
+        self.uid = None
 
-class GroupBase(object):
-    """
-    Base class for groups
-    """
+    def set_external(self, ext_model):
+        self.parent_model = ext_model
+        self.parent_instance = ext_model.__dict__[self.src]
+        self.uid = ext_model.idx2uid(self.indexer.v)
 
-    def __init__(self, name):
-        self.name = name
-        self.shared_parameters = []
-        self.shared_variables = []
+        n_indexer = len(self.indexer.v)
+        if n_indexer == 0:
+            return
 
-        self.models = {}  # model name, model instance
-        self.elem2model = {}  # element idx, model name
+        # pull in values
+        self.a = self.parent_instance.a[self.uid]
+        self.n = len(self.a)
 
-    def register(self, name, model_instance):
-        if name not in self.models:
-            self.models[name] = model_instance
-        else:
-            raise KeyError(f"Duplicate model registration if {name}")
-
-    def register_element(self, idx, model_name):
-        """
-        Register an idx from model_name to the group
-
-        Parameters
-        ----------
-        idx: Union[str, float]
-            Register an element to a model
-
-        model_name: str
-            Name of the model
-
-        Returns
-        -------
-
-        """
-        self.elem2model['idx'] = model_name
-
-    def next_idx(self, idx=None):
-        """
-        Return the auto-generated next idx
-
-        Parameters
-        ----------
-        idx
-
-        Returns
-        -------
-
-        """
-        need_new = False
-
-        if idx is not None:
-            if idx not in self.elem2model:
-                # name is good
-                pass
-            else:
-                logger.warning(f"{self.name}: conflict idx {idx}. Data may be inconsistent.")
-                need_new = True
-
-        if idx is None:
-            need_new = True
-
-        if need_new is True:
-            count = len(self.elem2model)
-            while True:
-                idx = self.name + str(count)
-                if idx not in self.elem2model:
-                    break
-                else:
-                    count += 1
-
-        return idx
+        # set initial v and e values to zero
+        self.v = np.zeros(self.n)
+        self.e = np.zeros(self.a)
 
 
 class NewModelBase(object):
@@ -428,17 +405,26 @@ class NewModelBase(object):
         self.algebs = OrderedDict()
         self.states = OrderedDict()
         self.calcs = OrderedDict()
+        self.var_ext = OrderedDict()
 
         self.params_int = OrderedDict()
         self.params_ext = OrderedDict()
 
-        self.u = ParamInt(default=1, descr='connection status', unit='bool')
-        self.name = ParamInt(default=self.__class__.__name__, descr='element name')
+        self.idx = []
+        self.u = NumParam(default=1, descr='connection status', unit='bool')
+        self.name = NumParam(default=self.__class__.__name__, descr='element names')
+
+    def get_new_idx(self):
+        pass
 
     def __setattr__(self, key, value):
         if isinstance(value, (VarBase, ParamBase)):
+            value.owner = self
             if not value.name:
                 value.name = key
+
+            if key in self.__dict__:
+                logger.warning(f"{self.__class__}: redefinition of instance member <{key}>")
 
         if isinstance(value, Algeb):
             self.algebs[key] = value
@@ -446,18 +432,14 @@ class NewModelBase(object):
             self.states[key] = value
         elif isinstance(value, Calc):
             self.calcs[key] = value
-        elif isinstance(value, ParamInt):
+        elif isinstance(value, VarExt):
+            self.var_ext[key] = value
+        elif isinstance(value, NumParam):
             self.params_int[key] = value
         elif isinstance(value, ParamExt):
             self.params_ext[key] = value
 
-        if key in self.__dict__:
-            logger.warning(f"{self.__class__}: redefinition of instance member <{key}>")
-
         super().__setattr__(key, value)
-
-    def define_finalize(self):
-        pass
 
     def consistency_check(self):
         """
@@ -505,6 +487,278 @@ class NewModelBase(object):
             A formatted string
         """
         pass
+
+
+class Cache(object):
+    def __init__(self):
+        self._callbacks = {}
+
+    def __getattr__(self, item):
+        if item not in self.__dict__:
+            if item not in self._callbacks:
+                self.__dict__[item] = None
+            else:
+                self.__dict__[item] = self._callbacks[item]()
+
+        return self.__dict__[item]
+
+    def __setattr__(self, key, value):
+        super(Cache, self).__setattr__(key, value)
+
+    def add_attr(self, name, callback):
+        self._callbacks[name] = callback
+
+    def refresh(self, name=None):
+        if name is None:
+            for name, cb in self._callbacks.items():
+                self.__dict__[name] = cb()
+        elif isinstance(name, str):
+            self.__dict__[name] = self._callbacks[name]()
+        elif isinstance(name, list):
+            for n in name:
+                self.__dict__[n] = self._callbacks[n]()
+
+
+class Comparer(object):
+    def __init__(self, lhs, rhs, cmp, name=None):
+        self.name = name
+        self.lhs = lhs
+        self.rhs = rhs
+        self.cmp = cmp
+        self.v = None
+        self.owner = None
+
+    def eval(self):
+        self.v = self.cmp(self.lhs.v, self.rhs.v)
+
+
+class ModelData(object):
+    """
+    Class for holding model data
+    """
+    def __init__(self, *args, **kwargs):
+        self.params = OrderedDict()
+        self.cache = Cache()
+        self.cache.add_attr('dict', self.as_dict)
+        self.cache.add_attr('df', self.as_df)
+
+        self.num_params = OrderedDict()
+
+        self.n = 0
+        self.idx = []
+        self.u = NumParam(default=1, descr='connection status', unit='bool')
+
+    def __setattr__(self, key, value):
+        if isinstance(value, ParamBase):
+            value.owner = self
+            if not value.name:
+                value.name = key
+
+            if key in self.__dict__:
+                logger.warning(f"{self.__class__}: redefinition of instance member <{key}>")
+
+            self.params[key] = value
+
+        if isinstance(value, NumParam):
+            self.num_params[key] = value
+
+        super(ModelData, self).__setattr__(key, value)
+
+    def add(self, **kwargs):
+        idx = kwargs.pop('idx', None)
+
+        self.idx.append(idx)
+        self.n += 1
+
+        for name, instance in self.params.items():
+            value = kwargs.pop(name, None)
+            self.__dict__[name].add(value)
+        if len(kwargs) > 0:
+            logger.warning(f'{self.__class__.__name__}: Unused data {kwargs}')
+
+    def as_dict(self):
+        out = dict()
+        out['uid'] = np.arange(self.n)
+        out['idx'] = self.idx
+
+        for name, instance in self.params.items():
+            out[name] = instance.v
+
+        return out
+
+    def as_df(self):
+        if not load_pd():
+            return None
+
+        out = pd.DataFrame(self.as_dict()).set_index('uid')
+
+        return out
+
+
+class Model(object):
+    """
+    Base class for power system device models
+    """
+
+    def __init__(self, system=None, name: str = None):
+        """meta-data to be overloaded by subclasses"""
+
+        self.system = system
+        self.idx = []  # duplicate from ModelData. Keep for now.
+
+        # variables
+        self.states = OrderedDict()
+        self.algebs = OrderedDict()
+        self.calcs = OrderedDict()
+        self.vars_ext = OrderedDict()
+        self.params_ext = OrderedDict()
+        self.comparers = OrderedDict()
+
+        # service/temporary variables
+        self.services = []
+
+        self.mdl_from = []
+        self.mdl_to = []
+
+        self.flags = {
+            'sysbase': False,
+            'allocate': False,
+            'address': False,
+        }
+
+        self.config = {
+            'group_by': 'element',
+            'is_series': False,
+        }
+
+        self.syms = OrderedDict()
+        self.f_syms = []
+        self.g_syms = []
+        self.c_syms = []
+
+    @property
+    def all_vars(self):
+        return OrderedDict(list(self.states.items()) +
+                           list(self.algebs.items()) +
+                           list(self.calcs.items()) +
+                           list(self.vars_ext.items())
+                           )
+
+    @property
+    def all_params(self):
+        return OrderedDict(list(self.num_params.items()) +
+                           list(self.comparers.items())
+                           )
+
+    def __setattr__(self, key, value):
+        if isinstance(value, (VarBase, Comparer)):
+            value.owner = self
+            if not value.name:
+                value.name = key
+
+            if key in self.__dict__:
+                logger.warning(f"{self.__class__.__name__}: redefinition of instance member <{key}>")
+
+        if isinstance(value, Algeb):
+            self.algebs[key] = value
+        elif isinstance(value, State):
+            self.states[key] = value
+        elif isinstance(value, Calc):
+            self.calcs[key] = value
+        elif isinstance(value, VarExt):
+            self.vars_ext[key] = value
+        elif isinstance(value, ParamExt):
+            self.params_ext[key] = value
+        elif isinstance(value, Comparer):
+            self.comparers[key] = value
+
+        super(Model, self).__setattr__(key, value)
+
+    def finalize_add(self):
+        for name, instance in self.num_params.items():
+            instance.to_array()
+
+        # check the uniqueness of idx
+
+    def idx2uid(self, idx):
+        if idx is None:
+            logger.error("idx2uid cannot search for None idx")
+            return None
+        if isinstance(idx, (float, int, str)):
+            return self.idx.index(idx)
+        elif isinstance(idx, list):
+            return [self.idx.index(i) for i in idx]
+        elif isinstance(idx, np.ndarray):
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+
+    def convert_equations(self):
+        from sympy import Symbol, Matrix, sympify, lambdify
+
+        for var in list(self.all_params.keys()) + list(self.all_vars.keys()):
+            self.syms[var] = Symbol(var)
+
+        for name, instance in self.states.items():
+            if instance.equation is None:
+                self.f_syms.append(0)
+            else:
+                self.f_syms.append(sympify(instance.equation, locals=self.syms))
+
+        for name, instance in self.algebs.items():
+            if instance.equation is None:
+                self.g_syms.append(0)
+            else:
+                self.g_syms.append(sympify(instance.equation, locals=self.syms))
+
+        for name, instance in self.calcs.items():
+            if instance.equation is None:
+                self.c_syms.append(0)
+            else:
+                self.c_syms.append(sympify(instance.equation, locals=self.syms))
+
+        for name, instance in self.vars_ext.items():
+            if instance.equation is None:
+                self.g_syms.append(0)
+            else:
+                self.g_syms.append(sympify(instance.equation, locals=self.syms))
+
+        self.g_syms = Matrix(self.g_syms)
+        self.f_syms = Matrix(self.f_syms)
+        self.c_syms = Matrix(self.c_syms)
+
+        syms_list = list(self.syms)
+
+        self._gcall = lambdify(syms_list, self.g_syms, 'numpy')
+        self._fcall = lambdify(syms_list, self.f_syms, 'numpy')
+        self._ccall = lambdify(syms_list, self.c_syms, 'numpy')
+
+    def gcall(self):
+        if self.n == 0:
+            return
+
+        self.eval_comparer()
+
+        args = []
+        for name, instance in self.all_params.items():
+            args.append(instance.v)
+        for name, instance in self.all_vars.items():
+            args.append(instance.v)
+
+        ret = self._gcall(*args)
+        idx = 0
+
+        for name, instance in self.algebs.items():
+            instance.e = np.ravel(ret[idx])
+            idx += 1
+
+        for name, instance in self.vars_ext.items():
+            instance.e = np.ravel(ret[idx])
+            idx += 1
+
+    def eval_comparer(self):
+        for name, instance in self.comparers.items():
+            instance.eval()
 
 
 class ModelBase(object):

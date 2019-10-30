@@ -10,6 +10,20 @@ from ..utils.math import zeros, ones
 logger = logging.getLogger(__name__)
 
 
+class DAENew(object):
+    """
+    Numerical DAE
+    """
+    def __init__(self):
+        self.m = 0
+        self.n = 0
+
+        self.x = None
+        self.y = None
+        self.f = None
+        self.g = None
+
+
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (dae)"""
 

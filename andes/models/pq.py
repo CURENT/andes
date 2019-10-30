@@ -8,6 +8,8 @@ from ..consts import Gy  # NOQA
 from ..utils.math import altb, agtb, aorb, nota
 from ..utils.math import zeros, ones
 
+from .base import Model, ModelData, NumParam, VarExt, Data, Comparer
+
 
 class PQ(ModelBase):
     """Static PQ load class"""
@@ -119,3 +121,32 @@ class PQ(ModelBase):
 
         dae.add_jac(Gy, mul(self.p, k), self.a, self.v)
         dae.add_jac(Gy, mul(self.q, k), self.v, self.v)
+
+
+class PQData(ModelData):
+    def __init__(self):
+        super().__init__()
+        self.bus = Data(default=None, descr="linked bus idx", mandatory=True)
+        self.owner = Data(default=None, descr="owner idx")
+
+        self.p = NumParam(default=0, descr='active power load', power=True)
+        self.q = NumParam(default=0, descr='reactive power load', power=True)
+        self.vmax = NumParam(default=1.1, descr='max voltage before switching to impedance')
+        self.vmin = NumParam(default=0.9, descr='min voltage before switching to impedance')
+
+
+class PQNew(Model, PQData):
+    def __init__(self, system=None, name=None):
+        Model.__init__(self, system, name)
+        PQData.__init__(self)
+
+        self.a = VarExt(model='BusNew', src='a', indexer=self.bus)
+        self.v = VarExt(model='BusNew', src='v', indexer=self.bus)
+
+        self.v_below = Comparer(lhs=self.v, rhs=self.vmin, cmp=np.less_equal)
+        self.v_above = Comparer(lhs=self.v, rhs=self.vmax, cmp=np.greater_equal)
+
+        # self.v_bound = AlgebBound(var=self.v, lower=self.vmin, upper=vmax)
+
+        self.a.equation = '+ u * (p * (1 - (v_above + v_below))'
+        self.v.equation = '+ u * q'
