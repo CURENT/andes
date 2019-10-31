@@ -36,7 +36,9 @@ class Limiter(object):
         -------
 
         """
-        pass
+        self.var.v = self.var.v * (1 - self.zu) * (1 - self.zl) + \
+            self.lower.v * self.zl + \
+            self.upper.v * self.zu
 
     def get_name(self):
         """
@@ -50,29 +52,25 @@ class Limiter(object):
 
 
 class Comparer(Limiter):
-    pass
+    def set_limit(self):
+        # empty set_limit function
+        pass
 
 
 class HardLimiter(Limiter):
     def __init__(self, var, lower, upper, **kwargs):
         super(HardLimiter, self).__init__(var, lower, upper, **kwargs)
 
-    def set_limit(self):
-        pass  # TODO: set to the limits
-
 
 class WindupLimiter(Limiter):
     def __init__(self, var, lower, upper, **kwargs):
         super(WindupLimiter, self).__init__(var, lower, upper, **kwargs)
 
-    def set_limit(self):
-        pass  # TODO: set to the limits
-
 
 class AntiWindupLimiter(WindupLimiter):
     def __init__(self, var, lower, upper, state=None, **kwargs):
         super(AntiWindupLimiter, self).__init__(var, lower, upper, **kwargs)
-        self.state = state
+        self.state = state if state else var
 
     def eval(self):
         super(AntiWindupLimiter, self).eval()
@@ -83,7 +81,8 @@ class AntiWindupLimiter(WindupLimiter):
                           self.zl.astype(np.bool))).astype(np.float64)
 
     def set_limit(self):
-        pass  # TODO: set to the limits
+        super(AntiWindupLimiter, self).set_limit()
+        self.state.e = self.state.e * (1 - self.zu) * (1 - self.zl)
 
 
 class DeadBand(Limiter):

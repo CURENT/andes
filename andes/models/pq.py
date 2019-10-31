@@ -13,6 +13,7 @@ from andes.core.limiter import Comparer
 from andes.core.var import ExtVar
 from andes.core.param import DataParam, NumParam
 from andes.core.service import Service
+from andes.core.block import PIController
 
 
 class PQ(ModelBase):
@@ -149,15 +150,18 @@ class PQNew(Model, PQData):
 
         self.v_lim = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        self.k = Service()
-        self.k.e_symbolic = "1"
+        self.kp = Service()
+        self.kp.e_symbolic = "1"
+        self.ki = Service()
+        self.ki.e_symbolic = "1"
+
+        self.pi = PIController(self.v, self.kp, self.ki)
 
         self.a.e_symbolic = """+ u * (p * v_lim_zi +
                                     p * v_lim_zl * (v ** 2 / vmin ** 2) +
                                     p * v_lim_zu * (v ** 2 / vmax ** 2))
                                     """
 
-        self.a.e_symbolic = "u * k * p"
         self.v.e_numeric = self._q_function
 
     def _q_function(self):

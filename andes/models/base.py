@@ -27,6 +27,7 @@ import numpy as np
 from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtVar
+from andes.core.block import Block
 from andes.core.service import Service
 from cvxopt import matrix
 from cvxopt import mul, div
@@ -165,6 +166,7 @@ class Model(object):
         self.vars_ext = OrderedDict()
         self.params_ext = OrderedDict()
         self.limiters = OrderedDict()
+        self.blocks = OrderedDict()
 
         # service/temporary variables
         self.services = OrderedDict()
@@ -234,7 +236,7 @@ class Model(object):
                            list(self.vars_ext.items()))
 
     def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, Limiter, Service)):
+        if isinstance(value, (VarBase, Limiter, Service, Block)):
             value.owner = self
             if not value.name:
                 value.name = key
@@ -257,8 +259,25 @@ class Model(object):
             self.limiters[key] = value
         elif isinstance(value, Service):
             self.services[key] = value
+        elif isinstance(value, Block):
+            self.blocks[key] = value
+            for sub_name, var_instance in value.export_vars().items():
+                full_var_name = f'{key}_{sub_name}'
+                self.__setattr__(full_var_name, var_instance)
 
         super(Model, self).__setattr__(key, value)
+
+    def load_block(self):
+        """
+        Pull in variables from control blocks
+        Returns
+        -------
+
+        """
+        for name, instance in self.blocks.items():
+            for sub_name, var_instance in instance.export_vars():
+                full_var_name = f'{name}_{sub_name}'
+                self.__set_attr__(full_var_name, var_instance)
 
     def finalize_add(self):
         # TODO: check the uniqueness of idx
@@ -357,7 +376,10 @@ class Model(object):
         for name, instance in self.cache.algeb_ext.items():
             # TODO: possible speed up
             if hasattr(instance, 'e_lambdify') and callable(instance.e_lambdify):
-                instance.e += np.ravel(instance.e_lambdify(*args))
+                try:
+                    instance.e += np.ravel(instance.e_lambdify(*args))
+                except TypeError:
+                    print(instance.e_lambdify(*args))
 
     def eval_limiter(self):
         for name, instance in self.limiters.items():

@@ -34,14 +34,6 @@ class VarBase(object):
         self.e_lambdify = None
         self.e_numeric = None
 
-        # metadata
-        self.property = {"intf": False,
-                         "ext": False,
-                         "limit": False,
-                         "windup": False,
-                         "anti_windup": False,
-                         "deadband": False}
-
     def set_address(self, addr):
         self.a = addr
         self.n = len(self.a)

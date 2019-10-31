@@ -144,12 +144,12 @@ class SystemNew(object):
             if group_by == 'variable':
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     item.set_address(np.array(range(m0 + idx * n, m0 + (idx + 1) * n)))
-                for idx, item in enumerate(mdl.states.items()):
+                for idx, (name, item) in enumerate(mdl.states.items()):
                     item.set_address(np.array(range(n0 + idx * n, n0 + (idx + 1) * n)))
             elif group_by == 'element':
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     item.set_address(np.array(range(m0 + idx, m_end, len(mdl.algebs))))
-                for idx, item in enumerate(mdl.states.items()):
+                for idx, (name, item) in enumerate(mdl.states.items()):
                     item.set_address(np.array(range(n0 + idx, n_end, len(mdl.states))))
             else:
                 raise NotImplementedError
