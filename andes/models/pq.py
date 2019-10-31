@@ -8,7 +8,10 @@ from ..consts import Gy  # NOQA
 from ..utils.math import altb, agtb, aorb, nota
 from ..utils.math import zeros, ones
 
-from .base import Model, ModelData, NumParam, VarExt, Data, Comparer
+from .base import Model, ModelData
+from andes.core.limiter import Comparer
+from andes.core.var import ExtVar
+from andes.core.param import DataParam, NumParam
 
 
 class PQ(ModelBase):
@@ -126,8 +129,8 @@ class PQ(ModelBase):
 class PQData(ModelData):
     def __init__(self):
         super().__init__()
-        self.bus = Data(default=None, descr="linked bus idx", mandatory=True)
-        self.owner = Data(default=None, descr="owner idx")
+        self.bus = DataParam(default=None, descr="linked bus idx", mandatory=True)
+        self.owner = DataParam(default=None, descr="owner idx")
 
         self.p = NumParam(default=0, descr='active power load', power=True)
         self.q = NumParam(default=0, descr='reactive power load', power=True)
@@ -140,8 +143,8 @@ class PQNew(Model, PQData):
         Model.__init__(self, system, name)
         PQData.__init__(self)
 
-        self.a = VarExt(model='BusNew', src='a', indexer=self.bus)
-        self.v = VarExt(model='BusNew', src='v', indexer=self.bus)
+        self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
+        self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
 
         # TODO: The below needs to be improved. Probably use new classes
         self.v_lim = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
@@ -156,4 +159,9 @@ class PQNew(Model, PQData):
                                     p * v_lim_zl * (v ** 2 / vmin ** 2) +
                                     p * v_lim_zu * (v ** 2 / vmax ** 2))
                                     """
-        self.v.equation = '+ u * q'
+        # self.v.equation = '+ u * q'
+
+        self.v.efunction = self._q_function
+
+    def _q_function(self):
+        return self.q.v

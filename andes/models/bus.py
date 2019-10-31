@@ -1,8 +1,8 @@
 from cvxopt import matrix, uniform  # NOQA
 
+from andes.core.var import Algeb
+from andes.core.param import NumParam, DataParam  # NOQA
 from .base import ModelBase
-from .base import VarBase, VarType, NumParam, Algeb, State, Calc # NOQA
-from .base import NumParam, Data  # NOQA
 from .base import ModelData, Model
 
 from ..consts import Gy  # NOQA
@@ -141,11 +141,11 @@ class BusData(ModelData):
         self.Vn = NumParam(default=110, descr="AC voltage rating", unit='kV', nonzero=True)
         self.angle = NumParam(default=0, descr="initial voltage phase angle", unit='rad')
 
-        self.area = Data(default=None, descr="Area code")
-        self.region = Data(default=None, descr="Region code")
-        self.owner = Data(default=None, descr="Owner code")
-        self.xcoord = Data(default=0, descr='x coordinate')
-        self.ycoord = Data(default=0, descr='y coordinate')
+        self.area = DataParam(default=None, descr="Area code")
+        self.region = DataParam(default=None, descr="Region code")
+        self.owner = DataParam(default=None, descr="Owner code")
+        self.xcoord = DataParam(default=0, descr='x coordinate')
+        self.ycoord = DataParam(default=0, descr='y coordinate')
 
         self.vmax = NumParam(default=1.1, descr="Voltage upper limit")
         self.vmin = NumParam(default=0.9, descr="Voltage lower limit")

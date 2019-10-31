@@ -17,20 +17,18 @@
 """
 Base class for building ANDES models
 """
-from typing import List, Set, Dict, Tuple, Optional, Union, Type, Callable  # NOQA
 from collections import OrderedDict
-
-from abc import ABC, abstractmethod  # NOQA
 
 import importlib
 import logging
 import sys
 
 import numpy as np
-from numpy import ndarray
+from andes.core.limiter import Limiter
+from andes.core.param import ParamBase, NumParam, ExtParam
+from andes.core.var import VarBase, Algeb, State, Calc, ExtVar
 from cvxopt import matrix
 from cvxopt import mul, div
-from enum import Enum
 
 from ..utils.math import agtb, altb
 from ..utils.tab import Tab
@@ -54,452 +52,6 @@ def load_pd():
     return True
 
 
-class VarType(Enum):
-    X = 0  # state
-    Y = 1  # algebraic
-    C = 2  # calculated
-
-
-class ParamType(Enum):
-    INT = 0  # internal parameter
-    EXT = 1  # external parameter
-
-
-class ParamBase(object):
-    """
-    Basic single data class
-    """
-    def __init__(self, default=None, name=None, tex_name=None, descr=None, mandatory=False):
-        self.name = name
-        self.default = default
-        self.tex_name = tex_name if tex_name else name
-        self.descr = descr
-        self.owner = None
-
-        self.n = 0
-        self.v = []
-        self.property = dict(mandatory=mandatory)
-
-    def add(self, value=None):
-        """
-        Add a new value (from a new element) to this parameter list
-
-        Parameters
-        ----------
-        value
-            Parameter value of the new element
-
-        Returns
-        -------
-        None
-        """
-
-        # check for mandatory
-        if value is None:
-            value = self.default
-
-        self.v.append(value)
-        self.n += 1
-
-
-class Data(ParamBase):
-    pass
-
-
-class NumParam(ParamBase):
-    """
-    Parameter class
-    """
-
-    def __init__(self,
-                 default: Optional[Union[float, str, Callable]] = None,
-                 name: Optional[str] = None,
-                 tex_name: Optional[str] = None,
-                 descr: Optional[str] = None,
-                 unit: Optional[str] = None,
-                 nonzero: bool = False,
-                 mandatory: bool = False,
-                 power: bool = False,
-                 voltage: bool = False,
-                 current: bool = False,
-                 z: bool = False,
-                 y: bool = False,
-                 r: bool = False,
-                 g: bool = False,
-                 dcvoltage: bool = False,
-                 dccurrent: bool = False,
-                 toarray: bool = True,
-                 ):
-        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, descr=descr)
-        self.unit = unit
-
-        self.property = dict(nonzero=nonzero, mandatory=mandatory, power=power, voltage=voltage, toarray=toarray,
-                             current=current, z=z, y=y, r=r, g=g, dccurrent=dccurrent, dcvoltage=dcvoltage)
-
-        self.pu_coeff = None
-        self.vin = None  # values from input
-
-    def get_property(self, property_name):
-        """
-        Check the boolean value of the given property
-
-        Parameters
-        ----------
-        property_name
-            Property name
-
-        Returns
-        -------
-        The truth value of the property
-        """
-        return self.property[property_name]
-
-    def add(self, value=None):
-        """
-        Add a new value (from a new element) to this parameter list
-
-        Parameters
-        ----------
-        value
-            Parameter value of the new element
-
-        Returns
-        -------
-        None
-        """
-
-        # check for mandatory
-        if value is None:
-            if self.get_property('mandatory'):
-                logger.error(f'Mandatory parameter {self.name} missing')
-                sys.exit(1)
-            else:
-                value = self.default
-
-        # check for non-zero
-        if value == 0 and self.get_property('nonzero'):
-            logger.warning(f'Parameter {self.name} must be non-zero')
-            value = self.default
-
-        super(NumParam, self).add(value)
-
-    def to_array(self):
-        """
-        Convert to np array for speed up
-
-        Returns:
-
-        """
-        self.v = np.array(self.v)
-
-
-class ParamInt(NumParam):
-    pass
-
-
-class ParamExt(NumParam):
-    """
-    External parameter, specified by other modules
-    """
-    def __init__(self, model: str, src: str, indexer=None, **kwargs):
-        super(ParamExt, self).__init__(**kwargs)
-        self.model = model
-        self.src = src
-        self.indexer = indexer
-
-        self.parent_model = None   # parent model instance
-        self.parent_instance = None
-        self.uid = None
-
-    def set_external(self, ext_model):
-        """
-        Update parameter values provided by external models
-        Returns
-        -------
-        """
-        self.parent_model = ext_model
-        self.parent_instance = ext_model.__dict__[self.src]
-
-        n_indexer = len(self.indexer.v)
-        if n_indexer == 0:
-            return
-
-        self.uid = ext_model.idx2uid(self.indexer.v)
-        # pull in values
-        self.property = dict(self.parent_instance.property)
-        self.v = self.parent_instance.v[self.uid]
-        self.vin = self.parent_instance.vin[self.uid]
-        self.pu_coeff = self.parent_instance.pu_coeff[self.uid]
-        self.n = len(self.v)
-
-
-class VarBase(object):
-    """
-    Variable class
-    """
-
-    def __init__(self,
-                 name: Optional[str] = None,
-                 tex_name: Optional[str] = None,
-                 descr: Optional[str] = None,
-                 unit: Optional[str] = None,
-                 **kwargs
-                 ):
-
-        self.name = name
-        self.descr = descr
-        self.unit = unit
-
-        self.tex_name = tex_name if tex_name else name
-        self.owner = None
-
-        self.n = 0
-        self.a: Optional[Union[ndarray, List]] = None
-        self.v: Optional[ndarray] = None
-        self.e: Optional[ndarray] = None
-
-        self.equation = None
-
-        # metadata
-        self.property = {"intf": False,
-                         "ext": False,
-                         "limit": False,
-                         "windup": False,
-                         "anti_windup": False,
-                         "deadband": False}
-
-        # values for the limits or dead band
-        self.lower = None
-        self.upper = None
-
-        # flags for the bounds
-        self.flag_lower = None
-        self.flag_upper = None
-
-    def set_address(self, addr):
-        self.a = addr
-        self.n = len(self.a)
-        self.v = np.zeros(self.n)
-        self.e = np.zeros(self.n)
-
-    def set_property(self, property_name, value):
-        """
-        Set the variable property to the provided value
-
-        Parameters
-        ----------
-        property_name
-            name of the property
-
-        value
-            value
-
-        Returns
-        -------
-        """
-        if property_name not in self.property:
-            raise KeyError(f'Property name {property_name} is invalid')
-
-        self.property[property_name] = value
-
-    def set_bounds(self, lower, upper):
-        """
-        Set the bounds of the limiters or deadbands
-
-        Parameters
-        ----------
-        lower
-            Lower bound value
-        upper
-            Upper bound value
-
-        Returns
-        -------
-
-        """
-        self.lower = lower
-        self.upper = upper
-
-    def check_bounds(self):
-        """
-        Check the bounds of the variables
-        """
-        self.flag_lower = np.less_equal(self.v, self.lower)
-        self.flag_upper = np.greater_equal(self.v, self.upper)
-
-
-class ControlBlock(object):
-    """
-    Base class for all control blocks
-    """
-    pass
-
-
-class Limiter(ControlBlock):
-    def __init__(self, var, lower, upper, **kwargs):
-        self.name = None
-        self.owner = None
-
-        self.var = var
-        self.lower = lower
-        self.upper = upper
-        self.zu = None
-        self.zl = None
-        self.zi = None
-
-    def eval(self):
-        """
-        Evaluate `self.zu` and `self.zl`
-
-        Returns
-        -------
-
-        """
-        self.zu = np.greater_equal(self.var.v, self.upper.v).astype(np.float64)
-        self.zl = np.less_equal(self.var.v, self.lower.v).astype(np.float64)
-        self.zi = np.logical_not(
-            np.logical_or(
-                self.zu.astype(np.bool),
-                self.zl.astype(np.bool))).astype(np.float64)
-
-    def set_value(self):
-        """
-        Set the value to the limit
-
-        Returns
-        -------
-
-        """
-        pass
-
-    def get_syms(self):
-        """
-        Available symbols from thhis class
-
-        Returns
-        -------
-
-        """
-        return [self.name + '_zl', self.name + '_zi', self.name + '_zu']
-
-
-class Comparer(Limiter):
-    pass
-
-
-class HardLimiter(Limiter):
-    def __init__(self, var, lower, upper, **kwargs):
-        super(HardLimiter, self).__init__(var, lower, upper, **kwargs)
-
-    def set_value(self):
-        pass  # TODO: set to the limits
-
-
-class WindupLimiter(Limiter):
-    def __init__(self, var, lower, upper, **kwargs):
-        super(WindupLimiter, self).__init__(var, lower, upper, **kwargs)
-
-    def set_value(self):
-        pass  # TODO: set to the limits
-
-
-class AntiWindupLimiter(WindupLimiter):
-    def __init__(self, var, lower, upper, state=None, **kwargs):
-        super(AntiWindupLimiter, self).__init__(var, lower, upper, **kwargs)
-        self.state = state
-
-    def eval(self):
-        super(AntiWindupLimiter, self).eval()
-        self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
-        self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
-        self.zi = np.logical_not(
-            np.logical_or(self.zu.astype(np.bool),
-                          self.zl.astype(np.bool))).astype(np.float64)
-
-    def set_value(self):
-        pass  # TODO: set to the limits
-
-
-class DeadBand(Limiter):
-    def __init__(self, var, lower, upper, **kwargs):
-        super(DeadBand, self).__init__(var, lower, upper, **kwargs)
-
-    def set_value(self):
-        pass  # TODO: set the value based on deadband
-
-
-class SampleAndHolder(ControlBlock):
-    pass
-
-
-class Algeb(VarBase):
-    """
-    Algebraic variable
-    """
-    pass
-
-
-class State(VarBase):
-    pass
-
-
-class Calc(VarBase):
-    pass
-
-
-class VarExt(VarBase):
-    def __init__(self,
-                 model: str,
-                 src: str,
-                 indexer: Optional[Union[List, ndarray, Data]] = None,
-                 *args,
-                 **kwargs):
-        super(VarExt, self).__init__(*args, **kwargs)
-        self.initialized = False
-        self.model = model
-        self.src = src
-        self.indexer = indexer
-
-        self.parent_model = None
-        self.parent_instance = None
-        self.uid = None
-
-    def set_external(self, ext_model):
-        self.parent_model = ext_model
-        self.parent_instance = ext_model.__dict__[self.src]
-        self.uid = ext_model.idx2uid(self.indexer.v)
-
-        n_indexer = len(self.indexer.v)
-        if n_indexer == 0:
-            return
-
-        # pull in values
-        self.a = self.parent_instance.a[self.uid]
-        self.n = len(self.a)
-
-        # set initial v and e values to zero
-        self.v = np.zeros(self.n)
-        self.e = np.zeros(self.a)
-
-
-class ServiceBase(object):
-    """
-    Base class for service variables
-    """
-    def __init__(self, name=None):
-        self.name = name
-        self.equation = None
-        self.v = None
-
-
-class ServiceConstant(ServiceBase):
-    pass
-
-
-class ServiceVariable(ServiceBase):
-    pass
-
-
 class Cache(object):
     def __init__(self):
         self._callbacks = {}
@@ -516,7 +68,7 @@ class Cache(object):
     def __setattr__(self, key, value):
         super(Cache, self).__setattr__(key, value)
 
-    def add_attr(self, name, callback):
+    def add_callback(self, name, callback):
         self._callbacks[name] = callback
 
     def refresh(self, name=None):
@@ -536,9 +88,10 @@ class ModelData(object):
     """
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
-        self.cache = Cache()
-        self.cache.add_attr('dict', self.as_dict)
-        self.cache.add_attr('df', self.as_df)
+        if not hasattr(self, 'cache'):
+            self.cache = Cache()
+        self.cache.add_callback('dict', self.as_dict)
+        self.cache.add_callback('df', self.as_df)
 
         self.num_params = OrderedDict()
 
@@ -633,8 +186,13 @@ class Model(object):
         self.f_syms = []
         self.g_syms = []
         self.c_syms = []
+        self.cache = Cache()
 
-    @property
+        self.cache.add_callback('all_vars', self.all_vars)
+        self.cache.add_callback('all_params', self.all_params)
+        self.cache.add_callback('all_params_syms', self.all_params_syms)
+        self.cache.add_callback('algeb_efunction', self.get_algeb_efunction)
+
     def all_vars(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.algebs.items()) +
@@ -642,17 +200,24 @@ class Model(object):
                            list(self.vars_ext.items())
                            )
 
-    @property
     def all_params(self):
         return OrderedDict(list(self.num_params.items()) +
                            list(self.limiters.items())
                            )
 
-    @property
     def all_params_syms(self):
         out = list(self.num_params.keys())
         for name, instance in self.limiters.items():
             out += instance.get_syms()
+        return out
+
+    def get_algeb_efunction(self):
+        out = OrderedDict()
+        for name, instance in OrderedDict(list(self.algebs.items()) +
+                                          list(self.vars_ext.items())
+                                          ).items():
+            if instance.efunction is not None:
+                out[name] = instance
         return out
 
     def __setattr__(self, key, value):
@@ -670,9 +235,9 @@ class Model(object):
             self.states[key] = value
         elif isinstance(value, Calc):
             self.calcs[key] = value
-        elif isinstance(value, VarExt):
+        elif isinstance(value, ExtVar):
             self.vars_ext[key] = value
-        elif isinstance(value, ParamExt):
+        elif isinstance(value, ExtParam):
             self.params_ext[key] = value
         elif isinstance(value, Limiter):
             self.limiters[key] = value
@@ -680,10 +245,9 @@ class Model(object):
         super(Model, self).__setattr__(key, value)
 
     def finalize_add(self):
+        # TODO: check the uniqueness of idx
         for name, instance in self.num_params.items():
             instance.to_array()
-
-        # check the uniqueness of idx
 
     def idx2uid(self, idx):
         if idx is None:
@@ -701,7 +265,7 @@ class Model(object):
     def convert_equations(self):
         from sympy import Symbol, Matrix, sympify, lambdify
 
-        for var in self.all_params_syms + list(self.all_vars.keys()):
+        for var in self.cache.all_params_syms + list(self.cache.all_vars.keys()):
             self.syms[var] = Symbol(var)
 
         iter_list = [self.states, self.algebs, self.calcs, self.vars_ext]
@@ -724,12 +288,20 @@ class Model(object):
         self._fcall = lambdify(syms_list, self.f_syms, 'numpy')
         self._ccall = lambdify(syms_list, self.c_syms, 'numpy')
 
+    def _gcall_num(self):
+        # evaluate numerical function calls provided in `Algeb.efunction`
+        for name, instance in self.cache.algeb_efunction.items():
+            instance.e += instance.efunction()
+
     def gcall(self):
         if self.n == 0:
             return
 
-        self.eval_comparer()
+        self.eval_limiter()
         self.eval_service()
+
+        # update equations for algebraic variables supplied with `efunction`
+        self._gcall_num()
 
         args = []
 
@@ -740,26 +312,23 @@ class Model(object):
             args.append(instance.zl)
             args.append(instance.zi)
             args.append(instance.zu)
-        for name, instance in self.all_vars.items():
+        for name, instance in self.cache.all_vars.items():
             args.append(instance.v)
 
-        # TODO: add services
-
         ret = self._gcall(*args)
+
         idx = 0
-
         for name, instance in self.algebs.items():
-            instance.e = np.ravel(ret[idx])
+            instance.e += np.ravel(ret[idx][0])
             idx += 1
-
         for name, instance in self.vars_ext.items():
-            instance.e = np.ravel(ret[idx])
+            instance.e += np.ravel(ret[idx][0])
             idx += 1
 
-    def eval_comparer(self):
+    def eval_limiter(self):
         for name, instance in self.limiters.items():
             instance.eval()
-            instance.set_value()
+            instance.set_limit()
 
     def eval_service(self):
         pass  # TODO: set v for service variables
