@@ -1,7 +1,7 @@
 from cvxopt import matrix, uniform  # NOQA
 
 from .base import ModelBase
-from .base import NewModelBase, VarBase, VarType, NumParam, Algeb, State, Calc # NOQA
+from .base import VarBase, VarType, NumParam, Algeb, State, Calc # NOQA
 from .base import NumParam, Data  # NOQA
 from .base import ModelData, Model
 

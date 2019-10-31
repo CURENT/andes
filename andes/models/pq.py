@@ -143,10 +143,17 @@ class PQNew(Model, PQData):
         self.a = VarExt(model='BusNew', src='a', indexer=self.bus)
         self.v = VarExt(model='BusNew', src='v', indexer=self.bus)
 
-        self.v_below = Comparer(lhs=self.v, rhs=self.vmin, cmp=np.less_equal)
-        self.v_above = Comparer(lhs=self.v, rhs=self.vmax, cmp=np.greater_equal)
+        # TODO: The below needs to be improved. Probably use new classes
+        self.v_lim = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        # self.v_bound = AlgebBound(var=self.v, lower=self.vmin, upper=vmax)
+        # self.k = ServiceVariable()
+        # self.k.equation = """ v_lim_zi +
+        #                       v_lim_zl * (v ** 2 / vmin ** 2) +
+        #                       v_lim_zu * (v ** 2 / vmax ** 2)"""
+        # self.xx = ServiceConstant()
 
-        self.a.equation = '+ u * (p * (1 - (v_above + v_below))'
+        self.a.equation = """+ u * (p * v_lim_zi +
+                                    p * v_lim_zl * (v ** 2 / vmin ** 2) +
+                                    p * v_lim_zu * (v ** 2 / vmax ** 2))
+                                    """
         self.v.equation = '+ u * q'

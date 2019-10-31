@@ -328,6 +328,110 @@ class VarBase(object):
         self.flag_upper = np.greater_equal(self.v, self.upper)
 
 
+class ControlBlock(object):
+    """
+    Base class for all control blocks
+    """
+    pass
+
+
+class Limiter(ControlBlock):
+    def __init__(self, var, lower, upper, **kwargs):
+        self.name = None
+        self.owner = None
+
+        self.var = var
+        self.lower = lower
+        self.upper = upper
+        self.zu = None
+        self.zl = None
+        self.zi = None
+
+    def eval(self):
+        """
+        Evaluate `self.zu` and `self.zl`
+
+        Returns
+        -------
+
+        """
+        self.zu = np.greater_equal(self.var.v, self.upper.v).astype(np.float64)
+        self.zl = np.less_equal(self.var.v, self.lower.v).astype(np.float64)
+        self.zi = np.logical_not(
+            np.logical_or(
+                self.zu.astype(np.bool),
+                self.zl.astype(np.bool))).astype(np.float64)
+
+    def set_value(self):
+        """
+        Set the value to the limit
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def get_syms(self):
+        """
+        Available symbols from thhis class
+
+        Returns
+        -------
+
+        """
+        return [self.name + '_zl', self.name + '_zi', self.name + '_zu']
+
+
+class Comparer(Limiter):
+    pass
+
+
+class HardLimiter(Limiter):
+    def __init__(self, var, lower, upper, **kwargs):
+        super(HardLimiter, self).__init__(var, lower, upper, **kwargs)
+
+    def set_value(self):
+        pass  # TODO: set to the limits
+
+
+class WindupLimiter(Limiter):
+    def __init__(self, var, lower, upper, **kwargs):
+        super(WindupLimiter, self).__init__(var, lower, upper, **kwargs)
+
+    def set_value(self):
+        pass  # TODO: set to the limits
+
+
+class AntiWindupLimiter(WindupLimiter):
+    def __init__(self, var, lower, upper, state=None, **kwargs):
+        super(AntiWindupLimiter, self).__init__(var, lower, upper, **kwargs)
+        self.state = state
+
+    def eval(self):
+        super(AntiWindupLimiter, self).eval()
+        self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
+        self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
+        self.zi = np.logical_not(
+            np.logical_or(self.zu.astype(np.bool),
+                          self.zl.astype(np.bool))).astype(np.float64)
+
+    def set_value(self):
+        pass  # TODO: set to the limits
+
+
+class DeadBand(Limiter):
+    def __init__(self, var, lower, upper, **kwargs):
+        super(DeadBand, self).__init__(var, lower, upper, **kwargs)
+
+    def set_value(self):
+        pass  # TODO: set the value based on deadband
+
+
+class SampleAndHolder(ControlBlock):
+    pass
+
+
 class Algeb(VarBase):
     """
     Algebraic variable
@@ -378,115 +482,22 @@ class VarExt(VarBase):
         self.e = np.zeros(self.a)
 
 
-class NewModelBase(object):
+class ServiceBase(object):
     """
-    New base model class
-
-    Subclass should define the following:
-     - Overload the `define` function to
-       - Provide the group instance
-       - Define parameters with `param_define`
-       - Define variables with `var_define`
-       - Define external parameters with `param_ext_define`
-       - Define external variables with `var_ext_define`
-       - Set proper parameter and variable properties
-
-
-    Sequence of call from the system class:
-     - `define()` of the subclass
-     - `consistency_check()`
-     - `define_finalize()` to instantiate meta data
-     -
+    Base class for service variables
     """
-    def __init__(self, system, *args, **kwargs):
-        self.system = system
-        self.group = None
+    def __init__(self, name=None):
+        self.name = name
+        self.equation = None
+        self.v = None
 
-        self.algebs = OrderedDict()
-        self.states = OrderedDict()
-        self.calcs = OrderedDict()
-        self.var_ext = OrderedDict()
 
-        self.params_int = OrderedDict()
-        self.params_ext = OrderedDict()
+class ServiceConstant(ServiceBase):
+    pass
 
-        self.idx = []
-        self.u = NumParam(default=1, descr='connection status', unit='bool')
-        self.name = NumParam(default=self.__class__.__name__, descr='element names')
 
-    def get_new_idx(self):
-        pass
-
-    def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, ParamBase)):
-            value.owner = self
-            if not value.name:
-                value.name = key
-
-            if key in self.__dict__:
-                logger.warning(f"{self.__class__}: redefinition of instance member <{key}>")
-
-        if isinstance(value, Algeb):
-            self.algebs[key] = value
-        elif isinstance(value, State):
-            self.states[key] = value
-        elif isinstance(value, Calc):
-            self.calcs[key] = value
-        elif isinstance(value, VarExt):
-            self.var_ext[key] = value
-        elif isinstance(value, NumParam):
-            self.params_int[key] = value
-        elif isinstance(value, ParamExt):
-            self.params_ext[key] = value
-
-        super().__setattr__(key, value)
-
-    def consistency_check(self):
-        """
-        Check data consistency requirements
-
-        Returns:
-
-        """
-        assert self.group is not None, "Must provide group class"
-
-        # check if all group parameters are defined
-
-    def set_group(self):
-        raise NotImplementedError("Must be overwritten by subclass")
-
-    def add(self, *args, **kwargs):
-        """
-        Add an element to the model instance
-        """
-        pass
-
-    def dump(self):
-        """
-        Dump all element data into a dictionary
-        Returns:
-
-        """
-        pass
-
-    def export(self, idx=None, fmt='json'):
-        """
-        Export element data into specified format
-
-        Parameters
-        ----------
-        idx: Union[str, float, List]
-            Index of the element(s)
-
-        fmt: str
-            Export format
-
-        Returns
-        -------
-        str
-            A formatted string
-        """
-        pass
+class ServiceVariable(ServiceBase):
+    pass
 
 
 class Cache(object):
@@ -517,19 +528,6 @@ class Cache(object):
         elif isinstance(name, list):
             for n in name:
                 self.__dict__[n] = self._callbacks[n]()
-
-
-class Comparer(object):
-    def __init__(self, lhs, rhs, cmp, name=None):
-        self.name = name
-        self.lhs = lhs
-        self.rhs = rhs
-        self.cmp = cmp
-        self.v = None
-        self.owner = None
-
-    def eval(self):
-        self.v = self.cmp(self.lhs.v, self.rhs.v)
 
 
 class ModelData(object):
@@ -612,7 +610,7 @@ class Model(object):
         self.calcs = OrderedDict()
         self.vars_ext = OrderedDict()
         self.params_ext = OrderedDict()
-        self.comparers = OrderedDict()
+        self.limiters = OrderedDict()
 
         # service/temporary variables
         self.services = []
@@ -647,11 +645,18 @@ class Model(object):
     @property
     def all_params(self):
         return OrderedDict(list(self.num_params.items()) +
-                           list(self.comparers.items())
+                           list(self.limiters.items())
                            )
 
+    @property
+    def all_params_syms(self):
+        out = list(self.num_params.keys())
+        for name, instance in self.limiters.items():
+            out += instance.get_syms()
+        return out
+
     def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, Comparer)):
+        if isinstance(value, (VarBase, Limiter)):
             value.owner = self
             if not value.name:
                 value.name = key
@@ -669,8 +674,8 @@ class Model(object):
             self.vars_ext[key] = value
         elif isinstance(value, ParamExt):
             self.params_ext[key] = value
-        elif isinstance(value, Comparer):
-            self.comparers[key] = value
+        elif isinstance(value, Limiter):
+            self.limiters[key] = value
 
         super(Model, self).__setattr__(key, value)
 
@@ -696,32 +701,18 @@ class Model(object):
     def convert_equations(self):
         from sympy import Symbol, Matrix, sympify, lambdify
 
-        for var in list(self.all_params.keys()) + list(self.all_vars.keys()):
+        for var in self.all_params_syms + list(self.all_vars.keys()):
             self.syms[var] = Symbol(var)
 
-        for name, instance in self.states.items():
-            if instance.equation is None:
-                self.f_syms.append(0)
-            else:
-                self.f_syms.append(sympify(instance.equation, locals=self.syms))
+        iter_list = [self.states, self.algebs, self.calcs, self.vars_ext]
+        dest_list = [self.f_syms, self.g_syms, self.c_syms, self.g_syms]
 
-        for name, instance in self.algebs.items():
-            if instance.equation is None:
-                self.g_syms.append(0)
-            else:
-                self.g_syms.append(sympify(instance.equation, locals=self.syms))
-
-        for name, instance in self.calcs.items():
-            if instance.equation is None:
-                self.c_syms.append(0)
-            else:
-                self.c_syms.append(sympify(instance.equation, locals=self.syms))
-
-        for name, instance in self.vars_ext.items():
-            if instance.equation is None:
-                self.g_syms.append(0)
-            else:
-                self.g_syms.append(sympify(instance.equation, locals=self.syms))
+        for it, dest in zip(iter_list, dest_list):
+            for name, instance in it.items():
+                if instance.equation is None:
+                    dest.append(0)
+                else:
+                    dest.append(sympify(instance.equation, locals=self.syms))
 
         self.g_syms = Matrix(self.g_syms)
         self.f_syms = Matrix(self.f_syms)
@@ -738,12 +729,21 @@ class Model(object):
             return
 
         self.eval_comparer()
+        self.eval_service()
 
         args = []
-        for name, instance in self.all_params.items():
+
+        # the below should correspond to `self.all_param_syms`
+        for name, instance in self.num_params.items():
             args.append(instance.v)
+        for name, instance in self.limiters.items():
+            args.append(instance.zl)
+            args.append(instance.zi)
+            args.append(instance.zu)
         for name, instance in self.all_vars.items():
             args.append(instance.v)
+
+        # TODO: add services
 
         ret = self._gcall(*args)
         idx = 0
@@ -757,8 +757,12 @@ class Model(object):
             idx += 1
 
     def eval_comparer(self):
-        for name, instance in self.comparers.items():
+        for name, instance in self.limiters.items():
             instance.eval()
+            instance.set_value()
+
+    def eval_service(self):
+        pass  # TODO: set v for service variables
 
 
 class ModelBase(object):
