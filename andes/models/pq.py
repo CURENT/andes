@@ -159,9 +159,9 @@ class PQNew(Model, PQData):
                                     p * v_lim_zl * (v ** 2 / vmin ** 2) +
                                     p * v_lim_zu * (v ** 2 / vmax ** 2))
                                     """
-        # self.v.equation = '+ u * q'
 
         self.v.efunction = self._q_function
 
     def _q_function(self):
-        return self.q.v
+
+        return self.u.v * self.q.v
