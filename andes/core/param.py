@@ -144,6 +144,9 @@ class NumParam(ParamBase):
         """
         self.v = np.array(self.v)
 
+    def get_name(self):
+        return [self.name]
+
 
 class ExtParam(NumParam):
     """

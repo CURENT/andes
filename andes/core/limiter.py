@@ -38,7 +38,7 @@ class Limiter(object):
         """
         pass
 
-    def get_names(self):
+    def get_name(self):
         """
         Available symbols from thhis class
 

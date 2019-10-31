@@ -30,8 +30,9 @@ class VarBase(object):
         self.v: Optional[ndarray] = None
         self.e: Optional[ndarray] = None
 
-        self.equation = None
-        self.efunction = None
+        self.e_symbolic = None
+        self.e_lambdify = None
+        self.e_numeric = None
 
         # metadata
         self.property = {"intf": False,

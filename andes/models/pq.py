@@ -12,6 +12,7 @@ from .base import Model, ModelData
 from andes.core.limiter import Comparer
 from andes.core.var import ExtVar
 from andes.core.param import DataParam, NumParam
+from andes.core.service import Service
 
 
 class PQ(ModelBase):
@@ -146,21 +147,18 @@ class PQNew(Model, PQData):
         self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
 
-        # TODO: The below needs to be improved. Probably use new classes
         self.v_lim = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        # self.k = ServiceVariable()
-        # self.k.equation = """ v_lim_zi +
-        #                       v_lim_zl * (v ** 2 / vmin ** 2) +
-        #                       v_lim_zu * (v ** 2 / vmax ** 2)"""
-        # self.xx = ServiceConstant()
+        self.k = Service()
+        self.k.e_symbolic = "1"
 
-        self.a.equation = """+ u * (p * v_lim_zi +
+        self.a.e_symbolic = """+ u * (p * v_lim_zi +
                                     p * v_lim_zl * (v ** 2 / vmin ** 2) +
                                     p * v_lim_zu * (v ** 2 / vmax ** 2))
                                     """
 
-        self.v.efunction = self._q_function
+        self.a.e_symbolic = "u * k * p"
+        self.v.e_numeric = self._q_function
 
     def _q_function(self):
 
