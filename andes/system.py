@@ -109,16 +109,16 @@ class SystemNew(object):
         #     self.__dict__[r.lower()] = getattr(file, r)(self)
         pass
 
-    def set_external(self):
+    def link_external(self):
         for m in self.models:
             mdl = self.__dict__[m]
             for name, instance in mdl.vars_ext.items():
                 ext_model_name = instance.model
-                instance.set_external(self.__dict__[ext_model_name])
+                instance.link_external(self.__dict__[ext_model_name])
 
             for name, instance in mdl.params_ext.items():
                 ext_model_name = instance.model
-                instance.set_external(self.__dict__[ext_model_name])
+                instance.link_external(self.__dict__[ext_model_name])
 
     def finalize_add(self):
         for m in self.models:

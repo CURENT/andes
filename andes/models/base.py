@@ -99,7 +99,7 @@ class ModelData(object):
 
         self.n = 0
         self.idx = []
-        self.u = NumParam(default=1, descr='connection status', unit='bool')
+        self.u = NumParam(default=1, info='connection status', unit='bool')
 
     def __setattr__(self, key, value):
         if isinstance(value, ParamBase):
@@ -261,6 +261,7 @@ class Model(object):
             self.services[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
+            # pull in sub-variables from control blocks
             for sub_name, var_instance in value.export_vars().items():
                 full_var_name = f'{key}_{sub_name}'
                 self.__setattr__(full_var_name, var_instance)

@@ -131,13 +131,13 @@ class PQ(ModelBase):
 class PQData(ModelData):
     def __init__(self):
         super().__init__()
-        self.bus = DataParam(default=None, descr="linked bus idx", mandatory=True)
-        self.owner = DataParam(default=None, descr="owner idx")
+        self.bus = DataParam(default=None, info="linked bus idx", mandatory=True)
+        self.owner = DataParam(default=None, info="owner idx")
 
-        self.p = NumParam(default=0, descr='active power load', power=True)
-        self.q = NumParam(default=0, descr='reactive power load', power=True)
-        self.vmax = NumParam(default=1.1, descr='max voltage before switching to impedance')
-        self.vmin = NumParam(default=0.9, descr='min voltage before switching to impedance')
+        self.p = NumParam(default=0, info='active power load', power=True)
+        self.q = NumParam(default=0, info='reactive power load', power=True)
+        self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance')
+        self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance')
 
 
 class PQNew(Model, PQData):
@@ -148,22 +148,23 @@ class PQNew(Model, PQData):
         self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
 
-        self.v_lim = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
+        self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
+        self.a.e_symbolic = """u * (p * v_cmp_zi +
+                                    p * v_cmp_zl * (v ** 2 / vmin ** 2) +
+                                    p * v_cmp_zu * (v ** 2 / vmax ** 2))
+                                    """
+
+        self.v.e_symbolic = """u * (q * v_cmp_zi +
+                                    q * v_cmp_zl * (v ** 2 / vmin ** 2) +
+                                    q * v_cmp_zu * (v ** 2 / vmax ** 2))
+                                    """
+        # TODO: consider configuration parameters
         self.kp = Service()
         self.kp.e_symbolic = "1"
         self.ki = Service()
         self.ki.e_symbolic = "1"
-
         self.pi = PIController(self.v, self.kp, self.ki)
 
-        self.a.e_symbolic = """+ u * (p * v_lim_zi +
-                                    p * v_lim_zl * (v ** 2 / vmin ** 2) +
-                                    p * v_lim_zu * (v ** 2 / vmax ** 2))
-                                    """
-
-        self.v.e_numeric = self._q_function
-
     def _q_function(self):
-
         return self.u.v * self.q.v

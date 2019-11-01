@@ -16,7 +16,7 @@ class TestSystem(unittest.TestCase):
         self.ss.add('PQNew', bus=2, idx=2)
 
         self.ss.set_address()
-        self.ss.set_external()
+        self.ss.link_external()
 
     def test_names(self):
         self.assertTrue('BusNew' in self.ss.models)

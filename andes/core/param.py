@@ -11,11 +11,11 @@ class ParamBase(object):
     """
     Basic single data class
     """
-    def __init__(self, default=None, name=None, tex_name=None, descr=None, mandatory=False):
+    def __init__(self, default=None, name=None, tex_name=None, info=None, mandatory=False):
         self.name = name
         self.default = default
         self.tex_name = tex_name if tex_name else name
-        self.descr = descr
+        self.info = info
         self.owner = None
 
         self.n = 0
@@ -43,6 +43,9 @@ class ParamBase(object):
         self.v.append(value)
         self.n += 1
 
+    def get_name(self):
+        return [self.name]
+
 
 class DataParam(ParamBase):
     pass
@@ -57,9 +60,9 @@ class NumParam(ParamBase):
                  default: Optional[Union[float, str, Callable]] = None,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
-                 descr: Optional[str] = None,
+                 info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 nonzero: bool = False,
+                 non_zero: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
                  voltage: bool = False,
@@ -68,25 +71,23 @@ class NumParam(ParamBase):
                  y: bool = False,
                  r: bool = False,
                  g: bool = False,
-                 dcvoltage: bool = False,
-                 dccurrent: bool = False,
-                 toarray: bool = True,
+                 dc_voltage: bool = False,
+                 dc_current: bool = False,
                  ):
-        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, descr=descr)
+        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info)
         self.unit = unit
 
-        self.property = dict(nonzero=nonzero,
+        self.property = dict(nonzero=non_zero,
                              mandatory=mandatory,
                              power=power,
                              voltage=voltage,
-                             toarray=toarray,
                              current=current,
                              z=z,
                              y=y,
                              r=r,
                              g=g,
-                             dccurrent=dccurrent,
-                             dcvoltage=dcvoltage)
+                             dccurrent=dc_current,
+                             dcvoltage=dc_voltage)
 
         self.pu_coeff = None
         self.vin = None  # values from input
@@ -143,9 +144,7 @@ class NumParam(ParamBase):
 
         """
         self.v = np.array(self.v)
-
-    def get_name(self):
-        return [self.name]
+        self.vin = np.array(self.v)
 
 
 class ExtParam(NumParam):
@@ -162,7 +161,7 @@ class ExtParam(NumParam):
         self.parent_instance = None
         self.uid = None
 
-    def set_external(self, ext_model):
+    def link_external(self, ext_model):
         """
         Update parameter values provided by external models
         Returns

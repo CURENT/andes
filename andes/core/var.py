@@ -73,7 +73,7 @@ class ExtVar(VarBase):
         self.parent_instance = None
         self.uid = None
 
-    def set_external(self, ext_model):
+    def link_external(self, ext_model):
         self.parent_model = ext_model
         self.parent_instance = ext_model.__dict__[self.src]
         self.uid = ext_model.idx2uid(self.indexer.v)

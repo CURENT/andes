@@ -31,7 +31,8 @@ class PIController(Block):
         self.xi = State(descr="integration value of PI controller")
         self.y = Algeb(descr="integration value of PI controller")
 
+        # TODO: define equations as usual
+        self.xi.e_symbolic = 0
+
     def export_vars(self):
-        print(self.__dict__)
-        return {'xi': self.xi,
-                'y': self.y}
+        return {'xi': self.xi, 'y': self.y}
