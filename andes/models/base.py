@@ -348,7 +348,7 @@ class Model(object):
         dest_list = [self.f_syms, self.g_syms, self.c_syms, self.g_syms]
 
         for it, dest in zip(iter_list, dest_list):
-            for name, instance in it.items():
+            for instance in it.values():
                 if instance.e_symbolic is None:
                     dest.append(0)
                 else:
@@ -400,6 +400,7 @@ class Model(object):
             else:
                 dest = f'_{eqn.e_code}{var.v_code}'
 
+            # TODO: ### RECONSIDER WHERE TO STORE THESE TRIPLETS - IN THE MODEL OR IN VARIABLES ###
             self.__dict__[dest].append((eqn.a, var.a, lambdify(syms_list, e_symbolic)))
 
         for item in self.df_syms_sparse.row_list():
@@ -421,28 +422,29 @@ class Model(object):
 
     def _g_numeric(self):
         # evaluate numerical function calls provided in `Algeb.e_numeric`
-        for name, instance in self.cache.algeb_ext_numeric.items():
+        kwargs = self.get_input()
+        for instance in self.cache.algeb_ext_numeric.values():
             # do not use in-place add below for `gcall` re-entrance
-            instance.e = instance.e_numeric()
+            instance.e = instance.e_numeric(**kwargs)
 
     def get_input(self):
-        args = []
+        kwargs = OrderedDict()
 
         # the below should correspond to `self.all_param_syms`
         for instance in self.num_params.values():
-            args.append(instance.v)
+            kwargs[instance.name] = instance.v
         for instance in self.limiters.values():
-            args.append(instance.zl)
-            args.append(instance.zi)
-            args.append(instance.zu)
+            kwargs[instance.name + '_zl'] = instance.zl
+            kwargs[instance.name + '_zi'] = instance.zi
+            kwargs[instance.name + '_zu'] = instance.zu
         for instance in self.services.values():
-            args.append(instance.v)
+            kwargs[instance.name] = instance.v
 
         # append all variable values
         for instance in self.cache.all_vars.values():
-            args.append(instance.v)
+            kwargs[instance.name] = instance.v
 
-        return args
+        return kwargs
 
     def gcall(self):
         if self.n == 0:
@@ -453,11 +455,11 @@ class Model(object):
         # update equations for algebraic variables supplied with `e_numeric`
         self._g_numeric()
 
-        args = self.get_input()
+        kwargs = self.get_input()
 
         # call lambdified functions
         for instance in self.cache.algeb_ext_symbolic.values():
-            instance.e += np.ravel(instance.e_lambdify(*args))
+            instance.e += np.ravel(instance.e_lambdify(**kwargs))
 
     def j_const_call(self):
         """Update Jacobians"""
@@ -465,18 +467,18 @@ class Model(object):
         # update the constant ones
         const_dict = {'_fxc': 'fx', '_fyc': 'fy', '_gxc': 'gx', '_gyc': 'gy'}
 
-        args = self.get_input()
+        kwargs = self.get_input()
         for src, dest in const_dict.items():
             for row, col, fun in self.__dict__[src]:
-                self.system.dae.__dict__[dest].ipadd(fun(*args), row, col)
+                self.system.dae.__dict__[dest].ipadd(fun(**kwargs), row, col)
 
     def j_variable_call(self):
         var_jac_dict = {'_fx': 'fx', '_fy': 'fy', '_gx': 'gx', '_gy': 'gy'}
 
-        args = self.get_input()
+        kwargs = self.get_input()
         for src, dest in var_jac_dict.items():
             for row, col, fun in self.__dict__[src]:
-                self.system.dae.__dict__[dest].ipadd(fun(*args), row, col)
+                self.system.dae.__dict__[dest].ipadd(fun(**kwargs), row, col)
 
     def get_sparse_pattern(self):
         self.ifx = []
@@ -512,13 +514,13 @@ class Model(object):
             instance.set_limit()
 
     def eval_service(self):
-        args = self.get_input()
+        kwargs = self.get_input()
 
-        for name, instance in self.services.items():
+        for instance in self.services.values():
             if instance.e_lambdify is not None:
-                instance.v = instance.e_lambdify(*args)
+                instance.v = instance.e_lambdify(**kwargs)
             if instance.e_numeric is not None:
-                instance.v += instance.e_numeric()
+                instance.v += instance.e_numeric(**kwargs)
 
 
 class ModelBase(object):

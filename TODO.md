@@ -6,7 +6,7 @@
 ## Performance Improvement
 *   Reduce the overhead in `VarOut.store()` and `TDS.dump_results()`
     *   Impact: Low
-    
+
 *   Reduce the overhead in `DAE.reset_Ac()`
     *   Impact: High
 
@@ -27,3 +27,6 @@ the model
 
 *   Prototype Connectivity checking, previously implemented as `gyisland`
 *   Initial values, pass initialized values between models, and solve initializer equations
+# TODO: function for providing the jacobian triplet
+
+# TODO: implement a standalone PI controller with numerical jacobians

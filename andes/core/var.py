@@ -33,6 +33,10 @@ class VarBase(object):
         self.e_lambdify = None
         self.e_numeric = None
 
+        # TODO: Design the signature of the numerical jacobian function
+        self.j_lambdify = None
+        self.j_numeric = None
+
     def set_address(self, addr):
         self.a = addr
         self.n = len(self.a)

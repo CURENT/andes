@@ -159,6 +159,7 @@ class PQNew(Model, PQData):
                                     q * v_cmp_zl * (v ** 2 / vmin ** 2) +
                                     q * v_cmp_zu * (v ** 2 / vmax ** 2))
                                     """
+
         # TODO: consider configuration parameters
         self.kp = Service()
         self.kp.e_symbolic = "1"
@@ -166,5 +167,8 @@ class PQNew(Model, PQData):
         self.ki.e_symbolic = "1"
         self.pi = PIController(self.v, self.kp, self.ki)
 
-    def _q_function(self):
-        return self.u.v * self.q.v
+    @staticmethod
+    def _q_function(u, q, **kwargs):
+        from pprint import pprint
+        pprint(kwargs)
+        return u * q
