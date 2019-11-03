@@ -149,7 +149,7 @@ class BusData(ModelData):
 
         self.vmax = NumParam(default=1.1, info="Voltage upper limit")
         self.vmin = NumParam(default=0.9, info="Voltage lower limit")
-        self.voltage = NumParam(default=1.0, info="initial voltage magnitude")
+        self.voltage = NumParam(default=1.0, info="initial voltage magnitude", non_zero=True)
 
 
 class BusNew(Model, BusData):

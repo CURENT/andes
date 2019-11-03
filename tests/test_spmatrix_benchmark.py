@@ -172,16 +172,26 @@ class TestCVXOPTBenchmark(unittest.TestCase):
             Jl.append(matrix(np.random.randint(0, shape, n_size)))
             Vl.append(matrix(np.ones((n_size, 1))))
 
+        Ss_shape = spmatrix(0,
+                            np.ravel(matrix(Il)),
+                            np.ravel(matrix(Jl)),
+                            (shape, shape), 'd')
+
         t0 = time.time()
         for nl in range(n_loop):
-            Im = matrix([])
-            Jm = matrix([])
-            Vm = matrix([])
-            for i in range(n_batch):
-                Im = matrix([Im, Il[i]])
-                Jm = matrix([Jm, Jl[i]])
-                Vm = matrix([Vm, Vl[i]])
+            Im = matrix(Il)
+            Jm = matrix(Jl)
+            Vm = matrix(Vl)
+            for ii, jj, vv in zip(Im, Jm, Vm):
+                Ss_shape[ii, jj] += vv
 
+        print("Time for incrementally build with for loop took {} s".format((time.time() - t0) / n_loop))
+
+        t0 = time.time()
+        for nl in range(n_loop):
+            Im = matrix(Il)
+            Jm = matrix(Jl)
+            Vm = matrix(Vl)
             Ss = spmatrix(Vm, Im, Jm, (shape, shape), 'd')
         print("Time for incremental triplet building took {} s".format((time.time() - t0) / n_loop))
 

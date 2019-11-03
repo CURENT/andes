@@ -63,7 +63,7 @@ class Cache(object):
             if item not in self._callbacks:
                 self.__dict__[item] = None
             else:
-                self.__dict__[item] = self._callbacks[item]()
+                self.__dict__[item] = self._call(item)
 
         return self.__dict__[item]
 
@@ -75,19 +75,29 @@ class Cache(object):
 
     def refresh(self, name=None):
         if name is None:
-            for name, cb in self._callbacks.items():
-                self.__dict__[name] = cb()
+            for name in self._callbacks.keys():
+                self.__dict__[name] = self._call(name)
         elif isinstance(name, str):
-            self.__dict__[name] = self._callbacks[name]()
+            self.__dict__[name] = self._call(name)
         elif isinstance(name, list):
             for n in name:
-                self.__dict__[n] = self._callbacks[n]()
+                self.__dict__[n] = self._call(n)
+
+    def _call(self, name):
+        if name not in self._callbacks:
+            return None
+        else:
+            if callable(self._callbacks[name]):
+                return self._callbacks[name]()
+            else:
+                return self._callbacks[name]
 
 
 class ModelData(object):
     """
     Class for holding model data
     """
+
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
         if not hasattr(self, 'cache'):
@@ -125,7 +135,7 @@ class ModelData(object):
 
         for name, instance in self.params.items():
             value = kwargs.pop(name, None)
-            self.__dict__[name].add(value)
+            instance.add(value)
         if len(kwargs) > 0:
             logger.warning(f'{self.__class__.__name__}: Unused data {kwargs}')
 
@@ -157,26 +167,31 @@ class Model(object):
         """meta-data to be overloaded by subclasses"""
 
         self.system = system
-        self.idx = []  # duplicate from ModelData. Keep for now.
+
+        # duplicate attributes from ModelData. Keep for now.
+        self.n = 0
+        self.idx = []
+        if not hasattr(self, 'num_params'):
+            self.num_params = OrderedDict()
 
         # variables
         self.states = OrderedDict()
         self.algebs = OrderedDict()
         self.calcs = OrderedDict()
         self.vars_ext = OrderedDict()
+
+        # external parameters
         self.params_ext = OrderedDict()
+
+        # limiters and control blocks
         self.limiters = OrderedDict()
         self.blocks = OrderedDict()
 
         # service/temporary variables
         self.services = OrderedDict()
 
-        self.mdl_from = []
-        self.mdl_to = []
-
         self.flags = {
             'sysbase': False,
-            'allocate': False,
             'address': False,
         }
 
@@ -197,32 +212,64 @@ class Model(object):
         self.f_lambdify = None
         self.c_lambdify = None
 
-        self.cache.add_callback('all_vars', self.all_vars)
-        self.cache.add_callback('all_params', self.all_params)
-        self.cache.add_callback('all_params_syms', self.all_params_syms)
-        self.cache.add_callback('algeb_e_numeric', self.algeb_e_numeric)
-        self.cache.add_callback('algeb_ext', self.algeb_ext)
+        self._fx = []
+        self._fy = []
+        self._gx = []
+        self._gy = []
+        self._fxc = []
+        self._fyc = []
+        self._gxc = []
+        self._gyc = []
 
-    def all_vars(self):
+        self.ifx = []
+        self.jfx = []
+
+        self.ify = []
+        self.jfy = []
+
+        self.igx = []
+        self.jgx = []
+
+        self.igy = []
+        self.jgy = []
+
+        # cached class attributes
+        self.cache.add_callback('all_vars', self._all_vars)
+        self.cache.add_callback('all_params', self._all_params)
+        self.cache.add_callback('all_params_names', self._all_params_names)
+        self.cache.add_callback('algeb_ext_numeric', self._algeb_ext_numeric)
+        self.cache.add_callback('algeb_ext_symbolic', self._algeb_ext_symbolic)
+        self.cache.add_callback('algeb_ext', self._algeb_ext)
+
+    def _all_vars(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.algebs.items()) +
                            list(self.calcs.items()) +
                            list(self.vars_ext.items())
                            )
 
-    def all_params(self):
+    def _all_params(self):
         return OrderedDict(list(self.num_params.items()) +
                            list(self.limiters.items()) +
                            list(self.services.items())
                            )
 
-    def all_params_syms(self):
+    def _all_params_names(self):
         out = []
-        for name, instance in self.cache.all_params.items():
+        for instance in self.cache.all_params.values():
             out += instance.get_name()
         return out
 
-    def algeb_e_numeric(self):
+    def _algeb_ext_symbolic(self):
+        out = OrderedDict()
+        for name, instance in OrderedDict(list(self.algebs.items()) +
+                                          list(self.vars_ext.items())
+                                          ).items():
+            if instance.e_symbolic is not None:
+                out[name] = instance
+        return out
+
+    def _algeb_ext_numeric(self):
         out = OrderedDict()
         for name, instance in OrderedDict(list(self.algebs.items()) +
                                           list(self.vars_ext.items())
@@ -231,7 +278,7 @@ class Model(object):
                 out[name] = instance
         return out
 
-    def algeb_ext(self):
+    def _algeb_ext(self):
         return OrderedDict(list(self.algebs.items()) +
                            list(self.vars_ext.items()))
 
@@ -268,21 +315,9 @@ class Model(object):
 
         super(Model, self).__setattr__(key, value)
 
-    def load_block(self):
-        """
-        Pull in variables from control blocks
-        Returns
-        -------
-
-        """
-        for name, instance in self.blocks.items():
-            for sub_name, var_instance in instance.export_vars():
-                full_var_name = f'{name}_{sub_name}'
-                self.__set_attr__(full_var_name, var_instance)
-
     def finalize_add(self):
         # TODO: check the uniqueness of idx
-        for name, instance in self.num_params.items():
+        for _, instance in self.num_params.items():
             instance.to_array()
 
     def idx2uid(self, idx):
@@ -301,7 +336,7 @@ class Model(object):
     def convert_equations(self):
         from sympy import Symbol, Matrix, sympify, lambdify
 
-        for var in self.cache.all_params_syms:
+        for var in self.cache.all_params_names:
             self.input_syms[var] = Symbol(var)
 
         for var in list(self.cache.all_vars.keys()):
@@ -318,29 +353,75 @@ class Model(object):
                     dest.append(0)
                 else:
                     sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
+
                     instance.e_lambdify = lambdify(syms_list, sympified_equation, 'numpy')
                     dest.append(sympified_equation)
 
-        self.g_syms = Matrix(self.g_syms)
-        self.f_syms = Matrix(self.f_syms)
-        self.c_syms = Matrix(self.c_syms)
+        self.g_syms_matrix = Matrix(self.g_syms)
+        self.f_syms_matrix = Matrix(self.f_syms)
+        self.c_syms_matrix = Matrix(self.c_syms)
 
-        self.g_lambdify = lambdify(syms_list, self.g_syms, 'numpy')
-        self.f_lambdify = lambdify(syms_list, self.f_syms, 'numpy')
-        self.c_lambdify = lambdify(syms_list, self.c_syms, 'numpy')
+        self.g_lambdify = lambdify(syms_list, self.g_syms_matrix, 'numpy')
+        self.f_lambdify = lambdify(syms_list, self.f_syms_matrix, 'numpy')
+        self.c_lambdify = lambdify(syms_list, self.c_syms_matrix, 'numpy')
 
         # convert service equations
-        for name, instance in self.services.items():
+        for instance in self.services.values():
             if instance.e_symbolic is not None:
                 sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
                 instance.e_lambdify = lambdify(syms_list, sympified_equation, 'numpy')
 
     def convert_jacobians(self):
-        pass
+        from sympy import SparseMatrix, lambdify
 
-    def g_numeric(self):
+        self.dg_syms = self.g_syms_matrix.jacobian(list(self.vars_syms.values()))
+        self.dg_syms_sparse = SparseMatrix(self.dg_syms)
+
+        self.df_syms = self.f_syms_matrix.jacobian(list(self.vars_syms.values()))
+        self.df_syms_sparse = SparseMatrix(self.df_syms)
+
+        vars_syms_list = list(self.vars_syms.items())
+        syms_list = list(self.input_syms)
+        algeb_ext_list = list(self.cache.algeb_ext)
+        state_list = list(self.states)
+
+        for item in self.dg_syms_sparse.row_list():
+            e_idx = item[0]
+            v_idx = item[1]
+            e_symbolic = item[2]
+
+            eq_name = algeb_ext_list[e_idx][0]
+            var_name = vars_syms_list[v_idx][0]
+            eqn = self.cache.all_vars[eq_name]
+            var = self.cache.all_vars[var_name]
+
+            if e_symbolic.is_constant():
+                dest = f'_{eqn.e_code}{var.v_code}c'
+            else:
+                dest = f'_{eqn.e_code}{var.v_code}'
+
+            self.__dict__[dest].append((eqn.a, var.a, lambdify(syms_list, e_symbolic)))
+
+        for item in self.df_syms_sparse.row_list():
+            e_idx = item[0]
+            v_idx = item[1]
+            e_symbolic = item[2]
+
+            eq_name = state_list[e_idx][0]
+            var_name = vars_syms_list[v_idx][0]
+            eqn = self.cache.all_vars[eq_name]
+            var = self.cache.all_vars[var_name]
+
+            if e_symbolic.is_constant():
+                dest = f'_{eqn.e_code}{var.v_code}c'
+            else:
+                dest = f'_{eqn.e_code}{var.v_code}'
+
+            self.__dict__[dest].append((eqn.a, var.a, lambdify(syms_list, e_symbolic)))
+
+    def _g_numeric(self):
         # evaluate numerical function calls provided in `Algeb.e_numeric`
-        for name, instance in self.cache.algeb_e_numeric.items():
+        for name, instance in self.cache.algeb_ext_numeric.items():
             # do not use in-place add below for `gcall` re-entrance
             instance.e = instance.e_numeric()
 
@@ -348,17 +429,17 @@ class Model(object):
         args = []
 
         # the below should correspond to `self.all_param_syms`
-        for name, instance in self.num_params.items():
+        for instance in self.num_params.values():
             args.append(instance.v)
-        for name, instance in self.limiters.items():
+        for instance in self.limiters.values():
             args.append(instance.zl)
             args.append(instance.zi)
             args.append(instance.zu)
-        for name, instance in self.services.items():
+        for instance in self.services.values():
             args.append(instance.v)
 
         # append all variable values
-        for name, instance in self.cache.all_vars.items():
+        for instance in self.cache.all_vars.values():
             args.append(instance.v)
 
         return args
@@ -370,25 +451,67 @@ class Model(object):
         self.eval_limiter()
 
         # update equations for algebraic variables supplied with `e_numeric`
-        self.g_numeric()
+        self._g_numeric()
 
         args = self.get_input()
 
-        for name, instance in self.cache.algeb_ext.items():
-            # TODO: possible speed up
-            if hasattr(instance, 'e_lambdify') and callable(instance.e_lambdify):
-                try:
-                    instance.e += np.ravel(instance.e_lambdify(*args))
-                except TypeError:
-                    print(instance.e_lambdify(*args))
+        # call lambdified functions
+        for instance in self.cache.algeb_ext_symbolic.values():
+            instance.e += np.ravel(instance.e_lambdify(*args))
+
+    def j_const_call(self):
+        """Update Jacobians"""
+        pass
+        # update the constant ones
+        const_dict = {'_fxc': 'fx', '_fyc': 'fy', '_gxc': 'gx', '_gyc': 'gy'}
+
+        args = self.get_input()
+        for src, dest in const_dict.items():
+            for row, col, fun in self.__dict__[src]:
+                self.system.dae.__dict__[dest].ipadd(fun(*args), row, col)
+
+    def j_variable_call(self):
+        var_jac_dict = {'_fx': 'fx', '_fy': 'fy', '_gx': 'gx', '_gy': 'gy'}
+
+        args = self.get_input()
+        for src, dest in var_jac_dict.items():
+            for row, col, fun in self.__dict__[src]:
+                self.system.dae.__dict__[dest].ipadd(fun(*args), row, col)
+
+    def get_sparse_pattern(self):
+        self.ifx = []
+        self.jfx = []
+        self.ify = []
+        self.jfy = []
+        self.igx = []
+        self.jgx = []
+        self.igy = []
+        self.jgy = []
+
+        for row, col, _ in self._fx + self._fxc:
+            self.ifx.append(row)
+            self.jfx.append(col)
+
+        for row, col, _ in self._fy + self._fyc:
+            self.ify.append(row)
+            self.jfy.append(col)
+
+        for row, col, _ in self._gx + self._gxc:
+            self.igx.append(row)
+            self.jgx.append(col)
+
+        for row, col, _ in self._gy + self._gyc:
+            self.igy.append(row)
+            self.jgy.append(col)
+
+        # TODO: call get_sparse_pattern for each variable with e_numeric
 
     def eval_limiter(self):
-        for name, instance in self.limiters.items():
+        for instance in self.limiters.values():
             instance.eval()
             instance.set_limit()
 
     def eval_service(self):
-        # TODO: set v for service variables
         args = self.get_input()
 
         for name, instance in self.services.items():
@@ -1661,7 +1784,7 @@ class ModelBase(object):
                 continue
             minval = lower[idx]
             logger.error('{0} <{1}.{2}> below its minimum of {3}.'.format(
-                    self.name[idx], self._name, key, minval))
+                self.name[idx], self._name, key, minval))
             if limit:
                 self.__dict__[key][idx] = minval
 

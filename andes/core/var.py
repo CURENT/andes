@@ -9,7 +9,6 @@ class VarBase(object):
     """
     Variable class
     """
-
     def __init__(self,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
@@ -45,11 +44,13 @@ class Algeb(VarBase):
     """
     Algebraic variable
     """
-    pass
+    e_code = 'g'
+    v_code = 'y'
 
 
 class State(VarBase):
-    pass
+    e_code = 'f'
+    v_code = 'x'
 
 
 class Calc(VarBase):
@@ -73,6 +74,9 @@ class ExtVar(VarBase):
         self.parent_instance = None
         self.uid = None
 
+        self.e_code = ''
+        self.v_code = ''
+
     def link_external(self, ext_model):
         self.parent_model = ext_model
         self.parent_instance = ext_model.__dict__[self.src]
@@ -89,3 +93,6 @@ class ExtVar(VarBase):
         # set initial v and e values to zero
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
+
+        self.e_code = self.parent_instance.e_code
+        self.v_code = self.parent_instance.v_code

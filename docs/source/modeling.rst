@@ -5,8 +5,13 @@ Device Modeling
 ***************
 
 
-Base ``Model`` Class
-====================
+Base ``Model`` and ``ModelData`` Class
+======================================
+The `ModelData` class provides structure and methods for storing
+power system data incrementally.
+
+The `Model` class provides functions needed for defining
+variables and equations.
 
 OrderedDict of instances
 -------------------------
@@ -15,8 +20,8 @@ Variables:
 
 Variables has the following attributes in common:
  - *a* for variable address
- - *v* for variable address
- - *e* for variable equation value
+ - *v* for variable value
+ - *e* for the corresponding equation value
  - *e_symbolic* for the string/symbolic representation of the equation
  - *e_numeric* for the callable to update equation value
  - *e_lambdify* for the generated callable to update equation value
@@ -52,7 +57,14 @@ Service Constants:
  - *services* for service constants
 
 Limiters:
- - *limiters* for limiter blocks
+Limiters are used to add limits to algebraic or state variables. 
+Limiters need be provided with a variable and its limits. 
+ - *limiters* for limiters
 
 Blocks:
+
+Blocks are collections of variables and the corresponding equations.
+Blocks can be instantiated as model attributes. The instantiation of blocks
+will add the corresponding variables and equations to the parent class.
+An example block is the PIController. 
  - *blocks* for general blocks

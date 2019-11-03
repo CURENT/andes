@@ -24,3 +24,6 @@
 *   Pickle/dill the auto-generated function calls on the first run (set dill recursive to True)
 *   Use SymEngine to get the derivative for each model; the derivates may store in a smaller matrix locally to 
 the model
+
+*   Prototype Connectivity checking, previously implemented as `gyisland`
+*   Initial values, pass initialized values between models, and solve initializer equations
