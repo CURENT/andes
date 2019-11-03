@@ -10,8 +10,6 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      win_python3.6:
-        python.version: '3.6'
       win_python3.7:
         python.version: '3.7'
 

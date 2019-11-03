@@ -10,10 +10,6 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      linux_python3.5:
-        python.version: '3.5'
-      linux_python3.6:
-        python.version: '3.6'
       linux_python3.7:
         python.version: '3.7'
 
