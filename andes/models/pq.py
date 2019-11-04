@@ -131,8 +131,8 @@ class PQ(ModelBase):
 class PQData(ModelData):
     def __init__(self):
         super().__init__()
-        self.bus = DataParam(default=None, info="linked bus idx", mandatory=True)
-        self.owner = DataParam(default=None, info="owner idx")
+        self.bus = DataParam(info="linked bus idx", mandatory=True)
+        self.owner = DataParam(info="owner idx")
 
         self.p = NumParam(default=0, info='active power load', power=True)
         self.q = NumParam(default=0, info='reactive power load', power=True)
@@ -145,10 +145,12 @@ class PQNew(Model, PQData):
         Model.__init__(self, system, name)
         PQData.__init__(self)
 
+        # TODO: Take a configuration to disable switching to impedance
+
         self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
 
-        self.v_ref = Algeb()
+        self.v_ref = Algeb(info="Voltage reference for PI")
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
         self.a.e_symbolic = """u * (p * v_cmp_zi +
@@ -166,7 +168,8 @@ class PQNew(Model, PQData):
         self.kp.e_symbolic = "1"
         self.ki = Service()
         self.ki.e_symbolic = "1"
-        self.pi = PIController(self.v, self.v_ref, self.kp, self.ki)
+        self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
+            info='PI controller for voltage')
 
     @staticmethod
     def _q_function(u, q, **kwargs):

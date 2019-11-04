@@ -1,4 +1,5 @@
 from andes.core.var import Algeb, State
+from typing import Optional
 
 
 class Block(object):
@@ -9,11 +10,17 @@ class Block(object):
     to provide pre-defined equation sets. All subclasses must
     provide `get_name` method and `export_vars` method. Subclasses
     must overload the `__init__` method to take custom inputs.
+
+    Parameters
+    ----------
+    info : str, optional
+        Block description.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, info: Optional[str] = None, *args, **kwargs):
         self.name = None
         self.owner = None
+        self.info = info
         self.vars = {}
 
     def get_name(self):
@@ -82,7 +89,7 @@ class PIController(Block):
 
     """
     def __init__(self, var, ref, kp, ki, **kwargs):
-        super(PIController, self).__init__(var, kp, ki, **kwargs)
+        super(PIController, self).__init__(**kwargs)
 
         self.var = var
         self.ref = ref
