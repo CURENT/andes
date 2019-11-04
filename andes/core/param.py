@@ -279,6 +279,11 @@ class ExtParam(NumParam):
         """
         Update parameter values provided by external models
 
+        Parameters
+        ----------
+        ext_model : Model
+            Instance of the parent model
+
         Returns
         -------
         None
