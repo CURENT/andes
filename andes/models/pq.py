@@ -169,7 +169,7 @@ class PQNew(Model, PQData):
         self.ki = Service()
         self.ki.e_symbolic = "1"
         self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
-            info='PI controller for voltage')
+                               info='PI controller for voltage')
 
     @staticmethod
     def _q_function(u, q, **kwargs):
