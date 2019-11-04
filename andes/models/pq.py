@@ -10,7 +10,7 @@ from ..utils.math import zeros, ones
 
 from .base import Model, ModelData
 from andes.core.limiter import Comparer
-from andes.core.var import ExtVar
+from andes.core.var import ExtVar, Algeb
 from andes.core.param import DataParam, NumParam
 from andes.core.service import Service
 from andes.core.block import PIController
@@ -148,6 +148,7 @@ class PQNew(Model, PQData):
         self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
 
+        self.v_ref = Algeb()
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
         self.a.e_symbolic = """u * (p * v_cmp_zi +
@@ -165,7 +166,7 @@ class PQNew(Model, PQData):
         self.kp.e_symbolic = "1"
         self.ki = Service()
         self.ki.e_symbolic = "1"
-        self.pi = PIController(self.v, self.kp, self.ki)
+        self.pi = PIController(self.v, self.v_ref, self.kp, self.ki)
 
     @staticmethod
     def _q_function(u, q, **kwargs):

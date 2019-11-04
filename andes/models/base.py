@@ -55,6 +55,10 @@ def load_pd():
 
 
 class Cache(object):
+    """
+    Class for caching the return value of callback functions
+    """
+
     def __init__(self):
         self._callbacks = {}
 
@@ -70,10 +74,28 @@ class Cache(object):
     def __setattr__(self, key, value):
         super(Cache, self).__setattr__(key, value)
 
-    def add_callback(self, name, callback):
+    def add_callback(self, name: str, callback):
+        """
+        Add a cache attribute and a callback function to update the attribute
+
+        Parameters
+        ----------
+        name : str
+            name of the cached function return value
+        callback : callable
+            callback function for updating the cached attribute
+        """
         self._callbacks[name] = callback
 
     def refresh(self, name=None):
+        """
+        Refresh the cached values
+
+        Parameters
+        ----------
+        name : str, list, optional
+            name or list of cached to refresh, by default None for refreshing all
+        """
         if name is None:
             for name in self._callbacks.keys():
                 self.__dict__[name] = self._call(name)
@@ -95,7 +117,11 @@ class Cache(object):
 
 class ModelData(object):
     """
-    Class for holding model data
+    Class for holding model data.
+
+    This class is used when accessing
+    data file and manipulating with the raw data without having
+    the `System` class constructed.
     """
 
     def __init__(self, *args, **kwargs):
@@ -127,9 +153,16 @@ class ModelData(object):
 
         super(ModelData, self).__setattr__(key, value)
 
-    def add(self, **kwargs):
-        idx = kwargs.pop('idx', None)
+    def add(self, idx=None, **kwargs):
+        """
+        Add a model element using a set of parameters.
 
+
+        Parameters
+        ----------
+        idx : str, optional
+            referenceable external index, by default None
+        """
         self.idx.append(idx)
         self.n += 1
 
@@ -140,6 +173,17 @@ class ModelData(object):
             logger.warning(f'{self.__class__.__name__}: Unused data {kwargs}')
 
     def as_dict(self):
+        """
+        Export all variable parameters as a dict
+
+
+        Returns
+        -------
+        dict
+            a dict with the keys being the `ModelData` parameter names
+            and the values being an array-like of data in the order of adding.
+            An additional `uid` key is added with the value default to range(n).
+        """
         out = dict()
         out['uid'] = np.arange(self.n)
         out['idx'] = self.idx
@@ -150,6 +194,16 @@ class ModelData(object):
         return out
 
     def as_df(self):
+        """
+        Export all the data as a `pandas.DataFrame`
+        This function utilizes `as_dict` for preparing data.
+
+
+        Returns
+        -------
+        DataFrame
+            A dataframe containing all model data. An `uid` column is added.
+        """
         if not load_pd():
             return None
 
@@ -161,11 +215,22 @@ class ModelData(object):
 class Model(object):
     """
     Base class for power system device models
+
+
+    Attributes
+    ----------
+    n : int
+        The number of loaded elements.
+
+    idx : list
+        A list of all element idx.
+
+    num_params : OrderedDict
+        {name: instance} of numerical parameters, including internal
+        and external ones
     """
 
     def __init__(self, system=None, name: str = None):
-        """meta-data to be overloaded by subclasses"""
-
         self.system = system
 
         # duplicate attributes from ModelData. Keep for now.
@@ -309,9 +374,8 @@ class Model(object):
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
-            for sub_name, var_instance in value.export_vars().items():
-                full_var_name = f'{key}_{sub_name}'
-                self.__setattr__(full_var_name, var_instance)
+            for name, var_instance in value.export_vars().items():
+                self.__setattr__(name, var_instance)
 
         super(Model, self).__setattr__(key, value)
 
@@ -352,6 +416,7 @@ class Model(object):
                 if instance.e_symbolic is None:
                     dest.append(0)
                 else:
+                    print(instance.e_symbolic)
                     sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
 
                     instance.e_lambdify = lambdify(syms_list, sympified_equation, 'numpy')
@@ -380,7 +445,7 @@ class Model(object):
         self.df_syms = self.f_syms_matrix.jacobian(list(self.vars_syms.values()))
         self.df_syms_sparse = SparseMatrix(self.df_syms)
 
-        vars_syms_list = list(self.vars_syms.items())
+        vars_syms_list = list(self.vars_syms)
         syms_list = list(self.input_syms)
         algeb_ext_list = list(self.cache.algeb_ext)
         state_list = list(self.states)
@@ -390,8 +455,8 @@ class Model(object):
             v_idx = item[1]
             e_symbolic = item[2]
 
-            eq_name = algeb_ext_list[e_idx][0]
-            var_name = vars_syms_list[v_idx][0]
+            eq_name = algeb_ext_list[e_idx]
+            var_name = vars_syms_list[v_idx]
             eqn = self.cache.all_vars[eq_name]
             var = self.cache.all_vars[var_name]
 
@@ -408,8 +473,8 @@ class Model(object):
             v_idx = item[1]
             e_symbolic = item[2]
 
-            eq_name = state_list[e_idx][0]
-            var_name = vars_syms_list[v_idx][0]
+            eq_name = state_list[e_idx]
+            var_name = vars_syms_list[v_idx]
             eqn = self.cache.all_vars[eq_name]
             var = self.cache.all_vars[var_name]
 
