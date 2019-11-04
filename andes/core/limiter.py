@@ -42,7 +42,7 @@ class Limiter(object):
 
     def get_name(self):
         """
-        Available symbols from thhis class
+        Available symbols from this class
 
         Returns
         -------

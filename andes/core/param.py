@@ -9,9 +9,24 @@ logger = logging.getLogger(__name__)
 
 class ParamBase(object):
     """
-    Basic single data class
+    Base parameter class for storing non-computational parameters
+
+    Parameters
+    ----------
+    default : str or float
+        The default value of this parameter if no value is provided
+    name : str
+        Name of this parameter. If not provided, `name` will be set
+        to the attribute name of the parent `Model`.
+    tex_name : str
+        LaTeX-formatted parameter name. If not provided, `tex_name`
+        will be assigned the same as `name`.
+    info : str
+        A description of this parameter
+    mandatory : bool
+        True if this parameter is mandatory
     """
-    def __init__(self, default=None, name=None, tex_name=None, info=None, mandatory=False):
+    def __init__(self, default=None, name=None, tex_name=None, info=None, mandatory: bool = False):
         self.name = name
         self.default = default
         self.tex_name = tex_name if tex_name else name
@@ -28,7 +43,7 @@ class ParamBase(object):
 
         Parameters
         ----------
-        value
+        value : str or float
             Parameter value of the new element
 
         Returns
@@ -44,16 +59,89 @@ class ParamBase(object):
         self.n += 1
 
     def get_name(self):
+        """
+        Return `name` in a list
+
+        Returns
+        -------
+        list
+            A list only containing the name of the parameter
+        """
         return [self.name]
 
 
 class DataParam(ParamBase):
+    """
+    An alias of the `ParamBase` class.
+
+    This class is used for string parameters or non-computational
+    numerical parameters. This class does not provide a `to_array`
+    method. All input values will be stored in `v` as a list.
+    """
     pass
 
 
 class NumParam(ParamBase):
     """
-    Parameter class
+    A computational numerical parameter.
+
+    Parameters defined using
+    this class will have their values converted to a NumPy.ndarray
+    and stored in `v`. The original input values will be stored in
+    `vin`, and the coefficients for converting to system-base per-unit
+    will be stored in `pu_coeff`.
+
+
+    Parameters
+    ----------
+    default : str or float
+        The default value of this parameter if no value is provided
+    name : str
+        Name of this parameter. If not provided, `name` will be set
+        to the attribute name of the parent `Model`.
+    tex_name : str
+        LaTeX-formatted parameter name. If not provided, `tex_name`
+        will be assigned the same as `name`.
+    info : str
+        A description of this parameter
+    mandatory : bool
+        True if this parameter is mandatory
+    unit : str
+        Unit of the parameter
+
+    Other Parameters
+    ----------------
+    non_zero : bool
+        True if this parameter must be non-zero
+    mandatory : bool
+        True if this parameter must not be None
+    power : bool
+        True if this parameter is a power per-unit quantity
+        under the device base
+    voltage : bool
+        True if the parameter is a voltage pu quantity
+        under the device base
+    current: bool
+        True if the parameter is a current pu quantity
+        under the device base
+    z : bool
+        True if the parameter is an AC impedance pu quantity
+        under the device base
+    y : bool
+        True if the parameter is an AC admittance pu quantity
+        under the device base
+    r : bool
+        True if the parameter is a DC resistance pu quantity
+        under the device base
+    g : bool
+        True if the parameter is a DC conductance pu quantity
+        under the device base
+    dc_current : bool
+        True if the parameter is a DC current pu quantity under
+        device base
+    dc_voltage : bool
+        True if the parameter is a DC voltage pu quantity under
+        device base
     """
 
     def __init__(self,
@@ -77,7 +165,7 @@ class NumParam(ParamBase):
         super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info)
         self.unit = unit
 
-        self.property = dict(nonzero=non_zero,
+        self.property = dict(non_zero=non_zero,
                              mandatory=mandatory,
                              power=power,
                              voltage=voltage,
@@ -86,19 +174,19 @@ class NumParam(ParamBase):
                              y=y,
                              r=r,
                              g=g,
-                             dccurrent=dc_current,
-                             dcvoltage=dc_voltage)
+                             dc_current=dc_current,
+                             dc_voltage=dc_voltage)
 
         self.pu_coeff = None
         self.vin = None  # values from input
 
-    def get_property(self, property_name):
+    def get_property(self, property_name: str):
         """
         Check the boolean value of the given property
 
         Parameters
         ----------
-        property_name
+        property_name : str
             Property name
 
         Returns
@@ -113,7 +201,7 @@ class NumParam(ParamBase):
 
         Parameters
         ----------
-        value
+        value : str or float
             Parameter value of the new element
 
         Returns
@@ -138,10 +226,14 @@ class NumParam(ParamBase):
 
     def to_array(self):
         """
-        Convert to np array for speed up
+        Convert `v` to np.ndarray after adding elements. Store a copy
+        if the input in `vin`.
 
-        Returns:
+        The conversion enables array-based calculation.
 
+        Warnings
+        --------
+        After this call, `add` will not be allowed.
         """
         self.v = np.array(self.v)
         self.vin = np.array(self.v)
@@ -149,7 +241,29 @@ class NumParam(ParamBase):
 
 class ExtParam(NumParam):
     """
-    External parameter, specified by other modules
+    A parameter whose values are retrieved from an external model.
+
+    Parameters
+    ----------
+    model : str
+        Name of the source model
+    src : str
+        Source parameter name
+    indexer : ParamBase
+        A parameter of the hosting model, used as indices into
+        the source model and parameter. If is None, the source
+        parameter values will be fully copied.
+
+    Attributes
+    ----------
+    parent_model : Model
+        The parent model providing the original parameter.
+    parent_instance : ParamBase
+        The parent parameter, which is an attribute of the parent
+        model, providing the original values.
+    uid : array-like
+        An array containing the absolute indices into the
+        parent_instance values.
     """
     def __init__(self, model: str, src: str, indexer=None, **kwargs):
         super(ExtParam, self).__init__(**kwargs)
@@ -164,8 +278,10 @@ class ExtParam(NumParam):
     def link_external(self, ext_model):
         """
         Update parameter values provided by external models
+
         Returns
         -------
+        None
         """
         self.parent_model = ext_model
         self.parent_instance = ext_model.__dict__[self.src]

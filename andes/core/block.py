@@ -2,37 +2,128 @@ from andes.core.var import Algeb, State
 
 
 class Block(object):
+    """
+    Base class for control blocks.
+
+    Blocks are meant to be instantiated as Model attributes
+    to provide pre-defined equation sets. All subclasses must
+    provide `get_name` method and `export_vars` method. Subclasses
+    must overload the `__init__` method to take custom inputs.
+    """
+
     def __init__(self, *args, **kwargs):
         self.name = None
         self.owner = None
+        self.vars = {}
 
-    def get_syms(self):
-        pass
+    def get_name(self):
+        """
+        Method for getting the name of the block.
+
+        Notes
+        -----
+        This method is currently unused
+
+        Returns
+        -------
+        list
+            The `name` attribute in a list
+        """
+        return [self.name]
 
     def export_vars(self):
-        pass
+        """
+        Method for exporting algebraic and state variables
+        created in this block as a dictionary.
+
+        Subclasses must implement the meta-equations in the
+        derived `export_vars` method. Before returning `vars`,
+        the subclass should first update `vars`.
+
+
+        See Also
+        --------
+        PIController.export_vars
+
+        Returns
+        -------
+        dict
+            Key being the variable name and the value being
+            the variable instance.
+        """
+        return self.vars
 
 
 class SampleAndHolder(Block):
+    """
+    Sample and hold block
+
+    Warnings
+    --------
+    Not implemented yet.
+    """
     pass
 
 
 class PIController(Block):
     """
-    Proportional Integral Controller
+    Proportional Integral Controller with the reference from an external variable
+
+    Parameters
+    ----------
+    var : VarBase
+        The input variable instance
+    ref : Union[VarBase, ParamBase]
+        The reference instance
+    kp : ParamBase
+        The proportional gain parameter instance
+    ki : [type]
+        The integral gain parameter instance
+
     """
-    def __init__(self, var, kp, ki, **kwargs):
+    def __init__(self, var, ref, kp, ki, **kwargs):
         super(PIController, self).__init__(var, kp, ki, **kwargs)
 
         self.var = var
+        self.ref = ref
         self.kp = kp
         self.ki = ki
 
-        self.xi = State(descr="integration value of PI controller")
-        self.y = Algeb(descr="integration value of PI controller")
-
-        # TODO: define equations as usual
-        self.xi.e_symbolic = 0
+        self.xi = State(info="integration value of PI controller", block=True)
+        self.y = Algeb(info="integration value of PI controller", block=True)
 
     def export_vars(self):
-        return {'xi': self.xi, 'y': self.y}
+        r"""
+        Define meta equations and export variables of the PI Controller.
+
+
+        Notes
+        -----
+        One state variable ``xi`` and one algebraic variable ``y`` are added.
+
+        Equations implemented are
+
+        .. math ::
+            \dot{x_i} = k_i * (ref - var)
+
+            y = x_i + k_i * (ref - var)
+
+        Warnings
+        --------
+        Only one level of nesting is allowed.
+        Namely, PIController cannot have a sub-block.
+
+        Returns
+        -------
+        dict
+            A dictionary with the keys being the names of the two variables,
+            ``xi`` and ``y``, and the values being the corresponding
+            instances.
+        """
+        # NOTE:
+
+        self.xi.e_symbolic = f'ki * ({self.ref.name} - {self.var.name})'
+        self.y.e_symbolic = f'kp * ({self.ref.name} - {self.var.name}) + {self.name}_xi'
+
+        self.vars = {self.name + '_xi': self.xi, self.name + '_y': self.y}
+        return self.vars

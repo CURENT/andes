@@ -1,11 +1,11 @@
 .. _modeling:
 
-***************
-Device Modeling
-***************
+**********************
+Hybrid Device Modeling
+**********************
 
 
-Base ``Model`` and ``ModelData`` Class
+Model and ModelData Classes
 ======================================
 
 The `ModelData` class provides structure and methods for storing
@@ -74,10 +74,12 @@ NumParam holds the following additional attributes:
   for external parameters
 
 ExtParam holds the additional methods:
+
 *link_external*
   for linking external parameter data
 
 Service Constants:
+
 *services*
   for service constants
 
@@ -85,6 +87,7 @@ Limiters:
 
 Limiters are used to add limits to algebraic or state variables.
 Limiters need be provided with a variable and its limits.
+
 *limiters*
   for limiters
 
@@ -94,6 +97,7 @@ Blocks are collections of variables and the corresponding equations.
 Blocks can be instantiated as model attributes. The instantiation of blocks
 will add the corresponding variables and equations to the parent class.
 An example block is the PIController.
+
 *blocks*
   for general blocks
 
