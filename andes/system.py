@@ -17,7 +17,7 @@
 """
 Power system class
 """
-
+import pathlib
 import configparser
 import importlib
 import logging
@@ -58,6 +58,7 @@ class SystemNew(object):
         self.config = config if config else System()
         self.options = options  # options from command line or so
         self.dae = DAENew()
+        self.calls = OrderedDict()
 
         self.models = []
         self.routine_import()
@@ -175,6 +176,39 @@ class SystemNew(object):
     def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('store_sparse_pattern', model)
 
+    def store_calls(self):
+        for name in self.models:
+            self.calls[name] = self.__dict__[name].call
+
+    def _get_pkl_path(self):
+        pkl_name = 'calls.pkl'
+        andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
+
+        if not os.path.exists(andes_path):
+            os.makedirs(andes_path)
+
+        pkl_path = os.path.join(andes_path, pkl_name)
+
+        return pkl_path
+
+    def dill_calls(self):
+        import dill
+        pkl_path = self._get_pkl_path()
+
+        dill.dump(self.calls, open(pkl_path, 'wb'))
+
+    def undill_calls(self):
+        import dill
+        pkl_path = self._get_pkl_path()
+
+        if not os.path.isfile(pkl_path):
+            self.prepare()
+
+        self.calls = dill.load(open(pkl_path, 'rb'))
+
+        for name, model_call in self.calls.items():
+            self.__dict__[name].call = model_call
+
     def _call_model_method(self, method, model=None, **kwargs):
         if model is None:
             for name in self.models:
@@ -185,10 +219,13 @@ class SystemNew(object):
             for name in model:
                 getattr(self.__dict__[name], method)(**kwargs)
 
-    def setup(self):
+    def prepare(self):
         self.convert_equations()
         self.convert_jacobians()
+        self.store_calls()
+        self.dill_calls()
 
+    def setup(self):
         self.set_address()
         self.finalize_add()
         self.link_external()
