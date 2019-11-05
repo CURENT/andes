@@ -1,7 +1,7 @@
-## Modular Refactorization
-
+## Modular Refactorize
 *   Varout to DataFrame
 *   Optimize `_varname()` in models
+
 
 ## Performance Improvement
 *   Reduce the overhead in `VarOut.store()` and `TDS.dump_results()`
@@ -17,16 +17,32 @@
 
 
 ## Version 0.7.0
-*   Clearly define interface variables`VarExt`
-*   Define associated equation with each variable (internal of interface)
-*   Define the call sequence for data flow between models and dae/models
-*   Use SymPy/SynEngine to generate function calls - define the interfaces
-*   Pickle/dill the auto-generated function calls on the first run (set dill recursive to True)
-*   Use SymEngine to get the derivative for each model; the derivates may store in a smaller matrix locally to 
-the model
 
+### Milestones
+*   A working `PQNew` class with an option to convert to Z
+*   A working `System` class providing parameter retrieval by group and model
+*   A refreshed raw file reader to build data into `ModelData`
+*   A defined data loading, model initialization, variable/equation relaying sequence
+*   A working power flow routine fully generated from symbolic expressions
+*   A working `GENROU` model with saturation function
+
+
+### To-do bullets
+- [x] Clearly define interface variables `VarExt`
+- [x] Define associated equation with each variable (internal of interface)
+- [x] Use SymPy/SynEngine to generate function calls - define the interfaces
+- [x] Use SymEngine to get the derivative for each model; the derivatives may store in a smaller matrix locally to the model
+*   Define the call sequence for data flow between models and dae/models
+*   Pickle/dill the auto-generated function calls on the first run (set dill recursive to True)
 *   Prototype Connectivity checking, previously implemented as `gyisland`
 *   Initial values, pass initialized values between models, and solve initializer equations
-# TODO: function for providing the jacobian triplet
+*   TODO: function for providing the jacobian triplet
 
-# TODO: implement a standalone PI controller with numerical jacobians
+### Examples
+- [x] implement a standalone PI controller with numerical jacobians
+
+Version 0.7.1
+## Milestones
+
+### To-do bullets
+*  A refreshed dyr file reader
