@@ -10,7 +10,7 @@ from ..utils.math import zeros, ones
 
 from .base import Model, ModelData
 from andes.core.limiter import Comparer
-from andes.core.var import ExtVar, Algeb
+from andes.core.var import ExtAlgeb, Algeb
 from andes.core.param import DataParam, NumParam
 from andes.core.service import Service
 from andes.core.block import PIController
@@ -147,8 +147,8 @@ class PQNew(Model, PQData):
 
         # TODO: Take a configuration to disable switching to impedance
 
-        self.a = ExtVar(model='BusNew', src='a', indexer=self.bus)
-        self.v = ExtVar(model='BusNew', src='v', indexer=self.bus)
+        self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
+        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
 
         self.v_ref = Algeb(info="Voltage reference for PI")
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)

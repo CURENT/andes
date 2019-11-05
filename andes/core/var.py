@@ -129,7 +129,7 @@ class Calc(VarBase):
 
 class ExtVar(VarBase):
     """
-    Externally defined variable
+    Externally defined algebraic variable
 
     This class is used to retrieve the addresses of externally-
     defined variable. The `e` value of the `ExtVar` will be added
@@ -177,9 +177,6 @@ class ExtVar(VarBase):
         self.parent_instance = None
         self.uid = None
 
-        self.e_code = ''
-        self.v_code = ''
-
     def link_external(self, ext_model):
         """
         Update variable addresses provided by external models
@@ -213,5 +210,12 @@ class ExtVar(VarBase):
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
 
-        self.e_code = self.parent_instance.e_code
-        self.v_code = self.parent_instance.v_code
+
+class ExtState(ExtVar):
+    e_code = 'f'
+    v_code = 'x'
+
+
+class ExtAlgeb(ExtVar):
+    e_code = 'g'
+    v_code = 'y'

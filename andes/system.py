@@ -120,11 +120,6 @@ class SystemNew(object):
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
-    def finalize_add(self):
-        for m in self.models:
-            mdl = self.__dict__[m]
-            mdl.finalize_add()
-
     def set_address(self):
         for model_name in self.models:
             mdl = self.__dict__[model_name]
@@ -161,6 +156,44 @@ class SystemNew(object):
 
     def add(self, model, **kwargs):
         self.__dict__[model].add(**kwargs)
+
+    def finalize_add(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('finalize_add', model)
+
+    def convert_equations(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('convert_equations', model)
+
+    def convert_jacobians(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('convert_jacobians', model)
+
+    def eval_service(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('eval_service', model)
+
+    def gcall(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('gcall', model)
+
+    def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('store_sparse_pattern', model)
+
+    def _call_model_method(self, method, model=None, **kwargs):
+        if model is None:
+            for name in self.models:
+                getattr(self.__dict__[name], method)(**kwargs)
+        else:
+            if isinstance(model, str):
+                model = [model]
+            for name in model:
+                getattr(self.__dict__[name], method)(**kwargs)
+
+    def setup(self):
+        self.convert_equations()
+        self.convert_jacobians()
+
+        self.set_address()
+        self.finalize_add()
+        self.link_external()
+        self.store_sparse_pattern()
+        self.eval_service()
 
 
 class PowerSystem(object):

@@ -22,6 +22,9 @@ class TestSystem(unittest.TestCase):
         self.ss.PQNew.convert_jacobians()
 
     def test_names(self):
+        self.assertEqual(self.ss.BusNew.n, self.n_bus)
+        self.assertEqual(self.ss.PQNew.n, self.n_bus)
+
         self.assertTrue('BusNew' in self.ss.models)
         self.assertTrue('PQNew' in self.ss.models)
 

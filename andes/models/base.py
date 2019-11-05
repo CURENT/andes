@@ -26,7 +26,7 @@ import sys
 import numpy as np
 from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, NumParam, ExtParam
-from andes.core.var import VarBase, Algeb, State, Calc, ExtVar
+from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb
 from andes.core.block import Block
 from andes.core.service import Service
 from cvxopt import matrix
@@ -277,26 +277,30 @@ class Model(object):
         self.f_lambdify = None
         self.c_lambdify = None
 
-        self._fx = []
-        self._fy = []
-        self._gx = []
-        self._gy = []
-        self._fxc = []
-        self._fyc = []
-        self._gxc = []
-        self._gyc = []
+        self._ifx, self._jfx, self._vfx = list(), list(), list()
+        self._ify, self._jfy, self._vfy = list(), list(), list()
+        self._igx, self._jgx, self._vgx = list(), list(), list()
+        self._igy, self._jgy, self._vgy = list(), list(), list()
 
-        self.ifx = []
-        self.jfx = []
+        self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
+        self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
+        self._igxc, self._jgxc, self._vgxc = list(), list(), list()
+        self._igyc, self._jgyc, self._vgyc = list(), list(), list()
 
-        self.ify = []
-        self.jfy = []
+        # self._fx, self._fy = list(), list()
+        # self._gx, self._gy = list(), list()
+        # self._fxc, self._fyc = list(), list()
+        # self._gxc, self._gyc = list(), list()
 
-        self.igx = []
-        self.jgx = []
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
 
-        self.igy = []
-        self.jgy = []
+        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
+        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
+        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
+        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
@@ -363,7 +367,7 @@ class Model(object):
             self.states[key] = value
         elif isinstance(value, Calc):
             self.calcs[key] = value
-        elif isinstance(value, ExtVar):
+        elif isinstance(value, ExtAlgeb):
             self.vars_ext[key] = value
         elif isinstance(value, ExtParam):
             self.params_ext[key] = value
@@ -398,6 +402,7 @@ class Model(object):
             raise NotImplementedError
 
     def convert_equations(self):
+        logger.debug(f'Converting equations for {self.__class__.__name__}')
         from sympy import Symbol, Matrix, sympify, lambdify
 
         for var in self.cache.all_params_names:
@@ -416,7 +421,6 @@ class Model(object):
                 if instance.e_symbolic is None:
                     dest.append(0)
                 else:
-                    print(instance.e_symbolic)
                     sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
 
                     instance.e_lambdify = lambdify(syms_list, sympified_equation, 'numpy')
@@ -437,12 +441,29 @@ class Model(object):
                 instance.e_lambdify = lambdify(syms_list, sympified_equation, 'numpy')
 
     def convert_jacobians(self):
-        from sympy import SparseMatrix, lambdify
+        logger.debug(f'Converting Jacobians for {self.__class__.__name__}')
+        from sympy import SparseMatrix, lambdify, Matrix
 
-        self.dg_syms = self.g_syms_matrix.jacobian(list(self.vars_syms.values()))
+        self._ifx, self._jfx, self._vfx = list(), list(), list()
+        self._ify, self._jfy, self._vfy = list(), list(), list()
+        self._igx, self._jgx, self._vgx = list(), list(), list()
+        self._igy, self._jgy, self._vgy = list(), list(), list()
+
+        self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
+        self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
+        self._igxc, self._jgxc, self._vgxc = list(), list(), list()
+        self._igyc, self._jgyc, self._vgyc = list(), list(), list()
+
+        # NOTE: SymPy does not allow getting the derivative of an empty array
+        self.dg_syms = Matrix([])
+        self.df_syms = Matrix([])
+        if len(self.g_syms_matrix) > 0:
+            self.dg_syms = self.g_syms_matrix.jacobian(list(self.vars_syms.values()))
+
+        if len(self.f_syms_matrix) > 0:
+            self.df_syms = self.f_syms_matrix.jacobian(list(self.vars_syms.values()))
+
         self.dg_syms_sparse = SparseMatrix(self.dg_syms)
-
-        self.df_syms = self.f_syms_matrix.jacobian(list(self.vars_syms.values()))
         self.df_syms_sparse = SparseMatrix(self.df_syms)
 
         vars_syms_list = list(self.vars_syms)
@@ -461,12 +482,13 @@ class Model(object):
             var = self.cache.all_vars[var_name]
 
             if e_symbolic.is_constant():
-                dest = f'_{eqn.e_code}{var.v_code}c'
+                jac_name = f'{eqn.e_code}{var.v_code}c'
             else:
-                dest = f'_{eqn.e_code}{var.v_code}'
+                jac_name = f'{eqn.e_code}{var.v_code}'
 
-            # TODO: ### RECONSIDER WHERE TO STORE THESE TRIPLETS - IN THE MODEL OR IN VARIABLES ###
-            self.__dict__[dest].append((eqn.a, var.a, lambdify(syms_list, e_symbolic)))
+            self.__dict__[f'_i{jac_name}'].append(e_idx)
+            self.__dict__[f'_j{jac_name}'].append(v_idx)
+            self.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
 
         for item in self.df_syms_sparse.row_list():
             e_idx = item[0]
@@ -479,11 +501,13 @@ class Model(object):
             var = self.cache.all_vars[var_name]
 
             if e_symbolic.is_constant():
-                dest = f'_{eqn.e_code}{var.v_code}c'
+                jac_name = f'{eqn.e_code}{var.v_code}c'
             else:
-                dest = f'_{eqn.e_code}{var.v_code}'
+                jac_name = f'{eqn.e_code}{var.v_code}'
 
-            self.__dict__[dest].append((eqn.a, var.a, lambdify(syms_list, e_symbolic)))
+            self.__dict__[f'_i{jac_name}'].append(e_idx)
+            self.__dict__[f'_j{jac_name}'].append(v_idx)
+            self.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
 
     def _g_numeric(self):
         # evaluate numerical function calls provided in `Algeb.e_numeric`
@@ -526,52 +550,60 @@ class Model(object):
         for instance in self.cache.algeb_ext_symbolic.values():
             instance.e += np.ravel(instance.e_lambdify(**kwargs))
 
-    def j_const_call(self):
-        """Update Jacobians"""
-        pass
-        # update the constant ones
-        const_dict = {'_fxc': 'fx', '_fyc': 'fy', '_gxc': 'gx', '_gyc': 'gy'}
+    def store_sparse_pattern(self):
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
 
-        kwargs = self.get_input()
-        for src, dest in const_dict.items():
-            for row, col, fun in self.__dict__[src]:
-                self.system.dae.__dict__[dest].ipadd(fun(**kwargs), row, col)
+        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
+        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
+        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
+        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
-    def j_variable_call(self):
-        var_jac_dict = {'_fx': 'fx', '_fy': 'fy', '_gx': 'gx', '_gy': 'gy'}
+        jac_set = ('fx', 'fy', 'gx', 'gy')
+        var_names_list = list(self.cache.all_vars.keys())
 
-        kwargs = self.get_input()
-        for src, dest in var_jac_dict.items():
-            for row, col, fun in self.__dict__[src]:
-                self.system.dae.__dict__[dest].ipadd(fun(**kwargs), row, col)
+        for dict_name in jac_set:
+            # constant jacobian elements
+            for row, col, val in zip(self.__dict__[f'_i{dict_name}c'],
+                                     self.__dict__[f'_j{dict_name}c'],
+                                     self.__dict__[f'_v{dict_name}c']):
+                row_name = var_names_list[row]
+                col_name = var_names_list[col]
 
-    def get_sparse_pattern(self):
-        self.ifx = []
-        self.jfx = []
-        self.ify = []
-        self.jfy = []
-        self.igx = []
-        self.jgx = []
-        self.igy = []
-        self.jgy = []
+                row_idx = self.__dict__[row_name].a
+                col_idx = self.__dict__[col_name].a
 
-        for row, col, _ in self._fx + self._fxc:
-            self.ifx.append(row)
-            self.jfx.append(col)
+                self.__dict__[f'i{dict_name}c'].append(row_idx)
+                self.__dict__[f'j{dict_name}c'].append(col_idx)
+                self.__dict__[f'v{dict_name}c'].append(val)
 
-        for row, col, _ in self._fy + self._fyc:
-            self.ify.append(row)
-            self.jfy.append(col)
+            # variable jacobian elements
+            for row, col, val in zip(self.__dict__[f'_i{dict_name}'],
+                                     self.__dict__[f'_j{dict_name}'],
+                                     self.__dict__[f'_v{dict_name}']):
+                row_name = var_names_list[row]
+                col_name = var_names_list[col]
 
-        for row, col, _ in self._gx + self._gxc:
-            self.igx.append(row)
-            self.jgx.append(col)
+                row_idx = self.__dict__[row_name].a
+                col_idx = self.__dict__[col_name].a
 
-        for row, col, _ in self._gy + self._gyc:
-            self.igy.append(row)
-            self.jgy.append(col)
+                self.__dict__[f'i{dict_name}'].append(row_idx)
+                self.__dict__[f'j{dict_name}'].append(col_idx)
+                self.__dict__[f'v{dict_name}'].append(np.zeros(self.n))
 
         # TODO: call get_sparse_pattern for each variable with e_numeric
+
+    def jvcall(self):
+        jac_set = ('fx', 'fy', 'gx', 'gy')
+
+        kwargs = self.get_input()
+        for name in jac_set:
+            fun_list = self.__dict__[f'_v{name}']
+            for idx, fun in enumerate(fun_list):
+                ret = fun(**kwargs)
+                self.__dict__[f'v{name}'][idx] = ret
 
     def eval_limiter(self):
         for instance in self.limiters.values():
