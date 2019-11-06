@@ -32,11 +32,15 @@
 - [x] Define associated equation with each variable (internal of interface)
 - [x] Use SymPy/SynEngine to generate function calls - define the interfaces
 - [x] Use SymEngine to get the derivative for each model; the derivatives may store in a smaller matrix locally to the model
+- [x] Pickle/dill the auto-generated function calls on the first run
+- [x] Function for providing the jacobian triplet
+*   Implement a PV model with the old code
+*   Implement a group for PV and Slack
 *   Define the call sequence for data flow between models and dae/models
-*   Pickle/dill the auto-generated function calls on the first run (set dill recursive to True)
 *   Prototype Connectivity checking, previously implemented as `gyisland`
 *   Initial values, pass initialized values between models, and solve initializer equations
-*   TODO: function for providing the jacobian triplet
+*   Allow semi-implicit method formulation
+*   Allow semi-analytic derivation of equations
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians

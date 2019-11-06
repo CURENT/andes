@@ -34,7 +34,7 @@ class Service(object):
         self.name = name
         self.owner = None
         self.e_symbolic = None
-        self.e_numeric = None
+        self.e_numeric = None  # allow for custom update function
         self.v = None
 
         self.e_lambdify = None

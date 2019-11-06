@@ -127,7 +127,6 @@ class PIController(Block):
             ``xi`` and ``y``, and the values being the corresponding
             instances.
         """
-        # NOTE:
 
         self.xi.e_symbolic = f'ki * ({self.ref.name} - {self.var.name})'
         self.y.e_symbolic = f'kp * ({self.ref.name} - {self.var.name}) + {self.name}_xi'

@@ -2249,6 +2249,50 @@ class ModelBase(object):
     def gycall(self, dae):
         pass
 
+    def get_new_model_format(self):
+        out = ''
+        for key, val in self._data.items():
+            line = ''
+            if key in self._params:
+                line += f'self.{key} = NumParam(default={val}, '
+            else:
+                line += f'self.{key} = DataParam('
+                if val is not None:
+                    line += f'default={val}, '
+
+            if key in self._descr:
+                line += f'info="{self._descr[key]}", '
+            if key in self._mandatory:
+                line += 'mandatory=True, '
+            if key in self._zeros:
+                line += 'non_zero=True, '
+            if key in self._powers:
+                line += 'power=True, '
+            if key in self._voltages:
+                line += 'voltage=True, '
+            if key in self._currents:
+                line += 'current=True, '
+            if key in self._z:
+                line += 'z=True, '
+            if key in self._y:
+                line += 'y=True, '
+            if key in self._r:
+                line += 'r=True, '
+            if key in self._g:
+                line += 'g=True, '
+            if key in self._dcvoltages:
+                line += 'dc_voltage=True, '
+            if key in self._dccurrents:
+                line += 'dc_current=True, '
+            if key in self._times:
+                line += 'is_time=True, '
+
+            line = line[:-2]
+            line += ')\n'
+
+            out += line
+        return out
+
     # def var_store_snapshot(self, variable='all'):
     #     """
     #     Store a snapshot of variable values to self._snapshot.

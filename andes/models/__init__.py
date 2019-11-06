@@ -16,6 +16,7 @@ order = [
 non_jits_new = OrderedDict([
     ('bus', 'BusNew'),
     ('pq', 'PQNew'),
+    ('pv', 'PVNew'),
 ])
 
 

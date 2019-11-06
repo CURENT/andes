@@ -150,29 +150,22 @@ class PQNew(Model, PQData):
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
 
-        self.v_ref = Algeb(info="Voltage reference for PI")
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        self.a.e_symbolic = """u * (p * v_cmp_zi +
-                                    p * v_cmp_zl * (v ** 2 / vmin ** 2) +
-                                    p * v_cmp_zu * (v ** 2 / vmax ** 2))
-                                    """
+        self.a.e_symbolic = "u * (p * v_cmp_zi + \
+                                  p * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  p * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
-        self.v.e_symbolic = """u * (q * v_cmp_zi +
-                                    q * v_cmp_zl * (v ** 2 / vmin ** 2) +
-                                    q * v_cmp_zu * (v ** 2 / vmax ** 2))
-                                    """
+        self.v.e_symbolic = "u * (q * v_cmp_zi + \
+                                  q * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  q * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
-        # TODO: consider configuration parameters
+        # Experimental Zone Below
+        self.v_ref = Algeb(info="Voltage reference for PI")
         self.kp = Service()
-        self.kp.e_symbolic = "1"
         self.ki = Service()
+
+        self.kp.e_symbolic = "1"
         self.ki.e_symbolic = "1"
         self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
                                info='PI controller for voltage')
-
-    @staticmethod
-    def _q_function(u, q, **kwargs):
-        from pprint import pprint
-        pprint(kwargs)
-        return u * q

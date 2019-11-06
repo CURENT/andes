@@ -4,6 +4,10 @@ from cvxopt import matrix, mul
 
 from .base import ModelBase
 from ..utils.math import sort_idx
+from andes.models.base import Model, ModelData  # NOQA
+from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.limiter import Comparer
 
 logger = logging.getLogger(__name__)
 
@@ -226,3 +230,49 @@ class Slack(PV):
         dae.set_jac('Gy0', -self.u, self.a, self.p)
         dae.set_jac('Gy0', self.u, self.p, self.a)
         dae.set_jac('Gy0', 1e-6, self.p, self.p)
+
+
+class PVData(ModelData):
+    def __init__(self):
+        super().__init__()
+        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True)
+        self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True)
+
+        self.bus = DataParam(info="the idx of the installed bus")
+        self.busr = DataParam(info="the idx of remotely controlled bus")
+        self.p0 = NumParam(default=0.0, info="active power set point", power=True)
+        self.q0 = NumParam(default=0.0, info="reactive power set point", power=True)
+
+        self.pmax = NumParam(default=1.0, info="maximum active power output")
+        self.pmin = NumParam(default=0.0, info="minimum active power output")
+        self.qmax = NumParam(default=0.0, info="maximim reactive power output")
+        self.qmin = NumParam(default=0.0, info="minimum reactive power output")
+
+        self.v0 = NumParam(default=1.0, info="voltage set point")
+        self.vmax = NumParam(default=1.4, info="maximum voltage voltage")
+        self.vmin = NumParam(default=0.6, info="minimum allowed voltage")
+        self.ra = NumParam(default=0.01)
+        self.xs = NumParam(default=0.3)
+
+
+class PVNew(Model, PVData):
+    def __init__(self, system=None, name=None):
+        Model.__init__(self, system, name)
+        PVData.__init__(self)
+
+        self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
+        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
+
+        self.p = Algeb(info='actual active power generation', unit='pu')
+        self.q = Algeb(info='actual reactive power generation', unit='pu')
+
+        self.q_cmp = Comparer(var=self.q, lower=self.qmin, upper=self.qmax)
+
+        # injections into nodes have negative values
+        self.a.e_symbolic = "-u * p"
+        self.v.e_symbolic = "-u * q"
+
+        self.p.e_symbolic = "u * (-p + p0)"
+        self.q.e_symbolic = "u * (q_cmp_zi * (v - v0) + \
+                                  q_cmp_zl * (q - qmin) + \
+                                  q_cmp_zu * (q - qmax))"
