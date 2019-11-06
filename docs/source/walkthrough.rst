@@ -16,10 +16,12 @@ Command Line Options
 
 Andes is invoked from the command line using the command ``andes``. It prints
 out a splash screen with version and environment information and exits with a
-"no input" error. ::
+"no input" error. 
 
-    ANDES 0.5.5 (Build gdded710, Python 3.5.2 on Linux)
-    Session: 09/05/2018 02:05:18 PM
+::
+
+    ANDES 0.6.8 (Build 9da49e2b, Python 3.7.3 on Darwin)
+    Session: hcui7, 10/23/2019 10:23:44 AM
 
     error: no input file. Try 'andes -h' for help.
 
@@ -31,25 +33,31 @@ Frequently Used Options
 
 ``casename``
 
-One positional argument, path to the case file, is required for Andes to
+The positional argument, path to the case file, is required for andes to
 populate the power system object and perform studies. The case file, however,
 is omitted if any utility options are specified in the optional arguments.
 
-To perform a power flow study of the file named ``ieee14.dm`` in the current
-directory, run ::
+To perform a power flow study on the file named ``ieee14.dm`` in the current
+directory, run 
+
+.. code:: bash
 
     andes ieee14.dm
 
-Andes also takes the full path to the case file, for example, ::
+Andes also takes the full path to the case file, for example, 
+
+.. code:: bash
 
     andes /home/hcui7/andes/cases/ieee14.dm
 
-Output files will be saved to the current directory where Andes is called.
+Output files will be saved to the current directory where andes is called.
 
 Andes also takes multiple files or wildcard. Multiprocessing will be
 triggered if more than one valid input files are found. For example, to run
 power flow for files with a prefix of ``ieee1`` and a suffix (file extension)
 of ``.dm``, run
+
+.. code:: bash
 
     andes ieee1*.dm
 
@@ -65,7 +73,27 @@ default is this option is not given.
 For example, to run time domain simulation for ``ieee14.dm`` in the current
 directory, run
 
+.. code:: bash
+
     andes ieee14.dm -r tds
+
+``-q, --quick-help``
+
+Print out a quick help of parameter definitions of a single given model. For
+example, ``andes -q Bus`` prints out the parameter definition of the model
+``Bus``.
+
+Parameters with an asterisk ``*`` are mandatory. Parameters with a number
+sign ``#`` are per unit values in the element base.
+
+``-d, --dump-raw``
+
+Export the given case files to the DOME format supported by andes. 
+
+``-v VERBOSE, --verbose VERBOSE``
+
+Program verbosity level. 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
+50 - CRITICAL. For the most debugging output, use ``-v 10``.
 
 ``-C, --clean``
 
@@ -77,15 +105,6 @@ suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
 
 Option to print out all the models in a group. To print out all the groups
 and models they contain, run ``andes -g all``.
-
-``-q, --quick-help``
-
-Print out a quick help of parameter definitions of a single given model. For
-example, ``andes -q Bus`` prints out the parameter definition of the model
-``Bus``.
-
-Parameters with an asterisk ``*`` are mandatory. Parameters with a number
-sign ``#`` are per unit values in the element base.
 
 ``--help-config``
 
@@ -112,22 +131,57 @@ CRITICAL). The default is 20 (INFO). Set to 10 for debugging.
 Plotting Tool
 -------------
 
-Andes comes with a command-line plotting tool for time-domain simulation
-output data.
+Andes comes with a command-line plotting tool, `tdsplot` for time-domain simulation
+output data. 
+
+usage: tdsplot [-h] [--xmin LEFT] [--xmax RIGHT] [--ymax YMAX] [--ymin YMIN]
+               [--checkinit] [-x XLABEL] [-y YLABEL] [-s] [-g] [-d] [-n]
+               [--ytimes YTIMES] [--dpi DPI]
+               datfile x [y [y ...]]
+
+positional arguments:
+  ========              =====================
+  Argument              Description
+  --------              ---------------------
+  datfile               dat file name.
+  x                     x axis variable index
+  y                     y axis variable index
+  ========              =====================
+
+optional arguments:
+  ==========================    ======================================
+  Argument                      Description
+  --------------------------    --------------------------------------
+  -h, --help                    show this help message and exit
+  --xmin LEFT                   x axis minimum value
+  --xmax RIGHT                  x axis maximum value
+  --ymax YMAX                   y axis maximum value
+  --ymin YMIN                   y axis minimum value
+  --checkinit                   check initialization value
+  -x XLABEL, --xlabel XLABEL
+                                manual x-axis text label
+  -y YLABEL, --ylabel YLABEL
+                                y-axis text label
+  -s, --save                    save to file
+  -g, --grid                    grid on
+  -d, --no_latex                disable LaTex formatting
+  -n, --no_show                 do not show the plot window
+  --ytimes YTIMES               y times
+  --dpi DPI                     image resolution in dot per inch (DPI)
+  ==========================    ======================================
 
 Examples
 --------
 
-Power Flow
-----------
+Power Flow Calculation
+----------------------
 
 The example test cases are in the ``cases`` folder of the package.
 
 Run power flow for ``ieee14_syn.dm`` using the command ::
 
-    $ andes ieee14_syn.dm
-    ANDES 0.5.5 (Build g651fdac, Python 3.5.2 on Linux)
-    Session: 09/06/2018 11:02:52 AM
+    ANDES 0.6.8 (Build 9da49e2b, Python 3.7.3 on Darwin)
+    Session: hcui7, 10/23/2019 11:18:32 AM
 
     Parsing input file <ieee14_syn.dm>
     -> Power flow study: NR method, non-flat start
@@ -135,18 +189,23 @@ Run power flow for ``ieee14_syn.dm`` using the command ::
     Iter 2.  max mismatch = 0.2403104
     Iter 3.  max mismatch = 0.0009915
     Iter 4.  max mismatch = 0.0000001
-    Solution converged in 0.0028 second in 4 iterations
-    report written to <ieee14_syn_out.txt> in 0.0014 second.
-    -> Single process finished in 0.1537 second.
+    Solution converged in 0.0027 second in 4 iterations
+    Report saved to <ieee14_syn_out.txt> in 0.0016 second.
+    -> Single process finished in 0.2191 second.
 
 The printed message shows that the power flow uses the Newton Raphson (NR)
 method with non-flat start. The solution process converges in four iterations
-in 0.002 seconds. A report is written to the file <ieee14_syn_out.txt>.
+in 0.002 seconds. The report is written to the file <ieee14_syn_out.txt>.
 
 The power flow report contains four sections: a) system statistics, b) ac bus
 and dc node data, c) ac line data, and d) the initialized values of other
 algebraic variables and state variables.
 
+
+Time Domain Simulation 
+----------------------
+
+The other most used routine of andes is the time domain simulation (TDS). 
 
 Change Run Config
 -----------------
