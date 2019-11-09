@@ -89,16 +89,21 @@ class Block(object):
         """
         return self.vars
 
-    def e_numeric(self, **kwargs):
+    def g_numeric(self, **kwargs):
         """
         Function to customize function calls
         """
         pass
 
-    def store_jacobian(self):
+    def f_numeric(self, **kwargs):
+        """
+        Function to customize differential function calls
+        """
+        pass
+
+    def j_numeric(self):
         """
         This function stores the constant and variable jacobian information.
-
 
         Constant jacobians are stored by indices and values in `ifxc`, `jfxc`
         and `vfxc`. Note that it is the values that gets stored in `vfxc`.
@@ -202,14 +207,16 @@ class PIControllerNumeric(Block):
         self.vars = {self.name + '_xi': self.xi, self.name + '_y': self.y}
         return self.vars
 
-    def e_numeric(self, **kwargs):
-        self.xi.e = self.ki.v * (self.ref.v - self.var.v)
+    def g_numeric(self, **kwargs):
         self.y.e = self.kp.v * (self.ref.v - self.var.v) + self.xi.v
+
+    def f_numeric(self, **kwargs):
+        self.xi.e = self.ki.v * (self.ref.v - self.var.v)
 
     def store_jacobian(self):
         self.j_reset()
 
-        self.ifyc.apend(self.xi.a)
+        self.ifyc.append(self.xi.a)
         self.jfyc.append(self.var.a)
         self.vfyc.append(-self.ki.v)
 

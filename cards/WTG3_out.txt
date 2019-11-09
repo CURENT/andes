@@ -1,0 +1,29 @@
+ANDES 0.6.8.post58.dev0+gff558568
+Copyright (C) 2015-2018 Hantao Cui
+
+ANDES comes with ABSOLUTELY NO WARRANTY
+Use this software AT YOUR OWN RISK
+
+Case file: /Users/hcui7/repos/andes/cards/WTG3.andc
+report Time: 11/06/2019 06:10:59 PM
+
+
+SUMMARY:
+Buses                      0
+Generators                 0
+Committed Gens             0
+Loads                      0
+Shunts                     0
+Lines                      0
+Transformers               0
+Areas                      0
+
+EXTENDED SUMMARY:
+                      P (pu)        Q (pu)
+
+Generation                 0             0
+Load                       0             0
+Shunt Inj                  0             0
+Losses                     0             0
+Line Charging              0             0
+

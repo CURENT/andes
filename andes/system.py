@@ -226,6 +226,11 @@ class SystemNew(object):
         self.dill_calls()
 
     def setup(self):
+        """
+        Set up system for studies
+
+        This function is to be called after all data are added.
+        """
         self.set_address()
         self.finalize_add()
         self.link_external()
