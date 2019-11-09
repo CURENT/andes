@@ -7,8 +7,7 @@ from ..utils.math import sort_idx
 from andes.models.base import Model, ModelData  # NOQA
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer
-
+from andes.core.limiter import Comparer, OrderedLimiter  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -251,8 +250,14 @@ class PVData(ModelData):
         self.v0 = NumParam(default=1.0, info="voltage set point")
         self.vmax = NumParam(default=1.4, info="maximum voltage voltage")
         self.vmin = NumParam(default=0.6, info="minimum allowed voltage")
-        self.ra = NumParam(default=0.01)
-        self.xs = NumParam(default=0.3)
+        self.ra = NumParam(default=0.01, info='armature resistance')
+        self.xs = NumParam(default=0.3, info='armature reactance')
+
+
+class SlackData(PVData):
+    def __init__(self):
+        super().__init__()
+        self.a0 = NumParam(default=0.0, info="reference angle set point")
 
 
 class PVNew(Model, PVData):
@@ -266,13 +271,25 @@ class PVNew(Model, PVData):
         self.p = Algeb(info='actual active power generation', unit='pu')
         self.q = Algeb(info='actual reactive power generation', unit='pu')
 
-        self.q_cmp = Comparer(var=self.q, lower=self.qmin, upper=self.qmax)
+        self.q_lim = OrderedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
+                                    n_select=2)
 
-        # injections into nodes have negative values
+        # injections into buses have negative values
         self.a.e_symbolic = "-u * p"
         self.v.e_symbolic = "-u * q"
 
         self.p.e_symbolic = "u * (-p + p0)"
-        self.q.e_symbolic = "u * (q_cmp_zi * (v - v0) + \
-                                  q_cmp_zl * (q - qmin) + \
-                                  q_cmp_zu * (q - qmax))"
+        self.q.e_symbolic = "u * (q_lim_zi * (v - v0) + \
+                                  q_lim_zl * (q - qmin) + \
+                                  q_lim_zu * (q - qmax))"
+
+
+class SlackNew(PVNew):
+    def __init__(self, system=None, name=None):
+        PVNew.__init__(self, system, name)
+
+        self.p_lim = OrderedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
+
+        self.p.e_symbolic = "u * (p_lim_zi * (a - a0) + \
+                                  p_lim_zl * (p - pmin) + \
+                                  p_lim_zu * (p - pmax))"

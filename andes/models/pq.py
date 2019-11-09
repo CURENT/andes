@@ -13,7 +13,7 @@ from andes.core.limiter import Comparer
 from andes.core.var import ExtAlgeb, Algeb
 from andes.core.param import DataParam, NumParam
 from andes.core.service import Service
-from andes.core.block import PIController
+from andes.core.block import PIController, PIControllerNumeric  # NOQA
 
 
 class PQ(ModelBase):

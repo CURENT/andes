@@ -34,8 +34,6 @@ class VarBase(object):
         local-storage of the corresponding equation value
     e_symbolic : str
         the string/symbolic representation of the equation
-    e_numeric : Callable
-        the callable function to update equation value
     e_lambdify : Callable
         SymPy-generated callable to update equation value;
         not intended to be provided by user
@@ -54,6 +52,7 @@ class VarBase(object):
 
         self.tex_name = tex_name if tex_name else name
         self.owner = None
+        self.id = None
 
         self.n = 0
         self.a: Optional[Union[ndarray, List]] = None
@@ -62,11 +61,6 @@ class VarBase(object):
 
         self.e_symbolic = None
         self.e_lambdify = None
-        self.e_numeric = None
-
-        # TODO: Design the signature of the numerical jacobian function
-        self.j_lambdify = None
-        self.j_numeric = None
 
     def set_address(self, addr):
         """
@@ -81,6 +75,9 @@ class VarBase(object):
         self.n = len(self.a)
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
+
+    def get_name(self):
+        return [self.name]
 
 
 class Algeb(VarBase):

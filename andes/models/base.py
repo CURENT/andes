@@ -124,15 +124,15 @@ class ModelData(object):
 
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
+        self.num_params = OrderedDict()
+        self.n = 0
+        self.idx = []
+
         if not hasattr(self, 'cache'):
             self.cache = Cache()
         self.cache.add_callback('dict', self.as_dict)
         self.cache.add_callback('df', self.as_df)
 
-        self.num_params = OrderedDict()
-
-        self.n = 0
-        self.idx = []
         self.u = NumParam(default=1, info='connection status', unit='bool')
 
     def __setattr__(self, key, value):
@@ -154,7 +154,6 @@ class ModelData(object):
     def add(self, idx=None, **kwargs):
         """
         Add a model element using a set of parameters.
-
 
         Parameters
         ----------
@@ -228,16 +227,6 @@ class ModelCall(object):
         self._igxc, self._jgxc, self._vgxc = list(), list(), list()
         self._igyc, self._jgyc, self._vgyc = list(), list(), list()
 
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-
-        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
-        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
-        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
-        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
-
 
 class Model(object):
     """
@@ -259,6 +248,7 @@ class Model(object):
 
     def __init__(self, system=None, name: str = None):
         self.system = system
+        self.owner = None
 
         # duplicate attributes from ModelData. Keep for now.
         self.n = 0
@@ -279,8 +269,15 @@ class Model(object):
         self.limiters = OrderedDict()
         self.blocks = OrderedDict()
 
+        # sub-models
+        self.sub_models = OrderedDict()
+
         # service/temporary variables
         self.services = OrderedDict()
+
+        # cache callback and lambda function storage
+        self.cache = Cache()
+        self.call = ModelCall()
 
         self.flags = {
             'sysbase': False,
@@ -297,8 +294,18 @@ class Model(object):
         self.f_syms = []
         self.g_syms = []
         self.c_syms = []
-        self.cache = Cache()
-        self.call = ModelCall()
+
+        # ----- ONLY FOR CUSTOM NUMERICAL JACOBIAN FUNCTIONS -----
+        self._ifx, self._jfx, self._vfx = list(), list(), list()
+        self._ify, self._jfy, self._vfy = list(), list(), list()
+        self._igx, self._jgx, self._vgx = list(), list(), list()
+        self._igy, self._jgy, self._vgy = list(), list(), list()
+
+        self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
+        self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
+        self._igxc, self._jgxc, self._vgxc = list(), list(), list()
+        self._igyc, self._jgyc, self._vgyc = list(), list(), list()
+        # -------------------------------------------------------
 
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
@@ -312,9 +319,9 @@ class Model(object):
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
+        self.cache.add_callback('all_vars_names', self._all_vars_names)
         self.cache.add_callback('all_params', self._all_params)
         self.cache.add_callback('all_params_names', self._all_params_names)
-        self.cache.add_callback('algeb_ext_numeric', self._algeb_ext_numeric)
         self.cache.add_callback('algeb_ext_symbolic', self._algeb_ext_symbolic)
         self.cache.add_callback('algeb_ext', self._algeb_ext)
 
@@ -324,6 +331,12 @@ class Model(object):
                            list(self.calcs.items()) +
                            list(self.vars_ext.items())
                            )
+
+    def _all_vars_names(self):
+        out = []
+        for instance in self.cache.all_vars.values():
+            out += instance.get_name()
+        return out
 
     def _all_params(self):
         return OrderedDict(list(self.num_params.items()) +
@@ -346,15 +359,6 @@ class Model(object):
                 out[name] = instance
         return out
 
-    def _algeb_ext_numeric(self):
-        out = OrderedDict()
-        for name, instance in OrderedDict(list(self.algebs.items()) +
-                                          list(self.vars_ext.items())
-                                          ).items():
-            if instance.e_numeric is not None:
-                out[name] = instance
-        return out
-
     def _algeb_ext(self):
         return OrderedDict(list(self.algebs.items()) +
                            list(self.vars_ext.items()))
@@ -368,6 +372,8 @@ class Model(object):
             if key in self.__dict__:
                 logger.warning(f"{self.__class__.__name__}: "
                                f"redefinition of instance member <{key}>")
+        if isinstance(value, VarBase):
+            value.id = len(self._all_vars())
 
         if isinstance(value, Algeb):
             self.algebs[key] = value
@@ -420,7 +426,7 @@ class Model(object):
         for var in self.cache.all_params_names:
             self.input_syms[var] = Symbol(var)
 
-        for var in list(self.cache.all_vars.keys()):
+        for var in self.cache.all_vars_names:
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
 
@@ -526,22 +532,27 @@ class Model(object):
             self.call.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
 
     def _g_numeric(self):
-        # evaluate numerical function calls provided in `Algeb.e_numeric`
+        # evaluate numerical function calls
         kwargs = self.get_input()
-        for instance in self.cache.algeb_ext_numeric.values():
-            # do not use in-place add below for `gcall` re-entrance
-            instance.e = instance.e_numeric(**kwargs)
+
+        # numerical calls defined in the model
+        self.e_numeric(**kwargs)
+
+        for instance in self.blocks.values():
+            # TODO: consider converting argument names
+            instance.e_numeric(**kwargs)
 
     def get_input(self):
         kwargs = OrderedDict()
 
-        # the below should correspond to `self.all_param_syms`
+        # the below sequence should correspond to `self.all_param_names`
         for instance in self.num_params.values():
             kwargs[instance.name] = instance.v
+
         for instance in self.limiters.values():
-            kwargs[instance.name + '_zl'] = instance.zl
-            kwargs[instance.name + '_zi'] = instance.zi
-            kwargs[instance.name + '_zu'] = instance.zu
+            for name, val in zip(instance.get_name(), instance.get_value()):
+                kwargs[name] = val
+
         for instance in self.services.values():
             kwargs[instance.name] = instance.v
 
@@ -568,11 +579,16 @@ class Model(object):
         for idx, instance in enumerate(self.cache.algeb_ext_symbolic.values()):
             instance.e += ret[idx][0]
 
-        # call lambdified functions
-        # for instance in self.cache.algeb_ext_symbolic.values():
-        #     instance.e += np.ravel(instance.e_lambdify(**kwargs))
-
     def store_sparse_pattern(self):
+        """
+
+        Calling sequence:
+        For each jacobian name, `fx`, `fy`, `gx` and `gy`,
+        store by
+        a) generated constant and variable jacobians
+        c) user-provided constant and variable jacobians,
+        d) user-provided block constant and variable jacobians
+        """
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
         self.igx, self.jgx, self.vgx = list(), list(), list()
@@ -583,54 +599,101 @@ class Model(object):
         self.igxc, self.jgxc, self.vgxc = list(), list(), list()
         self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
+        # store block jacobians
+        for instance in self.blocks.values():
+            instance.store_jacobian()
+
         jac_set = ('fx', 'fy', 'gx', 'gy')
+        jac_type = ('c', '')
         var_names_list = list(self.cache.all_vars.keys())
 
         for dict_name in jac_set:
-            # constant jacobian elements
-            for row, col, val in zip(self.call.__dict__[f'_i{dict_name}c'],
-                                     self.call.__dict__[f'_j{dict_name}c'],
-                                     self.call.__dict__[f'_v{dict_name}c']):
-                row_name = var_names_list[row]
-                col_name = var_names_list[col]
+            for j_type in jac_type:
+                # generated lambda functions
+                for row, col, val in zip(self.call.__dict__[f'_i{dict_name}{j_type}'],
+                                         self.call.__dict__[f'_j{dict_name}{j_type}'],
+                                         self.call.__dict__[f'_v{dict_name}{j_type}']):
+                    row_name = var_names_list[row]
+                    col_name = var_names_list[col]
 
-                row_idx = self.__dict__[row_name].a
-                col_idx = self.__dict__[col_name].a
+                    row_idx = self.__dict__[row_name].a
+                    col_idx = self.__dict__[col_name].a
 
-                self.__dict__[f'i{dict_name}c'].append(row_idx)
-                self.__dict__[f'j{dict_name}c'].append(col_idx)
-                self.__dict__[f'v{dict_name}c'].append(val)
+                    self.__dict__[f'i{dict_name}{j_type}'].append(row_idx)
+                    self.__dict__[f'j{dict_name}{j_type}'].append(col_idx)
+                    if jac_type == 'c':
+                        self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                    else:
+                        self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
 
-            # variable jacobian elements
-            for row, col, val in zip(self.call.__dict__[f'_i{dict_name}'],
-                                     self.call.__dict__[f'_j{dict_name}'],
-                                     self.call.__dict__[f'_v{dict_name}']):
-                row_name = var_names_list[row]
-                col_name = var_names_list[col]
+                # user-provided numerical jacobians
+                for row, col, val in zip(self.__dict__[f'_i{dict_name}{j_type}'],
+                                         self.__dict__[f'_j{dict_name}{j_type}'],
+                                         self.__dict__[f'_v{dict_name}{j_type}']):
 
-                row_idx = self.__dict__[row_name].a
-                col_idx = self.__dict__[col_name].a
+                    self.__dict__[f'i{dict_name}{j_type}'].append(row)
+                    self.__dict__[f'j{dict_name}{j_type}'].append(col)
 
-                self.__dict__[f'i{dict_name}'].append(row_idx)
-                self.__dict__[f'j{dict_name}'].append(col_idx)
-                self.__dict__[f'v{dict_name}'].append(np.zeros(self.n))
+                    if jac_type == 'c':
+                        self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                    else:
+                        self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
 
-        # TODO: call get_sparse_pattern for each variable with e_numeric
+                # user-provided numerical jacobians in blocks
+                for instance in list(self.blocks.values()):
+                    for row, col, val in zip(instance.__dict__[f'i{dict_name}{j_type}'],
+                                             instance.__dict__[f'j{dict_name}{j_type}'],
+                                             instance.__dict__[f'v{dict_name}{j_type}']):
+                        self.__dict__[f'i{dict_name}{j_type}'].append(row)
+                        self.__dict__[f'j{dict_name}{j_type}'].append(col)
+
+                        if jac_type == 'c':
+                            self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                        else:
+                            self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
 
     def jvcall(self):
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
         kwargs = self.get_input()
         for name in jac_set:
+            idx = 0
+
+            # generated lambda jacobian functions first
             fun_list = self.call.__dict__[f'_v{name}']
-            for idx, fun in enumerate(fun_list):
-                ret = fun(**kwargs)
-                self.__dict__[f'v{name}'][idx] = ret
+            for fun in fun_list:
+                self.__dict__[f'v{name}'][idx] = fun(**kwargs)
+                idx += 1
+
+            # call numerical jacobians for self
+            for fun in self.__dict__[f'_v{name}']:
+                self.__dict__[f'v{name}'][idx] = fun()
+                idx += 1
+
+            # call jacobian functions for blocks
+            for instance in self.blocks.values():
+                for fun in instance.__dict__[f'v{name}']:
+                    self.__dict__[f'v{name}'][idx] = fun()
+                    idx += 1
+
+    def j_numeric(self):
+        """
+        Custom numeric update functions.
+
+        This function should append indices to `_ifx`, `_jfx`, and `_vfx`
+        """
+        pass
+
+    def e_numeric(self, **kwargs):
+        """
+        Custom gcall and fcall functions. Modify equations directly
+        """
+        pass
 
     def eval_limiter(self):
         for instance in self.limiters.values():
             instance.eval()
-            instance.set_limit()
+            instance.set_value()
 
     def eval_service(self):
         kwargs = self.get_input()

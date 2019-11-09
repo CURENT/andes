@@ -229,8 +229,8 @@ class SystemNew(object):
         self.set_address()
         self.finalize_add()
         self.link_external()
-        self.store_sparse_pattern()
         self.eval_service()
+        self.store_sparse_pattern()
 
 
 class PowerSystem(object):

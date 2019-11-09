@@ -11,6 +11,14 @@ class Block(object):
     provide `get_name` method and `export_vars` method. Subclasses
     must overload the `__init__` method to take custom inputs.
 
+
+    TODO: consider letting Block inherit Model so that all service
+    and nonlinear models can be captured by the parent class.
+
+    Warnings
+    --------
+    This class may be significantly modified soon.
+
     Parameters
     ----------
     info : str, optional
@@ -22,6 +30,27 @@ class Block(object):
         self.owner = None
         self.info = info
         self.vars = {}
+
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
+
+        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
+        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
+        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
+        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
+
+    def j_reset(self):
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
+
+        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
+        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
+        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
+        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
     def get_name(self):
         """
@@ -60,6 +89,25 @@ class Block(object):
         """
         return self.vars
 
+    def e_numeric(self, **kwargs):
+        """
+        Function to customize function calls
+        """
+        pass
+
+    def store_jacobian(self):
+        """
+        This function stores the constant and variable jacobian information.
+
+
+        Constant jacobians are stored by indices and values in `ifxc`, `jfxc`
+        and `vfxc`. Note that it is the values that gets stored in `vfxc`.
+        Variable jacobians are stored by indices and functions. The function
+        shall return the value of the corresponding jacobian elements.
+
+        """
+        pass
+
 
 class SampleAndHolder(Block):
     """
@@ -96,8 +144,8 @@ class PIController(Block):
         self.kp = kp
         self.ki = ki
 
-        self.xi = State(info="integration value of PI controller", block=True)
-        self.y = Algeb(info="integration value of PI controller", block=True)
+        self.xi = State(info="Integration value of PI controller", block=True)
+        self.y = Algeb(info="Integration value of PI controller", block=True)
 
     def export_vars(self):
         r"""
@@ -133,3 +181,42 @@ class PIController(Block):
 
         self.vars = {self.name + '_xi': self.xi, self.name + '_y': self.y}
         return self.vars
+
+
+# TODO: what if a PI controller has a limiter? How can it be exported?
+
+class PIControllerNumeric(Block):
+
+    def __init__(self, var, ref, kp, ki, **kwargs):
+        super().__init__(**kwargs)
+
+        self.var = var
+        self.ref = ref
+        self.kp = kp
+        self.ki = ki
+
+        self.xi = State(info="Integration value of PI controller", block=True)
+        self.y = Algeb(info="Integration value of PI controller", block=True)
+
+    def export_vars(self):
+        self.vars = {self.name + '_xi': self.xi, self.name + '_y': self.y}
+        return self.vars
+
+    def e_numeric(self, **kwargs):
+        self.xi.e = self.ki.v * (self.ref.v - self.var.v)
+        self.y.e = self.kp.v * (self.ref.v - self.var.v) + self.xi.v
+
+    def store_jacobian(self):
+        self.j_reset()
+
+        self.ifyc.apend(self.xi.a)
+        self.jfyc.append(self.var.a)
+        self.vfyc.append(-self.ki.v)
+
+        self.igyc.append(self.y.a)
+        self.jgyc.append(self.var.v)
+        self.vgyc.append(-self.kp.v)
+
+        self.igxc.append(self.y.a)
+        self.jgxc.append(self.xi.a)
+        self.vgxc.append(1)
