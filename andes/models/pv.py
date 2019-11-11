@@ -260,19 +260,25 @@ class SlackData(PVData):
         self.a0 = NumParam(default=0.0, info="reference angle set point")
 
 
-class PVNew(Model, PVData):
+class PVModel(Model):
     def __init__(self, system=None, name=None):
-        Model.__init__(self, system, name)
-        PVData.__init__(self)
+        super().__init__(system, name)
+
+        self.flags['pflow'] = True
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
-        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
+        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, setter=True)
 
         self.p = Algeb(info='actual active power generation', unit='pu')
         self.q = Algeb(info='actual reactive power generation', unit='pu')
 
         self.q_lim = OrderedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
                                     n_select=2)
+
+        # initialization equations
+        self.v.v_init = 'v0'
+        self.p.v_init = 'p0'
+        self.q.v_init = 'q0'
 
         # injections into buses have negative values
         self.a.e_symbolic = "-u * p"
@@ -284,9 +290,18 @@ class PVNew(Model, PVData):
                                   q_lim_zu * (q - qmax))"
 
 
-class SlackNew(PVNew):
+class PVNew(PVData, PVModel):
     def __init__(self, system=None, name=None):
-        PVNew.__init__(self, system, name)
+        PVData.__init__(self)
+        PVModel.__init__(self, system, name)
+
+
+class SlackNew(SlackData, PVModel):
+    def __init__(self, system=None, name=None):
+        SlackData.__init__(self)
+        PVModel.__init__(self, system, name)
+
+        self.a.v_init = 'a0'
 
         self.p_lim = OrderedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
 

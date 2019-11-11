@@ -23,6 +23,28 @@ class DAENew(object):
         self.f = None
         self.g = None
 
+        self.fx = None
+        self.fy = None
+        self.gx = None
+        self.gy = None
+        self.tx = None
+        self.rx = None
+
+    def reset_array(self):
+        self.x = np.zeros(self.n)
+        self.y = np.zeros(self.m)
+        self.f = np.zeros(self.n)
+        self.g = np.zeros(self.m)
+
+    def get_size(self, name):
+        ret = []
+        for char in name:
+            if char in ('f', 'x'):
+                ret.append(self.n)
+            elif char in ('g', 'y'):
+                ret.append(self.m)
+        return tuple(ret)
+
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (dae)"""

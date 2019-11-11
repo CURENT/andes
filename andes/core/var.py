@@ -43,6 +43,7 @@ class VarBase(object):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
+                 setter: Optional[bool] = False,
                  **kwargs
                  ):
 
@@ -58,6 +59,9 @@ class VarBase(object):
         self.a: Optional[Union[ndarray, List]] = None
         self.v: Optional[ndarray] = None
         self.e: Optional[ndarray] = None
+
+        self.v_init = None
+        self.v_setter = setter
 
         self.e_symbolic = None
         self.e_lambdify = None
@@ -193,19 +197,22 @@ class ExtVar(VarBase):
         """
         self.parent_model = ext_model
         self.parent_instance = ext_model.__dict__[self.src]
-        self.uid = ext_model.idx2uid(self.indexer.v)
 
-        n_indexer = len(self.indexer.v)
-        if n_indexer == 0:
-            return
+        if self.indexer is not None:
+            self.uid = ext_model.idx2uid(self.indexer.v)
+        else:
+            self.uid = np.arange(ext_model.n, dtype=int)
 
-        # pull in values
-        self.a = self.parent_instance.a[self.uid]
-        self.n = len(self.a)
+        self.n = len(self.uid)
 
         # set initial v and e values to zero
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
+
+        if self.n != 0:
+            self.a = self.parent_instance.a[self.uid]
+        else:
+            self.a = np.array([])
 
 
 class ExtState(ExtVar):

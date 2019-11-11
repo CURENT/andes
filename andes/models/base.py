@@ -215,6 +215,7 @@ class ModelCall(object):
         self.g_lambdify = None
         self.f_lambdify = None
         self.c_lambdify = None
+        self.init_lambdify = None
         self.service_lambdify = None
 
         self._ifx, self._jfx, self._vfx = list(), list(), list()
@@ -248,13 +249,15 @@ class Model(object):
 
     def __init__(self, system=None, name: str = None):
         self.system = system
-        self.owner = None
 
         # duplicate attributes from ModelData. Keep for now.
         self.n = 0
         self.idx = []
+
         if not hasattr(self, 'num_params'):
             self.num_params = OrderedDict()
+        if not hasattr(self, 'cache'):
+            self.cache = Cache()
 
         # variables
         self.states = OrderedDict()
@@ -276,11 +279,12 @@ class Model(object):
         self.services = OrderedDict()
 
         # cache callback and lambda function storage
-        self.cache = Cache()
         self.call = ModelCall()
 
         self.flags = {
-            'sysbase': False,
+            'pflow': False,
+            'tds': False,
+            'sys_base': False,
             'address': False,
         }
 
@@ -324,7 +328,6 @@ class Model(object):
         self.cache.add_callback('all_params_names', self._all_params_names)
         self.cache.add_callback('all_consts', self._all_consts)
         self.cache.add_callback('all_consts_names', self._all_consts_names)
-        self.cache.add_callback('algeb_ext_symbolic', self._algeb_ext_symbolic)
         self.cache.add_callback('algeb_ext', self._algeb_ext)
 
     def _all_vars(self):
@@ -362,15 +365,6 @@ class Model(object):
         out = []
         for instance in self.cache.all_params.values():
             out += instance.get_name()
-        return out
-
-    def _algeb_ext_symbolic(self):
-        out = OrderedDict()
-        for name, instance in OrderedDict(list(self.algebs.items()) +
-                                          list(self.vars_ext.items())
-                                          ).items():
-            if instance.e_symbolic is not None:
-                out[name] = instance
         return out
 
     def _algeb_ext(self):
@@ -455,19 +449,40 @@ class Model(object):
             instance.set_value()
 
     def eval_service(self):
-        kwargs = self.get_input()
-
-        if self.call.service_lambdify is not None:
-            ret = self.call.service_lambdify(**kwargs)
-            for idx, instance in enumerate(self.services.values()):
-                instance.v = ret[idx][0]
 
         for idx, instance in enumerate(self.services.values()):
-            instance.v = ret[idx][0]
             if instance.e_numeric is not None:
-                instance.v += instance.e_numeric(**kwargs)
+                kwargs = self.get_input()
+                instance.v = instance.e_numeric(**kwargs)
 
-    def convert_equations(self):
+        if self.call.service_lambdify is not None and len(self.call.service_lambdify):
+            for idx, instance in enumerate(self.services.values()):
+                if callable(self.call.service_lambdify[idx]):
+                    kwargs = self.get_input()
+                    instance.v = self.call.service_lambdify[idx](**kwargs)
+                else:
+                    instance.v = self.call.service_lambdify[idx]
+
+    def generate_initializer(self):
+        """
+        Generate lambda functions for initial values
+        """
+        from sympy import Matrix, sympify, lambdify
+        syms_list = list(self.input_syms)
+
+        self.init_syms = []
+        self.init_syms_matrix = []
+        for instance in self.cache.all_vars.values():
+            if instance.v_init is None:
+                self.init_syms.append(0)
+            else:
+                sympified = sympify(instance.v_init, locals=self.input_syms)
+                self.init_syms.append(sympified)
+
+        self.init_syms_matrix = Matrix(self.init_syms)
+        self.call.init_lambdify = lambdify(syms_list, self.init_syms_matrix, 'numpy')
+
+    def generate_equations(self):
         logger.debug(f'Converting equations for {self.__class__.__name__}')
         from sympy import Symbol, Matrix, sympify, lambdify
 
@@ -503,18 +518,19 @@ class Model(object):
         self.call.c_lambdify = lambdify(syms_list, self.c_syms_matrix, 'numpy')
 
         # convert service equations
+        # Note: service equations are converted one by one, because service variables
+        # can be interdependent
         service_eq_list = []
         for instance in self.services.values():
             if instance.e_symbolic is not None:
                 sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
-                service_eq_list.append(sympified_equation)
+                service_eq_list.append(lambdify(syms_list, sympified_equation, 'numpy'))
             else:
                 service_eq_list.append(0)
 
-            service_eq_matrix = Matrix(service_eq_list)
-            self.call.service_lambdify = lambdify(syms_list, service_eq_matrix, 'numpy')
+            self.call.service_lambdify = service_eq_list
 
-    def convert_jacobians(self):
+    def generate_jacobians(self):
         logger.debug(f'Converting Jacobians for {self.__class__.__name__}')
         from sympy import SparseMatrix, lambdify, Matrix
 
@@ -561,15 +577,18 @@ class Model(object):
                 eqn = self.cache.all_vars[eq_name]
                 var = self.cache.all_vars[var_name]
 
-                if e_symbolic.is_constant():
-                    jac_name = f'{eqn.e_code}{var.v_code}c'
+                # FIXME: this line takes excessively long to run
+                # if e_symbolic.is_constant():
+                #     jac_name = f'{eqn.e_code}{var.v_code}c'
+
+                # -----------------------------------------------------------------
                 # ------ Constant parameters are not known at generation time -----
                 # elif len(e_symbolic.atoms(Symbol)) == 1 and \
                 #         str(list(e_symbolic.atoms(Symbol))[0]) in self.cache.all_consts_names:
                 #     jac_name = f'{eqn.e_code}{var.v_code}c'
                 # -----------------------------------------------------------------
-                else:
-                    jac_name = f'{eqn.e_code}{var.v_code}'
+                # else:
+                jac_name = f'{eqn.e_code}{var.v_code}'
 
                 self.call.__dict__[f'_i{jac_name}'].append(e_idx)
                 self.call.__dict__[f'_j{jac_name}'].append(v_idx)
@@ -585,6 +604,7 @@ class Model(object):
         c) user-provided constant and variable jacobians,
         d) user-provided block constant and variable jacobians
         """
+
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
         self.igx, self.jgx, self.vgx = list(), list(), list()
@@ -594,6 +614,9 @@ class Model(object):
         self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
         self.igxc, self.jgxc, self.vgxc = list(), list(), list()
         self.igyc, self.jgyc, self.vgyc = list(), list(), list()
+
+        if not self.flags['address']:
+            return
 
         self.j_numeric()
         # store block jacobians to block instances
@@ -649,7 +672,43 @@ class Model(object):
                         else:
                             self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
 
-    def gcall(self):
+    def initializer(self):
+        if self.n == 0:
+            return
+
+        kwargs = self.get_input()
+
+        ret = self.call.init_lambdify(**kwargs)
+        for idx, instance in enumerate(self.cache.all_vars.values()):
+            instance.v += ret[idx][0]
+
+        # call custom variable initializer
+        self.v_numeric(**kwargs)
+
+    def f_update(self):
+        if self.n == 0:
+            return
+
+        self.eval_limiter()
+
+        # update equations for algebraic variables supplied with `g_numeric`
+        # evaluate numerical function calls
+        kwargs = self.get_input()
+
+        # numerical calls defined in the model
+        self.f_numeric(**kwargs)
+
+        # numerical calls in blocks
+        for instance in self.blocks.values():
+            instance.f_numeric(**kwargs)
+
+        # call lambdified functions with use self.call
+        ret = self.call.f_lambdify(**kwargs)
+
+        for idx, instance in enumerate(self.states.values()):
+            instance.e += ret[idx][0]
+
+    def g_update(self):
         if self.n == 0:
             return
 
@@ -669,10 +728,10 @@ class Model(object):
         # call lambdified functions with use self.call
         ret = self.call.g_lambdify(**kwargs)
 
-        for idx, instance in enumerate(self.cache.algeb_ext_symbolic.values()):
+        for idx, instance in enumerate(self.cache.algeb_ext.values()):
             instance.e += ret[idx][0]
 
-    def jvcall(self):
+    def j_update(self):
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
         kwargs = self.get_input()
@@ -696,6 +755,12 @@ class Model(object):
                     self.__dict__[f'v{name}'][idx] = fun()
                     idx += 1
 
+    def v_numeric(self, **kwargs):
+        """
+        Custom variable initialization function
+        """
+        pass
+
     def g_numeric(self, **kwargs):
         """
         Custom gcall functions. Modify equations directly
@@ -708,11 +773,12 @@ class Model(object):
         """
         pass
 
-    def j_numeric(self):
+    def j_numeric(self, **kwargs):
         """
-        Custom numeric update functions. This function should only be called once.
+        Custom numeric update functions.
 
-        This function should append indices to `_ifx`, `_jfx`, and `_vfx`
+        This function should append indices to `_ifx`, `_jfx`, and `_vfx`.
+        It is only called once in `store_sparse_pattern`.
 
         Example
         -------

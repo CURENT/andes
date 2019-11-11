@@ -18,8 +18,8 @@ class TestSystem(unittest.TestCase):
         self.ss.set_address()
         self.ss.finalize_add()
         self.ss.link_external()
-        self.ss.PQNew.convert_equations()
-        self.ss.PQNew.convert_jacobians()
+        self.ss.PQNew.generate_equations()
+        self.ss.PQNew.generate_jacobians()
 
     def test_names(self):
         self.assertEqual(self.ss.BusNew.n, self.n_bus)

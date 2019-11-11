@@ -5,6 +5,10 @@ from scipy.sparse import coo_matrix
 from .base import ModelBase
 from ..consts import Gy  # NOQA
 
+from andes.models.base import ModelData, Model  # NOQA
+from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb  # NOQA
+
 
 class Shunt(ModelBase):
     """Static shunt device"""
@@ -86,3 +90,29 @@ class Shunt(ModelBase):
 
         dae.add_jac(Gy, dPdV, self.a, self.v)
         dae.add_jac(Gy, dQdV, self.v, self.v)
+
+
+class ShuntData(ModelData):
+
+    def __init__(self, system=None, name=None):
+        super().__init__(system, name)
+
+        self.bus = DataParam(info="idx of connected bus")
+        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True)
+        self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True)
+        self.g = NumParam(default=0, info="shunt conductance (real part)", y=True)
+        self.b = NumParam(default=0, info="shunt susceptance (positive as capatance)", y=True)
+        self.fn = NumParam(default=60.0, info="rated frequency")
+
+
+class ShuntNew(ShuntData, Model):
+    def __init__(self, system=None, name=None):
+        ShuntData.__init__(self)
+        Model.__init__(self, system, name)
+        self.flags['pflow'] = True
+
+        self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
+        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
+
+        self.a.e_symbolic = 'v**2 * g'
+        self.v.e_symbolic = '-v**2 * b'

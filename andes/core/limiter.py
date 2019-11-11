@@ -57,9 +57,9 @@ class Limiter(object):
         self.var = var
         self.lower = lower
         self.upper = upper
-        self.zu = None
-        self.zl = None
-        self.zi = None
+        self.zu = np.array([])
+        self.zl = np.array([])
+        self.zi = np.array([])
 
     def eval(self):
         """

@@ -10,9 +10,9 @@ from ..utils.math import zeros, ones
 
 from .base import Model, ModelData
 from andes.core.limiter import Comparer
-from andes.core.var import ExtAlgeb, Algeb
+from andes.core.var import ExtAlgeb, Algeb  # NOQA
 from andes.core.param import DataParam, NumParam
-from andes.core.service import Service
+from andes.core.service import Service  # Noqa
 from andes.core.block import PIController, PIControllerNumeric  # NOQA
 
 
@@ -134,38 +134,39 @@ class PQData(ModelData):
         self.bus = DataParam(info="linked bus idx", mandatory=True)
         self.owner = DataParam(info="owner idx")
 
-        self.p = NumParam(default=0, info='active power load', power=True)
-        self.q = NumParam(default=0, info='reactive power load', power=True)
+        self.p0 = NumParam(default=0, info='active power load', power=True)
+        self.q0 = NumParam(default=0, info='reactive power load', power=True)
         self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance')
         self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance')
 
 
-class PQNew(Model, PQData):
+class PQNew(PQData, Model):
     def __init__(self, system=None, name=None):
-        Model.__init__(self, system, name)
         PQData.__init__(self)
+        Model.__init__(self, system, name)
 
         # TODO: Take a configuration to disable switching to impedance
+        self.flags['pflow'] = True
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus)
 
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        self.a.e_symbolic = "u * (p * v_cmp_zi + \
-                                  p * v_cmp_zl * (v ** 2 / vmin ** 2) + \
-                                  p * v_cmp_zu * (v ** 2 / vmax ** 2))"
+        self.a.e_symbolic = "u * (p0 * v_cmp_zi + \
+                                  p0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  p0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
-        self.v.e_symbolic = "u * (q * v_cmp_zi + \
-                                  q * v_cmp_zl * (v ** 2 / vmin ** 2) + \
-                                  q * v_cmp_zu * (v ** 2 / vmax ** 2))"
+        self.v.e_symbolic = "u * (q0 * v_cmp_zi + \
+                                  q0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  q0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
         # Experimental Zone Below
-        self.v_ref = Algeb(info="Voltage reference for PI")
-        self.kp = Service()
-        self.ki = Service()
+        # self.v_ref = Algeb(info="Voltage reference for PI")
+        # self.kp = Service()
+        # self.ki = Service()
 
-        self.kp.e_symbolic = "1"
-        self.ki.e_symbolic = "1"
-        self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
-                               info='PI controller for voltage')
+        # self.kp.e_symbolic = "1"
+        # self.ki.e_symbolic = "1"
+        # self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
+        #                        info='PI controller for voltage')

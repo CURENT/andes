@@ -138,6 +138,7 @@ class BusData(ModelData):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.Vn = NumParam(default=110, info="AC voltage rating", unit='kV', non_zero=True)
         self.angle = NumParam(default=0, info="initial voltage phase angle", unit='rad')
 
@@ -164,6 +165,11 @@ class BusNew(Model, BusData):
         BusData.__init__(self)
 
         self.config['group_by'] = 'variable'
+        self.flags['pflow'] = True
 
         self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')
         self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')
+
+        # optional initial values
+        self.a.v_init = 'angle'
+        self.v.v_init = 'voltage'
