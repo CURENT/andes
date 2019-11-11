@@ -267,7 +267,7 @@ class PVModel(Model):
         self.flags['pflow'] = True
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
-        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, setter=True)
+        self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, v_setter=True)
 
         self.p = Algeb(info='actual active power generation', unit='pu')
         self.q = Algeb(info='actual reactive power generation', unit='pu')

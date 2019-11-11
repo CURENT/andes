@@ -167,8 +167,11 @@ class SystemNew(object):
 
             mdl.flags['address'] = True
 
-    def add(self, model, **kwargs):
-        self.__dict__[model].add(**kwargs)
+    def add(self, model, param_dict=None, **kwargs):
+        if param_dict is not None:
+            self.__dict__[model].add(**param_dict)
+        else:
+            self.__dict__[model].add(**kwargs)
 
     def finalize_add(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('finalize_add', model)
@@ -186,26 +189,78 @@ class SystemNew(object):
         self._call_model_method('eval_service', model)
 
     def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
+        self.dae.reset_array()
+        self.send_vars_to_models()
+
         if is_tds is False:
             self._call_model_with_flag('initializer', model, 'pflow', True)
         else:
             self._call_model_with_flag('initializer', model, 'tds', True)
 
+        # from variables to dae variables
+        for var in self.x_adders:
+            np.add.at(self.dae.x, var.a, var.v)
+        for var in self.x_setters:
+            np.put(self.dae.x, var.a, var.v)
+
+        for var in self.y_adders:
+            np.add.at(self.dae.y, var.a, var.v)
+        for var in self.y_setters:
+            np.put(self.dae.y, var.a, var.v)
+
+        # send vars to all models
+        self.send_vars_to_models()
+        return np.hstack((self.dae.x, self.dae.y))
+
+    def send_vars_to_models(self):
+        for var in self.y_adders + self.y_setters:
+            var.v = self.dae.y[var.a]
+
+        for var in self.x_adders + self.x_setters:
+            var.v = self.dae.x[var.a]
+
+    def store_adder_setter(self):
+
+        self.f_adders = []
+        self.g_adders = []
+        self.f_setters = []
+        self.g_setters = []
+
+        self.x_setters = []
+        self.y_setters = []
+        self.x_adders = []
+        self.y_adders = []
+
+        for mdl in self.models.values():
+            for var in mdl.cache.all_vars.values():
+                if var.has_address:
+                    if var.e_setter is False:
+                        self.__dict__[f'{var.e_code}_adders'].append(var)
+                    else:
+                        self.__dict__[f'{var.e_code}_setters'].append(var)
+
+                    if var.v_setter is False:
+                        self.__dict__[f'{var.v_code}_adders'].append(var)
+                    else:
+                        self.__dict__[f'{var.v_code}_setters'].append(var)
+
     def f_update(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('f_update', model)
-        for mdl in self.models.values():
-            for var in mdl.states.values():
-                if var.a is not None and len(var.a) > 0:
-                    np.add.at(self.dae.f, var.a, var.e)
 
-        return self.dae.g
+        for var in self.f_adders:
+            np.add.at(self.dae.f, var.a, var.e)
+        for var in self.f_setters:
+            np.put(self.dae.f, var.a, var.e)
+
+        return self.dae.f
 
     def g_update(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('g_update', model)
-        for mdl in self.models.values():
-            for var in mdl.cache.algeb_ext.values():
-                if var.a is not None and len(var.a) > 0:
-                    np.add.at(self.dae.g, var.a, var.e)
+
+        for var in self.g_adders:
+            np.add.at(self.dae.g, var.a, var.e)
+        for var in self.g_setters:
+            np.put(self.dae.g, var.a, var.e)
 
         return self.dae.g
 
@@ -317,6 +372,7 @@ class SystemNew(object):
         self.link_external()
         self.eval_service()
         self.store_sparse_pattern()
+        self.store_adder_setter()
         self.dae.reset_array()
 
 

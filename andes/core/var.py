@@ -43,7 +43,8 @@ class VarBase(object):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 setter: Optional[bool] = False,
+                 v_setter: Optional[bool] = False,
+                 e_setter: Optional[bool] = False,
                  **kwargs
                  ):
 
@@ -61,7 +62,8 @@ class VarBase(object):
         self.e: Optional[ndarray] = None
 
         self.v_init = None
-        self.v_setter = setter
+        self.v_setter = v_setter
+        self.e_setter = e_setter
 
         self.e_symbolic = None
         self.e_lambdify = None
@@ -82,6 +84,10 @@ class VarBase(object):
 
     def get_name(self):
         return [self.name]
+
+    @property
+    def has_address(self):
+        return self.a is not None and len(self.a) > 0
 
 
 class Algeb(VarBase):

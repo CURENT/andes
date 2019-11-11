@@ -216,9 +216,11 @@ class NumParam(ParamBase):
                 sys.exit(1)
             else:
                 value = self.default
+        elif isinstance(value, str):
+            value = float(value)
 
         # check for non-zero
-        if value == 0 and self.get_property('non_zero'):
+        if value == 0. and self.get_property('non_zero'):
             logger.warning(f'Parameter {self.name} must be non-zero')
             value = self.default
 

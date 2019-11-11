@@ -25,7 +25,7 @@ import sys
 
 import numpy as np
 from andes.core.limiter import Limiter
-from andes.core.param import ParamBase, NumParam, ExtParam
+from andes.core.param import ParamBase, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb
 from andes.core.block import Block
 from andes.core.service import Service
@@ -134,6 +134,7 @@ class ModelData(object):
         self.cache.add_callback('df', self.as_df)
 
         self.u = NumParam(default=1, info='connection status', unit='bool')
+        self.name = DataParam(info='element name')
 
     def __setattr__(self, key, value):
         if isinstance(value, ParamBase):
@@ -578,8 +579,10 @@ class Model(object):
                 var = self.cache.all_vars[var_name]
 
                 # FIXME: this line takes excessively long to run
-                # if e_symbolic.is_constant():
-                #     jac_name = f'{eqn.e_code}{var.v_code}c'
+                # it will work with is_number, but needs some refactor with the value
+                if e_symbolic.is_constant():
+                    jac_name = f'{eqn.e_code}{var.v_code}c'
+                    print('found number')
 
                 # -----------------------------------------------------------------
                 # ------ Constant parameters are not known at generation time -----
@@ -587,8 +590,8 @@ class Model(object):
                 #         str(list(e_symbolic.atoms(Symbol))[0]) in self.cache.all_consts_names:
                 #     jac_name = f'{eqn.e_code}{var.v_code}c'
                 # -----------------------------------------------------------------
-                # else:
-                jac_name = f'{eqn.e_code}{var.v_code}'
+                else:
+                    jac_name = f'{eqn.e_code}{var.v_code}'
 
                 self.call.__dict__[f'_i{jac_name}'].append(e_idx)
                 self.call.__dict__[f'_j{jac_name}'].append(v_idx)
