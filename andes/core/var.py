@@ -68,6 +68,9 @@ class VarBase(object):
         self.e_symbolic = None
         self.e_lambdify = None
 
+    def __repr__(self):
+        return f'{self.owner.__class__.__name__}.{self.name} ({self.__class__.__name__})'
+
     def set_address(self, addr):
         """
         Set the address of this variables

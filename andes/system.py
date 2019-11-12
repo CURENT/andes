@@ -227,6 +227,8 @@ class SystemNew(object):
 
     def eval_limiter(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('eval_limiter', model)
+        self.send_vars_to_dae()
+        self.send_vars_to_models()
 
     def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
         self.dae.reset_array()
@@ -245,11 +247,17 @@ class SystemNew(object):
         self.dae.reset_xy()
         # from variables to dae variables
         for var in self.x_adders:
+            if var.v_init is None:
+                continue
             np.add.at(self.dae.x, var.a, var.v)
         for var in self.x_setters:
             np.put(self.dae.x, var.a, var.v)
 
+        # NOTE:
+        # Need to skip vars that are not initializers for re-entrance
         for var in self.y_adders:
+            if var.v_init is None:
+                continue
             np.add.at(self.dae.y, var.a, var.v)
         for var in self.y_setters:
             np.put(self.dae.y, var.a, var.v)

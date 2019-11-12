@@ -36,6 +36,7 @@ class ParamBase(object):
         self.n = 0
         self.v = []
         self.property = dict(mandatory=mandatory)
+        self._is_array = False
 
     def add(self, value=None):
         """
@@ -55,7 +56,11 @@ class ParamBase(object):
         if value is None:
             value = self.default
 
-        self.v.append(value)
+        if self._is_array is False:
+            self.v.append(value)
+        else:
+            np.append(self.v, value)
+
         self.n += 1
 
     def get_name(self):
@@ -179,6 +184,7 @@ class NumParam(ParamBase):
 
         self.pu_coeff = None
         self.vin = None  # values from input
+        self._is_array = False
 
     def get_property(self, property_name: str):
         """
@@ -239,6 +245,7 @@ class NumParam(ParamBase):
         """
         self.v = np.array(self.v)
         self.vin = np.array(self.v)
+        self._is_array = True
 
 
 class ExtParam(NumParam):
