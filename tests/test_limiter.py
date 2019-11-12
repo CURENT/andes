@@ -2,7 +2,7 @@ import unittest
 
 from andes.core.var import Algeb
 from andes.core.param import NumParam
-from andes.core.limiter import Comparer, OrderedLimiter
+from andes.core.limiter import Comparer, SortedLimiter
 
 import numpy as np
 
@@ -32,7 +32,7 @@ class TestComparer(unittest.TestCase):
         self.cmp = Comparer(self.var, self.lower, self.upper)
         self.cmp.eval()
 
-        self.rcmp = OrderedLimiter(self.var, self.lower, self.upper, n_select=1)
+        self.rcmp = SortedLimiter(self.var, self.lower, self.upper, n_select=1)
         self.rcmp.eval()
 
         self.assertSequenceEqual(self.rcmp.zl.tolist(),
@@ -43,7 +43,7 @@ class TestComparer(unittest.TestCase):
                                  [0., 0., 0., 0., 0., 0., 0., 1.])
 
         # test when no `n_select` is specified
-        self.rcmp_noselect = OrderedLimiter(self.var, self.lower, self.upper)
+        self.rcmp_noselect = SortedLimiter(self.var, self.lower, self.upper)
         self.rcmp_noselect.eval()
 
         self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),

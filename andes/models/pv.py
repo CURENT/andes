@@ -7,7 +7,7 @@ from ..utils.math import sort_idx
 from andes.models.base import Model, ModelData  # NOQA
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer, OrderedLimiter  # NOQA
+from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -273,8 +273,8 @@ class PVModel(Model):
         self.p = Algeb(info='actual active power generation', unit='pu')
         self.q = Algeb(info='actual reactive power generation', unit='pu')
 
-        self.q_lim = OrderedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
-                                    n_select=2)
+        self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
+                                   n_select=2)
 
         # initialization equations
         self.v.v_init = 'v0'
@@ -304,7 +304,7 @@ class SlackNew(SlackData, PVModel):
 
         self.a.v_init = 'a0'
 
-        self.p_lim = OrderedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
+        self.p_lim = SortedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
 
         self.p.e_symbolic = "u * (p_lim_zi * (a - a0) + \
                                   p_lim_zl * (p - pmin) + \

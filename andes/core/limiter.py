@@ -115,7 +115,7 @@ class Comparer(Limiter):
         pass
 
 
-class OrderedLimiter(Limiter):
+class SortedLimiter(Limiter):
     """
     A comparer with the top value selection
 
