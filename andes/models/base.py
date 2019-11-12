@@ -468,20 +468,19 @@ class Model(object):
         """
         Generate lambda functions for initial values
         """
-        from sympy import Matrix, sympify, lambdify
+        from sympy import sympify, lambdify
         syms_list = list(self.input_syms)
 
-        self.init_syms = []
-        self.init_syms_matrix = []
+        init_lambda_list = []
         for instance in self.cache.all_vars.values():
             if instance.v_init is None:
-                self.init_syms.append(0)
+                init_lambda_list.append(0)
             else:
                 sympified = sympify(instance.v_init, locals=self.input_syms)
-                self.init_syms.append(sympified)
+                lambdified = lambdify(syms_list, sympified, 'numpy')
+                init_lambda_list.append(lambdified)
 
-        self.init_syms_matrix = Matrix(self.init_syms)
-        self.call.init_lambdify = lambdify(syms_list, self.init_syms_matrix, 'numpy')
+        self.call.init_lambdify = init_lambda_list
 
     def generate_equations(self):
         logger.debug(f'Converting equations for {self.__class__.__name__}')
@@ -609,12 +608,12 @@ class Model(object):
         # It should really be commented out ideally.
         # Rather, the modeling user should take care
         # of the algebraic equations
-        #
-        # for var in self.algebs.values():
-        #     v_idx = vars_syms_list.index(var.name)
-        #     self.call.__dict__[f'_igyc'].append(v_idx)
-        #     self.call.__dict__[f'_jgyc'].append(v_idx)
-        #     self.call.__dict__[f'_vgyc'].append(1e-8)
+
+        for var in self.algebs.values():
+            v_idx = vars_syms_list.index(var.name)
+            self.call.__dict__[f'_igyc'].append(v_idx)
+            self.call.__dict__[f'_jgyc'].append(v_idx)
+            self.call.__dict__[f'_vgyc'].append(1e-8)
 
     def store_sparse_pattern(self):
         """
@@ -705,20 +704,26 @@ class Model(object):
         if self.n == 0:
             return
 
-        kwargs = self.get_input()
-
-        ret = self.call.init_lambdify(**kwargs)
         for idx, instance in enumerate(self.cache.all_vars.values()):
-            instance.v += ret[idx][0]
+            kwargs = self.get_input()
+            init_fun = self.call.init_lambdify[idx]
+            if callable(init_fun):
+                instance.v += init_fun(**kwargs)
+            else:
+                instance.v += init_fun
 
         # call custom variable initializer
         self.v_numeric(**kwargs)
 
+    def e_clear(self):
+        if self.n == 0:
+            return
+        for instance in self.cache.all_vars.values():
+            instance.e = np.zeros(self.n)
+
     def f_update(self):
         if self.n == 0:
             return
-
-        self.eval_limiter()
 
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls
@@ -740,8 +745,6 @@ class Model(object):
     def g_update(self):
         if self.n == 0:
             return
-
-        self.eval_limiter()
 
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls

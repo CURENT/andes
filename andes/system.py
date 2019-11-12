@@ -225,6 +225,9 @@ class SystemNew(object):
     def eval_service(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('eval_service', model)
 
+    def eval_limiter(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('eval_limiter', model)
+
     def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
         self.dae.reset_array()
         self.send_vars_to_models()
@@ -234,6 +237,12 @@ class SystemNew(object):
         else:
             self._call_model_with_flag('initializer', model, 'tds', True)
 
+        self.send_vars_to_dae()
+        self.send_vars_to_models()
+        return np.hstack((self.dae.x, self.dae.y))
+
+    def send_vars_to_dae(self):
+        self.dae.reset_xy()
         # from variables to dae variables
         for var in self.x_adders:
             np.add.at(self.dae.x, var.a, var.v)
@@ -244,10 +253,6 @@ class SystemNew(object):
             np.add.at(self.dae.y, var.a, var.v)
         for var in self.y_setters:
             np.put(self.dae.y, var.a, var.v)
-
-        # send vars to all models
-        self.send_vars_to_models()
-        return np.hstack((self.dae.x, self.dae.y))
 
     def send_vars_to_models(self):
         for var in self.y_adders + self.y_setters:
@@ -280,6 +285,9 @@ class SystemNew(object):
                         self.__dict__[f'{var.v_code}_adders'].append(var)
                     else:
                         self.__dict__[f'{var.v_code}_setters'].append(var)
+
+    def e_clear(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('e_clear', model)
 
     def f_update(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('f_update', model)
@@ -316,9 +324,9 @@ class SystemNew(object):
                                          mdl.__dict__[f'j{j_name}'],
                                          mdl.__dict__[f'v{j_name}']):
                     # TODO: use `spmatrix.ipadd` if available
-                    if len(val) == 0:
-                        continue
-                    self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                    # TODO: fix `ipadd` to get rid of type checking
+                    if isinstance(val, float) or len(val) > 0:
+                        self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
 
     def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('store_sparse_pattern', model)

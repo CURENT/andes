@@ -42,10 +42,16 @@ class DAENew(object):
         self.y_name = []
 
     def reset_array(self):
-        self.x = np.zeros(self.n)
-        self.y = np.zeros(self.m)
+        self.reset_fg()
+        self.reset_xy()
+
+    def reset_fg(self):
         self.f = np.zeros(self.n)
         self.g = np.zeros(self.m)
+
+    def reset_xy(self):
+        self.x = np.zeros(self.n)
+        self.y = np.zeros(self.m)
 
     def store_pattern_copy(self):
         self.fx_pattern = deepcopy(self.fx)
