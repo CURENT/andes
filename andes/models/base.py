@@ -579,10 +579,11 @@ class Model(object):
                 var = self.cache.all_vars[var_name]
 
                 # FIXME: this line takes excessively long to run
-                # it will work with is_number, but needs some refactor with the value
-                if e_symbolic.is_constant():
-                    jac_name = f'{eqn.e_code}{var.v_code}c'
-                    print('found number')
+                # it will work with is_number
+                # but needs some refactor with the value
+                #
+                # if e_symbolic.is_constant():
+                #     jac_name = f'{eqn.e_code}{var.v_code}c'
 
                 # -----------------------------------------------------------------
                 # ------ Constant parameters are not known at generation time -----
@@ -590,12 +591,30 @@ class Model(object):
                 #         str(list(e_symbolic.atoms(Symbol))[0]) in self.cache.all_consts_names:
                 #     jac_name = f'{eqn.e_code}{var.v_code}c'
                 # -----------------------------------------------------------------
-                else:
-                    jac_name = f'{eqn.e_code}{var.v_code}'
+                # else:
+                jac_name = f'{eqn.e_code}{var.v_code}'
 
                 self.call.__dict__[f'_i{jac_name}'].append(e_idx)
                 self.call.__dict__[f'_j{jac_name}'].append(v_idx)
                 self.call.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
+
+        # NOTE: This will not work: checking if the jacobian
+        # element has value and add an epsilon if not.
+        # The reason is that even if the jacobian is non-zero at
+        # generation time, it can evaluate to zero
+
+        # NOTE:
+        # The for loop below is intended to add an epsilon small
+        # value to the diagonal of gy matrix.
+        # It should really be commented out ideally.
+        # Rather, the modeling user should take care
+        # of the algebraic equations
+        #
+        # for var in self.algebs.values():
+        #     v_idx = vars_syms_list.index(var.name)
+        #     self.call.__dict__[f'_igyc'].append(v_idx)
+        #     self.call.__dict__[f'_jgyc'].append(v_idx)
+        #     self.call.__dict__[f'_vgyc'].append(1e-8)
 
     def store_sparse_pattern(self):
         """
@@ -618,7 +637,14 @@ class Model(object):
         self.igxc, self.jgxc, self.vgxc = list(), list(), list()
         self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
-        if not self.flags['address']:
+        if (not self.flags['address']) or (self.n == 0):
+            # Note:
+            # if `self.n` is 0, skipping the processes below will
+            # avoid appending empty lists/arrays and non-empty values,
+            # which as a combination is not accepted by `cvxopt.spmatrix`
+            #
+            # If we don't want to check `self.n`, we can check if
+            # len(row) == 0 or len(col) ==0 in the code below.
             return
 
         self.j_numeric()
@@ -644,7 +670,7 @@ class Model(object):
 
                     self.__dict__[f'i{dict_name}{j_type}'].append(row_idx)
                     self.__dict__[f'j{dict_name}{j_type}'].append(col_idx)
-                    if jac_type == 'c':
+                    if j_type == 'c':
                         self.__dict__[f'v{dict_name}{j_type}'].append(val)
                     else:
                         self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
@@ -657,7 +683,7 @@ class Model(object):
                     self.__dict__[f'i{dict_name}{j_type}'].append(row)
                     self.__dict__[f'j{dict_name}{j_type}'].append(col)
 
-                    if jac_type == 'c':
+                    if j_type == 'c':
                         self.__dict__[f'v{dict_name}{j_type}'].append(val)
                     else:
                         self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
@@ -670,7 +696,7 @@ class Model(object):
                         self.__dict__[f'i{dict_name}{j_type}'].append(row)
                         self.__dict__[f'j{dict_name}{j_type}'].append(col)
 
-                        if jac_type == 'c':
+                        if j_type == 'c':
                             self.__dict__[f'v{dict_name}{j_type}'].append(val)
                         else:
                             self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
@@ -735,6 +761,9 @@ class Model(object):
             instance.e += ret[idx][0]
 
     def j_update(self):
+        if self.n == 0:
+            return
+
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
         kwargs = self.get_input()

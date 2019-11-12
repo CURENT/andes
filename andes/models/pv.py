@@ -242,10 +242,10 @@ class PVData(ModelData):
         self.p0 = NumParam(default=0.0, info="active power set point", power=True)
         self.q0 = NumParam(default=0.0, info="reactive power set point", power=True)
 
-        self.pmax = NumParam(default=1.0, info="maximum active power output")
-        self.pmin = NumParam(default=0.0, info="minimum active power output")
-        self.qmax = NumParam(default=0.0, info="maximim reactive power output")
-        self.qmin = NumParam(default=0.0, info="minimum reactive power output")
+        self.pmax = NumParam(default=1.0, info="maximum active power output", power=True)
+        self.pmin = NumParam(default=0.0, info="minimum active power output", power=True)
+        self.qmax = NumParam(default=999.0, info="maximim reactive power output", power=True)
+        self.qmin = NumParam(default=-999.0, info="minimum reactive power output", power=True)
 
         self.v0 = NumParam(default=1.0, info="voltage set point")
         self.vmax = NumParam(default=1.4, info="maximum voltage voltage")
@@ -265,6 +265,7 @@ class PVModel(Model):
         super().__init__(system, name)
 
         self.flags['pflow'] = True
+        self.config['group_by'] = 'variable'
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, v_setter=True)
@@ -287,7 +288,8 @@ class PVModel(Model):
         self.p.e_symbolic = "u * (-p + p0)"
         self.q.e_symbolic = "u * (q_lim_zi * (v - v0) + \
                                   q_lim_zl * (q - qmin) + \
-                                  q_lim_zu * (q - qmax))"
+                                  q_lim_zu * (q - qmax)) + \
+                                  1e-8 * q"
 
 
 class PVNew(PVData, PVModel):

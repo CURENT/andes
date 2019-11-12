@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from copy import deepcopy
 from cvxopt import matrix, spmatrix, sparse, spdiag
 
 from ..utils.math import ageb, aleb, aandb  # NOQA
@@ -30,11 +31,37 @@ class DAENew(object):
         self.tx = None
         self.rx = None
 
+        self.fx_pattern = None
+        self.fy_pattern = None
+        self.gx_pattern = None
+        self.gy_pattern = None
+        self.tx_pattern = None
+        self.rx_pattern = None
+
+        self.x_name = []
+        self.y_name = []
+
     def reset_array(self):
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
         self.f = np.zeros(self.n)
         self.g = np.zeros(self.m)
+
+    def store_pattern_copy(self):
+        self.fx_pattern = deepcopy(self.fx)
+        self.fy_pattern = deepcopy(self.fy)
+        self.gx_pattern = deepcopy(self.gx)
+        self.gy_pattern = deepcopy(self.gy)
+        self.tx_pattern = deepcopy(self.tx)
+        self.rx_pattern = deepcopy(self.rx)
+
+    def reset_sparse(self):
+        self.fx = deepcopy(self.fx_pattern)
+        self.fy = deepcopy(self.fy_pattern)
+        self.gx = deepcopy(self.gx_pattern)
+        self.gy = deepcopy(self.gy_pattern)
+        self.tx = deepcopy(self.tx_pattern)
+        self.rx = deepcopy(self.rx_pattern)
 
     def get_size(self, name):
         ret = []

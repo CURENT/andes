@@ -42,6 +42,11 @@ try:
 except ImportError:
     STREAMING = False
 
+IP_ADD = False
+if hasattr(spmatrix, 'ipadd'):
+    IP_ADD = True
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -151,14 +156,14 @@ class SystemNew(object):
 
             if group_by == 'variable':
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
-                    item.set_address(np.array(range(m0 + idx * n, m0 + (idx + 1) * n)))
+                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n))
                 for idx, (name, item) in enumerate(mdl.states.items()):
-                    item.set_address(np.array(range(n0 + idx * n, n0 + (idx + 1) * n)))
+                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n))
             elif group_by == 'element':
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
-                    item.set_address(np.array(range(m0 + idx, m_end, len(mdl.algebs))))
+                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)))
                 for idx, (name, item) in enumerate(mdl.states.items()):
-                    item.set_address(np.array(range(n0 + idx, n_end, len(mdl.states))))
+                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)))
             else:
                 raise KeyError(f'Unknown group_by value <{group_by}>')
 
@@ -166,6 +171,38 @@ class SystemNew(object):
             self.dae.n = n_end
 
             mdl.flags['address'] = True
+
+        # store variable names
+        # FIXME: fix the messy code below
+        self.dae.x_name = [''] * self.dae.n
+        self.dae.y_name = [''] * self.dae.m
+
+        m0, n0 = 0, 0
+        for mdl in self.models.values():
+            mdl_name = mdl.__class__.__name__
+            group_by = mdl.config['group_by']
+
+            n = mdl.n
+            m_end = m0 + len(mdl.algebs) * n
+            n_end = n0 + len(mdl.states) * n
+
+            if group_by == 'variable':
+                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                    for uid, i in enumerate(range(m0 + idx * n, m0 + (idx + 1) * n)):
+                        self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'
+                for idx, (name, item) in enumerate(mdl.states.items()):
+                    for uid, i in enumerate(range(n0 + idx * n, n0 + (idx + 1) * n)):
+                        self.dae.x_name[i] = f'{mdl_name}_{item.name}_{uid}'
+
+            elif group_by == 'element':
+                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                    for uid, i in enumerate(range(m0 + idx, m_end, len(mdl.algebs))):
+                        self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'
+                for idx, (name, item) in enumerate(mdl.states.items()):
+                    for uid, i in enumerate(range(n0 + idx, n_end, len(mdl.states))):
+                        self.dae.x_name[i] = f'{mdl_name}_{item.name}_{uid}'
+            m0 = m_end
+            n0 = n_end
 
     def add(self, model, param_dict=None, **kwargs):
         if param_dict is not None:
@@ -267,15 +304,41 @@ class SystemNew(object):
     def j_update(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('j_update', model)
 
+        self.dae.reset_sparse()
+
+        # collect sparse values into sparse structures
+        jac_name = ('fx', 'fy', 'gx', 'gy')
+        for j_name in jac_name:
+            j_size = self.dae.get_size(j_name)
+
+            for mdl in self.models.values():
+                for row, col, val in zip(mdl.__dict__[f'i{j_name}'],
+                                         mdl.__dict__[f'j{j_name}'],
+                                         mdl.__dict__[f'v{j_name}']):
+                    # TODO: use `spmatrix.ipadd` if available
+                    if len(val) == 0:
+                        continue
+                    self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+
     def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('store_sparse_pattern', model)
-        jac_set = ('fx', 'fy', 'gx', 'gy')
+        jac_name = ('fx', 'fy', 'gx', 'gy')
         jac_type = {'c', ''}
 
-        for j_name in jac_set:
+        # add variable jacobian values
+        for j_name in jac_name:
             ii = []
             jj = []
             vv = []
+
+            # for `gy` matrix, always make sure the diagonal is reserved
+            # It is a safeguard if the modeling user omitted the diagonal
+            # term in the equations
+            if j_name == 'gy':
+                ii.extend(np.arange(self.dae.m))
+                jj.extend(np.arange(self.dae.m))
+                vv.extend(np.zeros(self.dae.m))
+
             for j_type in jac_type:
                 for name, mdl in self.models.items():
                     ii.extend(np.ravel(np.array(mdl.__dict__[f'i{j_name}{j_type}'])))
@@ -286,16 +349,19 @@ class SystemNew(object):
                 jj = np.ravel(np.array(jj)).astype(int)
                 vv = np.zeros(ii.size)
 
-            self.dae.__dict__[j_name] = spmatrix(vv, ii, jj, self.dae.get_size(j_name), 'd')
+            self.dae.__dict__[j_name] = spmatrix(vv, ii, jj,
+                                                 self.dae.get_size(j_name), 'd')
 
         # add the constant jacobian values
-        for j_name in jac_set:
+        for j_name in jac_name:
             for mdl in self.models.values():
                 for row, col, val in zip(mdl.__dict__[f'i{j_name}c'],
                                          mdl.__dict__[f'j{j_name}c'],
                                          mdl.__dict__[f'v{j_name}c']):
                     self.dae.__dict__[j_name] += spmatrix(val, row, col,
                                                           self.dae.get_size(j_name), 'd')
+
+        self.dae.store_pattern_copy()
 
     def store_calls(self):
         for name, mdl in self.models.items():
