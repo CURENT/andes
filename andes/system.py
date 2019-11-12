@@ -229,6 +229,10 @@ class SystemNew(object):
         self._call_model_method('eval_limiter', model)
         self.send_vars_to_dae()
         self.send_vars_to_models()
+        # FIXME:
+        # This function should somehow return the indices and values
+        # of variables that hit the limit.
+        # This will complement general solvers such as `scipy.optimize.newton_krylov`
 
     def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
         self.dae.reset_array()
