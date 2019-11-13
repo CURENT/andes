@@ -779,16 +779,51 @@ class Model(object):
                 self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1
 
-            # call numerical jacobians for self
-            for fun in self.__dict__[f'_v{name}']:
-                self.__dict__[f'v{name}'][idx] = fun()
-                idx += 1
-
             # call jacobian functions for blocks
             for instance in self.blocks.values():
                 for fun in instance.__dict__[f'v{name}']:
                     self.__dict__[f'v{name}'][idx] = fun()
                     idx += 1
+
+            # call numerical jacobians for self
+            for fun in self.__dict__[f'_v{name}']:
+                self.__dict__[f'v{name}'][idx] = fun()
+                idx += 1
+
+    def row_idx(self, name):
+        """
+        Return the row index in a flattened arrays for the specified jacobian matrix
+
+        Parameters
+        ----------
+        name : str
+            name of the jacobian matrix
+        """
+        return np.ravel(np.array(self.__dict__[f'i{name}']))
+
+    def col_idx(self, name):
+        """
+        Return the col index in a flattened arrays for the specified jacobian matrix
+
+        Parameters
+        ----------
+        name : str
+            name of the jacobian matrix
+        """
+        return np.ravel(np.array(self.__dict__[f'j{name}']))
+
+    def zip_ijv(self, name):
+        """
+        Return a zipped iterator for the rows, cols and vals for the specified matrix
+
+        Parameters
+        ----------
+        name : str
+            jac name
+        """
+        return zip(self.__dict__[f'i{name}'],
+                   self.__dict__[f'j{name}'],
+                   self.__dict__[f'v{name}'])
 
     def v_numeric(self, **kwargs):
         """

@@ -172,6 +172,7 @@ class SystemNew(object):
 
             mdl.flags['address'] = True
 
+    def set_dae_names(self, is_tds: bool = False):
         # store variable names
         # FIXME: fix the messy code below
         self.dae.x_name = [''] * self.dae.n
@@ -222,32 +223,20 @@ class SystemNew(object):
     def generate_jacobians(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('generate_jacobians', model)
 
-    def eval_service(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('eval_service', model)
-
-    def eval_limiter(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('eval_limiter', model)
-        self.send_vars_to_dae()
-        self.send_vars_to_models()
-        # FIXME:
-        # This function should somehow return the indices and values
-        # of variables that hit the limit.
-        # This will complement general solvers such as `scipy.optimize.newton_krylov`
-
     def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
         self.dae.reset_array()
-        self.send_vars_to_models()
+        self.vars_to_models()
 
         if is_tds is False:
             self._call_model_with_flag('initializer', model, 'pflow', True)
         else:
             self._call_model_with_flag('initializer', model, 'tds', True)
 
-        self.send_vars_to_dae()
-        self.send_vars_to_models()
+        self.vars_to_dae()
+        self.vars_to_models()
         return np.hstack((self.dae.x, self.dae.y))
 
-    def send_vars_to_dae(self):
+    def vars_to_dae(self):
         self.dae.reset_xy()
         # from variables to dae variables
         for var in self.x_adders:
@@ -266,7 +255,7 @@ class SystemNew(object):
         for var in self.y_setters:
             np.put(self.dae.y, var.a, var.v)
 
-    def send_vars_to_models(self):
+    def vars_to_models(self):
         for var in self.y_adders + self.y_setters:
             var.v = self.dae.y[var.a]
 
@@ -286,6 +275,8 @@ class SystemNew(object):
         self.y_adders = []
 
         for mdl in self.models.values():
+            if not mdl.n:
+                continue
             for var in mdl.cache.all_vars.values():
                 if var.has_address:
                     if var.e_setter is False:
@@ -298,7 +289,23 @@ class SystemNew(object):
                     else:
                         self.__dict__[f'{var.v_code}_setters'].append(var)
 
+    def s_update(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('eval_service', model)
+
+    def l_update(self, model: Optional[Union[str, List]] = None):
+        self._call_model_method('eval_limiter', model)
+        self.vars_to_dae()
+        self.vars_to_models()
+
+        # TODO:
+        # This function should somehow return the indices and values
+        # of variables that hit the limit.
+
+        # The limited values need to sent to solvers
+        # such as `scipy.optimize.newton_krylov` to make the result correct
+
     def e_clear(self, model: Optional[Union[str, List]] = None):
+        self.dae.reset_fg()
         self._call_model_method('e_clear', model)
 
     def f_update(self, model: Optional[Union[str, List]] = None):
@@ -332,9 +339,7 @@ class SystemNew(object):
             j_size = self.dae.get_size(j_name)
 
             for mdl in self.models.values():
-                for row, col, val in zip(mdl.__dict__[f'i{j_name}'],
-                                         mdl.__dict__[f'j{j_name}'],
-                                         mdl.__dict__[f'v{j_name}']):
+                for row, col, val in mdl.zip_ijv(j_name):
                     # TODO: use `spmatrix.ipadd` if available
                     # TODO: fix `ipadd` to get rid of type checking
                     if isinstance(val, float) or len(val) > 0:
@@ -343,13 +348,10 @@ class SystemNew(object):
     def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('store_sparse_pattern', model)
         jac_name = ('fx', 'fy', 'gx', 'gy')
-        jac_type = {'c', ''}
 
         # add variable jacobian values
         for j_name in jac_name:
-            ii = []
-            jj = []
-            vv = []
+            ii, jj, vv = list(), list(), list()
 
             # for `gy` matrix, always make sure the diagonal is reserved
             # It is a safeguard if the modeling user omitted the diagonal
@@ -359,29 +361,33 @@ class SystemNew(object):
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
 
-            for j_type in jac_type:
-                for name, mdl in self.models.items():
-                    ii.extend(np.ravel(np.array(mdl.__dict__[f'i{j_name}{j_type}'])))
-                    jj.extend(np.ravel(np.array(mdl.__dict__[f'j{j_name}{j_type}'])))
+            for name, mdl in self.models.items():
+                row_idx = mdl.row_idx(f'{j_name}')
+                col_idx = mdl.col_idx(f'{j_name}')
+
+                ii.extend(row_idx)
+                jj.extend(col_idx)
+                vv.extend(np.zeros(len(np.array(row_idx))))
+
+                # add the constant jacobian values
+                for row, col, val in mdl.zip_ijv(f'{j_name}c'):
+                    ii.extend(row)
+                    jj.extend(col)
+
+                    if isinstance(val, (float, int)):
+                        vv.extend(val * np.ones(len(row)))
+                    elif isinstance(val, (list, np.ndarray)):
+                        vv.extend(val)
+                    else:
+                        raise TypeError(f'Unknown type {type(val)} in constant jacobian {jac_name}')
 
             if len(ii) > 0:
-                ii = np.ravel(np.array(ii)).astype(int)
-                jj = np.ravel(np.array(jj)).astype(int)
-                vv = np.zeros(ii.size)
+                ii = np.array(ii).astype(int)
+                jj = np.array(jj).astype(int)
+                vv = np.array(vv).astype(float)
 
-            self.dae.__dict__[j_name] = spmatrix(vv, ii, jj,
-                                                 self.dae.get_size(j_name), 'd')
-
-        # add the constant jacobian values
-        for j_name in jac_name:
-            for mdl in self.models.values():
-                for row, col, val in zip(mdl.__dict__[f'i{j_name}c'],
-                                         mdl.__dict__[f'j{j_name}c'],
-                                         mdl.__dict__[f'v{j_name}c']):
-                    self.dae.__dict__[j_name] += spmatrix(val, row, col,
-                                                          self.dae.get_size(j_name), 'd')
-
-        self.dae.store_pattern_copy()
+            self.dae.store_sparse_ijv(j_name, ii, jj, vv)
+            self.dae.build_pattern(j_name)
 
     def store_calls(self):
         for name, mdl in self.models.items():
@@ -454,12 +460,13 @@ class SystemNew(object):
         This function is to be called after all data are added.
         """
         self.set_address()
+        self.set_dae_names()
         self.finalize_add()
         self.link_external()
-        self.eval_service()
+        self.s_update()
         self.store_sparse_pattern()
         self.store_adder_setter()
-        self.dae.reset_array()
+        self.e_clear()
 
 
 class PowerSystem(object):

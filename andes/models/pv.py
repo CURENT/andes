@@ -261,11 +261,14 @@ class SlackData(PVData):
 
 
 class PVModel(Model):
+    """
+    PV generator model (power flow) with q limit and PV-PQ conversion
+    """
     def __init__(self, system=None, name=None):
         super().__init__(system, name)
 
         self.flags['pflow'] = True
-        # self.config['group_by'] = 'variable'
+        self.config['group_by'] = 'variable'
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, v_setter=True)
@@ -276,7 +279,7 @@ class PVModel(Model):
         self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
                                    n_select=2)
 
-        # initialization equations
+        # variable initialization equations
         self.v.v_init = 'v0'
         self.p.v_init = 'p0'
         self.q.v_init = 'q0'
@@ -285,6 +288,7 @@ class PVModel(Model):
         self.a.e_symbolic = "-u * p"
         self.v.e_symbolic = "-u * q"
 
+        # power injection equations g(y) = 0
         self.p.e_symbolic = "u * (-p + p0)"
         self.q.e_symbolic = "u * (q_lim_zi * (v - v0) + \
                                   q_lim_zl * (q - qmin) + \

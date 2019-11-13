@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-from copy import deepcopy
 from cvxopt import matrix, spmatrix, sparse, spdiag
 
 from ..utils.math import ageb, aleb, aandb  # NOQA
@@ -13,9 +12,12 @@ logger = logging.getLogger(__name__)
 
 class DAENew(object):
     """
-    Numerical DAE
+    Numerical DAE class
     """
     def __init__(self):
+
+        self.jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
+
         self.m = 0
         self.n = 0
 
@@ -41,35 +43,71 @@ class DAENew(object):
         self.x_name = []
         self.y_name = []
 
+        # ----- indices of sparse matrices -----
+        self.ifx = []
+        self.jfx = []
+        self.vfx = []
+
+        self.ify = []
+        self.jfy = []
+        self.vfy = []
+
+        self.igx = []
+        self.jgx = []
+        self.vgx = []
+
+        self.igy = []
+        self.jgy = []
+        self.vgy = []
+
+        self.itx = []
+        self.jtx = []
+        self.vtx = []
+
+        self.irx = []
+        self.jrx = []
+        self.vrx = []
+
     def reset_array(self):
+        """
+        Reset equation and variable arrays to empty.
+        """
         self.reset_fg()
         self.reset_xy()
 
     def reset_fg(self):
+        """Resets equation arrays to empty
+        """
         self.f = np.zeros(self.n)
         self.g = np.zeros(self.m)
 
     def reset_xy(self):
+        """Reset variable arrays to empty
+        """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
 
-    def store_pattern_copy(self):
-        self.fx_pattern = deepcopy(self.fx)
-        self.fy_pattern = deepcopy(self.fy)
-        self.gx_pattern = deepcopy(self.gx)
-        self.gy_pattern = deepcopy(self.gy)
-        self.tx_pattern = deepcopy(self.tx)
-        self.rx_pattern = deepcopy(self.rx)
-
     def reset_sparse(self):
-        self.fx = deepcopy(self.fx_pattern)
-        self.fy = deepcopy(self.fy_pattern)
-        self.gx = deepcopy(self.gx_pattern)
-        self.gy = deepcopy(self.gy_pattern)
-        self.tx = deepcopy(self.tx_pattern)
-        self.rx = deepcopy(self.rx_pattern)
+        """
+        Reset all sparse arrays to shape with non-zero constants
+        """
+        for name in self.jac_name:
+            self.build_pattern(name)
 
     def get_size(self, name):
+        """
+        Get the size of an array or sparse matrix based on name.
+
+        Parameters
+        ----------
+        name : str (f, g, fx, gy, etc.)
+            array/sparse name
+
+        Returns
+        -------
+        tuple
+            sizes of each element in a tuple
+        """
         ret = []
         for char in name:
             if char in ('f', 'x'):
@@ -77,6 +115,89 @@ class DAENew(object):
             elif char in ('g', 'y'):
                 ret.append(self.m)
         return tuple(ret)
+
+    def store_sparse_ijv(self, name, row, col, val):
+        """Store the sparse pattern triplets.
+
+        This function is to be called after building the sparse pattern
+        in System.
+
+        Parameters
+        ----------
+        name : str
+            sparse matrix name
+        row : np.ndarray
+            all row indices
+        col : np.ndarray
+            all col indices
+        val : np.ndarray
+            all values
+        """
+        self.__dict__[f'i{name}'] = row
+        self.__dict__[f'j{name}'] = col
+        self.__dict__[f'v{name}'] = val
+
+    def row_of(self, name):
+        """Get the row indices of the named sparse matrix.
+
+        Parameters
+        ----------
+        name : str
+            name of the sparse matrix
+
+        Returns
+        -------
+        np.ndarray
+            row indices
+        """
+        return self.__dict__[f'i{name}']
+
+    def col_of(self, name):
+        """
+        Get the col indices of the named sparse matrix.
+
+        Parameters
+        ----------
+        name : str
+            name of the sparse matrix
+
+        Returns
+        -------
+        np.ndarray
+            col indices
+        """
+        return self.__dict__[f'j{name}']
+
+    def val_of(self, name):
+        """
+        Get the values of the named sparse matrix.
+
+        Parameters
+        ----------
+        name : str
+            name of the sparse matrix
+
+        Returns
+        -------
+        np.ndarray
+            values
+        """
+        return self.__dict__[f'v{name}']
+
+    def build_pattern(self, name):
+        """
+        Build sparse matrices with stored patterns.
+
+        Call to `store_row_col_idx` should be made before this function.
+
+        Parameters
+        ----------
+        name : name
+            jac name
+        """
+        self.__dict__[name] = spmatrix(self.val_of(name),
+                                       self.row_of(name),
+                                       self.col_of(name))
 
 
 class DAE(object):

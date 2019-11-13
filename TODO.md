@@ -21,8 +21,8 @@
 ### Milestones
 *   A working `PQNew` class with an option to convert to Z; Allow config in models
 *   A working `System` class providing parameter retrieval by group and model
-*   A defined data loading, model initialization, variable/equation relaying sequence
-*   A working power flow routine fully generated from symbolic expressions
+- [x] A defined data loading, model initialization, variable/equation relaying sequence
+- [x] A working power flow routine fully generated from symbolic expressions
 
 ### To-do bullets
 - [x] Clearly define interface variables `VarExt`
@@ -34,7 +34,7 @@
 - [x] Implement a PV model with the old code - Partially done with the Hybrid `j_numeric`
 - [x] Define the call sequence for data flow between models and dae/models
 - [x] Initial values, pass initialized values between models, and solve initializer equations
-*   Improve the access to dae attributes. Get rid of `self.dae.__dict__[f'']` usages.
+- [x] Improve the access to dae attributes. Get rid of `self.dae.__dict__[f'']` usages.
 *   Improve running functions based on routine. Get rid of passing around `is_tds`.
 *   Implement a group for PV and Slack
 *   Prototype Connectivity checking, previously implemented as `gyisland`
