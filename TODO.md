@@ -35,9 +35,11 @@
 - [x] Define the call sequence for data flow between models and dae/models
 - [x] Initial values, pass initialized values between models, and solve initializer equations
 - [x] Improve the access to dae attributes. Get rid of `self.dae.__dict__[f'']` usages.
-*   Improve running functions based on routine. Get rid of passing around `is_tds`.
-*   Implement a group for PV and Slack
-*   Prototype Connectivity checking, previously implemented as `gyisland`
+*   Configs in models
+*   Dummy service variables for storing initial values (such as pm0, vref0)
+*   Improve running functions based on routine. Get rid of passing around `is_tds`. Possibly implementing a `pflow_models` and a `tds_models` list in system
+*   Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
+*   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations

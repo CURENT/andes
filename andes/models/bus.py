@@ -164,7 +164,7 @@ class BusNew(Model, BusData):
         Model.__init__(self, system=system, name=name)
         BusData.__init__(self)
 
-        self.config['group_by'] = 'variable'
+        self.flags['collate'] = False
         self.flags['pflow'] = True
 
         self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')

@@ -53,20 +53,20 @@ class VarBase(object):
         self.unit = unit
 
         self.tex_name = tex_name if tex_name else name
-        self.owner = None
+        self.owner = None  # instance of the owner Model
         self.id = None
 
-        self.n = 0
-        self.a: Optional[Union[ndarray, List]] = None
-        self.v: Optional[ndarray] = None
-        self.e: Optional[ndarray] = None
+        self.n = 0  # count of elements in the array
+        self.a: Optional[Union[ndarray, List]] = None  # address array
+        self.v: Optional[ndarray] = None  # variable value array
+        self.e: Optional[ndarray] = None  # equation value array
 
-        self.v_init = None
-        self.v_setter = v_setter
-        self.e_setter = e_setter
+        self.v_init = None  # equation string for variable initialization
+        self.v_setter = v_setter  # True if this variable sets the variable value
+        self.e_setter = e_setter  # True if this var sets the equation value
 
-        self.e_symbolic = None
-        self.e_lambdify = None
+        self.e_symbolic = None  # string for symbolic equation
+        self.e_lambdify = None  # internal - sympy generated lambda function for equation
 
     def __repr__(self):
         return f'{self.owner.__class__.__name__}.{self.name} ({self.__class__.__name__})'

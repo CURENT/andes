@@ -1,6 +1,6 @@
 # ANDES, a power system simulation tool for research.
 #
-# Copyright 2015-2017 Hantao Cui
+# Copyright 2015-2029 Hantao Cui
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ class SystemNew(object):
                 logger.debug(f'{mdl.__class__.__name__} addresses exist.')
                 continue
 
-            group_by = mdl.config['group_by']
+            collate = mdl.flags['collate']
 
             n = mdl.n
             m0 = self.dae.m
@@ -154,18 +154,16 @@ class SystemNew(object):
             m_end = m0 + len(mdl.algebs) * n
             n_end = n0 + len(mdl.states) * n
 
-            if group_by == 'variable':
+            if not collate:
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n))
                 for idx, (name, item) in enumerate(mdl.states.items()):
                     item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n))
-            elif group_by == 'element':
+            else:
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)))
                 for idx, (name, item) in enumerate(mdl.states.items()):
                     item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)))
-            else:
-                raise KeyError(f'Unknown group_by value <{group_by}>')
 
             self.dae.m = m_end
             self.dae.n = n_end
@@ -181,13 +179,13 @@ class SystemNew(object):
         m0, n0 = 0, 0
         for mdl in self.models.values():
             mdl_name = mdl.__class__.__name__
-            group_by = mdl.config['group_by']
+            collate = mdl.flags['collate']
 
             n = mdl.n
             m_end = m0 + len(mdl.algebs) * n
             n_end = n0 + len(mdl.states) * n
 
-            if group_by == 'variable':
+            if not collate:
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     for uid, i in enumerate(range(m0 + idx * n, m0 + (idx + 1) * n)):
                         self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'
@@ -195,7 +193,7 @@ class SystemNew(object):
                     for uid, i in enumerate(range(n0 + idx * n, n0 + (idx + 1) * n)):
                         self.dae.x_name[i] = f'{mdl_name}_{item.name}_{uid}'
 
-            elif group_by == 'element':
+            else:
                 for idx, (name, item) in enumerate(mdl.algebs.items()):
                     for uid, i in enumerate(range(m0 + idx, m_end, len(mdl.algebs))):
                         self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'

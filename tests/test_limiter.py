@@ -17,7 +17,7 @@ class TestComparer(unittest.TestCase):
         self.lower.v = np.array([0, 0, 0, 0, 0, 0, 0, 0])
         self.var.v = np.array([-3, -2, -1, 0, 1, 2, 3, 4])
 
-    def test_compare(self):
+    def test_comparer(self):
         self.cmp = Comparer(self.var, self.lower, self.upper)
         self.cmp.eval()
 
@@ -28,7 +28,7 @@ class TestComparer(unittest.TestCase):
         self.assertSequenceEqual(self.cmp.zu.tolist(),
                                  [0., 0., 0., 0., 0., 1., 1., 1.])
 
-    def test_ranking_comparer(self):
+    def test_sorted_limiter(self):
         self.cmp = Comparer(self.var, self.lower, self.upper)
         self.cmp.eval()
 
@@ -44,6 +44,18 @@ class TestComparer(unittest.TestCase):
 
         # test when no `n_select` is specified
         self.rcmp_noselect = SortedLimiter(self.var, self.lower, self.upper)
+        self.rcmp_noselect.eval()
+
+        self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),
+                                 self.cmp.zl.tolist())
+        self.assertSequenceEqual(self.rcmp_noselect.zi.tolist(),
+                                 self.cmp.zi.tolist())
+        self.assertSequenceEqual(self.rcmp_noselect.zu.tolist(),
+                                 self.cmp.zu.tolist())
+
+        # test when no `n_select` is over range
+        self.rcmp_noselect = SortedLimiter(self.var, self.lower, self.upper,
+                                           n_select=999)
         self.rcmp_noselect.eval()
 
         self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),

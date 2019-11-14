@@ -230,6 +230,17 @@ class ModelCall(object):
         self._igyc, self._jgyc, self._vgyc = list(), list(), list()
 
 
+class ModelConfig(object):
+    """Class for storing model configurations that will be used in equations"""
+
+    def __init__(self, **kwargs):
+        for key, val in kwargs.items():
+            try:
+                self.__dict__[key] = float(val)
+            except ValueError:
+                logger.error(f'Non-numeric value in config {key} = {val}')
+
+
 class Model(object):
     """
     Base class for power system device models
@@ -273,26 +284,22 @@ class Model(object):
         self.limiters = OrderedDict()
         self.blocks = OrderedDict()
 
-        # sub-models
-        self.sub_models = OrderedDict()
-
         # service/temporary variables
         self.services = OrderedDict()
 
         # cache callback and lambda function storage
         self.call = ModelCall()
 
-        self.flags = {
-            'pflow': False,
-            'tds': False,
-            'sys_base': False,
-            'address': False,
-        }
+        self.flags = dict(
+            pflow=False,
+            tds=False,
+            sys_base=False,
+            address=False,
+            collate=True,
+            is_series=False,
+        )
 
-        self.config = {
-            'group_by': 'element',
-            'is_series': False,
-        }
+        self.config = ModelConfig()
 
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()

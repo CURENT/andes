@@ -268,7 +268,7 @@ class PVModel(Model):
         super().__init__(system, name)
 
         self.flags['pflow'] = True
-        self.config['group_by'] = 'variable'
+        self.flags['collate'] = True
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, v_setter=True)
@@ -276,8 +276,9 @@ class PVModel(Model):
         self.p = Algeb(info='actual active power generation', unit='pu')
         self.q = Algeb(info='actual reactive power generation', unit='pu')
 
+        # TODO: implement switching starting from the second iteration
         self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
-                                   n_select=2)
+                                   n_select=1)
 
         # variable initialization equations
         self.v.v_init = 'v0'
