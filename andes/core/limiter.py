@@ -132,8 +132,8 @@ class SortedLimiter(Limiter):
         super().eval()
 
         if self.n_select is not None and self.n_select > 0:
-            asc = np.argsort(self.var.v)
-            desc = np.flip(asc)
+            asc = np.argsort(self.var.v - self.lower.v)   # ascending order
+            desc = np.argsort(self.upper.v - self.var.v)
 
             lowest_n = asc[:self.n_select]
             highest_n = desc[:self.n_select]
@@ -146,6 +146,7 @@ class SortedLimiter(Limiter):
             self.zi = np.logical_or(reset_in, self.zi).astype(np.float64)
             self.zl = np.logical_and(reset_out, self.zl).astype(np.float64)
             self.zu = np.logical_and(reset_out, self.zu).astype(np.float64)
+            print(self.zu)
 
 
 class HardLimiter(Limiter):

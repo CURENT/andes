@@ -13,9 +13,9 @@ class TestComparer(unittest.TestCase):
         self.upper = NumParam()
         self.var = Algeb()
 
-        self.upper.v = np.array([2, 2, 2, 2, 2, 2, 2, 2])
-        self.lower.v = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-        self.var.v = np.array([-3, -2, -1, 0, 1, 2, 3, 4])
+        self.upper.v = np.array([2,    2,   2, 2,   2,   2, 2.8, 3.9])
+        self.var.v = np.array([-3, -1.1,  -5, 0,   1,   2,   3,  10])
+        self.lower.v = np.array([-2,   -1, 0.5, 0, 0.5, 1.5,   2,   3])
 
     def test_comparer(self):
         self.cmp = Comparer(self.var, self.lower, self.upper)
@@ -36,9 +36,9 @@ class TestComparer(unittest.TestCase):
         self.rcmp.eval()
 
         self.assertSequenceEqual(self.rcmp.zl.tolist(),
-                                 [1., 0., 0., 0., 0., 0., 0., 0.])
+                                 [0., 0., 1., 0., 0., 0., 0., 0.])
         self.assertSequenceEqual(self.rcmp.zi.tolist(),
-                                 [0., 1., 1., 1., 1., 1., 1., 0.])
+                                 [1., 1., 0., 1., 1., 1., 1., 0.])
         self.assertSequenceEqual(self.rcmp.zu.tolist(),
                                  [0., 0., 0., 0., 0., 0., 0., 1.])
 

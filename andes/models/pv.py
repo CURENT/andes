@@ -264,7 +264,7 @@ class PVModel(Model):
     """
     PV generator model (power flow) with q limit and PV-PQ conversion
     """
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         super().__init__(system, name)
 
         self.flags['pflow'] = True
