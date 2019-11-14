@@ -126,7 +126,7 @@ class SortedLimiter(Limiter):
                  **kwargs):
 
         super().__init__(var, lower, upper, **kwargs)
-        self.n_select = n_select
+        self.n_select = int(n_select) if n_select else 0
 
     def eval(self):
         super().eval()
@@ -146,7 +146,6 @@ class SortedLimiter(Limiter):
             self.zi = np.logical_or(reset_in, self.zi).astype(np.float64)
             self.zl = np.logical_and(reset_out, self.zl).astype(np.float64)
             self.zu = np.logical_and(reset_out, self.zu).astype(np.float64)
-            print(self.zu)
 
 
 class HardLimiter(Limiter):

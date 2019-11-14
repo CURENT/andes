@@ -608,9 +608,9 @@ class LineData(ModelData):
 
 
 class LineNew(LineData, Model):
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         LineData.__init__(self)
-        Model.__init__(self)
+        Model.__init__(self, name, system, config)
         self.flags['pflow'] = True
 
         self.a1 = ExtAlgeb(model='BusNew', src='a', indexer=self.bus1)

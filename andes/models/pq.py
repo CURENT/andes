@@ -141,9 +141,9 @@ class PQData(ModelData):
 
 
 class PQNew(PQData, Model):
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         PQData.__init__(self)
-        Model.__init__(self, system, name)
+        Model.__init__(self, system, name, config)
 
         # TODO: Take a configuration to disable switching to impedance
         self.flags['pflow'] = True

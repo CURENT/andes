@@ -231,14 +231,36 @@ class ModelCall(object):
 
 
 class ModelConfig(object):
-    """Class for storing model configurations that will be used in equations"""
+    """
+    Class for storing model configurations that will be used in equations
+
+    All config entries must be numerical.
+    """
 
     def __init__(self, **kwargs):
+        self.add(**kwargs)
+
+    def add(self, **kwargs):
         for key, val in kwargs.items():
-            try:
-                self.__dict__[key] = float(val)
-            except ValueError:
-                logger.error(f'Non-numeric value in config {key} = {val}')
+            if key in self.__dict__:
+                # skip existing entries that are already loaded (from config files)
+                continue
+
+            if isinstance(val, str):
+                try:
+                    val = float(val)
+                except ValueError:
+                    logger.error(f'Non-numeric value in config {key} = {val}')
+
+            self.__dict__[key] = val
+
+    def as_dict(self):
+        out = []
+        for key, val in self.__dict__.items():
+            if not key.endswith('_alt'):
+                out.append((key, val))
+
+        return OrderedDict(out)
 
 
 class Model(object):
@@ -259,7 +281,7 @@ class Model(object):
         and external ones
     """
 
-    def __init__(self, system=None, name: str = None):
+    def __init__(self, system=None, name: str = None, config=None):
         self.system = system
 
         # duplicate attributes from ModelData. Keep for now.
@@ -300,6 +322,7 @@ class Model(object):
         )
 
         self.config = ModelConfig()
+        self.set_config(config)
 
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
@@ -412,6 +435,18 @@ class Model(object):
                 self.__setattr__(name, var_instance)
 
         super(Model, self).__setattr__(key, value)
+
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
+    def set_config(self, config):
+        if self.class_name in config:
+            for key, val in config[self.class_name]:
+                self.config.__dict__[key] = val
+
+    def get_config(self):
+        return self.config.as_dict()
 
     def finalize_add(self):
         # TODO: check the uniqueness of idx

@@ -106,9 +106,9 @@ class ShuntData(ModelData):
 
 
 class ShuntNew(ShuntData, Model):
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         ShuntData.__init__(self)
-        Model.__init__(self, system, name)
+        Model.__init__(self, system, name, config)
         self.flags['pflow'] = True
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)

@@ -160,8 +160,8 @@ class BusNew(Model, BusData):
     group = 'StaticLoad'
     category = 'Load'
 
-    def __init__(self, system, name=None):
-        Model.__init__(self, system=system, name=name)
+    def __init__(self, system, name=None, config=None):
+        Model.__init__(self, system=system, name=name, config=config)
         BusData.__init__(self)
 
         self.flags['collate'] = False

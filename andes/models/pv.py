@@ -4,7 +4,7 @@ from cvxopt import matrix, mul
 
 from .base import ModelBase
 from ..utils.math import sort_idx
-from andes.models.base import Model, ModelData  # NOQA
+from andes.models.base import Model, ModelData, ModelConfig  # NOQA
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
@@ -265,10 +265,12 @@ class PVModel(Model):
     PV generator model (power flow) with q limit and PV-PQ conversion
     """
     def __init__(self, system=None, name=None, config=None):
-        super().__init__(system, name)
+        super().__init__(system, name, config)
 
         self.flags['pflow'] = True
         self.flags['collate'] = True
+
+        self.config.add(npv2pq=5)
 
         self.a = ExtAlgeb(model='BusNew', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='BusNew', src='v', indexer=self.bus, v_setter=True)
@@ -278,7 +280,7 @@ class PVModel(Model):
 
         # TODO: implement switching starting from the second iteration
         self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
-                                   n_select=1)
+                                   n_select=self.config.npv2pq)
 
         # variable initialization equations
         self.v.v_init = 'v0'
@@ -297,15 +299,15 @@ class PVModel(Model):
 
 
 class PVNew(PVData, PVModel):
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         PVData.__init__(self)
-        PVModel.__init__(self, system, name)
+        PVModel.__init__(self, system, name, config)
 
 
 class SlackNew(SlackData, PVModel):
-    def __init__(self, system=None, name=None):
+    def __init__(self, system=None, name=None, config=None):
         SlackData.__init__(self)
-        PVModel.__init__(self, system, name)
+        PVModel.__init__(self, system, name, config)
 
         self.a.v_init = 'a0'
 

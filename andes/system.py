@@ -66,6 +66,8 @@ class SystemNew(object):
         self.dae = DAENew()
         self.calls = OrderedDict()
 
+        self.config_from_file = self.load_config()
+
         self.models = OrderedDict()
         self.routine_import()
         self.model_import()
@@ -87,7 +89,7 @@ class SystemNew(object):
                 the_model = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_model, cls_name)
                 attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self)
+                self.__dict__[attr_name] = the_class(system=self, config=self.config_from_file)
                 self.models[attr_name] = self.__dict__[attr_name]
 
         # import JIT models
@@ -444,7 +446,32 @@ class SystemNew(object):
                     return
                 getattr(self.__dict__[name], method)(**kwargs)
 
+    def set_config(self, model=None, config=None):
+        if config is not None:
+            self._call_model_method('set_config', model, config=config)
+        else:
+            logger.warning('No config provided.')
+
+    def get_config(self):
+        """Get config data from models
+
+        Returns
+        -------
+        dict
+            a dict containing the config from devices; class names are the keys
+        """
+        config_dict = configparser.ConfigParser()
+        for name, instance in self.models.items():
+            config_dict[name] = instance.get_config()
+        return config_dict
+
+    def load_config(self):
+        return configparser.ConfigParser()
+
     def prepare(self):
+        """Prepare classes and lambda functions
+
+        Anything in this function should be case independent"""
         self.generate_equations()
         self.generate_jacobians()
         self.generate_initializer()
