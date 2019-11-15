@@ -22,6 +22,7 @@ from collections import OrderedDict
 import importlib
 import logging
 import sys
+import pprint
 
 import numpy as np
 from andes.core.limiter import Limiter
@@ -237,7 +238,10 @@ class ModelConfig(object):
     All config entries must be numerical.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, dct=None, **kwargs):
+        if dct is not None:
+            self.add(**dct)
+
         self.add(**kwargs)
 
     def add(self, **kwargs):
@@ -261,6 +265,9 @@ class ModelConfig(object):
                 out.append((key, val))
 
         return OrderedDict(out)
+
+    def __repr__(self):
+        return pprint.pformat(self.__dict__)
 
 
 class Model(object):
@@ -322,7 +329,8 @@ class Model(object):
         )
 
         self.config = ModelConfig()
-        self.set_config(config)
+        if config is not None:
+            self.set_config(config)
 
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
@@ -442,8 +450,8 @@ class Model(object):
 
     def set_config(self, config):
         if self.class_name in config:
-            for key, val in config[self.class_name]:
-                self.config.__dict__[key] = val
+            config_section = config[self.class_name]
+            self.config.add(**OrderedDict(config_section))
 
     def get_config(self):
         return self.config.as_dict()
@@ -483,6 +491,10 @@ class Model(object):
         # append all variable values
         for instance in self.cache.all_vars.values():
             kwargs[instance.name] = instance.v
+
+        # append config variables
+        for key, val in self.config.__dict__.items():
+            kwargs[key] = val
 
         return kwargs
 
@@ -538,6 +550,9 @@ class Model(object):
         for var in self.cache.all_vars_names:
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
+
+        for key in self.config.__dict__:
+            self.input_syms[key] = Symbol(key)
 
         syms_list = list(self.input_syms)
         iter_list = [self.states, self.algebs, self.calcs, self.vars_ext]

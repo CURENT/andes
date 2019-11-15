@@ -22,19 +22,23 @@ import configparser
 import importlib
 import logging
 import os
+import numpy as np
+from cvxopt import spmatrix
 from operator import itemgetter
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional  # NOQA
+
 from . import routines
 from .config import System
 from .consts import pi, rad2deg
-from .models import non_jits, jits, JIT, all_models_list, non_jits_new
+from .models import non_jits, jits, JIT, all_models_list
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
-from .models.base import Model  # NOQA
+
 from .variables.dae import DAENew
-import numpy as np
-from cvxopt import spmatrix
+
+from andes.devices import non_jits
+from andes.core.model import ModelConfig
 
 try:
     from andes_addon.streaming import Streaming
@@ -56,19 +60,24 @@ class SystemNew(object):
     """
     def __init__(self,
                  name: Optional[str] = None,
-                 config: Optional[System] = None,
+                 config_path: Optional[str] = None,
                  options: Optional[Dict] = None,
                  **kwargs: Optional[Dict]
                  ):
         self.name = name
-        self.config = config if config else System()
         self.options = options  # options from command line or so
-        self.dae = DAENew()
         self.calls = OrderedDict()
-
-        self.config_from_file = self.load_config()
-
         self.models = OrderedDict()
+
+        # get and load default config file
+        self.config = ModelConfig()
+        self.config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
+        self.config_from_file = self.load_config(self.config_path)
+        self.load_config()  # only load config for system and routines
+        # custom configuration for system goes after this line
+
+        self.dae = DAENew()
+
         self.routine_import()
         self.model_import()
 
@@ -84,9 +93,9 @@ class SystemNew(object):
         None
         """
         # non-JIT models
-        for file, cls_list in non_jits_new.items():
+        for file, cls_list in non_jits.items():
             for cls_name in cls_list:
-                the_model = importlib.import_module('andes.models.' + file)
+                the_model = importlib.import_module('andes.devices.' + file)
                 the_class = getattr(the_model, cls_name)
                 attr_name = cls_name
                 self.__dict__[attr_name] = the_class(system=self, config=self.config_from_file)
@@ -446,9 +455,16 @@ class SystemNew(object):
                     return
                 getattr(self.__dict__[name], method)(**kwargs)
 
-    def set_config(self, model=None, config=None):
+    def set_config(self, config=None):
+        # NOTE: No need to call `set_config` for models since
+        # the config is passed during model import
         if config is not None:
-            self._call_model_method('set_config', model, config=config)
+            # set config for system
+            if self.__class__.__name__ in config:
+                self.config.add(**config[self.__class__.__name__])
+
+            # TODO: set config for routines
+
         else:
             logger.warning('No config provided.')
 
@@ -461,12 +477,64 @@ class SystemNew(object):
             a dict containing the config from devices; class names are the keys
         """
         config_dict = configparser.ConfigParser()
+        config_dict[self.__class__.__name__] = self.config.as_dict()
+
+        # TODO: get routine config
         for name, instance in self.models.items():
             config_dict[name] = instance.get_config()
         return config_dict
 
-    def load_config(self):
-        return configparser.ConfigParser()
+    def load_config(self, conf_path=None):
+        """
+        Load config from an ``andes.rc`` file.
+
+        Parameters
+        ----------
+        conf_path : None or str
+            Path to the Andes rc file. If ``None``, the function body
+            will not run.
+
+        Returns
+        -------
+        configparse.ConfigParser
+        """
+        if conf_path is None:
+            return
+
+        conf = configparser.ConfigParser()
+        conf.read(conf_path)
+        logger.debug('Loaded config file from {}.'.format(conf_path))
+        return conf
+
+    def save_config(self, file_path=None):
+        """
+        Save system and routine configurations to an rc-formatted file.
+
+        Parameters
+        ----------
+        file_path : str
+            path to the configuration file. The user will be prompted if the
+            file already exists.
+
+        Returns
+        -------
+        None
+        """
+        if file_path is None:
+            home_dir = os.path.expanduser('~')
+            file_path = os.path.join(home_dir, '.andes', 'andes.rc')
+
+        if os.path.isfile(file_path):
+            choice = input('File {} already exist. Overwrite? [y/N]'.format(file_path)).lower()
+            if len(choice) == 0 or choice[0] != 'y':
+                logger.info('File not overwritten.')
+                return
+
+        conf = self.get_config()
+        with open(file_path, 'w') as f:
+            conf.write(f)
+
+        logger.info('Config written to {}'.format(file_path))
 
     def prepare(self):
         """Prepare classes and lambda functions

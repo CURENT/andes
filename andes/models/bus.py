@@ -1,9 +1,6 @@
 from cvxopt import matrix, uniform  # NOQA
 
-from andes.core.var import Algeb
-from andes.core.param import NumParam, DataParam  # NOQA
 from .base import ModelBase
-from .base import ModelData, Model
 
 from ..consts import Gy  # NOQA
 
@@ -130,46 +127,3 @@ class Bus(ModelBase):
             v = [self.system.Bus.n + item for item in a]
             dae.set_jac(Gy, 1e-6, a, a)
             dae.set_jac(Gy, 1e-6, v, v)
-
-
-class BusData(ModelData):
-    """
-    Class for Bus data
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.Vn = NumParam(default=110, info="AC voltage rating", unit='kV', non_zero=True)
-        self.angle = NumParam(default=0, info="initial voltage phase angle", unit='rad')
-
-        self.area = DataParam(default=None, info="Area code")
-        self.region = DataParam(default=None, info="Region code")
-        self.owner = DataParam(default=None, info="Owner code")
-        self.xcoord = DataParam(default=0, info='x coordinate')
-        self.ycoord = DataParam(default=0, info='y coordinate')
-
-        self.vmax = NumParam(default=1.1, info="Voltage upper limit")
-        self.vmin = NumParam(default=0.9, info="Voltage lower limit")
-        self.voltage = NumParam(default=1.0, info="initial voltage magnitude", non_zero=True)
-
-
-class BusNew(Model, BusData):
-    """
-    Bus model constructed from the NewModelBase
-    """
-    group = 'StaticLoad'
-    category = 'Load'
-
-    def __init__(self, system, name=None, config=None):
-        Model.__init__(self, system=system, name=name, config=config)
-        BusData.__init__(self)
-
-        self.flags['collate'] = False
-        self.flags['pflow'] = True
-
-        self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')
-        self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')
-
-        # optional initial values
-        self.a.v_init = 'angle'
-        self.v.v_init = 'voltage'

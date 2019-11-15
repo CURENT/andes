@@ -17,7 +17,7 @@
 # limitations under the License.
 """
 Andes main entry point Redirection to main.py
-This makes the packacke callable with py -m andes
+This makes the package callable with python -m andes
 """
 
 from andes import main

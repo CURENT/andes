@@ -1,0 +1,51 @@
+import logging
+from andes.models.base import Model, ModelData, ModelConfig  # NOQA
+from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.limiter import Comparer, SortedLimiter  # NOQA
+from andes.core.service import Service  # NOQa
+logger = logging.getLogger(__name__)
+
+
+class PQData(ModelData):
+    def __init__(self):
+        super().__init__()
+        self.bus = DataParam(info="linked bus idx", mandatory=True)
+        self.owner = DataParam(info="owner idx")
+
+        self.p0 = NumParam(default=0, info='active power load', power=True)
+        self.q0 = NumParam(default=0, info='reactive power load', power=True)
+        self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance')
+        self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance')
+
+
+class PQ(PQData, Model):
+    def __init__(self, system=None, name=None, config=None):
+        PQData.__init__(self)
+        Model.__init__(self, system, name, config)
+
+        # TODO: Take a configuration to disable switching to impedance
+        self.flags['pflow'] = True
+
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
+
+        self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
+
+        self.a.e_symbolic = "u * (p0 * v_cmp_zi + \
+                                  p0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  p0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
+
+        self.v.e_symbolic = "u * (q0 * v_cmp_zi + \
+                                  q0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
+                                  q0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
+
+        # Experimental Zone Below
+        # self.v_ref = Algeb(info="Voltage reference for PI")
+        # self.kp = Service()
+        # self.ki = Service()
+
+        # self.kp.e_symbolic = "1"
+        # self.ki.e_symbolic = "1"
+        # self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
+        #                        info='PI controller for voltage')

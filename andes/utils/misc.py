@@ -6,7 +6,7 @@ import tempfile
 logger = logging.getLogger(__name__)
 
 
-def get_config_load_path(conf_path=None):
+def get_config_load_path(conf_path=None, file_name='andes.conf'):
     """
     Return config file load path
 
@@ -26,14 +26,14 @@ def get_config_load_path(conf_path=None):
 
     if conf_path is None:
         # test ./andes.conf
-        if os.path.isfile('andes.conf'):
-            conf_path = 'andes.conf'
+        if os.path.isfile(file_name):
+            conf_path = file_name
         # test ~/andes.conf
         home_dir = os.path.expanduser('~')
-        if os.path.isfile(os.path.join(home_dir, '.andes', 'andes.conf')):
-            conf_path = os.path.join(home_dir, '.andes', 'andes.conf')
+        if os.path.isfile(os.path.join(home_dir, '.andes', file_name)):
+            conf_path = os.path.join(home_dir, '.andes', file_name)
 
-    if conf_path is not None:
+    else:
         logger.debug('Found config file at {}.'.format(conf_path))
 
     return conf_path
