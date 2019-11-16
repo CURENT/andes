@@ -1,5 +1,5 @@
 import logging
-from andes.models.base import Model, ModelData, ModelConfig  # NOQA
+from andes.core.model import Model, ModelData, ModelConfig  # NOQA
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
@@ -43,8 +43,8 @@ class PVModel(Model):
     def __init__(self, system=None, name=None, config=None):
         super().__init__(system, name, config)
 
-        self.flags['pflow'] = True
-        self.flags['collate'] = True
+        self.flags.update({'pflow': True,
+                           'collate': True})
 
         self.config.add(npv2pq=1)
 

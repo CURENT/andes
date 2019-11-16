@@ -1,5 +1,5 @@
 import logging
-from andes.models.base import Model, ModelData, ModelConfig  # NOQA
+from andes.core.model import Model, ModelData, ModelConfig  # NOQA
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA

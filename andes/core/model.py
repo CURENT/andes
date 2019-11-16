@@ -312,7 +312,7 @@ class Model(object):
         self.services = OrderedDict()
 
         # cache callback and lambda function storage
-        self.call = ModelCall()
+        self.calls = ModelCall()
 
         self.flags = dict(
             pflow=False,
@@ -505,13 +505,13 @@ class Model(object):
                 kwargs = self.get_input()
                 instance.v = instance.e_numeric(**kwargs)
 
-        if self.call.service_lambdify is not None and len(self.call.service_lambdify):
+        if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
             for idx, instance in enumerate(self.services.values()):
-                if callable(self.call.service_lambdify[idx]):
+                if callable(self.calls.service_lambdify[idx]):
                     kwargs = self.get_input()
-                    instance.v = self.call.service_lambdify[idx](**kwargs)
+                    instance.v = self.calls.service_lambdify[idx](**kwargs)
                 else:
-                    instance.v = self.call.service_lambdify[idx]
+                    instance.v = self.calls.service_lambdify[idx]
 
     def generate_initializer(self):
         """
@@ -529,7 +529,7 @@ class Model(object):
                 lambdified = lambdify(syms_list, sympified, 'numpy')
                 init_lambda_list.append(lambdified)
 
-        self.call.init_lambdify = init_lambda_list
+        self.calls.init_lambdify = init_lambda_list
 
     def generate_equations(self):
         logger.debug(f'Converting equations for {self.__class__.__name__}')
@@ -565,9 +565,9 @@ class Model(object):
         self.f_syms_matrix = Matrix(self.f_syms)
         self.c_syms_matrix = Matrix(self.c_syms)
 
-        self.call.g_lambdify = lambdify(syms_list, self.g_syms_matrix, 'numpy')
-        self.call.f_lambdify = lambdify(syms_list, self.f_syms_matrix, 'numpy')
-        self.call.c_lambdify = lambdify(syms_list, self.c_syms_matrix, 'numpy')
+        self.calls.g_lambdify = lambdify(syms_list, self.g_syms_matrix, 'numpy')
+        self.calls.f_lambdify = lambdify(syms_list, self.f_syms_matrix, 'numpy')
+        self.calls.c_lambdify = lambdify(syms_list, self.c_syms_matrix, 'numpy')
 
         # convert service equations
         # Note: service equations are converted one by one, because service variables
@@ -580,21 +580,21 @@ class Model(object):
             else:
                 service_eq_list.append(0)
 
-            self.call.service_lambdify = service_eq_list
+            self.calls.service_lambdify = service_eq_list
 
     def generate_jacobians(self):
         logger.debug(f'Converting Jacobians for {self.__class__.__name__}')
         from sympy import SparseMatrix, lambdify, Matrix
 
-        self.call._ifx, self.call._jfx, self.call._vfx = list(), list(), list()
-        self.call._ify, self.call._jfy, self.call._vfy = list(), list(), list()
-        self.call._igx, self.call._jgx, self.call._vgx = list(), list(), list()
-        self.call._igy, self.call._jgy, self.call._vgy = list(), list(), list()
+        self.calls._ifx, self.calls._jfx, self.calls._vfx = list(), list(), list()
+        self.calls._ify, self.calls._jfy, self.calls._vfy = list(), list(), list()
+        self.calls._igx, self.calls._jgx, self.calls._vgx = list(), list(), list()
+        self.calls._igy, self.calls._jgy, self.calls._vgy = list(), list(), list()
 
-        self.call._ifxc, self.call._jfxc, self.call._vfxc = list(), list(), list()
-        self.call._ifyc, self.call._jfyc, self.call._vfyc = list(), list(), list()
-        self.call._igxc, self.call._jgxc, self.call._vgxc = list(), list(), list()
-        self.call._igyc, self.call._jgyc, self.call._vgyc = list(), list(), list()
+        self.calls._ifxc, self.calls._jfxc, self.calls._vfxc = list(), list(), list()
+        self.calls._ifyc, self.calls._jfyc, self.calls._vfyc = list(), list(), list()
+        self.calls._igxc, self.calls._jgxc, self.calls._vgxc = list(), list(), list()
+        self.calls._igyc, self.calls._jgyc, self.calls._vgyc = list(), list(), list()
 
         # NOTE: SymPy does not allow getting the derivative of an empty array
         self.dg_syms = Matrix([])
@@ -645,9 +645,9 @@ class Model(object):
                 # else:
                 jac_name = f'{eqn.e_code}{var.v_code}'
 
-                self.call.__dict__[f'_i{jac_name}'].append(e_idx)
-                self.call.__dict__[f'_j{jac_name}'].append(v_idx)
-                self.call.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
+                self.calls.__dict__[f'_i{jac_name}'].append(e_idx)
+                self.calls.__dict__[f'_j{jac_name}'].append(v_idx)
+                self.calls.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
 
         # NOTE: This will not work: checking if the jacobian
         # element has value and add an epsilon if not.
@@ -663,9 +663,9 @@ class Model(object):
 
         for var in self.algebs.values():
             v_idx = vars_syms_list.index(var.name)
-            self.call.__dict__[f'_igyc'].append(v_idx)
-            self.call.__dict__[f'_jgyc'].append(v_idx)
-            self.call.__dict__[f'_vgyc'].append(1e-8)
+            self.calls.__dict__[f'_igyc'].append(v_idx)
+            self.calls.__dict__[f'_jgyc'].append(v_idx)
+            self.calls.__dict__[f'_vgyc'].append(1e-8)
 
     def store_sparse_pattern(self):
         """
@@ -710,9 +710,9 @@ class Model(object):
         for dict_name in jac_set:
             for j_type in jac_type:
                 # generated lambda functions
-                for row, col, val in zip(self.call.__dict__[f'_i{dict_name}{j_type}'],
-                                         self.call.__dict__[f'_j{dict_name}{j_type}'],
-                                         self.call.__dict__[f'_v{dict_name}{j_type}']):
+                for row, col, val in zip(self.calls.__dict__[f'_i{dict_name}{j_type}'],
+                                         self.calls.__dict__[f'_j{dict_name}{j_type}'],
+                                         self.calls.__dict__[f'_v{dict_name}{j_type}']):
                     row_name = var_names_list[row]
                     col_name = var_names_list[col]
 
@@ -752,13 +752,13 @@ class Model(object):
                         else:
                             self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
 
-    def initializer(self):
+    def initialize(self):
         if self.n == 0:
             return
 
         for idx, instance in enumerate(self.cache.all_vars.values()):
             kwargs = self.get_input()
-            init_fun = self.call.init_lambdify[idx]
+            init_fun = self.calls.init_lambdify[idx]
             if callable(init_fun):
                 instance.v += init_fun(**kwargs)
             else:
@@ -789,7 +789,7 @@ class Model(object):
             instance.f_numeric(**kwargs)
 
         # call lambdified functions with use self.call
-        ret = self.call.f_lambdify(**kwargs)
+        ret = self.calls.f_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.states.values()):
             instance.e += ret[idx][0]
@@ -810,7 +810,7 @@ class Model(object):
             instance.g_numeric(**kwargs)
 
         # call lambdified functions with use self.call
-        ret = self.call.g_lambdify(**kwargs)
+        ret = self.calls.g_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.cache.algeb_ext.values()):
             instance.e += ret[idx][0]
@@ -826,7 +826,7 @@ class Model(object):
             idx = 0
 
             # generated lambda jacobian functions first
-            fun_list = self.call.__dict__[f'_v{name}']
+            fun_list = self.calls.__dict__[f'_v{name}']
             for fun in fun_list:
                 self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1

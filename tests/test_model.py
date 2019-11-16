@@ -15,9 +15,9 @@ class TestSystem(unittest.TestCase):
             self.ss.add('BusNew', Vn=100, idx=i)
             self.ss.add('PQNew', bus=i, idx=1)
 
-        self.ss.set_address()
-        self.ss.finalize_add()
-        self.ss.link_external()
+        self.ss._set_address()
+        self.ss._finalize_add()
+        self.ss._link_external()
         self.ss.PQNew.generate_equations()
         self.ss.PQNew.generate_jacobians()
 

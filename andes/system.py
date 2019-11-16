@@ -71,9 +71,9 @@ class SystemNew(object):
 
         # get and load default config file
         self.config = ModelConfig()
-        self.config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
-        self.config_from_file = self.load_config(self.config_path)
-        self.load_config()  # only load config for system and routines
+        self._config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
+        self._config_from_file = self.load_config(self._config_path)
+        self.set_config(self._config_from_file)  # only load config for system and routines
         # custom configuration for system goes after this line
 
         self.dae = DAENew()
@@ -98,7 +98,7 @@ class SystemNew(object):
                 the_model = importlib.import_module('andes.devices.' + file)
                 the_class = getattr(the_model, cls_name)
                 attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=self.config_from_file)
+                self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
                 self.models[attr_name] = self.__dict__[attr_name]
 
         # import JIT models
@@ -128,7 +128,7 @@ class SystemNew(object):
         #     self.__dict__[r.lower()] = getattr(file, r)(self)
         pass
 
-    def link_external(self, is_tds: bool = False):
+    def _link_external(self, is_tds: bool = False):
         for mdl in self.models.values():
 
             # skip non-powerflow model during power flow
@@ -145,7 +145,7 @@ class SystemNew(object):
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
-    def set_address(self, is_tds: bool = False):
+    def _set_address(self, is_tds: bool = False):
         for mdl in self.models.values():
 
             if (not is_tds) and (not mdl.flags['pflow']):
@@ -181,7 +181,7 @@ class SystemNew(object):
 
             mdl.flags['address'] = True
 
-    def set_dae_names(self, is_tds: bool = False):
+    def _set_dae_names(self, is_tds: bool = False):
         # store variable names
         # FIXME: fix the messy code below
         self.dae.x_name = [''] * self.dae.n
@@ -220,10 +220,10 @@ class SystemNew(object):
         else:
             self.__dict__[model].add(**kwargs)
 
-    def finalize_add(self, model: Optional[Union[str, List]] = None):
+    def _finalize_add(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('finalize_add', model)
 
-    def generate_initializer(self, model: Optional[Union[str, List]] = None):
+    def generate_initializers(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('generate_initializer', model)
 
     def generate_equations(self, model: Optional[Union[str, List]] = None):
@@ -232,14 +232,14 @@ class SystemNew(object):
     def generate_jacobians(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('generate_jacobians', model)
 
-    def initializer(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
+    def initialize(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
         self.dae.reset_array()
         self.vars_to_models()
 
         if is_tds is False:
-            self._call_model_with_flag('initializer', model, 'pflow', True)
+            self._call_model_with_flag('initialize', model, 'pflow', True)
         else:
-            self._call_model_with_flag('initializer', model, 'tds', True)
+            self._call_model_with_flag('initialize', model, 'tds', True)
 
         self.vars_to_dae()
         self.vars_to_models()
@@ -398,11 +398,12 @@ class SystemNew(object):
             self.dae.store_sparse_ijv(j_name, ii, jj, vv)
             self.dae.build_pattern(j_name)
 
-    def store_calls(self):
+    def _store_calls(self):
         for name, mdl in self.models.items():
-            self.calls[name] = mdl.call
+            self.calls[name] = mdl.calls
 
-    def _get_pkl_path(self):
+    @staticmethod
+    def _get_pkl_path():
         pkl_name = 'calls.pkl'
         andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
 
@@ -427,9 +428,9 @@ class SystemNew(object):
             self.prepare()
 
         self.calls = dill.load(open(pkl_path, 'rb'))
-
+        logger.debug('System undill: loaded <calls.pkl> file.')
         for name, model_call in self.calls.items():
-            self.__dict__[name].call = model_call
+            self.__dict__[name].calls = model_call
 
     def _call_model_method(self, method, model=None, **kwargs):
         if model is None:
@@ -462,6 +463,7 @@ class SystemNew(object):
             # set config for system
             if self.__class__.__name__ in config:
                 self.config.add(**config[self.__class__.__name__])
+                logger.info("Config: set for System")
 
             # TODO: set config for routines
 
@@ -484,7 +486,8 @@ class SystemNew(object):
             config_dict[name] = instance.get_config()
         return config_dict
 
-    def load_config(self, conf_path=None):
+    @staticmethod
+    def load_config(conf_path=None):
         """
         Load config from an ``andes.rc`` file.
 
@@ -503,7 +506,7 @@ class SystemNew(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug('Loaded config file from {}.'.format(conf_path))
+        logger.debug(f'Config: Loaded from file {conf_path}')
         return conf
 
     def save_config(self, file_path=None):
@@ -525,25 +528,27 @@ class SystemNew(object):
             file_path = os.path.join(home_dir, '.andes', 'andes.rc')
 
         if os.path.isfile(file_path):
-            choice = input('File {} already exist. Overwrite? [y/N]'.format(file_path)).lower()
+            choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
             if len(choice) == 0 or choice[0] != 'y':
-                logger.info('File not overwritten.')
+                logger.info('Config file not overwritten.')
                 return
 
         conf = self.get_config()
         with open(file_path, 'w') as f:
             conf.write(f)
 
-        logger.info('Config written to {}'.format(file_path))
+        logger.info('Config: written to {}'.format(file_path))
 
     def prepare(self):
-        """Prepare classes and lambda functions
+        """
+        Prepare classes and lambda functions
 
-        Anything in this function should be case independent"""
+        Anything in this function should be independent of test case
+        """
         self.generate_equations()
         self.generate_jacobians()
-        self.generate_initializer()
-        self.store_calls()
+        self.generate_initializers()
+        self._store_calls()
         self.dill_calls()
 
     def setup(self):
@@ -552,10 +557,10 @@ class SystemNew(object):
 
         This function is to be called after all data are added.
         """
-        self.set_address()
-        self.set_dae_names()
-        self.finalize_add()
-        self.link_external()
+        self._set_address()
+        self._set_dae_names()
+        self._finalize_add()
+        self._link_external()
         self.s_update()
         self.store_sparse_pattern()
         self.store_adder_setter()
