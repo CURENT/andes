@@ -59,17 +59,17 @@ class Line(LineData, Model):
         self.ghk = Service()
         self.bhk = Service()
 
-        self.gh.e_symbolic = 'g1 + 0.5 * g'
-        self.bh.e_symbolic = 'b1 + 0.5 * b'
-        self.gk.e_symbolic = 'g2 + 0.5 * g'
-        self.bk.e_symbolic = 'b2 + 0.5 * b'
+        self.gh.v_symbolic = 'g1 + 0.5 * g'
+        self.bh.v_symbolic = 'b1 + 0.5 * b'
+        self.gk.v_symbolic = 'g2 + 0.5 * g'
+        self.bk.v_symbolic = 'b2 + 0.5 * b'
 
-        self.yh.e_symbolic = 'u * (gh + 1j * bh)'
-        self.yk.e_symbolic = 'u * (gk + 1j * bk)'
-        self.yhk.e_symbolic = 'u / (r + 1j * x)'
+        self.yh.v_symbolic = 'u * (gh + 1j * bh)'
+        self.yk.v_symbolic = 'u * (gk + 1j * bk)'
+        self.yhk.v_symbolic = 'u / (r + 1j * x)'
 
-        self.ghk.e_symbolic = 're(yhk)'
-        self.bhk.e_symbolic = 'im(yhk)'
+        self.ghk.v_symbolic = 're(yhk)'
+        self.bhk.v_symbolic = 'im(yhk)'
 
         self.a1.e_symbolic = 'v1 ** 2 * (gh + ghk / tap ** 2)  - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) + \

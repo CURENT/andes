@@ -33,11 +33,9 @@ class Service(object):
     def __init__(self, name=None, *args, **kwargs):
         self.name = name
         self.owner = None
-        self.e_symbolic = None
-        self.e_numeric = None  # allow for custom update function
+        self.v_symbolic = None
+        self.v_numeric = None  # allow for custom update function
         self.v = None
-
-        self.e_lambdify = None
 
     def get_name(self):
         """
@@ -61,6 +59,10 @@ class Service(object):
             The count of elements in this variable
         """
         return self.owner.n if self.owner is not None else 0
+
+
+class InitializeService(object):
+    pass
 
 
 class ServiceRandom(Service):

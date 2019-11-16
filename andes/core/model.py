@@ -501,9 +501,9 @@ class Model(object):
     def eval_service(self):
 
         for idx, instance in enumerate(self.services.values()):
-            if instance.e_numeric is not None:
+            if instance.v_numeric is not None:
                 kwargs = self.get_input()
-                instance.v = instance.e_numeric(**kwargs)
+                instance.v = instance.v_numeric(**kwargs)
 
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
             for idx, instance in enumerate(self.services.values()):
@@ -574,8 +574,8 @@ class Model(object):
         # can be interdependent
         service_eq_list = []
         for instance in self.services.values():
-            if instance.e_symbolic is not None:
-                sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
+            if instance.v_symbolic is not None:
+                sympified_equation = sympify(instance.v_symbolic, locals=self.input_syms)
                 service_eq_list.append(lambdify(syms_list, sympified_equation, 'numpy'))
             else:
                 service_eq_list.append(0)
