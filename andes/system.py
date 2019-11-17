@@ -480,7 +480,7 @@ class SystemNew(object):
             # set config for system
             if self.__class__.__name__ in config:
                 self.config.add(**config[self.__class__.__name__])
-                logger.info("Config: set for System")
+                logger.debug("Config: set for System")
 
             # TODO: set config for routines
 

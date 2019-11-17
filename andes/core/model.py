@@ -503,7 +503,7 @@ class Model(object):
             instance.set_value()
 
     def eval_service(self):
-        logger.info(f'{self.class_name}: calling eval_service()')
+        logger.debug(f'{self.class_name}: calling eval_service()')
 
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
             for name, instance in self.services.items():
