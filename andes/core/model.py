@@ -300,6 +300,7 @@ class Model(object):
         self.algebs = OrderedDict()
         self.calcs = OrderedDict()
         self.vars_ext = OrderedDict()
+        self.vars_decl_order = OrderedDict()
 
         # external parameters
         self.params_ext = OrderedDict()
@@ -416,6 +417,7 @@ class Model(object):
 
         if isinstance(value, VarBase):
             value.id = len(self._all_vars())  # NOT in use yet
+            self.vars_decl_order[key] = value
 
         if isinstance(value, Algeb):
             self.algebs[key] = value
@@ -502,17 +504,21 @@ class Model(object):
 
     def eval_service(self):
         logger.info(f'{self.class_name}: calling eval_service()')
+
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
-            for idx, instance in enumerate(self.services.values()):
+            for name, instance in self.services.items():
                 # skip `ExtService` because it is handled in `link_external`
                 if isinstance(instance, ExtService):
                     continue
-                if callable(self.calls.service_lambdify[idx]):
+
+                service_fun = self.calls.service_lambdify[name]
+                if callable(service_fun):
                     logger.debug(f"Service: eval lambdified for <{instance.name}>")
                     kwargs = self.get_input()
-                    instance.v = self.calls.service_lambdify[idx](**kwargs)
+                    instance.v = service_fun(**kwargs)
                 else:
-                    instance.v = self.calls.service_lambdify[idx]
+                    instance.v = service_fun
+
         # NOTE: some numerical calls depend on other service values
         for idx, instance in enumerate(self.services.values()):
             if instance.v_numeric is not None:
@@ -527,14 +533,14 @@ class Model(object):
         from sympy import sympify, lambdify
         syms_list = list(self.input_syms)
 
-        init_lambda_list = []
-        for instance in self.cache.all_vars.values():
+        init_lambda_list = OrderedDict()
+        for name, instance in self.cache.all_vars.items():
             if instance.v_init is None:
-                init_lambda_list.append(0)
+                init_lambda_list[name] = 0
             else:
                 sympified = sympify(instance.v_init, locals=self.input_syms)
                 lambdified = lambdify(syms_list, sympified, 'numpy')
-                init_lambda_list.append(lambdified)
+                init_lambda_list[name] = lambdified
 
         self.calls.init_lambdify = init_lambda_list
 
@@ -562,10 +568,10 @@ class Model(object):
 
         for it, dest in zip(iter_list, dest_list):
             for instance in it.values():
-                if instance.e_symbolic is None:
+                if instance.e_str is None:
                     dest.append(0)
                 else:
-                    sympified_equation = sympify(instance.e_symbolic, locals=self.input_syms)
+                    sympified_equation = sympify(instance.e_str, locals=self.input_syms)
                     dest.append(sympified_equation)
 
         self.g_syms_matrix = Matrix(self.g_syms)
@@ -579,13 +585,13 @@ class Model(object):
         # convert service equations
         # Note: service equations are converted one by one, because service variables
         # can be interdependent
-        service_eq_list = []
-        for instance in self.services.values():
+        service_eq_list = OrderedDict()
+        for name, instance in self.services.items():
             if instance.v_str is not None:
                 sympified_equation = sympify(instance.v_str, locals=self.input_syms)
-                service_eq_list.append(lambdify(syms_list, sympified_equation, 'numpy'))
+                service_eq_list[name] = lambdify(syms_list, sympified_equation, 'numpy')
             else:
-                service_eq_list.append(0)
+                service_eq_list[name] = 0
 
             self.calls.service_lambdify = service_eq_list
 
@@ -640,13 +646,13 @@ class Model(object):
                 # it will work with is_number
                 # but needs some refactor with the value
                 #
-                # if e_symbolic.is_constant():
+                # if e_str.is_constant():
                 #     jac_name = f'{eqn.e_code}{var.v_code}c'
 
                 # -----------------------------------------------------------------
                 # ------ Constant parameters are not known at generation time -----
-                # elif len(e_symbolic.atoms(Symbol)) == 1 and \
-                #         str(list(e_symbolic.atoms(Symbol))[0]) in self.cache.all_consts_names:
+                # elif len(e_str.atoms(Symbol)) == 1 and \
+                #         str(list(e_str.atoms(Symbol))[0]) in self.cache.all_consts_names:
                 #     jac_name = f'{eqn.e_code}{var.v_code}c'
                 # -----------------------------------------------------------------
                 # else:
@@ -764,20 +770,20 @@ class Model(object):
             return
 
         logger.debug(f'{self.class_name}: calling initialize()')
-        for idx, instance in enumerate(self.cache.all_vars.values()):
-            logger.debug(f'{instance.name}: {instance.v_init}')
+        for name, instance in self.vars_decl_order.items():
+            logger.debug(f'{name}: {instance.v_init}')
             kwargs = self.get_input()
-            init_fun = self.calls.init_lambdify[idx]
+            init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
                 try:
-                    instance.v += init_fun(**kwargs)
+                    instance.v = init_fun(**kwargs)
                 except TypeError:
                     logger.error(f'{self.class_name}: {instance.name} = {instance.v_init} error.'
                                  f'You might have undefined variable in the equation string.')
             else:
-                instance.v += init_fun
+                instance.v = init_fun
 
-        # call custom variable initializer
+        # call custom variable initializer after lambdified initializers
         self.v_numeric(**kwargs)
 
     def e_clear(self):

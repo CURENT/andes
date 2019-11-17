@@ -181,8 +181,8 @@ class PIController(Block):
             instances.
         """
 
-        self.xi.e_symbolic = f'ki * ({self.ref.name} - {self.var.name})'
-        self.y.e_symbolic = f'kp * ({self.ref.name} - {self.var.name}) + {self.name}_xi'
+        self.xi.e_str = f'ki * ({self.ref.name} - {self.var.name})'
+        self.y.e_str = f'kp * ({self.ref.name} - {self.var.name}) + {self.name}_xi'
 
         self.vars = {self.name + '_xi': self.xi, self.name + '_y': self.y}
         return self.vars

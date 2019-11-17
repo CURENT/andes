@@ -64,12 +64,12 @@ class PVModel(Model):
         self.q.v_init = 'q0'
 
         # injections into buses have negative values
-        self.a.e_symbolic = "-u * p"
-        self.v.e_symbolic = "-u * q"
+        self.a.e_str = "-u * p"
+        self.v.e_str = "-u * q"
 
         # power injection equations g(y) = 0
-        self.p.e_symbolic = "u * (-p + p0)"
-        self.q.e_symbolic = "u * (q_lim_zi * (v - v0) + \
+        self.p.e_str = "u * (-p + p0)"
+        self.q.e_str = "u * (q_lim_zi * (v - v0) + \
                                   q_lim_zl * (q - qmin) + \
                                   q_lim_zu * (q - qmax))"
 
@@ -85,10 +85,11 @@ class Slack(SlackData, PVModel):
         SlackData.__init__(self)
         PVModel.__init__(self, system, name, config)
 
+        self.a.v_setter = True
         self.a.v_init = 'a0'
 
         self.p_lim = SortedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
 
-        self.p.e_symbolic = "u * (p_lim_zi * (a - a0) + \
+        self.p.e_str = "u * (p_lim_zi * (a - a0) + \
                                   p_lim_zl * (p - pmin) + \
                                   p_lim_zu * (p - pmax))"

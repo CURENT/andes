@@ -32,11 +32,11 @@ class PQ(PQData, Model):
 
         self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
 
-        self.a.e_symbolic = "u * (p0 * v_cmp_zi + \
+        self.a.e_str = "u * (p0 * v_cmp_zi + \
                                   p0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
                                   p0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
-        self.v.e_symbolic = "u * (q0 * v_cmp_zi + \
+        self.v.e_str = "u * (q0 * v_cmp_zi + \
                                   q0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
                                   q0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
 
@@ -45,7 +45,7 @@ class PQ(PQData, Model):
         # self.kp = Service()
         # self.ki = Service()
 
-        # self.kp.e_symbolic = "1"
-        # self.ki.e_symbolic = "1"
+        # self.kp.e_str = "1"
+        # self.ki.e_str = "1"
         # self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
         #                        info='PI controller for voltage')

@@ -66,7 +66,7 @@ class VarBase(object):
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
 
-        self.e_symbolic = None  # string for symbolic equation
+        self.e_str = None  # string for symbolic equation
         self.e_lambdify = None  # internal - sympy generated lambda function for equation
 
     def __repr__(self):

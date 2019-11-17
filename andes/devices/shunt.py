@@ -29,5 +29,5 @@ class Shunt(ShuntData, Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
 
-        self.a.e_symbolic = 'v**2 * g'
-        self.v.e_symbolic = '-v**2 * b'
+        self.a.e_str = 'v**2 * g'
+        self.v.e_str = '-v**2 * b'

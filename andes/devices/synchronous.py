@@ -55,12 +55,14 @@ class GEN2Axis(GEN2AxisData, Model):
 
         self.delta = State(v_init='u * im(log(E / abs(E)))')
         self.omega = State(v_init='1')
-        self.e1d = State(v_init='vq + ra * Iq + xd1 * Id')
-        self.e1q = State(v_init='vd + ra * Id - xq1 * Iq')
         self.vd = Algeb(v_init='re(vdq)')
         self.vq = Algeb(v_init='im(vdq)')
         self.tm = Algeb(v_init='tm0')
         self.vf = Algeb(v_init='vf0')
+
+        # NOTE: `Algeb` and `State` variables need to be declared in the initialization order
+        self.e1d = State(v_init='vq + ra * Iq + xd1 * Id')
+        self.e1q = State(v_init='vd + ra * Id - xq1 * Iq')
 
         # NOTE: assume that one static gen can only correspond to one syn
         # Does not support automatic PV gen combination
@@ -86,4 +88,3 @@ class GEN2Axis(GEN2AxisData, Model):
     @staticmethod
     def _vf0(e1q, xd, xd1, Id, **kwargs):
         return e1q + (xd - xd1) * Id
-
