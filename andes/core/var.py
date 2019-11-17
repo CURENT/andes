@@ -70,7 +70,21 @@ class VarBase(object):
         self.e_lambdify = None  # internal - sympy generated lambda function for equation
 
     def __repr__(self):
-        return f'{self.owner.__class__.__name__}.{self.name} ({self.__class__.__name__})'
+        span = []
+        if 1 <= self.n <= 20:
+            span = self.a.tolist()
+            span = ','.join([str(i) for i in span])
+        elif self.n > 20:
+            if not isinstance(self, ExtVar):
+                span.append(self.a[0])
+                span.append(self.a[-1])
+                span.append(self.a[1] - self.a[0])
+                span = ':'.join([str(i) for i in span])
+
+        if span:
+            span = ' [' + span + ']'
+
+        return f'{self.owner.__class__.__name__}.{self.name}, {self.__class__.__name__}{span}'
 
     def set_address(self, addr):
         """

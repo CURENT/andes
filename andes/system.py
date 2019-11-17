@@ -138,7 +138,7 @@ class SystemNew(object):
                 continue
 
             # TODO: handle external groups
-            for name, instance in mdl.vars_ext.items():
+            for name, instance in mdl.cache.vars_ext.items():
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
@@ -146,7 +146,7 @@ class SystemNew(object):
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
-            for name, instance in mdl.service_ext.items():
+            for name, instance in mdl.services_ext.items():
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 

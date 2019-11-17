@@ -2,9 +2,46 @@ import numpy as np
 from typing import Callable, Optional
 
 
-class Service(object):
+class ServiceBase(object):
+    def __init__(self, name=None):
+        """
+        Base class for service variables
+
+        Parameters
+        ----------
+        name
+        """
+        self.v = 0
+        self.name = name
+        self.owner = None
+
+    def get_name(self):
+        """
+        Return `name` in a list
+
+        Returns
+        -------
+        list
+            A list only containing the name of the service variable
+        """
+        return [self.name]
+
+    @property
+    def n(self):
+        """
+        Return the count of the service variable
+
+        Returns
+        -------
+        int
+            The count of elements in this variable
+        """
+        return self.owner.n if self.owner is not None else 0
+
+
+class Service(ServiceBase):
     """
-    Base class for service variables
+    Service variables that remains constants
 
     Service variables are constants calculated from
     parameters. They are only evaluated once in the
@@ -35,37 +72,13 @@ class Service(object):
                  v_numeric: Optional[Callable] = None,
                  name: Optional[str] = None,
                  *args, **kwargs):
-        self.name = name
-        self.owner = None
+        super().__init__(name)
         self.v_str = v_str
         self.v_numeric = v_numeric  # allow for custom update function
         self.v = None
 
-    def get_name(self):
-        """
-        Return `name` in a list
 
-        Returns
-        -------
-        list
-            A list only containing the name of the service variable
-        """
-        return [self.name]
-
-    @property
-    def n(self):
-        """
-        Return the count of the service variable
-
-        Returns
-        -------
-        int
-            The count of elements in this variable
-        """
-        return self.owner.n if self.owner is not None else 0
-
-
-class ExtService(Service):
+class ExtService(ServiceBase):
     """
     Service variable from an attribute of an external model or group.
 
@@ -75,6 +88,7 @@ class ExtService(Service):
     for initialization. It will be stored in an `ExtService` instance.
     """
     def __init__(self, src,
+                 name: Optional[str] = None,
                  model: Optional[str] = None,
                  group: Optional[str] = None,
                  indexer=None,

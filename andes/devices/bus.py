@@ -36,11 +36,11 @@ class Bus(Model, BusData):
     category = 'Load'
 
     def __init__(self, system, name=None, config=None):
-        Model.__init__(self, system=system, name=name, config=config)
         BusData.__init__(self)
+        Model.__init__(self, system=system, name=name, config=config)
 
-        self.flags['collate'] = False
-        self.flags['pflow'] = True
+        self.flags.update({'collate': False,
+                           'pflow': True})
 
         self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')
         self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')

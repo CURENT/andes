@@ -26,9 +26,9 @@ import pprint
 import numpy as np
 from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, DataParam, NumParam, ExtParam
-from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb
+from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
-from andes.core.service import Service, ExtService
+from andes.core.service import ServiceBase, Service, ExtService
 
 
 logger = logging.getLogger(__name__)
@@ -296,10 +296,11 @@ class Model(object):
             self.cache = Cache()
 
         # variables
-        self.states = OrderedDict()
-        self.algebs = OrderedDict()
-        self.calcs = OrderedDict()
-        self.vars_ext = OrderedDict()
+        self.states = OrderedDict()  # internal states
+        self.states_ext = OrderedDict()  # external states
+        self.algebs = OrderedDict()  # internal algebraic variables
+        self.algebs_ext = OrderedDict()  # external algebraic vars
+        self.calcs = OrderedDict()   # internal calculated vars
         self.vars_decl_order = OrderedDict()
 
         # external parameters
@@ -311,7 +312,7 @@ class Model(object):
 
         # service/temporary variables
         self.services = OrderedDict()
-        self.service_ext = OrderedDict()
+        self.services_ext = OrderedDict()
 
         # cache callback and lambda function storage
         self.calls = ModelCall()
@@ -362,14 +363,16 @@ class Model(object):
         self.cache.add_callback('all_vars_names', self._all_vars_names)
         self.cache.add_callback('all_params', self._all_params)
         self.cache.add_callback('all_params_names', self._all_params_names)
-        self.cache.add_callback('all_consts', self._all_consts)
-        self.cache.add_callback('all_consts_names', self._all_consts_names)
-        self.cache.add_callback('algeb_ext', self._algeb_ext)
+        self.cache.add_callback('algebs_and_ext', self._algebs_and_ext)
+        self.cache.add_callback('states_and_ext', self._states_and_ext)
+        self.cache.add_callback('services_and_ext', self._services_and_ext)
+        self.cache.add_callback('vars_ext', self._vars_ext)
 
     def _all_vars(self):
         return OrderedDict(list(self.states.items()) +
+                           list(self.states_ext.items()) +
                            list(self.algebs.items()) +
-                           list(self.vars_ext.items()) +
+                           list(self.algebs_ext.items()) +
                            list(self.calcs.items())
                            )
 
@@ -379,22 +382,12 @@ class Model(object):
             out += instance.get_name()
         return out
 
-    def _all_consts(self):
-        return OrderedDict(list(self.num_params.items()) +
-                           list(self.services.items())
-                           )
-
-    def _all_consts_names(self):
-        out = []
-        for instance in self.cache.all_consts.values():
-            out += instance.get_name()
-        return out
-
     def _all_params(self):
         # the service stuff should not be moved to variables.
         return OrderedDict(list(self.num_params.items()) +
                            list(self.limiters.items()) +
-                           list(self.services.items())
+                           list(self.services.items()) +
+                           list(self.services_ext.items())
                            )
 
     def _all_params_names(self):
@@ -403,38 +396,54 @@ class Model(object):
             out += instance.get_name()
         return out
 
-    def _algeb_ext(self):
+    def _algebs_and_ext(self):
         return OrderedDict(list(self.algebs.items()) +
-                           list(self.vars_ext.items()))
+                           list(self.algebs_ext.items()))
+
+    def _states_and_ext(self):
+        return OrderedDict(list(self.states.items()) +
+                           list(self.states_ext.items()))
+
+    def _services_and_ext(self):
+        return OrderedDict(list(self.services.items()) +
+                           list(self.services_ext.items()))
+
+    def _vars_ext(self):
+        return OrderedDict(list(self.states_ext.items()) +
+                           list(self.algebs_ext.items()))
 
     def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, Limiter, Service, Block)):
+        if isinstance(value, (VarBase, ServiceBase, Limiter, Block)):
             value.owner = self
             if not value.name:
                 value.name = key
             if key in self.__dict__:
                 logger.warning(f"{self.class_name}: redefinition of member <{key}>")
 
+        # store the variable declaration order
         if isinstance(value, VarBase):
             value.id = len(self._all_vars())  # NOT in use yet
             self.vars_decl_order[key] = value
 
+        # store instances to the corresponding OrderedDict
         if isinstance(value, Algeb):
             self.algebs[key] = value
+        elif isinstance(value, ExtAlgeb):
+            self.algebs_ext[key] = value
         elif isinstance(value, State):
             self.states[key] = value
+        elif isinstance(value, ExtState):
+            self.states_ext[key] = value
         elif isinstance(value, Calc):
             self.calcs[key] = value
-        elif isinstance(value, ExtAlgeb):
-            self.vars_ext[key] = value
         elif isinstance(value, ExtParam):
             self.params_ext[key] = value
         elif isinstance(value, Limiter):
             self.limiters[key] = value
         elif isinstance(value, Service):
             self.services[key] = value
-            if isinstance(value, ExtService):
-                self.service_ext[key] = value
+        elif isinstance(value, ExtService):
+            self.services_ext[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
@@ -474,8 +483,10 @@ class Model(object):
             raise NotImplementedError
 
     def get_input(self):
+        # The order of inputs: `all_params` and then `all_vars`, finally `config`
         kwargs = OrderedDict()
 
+        # ----------------------------------------------------
         # the below sequence should correspond to `self.all_param_names`
         for instance in self.num_params.values():
             kwargs[instance.name] = instance.v
@@ -486,6 +497,10 @@ class Model(object):
 
         for instance in self.services.values():
             kwargs[instance.name] = instance.v
+
+        for instance in self.services_ext.values():
+            kwargs[instance.name] = instance.v
+        # ----------------------------------------------------
 
         # append all variable values
         for instance in self.cache.all_vars.values():
@@ -507,19 +522,17 @@ class Model(object):
 
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
             for name, instance in self.services.items():
-                # skip `ExtService` because it is handled in `link_external`
-                if isinstance(instance, ExtService):
-                    continue
 
-                service_fun = self.calls.service_lambdify[name]
-                if callable(service_fun):
+                func = self.calls.service_lambdify[name]
+                if callable(func):
                     logger.debug(f"Service: eval lambdified for <{instance.name}>")
                     kwargs = self.get_input()
-                    instance.v = service_fun(**kwargs)
+                    instance.v = func(**kwargs)
                 else:
-                    instance.v = service_fun
+                    instance.v = func
 
-        # NOTE: some numerical calls depend on other service values
+        # NOTE: some numerical calls depend on other service values, so they are evaluated
+        #       after lambdified calls
         for idx, instance in enumerate(self.services.values()):
             if instance.v_numeric is not None:
                 logger.debug(f"Service: eval numeric function for <{instance.name}>")
@@ -563,8 +576,8 @@ class Model(object):
             self.input_syms[key] = Symbol(key)
 
         syms_list = list(self.input_syms)
-        iter_list = [self.states, self.algebs, self.calcs, self.vars_ext]
-        dest_list = [self.f_syms, self.g_syms, self.c_syms, self.g_syms]
+        iter_list = [self.states, self.states_ext, self.algebs, self.algebs_ext, self.calcs]
+        dest_list = [self.f_syms, self.f_syms, self.g_syms, self.g_syms, self.c_syms]
 
         for it, dest in zip(iter_list, dest_list):
             for instance in it.values():
@@ -623,7 +636,8 @@ class Model(object):
 
         vars_syms_list = list(self.vars_syms)
         syms_list = list(self.input_syms)
-        algeb_ext_list = list(self.cache.algeb_ext)
+        algebs_and_ext_list = list(self.cache.algebs_and_ext)
+        # TODO: change to states and ext
         state_list = list(self.states)
 
         fg_sparse = [self.df_syms_sparse, self.dg_syms_sparse]
@@ -636,7 +650,7 @@ class Model(object):
                 if idx == 0:
                     eq_name = state_list[e_idx]
                 else:
-                    eq_name = algeb_ext_list[e_idx]
+                    eq_name = algebs_and_ext_list[e_idx]
 
                 var_name = vars_syms_list[v_idx]
                 eqn = self.cache.all_vars[eq_name]
@@ -800,18 +814,18 @@ class Model(object):
         # evaluate numerical function calls
         kwargs = self.get_input()
 
+        # call lambdified functions with use self.call
+        ret = self.calls.f_lambdify(**kwargs)
+
+        for idx, instance in enumerate(self.cache.states_and_ext.values()):
+            instance.e += ret[idx][0]
+
         # numerical calls defined in the model
         self.f_numeric(**kwargs)
 
         # numerical calls in blocks
         for instance in self.blocks.values():
             instance.f_numeric(**kwargs)
-
-        # call lambdified functions with use self.call
-        ret = self.calls.f_lambdify(**kwargs)
-
-        for idx, instance in enumerate(self.states.values()):
-            instance.e += ret[idx][0]
 
     def g_update(self):
         if self.n == 0:
@@ -821,18 +835,18 @@ class Model(object):
         # evaluate numerical function calls
         kwargs = self.get_input()
 
+        # call lambdified functions with use self.call
+        ret = self.calls.g_lambdify(**kwargs)
+
+        for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
+            instance.e += ret[idx][0]
+
         # numerical calls defined in the model
         self.g_numeric(**kwargs)
 
         # numerical calls in blocks
         for instance in self.blocks.values():
             instance.g_numeric(**kwargs)
-
-        # call lambdified functions with use self.call
-        ret = self.calls.g_lambdify(**kwargs)
-
-        for idx, instance in enumerate(self.cache.algeb_ext.values()):
-            instance.e += ret[idx][0]
 
     def j_update(self):
         if self.n == 0:
