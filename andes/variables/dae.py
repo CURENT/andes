@@ -199,6 +199,21 @@ class DAENew(object):
                                        self.row_of(name),
                                        self.col_of(name))
 
+    def resize_array(self):
+        """
+        Resize arrays to the new `m` and `n`
+
+        Returns
+        -------
+
+        """
+        pass
+        self.x = np.append(self.x, np.zeros(self.n - len(self.x)))
+        self.y = np.append(self.y, np.zeros(self.m - len(self.y)))
+
+        self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
+        self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
+
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (dae)"""

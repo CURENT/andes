@@ -43,6 +43,7 @@ class VarBase(object):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
+                 v_init: Optional[str] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  **kwargs
@@ -61,7 +62,7 @@ class VarBase(object):
         self.v: Optional[ndarray] = None  # variable value array
         self.e: Optional[ndarray] = None  # equation value array
 
-        self.v_init = None  # equation string for variable initialization
+        self.v_init = v_init  # equation string for variable initialization
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
 
@@ -175,6 +176,7 @@ class ExtVar(VarBase):
                  model: str,
                  src: str,
                  indexer: Optional[Union[List, ndarray, DataParam]] = None,
+                 sum: Optional[bool] = False,
                  *args,
                  **kwargs):
         super(ExtVar, self).__init__(*args, **kwargs)
@@ -182,6 +184,7 @@ class ExtVar(VarBase):
         self.model = model
         self.src = src
         self.indexer = indexer
+        self.sum = sum  # if values at the same indices should be summed up (NOT in use yet)
 
         self.parent_model = None
         self.parent_instance = None

@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Callable, Optional
 
 
 class Service(object):
@@ -30,11 +31,14 @@ class Service(object):
     v : array-like
         Evaluated service variable value
     """
-    def __init__(self, name=None, *args, **kwargs):
+    def __init__(self, v_str: Optional[str] = None,
+                 v_numeric: Optional[Callable] = None,
+                 name: Optional[str] = None,
+                 *args, **kwargs):
         self.name = name
         self.owner = None
-        self.v_symbolic = None
-        self.v_numeric = None  # allow for custom update function
+        self.v_str = v_str
+        self.v_numeric = v_numeric  # allow for custom update function
         self.v = None
 
     def get_name(self):
@@ -61,8 +65,33 @@ class Service(object):
         return self.owner.n if self.owner is not None else 0
 
 
-class InitializeService(object):
-    pass
+class ExtService(Service):
+    """
+    Service variable from an attribute of an external model or group.
+
+    Examples
+    --------
+    A synchronous generator needs to retrieve the p and q values from static generators
+    for initialization. It will be stored in an `ExtService` instance.
+    """
+    def __init__(self, src,
+                 model: Optional[str] = None,
+                 group: Optional[str] = None,
+                 indexer=None,
+                 **kwargs):
+        super().__init__()
+        self.src = src
+        self.model = model
+        self.group = group
+        self.indexer = indexer
+        self.uid = None
+
+    def link_external(self, ext_model):
+        self.uid = ext_model.idx2uid(self.indexer.v)
+
+        # set initial v and e values to zero
+        self.v = np.zeros(self.n)
+        self.v = ext_model.__dict__[self.src].v[self.uid]
 
 
 class ServiceRandom(Service):

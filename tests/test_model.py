@@ -17,7 +17,7 @@ class TestSystem(unittest.TestCase):
 
         self.ss._set_address()
         self.ss._finalize_add()
-        self.ss._link_external()
+        self.ss.link_external()
         self.ss.PQNew.generate_equations()
         self.ss.PQNew.generate_jacobians()
 

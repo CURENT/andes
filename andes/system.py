@@ -37,7 +37,7 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 from .variables.dae import DAENew
 
-from andes.devices import non_jits
+from andes.devices import non_jit
 from andes.core.model import ModelConfig
 
 try:
@@ -93,7 +93,7 @@ class SystemNew(object):
         None
         """
         # non-JIT models
-        for file, cls_list in non_jits.items():
+        for file, cls_list in non_jit.items():
             for cls_name in cls_list:
                 the_model = importlib.import_module('andes.devices.' + file)
                 the_class = getattr(the_model, cls_name)
@@ -128,7 +128,7 @@ class SystemNew(object):
         #     self.__dict__[r.lower()] = getattr(file, r)(self)
         pass
 
-    def _link_external(self, is_tds: bool = False):
+    def link_external(self, is_tds: bool = False):
         for mdl in self.models.values():
 
             # skip non-powerflow model during power flow
@@ -137,11 +137,16 @@ class SystemNew(object):
             elif is_tds and (not mdl.flags['tds']):
                 continue
 
+            # TODO: handle external groups
             for name, instance in mdl.vars_ext.items():
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
             for name, instance in mdl.params_ext.items():
+                ext_model_name = instance.model
+                instance.link_external(self.__dict__[ext_model_name])
+
+            for name, instance in mdl.service_ext.items():
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
@@ -189,7 +194,13 @@ class SystemNew(object):
 
         m0, n0 = 0, 0
         for mdl in self.models.values():
-            mdl_name = mdl.__class__.__name__
+
+            if (not is_tds) and (not mdl.flags['pflow']):
+                continue
+            elif is_tds and (not mdl.flags['tds']):
+                continue
+
+            mdl_name = mdl.class_name
             collate = mdl.flags['collate']
 
             n = mdl.n
@@ -233,7 +244,8 @@ class SystemNew(object):
         self._call_model_method('generate_jacobians', model)
 
     def initialize(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
-        self.dae.reset_array()
+        if not is_tds:
+            self.dae.reset_array()
         self.vars_to_models()
 
         if is_tds is False:
@@ -272,7 +284,6 @@ class SystemNew(object):
             var.v = self.dae.x[var.a]
 
     def store_adder_setter(self):
-
         self.f_adders = []
         self.g_adders = []
         self.f_setters = []
@@ -298,8 +309,14 @@ class SystemNew(object):
                     else:
                         self.__dict__[f'{var.v_code}_setters'].append(var)
 
-    def s_update(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('eval_service', model)
+    def s_update(self, is_tds: bool = False):
+        for name, mdl in self.models.items():
+            if (not is_tds) and (not mdl.flags['pflow']):
+                continue
+            elif is_tds and (not mdl.flags['tds']):
+                continue
+
+            self._call_model_method('eval_service', name)
 
     def l_update(self, model: Optional[Union[str, List]] = None):
         self._call_model_method('eval_limiter', model)
@@ -560,7 +577,7 @@ class SystemNew(object):
         self._set_address()
         self._set_dae_names()
         self._finalize_add()
-        self._link_external()
+        self.link_external()
         self.s_update()
         self.store_sparse_pattern()
         self.store_adder_setter()

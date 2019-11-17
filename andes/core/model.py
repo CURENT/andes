@@ -28,7 +28,7 @@ from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb
 from andes.core.block import Block
-from andes.core.service import Service
+from andes.core.service import Service, ExtService
 
 
 logger = logging.getLogger(__name__)
@@ -310,6 +310,7 @@ class Model(object):
 
         # service/temporary variables
         self.services = OrderedDict()
+        self.service_ext = OrderedDict()
 
         # cache callback and lambda function storage
         self.calls = ModelCall()
@@ -410,12 +411,11 @@ class Model(object):
             value.owner = self
             if not value.name:
                 value.name = key
-
             if key in self.__dict__:
-                logger.warning(f"{self.__class__.__name__}: "
-                               f"redefinition of instance member <{key}>")
+                logger.warning(f"{self.class_name}: redefinition of member <{key}>")
+
         if isinstance(value, VarBase):
-            value.id = len(self._all_vars())
+            value.id = len(self._all_vars())  # NOT in use yet
 
         if isinstance(value, Algeb):
             self.algebs[key] = value
@@ -431,6 +431,8 @@ class Model(object):
             self.limiters[key] = value
         elif isinstance(value, Service):
             self.services[key] = value
+            if isinstance(value, ExtService):
+                self.service_ext[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
@@ -499,19 +501,24 @@ class Model(object):
             instance.set_value()
 
     def eval_service(self):
-
-        for idx, instance in enumerate(self.services.values()):
-            if instance.v_numeric is not None:
-                kwargs = self.get_input()
-                instance.v = instance.v_numeric(**kwargs)
-
+        logger.info(f'{self.class_name}: calling eval_service()')
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
             for idx, instance in enumerate(self.services.values()):
+                # skip `ExtService` because it is handled in `link_external`
+                if isinstance(instance, ExtService):
+                    continue
                 if callable(self.calls.service_lambdify[idx]):
+                    logger.debug(f"Service: eval lambdified for <{instance.name}>")
                     kwargs = self.get_input()
                     instance.v = self.calls.service_lambdify[idx](**kwargs)
                 else:
                     instance.v = self.calls.service_lambdify[idx]
+        # NOTE: some numerical calls depend on other service values
+        for idx, instance in enumerate(self.services.values()):
+            if instance.v_numeric is not None:
+                logger.debug(f"Service: eval numeric function for <{instance.name}>")
+                kwargs = self.get_input()
+                instance.v = instance.v_numeric(**kwargs)
 
     def generate_initializer(self):
         """
@@ -532,7 +539,7 @@ class Model(object):
         self.calls.init_lambdify = init_lambda_list
 
     def generate_equations(self):
-        logger.debug(f'Converting equations for {self.__class__.__name__}')
+        logger.debug(f'Generating equations for {self.__class__.__name__}')
         from sympy import Symbol, Matrix, sympify, lambdify
 
         self.g_syms = []
@@ -574,8 +581,8 @@ class Model(object):
         # can be interdependent
         service_eq_list = []
         for instance in self.services.values():
-            if instance.v_symbolic is not None:
-                sympified_equation = sympify(instance.v_symbolic, locals=self.input_syms)
+            if instance.v_str is not None:
+                sympified_equation = sympify(instance.v_str, locals=self.input_syms)
                 service_eq_list.append(lambdify(syms_list, sympified_equation, 'numpy'))
             else:
                 service_eq_list.append(0)
@@ -583,7 +590,7 @@ class Model(object):
             self.calls.service_lambdify = service_eq_list
 
     def generate_jacobians(self):
-        logger.debug(f'Converting Jacobians for {self.__class__.__name__}')
+        logger.debug(f'Generating Jacobians for {self.__class__.__name__}')
         from sympy import SparseMatrix, lambdify, Matrix
 
         self.calls._ifx, self.calls._jfx, self.calls._vfx = list(), list(), list()
@@ -756,11 +763,17 @@ class Model(object):
         if self.n == 0:
             return
 
+        logger.debug(f'{self.class_name}: calling initialize()')
         for idx, instance in enumerate(self.cache.all_vars.values()):
+            logger.debug(f'{instance.name}: {instance.v_init}')
             kwargs = self.get_input()
             init_fun = self.calls.init_lambdify[idx]
             if callable(init_fun):
-                instance.v += init_fun(**kwargs)
+                try:
+                    instance.v += init_fun(**kwargs)
+                except TypeError:
+                    logger.error(f'{self.class_name}: {instance.name} = {instance.v_init} error.'
+                                 f'You might have undefined variable in the equation string.')
             else:
                 instance.v += init_fun
 

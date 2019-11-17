@@ -1,4 +1,3 @@
-import sys
 from typing import Optional, Union, Callable
 
 import numpy as np
@@ -54,7 +53,10 @@ class ParamBase(object):
 
         # check for mandatory
         if value is None:
-            value = self.default
+            if self.get_property('mandatory'):
+                raise ValueError(f'Mandatory parameter {self.name} missing')
+            else:
+                value = self.default
 
         if self._is_array is False:
             self.v.append(value)
@@ -62,6 +64,21 @@ class ParamBase(object):
             np.append(self.v, value)
 
         self.n += 1
+
+    def get_property(self, property_name: str):
+        """
+        Check the boolean value of the given property
+
+        Parameters
+        ----------
+        property_name : str
+            Property name
+
+        Returns
+        -------
+        The truth value of the property
+        """
+        return self.property[property_name]
 
     def get_name(self):
         """
@@ -186,21 +203,6 @@ class NumParam(ParamBase):
         self.vin = None  # values from input
         self._is_array = False
 
-    def get_property(self, property_name: str):
-        """
-        Check the boolean value of the given property
-
-        Parameters
-        ----------
-        property_name : str
-            Property name
-
-        Returns
-        -------
-        The truth value of the property
-        """
-        return self.property[property_name]
-
     def add(self, value=None):
         """
         Add a new value (from a new element) to this parameter list
@@ -218,8 +220,7 @@ class NumParam(ParamBase):
         # check for mandatory
         if value is None:
             if self.get_property('mandatory'):
-                logger.error(f'Mandatory parameter {self.name} missing')
-                sys.exit(1)
+                raise ValueError(f'Mandatory parameter {self.name} missing')
             else:
                 value = self.default
         elif isinstance(value, str):
