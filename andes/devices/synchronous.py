@@ -53,12 +53,12 @@ class GEN2Axis(GEN2AxisData, Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
 
-        self.delta = State(v_init='u * im(log(E / abs(E)))')
+        self.delta = State(v_init='delta0')
         self.omega = State(v_init='1')
-        self.vd = Algeb(v_init='re(vdq)')
-        self.vq = Algeb(v_init='im(vdq)')
-        self.tm = Algeb(v_init='tm0')
-        self.vf = Algeb(v_init='vf0')
+        self.vd = Algeb(v_init='vd0')
+        self.vq = Algeb(v_init='vq0')
+        self.tm = Algeb(v_init='tm0', v_setter=True)
+        self.vf = Algeb(v_init='vf0', v_setter=True)
 
         # NOTE: `Algeb` and `State` variables need to be declared in the initialization order
         self.e1d = State(v_init='vq + ra * Iq + xd1 * Id')
@@ -73,12 +73,17 @@ class GEN2Axis(GEN2AxisData, Model):
         self.S = Service(v_str='p0 - 1j * q0')
         self.Ic = Service(v_str='S / conj(Vc)')
         self.E = Service(v_str='Vc + Ic * (ra + 1j * xq)')
+        self.deltac = Service(v_str='log(E / abs(E))')
+        self.delta0 = Service(v_str='u * im(deltac)')
 
-        self.vdq = Service(v_str='u * (Vc * exp(1j * 0.5 * pi - delta))')
-        self.Idq = Service(v_str='u * (Ic * exp(1j * 0.5 * pi - delta))')
+        self.vdq = Service(v_str='u * (Vc * exp(1j * 0.5 * pi - deltac))')
+        self.Idq = Service(v_str='u * (Ic * exp(1j * 0.5 * pi - deltac))')
         self.Id = Service(v_str='re(Idq)')
         self.Iq = Service(v_str='im(Idq)')
-        self.tm0 = Service(v_str='(im(vdq) + ra * Iq) * Iq + (re(vdq) + ra * Id) * Id')
+        self.vd0 = Service(v_str='re(vdq)')
+        self.vq0 = Service(v_str='im(vdq)')
+
+        self.tm0 = Service(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
         self.vf0 = Service(v_numeric=self._vf0)
 
         # DAE
