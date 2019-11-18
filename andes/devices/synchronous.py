@@ -78,7 +78,7 @@ class GEN2Axis(GEN2AxisData, Model):
         self.Idq = Service(v_str='u * (Ic * exp(1j * 0.5 * pi - delta))')
         self.Id = Service(v_str='re(Idq)')
         self.Iq = Service(v_str='im(Idq)')
-        self.tm0 = Service(v_str='(vq + ra * Iq) * Iq + (vd + ra * Id) * Id')
+        self.tm0 = Service(v_str='(im(vdq) + ra * Iq) * Iq + (re(vdq) + ra * Id) * Id')
         self.vf0 = Service(v_numeric=self._vf0)
 
         # DAE

@@ -210,8 +210,12 @@ class SystemNew(object):
             mdl.flags['address'] = True
 
         # pre-allocate for names
-        self.dae.x_name = [''] * self.dae.n
-        self.dae.y_name = [''] * self.dae.m
+        if len(self.dae.y_name) == 0:
+            self.dae.x_name = [''] * self.dae.n
+            self.dae.y_name = [''] * self.dae.m
+        else:
+            self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
+            self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
 
     def set_dae_names(self, models=None):
         # store variable names
