@@ -289,6 +289,7 @@ class Model(object):
         # duplicate attributes from ModelData. Keep for now.
         self.n = 0
         self.idx = []
+        self.group = 'Undefined'
 
         if not hasattr(self, 'num_params'):
             self.num_params = OrderedDict()

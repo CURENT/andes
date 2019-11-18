@@ -22,6 +22,7 @@ import configparser
 import importlib
 import logging
 import os
+import inspect
 import numpy as np
 from cvxopt import spmatrix
 from operator import itemgetter
@@ -68,6 +69,7 @@ class SystemNew(object):
         self.options = options  # options from command line or so
         self.calls = OrderedDict()
         self.models = OrderedDict()
+        self.groups = OrderedDict()
         self.programs = OrderedDict()
 
         # get and load default config file
@@ -78,6 +80,7 @@ class SystemNew(object):
         # custom configuration for system goes after this line
 
         self.dae = DAENew()
+        self.group_import()
         self.model_import()
         # routine import comes after model import; routines need to query model flags
         self.routine_import()
@@ -99,6 +102,23 @@ class SystemNew(object):
         self.y_adders = []
         # ------------------------------
 
+    def group_import(self):
+        """
+        Import groups defined in `devices/group.py`
+
+        Returns
+        -------
+
+        """
+        module = importlib.import_module('andes.devices.group')
+        for m in inspect.getmembers(module, inspect.isclass):
+            name = m[0]
+            cls = m[1]
+            if name == 'GroupBase':
+                continue
+            self.__dict__[name] = cls()
+            self.groups[name] = self.__dict__[name]
+
     def model_import(self):
         """
         Import and instantiate the non-JIT models and the JIT models.
@@ -112,12 +132,15 @@ class SystemNew(object):
         """
         # non-JIT models
         for file, cls_list in non_jit.items():
-            for cls_name in cls_list:
-                the_model = importlib.import_module('andes.devices.' + file)
-                the_class = getattr(the_model, cls_name)
-                attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
-                self.models[attr_name] = self.__dict__[attr_name]
+            for model_name in cls_list:
+                the_module = importlib.import_module('andes.devices.' + file)
+                the_class = getattr(the_module, model_name)
+                self.__dict__[model_name] = the_class(system=self, config=self._config_from_file)
+                self.models[model_name] = self.__dict__[model_name]
+
+                # link to the group
+                group_name = self.__dict__[model_name].group
+                self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
 
         # import JIT models
         # for file, pair in jits.items():

@@ -23,14 +23,15 @@ class PQ(PQData, Model):
     def __init__(self, system=None, name=None, config=None):
         PQData.__init__(self)
         Model.__init__(self, system, name, config)
-
-        # TODO: Take a configuration to disable switching to impedance
+        self.group = 'StaticLoad'
         self.flags['pflow'] = True
+        self.config.add(pq2z=1)
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
 
-        self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax)
+        self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax,
+                              enable=self.config.pq2z)
 
         self.a.e_str = "u * (p0 * v_cmp_zi + \
                                   p0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \

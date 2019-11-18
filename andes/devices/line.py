@@ -40,6 +40,7 @@ class Line(LineData, Model):
     def __init__(self, system=None, name=None, config=None):
         LineData.__init__(self)
         Model.__init__(self, name, system, config)
+        self.group = 'AcLine'
         self.flags['pflow'] = True
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1)

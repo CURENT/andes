@@ -32,12 +32,13 @@ class Bus(Model, BusData):
     """
     Bus model constructed from the NewModelBase
     """
-    group = 'StaticLoad'
-    category = 'Load'
 
     def __init__(self, system, name=None, config=None):
         BusData.__init__(self)
         Model.__init__(self, system=system, name=name, config=config)
+
+        self.group = 'AcTopology'
+        self.category = ['Node']
 
         self.flags.update({'collate': False,
                            'pflow': True})

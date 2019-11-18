@@ -48,6 +48,7 @@ class GEN2Axis(GEN2AxisData, Model):
         GEN2AxisData.__init__(self)
         Model.__init__(self, name, system, config)
 
+        self.group = 'SynGen'
         self.flags.update({'tds': True})
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)

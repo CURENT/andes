@@ -42,7 +42,7 @@ class PVModel(Model):
     """
     def __init__(self, system=None, name=None, config=None):
         super().__init__(system, name, config)
-
+        self.group = 'StaticGen'
         self.flags.update({'pflow': True,
                            'collate': True})
 

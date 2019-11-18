@@ -1,22 +1,27 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class GroupBase(object):
     """
     Base class for groups
     """
 
     def __init__(self):
-        self.shared_parameters = []
-        self.shared_variables = []
+        self.common_params = []
+        self.common_vars = []
 
         self.models = {}  # model name, model instance
         self.elem2model = {}  # element idx, model name
 
-    def register(self, name, model_instance):
+    def add_model(self, name, instance):
         if name not in self.models:
-            self.models[name] = model_instance
+            self.models[name] = instance
         else:
             raise KeyError(f"Duplicate model registration if {name}")
 
-    def register_element(self, idx, model_name):
+    def add(self, idx, model_name):
         """
         Register an idx from model_name to the group
 
@@ -53,7 +58,7 @@ class GroupBase(object):
                 # name is good
                 pass
             else:
-                # logger.warning(f"{self.name}: conflict idx {idx}. Data may be inconsistent.")
+                logger.debug(f"{self.__class__.__name__}: conflict idx {idx}. Data may be inconsistent.")
                 need_new = True
 
         if idx is None:
@@ -69,3 +74,34 @@ class GroupBase(object):
                     count += 1
 
         return idx
+
+
+class Undefined(GroupBase):
+    pass
+
+
+class AcTopology(GroupBase):
+    pass
+
+
+class StaticGen(GroupBase):
+    def __init__(self):
+        super().__init__()
+        self.common_params = ('p0', 'q0')
+        self.common_vars = ('p', 'q')
+
+
+class AcLine(GroupBase):
+    pass
+
+
+class StaticLoad(GroupBase):
+    pass
+
+
+class StaticShunt(GroupBase):
+    pass
+
+
+class SynGen(GroupBase):
+    pass
