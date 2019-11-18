@@ -50,13 +50,14 @@ class Limiter(object):
         [description]
     """
 
-    def __init__(self, var, lower, upper, **kwargs):
+    def __init__(self, var, lower, upper, enable=True, **kwargs):
         self.name = None
         self.owner = None
 
         self.var = var
         self.lower = lower
         self.upper = upper
+        self.enable = enable
         self.zu = 0
         self.zl = 0
         self.zi = 1
@@ -69,6 +70,8 @@ class Limiter(object):
         -------
 
         """
+        if not self.enable:
+            return
         self.zu = np.greater_equal(self.var.v, self.upper.v).astype(np.float64)
         self.zl = np.less_equal(self.var.v, self.lower.v).astype(np.float64)
         self.zi = np.logical_not(
@@ -84,6 +87,8 @@ class Limiter(object):
         -------
 
         """
+        if not self.enable:
+            return
         self.var.v = self.var.v * (1 - self.zu) * (1 - self.zl) + \
             self.lower.v * self.zl + \
             self.upper.v * self.zu
@@ -121,15 +126,17 @@ class SortedLimiter(Limiter):
 
     """
 
-    def __init__(self, var, lower, upper,
+    def __init__(self, var, lower, upper, enable=True,
                  n_select: Optional[int] = None,
                  **kwargs):
 
-        super().__init__(var, lower, upper, **kwargs)
+        super().__init__(var, lower, upper, enable=enable, **kwargs)
         self.n_select = int(n_select) if n_select else 0
 
     def eval(self):
         super().eval()
+        if not self.enable:
+            return
 
         if self.n_select is not None and self.n_select > 0:
             asc = np.argsort(self.var.v - self.lower.v)   # ascending order
@@ -149,13 +156,13 @@ class SortedLimiter(Limiter):
 
 
 class HardLimiter(Limiter):
-    def __init__(self, var, lower, upper, **kwargs):
-        super(HardLimiter, self).__init__(var, lower, upper, **kwargs)
+    def __init__(self, var, lower, upper, enable=True, **kwargs):
+        super(HardLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
 
 
 class WindupLimiter(Limiter):
-    def __init__(self, var, lower, upper, **kwargs):
-        super(WindupLimiter, self).__init__(var, lower, upper, **kwargs)
+    def __init__(self, var, lower, upper, enable=True, **kwargs):
+        super(WindupLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
 
 
 class AntiWindupLimiter(WindupLimiter):
@@ -172,8 +179,8 @@ class AntiWindupLimiter(WindupLimiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, var, lower, upper, state=None, **kwargs):
-        super(AntiWindupLimiter, self).__init__(var, lower, upper, **kwargs)
+    def __init__(self, var, lower, upper, enable=True, state=None, **kwargs):
+        super(AntiWindupLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
         self.state = state if state else var
 
     def eval(self):
@@ -199,8 +206,8 @@ class DeadBand(Limiter):
 
     """
 
-    def __init__(self, var, lower, upper, **kwargs):
-        super(DeadBand, self).__init__(var, lower, upper, **kwargs)
+    def __init__(self, var, lower, upper, enable=True, **kwargs):
+        super(DeadBand, self).__init__(var, lower, upper, enable, **kwargs)
 
     def set_value(self):
         pass  # TODO: set the value based on deadband

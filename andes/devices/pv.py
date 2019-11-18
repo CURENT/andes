@@ -46,7 +46,7 @@ class PVModel(Model):
         self.flags.update({'pflow': True,
                            'collate': True})
 
-        self.config.add(npv2pq=1)
+        self.config.add(pv2pq=1, npv2pq=1)
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True)
@@ -56,6 +56,7 @@ class PVModel(Model):
 
         # TODO: implement switching starting from the second iteration
         self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
+                                   enable=self.config.pv2pq,
                                    n_select=self.config.npv2pq)
 
         # variable initialization equations
