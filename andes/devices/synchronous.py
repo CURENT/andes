@@ -62,7 +62,7 @@ class GEN2Axis(GEN2AxisData, Model):
 
         # NOTE: `Algeb` and `State` variables need to be declared in the initialization order
         self.e1d = State(v_init='vq + ra * Iq + xd1 * Id')
-        self.e1q = State(v_init='vd + ra * Id - xq1 * Iq')
+        self.e1q = State(v_init='e1q0')
 
         # NOTE: assume that one static gen can only correspond to one syn
         # Does not support automatic PV gen combination
@@ -84,12 +84,18 @@ class GEN2Axis(GEN2AxisData, Model):
         self.vq0 = Service(v_str='im(vdq)')
 
         self.tm0 = Service(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
+        self.e1q0 = Service(v_str='vd0 + ra * Id - xq1 * Iq')
         self.vf0 = Service(v_numeric=self._vf0)
+
+        # NOTE: All non-iterative initialization can be completed by using `Service`
+        #       for computation and setting the variable initial values to
+        #       the corresponding `Service`.
+        #       Create as many temp service variables as needed
 
         # DAE
 
         # TODO: substitute static generators
         # Method: define a function `set_param` in base class??
     @staticmethod
-    def _vf0(e1q, xd, xd1, Id, **kwargs):
-        return e1q + (xd - xd1) * Id
+    def _vf0(e1q0, xd, xd1, Id, **kwargs):
+        return e1q0 + (xd - xd1) * Id
