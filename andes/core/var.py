@@ -46,6 +46,7 @@ class VarBase(object):
                  v_init: Optional[str] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
+                 addressable: Optional[bool] = True,
                  **kwargs
                  ):
 
@@ -65,6 +66,7 @@ class VarBase(object):
         self.v_init = v_init  # equation string for variable initialization
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
+        self.addressable = addressable  # True if this var needs to be assigned an address
 
         self.e_str = None  # string for symbolic equation
         self.e_lambdify = None  # internal - sympy generated lambda function for equation

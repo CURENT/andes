@@ -36,7 +36,7 @@ from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
 from .variables.dae import DAENew
-
+from andes.programs import all_programs
 from andes.devices import non_jit
 from andes.core.model import ModelConfig, Model
 
@@ -68,6 +68,7 @@ class SystemNew(object):
         self.options = options  # options from command line or so
         self.calls = OrderedDict()
         self.models = OrderedDict()
+        self.programs = OrderedDict()
 
         # get and load default config file
         self.config = ModelConfig()
@@ -77,9 +78,9 @@ class SystemNew(object):
         # custom configuration for system goes after this line
 
         self.dae = DAENew()
-
-        self.routine_import()
         self.model_import()
+        # routine import comes after model import; routines need to query model flags
+        self.routine_import()
 
         self._models_with_flag = {'pflow': self.get_models_with_flag('pflow'),
                                   'tds': self.get_models_with_flag('tds'),
@@ -140,10 +141,13 @@ class SystemNew(object):
         -------
         None
         """
-        # for r in routines.__all__:
-        #     file = importlib.import_module('.' + r.lower(), 'andes.routines')
-        #     self.__dict__[r.lower()] = getattr(file, r)(self)
-        pass
+        for file, cls_list in all_programs.items():
+            for cls_name in cls_list:
+                file = importlib.import_module('andes.programs.' + file)
+                the_class = getattr(file, cls_name)
+                attr_name = cls_name
+                self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
+                self.programs[attr_name] = self.__dict__[attr_name]
 
     def get_models_with_flag(self, flag: Optional[Union[str, Tuple]] = None):
         if isinstance(flag, str):

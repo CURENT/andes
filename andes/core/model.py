@@ -249,7 +249,7 @@ class ModelConfig(object):
                 try:
                     val = float(val)
                 except ValueError:
-                    logger.error(f'Non-numeric value in config {key} = {val}')
+                    logger.debug(f'Non-numeric value in config {key} = {val}')
 
             self.__dict__[key] = val
 

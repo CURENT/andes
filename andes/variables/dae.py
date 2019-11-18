@@ -98,7 +98,7 @@ class DAENew(object):
         """
         Get the size of an array or sparse matrix based on name.
 
-        Parameters
+        Parameter
         ----------
         name : str (f, g, fx, gy, etc.)
             array/sparse name
@@ -110,9 +110,9 @@ class DAENew(object):
         """
         ret = []
         for char in name:
-            if char in ('f', 'x'):
+            if char in ('f', 'x', 't'):
                 ret.append(self.n)
-            elif char in ('g', 'y'):
+            elif char in ('g', 'y', 'r'):
                 ret.append(self.m)
         return tuple(ret)
 
@@ -197,7 +197,8 @@ class DAENew(object):
         """
         self.__dict__[name] = spmatrix(self.val_of(name),
                                        self.row_of(name),
-                                       self.col_of(name))
+                                       self.col_of(name),
+                                       self.get_size(name), 'd')
 
     def resize_array(self):
         """

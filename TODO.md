@@ -19,10 +19,10 @@
 ## Version 0.7.0
 
 ### Milestones
-*   A working `PQNew` class with an option to convert to Z; Allow config in models
-*   A working `System` class providing parameter retrieval by group and model
+- [x] A working `PQNew` class with an option to convert to Z; Allow config in models
 - [x] A defined data loading, model initialization, variable/equation relaying sequence
 - [x] A working power flow routine fully generated from symbolic expressions
+*   A working `System` class providing parameter retrieval by group and model
 
 ### To-do bullets
 - [x] Clearly define interface variables `VarExt`
@@ -36,8 +36,9 @@
 - [x] Initial values, pass initialized values between models, and solve initializer equations
 - [x] Improve the access to dae attributes. Get rid of `self.dae.__dict__[f'']` usages.
 - [x] Configs in models that can participate in the computation, saved to files, and loaded
-*   Dummy service variables for storing initial values (such as pm0, vref0)
-*   Improve running functions based on routine. Get rid of passing around `is_tds`. Possibly implementing a `pflow_models` and a `tds_models` list in system
+- [x] Dummy service variables for storing initial values (such as pm0, vref0) (Solved with `Service` itself)
+- [x] Improve running functions based on routine. Get rid of passing around `is_tds`. Possibly implementing a
+ `pflow_models` and a `tds_models` list in system
 *   Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
 *   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen
