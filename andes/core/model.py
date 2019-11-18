@@ -513,11 +513,15 @@ class Model(object):
         return kwargs
 
     def eval_limiter(self):
+        if self.n == 0:
+            return
         for instance in self.limiters.values():
             instance.eval()
             instance.set_value()
 
     def eval_service(self):
+        if self.n == 0:
+            return
         logger.debug(f'{self.class_name}: calling eval_service()')
 
         if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
@@ -867,12 +871,12 @@ class Model(object):
             # call jacobian functions for blocks
             for instance in self.blocks.values():
                 for fun in instance.__dict__[f'v{name}']:
-                    self.__dict__[f'v{name}'][idx] = fun()
+                    self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                     idx += 1
 
             # call numerical jacobians for self
             for fun in self.__dict__[f'_v{name}']:
-                self.__dict__[f'v{name}'][idx] = fun()
+                self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1
 
     def row_idx(self, name):

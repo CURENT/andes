@@ -84,7 +84,7 @@ class GEN2Axis(GEN2AxisData, Model):
         # DAE
 
         # TODO: substitute static generators
-
+        # Method: define a function `set_param` in base class??
     @staticmethod
     def _vf0(e1q, xd, xd1, Id, **kwargs):
         return e1q + (xd - xd1) * Id

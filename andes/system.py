@@ -38,7 +38,7 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .variables.dae import DAENew
 
 from andes.devices import non_jit
-from andes.core.model import ModelConfig
+from andes.core.model import ModelConfig, Model
 
 try:
     from andes_addon.streaming import Streaming
@@ -80,6 +80,23 @@ class SystemNew(object):
 
         self.routine_import()
         self.model_import()
+
+        self._models_with_flag = {'pflow': self.get_models_with_flag('pflow'),
+                                  'tds': self.get_models_with_flag('tds'),
+                                  'pflow_and_tds': self.get_models_with_flag(('tds', 'pflow')),
+                                  }
+
+        # ------------------------------
+        self.f_adders = []
+        self.g_adders = []
+        self.f_setters = []
+        self.g_setters = []
+
+        self.x_setters = []
+        self.y_setters = []
+        self.x_adders = []
+        self.y_adders = []
+        # ------------------------------
 
     def model_import(self):
         """
@@ -128,14 +145,23 @@ class SystemNew(object):
         #     self.__dict__[r.lower()] = getattr(file, r)(self)
         pass
 
-    def link_external(self, is_tds: bool = False):
-        for mdl in self.models.values():
+    def get_models_with_flag(self, flag: Optional[Union[str, Tuple]] = None):
+        if isinstance(flag, str):
+            flag = [flag]
 
-            # skip non-powerflow model during power flow
-            if (not is_tds) and (not mdl.flags['pflow']):
-                continue
-            elif is_tds and (not mdl.flags['tds']):
-                continue
+        out = OrderedDict()
+        for name, mdl in self.models.items():
+            for f in flag:
+                if mdl.flags[f] is True:
+                    out[name] = mdl
+                    break
+        return out
+
+    def link_external(self, models=None):
+        if models is None:
+            models = self._models_with_flag['pflow']
+
+        for mdl in models.values():
 
             # TODO: handle external groups
             for name, instance in mdl.cache.vars_ext.items():
@@ -150,16 +176,13 @@ class SystemNew(object):
                 ext_model_name = instance.model
                 instance.link_external(self.__dict__[ext_model_name])
 
-    def _set_address(self, is_tds: bool = False):
-        for mdl in self.models.values():
+    def set_address(self, models=None):
+        if models is None:
+            models = self._models_with_flag['pflow']
 
-            if (not is_tds) and (not mdl.flags['pflow']):
-                continue
-            elif is_tds and (not mdl.flags['tds']):
-                continue
-
+        for mdl in models.values():
             if mdl.flags['address'] is True:
-                logger.debug(f'{mdl.__class__.__name__} addresses exist.')
+                logger.debug(f'{mdl.class_name} addresses exist.')
                 continue
 
             collate = mdl.flags['collate']
@@ -186,44 +209,25 @@ class SystemNew(object):
 
             mdl.flags['address'] = True
 
-    def _set_dae_names(self, is_tds: bool = False):
-        # store variable names
-        # FIXME: fix the messy code below
+        # pre-allocate for names
         self.dae.x_name = [''] * self.dae.n
         self.dae.y_name = [''] * self.dae.m
 
-        m0, n0 = 0, 0
-        for mdl in self.models.values():
+    def set_dae_names(self, models=None):
+        # store variable names
+        # FIXME: fix the messy code below
 
-            if (not is_tds) and (not mdl.flags['pflow']):
-                continue
-            elif is_tds and (not mdl.flags['tds']):
-                continue
+        if models is None:
+            models = self._models_with_flag['pflow']
 
+        for mdl in models.values():
             mdl_name = mdl.class_name
-            collate = mdl.flags['collate']
-
-            n = mdl.n
-            m_end = m0 + len(mdl.algebs) * n
-            n_end = n0 + len(mdl.states) * n
-
-            if not collate:
-                for idx, (name, item) in enumerate(mdl.algebs.items()):
-                    for uid, i in enumerate(range(m0 + idx * n, m0 + (idx + 1) * n)):
-                        self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'
-                for idx, (name, item) in enumerate(mdl.states.items()):
-                    for uid, i in enumerate(range(n0 + idx * n, n0 + (idx + 1) * n)):
-                        self.dae.x_name[i] = f'{mdl_name}_{item.name}_{uid}'
-
-            else:
-                for idx, (name, item) in enumerate(mdl.algebs.items()):
-                    for uid, i in enumerate(range(m0 + idx, m_end, len(mdl.algebs))):
-                        self.dae.y_name[i] = f'{mdl_name}_{item.name}_{uid}'
-                for idx, (name, item) in enumerate(mdl.states.items()):
-                    for uid, i in enumerate(range(n0 + idx, n_end, len(mdl.states))):
-                        self.dae.x_name[i] = f'{mdl_name}_{item.name}_{uid}'
-            m0 = m_end
-            n0 = n_end
+            for name, item in mdl.algebs.items():
+                for uid, addr in enumerate(item.a):
+                    self.dae.y_name[addr] = f'{mdl_name}_{item.name}_{uid}'
+            for name, item in mdl.states.items():
+                for uid, addr in enumerate(item.a):
+                    self.dae.x_name[addr] = f'{mdl_name}_{item.name}_{uid}'
 
     def add(self, model, param_dict=None, **kwargs):
         if param_dict is not None:
@@ -231,27 +235,26 @@ class SystemNew(object):
         else:
             self.__dict__[model].add(**kwargs)
 
-    def _finalize_add(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('finalize_add', model)
+    def _finalize_add(self, models=None):
+        self._call_models_method('finalize_add', self.models)
 
-    def generate_initializers(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('generate_initializer', model)
+    def generate_initializers(self):
+        # TODO: consider both JIT and non-JIT models
+        self._call_models_method('generate_initializer', self.models)
 
-    def generate_equations(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('generate_equations', model)
+    def generate_equations(self):
+        self._call_models_method('generate_equations', self.models)
 
-    def generate_jacobians(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('generate_jacobians', model)
+    def generate_jacobians(self):
+        self._call_models_method('generate_jacobians', self.models)
 
-    def initialize(self, is_tds: bool = False, model: Optional[Union[str, List]] = None):
-        if not is_tds:
-            self.dae.reset_array()
+    def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None, tds=False):
+        if tds is False:
+            # clear x and y values for power flow only
+            self.dae.reset_xy()
         self.vars_to_models()
 
-        if is_tds is False:
-            self._call_model_with_flag('initialize', model, 'pflow', True)
-        else:
-            self._call_model_with_flag('initialize', model, 'tds', True)
+        self._call_models_method('initialize', models)
 
         self.vars_to_dae()
         self.vars_to_models()
@@ -267,8 +270,7 @@ class SystemNew(object):
         for var in self.x_setters:
             np.put(self.dae.x, var.a, var.v)
 
-        # NOTE:
-        # Need to skip vars that are not initializers for re-entrance
+        # NOTE: Need to skip vars that are not initializers for re-entrance
         for var in self.y_adders:
             if var.v_init is None:
                 continue
@@ -309,33 +311,27 @@ class SystemNew(object):
                     else:
                         self.__dict__[f'{var.v_code}_setters'].append(var)
 
-    def s_update(self, is_tds: bool = False):
-        for name, mdl in self.models.items():
-            if (not is_tds) and (not mdl.flags['pflow']):
-                continue
-            elif is_tds and (not mdl.flags['tds']):
-                continue
+    def s_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('eval_service', models)
 
-            self._call_model_method('eval_service', name)
-
-    def l_update(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('eval_limiter', model)
-        self.vars_to_dae()
-        self.vars_to_models()
-
+    def l_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         # TODO:
         # This function should somehow return the indices and values
-        # of variables that hit the limit.
+        # of variables that are pegged at the limit.
 
         # The limited values need to sent to solvers
         # such as `scipy.optimize.newton_krylov` to make the result correct
 
-    def e_clear(self, model: Optional[Union[str, List]] = None):
-        self.dae.reset_fg()
-        self._call_model_method('e_clear', model)
+        self._call_models_method('eval_limiter', models)
+        self.vars_to_dae()
+        self.vars_to_models()
 
-    def f_update(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('f_update', model)
+    def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self.dae.reset_fg()
+        self._call_models_method('e_clear', models)
+
+    def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('f_update', models)
 
         for var in self.f_adders:
             np.add.at(self.dae.f, var.a, var.e)
@@ -344,8 +340,8 @@ class SystemNew(object):
 
         return self.dae.f
 
-    def g_update(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('g_update', model)
+    def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('g_update', models)
 
         for var in self.g_adders:
             np.add.at(self.dae.g, var.a, var.e)
@@ -354,8 +350,8 @@ class SystemNew(object):
 
         return self.dae.g
 
-    def j_update(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('j_update', model)
+    def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('j_update', models)
 
         self.dae.reset_sparse()
 
@@ -371,8 +367,8 @@ class SystemNew(object):
                     if isinstance(val, float) or len(val) > 0:
                         self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
 
-    def store_sparse_pattern(self, model: Optional[Union[str, List]] = None):
-        self._call_model_method('store_sparse_pattern', model)
+    def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('store_sparse_pattern', models)
         jac_name = ('fx', 'fy', 'gx', 'gy')
 
         # add variable jacobian values
@@ -449,29 +445,25 @@ class SystemNew(object):
         for name, model_call in self.calls.items():
             self.__dict__[name].calls = model_call
 
-    def _call_model_method(self, method, model=None, **kwargs):
-        if model is None:
-            for name in self.models.keys():
-                getattr(self.__dict__[name], method)(**kwargs)
-        else:
-            if isinstance(model, str):
-                model = [model]
-            for name in model:
-                getattr(self.__dict__[name], method)(**kwargs)
+    def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+        if models is None:
+            models = self._models_with_flag['pflow']
+        if isinstance(models, str):
+            models = {models: self.__dict__[models]}
+        elif isinstance(models, Model):
+            models = {models.class_name, models}
+        elif isinstance(models, list):
+            models = OrderedDict()
+            for item in models:
+                if isinstance(item, Model):
+                    models[item.class_name] = item
+                elif isinstance(item, str):
+                    models[item] = self.__dict__[item]
+                else:
+                    raise TypeError(f'Unknown type {type(item)}')
 
-    def _call_model_with_flag(self, method, model=None, flag=None, value=None, **kwargs):
-        if model is None:
-            for name in self.models.keys():
-                if self.__dict__[name].flags[flag] != value:
-                    continue
-                getattr(self.__dict__[name], method)(**kwargs)
-        else:
-            if isinstance(model, str):
-                model = [model]
-            for name in model:
-                if self.__dict__[name].flags[flag] != value:
-                    return
-                getattr(self.__dict__[name], method)(**kwargs)
+        for mdl in models.values():
+            getattr(mdl, method)()
 
     def set_config(self, config=None):
         # NOTE: No need to call `set_config` for models since
@@ -574,8 +566,8 @@ class SystemNew(object):
 
         This function is to be called after all data are added.
         """
-        self._set_address()
-        self._set_dae_names()
+        self.set_address()
+        self.set_dae_names()
         self._finalize_add()
         self.link_external()
         self.s_update()

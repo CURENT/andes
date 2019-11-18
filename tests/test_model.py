@@ -14,7 +14,7 @@ class TestSystem(unittest.TestCase):
             self.ss.add('Bus', Vn=100, idx=i)
             self.ss.add('PQ', bus=i, idx=1)
 
-        self.ss._set_address()
+        self.ss.set_address()
         self.ss._finalize_add()
         self.ss.link_external()
         self.ss.PQ.generate_equations()
