@@ -39,6 +39,7 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .variables.dae import DAENew
 from andes.programs import all_programs
 from andes.devices import non_jit
+from andes.core.param import ParamBase
 from andes.core.model import Model
 from andes.common.config import Config
 
@@ -523,6 +524,31 @@ class SystemNew(object):
         for mdl in models.values():
             getattr(mdl, method)()
 
+    def _check_group_common(self):
+        """
+        Check if all group common variables and parameters are met
+
+        Raises
+        ------
+        KeyError if any parameter or value is not provided
+
+        Returns
+        -------
+        None
+        """
+        for group in self.groups.values():
+            for item in group.common_params:
+                for model in group.models.values():
+                    # the below includes all of ParamBase (NumParam, DataParam and ExtParam)
+                    if item not in model.__dict__ or not isinstance(model.__dict__[item], ParamBase):
+                        raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
+                                       f'in model <{model.class_name}>')
+            for item in group.common_vars:
+                for model in group.models.values():
+                    if item not in model.cache.all_vars:
+                        raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
+                                       f'in model <{model.class_name}>')
+
     def set_config(self, config=None):
         # NOTE: No need to call `set_config` for models since
         # the config is passed during model import
@@ -621,6 +647,7 @@ class SystemNew(object):
         self.generate_equations()
         self.generate_jacobians()
         self.generate_initializers()
+        self._check_group_common()
         self._store_calls()
         self.dill_calls()
 
