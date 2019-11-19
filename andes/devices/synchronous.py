@@ -44,9 +44,9 @@ class GEN2AxisData(ModelData):
 
 
 class GEN2Axis(GEN2AxisData, Model):
-    def __init__(self, system=None, name=None, config=None):
+    def __init__(self, system=None, config=None):
         GEN2AxisData.__init__(self)
-        Model.__init__(self, system=system, name=name, config=config)
+        Model.__init__(self, system=system, config=config)
 
         self.group = 'SynGen'
         self.flags.update({'tds': True})

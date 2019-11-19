@@ -42,8 +42,8 @@ class PVModel(Model):
     """
     PV generator model (power flow) with q limit and PV-PQ conversion
     """
-    def __init__(self, system=None, name=None, config=None):
-        super().__init__(system, name, config)
+    def __init__(self, system=None, config=None):
+        super().__init__(system, config)
         self.group = 'StaticGen'
         self.flags.update({'pflow': True,
                            'collate': True})
@@ -79,15 +79,15 @@ class PVModel(Model):
 
 
 class PV(PVData, PVModel):
-    def __init__(self, system=None, name=None, config=None):
+    def __init__(self, system=None, config=None):
         PVData.__init__(self)
-        PVModel.__init__(self, system, name, config)
+        PVModel.__init__(self, system, config)
 
 
 class Slack(SlackData, PVModel):
-    def __init__(self, system=None, name=None, config=None):
+    def __init__(self, system=None, config=None):
         SlackData.__init__(self)
-        PVModel.__init__(self, system, name, config)
+        PVModel.__init__(self, system, config)
 
         self.a.v_setter = True
         self.a.v_init = 'a0'

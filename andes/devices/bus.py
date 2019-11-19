@@ -32,9 +32,9 @@ class Bus(Model, BusData):
     Bus model constructed from the NewModelBase
     """
 
-    def __init__(self, system, name=None, config=None):
+    def __init__(self, system=None, config=None):
         BusData.__init__(self)
-        Model.__init__(self, system=system, name=name, config=config)
+        Model.__init__(self, system=system, config=config)
 
         self.group = 'AcTopology'
         self.category = ['Node']

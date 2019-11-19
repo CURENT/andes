@@ -245,7 +245,7 @@ class Model(object):
         and external ones
     """
 
-    def __init__(self, system=None, name: str = None, config=None):
+    def __init__(self, system=None, config=None):
         self.system = system
 
         # duplicate attributes from ModelData. Keep for now.

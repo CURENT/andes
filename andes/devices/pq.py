@@ -21,9 +21,9 @@ class PQData(ModelData):
 
 
 class PQ(PQData, Model):
-    def __init__(self, system=None, name=None, config=None):
+    def __init__(self, system=None, config=None):
         PQData.__init__(self)
-        Model.__init__(self, system, name, config)
+        Model.__init__(self, system, config)
         self.group = 'StaticLoad'
         self.flags['pflow'] = True
         self.config.add(OrderedDict((('pq2z', 1), )))

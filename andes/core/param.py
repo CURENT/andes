@@ -26,12 +26,19 @@ class ParamBase(object):
     mandatory : bool
         True if this parameter is mandatory
     """
-    def __init__(self, default=None, name=None, tex_name=None, info=None, mandatory: bool = False):
+    def __init__(self,
+                 default=None,
+                 name=None,
+                 tex_name=None,
+                 info=None,
+                 mandatory: bool = False,
+                 export: bool = True):
         self.name = name
         self.default = default
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.owner = None
+        self.owner = None  # TODO: maybe rename it to `model`
+        self.export = export
 
         self.n = 0
         self.v = []
@@ -109,7 +116,7 @@ class IdxParam(ParamBase):
     A special ParamBase for storing `idx` of other models
     """
     def __init__(self, model, **kwargs):
-        super(IdxParam, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.model = model
 
 
@@ -193,8 +200,9 @@ class NumParam(ParamBase):
                  g: bool = False,
                  dc_voltage: bool = False,
                  dc_current: bool = False,
+                 export: bool = True,
                  ):
-        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info)
+        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info, export=export)
         self.unit = unit
 
         self.property = dict(non_zero=non_zero,
@@ -288,7 +296,11 @@ class ExtParam(NumParam):
         An array containing the absolute indices into the
         parent_instance values.
     """
-    def __init__(self, model: str, src: str, indexer=None, **kwargs):
+    def __init__(self,
+                 model: str,
+                 src: str,
+                 indexer=None,
+                 **kwargs):
         super(ExtParam, self).__init__(**kwargs)
         self.model = model
         self.src = src

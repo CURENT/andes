@@ -22,9 +22,9 @@ class ShuntData(ModelData):
 
 
 class Shunt(ShuntData, Model):
-    def __init__(self, system=None, name=None, config=None):
+    def __init__(self, system=None, config=None):
         ShuntData.__init__(self)
-        Model.__init__(self, system, name, config)
+        Model.__init__(self, system, config)
         self.group = 'StaticShunt'
         self.flags['pflow'] = True
 
