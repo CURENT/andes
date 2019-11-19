@@ -262,10 +262,16 @@ class SystemNew(object):
                     self.dae.x_name[addr] = f'{mdl_name}_{item.name}_{uid}'
 
     def add(self, model, param_dict=None, **kwargs):
-        if param_dict is not None:
-            self.__dict__[model].add(**param_dict)
-        else:
-            self.__dict__[model].add(**kwargs)
+        group_name = self.__dict__[model].group
+        group = self.groups[group_name]
+
+        if kwargs is not None:
+            param_dict.update(kwargs)
+
+        idx = param_dict.pop('idx', None)
+        idx = group.get_next_idx(idx=idx, model_name=model)
+        self.__dict__[model].add(idx=idx, **param_dict)
+        group.add(idx=idx, model_name=model)
 
     def _finalize_add(self, models=None):
         self._call_models_method('finalize_add', self.models)

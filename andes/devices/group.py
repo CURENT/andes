@@ -13,7 +13,11 @@ class GroupBase(object):
         self.common_vars = []
 
         self.models = {}  # model name, model instance
-        self.elem2model = {}  # element idx, model name
+        self.idx2model = {}  # element idx, model name
+
+    @property
+    def class_name(self):
+        return self.__class__.__name__
 
     def add_model(self, name, instance):
         if name not in self.models:
@@ -37,9 +41,9 @@ class GroupBase(object):
         -------
 
         """
-        self.elem2model['idx'] = model_name
+        self.idx2model[idx] = model_name
 
-    def get_next_idx(self, idx=None):
+    def get_next_idx(self, idx=None, model_name=None):
         """
         Return the auto-generated next idx
 
@@ -47,28 +51,32 @@ class GroupBase(object):
         ----------
         idx
 
+        model_name
+
         Returns
         -------
 
         """
+        if model_name is None:
+            model_name = self.class_name
+
         need_new = False
 
         if idx is not None:
-            if idx not in self.elem2model:
+            if idx not in self.idx2model:
                 # name is good
                 pass
             else:
-                logger.debug(f"{self.__class__.__name__}: conflict idx {idx}. Data may be inconsistent.")
+                logger.debug(f"{self.class_name}: conflict idx {idx}. Data may be inconsistent.")
                 need_new = True
-
-        if idx is None:
+        else:
             need_new = True
 
         if need_new is True:
-            count = len(self.elem2model)
+            count = len(self.idx2model)
             while True:
-                idx = self.name + str(count)
-                if idx not in self.elem2model:
+                idx = model_name + '_' + str(count)
+                if idx not in self.idx2model:
                     break
                 else:
                     count += 1

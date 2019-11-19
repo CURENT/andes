@@ -4,7 +4,6 @@ Synchronous generator classes
 
 import logging
 from andes.core.model import Model, ModelData  # NOQA
-from andes.common.config import Config
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
