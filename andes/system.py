@@ -206,10 +206,20 @@ class SystemNew(object):
 
                 instance.link_external(ext_model)
 
-    def set_address(self, models=None, reset=False):
-        if reset is True:
-            self._a_clear()
+    def reset(self):
+        """
+        Reset to the state after reading data and setup (before power flow)
 
+        Returns
+        -------
+
+        """
+
+        self._a_clear()
+        self._p_restore()
+        self.setup()
+
+    def set_address(self, models=None):
         if models is None:
             models = self._models_with_flag['pflow']
 
@@ -379,11 +389,29 @@ class SystemNew(object):
         self._call_models_method('e_clear', models)
 
     def _a_clear(self):
+        """
+        Clear addresses in variables
+
+        Returns
+        -------
+
+        """
         self.dae.m = 0
         self.dae.n = 0
         self.dae.reset_fg()
         self.dae.reset_xy()
         self._call_models_method('a_clear', models=self.models)
+
+    def _p_restore(self):
+        """
+        Restore parameters stored in `pin`
+        Returns
+        -------
+
+        """
+        for model in self.models.values():
+            for param in model.num_params.values():
+                param.restore()
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('f_update', models)
@@ -638,6 +666,15 @@ class SystemNew(object):
 
         logger.info('Config: written to {}'.format(file_path))
 
+    def calc_pu_coeff(self):
+        """
+        Calculate per unit conversion factor; store input parameters to `vin`, and perform the conversion
+        Returns
+        -------
+
+        """
+        pass
+
     def prepare(self):
         """
         Prepare classes and lambda functions
@@ -651,15 +688,16 @@ class SystemNew(object):
         self._store_calls()
         self.dill_calls()
 
-    def setup(self, reset=False):
+    def setup(self):
         """
         Set up system for studies
 
         This function is to be called after all data are added.
         """
-        self.set_address(reset=reset)
+        self.set_address()
         self.set_dae_names()
         self._finalize_add()
+        self.calc_pu_coeff()
         self.link_external()
         self.s_update()
         self.store_sparse_pattern()

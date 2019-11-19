@@ -249,6 +249,9 @@ class NumParam(ParamBase):
         self.vin = np.array(self.v)
         self._is_array = True
 
+    def restore(self):
+        self.v = self.vin
+
 
 class ExtParam(NumParam):
     """

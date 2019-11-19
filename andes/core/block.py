@@ -12,9 +12,6 @@ class Block(object):
     must overload the `__init__` method to take custom inputs.
 
 
-    TODO: consider letting Block inherit Model so that all service
-    and nonlinear models can be captured by the parent class.
-
     Warnings
     --------
     This class may be significantly modified soon.
@@ -155,7 +152,6 @@ class PIController(Block):
     def export_vars(self):
         r"""
         Define meta equations and export variables of the PI Controller.
-
 
         Notes
         -----

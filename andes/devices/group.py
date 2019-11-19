@@ -102,7 +102,7 @@ class GroupBase(object):
         self._check_idx(idx)
 
         if isinstance(value, (float, str, int)):
-            value = [value]
+            value = [value] * len(idx)
 
         models = self.idx2model(idx)
         for i, idx in enumerate(idx):

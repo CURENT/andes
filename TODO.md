@@ -42,15 +42,21 @@
 - [x] Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
 - [x]   Implement index handling in `group.py`, update `link_external` to work with groups (Let group implement
  similar api to models.idx2uid, or implement a `get_by_idx` for both)
-*   Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
+- [x] Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
+ (Currently done with `v_numeric`)
 *   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen
 *   COI-type of one-to-multiple aggregation model (the N-to-1 model)
+*   Store states in systems to enforce sequence of execution
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
+*   Add a more generic parser for PSSE RAW
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians
+
+### Features
+- [x] Newton-Raphson and Newton-Krylov power flow (with handling of separated systems)
 
 ## Version 0.7.1
 ## Milestones

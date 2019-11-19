@@ -39,6 +39,7 @@ class PFlow(ProgramBase):
         """
         system = self.system
         # evaluate limiters, differential, algebraic, and jacobians
+        system.e_clear()
         system.l_update()
         system.f_update()
         system.g_update()
@@ -60,7 +61,6 @@ class PFlow(ProgramBase):
         self.mis.append(mis)
 
         system.vars_to_models()
-        system.e_clear()
 
         return mis
 
@@ -72,19 +72,29 @@ class PFlow(ProgramBase):
         -------
 
         """
+        system = self.system
         self._initialize()
         self.niter = 0
         while True:
             mis = self.nr_step()
-            logger.info(f'{self.niter}:  |F(x)| = {mis:10g}')
+            logger.info(f'{self.niter}: |F(x)| = {mis:<10g}')
 
-            if mis < self.config.tol or self.niter > self.config.max_iter:
+            if mis < self.config.tol:
                 self.converged = True
                 break
-            if mis > 1e4 * self.mis[0]:
-                logger.error(f'Mismatch increase too much. Convergence not likely.')
+            elif self.niter > self.config.max_iter:
+                break
+            elif mis > 1e4 * self.mis[0]:
+                logger.error('Mismatch increased too fast. Convergence not likely.')
                 break
             self.niter += 1
+
+        if not self.converged:
+            if abs(self.mis[-1] - self.mis[-2]) < self.config.tol:
+                max_idx = np.argmax(np.abs(system.dae.xy))
+                name = system.dae.xy_name[max_idx]
+                logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
+                logger.info(f'Largest mismatch on equation associated with <{name}>')
 
         return self.converged
 
@@ -130,4 +140,10 @@ class PFlow(ProgramBase):
         system = self.system
         system.initialize()
         v0 = system.dae.y
-        return newton_krylov(self._g_wrapper, v0, verbose=verbose)
+        try:
+            ret = newton_krylov(self._g_wrapper, v0, verbose=verbose)
+        except ValueError as e:
+            logger.error('Mismatch is not correctable. Equations may be intrinsically unsolvable.')
+            raise e
+
+        return ret

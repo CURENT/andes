@@ -68,3 +68,6 @@ class Test5Bus(unittest.TestCase):
     def test_tds_init(self):
         self.ss.PFlow.nr()
         self.ss.TDS._initialize()
+        self.ss.reset()
+        self.ss.PFlow.nr()
+        self.ss.TDS._initialize()

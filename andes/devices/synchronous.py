@@ -46,7 +46,7 @@ class GEN2AxisData(ModelData):
 class GEN2Axis(GEN2AxisData, Model):
     def __init__(self, system=None, name=None, config=None):
         GEN2AxisData.__init__(self)
-        Model.__init__(self, name, system, config)
+        Model.__init__(self, system=system, name=name, config=config)
 
         self.group = 'SynGen'
         self.flags.update({'tds': True})
@@ -101,3 +101,7 @@ class GEN2Axis(GEN2AxisData, Model):
     @staticmethod
     def _vf0(e1q0, xd, xd1, Id, **kwargs):
         return e1q0 + (xd - xd1) * Id
+
+    def v_numeric(self, **kwargs):
+        # disable corresponding `StaticGen`
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)

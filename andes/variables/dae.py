@@ -215,6 +215,14 @@ class DAENew(object):
         self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
         self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
 
+    @property
+    def xy(self):
+        return np.hstack((self.x, self.y))
+
+    @property
+    def xy_name(self):
+        return self.x_name + self.y_name
+
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (dae)"""
