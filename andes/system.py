@@ -584,7 +584,7 @@ class SystemNew(object):
         if os.path.isfile(file_path):
             choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
             if len(choice) == 0 or choice[0] != 'y':
-                logger.info('Config file not overwritten.')
+                logger.info('No config file overwritten.')
                 return
 
         conf = self.get_config()
