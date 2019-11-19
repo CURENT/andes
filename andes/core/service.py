@@ -106,7 +106,7 @@ class ExtService(ServiceBase):
             return
 
         if isinstance(ext_model, GroupBase):
-            self.v = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='v')
+            self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
         else:
             uid = ext_model.idx2uid(self.indexer.v)
             # set initial v and e values to zero

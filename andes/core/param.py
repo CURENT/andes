@@ -304,16 +304,16 @@ class ExtParam(NumParam):
             self.n = len(self.indexer.v)
 
             # TODO: the three lines below is a bit inefficient - 3x same loops
-            self.v = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='v')
-            self.vin = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='vin')
-            self.pu_coeff = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='vin')
+            self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+            self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+            self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
 
         else:
             parent_instance = ext_model.__dict__[self.src]
             self.property = dict(parent_instance.property)
 
             if self.indexer is None:
-                # if `indexer` is None, retrieve all the values
+                # if `idx` is None, retrieve all the values
                 self.uid = np.arange(ext_model.n)
             else:
                 if len(self.indexer.v) == 0:

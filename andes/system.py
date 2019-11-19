@@ -190,7 +190,7 @@ class SystemNew(object):
             models = self._models_with_flag['pflow']
 
         for mdl in models.values():
-            # TODO: handle external groups
+            # handle external groups
             for name, instance in OrderedDict(list(mdl.cache.vars_ext.items()) +
                                               list(mdl.params_ext.items()) +
                                               list(mdl.services_ext.items())
@@ -201,7 +201,7 @@ class SystemNew(object):
                 elif ext_name in self.models:
                     ext_model = self.models[ext_name]
                 else:
-                    raise KeyError
+                    raise KeyError(f'<{ext_name}> is not a model or group name.')
 
                 instance.link_external(ext_model)
 

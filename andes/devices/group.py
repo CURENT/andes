@@ -9,7 +9,7 @@ class GroupBase(object):
     """
 
     def __init__(self):
-        self.common_params = []
+        self.common_params = ['u', 'name']
         self.common_vars = []
 
         self.models = {}  # model name, model instance
@@ -34,8 +34,8 @@ class GroupBase(object):
         idx: Union[str, float]
             Register an element to a model
 
-        model_name: str
-            Name of the model
+        model: Model
+            instance of the model
 
         Returns
         -------
@@ -46,26 +46,54 @@ class GroupBase(object):
     def idx2model(self, idx):
         return [self._idx2model[i] for i in idx]
 
-    def get_by_idx(self, src: str, indexer, attr):
+    def get(self, src: str, idx, attr):
+        """
+        Based on the indexer, get the `attr` field of the `src` parameter or variable.
+
+        Parameters
+        ----------
+        src : str
+            param or var name
+        idx : array-like
+
+        attr
+            The attribute of the param or var to retrieve
+
+        Returns
+        -------
+        The requested param or variable attribute
+        """
         if src not in self.common_vars + self.common_params:
             raise AttributeError(f'Group <{self.class_name}> unable to get variable <{src}>')
 
-        if indexer is None:
+        if idx is None:
             raise IndexError(f'{self.__class__.__name__}:'
                              f'Indexer cannot be None for group variable <{src}>')
 
-        n = len(indexer.v)
+        n = len(idx)
         if n == 0:
             return np.zeros(0)
 
-        ret = np.zeros(n)
-        models = self.idx2model(indexer.v)
-        for i, idx in enumerate(indexer.v):
+        ret = None
+        models = self.idx2model(idx)
+        for i, idx in enumerate(idx):
             model = models[i]
             uid = model.idx2uid(idx)
-            ret[i] = model.__dict__[src].__dict__[attr][uid]
+            instance = model.__dict__[src]
+            val = instance.__dict__[attr][uid]
+
+            # deduce the type for ret
+            if ret is None:
+                if isinstance(val, str):
+                    ret = [''] * n
+                else:
+                    ret = np.zeros(n)
+            ret[i] = val
 
         return ret
+
+    def set(self, src: str, indexer, attr, value):
+        pass
 
     def get_next_idx(self, idx=None, model_name=None):
         """
@@ -119,8 +147,8 @@ class AcTopology(GroupBase):
 class StaticGen(GroupBase):
     def __init__(self):
         super().__init__()
-        self.common_params = ('p0', 'q0')
-        self.common_vars = ('p', 'q')
+        self.common_params.extend(('p0', 'q0'))
+        self.common_vars.extend(('p', 'q'))
 
 
 class AcLine(GroupBase):

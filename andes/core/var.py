@@ -228,7 +228,7 @@ class ExtVar(VarBase):
             self.n = len(self.indexer.v)
             self.v = np.zeros(self.n)
             self.e = np.zeros(self.n)
-            self.a = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='a')
+            self.a = ext_model.get(src=self.src, idx=self.indexer.v, attr='a')
 
         else:
             original_var = ext_model.__dict__[self.src]
