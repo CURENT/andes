@@ -1,5 +1,5 @@
 import logging
-
+import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -13,7 +13,7 @@ class GroupBase(object):
         self.common_vars = []
 
         self.models = {}  # model name, model instance
-        self.idx2model = {}  # element idx, model name
+        self._idx2model = {}  # element idx, model name
 
     @property
     def class_name(self):
@@ -25,7 +25,7 @@ class GroupBase(object):
         else:
             raise KeyError(f"Duplicate model registration if {name}")
 
-    def add(self, idx, model_name):
+    def add(self, idx, model):
         """
         Register an idx from model_name to the group
 
@@ -41,7 +41,31 @@ class GroupBase(object):
         -------
 
         """
-        self.idx2model[idx] = model_name
+        self._idx2model[idx] = model
+
+    def idx2model(self, idx):
+        return [self._idx2model[i] for i in idx]
+
+    def get_by_idx(self, src: str, indexer, attr):
+        if src not in self.common_vars + self.common_params:
+            raise AttributeError(f'Group <{self.class_name}> unable to get variable <{src}>')
+
+        if indexer is None:
+            raise IndexError(f'{self.__class__.__name__}:'
+                             f'Indexer cannot be None for group variable <{src}>')
+
+        n = len(indexer.v)
+        if n == 0:
+            return np.zeros(0)
+
+        ret = np.zeros(n)
+        models = self.idx2model(indexer.v)
+        for i, idx in enumerate(indexer.v):
+            model = models[i]
+            uid = model.idx2uid(idx)
+            ret[i] = model.__dict__[src].__dict__[attr][uid]
+
+        return ret
 
     def get_next_idx(self, idx=None, model_name=None):
         """
@@ -63,7 +87,7 @@ class GroupBase(object):
         need_new = False
 
         if idx is not None:
-            if idx not in self.idx2model:
+            if idx not in self._idx2model:
                 # name is good
                 pass
             else:
@@ -73,10 +97,10 @@ class GroupBase(object):
             need_new = True
 
         if need_new is True:
-            count = len(self.idx2model)
+            count = len(self._idx2model)
             while True:
                 idx = model_name + '_' + str(count)
-                if idx not in self.idx2model:
+                if idx not in self._idx2model:
                     break
                 else:
                     count += 1

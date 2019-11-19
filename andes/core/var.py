@@ -2,6 +2,7 @@ from typing import Optional, Union, List
 
 import numpy as np
 from andes.core.param import DataParam
+from andes.devices.group import GroupBase
 from numpy import ndarray
 
 
@@ -203,8 +204,6 @@ class ExtVar(VarBase):
         self.sum = sum  # if values at the same indices should be summed up (NOT in use yet)
 
         self.parent_model = None
-        self.parent_instance = None
-        self.uid = None
 
     def link_external(self, ext_model):
         """
@@ -224,23 +223,31 @@ class ExtVar(VarBase):
             Instance of the parent model
         """
         self.parent_model = ext_model
-        self.parent_instance = ext_model.__dict__[self.src]
 
-        if self.indexer is not None:
-            self.uid = ext_model.idx2uid(self.indexer.v)
+        if isinstance(ext_model, GroupBase):
+            self.n = len(self.indexer.v)
+            self.v = np.zeros(self.n)
+            self.e = np.zeros(self.n)
+            self.a = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='a')
+
         else:
-            self.uid = np.arange(ext_model.n, dtype=int)
+            original_var = ext_model.__dict__[self.src]
 
-        self.n = len(self.uid)
+            if self.indexer is not None:
+                uid = ext_model.idx2uid(self.indexer.v)
+            else:
+                uid = np.arange(ext_model.n, dtype=int)
 
-        # set initial v and e values to zero
-        self.v = np.zeros(self.n)
-        self.e = np.zeros(self.n)
+            self.n = len(uid)
 
-        if self.n != 0:
-            self.a = self.parent_instance.a[self.uid]
-        else:
-            self.a = np.array([])
+            # set initial v and e values to zero
+            self.v = np.zeros(self.n)
+            self.e = np.zeros(self.n)
+
+            if self.n != 0:
+                self.a = original_var.a[uid]
+            else:
+                self.a = np.array([])
 
 
 class ExtState(ExtVar):

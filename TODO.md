@@ -40,7 +40,8 @@
 - [x] Improve running functions based on routine. Get rid of passing around `is_tds`. Possibly implementing a
  `pflow_models` and a `tds_models` list in system
 - [x] Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
-*   Implement index handling in `group.py`, update `link_external` to work with groups
+*   Implement index handling in `group.py`, update `link_external` to work with groups (Let group implement
+ similar api to models.idx2uid, or implement a `get_data_idx` for both)
 *   Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
 *   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen

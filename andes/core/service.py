@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Callable, Optional
+from andes.devices.group import GroupBase
 
 
 class ServiceBase(object):
@@ -98,14 +99,18 @@ class ExtService(ServiceBase):
         self.model = model
         self.group = group
         self.indexer = indexer
-        self.uid = None
 
     def link_external(self, ext_model):
-        self.uid = ext_model.idx2uid(self.indexer.v)
-
-        # set initial v and e values to zero
         self.v = np.zeros(self.n)
-        self.v = ext_model.__dict__[self.src].v[self.uid]
+        if self.n == 0:
+            return
+
+        if isinstance(ext_model, GroupBase):
+            self.v = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='v')
+        else:
+            uid = ext_model.idx2uid(self.indexer.v)
+            # set initial v and e values to zero
+            self.v = ext_model.__dict__[self.src].v[uid]
 
 
 class ServiceRandom(Service):

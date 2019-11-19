@@ -67,8 +67,8 @@ class GEN2Axis(GEN2AxisData, Model):
 
         # NOTE: assume that one static gen can only correspond to one syn
         # Does not support automatic PV gen combination
-        self.p0 = ExtService(model='PV', src='p', indexer=self.gen)
-        self.q0 = ExtService(model='PV', src='q', indexer=self.gen)
+        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen)
+        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen)
 
         self.Vc = Service(v_str='v * exp(1j * a)')
         self.S = Service(v_str='p0 - 1j * q0')

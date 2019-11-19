@@ -190,19 +190,20 @@ class SystemNew(object):
             models = self._models_with_flag['pflow']
 
         for mdl in models.values():
-
             # TODO: handle external groups
-            for name, instance in mdl.cache.vars_ext.items():
-                ext_model_name = instance.model
-                instance.link_external(self.__dict__[ext_model_name])
+            for name, instance in OrderedDict(list(mdl.cache.vars_ext.items()) +
+                                              list(mdl.params_ext.items()) +
+                                              list(mdl.services_ext.items())
+                                              ).items():
+                ext_name = instance.model
+                if ext_name in self.groups:
+                    ext_model = self.groups[ext_name]
+                elif ext_name in self.models:
+                    ext_model = self.models[ext_name]
+                else:
+                    raise KeyError
 
-            for name, instance in mdl.params_ext.items():
-                ext_model_name = instance.model
-                instance.link_external(self.__dict__[ext_model_name])
-
-            for name, instance in mdl.services_ext.items():
-                ext_model_name = instance.model
-                instance.link_external(self.__dict__[ext_model_name])
+                instance.link_external(ext_model)
 
     def set_address(self, models=None):
         if models is None:
@@ -271,7 +272,7 @@ class SystemNew(object):
         idx = param_dict.pop('idx', None)
         idx = group.get_next_idx(idx=idx, model_name=model)
         self.__dict__[model].add(idx=idx, **param_dict)
-        group.add(idx=idx, model_name=model)
+        group.add(idx=idx, model=self.__dict__[model])
 
     def _finalize_add(self, models=None):
         self._call_models_method('finalize_add', self.models)

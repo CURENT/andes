@@ -2,6 +2,7 @@ from typing import Optional, Union, Callable
 
 import numpy as np
 import logging
+from andes.devices.group import GroupBase
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +283,6 @@ class ExtParam(NumParam):
         self.indexer = indexer
 
         self.parent_model = None   # parent model instance
-        self.parent_instance = None
         self.uid = None
 
     def link_external(self, ext_model):
@@ -299,21 +299,30 @@ class ExtParam(NumParam):
         None
         """
         self.parent_model = ext_model
-        self.parent_instance = ext_model.__dict__[self.src]
-        self.property = dict(self.parent_instance.property)
 
-        if self.indexer is None:
-            # if `indexer` is None, retrieve all the values
-            self.uid = np.arange(ext_model.n)
+        if isinstance(ext_model, GroupBase):
+            self.n = len(self.indexer.v)
+
+            # TODO: the three lines below is a bit inefficient - 3x same loops
+            self.v = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='v')
+            self.vin = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='vin')
+            self.pu_coeff = ext_model.get_by_idx(src=self.src, indexer=self.indexer, attr='vin')
+
         else:
-            n_indexer = len(self.indexer.v)
-            if n_indexer == 0:
-                return
-            else:
-                self.uid = ext_model.idx2uid(self.indexer.v)
+            parent_instance = ext_model.__dict__[self.src]
+            self.property = dict(parent_instance.property)
 
-        # pull in values
-        self.v = self.parent_instance.v[self.uid]
-        self.vin = self.parent_instance.vin[self.uid]
-        self.pu_coeff = self.parent_instance.pu_coeff[self.uid]
-        self.n = len(self.v)
+            if self.indexer is None:
+                # if `indexer` is None, retrieve all the values
+                self.uid = np.arange(ext_model.n)
+            else:
+                if len(self.indexer.v) == 0:
+                    return
+                else:
+                    self.uid = ext_model.idx2uid(self.indexer.v)
+
+            # pull in values
+            self.v = parent_instance.v[self.uid]
+            self.vin = parent_instance.vin[self.uid]
+            self.pu_coeff = parent_instance.pu_coeff[self.uid]
+            self.n = len(self.v)
