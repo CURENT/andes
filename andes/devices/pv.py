@@ -1,9 +1,12 @@
 import logging
-from andes.core.model import Model, ModelData, ModelConfig  # NOQA
+from collections import OrderedDict
+from andes.core.model import Model, ModelData  # NOQA
+from andes.common.config import Config
 from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import Service  # NOQa
+from andes.core.service import Service  # NOQA
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +49,8 @@ class PVModel(Model):
         self.flags.update({'pflow': True,
                            'collate': True})
 
-        self.config.add(pv2pq=1, npv2pq=1)
+        self.config.add(OrderedDict((('pv2pq', 1),
+                                     ('npv2pq', 1))))
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True)

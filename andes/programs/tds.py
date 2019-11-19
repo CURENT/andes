@@ -1,4 +1,5 @@
 import numpy as np  # NOQA
+from collections import OrderedDict
 from andes.programs.base import ProgramBase
 from cvxopt import matrix, sparse  # NOQA
 
@@ -10,10 +11,10 @@ class TDS(ProgramBase):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
-        self.config.add(tol=1e-6,
-                        tf=20.0,
-                        fixt=1,
-                        tstep=1/30)
+        self.config.add(OrderedDict((('tol', 1e-6),
+                                     ('tf', 20.0),
+                                     ('fixt', 1),
+                                     ('tstep', 1/30))))
         self.tds_models = system.get_models_with_flag('tds')
         self.tds_pflow_models = system.get_models_with_flag(('tds', 'pflow'))
 

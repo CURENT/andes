@@ -39,7 +39,8 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .variables.dae import DAENew
 from andes.programs import all_programs
 from andes.devices import non_jit
-from andes.core.model import ModelConfig, Model
+from andes.core.model import Model
+from andes.common.config import Config
 
 try:
     from andes_addon.streaming import Streaming
@@ -73,7 +74,7 @@ class SystemNew(object):
         self.programs = OrderedDict()
 
         # get and load default config file
-        self.config = ModelConfig()
+        self.config = Config()
         self._config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
         self._config_from_file = self.load_config(self._config_path)
         self.set_config(self._config_from_file)  # only load config for system and routines
@@ -502,7 +503,7 @@ class SystemNew(object):
         if config is not None:
             # set config for system
             if self.__class__.__name__ in config:
-                self.config.add(**config[self.__class__.__name__])
+                self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
 
             # TODO: set config for routines
@@ -521,9 +522,17 @@ class SystemNew(object):
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
 
-        # TODO: get routine config
+        # get routine config
+        for name, instance in self.programs.items():
+            cfg = instance.get_config()
+            if len(cfg) > 0:
+                config_dict[name] = cfg
+
+        # get model config
         for name, instance in self.models.items():
-            config_dict[name] = instance.get_config()
+            cfg = instance.get_config()
+            if len(cfg) > 0:
+                config_dict[name] = cfg
         return config_dict
 
     @staticmethod

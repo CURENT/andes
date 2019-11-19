@@ -21,9 +21,10 @@ from collections import OrderedDict
 
 import importlib
 import logging
-import pprint
 
 import numpy as np
+
+from andes.common.config import Config
 from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
@@ -226,45 +227,6 @@ class ModelCall(object):
         self._igyc, self._jgyc, self._vgyc = list(), list(), list()
 
 
-class ModelConfig(object):
-    """
-    Class for storing model configurations that will be used in equations
-
-    All config entries must be numerical.
-    """
-
-    def __init__(self, dct=None, **kwargs):
-        if dct is not None:
-            self.add(**dct)
-
-        self.add(**kwargs)
-
-    def add(self, **kwargs):
-        for key, val in kwargs.items():
-            if key in self.__dict__:
-                # skip existing entries that are already loaded (from config files)
-                continue
-
-            if isinstance(val, str):
-                try:
-                    val = float(val)
-                except ValueError:
-                    logger.debug(f'Non-numeric value in config {key} = {val}')
-
-            self.__dict__[key] = val
-
-    def as_dict(self):
-        out = []
-        for key, val in self.__dict__.items():
-            if not key.endswith('_alt'):
-                out.append((key, val))
-
-        return OrderedDict(out)
-
-    def __repr__(self):
-        return pprint.pformat(self.__dict__)
-
-
 class Model(object):
     """
     Base class for power system device models
@@ -327,7 +289,7 @@ class Model(object):
             is_series=False,
         )
 
-        self.config = ModelConfig()
+        self.config = Config()
         if config is not None:
             self.set_config(config)
 
@@ -460,7 +422,7 @@ class Model(object):
     def set_config(self, config):
         if self.class_name in config:
             config_section = config[self.class_name]
-            self.config.add(**OrderedDict(config_section))
+            self.config.add(OrderedDict(config_section))
 
     def get_config(self):
         return self.config.as_dict()

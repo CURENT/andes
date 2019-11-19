@@ -39,7 +39,9 @@
 - [x] Dummy service variables for storing initial values (such as pm0, vref0) (Solved with `Service` itself)
 - [x] Improve running functions based on routine. Get rid of passing around `is_tds`. Possibly implementing a
  `pflow_models` and a `tds_models` list in system
-*   Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
+- [x] Implement a group for PV and Slack. Possibly implementing all groups in `group.py`
+*   Implement index handling in `group.py`, update `link_external` to work with groups
+*   Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
 *   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen
 *   Allow for semi-implicit method formulation

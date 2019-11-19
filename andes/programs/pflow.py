@@ -1,4 +1,5 @@
 import numpy as np
+from collections import OrderedDict
 from andes.programs.base import ProgramBase
 from cvxopt import matrix, sparse
 from scipy.optimize import newton_krylov
@@ -11,7 +12,8 @@ class PFlow(ProgramBase):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
-        self.config.add(tol=1e-6, max_iter=20)
+        self.config.add(OrderedDict((('tol', 1e-6),
+                                     ('max_iter', 20))))
         self.models = system.get_models_with_flag('pflow')
 
         self.converged = False
