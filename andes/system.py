@@ -506,8 +506,6 @@ class SystemNew(object):
                 self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
 
-            # TODO: set config for routines
-
         else:
             logger.warning('No config provided.')
 

@@ -16,7 +16,7 @@ class ProgramBase(object):
 
         self.solver = Solver(sparselib=self.config.sparselib)
 
-    @staticmethod
+    @property
     def class_name(self):
         return self.__class__.__name__
 
