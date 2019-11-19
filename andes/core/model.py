@@ -26,7 +26,7 @@ import numpy as np
 
 from andes.common.config import Config
 from andes.core.limiter import Limiter
-from andes.core.param import ParamBase, DataParam, NumParam, ExtParam
+from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import ServiceBase, Service, ExtService
@@ -122,6 +122,8 @@ class ModelData(object):
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
         self.num_params = OrderedDict()
+        self.ref_params = OrderedDict()
+        self.idx_params = OrderedDict()
         self.n = 0
         self.idx = []
 
@@ -146,6 +148,10 @@ class ModelData(object):
 
         if isinstance(value, NumParam):
             self.num_params[key] = value
+        elif isinstance(value, RefParam):
+            self.ref_params[key] = value
+        elif isinstance(value, IdxParam):
+            self.idx_params[key] = value
 
         super(ModelData, self).__setattr__(key, value)
 
@@ -156,12 +162,15 @@ class ModelData(object):
         Parameters
         ----------
         idx : str, optional
-            referenceable external index, by default None
+            reference-able external index, by default None
         """
         self.idx.append(idx)
         self.n += 1
 
         for name, instance in self.params.items():
+            # skip `RefParam` because it is collected outside `add`
+            if isinstance(instance, RefParam):
+                continue
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:

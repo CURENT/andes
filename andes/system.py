@@ -288,6 +288,42 @@ class SystemNew(object):
         self.__dict__[model].add(idx=idx, **param_dict)
         group.add(idx=idx, model=self.__dict__[model])
 
+    def _collect_ref_param(self):
+        """
+        Collect indices into `RefParam` for all models
+
+        Returns
+        -------
+
+        """
+        # FIXME: too many safe-checking here. Even the model can be non-existent.
+
+        for model in self.models.values():
+            for ref in model.ref_params.values():
+                ref.v = [list() for i in range(model.n)]
+
+        for model in self.models.values():
+            if model.n == 0:
+                continue
+
+            for ref in model.idx_params.values():  # owner
+                if ref.model not in self.models:
+                    continue
+                dest_model = self.__dict__[ref.model]  # Owner instance
+
+                if dest_model.n == 0:
+                    continue
+
+                for n in (model.class_name, model.group):
+                    if n not in dest_model.ref_params:
+                        continue
+
+                    for model_idx, dest_idx in zip(model.idx, ref.v):
+                        if dest_idx not in dest_model.idx:
+                            continue
+                        uid = dest_model.idx2uid(dest_idx)
+                        dest_model.ref_params[n].v[uid].append(model_idx)
+
     def _finalize_add(self, models=None):
         self._call_models_method('finalize_add', self.models)
 
@@ -696,6 +732,7 @@ class SystemNew(object):
         """
         self.set_address()
         self.set_dae_names()
+        self._collect_ref_param()
         self._finalize_add()
         self.calc_pu_coeff()
         self.link_external()

@@ -111,6 +111,12 @@ class DataParam(ParamBase):
     pass
 
 
+class RefParam(ParamBase):
+    def __init__(self, **kwargs):
+        super(RefParam, self).__init__(**kwargs)
+        self.export = False
+
+
 class IdxParam(ParamBase):
     """
     A special ParamBase for storing `idx` of other models

@@ -8,5 +8,6 @@ non_jit = OrderedDict([
     ('pv', ['PV', 'Slack']),
     ('shunt', ['Shunt']),
     ('line', ['Line']),
+    ('area', ['Area']),
     ('synchronous', ['GEN2Axis']),
 ])
