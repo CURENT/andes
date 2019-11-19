@@ -445,6 +445,12 @@ class Model(object):
         else:
             raise NotImplementedError
 
+    def get(self, src: str, idx, attr):
+        pass
+
+    def set(self, src, idx, attr, value):
+        pass
+
     def get_input(self):
         # The order of inputs: `all_params` and then `all_vars`, finally `config`
         kwargs = OrderedDict()
@@ -766,6 +772,19 @@ class Model(object):
 
         # call custom variable initializer after lambdified initializers
         self.v_numeric(**kwargs)
+
+    def a_clear(self):
+        """
+        Clear addresses and reset flags['address']
+        Returns
+        -------
+
+        """
+        if self.n == 0:
+            return
+        for var in self.cache.all_vars.values():
+            var.clear()
+        self.flags['address'] = False
 
     def e_clear(self):
         if self.n == 0:

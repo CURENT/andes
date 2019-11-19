@@ -205,7 +205,10 @@ class SystemNew(object):
 
                 instance.link_external(ext_model)
 
-    def set_address(self, models=None):
+    def set_address(self, models=None, reset=False):
+        if reset is True:
+            self._a_clear()
+
         if models is None:
             models = self._models_with_flag['pflow']
 
@@ -305,24 +308,30 @@ class SystemNew(object):
         for var in self.x_adders:
             if var.v_init is None:
                 continue
-            np.add.at(self.dae.x, var.a, var.v)
+            if var.has_address:
+                np.add.at(self.dae.x, var.a, var.v)
         for var in self.x_setters:
-            np.put(self.dae.x, var.a, var.v)
+            if var.has_address:
+                np.put(self.dae.x, var.a, var.v)
 
         # NOTE: Need to skip vars that are not initializers for re-entrance
         for var in self.y_adders:
             if var.v_init is None:
                 continue
-            np.add.at(self.dae.y, var.a, var.v)
+            if var.has_address:
+                np.add.at(self.dae.y, var.a, var.v)
         for var in self.y_setters:
-            np.put(self.dae.y, var.a, var.v)
+            if var.has_address:
+                np.put(self.dae.y, var.a, var.v)
 
     def vars_to_models(self):
         for var in self.y_adders + self.y_setters:
-            var.v = self.dae.y[var.a]
+            if var.has_address:
+                var.v = self.dae.y[var.a]
 
         for var in self.x_adders + self.x_setters:
-            var.v = self.dae.x[var.a]
+            if var.has_address:
+                var.v = self.dae.x[var.a]
 
     def store_adder_setter(self):
         self.f_adders = []
@@ -339,16 +348,15 @@ class SystemNew(object):
             if not mdl.n:
                 continue
             for var in mdl.cache.all_vars.values():
-                if var.has_address:
-                    if var.e_setter is False:
-                        self.__dict__[f'{var.e_code}_adders'].append(var)
-                    else:
-                        self.__dict__[f'{var.e_code}_setters'].append(var)
+                if var.e_setter is False:
+                    self.__dict__[f'{var.e_code}_adders'].append(var)
+                else:
+                    self.__dict__[f'{var.e_code}_setters'].append(var)
 
-                    if var.v_setter is False:
-                        self.__dict__[f'{var.v_code}_adders'].append(var)
-                    else:
-                        self.__dict__[f'{var.v_code}_setters'].append(var)
+                if var.v_setter is False:
+                    self.__dict__[f'{var.v_code}_adders'].append(var)
+                else:
+                    self.__dict__[f'{var.v_code}_setters'].append(var)
 
     def s_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('eval_service', models)
@@ -369,13 +377,22 @@ class SystemNew(object):
         self.dae.reset_fg()
         self._call_models_method('e_clear', models)
 
+    def _a_clear(self):
+        self.dae.m = 0
+        self.dae.n = 0
+        self.dae.reset_fg()
+        self.dae.reset_xy()
+        self._call_models_method('a_clear', models=self.models)
+
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('f_update', models)
 
         for var in self.f_adders:
-            np.add.at(self.dae.f, var.a, var.e)
+            if var.has_address:
+                np.add.at(self.dae.f, var.a, var.e)
         for var in self.f_setters:
-            np.put(self.dae.f, var.a, var.e)
+            if var.has_address:
+                np.put(self.dae.f, var.a, var.e)
 
         return self.dae.f
 
@@ -383,9 +400,11 @@ class SystemNew(object):
         self._call_models_method('g_update', models)
 
         for var in self.g_adders:
-            np.add.at(self.dae.g, var.a, var.e)
+            if var.has_address:
+                np.add.at(self.dae.g, var.a, var.e)
         for var in self.g_setters:
-            np.put(self.dae.g, var.a, var.e)
+            if var.has_address:
+                np.put(self.dae.g, var.a, var.e)
 
         return self.dae.g
 
@@ -605,13 +624,13 @@ class SystemNew(object):
         self._store_calls()
         self.dill_calls()
 
-    def setup(self):
+    def setup(self, reset=False):
         """
         Set up system for studies
 
         This function is to be called after all data are added.
         """
-        self.set_address()
+        self.set_address(reset=reset)
         self.set_dae_names()
         self._finalize_add()
         self.link_external()

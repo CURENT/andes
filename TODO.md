@@ -45,6 +45,7 @@
 *   Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
 *   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
 *   Define general hooks - when should the connectivity check happen
+*   COI-type of one-to-multiple aggregation model (the N-to-1 model)
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 

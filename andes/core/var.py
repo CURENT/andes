@@ -72,6 +72,12 @@ class VarBase(object):
         self.e_str = None  # string for symbolic equation
         self.e_lambdify = None  # internal - sympy generated lambda function for equation
 
+    def clear(self):
+        self.n = 0
+        self.a = None
+        self.v = None
+        self.e = None
+
     def __repr__(self):
         span = []
         if 1 <= self.n <= 20:

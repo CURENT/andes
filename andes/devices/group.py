@@ -31,7 +31,7 @@ class GroupBase(object):
 
         Parameters
         ----------
-        idx: Union[str, float]
+        idx: Union[str, float, int]
             Register an element to a model
 
         model: Model
@@ -41,10 +41,19 @@ class GroupBase(object):
         -------
 
         """
+        if idx in self._idx2model:
+            raise KeyError(f'Group <{self.class_name}> already contains <{repr(idx)}> from '
+                           f'<{self._idx2model[idx].class_name}>')
         self._idx2model[idx] = model
 
     def idx2model(self, idx):
-        return [self._idx2model[i] for i in idx]
+        ret = []
+        for i in idx:
+            try:
+                ret.append(self._idx2model[i])
+            except KeyError:
+                raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
+        return ret
 
     def get(self, src: str, idx, attr):
         """
@@ -63,12 +72,8 @@ class GroupBase(object):
         -------
         The requested param or variable attribute
         """
-        if src not in self.common_vars + self.common_params:
-            raise AttributeError(f'Group <{self.class_name}> unable to get variable <{src}>')
-
-        if idx is None:
-            raise IndexError(f'{self.__class__.__name__}:'
-                             f'Indexer cannot be None for group variable <{src}>')
+        self._check_src(src)
+        self._check_idx(idx)
 
         n = len(idx)
         if n == 0:
@@ -92,8 +97,27 @@ class GroupBase(object):
 
         return ret
 
-    def set(self, src: str, indexer, attr, value):
-        pass
+    def set(self, src: str, idx, attr, value):
+        self._check_src(src)
+        self._check_idx(idx)
+
+        if isinstance(value, (float, str, int)):
+            value = [value]
+
+        models = self.idx2model(idx)
+        for i, idx in enumerate(idx):
+            model = models[i]
+            uid = model.idx2uid(idx)
+            instance = model.__dict__[src]
+            instance.__dict__[attr][uid] = value[i]
+
+    def _check_src(self, src: str):
+        if src not in self.common_vars + self.common_params:
+            raise AttributeError(f'Group <{self.class_name}> unable to get variable <{src}>')
+
+    def _check_idx(self, idx):
+        if idx is None:
+            raise IndexError(f'{self.__class__.__name__}: idx cannot be None')
 
     def get_next_idx(self, idx=None, model_name=None):
         """
@@ -148,7 +172,7 @@ class StaticGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('p0', 'q0'))
-        self.common_vars.extend(('p', 'q'))
+        self.common_vars.extend(('p', 'q', 'a', 'v'))
 
 
 class AcLine(GroupBase):
