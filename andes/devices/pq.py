@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 from andes.core.service import Service  # NOQa
@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class PQData(ModelData):
     def __init__(self):
         super().__init__()
-        self.bus = DataParam(info="linked bus idx", mandatory=True)
-        self.owner = DataParam(info="owner idx")
+        self.bus = IdxParam(model='Bus', info="linked bus idx", mandatory=True)
+        self.owner = IdxParam(model='Owner', info="owner idx")
 
         self.p0 = NumParam(default=0, info='active power load', power=True)
         self.q0 = NumParam(default=0, info='reactive power load', power=True)

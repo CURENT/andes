@@ -44,12 +44,14 @@
  similar api to models.idx2uid, or implement a `get_by_idx` for both)
 - [x] Let Synchronous generator subsitute PV; more generally, let any non-pflow model substitute a pflow one
  (Currently done with `v_numeric`)
-*   Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under `System`
-*   Define general hooks - when should the connectivity check happen
+- [x] Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under
+ `System` (It turns out that `gy_island` and `gisland` does not need to be implemented. If there is a large
+  mismatch, just let the power flow fail and let the user correct the data.)
 *   COI-type of one-to-multiple aggregation model (the N-to-1 model)
 *   Store states in systems to enforce sequence of execution
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
+*   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
 
 ### Examples

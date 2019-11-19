@@ -104,6 +104,15 @@ class DataParam(ParamBase):
     pass
 
 
+class IdxParam(ParamBase):
+    """
+    A special ParamBase for storing `idx` of other models
+    """
+    def __init__(self, model, **kwargs):
+        super(IdxParam, self).__init__(**kwargs)
+        self.model = model
+
+
 class NumParam(ParamBase):
     """
     A computational numerical parameter.

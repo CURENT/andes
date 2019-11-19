@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.param import DataParam, NumParam, IdxParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 from andes.core.service import Service  # NOQA
@@ -15,8 +15,8 @@ class PVData(ModelData):
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True)
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True)
 
-        self.bus = DataParam(info="the idx of the installed bus")
-        self.busr = DataParam(info="the idx of remotely controlled bus")
+        self.bus = IdxParam(model='Bus', info="the idx of the installed bus")
+        self.busr = IdxParam(model='Bus', info="the idx of remotely controlled bus")
         self.p0 = NumParam(default=0.0, info="active power set point", power=True)
         self.q0 = NumParam(default=0.0, info="reactive power set point", power=True)
 

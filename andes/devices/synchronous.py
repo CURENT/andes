@@ -4,7 +4,7 @@ Synchronous generator classes
 
 import logging
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.param import IdxParam, DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 from andes.core.service import Service, ExtService  # NOQA
@@ -19,9 +19,9 @@ class GEN2AxisData(ModelData):
         self.Vn = NumParam(default=110.0, info="AC voltage rating")
         self.fn = NumParam(default=60.0, info="rated frequency")
 
-        self.bus = DataParam(info="interface bus idx", mandatory=True)
+        self.bus = IdxParam(model='Bus', info="interface bus idx", mandatory=True)
+        self.coi = IdxParam(model='COI', info="center of inertia index")
         self.gen = DataParam(info="static generator index", mandatory=True)
-        self.coi = DataParam(info="center of inertia index")
 
         self.D = NumParam(default=0.0, info="Damping coefficient", power=True)
         self.M = NumParam(default=6, info="machine start up time (2xH)", non_zero=True, power=True)

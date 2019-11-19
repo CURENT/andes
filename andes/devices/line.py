@@ -1,6 +1,6 @@
 import logging
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.param import IdxParam, DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 from andes.core.service import Service  # NOQa
@@ -11,11 +11,12 @@ class LineData(ModelData):
     def __init__(self):
         super().__init__()
 
-        self.bus1 = DataParam(info="idx of from bus")
-        self.bus2 = DataParam(info="idx of to bus")
+        self.bus1 = IdxParam(model='Bus', info="idx of from bus")
+        self.bus2 = IdxParam(model='Bus', info="idx of to bus")
+        self.owner = IdxParam(model='Owner', info="owner code")
+
         self.xcoord = DataParam(info="x coordinates")
         self.ycoord = DataParam(info="y coordinates")
-        self.owner = DataParam(info="owner code")
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True)
         self.fn = NumParam(default=60, info="rated frequency")

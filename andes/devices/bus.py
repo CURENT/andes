@@ -1,9 +1,7 @@
 import logging
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, ExtParam  # NOQA
+from andes.core.param import IdxParam, DataParam, NumParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import Service  # NOQa
 logger = logging.getLogger(__name__)
 
 
@@ -14,18 +12,19 @@ class BusData(ModelData):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.Vn = NumParam(default=110, info="AC voltage rating", unit='kV', non_zero=True)
-        self.angle = NumParam(default=0, info="initial voltage phase angle", unit='rad')
+        self.area = IdxParam(model='Area', default=None, info="Area code")
+        self.region = IdxParam(model='Region', default=None, info="Region code")
+        self.owner = IdxParam(model='Owner', default=None, info="Owner code")
 
-        self.area = DataParam(default=None, info="Area code")
-        self.region = DataParam(default=None, info="Region code")
-        self.owner = DataParam(default=None, info="Owner code")
         self.xcoord = DataParam(default=0, info='x coordinate')
         self.ycoord = DataParam(default=0, info='y coordinate')
 
+        self.Vn = NumParam(default=110, info="AC voltage rating", unit='kV', non_zero=True)
         self.vmax = NumParam(default=1.1, info="Voltage upper limit")
         self.vmin = NumParam(default=0.9, info="Voltage lower limit")
-        self.voltage = NumParam(default=1.0, info="initial voltage magnitude", non_zero=True)
+
+        self.v0 = NumParam(default=1.0, info="initial voltage magnitude", non_zero=True)
+        self.a0 = NumParam(default=0, info="initial voltage phase angle", unit='rad')
 
 
 class Bus(Model, BusData):
@@ -47,5 +46,5 @@ class Bus(Model, BusData):
         self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')
 
         # optional initial values
-        self.a.v_init = 'angle'
-        self.v.v_init = 'voltage'
+        self.a.v_init = 'a0'
+        self.v.v_init = 'v0'
