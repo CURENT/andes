@@ -165,7 +165,9 @@ class Undefined(GroupBase):
 
 
 class AcTopology(GroupBase):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('a', 'v'))
 
 
 class StaticGen(GroupBase):

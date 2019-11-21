@@ -1,7 +1,7 @@
 from typing import Optional, Union, List
 
 import numpy as np
-from andes.core.param import DataParam
+from andes.core.param import ParamBase
 from andes.devices.group import GroupBase
 from numpy import ndarray
 
@@ -61,8 +61,8 @@ class VarBase(object):
 
         self.n = 0  # count of elements in the array
         self.a: Optional[Union[ndarray, List]] = None  # address array
-        self.v: Optional[ndarray] = None  # variable value array
-        self.e: Optional[ndarray] = None  # equation value array
+        self.v: Optional[Union[ndarray, float]] = 0  # variable value array
+        self.e: Optional[Union[ndarray, float]] = 0   # equation value array
 
         self.v_init = v_init  # equation string for variable initialization
         self.v_setter = v_setter  # True if this variable sets the variable value
@@ -75,8 +75,8 @@ class VarBase(object):
     def clear(self):
         self.n = 0
         self.a = None
-        self.v = None
-        self.e = None
+        self.v = 0
+        self.e = 0
 
     def __repr__(self):
         span = []
@@ -84,7 +84,7 @@ class VarBase(object):
             span = self.a.tolist()
             span = ','.join([str(i) for i in span])
         elif self.n > 20:
-            if not isinstance(self, ExtVar):
+            if not isinstance(self, (ExtVar, Calc)):
                 span.append(self.a[0])
                 span.append(self.a[-1])
                 span.append(self.a[1] - self.a[0])
@@ -153,12 +153,10 @@ class Calc(VarBase):
 
     This class is meant for internally calculated variables
     such as line flow power.
-
-    Warnings
-    --------
-    Not implemented yet..
     """
-    pass
+    def __init__(self, **kwargs):
+        super(Calc, self).__init__(**kwargs)
+        self.addressable = False
 
 
 class ExtVar(VarBase):
@@ -198,8 +196,7 @@ class ExtVar(VarBase):
     def __init__(self,
                  model: str,
                  src: str,
-                 indexer: Optional[Union[List, ndarray, DataParam]] = None,
-                 sum: Optional[bool] = False,
+                 indexer: Optional[Union[List, ndarray, ParamBase]] = None,
                  *args,
                  **kwargs):
         super(ExtVar, self).__init__(*args, **kwargs)
@@ -207,9 +204,31 @@ class ExtVar(VarBase):
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.sum = sum  # if values at the same indices should be summed up (NOT in use yet)
+        self._idx = None
+        self._n = None
+        self._2d = False
+
+        delattr(self, 'n')
 
         self.parent_model = None
+
+    @property
+    def _v(self):
+        out = []
+        idx = 0
+        for n in self._n:
+            out.append(self.v[idx:idx+n])
+            idx += n
+        return out
+
+    @property
+    def _a(self):
+        out = []
+        idx = 0
+        for n in self._n:
+            out.append(self.a[idx:idx+n])
+            idx += n
+        return out
 
     def link_external(self, ext_model):
         """
@@ -231,10 +250,20 @@ class ExtVar(VarBase):
         self.parent_model = ext_model
 
         if isinstance(ext_model, GroupBase):
-            self.n = len(self.indexer.v)
+            if self.indexer.n > 0 and isinstance(self.indexer.v[0], (list, np.ndarray)):
+                self._n = [len(i) for i in self.indexer.v]  # number of elements in each sublist
+                self.n = np.sum(self._n)  # total number
+                self._idx = np.concatenate([np.array(i) for i in self.indexer.v])
+                self._2d = True
+            else:
+                self._n = None
+                self.n = len(self.indexer.v)
+                self._idx = self.indexer.v
+                self._2d = False
+
             self.v = np.zeros(self.n)
             self.e = np.zeros(self.n)
-            self.a = ext_model.get(src=self.src, idx=self.indexer.v, attr='a')
+            self.a = ext_model.get(src=self.src, idx=self._idx, attr='a').astype(int)
 
         else:
             original_var = ext_model.__dict__[self.src]

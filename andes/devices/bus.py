@@ -1,7 +1,7 @@
 import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, DataParam, NumParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.var import Algeb, State, ExtAlgeb, Calc  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +45,10 @@ class Bus(Model, BusData):
         self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')
         self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')
 
+        # --- TO BE REMOVED EXAMPLE ---
+        self.a_times_v = Calc()
+        self.a_times_v.e_str = 'a * v'
+        # ------------------------------
         # optional initial values
         self.a.v_init = 'a0'
         self.v.v_init = 'v0'

@@ -515,6 +515,7 @@ class Model(object):
 
         # NOTE: some numerical calls depend on other service values, so they are evaluated
         #       after lambdified calls
+        # TODO: replace the individual `v_numeric` with `s_numeric`
         for idx, instance in enumerate(self.services.values()):
             if instance.v_numeric is not None:
                 logger.debug(f"Service: eval numeric function for <{instance.name}>")
@@ -767,6 +768,9 @@ class Model(object):
 
         logger.debug(f'{self.class_name}: calling initialize()')
         for name, instance in self.vars_decl_order.items():
+            if instance.v_init is None:
+                continue
+
             logger.debug(f'{name}: {instance.v_init}')
             kwargs = self.get_input()
             init_fun = self.calls.init_lambdify[name]
@@ -780,6 +784,7 @@ class Model(object):
                 instance.v = init_fun
 
         # call custom variable initializer after lambdified initializers
+        kwargs = self.get_input()
         self.v_numeric(**kwargs)
 
     def a_clear(self):
@@ -799,7 +804,8 @@ class Model(object):
         if self.n == 0:
             return
         for instance in self.cache.all_vars.values():
-            instance.e = np.zeros(self.n)
+            # use `instance.n` for 2D vars
+            instance.e = np.zeros(instance.n)
 
     def f_update(self):
         if self.n == 0:
@@ -842,6 +848,22 @@ class Model(object):
         # numerical calls in blocks
         for instance in self.blocks.values():
             instance.g_numeric(**kwargs)
+
+    def c_update(self):
+        if self.n == 0:
+            return
+        kwargs = self.get_input()
+        # call lambdified functions with use self.call
+        ret = self.calls.c_lambdify(**kwargs)
+        for idx, instance in enumerate(self.calcs.values()):
+            instance.v = ret[idx][0]
+
+        # numerical calls defined in the model
+        self.c_numeric(**kwargs)
+
+        # numerical calls in blocks
+        for instance in self.blocks.values():
+            instance.c_numeric(**kwargs)
 
     def j_update(self):
         if self.n == 0:
@@ -921,6 +943,9 @@ class Model(object):
         """
         Custom fcall functions. Modify equations directly
         """
+        pass
+
+    def c_numeric(self, **kwargs):
         pass
 
     def j_numeric(self, **kwargs):

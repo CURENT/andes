@@ -40,7 +40,7 @@ class ParamBase(object):
         self.owner = None  # TODO: maybe rename it to `model`
         self.export = export
 
-        self.n = 0
+        # self.n = 0
         self.v = []
         self.property = dict(mandatory=mandatory)
         self._is_array = False
@@ -71,7 +71,11 @@ class ParamBase(object):
         else:
             np.append(self.v, value)
 
-        self.n += 1
+        # self.n += 1
+
+    @property
+    def n(self):
+        return len(self.v) if self.v else 0
 
     def get_property(self, property_name: str):
         """

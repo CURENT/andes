@@ -40,6 +40,7 @@ from .variables.dae import DAENew
 from andes.programs import all_programs
 from andes.devices import non_jit
 from andes.core.param import ParamBase
+from andes.core.var import Calc
 from andes.core.model import Model
 from andes.common.config import Config
 
@@ -82,10 +83,10 @@ class SystemNew(object):
         # custom configuration for system goes after this line
 
         self.dae = DAENew()
-        self.group_import()
-        self.model_import()
         # routine import comes after model import; routines need to query model flags
-        self.routine_import()
+        self._group_import()
+        self._model_import()
+        self._routine_import()
 
         self._models_with_flag = {'pflow': self.get_models_with_flag('pflow'),
                                   'tds': self.get_models_with_flag('tds'),
@@ -93,18 +94,14 @@ class SystemNew(object):
                                   }
 
         # ------------------------------
-        self.f_adders = []
-        self.g_adders = []
-        self.f_setters = []
-        self.g_setters = []
+        self.f_adders, self.f_setters = list(), list()
+        self.g_adders, self.g_setters = list(), list()
 
-        self.x_setters = []
-        self.y_setters = []
-        self.x_adders = []
-        self.y_adders = []
+        self.x_adders, self.x_setters = list(), list()
+        self.y_adders, self.y_setters = list(), list()
         # ------------------------------
 
-    def group_import(self):
+    def _group_import(self):
         """
         Import groups defined in `devices/group.py`
 
@@ -121,7 +118,7 @@ class SystemNew(object):
             self.__dict__[name] = cls()
             self.groups[name] = self.__dict__[name]
 
-    def model_import(self):
+    def _model_import(self):
         """
         Import and instantiate the non-JIT models and the JIT models.
 
@@ -149,7 +146,7 @@ class SystemNew(object):
         #     for cls, name in pair.items():
         #         self.__dict__[name] = JIT(self, file, cls, name)
 
-    def routine_import(self):
+    def _routine_import(self):
         """
         Dynamically import routines as defined in ``routines/__init__.py``.
 
@@ -395,6 +392,9 @@ class SystemNew(object):
             if not mdl.n:
                 continue
             for var in mdl.cache.all_vars.values():
+                if isinstance(var, Calc):
+                    continue
+
                 if var.e_setter is False:
                     self.__dict__[f'{var.e_code}_adders'].append(var)
                 else:
@@ -472,6 +472,9 @@ class SystemNew(object):
                 np.put(self.dae.g, var.a, var.e)
 
         return self.dae.g
+
+    def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
+        self._call_models_method('c_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('j_update', models)

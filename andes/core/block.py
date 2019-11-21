@@ -98,6 +98,9 @@ class Block(object):
         """
         pass
 
+    def c_numeric(self, **kwargs):
+        pass
+
     def j_numeric(self):
         """
         This function stores the constant and variable jacobian information.
@@ -223,3 +226,12 @@ class PIControllerNumeric(Block):
         self.igxc.append(self.y.a)
         self.jgxc.append(self.xi.a)
         self.vgxc.append(1)
+
+
+class ArrayReduce(Block):
+    """
+    This block takes a 2D `ExtVar` (with its `_v` as a list of arrays),
+    call the callback for each array in the list, and return an array of scalars.
+    """
+    def __init__(self, ext_var):
+        pass

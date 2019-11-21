@@ -43,6 +43,7 @@ class PFlow(ProgramBase):
         system.l_update()
         system.f_update()
         system.g_update()
+        system.c_update()
         system.j_update()
 
         # prepare and solve linear equations
@@ -98,7 +99,7 @@ class PFlow(ProgramBase):
 
         return self.converged
 
-    def _g_wrapper(self, y):
+    def _fg_wrapper(self, y):
         """
         Wrapper for algebraic equations to be used with Newton-Krylov general solver
 
@@ -111,15 +112,17 @@ class PFlow(ProgramBase):
 
         """
         system = self.system
-        system.dae.y = y
+        system.dae.x = y[:system.dae.n]
+        system.dae.y = y[system.dae.n:]
         system.vars_to_models()
         system.e_clear()
 
         system.l_update()
         system.f_update()
-        g = system.g_update()
+        system.g_update()
+        fg = np.hstack((system.dae.f, system.dae.g))
 
-        return g
+        return fg
 
     def newton_krylov(self, verbose=False):
         """
@@ -139,9 +142,9 @@ class PFlow(ProgramBase):
         """
         system = self.system
         system.initialize()
-        v0 = system.dae.y
+        v0 = np.hstack((system.dae.x, system.dae.y))
         try:
-            ret = newton_krylov(self._g_wrapper, v0, verbose=verbose)
+            ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
         except ValueError as e:
             logger.error('Mismatch is not correctable. Equations may be intrinsically unsolvable.')
             raise e
