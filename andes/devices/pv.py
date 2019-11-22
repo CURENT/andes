@@ -4,7 +4,7 @@ from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import DataParam, NumParam, IdxParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import Service  # NOQA
+from andes.core.service import ServiceConst  # NOQA
 
 logger = logging.getLogger(__name__)
 

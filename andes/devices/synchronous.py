@@ -7,7 +7,7 @@ from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import Service, ExtService  # NOQA
+from andes.core.service import ServiceConst, ExtService  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -70,23 +70,23 @@ class GEN2Axis(GEN2AxisData, Model):
         self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen)
         self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen)
 
-        self.Vc = Service(v_str='v * exp(1j * a)')
-        self.S = Service(v_str='p0 - 1j * q0')
-        self.Ic = Service(v_str='S / conj(Vc)')
-        self.E = Service(v_str='Vc + Ic * (ra + 1j * xq)')
-        self.deltac = Service(v_str='log(E / abs(E))')
-        self.delta0 = Service(v_str='u * im(deltac)')
+        self.Vc = ServiceConst(v_str='v * exp(1j * a)')
+        self.S = ServiceConst(v_str='p0 - 1j * q0')
+        self.Ic = ServiceConst(v_str='S / conj(Vc)')
+        self.E = ServiceConst(v_str='Vc + Ic * (ra + 1j * xq)')
+        self.deltac = ServiceConst(v_str='log(E / abs(E))')
+        self.delta0 = ServiceConst(v_str='u * im(deltac)')
 
-        self.vdq = Service(v_str='u * (Vc * exp(1j * 0.5 * pi - deltac))')
-        self.Idq = Service(v_str='u * (Ic * exp(1j * 0.5 * pi - deltac))')
-        self.Id = Service(v_str='re(Idq)')
-        self.Iq = Service(v_str='im(Idq)')
-        self.vd0 = Service(v_str='re(vdq)')
-        self.vq0 = Service(v_str='im(vdq)')
+        self.vdq = ServiceConst(v_str='u * (Vc * exp(1j * 0.5 * pi - deltac))')
+        self.Idq = ServiceConst(v_str='u * (Ic * exp(1j * 0.5 * pi - deltac))')
+        self.Id = ServiceConst(v_str='re(Idq)')
+        self.Iq = ServiceConst(v_str='im(Idq)')
+        self.vd0 = ServiceConst(v_str='re(vdq)')
+        self.vq0 = ServiceConst(v_str='im(vdq)')
 
-        self.tm0 = Service(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
-        self.e1q0 = Service(v_str='vd0 + ra * Id - xq1 * Iq')
-        self.vf0 = Service(v_numeric=self._vf0)
+        self.tm0 = ServiceConst(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
+        self.e1q0 = ServiceConst(v_str='vd0 + ra * Id - xq1 * Iq')
+        self.vf0 = ServiceConst(v_numeric=self._vf0)
 
         # NOTE: All non-iterative initialization can be completed by using `Service`
         #       for computation and setting the variable initial values to

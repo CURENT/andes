@@ -3,7 +3,7 @@ from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, DataParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import Service  # NOQa
+from andes.core.service import ServiceConst  # NOQa
 logger = logging.getLogger(__name__)
 
 
@@ -49,17 +49,17 @@ class Line(LineData, Model):
         self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1)
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2)
 
-        self.gh = Service()
-        self.bh = Service()
-        self.gk = Service()
-        self.bk = Service()
+        self.gh = ServiceConst()
+        self.bh = ServiceConst()
+        self.gk = ServiceConst()
+        self.bk = ServiceConst()
 
-        self.yh = Service()
-        self.yk = Service()
-        self.yhk = Service()
+        self.yh = ServiceConst()
+        self.yk = ServiceConst()
+        self.yhk = ServiceConst()
 
-        self.ghk = Service()
-        self.bhk = Service()
+        self.ghk = ServiceConst()
+        self.bhk = ServiceConst()
 
         self.gh.v_str = 'g1 + 0.5 * g'
         self.bh.v_str = 'b1 + 0.5 * b'

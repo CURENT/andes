@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 from andes.devices.group import GroupBase
 
 
@@ -12,7 +12,7 @@ class ServiceBase(object):
         ----------
         name
         """
-        self.v = 0
+        self.v: Union[float, int, np.ndarray] = 0.
         self.name = name
         self.owner = None
 
@@ -37,10 +37,13 @@ class ServiceBase(object):
         int
             The count of elements in this variable
         """
-        return self.owner.n if self.owner is not None else 0
+        if isinstance(self.v, (int, float)):
+            return 1
+        else:
+            return len(self.v)
 
 
-class Service(ServiceBase):
+class ServiceConst(ServiceBase):
     """
     Service variables that remains constants
 
@@ -60,22 +63,18 @@ class Service(ServiceBase):
     e_symbolic : str
         A string with the equation to calculate the service
         variable.
-    e_numeric : Callable
-        A user-defined callback for calculating the service
-        variable.
     e_lambdify : Callable
         SymPy-generated lambda function for updating the
         value; Not to be provided or modified by the user
     v : array-like
         Evaluated service variable value
     """
-    def __init__(self, v_str: Optional[str] = None,
-                 v_numeric: Optional[Callable] = None,
+    def __init__(self,
+                 v_str: Optional[str] = None,
                  name: Optional[str] = None,
                  *args, **kwargs):
         super().__init__(name)
         self.v_str = v_str
-        self.v_numeric = v_numeric  # allow for custom update function
         self.v = None
 
 
@@ -88,17 +87,17 @@ class ExtService(ServiceBase):
     A synchronous generator needs to retrieve the p and q values from static generators
     for initialization. It will be stored in an `ExtService` instance.
     """
-    def __init__(self, src,
+    def __init__(self,
+                 src: str,
+                 model: str,
+                 indexer,
                  name: Optional[str] = None,
-                 model: Optional[str] = None,
-                 group: Optional[str] = None,
-                 indexer=None,
                  **kwargs):
         super().__init__()
+        self.name = name
         self.src = src
         self.model = model
-        self.group = group
-        self.indexer = indexer
+        self.indexer = indexer  # `indexer` cannot be None for now
 
     def link_external(self, ext_model):
         self.v = np.zeros(self.n)
@@ -113,7 +112,7 @@ class ExtService(ServiceBase):
             self.v = ext_model.__dict__[self.src].v[uid]
 
 
-class ServiceRandom(Service):
+class ServiceRandom(ServiceConst):
     """
     A service variable for generating random numbers
 

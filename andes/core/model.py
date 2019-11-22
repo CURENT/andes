@@ -29,7 +29,7 @@ from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
-from andes.core.service import ServiceBase, Service, ExtService
+from andes.core.service import ServiceBase, ServiceConst, ExtService
 
 
 logger = logging.getLogger(__name__)
@@ -412,7 +412,7 @@ class Model(object):
             self.params_ext[key] = value
         elif isinstance(value, Limiter):
             self.limiters[key] = value
-        elif isinstance(value, Service):
+        elif isinstance(value, ServiceConst):
             self.services[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
@@ -515,12 +515,9 @@ class Model(object):
 
         # NOTE: some numerical calls depend on other service values, so they are evaluated
         #       after lambdified calls
-        # TODO: replace the individual `v_numeric` with `s_numeric`
-        for idx, instance in enumerate(self.services.values()):
-            if instance.v_numeric is not None:
-                logger.debug(f"Service: eval numeric function for <{instance.name}>")
-                kwargs = self.get_input()
-                instance.v = instance.v_numeric(**kwargs)
+        # repleaced the individual `v_numeric` with `s_numeric`
+        kwargs = self.get_input()
+        self.s_numeric(**kwargs)
 
     def generate_initializer(self):
         """
@@ -946,6 +943,9 @@ class Model(object):
         pass
 
     def c_numeric(self, **kwargs):
+        pass
+
+    def s_numeric(self, **kwargs):
         pass
 
     def j_numeric(self, **kwargs):

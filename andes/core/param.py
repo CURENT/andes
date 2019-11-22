@@ -37,13 +37,12 @@ class ParamBase(object):
         self.default = default
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.owner = None  # TODO: maybe rename it to `model`
+        self.owner = None
         self.export = export
 
         # self.n = 0
         self.v = []
         self.property = dict(mandatory=mandatory)
-        self._is_array = False
 
     def add(self, value=None):
         """
@@ -66,7 +65,7 @@ class ParamBase(object):
             else:
                 value = self.default
 
-        if self._is_array is False:
+        if isinstance(self.v, list):
             self.v.append(value)
         else:
             np.append(self.v, value)
@@ -229,7 +228,6 @@ class NumParam(ParamBase):
 
         self.pu_coeff = None
         self.vin = None  # values from input
-        self._is_array = False
 
     def add(self, value=None):
         """
@@ -255,7 +253,7 @@ class NumParam(ParamBase):
             value = float(value)
 
         # check for non-zero
-        if value == 0. and self.get_property('non_zero'):
+        if value == 0.0 and self.get_property('non_zero'):
             logger.warning(f'Parameter {self.name} must be non-zero')
             value = self.default
 
@@ -274,7 +272,6 @@ class NumParam(ParamBase):
         """
         self.v = np.array(self.v)
         self.vin = np.array(self.v)
-        self._is_array = True
 
     def restore(self):
         self.v = self.vin
@@ -317,7 +314,6 @@ class ExtParam(NumParam):
         self.indexer = indexer
 
         self.parent_model = None   # parent model instance
-        self.uid = None
 
     def link_external(self, ext_model):
         """
@@ -335,7 +331,6 @@ class ExtParam(NumParam):
         self.parent_model = ext_model
 
         if isinstance(ext_model, GroupBase):
-            self.n = len(self.indexer.v)
 
             # TODO: the three lines below is a bit inefficient - 3x same loops
             self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
@@ -348,15 +343,14 @@ class ExtParam(NumParam):
 
             if self.indexer is None:
                 # if `idx` is None, retrieve all the values
-                self.uid = np.arange(ext_model.n)
+                uid = np.arange(ext_model.n)
             else:
                 if len(self.indexer.v) == 0:
                     return
                 else:
-                    self.uid = ext_model.idx2uid(self.indexer.v)
+                    uid = ext_model.idx2uid(self.indexer.v)
 
             # pull in values
-            self.v = parent_instance.v[self.uid]
-            self.vin = parent_instance.vin[self.uid]
-            self.pu_coeff = parent_instance.pu_coeff[self.uid]
-            self.n = len(self.v)
+            self.v = parent_instance.v[uid]
+            self.vin = parent_instance.vin[uid]
+            self.pu_coeff = parent_instance.pu_coeff[uid]
