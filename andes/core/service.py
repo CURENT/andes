@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 from andes.devices.group import GroupBase
 
 

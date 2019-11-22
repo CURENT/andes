@@ -59,8 +59,7 @@ class VarBase(object):
         self.owner = None  # instance of the owner Model
         self.id = None
 
-        self.n = 0  # count of elements in the array
-        self.a: Optional[Union[ndarray, List]] = None  # address array
+        self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)  # address array
         self.v: Optional[Union[ndarray, float]] = 0  # variable value array
         self.e: Optional[Union[ndarray, float]] = 0   # equation value array
 
@@ -73,8 +72,7 @@ class VarBase(object):
         self.e_lambdify = None  # internal - sympy generated lambda function for equation
 
     def clear(self):
-        self.n = 0
-        self.a = None
+        self.a = np.array([], dtype=int)
         self.v = 0
         self.e = 0
 
@@ -105,7 +103,6 @@ class VarBase(object):
             The assigned address for this variable
         """
         self.a = addr
-        self.n = len(self.a)
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
 
@@ -113,8 +110,8 @@ class VarBase(object):
         return [self.name]
 
     @property
-    def has_address(self):
-        return self.a is not None and len(self.a) > 0
+    def n(self):
+        return len(self.a)
 
 
 class Algeb(VarBase):
@@ -205,12 +202,7 @@ class ExtVar(VarBase):
         self.src = src
         self.indexer = indexer
         self._idx = None
-        self._n = None
-        self._2d = False
-
-        delattr(self, 'n')
-
-        self.parent_model = None
+        self._n = []
 
     @property
     def _v(self):
@@ -247,19 +239,14 @@ class ExtVar(VarBase):
         ext_model : Model
             Instance of the parent model
         """
-        self.parent_model = ext_model
 
         if isinstance(ext_model, GroupBase):
             if self.indexer.n > 0 and isinstance(self.indexer.v[0], (list, np.ndarray)):
                 self._n = [len(i) for i in self.indexer.v]  # number of elements in each sublist
-                self.n = np.sum(self._n)  # total number
                 self._idx = np.concatenate([np.array(i) for i in self.indexer.v])
-                self._2d = True
             else:
-                self._n = None
-                self.n = len(self.indexer.v)
+                self._n = [len(self.indexer.v)]
                 self._idx = self.indexer.v
-                self._2d = False
 
             self.v = np.zeros(self.n)
             self.e = np.zeros(self.n)
@@ -273,16 +260,20 @@ class ExtVar(VarBase):
             else:
                 uid = np.arange(ext_model.n, dtype=int)
 
-            self.n = len(uid)
+            self._n = [len(uid)]
 
             # set initial v and e values to zero
             self.v = np.zeros(self.n)
             self.e = np.zeros(self.n)
 
-            if self.n != 0:
+            if self.n > 0:
                 self.a = original_var.a[uid]
             else:
-                self.a = np.array([])
+                self.a = np.array([], dtype=int)
+
+    @property
+    def n(self):
+        return np.sum(self._n)
 
 
 class ExtState(ExtVar):

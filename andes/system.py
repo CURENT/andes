@@ -350,31 +350,29 @@ class SystemNew(object):
         self.dae.reset_xy()
         # from variables to dae variables
         for var in self.x_adders:
-            if var.v_init is None:
+            if var.v_init is None or (var.n == 0):
                 continue
-            if var.has_address:
-                np.add.at(self.dae.x, var.a, var.v)
+            np.add.at(self.dae.x, var.a, var.v)
         for var in self.x_setters:
-            if var.has_address:
+            if var.n > 0:
                 np.put(self.dae.x, var.a, var.v)
 
         # NOTE: Need to skip vars that are not initializers for re-entrance
         for var in self.y_adders:
-            if var.v_init is None:
+            if var.v_init is None or (var.n == 0):
                 continue
-            if var.has_address:
-                np.add.at(self.dae.y, var.a, var.v)
+            np.add.at(self.dae.y, var.a, var.v)
         for var in self.y_setters:
-            if var.has_address:
+            if var.n > 0:
                 np.put(self.dae.y, var.a, var.v)
 
     def vars_to_models(self):
         for var in self.y_adders + self.y_setters:
-            if var.has_address:
+            if var.n > 0:
                 var.v = self.dae.y[var.a]
 
         for var in self.x_adders + self.x_setters:
-            if var.has_address:
+            if var.n > 0:
                 var.v = self.dae.x[var.a]
 
     def store_adder_setter(self):
@@ -453,10 +451,10 @@ class SystemNew(object):
         self._call_models_method('f_update', models)
 
         for var in self.f_adders:
-            if var.has_address:
+            if var.n > 0:
                 np.add.at(self.dae.f, var.a, var.e)
         for var in self.f_setters:
-            if var.has_address:
+            if var.n > 0:
                 np.put(self.dae.f, var.a, var.e)
 
         return self.dae.f
@@ -465,10 +463,10 @@ class SystemNew(object):
         self._call_models_method('g_update', models)
 
         for var in self.g_adders:
-            if var.has_address:
+            if var.n > 0:
                 np.add.at(self.dae.g, var.a, var.e)
         for var in self.g_setters:
-            if var.has_address:
+            if var.n > 0:
                 np.put(self.dae.g, var.a, var.e)
 
         return self.dae.g
@@ -509,10 +507,13 @@ class SystemNew(object):
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
 
+            logger.debug(f'Jac <{j_name}>, row={ii}')
+
             for name, mdl in self.models.items():
                 row_idx = mdl.row_idx(f'{j_name}')
                 col_idx = mdl.col_idx(f'{j_name}')
 
+                logger.debug(f'Model <{name}>, row={row_idx}')
                 ii.extend(row_idx)
                 jj.extend(col_idx)
                 vv.extend(np.zeros(len(np.array(row_idx))))

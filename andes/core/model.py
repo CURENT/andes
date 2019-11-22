@@ -725,6 +725,12 @@ class Model(object):
 
                     row_idx = self.__dict__[row_name].a
                     col_idx = self.__dict__[col_name].a
+                    if len(row_idx) != len(col_idx):
+                        print(f'row_idx: {row_idx}')
+                        print(f'col_idx: {col_idx}')
+                        raise ValueError
+                    elif len(row_idx) == 0 and len(col_idx) == 0:
+                        continue
 
                     self.__dict__[f'i{dict_name}{j_type}'].append(row_idx)
                     self.__dict__[f'j{dict_name}{j_type}'].append(col_idx)
@@ -737,6 +743,11 @@ class Model(object):
                 for row, col, val in zip(self.__dict__[f'_i{dict_name}{j_type}'],
                                          self.__dict__[f'_j{dict_name}{j_type}'],
                                          self.__dict__[f'_v{dict_name}{j_type}']):
+
+                    if len(row) != len(col):
+                        raise ValueError
+                    elif len(row) == 0 and len(col) == 0:
+                        continue
 
                     self.__dict__[f'i{dict_name}{j_type}'].append(row)
                     self.__dict__[f'j{dict_name}{j_type}'].append(col)
