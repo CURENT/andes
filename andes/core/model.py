@@ -21,7 +21,6 @@ from collections import OrderedDict
 
 import importlib
 import logging
-
 import numpy as np
 
 from andes.common.config import Config
@@ -29,11 +28,10 @@ from andes.core.limiter import Limiter
 from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
-from andes.core.service import ServiceBase, ServiceConst, ExtService
-
+from andes.core.service import ServiceBase, ServiceConst, ExtService, ServiceOperation, ServiceRandom
+from andes.common.operation import list_flatten
 
 logger = logging.getLogger(__name__)
-
 pd = None
 
 
@@ -285,6 +283,7 @@ class Model(object):
         # service/temporary variables
         self.services = OrderedDict()
         self.services_ext = OrderedDict()
+        self.services_ops = OrderedDict()
 
         # cache callback and lambda function storage
         self.calls = ModelCall()
@@ -413,9 +412,12 @@ class Model(object):
         elif isinstance(value, Limiter):
             self.limiters[key] = value
         elif isinstance(value, ServiceConst):
+            # only services with `v_str`
             self.services[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
+        elif isinstance(value, (ServiceOperation, ServiceRandom)):
+            self.services_ops[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
@@ -447,15 +449,15 @@ class Model(object):
             return None
         if isinstance(idx, (float, int, str)):
             return self.idx.index(idx)
-        elif isinstance(idx, list):
+        elif isinstance(idx, (list, np.ndarray)):
+            idx = list_flatten(idx)
             return [self.idx.index(i) for i in idx]
-        elif isinstance(idx, np.ndarray):
-            raise NotImplementedError
         else:
             raise NotImplementedError
 
     def get(self, src: str, idx, attr):
-        pass
+        uid = self.idx2uid(idx)
+        return self.__dict__[src].__dict__[attr][uid]
 
     def set(self, src, idx, attr, value):
         pass

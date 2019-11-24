@@ -43,7 +43,6 @@ class PFlow(ProgramBase):
         system.l_update()
         system.f_update()
         system.g_update()
-        system.c_update()
         system.j_update()
 
         # prepare and solve linear equations
@@ -58,7 +57,9 @@ class PFlow(ProgramBase):
         system.dae.x += np.ravel(np.array(self.inc[:system.dae.n]))
         system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
 
-        mis = max(abs(matrix([matrix(system.dae.f), matrix(system.dae.g)])))
+        system.c_update()
+
+        mis = np.max(np.abs(system.dae.fg))
         self.mis.append(mis)
 
         system.vars_to_models()
@@ -99,30 +100,28 @@ class PFlow(ProgramBase):
 
         return self.converged
 
-    def _fg_wrapper(self, y):
+    def _fg_wrapper(self, xy):
         """
         Wrapper for algebraic equations to be used with Newton-Krylov general solver
 
         Parameters
         ----------
-        y
+        xy
 
         Returns
         -------
 
         """
         system = self.system
-        system.dae.x = y[:system.dae.n]
-        system.dae.y = y[system.dae.n:]
+        system.dae.x = xy[:system.dae.n]
+        system.dae.y = xy[system.dae.n:]
         system.vars_to_models()
         system.e_clear()
 
         system.l_update()
         system.f_update()
         system.g_update()
-        fg = np.hstack((system.dae.f, system.dae.g))
-
-        return fg
+        return system.dae.fg
 
     def newton_krylov(self, verbose=False):
         """
@@ -142,7 +141,7 @@ class PFlow(ProgramBase):
         """
         system = self.system
         system.initialize()
-        v0 = np.hstack((system.dae.x, system.dae.y))
+        v0 = system.dae.xy
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
         except ValueError as e:

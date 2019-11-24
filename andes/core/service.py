@@ -1,6 +1,7 @@
 import numpy as np
-from typing import Optional, Union
-from andes.devices.group import GroupBase
+from typing import Optional, Union, Callable
+from andes.core.param import RefParam
+from andes.common.operation import list_flatten
 
 
 class ServiceBase(object):
@@ -12,7 +13,6 @@ class ServiceBase(object):
         ----------
         name
         """
-        self.v: Union[float, int, np.ndarray] = 0.
         self.name = name
         self.owner = None
 
@@ -37,10 +37,10 @@ class ServiceBase(object):
         int
             The count of elements in this variable
         """
-        if isinstance(self.v, (int, float)):
-            return 1
-        else:
+        if isinstance(self.v, np.ndarray):
             return len(self.v)
+        else:
+            return 1
 
 
 class ServiceConst(ServiceBase):
@@ -75,7 +75,7 @@ class ServiceConst(ServiceBase):
                  *args, **kwargs):
         super().__init__(name)
         self.v_str = v_str
-        self.v = None
+        self.v: Union[float, int, np.ndarray] = 0.
 
 
 class ExtService(ServiceBase):
@@ -98,18 +98,75 @@ class ExtService(ServiceBase):
         self.src = src
         self.model = model
         self.indexer = indexer  # `indexer` cannot be None for now
+        self.v = 0
 
     def link_external(self, ext_model):
+        # set initial v values to zero
         self.v = np.zeros(self.n)
         if self.n == 0:
             return
 
-        if isinstance(ext_model, GroupBase):
-            self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+        # the same `get` api for Group and Model
+        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+
+
+class ServiceOperation(ServiceBase):
+
+    def __init__(self,
+                 origin,
+                 ref: RefParam,
+                 name=None):
+        self._v = None
+        super().__init__(name)
+        self.origin = origin
+        self.ref = ref
+        self.v_str = None
+
+    @property
+    def v(self):
+        return self._v
+
+    @v.setter
+    def v(self, value):
+        self._v = value
+
+
+class ServiceReduce(ServiceOperation):
+    def __init__(self,
+                 fun: Callable,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.fun = fun
+
+    @property
+    def v(self):
+        if self._v is None:
+            self._v = np.zeros(len(self.ref.v))
+            idx = 0
+            for i, v in enumerate(self.ref.v):
+                self._v[i] = self.fun(self.origin.v[idx:idx + len(v)])
+                idx += len(v)
+            return self._v
         else:
-            uid = ext_model.idx2uid(self.indexer.v)
-            # set initial v and e values to zero
-            self.v = ext_model.__dict__[self.src].v[uid]
+            return self._v
+
+
+class ServiceRepeat(ServiceOperation):
+    def __init__(self,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def v(self):
+        if self._v is None:
+            self._v = np.zeros(len(list_flatten(self.ref.v)))
+            idx = 0
+            for i, v in enumerate(self.ref.v):
+                self._v[idx:idx + len(v)] = self.origin.v[i]
+                idx += len(v)
+            return self._v
+        else:
+            return self._v
 
 
 class ServiceRandom(ServiceConst):
@@ -126,7 +183,6 @@ class ServiceRandom(ServiceConst):
     def __init__(self, name=None, func=np.random.rand):
         super(ServiceRandom, self).__init__(name)
         self.func = func
-        delattr(self, 'v')
 
     @property
     def v(self):

@@ -220,6 +220,10 @@ class DAENew(object):
         return np.hstack((self.x, self.y))
 
     @property
+    def fg(self):
+        return np.hstack((self.f, self.g))
+
+    @property
     def xy_name(self):
         return self.x_name + self.y_name
 

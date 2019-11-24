@@ -226,7 +226,7 @@ class NumParam(ParamBase):
                              dc_current=dc_current,
                              dc_voltage=dc_voltage)
 
-        self.pu_coeff = None
+        self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
 
     def add(self, value=None):
@@ -312,7 +312,6 @@ class ExtParam(NumParam):
         self.model = model
         self.src = src
         self.indexer = indexer
-
         self.parent_model = None   # parent model instance
 
     def link_external(self, ext_model):
@@ -335,7 +334,8 @@ class ExtParam(NumParam):
             # TODO: the three lines below is a bit inefficient - 3x same loops
             self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
             self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
-            self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+            # TODO: uncomment when pu_coeff() is ready
+            # self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
 
         else:
             parent_instance = ext_model.__dict__[self.src]
@@ -353,4 +353,5 @@ class ExtParam(NumParam):
             # pull in values
             self.v = parent_instance.v[uid]
             self.vin = parent_instance.vin[uid]
-            self.pu_coeff = parent_instance.pu_coeff[uid]
+            # TODO: uncomment when pu_coeff() is ready
+            # self.pu_coeff = parent_instance.pu_coeff[uid]

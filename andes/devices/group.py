@@ -55,7 +55,7 @@ class GroupBase(object):
                 raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
         return ret
 
-    def get(self, src: str, idx, attr):
+    def get(self, src: str, idx, attr: str):
         """
         Based on the indexer, get the `attr` field of the `src` parameter or variable.
 
@@ -82,9 +82,8 @@ class GroupBase(object):
         ret = None
         models = self.idx2model(idx)
         for i, idx in enumerate(idx):
-            model = models[i]
-            uid = model.idx2uid(idx)
-            instance = model.__dict__[src]
+            uid = models[i].idx2uid(idx)
+            instance = models[i].__dict__[src]
             val = instance.__dict__[attr][uid]
 
             # deduce the type for ret

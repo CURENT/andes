@@ -53,6 +53,8 @@
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
+*   Divide limiter to pre-equation and post-equation limiters (such as anti-windup limiter which depends on
+ equation values)
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians
