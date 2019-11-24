@@ -66,7 +66,6 @@ class SystemNew(object):
                  name: Optional[str] = None,
                  config_path: Optional[str] = None,
                  options: Optional[Dict] = None,
-                 **kwargs: Optional[Dict]
                  ):
         self.name = name
         self.options = options  # options from command line or so
@@ -94,6 +93,7 @@ class SystemNew(object):
                                   }
 
         # ------------------------------
+        # FIXME: reduce clutter with defaultdict `adders` and `setters`, each with `x`, `y`, `f`, and `g`
         self.f_adders, self.f_setters = list(), list()
         self.g_adders, self.g_setters = list(), list()
 
@@ -297,16 +297,16 @@ class SystemNew(object):
 
         for model in self.models.values():
             for ref in model.ref_params.values():
-                ref.v = [list() for i in range(model.n)]
+                ref.v = [list() for _ in range(model.n)]
 
         for model in self.models.values():
             if model.n == 0:
                 continue
 
-            for ref in model.idx_params.values():  # owner
+            for ref in model.idx_params.values():
                 if ref.model not in self.models:
                     continue
-                dest_model = self.__dict__[ref.model]  # Owner instance
+                dest_model = self.__dict__[ref.model]
 
                 if dest_model.n == 0:
                     continue
@@ -347,8 +347,14 @@ class SystemNew(object):
         return np.hstack((self.dae.x, self.dae.y))
 
     def vars_to_dae(self):
+        """
+        From variables to dae variables
+        Returns
+        -------
+
+        """
         self.dae.reset_xy()
-        # from variables to dae variables
+        # NOTE: Need to skip vars that are not initializers for re-entrance
         for var in self.x_adders:
             if var.v_init is None or (var.n == 0):
                 continue
@@ -357,7 +363,6 @@ class SystemNew(object):
             if var.n > 0:
                 np.put(self.dae.x, var.a, var.v)
 
-        # NOTE: Need to skip vars that are not initializers for re-entrance
         for var in self.y_adders:
             if var.v_init is None or (var.n == 0):
                 continue
@@ -376,15 +381,11 @@ class SystemNew(object):
                 var.v = self.dae.x[var.a]
 
     def store_adder_setter(self):
-        self.f_adders = []
-        self.g_adders = []
-        self.f_setters = []
-        self.g_setters = []
+        self.f_adders, self.f_setters = list(), list()
+        self.g_adders, self.g_setters = list(), list()
 
-        self.x_setters = []
-        self.y_setters = []
-        self.x_adders = []
-        self.y_adders = []
+        self.x_adders, self.x_setters = list(), list()
+        self.y_adders, self.y_setters = list(), list()
 
         for mdl in self.models.values():
             if not mdl.n:

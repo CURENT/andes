@@ -19,6 +19,7 @@ class Area(AreaData, Model):
         self.Bus = RefParam()
         self.AcTopology = RefParam()
 
+        # --------------------Experiment Zone--------------------
         self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.AcTopology)
         self.Vn_sum = ServiceReduce(origin=self.Vn, fun=np.sum, ref=self.Bus)
         self.Vn_sum_rep = ServiceRepeat(origin=self.Vn_sum, ref=self.Bus)

@@ -1,10 +1,9 @@
 import logging
 from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import ServiceConst  # NOQa
+from andes.core.param import IdxParam, NumParam # NOQA
+from andes.core.var import Algeb, ExtAlgeb  # NOQA
+from andes.core.limiter import Comparer  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +24,7 @@ class PQ(PQData, Model):
         PQData.__init__(self)
         Model.__init__(self, system, config)
         self.group = 'StaticLoad'
-        self.flags['pflow'] = True
+        self.flags.update({'pflow': True})
         self.config.add(OrderedDict((('pq2z', 1), )))
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)

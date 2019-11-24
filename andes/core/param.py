@@ -124,9 +124,9 @@ class IdxParam(ParamBase):
     """
     A special ParamBase for storing `idx` of other models
     """
-    def __init__(self, model, **kwargs):
+    def __init__(self, model=None, **kwargs):
         super().__init__(**kwargs)
-        self.model = model
+        self.model = model  # must be a `Model` name for building RefParam
 
 
 class NumParam(ParamBase):

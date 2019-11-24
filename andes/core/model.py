@@ -339,6 +339,9 @@ class Model(object):
         self.cache.add_callback('services_and_ext', self._services_and_ext)
         self.cache.add_callback('vars_ext', self._vars_ext)
 
+        # construct `self.idx` into an `IdxParam`
+        self._idx = IdxParam(model=self.class_name)
+
     def _all_vars(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.states_ext.items()) +
@@ -442,6 +445,7 @@ class Model(object):
         # TODO: check the uniqueness of idx
         for _, instance in self.num_params.items():
             instance.to_array()
+        self._idx.v = list(self.idx)
 
     def idx2uid(self, idx):
         if idx is None:
@@ -524,7 +528,14 @@ class Model(object):
 
         # NOTE: some numerical calls depend on other service values, so they are evaluated
         #       after lambdified calls
-        # repleaced the individual `v_numeric` with `s_numeric`
+
+        # Apply both the individual `v_numeric` and Model-level `s_numeric`
+        for instance in self.services.values():
+            func = instance.v_numeric
+            if func is not None and callable(func):
+                kwargs = self.get_input()
+                instance.v = func(**kwargs)
+
         kwargs = self.get_input()
         self.s_numeric(**kwargs)
 

@@ -71,10 +71,12 @@ class ServiceConst(ServiceBase):
     """
     def __init__(self,
                  v_str: Optional[str] = None,
+                 v_numeric: Optional[Callable] = None,
                  name: Optional[str] = None,
                  *args, **kwargs):
         super().__init__(name)
         self.v_str = v_str
+        self.v_numeric = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.
 
 

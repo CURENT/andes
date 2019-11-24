@@ -1,10 +1,9 @@
 import logging
 from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import DataParam, NumParam, IdxParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer, SortedLimiter  # NOQA
-from andes.core.service import ServiceConst  # NOQA
+from andes.core.param import NumParam, IdxParam # NOQA
+from andes.core.var import Algeb, ExtAlgeb  # NOQA
+from andes.core.limiter import SortedLimiter  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +57,9 @@ class PVModel(Model):
         self.q = Algeb(info='actual reactive power generation', unit='pu')
 
         # TODO: implement switching starting from the second iteration
-        self.q_lim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
-                                   enable=self.config.pv2pq,
-                                   n_select=self.config.npv2pq)
+        self.qlim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
+                                  enable=self.config.pv2pq,
+                                  n_select=self.config.npv2pq)
 
         # variable initialization equations
         self.v.v_init = 'v0'
@@ -73,9 +72,9 @@ class PVModel(Model):
 
         # power injection equations g(y) = 0
         self.p.e_str = "u * (-p + p0)"
-        self.q.e_str = "u * (q_lim_zi * (v - v0) + \
-                                  q_lim_zl * (q - qmin) + \
-                                  q_lim_zu * (q - qmax))"
+        self.q.e_str = "u * (qlim_zi * (v - v0) + \
+                                  qlim_zl * (q - qmin) + \
+                                  qlim_zu * (q - qmax))"
 
 
 class PV(PVData, PVModel):

@@ -198,7 +198,7 @@ class ExtVar(VarBase):
                  indexer: Optional[Union[List, ndarray, ParamBase]] = None,
                  *args,
                  **kwargs):
-        super(ExtVar, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.initialized = False
         self.model = model
         self.src = src

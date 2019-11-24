@@ -9,5 +9,5 @@ non_jit = OrderedDict([
     ('shunt', ['Shunt']),
     ('line', ['Line']),
     ('area', ['Area']),
-    ('synchronous', ['GEN2Axis']),
+    ('synchronous', ['GENCLS']),
 ])
