@@ -9,9 +9,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from cvxoptklu import klu
-    KLU = True
 except ImportError:
-    KLU = False
+    klu = None
 
 
 class Solver(object):
@@ -26,6 +25,10 @@ class Solver(object):
         self.N = None
         self.factorize = True
         self.use_linsolve = False
+
+        # input checking
+        if globals()[sparselib] is None:
+            self.sparselib = 'umfpack'
 
     def symbolic(self, A):
         """
@@ -144,17 +147,18 @@ class Solver(object):
 
             try:
                 self.N = self.numeric(self.A, self.F)
+                self._solve(self.A, self.F, self.N, self.b)
+                return self.b
             except ValueError:
                 logger.warning('Unexpected symbolic factorization.')
                 self.factorize = True
+                return self.linsolve(self.A, self.b)
             except ArithmeticError:
                 logger.warning('Jacobian matrix is singular.')
-
-            self._solve(self.A, self.F, self.N, self.b)
-            return b
+                return np.ravel(matrix(0, self.b.size, 'd'))
 
         elif self.sparselib in ('spsolve', 'cupy'):
-            self.linsolve(A, b)
+            return self.linsolve(A, b)
 
     def linsolve(self, A, b):
         """
