@@ -27,7 +27,7 @@ class GENCLSData(ModelData):
         self.ra = NumParam(default=0.0, info="armature resistance", z=True, tex_name='r_a')
         self.xl = NumParam(default=0.0, info="leakage reactance", z=True, tex_name='x_l')
         self.xq = NumParam(default=1.7, info="q-axis synchronous reactance", z=True, tex_name='x_q')
-        self.xd1 = NumParam(default=1.9, info="synchronous reactance", z=True, tex_name=r"x'_d")
+        # NOTE: assume `xd1 = xq` for GENCLS
 
         self.kp = NumParam(default=0, info="active power feedback gain", tex_name='k_p')
         self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
@@ -49,9 +49,9 @@ class GENBase(Model):
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
-                          v_init='-p0', e_str='-u * (vd * Id + vq * Iq)')
+                          e_str='-u * (vd * Id + vq * Iq)')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
-                          v_str='-q0', e_str='-u * (vq * Id - vd * Iq)')
+                          e_str='-u * (vq * Id - vd * Iq)')
 
         self.p = Calc(e_str='-u * (vd * Id + vq * Iq)', tex_name='p')
         self.q = Calc(e_str='-u * (vq * Id - vd * Iq)', tex_name='q')
@@ -87,7 +87,7 @@ class GENBase(Model):
         self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'v_{d0}')
         self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'v_{q0}')
 
-        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id)', tex_name=r'p_{m0}')
+        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'p_{m0}')
         self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
     @staticmethod
@@ -101,20 +101,20 @@ class GENBase(Model):
 
 class Flux0(object):
     def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d', v_init='- u * ra * Id - vd',
-                          e_str='u * (ra * Id + vd) + psiq')
-        self.psiq = Algeb(tex_name=r'\psi_q', v_init='u * ra * Iq + vq',
+        self.psid = Algeb(tex_name=r'\psi_d', v_init='u * (ra * Iq0) + vq0',
                           e_str='u * (ra * Iq + vq) - psid')
+        self.psiq = Algeb(tex_name=r'\psi_q', v_init='- u * (ra * Id0) - vd0',
+                          e_str='u * (ra * Id + vd) + psiq')
 
-        self.Id.e_str += '+ psid'
-        self.Iq.e_str += '+ psiq'
-        self.pe.e_str += '+ psid * Iq - psiq * Id'
+        self.Id.e_str += ' + psid'
+        self.Iq.e_str += ' + psiq'
+        self.pe.e_str += ' + psid * Iq - psiq * Id'
 
 
 class GENCLSModel(object):
     def __init__(self):
-        self.Id.e_str = 'xd1 * Id - vf'
-        self.Iq.e_str = 'xd1 * Iq'
+        self.Id.e_str = 'xq * Id - vf'
+        self.Iq.e_str = 'xq * Iq'
 
 
 class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
@@ -125,8 +125,8 @@ class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
         Flux0.__init__(self)
 
     @staticmethod
-    def _vf0(vq, ra, Iq, xd1, Id, **kwargs):
-        return vq + ra * Iq + xd1 * Id
+    def _vf0(vq0, ra, Iq0, xq, Id0, **kwargs):
+        return vq0 + ra * Iq0 + xq * Id0
 
 
 # class GEN2AxisData(ModelData):
@@ -213,7 +213,6 @@ class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
 #
 #         # DAE
 #
-#         # TODO: substitute static generators
 #         # Method: define a function `set_param` in base class??
 #
 #     @staticmethod

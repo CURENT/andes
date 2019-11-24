@@ -810,6 +810,9 @@ class Model(object):
         if self.n == 0:
             return
 
+        # update service values
+        self.s_update()
+
         logger.debug(f'{self.class_name}: calling initialize()')
         for name, instance in self.vars_decl_order.items():
             if instance.v_init is None:

@@ -16,7 +16,7 @@ class TDS(ProgramBase):
                                      ('fixt', 1),
                                      ('tstep', 1/30))))
         self.tds_models = system.get_models_with_flag('tds')
-        self.tds_pflow_models = system.get_models_with_flag(('tds', 'pflow'))
+        self.pflow_tds_models = system.get_models_with_flag(('tds', 'pflow'))
 
     def _initialize(self):
         system = self.system
@@ -26,7 +26,17 @@ class TDS(ProgramBase):
         system.dae.resize_array()
         system.link_external(models=self.tds_models)
         system.store_adder_setter()
-
-        system.vars_to_models()
-        system.s_update(models=self.tds_models)
         return system.initialize(self.tds_models, tds=True)
+
+    def f_update(self):
+        system = self.system
+        # evaluate limiters, differential, algebraic, and jacobians
+        system.vars_to_models()
+        system.e_clear(models=self.pflow_tds_models)
+        system.l_update_var(models=self.pflow_tds_models)
+        system.f_update(models=self.pflow_tds_models)
+        system.l_update_eq(models=self.pflow_tds_models)
+
+    def g_update(self):
+        system = self.system
+        system.g_update(models=self.pflow_tds_models)

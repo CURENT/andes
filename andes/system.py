@@ -406,8 +406,8 @@ class SystemNew(object):
                 else:
                     self.__dict__[f'{var.v_code}_setters'].append(var)
 
-    def s_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        self._call_models_method('s_update', models)
+    # def s_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    #     self._call_models_method('s_update', models)
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         # TODO:
@@ -755,7 +755,6 @@ class SystemNew(object):
         self._finalize_add()
         self.calc_pu_coeff()
         self.link_external()
-        self.s_update()
         self.store_sparse_pattern()
         self.store_adder_setter()
         self.e_clear()

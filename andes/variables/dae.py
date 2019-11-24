@@ -227,6 +227,14 @@ class DAENew(object):
     def xy_name(self):
         return self.x_name + self.y_name
 
+    def get_name(self, arr):
+        mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y'}
+        return self.__dict__[mapping[arr] + '_name']
+
+    def print_array(self, name):
+        res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), self.__dict__[name]))
+        print(res)
+
 
 class DAE(object):
     """Class for numerical Differential Algebraic Equations (dae)"""
