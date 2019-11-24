@@ -49,8 +49,8 @@ class Test5Bus(unittest.TestCase):
 
         self.ss.add("Slack", {"idx": "4", "name": "Slack 1", "bus": "3", "v0": "1", "a0": "0"})
 
-        self.ss.add("GEN2Axis", {"idx": "1", "xd": 1.7, "xq1": 0.5,
-                                 "gen": "0", "bus": "0", 'Td10': 8, 'Tq10': 0.8})
+        self.ss.add("GENCLS", {"idx": "1", "xd": 1.7, "xq1": 0.5,
+                               "gen": "0", "bus": "0", 'Td10': 8, 'Tq10': 0.8})
 
         self.ss.setup()
 

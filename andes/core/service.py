@@ -5,7 +5,7 @@ from andes.common.operation import list_flatten
 
 
 class ServiceBase(object):
-    def __init__(self, name=None):
+    def __init__(self, name=None, tex_name=None, **kwargs):
         """
         Base class for service variables
 
@@ -14,6 +14,7 @@ class ServiceBase(object):
         name
         """
         self.name = name
+        self.tex_name = tex_name if tex_name else name
         self.owner = None
 
     def get_name(self):
@@ -72,9 +73,8 @@ class ServiceConst(ServiceBase):
     def __init__(self,
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
-                 name: Optional[str] = None,
                  *args, **kwargs):
-        super().__init__(name)
+        super().__init__(**kwargs)
         self.v_str = v_str
         self.v_numeric = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.
@@ -93,9 +93,8 @@ class ExtService(ServiceBase):
                  src: str,
                  model: str,
                  indexer,
-                 name: Optional[str] = None,
                  **kwargs):
-        super().__init__(name)
+        super().__init__(**kwargs)
         self.src = src
         self.model = model
         self.indexer = indexer  # `indexer` cannot be None for now
@@ -116,9 +115,9 @@ class ServiceOperation(ServiceBase):
     def __init__(self,
                  origin,
                  ref: RefParam,
-                 name=None):
+                 **kwargs):
         self._v = None
-        super().__init__(name)
+        super().__init__(**kwargs)
         self.origin = origin
         self.ref = ref
         self.v_str = None
@@ -181,8 +180,8 @@ class ServiceRandom(ServiceConst):
     func : Callable
         A callable for generating the random variable.
     """
-    def __init__(self, name=None, func=np.random.rand):
-        super(ServiceRandom, self).__init__(name)
+    def __init__(self, func=np.random.rand, **kwargs):
+        super(ServiceRandom, self).__init__(**kwargs)
         self.func = func
 
     @property

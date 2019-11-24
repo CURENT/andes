@@ -35,7 +35,7 @@ class ParamBase(object):
                  export: bool = True):
         self.name = name
         self.default = default
-        self.tex_name = tex_name if tex_name else name
+        self.tex_name = tex_name if tex_name is not None else name
         self.info = info
         self.owner = None
         self.export = export

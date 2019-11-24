@@ -17,23 +17,23 @@ class LineData(ModelData):
         self.xcoord = DataParam(info="x coordinates")
         self.ycoord = DataParam(info="y coordinates")
 
-        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True)
-        self.fn = NumParam(default=60, info="rated frequency")
-        self.Vn1 = NumParam(default=110.0, info="AC voltage rating", non_zero=True)
-        self.Vn2 = NumParam(default=110.0, info="rated voltage of bus2", non_zero=True)
+        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
+        self.fn = NumParam(default=60, info="rated frequency", tex_name=r'f')
+        self.Vn1 = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_{n1}')
+        self.Vn2 = NumParam(default=110.0, info="rated voltage of bus2", non_zero=True, tex_name=r'V_{n2}')
 
-        self.r = NumParam(default=0, info="connection line resistance")
-        self.x = NumParam(default=1e-8, info="connection line reactance")
+        self.r = NumParam(default=0, info="connection line resistance", tex_name='r')
+        self.x = NumParam(default=1e-8, info="connection line reactance", tex_name='x')
         self.b = NumParam(default=1e-10, info="shared shunt susceptance")
         self.g = NumParam(default=0.0, info="shared shunt conductance")
-        self.b1 = NumParam(default=0.0, info="from-side susceptance")
-        self.g1 = NumParam(default=0.0, info="from-side conductance")
-        self.b2 = NumParam(default=0.0, info="to-side susceptance")
-        self.g2 = NumParam(default=0.0, info="to-side conductance")
+        self.b1 = NumParam(default=0.0, info="from-side susceptance", tex_name='b_1')
+        self.g1 = NumParam(default=0.0, info="from-side conductance", tex_name='g_1')
+        self.b2 = NumParam(default=0.0, info="to-side susceptance", tex_name='b_2')
+        self.g2 = NumParam(default=0.0, info="to-side conductance", tex_name='g_2')
 
         self.trans = NumParam(default=0, info="transformer branch flag")
-        self.tap = NumParam(default=1.0, info="transformer branch tap ratio")
-        self.phi = NumParam(default=0, info="transformer branch phase shift in rad")
+        self.tap = NumParam(default=1.0, info="transformer branch tap ratio", tex_name='t_{ap}')
+        self.phi = NumParam(default=0, info="transformer branch phase shift in rad", tex_name=r'\phi')
 
 
 class Line(LineData, Model):
@@ -43,10 +43,10 @@ class Line(LineData, Model):
         self.group = 'AcLine'
         self.flags['pflow'] = True
 
-        self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1)
-        self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2)
-        self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1)
-        self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2)
+        self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1')
+        self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2, tex_name='a_2')
+        self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1')
+        self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2')
 
         self.gh = ServiceConst()
         self.bh = ServiceConst()

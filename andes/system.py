@@ -274,6 +274,8 @@ class SystemNew(object):
                     self.dae.x_name[addr] = f'{mdl_name}_{item.name}_{uid}'
 
     def add(self, model, param_dict=None, **kwargs):
+        if model not in self.models:
+            raise KeyError(f"<{model}> is not an existing model.")
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 

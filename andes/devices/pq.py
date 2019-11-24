@@ -13,10 +13,10 @@ class PQData(ModelData):
         self.bus = IdxParam(model='Bus', info="linked bus idx", mandatory=True)
         self.owner = IdxParam(model='Owner', info="owner idx")
 
-        self.p0 = NumParam(default=0, info='active power load', power=True)
-        self.q0 = NumParam(default=0, info='reactive power load', power=True)
-        self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance')
-        self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance')
+        self.p0 = NumParam(default=0, info='active power load', power=True, tex_name=r'p_0')
+        self.q0 = NumParam(default=0, info='reactive power load', power=True, tex_name=r'q_0')
+        self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance', tex_name=r'v_{max}')
+        self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance', tex_name=r'v_{min}')
 
 
 class PQ(PQData, Model):
@@ -27,19 +27,23 @@ class PQ(PQData, Model):
         self.flags.update({'pflow': True})
         self.config.add(OrderedDict((('pq2z', 1), )))
 
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
+        self.tex_names.update({'vcmp_zl': 'z_{vl}',
+                               'vcmp_zi': 'z_{vi}',
+                               'vcmp_zu': 'z_{vu}'})
 
-        self.v_cmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax,
-                              enable=self.config.pq2z)
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')
 
-        self.a.e_str = "u * (p0 * v_cmp_zi + \
-                                  p0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
-                                  p0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
+        self.vcmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax,
+                             enable=self.config.pq2z)
 
-        self.v.e_str = "u * (q0 * v_cmp_zi + \
-                                  q0 * v_cmp_zl * (v ** 2 / vmin ** 2) + \
-                                  q0 * v_cmp_zu * (v ** 2 / vmax ** 2))"
+        self.a.e_str = "u * (p0 * vcmp_zi + \
+                             p0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
+                             p0 * vcmp_zu * (v ** 2 / vmax ** 2))"
+
+        self.v.e_str = "u * (q0 * vcmp_zi + \
+                             q0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
+                             q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
 
         # Experimental Zone Below
         # self.v_ref = Algeb(info="Voltage reference for PI")

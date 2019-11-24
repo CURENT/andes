@@ -130,8 +130,8 @@ class ModelData(object):
         self.cache.add_callback('dict', self.as_dict)
         self.cache.add_callback('df', self.as_df)
 
-        self.u = NumParam(default=1, info='connection status', unit='bool')
-        self.name = DataParam(info='element name')
+        self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
+        self.name = DataParam(info='element name', tex_name='name')
 
     def __setattr__(self, key, value):
         if isinstance(value, ParamBase):
@@ -301,11 +301,11 @@ class Model(object):
         if config is not None:
             self.set_config(config)
 
+        self.tex_names = OrderedDict()
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
-        self.f_syms = []
-        self.g_syms = []
-        self.c_syms = []
+        self.f_syms, self.g_syms, self.c_syms = list(), list(), list()
+        self.f_print, self.g_print, self.c_print = list(), list(), list()
 
         # ----- ONLY FOR CUSTOM NUMERICAL JACOBIAN FUNCTIONS -----
         self._ifx, self._jfx, self._vfx = list(), list(), list()
@@ -565,12 +565,24 @@ class Model(object):
         self.f_syms = []
         self.c_syms = []
 
+        # process tex_names defined in model
+        for key in self.tex_names.keys():
+            self.tex_names[key] = Symbol(self.tex_names[key])
+
         for var in self.cache.all_params_names:
             self.input_syms[var] = Symbol(var)
+
+            # replace symbols for printing
+            if var in self.__dict__ and self.__dict__[var].tex_name is not None:
+                self.tex_names[Symbol(var)] = Symbol(self.__dict__[var].tex_name)
 
         for var in self.cache.all_vars_names:
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
+
+            # replace symbols for printing
+            if var in self.__dict__ and self.__dict__[var].tex_name is not None:
+                self.tex_names[Symbol(var)] = Symbol(self.__dict__[var].tex_name)
 
         for key in self.config.__dict__:
             self.input_syms[key] = Symbol(key)
@@ -587,9 +599,13 @@ class Model(object):
                     sympified_equation = sympify(instance.e_str, locals=self.input_syms)
                     dest.append(sympified_equation)
 
-        self.g_syms_matrix = Matrix(self.g_syms)
         self.f_syms_matrix = Matrix(self.f_syms)
+        self.g_syms_matrix = Matrix(self.g_syms)
         self.c_syms_matrix = Matrix(self.c_syms)
+
+        self.f_print = self.f_syms_matrix.subs(self.tex_names)
+        self.g_print = self.g_syms_matrix.subs(self.tex_names)
+        self.c_print = self.c_syms_matrix.subs(self.tex_names)
 
         self.calls.g_lambdify = lambdify(syms_list, self.g_syms_matrix, 'numpy')
         self.calls.f_lambdify = lambdify(syms_list, self.f_syms_matrix, 'numpy')

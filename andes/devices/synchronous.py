@@ -3,10 +3,9 @@ Synchronous generator classes
 """
 
 import logging
-from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import IdxParam, DataParam, NumParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
+from andes.core.var import Algeb, State, Calc, ExtAlgeb  # NOQA
 from andes.core.limiter import Comparer, SortedLimiter  # NOQA
 from andes.core.service import ServiceConst, ExtService  # NOQA
 logger = logging.getLogger(__name__)
@@ -21,19 +20,19 @@ class GENCLSData(ModelData):
 
         self.Sn = NumParam(default=100.0, info="Power rating")
         self.Vn = NumParam(default=110.0, info="AC voltage rating")
-        self.fn = NumParam(default=60.0, info="rated frequency")
+        self.fn = NumParam(default=60.0, info="rated frequency", tex_name='f')
 
         self.D = NumParam(default=0.0, info="Damping coefficient", power=True)
         self.M = NumParam(default=6, info="machine start up time (2H)", non_zero=True, power=True)
-        self.ra = NumParam(default=0.0, info="armature resistance", z=True)
-        self.xl = NumParam(default=0.0, info="leakage reactance", z=True)
-        self.xq = NumParam(default=1.7, info="q-axis synchronous reactance", z=True)
-        self.xd1 = NumParam(default=1.9, info="synchronous reactance", z=True)
+        self.ra = NumParam(default=0.0, info="armature resistance", z=True, tex_name='r_a')
+        self.xl = NumParam(default=0.0, info="leakage reactance", z=True, tex_name='x_l')
+        self.xq = NumParam(default=1.7, info="q-axis synchronous reactance", z=True, tex_name='x_q')
+        self.xd1 = NumParam(default=1.9, info="synchronous reactance", z=True, tex_name=r"x'_d")
 
-        self.kp = NumParam(default=0, info="active power feedback gain")
-        self.kw = NumParam(default=0, info="speed feedback gain")
-        self.S10 = NumParam(default=0, info="first saturation factor")
-        self.S12 = NumParam(default=0, info="second saturation factor")
+        self.kp = NumParam(default=0, info="active power feedback gain", tex_name='k_p')
+        self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
+        self.S10 = NumParam(default=0, info="first saturation factor", tex_name='S_{10}')
+        self.S12 = NumParam(default=0, info="second saturation factor", tex_name='S_{20}')
 
 
 class GENBase(Model):
@@ -41,7 +40,6 @@ class GENBase(Model):
         super().__init__(system, config)
         self.group = 'SynGen'
         self.flags.update({'tds': True})
-        self.config.add(OrderedDict((('fn', 60), )))
 
         # state variables
         self.delta = State(v_init='delta0', tex_name=r'\delta',
@@ -50,47 +48,47 @@ class GENBase(Model):
                            e_str='(u / M ) * (pm - pe - D * (omega - 1))')
 
         # network algebraic variables
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus,
-                          e_str='-p')
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus,
-                          e_str='-q')
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
+                          v_init='-p0', e_str='-u * (vd * Id + vq * Iq)')
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
+                          v_str='-q0', e_str='-u * (vq * Id - vd * Iq)')
+
+        self.p = Calc(e_str='-u * (vd * Id + vq * Iq)', tex_name='p')
+        self.q = Calc(e_str='-u * (vq * Id - vd * Iq)', tex_name='q')
 
         # algebraic variables
-        self.p = Algeb(v_init='p0', e_str='u * (vd * Id + vq * Iq) - p')
-        self.q = Algeb(v_init='q0', e_str='u * (vq * Id - vd * Iq) - q')
-
         # Need to be provided by specific generator models
-        self.Id = Algeb(v_init='Id0')  # to be completed by subclasses
-        self.Iq = Algeb(v_init='Iq0')  # to be completed
-        self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd')
-        self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq')
+        self.Id = Algeb(v_init='Id0', tex_name=r'I_d')  # to be completed by subclasses
+        self.Iq = Algeb(v_init='Iq0', tex_name=r'I_q')  # to be completed
+        self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'v_d')
+        self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'v_q')
 
-        self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm')
-        self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe')  # to be completed by subclasses
-        self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf')
+        self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'p_m')
+        self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'p_e')  # to be completed by subclasses
+        self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
 
         # ----------service consts for initialization----------
-        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen)
-        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen)
+        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='p_0')
+        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='q_0')
 
         # internal voltage and rotor angle calculation
-        self._V = ServiceConst(v_str='v * exp(1j * a)')
-        self._S = ServiceConst(v_str='p0 - 1j * q0')
-        self._I = ServiceConst(v_str='_S / conj(_V)')
-        self._E = ServiceConst(v_str='_V + _I * (ra + 1j * xq)')
-        self._deltac = ServiceConst(v_str='log(_E / abs(_E))')
-        self.delta0 = ServiceConst(v_str='u * im(_deltac)')
+        self._V = ServiceConst(v_str='v * exp(1j * a)', tex_name='V_c')
+        self._S = ServiceConst(v_str='p0 - 1j * q0', tex_name='S')
+        self._I = ServiceConst(v_str='_S / conj(_V)', tex_name='I_c')
+        self._E = ServiceConst(v_str='_V + _I * (ra + 1j * xq)', tex_name='E')
+        self._deltac = ServiceConst(v_str='log(_E / abs(_E))', tex_name=r'\delta_c')
+        self.delta0 = ServiceConst(v_str='u * im(_deltac)', tex_name=r'\delta_0')
 
-        self.vdq = ServiceConst(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))')
-        self.Idq = ServiceConst(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))')
+        self.vdq = ServiceConst(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='v_{dq}')
+        self.Idq = ServiceConst(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
 
-        self.Id0 = ServiceConst(v_str='re(Idq)')
-        self.Iq0 = ServiceConst(v_str='im(Idq)')
-        self.vd0 = ServiceConst(v_str='re(vdq)')
-        self.vq0 = ServiceConst(v_str='im(vdq)')
+        self.Id0 = ServiceConst(v_str='re(Idq)', tex_name=r'I_{d0}')
+        self.Iq0 = ServiceConst(v_str='im(Idq)', tex_name=r'I_{q0}')
+        self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'v_{d0}')
+        self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'v_{q0}')
 
-        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id)')
-        self.vf0 = ServiceConst(v_numeric=self._vf0)
+        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id)', tex_name=r'p_{m0}')
+        self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
     @staticmethod
     def _vf0(**kwargs):
@@ -107,12 +105,10 @@ class Flux0(object):
                           e_str='u * (ra * Id + vd) + psiq')
         self.psiq = Algeb(tex_name=r'\psi_q', v_init='u * ra * Iq + vq',
                           e_str='u * (ra * Iq + vq) - psid')
-        self._Id = ExtAlgeb(model=self.class_name, src='Id', indexer=self._idx,
-                            e_str='psid')
-        self._Iq = ExtAlgeb(model=self.class_name, src='Iq', indexer=self._idx,
-                            e_str='psiq')
-        self._pe = ExtAlgeb(model=self.class_name, src='pe', indexer=self._idx,
-                            e_str='psid * Iq - psiq * Id')
+
+        self.Id.e_str += '+ psid'
+        self.Iq.e_str += '+ psiq'
+        self.pe.e_str += '+ psid * Iq - psiq * Id'
 
 
 class GENCLSModel(object):
@@ -132,7 +128,7 @@ class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
     def _vf0(vq, ra, Iq, xd1, Id, **kwargs):
         return vq + ra * Iq + xd1 * Id
 
-#
+
 # class GEN2AxisData(ModelData):
 #     def __init__(self):
 #         super().__init__()
