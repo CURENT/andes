@@ -47,14 +47,14 @@
 - [x] Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under
  `System` (It turns out that `gy_island` and `gisland` does not need to be implemented. If there is a large
   mismatch, just let the power flow fail and let the user correct the data.)
-*   Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model (the N-to-1 model))
+- [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model 
+(RefParam, SericeReduce and ServiceRepeat)
+- [x] Divide limiter to update_var and update_eq (such as anti-windup limiter which depends on equations)
 *   Store states in systems to enforce sequence of execution
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
-*   Divide limiter to pre-equation and post-equation limiters (such as anti-windup limiter which depends on
- equation values)
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians

@@ -2,15 +2,21 @@ import numpy as np
 from typing import Optional  # NOQA
 
 
-class NonLinear(object):
+class Discrete(object):
 
     def __init__(self):
         pass
 
-    def eval(self):
+    def check_var(self):
         pass
 
-    def set(self):
+    def check_eq(self):
+        pass
+
+    def set_var(self):
+        pass
+
+    def set_eq(self):
         pass
 
     def get_name(self):
@@ -20,7 +26,7 @@ class NonLinear(object):
         pass
 
 
-class Limiter(object):
+class Limiter(Discrete):
     """
     Base limiter class
 
@@ -51,6 +57,7 @@ class Limiter(object):
     """
 
     def __init__(self, var, lower, upper, enable=True, **kwargs):
+        super().__init__()
         self.name = None
         self.owner = None
 
@@ -62,7 +69,7 @@ class Limiter(object):
         self.zl = 0
         self.zi = 1
 
-    def eval(self):
+    def check_var(self):
         """
         Evaluate `self.zu` and `self.zl`
 
@@ -79,7 +86,7 @@ class Limiter(object):
                 self.zu.astype(np.bool),
                 self.zl.astype(np.bool))).astype(np.float64)
 
-    def set_value(self):
+    def set_var(self):
         """
         Set the value to the limit
 
@@ -115,7 +122,7 @@ class Comparer(Limiter):
     does not set the limit value.
     """
 
-    def set_value(self):
+    def set_var(self):
         # empty set_value function
         pass
 
@@ -133,10 +140,10 @@ class SortedLimiter(Limiter):
         super().__init__(var, lower, upper, enable=enable, **kwargs)
         self.n_select = int(n_select) if n_select else 0
 
-    def eval(self):
-        super().eval()
+    def check_var(self):
         if not self.enable:
             return
+        super().check_var()
 
         if self.n_select is not None and self.n_select > 0:
             asc = np.argsort(self.var.v - self.lower.v)   # ascending order
@@ -157,12 +164,12 @@ class SortedLimiter(Limiter):
 
 class HardLimiter(Limiter):
     def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super(HardLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
+        super().__init__(var, lower, upper, enable=enable, **kwargs)
 
 
 class WindupLimiter(Limiter):
     def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super(WindupLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
+        super().__init__(var, lower, upper, enable=enable, **kwargs)
 
 
 class AntiWindupLimiter(WindupLimiter):
@@ -180,19 +187,18 @@ class AntiWindupLimiter(WindupLimiter):
     """
 
     def __init__(self, var, lower, upper, enable=True, state=None, **kwargs):
-        super(AntiWindupLimiter, self).__init__(var, lower, upper, enable=enable, **kwargs)
+        super().__init__(var, lower, upper, enable=enable, **kwargs)
         self.state = state if state else var
 
-    def eval(self):
-        super(AntiWindupLimiter, self).eval()
+    def check_eq(self):
         self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
         self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
         self.zi = np.logical_not(
             np.logical_or(self.zu.astype(np.bool),
                           self.zl.astype(np.bool))).astype(np.float64)
 
-    def set_value(self):
-        super(AntiWindupLimiter, self).set_value()
+    def set_eq(self):
+        super(AntiWindupLimiter, self).set_var()
         self.state.e = self.state.e * (1 - self.zu) * (1 - self.zl)
 
 
@@ -207,7 +213,4 @@ class DeadBand(Limiter):
     """
 
     def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super(DeadBand, self).__init__(var, lower, upper, enable, **kwargs)
-
-    def set_value(self):
-        pass  # TODO: set the value based on deadband
+        super().__init__(var, lower, upper, enable, **kwargs)

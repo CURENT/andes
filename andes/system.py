@@ -404,9 +404,9 @@ class SystemNew(object):
                     self.__dict__[f'{var.v_code}_setters'].append(var)
 
     def s_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        self._call_models_method('eval_service', models)
+        self._call_models_method('s_update', models)
 
-    def l_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         # TODO:
         # This function should somehow return the indices and values
         # of variables that are pegged at the limit.
@@ -414,7 +414,19 @@ class SystemNew(object):
         # The limited values need to sent to solvers
         # such as `scipy.optimize.newton_krylov` to make the result correct
 
-        self._call_models_method('eval_limiter', models)
+        self._call_models_method('l_update_var', models)
+        self.vars_to_dae()
+        self.vars_to_models()
+
+    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        # TODO:
+        # This function should somehow return the indices and values
+        # of variables that are pegged at the limit.
+
+        # The limited values need to sent to solvers
+        # such as `scipy.optimize.newton_krylov` to make the result correct
+
+        self._call_models_method('l_update_eq', models)
         self.vars_to_dae()
         self.vars_to_models()
 

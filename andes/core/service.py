@@ -93,8 +93,7 @@ class ExtService(ServiceBase):
                  indexer,
                  name: Optional[str] = None,
                  **kwargs):
-        super().__init__()
-        self.name = name
+        super().__init__(name)
         self.src = src
         self.model = model
         self.indexer = indexer  # `indexer` cannot be None for now

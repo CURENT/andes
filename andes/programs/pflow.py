@@ -40,9 +40,11 @@ class PFlow(ProgramBase):
         system = self.system
         # evaluate limiters, differential, algebraic, and jacobians
         system.e_clear()
-        system.l_update()
+        system.l_update_var()
         system.f_update()
         system.g_update()
+        system.l_update_eq()
+
         system.j_update()
 
         # prepare and solve linear equations
@@ -118,9 +120,10 @@ class PFlow(ProgramBase):
         system.vars_to_models()
         system.e_clear()
 
-        system.l_update()
+        system.l_update_var()
         system.f_update()
         system.g_update()
+        system.l_update_eq()
         return system.dae.fg
 
     def newton_krylov(self, verbose=False):

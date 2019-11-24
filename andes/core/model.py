@@ -492,14 +492,21 @@ class Model(object):
 
         return kwargs
 
-    def eval_limiter(self):
+    def l_update_var(self):
         if self.n == 0:
             return
         for instance in self.limiters.values():
-            instance.eval()
-            instance.set_value()
+            instance.check_var()
+            instance.set_var()
 
-    def eval_service(self):
+    def l_update_eq(self):
+        if self.n == 0:
+            return
+        for instance in self.limiters.values():
+            instance.check_eq()
+            instance.set_eq()
+
+    def s_update(self):
         if self.n == 0:
             return
         logger.debug(f'{self.class_name}: calling eval_service()')
