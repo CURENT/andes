@@ -14,7 +14,8 @@ class Area(AreaData, Model):
     def __init__(self, system, config):
         AreaData.__init__(self)
         Model.__init__(self, system, config)
-        self.flags.update({'pflow': True})
+        self.flags.update({'pflow': True,
+                           'tds': True})
 
         self.Bus = RefParam()
         self.AcTopology = RefParam()
@@ -26,3 +27,5 @@ class Area(AreaData, Model):
 
         self.a = ExtAlgeb(model='AcTopology', src='a', indexer=self.AcTopology)
         self.v = ExtAlgeb(model='AcTopology', src='v', indexer=self.AcTopology)
+
+        # self.time = Algeb(e_str='time - dae_t', v_setter=True)

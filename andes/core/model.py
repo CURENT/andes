@@ -290,7 +290,7 @@ class Model(object):
 
         self.flags = dict(
             pflow=False,
-            tds=False,
+            tds=False,  # if `tds` is False, `dae_t` cannot be used
             sys_base=False,
             address=False,
             collate=True,
@@ -301,11 +301,13 @@ class Model(object):
         if config is not None:
             self.set_config(config)
 
-        self.tex_names = OrderedDict()
+        self.tex_names = OrderedDict((('dae_t', 't_{dae}'), ))
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
         self.f_syms, self.g_syms, self.c_syms = list(), list(), list()
+        self.f_syms_matrix, self.g_syms_matrix, self.c_syms_matrix = list(), list(), list()
         self.f_print, self.g_print, self.c_print = list(), list(), list()
+        self.df_print, self.dg_print = None, None
 
         # ----- ONLY FOR CUSTOM NUMERICAL JACOBIAN FUNCTIONS -----
         self._ifx, self._jfx, self._vfx = list(), list(), list()
@@ -494,6 +496,8 @@ class Model(object):
         for key, val in self.config.__dict__.items():
             kwargs[key] = val
 
+        # append `dae_t`
+        kwargs['dae_t'] = self.system.dae.t
         return kwargs
 
     def l_update_var(self):
@@ -561,10 +565,11 @@ class Model(object):
         logger.debug(f'Generating equations for {self.__class__.__name__}')
         from sympy import Symbol, Matrix, sympify, lambdify
 
-        self.g_syms = []
-        self.f_syms = []
-        self.c_syms = []
+        self.f_syms, self.g_syms, self.c_syms = list(), list(), list()
+        self.f_syms_matrix, self.g_syms_matrix, self.c_syms_matrix = list(), list(), list()
+        self.f_print, self.g_print, self.c_print = list(), list(), list()
 
+        # -----------------------------------------------------------
         # process tex_names defined in model
         for key in self.tex_names.keys():
             self.tex_names[key] = Symbol(self.tex_names[key])
@@ -586,6 +591,9 @@ class Model(object):
 
         for key in self.config.__dict__:
             self.input_syms[key] = Symbol(key)
+
+        self.input_syms['dae_t'] = Symbol('dae_t')
+        # ------------------------------------------------------------
 
         syms_list = list(self.input_syms)
         iter_list = [self.states, self.states_ext, self.algebs, self.algebs_ext, self.calcs]
@@ -649,6 +657,9 @@ class Model(object):
 
         self.dg_syms_sparse = SparseMatrix(self.dg_syms)
         self.df_syms_sparse = SparseMatrix(self.df_syms)
+
+        self.df_print = self.df_syms_sparse.subs(self.tex_names)
+        self.dg_print = self.dg_syms_sparse.subs(self.tex_names)
 
         vars_syms_list = list(self.vars_syms)
         syms_list = list(self.input_syms)
@@ -930,7 +941,7 @@ class Model(object):
                 self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1
 
-            # call jacobian functions for blocks
+            # call numerical jacobian functions for blocks
             for instance in self.blocks.values():
                 for fun in instance.__dict__[f'v{name}']:
                     self.__dict__[f'v{name}'][idx] = fun(**kwargs)

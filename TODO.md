@@ -23,6 +23,7 @@
 - [x] A defined data loading, model initialization, variable/equation relaying sequence
 - [x] A working power flow routine fully generated from symbolic expressions
 - [x] A working `System` class providing parameter retrieval by group and model
+- [x] Time domain simulation using scipy.integrate (odeint and solve_ivp)
 
 ### To-do bullets
 - [x] Clearly define interface variables `VarExt`
@@ -50,11 +51,12 @@
 - [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model 
 (RefParam, SericeReduce and ServiceRepeat)
 - [x] Divide limiter to update_var and update_eq (such as anti-windup limiter which depends on equations)
-*   Store states in systems to enforce sequence of execution
+*   Allow time definition in models reserve keyword `dae_t`, 
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
+*   Store states in systems to enforce sequence of execution
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians

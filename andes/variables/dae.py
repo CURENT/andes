@@ -10,6 +10,12 @@ from ..utils.math import zeros, ones
 logger = logging.getLogger(__name__)
 
 
+class DAETimeSeries(object):
+    def __init__(self):
+        self.t = None
+        self.y = None
+
+
 class DAENew(object):
     """
     Numerical DAE class
@@ -19,14 +25,12 @@ class DAENew(object):
         self.jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
 
         self.t = 0
+        self.ts = DAETimeSeries()
 
-        self.m = 0
-        self.n = 0
+        self.m, self.n = 0, 0
 
-        self.x = None
-        self.y = None
-        self.f = None
-        self.g = None
+        self.x, self.y = None, None
+        self.f, self.g = None, None
 
         self.fx = None
         self.fy = None
@@ -42,8 +46,8 @@ class DAENew(object):
         self.tx_pattern = None
         self.rx_pattern = None
 
-        self.x_name = []
-        self.y_name = []
+        self.x_name, self.x_tex_name = [], []
+        self.y_name, self.y_tex_name = [], []
 
         # ----- indices of sparse matrices -----
         self.ifx = []
@@ -236,6 +240,18 @@ class DAENew(object):
     def print_array(self, name):
         res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), self.__dict__[name]))
         print(res)
+
+    def set_t(self, t):
+        print(f'Time advancement of {t - self.t}')
+        self.t = t
+        if self.ts.t is None:
+            self.ts.t = np.array([t])
+        else:
+            self.ts.t = np.hstack((self.ts.t, self.t))
+        if self.ts.y is None:
+            self.ts.y = np.array(self.y)
+        else:
+            self.ts.y = np.vstack((self.ts.y, self.y))
 
 
 class DAE(object):

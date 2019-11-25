@@ -253,13 +253,16 @@ class SystemNew(object):
         if len(self.dae.y_name) == 0:
             self.dae.x_name = [''] * self.dae.n
             self.dae.y_name = [''] * self.dae.m
+            self.dae.x_tex_name = [''] * self.dae.n
+            self.dae.y_tex_name = [''] * self.dae.m
         else:
             self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
             self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
+            self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
+            self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
 
     def set_dae_names(self, models=None):
         # store variable names
-        # FIXME: fix the messy code below
 
         if models is None:
             models = self._models_with_flag['pflow']
@@ -268,10 +271,12 @@ class SystemNew(object):
             mdl_name = mdl.class_name
             for name, item in mdl.algebs.items():
                 for uid, addr in enumerate(item.a):
-                    self.dae.y_name[addr] = f'{mdl_name}_{item.name}_{uid}'
+                    self.dae.y_name[addr] = f'{mdl_name} {item.name} {uid}'
+                    self.dae.y_tex_name[addr] = rf'{mdl_name}\ {item.tex_name}\ {uid}'
             for name, item in mdl.states.items():
                 for uid, addr in enumerate(item.a):
-                    self.dae.x_name[addr] = f'{mdl_name}_{item.name}_{uid}'
+                    self.dae.x_name[addr] = f'{mdl_name} {item.name} {uid}'
+                    self.dae.x_tex_name[addr] = rf'{mdl_name}\ {item.tex_name}\ {uid}'
 
     def add(self, model, param_dict=None, **kwargs):
         if model not in self.models:
@@ -351,6 +356,9 @@ class SystemNew(object):
     def vars_to_dae(self):
         """
         From variables to dae variables
+
+        For adders, only those with `v_init` can set the value. ??????
+
         Returns
         -------
 
