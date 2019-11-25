@@ -18,6 +18,8 @@ class DAENew(object):
 
         self.jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
 
+        self.t = 0
+
         self.m = 0
         self.n = 0
 

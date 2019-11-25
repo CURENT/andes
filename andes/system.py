@@ -503,7 +503,7 @@ class SystemNew(object):
                 for row, col, val in mdl.zip_ijv(j_name):
                     # TODO: use `spmatrix.ipadd` if available
                     # TODO: fix `ipadd` to get rid of type checking
-                    if isinstance(val, float) or len(val) > 0:
+                    if isinstance(val, (int, float)) or len(val) > 0:
                         self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):

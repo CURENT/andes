@@ -915,12 +915,14 @@ class Model(object):
     def j_update(self):
         if self.n == 0:
             return
+        logger.debug(f'j_update for {self.class_name}')
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
         kwargs = self.get_input()
         for name in jac_set:
             idx = 0
+            logger.debug(f' for j_name {name}')
 
             # generated lambda jacobian functions first
             fun_list = self.calls.__dict__[f'_v{name}']
