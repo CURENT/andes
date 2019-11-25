@@ -4,7 +4,7 @@ from andes.programs.base import ProgramBase
 from cvxopt import matrix, sparse  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, odeint
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class TDS(ProgramBase):
         self.niter = 0
         self.mis = []
 
-    def _initialize(self):
+    def initialize(self):
         system = self.system
 
         system.set_address(models=self.tds_models)
@@ -70,28 +70,41 @@ class TDS(ProgramBase):
         system.l_update_eq(self.pflow_tds_models)
         return system.dae.g
 
-    def _solve_g(self):
+    def _solve_g(self, verbose):
         system = self.system
+        dae = system.dae
         self.converged = False
         self.niter = 0
         self.mis = []
+
         while True:
-            inc = -matrix(self._g_wrapper(system.dae.y))
+            self._g_wrapper(dae.y)
+
+            inc = -matrix(system.dae.g)
             system.j_update(models=self.pflow_tds_models)
-            inc = self.solver.linsolve(system.dae.gy, inc)
-            system.dae.y += np.ravel(np.array(inc))
-            system.vars_to_models()
+            A = sparse(dae.gy)
+            inc = self.solver.linsolve(A, inc)
+            dae.y += np.ravel(np.array(inc))
+
+            # NOTE: CAUTION!! This line must not be executed
+            # The line below will update y and cause out of sync between x and y
+            # namely, dae.f is evaluated with the new y, while dae.g is from the old y
+            # --------------------------------------------------
+            # system.vars_to_models()
+            # --------------------------------------------------
 
             mis = np.max(np.abs(system.dae.g))
-            print(f'{system.dae.t}, {inc}, {mis}')
             self.mis.append(mis)
+            if verbose:
+                print(f't={dae.t:<.4g}, iter={self.niter:<g}, mis={mis:<.4g}')
             if mis < self.config.tol:
                 self.converged = True
                 break
             elif self.niter > self.config.max_iter:
                 raise NoConvergence(f'Convergence not reached after {self.config.max_iter} iterations')
-            # elif mis > 1e4 * self.mis[0]:
-            #     raise NoConvergence('Mismatch increased too fast. Convergence not likely.')
+            elif mis >= 1000 and (mis > 1e4 * self.mis[0]):
+                raise NoConvergence('Mismatch increased too fast. Convergence not likely.')
+
             self.niter += 1
 
     def _solve_ivp_wrapper(self, t, xy, asolver, verbose):
@@ -99,10 +112,11 @@ class TDS(ProgramBase):
         dae = self.system.dae
         dae.t = t
         dae.x = xy[:dae.n]
+        dae.y = xy[dae.n:dae.m + dae.n]
 
         # solve for algebraic variables
         if asolver is None:
-            self._solve_g()
+            self._solve_g(verbose)
         elif asolver == 'fsolve':
             sol, _, ier, mesg = fsolve(self._g_wrapper, dae.y, full_output=True)
             if ier != 1:
@@ -118,60 +132,21 @@ class TDS(ProgramBase):
 
         return np.hstack((dae.f, np.zeros(dae.g.shape)))
 
-    def simulate(self, tspan, y0=None, asolver=None, verbose=False):
-        self._initialize()
-        if y0 is None:
-            y0 = self.system.dae.xy
+    def simulate(self, tspan, xy0=None, asolver=None, method='RK45', verbose=False):
+        if xy0 is None:
+            xy0 = self.system.dae.xy
         return solve_ivp(lambda t, y: self._solve_ivp_wrapper(t, y, asolver, verbose=verbose),
-                         tspan, y0, method='LSODA')
+                         tspan, xy0, method=method)
 
-    def nr(self):
-        """
-        Full Newton-Raphson method
-
-        Returns
-        -------
-
-        """
-        system = self.system
-        self.niter = 0
-        self.mis = []
-        self.converged = False
-        while True:
-            # evaluate limiters, differential, algebraic, and jacobians
-            system.e_clear(self.pflow_tds_models)
-            system.l_update_var(self.pflow_tds_models)
-            system.g_update(self.pflow_tds_models)
-            system.l_update_eq(self.pflow_tds_models)
-            system.j_update(self.pflow_tds_models)
-
-            # prepare and solve linear equations
-            inc = -matrix(system.dae.g)
-            A = sparse(system.dae.gy)
-            inc = self.solver.solve(A, inc)
-            system.dae.y += np.ravel(np.array(inc))
-
-            system.c_update(self.pflow_tds_models)
-            mis = np.max(np.abs(system.dae.g))
-            self.mis.append(mis)
-
-            system.vars_to_models()
-
-            if mis < self.config.tol:
-                self.converged = True
-                break
-            elif self.niter > self.config.max_iter:
-                break
-            elif mis > 1e4 * self.mis[0]:
-                logger.error('Mismatch increased too fast. Convergence not likely.')
-                break
-            self.niter += 1
-
-        if not self.converged:
-            if abs(self.mis[-1] - self.mis[-2]) < self.config.tol:
-                max_idx = np.argmax(np.abs(system.dae.xy))
-                name = system.dae.xy_name[max_idx]
-                logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
-                logger.info(f'Largest mismatch on equation associated with <{name}>')
-
-        return self.converged
+    def integrate(self, tspan, xy0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
+        if xy0 is None:
+            xy0 = self.system.dae.xy
+        times = np.arange(tspan[0], tspan[1], h)
+        return times, odeint(self._solve_ivp_wrapper,
+                             xy0,
+                             times,
+                             tfirst=True,
+                             args=(asolver, verbose),
+                             full_output=True,
+                             hmax=hmax,
+                             hmin=hmin)
