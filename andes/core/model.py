@@ -664,8 +664,7 @@ class Model(object):
         vars_syms_list = list(self.vars_syms)
         syms_list = list(self.input_syms)
         algebs_and_ext_list = list(self.cache.algebs_and_ext)
-        # TODO: change to states and ext
-        state_list = list(self.states)
+        states_and_ext_list = list(self.cache.states_and_ext)
 
         fg_sparse = [self.df_syms_sparse, self.dg_syms_sparse]
         for idx, eq_sparse in enumerate(fg_sparse):
@@ -675,7 +674,7 @@ class Model(object):
                 e_symbolic = item[2]
 
                 if idx == 0:
-                    eq_name = state_list[e_idx]
+                    eq_name = states_and_ext_list[e_idx]
                 else:
                     eq_name = algebs_and_ext_list[e_idx]
 

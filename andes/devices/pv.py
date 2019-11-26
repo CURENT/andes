@@ -75,10 +75,10 @@ class PVModel(Model):
         self.v.e_str = "-u * q"
 
         # power injection equations g(y) = 0
-        self.p.e_str = "u * (-p + p0)"
-        self.q.e_str = "u * (qlim_zi * (v - v0) + \
-                             qlim_zl * (q - qmin) + \
-                             qlim_zu * (q - qmax))"
+        self.p.e_str = "u * (p0 - p)"
+        self.q.e_str = "u * (qlim_zi * (v0 - v) + \
+                             qlim_zl * (qmin - q) + \
+                             qlim_zu * (qmax - q))"
 
 
 class PV(PVData, PVModel):
@@ -100,6 +100,6 @@ class Slack(SlackData, PVModel):
 
         self.plim = SortedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
 
-        self.p.e_str = "u * (plim_zi * (a - a0) + \
-                             plim_zl * (p - pmin) + \
-                             plim_zu * (p - pmax))"
+        self.p.e_str = "u * (plim_zi * (a0 - a) + \
+                             plim_zl * (pmin - p) + \
+                             plim_zu * (pmax - p))"

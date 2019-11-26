@@ -79,6 +79,8 @@ class SystemNew(object):
         self._config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
         self._config_from_file = self.load_config(self._config_path)
         self.set_config(self._config_from_file)  # only load config for system and routines
+        self.config.add(OrderedDict((('freq', 60),
+                                     )))
         # custom configuration for system goes after this line
 
         self.dae = DAENew()

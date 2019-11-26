@@ -44,7 +44,6 @@ class PFlow(ProgramBase):
         system.f_update()
         system.g_update()
         system.l_update_eq()
-
         system.j_update()
 
         # prepare and solve linear equations

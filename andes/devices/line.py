@@ -18,13 +18,13 @@ class LineData(ModelData):
         self.ycoord = DataParam(info="y coordinates")
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
-        self.fn = NumParam(default=60, info="rated frequency", tex_name=r'f')
+        self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
         self.Vn1 = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_{n1}')
         self.Vn2 = NumParam(default=110.0, info="rated voltage of bus2", non_zero=True, tex_name=r'V_{n2}')
 
         self.r = NumParam(default=0, info="connection line resistance", tex_name='r')
         self.x = NumParam(default=1e-8, info="connection line reactance", tex_name='x')
-        self.b = NumParam(default=1e-10, info="shared shunt susceptance")
+        self.b = NumParam(default=0.0, info="shared shunt susceptance")
         self.g = NumParam(default=0.0, info="shared shunt conductance")
         self.b1 = NumParam(default=0.0, info="from-side susceptance", tex_name='b_1')
         self.g1 = NumParam(default=0.0, info="from-side conductance", tex_name='g_1')

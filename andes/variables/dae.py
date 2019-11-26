@@ -237,9 +237,11 @@ class DAENew(object):
         mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y'}
         return self.__dict__[mapping[arr] + '_name']
 
-    def print_array(self, name):
-        res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), self.__dict__[name]))
-        print(res)
+    def print_array(self, name, value=None):
+        if value is None:
+            value = self.__dict__[name]
+        res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), value))
+        logger.info(res)
 
     def store_y(self):
         """

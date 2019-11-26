@@ -28,4 +28,4 @@ class Area(AreaData, Model):
         self.a = ExtAlgeb(model='AcTopology', src='a', indexer=self.AcTopology)
         self.v = ExtAlgeb(model='AcTopology', src='v', indexer=self.AcTopology)
 
-        self.time = Algeb(e_str='time - dae_t', v_setter=True)
+        # self.time = Algeb(e_str='time - dae_t', v_setter=True)
