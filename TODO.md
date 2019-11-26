@@ -51,7 +51,11 @@
 - [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model 
 (RefParam, SericeReduce and ServiceRepeat)
 - [x] Divide limiter to update_var and update_eq (such as anti-windup limiter which depends on equations)
-*   Allow time definition in models reserve keyword `dae_t`, 
+- [x] Allow time definition in models reserve keyword `dae_t` (see `Area`)
+*   Clean up the use of `vars_to_dae` and `vars_to_models` everywhere. 
+*   Fix the case when Area is not a `TDS` model but has an equation `time = dae_t` which does not get updated
+ during TDS.
+*   Implement a trapezoidal rule for numerical integration
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
@@ -74,3 +78,4 @@
 
 ## Later Versions
 *   Solve non-linear initialization equations
+*   Find a workaround for IDA

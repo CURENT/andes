@@ -719,7 +719,7 @@ class Model(object):
             v_idx = vars_syms_list.index(var.name)
             self.calls.__dict__[f'_igyc'].append(v_idx)
             self.calls.__dict__[f'_jgyc'].append(v_idx)
-            self.calls.__dict__[f'_vgyc'].append(1e-8)
+            self.calls.__dict__[f'_vgyc'].append(1e-12)
 
     def store_sparse_pattern(self):
         """

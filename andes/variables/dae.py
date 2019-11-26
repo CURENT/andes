@@ -241,13 +241,22 @@ class DAENew(object):
         res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), self.__dict__[name]))
         print(res)
 
-    def set_t(self, t):
-        print(f'Time advancement of {t - self.t}')
-        self.t = t
+    def store_y(self):
+        """
+        Store previous step result and progress time
+        Parameters
+        ----------
+        t
+
+        Returns
+        -------
+
+        """
         if self.ts.t is None:
-            self.ts.t = np.array([t])
+            self.ts.t = np.array([self.t])
         else:
             self.ts.t = np.hstack((self.ts.t, self.t))
+
         if self.ts.y is None:
             self.ts.y = np.array(self.y)
         else:

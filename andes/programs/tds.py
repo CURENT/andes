@@ -10,13 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class TDSOut(object):
-    def __init__(self, dae):
-        self.t = np.zeros(0)
-
-
 class TDS(ProgramBase):
-    # TODO: implement implicit integration routine
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
@@ -70,7 +64,7 @@ class TDS(ProgramBase):
         system = self.system
         if y is not None:
             system.dae.y = y
-            system.vars_to_models()
+        system.vars_to_models()
         system.e_clear(models=self.pflow_tds_models)
         system.l_update_var(models=self.pflow_tds_models)
         system.g_update(models=self.pflow_tds_models)
@@ -84,7 +78,10 @@ class TDS(ProgramBase):
         self.mis = []
 
         while True:
-            self._g_wrapper(dae.y)
+            system.e_clear(models=self.pflow_tds_models)
+            system.l_update_var(models=self.pflow_tds_models)
+            system.g_update(models=self.pflow_tds_models)
+
             inc = -matrix(system.dae.g)
             system.j_update(models=self.pflow_tds_models)
             inc = self.solver.solve(dae.gy, inc)
@@ -108,9 +105,10 @@ class TDS(ProgramBase):
     def _solve_ivp_wrapper(self, t, xy, asolver, verbose):
         system = self.system
         dae = self.system.dae
-        dae.set_t(t)
+        dae.t = t
         dae.x = xy[:dae.n]
         dae.y = xy[dae.n:dae.m + dae.n]
+        system.vars_to_models()
 
         # solve for algebraic variables
         if asolver is None:
@@ -125,6 +123,7 @@ class TDS(ProgramBase):
         else:
             raise NotImplementedError(f"Unknown algeb_solver {asolver}")
 
+        system.dae.store_y()
         system.f_update(models=self.pflow_tds_models)
         system.l_update_eq(models=self.pflow_tds_models)
 
@@ -142,119 +141,11 @@ class TDS(ProgramBase):
         if xy0 is None:
             xy0 = self.system.dae.xy
         times = np.arange(tspan[0], tspan[1], h)
-        return times, odeint(self._solve_ivp_wrapper,
-                             xy0,
-                             times,
-                             tfirst=True,
-                             args=(asolver, verbose),
-                             full_output=True,
-                             hmax=hmax,
-                             hmin=hmin)
-
-    def _residual(self, t, xy, xydot, result):
-        """
-        Resudual function to be passed to `scikits.odes`
-        Parameters
-        ----------
-        t
-        xy
-        xydot
-        result
-
-        Returns
-        -------
-
-        """
-        system = self.system
-        dae = self.system.dae
-        dae.t = t
-        dae.x = xy[:dae.n]
-        dae.y = xy[dae.n:dae.m + dae.n]
-
-        self._g_wrapper(dae.y)
-        system.f_update(models=self.pflow_tds_models)
-        system.l_update_eq(models=self.pflow_tds_models)
-
-        result[:dae.n] = dae.f - xydot[:dae.n]
-        result[dae.n:dae.n + dae.m] = dae.g
-
-    def _residual_assimulo(self, t, xy, xydot):
-        """
-        Residual function to be passed to assimulo
-        Parameters
-        ----------
-        t
-        xy
-        xydot
-
-        Returns
-        -------
-
-        """
-        result = np.zeros_like(xy)
-        self._residual(t, xy, xydot, result)
-        return result
-
-    def odes_solve(self, tspan, xy0=None, xyp0=None, method='ida', verbose=False, h=0.05):
-        """
-        Use scikits.odes to solve the DAE
-
-        Warnings
-        --------
-        Not working yet
-
-        Parameters
-        ----------
-        tspan
-        xy0
-        xyp0
-        method
-        verbose
-        h
-
-        Returns
-        -------
-
-        """
-        from scikits.odes.dae import dae
-        system = self.system
-
-        self._initialize()
-        if xy0 is None:
-            xy0 = self.system.dae.xy
-        xyp0 = np.zeros_like(xy0) if xyp0 is None else xyp0
-        algeb_idx = list(range(system.dae.n, system.dae.n + system.dae.m))
-        times = np.arange(tspan[0], tspan[1], h)
-
-        solver = dae(method,
-                     self._residual,
-                     first_step_size=1e-18,
-                     atol=1e-6,
-                     rtol=1e-6,
-                     algebraic_vars_idx=algeb_idx,
-                     # compute_initcond='yp0',
-                     # compute_initcond_t0=20,
-                     old_api=False
-                     )
-        return solver.solve(times, xy0, xyp0)
-
-    def assimulo_solve(self, tspan, xy0=None, xyp0=None, h=0.05):
-        from assimulo.problem import Implicit_Problem
-        from assimulo.solvers import ODASSL
-
-        self._initialize()
-        if xy0 is None:
-            xy0 = self.system.dae.xy
-
-        tfinal = tspan[1]
-        ncp = (tspan[1] - tspan[0]) / h
-
-        xyp0 = np.zeros_like(xy0) if xyp0 is None else xyp0
-        model = Implicit_Problem(self._residual_assimulo, xy0, xyp0, tspan[0])  # Create an Assimulo problem
-        model.name = 'TDS'
-        sim = ODASSL(model)
-
-        t, y, yd = sim.simulate(tfinal, ncp)
-        # Use the .simulate method to simulate and provide the final time and ncp (optional)
-        sim.plot()
-        return t, y, yd
+        return odeint(self._solve_ivp_wrapper,
+                      xy0,
+                      times,
+                      tfirst=True,
+                      args=(asolver, verbose),
+                      full_output=True,
+                      hmax=hmax,
+                      hmin=hmin)
