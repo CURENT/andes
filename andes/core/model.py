@@ -715,10 +715,12 @@ class Model(object):
         # of the algebraic equations
 
         for var in self.algebs.values():
+            if var.diag_eps == 0:
+                continue
             v_idx = vars_syms_list.index(var.name)
             self.calls.__dict__[f'_igyc'].append(v_idx)
             self.calls.__dict__[f'_jgyc'].append(v_idx)
-            self.calls.__dict__[f'_vgyc'].append(1e-12)
+            self.calls.__dict__[f'_vgyc'].append(var.diag_eps)
 
     def store_sparse_pattern(self):
         """
@@ -759,14 +761,16 @@ class Model(object):
         jac_set = ('fx', 'fy', 'gx', 'gy')
         jac_type = ('c', '')
         var_names_list = list(self.cache.all_vars.keys())
+        eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
+                    'g': var_names_list[len(self.cache.states_and_ext):]}
 
-        for dict_name in jac_set:
+        for j_name in jac_set:
             for j_type in jac_type:
                 # generated lambda functions
-                for row, col, val in zip(self.calls.__dict__[f'_i{dict_name}{j_type}'],
-                                         self.calls.__dict__[f'_j{dict_name}{j_type}'],
-                                         self.calls.__dict__[f'_v{dict_name}{j_type}']):
-                    row_name = var_names_list[row]
+                for row, col, val in zip(self.calls.__dict__[f'_i{j_name}{j_type}'],
+                                         self.calls.__dict__[f'_j{j_name}{j_type}'],
+                                         self.calls.__dict__[f'_v{j_name}{j_type}']):
+                    row_name = eq_names[j_name[0]][row]  # skip states
                     col_name = var_names_list[col]
 
                     row_idx = self.__dict__[row_name].a
@@ -778,43 +782,43 @@ class Model(object):
                     elif len(row_idx) == 0 and len(col_idx) == 0:
                         continue
 
-                    self.__dict__[f'i{dict_name}{j_type}'].append(row_idx)
-                    self.__dict__[f'j{dict_name}{j_type}'].append(col_idx)
+                    self.__dict__[f'i{j_name}{j_type}'].append(row_idx)
+                    self.__dict__[f'j{j_name}{j_type}'].append(col_idx)
                     if j_type == 'c':
-                        self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                        self.__dict__[f'v{j_name}{j_type}'].append(val)
                     else:
-                        self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
+                        self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
 
                 # user-provided numerical jacobians
-                for row, col, val in zip(self.__dict__[f'_i{dict_name}{j_type}'],
-                                         self.__dict__[f'_j{dict_name}{j_type}'],
-                                         self.__dict__[f'_v{dict_name}{j_type}']):
+                for row, col, val in zip(self.__dict__[f'_i{j_name}{j_type}'],
+                                         self.__dict__[f'_j{j_name}{j_type}'],
+                                         self.__dict__[f'_v{j_name}{j_type}']):
 
                     if len(row) != len(col):
                         raise ValueError
                     elif len(row) == 0 and len(col) == 0:
                         continue
 
-                    self.__dict__[f'i{dict_name}{j_type}'].append(row)
-                    self.__dict__[f'j{dict_name}{j_type}'].append(col)
+                    self.__dict__[f'i{j_name}{j_type}'].append(row)
+                    self.__dict__[f'j{j_name}{j_type}'].append(col)
 
                     if j_type == 'c':
-                        self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                        self.__dict__[f'v{j_name}{j_type}'].append(val)
                     else:
-                        self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
+                        self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
 
                 # user-provided numerical jacobians in blocks
                 for instance in list(self.blocks.values()):
-                    for row, col, val in zip(instance.__dict__[f'i{dict_name}{j_type}'],
-                                             instance.__dict__[f'j{dict_name}{j_type}'],
-                                             instance.__dict__[f'v{dict_name}{j_type}']):
-                        self.__dict__[f'i{dict_name}{j_type}'].append(row)
-                        self.__dict__[f'j{dict_name}{j_type}'].append(col)
+                    for row, col, val in zip(instance.__dict__[f'i{j_name}{j_type}'],
+                                             instance.__dict__[f'j{j_name}{j_type}'],
+                                             instance.__dict__[f'v{j_name}{j_type}']):
+                        self.__dict__[f'i{j_name}{j_type}'].append(row)
+                        self.__dict__[f'j{j_name}{j_type}'].append(col)
 
                         if j_type == 'c':
-                            self.__dict__[f'v{dict_name}{j_type}'].append(val)
+                            self.__dict__[f'v{j_name}{j_type}'].append(val)
                         else:
-                            self.__dict__[f'v{dict_name}{j_type}'].append(np.zeros(self.n))
+                            self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
 
     def initialize(self):
         if self.n == 0:

@@ -50,6 +50,7 @@ class VarBase(object):
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
+                 diag_eps: Optional[float] = 0.0,
                  **kwargs
                  ):
 
@@ -72,6 +73,7 @@ class VarBase(object):
         self.e_setter = e_setter  # True if this var sets the equation value
         self.addressable = addressable  # True if this var needs to be assigned an address
         self.export = export  # True if this var's value needs to exported
+        self.diag_eps = diag_eps  # small value to be added to the jacobian matrix
 
     def clear(self):
         self.a = np.array([], dtype=int)

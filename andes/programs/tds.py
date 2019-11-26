@@ -30,6 +30,7 @@ class TDS(ProgramBase):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
+        self.next_pc = 0.1
 
         self.converged = False
         self.busted = False
@@ -209,8 +210,8 @@ class TDS(ProgramBase):
             self.mis.append(mis)
             self.niter += 1
 
-            logger.info(f'Iter: {self.niter}, mis={mis:.4g}')
             if verbose:
+                logger.info(f'Iter: {self.niter}, mis={mis:.4g}')
                 logger.error(f'dae.g mismatches:')
                 dae.print_array('g')
                 logger.error(f'Correction:')
@@ -247,6 +248,7 @@ class TDS(ProgramBase):
         # ret = False
         system = self.system
         dae = self.system.dae
+        config = self.config
 
         self.config.t0, self.config.tf = tspan
 
@@ -258,14 +260,17 @@ class TDS(ProgramBase):
             if self.calc_h() == 0:
                 logger.error("Time step calculated to zero. Simulation terminated.")
                 break
-            logger.info(f'Time step set to h={self.h:.4f}')
             if not self.istep(verbose):
                 logger.error(f'Integration failed at t={dae.t}')
                 logger.error(f'Y deviation from initial:')
                 dae.print_array('y', dae.y - self.y00)
                 logger.error(f'  Max y deviation is {np.max(np.abs(dae.y - self.y00))}')
             else:
-                logger.info(f'Sim time = {dae.t:.4f}')
+                perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
+                if perc > self.next_pc or dae.t == config.tf:
+                    self.next_pc += 10
+                    logger.info(' ({:.0f}%) time = {:.4f}s, niter = {}'
+                                .format(100 * dae.t / config.tf, dae.t, self.niter))
                 dae.t += self.h
 
     def _calc_h_first(self):
