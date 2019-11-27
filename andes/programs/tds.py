@@ -228,7 +228,6 @@ class TDS(ProgramBase):
 
             # set new values
             inc = self.solver.linsolve(Ac, -matrix(qg))
-            # gy = np.array(matrix(dae.gy))
             dae.x += np.ravel(np.array(inc[:dae.n]))
             dae.y += np.ravel(np.array(inc[dae.n: dae.n + dae.m]))
             system.vars_to_models()

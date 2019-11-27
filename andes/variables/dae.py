@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Union
 from distutils.spawn import find_executable
 
 from cvxopt import matrix, spmatrix, sparse, spdiag
@@ -298,8 +298,8 @@ class DAENew(object):
              idx=None,
              legend: Optional[bool] = False,
              grid: Optional[bool] = False,
-             left: Optional[int, float] = None,
-             right: Optional[int, float] = None,
+             left: Optional[Union[int, float]] = None,
+             right: Optional[Union[int, float]] = None,
              fig=None,
              ax=None):
         if var not in ('x', 'y', 'c'):

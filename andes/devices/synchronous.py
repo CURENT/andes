@@ -49,12 +49,12 @@ class GENBase(Model):
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
-                          e_str='-p')
+                          e_str='-u * (vd * Id + vq * Iq)')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
-                          e_str='-q')
+                          e_str='-u * (vq * Id - vd * Iq)')
 
-        # self.p = Calc(e_str='-u * (vd * Id + vq * Iq)', tex_name='p')
-        # self.q = Calc(e_str='-u * (vq * Id - vd * Iq)', tex_name='q')
+        self.p = Calc(e_str='-u * (vd * Id + vq * Iq)', tex_name='p')
+        self.q = Calc(e_str='-u * (vq * Id - vd * Iq)', tex_name='q')
 
         # algebraic variables
         # Need to be provided by specific generator models
@@ -66,8 +66,6 @@ class GENBase(Model):
         self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'p_m')
         self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'p_e')  # to be completed by subclasses
         self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
-        self.p = Algeb(v_init='p0', v_setter=True, e_str='u * (vd * Id + vq * Iq) - p', tex_name='p')
-        self.q = Algeb(v_init='q0', v_setter=True, e_str='u * (vq * Id - vd * Iq) - q', tex_name='q')
 
         # ----------service consts for initialization----------
         self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='p_0')
