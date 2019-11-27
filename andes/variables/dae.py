@@ -50,29 +50,15 @@ class DAENew(object):
         self.y_name, self.y_tex_name = [], []
 
         # ----- indices of sparse matrices -----
-        self.ifx = []
-        self.jfx = []
-        self.vfx = []
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
+        self.itx, self.jtx, self.vtx = list(), list(), list()
+        self.irx, self.jrx, self.vrx = list(), list(), list()
 
-        self.ify = []
-        self.jfy = []
-        self.vfy = []
-
-        self.igx = []
-        self.jgx = []
-        self.vgx = []
-
-        self.igy = []
-        self.jgy = []
-        self.vgy = []
-
-        self.itx = []
-        self.jtx = []
-        self.vtx = []
-
-        self.irx = []
-        self.jrx = []
-        self.vrx = []
+    def reset(self):
+        self.ts = DAETimeSeries()
 
     def reset_array(self):
         """
@@ -92,6 +78,14 @@ class DAENew(object):
         """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
+
+    def reset_ijv(self):
+        self.ifx, self.jfx, self.vfx = list(), list(), list()
+        self.ify, self.jfy, self.vfy = list(), list(), list()
+        self.igx, self.jgx, self.vgx = list(), list(), list()
+        self.igy, self.jgy, self.vgy = list(), list(), list()
+        self.itx, self.jtx, self.vtx = list(), list(), list()
+        self.irx, self.jrx, self.vrx = list(), list(), list()
 
     def reset_sparse(self):
         """

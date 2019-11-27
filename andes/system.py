@@ -216,6 +216,7 @@ class SystemNew(object):
 
         self._a_clear()
         self._p_restore()
+        self.dae.reset_ijv()
         self.setup()
 
     def set_address(self, models=None):
@@ -343,14 +344,10 @@ class SystemNew(object):
     def generate_jacobians(self):
         self._call_models_method('generate_jacobians', self.models)
 
-    def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None, tds=False):
-        if tds is False:
-            # clear x and y values for power flow only
-            self.dae.reset_xy()
-        self.vars_to_models()
-
+    def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        # TODO: FIXME NOW: Initialization may happen sequentially - a TG initialization may depend on Synchronous;
+        # Might need to relay data back and forth ????
         self._call_models_method('initialize', models)
-
         self.vars_to_dae()
         self.vars_to_models()
         return np.hstack((self.dae.x, self.dae.y))
@@ -501,6 +498,7 @@ class SystemNew(object):
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('j_update', models)
+        models = self._get_models(models)
 
         self.dae.reset_sparse()
 
@@ -509,15 +507,21 @@ class SystemNew(object):
         for j_name in jac_name:
             j_size = self.dae.get_size(j_name)
 
-            for mdl in self.models.values():
+            for mdl in models.values():
                 for row, col, val in mdl.zip_ijv(j_name):
                     # TODO: use `spmatrix.ipadd` if available
                     # TODO: fix `ipadd` to get rid of type checking
                     if isinstance(val, (int, float)) or len(val) > 0:
-                        self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                        try:
+                            self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                        except TypeError as e:
+                            logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, '
+                                         f'j_size={j_size}')
+                            raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('store_sparse_pattern', models)
+        models = self._get_models(models)
         jac_name = ('fx', 'fy', 'gx', 'gy')
 
         # add variable jacobian values
@@ -534,7 +538,7 @@ class SystemNew(object):
 
             logger.debug(f'Jac <{j_name}>, row={ii}')
 
-            for name, mdl in self.models.items():
+            for name, mdl in models.items():
                 row_idx = mdl.row_idx(f'{j_name}')
                 col_idx = mdl.col_idx(f'{j_name}')
 
@@ -597,7 +601,7 @@ class SystemNew(object):
         for name, model_call in self.calls.items():
             self.__dict__[name].calls = model_call
 
-    def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+    def _get_models(self, models):
         if models is None:
             models = self._models_with_flag['pflow']
         if isinstance(models, str):
@@ -614,6 +618,10 @@ class SystemNew(object):
                 else:
                     raise TypeError(f'Unknown type {type(item)}')
 
+        return models
+
+    def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+        models = self._get_models(models)
         for mdl in models.values():
             getattr(mdl, method)()
 

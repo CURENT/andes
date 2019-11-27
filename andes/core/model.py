@@ -776,8 +776,9 @@ class Model(object):
                     row_idx = self.__dict__[row_name].a
                     col_idx = self.__dict__[col_name].a
                     if len(row_idx) != len(col_idx):
-                        print(f'row_idx: {row_idx}')
-                        print(f'col_idx: {col_idx}')
+                        print(f'Model: {self.class_name}')
+                        print(f'row {row_name}, row_idx: {row_idx}')
+                        print(f'col {col_name}, col_idx: {col_idx}')
                         raise ValueError
                     elif len(row_idx) == 0 and len(col_idx) == 0:
                         continue

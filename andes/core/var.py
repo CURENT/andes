@@ -62,6 +62,7 @@ class VarBase(object):
         self.owner = None  # instance of the owner Model
         self.id = None
 
+        self.n = 0
         self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)  # address array
         self.v: Optional[Union[ndarray, float]] = 0  # variable value array
         self.e: Optional[Union[ndarray, float]] = 0   # equation value array
@@ -107,15 +108,12 @@ class VarBase(object):
             The assigned address for this variable
         """
         self.a = addr
+        self.n = len(self.a)
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
 
     def get_name(self):
         return [self.name]
-
-    @property
-    def n(self):
-        return len(self.a)
 
 
 class Algeb(VarBase):
@@ -207,6 +205,7 @@ class ExtVar(VarBase):
         self.indexer = indexer
         self._idx = None
         self._n = []
+        self._n_count = 0
 
     @property
     def _v(self):
@@ -252,9 +251,10 @@ class ExtVar(VarBase):
                 self._n = [len(self.indexer.v)]
                 self._idx = self.indexer.v
 
+            self.a = ext_model.get(src=self.src, idx=self._idx, attr='a').astype(int)
+            self.n = len(self.a)
             self.v = np.zeros(self.n)
             self.e = np.zeros(self.n)
-            self.a = ext_model.get(src=self.src, idx=self._idx, attr='a').astype(int)
 
         else:
             original_var = ext_model.__dict__[self.src]
@@ -265,19 +265,15 @@ class ExtVar(VarBase):
                 uid = np.arange(ext_model.n, dtype=int)
 
             self._n = [len(uid)]
-
-            # set initial v and e values to zero
-            self.v = np.zeros(self.n)
-            self.e = np.zeros(self.n)
-
-            if self.n > 0:
+            if len(uid) > 0:
                 self.a = original_var.a[uid]
             else:
                 self.a = np.array([], dtype=int)
 
-    @property
-    def n(self):
-        return np.sum(self._n)
+            # set initial v and e values to zero
+            self.n = len(self.a)
+            self.v = np.zeros(self.n)
+            self.e = np.zeros(self.n)
 
 
 class ExtState(ExtVar):

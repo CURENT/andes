@@ -40,14 +40,24 @@ class TDS(ProgramBase):
 
     def _initialize(self):
         system = self.system
+        system.dae.t = 0.0
+
+        # reset states
+        self.deltat = 0
+        self.deltatmin = 0
+        self.deltatmax = 0
+        self.h = 0
+        self.next_pc = 0.1
 
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
         system.dae.resize_array()
         system.link_external(models=self.tds_models)
-        system.store_sparse_pattern(models=self.tds_models)
+        system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter()
-        return system.initialize(self.tds_models, tds=True)
+        system.vars_to_models()
+        system.initialize(self.tds_models)
+        return system.dae.xy
 
     def f_update(self):
         system = self.system
