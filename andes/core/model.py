@@ -344,6 +344,9 @@ class Model(object):
         # construct `self.idx` into an `IdxParam`
         self._idx = IdxParam(model=self.class_name)
 
+        # cached dictionary of input
+        self._input = OrderedDict()
+
     def _all_vars(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.states_ext.items()) +
@@ -361,9 +364,9 @@ class Model(object):
     def _all_params(self):
         # the service stuff should not be moved to variables.
         return OrderedDict(list(self.num_params.items()) +
-                           list(self.limiters.items()) +
                            list(self.services.items()) +
-                           list(self.services_ext.items())
+                           list(self.services_ext.items()) +
+                           list(self.limiters.items())
                            )
 
     def _all_params_names(self):
@@ -468,37 +471,38 @@ class Model(object):
     def set(self, src, idx, attr, value):
         pass
 
-    def get_input(self):
-        # The order of inputs: `all_params` and then `all_vars`, finally `config`
-        kwargs = OrderedDict()
+    def get_input(self, refresh=False):
+        if len(self._input) == 0 or refresh:
+            self._refresh_input()
 
-        # ----------------------------------------------------
+        # append `dae_t`
+        self._input['dae_t'] = self.system.dae.t
+        return self._input
+
+    def _refresh_input(self):
+        # The order of inputs: `all_params` and then `all_vars`, finally `config`
         # the below sequence should correspond to `self.all_param_names`
         for instance in self.num_params.values():
-            kwargs[instance.name] = instance.v
-
-        for instance in self.limiters.values():
-            for name, val in zip(instance.get_name(), instance.get_value()):
-                kwargs[name] = val
+            self._input[instance.name] = instance.v
 
         for instance in self.services.values():
-            kwargs[instance.name] = instance.v
+            self._input[instance.name] = instance.v
 
         for instance in self.services_ext.values():
-            kwargs[instance.name] = instance.v
-        # ----------------------------------------------------
+            self._input[instance.name] = instance.v
+
+        # updated every call
+        for instance in self.limiters.values():
+            for name, val in zip(instance.get_name(), instance.get_value()):
+                self._input[name] = val
 
         # append all variable values
         for instance in self.cache.all_vars.values():
-            kwargs[instance.name] = instance.v
+            self._input[instance.name] = instance.v
 
         # append config variables
         for key, val in self.config.__dict__.items():
-            kwargs[key] = val
-
-        # append `dae_t`
-        kwargs['dae_t'] = self.system.dae.t
-        return kwargs
+            self._input[key] = val
 
     def l_update_var(self):
         if self.n == 0:
@@ -506,6 +510,7 @@ class Model(object):
         for instance in self.limiters.values():
             instance.check_var()
             instance.set_var()
+        self._refresh_input()
 
     def l_update_eq(self):
         if self.n == 0:
@@ -513,6 +518,7 @@ class Model(object):
         for instance in self.limiters.values():
             instance.check_eq()
             instance.set_eq()
+        self._refresh_input()
 
     def s_update(self):
         if self.n == 0:
@@ -524,8 +530,7 @@ class Model(object):
 
                 func = self.calls.service_lambdify[name]
                 if callable(func):
-                    logger.debug(f"Service: eval lambdified for <{instance.name}>")
-                    kwargs = self.get_input()
+                    kwargs = self.get_input(refresh=True)
                     instance.v = func(**kwargs)
                 else:
                     instance.v = func
@@ -537,10 +542,10 @@ class Model(object):
         for instance in self.services.values():
             func = instance.v_numeric
             if func is not None and callable(func):
-                kwargs = self.get_input()
+                kwargs = self.get_input(refresh=True)
                 instance.v = func(**kwargs)
 
-        kwargs = self.get_input()
+        kwargs = self.get_input(refresh=True)
         self.s_numeric(**kwargs)
 
     def generate_initializer(self):
@@ -593,6 +598,7 @@ class Model(object):
             self.input_syms[key] = Symbol(key)
 
         self.input_syms['dae_t'] = Symbol('dae_t')
+        self.vars_print = Matrix(list(self.vars_syms.values())).subs(self.tex_names)
         # ------------------------------------------------------------
 
         syms_list = list(self.input_syms)
@@ -710,9 +716,8 @@ class Model(object):
         # NOTE:
         # The for loop below is intended to add an epsilon small
         # value to the diagonal of gy matrix.
-        # It should really be commented out ideally.
-        # Rather, the modeling user should take care
-        # of the algebraic equations
+        # The user should take care of the algebraic equations
+        # by using `diag_eps` in Algeb definition
 
         for var in self.algebs.values():
             if var.diag_eps == 0:
@@ -833,8 +838,7 @@ class Model(object):
             if instance.v_init is None:
                 continue
 
-            logger.debug(f'{name}: {instance.v_init}')
-            kwargs = self.get_input()
+            kwargs = self.get_input(refresh=True)
             init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
                 try:
@@ -846,7 +850,7 @@ class Model(object):
                 instance.v = init_fun
 
         # call custom variable initializer after lambdified initializers
-        kwargs = self.get_input()
+        kwargs = self.get_input(refresh=True)
         self.v_numeric(**kwargs)
 
     def a_clear(self):
@@ -914,7 +918,7 @@ class Model(object):
     def c_update(self):
         if self.n == 0:
             return
-        kwargs = self.get_input()
+        kwargs = self.get_input(refresh=True)
         # call lambdified functions with use self.call
         ret = self.calls.c_lambdify(**kwargs)
         for idx, instance in enumerate(self.calcs.values()):
@@ -930,14 +934,12 @@ class Model(object):
     def j_update(self):
         if self.n == 0:
             return
-        logger.debug(f'j_update for {self.class_name}')
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
         kwargs = self.get_input()
         for name in jac_set:
             idx = 0
-            logger.debug(f' for j_name {name}')
 
             # generated lambda jacobian functions first
             fun_list = self.calls.__dict__[f'_v{name}']

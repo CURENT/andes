@@ -52,6 +52,7 @@ class TDS(ProgramBase):
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
         system.dae.resize_array()
+        system.dae.clear_ts()
         system.link_external(models=self.tds_models)
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter()
@@ -125,13 +126,15 @@ class TDS(ProgramBase):
 
             self.niter += 1
 
-    def _solve_ivp_wrapper(self, t, xy, asolver, verbose):
+    def _solve_ivp_wrapper(self, t, x, asolver, verbose):
         system = self.system
         dae = self.system.dae
-        dae.t = t
-        dae.x = xy[:dae.n]
-        dae.y = xy[dae.n:dae.m + dae.n]
+        # store the values from k-1 (the last step)
+        dae.x = x
         system.vars_to_models()
+        system.dae.store_yt_single()
+        # set new t must come after `store_xyt`
+        dae.t = t
 
         # solve for algebraic variables
         if asolver is None:
@@ -146,34 +149,47 @@ class TDS(ProgramBase):
         else:
             raise NotImplementedError(f"Unknown algeb_solver {asolver}")
 
-        system.dae.store_y()
         system.f_update(models=self.pflow_tds_models)
         system.l_update_eq(models=self.pflow_tds_models)
 
-        return np.hstack((dae.f, np.zeros_like(dae.g)))
+        return dae.f
 
-    def simulate(self, tspan, xy0=None, asolver=None, method='RK45', verbose=False):
+    def run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
         self._initialize()
-        if xy0 is None:
-            xy0 = self.system.dae.xy
-        return solve_ivp(lambda t, y: self._solve_ivp_wrapper(t, y, asolver, verbose=verbose),
-                         tspan, xy0, method=method)
+        if x0 is None:
+            x0 = self.system.dae.x
+        ret = solve_ivp(lambda t, x: self._solve_ivp_wrapper(t, x, asolver, verbose=verbose),
+                        tspan,
+                        x0,
+                        method=method)
 
-    def integrate(self, tspan, xy0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
+        # store the last step algebraic variables
+        self.system.dae.store_yt_single()
+
+        self.system.dae.store_xt_array(np.transpose(ret.y), ret.t)
+        return ret
+
+    def run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
         self._initialize()
-        if xy0 is None:
-            xy0 = self.system.dae.xy
+        if x0 is None:
+            x0 = self.system.dae.x
         times = np.arange(tspan[0], tspan[1], h)
-        return odeint(self._solve_ivp_wrapper,
-                      xy0,
-                      times,
-                      tfirst=True,
-                      args=(asolver, verbose),
-                      full_output=True,
-                      hmax=hmax,
-                      hmin=hmin)
+        ret = odeint(self._solve_ivp_wrapper,
+                     x0,
+                     times,
+                     tfirst=True,
+                     args=(asolver, verbose),
+                     full_output=True,
+                     hmax=hmax,
+                     hmin=hmin)
 
-    def istep(self, verbose=False):
+        # store the last step algebraic variables
+        self.system.dae.store_yt_single()
+
+        self.system.dae.store_xt_array(ret[0], times)
+        return ret
+
+    def _implicit_step(self, verbose=False):
         """
         Implicit step
 
@@ -199,7 +215,9 @@ class TDS(ProgramBase):
             system.f_update(models=self.pflow_tds_models)
             system.g_update(models=self.pflow_tds_models)
             system.l_update_eq(models=self.pflow_tds_models)
-            system.j_update(models=self.pflow_tds_models)
+            # lazy jacobian update
+            if dae.t == 0 or self.niter > 3:
+                system.j_update(models=self.pflow_tds_models)
 
             # solve
             In = spdiag([1] * dae.n)
@@ -254,7 +272,7 @@ class TDS(ProgramBase):
 
         return self.converged
 
-    def implicit_solver(self, tspan, verbose=False):
+    def run_implicit(self, tspan, verbose=False):
         # ret = False
         system = self.system
         dae = self.system.dae
@@ -270,12 +288,17 @@ class TDS(ProgramBase):
             if self.calc_h() == 0:
                 logger.error("Time step calculated to zero. Simulation terminated.")
                 break
-            if not self.istep(verbose):
+            if not self._implicit_step(verbose):
                 logger.error(f'Integration failed at t={dae.t}')
                 logger.error(f'Y deviation from initial:')
                 dae.print_array('y', dae.y - self.y00)
                 logger.error(f'  Max y deviation is {np.max(np.abs(dae.y - self.y00))}')
             else:
+                # store values
+                dae.store_yt_single()
+                dae.store_x_single()
+
+                # show progress in precentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
                 if perc > self.next_pc or dae.t == config.tf:
                     self.next_pc += 10

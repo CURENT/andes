@@ -1,7 +1,14 @@
 import logging
+from typing import Optional
+from distutils.spawn import find_executable
+
+from cvxopt import matrix, spmatrix, sparse, spdiag
 
 import numpy as np
-from cvxopt import matrix, spmatrix, sparse, spdiag
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+
+from andes.common.config import Config
 
 from ..utils.math import ageb, aleb, aandb  # NOQA
 from ..utils.math import index  # NOQA
@@ -12,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 class DAETimeSeries(object):
     def __init__(self):
-        self.t = None
+        self.t_y = None
+        self.t_x = None
+        self.x = None
         self.y = None
 
 
@@ -20,7 +29,7 @@ class DAENew(object):
     """
     Numerical DAE class
     """
-    def __init__(self):
+    def __init__(self, config):
 
         self.jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
 
@@ -57,7 +66,12 @@ class DAENew(object):
         self.itx, self.jtx, self.vtx = list(), list(), list()
         self.irx, self.jrx, self.vrx = list(), list(), list()
 
-    def reset(self):
+        self.config = Config()
+        self.config.add({'latex': 1,
+                         'dpi': 150,
+                         })
+
+    def clear_ts(self):
         self.ts = DAETimeSeries()
 
     def reset_array(self):
@@ -227,6 +241,10 @@ class DAENew(object):
     def xy_name(self):
         return self.x_name + self.y_name
 
+    @property
+    def xy_tex_name(self):
+        return self.x_tex_name + self.y_tex_name
+
     def get_name(self, arr):
         mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y'}
         return self.__dict__[mapping[arr] + '_name']
@@ -237,26 +255,135 @@ class DAENew(object):
         res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), value))
         logger.info(res)
 
-    def store_y(self):
+    def store_yt_single(self):
         """
-        Store previous step result and progress time
-        Parameters
-        ----------
-        t
+        Store algebraic variable value and the corresponding t
 
         Returns
         -------
 
         """
-        if self.ts.t is None:
-            self.ts.t = np.array([self.t])
+        # store t
+        if self.ts.t_y is None:
+            self.ts.t_y = np.array([self.t])
         else:
-            self.ts.t = np.hstack((self.ts.t, self.t))
+            self.ts.t_y = np.hstack((self.ts.t_y, self.t))
 
+        # store y
         if self.ts.y is None:
             self.ts.y = np.array(self.y)
         else:
             self.ts.y = np.vstack((self.ts.y, self.y))
+
+    def store_x_single(self):
+        """
+        Store differential variable value
+
+        Returns
+        -------
+
+        """
+        # store x
+        if self.ts.x is None:
+            self.ts.x = np.array(self.x)
+        else:
+            self.ts.x = np.vstack((self.ts.x, self.x))
+
+    def store_xt_array(self, x, t):
+        self.ts.x = x
+        self.ts.t_x = t
+
+    def plot(self,
+             var,
+             idx=None,
+             legend: Optional[bool] = False,
+             grid: Optional[bool] = False,
+             left: Optional[int, float] = None,
+             right: Optional[int, float] = None,
+             fig=None,
+             ax=None):
+        if var not in ('x', 'y', 'c'):
+            raise ValueError('Only x, y or c is allowed for var')
+
+        # set latex option
+        self.set_latex(self.config.latex)
+
+        if idx is None:
+            value_array = self.ts.__dict__[var]
+        else:
+            # slice values
+            value_array = self.ts.__dict__[var][:, idx]
+
+        legend_list = self._get_legend(var, idx)
+
+        # get the correct time array
+        if self.ts.__dict__['t_' + var] is not None:
+            t_array = self.ts.__dict__['t_' + var]
+        else:
+            t_array = self.ts.t_y  # fallback
+
+        if not left:
+            left = t_array[0] - 1e-6
+        if not right:
+            right = t_array[-1] + 1e-6
+
+        # set latex
+        self.set_latex(self.config.latex)
+
+        if fig is None:
+            fig = plt.figure(dpi=self.config.dpi)
+            ax = plt.gca()
+
+        ax.plot(t_array, value_array)
+        ax.set_xlim(left=left, right=right)
+        ax.ticklabel_format(useOffset=False)
+
+        if grid:
+            ax.grid(b=True, linestyle='--')
+
+        if legend is True:
+            ax.legend(legend_list)
+
+        return fig, ax
+
+    def set_latex(self, enable=1):
+        """
+        Enables latex for matplotlib based on the `with_latex` option and `dvipng` availability
+
+        Parameters
+        ----------
+        enable: bool, optional
+            True for latex on and False for off
+
+        Returns
+        -------
+        bool
+            True for latex on and False for off
+        """
+
+        if enable == 1:
+            if find_executable('dvipng'):
+                mpl.rc('text', usetex=True)
+                self.config.latex = 1
+                return True
+
+        mpl.rc('text', usetex=False)
+        self.config.latex = 0
+        return False
+
+    def _get_legend(self, var, idx=None):
+        attr_name = f'{var}_name'
+        attr_tex_name = f'{var}_tex_name'
+
+        if self.config.latex == 1:
+            out = self.__dict__[attr_tex_name]
+        else:
+            out = self.__dict__[attr_name]
+
+        if idx is not None:
+            out = [out[i] for i in idx]
+
+        return out
 
 
 class DAE(object):

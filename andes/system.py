@@ -83,7 +83,7 @@ class SystemNew(object):
                                      )))
         # custom configuration for system goes after this line
 
-        self.dae = DAENew()
+        self.dae = DAENew(config=self._config_from_file)
         # routine import comes after model import; routines need to query model flags
         self._group_import()
         self._model_import()
@@ -275,11 +275,11 @@ class SystemNew(object):
             for name, item in mdl.algebs.items():
                 for uid, addr in enumerate(item.a):
                     self.dae.y_name[addr] = f'{mdl_name} {item.name} {uid}'
-                    self.dae.y_tex_name[addr] = rf'{mdl_name}\ {item.tex_name}\ {uid}'
+                    self.dae.y_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
             for name, item in mdl.states.items():
                 for uid, addr in enumerate(item.a):
                     self.dae.x_name[addr] = f'{mdl_name} {item.name} {uid}'
-                    self.dae.x_tex_name[addr] = rf'{mdl_name}\ {item.tex_name}\ {uid}'
+                    self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
 
     def add(self, model, param_dict=None, **kwargs):
         if model not in self.models:
