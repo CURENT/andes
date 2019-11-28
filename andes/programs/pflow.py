@@ -58,8 +58,6 @@ class PFlow(ProgramBase):
         system.dae.x += np.ravel(np.array(self.inc[:system.dae.n]))
         system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
 
-        system.c_update()
-
         mis = np.max(np.abs(system.dae.fg))
         self.mis.append(mis)
 
@@ -98,6 +96,8 @@ class PFlow(ProgramBase):
                 name = system.dae.xy_name[max_idx]
                 logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
                 logger.info(f'Largest mismatch on equation associated with <{name}>')
+        else:
+            system.c_update()
 
         return self.converged
 

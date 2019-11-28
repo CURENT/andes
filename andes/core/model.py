@@ -227,11 +227,15 @@ class ModelCall(object):
         self._ify, self._jfy, self._vfy = list(), list(), list()
         self._igx, self._jgx, self._vgx = list(), list(), list()
         self._igy, self._jgy, self._vgy = list(), list(), list()
+        self._itx, self._jtx, self._vtx = list(), list(), list()
+        self._irx, self._jrx, self._vrx = list(), list(), list()
 
         self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
         self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
         self._igxc, self._jgxc, self._vgxc = list(), list(), list()
         self._igyc, self._jgyc, self._vgyc = list(), list(), list()
+        self._itxc, self._jtxc, self._vtxc = list(), list(), list()
+        self._irxc, self._jrxc, self._vrxc = list(), list(), list()
 
 
 class Model(object):
@@ -314,11 +318,15 @@ class Model(object):
         self._ify, self._jfy, self._vfy = list(), list(), list()
         self._igx, self._jgx, self._vgx = list(), list(), list()
         self._igy, self._jgy, self._vgy = list(), list(), list()
+        self._itx, self._jtx, self._vtx = list(), list(), list()
+        self._irx, self._jrx, self._vrx = list(), list(), list()
 
         self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
         self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
         self._igxc, self._jgxc, self._vgxc = list(), list(), list()
         self._igyc, self._jgyc, self._vgyc = list(), list(), list()
+        self._itxc, self._jtxc, self._vtxc = list(), list(), list()
+        self._irxc, self._jrxc, self._vrxc = list(), list(), list()
         # -------------------------------------------------------
 
         self.ifx, self.jfx, self.vfx = list(), list(), list()
@@ -346,50 +354,6 @@ class Model(object):
 
         # cached dictionary of input
         self._input = OrderedDict()
-
-    def _all_vars(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()) +
-                           list(self.algebs.items()) +
-                           list(self.algebs_ext.items()) +
-                           list(self.calcs.items())
-                           )
-
-    def _all_vars_names(self):
-        out = []
-        for instance in self.cache.all_vars.values():
-            out += instance.get_name()
-        return out
-
-    def _all_params(self):
-        # the service stuff should not be moved to variables.
-        return OrderedDict(list(self.num_params.items()) +
-                           list(self.services.items()) +
-                           list(self.services_ext.items()) +
-                           list(self.limiters.items())
-                           )
-
-    def _all_params_names(self):
-        out = []
-        for instance in self.cache.all_params.values():
-            out += instance.get_name()
-        return out
-
-    def _algebs_and_ext(self):
-        return OrderedDict(list(self.algebs.items()) +
-                           list(self.algebs_ext.items()))
-
-    def _states_and_ext(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()))
-
-    def _services_and_ext(self):
-        return OrderedDict(list(self.services.items()) +
-                           list(self.services_ext.items()))
-
-    def _vars_ext(self):
-        return OrderedDict(list(self.states_ext.items()) +
-                           list(self.algebs_ext.items()))
 
     def __setattr__(self, key, value):
         if isinstance(value, (VarBase, ServiceBase, Limiter, Block)):
@@ -434,24 +398,6 @@ class Model(object):
 
         super(Model, self).__setattr__(key, value)
 
-    @property
-    def class_name(self):
-        return self.__class__.__name__
-
-    def set_config(self, config):
-        if self.class_name in config:
-            config_section = config[self.class_name]
-            self.config.add(OrderedDict(config_section))
-
-    def get_config(self):
-        return self.config.as_dict()
-
-    def finalize_add(self):
-        # TODO: check the uniqueness of idx
-        for _, instance in self.num_params.items():
-            instance.to_array()
-        self._idx.v = list(self.idx)
-
     def idx2uid(self, idx):
         if idx is None:
             logger.error("idx2uid cannot search for None idx")
@@ -471,15 +417,15 @@ class Model(object):
     def set(self, src, idx, attr, value):
         pass
 
-    def get_input(self, refresh=False):
+    def get_inputs(self, refresh=False):
         if len(self._input) == 0 or refresh:
-            self._refresh_input()
+            self.refresh_inputs()
 
-        # append `dae_t`
+        # update`dae_t`
         self._input['dae_t'] = self.system.dae.t
         return self._input
 
-    def _refresh_input(self):
+    def refresh_inputs(self):
         # The order of inputs: `all_params` and then `all_vars`, finally `config`
         # the below sequence should correspond to `self.all_param_names`
         for instance in self.num_params.values():
@@ -510,7 +456,7 @@ class Model(object):
         for instance in self.limiters.values():
             instance.check_var()
             instance.set_var()
-        self._refresh_input()
+        self.refresh_inputs()
 
     def l_update_eq(self):
         if self.n == 0:
@@ -518,9 +464,17 @@ class Model(object):
         for instance in self.limiters.values():
             instance.check_eq()
             instance.set_eq()
-        self._refresh_input()
+        self.refresh_inputs()
 
     def s_update(self):
+        """
+        Evaluate service equations
+
+        This function is only evaluated at initialization, sequentially.
+        Returns
+        -------
+
+        """
         if self.n == 0:
             return
         logger.debug(f'{self.class_name}: calling eval_service()')
@@ -530,7 +484,7 @@ class Model(object):
 
                 func = self.calls.service_lambdify[name]
                 if callable(func):
-                    kwargs = self.get_input(refresh=True)
+                    kwargs = self.get_inputs(refresh=True)
                     instance.v = func(**kwargs)
                 else:
                     instance.v = func
@@ -542,13 +496,13 @@ class Model(object):
         for instance in self.services.values():
             func = instance.v_numeric
             if func is not None and callable(func):
-                kwargs = self.get_input(refresh=True)
+                kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
 
-        kwargs = self.get_input(refresh=True)
+        kwargs = self.get_inputs(refresh=True)
         self.s_numeric(**kwargs)
 
-    def generate_initializer(self):
+    def generate_initializers(self):
         """
         Generate lambda functions for initial values
         """
@@ -742,11 +696,15 @@ class Model(object):
         self.ify, self.jfy, self.vfy = list(), list(), list()
         self.igx, self.jgx, self.vgx = list(), list(), list()
         self.igy, self.jgy, self.vgy = list(), list(), list()
+        self.itx, self.jtx, self.vtx = list(), list(), list()
+        self.irx, self.jrx, self.vrx = list(), list(), list()
 
         self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
         self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
         self.igxc, self.jgxc, self.vgxc = list(), list(), list()
         self.igyc, self.jgyc, self.vgyc = list(), list(), list()
+        self.itxc, self.jtxc, self.vtxc = list(), list(), list()
+        self.irxc, self.jrxc, self.vrxc = list(), list(), list()
 
         if (not self.flags['address']) or (self.n == 0):
             # Note:
@@ -763,14 +721,12 @@ class Model(object):
         for instance in self.blocks.values():
             instance.j_numeric()
 
-        jac_set = ('fx', 'fy', 'gx', 'gy')
-        jac_type = ('c', '')
         var_names_list = list(self.cache.all_vars.keys())
         eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
                     'g': var_names_list[len(self.cache.states_and_ext):]}
 
-        for j_name in jac_set:
-            for j_type in jac_type:
+        for j_name in self.system.dae.jac_name:
+            for j_type in self.system.dae.jac_type:
                 # generated lambda functions
                 for row, col, val in zip(self.calls.__dict__[f'_i{j_name}{j_type}'],
                                          self.calls.__dict__[f'_j{j_name}{j_type}'],
@@ -838,7 +794,7 @@ class Model(object):
             if instance.v_init is None:
                 continue
 
-            kwargs = self.get_input(refresh=True)
+            kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
                 try:
@@ -850,28 +806,8 @@ class Model(object):
                 instance.v = init_fun
 
         # call custom variable initializer after lambdified initializers
-        kwargs = self.get_input(refresh=True)
+        kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
-
-    def a_clear(self):
-        """
-        Clear addresses and reset flags['address']
-        Returns
-        -------
-
-        """
-        if self.n == 0:
-            return
-        for var in self.cache.all_vars.values():
-            var.clear()
-        self.flags['address'] = False
-
-    def e_clear(self):
-        if self.n == 0:
-            return
-        for instance in self.cache.all_vars.values():
-            # use `instance.n` for 2D vars
-            instance.e = np.zeros(instance.n)
 
     def f_update(self):
         if self.n == 0:
@@ -879,7 +815,7 @@ class Model(object):
 
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls
-        kwargs = self.get_input()
+        kwargs = self.get_inputs()
 
         # call lambdified functions with use self.call
         ret = self.calls.f_lambdify(**kwargs)
@@ -900,7 +836,7 @@ class Model(object):
 
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls
-        kwargs = self.get_input()
+        kwargs = self.get_inputs()
 
         # call lambdified functions with use self.call
         ret = self.calls.g_lambdify(**kwargs)
@@ -918,7 +854,7 @@ class Model(object):
     def c_update(self):
         if self.n == 0:
             return
-        kwargs = self.get_input(refresh=True)
+        kwargs = self.get_inputs(refresh=True)
         # call lambdified functions with use self.call
         ret = self.calls.c_lambdify(**kwargs)
         for idx, instance in enumerate(self.calcs.values()):
@@ -937,7 +873,7 @@ class Model(object):
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
 
-        kwargs = self.get_input()
+        kwargs = self.get_inputs()
         for name in jac_set:
             idx = 0
 
@@ -958,7 +894,55 @@ class Model(object):
                 self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1
 
-    def row_idx(self, name):
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
+    def _all_vars(self):
+        return OrderedDict(list(self.states.items()) +
+                           list(self.states_ext.items()) +
+                           list(self.algebs.items()) +
+                           list(self.algebs_ext.items()) +
+                           list(self.calcs.items())
+                           )
+
+    def _all_vars_names(self):
+        out = []
+        for instance in self.cache.all_vars.values():
+            out += instance.get_name()
+        return out
+
+    def _all_params(self):
+        # the service stuff should not be moved to variables.
+        return OrderedDict(list(self.num_params.items()) +
+                           list(self.services.items()) +
+                           list(self.services_ext.items()) +
+                           list(self.limiters.items())
+                           )
+
+    def _all_params_names(self):
+        out = []
+        for instance in self.cache.all_params.values():
+            out += instance.get_name()
+        return out
+
+    def _algebs_and_ext(self):
+        return OrderedDict(list(self.algebs.items()) +
+                           list(self.algebs_ext.items()))
+
+    def _states_and_ext(self):
+        return OrderedDict(list(self.states.items()) +
+                           list(self.states_ext.items()))
+
+    def _services_and_ext(self):
+        return OrderedDict(list(self.services.items()) +
+                           list(self.services_ext.items()))
+
+    def _vars_ext(self):
+        return OrderedDict(list(self.states_ext.items()) +
+                           list(self.algebs_ext.items()))
+
+    def row_of(self, name):
         """
         Return the row index in a flattened arrays for the specified jacobian matrix
 
@@ -969,7 +953,7 @@ class Model(object):
         """
         return np.ravel(np.array(self.__dict__[f'i{name}']))
 
-    def col_idx(self, name):
+    def col_of(self, name):
         """
         Return the col index in a flattened arrays for the specified jacobian matrix
 
@@ -992,6 +976,38 @@ class Model(object):
         return zip(self.__dict__[f'i{name}'],
                    self.__dict__[f'j{name}'],
                    self.__dict__[f'v{name}'])
+
+    def set_config(self, config):
+        if self.class_name in config:
+            config_section = config[self.class_name]
+            self.config.add(OrderedDict(config_section))
+
+    def get_config(self):
+        return self.config.as_dict()
+
+    def finalize_add(self):
+        for _, instance in self.num_params.items():
+            instance.to_array()
+        self._idx.v = list(self.idx)
+
+    def a_reset(self):
+        """
+        Reset addresses to empty and reset flags['address']
+        Returns
+        -------
+
+        """
+        if self.n == 0:
+            return
+        for var in self.cache.all_vars.values():
+            var.reset()
+        self.flags['address'] = False
+
+    def e_clear(self):
+        if self.n == 0:
+            return
+        for instance in self.cache.all_vars.values():
+            instance.e = np.zeros(instance.n)
 
     def v_numeric(self, **kwargs):
         """

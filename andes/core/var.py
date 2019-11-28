@@ -76,7 +76,7 @@ class VarBase(object):
         self.export = export  # True if this var's value needs to exported
         self.diag_eps = diag_eps  # small value to be added to the jacobian matrix
 
-    def clear(self):
+    def reset(self):
         self.a = np.array([], dtype=int)
         self.v = 0
         self.e = 0

@@ -52,10 +52,9 @@ class TDS(ProgramBase):
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
         system.dae.resize_array()
-        system.dae.clear_ts()
         system.link_external(models=self.tds_models)
         system.store_sparse_pattern(models=self.pflow_tds_models)
-        system.store_adder_setter()
+        system.store_adder_setter(models=self.pflow_tds_models)
         system.vars_to_models()
         system.initialize(self.tds_models)
         return system.dae.xy
@@ -269,6 +268,9 @@ class TDS(ProgramBase):
             dae.f = np.array(self.f0)
             system.vars_to_models()
 
+        else:
+            system.c_update()
+
         return self.converged
 
     def run_implicit(self, tspan, verbose=False):
@@ -287,6 +289,7 @@ class TDS(ProgramBase):
             if self.calc_h() == 0:
                 logger.error("Time step calculated to zero. Simulation terminated.")
                 break
+
             if not self._implicit_step(verbose):
                 logger.error(f'Integration failed at t={dae.t}')
                 logger.error(f'Y deviation from initial:')
@@ -297,7 +300,9 @@ class TDS(ProgramBase):
                 dae.store_yt_single()
                 dae.store_x_single()
 
-                # show progress in precentage
+                # TODO: dae.store_c_single()
+
+                # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
                 if perc > self.next_pc or dae.t == config.tf:
                     self.next_pc += 10

@@ -23,22 +23,24 @@ class DAETimeSeries(object):
         self.t_x = None
         self.x = None
         self.y = None
+        self.c = None
 
 
 class DAENew(object):
     """
     Numerical DAE class
     """
-    def __init__(self, config):
+    jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
+    jac_type = ('c', '')
 
-        self.jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
+    def __init__(self, config):
 
         self.t = 0
         self.ts = DAETimeSeries()
 
-        self.m, self.n = 0, 0
+        self.m, self.n, self.k = 0, 0, 0
 
-        self.x, self.y = None, None
+        self.x, self.y, self.c = None, None, None
         self.f, self.g = None, None
 
         self.fx = None
@@ -74,26 +76,27 @@ class DAENew(object):
     def clear_ts(self):
         self.ts = DAETimeSeries()
 
-    def reset_array(self):
+    def clear_array(self):
         """
         Reset equation and variable arrays to empty.
         """
-        self.reset_fg()
-        self.reset_xy()
+        self.clear_fg()
+        self.clear_xy()
 
-    def reset_fg(self):
+    def clear_fg(self):
         """Resets equation arrays to empty
         """
         self.f = np.zeros(self.n)
         self.g = np.zeros(self.m)
 
-    def reset_xy(self):
+    def clear_xy(self):
         """Reset variable arrays to empty
         """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
+        self.c = np.zeros(self.k)
 
-    def reset_ijv(self):
+    def clear_ijv(self):
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
         self.igx, self.jgx, self.vgx = list(), list(), list()
@@ -101,12 +104,20 @@ class DAENew(object):
         self.itx, self.jtx, self.vtx = list(), list(), list()
         self.irx, self.jrx, self.vrx = list(), list(), list()
 
-    def reset_sparse(self):
+    def restore_sparse(self):
         """
-        Reset all sparse arrays to shape with non-zero constants
+        Restore all sparse arrays to shape with non-zero constants
         """
         for name in self.jac_name:
             self.build_pattern(name)
+
+    def reset(self):
+        self.m = 0
+        self.n = 0
+        self.clear_fg()
+        self.clear_xy()
+        self.clear_ijv()
+        self.clear_ts()
 
     def get_size(self, name):
         """
@@ -289,6 +300,20 @@ class DAENew(object):
         else:
             self.ts.x = np.vstack((self.ts.x, self.x))
 
+    def store_c_single(self):
+        """
+        Store differential variable value
+
+        Returns
+        -------
+
+        """
+        raise NotImplementedError
+        # if self.ts.c is None:
+        #     self.ts.c = np.array(self.c)
+        # else:
+        #     self.ts.c = np.vstack((self.ts.c, self.c))
+
     def store_xt_array(self, x, t):
         self.ts.x = x
         self.ts.t_x = t
@@ -308,7 +333,7 @@ class DAENew(object):
         # set latex option
         self.set_latex(self.config.latex)
 
-        if idx is None:
+        if idx is None or len(idx) == 0:
             value_array = self.ts.__dict__[var]
         else:
             # slice values
@@ -380,7 +405,7 @@ class DAENew(object):
         else:
             out = self.__dict__[attr_name]
 
-        if idx is not None:
+        if (idx is not None) and len(idx) > 0:
             out = [out[i] for i in idx]
 
         return out
