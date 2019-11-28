@@ -469,7 +469,7 @@ def tdsplot_parse():
 
     parser.add_argument('-n', '--no_show', action='store_false', dest='show', help='do not show the plot window')
 
-    parser.add_argument('--ytimes', type=str, help='y times')
+    parser.add_argument('--ytimes', type=str, help='y switch_times')
     parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
 
     args = parser.parse_args()

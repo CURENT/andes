@@ -154,7 +154,7 @@ class ModelBase(object):
 
         self._times = []  # time constants
 
-        self._event_times = []  # event occurrance times
+        self._event_times = []  # event occurrance switch_times
 
         # property functions this device has
 

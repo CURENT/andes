@@ -315,7 +315,7 @@ def get_root():
   try:
     # Certain runtime workflows (setup.py install/develop in a setuptools
     # tree) execute all dependencies in a single python process, so
-    # "versioneer" may be imported multiple times, and python's shared
+    # "versioneer" may be imported multiple switch_times, and python's shared
     # module-import table will cache the first one. So we can't use
     # os.path.dirname(__file__), as that will find whichever
     # versioneer.py was first imported, even in later projects.

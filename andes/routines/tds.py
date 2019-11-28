@@ -517,7 +517,7 @@ class TDS(RoutineBase):
 
     def check_fixed_times(self):
         """
-        Check for fixed times and store in ``self.fixed_times``.
+        Check for fixed switch_times and store in ``self.fixed_times``.
 
         Returns
         -------

@@ -7,7 +7,7 @@ SHOW_INT_CALL = False
 
 all_calls = [
     'gcall', 'gycall', 'fcall', 'fxcall', 'init0', 'pflow', 'windup', 'jac0',
-    'init1', 'shunt', 'series', 'flows', 'connection', 'times', 'stagen',
+    'init1', 'shunt', 'series', 'flows', 'connection', 'switch_times', 'stagen',
     'dyngen', 'gmcall', 'fmcall', 'dcseries', 'opf', 'obj'
 ]
 

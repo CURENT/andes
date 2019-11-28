@@ -25,7 +25,7 @@ import numpy as np
 
 from andes.common.config import Config
 from andes.core.limiter import Limiter
-from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam
+from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import ServiceBase, ServiceConst, ExtService, ServiceOperation, ServiceRandom
@@ -122,6 +122,7 @@ class ModelData(object):
         self.num_params = OrderedDict()
         self.ref_params = OrderedDict()
         self.idx_params = OrderedDict()
+        self.timer_params = OrderedDict()
         self.n = 0
         self.idx = []
 
@@ -150,6 +151,9 @@ class ModelData(object):
             self.ref_params[key] = value
         elif isinstance(value, IdxParam):
             self.idx_params[key] = value
+
+        if isinstance(value, TimerParam):
+            self.timer_params[key] = value
 
         super(ModelData, self).__setattr__(key, value)
 
@@ -415,7 +419,8 @@ class Model(object):
         return self.__dict__[src].__dict__[attr][uid]
 
     def set(self, src, idx, attr, value):
-        pass
+        uid = self.idx2uid(idx)
+        self.__dict__[src].__dict__[attr][uid] = value
 
     def get_inputs(self, refresh=False):
         if len(self._input) == 0 or refresh:
@@ -893,6 +898,37 @@ class Model(object):
             for fun in self.__dict__[f'_v{name}']:
                 self.__dict__[f'v{name}'][idx] = fun(**kwargs)
                 idx += 1
+
+    def get_times(self):
+        """
+        Get event switch_times from `TimerParam`
+
+        Returns
+        -------
+        list
+        """
+        out = []
+        if self.n > 0:
+            for name, instance in self.timer_params.items():
+                out.append(instance.v)
+
+        return out
+
+    def timer_action(self, dae_t):
+        if self.n == 0:
+            return
+
+        action = False
+        for timer in self.timer_params.values():
+            if timer.callback is not None and (timer.activated is False):
+                ret = timer.callback(timer.is_time(dae_t))
+                timer.activated = True
+                if ret is None or (ret is True):
+                    action = True
+
+        # TODO: consider `Block` with timer
+        if action:
+            self.refresh_inputs()
 
     @property
     def class_name(self):

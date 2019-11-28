@@ -73,6 +73,7 @@ class SystemNew(object):
         self.models = OrderedDict()
         self.groups = OrderedDict()
         self.programs = OrderedDict()
+        self.switch_times = np.array([])
 
         # get and load default config file
         self.config = Config()
@@ -649,6 +650,25 @@ class SystemNew(object):
                 self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
                 self.programs[attr_name] = self.__dict__[attr_name]
 
+    def store_times(self, models=None):
+        models = self._get_models(models)
+        out = []
+        for instance in models.values():
+            out.extend(instance.get_times())
+
+        out = np.ravel(np.array(out))
+        out = np.unique(out)
+        out = out[np.where(out >= 0)]
+        out = np.sort(out)
+
+        self.switch_times = out
+        return self.switch_times
+
+    def timer_action(self, models=None):
+        models = self._get_models(models)
+        for instance in models.values():
+            instance.timer_action(self.dae.t)
+
     def _p_restore(self):
         """
         Restore parameters stored in `pin`
@@ -1171,12 +1191,12 @@ class PowerSystem(object):
 
     def get_event_times(self):
         """
-        Return event times of Fault, Breaker and other timed events
+        Return event switch_times of Fault, Breaker and other timed events
 
         Returns
         -------
         list
-            A sorted list of event times
+            A sorted list of event switch_times
         """
         times = []
 

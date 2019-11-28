@@ -27,7 +27,7 @@ class ParamBase(object):
         True if this parameter is mandatory
     """
     def __init__(self,
-                 default=None,
+                 default: Optional[Union[float, str, int]] = None,
                  name=None,
                  tex_name=None,
                  info=None,
@@ -209,6 +209,7 @@ class NumParam(ParamBase):
                  g: bool = False,
                  dc_voltage: bool = False,
                  dc_current: bool = False,
+                 timer: bool = False,
                  export: bool = True,
                  ):
         super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info, export=export)
@@ -224,7 +225,8 @@ class NumParam(ParamBase):
                              r=r,
                              g=g,
                              dc_current=dc_current,
-                             dc_voltage=dc_voltage)
+                             dc_voltage=dc_voltage,
+                             timer=timer)
 
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
@@ -275,6 +277,17 @@ class NumParam(ParamBase):
 
     def restore(self):
         self.v = self.vin
+
+
+class TimerParam(NumParam):
+    def __init__(self, **kwargs):
+        super(TimerParam, self).__init__(**kwargs)
+        self.default = -1  # default to -1 to deactivate
+        self.callback = None  # provide a callback function that takes an array of booleans
+        self.activated = False  # if this timer has been activated
+
+    def is_time(self, dae_t):
+        return np.isclose(dae_t, self.v)
 
 
 class ExtParam(NumParam):

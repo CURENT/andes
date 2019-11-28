@@ -58,8 +58,10 @@
 - [x] Fix the case when Area is not a `TDS` model but has an equation `time = dae_t` which does not get updated
  during TDS. (a non-`tds` model is not allowed to use `dae.t`)
 - [x] Implement a trapezoidal rule for numerical integration
-- [x] Implement a time-based switching model and export all switching time to `System`
-- [x] Restore compatibility with dome format
+- [x] Refactorize jacobian after critical time (works for implicit method)
+- [x] Use an iterator into `System.times` rather than deleting `times[0]`
+- [x] Implement a time-based switching model and export all switching time to `System.switch_times`
+*   Restore compatibility with dome format
 *   Sequential initialization - Reduce the data back and forth in `System.initialize()`. Maybe delay
  `link_external` for variables until they are initialized
 *   Allow for semi-implicit method formulation

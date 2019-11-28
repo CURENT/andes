@@ -152,7 +152,7 @@ class TestCVXOPTBenchmark(unittest.TestCase):
             self.spmat1 = self.spmat1 * identity
 
         t_elapsed = (time.time() - t0) / self.n_loops
-        print("spmat times identity matrix took {} s".format(t_elapsed))
+        print("spmat switch_times identity matrix took {} s".format(t_elapsed))
 
         if id(self.spmat1) == id0:
             print("  spmat1 address did not change")

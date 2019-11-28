@@ -25,9 +25,9 @@ class EventBase(ModelBase):
 
     def get_times(self):
         """
-        Return a list of occurrance times of the events
+        Return a list of occurrance switch_times of the events
 
-        :return: list of times
+        :return: list of switch_times
         """
         if not self.n:
             return list()

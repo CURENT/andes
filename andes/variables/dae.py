@@ -2,13 +2,14 @@ import logging
 from typing import Optional, Union
 from distutils.spawn import find_executable
 
-from cvxopt import matrix, spmatrix, sparse, spdiag
-
 import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 
+from cvxopt import matrix, spmatrix, sparse, spdiag
+
 from andes.common.config import Config
+from andes.core.var import VarBase
 
 from ..utils.math import ageb, aleb, aandb  # NOQA
 from ..utils.math import index  # NOQA
@@ -320,7 +321,7 @@ class DAENew(object):
 
     def plot(self,
              var,
-             idx=None,
+             idx: Optional[Union[VarBase, list, np.ndarray]] = None,
              legend: Optional[bool] = False,
              grid: Optional[bool] = False,
              left: Optional[Union[int, float]] = None,
@@ -333,6 +334,8 @@ class DAENew(object):
         # set latex option
         self.set_latex(self.config.latex)
 
+        if isinstance(idx, VarBase):
+            idx = idx.a
         if idx is None or len(idx) == 0:
             value_array = self.ts.__dict__[var]
         else:

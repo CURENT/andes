@@ -54,7 +54,7 @@ class Breaker(ModelBase):
             'u4': 'boolean',
         })
         self._mandatory.extend(['bus', 'line'])
-        self._service.extend(['times', 'time'])
+        self._service.extend(['switch_times', 'time'])
         self.param_remove('Sn')
         self._init()
 
@@ -74,7 +74,7 @@ class Breaker(ModelBase):
                 self.u[i] = 0
 
     def get_times(self):
-        """Return all the action times and times-1e-6 in a list"""
+        """Return all the action switch_times and switch_times-1e-6 in a list"""
         if not self.n:
             return []
         self.times = list(mul(self.u1, self.t1)) + \

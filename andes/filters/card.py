@@ -239,7 +239,7 @@ def run(system,
         'dcvoltage': dcvoltages,
         'r': r,
         'g': g,
-        'times': times,
+        'switch_times': times,
     }
 
     if not data:
@@ -629,7 +629,7 @@ def run(system,
         'dcvoltages': dcvoltages,
         'r': r,
         'g': g,
-        'times': times,
+        'switch_times': times,
     }
 
     for key in sorted(meta_list_ext.keys()):
