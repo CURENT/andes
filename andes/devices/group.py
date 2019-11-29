@@ -112,7 +112,7 @@ class GroupBase(object):
 
     def _check_src(self, src: str):
         if src not in self.common_vars + self.common_params:
-            raise AttributeError(f'Group <{self.class_name}> unable to get variable <{src}>')
+            raise AttributeError(f'Group <{self.class_name}> does not share property <{src}>.')
 
     def _check_idx(self, idx):
         if idx is None:
@@ -189,4 +189,7 @@ class StaticShunt(GroupBase):
 
 
 class SynGen(GroupBase):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.common_params.extend(('Sn', 'Vn'))
+        self.common_vars.extend(('omega', 'delta', 'pm'))

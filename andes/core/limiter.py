@@ -166,6 +166,13 @@ class HardLimiter(Limiter):
     def __init__(self, var, lower, upper, enable=True, **kwargs):
         super().__init__(var, lower, upper, enable=enable, **kwargs)
 
+    def set_var(self):
+        pass
+
+    def set_eq(self):
+        super().set_var()
+        self.var.e = self.var.e * self.zi
+
 
 class WindupLimiter(Limiter):
     def __init__(self, var, lower, upper, enable=True, **kwargs):
@@ -190,6 +197,12 @@ class AntiWindupLimiter(WindupLimiter):
         super().__init__(var, lower, upper, enable=enable, **kwargs)
         self.state = state if state else var
 
+    def check_var(self):
+        super().check_var()
+
+    def set_var(self):
+        pass
+
     def check_eq(self):
         self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
         self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
@@ -198,8 +211,8 @@ class AntiWindupLimiter(WindupLimiter):
                           self.zl.astype(np.bool))).astype(np.float64)
 
     def set_eq(self):
-        super(AntiWindupLimiter, self).set_var()
-        self.state.e = self.state.e * (1 - self.zu) * (1 - self.zl)
+        super().set_var()
+        self.state.e = self.state.e * self.zi
 
 
 class DeadBand(Limiter):

@@ -168,15 +168,12 @@ class SystemNew(object):
         for mdl in models.values():
             # handle external groups
             for name, instance in OrderedDict(list(mdl.cache.vars_ext.items()) +
-                                              list(mdl.params_ext.items()) +
-                                              list(mdl.services_ext.items())
+                                              list(mdl.params_ext.items())
                                               ).items():
                 ext_name = instance.model
-                if ext_name in self.groups:
-                    ext_model = self.groups[ext_name]
-                elif ext_name in self.models:
-                    ext_model = self.models[ext_name]
-                else:
+                try:
+                    ext_model = self.__dict__[ext_name]
+                except KeyError:
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
                 instance.link_external(ext_model)
@@ -244,11 +241,28 @@ class SystemNew(object):
                     self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
 
     def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        # TODO: FIXME NOW: Initialization may happen sequentially - a TG initialization may depend on Synchronous;
-        # Might need to relay data back and forth ????
-        self._call_models_method('initialize', models)
-        self.vars_to_dae()
-        self.vars_to_models()
+        if models is None:
+            models = self._models_with_flag['pflow']
+
+        for mdl in models.values():
+            # link externals first
+            for name, instance in mdl.services_ext.items():
+                ext_name = instance.model
+                try:
+                    ext_model = self.__dict__[ext_name]
+                except KeyError:
+                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+
+                instance.link_external(ext_model)
+
+            # initialize variables second
+            mdl.initialize()
+
+            # Might need to relay data back and forth ????
+            # send data back and forth
+            self.vars_to_dae()
+            self.vars_to_models()
+
         return np.hstack((self.dae.x, self.dae.y))
 
     def store_adder_setter(self, models=None):

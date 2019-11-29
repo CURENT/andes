@@ -336,6 +336,9 @@ class DAENew(object):
 
         if isinstance(idx, VarBase):
             idx = idx.a
+        elif isinstance(idx, (int, np.int64)):
+            idx = [idx]
+
         if idx is None or len(idx) == 0:
             value_array = self.ts.__dict__[var]
         else:

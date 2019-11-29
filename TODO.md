@@ -61,9 +61,9 @@
 - [x] Refactorize jacobian after critical time (works for implicit method)
 - [x] Use an iterator into `System.times` rather than deleting `times[0]`
 - [x] Implement a time-based switching model and export all switching time to `System.switch_times`
-*   Restore compatibility with dome format
 *   Sequential initialization - Reduce the data back and forth in `System.initialize()`. Maybe delay
  `link_external` for variables until they are initialized
+*   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion)
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
@@ -76,11 +76,15 @@
 ### Features
 - [x] Newton-Raphson and Newton-Krylov power flow (with handling of separated systems)
 
+### Blocks
+*   Value selector
+
 ## Version 0.7.1
 ## Milestones
 
 ### To-do bullets
 *   A working `GENROU` model with saturation function
+*   Restore compatibility with dome format
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
 

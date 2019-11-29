@@ -353,10 +353,7 @@ class Model(object):
         self.cache.add_callback('services_and_ext', self._services_and_ext)
         self.cache.add_callback('vars_ext', self._vars_ext)
 
-        # construct `self.idx` into an `IdxParam`
-        self._idx = IdxParam(model=self.class_name)
-
-        # cached dictionary of input
+        # cached dictionary of inputs
         self._input = OrderedDict()
 
     def __setattr__(self, key, value):
@@ -1024,7 +1021,6 @@ class Model(object):
     def finalize_add(self):
         for _, instance in self.num_params.items():
             instance.to_array()
-        self._idx.v = list(self.idx)
 
     def a_reset(self):
         """
