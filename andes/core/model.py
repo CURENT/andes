@@ -24,7 +24,7 @@ import logging
 import numpy as np
 
 from andes.common.config import Config
-from andes.core.limiter import Discrete
+from andes.core.discrete import Discrete
 from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
@@ -361,6 +361,8 @@ class Model(object):
             value.owner = self
             if not value.name:
                 value.name = key
+            if not value.tex_name:
+                value.tex_name = key
             if key in self.__dict__:
                 logger.warning(f"{self.class_name}: redefinition of member <{key}>")
 

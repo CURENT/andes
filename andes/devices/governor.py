@@ -2,7 +2,7 @@ from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import State, Algeb, ExtState, ExtAlgeb
 from andes.core.service import ServiceConst, ExtService
-from andes.core.limiter import HardLimiter
+from andes.core.discrete import HardLimiter
 
 
 class TGBaseData(ModelData):

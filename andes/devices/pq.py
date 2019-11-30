@@ -3,7 +3,7 @@ from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam # NOQA
 from andes.core.var import Algeb, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer  # NOQA
+from andes.core.discrete import Comparer  # NOQA
 logger = logging.getLogger(__name__)
 
 

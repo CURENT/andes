@@ -38,7 +38,7 @@ class PFlow(ProgramBase):
 
         """
         system = self.system
-        # evaluate limiters, differential, algebraic, and jacobians
+        # evaluate discrete, differential, algebraic, and jacobians
         system.e_clear()
         system.l_update_var()
         system.f_update()
@@ -131,7 +131,7 @@ class PFlow(ProgramBase):
 
         Warnings
         --------
-        The result might be wrong if limiters are in use!
+        The result might be wrong if discrete are in use!
 
         Parameters
         ----------

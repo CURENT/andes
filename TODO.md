@@ -61,15 +61,12 @@
 - [x] Refactorize jacobian after critical time (works for implicit method)
 - [x] Use an iterator into `System.times` rather than deleting `times[0]`
 - [x] Implement a time-based switching model and export all switching time to `System.switch_times`
-*   Sequential initialization - Reduce the data back and forth in `System.initialize()`. Maybe delay
- `link_external` for variables until they are initialized
+- [x] Sequential initialization 
 *   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion)
-*   Deal with two-terminal and multi-terminal devices
-*   Allow for semi-implicit method formulation
-*   Allow for semi-analytical derivation of equations
+*   Deal with two-terminal and multi-terminal devices *   Allow for semi-implicit method formulation *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
-*   Clean up the use of `vars_to_dae` and `vars_to_models` everywhere. 
+*   Clean up the use of `vars_to_dae` and `vars_to_model`
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians
@@ -78,7 +75,7 @@
 - [x] Newton-Raphson and Newton-Krylov power flow (with handling of separated systems)
 
 ### Blocks
-*   Value selector
+- [x] Value selector
 
 ## Version 0.7.1
 ## Milestones

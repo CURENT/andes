@@ -5,7 +5,9 @@ from typing import Optional  # NOQA
 class Discrete(object):
 
     def __init__(self):
-        pass
+        self.name = None
+        self.tex_name = None
+        self.owner = None
 
     def check_var(self):
         pass
@@ -58,9 +60,6 @@ class Limiter(Discrete):
 
     def __init__(self, var, lower, upper, enable=True, **kwargs):
         super().__init__()
-        self.name = None
-        self.owner = None
-
         self.var = var
         self.lower = lower
         self.upper = upper
@@ -213,6 +212,37 @@ class AntiWindupLimiter(WindupLimiter):
     def set_eq(self):
         super().set_var()
         self.state.e = self.state.e * self.zi
+
+
+class Selector(Discrete):
+    """
+    Selection of variables using the provided function.
+
+    The function should take the given number of arguments. Example function is `np.maximum.reduce`.
+
+    Names are in `s0`, `s1`, ... and `sn`
+    """
+    def __init__(self, *args, fun):
+        super().__init__()
+        self.input_vars = args
+        self.fun = fun
+        self.n = len(args)
+        self._s = [0] * self.n
+        self._inputs = None
+        self._outputs = None
+
+    def get_name(self):
+        return [f'{self.name}_s' + str(i) for i in range(len(self.input_vars))]
+
+    def get_value(self):
+        return self._s
+
+    def check_var(self):
+        # set the correct flags to 1 if it is the maximum
+        self._inputs = [self.input_vars[i].v for i in range(self.n)]
+        self._outputs = self.fun(self._inputs)
+        for i in range(self.n):
+            self._s[i] = np.equal(self._inputs[i], self._outputs).astype(int)
 
 
 class DeadBand(Limiter):

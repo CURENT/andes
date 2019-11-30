@@ -2,7 +2,7 @@ import unittest
 
 from andes.core.var import Algeb
 from andes.core.param import NumParam
-from andes.core.limiter import Comparer, SortedLimiter
+from andes.core.discrete import Comparer, SortedLimiter
 
 import numpy as np
 

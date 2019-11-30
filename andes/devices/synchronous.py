@@ -1,12 +1,12 @@
 """
 Synchronous generator classes
 """
-
+import numpy as np
 import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, Calc, ExtAlgeb  # NOQA
-from andes.core.limiter import Comparer, SortedLimiter  # NOQA
+from andes.core.discrete import Comparer, SortedLimiter, Selector  # NOQA
 from andes.core.service import ServiceConst, ExtService  # NOQA
 logger = logging.getLogger(__name__)
 
@@ -60,11 +60,12 @@ class GENBase(Model):
         # Need to be provided by specific generator models
         self.Id = Algeb(v_init='Id0', tex_name=r'I_d')  # to be completed by subclasses
         self.Iq = Algeb(v_init='Iq0', tex_name=r'I_q')  # to be completed
-        self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'v_d')
-        self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'v_q')
+
+        self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
+        self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
 
         self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'P_m')
-        self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'p_e')  # to be completed by subclasses
+        self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'P_e')  # to be completed by subclasses
         self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
 
         # ----------service consts for initialization----------
@@ -79,16 +80,23 @@ class GENBase(Model):
         self._deltac = ServiceConst(v_str='log(_E / abs(_E))', tex_name=r'\delta_c')
         self.delta0 = ServiceConst(v_str='u * im(_deltac)', tex_name=r'\delta_0')
 
-        self.vdq = ServiceConst(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='v_{dq}')
+        self.vdq = ServiceConst(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
         self.Idq = ServiceConst(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
 
         self.Id0 = ServiceConst(v_str='re(Idq)', tex_name=r'I_{d0}')
         self.Iq0 = ServiceConst(v_str='im(Idq)', tex_name=r'I_{q0}')
-        self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'v_{d0}')
-        self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'v_{q0}')
+        self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'V_{d0}')
+        self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'V_{q0}')
 
         self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'P_{m0}')
         self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
+
+        # --------------------------------------------------Experimental-----
+        self.Idq_max = Algeb(v_init='maximum(Id, Iq) - Idq_max', diag_eps=1e-6,
+                             e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
+                             tex_name='I_{dq_{max}}')
+
+        self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce)
 
     @staticmethod
     def _vf0(**kwargs):
