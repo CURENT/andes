@@ -24,7 +24,7 @@ import logging
 import numpy as np
 
 from andes.common.config import Config
-from andes.core.limiter import Limiter
+from andes.core.limiter import Discrete
 from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
@@ -284,8 +284,8 @@ class Model(object):
         # external parameters
         self.params_ext = OrderedDict()
 
-        # limiters and control blocks
-        self.limiters = OrderedDict()
+        # discrete and control blocks
+        self.discrete = OrderedDict()
         self.blocks = OrderedDict()
 
         # service/temporary variables
@@ -357,7 +357,7 @@ class Model(object):
         self._input = OrderedDict()
 
     def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, ServiceBase, Limiter, Block)):
+        if isinstance(value, (VarBase, ServiceBase, Discrete, Block)):
             value.owner = self
             if not value.name:
                 value.name = key
@@ -382,8 +382,8 @@ class Model(object):
             self.calcs[key] = value
         elif isinstance(value, ExtParam):
             self.params_ext[key] = value
-        elif isinstance(value, Limiter):
-            self.limiters[key] = value
+        elif isinstance(value, Discrete):
+            self.discrete[key] = value
         elif isinstance(value, ServiceConst):
             # only services with `v_str`
             self.services[key] = value
@@ -440,7 +440,7 @@ class Model(object):
             self._input[instance.name] = instance.v
 
         # updated every call
-        for instance in self.limiters.values():
+        for instance in self.discrete.values():
             for name, val in zip(instance.get_name(), instance.get_value()):
                 self._input[name] = val
 
@@ -455,7 +455,7 @@ class Model(object):
     def l_update_var(self):
         if self.n == 0:
             return
-        for instance in self.limiters.values():
+        for instance in self.discrete.values():
             instance.check_var()
             instance.set_var()
         self.refresh_inputs()
@@ -463,7 +463,7 @@ class Model(object):
     def l_update_eq(self):
         if self.n == 0:
             return
-        for instance in self.limiters.values():
+        for instance in self.discrete.values():
             instance.check_eq()
             instance.set_eq()
         self.refresh_inputs()
@@ -676,10 +676,11 @@ class Model(object):
         # by using `diag_eps` in Algeb definition
 
         for var in self.algebs.values():
-            if var.diag_eps == 0:
+            if var.diag_eps == 0.0:
                 continue
+            e_idx = algebs_and_ext_list.index(var.name)
             v_idx = vars_syms_list.index(var.name)
-            self.calls.__dict__[f'_igyc'].append(v_idx)
+            self.calls.__dict__[f'_igyc'].append(e_idx)
             self.calls.__dict__[f'_jgyc'].append(v_idx)
             self.calls.__dict__[f'_vgyc'].append(var.diag_eps)
 
@@ -733,7 +734,7 @@ class Model(object):
                 for row, col, val in zip(self.calls.__dict__[f'_i{j_name}{j_type}'],
                                          self.calls.__dict__[f'_j{j_name}{j_type}'],
                                          self.calls.__dict__[f'_v{j_name}{j_type}']):
-                    row_name = eq_names[j_name[0]][row]  # skip states
+                    row_name = eq_names[j_name[0]][row]  # separate states and algebs
                     col_name = var_names_list[col]
 
                     row_idx = self.__dict__[row_name].a
@@ -949,7 +950,7 @@ class Model(object):
         return OrderedDict(list(self.num_params.items()) +
                            list(self.services.items()) +
                            list(self.services_ext.items()) +
-                           list(self.limiters.items())
+                           list(self.discrete.items())
                            )
 
     def _all_params_names(self):
