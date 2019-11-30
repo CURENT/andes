@@ -126,12 +126,10 @@ class SystemNew(object):
         self.set_address()
         self.set_dae_names()
         self._collect_ref_param()
-        self._finalize_add()
+        self._list2array()
         self.calc_pu_coeff()
-        self.link_external()
         self.store_sparse_pattern()
         self.store_adder_setter()
-        self.e_clear()
 
     def reset(self):
         """
@@ -144,6 +142,7 @@ class SystemNew(object):
 
         self.dae.reset()
         self._call_models_method('a_reset', models=self.models)
+        self.e_clear()
         self._p_restore()
         self.setup()
 
@@ -161,27 +160,11 @@ class SystemNew(object):
         self.__dict__[model].add(idx=idx, **param_dict)
         group.add(idx=idx, model=self.__dict__[model])
 
-    def link_external(self, models=None):
-        if models is None:
-            models = self._models_with_flag['pflow']
-
-        for mdl in models.values():
-            # handle external groups
-            for name, instance in OrderedDict(list(mdl.cache.vars_ext.items()) +
-                                              list(mdl.params_ext.items())
-                                              ).items():
-                ext_name = instance.model
-                try:
-                    ext_model = self.__dict__[ext_name]
-                except KeyError:
-                    raise KeyError(f'<{ext_name}> is not a model or group name.')
-
-                instance.link_external(ext_model)
-
     def set_address(self, models=None):
         if models is None:
             models = self._models_with_flag['pflow']
 
+        # set internal variable addresses
         for mdl in models.values():
             if mdl.flags['address'] is True:
                 logger.debug(f'{mdl.class_name} addresses exist.')
@@ -210,6 +193,18 @@ class SystemNew(object):
             self.dae.n = n_end
 
             mdl.flags['address'] = True
+
+        # set external variable addresses
+        for mdl in models.values():
+            # handle external groups
+            for name, instance in mdl.cache.vars_ext.items():
+                ext_name = instance.model
+                try:
+                    ext_model = self.__dict__[ext_name]
+                except KeyError:
+                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+
+                instance.link_external(ext_model)
 
         # pre-allocate for names
         if len(self.dae.y_name) == 0:
@@ -298,7 +293,16 @@ class SystemNew(object):
         -------
 
         """
-        pass
+        # TODO: for each model, get external parameters with `link_external` and then calculate the pu coeff
+        for mdl in self.models.values():
+            for name, instance in mdl.params_ext.items():
+                ext_name = instance.model
+                try:
+                    ext_model = self.__dict__[ext_name]
+                except KeyError:
+                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+
+                instance.link_external(ext_model)
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         # TODO:
@@ -316,36 +320,23 @@ class SystemNew(object):
         # TODO:
         # This function should somehow return the indices and values
         # of variables that are pegged at the limit.
-
         # The limited values need to sent to solvers
         # such as `scipy.optimize.newton_krylov` to make the result correct
 
         self._call_models_method('l_update_eq', models)
+        # TODO:
+        # There is room for reducing the overhead by knowing the pegged indices
         self.vars_to_dae()
         self.vars_to_models()
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('f_update', models)
-
-        for var in self.f_adders:
-            if var.n > 0:
-                np.add.at(self.dae.f, var.a, var.e)
-        for var in self.f_setters:
-            if var.n > 0:
-                np.put(self.dae.f, var.a, var.e)
-
+        self._e_to_dae('f')
         return self.dae.f
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('g_update', models)
-
-        for var in self.g_adders:
-            if var.n > 0:
-                np.add.at(self.dae.g, var.a, var.e)
-        for var in self.g_setters:
-            if var.n > 0:
-                np.put(self.dae.g, var.a, var.e)
-
+        self._e_to_dae('g')
         return self.dae.g
 
     def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
@@ -430,22 +421,8 @@ class SystemNew(object):
 
         """
         self.dae.clear_xy()
-        # NOTE: Need to skip vars that are not initializers for re-entrance
-        for var in self.x_adders:
-            if var.v_init is None or (var.n == 0):
-                continue
-            np.add.at(self.dae.x, var.a, var.v)
-        for var in self.x_setters:
-            if var.n > 0:
-                np.put(self.dae.x, var.a, var.v)
-
-        for var in self.y_adders:
-            if var.v_init is None or (var.n == 0):
-                continue
-            np.add.at(self.dae.y, var.a, var.v)
-        for var in self.y_setters:
-            if var.n > 0:
-                np.put(self.dae.y, var.a, var.v)
+        self._v_to_dae('x')
+        self._v_to_dae('y')
 
     def vars_to_models(self):
         for var in self.y_adders + self.y_setters:
@@ -455,6 +432,52 @@ class SystemNew(object):
         for var in self.x_adders + self.x_setters:
             if var.n > 0:
                 var.v = self.dae.x[var.a]
+
+    def _v_to_dae(self, v_name):
+        """
+        Helper function for collecting variable values into dae structures `x` and `y`
+
+        Parameters
+        ----------
+        v_name
+
+        Returns
+        -------
+
+        """
+        if v_name not in ('x', 'y'):
+            raise KeyError(f'{v_name} is not a valid var name')
+
+        for var in self.__dict__[f'{v_name}_adders']:
+            # NOTE: Need to skip vars that are not initializers for re-entrance
+            if var.v_init is None or (var.n == 0):
+                continue
+            np.add.at(self.dae.__dict__[v_name], var.a, var.v)
+        for var in self.__dict__[f'{v_name}_setters']:
+            if var.n > 0:
+                np.put(self.dae.__dict__[v_name], var.a, var.v)
+
+    def _e_to_dae(self, eq_name):
+        """
+        Helper function for collecting equation values into dae structures `f` and `g`
+
+        Parameters
+        ----------
+        eq_name
+
+        Returns
+        -------
+
+        """
+        if eq_name not in ('f', 'g'):
+            raise KeyError(f'{eq_name} is not a valid eq name')
+
+        for var in self.__dict__[f'{eq_name}_adders']:
+            if var.n > 0:
+                np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
+        for var in self.__dict__[f'{eq_name}_setters']:
+            if var.n > 0:
+                np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
     @staticmethod
     def _get_pkl_path():
@@ -702,8 +725,8 @@ class SystemNew(object):
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
 
-    def _finalize_add(self):
-        self._call_models_method('finalize_add', self.models)
+    def _list2array(self):
+        self._call_models_method('list2array', self.models)
 
     def set_config(self, config=None):
         # NOTE: No need to call `set_config` for models since

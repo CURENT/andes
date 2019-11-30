@@ -365,7 +365,11 @@ class DAENew(object):
             fig = plt.figure(dpi=self.config.dpi)
             ax = plt.gca()
 
-        ax.plot(t_array, value_array)
+        ls_list = ['-', '--', '-.', ':'] * (int(value_array.shape[1] / 4) + 1)
+
+        for i in range(value_array.shape[1]):
+            ax.plot(t_array, value_array[:, i], linestyle=ls_list[i])
+
         ax.set_xlim(left=left, right=right)
         ax.ticklabel_format(useOffset=False)
 

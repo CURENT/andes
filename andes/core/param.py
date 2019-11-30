@@ -276,7 +276,7 @@ class NumParam(ParamBase):
         self.vin = np.array(self.v)
 
     def restore(self):
-        self.v = self.vin
+        self.v = np.array(self.vin)
 
 
 class TimerParam(NumParam):
@@ -284,7 +284,6 @@ class TimerParam(NumParam):
         super(TimerParam, self).__init__(**kwargs)
         self.default = -1  # default to -1 to deactivate
         self.callback = None  # provide a callback function that takes an array of booleans
-        self.activated = False  # if this timer has been activated
 
     def is_time(self, dae_t):
         return np.isclose(dae_t, self.v)

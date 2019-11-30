@@ -47,7 +47,6 @@ class TDS(ProgramBase):
 
         system.dae.resize_array()
         system.dae.clear_ts()
-        system.link_external(models=self.tds_models)
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter(models=self.pflow_tds_models)
         system.vars_to_models()

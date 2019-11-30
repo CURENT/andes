@@ -63,13 +63,13 @@ class GENBase(Model):
         self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'v_d')
         self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'v_q')
 
-        self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'p_m')
+        self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'P_m')
         self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'p_e')  # to be completed by subclasses
         self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
 
         # ----------service consts for initialization----------
-        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='p_0')
-        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='q_0')
+        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='P_0')
+        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='Q_0')
 
         # internal voltage and rotor angle calculation
         self._V = ServiceConst(v_str='v * exp(1j * a)', tex_name='V_c')
@@ -87,7 +87,7 @@ class GENBase(Model):
         self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'v_{d0}')
         self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'v_{q0}')
 
-        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'p_{m0}')
+        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'P_{m0}')
         self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
     @staticmethod

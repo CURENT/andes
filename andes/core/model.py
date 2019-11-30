@@ -917,9 +917,8 @@ class Model(object):
 
         action = False
         for timer in self.timer_params.values():
-            if timer.callback is not None and (timer.activated is False):
+            if timer.callback is not None:
                 ret = timer.callback(timer.is_time(dae_t))
-                timer.activated = True
                 if ret is None or (ret is True):
                     action = True
 
@@ -1018,7 +1017,7 @@ class Model(object):
     def get_config(self):
         return self.config.as_dict()
 
-    def finalize_add(self):
+    def list2array(self):
         for _, instance in self.num_params.items():
             instance.to_array()
 

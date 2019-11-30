@@ -64,6 +64,7 @@
 *   Sequential initialization - Reduce the data back and forth in `System.initialize()`. Maybe delay
  `link_external` for variables until they are initialized
 *   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion)
+*   Deal with two-terminal and multi-terminal devices
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
