@@ -51,7 +51,7 @@ class TDS(ProgramBase):
         system.store_adder_setter(models=self.pflow_tds_models)
         system.vars_to_models()
         system.initialize(self.tds_models)
-        system.store_times(self.tds_models)
+        system.store_switch_times(self.tds_models)
         return system.dae.xy
 
     def run_implicit(self, tspan, verbose=False):
@@ -89,7 +89,7 @@ class TDS(ProgramBase):
             # check if the next step is critical time
             if self.is_switch_time():
                 self._last_switch_t = system.switch_times[self._switch_idx]
-                system.timer_action(self.pflow_tds_models)
+                system.switch_action(self.pflow_tds_models)
 
     def _implicit_step(self, verbose=False):
         """
@@ -312,7 +312,7 @@ class TDS(ProgramBase):
         tspan = abs(config.tf - config.t0)
         tcycle = 1 / freq
 
-        self.deltatmax = min(5 * tcycle, tspan / 100.0)
+        self.deltatmax = min(2 * tcycle, tspan / 100.0)
         self.deltat = min(tcycle, tspan / 100.0)
         self.deltatmin = min(tcycle / 64, self.deltatmax / 20)
 
@@ -392,7 +392,7 @@ class TDS(ProgramBase):
         # check if the next step is critical time
         if self.is_switch_time():
             self._last_switch_t = system.switch_times[self._switch_idx]
-            system.timer_action(self.pflow_tds_models)
+            system.switch_action(self.pflow_tds_models)
 
         while True:
             system.e_clear(models=self.pflow_tds_models)

@@ -7,7 +7,7 @@ from andes.core.discrete import Comparer, SortedLimiter
 import numpy as np
 
 
-class TestComparer(unittest.TestCase):
+class TestDiscrete(unittest.TestCase):
     def setUp(self):
         self.lower = NumParam()
         self.upper = NumParam()
@@ -18,6 +18,12 @@ class TestComparer(unittest.TestCase):
         self.lower.v = np.array([-2,   -1, 0.5, 0, 0.5, 1.5,   2,   3])
 
     def test_comparer(self):
+        """
+        Tests for `Comparer` class
+        Returns
+        -------
+
+        """
         self.cmp = Comparer(self.var, self.lower, self.upper)
         self.cmp.check_var()
 
@@ -29,6 +35,13 @@ class TestComparer(unittest.TestCase):
                                  [0., 0., 0., 0., 0., 1., 1., 1.])
 
     def test_sorted_limiter(self):
+        """
+        Tests for `SortedLimiter` class
+
+        Returns
+        -------
+
+        """
         self.cmp = Comparer(self.var, self.lower, self.upper)
         self.cmp.check_var()
 

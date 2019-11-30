@@ -28,7 +28,8 @@ class PFlow(ProgramBase):
         self.A = None
         self.niter = None
         self.mis = []
-        return self.system.initialize(self.models)
+        self.system.initialize(self.models)
+        return self.system.dae.xy
 
     def nr_step(self):
         """

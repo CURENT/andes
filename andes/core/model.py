@@ -257,7 +257,7 @@ class Model(object):
 
     num_params : OrderedDict
         {name: instance} of numerical parameters, including internal
-        and external ones
+        and external onesd
     """
 
     def __init__(self, system=None, config=None):
@@ -914,7 +914,7 @@ class Model(object):
 
         return out
 
-    def timer_action(self, dae_t):
+    def switch_action(self, dae_t):
         if self.n == 0:
             return
 

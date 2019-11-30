@@ -258,8 +258,6 @@ class SystemNew(object):
             self.vars_to_dae()
             self.vars_to_models()
 
-        return np.hstack((self.dae.x, self.dae.y))
-
     def store_adder_setter(self, models=None):
         models = self._get_models(models)
 
@@ -687,7 +685,7 @@ class SystemNew(object):
                 self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
                 self.programs[attr_name] = self.__dict__[attr_name]
 
-    def store_times(self, models=None):
+    def store_switch_times(self, models=None):
         models = self._get_models(models)
         out = []
         for instance in models.values():
@@ -701,10 +699,10 @@ class SystemNew(object):
         self.switch_times = out
         return self.switch_times
 
-    def timer_action(self, models=None):
+    def switch_action(self, models=None):
         models = self._get_models(models)
         for instance in models.values():
-            instance.timer_action(self.dae.t)
+            instance.switch_action(self.dae.t)
 
     def _p_restore(self):
         """

@@ -323,7 +323,7 @@ class DAENew(object):
              var,
              idx: Optional[Union[VarBase, list, np.ndarray]] = None,
              legend: Optional[bool] = False,
-             grid: Optional[bool] = False,
+             grid: Optional[bool] = True,
              left: Optional[Union[int, float]] = None,
              right: Optional[Union[int, float]] = None,
              fig=None,
@@ -368,7 +368,10 @@ class DAENew(object):
         ls_list = ['-', '--', '-.', ':'] * (int(value_array.shape[1] / 4) + 1)
 
         for i in range(value_array.shape[1]):
-            ax.plot(t_array, value_array[:, i], linestyle=ls_list[i])
+            ax.plot(t_array,
+                    value_array[:, i],
+                    linestyle=ls_list[i],
+                    )
 
         ax.set_xlim(left=left, right=right)
         ax.ticklabel_format(useOffset=False)
