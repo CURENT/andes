@@ -58,11 +58,12 @@ class Limiter(Discrete):
         [description]
     """
 
-    def __init__(self, var, lower, upper, enable=True, **kwargs):
+    def __init__(self, var, lower, upper, origin=None, enable=True, **kwargs):
         super().__init__()
         self.var = var
         self.lower = lower
         self.upper = upper
+        self.origin = self.var if origin is None else origin
         self.enable = enable
         self.zu = 0
         self.zl = 0
@@ -78,8 +79,8 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu = np.greater_equal(self.var.v, self.upper.v).astype(np.float64)
-        self.zl = np.less_equal(self.var.v, self.lower.v).astype(np.float64)
+        self.zu = np.greater_equal(self.origin.v, self.upper.v).astype(np.float64)
+        self.zl = np.less_equal(self.origin.v, self.lower.v).astype(np.float64)
         self.zi = np.logical_not(
             np.logical_or(
                 self.zu.astype(np.bool),
@@ -165,14 +166,10 @@ class HardLimiter(Limiter):
     """
     Hard limit on an algebraic variable
     """
-    def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super().__init__(var, lower, upper, enable=enable, **kwargs)
-
-    def set_var(self):
-        pass
+    def __init__(self, var, origin, lower, upper, enable=True, **kwargs):
+        super().__init__(var, lower, upper, origin=origin, enable=enable, **kwargs)
 
     def set_eq(self):
-        super().set_var()
         self.var.e = self.var.e * self.zi
 
 
@@ -257,8 +254,8 @@ class DeadBand(Limiter):
     Not implemented yet.
 
     """
-    def __init__(self, var, center, lower, upper, enable=True):
-        super().__init__(var, lower, upper, enable=enable)
+    def __init__(self, var, origin, center, lower, upper, enable=True):
+        super().__init__(var, lower, upper, origin=origin, enable=enable)
         self.center = center
 
     def set_var(self):
@@ -267,7 +264,7 @@ class DeadBand(Limiter):
     def set_eq(self):
         if not self.enable:
             return
-        self.var.v = (1 - self.zi) * self.var.v + self.zi * self.center.v
+        self.var.v = self.var.v * (1 - self.zi) + self.center.v * self.zi
         self.var.e = self.zi * self.var.e
 
 
