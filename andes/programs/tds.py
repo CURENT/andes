@@ -1,7 +1,7 @@
 import numpy as np  # NOQA
 from collections import OrderedDict
 from andes.programs.base import ProgramBase
-from cvxopt import matrix, sparse, spdiag # NOQA
+from cvxopt import matrix, sparse, spdiag  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence
 from scipy.integrate import solve_ivp, odeint
@@ -69,13 +69,10 @@ class TDS(ProgramBase):
                 logger.error("Time step calculated to zero. Simulation terminated.")
                 break
 
-            if not self._implicit_step(verbose):
-                logger.error(f'Integration failed at t={dae.t}')
-            else:
+            if self._implicit_step(verbose):
                 # store values
                 dae.store_yt_single()
                 dae.store_x_single()
-
                 # TODO: dae.store_c_single()
 
                 # show progress in percentage
@@ -102,7 +99,6 @@ class TDS(ProgramBase):
         system = self.system
         dae = self.system.dae
 
-        mis = 1
         self.mis = []
         self.niter = 0
         self.converged = False
@@ -139,15 +135,6 @@ class TDS(ProgramBase):
             self.mis.append(mis)
             self.niter += 1
 
-            if verbose:
-                logger.info(f'Iter: {self.niter}, mis={mis:.4g}')
-                logger.error(f'dae.g mismatches:')
-                dae.print_array('g')
-                logger.error(f'Correction:')
-                dae.print_array('y', inc[dae.n: dae.n + dae.m])
-                logger.error(f'  Max y correction is {np.max(np.abs(inc[dae.n:dae.n + dae.m]))}')
-                logger.error(f'Deviation from y00')
-
             if mis <= self.config.tol:
                 self.converged = True
                 break
@@ -157,7 +144,7 @@ class TDS(ProgramBase):
                 self.busted = True
                 break
             if self.niter > self.config.max_iter:
-                logger.error(f'Maximum iteration {self.config.max_iter} reached for t={dae.t}')
+                logger.debug(f'Maximum iteration {self.config.max_iter} reached for t={dae.t}, h={self.h:.4f}')
                 break
             if mis > 1000 and (mis > 1e4 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
@@ -169,6 +156,15 @@ class TDS(ProgramBase):
             dae.y = np.array(self.y0)
             dae.f = np.array(self.f0)
             system.vars_to_models()
+
+            if verbose:
+                logger.info(f'Iter: {self.niter}, mis={mis:.4g}')
+                logger.error(f'dae.g mismatches:')
+                dae.print_array('g')
+                logger.error(f'Correction:')
+                dae.print_array('y', inc[dae.n: dae.n + dae.m])
+                logger.error(f'  Max y correction is {np.max(np.abs(inc[dae.n:dae.n + dae.m]))}')
+                logger.error(f'Deviation from y00')
 
         else:
             system.c_update()

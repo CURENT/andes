@@ -21,10 +21,10 @@ class Discrete(object):
     def set_eq(self):
         pass
 
-    def get_name(self):
+    def get_names(self):
         pass
 
-    def get_value(self):
+    def get_values(self):
         pass
 
 
@@ -95,11 +95,11 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.var.v = self.var.v * (1 - self.zu) * (1 - self.zl) + \
+        self.var.v = self.var.v * self.zi + \
             self.lower.v * self.zl + \
             self.upper.v * self.zu
 
-    def get_name(self):
+    def get_names(self):
         """
         Available symbols from this class
 
@@ -109,7 +109,7 @@ class Limiter(Discrete):
         """
         return [self.name + '_zl', self.name + '_zi', self.name + '_zu']
 
-    def get_value(self):
+    def get_values(self):
         return [self.zl, self.zi, self.zu]
 
 
@@ -162,6 +162,9 @@ class SortedLimiter(Limiter):
 
 
 class HardLimiter(Limiter):
+    """
+    Hard limit on an algebraic variable
+    """
     def __init__(self, var, lower, upper, enable=True, **kwargs):
         super().__init__(var, lower, upper, enable=enable, **kwargs)
 
@@ -231,10 +234,10 @@ class Selector(Discrete):
         self._inputs = None
         self._outputs = None
 
-    def get_name(self):
+    def get_names(self):
         return [f'{self.name}_s' + str(i) for i in range(len(self.input_vars))]
 
-    def get_value(self):
+    def get_values(self):
         return self._s
 
     def check_var(self):
@@ -254,6 +257,22 @@ class DeadBand(Limiter):
     Not implemented yet.
 
     """
+    def __init__(self, var, center, lower, upper, enable=True):
+        super().__init__(var, lower, upper, enable=enable)
+        self.center = center
 
-    def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super().__init__(var, lower, upper, enable, **kwargs)
+    def set_var(self):
+        pass
+
+    def set_eq(self):
+        if not self.enable:
+            return
+        self.var.v = (1 - self.zi) * self.var.v + self.zi * self.center.v
+        self.var.e = self.zi * self.var.e
+
+
+class NonLinearGain(Discrete):
+    """
+    Non-linear gain function
+    """
+    pass

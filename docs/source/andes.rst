@@ -6,34 +6,14 @@ Subpackages
 
 .. toctree::
 
-   andes.config
+   andes.common
    andes.core
+   andes.devices
    andes.filters
-   andes.formats
-   andes.models
-   andes.routines
-   andes.server
-   andes.utils
    andes.variables
 
 Submodules
 ----------
-
-andes.consts module
--------------------
-
-.. automodule:: andes.consts
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-andes.debug module
-------------------
-
-.. automodule:: andes.debug
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 andes.main module
 -----------------

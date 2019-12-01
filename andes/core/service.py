@@ -17,7 +17,7 @@ class ServiceBase(object):
         self.tex_name = tex_name if tex_name else name
         self.owner = None
 
-    def get_name(self):
+    def get_names(self):
         """
         Return `name` in a list
 

@@ -91,7 +91,7 @@ class ParamBase(object):
         """
         return self.property[property_name]
 
-    def get_name(self):
+    def get_names(self):
         """
         Return `name` in a list
 
@@ -169,7 +169,7 @@ class NumParam(ParamBase):
     voltage : bool
         True if the parameter is a voltage pu quantity
         under the device base
-    current: bool
+    current : bool
         True if the parameter is a current pu quantity
         under the device base
     z : bool

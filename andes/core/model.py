@@ -443,7 +443,7 @@ class Model(object):
 
         # updated every call
         for instance in self.discrete.values():
-            for name, val in zip(instance.get_name(), instance.get_value()):
+            for name, val in zip(instance.get_names(), instance.get_values()):
                 self._input[name] = val
 
         # append all variable values
@@ -944,7 +944,7 @@ class Model(object):
     def _all_vars_names(self):
         out = []
         for instance in self.cache.all_vars.values():
-            out += instance.get_name()
+            out += instance.get_names()
         return out
 
     def _all_params(self):
@@ -958,7 +958,7 @@ class Model(object):
     def _all_params_names(self):
         out = []
         for instance in self.cache.all_params.values():
-            out += instance.get_name()
+            out += instance.get_names()
         return out
 
     def _algebs_and_ext(self):

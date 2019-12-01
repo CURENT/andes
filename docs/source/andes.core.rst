@@ -12,10 +12,10 @@ andes.core.block module
    :undoc-members:
    :show-inheritance:
 
-andes.core.limiter module
--------------------------
+andes.core.discrete module
+--------------------------
 
-.. automodule:: andes.core.limiter
+.. automodule:: andes.core.discrete
    :members:
    :undoc-members:
    :show-inheritance:

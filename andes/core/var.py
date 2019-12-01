@@ -112,7 +112,7 @@ class VarBase(object):
         self.v = np.zeros(self.n)
         self.e = np.zeros(self.n)
 
-    def get_name(self):
+    def get_names(self):
         return [self.name]
 
 

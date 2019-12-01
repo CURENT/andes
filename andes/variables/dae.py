@@ -124,7 +124,7 @@ class DAENew(object):
         """
         Get the size of an array or sparse matrix based on name.
 
-        Parameter
+        Parameters
         ----------
         name : str (f, g, fx, gy, etc.)
             array/sparse name
