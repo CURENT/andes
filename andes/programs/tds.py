@@ -143,6 +143,8 @@ class TDS(ProgramBase):
                 self.niter = self.config.max_iter + 1
                 self.busted = True
                 break
+            if self.niter > 5:
+                logger.debug('debug - niter > 5')
             if self.niter > self.config.max_iter:
                 logger.debug(f'Maximum iteration {self.config.max_iter} reached for t={dae.t}, h={self.h:.4f}')
                 break
@@ -158,7 +160,7 @@ class TDS(ProgramBase):
             system.vars_to_models()
 
             if verbose:
-                logger.info(f'  Not converged, time = {dae.t:.4f}s, iter: {self.niter}, mis={mis:.4g}')
+                logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
                 # logger.error(f'dae.g mismatches:')
                 # dae.print_array('g')
                 # logger.error(f'Correction:')

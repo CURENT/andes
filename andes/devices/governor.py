@@ -22,7 +22,8 @@ class TGBase(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.update({'tds': True})
-        self.config.add({'deadband': 0})
+        self.config.add({'deadband': 0,
+                         'hardlimit': 0,})
 
         self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m')
         self.pm0 = ExtService(src='pm', model='SynGen', indexer=self.syn, tex_name='p_{m0}')
@@ -59,24 +60,19 @@ class TG2(TG2Data, TGBase):
         self.T12 = ServiceConst(v_str='T1 / T2')
         self.gain = ServiceConst(v_str='u / R', tex_name='G')
 
-        self.xg = State(tex_name='x_g', e_str='(((1 - T12) * gain * (wref0 - omega_m)) - xg) / T2',
+        self.xg = State(tex_name='x_g', e_str='(((1 - T12) * gain * (wref0 - omega)) - xg) / T2',
                         v_setter=True)
 
-        self.pnl.e_str = 'pm0 + xg + (gain * T12 * (wref0 - omega_m)) - pnl'
-        self.pout.e_str = 'pnl * plim_zi + \
-                           pmax * plim_zu + \
-                           pmin * plim_zl - \
-                           pout'
-
-        self.plim = HardLimiter(var=self.pout, origin=self.pnl, lower=self.pmin, upper=self.pmax)
+        self.pnl.e_str = 'pm0 + xg + (gain * T12 * (wref0 - omega)) - pnl'
+        self.pout.e_str = 'pnl * plim_zi + pmax * plim_zu + pmin * plim_zl - pout'
+        self.plim = HardLimiter(var=self.pout, origin=self.pnl, lower=self.pmin, upper=self.pmax,
+                                enable=self.config.hardlimit)
 
         self.omega_m = Algeb(info='Measured generator speed after deadband', tex_name=r'\omega_{m}',
                              v_init='1')
-
         self.omega_m.e_str = 'omega * (1 - omega_db_zi) + \
                               wref * omega_db_zi - \
                               omega_m'
-
         self.omega_db = DeadBand(var=self.omega_m, origin=self.omega,
                                  center=self.dbc, lower=self.dbl, upper=self.dbu,
                                  enable=self.config.deadband)

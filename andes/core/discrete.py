@@ -171,9 +171,11 @@ class HardLimiter(Limiter):
         super().__init__(var, lower, upper, origin=origin, enable=enable, **kwargs)
 
     def set_var(self):
+        super().set_var()
         pass
 
     def set_eq(self):
+        self.var.e = self.zi * self.var.e
         pass
 
 
@@ -266,7 +268,26 @@ class DeadBand(Limiter):
         self.zl = 1
         self.zu = 0
 
+    # def check_var(self):
+    #     """
+    #     Evaluate `self.zu` and `self.zl`
+    #
+    #     Returns
+    #     -------
+    #
+    #     """
+    #     if not self.enable:
+    #         return
+    #     self.zu = np.greater_equal(self.origin.v, self.upper.v)
+    #     self.zl = np.less_equal(self.origin.v, self.lower.v)
+    #     self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
+    #
+    #     self.zu = self.zu.astype(np.float64)
+    #     self.zl = self.zl.astype(np.float64)
+    #     self.zi = self.zi.astype(np.float64)
+
     def set_var(self):
+        self.var.v = self.var.v * (1 - self.zi) + self.center.v * self.zi
         pass
 
 
