@@ -119,13 +119,13 @@ class TDS(ProgramBase):
 
             # solve
             In = spdiag([1] * dae.n)
-            Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
-                         [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
+            self.Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
+                              [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
             q = dae.x - self.x0 - self.h * 0.5 * (dae.f + self.f0)
             qg = np.hstack((q, dae.g))
 
             # set new values
-            inc = self.solver.solve(Ac, -matrix(qg))
+            inc = self.solver.solve(self.Ac, -matrix(qg))
             dae.x += np.ravel(np.array(inc[:dae.n]))
             dae.y += np.ravel(np.array(inc[dae.n: dae.n + dae.m]))
             system.vars_to_models()
@@ -158,13 +158,12 @@ class TDS(ProgramBase):
             system.vars_to_models()
 
             if verbose:
-                logger.info(f'Iter: {self.niter}, mis={mis:.4g}')
-                logger.error(f'dae.g mismatches:')
-                dae.print_array('g')
-                logger.error(f'Correction:')
-                dae.print_array('y', inc[dae.n: dae.n + dae.m])
-                logger.error(f'  Max y correction is {np.max(np.abs(inc[dae.n:dae.n + dae.m]))}')
-                logger.error(f'Deviation from y00')
+                logger.info(f'  Not converged, time = {dae.t:.4f}s, iter: {self.niter}, mis={mis:.4g}')
+                # logger.error(f'dae.g mismatches:')
+                # dae.print_array('g')
+                # logger.error(f'Correction:')
+                # dae.print_array('y', inc[dae.n: dae.n + dae.m])
+                # logger.error(f'  Max y correction is {np.max(np.abs(inc[dae.n:dae.n + dae.m]))}')
 
         else:
             system.c_update()

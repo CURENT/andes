@@ -1,5 +1,7 @@
 from andes.core.param import TimerParam, IdxParam, DataParam
 from andes.core.model import Model, ModelData
+import logging
+logger = logging.getLogger(__name__)
 
 
 class TogglerData(ModelData):
@@ -26,4 +28,5 @@ class Toggler(TogglerData, Model):
                 u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
                 instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
                 action = True
+                logger.info(f'<Toggle {i}>: Applying status toggle on {self.model.v[i]} idx={self.dev.v[i]}')
         return action

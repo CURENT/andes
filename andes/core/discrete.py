@@ -79,12 +79,13 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu = np.greater_equal(self.origin.v, self.upper.v).astype(np.float64)
-        self.zl = np.less_equal(self.origin.v, self.lower.v).astype(np.float64)
-        self.zi = np.logical_not(
-            np.logical_or(
-                self.zu.astype(np.bool),
-                self.zl.astype(np.bool))).astype(np.float64)
+        self.zu = np.greater_equal(self.origin.v, self.upper.v)
+        self.zl = np.less_equal(self.origin.v, self.lower.v)
+        self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
+
+        self.zu = self.zu.astype(np.float64)
+        self.zl = self.zl.astype(np.float64)
+        self.zi = self.zi.astype(np.float64)
 
     def set_var(self):
         """
@@ -169,8 +170,11 @@ class HardLimiter(Limiter):
     def __init__(self, var, origin, lower, upper, enable=True, **kwargs):
         super().__init__(var, lower, upper, origin=origin, enable=enable, **kwargs)
 
+    def set_var(self):
+        pass
+
     def set_eq(self):
-        self.var.e = self.var.e * self.zi
+        pass
 
 
 class WindupLimiter(Limiter):
@@ -257,15 +261,13 @@ class DeadBand(Limiter):
     def __init__(self, var, origin, center, lower, upper, enable=True):
         super().__init__(var, lower, upper, origin=origin, enable=enable)
         self.center = center
+        # default state if enable is False
+        self.zi = 0
+        self.zl = 1
+        self.zu = 0
 
     def set_var(self):
         pass
-
-    def set_eq(self):
-        if not self.enable:
-            return
-        self.var.v = self.var.v * (1 - self.zi) + self.center.v * self.zi
-        self.var.e = self.zi * self.var.e
 
 
 class NonLinearGain(Discrete):

@@ -150,11 +150,11 @@ class Solver(object):
                 self._solve(self.A, self.F, self.N, self.b)
                 return self.b
             except ValueError:
-                logger.warning('Unexpected symbolic factorization.')
+                logger.debug('Unexpected symbolic factorization.')
                 self.factorize = True
                 return self.linsolve(self.A, self.b)
             except ArithmeticError:
-                logger.warning('Jacobian matrix is singular.')
+                logger.error('Jacobian matrix is singular.')
                 return np.ravel(matrix(0, self.b.size, 'd'))
 
         elif self.sparselib in ('spsolve', 'cupy'):

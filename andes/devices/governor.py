@@ -15,19 +15,19 @@ class TGBaseData(ModelData):
         self.wref0 = NumParam(info='Base speed reference', tex_name=r'\omega_{ref0}', default=1.0)
         self.dbl = NumParam(info='Deadband lower limit', tex_name='dbL', default=0.999667)
         self.dbu = NumParam(info='Deadband upper limit', tex_name='dbU', default=1.000333)
-        self.dbc = NumParam(info='Deadband center', tex_name='dbU', default=1.0)
+        self.dbc = NumParam(info='Deadband center', tex_name='dbC', default=1.0)
 
 
 class TGBase(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.update({'tds': True})
-        self.config.add({'deadband': 1})
+        self.config.add({'deadband': 0})
 
         self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m')
         self.pm0 = ExtService(src='pm', model='SynGen', indexer=self.syn, tex_name='p_{m0}')
         self.omega = ExtState(src='omega', model='SynGen', indexer=self.syn, tex_name=r'\omega')
-        self.pm = ExtAlgeb(src='pm', model='SynGen', indexer=self.syn,tex_name='P_m',
+        self.pm = ExtAlgeb(src='pm', model='SynGen', indexer=self.syn, tex_name='P_m',
                            e_str='u*(pout - pm0)')
         self.pnl = Algeb(info='Power output before hard limiter', tex_name='P_{nl}',
                          v_init='pm0')
@@ -71,12 +71,12 @@ class TG2(TG2Data, TGBase):
         self.plim = HardLimiter(var=self.pout, origin=self.pnl, lower=self.pmin, upper=self.pmax)
 
         self.omega_m = Algeb(info='Measured generator speed after deadband', tex_name=r'\omega_{m}',
-                             v_init='1', diag_eps=1e-6)
+                             v_init='1')
 
         self.omega_m.e_str = 'omega * (1 - omega_db_zi) + \
-                              dbc * omega_db_zi - \
+                              wref * omega_db_zi - \
                               omega_m'
-        self.omega_m.e_str = 'omega - omega_m'
+
         self.omega_db = DeadBand(var=self.omega_m, origin=self.omega,
                                  center=self.dbc, lower=self.dbl, upper=self.dbu,
                                  enable=self.config.deadband)
