@@ -20,7 +20,6 @@ class TDS(ProgramBase):
                                      ('fixt', 1),
                                      ('tstep', 1/30),  # suggested step size
                                      ('max_iter', 20),
-                                     ('h_max', 0.1),
                                      )))
         self.tds_models = system.get_models_with_flag('tds')
         self.pflow_tds_models = system.get_models_with_flag(('tds', 'pflow'))
@@ -161,11 +160,6 @@ class TDS(ProgramBase):
 
             if verbose:
                 logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
-                # logger.error(f'dae.g mismatches:')
-                # dae.print_array('g')
-                # logger.error(f'Correction:')
-                # dae.print_array('y', inc[dae.n: dae.n + dae.m])
-                # logger.error(f'  Max y correction is {np.max(np.abs(inc[dae.n:dae.n + dae.m]))}')
 
         else:
             system.c_update()
@@ -309,7 +303,7 @@ class TDS(ProgramBase):
         tspan = abs(config.tf - config.t0)
         tcycle = 1 / freq
 
-        self.deltatmax = min(2 * tcycle, tspan / 100.0)
+        self.deltatmax = min(3 * tcycle, tspan / 100.0)
         self.deltat = min(tcycle, tspan / 100.0)
         self.deltatmin = min(tcycle / 64, self.deltatmax / 20)
 

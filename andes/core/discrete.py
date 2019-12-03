@@ -172,11 +172,9 @@ class HardLimiter(Limiter):
 
     def set_var(self):
         super().set_var()
-        pass
 
     def set_eq(self):
         self.var.e = self.zi * self.var.e
-        pass
 
 
 class WindupLimiter(Limiter):
@@ -264,31 +262,56 @@ class DeadBand(Limiter):
         super().__init__(var, lower, upper, origin=origin, enable=enable)
         self.center = center
         # default state if enable is False
-        self.zi = 0
-        self.zl = 1
-        self.zu = 0
+        self.zi = 0.
+        self.zl = 0.
+        self.zu = 0.
+        self.zur = 0.
+        self.zlr = 0.
 
-    # def check_var(self):
-    #     """
-    #     Evaluate `self.zu` and `self.zl`
-    #
-    #     Returns
-    #     -------
-    #
-    #     """
-    #     if not self.enable:
-    #         return
-    #     self.zu = np.greater_equal(self.origin.v, self.upper.v)
-    #     self.zl = np.less_equal(self.origin.v, self.lower.v)
-    #     self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
-    #
-    #     self.zu = self.zu.astype(np.float64)
-    #     self.zl = self.zl.astype(np.float64)
-    #     self.zi = self.zi.astype(np.float64)
+    def check_var(self):
+        """
+        Evaluate `self.zu` and `self.zl`
+
+        Returns
+        -------
+
+        """
+        if not self.enable:
+            return
+        zu = np.greater(self.origin.v, self.upper.v)
+        zl = np.less(self.origin.v, self.lower.v)
+        zi = np.logical_not(np.logical_or(zu, zl))
+
+        # square return dead band
+        # Upper return: 1) set when self.zu -> zi; 2) hold when self.zi -> zi; 3) clear otherwise
+        self.zur = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
+        self.zlr = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
+
+        self.zu = zu.astype(np.float64)
+        self.zl = zl.astype(np.float64)
+        self.zi = zi.astype(np.float64)
 
     def set_var(self):
-        self.var.v = self.var.v * (1 - self.zi) + self.center.v * self.zi
+        self.var.v = self.var.v * (1 - self.zi) + self.zur * self.upper.v + self.zlr * self.lower.v
         pass
+
+    def set_eq(self):
+        self.var.e = self.var.e * (1 - self.zi)
+
+    def get_names(self):
+        """
+        Available symbols from this class
+
+        Returns
+        -------
+
+        """
+        return [self.name + '_zl', self.name + '_zi', self.name + '_zu',
+                self.name + '_zur', self.name + '_zlr']
+
+    def get_values(self):
+        return [self.zl, self.zi, self.zu,
+                self.zur, self.zlr]
 
 
 class NonLinearGain(Discrete):

@@ -320,22 +320,21 @@ class SystemNew(object):
         # of variables that are pegged at the limit.
         # The limited values need to sent to solvers
         # such as `scipy.optimize.newton_krylov` to make the result correct
+        # There is room for reducing the overhead by knowing the pegged indices
 
         self._call_models_method('l_update_eq', models)
-        # TODO:
-        # There is room for reducing the overhead by knowing the pegged indices
+
         self.vars_to_dae()
         self.vars_to_models()
 
+        self._e_to_dae('f')
+        self._e_to_dae('g')
+
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('f_update', models)
-        self._e_to_dae('f')
-        return self.dae.f
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('g_update', models)
-        self._e_to_dae('g')
-        return self.dae.g
 
     def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
         self._call_models_method('c_update', models)
@@ -353,11 +352,14 @@ class SystemNew(object):
                 for row, col, val in mdl.zip_ijv(j_name):
                     # TODO: use `spmatrix.ipadd` if available
                     # TODO: fix `ipadd` to get rid of type checking
+                    if isinstance(val, np.float64):
+                        # Workaround for CVXOPT's handling of np.float64
+                        val = float(val)
                     if isinstance(val, (int, float)) or len(val) > 0:
                         try:
                             self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
                         except TypeError as e:
-                            logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, '
+                            logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
                                          f'j_size={j_size}')
                             raise e
 
