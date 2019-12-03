@@ -87,20 +87,6 @@ class Limiter(Discrete):
         self.zl = self.zl.astype(np.float64)
         self.zi = self.zi.astype(np.float64)
 
-    def set_var(self):
-        """
-        Set the value to the limit
-
-        Returns
-        -------
-
-        """
-        if not self.enable:
-            return
-        self.var.v = self.var.v * self.zi + \
-            self.lower.v * self.zl + \
-            self.upper.v * self.zu
-
     def get_names(self):
         """
         Available symbols from this class
@@ -122,10 +108,7 @@ class Comparer(Limiter):
     Same comparison algorithm as the Limiter. But the comparer
     does not set the limit value.
     """
-
-    def set_var(self):
-        # empty set_value function
-        pass
+    pass
 
 
 class SortedLimiter(Limiter):
@@ -170,12 +153,6 @@ class HardLimiter(Limiter):
     def __init__(self, var, origin, lower, upper, enable=True, **kwargs):
         super().__init__(var, lower, upper, origin=origin, enable=enable, **kwargs)
 
-    def set_var(self):
-        super().set_var()
-
-    def set_eq(self):
-        self.var.e = self.zi * self.var.e
-
 
 class WindupLimiter(Limiter):
     def __init__(self, var, lower, upper, enable=True, **kwargs):
@@ -201,12 +178,11 @@ class AntiWindupLimiter(WindupLimiter):
         self.state = state if state else var
 
     def check_var(self):
-        super().check_var()
-
-    def set_var(self):
+        # defer `check_var` to `check_eq`
         pass
 
     def check_eq(self):
+        super().check_var()
         self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
         self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
         self.zi = np.logical_not(
@@ -214,7 +190,6 @@ class AntiWindupLimiter(WindupLimiter):
                           self.zl.astype(np.bool))).astype(np.float64)
 
     def set_eq(self):
-        super().set_var()
         self.state.e = self.state.e * self.zi
 
 
@@ -252,11 +227,6 @@ class Selector(Discrete):
 class DeadBand(Limiter):
     """
     Deadband class with a range threshold
-
-    Warnings
-    --------
-    Not implemented yet.
-
     """
     def __init__(self, var, origin, center, lower, upper, enable=True):
         super().__init__(var, lower, upper, origin=origin, enable=enable)
@@ -290,13 +260,6 @@ class DeadBand(Limiter):
         self.zu = zu.astype(np.float64)
         self.zl = zl.astype(np.float64)
         self.zi = zi.astype(np.float64)
-
-    def set_var(self):
-        self.var.v = self.var.v * (1 - self.zi) + self.zur * self.upper.v + self.zlr * self.lower.v
-        pass
-
-    def set_eq(self):
-        self.var.e = self.var.e * (1 - self.zi)
 
     def get_names(self):
         """

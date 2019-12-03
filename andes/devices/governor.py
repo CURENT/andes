@@ -64,8 +64,9 @@ class TG2(TG2Data, TGBase):
                         v_setter=True)
 
         self.pnl.e_str = 'pm0 + xg + (gain * T12 * omega_dm) - pnl'
-        # self.pout.e_str = 'pnl * plim_zi + pmax * plim_zu + pmin * plim_zl - pout'
-        self.pout.e_str = 'pnl - pout'
+
+        self.pout.e_str = 'pnl * plim_zi + pmax * plim_zu + pmin * plim_zl - pout'
+
         self.plim = HardLimiter(var=self.pout, origin=self.pnl, lower=self.pmin, upper=self.pmax,
                                 enable=self.config.hardlimit)
 
@@ -75,12 +76,12 @@ class TG2(TG2Data, TGBase):
         self.omega_dm = Algeb(info='Measured speed deviation after dead band', tex_name=r'\omega_{m}',
                               v_init='0')
 
-        # self.omega_dm.e_str = '(1 - omega_db_zi) * omega_d + \
-        #                         omega_db_zlr * dbl + \
-        #                         omega_db_zur * dbu - \
-        #                         omega_dm'
+        self.omega_dm.e_str = '(1 - omega_db_zi) * omega_d + \
+                                omega_db_zlr * dbl + \
+                                omega_db_zur * dbu - \
+                                omega_dm'
 
-        self.omega_dm.e_str = 'omega_d - omega_dm'
+        # self.omega_dm.e_str = 'omega_d - omega_dm'
 
         self.omega_db = DeadBand(var=self.omega_dm, origin=self.omega_d,
                                  center=self.dbc, lower=self.dbl, upper=self.dbu,

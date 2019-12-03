@@ -303,29 +303,10 @@ class SystemNew(object):
                 instance.link_external(ext_model)
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        # TODO:
-        # This function should somehow return the indices and values
-        # of variables that are pegged at the limit.
-
-        # The limited values need to sent to solvers
-        # such as `scipy.optimize.newton_krylov` to make the result correct
-
         self._call_models_method('l_update_var', models)
-        self.vars_to_dae()
-        self.vars_to_models()
 
     def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        # TODO:
-        # This function should somehow return the indices and values
-        # of variables that are pegged at the limit.
-        # The limited values need to sent to solvers
-        # such as `scipy.optimize.newton_krylov` to make the result correct
-        # There is room for reducing the overhead by knowing the pegged indices
-
         self._call_models_method('l_update_eq', models)
-
-        self.vars_to_dae()
-        self.vars_to_models()
 
         self._e_to_dae('f')
         self._e_to_dae('g')
