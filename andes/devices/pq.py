@@ -34,7 +34,7 @@ class PQ(PQData, Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')
 
-        self.vcmp = Comparer(var=self.v, lower=self.vmin, upper=self.vmax,
+        self.vcmp = Comparer(u=self.v, lower=self.vmin, upper=self.vmax,
                              enable=self.config.pq2z)
 
         self.a.e_str = "u * (p0 * vcmp_zi + \

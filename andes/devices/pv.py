@@ -61,7 +61,7 @@ class PVModel(Model):
         self.q = Algeb(info='actual reactive power generation', unit='pu', tex_name='q', diag_eps=1e-6)
 
         # TODO: implement switching starting from the second iteration
-        self.qlim = SortedLimiter(var=self.q, lower=self.qmin, upper=self.qmax,
+        self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
                                   enable=self.config.pv2pq,
                                   n_select=self.config.npv2pq)
 
@@ -98,7 +98,7 @@ class Slack(SlackData, PVModel):
         self.a.v_setter = True
         self.a.v_init = 'a0'
 
-        self.plim = SortedLimiter(var=self.p, lower=self.pmin, upper=self.pmax)
+        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax)
 
         self.p.e_str = "u * (plim_zi * (a0 - a) + \
                              plim_zl * (pmin - p) + \

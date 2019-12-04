@@ -31,7 +31,7 @@ class TGBase(Model):
         self.group = 'Governor'
         self.flags.update({'tds': True})
         self.config.add({'deadband': 0,
-                         'hardlimit': 0})
+                         'hardlimit': 1})
 
         self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m',
                            info='Rated power from generator', unit='MVA')
@@ -71,11 +71,10 @@ class TG2(TG2Data, TGBase):
 
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}', v_init='0', e_str='(wref - omega) - w_d')
+        self.w_db = DeadBand(u=self.w_d, center=self.dbc, lower=self.dbl, upper=self.dbu,
+                             enable=self.config.deadband)
         self.w_dm = Algeb(info='Measured speed deviation after dead band', tex_name=r'\omega_{dm}',
                           v_init='0')
-        self.w_db = DeadBand(var=self.w_dm, origin=self.w_d,
-                             center=self.dbc, lower=self.dbl, upper=self.dbu,
-                             enable=self.config.deadband)
         self.w_dm.e_str = '(1 - w_db_zi) * w_d + \
                             w_db_zlr * dbl + \
                             w_db_zur * dbu - \
@@ -85,7 +84,7 @@ class TG2(TG2Data, TGBase):
                            v_init='0', e_str='gain * w_dm - w_dmg')
         self.leadlag = LeadLag(u=self.w_dmg, T1=self.T1, T2=self.T2)
 
-        self.plim = HardLimiter(var=self.pout, origin=self.pnl, lower=self.pmin, upper=self.pmax,
+        self.plim = HardLimiter(u=self.pnl, lower=self.pmin, upper=self.pmax,
                                 enable=self.config.hardlimit)
 
         self.pnl.e_str = 'pm0 + leadlag_y - pnl'

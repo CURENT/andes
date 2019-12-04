@@ -62,12 +62,14 @@
 - [x] Use an iterator into `System.times` rather than deleting `times[0]`
 - [x] Implement a time-based switching model and export all switching time to `System.switch_times`
 - [x] Sequential initialization 
-*   Limiter in PI controller
-*   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion)
-*   Deal with two-terminal and multi-terminal devices *   Allow for semi-implicit method formulation *   Allow for semi-analytical derivation of equations
+- [x] Limiter in PI controller
+- [x] Clean up the use of `vars_to_dae` and `vars_to_model` 
+*   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
+*   Deal with two-terminal and multi-terminal devices
+*   Allow for semi-implicit method formulation
+*   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
-*   Clean up the use of `vars_to_dae` and `vars_to_model`
 *   LaTeX names in blocks and limiters
 
 ### Examples
@@ -90,4 +92,4 @@
 
 ## Later Versions
 *   Solve non-linear initialization equations
-*   Find a workaround for IDA
+*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)

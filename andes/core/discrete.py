@@ -40,8 +40,8 @@ class Limiter(Discrete):
 
     Parameters
     ----------
-    var : VarBase
-        Variable instance
+    u : VarBase
+        Input Variable instance
     lower : ParamBase
         Parameter instance for the lower limit
     upper : ParamBase
@@ -56,14 +56,19 @@ class Limiter(Discrete):
         Flags for within the limits
     zu : array-like
         Flags for violating the upper limit
+
+    Notes
+    -----
+    One common pitfall is to confuse the output and input variables. The correct variable for input `u` should
+    be the variable *before* the limiter. The output variable is not involved in limiter classes; they are
+    handled in the equation associated with the output variable.
     """
 
-    def __init__(self, var, lower, upper, origin=None, enable=True, **kwargs):
+    def __init__(self, u, lower, upper, enable=True):
         super().__init__()
-        self.var = var
+        self.u = u
         self.lower = lower
         self.upper = upper
-        self.origin = self.var if origin is None else origin
         self.enable = enable
         self.zu = 0
         self.zl = 0
@@ -79,8 +84,8 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu = np.greater_equal(self.origin.v, self.upper.v)
-        self.zl = np.less_equal(self.origin.v, self.lower.v)
+        self.zu = np.greater_equal(self.u.v, self.upper.v)
+        self.zl = np.less_equal(self.u.v, self.lower.v)
         self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
 
         self.zu = self.zu.astype(np.float64)
@@ -117,11 +122,11 @@ class SortedLimiter(Limiter):
 
     """
 
-    def __init__(self, var, lower, upper, enable=True,
+    def __init__(self, u, lower, upper, enable=True,
                  n_select: Optional[int] = None,
                  **kwargs):
 
-        super().__init__(var, lower, upper, enable=enable, **kwargs)
+        super().__init__(u, lower, upper, enable=enable, **kwargs)
         self.n_select = int(n_select) if n_select else 0
 
     def check_var(self):
@@ -130,13 +135,13 @@ class SortedLimiter(Limiter):
         super().check_var()
 
         if self.n_select is not None and self.n_select > 0:
-            asc = np.argsort(self.var.v - self.lower.v)   # ascending order
-            desc = np.argsort(self.upper.v - self.var.v)
+            asc = np.argsort(self.u.v - self.lower.v)   # ascending order
+            desc = np.argsort(self.upper.v - self.u.v)
 
             lowest_n = asc[:self.n_select]
             highest_n = desc[:self.n_select]
 
-            reset_in = np.ones(self.var.v.shape)
+            reset_in = np.ones(self.u.v.shape)
             reset_in[lowest_n] = 0
             reset_in[highest_n] = 0
             reset_out = 1 - reset_in
@@ -150,13 +155,13 @@ class HardLimiter(Limiter):
     """
     Hard limit on an algebraic variable
     """
-    def __init__(self, var, origin, lower, upper, enable=True, **kwargs):
-        super().__init__(var, lower, upper, origin=origin, enable=enable, **kwargs)
+    def __init__(self, u, lower, upper, enable=True, **kwargs):
+        super().__init__(u, lower, upper, enable=enable, **kwargs)
 
 
 class WindupLimiter(Limiter):
-    def __init__(self, var, lower, upper, enable=True, **kwargs):
-        super().__init__(var, lower, upper, enable=enable, **kwargs)
+    def __init__(self, u, lower, upper, enable=True, **kwargs):
+        super().__init__(u, lower, upper, enable=enable, **kwargs)
 
 
 class AntiWindupLimiter(WindupLimiter):
@@ -173,9 +178,9 @@ class AntiWindupLimiter(WindupLimiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, var, lower, upper, enable=True, state=None, **kwargs):
-        super().__init__(var, lower, upper, enable=enable, **kwargs)
-        self.state = state if state else var
+    def __init__(self, u, lower, upper, enable=True, state=None, **kwargs):
+        super().__init__(u, lower, upper, enable=enable, **kwargs)
+        self.state = state if state else u
 
     def check_var(self):
         # defer `check_var` to `check_eq`
@@ -230,10 +235,8 @@ class DeadBand(Limiter):
 
     Parameters
     ----------
-    var
-        The post-deadband algebraic variable instance
-    origin
-        The pre-deadband variable instance
+    u
+        The pre-deadband input variable
     center : NumParam
         Neutral value of the output
     lower : NumParam
@@ -266,28 +269,27 @@ class DeadBand(Limiter):
     --------
 
     Exported deadband flags need to be used in the algebraic equation corresponding to the post-deadband variable.
-    Assume the pre-deadband variable is `origin`, and the post-deadband variable is `var`. First define a
+    Assume the pre-deadband input variable is `var_in` and the post-deadband variable is `var_out`. First, define a
     deadband instance `db` in the model using ::
 
-        self.db = DeadBand(var=self.var, origin=self.origin,
-                           center=self.dbc, lower=self.dbl, upper=self.dbu)
+        self.db = DeadBand(u=self.var_in, center=self.dbc, lower=self.dbl, upper=self.dbu)
 
     To implement a no-memory deadband whose output returns to center when the input is within the band,
     the equation for `var` can be written as ::
 
-        var.e_str = 'origin * (1 - db_zi) + (dbc * db_zi) - var'
+        var_out.e_str = 'var_in * (1 - db_zi) + (dbc * db_zi) - var_out'
 
     To implement a deadband whose output is pegged at the nearest deadband bounds, the equation for `var` can be
     provided as ::
 
-        var.e_str = 'origin * (1 - db_zi) + dbl * db_zlr + dbu * db_zur - var'
+        var_out.e_str = 'var_in * (1 - db_zi) + dbl * db_zlr + dbu * db_zur - var_out'
 
     """
-    def __init__(self, var, origin, center, lower, upper, enable=True):
+    def __init__(self, u, center, lower, upper, enable=True):
         """
 
         """
-        super().__init__(var, lower, upper, origin=origin, enable=enable)
+        super().__init__(u, lower, upper, enable=enable)
         self.center = center
         # default state if enable is False
         self.zi = 0.
@@ -301,10 +303,10 @@ class DeadBand(Limiter):
         Updates five flags: zi, zu, zl; zur, and zlr based on the following rules
 
         zu:
-          1 if input.v > upper.v; 0 otherwise
+          1 if u > upper; 0 otherwise.
 
         zl:
-          1 if input.v < lower.v; 0 otherwise
+          1 if u < lower; 0 otherwise.
         zi:
           not(zu or zl);
 
@@ -320,8 +322,8 @@ class DeadBand(Limiter):
         """
         if not self.enable:
             return
-        zu = np.greater(self.origin.v, self.upper.v)
-        zl = np.less(self.origin.v, self.lower.v)
+        zu = np.greater(self.u.v, self.upper.v)
+        zl = np.less(self.u.v, self.lower.v)
         zi = np.logical_not(np.logical_or(zu, zl))
 
         # square return dead band
