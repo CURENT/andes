@@ -11,10 +11,10 @@ class TestDiscrete(unittest.TestCase):
     def setUp(self):
         self.lower = NumParam()
         self.upper = NumParam()
-        self.var = Algeb()
+        self.u = Algeb()
 
         self.upper.v = np.array([2,    2,   2, 2,   2,   2, 2.8, 3.9])
-        self.var.v = np.array([-3, -1.1,  -5, 0,   1,   2,   3,  10])
+        self.u.v = np.array([-3, -1.1,  -5, 0,   1,   2,   3,  10])
         self.lower.v = np.array([-2,   -1, 0.5, 0, 0.5, 1.5,   2,   3])
 
     def test_comparer(self):
@@ -24,7 +24,7 @@ class TestDiscrete(unittest.TestCase):
         -------
 
         """
-        self.cmp = Comparer(self.var, self.lower, self.upper)
+        self.cmp = Comparer(self.u, self.lower, self.upper)
         self.cmp.check_var()
 
         self.assertSequenceEqual(self.cmp.zl.tolist(),
@@ -42,10 +42,10 @@ class TestDiscrete(unittest.TestCase):
         -------
 
         """
-        self.cmp = Comparer(self.var, self.lower, self.upper)
+        self.cmp = Comparer(self.u, self.lower, self.upper)
         self.cmp.check_var()
 
-        self.rcmp = SortedLimiter(self.var, self.lower, self.upper, n_select=1)
+        self.rcmp = SortedLimiter(self.u, self.lower, self.upper, n_select=1)
         self.rcmp.check_var()
 
         self.assertSequenceEqual(self.rcmp.zl.tolist(),
@@ -56,7 +56,7 @@ class TestDiscrete(unittest.TestCase):
                                  [0., 0., 0., 0., 0., 0., 0., 1.])
 
         # test when no `n_select` is specified
-        self.rcmp_noselect = SortedLimiter(self.var, self.lower, self.upper)
+        self.rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper)
         self.rcmp_noselect.check_var()
 
         self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),
@@ -67,7 +67,7 @@ class TestDiscrete(unittest.TestCase):
                                  self.cmp.zu.tolist())
 
         # test when no `n_select` is over range
-        self.rcmp_noselect = SortedLimiter(self.var, self.lower, self.upper,
+        self.rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper,
                                            n_select=999)
         self.rcmp_noselect.check_var()
 
