@@ -31,12 +31,14 @@ class ParamBase(object):
                  name=None,
                  tex_name=None,
                  info=None,
+                 unit=None,
                  mandatory: bool = False,
                  export: bool = True):
         self.name = name
         self.default = default
         self.tex_name = tex_name if tex_name is not None else name
         self.info = info
+        self.unit = unit
         self.owner = None
         self.export = export
 
@@ -101,6 +103,10 @@ class ParamBase(object):
             A list only containing the name of the parameter
         """
         return [self.name]
+
+    @property
+    def class_name(self):
+        return self.__class__.__name__
 
 
 class DataParam(ParamBase):
@@ -212,8 +218,8 @@ class NumParam(ParamBase):
                  timer: bool = False,
                  export: bool = True,
                  ):
-        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info, export=export)
-        self.unit = unit
+        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info,
+                                       unit=unit, export=export)
 
         self.property = dict(non_zero=non_zero,
                              mandatory=mandatory,

@@ -158,6 +158,9 @@ class GroupBase(object):
 
         return idx
 
+    def doc(self):
+        return ''
+
 
 class Undefined(GroupBase):
     pass
@@ -193,3 +196,9 @@ class SynGen(GroupBase):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn'))
         self.common_vars.extend(('omega', 'delta', 'pm'))
+
+
+class Governor(GroupBase):
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('pout',))

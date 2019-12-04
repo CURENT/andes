@@ -9,25 +9,34 @@ class TGBaseData(ModelData):
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen', info='Synchronous generator idx', mandatory=True)
-        self.R = NumParam(info='Speed regulation gain', tex_name='R', default=0.05)
-        self.pmax = NumParam(info='Maximum power output', tex_name='p_{max}', power=True, default=999.0)
-        self.pmin = NumParam(info='Minimum power output', tex_name='p_{min}', power=True, default=0.0)
-        self.wref0 = NumParam(info='Base speed reference', tex_name=r'\omega_{ref0}', default=1.0)
-        self.dbl = NumParam(info='Deadband lower limit', tex_name='dbL', default=-0.0001)
-        self.dbu = NumParam(info='Deadband upper limit', tex_name='dbU', default=0.0001)
-        self.dbc = NumParam(info='Deadband center', tex_name='dbC', default=0.0)
+        self.R = NumParam(info='Speed regulation gain', tex_name='R', default=0.05, unit='pu')
+        self.pmax = NumParam(info='Maximum power output', tex_name='p_{max}', power=True, default=999.0,
+                             unit='pu')
+        self.pmin = NumParam(info='Minimum power output', tex_name='p_{min}', power=True, default=0.0,
+                             unit='pu')
+        self.wref0 = NumParam(info='Base speed reference', tex_name=r'\omega_{ref0}', default=1.0,
+                              unit='pu')
+        self.dbl = NumParam(info='Deadband lower limit', tex_name='dbL', default=-0.0001,
+                            unit='pu')
+        self.dbu = NumParam(info='Deadband upper limit', tex_name='dbU', default=0.0001,
+                            unit='pu')
+        self.dbc = NumParam(info='Deadband neutral value', tex_name='dbC', default=0.0,
+                            unit='pu')
 
 
 class TGBase(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
+        self.group = 'Governor'
         self.flags.update({'tds': True})
         self.config.add({'deadband': 0,
                          'hardlimit': 0})
 
-        self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m')
+        self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m',
+                           info='Rated power from generator', unit='MVA')
         self.pm0 = ExtService(src='pm', model='SynGen', indexer=self.syn, tex_name='p_{m0}')
-        self.omega = ExtState(src='omega', model='SynGen', indexer=self.syn, tex_name=r'\omega')
+        self.omega = ExtState(src='omega', model='SynGen', indexer=self.syn, tex_name=r'\omega',
+                              info='Generator speed')
         self.pm = ExtAlgeb(src='pm', model='SynGen', indexer=self.syn, tex_name='P_m',
                            e_str='u*(pout - pm0)')
         self.pnl = Algeb(info='Power output before hard limiter', tex_name='P_{nl}',
@@ -61,7 +70,7 @@ class TG2(TG2Data, TGBase):
         self.gain = ServiceConst(v_str='u / R', tex_name='G')
 
         self.xg = State(tex_name='x_g', e_str='(((1 - T12) * gain * omega_dm) - xg) / T2',
-                        v_setter=True)
+                        v_setter=True, info='Intermediate state in washout filter')
 
         self.pnl.e_str = 'pm0 + xg + (gain * T12 * omega_dm) - pnl'
 
@@ -80,8 +89,6 @@ class TG2(TG2Data, TGBase):
                                 omega_db_zlr * dbl + \
                                 omega_db_zur * dbu - \
                                 omega_dm'
-
-        # self.omega_dm.e_str = 'omega_d - omega_dm'
 
         self.omega_db = DeadBand(var=self.omega_dm, origin=self.omega_d,
                                  center=self.dbc, lower=self.dbl, upper=self.dbu,

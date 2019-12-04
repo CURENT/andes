@@ -115,6 +115,10 @@ class VarBase(object):
     def get_names(self):
         return [self.name]
 
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
 
 class Algeb(VarBase):
     """

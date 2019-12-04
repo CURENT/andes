@@ -30,6 +30,7 @@ from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import ServiceBase, ServiceConst, ExtService, ServiceOperation, ServiceRandom
 from andes.common.operation import list_flatten
+from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
 pd = None
@@ -1078,3 +1079,104 @@ class Model(object):
         -------
         """
         pass
+
+    def _param_doc(self):
+        """
+        Export formatted model documentation as a string
+
+        Returns
+        -------
+        str
+        """
+        # parameter documentation
+
+        title = f'Parameters of Model <{self.class_name}>, Group=<{self.group}>'
+        table = Tab(title=title, descr=self.__doc__)
+        rows = []
+        for p in self.params.values():
+            property_list = []
+            for key, val in p.property.items():
+                if val is True:
+                    property_list.append(key)
+            property_str = ','.join(property_list)
+            rows.append((p.class_name, p.name, p.info, p.default, p.unit, property_str))
+
+        table.add_rows(rows, header=False)
+        table.header(('Type', 'Parameter', 'Description', 'Default', 'Unit', 'Properties'))
+
+        return table.draw()
+
+    def _var_doc(self):
+        # variable documentation
+        title = f'Variables of Model <{self.class_name}>, Group=<{self.group}>'
+        table = Tab(title=title, descr=self.__doc__)
+
+        rows = []
+        for var in self.cache.all_vars.values():
+            all_properties = ['v_init', 'v_setter', 'e_setter']
+            property_list = []
+            for item in all_properties:
+                if (var.__dict__[item] is not None) and (var.__dict__[item] is not False):
+                    property_list.append(item)
+            property_str = ','.join(property_list)
+            rows.append((var.class_name, var.name, var.info, var.unit, property_str))
+
+        table.add_rows(rows, header=False)
+        table.header(('Type', 'Name', 'Description', 'Unit', 'Properties'))
+
+        return table.draw()
+
+    def _eq_doc(self):
+        # equation documentation
+        title = f'Equations of Model <{self.class_name}>, Group=<{self.group}>'
+        table = Tab(title=title, descr=self.__doc__)
+
+        rows = []
+        for var in self.cache.all_vars.values():
+            rows.append((var.class_name, var.name, var.v_init, var.v_setter, var.e_str, ))
+
+        table.add_rows(rows, header=False)
+        table.header(('Type', 'Name', 'Initial Value', 'V Setter', 'Equation (x\'=f or g=0)'))
+
+        return table.draw()
+
+    def _service_doc(self):
+        title = f'Service of Model <{self.class_name}>, Group=<{self.group}>'
+        table = Tab(title=title, descr=self.__doc__)
+
+        rows = []
+        for var in self.services.values():
+            rows.append((var.name,
+                         var.v_str if (var.v_str is not None) else var.v_numeric,
+                         var.class_name))
+
+        table.add_rows(rows, header=False)
+        table.header(('Name', 'Value Equation or Callback', 'Type'))
+        return table.draw()
+
+    def _discrete_doc(self):
+        title = f'Discrete Components of Model <{self.class_name}>, Group=<{self.group}>'
+        table = Tab(title=title, descr=self.__doc__)
+        rows = []
+        for var in self.discrete.values():
+            rows.append((var.class_name, var.name,
+                         var.var.name if hasattr(var, 'var') else '',
+                         var.upper.name if hasattr(var, 'upper') else '',
+                         var.lower.name if hasattr(var, 'lower') else ''
+                         ))
+
+        table.add_rows(rows, header=False)
+        table.header(('Type', 'Name', 'Output', 'Upper Bound', 'Lower Bound'))
+        return table.draw()
+
+    def _block_doc(self):
+        return ''
+
+    def doc(self):
+        out = self._param_doc() + \
+              self._var_doc() + \
+              self._eq_doc() + \
+              self._service_doc() + \
+              self._discrete_doc() + \
+              self._block_doc()
+        return out

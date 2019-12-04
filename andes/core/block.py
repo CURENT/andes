@@ -11,10 +11,9 @@ class Block(object):
     provide `get_name` method and `export_vars` method. Subclasses
     must overload the `__init__` method to take custom inputs.
 
-
     Warnings
     --------
-    This class may be significantly modified soon.
+    This class is subject to changes soon.
 
     Parameters
     ----------
@@ -22,8 +21,8 @@ class Block(object):
         Block description.
     """
 
-    def __init__(self, info: Optional[str] = None, *args, **kwargs):
-        self.name = None
+    def __init__(self, name: Optional[str] = None, info: Optional[str] = None):
+        self.name = name
         self.owner = None
         self.info = info
         self.vars = {}
@@ -140,9 +139,10 @@ class PIController(Block):
     ki : [type]
         The integral gain parameter instance
 
+    # TODO: what if a PI controller has a limiter? How can it be exported?
     """
-    def __init__(self, var, ref, kp, ki, **kwargs):
-        super(PIController, self).__init__(**kwargs)
+    def __init__(self, var, ref, kp, ki, name=None, info=None):
+        super(PIController, self).__init__(name=name, info=info)
 
         self.var = var
         self.ref = ref
@@ -187,12 +187,10 @@ class PIController(Block):
         return self.vars
 
 
-# TODO: what if a PI controller has a limiter? How can it be exported?
-
 class PIControllerNumeric(Block):
 
-    def __init__(self, var, ref, kp, ki, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, var, ref, kp, ki, name=None, info=None):
+        super().__init__(name=name, info=info)
 
         self.var = var
         self.ref = ref
@@ -228,10 +226,17 @@ class PIControllerNumeric(Block):
         self.vgxc.append(1)
 
 
-class ArrayReduce(Block):
+class Washout(Block):
     """
-    This block takes a 2D `ExtVar` (with its `_v` as a list of arrays),
-    call the callback for each array in the list, and return an array of scalars.
+    Washout filter block
+
+    1 + sT2
+    -------
+    1 + sT1
+
+    This block is implemented as the series
     """
-    def __init__(self, ext_var):
-        pass
+
+    def __init__(self, input, T1, T2, info=None, name=None):
+        super().__init__(name=name, info=info)
+        self.x = Algeb()

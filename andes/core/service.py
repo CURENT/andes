@@ -43,6 +43,10 @@ class ServiceBase(object):
         else:
             return 1
 
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
 
 class ServiceConst(ServiceBase):
     """

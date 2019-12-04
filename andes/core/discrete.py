@@ -27,6 +27,10 @@ class Discrete(object):
     def get_values(self):
         pass
 
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
 
 class Limiter(Discrete):
     """
@@ -226,9 +230,67 @@ class Selector(Discrete):
 
 class DeadBand(Limiter):
     """
-    Deadband class with a range threshold
+    Deadband with the direction of return.
+
+    Parameters
+    ----------
+    var
+        The post-deadband algebraic variable instance
+    origin
+        The pre-deadband variable instance
+    center : NumParam
+        Neutral value of the output
+    lower : NumParam
+        Lower bound
+    upper : NumParam
+        Upper bpund
+    enable : bool
+        Enabled if True; Disabled and works as a pass-through if False.
+
+    Notes
+    -----
+
+    Input changes within a deadband will incur no output changes. This component computes and exports five flags.
+
+    Three flags computed from the current input:
+     - zl: True if the input is below the lower threshold
+     - zi: True if the input is within the deadband
+     - zu: True if is above the lower threshold
+
+    Two flags indicating the direction of return:
+     - zur: True if the input is/has been within the deadband and was returned from the upper threshold
+     - zlr: True if the input is/has been within the deadband and was returned from the lower threshold
+
+    Initial condition:
+
+    All five flags are initialized to zero. All flags are updated during `check_var` when enabled. If the
+    deadband component is not enabled, all of them will remain zero.
+
+    Examples
+    --------
+
+    Exported deadband flags need to be used in the algebraic equation corresponding to the post-deadband variable.
+    Assume the pre-deadband variable is `origin`, and the post-deadband variable is `var`. First define a
+    deadband instance `db` in the model using ::
+
+        self.db = DeadBand(var=self.var, origin=self.origin,
+                           center=self.dbc, lower=self.dbl, upper=self.dbu)
+
+    To implement a no-memory deadband whose output returns to center when the input is within the band,
+    the equation for `var` can be written as ::
+
+        var.e_str = 'origin * (1 - db_zi) + (dbc * db_zi) - var'
+
+    To implement a deadband whose output is pegged at the nearest deadband bounds, the equation for `var` can be
+    provided as ::
+
+        var.e_str = 'origin * (1 - db_zi) + dbl * db_zlr + dbu * db_zur - var'
+
     """
     def __init__(self, var, origin, center, lower, upper, enable=True):
+        """
+
+        """
         super().__init__(var, lower, upper, origin=origin, enable=enable)
         self.center = center
         # default state if enable is False
@@ -240,11 +302,25 @@ class DeadBand(Limiter):
 
     def check_var(self):
         """
-        Evaluate `self.zu` and `self.zl`
+        Updates five flags: zi, zu, zl; zur, and zlr based on the following rules
 
-        Returns
-        -------
+        zu:
+          1 if input.v > upper.v; 0 otherwise
 
+        zl:
+          1 if input.v < lower.v; 0 otherwise
+        zi:
+          not(zu or zl);
+
+        zur:
+         - set to 1 when (previous zu + present zi == 2)
+         - hold when (previous zi == zi)
+         - clear otherwise
+
+        zlr:
+         - set to 1 when (previous zl + present zi == 2)
+         - hold when (previous zi == zi)
+         - clear otherwise
         """
         if not self.enable:
             return
@@ -253,7 +329,6 @@ class DeadBand(Limiter):
         zi = np.logical_not(np.logical_or(zu, zl))
 
         # square return dead band
-        # Upper return: 1) set when self.zu -> zi; 2) hold when self.zi -> zi; 3) clear otherwise
         self.zur = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
         self.zlr = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
 
@@ -263,18 +338,26 @@ class DeadBand(Limiter):
 
     def get_names(self):
         """
-        Available symbols from this class
+        Export names
 
         Returns
         -------
-
+        list:
+            Five exported names in the order of `zl`, `zi`, `zu`, `zur`, and `zlr`
         """
         return [self.name + '_zl', self.name + '_zi', self.name + '_zu',
                 self.name + '_zur', self.name + '_zlr']
 
     def get_values(self):
-        return [self.zl, self.zi, self.zu,
-                self.zur, self.zlr]
+        """
+        Export values
+
+        Returns
+        -------
+        list:
+            Five exported variables in the same order of names
+        """
+        return [self.zl, self.zi, self.zu, self.zur, self.zlr]
 
 
 class NonLinearGain(Discrete):
