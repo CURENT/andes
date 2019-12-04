@@ -56,10 +56,6 @@ class Limiter(Discrete):
         Flags for within the limits
     zu : array-like
         Flags for violating the upper limit
-    Returns
-    -------
-    [type]
-        [description]
     """
 
     def __init__(self, var, lower, upper, origin=None, enable=True, **kwargs):

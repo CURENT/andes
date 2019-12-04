@@ -35,9 +35,6 @@ class VarBase(object):
         local-storage of the corresponding equation value
     e_symbolic : str
         the string/symbolic representation of the equation
-    e_lambdify : Callable
-        SymPy-generated callable to update equation value;
-        not intended to be provided by user
     """
     def __init__(self,
                  name: Optional[str] = None,

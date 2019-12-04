@@ -397,8 +397,8 @@ class Model(object):
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
-            for name, var_instance in value.export_vars().items():
-                self.__setattr__(name, var_instance)
+            for var_name, var_instance in value.export_vars().items():
+                self.__setattr__(f'{value.name}_{var_name}', var_instance)
 
         super(Model, self).__setattr__(key, value)
 
