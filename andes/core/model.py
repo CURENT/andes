@@ -827,7 +827,11 @@ class Model(object):
         ret = self.calls.f_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
-            instance.e += ret[idx][0]
+            try:
+                instance.e += ret[idx][0]
+            except TypeError as e:
+                logger.error(f"Error evaluating f for {instance.name} where e_str={instance.e_str}")
+                raise e
 
         # numerical calls defined in the model
         self.f_numeric(**kwargs)
@@ -848,7 +852,11 @@ class Model(object):
         ret = self.calls.g_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
-            instance.e += ret[idx][0]
+            try:
+                instance.e += ret[idx][0]
+            except TypeError as e:
+                logger.error(f"Error evaluating g for {instance.name} where e_str={instance.e_str}")
+                raise e
 
         # numerical calls defined in the model
         self.g_numeric(**kwargs)

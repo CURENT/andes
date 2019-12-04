@@ -1,5 +1,6 @@
 from andes.core.var import Algeb, State
 from typing import Optional
+from andes.core.discrete import HardLimiter
 
 
 class Block(object):
@@ -335,3 +336,50 @@ class LeadLag(Block):
         self.y.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + \
                          {self.name}_x - \
                          {self.name}_y'
+
+
+class LeadLagLimit(Block):
+    """
+    Lead-Lag transfer function block with hard limiter (series implementation)
+                   ___upper___
+                  /
+              1 + sT1
+       u ->   -------  -> y
+              1 + sT2
+    __lower____/
+
+    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
+
+    Equations:
+    x' dot = (u - x') / T2
+    y = T1/T2 * (u - x') + x'
+    """
+    def __init__(self, u, T1, T2, lower, upper, info='Lead-lag transfer function', name=None):
+        super().__init__(name=name, info=info)
+        self.T1 = T1
+        self.T2 = T2
+        self.u = u
+        self.lower = lower
+        self.upper = upper
+
+        self.x = State(info='State in lead-lag transfer function', tex_name="x'")
+        self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
+        self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y')
+        self.lim = HardLimiter(var=self.y, origin=self.ynl, lower=self.lower, upper=self.upper)
+
+        self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
+
+    def set_eq(self):
+        self.x.v_init = f'{self.u.name}'
+        self.ynl.v_init = f'{self.u.name}'
+        self.y.v_init = f'{self.u.name}'
+
+        self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
+        self.ynl.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + ' \
+                         f'{self.name}_x - ' \
+                         f'{self.name}_ynl'
+
+        self.y.e_str = f'{self.name}_ynl * {self.name}_lim_zi + ' \
+                       f'{self.lower.name} * {self.name}_lim_zl + ' \
+                       f'{self.upper.name} * {self.name}_lim_zu - ' \
+                       f'{self.name}_y'
