@@ -108,10 +108,11 @@ class Limiter(Discrete):
 
 class Comparer(Limiter):
     """
-    A value comparer
+    A value comparer. This class is an alias of Limiter.
 
-    Same comparison algorithm as the Limiter. But the comparer
-    does not set the limit value.
+    .. deprecated:: soon
+        The `Comparer` class will be deprecated as it is identical to Limiter because Limiter no longer sets the
+        variable value. Now, A Limiter is essentially a comparer.
     """
     pass
 
@@ -153,37 +154,47 @@ class SortedLimiter(Limiter):
 
 class HardLimiter(Limiter):
     """
-    Hard limit on an algebraic variable
+    Hard limiter on an algebraic variable. This class is an alias of `Limiter`.
     """
-    def __init__(self, u, lower, upper, enable=True, **kwargs):
-        super().__init__(u, lower, upper, enable=enable, **kwargs)
+    pass
 
 
 class WindupLimiter(Limiter):
-    def __init__(self, u, lower, upper, enable=True, **kwargs):
-        super().__init__(u, lower, upper, enable=enable, **kwargs)
+    def __init__(self, u, lower, upper, enable=True):
+        super().__init__(u, lower, upper, enable=enable)
+
+    def set_eq(self):
+        self.u.e = self.u.e * self.zi
 
 
 class AntiWindupLimiter(WindupLimiter):
     """
-    Anti-windup limiter
+    Anti-windup limiter.
 
-    This class takes one more optional parameter for specifying the
-    equation.
+    The anti-windup limiter prevents the wind-up effect of a differential variable. The derivative of the
+    differential variable is reset if it continues to increase in the same direction after exceeding the limits.
+    During the derivative return, the limiter will be inactive ::
+
+      if x > xmax and x dot > 0: x = xmax and x dot = 0
+      if x < xmin and x dot < 0: x = xmin and x dot = 0
+
+    This class takes one more optional parameter for specifying the equation.
 
     Parameters
     ----------
-    State: VarBase
-        A VarBase instance whose equation value will be checked and reset
+    state : State, ExtState
+        A State (or ExtState) whose equation value will be checked and, when condition satisfies, will be reset
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True, state=None, **kwargs):
-        super().__init__(u, lower, upper, enable=enable, **kwargs)
+    def __init__(self, u, lower, upper, enable=True, state=None):
+        super().__init__(u, lower, upper, enable=enable)
         self.state = state if state else u
 
     def check_var(self):
-        # defer `check_var` to `check_eq`
+        """
+        This function is empty. Defers `check_var` to `check_eq`.
+        """
         pass
 
     def check_eq(self):
@@ -200,11 +211,38 @@ class AntiWindupLimiter(WindupLimiter):
 
 class Selector(Discrete):
     """
-    Selection of variables using the provided function.
+    Selection of variables using the provided reduce function.
 
-    The function should take the given number of arguments. Example function is `np.maximum.reduce`.
+    The reduce function should take the given number of arguments. An example function is `np.maximum.reduce`
+    which can be used to select the maximum.
 
     Names are in `s0`, `s1`, ... and `sn`
+
+    Examples
+    --------
+    Example 1: select the largest value between `v0` and `v1` and put it into vmax.
+
+    After the definitions of `v0` and `v1`, define the algebraic variable `vmax` for the largest value,
+    and a selector `vs` ::
+
+        self.vmax = Algeb(v_init='maximum(v0, v1) - vmax',
+                          tex_name='v_{max}',
+                          e_str='vs_s0 * v0 + vs_s1 * v1 - vmax')
+
+        self.vs = Selector(self.v0, self.v1, fun=np.maximum.reduce)
+
+    The initial value of `vmax` is calculated by ``maximum(v0, v1)``, which is the element-wise maximum in SymPy
+    and will be generated into ``np.maximum(v0, v1)``. The equation of `vmax` is to select the values based on
+    `vs_s0` and `vs_s1`.
+
+    Notes
+    -----
+    A common pitfall is the 0-based indexing in the Selector flags. Note that exported flags start from 0. Namely,
+    `s0` corresponds to the first variable provided for the Selector constructor.
+
+    See Also
+    --------
+    numpy.ufunc.reduce : NumPy reduce function
     """
     def __init__(self, *args, fun):
         super().__init__()
@@ -222,7 +260,9 @@ class Selector(Discrete):
         return self._s
 
     def check_var(self):
-        # set the correct flags to 1 if it is the maximum
+        """
+        Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input
+        """
         self._inputs = [self.input_vars[i].v for i in range(self.n)]
         self._outputs = self.fun(self._inputs)
         for i in range(self.n):

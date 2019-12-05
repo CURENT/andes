@@ -64,6 +64,7 @@
 - [x] Sequential initialization 
 - [x] Limiter in PI controller
 - [x] Clean up the use of `vars_to_dae` and `vars_to_model` 
+- [x] low pass filter in PI Controller - How the equations should be written
 *   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 *   Deal with two-terminal and multi-terminal devices
 *   Allow for semi-implicit method formulation

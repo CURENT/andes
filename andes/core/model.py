@@ -359,7 +359,8 @@ class Model(object):
 
     def __setattr__(self, key, value):
         if isinstance(value, (VarBase, ServiceBase, Discrete, Block)):
-            value.owner = self
+            if not value.owner:
+                value.owner = self
             if not value.name:
                 value.name = key
             if not value.tex_name:
@@ -397,8 +398,10 @@ class Model(object):
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
-            for var_name, var_instance in value.export_vars().items():
-                self.__setattr__(f'{value.name}_{var_name}', var_instance)
+            for var_name, var_instance in value.export().items():
+                var_instance.name = f'{value.name}_{var_name}'
+                var_instance.tex_name = rf'{value.tex_name}\ {var_instance.tex_name}'
+                self.__setattr__(var_instance.name, var_instance)
 
         super(Model, self).__setattr__(key, value)
 
@@ -569,7 +572,12 @@ class Model(object):
                 if instance.e_str is None:
                     dest.append(0)
                 else:
-                    sympified_equation = sympify(instance.e_str, locals=self.input_syms)
+                    try:
+                        sympified_equation = sympify(instance.e_str, locals=self.input_syms)
+                    except TypeError as e:
+                        logger.error(f'Error sympifying equation <{instance.e_str}> for <{instance.name}>')
+                        raise e
+
                     dest.append(sympified_equation)
 
         self.f_syms_matrix = Matrix(self.f_syms)

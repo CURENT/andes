@@ -7,26 +7,80 @@ class Block(object):
     """
     Base class for control blocks.
 
-    Blocks are meant to be instantiated as Model attributes
-    to provide pre-defined equation sets. All subclasses must
-    provide `get_name` method and `export_vars` method. Subclasses
+    Blocks are meant to be instantiated as Model attributes to provide pre-defined equation sets. Subclasses
     must overload the `__init__` method to take custom inputs.
+    All subclasses of Block must overload the `define` method to provide initialization and equation strings.
 
-    Warnings
-    --------
-    This class is subject to changes soon.
+    Blocks can be nested. A block can have blocks but itself as attributes and therefore reuse equations. When a
+    block has sub-blocks, the outer block must be constructed with a``name``.
+
+    Nested block works in the following way: the parent block modifies the sub-block's ``name`` attribute by
+    prepending the parent block's name at the construction phase. The parent block then exports the sub-block
+    as a whole. When the parent Model class picks up the block, it will recursively import the variables in the
+    block and the sub-blocks correctly. See the example section for details.
 
     Parameters
     ----------
+    name : str, optional
+        Block name
+    tex_name : str, optional
+        Block LaTeX name
     info : str, optional
         Block description.
+
+    Warnings
+    --------
+    It is suggested to have at most one level of nesting to avoid messy variable names.
+
+    Examples
+    --------
+    Example for two-level nested blocks. Suppose we have the following hierarchy ::
+
+        SomeModel  instance M
+           |
+        LeadLag A  exports (x, y)
+           |
+        Lag B      exports (x, y)
+
+    SomeModel instance M contains an instance of Leadlag block named A, which contains an instance of a Lag block
+    named B. Both A and B exports two variables ``x`` and ``y``.
+
+    In the code of Model, the following code is used to instantiate LeadLag ::
+
+        class SomeModel:
+            def __init__(...)
+                ...
+                self.A = LeadLag(name='A', u=self.foo1, T1=self.foo2, T2=self.foo3)
+
+    To use Lag in the LeadLag code, the following lines are found in the constructor of LeadLag ::
+
+        class LeadLag:
+            def __init__(name, ...)
+                ...
+                self.B = Lag(u=self.y, K=self.K, T=self.T)
+                self.vars = {..., 'A': self.A}
+
+    The ``__setattr__`` magic of LeadLag takes over the construction and assigns ``B.name`` as ``A_B``,
+    given A's name provided at run time. ``self.A`` is exported with the internal name ``A`` at the end.
+
+    Again, the LeadLag instance name (``A`` in this example) MUST be provided in SomeModel's constructor for the
+    name prepending to work correctly. If there is more than one level of nesting, other than the leaf-level
+    block, all parent blocks' names must be provided at instantiation.
+
+    When A is picked up by ``SomeModel.__setattr__``, B is captured from A's exports. Recursively, B's variables
+    are exported, Recall that ``B.name`` is ``A_B``, following the naming rule (parent block's name + variable
+    name), B's internal variables become ``A_B_x`` and ``A_B_y``.
+
+    In this way, B's ``define`` needs mo modification since the naming rule is the same. For example,
+    B's internal y is always ``{self.name}_y``, although B has gotten a new name ``A_B``.
+
     """
 
-    def __init__(self, name: Optional[str] = None, info: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None, tex_name: Optional[str] = None, info: Optional[str] = None):
         self.name = name
-        self.tex_name = None
-        self.owner = None
+        self.tex_name = tex_name if tex_name else name
         self.info = info
+        self.owner = None
         self.vars = {}
 
         self.ifx, self.jfx, self.vfx = list(), list(), list()
@@ -43,7 +97,30 @@ class Block(object):
         self.itxc, self.jtxc, self.vtxc = list(), list(), list()
         self.irxc, self.jrxc, self.vrxc = list(), list(), list()
 
+    def __setattr__(self, key, value):
+        # handle sub-blocks by prepending self.name
+        if isinstance(value, Block):
+            if self.name is None:
+                raise ValueError(f"`name` must be specified when constructing {self.class_name} instances.")
+            if not value.owner:
+                value.__dict__['owner'] = self
+
+            if not value.name:
+                value.__dict__['name'] = self.name + '_' + key
+            else:
+                value.__dict__['name'] = self.name + '_' + value.name
+
+            if not value.tex_name:
+                value.__dict__['tex_name'] = self.name + r'\ ' + key
+            else:
+                value.__dict__['tex_name'] = self.name + r'\ ' + value.tex_name
+
+        self.__dict__[key] = value
+
     def j_reset(self):
+        """
+        Helper function to clear the lists holding the numerical jacobians
+        """
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
         self.igx, self.jgx, self.vgx = list(), list(), list()
@@ -54,45 +131,66 @@ class Block(object):
         self.igxc, self.jgxc, self.vgxc = list(), list(), list()
         self.igyc, self.jgyc, self.vgyc = list(), list(), list()
 
-    def get_name(self):
+    def define(self):
         """
-        Method for getting the name of the block.
+        Function for setting the initialization and equation strings for internal variables. This method must be
+        implemented by subclasses.
 
-        Notes
-        -----
-        This method is currently unused
+        The equations should be written with the "final" variable names.
+        Let's say the block instance is named `blk` (kept at ``self.name`` of the block), and an internal
+        variable `v` is defined.
+        The internal variable will be captured as `blk_v` by the owner model. Therefore, all equations should
+        use `{self.name}_v` to represent variable `v`, where `{self.name}` is the name of the block at run time.
 
-        Returns
-        -------
-        list
-            The `name` attribute in a list
-        """
-        return [self.name]
+        On the other hand, the names of externally provided parameters or variables are obtained by
+        directly accessing the ``name`` attribute. For example, if ``self.T`` is a parameter provided through
+        the block constructor, ``{self.T.name}`` should be used in the equation
 
-    def set_eq(self):
-        pass
+        Examples
+        --------
+        Internal variable ``v`` has a trivial equation ``T = v``, where T is a parameter provided to the block
+        constructor.
 
-    def export_vars(self):
-        """
-        Method for exporting algebraic and state variables
-        created in this block as a dictionary.
+        In the model, one has ::
 
-        Subclasses must implement the meta-equations in the
-        derived `export_vars` method. Before returning `vars`,
-        the subclass should first update `vars`.
+            self.input = Algeb()
+            self.T = Param()
 
+            self.blk = ExampleBlock(u=self.input, T=self.T)
+
+        In the ExampleBlock function, the internal variable is defined in the constructor as ::
+
+            self.v = Algeb()
+            self.vars = {'v', self.v}
+
+        In the ``define``, the equation is provided as ::
+
+            self.v.v_init = '{self.T.name}'
+            self.v.e_str = '{self.T.name} - {self.name}_v'
+
+        In the owner model, ``v`` from the block will be captured as ``blk_v``, and the equation will become ::
+
+            self.blk_v.v_init = 'T'
+            self.blk_v.e_str = 'T - blk_v'
 
         See Also
         --------
-        PIController.export_vars
+        PIController.define : Meta equations for PI Controller block
+
+        """
+        raise NotImplementedError(f'define() method not implemented in {self.class_name}')
+
+    def export(self):
+        """
+        Method for exporting instances defined in this class in a dictionary. This method calls the ``define``
+        method first and returns ``self.vars``.
 
         Returns
         -------
         dict
-            Key being the variable name and the value being
-            the variable instance.
+            Keys are the variable name and the values are the attribute instance.
         """
-        self.set_eq()
+        self.define()
         return self.vars
 
     def g_numeric(self, **kwargs):
@@ -122,6 +220,11 @@ class Block(object):
         """
         pass
 
+    @property
+    def class_name(self):
+        """Return the class name"""
+        return self.__class__.__name__
+
 
 class SampleAndHolder(Block):
     """
@@ -149,7 +252,6 @@ class PIController(Block):
     ki : [type]
         The integral gain parameter instance
 
-    # TODO: what if a PI controller has a limiter? How can it be exported?
     """
     def __init__(self, u, ref, kp, ki, name=None, info=None):
         super(PIController, self).__init__(name=name, info=info)
@@ -164,7 +266,7 @@ class PIController(Block):
 
         self.vars = {'xi': self.xi, 'y': self.y}
 
-    def set_eq(self):
+    def define(self):
         r"""
         Define meta equations and export variables of the PI Controller.
 
@@ -183,6 +285,8 @@ class PIController(Block):
         --------
         Only one level of nesting is allowed.
         Namely, PIController cannot have a sub-block.
+
+        There might be a way to fix, but the naming of variables will become complicated.
 
         Returns
         -------
@@ -234,20 +338,22 @@ class PIControllerNumeric(Block):
 
 
 class Washout(Block):
-    """
-    Washout filter (high pass) block
+    r"""
+    Washout filter (high pass) block ::
 
-      sT1
-    -------
-    1 + sT2
+                sT1
+         u -> ------- -> y
+              1 + sT2
 
-    Equations:
-    x' dot = (u - x) / T
-    y = u - x
+    Notes
+    -----
+    Equations and initial values:
 
-    Initial Values
-    x0 = u
-    y0 = 0
+    .. math ::
+        \dot{x'} = (u - x) / T \\
+        y = u - x \\
+        x'_0 = u \\
+        y_0 = 0
     """
 
     def __init__(self, u, T, info=None, name=None):
@@ -259,7 +365,7 @@ class Washout(Block):
         self.y = Algeb(info='Output of washout filter', tex_name=r'y')
         self.vars = {'x': self.x, 'y': self.y}
 
-    def set_eq(self):
+    def define(self):
         self.x.v_init = f'{self.u.name}'
         self.y.v_init = f'0'
 
@@ -268,15 +374,12 @@ class Washout(Block):
 
 
 class Lag(Block):
-    """
-    Lag (low pass) transfer function block
+    r"""
+    Lag (low pass) transfer function block ::
 
-       K
-    ------
-    1 + sT
-
-    Equations:
-    x' dot = (u - x) / T
+                K
+        u -> ------ -> y
+             1 + sT
 
     Exports one state variable `x` as the output.
 
@@ -288,8 +391,18 @@ class Lag(Block):
         Time constant
     u
         Input variable
+
+    Notes
+    -----
+    Equation and initial value
+
+    .. math ::
+
+        \dot{x'} = (u - x) / T
+        x'_0 = u
+
     """
-    def __init__(self, u, K, T, info='Lag transfer function', name=None):
+    def __init__(self, u, K, T, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
 
         self.K = K
@@ -299,26 +412,41 @@ class Lag(Block):
 
         self.vars = {'x': self.x}
 
-    def set_eq(self):
+    def define(self):
         self.x.v_init = f'{self.u.name}'
         self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
 
 class LeadLag(Block):
-    """
-    Lead-Lag transfer function block in series implementation
+    r"""
+    Lead-Lag transfer function block in series implementation ::
 
-    1 + sT1
-    -------
-    1 + sT2
+             1 + sT1
+        u -> ------- -> y
+             1 + sT2
 
     Exports two variables: state x and output y.
 
-    Equations:
-    x' dot = (u - x') / T2
-    y = T1/T2 * (u - x') + x'
+    Parameters
+    ----------
+    T1
+        Time constant 1
+    T2
+        Time constant 2
+
+    Notes
+    -----
+
+    Implemented equations and initial values
+
+    .. math ::
+
+        \dot{x'} = (u - x') / T2 \\
+        y = \frac {T1} {T2} * (u - x') + x' \\
+        x'_0 = y_0 = u
+
     """
-    def __init__(self, u, T1, T2, info='Lead-lag transfer function', name=None):
+    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function'):
         super().__init__(name=name, info=info)
         self.T1 = T1
         self.T2 = T2
@@ -328,7 +456,7 @@ class LeadLag(Block):
         self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y')
         self.vars = {'x': self.x, 'y': self.y}
 
-    def set_eq(self):
+    def define(self):
         self.x.v_init = f'{self.u.name}'
         self.y.v_init = f'{self.u.name}'
 
@@ -339,22 +467,30 @@ class LeadLag(Block):
 
 
 class LeadLagLimit(Block):
-    """
-    Lead-Lag transfer function block with hard limiter (series implementation)
-                   ___upper___
-                  /
-              1 + sT1
-       u ->   -------  -> y
-              1 + sT2
-    __lower____/
+    r"""
+    Lead-Lag transfer function block with hard limiter (series implementation) ::
+
+                       ___upper___
+                      /
+                  1 + sT1
+           u ->   -------  -> y
+                  1 + sT2
+        __lower____/
 
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
 
-    Equations:
-    x' dot = (u - x') / T2
-    y = T1/T2 * (u - x') + x'
+    Notes
+    -----
+
+    Implemented equations and initial values
+
+    .. math ::
+
+        \dot{x'} = (u - x') / T2 \\
+        y = \frac {T1} {T2} * (u - x') + x' \\
+        x'_0 = y_0 = u
     """
-    def __init__(self, u, T1, T2, lower, upper, info='Lead-lag transfer function', name=None):
+    def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
         super().__init__(name=name, info=info)
         self.T1 = T1
         self.T2 = T2
@@ -369,7 +505,7 @@ class LeadLagLimit(Block):
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 
-    def set_eq(self):
+    def define(self):
         self.x.v_init = f'{self.u.name}'
         self.ynl.v_init = f'{self.u.name}'
         self.y.v_init = f'{self.u.name}'
