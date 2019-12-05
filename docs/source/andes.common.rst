@@ -12,10 +12,10 @@ andes.common.config module
    :undoc-members:
    :show-inheritance:
 
-andes.common.operation module
+andes.common.utils module
 -----------------------------
 
-.. automodule:: andes.common.operation
+.. automodule:: andes.common.utils
    :members:
    :undoc-members:
    :show-inheritance:

@@ -3,20 +3,35 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-##################
-ANDES User's Guide
-##################
+############
+Introduction
+############
 
-ANDES is a Python-based power system simulation tool for research. It
-supports power flow calculation, time domain simulation, and full eigenvalue
-analysis for transmission networks. ANDES is currently under active development.
+ANDES is a Python-based free software package for power system simulation, control and analysis.
+It establishes a unique **hybrid symbolic-numeric framework** for modeling differential algebraic
+equations (DAEs) for numerical analysis. Main features of ANDES include
+
+..
+   ANDES offers a symbolic library for discrete components
+   and transfer functions that can be easily imported to DAE models.
+   ANDES supports power flow calculation, time domain simulation and eigenvalue analysis for transmission
+   networks.
+
+- Symbolic DAE modeling and automated code generation for numerical simulation
+- Numerical DAE modeling for cases when symbolic implementations are difficult
+- Rapid modeling with block library with common transfer functions.
+- Discrete component library such as hard limiter, dead band, and anti-windup limiter.
+- Newton-Raphson and Newton-Krylov based power flow calculation.
+- Trapezoidal method for time domain simulation of semi-explicit DAE.
+
+ANDES is currently under active development. Please report issues on the
+`GitHub Issues page <https://github.com/cuihantao/andes/issues>`_.
 
 .. toctree::
-   :caption: ANDES Tutorial
+   :caption: ANDES Manual
    :maxdepth: 2
 
    copyright.rst
-   intro.rst
    install.rst
    walkthrough.rst
    formats.rst
@@ -25,10 +40,10 @@ analysis for transmission networks. ANDES is currently under active development.
    release-history.rst
 
 .. toctree::
-   :caption: ANDES Package References
+   :caption: Package References
    :maxdepth: 2
 
-   modules.rst
+   andes.rst
 
 
 Indices and tables
@@ -37,10 +52,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-Acknowledgement
-===============
-This work was supported in part by the Engineering Research Center Program of
-the National Science Foundation and the Department of Energy under NSF Award
-Number EEC-1041877 and the CURENT Industry Partnership Program.

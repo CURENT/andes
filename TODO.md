@@ -65,6 +65,8 @@
 - [x] Limiter in PI controller
 - [x] Clean up the use of `vars_to_dae` and `vars_to_model` 
 - [x] low pass filter in PI Controller - How the equations should be written
+- [x] Refactor `Config` to make load and save part of the config
+- [x] Use `multiprocessing` to call g_update and f_update
 *   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 *   Deal with two-terminal and multi-terminal devices
 *   Allow for semi-implicit method formulation
@@ -77,7 +79,13 @@
 - [x] implement a standalone PI controller with numerical jacobians
 
 ### Features
-- [x] Newton-Raphson and Newton-Krylov power flow (with handling of separated systems)
+- [x] Symbolic DAE modeling and automated code generation for numerical simulation
+- [x] Numerical DAE modeling for scanrios when symbolic implementations are difficult
+- [x] Rapid modeling with block library with common transfer functions.
+- [x] Discrete component library such as hard limiter, dead band, and anti-windup limiter.
+- [x] Pretty printing of DAE and automatically derived Jacobians
+- [x] Newton-Raphson and Newton-Krylov power flow (with automatic handling of separated systems).
+- [x] Trapezoidal method for semi-explicit time domain simulation.
 
 ### Blocks
 - [x] Value selector

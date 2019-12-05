@@ -29,7 +29,7 @@ from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam,
 from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import ServiceBase, ServiceConst, ExtService, ServiceOperation, ServiceRandom
-from andes.common.operation import list_flatten
+from andes.common.utils import list_flatten
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
