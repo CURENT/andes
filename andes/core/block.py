@@ -4,12 +4,14 @@ from andes.core.discrete import HardLimiter
 
 
 class Block(object):
-    """
+    r"""
     Base class for control blocks.
 
     Blocks are meant to be instantiated as Model attributes to provide pre-defined equation sets. Subclasses
     must overload the `__init__` method to take custom inputs.
-    All subclasses of Block must overload the `define` method to provide initialization and equation strings.
+    Subclasses of Block must overload the `define` method to provide initialization and equation strings.
+    Exported variables, services and blocks must be constructed into a dictionary ``self.vars`` at the end of
+    the constructor.
 
     Blocks can be nested. A block can have blocks but itself as attributes and therefore reuse equations. When a
     block has sub-blocks, the outer block must be constructed with a``name``.
@@ -139,34 +141,40 @@ class Block(object):
         The equations should be written with the "final" variable names.
         Let's say the block instance is named `blk` (kept at ``self.name`` of the block), and an internal
         variable `v` is defined.
-        The internal variable will be captured as `blk_v` by the owner model. Therefore, all equations should
-        use `{self.name}_v` to represent variable `v`, where `{self.name}` is the name of the block at run time.
+        The internal variable will be captured as ``blk_v`` by the owner model. Therefore, all equations should
+        use ``{self.name}_v`` to represent variable ``v``, where ``{self.name}`` is the name of the block at
+        run time.
 
         On the other hand, the names of externally provided parameters or variables are obtained by
         directly accessing the ``name`` attribute. For example, if ``self.T`` is a parameter provided through
-        the block constructor, ``{self.T.name}`` should be used in the equation
+        the block constructor, ``{self.T.name}`` should be used in the equation.
 
         Examples
         --------
-        Internal variable ``v`` has a trivial equation ``T = v``, where T is a parameter provided to the block
+        An internal variable ``v`` has a trivial equation ``T = v``, where T is a parameter provided to the block
         constructor.
 
         In the model, one has ::
 
-            self.input = Algeb()
-            self.T = Param()
+            class SomeModel():
+                def __init__(...)
+                    self.input = Algeb()
+                    self.T = Param()
 
-            self.blk = ExampleBlock(u=self.input, T=self.T)
+                    self.blk = ExampleBlock(u=self.input, T=self.T)
 
         In the ExampleBlock function, the internal variable is defined in the constructor as ::
 
-            self.v = Algeb()
-            self.vars = {'v', self.v}
+            class ExampleBlock():
+                def __init__(...):
+                    self.v = Algeb()
+                    self.vars = {'v', self.v}
 
         In the ``define``, the equation is provided as ::
 
-            self.v.v_init = '{self.T.name}'
-            self.v.e_str = '{self.T.name} - {self.name}_v'
+            def define(self):
+                self.v.v_init = '{self.T.name}'
+                self.v.e_str = '{self.T.name} - {self.name}_v'
 
         In the owner model, ``v`` from the block will be captured as ``blk_v``, and the equation will become ::
 
@@ -175,7 +183,7 @@ class Block(object):
 
         See Also
         --------
-        PIController.define : Meta equations for PI Controller block
+        PIController.define : Equations for the PI Controller block
 
         """
         raise NotImplementedError(f'define() method not implemented in {self.class_name}')
@@ -188,7 +196,7 @@ class Block(object):
         Returns
         -------
         dict
-            Keys are the variable name and the values are the attribute instance.
+            Keys are the (last section of the) variable name, and the values are the attribute instance.
         """
         self.define()
         return self.vars
@@ -243,7 +251,7 @@ class PIController(Block):
 
     Parameters
     ----------
-    var : VarBase
+    u : VarBase
         The input variable instance
     ref : Union[VarBase, ParamBase]
         The reference instance
@@ -268,7 +276,7 @@ class PIController(Block):
 
     def define(self):
         r"""
-        Define meta equations and export variables of the PI Controller.
+        Define equations for the PI Controller.
 
         Notes
         -----
@@ -280,20 +288,6 @@ class PIController(Block):
             \dot{x_i} = k_i * (ref - var)
 
             y = x_i + k_i * (ref - var)
-
-        Warnings
-        --------
-        Only one level of nesting is allowed.
-        Namely, PIController cannot have a sub-block.
-
-        There might be a way to fix, but the naming of variables will become complicated.
-
-        Returns
-        -------
-        dict
-            A dictionary with the keys being the names of the two variables,
-            ``xi`` and ``y``, and the values being the corresponding
-            instances.
         """
 
         self.xi.e_str = f'ki * ({self.ref.name} - {self.u.name})'
@@ -336,6 +330,10 @@ class PIControllerNumeric(Block):
         self.jgxc.append(self.xi.a)
         self.vgxc.append(1)
 
+    def define(self):
+        """Skip the symbolic definition"""
+        pass
+
 
 class Washout(Block):
     r"""
@@ -345,15 +343,6 @@ class Washout(Block):
          u -> ------- -> y
               1 + sT2
 
-    Notes
-    -----
-    Equations and initial values:
-
-    .. math ::
-        \dot{x'} = (u - x) / T \\
-        y = u - x \\
-        x'_0 = u \\
-        y_0 = 0
     """
 
     def __init__(self, u, T, info=None, name=None):
@@ -366,6 +355,18 @@ class Washout(Block):
         self.vars = {'x': self.x, 'y': self.y}
 
     def define(self):
+        r"""
+        Notes
+        -----
+        Equations and initial values:
+
+        .. math ::
+            \dot{x'} = (u - x) / T \\
+            y = u - x \\
+            x'_0 = u \\
+            y_0 = 0
+
+        """
         self.x.v_init = f'{self.u.name}'
         self.y.v_init = f'0'
 
@@ -392,15 +393,6 @@ class Lag(Block):
     u
         Input variable
 
-    Notes
-    -----
-    Equation and initial value
-
-    .. math ::
-
-        \dot{x'} = (u - x) / T
-        x'_0 = u
-
     """
     def __init__(self, u, K, T, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
@@ -413,6 +405,18 @@ class Lag(Block):
         self.vars = {'x': self.x}
 
     def define(self):
+        r"""
+
+        Notes
+        -----
+        Equation and initial value
+
+        .. math ::
+
+            \dot{x'} = (u - x) / T
+            x'_0 = u
+
+        """
         self.x.v_init = f'{self.u.name}'
         self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
@@ -434,16 +438,6 @@ class LeadLag(Block):
     T2
         Time constant 2
 
-    Notes
-    -----
-
-    Implemented equations and initial values
-
-    .. math ::
-
-        \dot{x'} = (u - x') / T2 \\
-        y = \frac {T1} {T2} * (u - x') + x' \\
-        x'_0 = y_0 = u
 
     """
     def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function'):
@@ -457,6 +451,20 @@ class LeadLag(Block):
         self.vars = {'x': self.x, 'y': self.y}
 
     def define(self):
+        r"""
+
+        Notes
+        -----
+
+        Implemented equations and initial values
+
+        .. math ::
+
+            \dot{x'} = (u - x') / T_2 \\
+            y = \frac {T_1} {T_2} * (u - x') + x' \\
+            x'_0 = y_0 = u
+
+        """
         self.x.v_init = f'{self.u.name}'
         self.y.v_init = f'{self.u.name}'
 
@@ -479,16 +487,6 @@ class LeadLagLimit(Block):
 
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
 
-    Notes
-    -----
-
-    Implemented equations and initial values
-
-    .. math ::
-
-        \dot{x'} = (u - x') / T2 \\
-        y = \frac {T1} {T2} * (u - x') + x' \\
-        x'_0 = y_0 = u
     """
     def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
         super().__init__(name=name, info=info)
@@ -506,6 +504,20 @@ class LeadLagLimit(Block):
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 
     def define(self):
+        r"""
+
+        Notes
+        -----
+
+        Implemented equations and initial values
+
+        .. math ::
+
+            \dot{x'} = (u - x') / T_2 \\
+            y = \frac {T_1} {T_2} * (u - x') + x' \\
+            x'_0 = y_0 = u
+
+        """
         self.x.v_init = f'{self.u.name}'
         self.ynl.v_init = f'{self.u.name}'
         self.y.v_init = f'{self.u.name}'
