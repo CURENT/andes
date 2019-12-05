@@ -41,7 +41,7 @@ ANDES is currently under active development. Please report issues on the
 
 .. toctree::
    :caption: Package References
-   :maxdepth: 2
+   :maxdepth: 3
 
    andes.rst
 
