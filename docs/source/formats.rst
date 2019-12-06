@@ -1,6 +1,6 @@
 .. _formats:
 
 ************************
-Input and output formats
+I/O Formats
 ************************
 

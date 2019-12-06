@@ -17,11 +17,11 @@ class Area(AreaData, Model):
         self.flags.update({'pflow': True,
                            'tds': True})
 
-        self.Bus = RefParam()
-        self.AcTopology = RefParam()
+        self.Bus = RefParam(export=False)
+        self.AcTopology = RefParam(export=False)
 
         # --------------------Experiment Zone--------------------
-        self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.AcTopology)
+        self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.AcTopology, export=False)
         self.Vn_sum = ServiceReduce(u=self.Vn, fun=np.sum, ref=self.Bus)
         self.Vn_sum_rep = ServiceRepeat(u=self.Vn_sum, ref=self.Bus)
 

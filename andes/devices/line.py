@@ -12,10 +12,6 @@ class LineData(ModelData):
 
         self.bus1 = IdxParam(model='Bus', info="idx of from bus")
         self.bus2 = IdxParam(model='Bus', info="idx of to bus")
-        self.owner = IdxParam(model='Owner', info="owner code")
-
-        self.xcoord = DataParam(info="x coordinates")
-        self.ycoord = DataParam(info="y coordinates")
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
@@ -34,6 +30,11 @@ class LineData(ModelData):
         self.trans = NumParam(default=0, info="transformer branch flag")
         self.tap = NumParam(default=1.0, info="transformer branch tap ratio", tex_name='t_{ap}')
         self.phi = NumParam(default=0, info="transformer branch phase shift in rad", tex_name=r'\phi')
+
+        self.owner = IdxParam(model='Owner', info="owner code")
+
+        self.xcoord = DataParam(info="x coordinates")
+        self.ycoord = DataParam(info="y coordinates")
 
 
 class Line(LineData, Model):

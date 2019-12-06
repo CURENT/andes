@@ -1,6 +1,9 @@
 import functools
 import operator
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def list_flatten(idx):

@@ -166,7 +166,10 @@ class GroupBase(object):
         else:
             group_header = ''
 
-        out += group_header + f'Group <{self.class_name}>\n' + group_header
+        if export == 'rest':
+            out += group_header + f'{self.class_name}\n' + group_header
+        else:
+            out += group_header + f'Group <{self.class_name}>\n' + group_header
 
         if len(self.common_params):
             out += 'Common Parameters: ' + ', '.join(self.common_params)

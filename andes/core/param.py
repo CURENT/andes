@@ -1,9 +1,9 @@
 from typing import Optional, Union, Callable
 
+import math
 import numpy as np
 import logging
 from andes.devices.group import GroupBase
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +59,9 @@ class ParamBase(object):
         -------
         None
         """
+
+        if isinstance(value, float) and math.isnan(value):
+            value = None
 
         # check for mandatory
         if value is None:
@@ -118,12 +121,6 @@ class DataParam(ParamBase):
     method. All input values will be stored in `v` as a list.
     """
     pass
-
-
-class RefParam(ParamBase):
-    def __init__(self, **kwargs):
-        super(RefParam, self).__init__(**kwargs)
-        self.export = False
 
 
 class IdxParam(ParamBase):
@@ -251,14 +248,18 @@ class NumParam(ParamBase):
         None
         """
 
+        # check for math.nan, usually imported from pandas
+        if isinstance(value, float) and math.isnan(value):
+            value = None
+        elif isinstance(value, str):
+            value = float(value)
+
         # check for mandatory
         if value is None:
             if self.get_property('mandatory'):
                 raise ValueError(f'Mandatory parameter {self.name} missing')
             else:
                 value = self.default
-        elif isinstance(value, str):
-            value = float(value)
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
@@ -373,3 +374,9 @@ class ExtParam(NumParam):
             self.vin = parent_instance.vin[uid]
             # TODO: uncomment when pu_coeff() is ready
             # self.pu_coeff = parent_instance.pu_coeff[uid]
+
+
+class RefParam(ParamBase):
+    def __init__(self, **kwargs):
+        super(RefParam, self).__init__(**kwargs)
+        self.export = False

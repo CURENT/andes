@@ -1,7 +1,7 @@
-.. _chap-walkthrough:
+.. _tutorial:
 
 ******************
-Getting Started
+Tutorial
 ******************
 This chapter describes the basic usage of a) the command-line interface, b)
 the Python functions for Notebook or IPython interactive environment.

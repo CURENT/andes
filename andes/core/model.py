@@ -131,6 +131,7 @@ class ModelData(object):
             self.cache = Cache()
         self.cache.add_callback('dict', self.as_dict)
         self.cache.add_callback('df', self.as_df)
+        self.cache.add_callback('df_in', self.as_df_in)
 
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
         self.name = DataParam(info='element name', tex_name='name')
@@ -153,6 +154,7 @@ class ModelData(object):
         elif isinstance(value, IdxParam):
             self.idx_params[key] = value
 
+        # `TimerParam` is a subclass of `NumParam` and thus tested separately
         if isinstance(value, TimerParam):
             self.timer_params[key] = value
 
@@ -171,6 +173,7 @@ class ModelData(object):
         self.n += 1
 
         for name, instance in self.params.items():
+
             # skip `RefParam` because it is collected outside `add`
             if isinstance(instance, RefParam):
                 continue
@@ -179,7 +182,7 @@ class ModelData(object):
         if len(kwargs) > 0:
             logger.warning(f'{self.__class__.__name__}: Unused data {kwargs}')
 
-    def as_dict(self):
+    def as_dict(self, vin=False):
         """
         Export all variable parameters as a dict
 
@@ -196,7 +199,15 @@ class ModelData(object):
         out['idx'] = self.idx
 
         for name, instance in self.params.items():
-            out[name] = instance.v
+            # skip non-exported parameters
+            if instance.export is False:
+                continue
+
+            # select origin input if `vin` is True
+            if vin is True and hasattr(instance, 'vin'):
+                out[name] = instance.vin
+            else:
+                out[name] = instance.v
 
         return out
 
@@ -215,6 +226,23 @@ class ModelData(object):
             return None
 
         out = pd.DataFrame(self.as_dict()).set_index('uid')
+
+        return out
+
+    def as_df_in(self):
+        """
+        Export all the data from original input (``vin``) as a `pandas.DataFrame`.
+        This function utilizes `as_dict` for preparing data.
+
+        Returns
+        -------
+        DataFrame
+            A dataframe containing all model data. An `uid` column is added.
+        """
+        if not load_pd():
+            return None
+
+        out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
 
         return out
 
@@ -409,13 +437,13 @@ class Model(object):
         if idx is None:
             logger.error("idx2uid cannot search for None idx")
             return None
-        if isinstance(idx, (float, int, str)):
+        if isinstance(idx, (float, int, str, np.int64, np.float64)):
             return self.idx.index(idx)
         elif isinstance(idx, (list, np.ndarray)):
             idx = list_flatten(idx)
             return [self.idx.index(i) for i in idx]
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
     def get(self, src: str, idx, attr):
         uid = self.idx2uid(idx)
@@ -515,18 +543,24 @@ class Model(object):
         Generate lambda functions for initial values
         """
         from sympy import sympify, lambdify
+        from sympy.printing import latex
+
         syms_list = list(self.input_syms)
 
         init_lambda_list = OrderedDict()
+        init_latex = OrderedDict()
         for name, instance in self.cache.all_vars.items():
             if instance.v_init is None:
                 init_lambda_list[name] = 0
+                init_latex[name] = ''
             else:
                 sympified = sympify(instance.v_init, locals=self.input_syms)
                 lambdified = lambdify(syms_list, sympified, 'numpy')
                 init_lambda_list[name] = lambdified
+                init_latex[name] = latex(sympified.subs(self.tex_names))
 
         self.calls.init_lambdify = init_lambda_list
+        self.calls.init_latex = init_latex
 
     def generate_equations(self):
         logger.debug(f'Generating equations for {self.__class__.__name__}')
@@ -608,14 +642,18 @@ class Model(object):
         # Note: service equations are converted one by one, because service variables
         # can be interdependent
         service_eq_list = OrderedDict()
+        service_latex = OrderedDict()
         for name, instance in self.services.items():
             if instance.v_str is not None:
                 sympified_equation = sympify(instance.v_str, locals=self.input_syms)
                 service_eq_list[name] = lambdify(syms_list, sympified_equation, 'numpy')
+                service_latex[name] = latex(sympified_equation.subs(self.tex_names))
             else:
                 service_eq_list[name] = 0
+                service_latex[name] = '0'
 
-            self.calls.service_lambdify = service_eq_list
+        self.calls.service_lambdify = service_eq_list
+        self.calls.service_latex = service_latex
 
     def generate_jacobians(self):
         logger.debug(f'Generating Jacobians for {self.__class__.__name__}')
@@ -935,6 +973,7 @@ class Model(object):
         Returns
         -------
         list
+            A list containing all switching times defined in TimerParams
         """
         out = []
         if self.n > 0:
@@ -960,9 +999,11 @@ class Model(object):
 
     @property
     def class_name(self):
+        """Return class name"""
         return self.__class__.__name__
 
     def _all_vars(self):
+        """An OrderedDict of States, ExtStates, Algebs, ExtAlgebs, and Calcs"""
         return OrderedDict(list(self.states.items()) +
                            list(self.states_ext.items()) +
                            list(self.algebs.items()) +
@@ -1129,10 +1170,15 @@ class Model(object):
                 if val is True:
                     property_list.append(key)
             property_str = ','.join(property_list)
-            rows.append((p.name, p.class_name, p.info, p.default, p.unit, property_str))
+            rows.append((p.name,
+                         p.unit if p.unit else '',
+                         p.class_name,
+                         p.info if p.info else '',
+                         p.default if p.default is not None else '',
+                         property_str))
 
         table.add_rows(rows, header=False)
-        table.header(('Name', 'Type', 'Description', 'Default', 'Unit', 'Properties'))
+        table.header(('Name', 'Unit', 'Type', 'Description', 'Default', 'Properties'))
 
         return table.draw()
 
@@ -1143,41 +1189,58 @@ class Model(object):
 
         table = Tab(title='Variables', max_width=max_width, export=export)
 
+        call_store = self.system.calls[self.class_name]
+        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex)
+        tex_init = self.math_wrap(call_store.init_latex.values())
+
         rows = []
-        for var in self.cache.all_vars.values():
+        for i, var in enumerate(self.cache.all_vars.values()):
             all_properties = ['v_init', 'v_setter', 'e_setter']
             property_list = []
             for item in all_properties:
                 if (var.__dict__[item] is not None) and (var.__dict__[item] is not False):
                     property_list.append(item)
             property_str = ','.join(property_list)
-            rows.append((var.name, var.class_name, var.v_init, var.unit, property_str, var.info))
+
+            rows.append((var.name,
+                         tex_names[i],
+                         var.unit if var.unit else '',
+                         tex_init[i],
+                         property_str,
+                         var.info if var.info else ''))
 
         table.add_rows(rows, header=False)
-        table.header(('Name', 'Type', 'Initial Value', 'Unit', 'Properties', 'Description'))
+        table.header(('Name', 'Symbol', 'Unit', 'Initial Value', 'Properties', 'Description'))
 
         return table.draw()
+
+    @staticmethod
+    def math_wrap(tex_str_list):
+        out = []
+        for item in tex_str_list:
+            if item is None or item == '':
+                out.append('')
+            else:
+                out.append(rf':math:`{item}`')
+        return out
 
     def _eq_doc(self, max_width=80, export='plain'):
         # equation documentation
         if len(self.cache.all_vars) == 0:
             return ''
 
-        def math_wrap(tex_str_list):
-            return [rf':math:`{item}`' for item in tex_str_list]
-
         table = Tab(title='Equations', max_width=max_width, export=export)
 
         call_store = self.system.calls[self.class_name]
-        tex_names = math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex)
-        tex_eqs = math_wrap(call_store.f_latex + call_store.g_latex + call_store.h_latex)
+        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex)
+        tex_eqs = self.math_wrap(call_store.f_latex + call_store.g_latex + call_store.h_latex)
 
         rows = []
         for i, var in enumerate(self.cache.all_vars.values()):
             rows.append((var.name, tex_names[i], tex_eqs[i], var.class_name))
 
         table.add_rows(rows, header=False)
-        table.header(('Name', 'Tex Name', 'Equation (x\'=f or g=0)', 'Type'))
+        table.header(('Name', 'Symbol', 'Equation (x\'=f or g=0)', 'Type'))
 
         return table.draw()
 
@@ -1187,14 +1250,19 @@ class Model(object):
 
         table = Tab(title='Services', max_width=max_width, export=export)
 
+        call_store = self.system.calls[self.class_name]
+        tex_names = self.math_wrap([item.tex_name for item in self.services.values()])
+        tex_eqs = self.math_wrap(call_store.service_latex.values())
+
         rows = []
-        for var in self.services.values():
+        for i, var in enumerate(self.services.values()):
             rows.append((var.name,
-                         var.v_str if (var.v_str is not None) else var.v_numeric,
+                         tex_names[i],
+                         tex_eqs[i] if (var.v_str is not None) else var.v_numeric,
                          var.class_name))
 
         table.add_rows(rows, header=False)
-        table.header(('Name', 'Value Equation or Callback', 'Type'))
+        table.header(('Name', 'Symbol', 'Equation or Callback', 'Type'))
         return table.draw()
 
     def _discrete_doc(self, max_width=80, export='plain'):
@@ -1226,7 +1294,11 @@ class Model(object):
         else:
             model_header = ''
 
-        out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
+        if export == 'rest':
+            out += model_header + f'{self.class_name}\n' + model_header
+            out += f'\nGroup {self.group}_\n\n'
+        else:
+            out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
 
         if self.__doc__ is not None:
             out += self.__doc__

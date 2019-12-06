@@ -23,6 +23,7 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 - Discrete component library such as hard limiter, dead band, and anti-windup limiter.
 - Newton-Raphson and Newton-Krylov based power flow calculation.
 - Trapezoidal method for time domain simulation of semi-explicit DAE.
+- Complete documentation of supported DAE models.
 
 ANDES is currently under active development. Please report issues on the
 `GitHub Issues page <https://github.com/cuihantao/andes/issues>`_.
@@ -33,12 +34,12 @@ ANDES is currently under active development. Please report issues on the
 
    copyright.rst
    install.rst
-   walkthrough.rst
+   tutorial.rst
    formats.rst
-   cases.rst
    modeling.rst
+   cases.rst
+   release-notes.rst
    modelref.rst
-   release-history.rst
 
 .. toctree::
    :caption: API References

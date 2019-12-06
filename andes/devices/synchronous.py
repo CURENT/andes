@@ -16,7 +16,6 @@ class GENCLSData(ModelData):
         super().__init__()
         self.bus = IdxParam(model='Bus', info="interface bus id", mandatory=True)
         self.gen = IdxParam(info="static generator index", mandatory=True)
-        self.coi = IdxParam(model='COI', info="center of inertia index")
 
         self.Sn = NumParam(default=100.0, info="Power rating")
         self.Vn = NumParam(default=110.0, info="AC voltage rating")
@@ -33,6 +32,8 @@ class GENCLSData(ModelData):
         self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
         self.S10 = NumParam(default=0, info="first saturation factor", tex_name='S_{10}')
         self.S12 = NumParam(default=0, info="second saturation factor", tex_name='S_{20}')
+
+        self.coi = IdxParam(model='COI', info="center of inertia index")
 
 
 class GENBase(Model):

@@ -34,7 +34,9 @@ class TGBase(Model):
                          'hardlimit': 1})
 
         self.Sn = ExtParam(src='Sn', model='SynGen', indexer=self.syn, tex_name='S_m',
-                           info='Rated power from generator', unit='MVA')
+                           info='Rated power from generator', unit='MVA', export=False)
+        self.Vn = ExtParam(src='Vn', model='SynGen', indexer=self.syn, tex_name='V_m',
+                           info='Rated voltage from generator', unit='kV', export=False)
         self.pm0 = ExtService(src='pm', model='SynGen', indexer=self.syn, tex_name='p_{m0}')
         self.omega = ExtState(src='omega', model='SynGen', indexer=self.syn, tex_name=r'\omega',
                               info='Generator speed')

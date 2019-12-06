@@ -1,7 +1,7 @@
 .. _install:
 
 *************************
-Installation instructions
+Installation
 *************************
 
 User Mode Installation
