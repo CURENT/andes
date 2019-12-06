@@ -1,6 +1,6 @@
 .. _cases:
 
 ***********************
-power system test cases
+Test cases
 ***********************
 

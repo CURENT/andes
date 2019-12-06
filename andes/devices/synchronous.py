@@ -96,7 +96,7 @@ class GENBase(Model):
                              e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
                              tex_name='I_{dq_{max}}')
 
-        self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce)
+        self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce, tex_name=r'I_{dq,max}')
 
     @staticmethod
     def _vf0(**kwargs):
@@ -111,7 +111,7 @@ class Flux0(object):
     def __init__(self):
         self.psid = Algeb(tex_name=r'\psi_d', v_init='u * (ra * Iq0) + vq0',
                           e_str='u * (ra * Iq + vq) - psid')
-        self.psiq = Algeb(tex_name=r'\psi_q', v_init='- u * (ra * Id0) - vd0',
+        self.psiq = Algeb(tex_name=r'\psi_q', v_init='-u * (ra * Id0) - vd0',
                           e_str='u * (ra * Id + vd) + psiq')
 
         self.Id.e_str += ' + psid'

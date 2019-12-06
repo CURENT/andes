@@ -37,10 +37,11 @@ ANDES is currently under active development. Please report issues on the
    formats.rst
    cases.rst
    modeling.rst
+   modelref.rst
    release-history.rst
 
 .. toctree::
-   :caption: Package References
+   :caption: API References
    :maxdepth: 3
 
    andes.rst

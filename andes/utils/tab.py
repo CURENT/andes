@@ -13,16 +13,16 @@ class Tab(Texttable):
                  header=None,
                  descr=None,
                  data=None,
-                 export='plain'):
-        Texttable.__init__(self)
-        self.set_chars(['-', '|', '+', '-'])
-        self.set_deco(Texttable.HEADER
-                      | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
+                 export='plain',
+                 max_width=80):
+        Texttable.__init__(self, max_width=max_width)
+        if export == 'plain':
+            self.set_chars(['-', '|', '+', '-'])
+            self.set_deco(Texttable.HEADER | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
         self.set_precision(3)
 
         self._title = title
         self._descr = descr
-        self._format = export  # outformat in ['plain', 'latex', 'html']
         if header is not None:
             self.header(header)
         if data is not None:
@@ -30,7 +30,7 @@ class Tab(Texttable):
 
     def header(self, array):
         Texttable.header(self, array)
-        self.auto_style()
+        # self.auto_style()
 
     def guess_header(self):
         if self._header:
@@ -42,22 +42,22 @@ class Tab(Texttable):
             header = ['Parameter', 'Description', 'Value', 'Unit']
         self.header(header)
 
-    def auto_style(self):
-        """
-        automatic styling according to _row_size
-        76 characters in a row
-        """
-        if self._row_size is None:
-            return
-        elif self._row_size == 3:
-            self.set_cols_align(['l', 'l', 'l'])
-            self.set_cols_valign(['t', 't', 't'])
-            self.set_cols_width([12, 54, 12])
-        elif self._row_size == 4:
-            self.set_cols_align(['l', 'l', 'l', 'l'])
-            self.set_cols_valign(['t', 't', 't', 't'])
-            self.set_cols_width([10, 40, 10, 10])
-            # TODO: third column use scientific notation for small values
+    # def auto_style(self):
+    #     """
+    #     automatic styling according to _row_size
+    #     76 characters in a row
+    #     """
+    #     if self._row_size is None:
+    #         return
+    #     elif self._row_size == 3:
+    #         self.set_cols_align(['l', 'l', 'l'])
+    #         self.set_cols_valign(['t', 't', 't'])
+    #         self.set_cols_width([12, 54, 12])
+    #     elif self._row_size == 4:
+    #         self.set_cols_align(['l', 'l', 'l', 'l'])
+    #         self.set_cols_valign(['t', 't', 't', 't'])
+    #         self.set_cols_width([10, 40, 10, 10])
+    #         # TODO: third column use scientific notation for small values
 
     def set_title(self, val):
         self._title = val
@@ -72,10 +72,8 @@ class Tab(Texttable):
     def draw(self):
         """generate texttable formatted string"""
         self.guess_header()
-        self.add_left_space(
-        )
-        # for Texttable, elem_add a column of whitespace on the left for
-        # better visual effect
+        self.add_left_space()
+        # for Texttable, add a column of whitespace on the left for better visual effect
         if self._title and self._descr:
             pre = self._title + '\n' + self._descr + '\n\n'
         elif self._title:

@@ -1,5 +1,5 @@
-ANDES Package
-=============
+API References
+==============
 
 Subpackages
 -----------
@@ -8,7 +8,6 @@ Subpackages
 
    andes.common
    andes.core
-   andes.devices
    andes.filters
    andes.variables
 

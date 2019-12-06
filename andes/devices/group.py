@@ -158,8 +158,42 @@ class GroupBase(object):
 
         return idx
 
-    def doc(self):
-        return ''
+    def doc(self, export='plain'):
+        out = ''
+        if export == 'rest':
+            out += f'.. _{self.class_name}:\n\n'
+            group_header = '================================================================================\n'
+        else:
+            group_header = ''
+
+        out += group_header + f'Group <{self.class_name}>\n' + group_header
+
+        if len(self.common_params):
+            out += 'Common Parameters: ' + ', '.join(self.common_params)
+            out += '\n\n'
+        if len(self.common_vars):
+            out += 'Common Variables: ' + ', '.join(self.common_vars)
+            out += '\n\n'
+        if len(self.models):
+            out += 'Available models:\n'
+            model_name_list = list(self.models.keys())
+
+            if export == 'rest':
+                def add_reference(name_list):
+                    return [f'{item}_' for item in name_list]
+                model_name_list = add_reference(model_name_list)
+
+            out += ',\n'.join(model_name_list) + '\n'
+
+        return out
+
+    def doc_all(self, export='plain'):
+        out = self.doc(export=export)
+        out += '\n'
+        for instance in self.models.values():
+            out += instance.doc(export=export)
+            out += '\n'
+        return out
 
 
 class Undefined(GroupBase):

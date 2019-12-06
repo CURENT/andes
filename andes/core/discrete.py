@@ -4,9 +4,9 @@ from typing import Optional  # NOQA
 
 class Discrete(object):
 
-    def __init__(self):
-        self.name = None
-        self.tex_name = None
+    def __init__(self, name=None, tex_name=None):
+        self.name = name
+        self.tex_name = tex_name
         self.owner = None
 
     def check_var(self):
@@ -244,8 +244,8 @@ class Selector(Discrete):
     --------
     numpy.ufunc.reduce : NumPy reduce function
     """
-    def __init__(self, *args, fun):
-        super().__init__()
+    def __init__(self, *args, fun, tex_name=None):
+        super().__init__(tex_name=tex_name)
         self.input_vars = args
         self.fun = fun
         self.n = len(args)
