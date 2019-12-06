@@ -33,12 +33,13 @@ ANDES is currently under active development. Please report issues on the
    :maxdepth: 2
 
    copyright.rst
+   release-notes.rst
    install.rst
    tutorial.rst
    formats.rst
    modeling.rst
    cases.rst
-   release-notes.rst
+   cheatsheet.rst
    modelref.rst
 
 .. toctree::

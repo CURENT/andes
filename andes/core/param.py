@@ -94,6 +94,8 @@ class ParamBase(object):
         -------
         The truth value of the property
         """
+        if property_name not in self.property:
+            return False
         return self.property[property_name]
 
     def get_names(self):
@@ -271,7 +273,7 @@ class NumParam(ParamBase):
     def to_array(self):
         """
         Convert `v` to np.ndarray after adding elements. Store a copy
-        if the input in `vin`.
+        if the input in `vin`. Set ``pu_coeff`` to all ones.
 
         The conversion enables array-based calculation.
 
@@ -281,6 +283,22 @@ class NumParam(ParamBase):
         """
         self.v = np.array(self.v)
         self.vin = np.array(self.v)
+        self.pu_coeff = np.ones_like(self.v)
+
+    def set_pu_coeff(self, coeff):
+        """
+        Store p.u. conversion coefficient into ``self.pu_coeff`` and calculate
+        ``self.v = self.vin * self.pu_coeff``.
+
+        This function must be called after ``self.to_array``.
+
+        Parameters
+        ----------
+        coeff : np.ndarray
+            An array with the pu conversion coefficients
+        """
+        self.pu_coeff = coeff
+        self.v = self.vin * self.pu_coeff
 
     def restore(self):
         self.v = np.array(self.vin)
@@ -353,8 +371,7 @@ class ExtParam(NumParam):
             # TODO: the three lines below is a bit inefficient - 3x same loops
             self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
             self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
-            # TODO: uncomment when pu_coeff() is ready
-            # self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+            self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
 
         else:
             parent_instance = ext_model.__dict__[self.src]
@@ -372,8 +389,7 @@ class ExtParam(NumParam):
             # pull in values
             self.v = parent_instance.v[uid]
             self.vin = parent_instance.vin[uid]
-            # TODO: uncomment when pu_coeff() is ready
-            # self.pu_coeff = parent_instance.pu_coeff[uid]
+            self.pu_coeff = parent_instance.pu_coeff[uid]
 
 
 class RefParam(ParamBase):

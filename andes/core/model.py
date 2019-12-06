@@ -246,6 +246,26 @@ class ModelData(object):
 
         return out
 
+    def find_param(self, prop):
+        """
+        Find an OrderedDict of params with the given property
+
+        Parameters
+        ----------
+        prop : str
+            Property name
+
+        Returns
+        -------
+        OrderedDict
+        """
+        out = OrderedDict()
+        for name, instance in self.params.items():
+            if instance.get_property(prop) is True:
+                out[name] = instance
+
+        return out
+
 
 class ModelCall(object):
     def __init__(self):
@@ -445,7 +465,7 @@ class Model(object):
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
-    def get(self, src: str, idx, attr):
+    def get(self, src: str, idx, attr: str):
         uid = self.idx2uid(idx)
         return self.__dict__[src].__dict__[attr][uid]
 

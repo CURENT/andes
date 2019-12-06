@@ -292,7 +292,9 @@ class SystemNew(object):
         -------
 
         """
-        # TODO: for each model, get external parameters with `link_external` and then calculate the pu coeff
+        Sb = self.config.mva
+
+        # for each model, get external parameters with `link_external` and then calculate the pu coeff
         for mdl in self.models.values():
             for name, instance in mdl.params_ext.items():
                 ext_name = instance.model
@@ -301,7 +303,45 @@ class SystemNew(object):
                 except KeyError:
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
-                instance.link_external(ext_model)
+                try:
+                    instance.link_external(ext_model)
+                except IndexError:
+                    raise IndexError(f'Model <{mdl.class_name}> param <{instance.name}> link parameter error')
+
+            # default Sn to Sb if not provided. Some controllers might not have Sn or Vn
+            if 'Sn' in mdl.params:
+                Sn = mdl.Sn.v
+            else:
+                Sn = Sb
+
+            # If both Vn and Vn1 are not provided, default to Vn = Vb = 1
+            # test if is shunt-connected or series-connected to bus, or unconnected to bus
+            Vb, Vn = 1, 1
+            if 'bus' in mdl.params or 'bus1' in mdl.params:
+                if 'bus' in mdl.params:
+                    Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
+                    Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
+                elif 'bus1' in mdl.params:
+                    Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
+                    Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
+
+            Zn = (Vn ** 2 / Sn)
+            Zb = (Vb ** 2 / Sb)
+
+            if 'node' in mdl.params or 'node1' in mdl.params:
+                raise NotImplementedError('Per unit conversion for DC models is not implemented')
+            # TODO: handle DC voltages similarly
+
+            coeffs = {'voltage': Vn / Vb,
+                      'power': Sn / Sb,
+                      'current': (Sn / Vn) / (Sb / Vb),
+                      'z': Zn / Zb,
+                      'y': Zb / Zn,
+                      }
+
+            for prop, coeff in coeffs.items():
+                for p in mdl.find_param(prop).values():
+                    p.set_pu_coeff(coeff)
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('l_update_var', models)
