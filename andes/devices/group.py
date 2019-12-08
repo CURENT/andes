@@ -235,7 +235,7 @@ class SynGen(GroupBase):
         self.common_vars.extend(('omega', 'delta', 'pm'))
 
 
-class Governor(GroupBase):
+class TurbineGov(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('pout',))

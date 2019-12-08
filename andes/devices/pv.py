@@ -92,13 +92,17 @@ class Slack(SlackData, PVModel):
         SlackData.__init__(self)
         PVModel.__init__(self, system, config)
 
+        self.config.add(OrderedDict((('av2pv', 0.),
+                                     )))
+
         self.tex_names.update({'plim_zi': 'z_{pi}',
                                'plim_zl': 'z_{pl}',
                                'plim_zu': 'z_{pu}'})
         self.a.v_setter = True
         self.a.v_init = 'a0'
 
-        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax)
+        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
+                                  enable=self.config.av2pv)
 
         self.p.e_str = "u * (plim_zi * (a0 - a) + \
                              plim_zl * (pmin - p) + \

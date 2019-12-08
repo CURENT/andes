@@ -265,7 +265,7 @@ class NumParam(ParamBase):
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
-            logger.warning(f'Parameter {self.name} must be non-zero')
+            logger.warning(f'Parameter {self.name} of {self.owner.class_name} must be non-zero')
             value = self.default
 
         super(NumParam, self).add(value)

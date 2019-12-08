@@ -460,7 +460,9 @@ class Model(object):
         if isinstance(idx, (float, int, str, np.int64, np.float64)):
             return self.idx.index(idx)
         elif isinstance(idx, (list, np.ndarray)):
-            idx = list_flatten(idx)
+            if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
+                idx = list_flatten(idx)
+            # TODO: The current implementation is extremely slow
             return [self.idx.index(i) for i in idx]
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
@@ -1210,8 +1212,8 @@ class Model(object):
         table = Tab(title='Variables', max_width=max_width, export=export)
 
         call_store = self.system.calls[self.class_name]
-        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex)
-        tex_init = self.math_wrap(call_store.init_latex.values())
+        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex, export=export)
+        tex_init = self.math_wrap(call_store.init_latex.values(), export=export)
 
         rows = []
         for i, var in enumerate(self.cache.all_vars.values()):
@@ -1235,7 +1237,11 @@ class Model(object):
         return table.draw()
 
     @staticmethod
-    def math_wrap(tex_str_list):
+    def math_wrap(tex_str_list, export):
+        # only wrap when export format is ``rest``
+        if export != 'rest':
+            return list(tex_str_list)
+
         out = []
         for item in tex_str_list:
             if item is None or item == '':
@@ -1252,8 +1258,8 @@ class Model(object):
         table = Tab(title='Equations', max_width=max_width, export=export)
 
         call_store = self.system.calls[self.class_name]
-        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex)
-        tex_eqs = self.math_wrap(call_store.f_latex + call_store.g_latex + call_store.h_latex)
+        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex, export=export)
+        tex_eqs = self.math_wrap(call_store.f_latex + call_store.g_latex + call_store.h_latex, export=export)
 
         rows = []
         for i, var in enumerate(self.cache.all_vars.values()):
@@ -1271,8 +1277,8 @@ class Model(object):
         table = Tab(title='Services', max_width=max_width, export=export)
 
         call_store = self.system.calls[self.class_name]
-        tex_names = self.math_wrap([item.tex_name for item in self.services.values()])
-        tex_eqs = self.math_wrap(call_store.service_latex.values())
+        tex_names = self.math_wrap([item.tex_name for item in self.services.values()], export=export)
+        tex_eqs = self.math_wrap(call_store.service_latex.values(), export=export)
 
         rows = []
         for i, var in enumerate(self.services.values()):

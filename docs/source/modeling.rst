@@ -21,6 +21,16 @@ The bases for DC system are
 
 - :math:`V_b^{dc}`: voltage in kV.
 
+Parameter Requirements
+----------------------
+If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
+its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
+voltages.
+
+Controllers not connected to Bus or Node will have its rated voltages omitted and thus ``Vb = Vn = 1``.
+In fact, controllers not directly connected to the network shall use per unit for voltage and current parameters
+. Controllers (such as a turine governor) may inherit rated power from controlled models and thus power parameters
+will be converted consistently.
 
 Model and ModelData Classes
 ======================================

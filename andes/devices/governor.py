@@ -28,7 +28,7 @@ class TGBaseData(ModelData):
 class TGBase(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
-        self.group = 'Governor'
+        self.group = 'TurbineGov'
         self.flags.update({'tds': True})
         self.config.add({'deadband': 0,
                          'hardlimit': 1})

@@ -153,6 +153,8 @@ class SystemNew(object):
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 
+        if param_dict is None:
+            param_dict = {}
         if kwargs is not None:
             param_dict.update(kwargs)
 
