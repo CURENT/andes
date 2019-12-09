@@ -4,7 +4,6 @@
 I/O Formats
 ************************
 
-
 ==============================
 Input Formats
 ==============================
@@ -39,8 +38,9 @@ PQ device uses the same value for its ``bus`` parameter.
 
 
 The ANDES xlsx reader will try to convert data into numerical types when possible.
-This means if the input ``idx`` is string literal of numbers, the exported file will have them
-converted to numbers. The conversion does not affect the consistncy of data.
+This is especially relevant when the input ``idx`` is string literal of numbers,
+the exported file will have them converted to numbers.
+The conversion does not affect the consistency of data.
 
 ------------------------------
 Parameter Check

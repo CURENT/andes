@@ -160,7 +160,7 @@ class ServiceOperation(ServiceBase):
 
     See Also
     --------
-    ServiceFlatten : Service for Flattening 2-D services into 1-D
+    ServiceReduce : Service for Reducing linearly stored 2-D services into 1-D
 
     ServiceRepeat : Service for repeating 1-D services following a sub-pattern
     """
@@ -222,6 +222,7 @@ class ServiceReduce(ServiceOperation):
                     ref=self.Bus)
 
     Suppose we define two areas, 1 and 2, the Bus data looks like ::
+
         Bus    Area  Vn
         1      1     110
         2      2     220
@@ -250,7 +251,7 @@ class ServiceReduce(ServiceOperation):
 
         Returns
         -------
-        The array, ``self._v`` storing the reduced values
+        The array ``self._v`` storing the reduced values
         """
         if self._v is None:
             self._v = np.zeros(len(self.ref.v))

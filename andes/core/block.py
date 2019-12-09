@@ -52,7 +52,10 @@ class Block(object):
         class SomeModel:
             def __init__(...)
                 ...
-                self.A = LeadLag(name='A', u=self.foo1, T1=self.foo2, T2=self.foo3)
+                self.A = LeadLag(name='A',
+                                 u=self.foo1,
+                                 T1=self.foo2,
+                                 T2=self.foo3)
 
     To use Lag in the LeadLag code, the following lines are found in the constructor of LeadLag ::
 
@@ -73,7 +76,7 @@ class Block(object):
     are exported, Recall that ``B.name`` is ``A_B``, following the naming rule (parent block's name + variable
     name), B's internal variables become ``A_B_x`` and ``A_B_y``.
 
-    In this way, B's ``define`` needs mo modification since the naming rule is the same. For example,
+    In this way, B's ``define`` needs no modification since the naming rule is the same. For example,
     B's internal y is always ``{self.name}_y``, although B has gotten a new name ``A_B``.
 
     """
@@ -141,7 +144,7 @@ class Block(object):
         The equations should be written with the "final" variable names.
         Let's say the block instance is named `blk` (kept at ``self.name`` of the block), and an internal
         variable `v` is defined.
-        The internal variable will be captured as ``blk_v`` by the owner model. Therefore, all equations should
+        The internal variable will be captured as ``blk_v`` by the parent model. Therefore, all equations should
         use ``{self.name}_v`` to represent variable ``v``, where ``{self.name}`` is the name of the block at
         run time.
 
@@ -176,7 +179,8 @@ class Block(object):
                 self.v.v_init = '{self.T.name}'
                 self.v.e_str = '{self.T.name} - {self.name}_v'
 
-        In the owner model, ``v`` from the block will be captured as ``blk_v``, and the equation will become ::
+        In the parent model, ``v`` from the block will be captured as ``blk_v``, and the equation will
+        evaluate into ::
 
             self.blk_v.v_init = 'T'
             self.blk_v.e_str = 'T - blk_v'

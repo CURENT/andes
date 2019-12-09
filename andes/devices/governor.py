@@ -17,11 +17,11 @@ class TGBaseData(ModelData):
                              unit='pu')
         self.wref0 = NumParam(info='Base speed reference', tex_name=r'\omega_{ref0}', default=1.0,
                               unit='pu')
-        self.dbl = NumParam(info='Deadband lower limit', tex_name='dbL', default=-0.0001,
+        self.dbl = NumParam(info='Deadband lower limit', tex_name='L_{db}', default=-0.0001,
                             unit='pu')
-        self.dbu = NumParam(info='Deadband upper limit', tex_name='dbU', default=0.0001,
+        self.dbu = NumParam(info='Deadband upper limit', tex_name='U_{db}', default=0.0001,
                             unit='pu')
-        self.dbc = NumParam(info='Deadband neutral value', tex_name='dbC', default=0.0,
+        self.dbc = NumParam(info='Deadband neutral value', tex_name='C_{db}', default=0.0,
                             unit='pu')
 
 

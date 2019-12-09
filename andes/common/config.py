@@ -12,6 +12,7 @@ class Config(object):
     """
 
     def __init__(self, dct=None, **kwargs):
+        """Constructor with a dictionary or keyword arguments"""
         self.add(dct, **kwargs)
 
     def add(self, dct=None, **kwargs):

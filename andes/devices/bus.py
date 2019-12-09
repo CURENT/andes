@@ -42,8 +42,8 @@ class Bus(Model, BusData):
         self.flags.update({'collate': False,
                            'pflow': True})
 
-        self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='radian')
-        self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='pu')
+        self.a = Algeb(name='a', tex_name=r'\theta', info='voltage angle', unit='rad')
+        self.v = Algeb(name='v', tex_name='V', info='voltage magnitude', unit='p.u.')
 
         # --- TO BE REMOVED EXAMPLE ---
         self.a_times_v = Calc()

@@ -21,8 +21,8 @@ The bases for DC system are
 
 - :math:`V_b^{dc}`: voltage in kV.
 
-Parameter Requirements
-----------------------
+Parameter Requirements for Voltage Rating
+----------------------------------------------------
 If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
 its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
 voltages.

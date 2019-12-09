@@ -1190,23 +1190,27 @@ class Model(object):
         if len(self.params) == 0:
             return ''
 
-        table = Tab(title='Parameters', export=export)
+        tex_names = [item.tex_name for item in self.params.values()]
+        tex_names = self.math_wrap(tex_names, export=export)
+
+        table = Tab(title='Parameters', max_width=max_width, export=export)
         rows = []
-        for p in self.params.values():
+        for i, p in enumerate(self.params.values()):
             property_list = []
             for key, val in p.property.items():
                 if val is True:
                     property_list.append(key)
             property_str = ','.join(property_list)
             rows.append((p.name,
-                         p.unit if p.unit else '',
+                         tex_names[i],
+                         f'*{p.unit}*' if p.unit else '',
                          p.class_name,
                          p.info if p.info else '',
                          p.default if p.default is not None else '',
                          property_str))
 
         table.add_rows(rows, header=False)
-        table.header(('Name', 'Unit', 'Type', 'Description', 'Default', 'Properties'))
+        table.header(('Name', 'Symbol', 'Unit', 'Type', 'Description', 'Default', 'Properties'))
 
         return table.draw()
 
@@ -1232,7 +1236,7 @@ class Model(object):
 
             rows.append((var.name,
                          tex_names[i],
-                         var.unit if var.unit else '',
+                         f'*{var.unit}*' if var.unit else '',
                          tex_init[i],
                          property_str,
                          var.info if var.info else ''))
