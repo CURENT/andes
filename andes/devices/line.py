@@ -41,7 +41,7 @@ class Line(LineData, Model):
     def __init__(self, system=None, config=None):
         LineData.__init__(self)
         Model.__init__(self, system, config)
-        self.group = 'AcLine'
+        self.group = 'ACLine'
         self.flags['pflow'] = True
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1')
@@ -49,17 +49,17 @@ class Line(LineData, Model):
         self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1')
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2')
 
-        self.gh = ServiceConst()
-        self.bh = ServiceConst()
-        self.gk = ServiceConst()
-        self.bk = ServiceConst()
+        self.gh = ServiceConst(tex_name='g_h')
+        self.bh = ServiceConst(tex_name='b_h')
+        self.gk = ServiceConst(tex_name='g_k')
+        self.bk = ServiceConst(tex_name='b_k')
 
-        self.yh = ServiceConst()
-        self.yk = ServiceConst()
-        self.yhk = ServiceConst()
+        self.yh = ServiceConst(tex_name='y_h')
+        self.yk = ServiceConst(tex_name='y_k')
+        self.yhk = ServiceConst(tex_name='y_{hk}')
 
-        self.ghk = ServiceConst()
-        self.bhk = ServiceConst()
+        self.ghk = ServiceConst(tex_name='g_{hk}')
+        self.bhk = ServiceConst(tex_name='b_{hk}')
 
         self.gh.v_str = 'g1 + 0.5 * g'
         self.bh.v_str = 'b1 + 0.5 * b'

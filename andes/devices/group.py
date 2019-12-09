@@ -171,6 +171,9 @@ class GroupBase(object):
         else:
             out += group_header + f'Group <{self.class_name}>\n' + group_header
 
+        if self.__doc__:
+            out += str(self.__doc__) + '\n\n'
+
         if len(self.common_params):
             out += 'Common Parameters: ' + ', '.join(self.common_params)
             out += '\n\n'
@@ -203,32 +206,36 @@ class Undefined(GroupBase):
     pass
 
 
-class AcTopology(GroupBase):
+class ACTopology(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('a', 'v'))
 
 
 class StaticGen(GroupBase):
+    """Static generator group for power flow calculation"""
     def __init__(self):
         super().__init__()
         self.common_params.extend(('p0', 'q0'))
         self.common_vars.extend(('p', 'q', 'a', 'v'))
 
 
-class AcLine(GroupBase):
+class ACLine(GroupBase):
     pass
 
 
 class StaticLoad(GroupBase):
+    """Static load group"""
     pass
 
 
 class StaticShunt(GroupBase):
+    """Static shunt compensator group"""
     pass
 
 
 class SynGen(GroupBase):
+    """Synchronous generator group"""
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn'))
@@ -236,6 +243,7 @@ class SynGen(GroupBase):
 
 
 class TurbineGov(GroupBase):
+    """Turbine governor group for synchronous generator"""
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('pout',))

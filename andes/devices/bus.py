@@ -29,14 +29,14 @@ class BusData(ModelData):
 
 class Bus(Model, BusData):
     """
-    Bus model constructed from the NewModelBase
+    AC Bus model developed using the symbolic framework
     """
 
     def __init__(self, system=None, config=None):
         BusData.__init__(self)
         Model.__init__(self, system=system, config=config)
 
-        self.group = 'AcTopology'
+        self.group = 'ACTopology'
         self.category = ['Node']
 
         self.flags.update({'collate': False,

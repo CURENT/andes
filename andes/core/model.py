@@ -135,7 +135,7 @@ class ModelData(object):
         self.cache.add_callback('df_in', self.as_df_in)
 
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-        self.name = DataParam(info='element name', tex_name='name')
+        self.name = DataParam(info='device name', tex_name='name')
 
     def __setattr__(self, key, value):
         if isinstance(value, ParamBase):
