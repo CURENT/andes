@@ -14,17 +14,17 @@ def testlines(fid):
 
 def read(system, file):
     """Read a MATPOWER data file into mpc and build andes device elements"""
-    func = re.compile('function\\s')
-    mva = re.compile('\\s*mpc.baseMVA\\s*=\\s*')
-    bus = re.compile('\\s*mpc.bus\\s*=\\s*\\[')
-    gen = re.compile('\\s*mpc.gen\\s*=\\s*\\[')
-    branch = re.compile('\\s*mpc.branch\\s*=\\s*\\[')
-    area = re.compile('\\s*mpc.areas\\s*=\\s*\\[')
-    gencost = re.compile('\\s*mpc.gencost\\s*=\\s*\\[')
-    bus_name = re.compile('\\s*mpc.bus_name\\s*=\\s*\\{')
-    end = re.compile('\\s*\\];?')
-    has_digit = re.compile('.*\\d+\\s*]?;?')
-    comment = re.compile('\\s*%.*')
+    func = re.compile(r'function\s')
+    mva = re.compile(r'\s*mpc.baseMVA\s*=\s*')
+    bus = re.compile(r'\s*mpc.bus\s*=\s*\[')
+    gen = re.compile(r'\s*mpc.gen\s*=\s*\[')
+    branch = re.compile(r'\s*mpc.branch\s*=\s*\[')
+    area = re.compile(r'\s*mpc.areas\s*=\s*\[')
+    gencost = re.compile(r'\s*mpc.gencost\s*=\s*\[')
+    bus_name = re.compile(r'\s*mpc.bus_name\s*=\s*{')
+    end = re.compile(r'\s*\];?')
+    has_digit = re.compile(r'.*\d+\s*]?;?')
+    comment = re.compile(r'\s*%.*')
 
     ret = True
     field = None
@@ -50,7 +50,7 @@ def read(system, file):
             continue
         elif comment.search(line):  # for comment lines
             if info:
-                logger.info(line[1:72])
+                logger.info(line[1:])
                 info = False
             else:
                 continue
@@ -125,26 +125,14 @@ def read(system, file):
         vmax = data[11]
         vmin = data[12]
 
-        try:
-            system.add('Bus',
-                       idx=idx,
-                       name='Bus ' + str(idx),
-                       Vn=baseKV,
-                       v0=vmag,
-                       a0=vang,
-                       vmax=vmax,
-                       vmin=vmin,
-                       area=area,
-                       region=zone)
-            if pd != 0 or qd != 0:
-                system.add('PQ',
-                           bus=idx, name='PQ ' + str(idx), Vn=baseKV, p0=pd, q0=qd)
-            if gs or bs:
-                system.add('Shunt',
-                           bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
-        except KeyError:
-            logger.error('Error adding <Bus> to System object.')
-            ret = False
+        system.add('Bus', idx=idx, name='Bus ' + str(idx), Vn=baseKV,
+                   v0=vmag, a0=vang,
+                   vmax=vmax, vmin=vmin,
+                   area=area, region=zone)
+        if pd != 0 or qd != 0:
+            system.add('PQ', bus=idx, name='PQ ' + str(idx), Vn=baseKV, p0=pd, q0=qd)
+        if gs or bs:
+            system.add('Shunt', bus=idx, name='Shunt ' + str(idx), Vn=baseKV, g=gs, b=bs)
 
     gen_idx = 0
     for data in mpc['gen']:
@@ -167,44 +155,23 @@ def read(system, file):
         pmax = data[8] / mbase
         pmin = data[9] / mbase
 
-        try:
-            uid = system.Bus.idx2uid(bus_idx)
-            vn = system.Bus.Vn.v[uid]
-            if bus_idx in sw:
-                system.add('Slack',
-                           idx=gen_idx,
-                           bus=bus_idx,
-                           busr=bus_idx,
-                           name='Slack ' + str(bus_idx),
-                           u=status,
-                           Vn=vn,
-                           v0=vg,
-                           p0=pg,
-                           q0=qg,
-                           pmax=pmax,
-                           pmin=pmin,
-                           qmax=qmax,
-                           qmin=qmin,
-                           a0=0.0)
-            else:
-                system.add('PV',
-                           idx=gen_idx,
-                           bus=bus_idx,
-                           busr=bus_idx,
-                           name='PV ' + str(bus_idx),
-                           u=status,
-                           Vn=vn,
-                           v0=vg,
-                           p0=pg,
-                           q0=qg,
-                           pmax=pmax,
-                           pmin=pmin,
-                           qmax=qmax,
-                           qmin=qmin)
-        except KeyError:
-            logger.error(
-                'Error adding <Slack> or <PV> to powersystem object.')
-            ret = False
+        uid = system.Bus.idx2uid(bus_idx)
+        vn = system.Bus.Vn.v[uid]
+
+        if bus_idx in sw:
+            system.add('Slack', idx=gen_idx, bus=bus_idx, busr=bus_idx,
+                       name='Slack ' + str(bus_idx),
+                       u=status,
+                       Vn=vn, v0=vg, p0=pg, q0=qg, a0=0,
+                       pmax=pmax, pmin=pmin,
+                       qmax=qmax, qmin=qmin)
+        else:
+            system.add('PV', idx=gen_idx, bus=bus_idx, busr=bus_idx,
+                       name='PV ' + str(bus_idx),
+                       u=status,
+                       Vn=vn, v0=vg, p0=pg, q0=qg,
+                       pmax=pmax, pmin=pmin,
+                       qmax=qmax, qmin=qmin)
 
     for data in mpc['branch']:
         # fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle
@@ -229,25 +196,15 @@ def read(system, file):
         else:
             tf = True
             ratio = data[8]
-            angle = data[9]
-        try:
-            vf = system.Bus.Vn.v[system.Bus.idx2uid(fbus)]
-            vt = system.Bus.Vn.v[system.Bus.idx2uid(tbus)]
-            system.add('Line',
-                       Vn1=vf,
-                       Vn2=vt,
-                       bus1=fbus,
-                       bus2=tbus,
-                       r=r,
-                       x=x,
-                       b=b,
-                       u=status,
-                       trans=tf,
-                       tap=ratio,
-                       phi=angle)
-        except KeyError:
-            logger.error('Error adding <Line> to System.')
-            ret = False
+            angle = data[9] * deg2rad
+
+        vf = system.Bus.Vn.v[system.Bus.idx2uid(fbus)]
+        vt = system.Bus.Vn.v[system.Bus.idx2uid(tbus)]
+        system.add('Line', u=status,
+                   Vn1=vf, Vn2=vt,
+                   bus1=fbus, bus2=tbus,
+                   r=r, x=x, b=b,
+                   trans=tf, tap=ratio, phi=angle)
 
     if len(mpc['bus_name']) == len(system.Bus.name.v):
         system.Bus.name.v[:] = mpc['bus_name']

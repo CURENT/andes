@@ -64,8 +64,8 @@ class Limiter(Discrete):
     handled in the equation associated with the output variable.
     """
 
-    def __init__(self, u, lower, upper, enable=True):
-        super().__init__()
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None):
+        super().__init__(name=name, tex_name=tex_name)
         self.u = u
         self.lower = lower
         self.upper = upper
@@ -124,10 +124,9 @@ class SortedLimiter(Limiter):
     """
 
     def __init__(self, u, lower, upper, enable=True,
-                 n_select: Optional[int] = None,
-                 **kwargs):
+                 n_select: Optional[int] = None, name=None, tex_name=None):
 
-        super().__init__(u, lower, upper, enable=enable, **kwargs)
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
         self.n_select = int(n_select) if n_select else 0
 
     def check_var(self):

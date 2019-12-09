@@ -136,13 +136,8 @@ class Solver(object):
         self.b = b
 
         if self.sparselib in ('umfpack', 'klu'):
-            if self.factorize:
-                try:
-                    self.F = self.symbolic(self.A)
-                except ValueError:
-                    if self.A.size == (0, 0):
-                        logger.error("Loaded case file contains no element.")
-                        return None
+            if self.factorize is True:
+                self.F = self.symbolic(self.A)
                 self.factorize = False
 
             try:
@@ -155,7 +150,7 @@ class Solver(object):
                 return self.linsolve(self.A, self.b)
             except ArithmeticError:
                 logger.error('Jacobian matrix is singular.')
-                return np.ravel(matrix(0, self.b.size, 'd'))
+                return np.ravel(matrix(1, self.b.size, 'd'))
 
         elif self.sparselib in ('spsolve', 'cupy'):
             return self.linsolve(A, b)
@@ -177,11 +172,17 @@ class Solver(object):
         None
         """
         if self.sparselib == 'umfpack':
-            umfpack.linsolve(A, b)
+            try:
+                umfpack.linsolve(A, b)
+            except ArithmeticError:
+                logger.error('Singular matrix. Case is not solvable')
             return b
 
         elif self.sparselib == 'klu':
-            klu.linsolve(A, b)
+            try:
+                klu.linsolve(A, b)
+            except ArithmeticError:
+                logger.error('Singular matrix. Case is not solvable')
             return b
 
         elif self.sparselib in ('spsolve', 'cupy'):

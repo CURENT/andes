@@ -76,6 +76,10 @@ class PFlow(ProgramBase):
         """
         system = self.system
         self._initialize()
+        if system.dae.m == 0:
+            logger.error("Loaded case file contains no element.")
+            return False
+
         self.niter = 0
         while True:
             mis = self.nr_step()

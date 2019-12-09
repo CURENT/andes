@@ -126,6 +126,7 @@ class ModelData(object):
         self.timer_params = OrderedDict()
         self.n = 0
         self.idx = []
+        self.uid = {}
 
         if not hasattr(self, 'cache'):
             self.cache = Cache()
@@ -170,6 +171,7 @@ class ModelData(object):
             reference-able external index, by default None
         """
         self.idx.append(idx)
+        self.uid[idx] = self.n
         self.n += 1
 
         for name, instance in self.params.items():
@@ -458,12 +460,11 @@ class Model(object):
             logger.error("idx2uid cannot search for None idx")
             return None
         if isinstance(idx, (float, int, str, np.int64, np.float64)):
-            return self.idx.index(idx)
+            return self.uid[idx]
         elif isinstance(idx, (list, np.ndarray)):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
-            # TODO: The current implementation is extremely slow
-            return [self.idx.index(i) for i in idx]
+            return [self.uid[i] for i in idx]
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
@@ -924,6 +925,7 @@ class Model(object):
         if self.n == 0:
             return
 
+        logger.debug(f'{self.class_name}: calling g_update()')
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls
         kwargs = self.get_inputs()

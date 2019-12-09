@@ -281,7 +281,15 @@ class NumParam(ParamBase):
         --------
         After this call, `add` will not be allowed.
         """
+
+        # data quality check
         self.v = np.array(self.v)
+        if np.sum(np.isnan(self.v)) > 0:
+            raise ValueError(f'Param <{self.name} contains NaN.')
+
+        self.v[self.v == np.inf] = 1e10
+        self.v[self.v == -np.inf] = -1e10
+
         self.vin = np.array(self.v)
         self.pu_coeff = np.ones_like(self.v)
 
