@@ -61,13 +61,6 @@ class TG2(TG2Data, TGBase):
     def __init__(self, system, config):
         TG2Data.__init__(self)
         TGBase.__init__(self, system, config)
-        self.tex_names = {'plim_zl': r'z_{P,l}',
-                          'plim_zi': r'z_{P,i}',
-                          'plim_zu': r'z_{P,u}',
-                          'w_db_zl': 'z_{db,l}',
-                          'w_db_zi': 'z_{db,i}',
-                          'w_db_zu': 'z_{db,u}',
-                          }
         self.T12 = ServiceConst(v_str='T1 / T2')
         self.gain = ServiceConst(v_str='u / R', tex_name='G')
 

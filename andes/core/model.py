@@ -450,7 +450,7 @@ class Model(object):
             # pull in sub-variables from control blocks
             for var_name, var_instance in value.export().items():
                 var_instance.name = f'{value.name}_{var_name}'
-                var_instance.tex_name = rf'{value.tex_name}\ {var_instance.tex_name}'
+                var_instance.tex_name = rf'{var_instance.tex_name}_{value.tex_name}'
                 self.__setattr__(var_instance.name, var_instance)
 
         super(Model, self).__setattr__(key, value)
@@ -496,7 +496,7 @@ class Model(object):
         for instance in self.services_ext.values():
             self._input[instance.name] = instance.v
 
-        # updated every call
+        # updated discrete flags every call
         for instance in self.discrete.values():
             for name, val in zip(instance.get_names(), instance.get_values()):
                 self._input[name] = val
@@ -594,10 +594,14 @@ class Model(object):
         self.f_syms_matrix, self.g_syms_matrix, self.c_syms_matrix = list(), list(), list()
         self.f_print, self.g_print, self.c_print = list(), list(), list()
 
-        # -----------------------------------------------------------
         # process tex_names defined in model
+        # -----------------------------------------------------------
         for key in self.tex_names.keys():
             self.tex_names[key] = Symbol(self.tex_names[key])
+        for instance in self.discrete.values():
+            for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
+                self.tex_names[name] = tex_name
+        # -----------------------------------------------------------
 
         for var in self.cache.all_params_names:
             self.input_syms[var] = Symbol(var)

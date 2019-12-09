@@ -50,10 +50,6 @@ class PVModel(Model):
         self.config.add(OrderedDict((('pv2pq', 1),
                                      ('npv2pq', 1))))
 
-        self.tex_names.update({'qlim_zi': 'z_{qi}',
-                               'qlim_zl': 'z_{ql}',
-                               'qlim_zu': 'z_{qu}'})
-
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')
 
@@ -94,10 +90,6 @@ class Slack(SlackData, PVModel):
 
         self.config.add(OrderedDict((('av2pv', 0.),
                                      )))
-
-        self.tex_names.update({'plim_zi': 'z_{pi}',
-                               'plim_zl': 'z_{pl}',
-                               'plim_zu': 'z_{pu}'})
         self.a.v_setter = True
         self.a.v_init = 'a0'
 

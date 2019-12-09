@@ -67,13 +67,15 @@
 - [x] low pass filter in PI Controller - How the equations should be written
 - [x] Refactor `Config` to make load and save part of the config
 - [x] Use `multiprocessing` to call g_update and f_update
-*   Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
+- [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
+- [x] LaTeX names in blocks and limiters
+*   Export power flow iteration steps for debugging; export limiter status (get_inputs)
+alongside equations
 *   Deal with two-terminal and multi-terminal devices
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
 *   Add a more generic parser for PSSE RAW
-*   LaTeX names in blocks and limiters
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians

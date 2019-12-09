@@ -18,14 +18,14 @@ class Area(AreaData, Model):
                            'tds': True})
 
         self.Bus = RefParam(export=False)
-        self.AcTopology = RefParam(export=False)
+        self.ACTopology = RefParam(export=False)
 
         # --------------------Experiment Zone--------------------
-        self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.AcTopology, export=False)
+        self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.ACTopology, export=False)
         self.Vn_sum = ServiceReduce(u=self.Vn, fun=np.sum, ref=self.Bus)
         self.Vn_sum_rep = ServiceRepeat(u=self.Vn_sum, ref=self.Bus)
 
-        self.a = ExtAlgeb(model='AcTopology', src='a', indexer=self.AcTopology)
-        self.v = ExtAlgeb(model='AcTopology', src='v', indexer=self.AcTopology)
+        self.a = ExtAlgeb(model='ACTopology', src='a', indexer=self.ACTopology)
+        self.v = ExtAlgeb(model='ACTopology', src='v', indexer=self.ACTopology)
 
         # self.time = Algeb(e_str='time - dae_t', v_setter=True)

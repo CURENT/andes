@@ -8,6 +8,8 @@ class Discrete(object):
         self.name = name
         self.tex_name = tex_name
         self.owner = None
+        self.export_flags = []
+        self.export_flags_tex = []
 
     def check_var(self):
         pass
@@ -22,10 +24,20 @@ class Discrete(object):
         pass
 
     def get_names(self):
-        pass
+        """
+        Available symbols from this class
+
+        Returns
+        -------
+
+        """
+        return [f'{self.name}_{flag}' for flag in self.export_flags]
+
+    def get_tex_names(self):
+        return [rf'{flag_tex}_{self.tex_name}' for flag_tex in self.export_flags_tex]
 
     def get_values(self):
-        pass
+        return [self.__dict__[flag] for flag in self.export_flags]
 
     @property
     def class_name(self):
@@ -73,6 +85,8 @@ class Limiter(Discrete):
         self.zu = 0
         self.zl = 0
         self.zi = 1
+        self.export_flags = ['zl', 'zi', 'zu']
+        self.export_flags_tex = ['z_l', 'z_i', 'z_u']
 
     def check_var(self):
         """
@@ -91,19 +105,6 @@ class Limiter(Discrete):
         self.zu = self.zu.astype(np.float64)
         self.zl = self.zl.astype(np.float64)
         self.zi = self.zi.astype(np.float64)
-
-    def get_names(self):
-        """
-        Available symbols from this class
-
-        Returns
-        -------
-
-        """
-        return [self.name + '_zl', self.name + '_zi', self.name + '_zu']
-
-    def get_values(self):
-        return [self.zl, self.zi, self.zu]
 
 
 class Comparer(Limiter):
@@ -336,6 +337,8 @@ class DeadBand(Limiter):
         self.zu = 0.
         self.zur = 0.
         self.zlr = 0.
+        self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
+        self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_{ur}', 'z_{lr}']
 
     def check_var(self):
         """
@@ -372,29 +375,6 @@ class DeadBand(Limiter):
         self.zu = zu.astype(np.float64)
         self.zl = zl.astype(np.float64)
         self.zi = zi.astype(np.float64)
-
-    def get_names(self):
-        """
-        Export names
-
-        Returns
-        -------
-        list:
-            Five exported names in the order of `zl`, `zi`, `zu`, `zur`, and `zlr`
-        """
-        return [self.name + '_zl', self.name + '_zi', self.name + '_zu',
-                self.name + '_zur', self.name + '_zlr']
-
-    def get_values(self):
-        """
-        Export values
-
-        Returns
-        -------
-        list:
-            Five exported variables in the same order of names
-        """
-        return [self.zl, self.zi, self.zu, self.zur, self.zlr]
 
 
 class NonLinearGain(Discrete):

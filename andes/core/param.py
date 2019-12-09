@@ -284,8 +284,9 @@ class NumParam(ParamBase):
 
         # data quality check
         self.v = np.array(self.v)
-        if np.sum(np.isnan(self.v)) > 0:
-            raise ValueError(f'Param <{self.name} contains NaN.')
+
+        # if np.sum(np.isnan(self.v)) > 0:
+        #     raise ValueError(f'Param <{self.name} contains NaN.')
 
         self.v[self.v == np.inf] = 1e10
         self.v[self.v == -np.inf] = -1e10
