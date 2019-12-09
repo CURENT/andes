@@ -34,7 +34,7 @@ class Discrete(object):
         return [f'{self.name}_{flag}' for flag in self.export_flags]
 
     def get_tex_names(self):
-        return [rf'{flag_tex}_{self.tex_name}' for flag_tex in self.export_flags_tex]
+        return [rf'{flag_tex}^{self.tex_name}' for flag_tex in self.export_flags_tex]
 
     def get_values(self):
         return [self.__dict__[flag] for flag in self.export_flags]
@@ -338,7 +338,7 @@ class DeadBand(Limiter):
         self.zur = 0.
         self.zlr = 0.
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
-        self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_{ur}', 'z_{lr}']
+        self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 
     def check_var(self):
         """
