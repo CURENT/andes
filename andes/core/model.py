@@ -277,7 +277,7 @@ class ModelCall(object):
         self.f_lambdify = None
         self.h_lambdify = None
         self.init_lambdify = None
-        self.service_lambdify = None
+        self.s_lambdify = None
 
         self._ifx, self._jfx, self._vfx = list(), list(), list()
         self._ify, self._jfy, self._vfy = list(), list(), list()
@@ -365,9 +365,11 @@ class Model(object):
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'), ))
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
+        self.vars_syms_list = list()
         self.non_vars_syms = OrderedDict()  # input_syms - vars_syms
+
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
-        self.f_syms_matrix, self.g_syms_matrix, self.c_syms_matrix = list(), list(), list()
+        self.f_matrix, self.g_matrix, self.c_syms_matrix = list(), list(), list()
         self.f_print, self.g_print, self.c_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
@@ -542,10 +544,10 @@ class Model(object):
             return
         logger.debug(f'{self.class_name}: calling eval_service()')
 
-        if self.calls.service_lambdify is not None and len(self.calls.service_lambdify):
+        if self.calls.s_lambdify is not None and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
 
-                func = self.calls.service_lambdify[name]
+                func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     instance.v = func(**kwargs)
@@ -641,11 +643,23 @@ class Model(object):
         for i, var in enumerate(self.cache.all_vars.values()):
             var.v = sol[i*self.n: (i+1) * self.n]
 
-    def generate_symbolc(self):
+    def generate_symbols(self):
         """
         Generate symbols for symbolic equation generations.
 
         This function should run before other generate equations.
+
+        Attributes
+        ----------
+        input_syms : OrderedDict
+            name-symbol pair of all parameters, variables and configs
+
+        vars_syms : OrderedDict
+            name-symbol pair of all variables, in the order of (states_and_ext + algebs_and_ext)
+
+        non_vars_syms : OrderedDict
+            name-symbol pair of alll non-variables, namely, (input_syms - vars_syms)
+
         Returns
         -------
 
@@ -653,14 +667,9 @@ class Model(object):
         from sympy import Symbol, Matrix, sympify, lambdify  # NOQA
         from sympy.printing import latex  # NOQA
 
-    def generate_equations(self):
-        logger.debug(f'Generating equations for {self.__class__.__name__}')
-        from sympy import Symbol, Matrix, sympify, lambdify
-        from sympy.printing import latex
-
+        # clear symbols storage
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
-        self.f_syms_matrix, self.g_syms_matrix, self.c_syms_matrix = list(), list(), list()
-        self.f_print, self.g_print, self.c_print = list(), list(), list()
+        self.f_matrix, self.g_matrix, self.c_syms_matrix = Matrix([]), Matrix([]), Matrix([])
 
         # process tex_names defined in model
         # -----------------------------------------------------------
@@ -674,20 +683,17 @@ class Model(object):
         for var in self.cache.all_params_names:
             self.input_syms[var] = Symbol(var)
 
-            # replace symbols for printing
-            if var in self.__dict__ and self.__dict__[var].tex_name is not None:
-                self.tex_names[Symbol(var)] = Symbol(self.__dict__[var].tex_name)
-
         for var in self.cache.all_vars_names:
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
 
-            # replace symbols for printing
-            if var in self.__dict__ and self.__dict__[var].tex_name is not None:
-                self.tex_names[Symbol(var)] = Symbol(self.__dict__[var].tex_name)
-
         for key in self.config.__dict__:
             self.input_syms[key] = Symbol(key)
+
+        # store tex names for pretty printing replacement later
+        for var in self.input_syms:
+            if var in self.__dict__ and self.__dict__[var].tex_name is not None:
+                self.tex_names[Symbol(var)] = Symbol(self.__dict__[var].tex_name)
 
         self.input_syms['dae_t'] = Symbol('dae_t')
 
@@ -695,11 +701,16 @@ class Model(object):
         self.non_vars_syms = OrderedDict(self.input_syms)
         for key in self.vars_syms:
             self.non_vars_syms.pop(key)
-        # ------------------------------------------------------------
 
-        syms_list = list(self.input_syms)
-        iter_list = [self.states, self.states_ext, self.algebs, self.algebs_ext, self.calcs]
-        dest_list = [self.f_syms, self.f_syms, self.g_syms, self.g_syms, self.h_syms]
+        self.vars_syms_list = list(self.vars_syms.values())  # useful for ``.jacobian()``
+
+    def generate_equations(self):
+        logger.debug(f'Generating equations for {self.__class__.__name__}')
+        from sympy import Matrix, sympify, lambdify
+
+        inputs_list = list(self.input_syms)
+        iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext, self.calcs]
+        dest_list = [self.f_syms, self.g_syms, self.h_syms]
 
         for it, dest in zip(iter_list, dest_list):
             for instance in it.values():
@@ -707,57 +718,40 @@ class Model(object):
                     dest.append(0)
                 else:
                     try:
-                        sympified_equation = sympify(instance.e_str, locals=self.input_syms)
+                        dest.append(sympify(instance.e_str, locals=self.input_syms))
                     except TypeError as e:
                         logger.error(f'Error sympifying equation <{instance.e_str}> for <{instance.name}>')
                         raise e
 
-                    dest.append(sympified_equation)
+        # convert to SymPy matrices
+        self.f_matrix = Matrix(self.f_syms)
+        self.g_matrix = Matrix(self.g_syms)
+        self.h_matrix = Matrix(self.h_syms)
 
-        self.f_syms_matrix = Matrix(self.f_syms)
-        self.g_syms_matrix = Matrix(self.g_syms)
-        self.h_syms_matrix = Matrix(self.h_syms)
-
-        self.vars_print = Matrix(list(self.vars_syms.values())).subs(self.tex_names)
-        self.f_print = self.f_syms_matrix.subs(self.tex_names)
-        self.g_print = self.g_syms_matrix.subs(self.tex_names)
-        self.h_print = self.h_syms_matrix.subs(self.tex_names)
-
-        self.calls.g_lambdify = lambdify(syms_list, self.g_syms_matrix, 'numpy')
-        self.calls.f_lambdify = lambdify(syms_list, self.f_syms_matrix, 'numpy')
-        self.calls.h_lambdify = lambdify(syms_list, self.h_syms_matrix, 'numpy')
-
-        # store latex strings
-        nx = len(self.f_print)
-        ny = len(self.g_print)
-        self.calls.x_latex = [latex(item) for item in self.vars_print[:nx]]
-        self.calls.y_latex = [latex(item) for item in self.vars_print[nx:nx + ny]]
-        self.calls.c_latex = [latex(item) for item in self.vars_print[nx + ny:]]
-
-        self.calls.f_latex = [latex(item) for item in self.f_print]
-        self.calls.g_latex = [latex(item) for item in self.g_print]
-        self.calls.h_latex = [latex(item) for item in self.h_print]
+        self.calls.g_lambdify = lambdify(inputs_list, self.g_matrix, 'numpy')
+        self.calls.f_lambdify = lambdify(inputs_list, self.f_matrix, 'numpy')
+        self.calls.h_lambdify = lambdify(inputs_list, self.h_matrix, 'numpy')
 
         # convert service equations
-        # Note: service equations are converted one by one, because service variables
-        # can be interdependent
-        service_eq_list = OrderedDict()
-        service_latex = OrderedDict()
+        # Service equations are converted sequentially because Services can be interdependent
+        s_syms = OrderedDict()
+        s_lambdify = OrderedDict()
         for name, instance in self.services.items():
             if instance.v_str is not None:
-                sympified_equation = sympify(instance.v_str, locals=self.input_syms)
-                service_eq_list[name] = lambdify(syms_list, sympified_equation, 'numpy')
-                service_latex[name] = latex(sympified_equation.subs(self.tex_names))
+                s_syms[name] = sympify(instance.v_str, locals=self.input_syms)
+                s_lambdify[name] = lambdify(inputs_list, s_syms[name], 'numpy')
             else:
-                service_eq_list[name] = 0
-                service_latex[name] = '0'
+                s_lambdify[name] = 0
 
-        self.calls.service_lambdify = service_eq_list
-        self.calls.service_latex = service_latex
+        self.s_matrix = Matrix(list(s_syms.values()))
+        self.calls.s_lambdify = s_lambdify
 
     def generate_jacobians(self):
         logger.debug(f'Generating Jacobians for {self.__class__.__name__}')
         from sympy import SparseMatrix, lambdify, Matrix
+
+        # clear storage
+        self.df_syms, self.dg_syms = Matrix([]), Matrix([])
 
         self.calls._ifx, self.calls._jfx, self.calls._vfx = list(), list(), list()
         self.calls._ify, self.calls._jfy, self.calls._vfy = list(), list(), list()
@@ -770,31 +764,24 @@ class Model(object):
         self.calls._igyc, self.calls._jgyc, self.calls._vgyc = list(), list(), list()
 
         # NOTE: SymPy does not allow getting the derivative of an empty array
-        self.dg_syms = Matrix([])
-        self.df_syms = Matrix([])
-        if len(self.g_syms_matrix) > 0:
-            self.dg_syms = self.g_syms_matrix.jacobian(list(self.vars_syms.values()))
+        if len(self.g_matrix) > 0:
+            self.dg_syms = self.g_matrix.jacobian(self.vars_syms_list)
 
-        if len(self.f_syms_matrix) > 0:
-            self.df_syms = self.f_syms_matrix.jacobian(list(self.vars_syms.values()))
+        if len(self.f_matrix) > 0:
+            self.df_syms = self.f_matrix.jacobian(self.vars_syms_list)
 
-        self.dg_syms_sparse = SparseMatrix(self.dg_syms)
-        self.df_syms_sparse = SparseMatrix(self.df_syms)
-
-        self.df_print = self.df_syms_sparse.subs(self.tex_names)
-        self.dg_print = self.dg_syms_sparse.subs(self.tex_names)
+        self.df_sparse = SparseMatrix(self.df_syms)
+        self.dg_sparse = SparseMatrix(self.dg_syms)
 
         vars_syms_list = list(self.vars_syms)
         syms_list = list(self.input_syms)
         algebs_and_ext_list = list(self.cache.algebs_and_ext)
         states_and_ext_list = list(self.cache.states_and_ext)
 
-        fg_sparse = [self.df_syms_sparse, self.dg_syms_sparse]
+        fg_sparse = [self.df_sparse, self.dg_sparse]
         for idx, eq_sparse in enumerate(fg_sparse):
             for item in eq_sparse.row_list():
-                e_idx = item[0]
-                v_idx = item[1]
-                e_symbolic = item[2]
+                e_idx, v_idx, e_symbolic = item
 
                 if idx == 0:
                     eq_name = states_and_ext_list[e_idx]
@@ -805,36 +792,14 @@ class Model(object):
                 eqn = self.cache.all_vars[eq_name]
                 var = self.cache.all_vars[var_name]
 
-                # FIXME: this line takes excessively long to run
-                # it will work with is_number
-                # but needs some refactor with the value
-                #
-                # if e_str.is_constant():
-                #     jac_name = f'{eqn.e_code}{var.v_code}c'
-
-                # -----------------------------------------------------------------
-                # ------ Constant parameters are not known at generation time -----
-                # elif len(e_str.atoms(Symbol)) == 1 and \
-                #         str(list(e_str.atoms(Symbol))[0]) in self.cache.all_consts_names:
-                #     jac_name = f'{eqn.e_code}{var.v_code}c'
-                # -----------------------------------------------------------------
-                # else:
                 jac_name = f'{eqn.e_code}{var.v_code}'
 
                 self.calls.__dict__[f'_i{jac_name}'].append(e_idx)
                 self.calls.__dict__[f'_j{jac_name}'].append(v_idx)
                 self.calls.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
 
-        # NOTE: This will not work: checking if the jacobian
-        # element has value and add an epsilon if not.
-        # The reason is that even if the jacobian is non-zero at
-        # generation time, it can evaluate to zero
-
-        # NOTE:
-        # The for loop below is intended to add an epsilon small
-        # value to the diagonal of gy matrix.
-        # The user should take care of the algebraic equations
-        # by using `diag_eps` in Algeb definition
+        # The for loop below is intended to add an epsilon small value to the diagonal of gy matrix.
+        # The user should take care of the algebraic equations by using `diag_eps` in Algeb definition
 
         for var in self.algebs.values():
             if var.diag_eps == 0.0:
@@ -844,6 +809,37 @@ class Model(object):
             self.calls.__dict__[f'_igyc'].append(e_idx)
             self.calls.__dict__[f'_jgyc'].append(v_idx)
             self.calls.__dict__[f'_vgyc'].append(var.diag_eps)
+
+    def generate_pretty_print(self):
+        """Generate pretty print variables and equations"""
+        from sympy import Matrix
+        from sympy.printing import latex
+
+        # equation symbols for pretty printing
+        self.f_print, self.g_print, self.c_print = Matrix([]), Matrix([]), Matrix([])
+
+        self.vars_print = Matrix(list(self.vars_syms.values())).subs(self.tex_names)
+
+        # get pretty printing equations by substituting symbols
+        self.f_print = self.f_matrix.subs(self.tex_names)
+        self.g_print = self.g_matrix.subs(self.tex_names)
+        self.h_print = self.h_matrix.subs(self.tex_names)
+        self.s_print = self.s_matrix.subs(self.tex_names)
+
+        # store latex strings
+        nx = len(self.f_print)
+        ny = len(self.g_print)
+        self.calls.x_latex = [latex(item) for item in self.vars_print[:nx]]
+        self.calls.y_latex = [latex(item) for item in self.vars_print[nx:nx + ny]]
+        self.calls.c_latex = [latex(item) for item in self.vars_print[nx + ny:]]
+
+        self.calls.f_latex = [latex(item) for item in self.f_print]
+        self.calls.g_latex = [latex(item) for item in self.g_print]
+        self.calls.h_latex = [latex(item) for item in self.h_print]
+        self.calls.s_latex = [latex(item) for item in self.s_print]
+
+        self.df_print = self.df_sparse.subs(self.tex_names)
+        self.dg_print = self.dg_sparse.subs(self.tex_names)
 
     def store_sparse_pattern(self):
         """
@@ -1374,7 +1370,7 @@ class Model(object):
 
         call_store = self.system.calls[self.class_name]
         tex_names = self.math_wrap([item.tex_name for item in self.services.values()], export=export)
-        tex_eqs = self.math_wrap(call_store.service_latex.values(), export=export)
+        tex_eqs = self.math_wrap(call_store.s_latex, export=export)
 
         rows = []
         for i, var in enumerate(self.services.values()):

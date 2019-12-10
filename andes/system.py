@@ -111,9 +111,11 @@ class SystemNew(object):
 
         Anything in this function should be independent of test case
         """
+        self._generate_symbols()
         self._generate_equations()
         self._generate_jacobians()
         self._generate_initializers()
+        self._generate_pretty_print()
         self._check_group_common()
         self._store_calls()
         self.dill_calls()
@@ -634,6 +636,12 @@ class SystemNew(object):
     def _generate_initializers(self):
         # TODO: consider both JIT and non-JIT models
         self._call_models_method('generate_initializers', self.models)
+
+    def _generate_symbols(self):
+        self._call_models_method('generate_symbols', self.models)
+
+    def _generate_pretty_print(self):
+        self._call_models_method('generate_pretty_print', self.models)
 
     def _generate_equations(self):
         self._call_models_method('generate_equations', self.models)
