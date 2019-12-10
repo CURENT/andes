@@ -868,12 +868,10 @@ class Model(object):
 
         if (not self.flags['address']) or (self.n == 0):
             # Note:
-            # if `self.n` is 0, skipping the processes below will
-            # avoid appending empty lists/arrays and non-empty values,
-            # which as a combination is not accepted by `cvxopt.spmatrix`
+            # if `self.n` is 0, skipping the processes below will avoid appending empty lists/arrays and
+            # non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`
             #
-            # If we don't want to check `self.n`, we can check if
-            # len(row) == 0 or len(col) ==0 in the code below.
+            # If we don't want to check `self.n`, we can check if len(row) == 0 or len(col) == 0 below instead.
             return
 
         self.j_numeric()
@@ -897,10 +895,9 @@ class Model(object):
                     row_idx = self.__dict__[row_name].a
                     col_idx = self.__dict__[col_name].a
                     if len(row_idx) != len(col_idx):
-                        print(f'Model: {self.class_name}')
-                        print(f'row {row_name}, row_idx: {row_idx}')
-                        print(f'col {col_name}, col_idx: {col_idx}')
-                        raise ValueError
+                        logger.error(f'row {row_name}, row_idx: {row_idx}')
+                        logger.error(f'col {col_name}, col_idx: {col_idx}')
+                        raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
                     elif len(row_idx) == 0 and len(col_idx) == 0:
                         continue
 
@@ -917,7 +914,9 @@ class Model(object):
                                          self.__dict__[f'_v{j_name}{j_type}']):
 
                     if len(row) != len(col):
-                        raise ValueError
+                        logger.error(f'row_idx: {row}')
+                        logger.error(f'col_idx: {col}')
+                        raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
                     elif len(row) == 0 and len(col) == 0:
                         continue
 
