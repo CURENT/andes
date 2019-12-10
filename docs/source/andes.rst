@@ -8,7 +8,6 @@ Subpackages
 
    andes.common
    andes.core
-   andes.filters
    andes.variables
 
 Submodules

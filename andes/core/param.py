@@ -361,7 +361,7 @@ class TimerParam(NumParam):
     """
     A parameter whose values are event occurrence times during the simulation.
 
-    The constructor takes an additional Callable ``callback`` for the action of the event.
+    The constructor takes an additional Callable ``self.callback`` for the action of the event.
     ``TimerParam`` has a default value of -1, meaning deactivated.
 
     Examples
@@ -380,7 +380,10 @@ class TimerParam(NumParam):
                     instance = self.system.__dict__[self.model.v[i]]
                     # get the original status and flip the value
                     u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
-                    instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
+                    instance.set(src='u',
+                                 attr='v',
+                                 idx=self.dev.v[i],
+                                 value=1-u0)
                     action = True
             return action
 
@@ -525,14 +528,15 @@ class RefParam(ParamBase):
         3      1     345
         4      1     500
 
-    The Area device wants to collect the indices of Bus devices which points to the corresponding Area.
+    The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
     In ``Area.__init__``, one defines ::
 
         self.Bus = RefParam()
 
-    where the member attribute name ``Bus`` needs to be the model name ``Area`` wants to collect ``idx`` for.
-    Similarly, one can define ``self.ACTopology = RefParam()`` to collect models in the ``ACTopology`` group
-    that references to areas.
+    where the member attribute name ``Bus`` needs to match exactly model name that ``Area`` wants to collect
+    ``idx`` for.
+    Similarly, one can define ``self.ACTopology = RefParam()`` to collect devices in the ``ACTopology`` group
+    that references Area.
 
     The collection of ``idx`` happens in ``System._collect_ref_param``. It has to be noted that the specific
     ``Area`` entry must exist to collect model idx-es referencing it. For example, if ``Area`` has the
@@ -541,15 +545,15 @@ class RefParam(ParamBase):
         idx
         1
 
-    Then, only Bus 1, 3, and 4 will be collected into ``self.Bus.v``.
+    Then, only Bus 1, 3, and 4 will be collected into ``self.Bus.v``, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
 
-    If ``Area`` has data
+    If ``Area`` has data ::
 
         idx
         1
         2
 
-    Then, ``self.Bus.v`` will end up with ``[ [1, 2, 4], [3] ]``.
+    Then, ``self.Bus.v`` will end up with ``[ [1, 3, 4], [2] ]``.
 
     See Also
     --------
