@@ -1,6 +1,7 @@
 from andes.core.param import TimerParam, IdxParam, DataParam
 from andes.core.model import Model, ModelData
 import logging
+import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +21,7 @@ class Toggler(TogglerData, Model):
 
         self.t.callback = self._u_switch
 
-    def _u_switch(self, is_time):
+    def _u_switch(self, is_time: np.ndarray):
         action = False
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):

@@ -38,7 +38,7 @@ pd = None
 
 def load_pd():
     """
-    Import pandas to globals() if not exist
+    Import pandas to globals() if not exist.
     """
     if globals()['pd'] is None:
         try:

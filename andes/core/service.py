@@ -223,7 +223,7 @@ class ServiceReduce(ServiceOperation):
 
     Suppose we define two areas, 1 and 2, the Bus data looks like ::
 
-        Bus    Area  Vn
+        idx    area  Vn
         1      1     110
         2      2     220
         3      1     345

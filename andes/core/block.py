@@ -418,6 +418,7 @@ class Lag(Block):
         .. math ::
 
             \dot{x'} = (u - x) / T
+
             x'_0 = u
 
         """
