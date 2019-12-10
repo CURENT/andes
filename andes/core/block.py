@@ -207,13 +207,25 @@ class Block(object):
 
     def g_numeric(self, **kwargs):
         """
-        Function to customize function calls
+        Function call to update algebraic equation values.
+
+        This function should modify the ``e`` value of block ``Algeb`` and ``ExtAlgeb`` in place.
+
+        Returns
+        -------
+        None
         """
         pass
 
     def f_numeric(self, **kwargs):
         """
-        Function to customize differential function calls
+        Function call to update differential equation values.
+
+        This function should modify the ``e`` value of block ``State`` and ``ExtState`` in place.
+
+        Returns
+        -------
+        None
         """
         pass
 
@@ -222,13 +234,13 @@ class Block(object):
 
     def j_numeric(self):
         """
-        This function stores the constant and variable jacobian information.
+        This function stores the constant and variable jacobian information in corresponding lists.
 
-        Constant jacobians are stored by indices and values in `ifxc`, `jfxc`
-        and `vfxc`. Note that it is the values that gets stored in `vfxc`.
-        Variable jacobians are stored by indices and functions. The function
-        shall return the value of the corresponding jacobian elements.
+        Constant jacobians are stored by indices and values in, for example, `ifxc`, `jfxc` and `vfxc`.
+        Value scalars or arrays are stored in `vfxc`.
 
+        Variable jacobians are stored by indices and functions. The function shall return the value of the
+        corresponding jacobian elements.
         """
         pass
 
@@ -299,6 +311,7 @@ class PIController(Block):
 
 
 class PIControllerNumeric(Block):
+    """A PI Controller implemented with numerical function calls"""
 
     def __init__(self, u, ref, kp, ki, name=None, info=None):
         super().__init__(name=name, info=info)
@@ -319,7 +332,7 @@ class PIControllerNumeric(Block):
     def f_numeric(self, **kwargs):
         self.xi.e = self.ki.v * (self.ref.v - self.u.v)
 
-    def store_jacobian(self):
+    def j_numeric(self):
         self.j_reset()
 
         self.ifyc.append(self.xi.a)

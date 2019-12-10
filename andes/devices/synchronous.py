@@ -93,7 +93,7 @@ class GENBase(Model):
         self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
         # --------------------------------------------------Experimental-----
-        self.Idq_max = Algeb(v_init='maximum(Id, Iq) - Idq_max', diag_eps=1e-6,
+        self.Idq_max = Algeb(v_init='maximum(Id, Iq)', diag_eps=1e-6,
                              e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
                              tex_name='I_{dq_{max}}')
 
