@@ -26,10 +26,10 @@ from scipy.optimize import newton_krylov
 
 from andes.common.config import Config
 from andes.core.discrete import Discrete
-from andes.core.param import ParamBase, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
-from andes.core.var import VarBase, Algeb, State, Calc, ExtAlgeb, ExtState
+from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
+from andes.core.var import BaseVar, Algeb, State, Calc, ExtAlgeb, ExtState
 from andes.core.block import Block
-from andes.core.service import ServiceBase, ServiceConst, ExtService, ServiceOperation, ServiceRandom
+from andes.core.service import BaseService, ServiceConst, ExtService, ServiceOperation, ServiceRandom
 from andes.common.utils import list_flatten
 from andes.utils.tab import Tab
 
@@ -139,7 +139,7 @@ class ModelData(object):
         self.name = DataParam(info='device name', tex_name='name')
 
     def __setattr__(self, key, value):
-        if isinstance(value, ParamBase):
+        if isinstance(value, BaseParam):
             value.owner = self
             if not value.name:
                 value.name = key
@@ -414,7 +414,7 @@ class Model(object):
         self._input = OrderedDict()
 
     def __setattr__(self, key, value):
-        if isinstance(value, (VarBase, ServiceBase, Discrete, Block)):
+        if isinstance(value, (BaseVar, BaseService, Discrete, Block)):
             if not value.owner:
                 value.owner = self
             if not value.name:
@@ -425,7 +425,7 @@ class Model(object):
                 logger.warning(f"{self.class_name}: redefinition of member <{key}>")
 
         # store the variable declaration order
-        if isinstance(value, VarBase):
+        if isinstance(value, BaseVar):
             value.id = len(self._all_vars())  # NOT in use yet
             self.vars_decl_order[key] = value
 

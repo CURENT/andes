@@ -21,6 +21,92 @@ The bases for DC system are
 
 - :math:`V_b^{dc}`: voltage in kV.
 
+Atoms
+==============================
+ANDES defines several types of atoms for building DAE models, including parameters, DAE variables,
+and service variables. Atoms can be used to build models and libraries, combined with discrete
+components and blocks.
+
+Parameters
+------------------------------
+Parameters, in the scope of atoms, are data provided to equations. Parameters are usually read from input data
+files and pre-processed before numerical simulation.
+
+The base class for parameters in ANDES is ``BaseParam``, which defines interfaces for adding values and
+checking the number of values. ``BaseParam`` has its values stored in a plain list, the member attribute ``v``.
+Subclasses such as ``NumParam`` stores values using a NumPy ndarray. An overview of supported parameters is
+given in the table below.
+
++---------------+----------------------------------------------------------------------------+
+|  Subclasses   |     Usage                                                                  |
++===============+============================================================================+
+|  DataParam    | An alias of ``BaseParam``. Can be used for any non-numerical parameters.   |
++---------------+----------------------------------------------------------------------------+
+|  NumParam     | The numerical parameter type. Used for all parameters in equations         |
++---------------+----------------------------------------------------------------------------+
+|  IdxParam     | The parameter type for storing ``idx`` into other models                   |
++---------------+----------------------------------------------------------------------------+
+|  ExtParam     | Externally defined parameter                                               |
++---------------+----------------------------------------------------------------------------+
+|  TimerParam   | Parameter for storing the action time of events                            |
++---------------+----------------------------------------------------------------------------+
+|  RefParam     | Parameter for collecting ``idx`` of referencing devices                    |
++---------------+----------------------------------------------------------------------------+
+
+
+DAE Variables
+----------------------------------------
+DAE Variables, or variables for short, are unknowns to be solved using numerical or analytical methods.
+A variable stores values, equation values, and addresses in the DAE array.
+
+Variables fall into two categories: state (differential) variables ``State`` and algebraic variables ``Algeb``.
+State variables are described by differential equations, whereas algebraic variables are described by
+algebraic equations. As a result, state variables can only change continuously, while algebraic variables
+can be discontinuous.
+
+Based on the model the variable is defined, variables can be internal or external. Most variables are internal
+and only appear in equations in the same model. Some models have "public" variables that can be accessed by other
+models. For example, a ``Bus`` defines ``v`` for the voltage magnitude.
+Each device attached to a particular bus needs to access the value and impose the reactive power injection.
+It can be done with ``ExtAlgeb`` or``ExtState``, which links with an existing variable from a model or a group.
+
+Variables have special flags for handling value initialization and equation values. This is only relevant for
+public or external variables. The ``v_setter`` is used to indicate whether a particular variable instance sets
+the initial value. The ``e_setter`` flag indicates whether a particular equation associated with a variable sets
+the equation value.
+
+The ``v_setter`` flag is checked when collecting data from models to the numerical DAE array. If
+``v_setter == False``, variable values of the same address will be added.
+If one of the variable or external variable has ``v_setter == True``, it will, at the end, set the values in the
+DAE array to its value. Only one (external) variable of the same address is allowed to have ``v_setter == True``.
+
+An Example of ``v_setter``
+```````````````````````````````````
+A Bus is allowed to default the initial voltage magnitude to 1 and the voltage phase angle to 0.
+If a PV device is connected to a Bus device, the PV should be allowed to override the voltage initial value
+with the voltage set point.
+
+In ``Bus.__init__``, one has ::
+
+    self.v = Algeb(v_str='1')
+
+In ``PV.__init__``, one can use ::
+
+    self.v0 = Param()
+    self.bus = IdxParam(model='Bus')
+
+    self.v = ExtAlgeb(src='v',
+                      model='Bus',
+                      indexer=self.bus,
+                      v_init='v0',
+                      v_setter=True)
+
+where an ``ExtAlgeb`` is defined to access ``Bus.v`` using indexer ``self.bus``. The ``v_init`` line sets the
+initial value to ``v0``. During variable initialization for each model, ``v0`` is set in ``PV.v.v``.
+
+During the value collection into the numerical DAE array, PV will overwrite the voltage magnitude of Bus devices
+with indexes in ``PV.bus``.
+
 Parameter Requirements for Voltage Rating
 ----------------------------------------------------
 If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
@@ -80,7 +166,7 @@ The following variable containers exist:
 
 Parameters:
 
-ParamBase hold the following attributes:
+BaseParam hold the following attributes:
 
 *property*
   for a dictionary of properties for data requirements
@@ -183,7 +269,7 @@ functions, namely, Python functions, to update Equations and
 Jacobians. To provide a numerical function call for equations,
 the use needs to define a member function in the hosting
 model. This function should update the equation value attribute,
-``VarBase.e`` and return None. Then, this function should be
+``BaseVar.e`` and return None. Then, this function should be
 assigned to the ``e_numeric`` attribute of the corresponding
 variable.
 

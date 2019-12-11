@@ -267,11 +267,11 @@ class PIController(Block):
 
     Parameters
     ----------
-    u : VarBase
+    u : BaseVar
         The input variable instance
-    ref : Union[VarBase, ParamBase]
+    ref : Union[BaseVar, BaseParam]
         The reference instance
-    kp : ParamBase
+    kp : BaseParam
         The proportional gain parameter instance
     ki : [type]
         The integral gain parameter instance

@@ -1,12 +1,12 @@
 from typing import Optional, Union, List
 
 import numpy as np
-from andes.core.param import ParamBase
+from andes.core.param import BaseParam
 from andes.devices.group import GroupBase
 from numpy import ndarray
 
 
-class VarBase(object):
+class BaseVar(object):
     """
     Base variable class
 
@@ -117,9 +117,9 @@ class VarBase(object):
         return self.__class__.__name__
 
 
-class Algeb(VarBase):
+class Algeb(BaseVar):
     """
-    Algebraic variable class, an alias of the `VarBase`.
+    Algebraic variable class, an alias of the `BaseVar`.
 
     Attributes
     ----------
@@ -132,9 +132,9 @@ class Algeb(VarBase):
     v_code = 'y'
 
 
-class State(VarBase):
+class State(BaseVar):
     """
-    Differential variable class, an alias of the `VarBase`.
+    Differential variable class, an alias of the `BaseVar`.
 
     Attributes
     ----------
@@ -147,9 +147,9 @@ class State(VarBase):
     v_code = 'x'
 
 
-class Calc(VarBase):
+class Calc(BaseVar):
     """
-    Calculated variable class, an alias of the `VarBase`.
+    Calculated variable class, an alias of the `BaseVar`.
 
     This class is meant for internally calculated variables
     such as line flow power.
@@ -159,7 +159,7 @@ class Calc(VarBase):
         self.addressable = False
 
 
-class ExtVar(VarBase):
+class ExtVar(BaseVar):
     """
     Externally defined algebraic variable
 
@@ -173,7 +173,7 @@ class ExtVar(VarBase):
         Name of the source model
     src : str
         Source variable name
-    indexer : ParamBase
+    indexer : BaseParam
         A parameter of the hosting model, used as indices into
         the source model and variable. If is None, the source
         variable address will be fully copied.
@@ -182,7 +182,7 @@ class ExtVar(VarBase):
     ----------
     parent_model : Model
         The parent model providing the original parameter.
-    parent_instance : ParamBase
+    parent_instance : BaseParam
         The parent parameter, which is an attribute of the parent
         model, providing the original values.
     uid : array-like
@@ -196,7 +196,7 @@ class ExtVar(VarBase):
     def __init__(self,
                  model: str,
                  src: str,
-                 indexer: Optional[Union[List, ndarray, ParamBase]] = None,
+                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)

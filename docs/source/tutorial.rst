@@ -391,3 +391,33 @@ Call function `do_plot` to plot the curves
                           ylabel='Generator Speed [pu]', grid=True)
 
 
+Pretty Print of Equations
+----------------------------------------
+Each ANDES models offers pretty print of LaTeX-formatted equations in the jupyter notebook environment.
+
+To use this feature, symbolic equations need to be generated in the current session using ::
+
+    import dill
+    dill.settings['recurse'] = True
+
+    import andes
+    sys = andes.system.System()
+    sys.prepare()
+
+This process may take several seconds to complete. Once done, equations can be viewed by accessing
+``sys.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationAttr>`` is the
+equation name.
+
+Supported equation names include the following:
+
+- ``f``: differential equations for states :math:`\textbf{f}=\dot{x}`
+- ``g``: algebraic equations for algebraic variables :math:`\textbf{g}=0`
+- ``df``: derivatives of ``f`` over all variables
+- ``dg``: derivatives of ``g`` over all variables
+- ``s`` the value equations for service variables
+
+For example, to print the algebraic equations of model ``GENCLS``, one can use ``sys.GENCLS.g_print``.
+
+In addition to equations, all variable symbols can be printed at ``sys.<ModelName>.vars_print``.
+
+

@@ -7,7 +7,7 @@ from andes.devices.group import GroupBase
 logger = logging.getLogger(__name__)
 
 
-class ParamBase(object):
+class BaseParam(object):
     """
     The base parameter class.
 
@@ -37,7 +37,7 @@ class ParamBase(object):
     Attributes
     ----------
     v : list
-        A list holding all the values. The ``ParamBase`` class does not convert the ``v`` attribute into NumPy
+        A list holding all the values. The ``BaseParam`` class does not convert the ``v`` attribute into NumPy
         arrays.
     property : dict
         A dict containing the truth values of the model properties.
@@ -132,9 +132,9 @@ class ParamBase(object):
         return len(self.v) if self.v else 0
 
 
-class DataParam(ParamBase):
+class DataParam(BaseParam):
     """
-    An alias of the ``ParamBase`` class.
+    An alias of the ``BaseParam`` class.
 
     This class is used for string parameters or non-computational numerical parameters.
     This class does not provide a ``to_array`` method.
@@ -142,14 +142,14 @@ class DataParam(ParamBase):
 
     See Also
     --------
-    ParamBase : Base parameter class
+    BaseParam : Base parameter class
     """
     pass
 
 
-class IdxParam(ParamBase):
+class IdxParam(BaseParam):
     """
-    An alias of ``ParamBase`` with an additional storage of the owner model name
+    An alias of ``BaseParam`` with an additional storage of the owner model name
 
     This class is intended for storing ``idx`` into other models. It can be used in the future for data
     consistency check.
@@ -178,7 +178,7 @@ class IdxParam(ParamBase):
         self.model = model  # must be a `Model` name for building RefParam - Not checked yet
 
 
-class NumParam(ParamBase):
+class NumParam(BaseParam):
     """
     A computational numerical parameter.
 
@@ -279,11 +279,11 @@ class NumParam(ParamBase):
         """
         Add a value to the parameter value list.
 
-        In addition to ``ParamBase.add``, this method checks for non-zero property and reset to default if is zero.
+        In addition to ``BaseParam.add``, this method checks for non-zero property and reset to default if is zero.
 
         See Also
         --------
-        ParamBase.add : add method of ParamBase
+        BaseParam.add : add method of BaseParam
 
         """
 
@@ -439,7 +439,7 @@ class ExtParam(NumParam):
         Name of the model or group providing the original parameter
     src : str
         The source parameter name
-    indexer : ParamBase
+    indexer : BaseParam
         A parameter defined in the model defining this ExtParam instance. ``indexer.v`` should contain indices into
         ``model.src.v``. If is None, the source parameter values will be fully copied. If ``model`` is a group
         name, the indexer cannot be None.
@@ -502,7 +502,7 @@ class ExtParam(NumParam):
             self.pu_coeff = parent_instance.pu_coeff[uid]
 
 
-class RefParam(ParamBase):
+class RefParam(BaseParam):
     """
     A special type of reference collector parameter.
 

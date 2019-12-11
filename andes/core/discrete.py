@@ -52,11 +52,11 @@ class Limiter(Discrete):
 
     Parameters
     ----------
-    u : VarBase
+    u : BaseVar
         Input Variable instance
-    lower : ParamBase
+    lower : BaseParam
         Parameter instance for the lower limit
-    upper : ParamBase
+    upper : BaseParam
         Parameter instance for the upper limit
 
     Attributes

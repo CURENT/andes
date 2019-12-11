@@ -39,7 +39,7 @@ from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 from .variables.dae import DAENew
 from andes.programs import all_programs
 from andes.devices import non_jit
-from andes.core.param import ParamBase
+from andes.core.param import BaseParam
 from andes.core.var import Calc
 from andes.core.model import Model
 from andes.common.config import Config
@@ -587,8 +587,8 @@ class SystemNew(object):
         for group in self.groups.values():
             for item in group.common_params:
                 for model in group.models.values():
-                    # the below includes all of ParamBase (NumParam, DataParam and ExtParam)
-                    if item not in model.__dict__ or not isinstance(model.__dict__[item], ParamBase):
+                    # the below includes all of BaseParam (NumParam, DataParam and ExtParam)
+                    if item not in model.__dict__ or not isinstance(model.__dict__[item], BaseParam):
                         raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
                                        f'in model <{model.class_name}>')
             for item in group.common_vars:

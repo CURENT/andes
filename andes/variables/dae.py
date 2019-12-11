@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from cvxopt import matrix, spmatrix, sparse, spdiag
 
 from andes.common.config import Config
-from andes.core.var import VarBase
+from andes.core.var import BaseVar
 
 from ..utils.math import ageb, aleb, aandb  # NOQA
 from ..utils.math import index  # NOQA
@@ -321,7 +321,7 @@ class DAENew(object):
 
     def plot(self,
              var,
-             idx: Optional[Union[VarBase, list, np.ndarray]] = None,
+             idx: Optional[Union[BaseVar, list, np.ndarray]] = None,
              legend: Optional[bool] = False,
              grid: Optional[bool] = True,
              left: Optional[Union[int, float]] = None,
@@ -334,7 +334,7 @@ class DAENew(object):
         # set latex option
         self.set_latex(self.config.latex)
 
-        if isinstance(idx, VarBase):
+        if isinstance(idx, BaseVar):
             idx = idx.a
         elif isinstance(idx, (int, np.int64)):
             idx = [idx]

@@ -1,10 +1,10 @@
 import numpy as np
 from typing import Optional, Union, Callable
-from andes.core.param import RefParam, ParamBase
+from andes.core.param import RefParam, BaseParam
 from andes.common.utils import list_flatten
 
 
-class ServiceBase(object):
+class BaseService(object):
     """
     Base class for Service.
 
@@ -62,7 +62,7 @@ class ServiceBase(object):
         return self.__class__.__name__
 
 
-class ServiceConst(ServiceBase):
+class ServiceConst(BaseService):
     """
     Service "variables" that stays constant.
 
@@ -93,7 +93,7 @@ class ServiceConst(ServiceBase):
         self.v: Union[float, int, np.ndarray] = 0.
 
 
-class ExtService(ServiceBase):
+class ExtService(BaseService):
     """
     Service constants whose value is from an external model or group.
 
@@ -103,7 +103,7 @@ class ExtService(ServiceBase):
         Variable or parameter name in the source model or group
     model : str
         A model name or a group name
-    indexer : IdxParam or ParamBase
+    indexer : IdxParam or BaseParam
         An "Indexer" instance whose ``v`` field contains the ``idx`` of devices in the model or group.
 
     Examples
@@ -125,7 +125,7 @@ class ExtService(ServiceBase):
     def __init__(self,
                  src: str,
                  model: str,
-                 indexer: ParamBase,
+                 indexer: BaseParam,
                  name: str = None,
                  tex_name: str = None):
         super().__init__(name=name, tex_name=tex_name)
@@ -152,7 +152,7 @@ class ExtService(ServiceBase):
         self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
 
 
-class ServiceOperation(ServiceBase):
+class ServiceOperation(BaseService):
     """
     Base class for a type of Service which performs specific operations
 
