@@ -8,7 +8,7 @@ Subpackages
 
    andes.common
    andes.core
-   andes.variables
+   andes.io
 
 Submodules
 ----------

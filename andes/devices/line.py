@@ -2,7 +2,7 @@ import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, DataParam, NumParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.service import ServiceConst  # NOQA
+from andes.core.service import ConstService  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -49,17 +49,17 @@ class Line(LineData, Model):
         self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1')
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2')
 
-        self.gh = ServiceConst(tex_name='g_h')
-        self.bh = ServiceConst(tex_name='b_h')
-        self.gk = ServiceConst(tex_name='g_k')
-        self.bk = ServiceConst(tex_name='b_k')
+        self.gh = ConstService(tex_name='g_h')
+        self.bh = ConstService(tex_name='b_h')
+        self.gk = ConstService(tex_name='g_k')
+        self.bk = ConstService(tex_name='b_k')
 
-        self.yh = ServiceConst(tex_name='y_h')
-        self.yk = ServiceConst(tex_name='y_k')
-        self.yhk = ServiceConst(tex_name='y_{hk}')
+        self.yh = ConstService(tex_name='y_h')
+        self.yk = ConstService(tex_name='y_k')
+        self.yhk = ConstService(tex_name='y_{hk}')
 
-        self.ghk = ServiceConst(tex_name='g_{hk}')
-        self.bhk = ServiceConst(tex_name='b_{hk}')
+        self.ghk = ConstService(tex_name='g_{hk}')
+        self.bhk = ConstService(tex_name='b_{hk}')
 
         self.gh.v_str = 'g1 + 0.5 * g'
         self.bh.v_str = 'b1 + 0.5 * b'

@@ -2,7 +2,7 @@ import numpy as np
 from andes.core.param import RefParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
-from andes.core.service import ServiceReduce, ServiceRepeat
+from andes.core.service import ReducerService, RepeaterService
 
 
 class AreaData(ModelData):
@@ -22,8 +22,8 @@ class Area(AreaData, Model):
 
         # --------------------Experiment Zone--------------------
         self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.ACTopology, export=False)
-        self.Vn_sum = ServiceReduce(u=self.Vn, fun=np.sum, ref=self.Bus)
-        self.Vn_sum_rep = ServiceRepeat(u=self.Vn_sum, ref=self.Bus)
+        self.Vn_sum = ReducerService(u=self.Vn, fun=np.sum, ref=self.Bus)
+        self.Vn_sum_rep = RepeaterService(u=self.Vn_sum, ref=self.Bus)
 
         self.a = ExtAlgeb(model='ACTopology', src='a', indexer=self.ACTopology)
         self.v = ExtAlgeb(model='ACTopology', src='v', indexer=self.ACTopology)

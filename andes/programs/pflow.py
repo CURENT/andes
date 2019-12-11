@@ -101,8 +101,6 @@ class PFlow(ProgramBase):
                 name = system.dae.xy_name[max_idx]
                 logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
                 logger.info(f'Largest mismatch on equation associated with <{name}>')
-        else:
-            system.c_update()
 
         return self.converged
 

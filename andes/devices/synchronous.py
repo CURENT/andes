@@ -5,9 +5,9 @@ import numpy as np
 import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, Calc, ExtAlgeb  # NOQA
-from andes.core.discrete import Comparer, SortedLimiter, Selector  # NOQA
-from andes.core.service import ServiceConst, ExtService  # NOQA
+from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.discrete import Selector  # NOQA
+from andes.core.service import ConstService, ExtService  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -54,9 +54,6 @@ class GENBase(Model):
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
                           e_str='-u * (vq * Id - vd * Iq)')
 
-        self.p = Calc(e_str='-u * (vd * Id + vq * Iq)', tex_name='p')
-        self.q = Calc(e_str='-u * (vq * Id - vd * Iq)', tex_name='q')
-
         # algebraic variables
         # Need to be provided by specific generator models
         self.Id = Algeb(v_str='Id0', tex_name=r'I_d')  # to be completed by subclasses
@@ -74,23 +71,23 @@ class GENBase(Model):
         self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='Q_0')
 
         # internal voltage and rotor angle calculation
-        self._V = ServiceConst(v_str='v * exp(1j * a)', tex_name='V_c')
-        self._S = ServiceConst(v_str='p0 - 1j * q0', tex_name='S')
-        self._I = ServiceConst(v_str='_S / conj(_V)', tex_name='I_c')
-        self._E = ServiceConst(v_str='_V + _I * (ra + 1j * xq)', tex_name='E')
-        self._deltac = ServiceConst(v_str='log(_E / abs(_E))', tex_name=r'\delta_c')
-        self.delta0 = ServiceConst(v_str='u * im(_deltac)', tex_name=r'\delta_0')
+        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c')
+        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S')
+        self._I = ConstService(v_str='_S / conj(_V)', tex_name='I_c')
+        self._E = ConstService(v_str='_V + _I * (ra + 1j * xq)', tex_name='E')
+        self._deltac = ConstService(v_str='log(_E / abs(_E))', tex_name=r'\delta_c')
+        self.delta0 = ConstService(v_str='u * im(_deltac)', tex_name=r'\delta_0')
 
-        self.vdq = ServiceConst(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
-        self.Idq = ServiceConst(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
+        self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
+        self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
 
-        self.Id0 = ServiceConst(v_str='re(Idq)', tex_name=r'I_{d0}')
-        self.Iq0 = ServiceConst(v_str='im(Idq)', tex_name=r'I_{q0}')
-        self.vd0 = ServiceConst(v_str='re(vdq)', tex_name=r'V_{d0}')
-        self.vq0 = ServiceConst(v_str='im(vdq)', tex_name=r'V_{q0}')
+        self.Id0 = ConstService(v_str='re(Idq)', tex_name=r'I_{d0}')
+        self.Iq0 = ConstService(v_str='im(Idq)', tex_name=r'I_{q0}')
+        self.vd0 = ConstService(v_str='re(vdq)', tex_name=r'V_{d0}')
+        self.vq0 = ConstService(v_str='im(vdq)', tex_name=r'V_{q0}')
 
-        self.pm0 = ServiceConst(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'P_{m0}')
-        self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
+        self.pm0 = ConstService(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'P_{m0}')
+        self.vf0 = ConstService(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
         # --------------------------------------------------Experimental-----
         self.Idq_max = Algeb(v_str='maximum(Id, Iq)', diag_eps=1e-6,
@@ -197,23 +194,23 @@ class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
 #         self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen)
 #         self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen)
 #
-#         self.Vc = ServiceConst(v_str='v * exp(1j * a)')
-#         self.S = ServiceConst(v_str='p0 - 1j * q0')
-#         self.Ic = ServiceConst(v_str='S / conj(Vc)')
-#         self.E = ServiceConst(v_str='Vc + Ic * (ra + 1j * xq)')
-#         self.deltac = ServiceConst(v_str='log(E / abs(E))')
-#         self.delta0 = ServiceConst(v_str='u * im(deltac)')
+#         self.Vc = ConstService(v_str='v * exp(1j * a)')
+#         self.S = ConstService(v_str='p0 - 1j * q0')
+#         self.Ic = ConstService(v_str='S / conj(Vc)')
+#         self.E = ConstService(v_str='Vc + Ic * (ra + 1j * xq)')
+#         self.deltac = ConstService(v_str='log(E / abs(E))')
+#         self.delta0 = ConstService(v_str='u * im(deltac)')
 #
-#         self.vdq = ServiceConst(v_str='u * (Vc * exp(1j * 0.5 * pi - deltac))')
-#         self.Idq = ServiceConst(v_str='u * (Ic * exp(1j * 0.5 * pi - deltac))')
-#         self.Id = ServiceConst(v_str='re(Idq)')
-#         self.Iq = ServiceConst(v_str='im(Idq)')
-#         self.vd0 = ServiceConst(v_str='re(vdq)')
-#         self.vq0 = ServiceConst(v_str='im(vdq)')
+#         self.vdq = ConstService(v_str='u * (Vc * exp(1j * 0.5 * pi - deltac))')
+#         self.Idq = ConstService(v_str='u * (Ic * exp(1j * 0.5 * pi - deltac))')
+#         self.Id = ConstService(v_str='re(Idq)')
+#         self.Iq = ConstService(v_str='im(Idq)')
+#         self.vd0 = ConstService(v_str='re(vdq)')
+#         self.vq0 = ConstService(v_str='im(vdq)')
 #
-#         self.tm0 = ServiceConst(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
-#         self.e1q0 = ServiceConst(v_str='vd0 + ra * Id - xq1 * Iq')
-#         self.vf0 = ServiceConst(v_numeric=self._vf0)
+#         self.tm0 = ConstService(v_str='(vq0 + ra * Iq) * Iq + (vd0 + ra * Id) * Id')
+#         self.e1q0 = ConstService(v_str='vd0 + ra * Id - xq1 * Iq')
+#         self.vf0 = ConstService(v_numeric=self._vf0)
 #
 #         # NOTE: All non-iterative initialization can be completed by using `Service`
 #         #       for computation and setting the variable initial values to

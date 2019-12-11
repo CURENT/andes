@@ -49,7 +49,7 @@
  `System` (It turns out that `gy_island` and `gisland` does not need to be implemented. If there is a large
   mismatch, just let the power flow fail and let the user correct the data.)
 - [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model 
-(RefParam, SericeReduce and ServiceRepeat)
+(RefParam, SericeReduce and RepeaterService)
 - [x] Divide limiter to update_var and update_eq (such as anti-windup limiter which depends on equations)
 - [x] Allow time definition in models reserve keyword `dae_t` (see `Area`)
 - [x] Clean up `System._get_models`; Clean up the use of model-dependent calls
@@ -68,7 +68,8 @@
 - [x] Refactor `Config` to make load and save part of the config
 - [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 - [x] LaTeX names in blocks and limiters
--   Iterative initialization for equations
+*   Decide whether to keep Calc as Var or move it to service.
+*   Iterative initialization for equations (half done with Newton Krylov)
 *   Deal with two-terminal and multi-terminal devices
 *   Add a more generic parser for PSSE RAW
 *   Allow for semi-implicit method formulation

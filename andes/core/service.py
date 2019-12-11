@@ -62,26 +62,26 @@ class BaseService(object):
         return self.__class__.__name__
 
 
-class ServiceConst(BaseService):
+class ConstService(BaseService):
     """
     Service "variables" that stays constant.
 
-    ServiceConst are constants calculated from parameters. They are only evaluated once in the initialization
+    ConstService are constants calculated from parameters. They are only evaluated once in the initialization
     phase before variables are initialized. Therefore, uninitialized variables must not be used in `v_str``.
 
     Parameters
     ----------
     name : str
-        Name of the ServiceConst
+        Name of the ConstService
     v_str : str
         An equation string to calculate the variable value.
     v_numeric : Callable, optional
-        A callable which returns the value of the ServiceConst
+        A callable which returns the value of the ConstService
 
     Attributes
     ----------
     v : array-like or a scalar
-        ServiceConst value
+        ConstService value
     """
     def __init__(self,
                  v_str: Optional[str] = None,
@@ -152,7 +152,7 @@ class ExtService(BaseService):
         self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
 
 
-class ServiceOperation(BaseService):
+class OperationService(BaseService):
     """
     Base class for a type of Service which performs specific operations
 
@@ -160,9 +160,9 @@ class ServiceOperation(BaseService):
 
     See Also
     --------
-    ServiceReduce : Service for Reducing linearly stored 2-D services into 1-D
+    ReducerService : Service for Reducing linearly stored 2-D services into 1-D
 
-    ServiceRepeat : Service for repeating 1-D services following a sub-pattern
+    RepeaterService : Service for repeating 1-D services following a sub-pattern
     """
     def __init__(self,
                  u,
@@ -185,12 +185,12 @@ class ServiceOperation(BaseService):
         self._v = value
 
 
-class ServiceReduce(ServiceOperation):
+class ReducerService(OperationService):
     """
     A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 
-    ServiceReduce works with ExtParam whose ``v`` field is a list of lists. A reduce function
-    which takes an array-like and returns a scalar need to be supplied. ServiceReduce calls the reduce
+    ReducerService works with ExtParam whose ``v`` field is a list of lists. A reduce function
+    which takes an array-like and returns a scalar need to be supplied. ReducerService calls the reduce
     function on each of the lists and return all the scalars in an array.
 
     Parameters
@@ -217,7 +217,7 @@ class ServiceReduce(ServiceOperation):
                     src='Vn',
                     indexer=self.Bus)
 
-                self.Vn_mean = ServiceReduce(u=self.Vn,
+                self.Vn_mean = ReducerService(u=self.Vn,
                     fun=np.mean,
                     ref=self.Bus)
 
@@ -264,22 +264,22 @@ class ServiceReduce(ServiceOperation):
             return self._v
 
 
-class ServiceRepeat(ServiceOperation):
+class RepeaterService(OperationService):
     r"""
     A helper Service type which repeats a v-provider's value based on the shape from a RefParam
 
 
     Examples
     --------
-    ServiceRepeat was originally designed for computing the inertia-weighted average rotor speed (center of
+    RepeaterService was originally designed for computing the inertia-weighted average rotor speed (center of
     inertia speed). COI speed is computed with
 
     .. math ::
         \omega_{COI} = \frac{ \sum{M_i * \omega_i} } {\sum{M_i}}
 
     The numerator can be calculated with a mix of RefParam, ExtParam and ExtState. The denominator needs to be
-    calculated with ServiceReduce and Service Repeat. That is, use ServiceReduce to calculate the sum,
-    and use ServiceRepeat to repeat the summed value for each device.
+    calculated with ReducerService and Service Repeat. That is, use ReducerService to calculate the sum,
+    and use RepeaterService to repeat the summed value for each device.
 
     In the COI class, one would have ::
 
@@ -296,11 +296,11 @@ class ServiceRepeat(ServiceOperation):
                                      src='omega',
                                      indexer=self.SynGen)
 
-                self.Mt = ServiceReduce(u=self.M,
+                self.Mt = ReducerService(u=self.M,
                                         fun=np.sum,
                                         ref=self.SynGen)
 
-                self.Mtr = ServiceRepeat(u=self.M_sym,
+                self.Mtr = RepeaterService(u=self.M_sym,
                                          ref=self.SynGen)
 
     Finally, one would define the center of inertia speed as ::
@@ -343,7 +343,7 @@ class ServiceRepeat(ServiceOperation):
             return self._v
 
 
-class ServiceRandom(ServiceConst):
+class RandomService(ConstService):
     """
     A service variable for generating random numbers.
 
@@ -360,7 +360,7 @@ class ServiceRandom(ServiceConst):
     each simulation step.
     """
     def __init__(self, func=np.random.rand, **kwargs):
-        super(ServiceRandom, self).__init__(**kwargs)
+        super(RandomService, self).__init__(**kwargs)
         self.func = func
 
     @property

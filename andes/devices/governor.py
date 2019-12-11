@@ -1,7 +1,7 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
-from andes.core.service import ServiceConst, ExtService
+from andes.core.service import ConstService, ExtService
 from andes.core.discrete import HardLimiter, DeadBand
 from andes.core.block import LeadLag
 
@@ -61,8 +61,8 @@ class TG2(TG2Data, TGBase):
     def __init__(self, system, config):
         TG2Data.__init__(self)
         TGBase.__init__(self, system, config)
-        self.T12 = ServiceConst(v_str='T1 / T2')
-        self.gain = ServiceConst(v_str='u / R', tex_name='G')
+        self.T12 = ConstService(v_str='T1 / T2')
+        self.gain = ConstService(v_str='u / R', tex_name='G')
 
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}', v_str='0', e_str='(wref - omega) - w_d')

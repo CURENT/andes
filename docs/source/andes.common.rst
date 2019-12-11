@@ -12,6 +12,14 @@ andes.common.config module
    :undoc-members:
    :show-inheritance:
 
+andes.common.dae module
+--------------------------
+
+.. automodule:: andes.common.dae
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 andes.common.utils module
 -----------------------------
 

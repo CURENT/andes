@@ -161,9 +161,6 @@ class TDS(ProgramBase):
             if verbose:
                 logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
 
-        else:
-            system.c_update()
-
         return self.converged
 
     def run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):

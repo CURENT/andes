@@ -27,9 +27,9 @@ from scipy.optimize import newton_krylov
 from andes.common.config import Config
 from andes.core.discrete import Discrete
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
-from andes.core.var import BaseVar, Algeb, State, Calc, ExtAlgeb, ExtState
+from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.block import Block
-from andes.core.service import BaseService, ServiceConst, ExtService, ServiceOperation, ServiceRandom
+from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
 from andes.common.utils import list_flatten
 from andes.utils.tab import Tab
 
@@ -330,7 +330,6 @@ class Model(object):
         self.states_ext = OrderedDict()  # external states
         self.algebs = OrderedDict()  # internal algebraic variables
         self.algebs_ext = OrderedDict()  # external algebraic vars
-        self.calcs = OrderedDict()   # internal calculated vars
         self.vars_decl_order = OrderedDict()
 
         # external parameters
@@ -438,18 +437,16 @@ class Model(object):
             self.states[key] = value
         elif isinstance(value, ExtState):
             self.states_ext[key] = value
-        elif isinstance(value, Calc):
-            self.calcs[key] = value
         elif isinstance(value, ExtParam):
             self.params_ext[key] = value
         elif isinstance(value, Discrete):
             self.discrete[key] = value
-        elif isinstance(value, ServiceConst):
+        elif isinstance(value, ConstService):
             # only services with `v_str`
             self.services[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
-        elif isinstance(value, (ServiceOperation, ServiceRandom)):
+        elif isinstance(value, (OperationService, RandomService)):
             self.services_ops[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
@@ -709,8 +706,8 @@ class Model(object):
         from sympy import Matrix, sympify, lambdify
 
         inputs_list = list(self.input_syms)
-        iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext, self.calcs]
-        dest_list = [self.f_syms, self.g_syms, self.h_syms]
+        iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
+        dest_list = [self.f_syms, self.g_syms]
 
         for it, dest in zip(iter_list, dest_list):
             for instance in it.values():
@@ -1027,21 +1024,21 @@ class Model(object):
         for instance in self.blocks.values():
             instance.g_numeric(**kwargs)
 
-    def c_update(self):
-        if self.n == 0:
-            return
-        kwargs = self.get_inputs(refresh=True)
-        # call lambdified functions with use self.call
-        ret = self.calls.h_lambdify(**kwargs)
-        for idx, instance in enumerate(self.calcs.values()):
-            instance.v = ret[idx][0]
-
-        # numerical calls defined in the model
-        self.c_numeric(**kwargs)
-
-        # numerical calls in blocks
-        for instance in self.blocks.values():
-            instance.c_numeric(**kwargs)
+    # def c_update(self):
+    #     if self.n == 0:
+    #         return
+    #     kwargs = self.get_inputs(refresh=True)
+    #     # call lambdified functions with use self.call
+    #     ret = self.calls.h_lambdify(**kwargs)
+    #     for idx, instance in enumerate(self.calcs.values()):
+    #         instance.v = ret[idx][0]
+    #
+    #     # numerical calls defined in the model
+    #     self.c_numeric(**kwargs)
+    #
+    #     # numerical calls in blocks
+    #     for instance in self.blocks.values():
+    #         instance.c_numeric(**kwargs)
 
     def j_update(self):
         if self.n == 0:
@@ -1107,12 +1104,11 @@ class Model(object):
         return self.__class__.__name__
 
     def _all_vars(self):
-        """An OrderedDict of States, ExtStates, Algebs, ExtAlgebs, and Calcs"""
+        """An OrderedDict of States, ExtStates, Algebs, ExtAlgebs"""
         return OrderedDict(list(self.states.items()) +
                            list(self.states_ext.items()) +
                            list(self.algebs.items()) +
-                           list(self.algebs_ext.items()) +
-                           list(self.calcs.items())
+                           list(self.algebs_ext.items())
                            )
 
     def _all_vars_names(self):
@@ -1153,8 +1149,7 @@ class Model(object):
 
     def _vars_int(self):
         return OrderedDict(list(self.states.items()) +
-                           list(self.algebs.items()) +
-                           list(self.calcs.items()))
+                           list(self.algebs.items()))
 
     def row_of(self, name):
         """

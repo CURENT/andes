@@ -36,11 +36,10 @@ from .models import non_jits, jits, JIT, all_models_list
 from .utils import get_config_load_path
 from .variables import FileMan, DevMan, DAE, VarName, VarOut, Call, Report
 
-from .variables.dae import DAENew
+from .common.dae import DAENew
 from andes.programs import all_programs
 from andes.devices import non_jit
 from andes.core.param import BaseParam
-from andes.core.var import Calc
 from andes.core.model import Model
 from andes.common.config import Config
 
@@ -276,9 +275,6 @@ class SystemNew(object):
             if not mdl.n:
                 continue
             for var in mdl.cache.all_vars.values():
-                if isinstance(var, Calc):
-                    continue
-
                 if var.e_setter is False:
                     self.__dict__[f'{var.e_code}_adders'].append(var)
                 else:
@@ -362,8 +358,8 @@ class SystemNew(object):
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('g_update', models)
 
-    def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
-        self._call_models_method('c_update', models)
+    # def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
+    #     self._call_models_method('c_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         models = self._get_models(models)

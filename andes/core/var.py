@@ -33,7 +33,7 @@ class BaseVar(object):
         local-storage of the variable value
     e : array-like
         local-storage of the corresponding equation value
-    e_symbolic : str
+    e_str : str
         the string/symbolic representation of the equation
     """
     def __init__(self,
@@ -42,6 +42,7 @@ class BaseVar(object):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  v_str: Optional[str] = None,
+                 v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
@@ -64,7 +65,8 @@ class BaseVar(object):
         self.v: Optional[Union[ndarray, float]] = 0  # variable value array
         self.e: Optional[Union[ndarray, float]] = 0   # equation value array
 
-        self.v_str = v_str  # equation string for variable initialization
+        self.v_str = v_str  # equation string (v = v_str) for variable initialization
+        self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
         self.e_str = e_str  # string for symbolic equation
 
         self.v_setter = v_setter  # True if this variable sets the variable value
@@ -147,18 +149,6 @@ class State(BaseVar):
     v_code = 'x'
 
 
-class Calc(BaseVar):
-    """
-    Calculated variable class, an alias of the `BaseVar`.
-
-    This class is meant for internally calculated variables
-    such as line flow power.
-    """
-    def __init__(self, **kwargs):
-        super(Calc, self).__init__(**kwargs)
-        self.addressable = False
-
-
 class ExtVar(BaseVar):
     """
     Externally defined algebraic variable
@@ -182,9 +172,6 @@ class ExtVar(BaseVar):
     ----------
     parent_model : Model
         The parent model providing the original parameter.
-    parent_instance : BaseParam
-        The parent parameter, which is an attribute of the parent
-        model, providing the original values.
     uid : array-like
         An array containing the absolute indices into the
         parent_instance values.
@@ -204,6 +191,7 @@ class ExtVar(BaseVar):
         self.model = model
         self.src = src
         self.indexer = indexer
+        self.parent = None
         self._idx = None
         self._n = []
         self._n_count = 0
@@ -243,6 +231,7 @@ class ExtVar(BaseVar):
         ext_model : Model
             Instance of the parent model
         """
+        self.parent = ext_model
 
         if isinstance(ext_model, GroupBase):
             if self.indexer.n > 0 and isinstance(self.indexer.v[0], (list, np.ndarray)):
@@ -285,3 +274,15 @@ class ExtState(ExtVar):
 class ExtAlgeb(ExtVar):
     e_code = 'g'
     v_code = 'y'
+
+
+# class Calc(BaseVar):
+#     """
+#     Calculated variable class, an alias of the `BaseVar`.
+#
+#     This class is meant for internally calculated variables
+#     such as line flow power.
+#     """
+#     def __init__(self, **kwargs):
+#         super(Calc, self).__init__(**kwargs)
+#         self.addressable = False

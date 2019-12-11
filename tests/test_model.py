@@ -1,11 +1,8 @@
 import unittest
-
-import numpy as np  # NOQA
-from andes.core.model import Model, ModelData  # NOQA
-from andes.devices.bus import Bus  # NOQA
-from andes.system import SystemNew
 import dill
 
+import numpy as np  # NOQA
+from andes.system import SystemNew
 dill.settings['recurse'] = True
 
 
@@ -73,9 +70,6 @@ class Test5Bus(unittest.TestCase):
     def test_idx(self):
         self.assertSequenceEqual(self.ss.Bus.idx, ['0', '1', '2', '3', '4'])
         self.assertSequenceEqual(self.ss.Area.idx, [1, 2, 3])
-
-    def test_pflow_address(self):
-        self.ss.PFlow._initialize()
 
     def test_pflow(self):
         self.ss.PFlow.nr()
