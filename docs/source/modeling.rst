@@ -21,6 +21,17 @@ The bases for DC system are
 
 - :math:`V_b^{dc}`: voltage in kV.
 
+Parameter Requirements for Voltage Rating
+----------------------------------------------------
+If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
+its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
+voltages.
+
+Controllers not connected to Bus or Node will have its rated voltages omitted and thus ``Vb = Vn = 1``.
+In fact, controllers not directly connected to the network shall use per unit for voltage and current parameters
+. Controllers (such as a turine governor) may inherit rated power from controlled models and thus power parameters
+will be converted consistently.
+
 Atoms
 ==============================
 ANDES defines several types of atoms for building DAE models, including parameters, DAE variables,
@@ -68,7 +79,7 @@ Based on the model the variable is defined, variables can be internal or externa
 and only appear in equations in the same model. Some models have "public" variables that can be accessed by other
 models. For example, a ``Bus`` defines ``v`` for the voltage magnitude.
 Each device attached to a particular bus needs to access the value and impose the reactive power injection.
-It can be done with ``ExtAlgeb`` or``ExtState``, which links with an existing variable from a model or a group.
+It can be done with ``ExtAlgeb`` or ``ExtState``, which links with an existing variable from a model or a group.
 
 Variables have special flags for handling value initialization and equation values. This is only relevant for
 public or external variables. The ``v_setter`` is used to indicate whether a particular variable instance sets
@@ -98,25 +109,15 @@ In ``PV.__init__``, one can use ::
     self.v = ExtAlgeb(src='v',
                       model='Bus',
                       indexer=self.bus,
-                      v_init='v0',
+                      v_str='v0',
                       v_setter=True)
 
-where an ``ExtAlgeb`` is defined to access ``Bus.v`` using indexer ``self.bus``. The ``v_init`` line sets the
+where an ``ExtAlgeb`` is defined to access ``Bus.v`` using indexer ``self.bus``. The ``v_str`` line sets the
 initial value to ``v0``. During variable initialization for each model, ``v0`` is set in ``PV.v.v``.
 
 During the value collection into the numerical DAE array, PV will overwrite the voltage magnitude of Bus devices
 with indexes in ``PV.bus``.
 
-Parameter Requirements for Voltage Rating
-----------------------------------------------------
-If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
-its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
-voltages.
-
-Controllers not connected to Bus or Node will have its rated voltages omitted and thus ``Vb = Vn = 1``.
-In fact, controllers not directly connected to the network shall use per unit for voltage and current parameters
-. Controllers (such as a turine governor) may inherit rated power from controlled models and thus power parameters
-will be converted consistently.
 
 Model and ModelData Classes
 ======================================

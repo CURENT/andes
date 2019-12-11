@@ -62,9 +62,9 @@ class PVModel(Model):
                                   n_select=self.config.npv2pq)
 
         # variable initialization equations
-        self.v.v_init = 'v0'
-        self.p.v_init = 'p0'
-        self.q.v_init = 'q0'
+        self.v.v_str = 'v0'
+        self.p.v_str = 'p0'
+        self.q.v_str = 'q0'
 
         # injections into buses have negative values
         self.a.e_str = "-u * p"
@@ -91,7 +91,7 @@ class Slack(SlackData, PVModel):
         self.config.add(OrderedDict((('av2pv', 0.),
                                      )))
         self.a.v_setter = True
-        self.a.v_init = 'a0'
+        self.a.v_str = 'a0'
 
         self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
                                   enable=self.config.av2pv)

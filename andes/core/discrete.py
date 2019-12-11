@@ -225,7 +225,7 @@ class Selector(Discrete):
     After the definitions of `v0` and `v1`, define the algebraic variable `vmax` for the largest value,
     and a selector `vs` ::
 
-        self.vmax = Algeb(v_init='maximum(v0, v1) - vmax',
+        self.vmax = Algeb(v_str='maximum(v0, v1) - vmax',
                           tex_name='v_{max}',
                           e_str='vs_s0 * v0 + vs_s1 * v1 - vmax')
 

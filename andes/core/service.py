@@ -305,12 +305,12 @@ class ServiceRepeat(ServiceOperation):
 
     Finally, one would define the center of inertia speed as ::
 
-        self.w_coi = Algeb(v_init='1', e_str='-w_coi')
+        self.w_coi = Algeb(v_str='1', e_str='-w_coi')
 
         self.w_coi_sub = ExtAlgeb(model='COI',
                                   src='w_coi',
                                   e_str='M * w_sg / Mtr',
-                                  v_init='M / Mtr',
+                                  v_str='M / Mtr',
                                   indexer=self.padded_idx,  # TODO
                                   )
 

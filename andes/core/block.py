@@ -176,13 +176,13 @@ class Block(object):
         In the ``define``, the equation is provided as ::
 
             def define(self):
-                self.v.v_init = '{self.T.name}'
+                self.v.v_str = '{self.T.name}'
                 self.v.e_str = '{self.T.name} - {self.name}_v'
 
         In the parent model, ``v`` from the block will be captured as ``blk_v``, and the equation will
         evaluate into ::
 
-            self.blk_v.v_init = 'T'
+            self.blk_v.v_str = 'T'
             self.blk_v.e_str = 'T - blk_v'
 
         See Also
@@ -384,8 +384,8 @@ class Washout(Block):
             y_0 = 0
 
         """
-        self.x.v_init = f'{self.u.name}'
-        self.y.v_init = f'0'
+        self.x.v_str = f'{self.u.name}'
+        self.y.v_str = f'0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T.name}'
         self.y.e_str = f'({self.u.name} - {self.name}_x) - {self.name}_y'
@@ -435,7 +435,7 @@ class Lag(Block):
             x'_0 = u
 
         """
-        self.x.v_init = f'{self.u.name}'
+        self.x.v_str = f'{self.u.name}'
         self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
 
@@ -483,8 +483,8 @@ class LeadLag(Block):
             x'_0 = y_0 = u
 
         """
-        self.x.v_init = f'{self.u.name}'
-        self.y.v_init = f'{self.u.name}'
+        self.x.v_str = f'{self.u.name}'
+        self.y.v_str = f'{self.u.name}'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
         self.y.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + \
@@ -536,9 +536,9 @@ class LeadLagLimit(Block):
             x'_0 = y_0 = u
 
         """
-        self.x.v_init = f'{self.u.name}'
-        self.ynl.v_init = f'{self.u.name}'
-        self.y.v_init = f'{self.u.name}'
+        self.x.v_str = f'{self.u.name}'
+        self.ynl.v_str = f'{self.u.name}'
+        self.y.v_str = f'{self.u.name}'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
         self.ynl.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + ' \

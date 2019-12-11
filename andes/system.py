@@ -440,7 +440,7 @@ class SystemNew(object):
         """
         From variables to dae variables
 
-        For adders, only those with `v_init` can set the value. ??????
+        For adders, only those with `v_str` can set the value. ??????
 
         Returns
         -------
@@ -476,7 +476,7 @@ class SystemNew(object):
 
         for var in self.__dict__[f'{v_name}_adders']:
             # NOTE: Need to skip vars that are not initializers for re-entrance
-            if var.v_init is None or (var.n == 0):
+            if var.v_str is None or (var.n == 0):
                 continue
             np.add.at(self.dae.__dict__[v_name], var.a, var.v)
         for var in self.__dict__[f'{v_name}_setters']:

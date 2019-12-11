@@ -43,9 +43,9 @@ class GENBase(Model):
         self.flags.update({'tds': True})
 
         # state variables
-        self.delta = State(v_init='delta0', tex_name=r'\delta',
+        self.delta = State(v_str='delta0', tex_name=r'\delta',
                            e_str='u * fn * (omega - 1)')
-        self.omega = State(v_init='u', tex_name=r'\omega',
+        self.omega = State(v_str='u', tex_name=r'\omega',
                            e_str='(u / M ) * (pm - pe - D * (omega - 1))')
 
         # network algebraic variables
@@ -59,15 +59,15 @@ class GENBase(Model):
 
         # algebraic variables
         # Need to be provided by specific generator models
-        self.Id = Algeb(v_init='Id0', tex_name=r'I_d')  # to be completed by subclasses
-        self.Iq = Algeb(v_init='Iq0', tex_name=r'I_q')  # to be completed
+        self.Id = Algeb(v_str='Id0', tex_name=r'I_d')  # to be completed by subclasses
+        self.Iq = Algeb(v_str='Iq0', tex_name=r'I_q')  # to be completed
 
-        self.vd = Algeb(v_init='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
-        self.vq = Algeb(v_init='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
+        self.vd = Algeb(v_str='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
+        self.vq = Algeb(v_str='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
 
-        self.pm = Algeb(v_init='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'P_m')
-        self.pe = Algeb(v_init='p0', v_setter=True, e_str='-pe', tex_name=r'P_e')  # to be completed by subclasses
-        self.vf = Algeb(v_init='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
+        self.pm = Algeb(v_str='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'P_m')
+        self.pe = Algeb(v_str='p0', v_setter=True, e_str='-pe', tex_name=r'P_e')  # to be completed by subclasses
+        self.vf = Algeb(v_str='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
 
         # ----------service consts for initialization----------
         self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='P_0')
@@ -93,7 +93,7 @@ class GENBase(Model):
         self.vf0 = ServiceConst(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
         # --------------------------------------------------Experimental-----
-        self.Idq_max = Algeb(v_init='maximum(Id, Iq)', diag_eps=1e-6,
+        self.Idq_max = Algeb(v_str='maximum(Id, Iq)', diag_eps=1e-6,
                              e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
                              tex_name='I_{dq_{max}}')
 
@@ -110,9 +110,9 @@ class GENBase(Model):
 
 class Flux0(object):
     def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d', v_init='u * (ra * Iq0) + vq0',
+        self.psid = Algeb(tex_name=r'\psi_d', v_str='u * (ra * Iq0) + vq0',
                           e_str='u * (ra * Iq + vq) - psid')
-        self.psiq = Algeb(tex_name=r'\psi_q', v_init='-u * (ra * Id0) - vd0',
+        self.psiq = Algeb(tex_name=r'\psi_q', v_str='-u * (ra * Id0) - vd0',
                           e_str='u * (ra * Id + vd) + psiq')
 
         self.Id.e_str += ' + psid'
@@ -181,16 +181,16 @@ class GENCLS(GENCLSData, GENBase, GENCLSModel, Flux0):
 #         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus)
 #         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus)
 #
-#         self.delta = State(v_init='delta0')
-#         self.omega = State(v_init='1')
-#         self.vd = Algeb(v_init='vd0')
-#         self.vq = Algeb(v_init='vq0')
-#         self.tm = Algeb(v_init='tm0', v_setter=True)
-#         self.vf = Algeb(v_init='vf0', v_setter=True)
+#         self.delta = State(v_str='delta0')
+#         self.omega = State(v_str='1')
+#         self.vd = Algeb(v_str='vd0')
+#         self.vq = Algeb(v_str='vq0')
+#         self.tm = Algeb(v_str='tm0', v_setter=True)
+#         self.vf = Algeb(v_str='vf0', v_setter=True)
 #
 #         # NOTE: `Algeb` and `State` variables need to be declared in the initialization order
-#         self.e1d = State(v_init='vq + ra * Iq + xd1 * Id')
-#         self.e1q = State(v_init='e1q0')
+#         self.e1d = State(v_str='vq + ra * Iq + xd1 * Id')
+#         self.e1q = State(v_str='e1q0')
 #
 #         # NOTE: assume that one static gen can only correspond to one syn
 #         # Does not support automatic PV gen combination

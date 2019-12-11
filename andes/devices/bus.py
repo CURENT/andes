@@ -50,5 +50,5 @@ class Bus(Model, BusData):
         self.a_times_v.e_str = 'a * v'
         # ------------------------------
         # optional initial values
-        self.a.v_init = 'a0'
-        self.v.v_init = 'v0'
+        self.a.v_str = 'a0'
+        self.v.v_str = 'v0'

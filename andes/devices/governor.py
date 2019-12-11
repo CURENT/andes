@@ -43,11 +43,11 @@ class TGBase(Model):
         self.pm = ExtAlgeb(src='pm', model='SynGen', indexer=self.syn, tex_name='P_m',
                            e_str='u*(pout - pm0)')
         self.pnl = Algeb(info='Power output before hard limiter', tex_name='P_{nl}',
-                         v_init='pm0')
+                         v_str='pm0')
         self.pout = Algeb(info='Turbine power output after limiter', tex_name='P_{out}',
-                          v_init='pm0')
+                          v_str='pm0')
         self.wref = Algeb(info='Speed referemce variable', tex_name=r'\omega_{ref}',
-                          v_init='wref0', e_str='wref0 - wref')
+                          v_str='wref0', e_str='wref0 - wref')
 
 
 class TG2Data(TGBaseData):
@@ -65,18 +65,18 @@ class TG2(TG2Data, TGBase):
         self.gain = ServiceConst(v_str='u / R', tex_name='G')
 
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
-                         tex_name=r'\omega_{dev}', v_init='0', e_str='(wref - omega) - w_d')
+                         tex_name=r'\omega_{dev}', v_str='0', e_str='(wref - omega) - w_d')
         self.w_db = DeadBand(u=self.w_d, center=self.dbc, lower=self.dbl, upper=self.dbu,
                              enable=self.config.deadband)
         self.w_dm = Algeb(info='Measured speed deviation after dead band', tex_name=r'\omega_{dm}',
-                          v_init='0')
+                          v_str='0')
         self.w_dm.e_str = '(1 - w_db_zi) * w_d + \
                             w_db_zlr * dbl + \
                             w_db_zur * dbu - \
                             w_dm'
 
         self.w_dmg = Algeb(info='Speed deviation after dead band after gain', tex_name=r'\omega_{dmG}',
-                           v_init='0', e_str='gain * w_dm - w_dmg')
+                           v_str='0', e_str='gain * w_dm - w_dmg')
         self.leadlag = LeadLag(u=self.w_dmg, T1=self.T1, T2=self.T2)
 
         self.plim = HardLimiter(u=self.pnl, lower=self.pmin, upper=self.pmax,

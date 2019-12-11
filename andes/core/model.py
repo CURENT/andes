@@ -581,18 +581,18 @@ class Model(object):
         input_syms_list = list(self.input_syms)
 
         for name, instance in self.cache.all_vars.items():
-            if instance.v_init is None:
+            if instance.v_str is None:
                 init_lambda_list[name] = 0
                 init_latex[name] = ''
 
                 init_g_list.append(sympify(f'0 - {name}', locals=self.input_syms))
             else:
-                sympified = sympify(instance.v_init, locals=self.input_syms)
+                sympified = sympify(instance.v_str, locals=self.input_syms)
                 lambdified = lambdify(input_syms_list, sympified, 'numpy')
                 init_lambda_list[name] = lambdified
                 init_latex[name] = latex(sympified.subs(self.tex_names))
 
-                init_g_list.append(sympify(f'{instance.v_init} - {name}', locals=self.input_syms))
+                init_g_list.append(sympify(f'{instance.v_str} - {name}', locals=self.input_syms))
 
         self.init_std = Matrix(init_g_list)
         self.init_dstd = Matrix([])
@@ -958,7 +958,7 @@ class Model(object):
         # ----------------------------------------
 
         for name, instance in self.vars_decl_order.items():
-            if instance.v_init is None:
+            if instance.v_str is None:
                 continue
 
             kwargs = self.get_inputs(refresh=True)
@@ -967,7 +967,7 @@ class Model(object):
                 try:
                     instance.v = init_fun(**kwargs)
                 except TypeError:
-                    logger.error(f'{self.class_name}: {instance.name} = {instance.v_init} error.'
+                    logger.error(f'{self.class_name}: {instance.name} = {instance.v_str} error.'
                                  f'You might have undefined variable in the equation string.')
             else:
                 instance.v = init_fun
@@ -1308,7 +1308,7 @@ class Model(object):
 
         rows = []
         for i, var in enumerate(self.cache.all_vars.values()):
-            all_properties = ['v_init', 'v_setter', 'e_setter']
+            all_properties = ['v_str', 'v_setter', 'e_setter']
             property_list = []
             for item in all_properties:
                 if (var.__dict__[item] is not None) and (var.__dict__[item] is not False):

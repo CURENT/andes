@@ -41,7 +41,7 @@ class BaseVar(object):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 v_init: Optional[str] = None,
+                 v_str: Optional[str] = None,
                  e_str: Optional[str] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
@@ -64,7 +64,7 @@ class BaseVar(object):
         self.v: Optional[Union[ndarray, float]] = 0  # variable value array
         self.e: Optional[Union[ndarray, float]] = 0   # equation value array
 
-        self.v_init = v_init  # equation string for variable initialization
+        self.v_str = v_str  # equation string for variable initialization
         self.e_str = e_str  # string for symbolic equation
 
         self.v_setter = v_setter  # True if this variable sets the variable value
