@@ -28,6 +28,8 @@ class Config(object):
         -------
 
         """
+        if config is None:
+            return
         if self._name in config:
             config_section = config[self._name]
             self.add(OrderedDict(config_section))
