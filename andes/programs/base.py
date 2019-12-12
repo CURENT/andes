@@ -7,10 +7,10 @@ class ProgramBase(object):
 
     def __init__(self, system=None, config=None):
         self.system = system
-        self.config = Config()
+        self.config = Config(self.class_name)
 
         if config is not None:
-            self.set_config(config)
+            self.config.load(config)
 
         self.config.add(OrderedDict((('sparselib', 'klu'), )))
 
@@ -19,11 +19,3 @@ class ProgramBase(object):
     @property
     def class_name(self):
         return self.__class__.__name__
-
-    def set_config(self, config):
-        if self.class_name in config:
-            config_section = config[self.class_name]
-            self.config.add(OrderedDict(config_section))
-
-    def get_config(self):
-        return self.config.as_dict()

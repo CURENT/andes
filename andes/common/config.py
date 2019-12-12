@@ -6,16 +6,45 @@ logger = logging.getLogger(__name__)
 
 class Config(object):
     """
-    Class for storing model configurations that will be used in equations
+    Class for storing model configurations that will be used in equations and routines.
 
     All config entries must be numerical.
     """
 
-    def __init__(self, dct=None, **kwargs):
+    def __init__(self, name, dct=None, **kwargs):
         """Constructor with a dictionary or keyword arguments"""
+        self._name = name
         self.add(dct, **kwargs)
 
+    def load(self, config):
+        """
+        Load from ConfigParser config object
+
+        Parameters
+        ----------
+        config
+
+        Returns
+        -------
+
+        """
+        if self._name in config:
+            config_section = config[self._name]
+            self.add(OrderedDict(config_section))
+
     def add(self, dct=None, **kwargs):
+        """
+        Add additional configs. Existing configs will not be overwritten.
+
+        Parameters
+        ----------
+        dct
+        kwargs
+
+        Returns
+        -------
+
+        """
         if dct is not None:
             self._add(**dct)
 
@@ -23,8 +52,8 @@ class Config(object):
 
     def _add(self, **kwargs):
         for key, val in kwargs.items():
+            # skip existing entries that are already loaded (from config files)
             if key in self.__dict__:
-                # skip existing entries that are already loaded (from config files)
                 continue
 
             if isinstance(val, str):
@@ -41,10 +70,10 @@ class Config(object):
     def as_dict(self):
         out = []
         for key, val in self.__dict__.items():
-            if not key.endswith('_alt'):
+            if not key.startswith('_'):
                 out.append((key, val))
 
         return OrderedDict(out)
 
     def __repr__(self):
-        return pprint.pformat(self.__dict__)
+        return pprint.pformat(self.as_dict())

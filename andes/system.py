@@ -30,7 +30,7 @@ from typing import List, Dict, Tuple, Union, Optional  # NOQA
 
 from andes.common.utils import get_config_load_path
 
-from andes.common.dae import DAE
+from andes.variables.dae import DAE
 from andes.programs import all_programs
 from andes.devices import non_jit
 from andes.core.param import BaseParam
@@ -63,10 +63,11 @@ class System(object):
         self.switch_times = np.array([])
 
         # get and load default config file
-        self.config = Config()
+        self.config = Config(self.__class__.__name__)
         self._config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
         self._config_from_file = self.load_config(self._config_path)
-        self.set_config(self._config_from_file)  # only load config for system and routines
+        self.config.load(self._config_from_file)  # only load config for system and routines
+
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
@@ -767,15 +768,11 @@ class System(object):
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
 
-        # get routine config
-        for name, instance in self.programs.items():
-            cfg = instance.get_config()
-            if len(cfg) > 0:
-                config_dict[name] = cfg
+        all_with_config = OrderedDict(list(self.programs.items()) +
+                                      list(self.models.items()))
 
-        # get model config
-        for name, instance in self.models.items():
-            cfg = instance.get_config()
+        for name, instance in all_with_config.items():
+            cfg = instance.config.as_dict()
             if len(cfg) > 0:
                 config_dict[name] = cfg
         return config_dict

@@ -5,7 +5,6 @@ from time import strftime
 from cvxopt import mul
 
 from andes import __version__ as version
-from ..formats import all_formats
 from ..common.utils import elapsed
 
 logger = logging.getLogger(__name__)

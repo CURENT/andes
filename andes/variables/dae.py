@@ -65,7 +65,7 @@ class DAE(object):
         self.itx, self.jtx, self.vtx = list(), list(), list()
         self.irx, self.jrx, self.vrx = list(), list(), list()
 
-        self.config = Config()
+        self.config = Config(self.__class__.__name__)
         self.config.add({'latex': 1,
                          'dpi': 150,
                          })

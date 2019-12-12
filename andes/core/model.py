@@ -357,9 +357,9 @@ class Model(object):
             is_series=False,
         )
 
-        self.config = Config()
+        self.config = Config(name=self.class_name)
         if config is not None:
-            self.set_config(config)
+            self.config.load(config)
 
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'), ))
         self.input_syms = OrderedDict()
@@ -509,7 +509,7 @@ class Model(object):
             self._input[instance.name] = instance.v
 
         # append config variables
-        for key, val in self.config.__dict__.items():
+        for key, val in self.config.as_dict().items():
             self._input[key] = val
 
     def l_update_var(self):
@@ -662,7 +662,6 @@ class Model(object):
 
         """
         from sympy import Symbol, Matrix, sympify, lambdify  # NOQA
-        from sympy.printing import latex  # NOQA
 
         # clear symbols storage
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
@@ -684,7 +683,7 @@ class Model(object):
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
 
-        for key in self.config.__dict__:
+        for key in self.config.as_dict():
             self.input_syms[key] = Symbol(key)
 
         # store tex names for pretty printing replacement later
@@ -1185,14 +1184,6 @@ class Model(object):
         return zip(self.__dict__[f'i{name}'],
                    self.__dict__[f'j{name}'],
                    self.__dict__[f'v{name}'])
-
-    def set_config(self, config):
-        if self.class_name in config:
-            config_section = config[self.class_name]
-            self.config.add(OrderedDict(config_section))
-
-    def get_config(self):
-        return self.config.as_dict()
 
     def list2array(self):
         for _, instance in self.num_params.items():
