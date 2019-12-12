@@ -86,7 +86,7 @@ class BaseVar(object):
             span = self.a.tolist()
             span = ','.join([str(i) for i in span])
         elif self.n > 20:
-            if not isinstance(self, (ExtVar, Calc)):
+            if not isinstance(self, ExtVar):
                 span.append(self.a[0])
                 span.append(self.a[-1])
                 span.append(self.a[1] - self.a[0])

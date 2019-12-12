@@ -17,12 +17,11 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
    ANDES supports power flow calculation, time domain simulation and eigenvalue analysis for transmission
    networks.
 
-- Symbolic DAE modeling and automated code generation for numerical simulation
-- Numerical DAE modeling for cases when symbolic implementations are difficult
-- Rapid modeling with block library with common transfer functions.
-- Discrete component library such as hard limiter, dead band, and anti-windup limiter.
-- Newton-Raphson and Newton-Krylov based power flow calculation.
-- Trapezoidal method for time domain simulation of semi-explicit DAE.
+- Symbolic DAE modeling and automated code generation for numerical simulation.
+- Numerical DAE modeling for cases when symbolic implementations are difficult.
+- Rapid modeling library with transfer functions and discrete components.
+- Automatic sequential and iterative initialization for dynamic models.
+- Newton-Raphson power flow and trapezoidal method-based time domain simulation.
 - Complete documentation of supported DAE models.
 
 ANDES is currently under active development. Please report issues on the
@@ -38,6 +37,7 @@ ANDES is currently under active development. Please report issues on the
    tutorial.rst
    formats.rst
    modeling.rst
+   misc.rst
    cases.rst
    cheatsheet.rst
    modelref.rst

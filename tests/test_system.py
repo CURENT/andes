@@ -17,4 +17,3 @@ class TestSystem(unittest.TestCase):
         out = ''
         for group in self.ss.groups.values():
             out += group.doc_all(export='rest')
-

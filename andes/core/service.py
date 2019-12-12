@@ -66,8 +66,9 @@ class ConstService(BaseService):
     """
     Service "variables" that stays constant.
 
-    ConstService are constants calculated from parameters. They are only evaluated once in the initialization
-    phase before variables are initialized. Therefore, uninitialized variables must not be used in `v_str``.
+    ConstService are usually constants calculated from parameters. They are only evaluated once in the
+    initialization phase before variables are initialized. Therefore, uninitialized variables must not be
+    used in `v_str``.
 
     Parameters
     ----------
@@ -229,9 +230,10 @@ class ReducerService(OperationService):
         3      1     345
         4      1     500
 
-    Then, ``self.Bus.v`` is a list of two lists ``[ [1, 3, 4], [2] ]``. ``self.Vn.v`` will be retrieved as
-    ``[110, 345, 500, 220]``. Based on the shape from ``self.Bus``, ``np.mean`` will be called on ``[110, 345,
-    500]`` and ``[220]`` respectively. Thus, ``self.Vn_mean.v`` will be ``[318.33, 220]``.
+    Then, ``self.Bus.v`` is a list of two lists ``[ [1, 3, 4], [2] ]``. ``self.Vn.v`` will be retrieved and
+    linearly stored as ``[110, 345, 500, 220]``. Based on the shape from ``self.Bus``, ``np.mean`` will be
+    called on ``[110, 345, 500]`` and ``[220]`` respectively. Thus, ``self.Vn_mean.v`` will become
+    ``[318.33, 220]``.
 
     """
     def __init__(self,
@@ -267,7 +269,6 @@ class ReducerService(OperationService):
 class RepeaterService(OperationService):
     r"""
     A helper Service type which repeats a v-provider's value based on the shape from a RefParam
-
 
     Examples
     --------
