@@ -34,11 +34,9 @@ from multiprocessing import Process
 from subprocess import call
 from time import sleep, strftime
 
-from andes import filters
-from andes import routines
-from andes import utils
-from andes.system import PowerSystem
-from andes.utils import elapsed, misc
+import andes.common.utils
+from andes.common.utils import elapsed
+from andes.system import System
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -138,7 +136,7 @@ def cli_parser():
 
     # general options
     general_group = parser.add_argument_group('General options')
-    general_group.add_argument('-r', '--routine', choices=routines.__cli__,
+    general_group.add_argument('-r', '--routine', choices=[],
                                help='Routine to run', nargs='*',
                                default=['pflow'], )
     general_group.add_argument('--edit-config', help='Quick edit of the config file',
@@ -325,7 +323,7 @@ def andeshelp(group=None, category=None, model_list=None, model_format=None, mod
     if model_list:
         raise NotImplementedError
 
-    system = PowerSystem()
+    system = System()
 
     # print example data
     if data_example is not None:
@@ -468,7 +466,7 @@ def edit_conf(edit_config='', load_config=None, **kwargs):
     if edit_config == '':
         return ret
 
-    conf_path = misc.get_config_load_path(load_config)
+    conf_path = andes.common.utils.get_config_load_path(load_config)
 
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
@@ -626,7 +624,7 @@ def save_config(save_config='', **kwargs):
 
         cf_path = os.path.join(path, cf_path)
 
-    ps = PowerSystem()
+    ps = System()
     ps.dump_config(cf_path)
     ret = True
 
@@ -661,7 +659,7 @@ def main(args=None):
         args = vars(args)
 
     # configure stream handler verbose level
-    config_logger(log_path=misc.get_log_dir(), file=True, stream=True,
+    config_logger(log_path=andes.common.utils.get_log_dir(), file=True, stream=True,
                   stream_level=args.get('verbose', logging.INFO))
 
     # show preamble
@@ -759,8 +757,8 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
     following workflow:
 
      * Turn on cProfile if requested
-     * Populate a ``PowerSystem`` object
-     * Parse the input files using filters
+     * Populate a ``System`` object
+     * Parse the input files using io filters
      * Dump the case file is requested
      * Set up the system
      * Run the specified routine(s)
@@ -787,8 +785,8 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
 
     Returns
     -------
-    PowerSystem
-        Andes PowerSystem object
+    System
+        Andes System object
 
     """
     t0, _ = elapsed()
@@ -798,18 +796,18 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
     if profile is True:
         pr.enable()
 
-    system = PowerSystem(case, **kwargs)
+    system = System(case, **kwargs)
 
     # guess format and parse data
-    if not filters.guess(system):
+    if not andes.io.guess(system):
         return
 
-    if not filters.parse(system):
+    if not andes.io.parse(system):
         return
 
     # dump system as raw file if requested
     if dump_raw:
-        filters.dump_raw(system)
+        andes.io.dump_raw(system)
 
     system.setup()
 
@@ -875,7 +873,7 @@ def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=Non
 def run_stock(rpath, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit_now=False,
               **kwargs):
     """Run a stock case distributed with andes"""
-    case_path = utils.stock_case.get_stock_case(rpath)
+    case_path = andes.common.stock_case.get_stock_case(rpath)
 
     return run(case_path, routine=routine, profile=profile, dump_raw=dump_raw, pid=pid,
                show_data=show_data, exit_now=exit_now, **kwargs)

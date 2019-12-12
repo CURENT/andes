@@ -31,7 +31,7 @@ from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
 from andes.common.utils import list_flatten
-from andes.utils.tab import Tab
+from andes.common.tab import Tab
 
 logger = logging.getLogger(__name__)
 pd = None

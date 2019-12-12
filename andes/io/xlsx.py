@@ -16,7 +16,7 @@ def write(system, outfile, skip_empty=True, overwrite=None):
 
     Parameters
     ----------
-    system : SystemNew
+    system : System
         A loaded system with parameters
     outfile : str
         Path to the output file
@@ -56,8 +56,8 @@ def read(system, infile):
 
     Parameters
     ----------
-    system : SystemNew
-        Empty SystemNew instance
+    system : System
+        Empty System instance
     infile : str
         Path to the input file
 

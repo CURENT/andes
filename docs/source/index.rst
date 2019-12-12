@@ -42,11 +42,12 @@ ANDES is currently under active development. Please report issues on the
    cheatsheet.rst
    modelref.rst
 
-.. toctree::
-   :caption: API References
-   :maxdepth: 4
+..
+   .. toctree::
+      :caption: API References
+      :maxdepth: 4
 
-   andes.rst
+      andes.rst
 
 
 Indices and tables

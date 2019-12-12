@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np  # NOQA
-from andes.system import SystemNew
+from andes.system import System
 import dill
 
 dill.settings['recurse'] = True
@@ -9,7 +9,7 @@ dill.settings['recurse'] = True
 
 class TestSystem(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = SystemNew()
+        self.ss = System()
         system = self.ss
         system.prepare()
 

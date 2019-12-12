@@ -8,10 +8,10 @@ from cvxopt.lapack import gesv
 
 from andes.config.eig import Eig
 from andes.consts import pi
-from andes.formats.txt import dump_data
-from andes.utils import elapsed
+from andes.io.txt import dump_data
+from andes.common.utils import elapsed
 from andes.utils.solver import Solver
-from .base import RoutineBase
+from andes.routines.base import RoutineBase
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'

@@ -6,7 +6,7 @@ import andes
 import dill
 dill.settings['recurse'] = True
 
-ss = andes.system.SystemNew()
+ss = andes.system.System()
 ss.prepare()
 
 out = ''

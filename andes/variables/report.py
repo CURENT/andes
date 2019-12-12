@@ -6,7 +6,7 @@ from cvxopt import mul
 
 from andes import __version__ as version
 from ..formats import all_formats
-from ..utils import elapsed
+from ..common.utils import elapsed
 
 logger = logging.getLogger(__name__)
 

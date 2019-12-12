@@ -23,7 +23,7 @@ class DAETimeSeries(object):
         self.c = None
 
 
-class DAENew(object):
+class DAE(object):
     """
     Numerical DAE class
     """

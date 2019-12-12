@@ -2,13 +2,13 @@ import unittest
 import dill
 
 import numpy as np  # NOQA
-from andes.system import SystemNew
+from andes.system import System
 dill.settings['recurse'] = True
 
 
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = SystemNew()
+        self.ss = System()
         system = self.ss
         system.undill_calls()
 
