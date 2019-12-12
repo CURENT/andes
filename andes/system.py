@@ -516,12 +516,15 @@ class System(object):
 
     def dill_calls(self):
         import dill
-        pkl_path = self._get_pkl_path()
+        dill.settings['recurse'] = True
 
+        pkl_path = self._get_pkl_path()
         dill.dump(self.calls, open(pkl_path, 'wb'))
 
     def undill_calls(self):
         import dill
+        dill.settings['recurse'] = True
+
         pkl_path = self._get_pkl_path()
 
         if not os.path.isfile(pkl_path):

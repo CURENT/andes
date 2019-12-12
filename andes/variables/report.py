@@ -8,6 +8,7 @@ from andes import __version__ as version
 from ..common.utils import elapsed
 
 logger = logging.getLogger(__name__)
+all_formats = {}
 
 
 class Report(object):

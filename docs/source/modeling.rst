@@ -7,12 +7,208 @@ Modeling
 System
 ======================================
 
+Overview
+----------------------------------------
+:py:mod:`andes.System` is the top-level class for organizing and orchestrating a power system model. The
+System class contains models and routines for modeling and simulation. ``System`` provides methods for
+automatically importing groups, models, and routines at ``System`` creation.
+
+``Systems`` contains a few special ``OrderedDict`` member attributes for housekeeping. These attributes include
+``models``, ``groups``, ``programs`` and ``calls`` for loaded models, groups, program routines, and numerical
+function calls, respectively. In these dictionaries, the keys are name strings and the values are the
+corresponding instances.
+
+Dynamic Imports
+````````````````````````````````````````
+Groups, models and routine programs are dynamically imported at the creation of a ``System`` instance. In
+detail, *all classes* defined in ``andes.devices.group`` are imported and instantiated.
+For models and groups, only the classes defined in the corresponding ``__init__.py`` files are imported and
+instantiated in the order of definition.
+
+See for details:
+
+:py:mod:`andes.system.System._group_import()` : group import
+
+:py:mod:`andes.system.System._model_import()` : model import
+
+:py:mod:`andes.system.System._routine_import()` : routine import
+
+
+Symbolic-to-Numeric Preparation
+````````````````````````````````````````
+Before the first use, all symbolic equations need to be generated into numerical function calls for accelerating
+the numerical simulation. Since the symbolic to numeric generation is slow, these numerical
+function calls (Python Callables), once generated, can be serialized into a file to speed up future. When models
+are modified (such as adding new models or changing equation strings), the generation function needs to be
+executed again for code consistency.
+
+In the first use of ANDES in an interactive environment, one would do ::
+
+    import andes
+    sys = andes.System()
+    sys.prepare()
+
+It may take several seconds to a few minutes to finish the preparation.
+
+The symbolic-to-numeric generation is independent of test systems and needs to happen before a test system is
+loaded. In other words, any symbolic processing for particular test systems must not be included in
+``System.prepare()``.
+
+The package used for serializing/de-serializing numerical calls is ``dill``. The serialized file will be named
+``calls.pkl`` and placed under ``<HomeDir>/.andes/``. As a note, the ``dill_calls()`` method has set the flag
+``dill.settings['recurse'] = True`` to ensure a successful recursive serialization.
+
+If no change is made to models, the call to ``prepare()`` afterwards can be replaced with ``undill_calls()``,
+which is fast to execute.
+
+See for details:
+
+:py:mod:`andes.system.System.prepare()` : symbolic-to-numerical preparation
+
+:py:mod:`andes.system.System.undill_calls()` : un-dill numerical calls
+
+Numerical Functions
+----------------------------------------
+
+DAE Arrays and Sparse Matrices
+````````````````````````````````````````
+``System`` contains an instance of the numerical DAE class, ``System.dae``, for storing the numerical values of
+variables, equations and first order derivatives (Jacobian matrices). Variable values and equation values are
+stored in ``np.ndarray``, while Jacobians are stored in ``CVXOPT.spmatrix``. Defined arrays and descriptions are
+as follows:
+
++-----------+---------------------------------------------+
+| DAE Array |                 Description                 |
++===========+=============================================+
+|  x        | Array for state variable values             |
++-----------+---------------------------------------------+
+|  y        | Array for algebraic variable values.        |
++-----------+---------------------------------------------+
+|  f        | Array for differential equation derivatives |
++-----------+---------------------------------------------+
+|  g        | Array for algebraic equation mismatches     |
++-----------+---------------------------------------------+
+
+Since the system of equations for power system simulation is determined, the number of equations has to equal
+to the number of variables. In other words, ``x`` and ``f`` has the same length (stored in ``DAE.n``), and so do
+``y`` and ``g`` (stored in ``DAE.m``).
+
+
+The derivatives of ``f`` and ``g`` with respect to ``x`` and ``y`` are stored in four sparse matrices: ``fx``,
+``fy``, ``gx`` and ``gy``, where the first letter is the equation name, and the second letter is the variable name.
+
+Note that DAE does not store the original variable at a particular address. Conversely, the addresses of a
+variable is stored in the variable instance. See Subsection Variables for more details.
+
+Model and DAE Values
+````````````````````````````````````````
+ANDES uses a decentralized architecture between models and DAE value arrays. In this architecture, variables are
+initialized and equations are evaluated inside each model. Since the equation system is solved simultaneously,
+``System`` provides methods for collecting initial values and equation values into ``DAE``, as well as copying
+updated variables to each model.
+
+The collection of values from models need to follow protocols to avoid conflicts.  Details
+are given in the subsection Variables.
+
+See for more details:
+
+:py:mod:`andes.System.vars_to_dae` : model -> DAE (for variable values)
+
+:py:mod:`andes.System.vars_to_models` : DAE -> model (for variable values)
+
+:py:mod:`andes.System._e_to_dae` : model -> DAE (for equation values)
+
+
+Model Functions
+````````````````````````````````````````
+``System`` functions as an orchestrator for calling shared member methods of models. These methods are defined
+for initialization, equation update, Jacobian update, and discrete flags update.
+
++--------------------------------------+------------------------------------------+
+|            System Method             |               Description                |
++======================================+==========================================+
+|  :py:mod:`andes.System.initialize`   | Variable initialization                  |
++--------------------------------------+------------------------------------------+
+|  :py:mod:`andes.System.f_update`     | Update differential equation             |
++--------------------------------------+------------------------------------------+
+|  :py:mod:`andes.System.g_update`     | Update algebraic equation                |
++--------------------------------------+------------------------------------------+
+|  :py:mod:`andes.System.j_update`     | Update values in the Jacobians           |
++--------------------------------------+------------------------------------------+
+|  :py:mod:`andes.System.l_update_var` | Discrete flags update based on variables |
++--------------------------------------+------------------------------------------+
+|  :py:mod:`andes.System.l_update_eq`  | Discrete flags update based on equations |
++--------------------------------------+------------------------------------------+
+
+Sparse Matrix Patterns
+````````````````````````````````````````
+The largest overhead in building and solving nonlinear equations is the building of Jacobian matrices. This is
+especially relevant when we use the implicit integration approach which algebraized the differential equations.
+Given the unique data structure of power system models, the sparse matrices for Jacobians are built model by
+model, incrementally.
+
+There are two common approaches to incrementally build a sparse matrix. The first one is to use simple in-place
+add on sparse matrices, such as doing ::
+
+    self.fx += spmatrix(v, i, j, (n, n), 'd')
+
+Although the implementation is simple, this involves creating and discarding temporary objects on the right hand
+side and, even worse, changing the sparse pattern of ``self.fx``. The second approach is to store the rows,
+columns and values in an array-like object and construct the Jacobians at the end. This approach is very
+efficient but has one caveat: it does not allow accessing the sparse matrix while building.
+
+ANDES uses a hybrid approach to avoid the change of sparse patterns by filling values into a known the sparse
+matrix pattern. ``System`` collects the indices of rows and columns for each Jacobian matrix. Before the
+in-place addition, ANDES builds a temporary zero-filled ``spmatrix`` in which Jacobian values are updated.
+Since these in-place add operations are only modifying existing values, it not change the pattern and thus will
+not incur value copying. In addition, updating sparse matrices can use the exact same code as the first approach.
+
+Note that this approach still creates and discards temporary objects, it is feasible to write a C function which
+takes three array-likes and modify the sparse matrices in place. This is feature to be developed, and our
+prototype shows a promising speed up.
+
+See for details:
+
+:py:mod:`andes.System.store_sparse_patterns` : store sparse patterns from models
+
+Configuration
+----------------------------------------
+Each model and routine program has a member attribute ``config`` for model-specific or routine-specific
+configurations. ``System`` also stores ``config`` for system-specific configurations. In addition, ``System``
+manages collecting all configs, saving in a config file, and loading the config file.
+
+The collected configs can be written to an ``andes.rc`` config file in ``<HomeDir>/.andes`` using
+``ConfigParser``. Saved config file can be loaded and populated *at system instance creation time*. Configs from
+the config file takes precedence over default config values.
+
+Again, configs from files is passed to model constructors during instantiation. If one needs to modify the
+config for a run, it needs to be done before the ``System`` instantiation. Directly modifying ``Model.config``
+may not take effect or have side effect in the current implementation.
+
+
+See for details:
+
+:py:mod:`andes.common.Config` : Config class
+
+:py:mod:`andes.System.save_config` : Save config into ``<HomeDir>/andes.rc``
+
+:py:mod:`andes.System.load_config` : load config from ``<HomeDir>/andes.rc``
+
+:py:mod:`andes.System._model_import` : dynamic model instantiation with config as an argument
+
 
 Models
 ======================================
 
+Overview
+----------------------------------------
+
+Parameters from Inputs
+----------------------------------------
+``ModelData``
+
 Parameter Requirements for Voltage Rating
-----------------------------------------------------
+```````````````````````````````````````````````
 If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
 its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
 voltages.
@@ -21,6 +217,21 @@ Controllers not connected to Bus or Node will have its rated voltages omitted an
 In fact, controllers not directly connected to the network shall use per unit for voltage and current parameters
 . Controllers (such as a turine governor) may inherit rated power from controlled models and thus power parameters
 will be converted consistently.
+
+Completing Symbolic Equations
+----------------------------------------
+
+The ``__setattr`` magic
+
+
+``Model.cache``
+````````````````````````````````````````
+
+Additional Numerical Equations
+----------------------------------------
+
+
+
 
 ..
     Atoms

@@ -4,7 +4,8 @@ del get_versions
 
 from andes import main  # NOQA
 from andes.main import run, run_stock  # NOQA
-from andes import system
+from andes import system  # NOQA
+from andes.system import System  # NOQA
 
 
 __author__ = 'Hantao Cui'
