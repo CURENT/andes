@@ -4,12 +4,12 @@ import logging
 import re
 
 from andes.consts import deg2rad
-from andes.utils.math import to_number
+from andes.common.utils import to_number
 
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def is_format(fid):
     """Check the raw file for frequency base"""
     first = fid.readline()
     first = first.strip().split('/')
@@ -20,22 +20,22 @@ def testlines(fid):
         return False
 
 
-def get_nol(b, mdata):
+def get_block_lines(b, mdata):
     """
     Return the number of lines based on data
     """
-    nol = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
+    line_counts = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
 
     if b == 5:  # for transformer
         if mdata[0][2] == 0:  # two-winding transformer
             return 4
-        else:  # three-widning transf
+        else:  # three-winding transformer
             return 5
 
-    return nol[b]
+    return line_counts[b]
 
 
-def read(file, system):
+def read(system, file):
     """read PSS/E RAW file v32 format"""
 
     blocks = [
@@ -43,23 +43,26 @@ def read(file, system):
         'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline', 'zone',
         'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q'
     ]
-    nol = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
     rawd = re.compile(r'rawd\d\d')
 
-    retval = True
-    version = 0
-    b = 0  # current block index
+    ret = True
+    block_idx = 0  # current block index
+    mva = 100
+
     raw = {}
     for item in blocks:
         raw[item] = []
 
     data = []
     mdata = []  # multi-line data
-    mline = 0  # line counter for multi-line models
+    dev_line = 0  # line counter for multi-line models
 
-    # parse file into raw with to_number conversions
-    fid = open(file, 'r')
-    for num, line in enumerate(fid.readlines()):
+    # read file into `line_list`
+    with open(file, 'r') as f:
+        line_list = [line.rstrip('\n') for line in f]
+
+    # parse file into `raw` with to_number conversions
+    for num, line in enumerate(line_list):
         line = line.strip()
         if num == 0:  # get basemva and frequency
             data = line.split('/')[0]
@@ -76,18 +79,16 @@ def read(file, system):
             logger.debug('PSSE raw version {} detected'.format(version))
 
             if version < 32 or version > 33:
-                logger.warning(
-                    'RAW file version is not 32 or 33. Error may occur.')
+                logger.warning('RAW file version is not 32 or 33. Error may occur.')
             continue
 
-        elif num == 1:  # store the case info line
-            logger.info(line)
-            continue
-        elif num == 2:
+        elif num == 1 or num == 2:  # store the case info line
+            if len(line) > 0:
+                logger.info(line)
             continue
         elif num >= 3:
             if line[0:2] == '0 ' or line[0:3] == ' 0 ':  # end of block
-                b += 1
+                block_idx += 1
                 continue
             elif line[0] == 'Q':  # end of file
                 break
@@ -95,16 +96,15 @@ def read(file, system):
 
         data = [to_number(item) for item in data]
         mdata.append(data)
-        mline += 1
-        nol = get_nol(b, mdata)
+        dev_line += 1
 
-        if mline >= nol:
-            if nol == 1:
+        block_lines = get_block_lines(block_idx, mdata)
+        if dev_line >= block_lines:
+            if block_lines == 1:
                 mdata = mdata[0]
-            raw[blocks[b]].append(mdata)
+            raw[blocks[block_idx]].append(mdata)
             mdata = []
-            mline = 0
-    fid.close()
+            dev_line = 0
 
     # add device elements to system
     sw = {}  # idx:a0
@@ -121,17 +121,11 @@ def read(file, system):
 
         if ty == 3:
             sw[idx] = a0
-        param = {
-            'idx': idx,
-            'name': data[1],
-            'Vn': data[2],
-            'voltage': data[7],
-            'angle': a0,
-            'area': data[4],
-            'zone': data[5],
-            'owner': data[6],
-        }
-        system.Bus.elem_add(**param)
+        param = {'idx': idx, 'name': data[1], 'Vn': data[2],
+                 'v0': data[7], 'a0': a0,
+                 'area': data[4], 'region': data[5], 'owner': data[6]}
+        system.add('Bus', param)
+
     max_bus = max(max_bus)
     for data in raw['load']:
         # version 32:
@@ -139,85 +133,59 @@ def read(file, system):
         # Bus, Id, Status, Area, Zone, PL(MW), QL (MW), IP, IQ, YP, YQ, OWNER
         #
         bus = data[0]
-        vn = system.Bus.get_field('Vn', bus)
-        voltage = system.Bus.get_field('voltage', bus)
-        param = {
-            'bus': bus,
-            'Vn': vn,
-            'Sn': mva,
-            'p': (data[5] + data[7] * voltage + data[9] * voltage**2) / mva,
-            'q': (data[6] + data[8] * voltage - data[10] * voltage**2) / mva,
-            'owner': data[11],
-        }
-        system.PQ.elem_add(**param)
+        vn = system.Bus.get(src='Vn', idx=bus, attr='v')
+        v0 = system.Bus.get(src='v0', idx=bus, attr='v')
+        param = {'bus': bus, 'u': data[2], 'Vn': vn,
+                 'p0': (data[5] + data[7] * v0 + data[9] * v0 ** 2) / mva,
+                 'q0': (data[6] + data[8] * v0 - data[10] * v0 ** 2) / mva,
+                 'owner': data[11]}
+        system.add('PQ', param)
 
     for data in raw['fshunt']:
-        #
         # 0,    1,      2,      3,      4
         # Bus, name, Status, g (MW), b (Mvar)
-        #
         bus = data[0]
-        vn = system.Bus.get_field('Vn', bus)
-        param = {
-            'bus': bus,
-            'Vn': vn,
-            'u': data[2],
-            'Sn': mva,
-            'g': data[3] / mva,
-            'b': data[4] / mva,
-        }
-        system.Shunt.elem_add(**param)
+        vn = system.Bus.get(src='Vn', idx=bus, attr='v')
+
+        param = {'bus': bus, 'Vn': vn, 'u': data[2],
+                 'Sn': mva, 'g': data[3] / mva, 'b': data[4] / mva}
+        system.add('Shunt', param)
 
     gen_idx = 0
     for data in raw['gen']:
-        #
         #  0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
         #  I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
-        #
         bus = data[0]
-        vn = system.Bus.get_field('Vn', bus)
+        vn = system.Bus.get(src='Vn', idx=bus, attr='v')
         gen_mva = data[8]  # unused yet
         gen_idx += 1
         status = data[14]
-        param = {
-            'Sn': gen_mva,
-            'Vn': vn,
-            'u': status,
-            'idx': gen_idx,
-            'bus': bus,
-            'pg': status * data[2] / mva,
-            'qg': status * data[3] / mva,
-            'qmax': data[4] / mva,
-            'qmin': data[5] / mva,
-            'v0': data[6],
-            'ra': data[9],  # ra  armature resistance
-            'xs': data[10],  # xs synchronous reactance
-            'pmax': data[16] / mva,
-            'pmin': data[17] / mva,
-        }
+        param = {'Sn': gen_mva, 'Vn': vn, 'u': status, 'idx': gen_idx, 'bus': bus,
+                 'p0': status * data[2] / mva,
+                 'q0': status * data[3] / mva,
+                 'pmax': data[16] / mva, 'pmin': data[17] / mva,
+                 'qmax': data[4] / mva, 'qmin': data[5] / mva,
+                 'v0': data[6],
+                 'ra': data[9],  # ra  armature resistance
+                 'xs': data[10],  # xs synchronous reactance
+                 }
         if data[0] in sw.keys():
-            param.update({
-                'a0': sw[data[0]],
-            })
-            system.SW.elem_add(**param)
+            param.update({'a0': sw[data[0]]})
+            system.add('Slack', param)
         else:
-            system.PV.elem_add(**param)
+            system.add('PV', param)
 
     for data in raw['branch']:
         #
         # I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...,O4,F4
         #
         param = {
-            'bus1': data[0],
-            'bus2': data[1],
-            'r': data[3],
-            'x': data[4],
-            'b': data[5],
-            'rate_a': data[6],
-            'Vn': system.Bus.get_field('Vn', data[0]),
-            'Vn2': system.Bus.get_field('Vn', data[1]),
+            'bus1': data[0], 'bus2': data[1],
+            'r': data[3], 'x': data[4], 'b': data[5],
+            'Vn1': system.Bus.get(src='Vn', idx=data[0], attr='v'),
+            'Vn2': system.Bus.get(src='Vn', idx=data[1], attr='v'),
         }
-        system.Line.elem_add(**param)
+        system.add('Line', **param)
 
     xf_3_count = 1
     for data in raw['transf']:
@@ -233,40 +201,27 @@ def read(file, system):
             phi = data[2][2]
 
             if tap == 1 and phi == 0:
-                trasf = False
+                transf = False
             else:
-                trasf = True
-            param = {
-                'trasf': trasf,
-                'bus1': data[0][0],
-                'bus2': data[0][1],
-                'u': data[0][11],
-                'b': data[0][8],
-                'r': data[1][0],
-                'x': data[1][1],
-                'tap': tap,
-                'phi': phi,
-                'rate_a': data[2][3],
-                'Vn': system.Bus.get_field('Vn', data[0][0]),
-                'Vn2': system.Bus.get_field('Vn', data[0][1]),
-            }
-            system.Line.elem_add(**param)
+                transf = True
+            param = {'bus1': data[0][0], 'bus2': data[0][1], 'u': data[0][11],
+                     'b': data[0][8], 'r': data[1][0], 'x': data[1][1],
+                     'trans': transf, 'tap': tap, 'phi': phi,
+                     'Vn1': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
+                     'Vn2': system.Bus.get(src='Vn', idx=data[0][1], attr='v'),
+                     }
+            system.add('Line', param)
         else:
-            # """
             # I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
             # R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
             # WINDV1, NOMV1, ANG1, RATA1, BATB1, RATC1, COD1, CONT1, RMA1, RMI1, VMA1, VMI1, NTP1, TAB1, CR1, CX1
             # WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
             # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
-            # """
-            param = {
-                'idx': max_bus+xf_3_count,
-                'name': '_'.join(str(data[0][:3])),
-                'Vn': system.Bus.get_field('Vn', data[0][0]),
-                'voltage': data[1][-2],
-                'angle': data[1][-1]/180*3.14
-            }
-            system.Bus.elem_add(**param)
+            param = {'idx': max_bus + xf_3_count, 'name': '_'.join(str(data[0][:3])),
+                     'Vn': system.Bus.get_field('Vn', data[0][0]),
+                     'v0': data[1][-2], 'a0': data[1][-1] * deg2rad
+                     }
+            system.add('Bus', param)
 
             r = []
             x = []
@@ -277,21 +232,13 @@ def read(file, system):
             x.append((data[1][4] + data[1][1] - data[1][7])/2)
             x.append((data[1][7] + data[1][4] - data[1][1])/2)
             for i in range(0, 3):
-                param = {
-                    'trasf': True,
-                    'bus1': data[0][i],
-                    'bus2': max_bus+xf_3_count,
-                    'u': data[0][11],
-                    'b': data[0][8],
-                    'r': r[i],
-                    'x': x[i],
-                    'tap': data[2+i][0],
-                    'phi': data[2+i][2],
-                    'rate_a': data[2+i][3],
-                    'Vn': system.Bus.get_field('Vn', data[0][i]),
-                    'Vn2': system.Bus.get_field('Vn', data[0][0]),
-                }
-                system.Line.elem_add(**param)
+                param = {'trans': True, 'bus1': data[0][i], 'bus2': max_bus+xf_3_count, 'u': data[0][11],
+                         'b': data[0][8], 'r': r[i], 'x': x[i],
+                         'tap': data[2+i][0], 'phi': data[2+i][2],
+                         'Vn1': system.Bus.get(src='Vn', idx=data[0][i], attr='v'),
+                         'Vn2': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
+                         }
+                system.add('Line', param)
             xf_3_count += 1
 
     for data in raw['swshunt']:
@@ -299,341 +246,23 @@ def read(file, system):
         # BINIT, N1, B1, N2, B2, ... N8, B8
         bus = data[0]
         vn = system.Bus.get_field('Vn', bus)
-        param = {
-            'bus': bus,
-            'Vn': vn,
-            'Sn': mva,
-            'u': data[3],
-            'b': data[9] / mva,
-        }
-        system.Shunt.elem_add(**param)
+        param = {'bus': bus, 'Vn': vn, 'Sn': mva, 'u': data[3],
+                 'b': data[9] / mva}
+        system.add('Shunt', param)
 
     for data in raw['area']:
         # ID, ISW, PDES, PTOL, ARNAME
-        param = {
-            'idx': data[0],
-            'isw': data[1],
-            'pdes': data[2],
-            'ptol': data[3],
-            'name': data[4],
-        }
-        system.Area.elem_add(**param)
+        param = {'idx': data[0], 'name': data[4],
+                 # 'isw': data[1],
+                 # 'pdes': data[2],
+                 # 'ptol': data[3],
+                 }
+        system.add('Area', param)
 
     for data in raw['zone']:
         # """ID, NAME"""
-        param = {
-            'idx': data[0],
-            'name': data[1],
-        }
-        system.Zone.elem_add(**param)
+        param = {'idx': data[0], 'name': data[1]}
+        # TODO: add back
+        # system.add('Region', param)
 
-    return retval
-
-
-def readadd(file, system):
-    """read DYR file"""
-    dyr = {}
-    data = []
-    end = 0
-    retval = True
-    sep = ','
-
-    fid = open(file, 'r')
-    for line in fid.readlines():
-        if line.find('/') >= 0:
-            line = line.split('/')[0]
-            end = 1
-        if line.find(',') >= 0:  # mixed comma and space splitter not allowed
-            line = [to_number(item.strip()) for item in line.split(sep)]
-        else:
-            line = [to_number(item.strip()) for item in line.split()]
-        if not line:
-            end = 0
-            continue
-        data.extend(line)
-        if end == 1:
-            field = data[1]
-            if field not in dyr.keys():
-                dyr[field] = []
-            dyr[field].append(data)
-            end = 0
-            data = []
-    fid.close()
-
-    # elem_add device elements to system
-    supported = [
-        'GENROU',
-        'GENCLS',
-        'ESST3A',
-        'ESDC2A',
-        'SEXS',
-        'EXST1',
-        'ST2CUT',
-        'IEEEST',
-        'TGOV1',
-    ]
-    used = list(supported)
-    for model in supported:
-        if model not in dyr.keys():
-            used.remove(model)
-            continue
-        for data in dyr[model]:
-            add_dyn(system, model, data)
-
-    needed = list(dyr.keys())
-    for i in supported:
-        if i in needed:
-            needed.remove(i)
-
-    if len(needed) > 0:
-        logger.warning('Models currently unsupported: {}'.format(', '.join(needed)))
-
-    return retval
-
-
-def add_dyn(system, model, data):
-    """helper function to elem_add a device element to system"""
-    if model == 'GENCLS':
-        bus = data[0]
-        data = data[3:]
-        if bus in system.PV.bus:
-            dev = 'PV'
-            gen_idx = system.PV.idx[system.PV.bus.index(bus)]
-        elif bus in system.SW.bus:
-            dev = 'SW'
-            gen_idx = system.SW.idx[system.SW.bus.index(bus)]
-        else:
-            raise KeyError
-        # todo: check xl
-        idx_PV = get_idx(system, 'StaticGen', 'bus', bus)
-        u = get_param(system, 'StaticGen', 'u', idx_PV)
-        param = {
-            'bus': bus,
-            'gen': gen_idx,
-            # 'idx': bus,
-            #  use `bus` for `idx`. Only one generator allowed on each bus
-            'Sn': system.__dict__[dev].get_field('Sn', gen_idx),
-            'Vn': system.__dict__[dev].get_field('Vn', gen_idx),
-            'xd1': system.__dict__[dev].get_field('xs', gen_idx),
-            'ra': system.__dict__[dev].get_field('ra', gen_idx),
-            'M': 2 * data[0],
-            'D': data[1],
-            'u': u,
-        }
-        system.Syn2.elem_add(**param)
-
-    elif model == 'GENROU':
-        bus = data[0]
-        data = data[3:]
-        if bus in system.PV.bus:
-            dev = 'PV'
-            gen_idx = system.PV.idx[system.PV.bus.index(bus)]
-        elif bus in system.SW.bus:
-            dev = 'SW'
-            gen_idx = system.SW.idx[system.SW.bus.index(bus)]
-        else:
-            raise KeyError
-        idx_PV = get_idx(system, 'StaticGen', 'bus', bus)
-        u = get_param(system, 'StaticGen', 'u', idx_PV)
-
-        param = {
-            'bus': bus,
-            'gen': gen_idx,
-            # 'idx': bus,
-            #  use `bus` for `idx`. Only one generator allowed on each bus
-            'Sn': system.__dict__[dev].get_field('Sn', gen_idx),
-            'Vn': system.__dict__[dev].get_field('Vn', gen_idx),
-            'ra': system.__dict__[dev].get_field('ra', gen_idx),
-            'Td10': data[0],
-            'Td20': data[1],
-            'Tq10': data[2],
-            'Tq20': data[3],
-            'M': 2 * data[4],
-            'D': data[5],
-            'xd': data[6],
-            'xq': data[7],
-            'xd1': data[8],
-            'xq1': data[9],
-            'xd2': data[10],
-            'xq2': data[10],  # xd2 = xq2
-            'xl': data[11],
-            'u': u,
-        }
-        system.Syn6a.elem_add(**param)
-
-    elif model == 'ESST3A':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        param = {
-            'syn': syn,
-            'vrmax': data[8],
-            'vrmin': data[9],
-            'Ka': data[6],
-            'Ta': data[7],
-            'Tf': data[5],
-            'Tr': data[0],
-            'Kf': data[5],
-            'Ke': 1,
-            'Te': 1,
-        }
-        system.AVR1.elem_add(**param)
-
-    elif model == 'ESDC2A':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        param = {
-            'syn': syn,
-            'vrmax': data[5],
-            'vrmin': data[6],
-            'Ka': data[1],
-            'Ta': data[2],
-            'Tf': data[10],
-            'Tr': data[0],
-            'Kf': data[9],
-            'Ke': 1,
-            'Te': data[8],
-        }
-        system.AVR1.elem_add(**param)
-
-    elif model == 'EXST1':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        param = {
-            'syn': syn,
-            'vrmax': data[7],
-            'vrmin': data[8],
-            'Ka': data[5],
-            'Ta': data[6],
-            'Kf': data[10],
-            'Tf': data[11],
-            'Tr': data[0],
-            'Te': data[4],
-        }
-        system.AVR1.elem_add(**param)
-
-    elif model == 'SEXS':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        param = {
-            'syn': syn,
-            'vrmax': data[5],
-            'vrmin': data[4],
-            'K0': data[2],
-            'T2': data[1],
-            'T1': data[0],
-            'Te': data[3],
-        }
-        system.AVR3.elem_add(**param)
-
-    elif model == 'IEEEG1':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-
-    elif model == 'TGOV1':
-        bus = data[0]
-        data = data[3:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        param = {
-            'gen': syn,
-            'R': data[0],
-            'T1': data[4],
-            'T2': data[5],
-        }
-        system.TG2.elem_add(**param)
-
-    elif model == 'ST2CUT':
-        bus = data[0]
-        data = data[3:]
-        Ic1 = data[0]
-        Ic2 = data[2]
-
-        data = data[4:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        avr = get_idx(system, 'AVR', 'syn', syn)
-        param = {
-            'avr': avr,
-            'Ic1': Ic1,
-            'Ic2': Ic2,
-            'K1': data[0],
-            'K2': data[1],
-            'T1': data[2],
-            'T2': data[3],
-            'T3': data[4],
-            'T4': data[5],
-            'T5': data[6],
-            'T6': data[7],
-            'T7': data[8],
-            'T8': data[9],
-            'T9': data[10],
-            'T10': data[11],
-            'lsmax': data[12],
-            'lsmin': data[13],
-            'vcu': data[14],
-            'vcl': data[15],
-        }
-        system.PSS1.elem_add(**param)
-
-    elif model == 'IEEEST':
-        bus = data[0]
-        data = data[3:]
-        Ic = data[0]
-
-        data = data[2:]
-        syn = get_idx(system, 'Synchronous', 'bus', bus)
-        avr = get_idx(system, 'AVR', 'syn', syn)
-        param = {
-            'avr': avr,
-            'Ic': Ic,
-            'A1': data[0],
-            'A2': data[1],
-            'A3': data[2],
-            'A4': data[3],
-            'A5': data[4],
-            'A6': data[5],
-            'T1': data[6],
-            'T2': data[7],
-            'T3': data[8],
-            'T4': data[9],
-            'T5': data[10],
-            'T6': data[11],
-            'Ks': data[12],
-            'lsmax': data[13],
-            'lsmin': data[14],
-            'vcu': data[15],
-            'vcl': data[16],
-        }
-        system.PSS2.elem_add(**param)
-
-    else:
-        logger.warning('Skipping unsupported model <{}> on bus {}'.format(
-            model, data[0]))
-
-
-def get_idx(system, group, param, fkey):
-    ret = None
-    for key, item in system.devman.group.items():
-        if key != group:
-            continue
-        for name, dev in item.items():
-            int_id = system.__dict__[dev].uid[name]
-            if system.__dict__[dev].__dict__[param][int_id] == fkey:
-                ret = name
-                break
-    return ret
-
-
-def get_param(system, group, param, fkey):
-    ret = None
-    for key, item in system.devman.group.items():
-        if key != group:
-            continue
-        for name, dev in item.items():
-            if name == fkey:
-                int_id = system.__dict__[dev].uid[name]
-                ret = system.__dict__[dev].__dict__[param][int_id]
     return ret

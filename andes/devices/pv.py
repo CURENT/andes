@@ -16,13 +16,18 @@ class PVData(ModelData):
 
         self.bus = IdxParam(model='Bus', info="the idx of the installed bus")
         self.busr = IdxParam(model='Bus', info="the idx of remotely controlled bus")
-        self.p0 = NumParam(default=0.0, info="active power set point", power=True, tex_name=r'p_0')
-        self.q0 = NumParam(default=0.0, info="reactive power set point", power=True, tex_name=r'q_0')
+        self.p0 = NumParam(default=0.0, info="active power set point in system base", tex_name=r'p_0', unit='p.u.')
+        self.q0 = NumParam(default=0.0, info="reactive power set point in system base", tex_name=r'q_0',
+                           unit='p.u.')
 
-        self.pmax = NumParam(default=999.0, info="maximum active power output", power=True, tex_name=r'p_{max}')
-        self.pmin = NumParam(default=-1.0, info="minimum active power output", power=True, tex_name=r'p_{min}')
-        self.qmax = NumParam(default=999.0, info="maximim reactive power output", power=True, tex_name=r'q_{max}')
-        self.qmin = NumParam(default=-999.0, info="minimum reactive power output", power=True, tex_name=r'q_{min}')
+        self.pmax = NumParam(default=999.0, info="maximum active power in system base",
+                             tex_name=r'p_{max}', unit='p.u.')
+        self.pmin = NumParam(default=-1.0, info="minimum active power in system base",
+                             tex_name=r'p_{min}', unit='p.u.')
+        self.qmax = NumParam(default=999.0, info="maximim reactive power in system base",
+                             tex_name=r'q_{max}', unit='p.u.')
+        self.qmin = NumParam(default=-999.0, info="minimum reactive power in system base",
+                             tex_name=r'q_{min}', unit='p.u.')
 
         self.v0 = NumParam(default=1.0, info="voltage set point", tex_name=r'v_0')
         self.vmax = NumParam(default=1.4, info="maximum voltage voltage", tex_name=r'v_{max}')

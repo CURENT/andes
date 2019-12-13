@@ -55,7 +55,7 @@ class GroupBase(object):
                 raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
         return ret
 
-    def get(self, src: str, idx, attr: str):
+    def get(self, src: str, idx, attr: str = 'v'):
         """
         Based on the indexer, get the `attr` field of the `src` parameter or variable.
 

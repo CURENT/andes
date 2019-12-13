@@ -2,13 +2,14 @@
 """
 import logging
 import re
+import numpy as np
 
 from ..consts import deg2rad
 
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def is_format(fid):
     return True  # hard coded
 
 
@@ -94,10 +95,15 @@ def read(system, file):
                     continue
                 line = line.split(';')
                 for item in line:
-                    data = [float(val) for val in item.split()]
+                    data = np.array([float(val) for val in item.split()])
                     mpc[field].append(data)
 
     fid.close()
+
+    # convert mpc to np array
+    mpc_array = dict()
+    for key, val in mpc.items():
+        mpc_array[key] = np.array(val)
 
     # list of buses with slack gen
     sw = []

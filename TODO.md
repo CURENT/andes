@@ -68,7 +68,8 @@
 - [x] Refactor `Config` to make load and save part of the config
 - [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 - [x] LaTeX names in blocks and limiters
-*   Decide whether to keep Calc as Var or move it to service.
+*   Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
+ service subclass)
 *   Iterative initialization for equations (half done with Newton Krylov)
 *   Deal with two-terminal and multi-terminal devices
 *   Add a more generic parser for PSSE RAW

@@ -471,7 +471,7 @@ class Model(object):
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
-    def get(self, src: str, idx, attr: str):
+    def get(self, src: str, idx, attr: str = 'v'):
         uid = self.idx2uid(idx)
         return self.__dict__[src].__dict__[attr][uid]
 

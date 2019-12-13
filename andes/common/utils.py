@@ -71,7 +71,7 @@ def get_config_load_path(conf_path=None, file_name='andes.conf'):
 
 def get_log_dir():
     """
-    Get a directory for logging
+    Get a directory for logging.
 
     On Linux or macOS, '/tmp/andes' is the default. On Windows,
     '%APPDATA%/andes' is the default.
@@ -81,14 +81,41 @@ def get_log_dir():
     str
         Path to the logging directory
     """
-    PATH = ''
+    path = ''
     if platform.system() in ('Linux', 'Darwin'):
-        PATH = tempfile.mkdtemp(prefix='andes-')
+        path = tempfile.mkdtemp(prefix='andes-')
 
     elif platform.system() == 'Windows':
-        APPDATA = os.getenv('APPDATA')
-        PATH = os.path.join(APPDATA, 'andes')
+        appdata = os.getenv('APPDATA')
+        path = os.path.join(appdata, 'andes')
 
-    if not os.path.exists(PATH):
-        os.makedirs(PATH)
-    return PATH
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
+def to_number(s):
+    """
+    Convert a string to a number. If unsuccessful, return the de-blanked string.
+    """
+    ret = s
+    # try converting to float
+    try:
+        ret = float(s)
+    except ValueError:
+        ret = ret.strip('\'').strip()
+
+    # try converting to uid
+    try:
+        ret = int(s)
+    except ValueError:
+        pass
+
+    # try converting to boolean
+    if ret == 'True':
+        ret = True
+    elif ret == 'False':
+        ret = False
+    elif ret == 'None':
+        ret = None
+    return ret

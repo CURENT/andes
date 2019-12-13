@@ -13,8 +13,10 @@ class PQData(ModelData):
         self.bus = IdxParam(model='Bus', info="linked bus idx", mandatory=True)
 
         self.Vn = NumParam(default=110, info="AC voltage rating", unit='kV', non_zero=True, tex_name=r'V_n')
-        self.p0 = NumParam(default=0, info='active power load', power=True, tex_name=r'p_0')
-        self.q0 = NumParam(default=0, info='reactive power load', power=True, tex_name=r'q_0')
+        self.p0 = NumParam(default=0, info='active power load in system base', power=False, tex_name=r'p_0',
+                           unit='p.u.')
+        self.q0 = NumParam(default=0, info='reactive power load in system base', power=False, tex_name=r'q_0',
+                           unit='p.u.')
         self.vmax = NumParam(default=1.1, info='max voltage before switching to impedance', tex_name=r'v_{max}')
         self.vmin = NumParam(default=0.9, info='min voltage before switching to impedance', tex_name=r'v_{min}')
 
