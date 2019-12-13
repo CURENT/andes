@@ -218,7 +218,7 @@ def read(system, file):
             # WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
             # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
             param = {'idx': max_bus + xf_3_count, 'name': '_'.join(str(data[0][:3])),
-                     'Vn': system.Bus.get_field('Vn', data[0][0]),
+                     'Vn': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
                      'v0': data[1][-2], 'a0': data[1][-1] * deg2rad
                      }
             system.add('Bus', param)
@@ -245,7 +245,7 @@ def read(system, file):
         # I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
         # BINIT, N1, B1, N2, B2, ... N8, B8
         bus = data[0]
-        vn = system.Bus.get_field('Vn', bus)
+        vn = system.Bus.get(src='Vn', idx=bus, attr='v')
         param = {'bus': bus, 'Vn': vn, 'Sn': mva, 'u': data[3],
                  'b': data[9] / mva}
         system.add('Shunt', param)

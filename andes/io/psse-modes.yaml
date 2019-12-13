@@ -1,0 +1,1471 @@
+---
+- name: Header
+  key: header
+  keep_tail: true
+  columns: 
+    - name: 'IC'
+      description: |
+        Change code
+        0 - base case (i.e., clear the working case before adding data to it)
+        1 - add data to the working case
+        IC = 0 by default.
+    - name: 'SBASE'
+      description: System base MVA. SBASE = 100.0 by default.
+  signal:
+  - line: 0
+    command: start
+  - line: 3
+    command: stop
+- name: Bus
+  key: bus
+  parse:
+    read_table: true
+  signal:
+  - line: 3
+    command: start
+  - text: END OF BUS DATA
+    command: stop 
+#  Bus Example                                                        NOT SURE WHAT THESE ARE min max voltage??
+#    1,'ROANSPRARE  ', 138.0000,1,  11,  11, 115,1.00000000,  69.709279, 1.05000, 0.95000, 1.05000, 0.95000
+#    2,'KEITHSW     ', 138.0000,1,  11,  11, 115,1.00000000,  69.756469, 1.05000, 0.95000, 1.05000, 0.95000    
+  columns:
+    - name: I
+      description: Bus number (1 to 999997).
+    - name: NAME
+      description: |
+        Alphanumeric identifier assigned to bus 'I'. The name may be up to twelve char-
+        acters and must be enclosed in single quotes. NAME may contain any combination
+        of blanks, uppercase letters, numbers and special characters, but the first char-
+        acter must not be a minus sign. NAME is twelve blanks by default.
+    - name: BASKV
+      description: Bus base voltage; entered in kV. BASKV = 0.0 by default.
+    - name: IDE 
+      description: |
+        Bus type code:
+        1 - load bus or other bus without any generator boundary condition.
+        2 - generator or plant bus either regulating voltage or with a fixed reactive power
+        (Mvar). A generator that reaches its reactive power limit will no longer control volt-
+        age but rather hold reactive power at its limit.
+        3 - swing bus or slack bus. It has no power or reactive limits and regulates voltage
+        at a fixed reference angle.
+        4 - disconnected or isolated bus.
+        IDE = 1 by default.
+    - name: AREA
+      description: Area number. (1 through the maximum number of areas at the current size level; see Table 1-1). AREA = 1 by default.
+    - name: ZONE
+      description: Zone number (1 through the maximum number of zones at the current size level; see Table 1-1). ZONE = 1 by default.
+    - name: OWNER
+      description: Owner number (1 through the maximum number of owners at the current size level; see Table 1-1). OWNER = 1 by default.
+    - name: VM
+      description: Bus voltage magnitude; entered in pu. VM = 1 .0 by default.
+    - name: VA
+      description: Bus voltage phase angle; entered in degrees. VA = 0.0 by default.
+    - name: AMAX
+      description: Unknown value - max
+    - name: AMIN
+      description: Unknown value - min
+    - name: BMAX
+      description: Unknown value - max
+    - name: BMIN
+      description: Unknown value - min
+    # - name: GL
+    #   description: |
+    #     Active component of shunt admittance to ground; entered in MW at one per unit
+    #     voltage. GL should not include any resistive admittance load, which is entered as
+    #     part of load data. GL = 0.0 by default.
+    # - name: BL
+    #   description: |
+    #     Reactive component of shunt admittance to ground; entered in Mvar at one per unit
+    #     voltage. BL should not include any reactive impedance load, which is entered as
+    #     part of load data; line charging and line connected shunts, which are entered as
+    #     part of non-transformer branch data; or transformer magnetizing admittance, which
+    #     is entered as part of transformer data. BL is positive for a capacitor, and negative
+    #     for a reactor or an inductive load. BL = 0.0 by default.
+- name: Branch
+  key: branch
+  signal:
+  - text: BEGIN BRANCH DATA
+    command: start
+  - text: END OF BRANCH DATA
+    command: stop
+  parse:
+    read_table: true
+# Branch Examples
+#     1,     5,'1 ',2.78800E-3,1.49000E-2,4.15000E-3, 237.00, 237.00, 237.00,  0.00000,  0.00000,  0.00000,  0.00000,1,1,   3.8, 115,1.0000,   0,1.0000,   0,1.0000,   0,1.0000
+#     1,    11,'1 ',5.85000E-3,3.00300E-2,8.32000E-3, 160.00, 160.00, 160.00,  0.00000,  0.00000,  0.00000,  0.00000,1,1,   7.2, 115,1.0000,   0,1.0000,   0,1.0000,   0,1.0000
+  columns:
+    - name: I
+      description: Branch 'from bus" number, or extended bus name enclosed in single quotes 
+    - name: J
+      description: |
+        Branch "to bus' number, or extended bus name enclosed in single quotes (see
+        Section 3.2.2.1). 'J' is entered as a negative number, or with a minus sign before
+        the first character of the extended bus name, to designate it as the metered end;
+        otherwise, bus 'I' is assumed to be the metered end.
+    - name: CKT
+      description: |
+        One- or two-character uppercase nonblank alphanumeric branch circuit identifier;
+        the first character of CKT must not be an ampersand "&" (see Section 3.4.4.12 for
+        a discussion on use of the ampersand in designation of multisection transmission
+        lines). It is recommended that single circuit branches be designated as having the
+        circuit identifier '1'. CKT = '1' by default.
+    - name: R
+      description: Branch resistance; entered in pu. A value of R must be entered for each branch.
+    - name: X
+      description: |
+        Branch reactance; entered in pu. A nonzero value of X must be entered for each
+        branch. See Section 3.2.5.1 for a discussion of the treatment of branches as zero
+        impedance lines.
+    - name: B
+      description: Total branch charging susceptance; entered in pu. B = 0.0 by default.
+    - name: RATEA
+      description: |
+        First loading rating; entered in MVA. If RATEA is set to 0.0, the default value, this
+        branch will not be included in any examination of circuit loading. (See
+        Section 4.4.5.1.1).
+    - name: RATEB
+      description: Second loading rating; entered in MVA. RATEB = 0.0 by default.
+    - name: RATEC
+      description: |
+        Third loading rating; entered in MVA. RATEC = 0.0 by default.
+        Ratings are entered as:
+        MVArated = SQRT(3) x Ebase X 'rated X i06
+        where:
+        Ebase is the base line-to-line voltage in volts of the buses to which the
+        terminal of the branch is connected
+        rated is the branch rated phase current in amperes.
+    - name: GI,BI
+      description: |
+        Complex admittance of the line shunt at the bus 'I' end of the branch; entered in
+        pu. BI is negative for a line connected reactor and positive for line connected
+        capacitor. GI + jBI = 0.0 by default.
+    - name: GJ,BJ
+      description: |
+        Complex admittance of the line shunt at the bus 'J' end of the branch; entered in
+        pu. BJ is negative for a line connected reactor nd positive for line connected capac-
+        itor. GJ + jBJ = 0.0 by default.
+    - name: ST
+      description: Initial branch status where 1 designates in-service and 0 designates out-of-service. ST = 1 by default.
+    - name: UK
+      description: Uknown small integer
+    - name: LEN
+      description: Line length; entered in user-selected units. LEN = 0.0 by default.
+    - name: O1
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each branch may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F1
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1 .0
+    - name: O2
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each branch may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F2
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1 .0
+    - name: O3
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each branch may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F3
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1 .0
+    - name: O4
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each branch may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F4
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1 .0
+- name: Generator
+  key: gen
+  parse:
+    read_table: true
+  signal:
+  - text: BEGIN GENERATOR DATA
+    command: start
+  - text: END OF GENERATOR DATA
+    command: stop
+# Generator Example
+#  967,'V1',     0.000,     0.000,     1.000,  -100.000,1.02500,    0,     1.000,   0.00000,9999.00000,   0.00000,   0.00000,0.00000,0,  100.0,     0.000,     0.000,1033,1.0000,   0,1.0000,   0,1.0000,   0,1.0000,0, 1.0000
+#  967,'V2',     0.000,     0.000,     1.000,  -100.000,1.02500,    0,     1.000,   0.00000,9999.00000,   0.00000,   0.00000,0.00000,0,  100.0,     0.000,     0.000,1033,1.0000,   0,1.0000,   0,1.0000,   0,1.0000,0, 1.0000
+  columns:
+    - name: I
+      description:  Bus number, or extended Section 3.2.2.1). bus name enclosed in single quotes
+    - name: ID
+      description:  |
+        One- or two-character uppercase non blank alphanumeric machine identifier used
+        to distinguish among multiple machines at bus "I'. It is recommended that, at buses
+        for which a single machine is present, the machine be designated as having the
+        machine identifier '1'. ID = '1' by default.
+    - name: PG
+      description:  Generator active power output; entered in MW. PG = 0.0 by default.
+    - name: QG
+      description:  Generator reactive power output; entered in Mvar. QG needs to be entered only if the case, as read in, is to be treated as a solved case. QG = 0.0 by default.
+    - name: QT
+      description:  |
+        Maximum generator reactive power output; entered in Mvar. For fixed output gen-
+        erators (i.e., nonregulating), QT must be equal to the fixed Mvar output.
+        QT = 9999.0 by default.
+    - name: QB
+      description:  Minimum generator reactive power output; entered in Mvar. For fixed output generators, QB must be equal to the fixed Mvar output. QB = -9999.0 by default.
+    - name: VS
+      description:  Regulated voltage setpoint; entered in pu. VS = 1 .0 by default.
+    - name: IREG
+      description:  |
+        Bus number, or extended bus name enclosed in single quotes (see
+        Section 3.2.2.1), of a remote type 1 or 2 bus whose voltage is to be regulated by
+        this plant to the value specified by VS. If bus IREG is other than a type 1 or 2 bus,
+        bus "I" regulates its own voltage to the value specified by VS. IREG is entered as
+        zero if the plant is to regulate its own voltage and must be zero for a type three
+        (swing) bus. IREG = 0 by default.
+    - name: MBASE
+      description:  |
+        Total MVA base of the units represented by this machine; entered in MVA. This
+        quantity is not needed in normal power flow and equivalent construction work, but
+        is required for switching studies, fault analysis, and dynamic simulation.
+        MBASE = system base MVA by default.
+    - name: ZR,ZX
+      description:  |
+        Complex machine impedance, ZSORCE; entered in pu on MBASE base. This data
+        is not needed in normal power flow and equivalent construction work, but is
+        required for switching studies, fault analysis, and dynamic simulation. For dynamic
+        simulation, this impedance must be set equal to the unsaturated subtransient
+        impedance for those generators to be modeled by subtransient level machine
+        models, and to unsaturated transient impedance for those to be modeled by clas-
+        sical or transient level models. For short-circuit studies, the saturated subtransient
+        or transient impedance should be used. ZR = 0.0 and ZX = 1.0 by default.
+    - name: RT,XT
+      description: |
+        Step-up transformer impedance, XTRAN; entered in pu on MBASE base. XTRAN
+        should be entered as zero if the step-up transformer is explicitly modeled as a net-
+        work branch and bus "I' is the terminal bus. RT+jXT = 0.0 by default.   
+    - name: GTAP
+      description: Step-up transformer off-nominal turns ratio; entered in pu. GTAP is used only if XTRAN is nonzero. GTAP = 1.0 by default.
+    - name: STAT
+      description:  Initial machine status of one for in-service and zero for out-of-service; STAT = 1 by default.
+    - name: RMPCT
+      description: |
+        Percent of the total Mvar required to hold the voltage at the bus controlled by this
+        bus 'I' that are to be contributed by the generation at bus 'I'; RMPCT must be pos-
+        itive. RMPCT is needed if IREG specifies a valid remote bus and there is more than
+        one local or remote voltage controlling device (plant, switched shunt, FACTS
+        device shunt element, or VSC dc line converter) controlling the voltage at bus IREG
+        to a setpoint. RMPCT is needed also if bus "I" itself is being controlled locally or
+        remotely by one or more other setpoint mode voltage controlling devices.
+        RMPCT = 100.0 by default.
+    - name: PT
+      description:  Maximum generator active power output; entered in MW. PT = 9999.0 by default.
+    - name: PB
+      description:  Minimum generator active power output; entered in MW. PB = -9999.0 by default.
+    - name: O1
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each machine may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F1
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1.0.
+    - name: O2
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each machine may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F2
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1.0.
+    - name: O3
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each machine may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F3
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1.0.
+    - name: O4
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each machine may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F4
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1.0.
+    - name: O5
+      description:  |
+        Owner number; (1 through the maximum number of owners at the current size
+        level: see Table 1-1). Each machine may have up to four owners. By default, 01 is
+        the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+    - name: F5
+      description: |
+        Fraction of total ownership assigned to owner Oi; each Fi must be positive. The Fi
+        values are normalized such that they sum to 1 .0 before they are placed in the
+        working case. By default, each Fi is 1.0.
+- name: Load
+  key: load
+  parse:
+    read_table: true
+  signal:
+  - text: BEGIN LOAD DATA
+    command: start
+  - text: END OF LOAD DATA
+    command: stop
+# Load Example
+#    1,'1 ',1,  11,  11,     7.626,     2.961,     0.000,     0.000,     0.000,     0.000, 115,1, 0
+#    4,'1 ',1,  11,  11,     7.807,     0.835,     0.000,     0.000,     0.000,     0.000, 115,1, 0
+  columns:
+    - name: I
+      description: Bus number, or extended bus name enclosed in single quotes Section 3.2.2.1).
+    - name: ID
+      description: |
+        One- or two-character uppercase non blank alphanumeric load identifier used to
+        distinguish among multiple loads at bus 'I'. It is recommended that, at buses for
+        which a single load is present, the load be designated as having the load identifier
+        '1'. ID = '1' by default.
+    - name: STATUS
+      description: Initial load status of one for in-service and zero for out-of-service. STATUS = 1 by default.
+    - name: AREA
+      description: |
+        Area to which the load is assigned (1 through the maximum number of areas at the
+        current size level, see Table 1-1). By default, AREA is the area to which bus 'I' is
+        assigned (see Section 3.2.2).
+    - name: ZONE
+      description: |
+        Zone to which the load is assigned (1 through the maximum number of zones at
+        the current size level, see Table 1-1). By default, ZONE is the zone to which bus
+        'I' is assigned (see Section 3.2.2).
+    - name: PL
+      description: Active power component of constant MVA load; entered in MW. PL = 0.0 by default.
+    - name: QL
+      description: |
+        Reactive power component of constant MVA load; entered in Mvar. QL = 0.0 by
+        default.
+    - name: IP 
+      description: Active power component of constant current load; entered in MW at one per unit voltage. IP = 0.0 by default.
+    - name: IQ
+      description: Reactive power component of constant current load; entered in Mvar at one per unit voltage. IQ = 0.0 by default.
+    - name: YP
+      description: Active power component of constant admittance load; entered in MW at one per unit voltage. YP = 0.0 by default.
+    - name: YQ
+      description: |
+        Reactive power component of constant admittance load; entered in Mvar at one
+        per unit voltage. YQ is a negative quantity for an inductive load and positive for a
+        capacitive load. YQ = 0.0 by default.
+    - name: OWNER
+      description: |
+        Owner to which the load is assigned (1 through the maximum number of owners at
+        the current size level, see Table 1-1). By default, OWNER is the owner to which
+        bus 'I' is assigned (see Section 3.2.2).
+    - name: A
+      description: Unknown value
+    - name: B
+      description: Unknown value
+- name: Fixed Shunt
+  key: fixedshunt
+  signal:
+  - text: BEGIN FIXED SHUNT DATA
+    command: start
+  - text: END OF FIXED SHUNT DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: I
+      description: |
+        Bus number, or extended bus name enclosed in single quotes.
+    - name: ID
+      description: |
+        Name
+    - name: STATUS
+      description: |
+        Status of shunt device
+    - name: UK1
+      description: Unknown 1
+    - name: B
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+- name: Transformer
+  key: transformer
+  signal:
+  - text: BEGIN TRANSFORMER DATA
+    command: start
+  - text: END OF TRANSFORMER DATA
+    command: stop
+  parse:
+    read_transformer: true
+  records:
+    - row: 1
+      columns:
+      - name: I
+        descriptions: |
+          The bus number, or extended bus name enclosed in single quotes, of the bus to
+          which the first winding is connected. The transformer's magnetizing admittance is
+          modeled on winding one. The first winding is the only winding of a two-winding
+          transformer whose tap ratio or phase shift angle may be adjusted by the power flow
+          solution activities; any winding(s) of a three-winding transformer may be adjusted.
+          No default is allowed.
+      - name: J
+        descriptions: |
+          The bus number, or extended bus name enclosed in single quotes, of the bus to
+          which the second winding is connected. This winding may have a fixed, off-nominal
+          tap ratio assigned to it. No default is allowed for 'J'.
+      - name: K
+        descriptions: |
+          The bus number, or extended bus name enclosed in single quotes, of the bus to
+          which the third winding is connected. Zero is used to indicate that no third winding
+          is present (i.e., that a two-winding rather than a three-winding transformer is being
+          specified). This winding may have a fixed, off-nominal tap ratio assigned to it. K =
+          0 by default.
+      - name: CKT
+        descriptions: |
+          One- or two-character uppercase nonblank alphanumeric transformer circuit iden-
+          tifier; the first character of CKT must not be an ampersand ('&'); see
+          Section 3.4.4.12. CKT = '1' by default.
+      - name: CW
+        descriptions: |
+          The winding data I/O code which defines the units in which the turns ratios
+          WINDV1, WINDV2 and WINDV3 are specified (the units of RMAi and RMIi are also
+          governed by CW when ICODiI is 1 or 2): 1 for off-nominal turns ratio in pu of
+          winding bus base voltage; 2 for winding voltage in kV. CW = 1 by default.
+      - name: CZ
+        descriptions: |
+          The impedance data I/O code that defines the units in which the winding imped-
+          ances R1-2, X1-2, R2-3, X2-3, R3-1 and X3-1 are specified: 1 for resistance and
+          reactance in pu on system base quantities; 2 for resistance and reactance in pu on
+          a specified base MVA and winding bus base voltage; 3 for transformer load loss in
+          watts and impedance magnitude in pu on a specified base MVA and winding bus
+          base voltage. CZ = 1 by default.
+      - name: CM
+        descriptions: |
+          The magnetizing admittance I/O code that defines the units in which MAG1 and
+          MAG2 are specified: 1 for complex admittance in pu on system base quantities; 2
+          for no load loss in watts and exciting current in pu on winding one to two base MVA
+          and nominal voltage. CM = 1 by default.
+      - name: MAG1,MAG2
+        descriptions: |
+          The magnetizing conductance and susceptance, respectively, in pu on system
+          base quantities when CM is 1; MAG1 is the no load loss in watts and MAG2 is the
+          exciting current in pu on winding one to two base MVA (SBASE1-2) and nominal
+          voltage (NOMV1) when CM is 2. MAG1 = 0.0 and MAG2 = 0.0 by default.
+      - name: NMETR
+        descriptions: |
+          The nonmetered end code of either 1 (for the winding one bus) or 2 (for the winding
+          two bus). In addition, for a three-winding transformer, 3 (for the winding three bus)
+          is a valid specification of NMETR. NMETR = 2 by default.
+      - name: NAME
+        descriptions: |
+          An alphanumeric identifier assigned to the transformer. The name may be up to
+          twelve characters and must be enclosed in single quotes. NAME may contain any
+          combination of blanks, uppercase letters, numbers and special characters. NAME
+          is twelve blanks by default.
+      - name: STAT
+        descriptions: |
+          The initial transformer status, where 1 designates in-service and 0 designates out-
+          of-service. In addition, for a three-winding transformer, 2 designates that only winding two is out-of-service, 3 indicates that only winding three is out-of-service,
+          and 4 indicates that only winding one is out-of-service, with the remaining windings
+          in-service. STAT = 1 by default.
+      - name: O1
+        description: |
+          An owner number; (1 through the maximum number of owners at the current size
+          level: see Table 1-1). Each transformer may have up to four owners. By default, 01
+          is the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+      - name: F1
+        description: |
+          The fraction of total ownership assigned to owner Oi; each Fi must be positive. The
+          Fi values are normalized such that they sum to 1.0 before they are placed in the
+          working case. By default, each Fi is 1.0.      
+      - name: O2
+        description: |
+          An owner number; (1 through the maximum number of owners at the current size
+          level: see Table 1-1). Each transformer may have up to four owners. By default, 01
+          is the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+      - name: F2
+        description: |
+          The fraction of total ownership assigned to owner Oi; each Fi must be positive. The
+          Fi values are normalized such that they sum to 1.0 before they are placed in the
+          working case. By default, each Fi is 1.0. 
+      - name: O3
+        description: |
+          An owner number; (1 through the maximum number of owners at the current size
+          level: see Table 1-1). Each transformer may have up to four owners. By default, 01
+          is the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+      - name: F3
+        description: |
+          The fraction of total ownership assigned to owner Oi; each Fi must be positive. The
+          Fi values are normalized such that they sum to 1.0 before they are placed in the
+          working case. By default, each Fi is 1.0. 
+      - name: O4
+        description: |
+          An owner number; (1 through the maximum number of owners at the current size
+          level: see Table 1-1). Each transformer may have up to four owners. By default, 01
+          is the owner to which bus 'I' is assigned and 02, 03, and 04 are zero.
+      - name: F4
+        description: |
+          The fraction of total ownership assigned to owner Oi; each Fi must be positive. The
+          Fi values are normalized such that they sum to 1.0 before they are placed in the
+          working case. By default, each Fi is 1.0. 
+      - name: UK1-A
+        description: |
+          Unknown string on record 1
+    - row: 2
+      columns:
+        - name: R1-2, X1-2
+          description: |
+            The measured impedance of the transformer between the buses to which its first
+            and second windings are connected. When CZ is 1, they are the resistance and
+            reactance, respectively, in pu on system base quantities; when CZ is 2, they are
+            the resistance and reactance, respectively, in pu on winding one to two base MVA
+            (SBASE1-2) and winding one bus base voltage; when CZ is 3, R1-2 is the load loss
+            in watts, and X1-2 is the impedance magnitude in pu on winding one to two base
+            MVA (SBASE1-2) and winding one bus base voltage. R1-2 = 0.0 by default, but no
+            default is allowed for X1-2.
+        - name: SBASE1-2
+          description: |
+            The winding one to two base MVA of the transformer. SBASE1-2 = SBASE (the
+            system base MVA) by default.
+        - name: R2-3, X2-3
+          description: |
+            The measured impedance of a three-winding transformer between the buses to
+            which its second and third windings are connected; ignored for a two-winding trans-
+            former. When CZ is 1, they are the resistance and reactance, respectively, in pu
+            on system base quantities; when CZ is 2, they are the resistance and reactance,
+            respectively, in pu on winding two to three base MVA (SBASE2-3) and winding two
+            bus base voltage; when CZ is 3, R2-3 is the load loss in watts, and X2-3 is the
+            impedance magnitude in pu on winding two to three base MVA (SBASE2-3) and
+            winding two bus base voltage. R2-3 = 0.0 by default, but no default is allowed for R1-2, X2-3.
+        - name: SBASE2-3
+          description: |
+            The winding two to three base MVA of a three-winding transformer; ignored for a
+            two-winding transformer. SBASE2-3 = SBASE (the system base MVA) by default.
+        - name: R3-1, X3-1
+          description: |
+            The measured impedance of a three-winding transformer between the buses to
+            which its third and first windings are connected; ignored for a two-winding trans-
+            former. When CZ is 1, they are the resistance and reactance, respectively, in pu
+            on system base quantities; when CZ is 2, they are the resistance and reactance,
+            respectively, in pu on winding three to one base MVA (SBASE3-1) and winding
+            three bus base voltage; when CZ is 3, R3-1 is the load loss in watts, and X3-1 is
+            the impedance magnitude in pu on winding three to one base MVA (SBASE3-1)
+            and winding three bus base voltage. R3-1 = 0.0 by default, but no default is allowed
+            for X3-1.
+        - name: SBASE3-1
+          description: |
+            The winding three to one base MVA of a three-winding transformer; ignored for a
+            two-winding transformer. SBASE3-1 = SBASE (the system base MVA) by default.
+        - name: VMSTAR
+          description: |
+            The voltage magnitude at the hidden star point bus; entered in pu. VMSTAR = 1.0
+            by default.
+        - name: ANSTAR
+          description: |
+            The bus voltage phase angle at the hidden star point bus; entered in degrees.
+            ANSTAR = 0.0 by default.
+    - row: 3
+      columns:
+        - name: WINDV1
+          description: |
+            The winding one off-nominal turns ratio in pu of winding one bus base voltage when
+            CW is 1; WINDV1 = 1.0 by default. WINDV1 is the actual winding one voltage in
+            kV when CW is 2; WINDV1 is equal to the base voltage of bus 'I' by default.
+        - name: NOMV1
+          description: |
+            The nominal (rated) winding one voltage in kV, or zero to indicate that nominal
+            winding one voltage is to be taken as the base voltage of bus 'I'. NOMV1 is used
+            only in converting magnetizing data between per unit admittance values and phys-
+            ical units when CM is 2. NOMV1 = 0.0 by default.
+        - name: ANG1
+          description: |
+            The winding one phase shift angle in degrees. ANG1 is positive for a positive
+            phase shift from the winding one side to the winding two side (for a two-winding
+            transformer), or from the winding one side to the 'T' (or star) point bus (for a three-
+            winding transformer). ANG1 must be greater than -180.0 and less than or equal to
+            +1 80.0. ANG1 = 0.0 by default.
+        - name: RATA1,RATB1,RATC1
+          description: |
+            The first winding's three ratings entered in MVA (not current expressed in MVA).
+            RATA1 = 0.0, RATB1 = 0.0 and RATC1 = 0.0 (bypass flow limit check for this
+            transformer winding) by default.
+        - name: COD1
+          description: |
+            The transformer control mode for automatic adjustments of the winding one tap or
+            phase shift angle during power flow solutions: 0 for no control (fixed tap and phase
+            shift); ±1 for voltage control; ±2 for reactive power flow control; ±3 for active power
+            flow control; ±4 for control of a dc line quantity (±4 is valid only for two-winding
+            transformers). If the control mode is entered as a positive number, automatic
+            adjustment of this transformer winding is enabled when the corresponding adjust-
+            ment is activated during power flow solutions; a negative control mode suppresses
+            the automatic adjustment of this transformer winding. COD1 = 0 by default.
+        - name: CONT1
+          description: |
+            The bus number, or extended bus name enclosed in single quotes, of the bus
+            whose voltage is to be controlled by the transformer turns ratio adjustment option
+            of the power flow solution activities when COD1 is 1. CONT1 should be nonzero
+            only for voltage controlling transformer windings.
+            CONT1 may specify a bus other than 'I', 'J', or 'K'; in this case, the sign of CONT1
+            defines the location of the controlled bus relative to the transformer winding. If
+            CONT1 is entered as a positive number, or a quoted extended bus name, the ratio
+            is adjusted as if bus CONT1 is on the winding two or winding three side of the trans-
+            former; if CONT1 is entered as a negative number, or a quoted extended bus name with 
+            a minus sign preceding the first character, the ratio is adjusted as if bus
+            ICONT1 I is on the winding one side of the transformer. CONT1 = 0 by default.
+        - name: RMA1, RMI1 
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Off-nominal turns ratio in pu of winding one bus base voltage when ICOD1I is
+            1 or2 and CW is 1; RMA1 = 1.1 and RMI1 = 0.9 by default.
+            • Actual winding one voltage in kV when ICOD1 I is 1 or 2 and CW is 2. No default
+            is allowed.
+            • Phase shift angle in degrees when ICOD1 I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; RMA1 = 1.1 and RMI1 = 0.9 by default.
+        - name: VMA1,VMI1
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Voltage at the controlled bus (bus ICONT1I) in pu when ICOD1I
+            is 1. VMA1 = 1.1 and VMI1 = 0.9 by default.
+            • Reactive power flow into the transformer at the winding one bus end in Mvar
+            when ICOD1I is 2. No default is allowed.
+            • Active power flow into the transformer at the winding one bus end in MW when
+            ICOD1I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; VMA1 = 1.1 and VMI1 = 0.9 by default.
+        - name: NTP1
+          description: |
+            The number of tap positions available; used when COD1 is 1 or 2. NTP1 must be
+            between 2 and 9999. NTP1 = 33 by default.
+        - name: TAB1
+          description: |
+            The number of a transformer impedance correction table
+        - name: CR1,CX1
+          description: |
+            The load drop compensation impedance for voltage controlling transformers
+            if this transformer
+            winding's impedance is to be a function of either off-nominal turns ratio or phase
+            shift angle (see Section 3.4.4.7), or 0 if no transformer impedance correction is to
+            be applied to this transformer winding. TAB1 = 0 by default.
+            entered in pu on system base quantities; used when COOl is 1. CR1 + j CX1 = 0.0
+            by default.
+        - name: UK3-A
+          description: Unknown number on record 3
+    - row: 4
+      columns:
+        - name: WINDV2
+          description: |
+            The winding one off-nominal turns ratio in pu of winding one bus base voltage when
+            CW is 1; WINDV1 = 1.0 by default. WINDV1 is the actual winding one voltage in
+            kV when CW is 2; WINDV1 is equal to the base voltage of bus 'I' by default.
+        - name: NOMV2
+          description: |
+            The nominal (rated) winding one voltage in kV, or zero to indicate that nominal
+            winding one voltage is to be taken as the base voltage of bus 'I'. NOMV1 is used
+            only in converting magnetizing data between per unit admittance values and phys-
+            ical units when CM is 2. NOMV1 = 0.0 by default.
+        - name: ANG2
+          description: |
+            The winding one phase shift angle in degrees. ANG1 is positive for a positive
+            phase shift from the winding one side to the winding two side (for a two-winding
+            transformer), or from the winding one side to the 'T' (or star) point bus (for a three-
+            winding transformer). ANG1 must be greater than -180.0 and less than or equal to
+            +1 80.0. ANG1 = 0.0 by default.
+        - name: RATA2,RATB2,RATC2
+          description: |
+            The first winding's three ratings entered in MVA (not current expressed in MVA).
+            RATA1 = 0.0, RATB1 = 0.0 and RATC1 = 0.0 (bypass flow limit check for this
+            transformer winding) by default.
+        - name: COD2
+          description: |
+            The transformer control mode for automatic adjustments of the winding one tap or
+            phase shift angle during power flow solutions: 0 for no control (fixed tap and phase
+            shift); ±1 for voltage control; ±2 for reactive power flow control; ±3 for active power
+            flow control; ±4 for control of a dc line quantity (±4 is valid only for two-winding
+            transformers). If the control mode is entered as a positive number, automatic
+            adjustment of this transformer winding is enabled when the corresponding adjust-
+            ment is activated during power flow solutions; a negative control mode suppresses
+            the automatic adjustment of this transformer winding. COD1 = 0 by default.
+        - name: CONT2
+          description: |
+            The bus number, or extended bus name enclosed in single quotes, of the bus
+            whose voltage is to be controlled by the transformer turns ratio adjustment option
+            of the power flow solution activities when COD1 is 1. CONT1 should be nonzero
+            only for voltage controlling transformer windings.
+            CONT1 may specify a bus other than 'I', 'J', or 'K'; in this case, the sign of CONT1
+            defines the location of the controlled bus relative to the transformer winding. If
+            CONT1 is entered as a positive number, or a quoted extended bus name, the ratio
+            is adjusted as if bus CONT1 is on the winding two or winding three side of the trans-
+            former; if CONT1 is entered as a negative number, or a quoted extended bus name with 
+            a minus sign preceding the first character, the ratio is adjusted as if bus
+            ICONT1 I is on the winding one side of the transformer. CONT1 = 0 by default.
+        - name: RMA2, RMI2 
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Off-nominal turns ratio in pu of winding one bus base voltage when ICOD1I is
+            1 or2 and CW is 1; RMA1 = 1.1 and RMI1 = 0.9 by default.
+            • Actual winding one voltage in kV when ICOD1 I is 1 or 2 and CW is 2. No default
+            is allowed.
+            • Phase shift angle in degrees when ICOD1 I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; RMA1 = 1.1 and RMI1 = 0.9 by default.
+        - name: VMA2,VMI2
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Voltage at the controlled bus (bus ICONT1I) in pu when ICOD1I
+            is 1. VMA1 = 1.1 and VMI1 = 0.9 by default.
+            • Reactive power flow into the transformer at the winding one bus end in Mvar
+            when ICOD1I is 2. No default is allowed.
+            • Active power flow into the transformer at the winding one bus end in MW when
+            ICOD1I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; VMA1 = 1.1 and VMI1 = 0.9 by default.
+        - name: NTP2
+          description: |
+            The number of tap positions available; used when COD1 is 1 or 2. NTP1 must be
+            between 2 and 9999. NTP1 = 33 by default.
+        - name: TAB2
+          description: |
+            The number of a transformer impedance correction table
+        - name: CR2,CX2
+          description: |
+            The load drop compensation impedance for voltage controlling transformers
+            if this transformer
+            winding's impedance is to be a function of either off-nominal turns ratio or phase
+            shift angle (see Section 3.4.4.7), or 0 if no transformer impedance correction is to
+            be applied to this transformer winding. TAB1 = 0 by default.
+            entered in pu on system base quantities; used when COOl is 1. CR1 + j CX1 = 0.0
+            by default.
+        - name: UK4-A
+          description: Unknown number on record 4
+    - row: 5
+      columns:
+        - name: WINDV3
+          description: |
+            The winding one off-nominal turns ratio in pu of winding one bus base voltage when
+            CW is 1; WINDV3 = 1.0 by default. WINDV3 is the actual winding one voltage in
+            kV when CW is 2; WINDV3 is equal to the base voltage of bus 'I' by default.
+        - name: NOMV3
+          description: |
+            The nominal (rated) winding one voltage in kV, or zero to indicate that nominal
+            winding one voltage is to be taken as the base voltage of bus 'I'. NOMV3 is used
+            only in converting magnetizing data between per unit admittance values and phys-
+            ical units when CM is 2. NOMV3 = 0.0 by default.
+        - name: ANG3
+          description: |
+            The winding one phase shift angle in degrees. ANG3 is positive for a positive
+            phase shift from the winding one side to the winding two side (for a two-winding
+            transformer), or from the winding one side to the 'T' (or star) point bus (for a three-
+            winding transformer). ANG3 must be greater than -180.0 and less than or equal to
+            +1 80.0. ANG3 = 0.0 by default.
+        - name: RATA3,RATB3,RATC3
+          description: |
+            The first winding's three ratings entered in MVA (not current expressed in MVA).
+            RATA3 = 0.0, RATB3 = 0.0 and RATC3 = 0.0 (bypass flow limit check for this
+            transformer winding) by default.
+        - name: COD3
+          description: |
+            The transformer control mode for automatic adjustments of the winding one tap or
+            phase shift angle during power flow solutions: 0 for no control (fixed tap and phase
+            shift); ±1 for voltage control; ±2 for reactive power flow control; ±3 for active power
+            flow control; ±4 for control of a dc line quantity (±4 is valid only for two-winding
+            transformers). If the control mode is entered as a positive number, automatic
+            adjustment of this transformer winding is enabled when the corresponding adjust-
+            ment is activated during power flow solutions; a negative control mode suppresses
+            the automatic adjustment of this transformer winding. COD1 = 0 by default.
+        - name: CONT3
+          description: |
+            The bus number, or extended bus name enclosed in single quotes, of the bus
+            whose voltage is to be controlled by the transformer turns ratio adjustment option
+            of the power flow solution activities when COD1 is 1. CONT1 should be nonzero
+            only for voltage controlling transformer windings.
+            CONT1 may specify a bus other than 'I', 'J', or 'K'; in this case, the sign of CONT1
+            defines the location of the controlled bus relative to the transformer winding. If
+            CONT1 is entered as a positive number, or a quoted extended bus name, the ratio
+            is adjusted as if bus CONT1 is on the winding two or winding three side of the trans-
+            former; if CONT1 is entered as a negative number, or a quoted extended bus name with 
+            a minus sign preceding the first character, the ratio is adjusted as if bus
+            ICONT1 I is on the winding one side of the transformer. CONT1 = 0 by default.
+        - name: RMA3,RMI3 
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Off-nominal turns ratio in pu of winding one bus base voltage when ICOD1I is
+            1 or2 and CW is 1; RMA1 = 1.1 and RMI1 = 0.9 by default.
+            • Actual winding one voltage in kV when ICOD1 I is 1 or 2 and CW is 2. No default
+            is allowed.
+            • Phase shift angle in degrees when ICOD1 I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; RMA1 = 1.1 and RMI1 = 0.9 by default.
+        - name: VMA3,VMI3
+          description: |
+            The upper and lower limits, respectively, of either:
+            • Voltage at the controlled bus (bus ICONT1I) in pu when ICOD1I
+            is 1. VMA1 = 1.1 and VMI1 = 0.9 by default.
+            • Reactive power flow into the transformer at the winding one bus end in Mvar
+            when ICOD1I is 2. No default is allowed.
+            • Active power flow into the transformer at the winding one bus end in MW when
+            ICOD1I is 3. No default is allowed.
+            • Not used when ICOD1I is 0 or 4; VMA1 = 1.1 and VMI1 = 0.9 by default.
+        - name: NTP3
+          description: |
+            The number of tap positions available; used when COD1 is 1 or 2. NTP1 must be
+            between 2 and 9999. NTP1 = 33 by default.
+        - name: TAB3
+          description: |
+            The number of a transformer impedance correction table
+        - name: CR3,CX3
+          description: |
+            The load drop compensation impedance for voltage controlling transformers
+            if this transformer
+            winding's impedance is to be a function of either off-nominal turns ratio or phase
+            shift angle (see Section 3.4.4.7), or 0 if no transformer impedance correction is to
+            be applied to this transformer winding. TAB1 = 0 by default.
+            entered in pu on system base quantities; used when COOl is 1. CR1 + j CX1 = 0.0
+            by default.
+        - name: UK5-A
+          description: Unknown number on record 5
+- name: Owner
+  key: owner
+  signal:
+  - text: BEGIN OWNER DATA
+    command: start
+  - text: END OF OWNER DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: I
+      description: |
+        Owner number, (1 through the maximum number of owners at the current size
+        level: see Table 1-1).
+    - name: OWNAME
+      description: |
+        Alphanumeric identifier assigned to owner I. The name may contain up to twelve
+        characters and must be enclosed in single quotes. OWNAME may be any combi-
+        nation of blanks, uppercase letters, numbers, and special characters. OWNAME is
+        set to twelve blanks by default.
+- name: Area
+  key: area
+  signal:
+  - text: BEGIN AREA DATA
+    command: start
+  - text: END OF AREA DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: I
+      description: |
+        Area number, (1 through the maximum number of areas at the current size level:
+        see Table 1-1).
+    - name: ISW
+      description: |
+        Bus number, or extended bus name enclosed in single quotes, of the area slack
+        bus for area interchange control. The bus must be a generator (type two) bus in the
+        specified area. Any area containing a system swing bus (type three) must have
+        either that swing bus or a bus number of zero specified for its area slack bus
+        number. Any area with an area slack bus number of zero is considered a "floating
+        area' by the area interchange control option of the power flow solution activities.
+        SW = 0 by default.
+    - name: PDES
+      description: |
+        Desired net interchange leaving the area (export); entered in MW. In the power flow
+        solution process there are two options for handling the interchange. One assumes
+        that the interchange is exported only on tie lines out of the area. The other assumes
+        that the interchange is a combination of flow on the tie lines plus any loads whose
+        area assignment is different from the bus to which it is connected. Thus the PDES
+        must be specified such that is consistent with these two options either of which will
+        be selected at initiation of the power flow solution. PDES = 0.0 by default.
+    - name: PTOL
+      description: |
+        Interchange tolerance bandwidth; entered in MW. PTOL = 10.0 by default.
+    - name: ARNAME
+      description: |
+        Alphanumeric identifier assigned to area I. The name may contain up to twelve
+        characters and must be enclosed in single quotes. ARNAME may be any combi-
+        nation of blanks, uppercase letters, numbers, and special characters. ARNAME is
+        set to twelve blanks by default.
+- name: Zone
+  key: zone
+  signal:
+  - text: BEGIN ZONE DATA
+    command: start
+  - text: END OF ZONE DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: I
+      description: |
+        Zone number, (1 through the maximum number of zones at the current size level:
+        see Table 1-1).
+    - name: ZONAME
+      description: |
+        Alphanumeric identifier assigned to zone I. The name may contain up to twelve
+        characters and must be enclosed in single quotes. ZONAME may be any combi-
+        nation of blanks, uppercase letters, numbers, and special characters. ZONAME is
+        set to twelve blanks by default.
+- name: Two-Terminal DC
+  key: twodc
+  signal:
+  - text: BEGIN TWO-TERMINAL DC DATA
+    command: start
+  - text: END OF TWO-TERMINAL DC DATA
+    command: stop
+  parse:
+    read_twodc: true
+  records:
+    - row: 1
+      columns:
+        - name: I
+          description: |
+            The dc line number
+        - name: MDC
+          description: |
+            Control mode: 0 for blocked, 1 for power, 2 for current. MDC = 0 by default.
+        - name: RDC
+          description: |
+            The dc line resistance; entered in ohms. No default allowed.
+        - name: SETVL
+          description: |
+            Current (amps) or power (MW) demand. When MDC is one, a positive value of
+            SETVL specifies desired power at the rectifier and a negative value specifies
+            desired inverter power. No default allowed.
+        - name: VSCHD
+          description: |
+            Scheduled compounded dc voltage; entered in kV. No default allowed.
+        - name: VCMOD
+          description: |
+            Mode switch dc voltage; entered in kV. When the inverter dc voltage falls below this
+            value and the line is in power control mode (i.e., MDC = 1), the line switches to cur-
+            rent control mode with a desired current corresponding to the desired power at
+            scheduled dc voltage. VCMOD = 0.0 by default.
+        - name: RCOMP
+          description: |
+            Compounding resistance; entered in ohms. Gamma and/or TAPI is used to attempt
+            to hold the compounded voltage (VDCI + DCCUR*RCOMP) at VSCHD. To control
+            the inverter end dc voltage VDCI, set RCOMP to zero; to control the rectifier end
+            dc voltage VDCR, set RCOMP to the dc line resistance, RDC; otherwise, set
+            RCOMP to the appropriate fraction of RDC. RCOMP = 0.0 by default.
+        - name: DELTI
+          description: |
+            Margin entered in per unit of desired dc power or current. This is the fraction by
+            which the order is reduced when ALPHA is at its minimum and the inverter is con-
+            trolling the line current. DELTI = 0.0 by default.
+        - name: METER
+          description: |
+            Metered end code of either 'R' (for rectifier) or 'I' (for inverter). METER = 'I' by
+            default.
+        - name: DCVMIN
+          description: |
+            Minimum compounded dc voltage; entered in kV. Only used in constant gamma
+            operation (i.e., when GAMMX = GAMMN) when TAPI is held constant and an ac
+            transformer tap is adjusted to control dc voltage (i.e., when Fl, TI, and Dl specify
+            a two-winding transformer). DCVMIN = 0.0 by default.
+        - name: CCCITMX
+          description: |
+            Iteration limit for capacitor commutated two-terminal dc line Newton solution pro-
+            cedure. CCCITMX = 20 by default.
+        - name: CCCACC
+          description: |
+            Acceleration factor for capacitor commutated two-terminal dc line Newton solution
+            procedure. CCCACC = 1.0 by default.
+    - row: 2
+      columns:
+        - name: IPR
+          description: |
+            Rectifier converter bus number, or extended bus name enclosed in single quotes.
+            No default allowed.
+        - name: NBR
+          description: |
+            Number of bridges in series (rectifier). No default allowed.
+        - name: ALFMX
+          description: |
+            Nominal maximum rectifier firing angle; entered in degrees. No default allowed.
+        - name: ALFMN
+          description: |
+            Minimum steady-state rectifier firing angle; entered in degrees. No default allowed.
+        - name: RCR
+          description: |
+            Rectifier commutating transformer resistance per bridge; entered in ohms. No
+            default allowed.
+        - name: XCR
+          description: |
+            Rectifier commutating transformer reactance per bridge; entered in ohms. No
+            default allowed.
+        - name: EBASR
+          description: |
+            Rectifier primary base ac voltage; entered in kV. No default allowed.
+        - name: TRR
+          description: |
+            Rectifier transformer ratio. TRR = 1.0 by default.
+        - name: TAPR
+          description: |
+            Rectifier tap setting. TAPR = 1.0 by default.
+        - name: TMXR
+          description: |
+            Maximum rectifier tap setting. TMXR = 1 .5 by default.
+        - name: TMNR
+          description: |
+            Minimum rectifier tap setting. TMNR = 0.51 by default.
+        - name: STPR
+          description: |
+            Rectifier tap step; must be positive. STPR = 0.00625 by default.
+        - name: ICR
+          description: |
+            Rectifier firing angle measuring bus number, or extended bus name enclosed in
+            single quotes. The firing angle and angle limits used inside the dc model are
+            adjusted by the difference between the phase angles at this bus and the ac/dc
+            interface (i.e., the converter bus, PR). ICR = 0 by default.
+        - name: IFR
+          description: |
+            Winding one side "from bus" number, or extended bus name enclosed in single
+            quotes, of a two-winding transformer. IFR = 0 by default.
+        - name: ITR
+          description: |
+            Winding two side "to bus' number, or extended bus name enclosed in single
+            quotes, of a two-winding transformer. ITR = 0 by default.
+        - name: IDR
+          description: |
+            Circuit identifier; the branch described by IFR, ITR, and IDR must have been
+            entered as a two-winding transformer; an ac transformer may control at most only
+            one dc converter. IDR = 1 by default.
+            If no branch is specified, TAPR is adjusted to keep alpha within limits; otherwise,
+            TAPR is held fixed and this transformer's tap ratio is adjusted. The adjustment logic
+            assumes that the rectifier converter bus is on the winding two side of the trans-
+            former. The limits TMXR and TMNR specified here are used; except for the trans-
+            former control mode flag (COD of Section 3.2.6), the ac tap adjustment data is
+            ignored.
+        - name: UK2-A
+          description: Uknown float on row 2
+    - row: 3
+      columns:
+        - name: IPI
+          description: |
+            Inverter converter bus number, or extended bus name enclosed in single quotes.
+            No default allowed.
+        - name: NBI
+          description: |
+            Number of bridges in series (inverter). No default allowed.
+        - name: GAMMX
+          description: |
+            Nominal maximum inverter firing angle; entered in degrees. No default allowed.
+        - name: GAMMN
+          description: |
+            Minimum steady-state inverter firing angle; entered in degrees. No default allowed.
+        - name: RCI
+          description: |
+            Inverter commutating transformer resistance per bridge; entered in ohms. No
+            default allowed.
+        - name: XCI
+          description: |
+            Inverter commutating transformer reactance per bridge; entered in ohms. No
+            default allowed.
+        - name: EBASI
+          description: |
+            Inverter primary base ac voltage; entered in kV. No default allowed.
+        - name: TRI
+          description: |
+            Inverter transformer ratio. TRR = 1.0 by default.
+        - name: TAPI
+          description: |
+            Inverter tap setting. TAPR = 1.0 by default.
+        - name: TMXI
+          description: |
+            Maximum inverter tap setting. TMXR = 1 .5 by default.
+        - name: TMNI
+          description: |
+            Minimum inverter tap setting. TMNR = 0.51 by default.
+        - name: STPI
+          description: |
+            Inverter tap step; must be positive. STPR = 0.00625 by default.
+        - name: ICI
+          description: |
+            Inverter firing angle measuring bus number, or extended bus name enclosed in
+            single quotes. The firing angle and angle limits used inside the dc model are
+            adjusted by the difference between the phase angles at this bus and the ac/dc
+            interface (i.e., the converter bus, PR). ICR = 0 by default.
+        - name: IFI
+          description: |
+            Winding one side "from bus" number, or extended bus name enclosed in single
+            quotes, of a two-winding transformer. IFR = 0 by default.
+        - name: ITI
+          description: |
+            Winding two side "to bus' number, or extended bus name enclosed in single
+            quotes, of a two-winding transformer. ITR = 0 by default.
+        - name: IDI
+          description: |
+            Circuit identifier; the branch described by IFR, ITR, and IDR must have been
+            entered as a two-winding transformer; an ac transformer may control at most only
+            one dc converter. IDR = 1 by default.
+            If no branch is specified, TAPR is adjusted to keep alpha within limits; otherwise,
+            TAPR is held fixed and this transformer's tap ratio is adjusted. The adjustment logic
+            assumes that the inverter converter bus is on the winding two side of the trans-
+            former. The limits TMXR and TMNR specified here are used; except for the trans-
+            former control mode flag (COD of Section 3.2.6), the ac tap adjustment data is
+            ignored.
+        - name: UK3-A
+          description: Uknown float on row 3
+- name: Multi-Terminal DC
+  key: multidc
+  signal:
+  - text: BEGIN MULTI-TERMINAL DC DATA
+    command: start
+  - text: END OF MULTI-TERMINAL DC DATA
+    command: stop
+- name: Voltage Source Converter
+  key: voltagesource
+  signal:
+  - text: BEGIN VOLTAGE SOURCE CONVERTER DATA
+    command: start
+  - text: END OF VOLTAGE SOURCE CONVERTER DATA
+    command: stop
+- name: Impedance Correction
+  key: impedancecorrection
+  signal:
+  - text: BEGIN IMPEDANCE CORRECTION DATA
+    command: start
+  - text: END OF IMPEDANCE CORRECTION DATA
+    command: stop
+- name: Multi-Section Line
+  key: multiline
+  signal:
+  - text: BEGIN MULTI-SECTION LINE DATA
+    command: start
+  - text: END OF MULTI-SECTION LINE DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: I
+      description: |
+        bus" number, or extended bus name enclosed in single quotes.
+    - name: J
+      description: |
+        'To bus" number, or extended bus name enclosed in single quotes. J is entered as
+        a negative number or with a minus sign before the first character of the extended
+        bus name to designate it as the metered end; otherwise, bus I is assumed to be the
+        metered end.
+    - name: ID
+      description: |
+        Two-character upper case alphanumeric multisection line grouping identifier. The
+        first character must be an ampersand ('&'). ID = '&l' by default.
+    - name: DUM1
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM2
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM3
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM4
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM5
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM6
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM7
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM8
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+    - name: DUM9
+      description: |
+        Bus numbers, or extended bus names enclosed in single quotes (see
+        Section 3.2.2.1), of the dummy buses connected by the branches that comprise
+        this multisection line grouping. No defaults allowed.
+- name: Inter-Area Transfer
+  key: areatransfer
+  signal:
+  - text: BEGIN INTER-AREA TRANSFER DATA
+    command: start
+  - text: END OF INTER-AREA TRANSFER DATA
+    command: stop
+- name: Facts Control Device
+  key: facts
+  signal:
+  - text: BEGIN FACTS CONTROL DEVICE DATA
+    command: start
+  - text: END OF FACTS CONTROL DEVICE DATA
+    command: stop
+  parse:
+    read_table: true
+  columns:
+    - name: N
+      description: |
+        FACTS device number.
+    - name: I
+      description: |
+        Sending end bus number, or extended bus name enclosed in single quotes. No
+        default allowed.
+    - name: J
+      description: |
+        Terminal end bus number, or extended bus name enclosed in single quotes; 0 for
+        a STATCON. J = 0 by default.
+    - name: MODE
+      description: |
+        Control mode:
+        0 - out-of-service (i.e., series and shunt links open).
+        1
+        - series and shunt links operating.
+        2 - series link bypassed (i.e., like a zero impedance line) and shunt link operating
+        as a STATCON.
+        3 - series and shunt links operating with series link at constant series impedance.
+        4 - series and shunt links operating with series link at constant series voltage.
+        5 - master device of an IPFC with P and Q setpoints specified; FACTS device
+        N+1 must be the slave device (i.e., its MODE is 6 or 8) of this IPFC.
+        6 - slave device of an IPFC with P and Q setpoints specified; FACTS device N-i
+        must be the master device (i.e., its MODE is 5 or 7) of this IPFC. The Q setpoint is
+        ignored as the master device dictates the active power exchanged between the two
+        devices.
+        7 - master device of an IPFC with constant series voltage setpoints specified;
+        FACTS device N+1 must be the slave device (i.e., its MODE is 6 or 8) of this IPFC.
+        8 - slave device of an I PFC with constant series voltage setpoints specified; FACTS
+        device N-i must be the master device (i.e., its MODE is 5 or 7) of this IPFC. The
+        complex Vd + iVq setpoint is modified during power flow solutions to reflect the
+        active power exchange determined by the master device.
+        If J is specified as 0, MODE must be either 0 or 1. MODE = i by default.
+    - name: PDES
+      description: |
+        Desired active power flow arriving at the terminal end bus; entered in MW.
+        PDES = 0.0 by default.
+    - name: QDES
+      description: |
+        Desired reactive power flow arriving at the terminal end bus; entered in MVAR.
+        QDES = 0.0 by default.
+    - name: VSET
+      description: |
+        Voltage setpoint at the sending end bus; entered in pu. VSET = 1.0 by default.
+    - name: SHMX
+      description: |
+        Maximum shunt current at the sending end bus; entered in MVA at unity voltage.
+        SHMX = 9999.0 by default.
+    - name: TRMX
+      description: |
+        Maximum bridge active power transfer; entered in MW. TRMX = 9999.0 by default.
+    - name: VTMN
+      description: |
+        Minimum voltage at the terminal end bus; entered in pu. VTMN = 0.9 by default.
+    - name: VTMX
+      description: |
+        Maximum voltage at the terminal end bus; entered in pu. VTMX = 1 .1 by default.
+    - name: VSMX
+      description: |
+        Maximum series voltage; entered in pu. VSMX = 1 .0 by default.
+    - name: IMX
+      description: |
+        Maximum series current, or zero for no series current limit; entered in MVA at unity
+        voltage. IMX = 0.0 by default.
+    - name: LINX
+      description: |
+        Reactance of the dummy series element used during model solution; entered in pu.
+        LINX = 0.05 by default.
+    - name: RMPCT
+      description: |
+        Percent of the total Mvar required to hold the voltage at bus I that are to be contrib-
+        uted by the shunt element of this FACTS device; RMPCT must be positive. RMPCT
+        is needed only if there is more than one local or remote voltage controlling device
+        (plant, switched shunt, FACTS device shunt element, or VSC dc line converter)
+        controlling the voltage at bus Ito a setpoint. RMPCT = 100.0 by default.
+    - name: OWNER
+      description: |
+        Owner number, (1 through the maximum number of owners at the current size
+        level: see Table 1-1). OWNER = 1 by default.
+    - name: SET1,SET2
+      description: |
+        If MODE is 3, resistance and reactance respectively of the constant impedance,
+        entered in pu; if MODE is 4, the magnitude (in pu) and angle (in degrees) of the
+        constant series voltage with respect to the quantity indicated by VSREF; if MODE
+        is 7 or 8, the real (Vd) and imaginary (Vq) components (in pu) of the constant series
+        voltage with respect to the quantity indicated by VSREF; for other values of MODE,
+        SET1 and SET2 are read, but not saved or used during power flow solutions.
+        SET1 = 0.0 and SET2 = 0.0 by default.
+    - name: VSREF
+      description: |
+        Series voltage reference code to indicate the series voltage reference of SET1 and
+        SET2 when MODE is 4, 7 or 8: 0 for sending end voltage, 1 for series current.
+        VSREF = 0 by default.
+- name: Switched Shunt
+  key: switchedshunt
+  signal:
+  - text: BEGIN SWITCHED SHUNT DATA
+    command: start
+  - text: END OF SWITCHED SHUNT DATA
+    command: stop
+  parse:
+    read_table: true
+# Switched Shunt Example    
+#  198,1,0,1,1.03000,0.95000,    0,100.0,'        ',    0.00, 1,   7.20
+#  204,1,0,1,1.03000,0.95000,    0,100.0,'        ',    3.60, 1,   3.60, 1,   3.60
+  columns:
+    - name: I
+      description: |
+        Bus number, or extended bus name enclosed in single quotes.
+    - name: MODSW
+      description: |
+        Control mode:
+        0 - fixed
+        1 - discrete adjustment, controlling voltage locally or at bus SWREM
+        2 - continuous adjustment, controlling voltage locally or at bus SWREM
+        3 - discrete adjustment, controlling reactive power output of the plant at bus SWREM
+        4 - discrete adjustment, controlling reactive power output of the VSC dc line
+        converter at bus SWREM of the VSC dc line whose name is specified as RMIDNT5 
+        5 - discrete adjustment, controlling admittance setting of the switched shunt at bus SWREM
+        MODSW = 1 by default.
+    - name: UK1
+      description: Unknown 1
+    - name: UK2
+      description: Unknown 2
+    - name: VSWHI
+      description: |
+        When MODSW is 1 or 2, the controlled voltage upper limit; entered in pu.
+        When MODSW is 3, 4 or 5, the controlled reactive power range upper limit; entered
+        in pu of the total reactive power range of the controlled voltage controlling device.
+        VSWHI is not used when MODSW isO. VSWHI = 1.0 by default.
+    - name: VSWLO
+      description: |
+        When MODSW is 1 or 2, the controlled voltage lower limit; entered in pu.
+        When MODSW is 3, 4 or 5, the controlled reactive power range lower limit; entered
+        in pu of the total reactive power range of the controlled voltage controlling device.
+        VSWLO is not used when MODSW is 0. VSWLO = 1.0 by default.
+    - name: SWREM
+      description: |
+        Bus number, or extended bus name enclosed in single quotes (see
+        Section 3.2.2.1), of the bus whose voltage or connected equipment reactive power
+        output is controlled by this switched shunt.
+        When MODSW is 1 or 2, SWREM is entered as 0 if the switched shunt is to regu-
+        late its own voltage; otherwise, SWREM specifies the remote type one or two bus
+        whose voltage is to be regulated by this switched shunt.
+        When MODSW is 3, SWREM specifies the type two or three bus whose plant reac-
+        tive power output is to be regulated by this switched shunt. Set SWREM to "I' if the
+        switched shunt and the plant which it controls are connected to the same bus.
+        When MODSW is 4, SWREM specifies the converter bus of a VSC dc line whose
+        converter reactive power output is to be regulated by this switched shunt. Set
+        SWREM to 'I' if the switched shunt and the VSC dc line converter which it controls
+        are connected to the same bus.
+        When MODSW is 5, SWREM specifies the remote bus to which the switched shunt
+        whose admittance setting is to be regulated by this switched shunt is connected.
+        SWREM is not used when MODSW is 0. SWREM = 0 by default.
+    - name: RMPCT
+      description: |
+        Percent of the total Mvar required to hold the voltage at the bus controlled by bus
+        I that are to be contributed by this switched shunt; RMPCT must be positive.
+        RMPCT is needed only if SWREM specifies a valid remote bus and there is more
+        than one local or remote voltage controlling device (plant, switched shunt, FACTS
+        device shunt element, or VSC dc line converter) controlling the voltage at bus
+        SWREM to a setpoint, or SWREM is zero but bus is the controlled bus, local or
+        remote, of one or more other setpoint mode voltage controlling devices. Only used
+        if MODSW = 1 or 2. RMPCT = 100.0 by default.
+    - name: RMIDNT
+      description: |
+        When MODSW is 4, the name of the VSC dc line whose converter bus is specified
+        in SWREM. RMIDNT is not used for other values of MODSW. RMIDNT is a blank
+        name by default.
+    - name: BINIT
+      description: |
+        Initial switched shunt admittance; entered in Mvar at unity voltage. BINIT = 0.0 by
+        default.
+    - name: N1
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B1
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N2
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B2
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N3
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B3
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N4
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B4
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N5
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B5
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N6
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B6
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N7
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B7
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+    - name: N8
+      description: |
+        Number of steps for block i. The first zero value of N1 or B1 is interpreted as the end
+        of the switched shunt blocks for bus I. N1 = 0 by default.
+    - name: B8
+      description: |
+        Admittance increment for each of N1 steps in block i; entered in Mvar at unity
+        voltage. B1 = 0.0 by default.
+- name: GNE Device
+  key: gnedevice
+  signal:
+  - text: BEGIN GNE DEVICE DATA
+    command: start
+  - text: END OF GNE DEVICE DATA
+    command: stop
