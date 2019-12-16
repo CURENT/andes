@@ -269,6 +269,35 @@ class Selector(Discrete):
             self._s[i] = np.equal(self._inputs[i], self._outputs).astype(int)
 
 
+class Switcher(Discrete):
+    """
+    Switcher class based on input parameters.
+
+    The switch class takes one v-provider, compares the input with each value in the option list, and exports
+    one flag array for each option.
+    """
+    def __init__(self, u, options: list, name: str = None, tex_name: str = None, cache=True):
+        super().__init__(name=name, tex_name=tex_name)
+        self.u = u
+        self.option: list = options
+        self.cache: bool = cache
+        self._eval = False  # if the flags has been evaluated
+
+        for i in range(len(options)):
+            self.__dict__[f's{i}'] = 0
+
+        self.export_flags = [f's{i}' for i in range(len(options))]
+        self.export_flags_tex = [f's_{i}' for i in range(len(options))]
+
+    def check_var(self):
+        if self.cache and self._eval:
+            return
+        for i in range(len(self.option)):
+            self.__dict__[f's{i}'] = np.equal(self.u.v, self.option[i]).astype(np.float64)
+
+        self._eval = True
+
+
 class DeadBand(Limiter):
     """
     Deadband with the direction of return.

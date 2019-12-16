@@ -2,7 +2,7 @@ import unittest
 
 from andes.core.var import Algeb
 from andes.core.param import NumParam
-from andes.core.discrete import Comparer, SortedLimiter
+from andes.core.discrete import Comparer, SortedLimiter, Switcher
 
 import numpy as np
 
@@ -77,3 +77,16 @@ class TestDiscrete(unittest.TestCase):
                                  self.cmp.zi.tolist())
         self.assertSequenceEqual(self.rcmp_noselect.zu.tolist(),
                                  self.cmp.zu.tolist())
+
+    def test_switcher(self):
+        p = NumParam()
+        p.v = np.array([0, 1, 2, 2, 1, 3, 1])
+        switcher = Switcher(u=p, options=[0, 1, 2, 3, 4])
+
+        switcher.check_var()
+
+        self.assertSequenceEqual(switcher.s0.tolist(), [1, 0, 0, 0, 0, 0, 0])
+        self.assertSequenceEqual(switcher.s1.tolist(), [0, 1, 0, 0, 1, 0, 1])
+        self.assertSequenceEqual(switcher.s2.tolist(), [0, 0, 1, 1, 0, 0, 0])
+        self.assertSequenceEqual(switcher.s3.tolist(), [0, 0, 0, 0, 0, 1, 0])
+        self.assertSequenceEqual(switcher.s4.tolist(), [0, 0, 0, 0, 0, 0, 0])
