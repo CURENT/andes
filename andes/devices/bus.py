@@ -1,6 +1,6 @@
 import logging
 from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, DataParam, NumParam  # NOQA
+from andes.core.param import IdxParam, DataParam, NumParam
 from andes.core.var import Algeb
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class BusData(ModelData):
         self.ycoord = DataParam(default=0, info='y coordinate (latitude)')
 
         self.area = IdxParam(model='Area', default=None, info="Area code")
-        self.region = IdxParam(model='Region', default=None, info="Region code")
+        self.zone = IdxParam(model='Region', default=None, info="Zone code")
         self.owner = IdxParam(model='Owner', default=None, info="Owner code")
 
 

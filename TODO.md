@@ -68,6 +68,8 @@
 - [x] Refactor `Config` to make load and save part of the config
 - [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 - [x] LaTeX names in blocks and limiters
+*   Input switch. If input equals 1, 2, 3, or 4; Service?
+
 *   Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
  service subclass)
 *   Iterative initialization for equations (half done with Newton Krylov)

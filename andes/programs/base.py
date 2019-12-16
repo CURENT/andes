@@ -12,7 +12,7 @@ class ProgramBase(object):
         if config is not None:
             self.config.load(config)
 
-        self.config.add(OrderedDict((('sparselib', 'klu'), )))
+        self.config.add(OrderedDict((('sparselib', 'umfpack'), )))
 
         self.solver = Solver(sparselib=self.config.sparselib)
 

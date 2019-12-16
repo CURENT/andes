@@ -134,7 +134,7 @@ def read(system, file):
         system.add('Bus', idx=idx, name='Bus ' + str(idx), Vn=baseKV,
                    v0=vmag, a0=vang,
                    vmax=vmax, vmin=vmin,
-                   area=area, region=zone)
+                   area=area, zone=zone)
         if pd != 0 or qd != 0:
             system.add('PQ', bus=idx, name='PQ ' + str(idx), Vn=baseKV, p0=pd, q0=qd)
         if gs or bs:

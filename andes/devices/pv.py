@@ -1,9 +1,9 @@
 import logging
 from collections import OrderedDict
-from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import NumParam, IdxParam # NOQA
-from andes.core.var import Algeb, ExtAlgeb  # NOQA
-from andes.core.discrete import SortedLimiter  # NOQA
+from andes.core.model import Model, ModelData
+from andes.core.param import NumParam, IdxParam
+from andes.core.var import Algeb, ExtAlgeb
+from andes.core.discrete import SortedLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,8 @@ class PVModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')
 
-        self.p = Algeb(info='actual active power generation', unit='pu', tex_name=r'p', diag_eps=1e-6)
-        self.q = Algeb(info='actual reactive power generation', unit='pu', tex_name='q', diag_eps=1e-6)
+        self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=1e-6)
+        self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=1e-6)
 
         # TODO: implement switching starting from the second iteration
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
