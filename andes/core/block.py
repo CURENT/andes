@@ -456,13 +456,19 @@ class LeadLag(Block):
     T2
         Time constant 2
 
+    Notes
+    -----
+    Future implementation will allow T2 to be zero with a safe division. Any division by zero will become zero.
+
+    c = np.divide(a, b, out=np.zeros_like(a), where=b!=0)
 
     """
-    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function'):
+    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function', safe_div=True):
         super().__init__(name=name, info=info)
         self.T1 = T1
         self.T2 = T2
         self.u = u
+        self.safe_div = safe_div  # TODO: implement me
 
         self.x = State(info='State in lead-lag transfer function', tex_name="x'")
         self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y')
@@ -549,3 +555,79 @@ class LeadLagLimit(Block):
                        f'{self.lower.name} * {self.name}_lim_zl + ' \
                        f'{self.upper.name} * {self.name}_lim_zu - ' \
                        f'{self.name}_y'
+
+
+class Piecewise(Block):
+    """
+    Piecewise block.
+
+    This block takes a list of N points, [x0, x1, ...x_{n-1}] and a list of N+1 functions [fun0, ..., fun_n].
+    Inputs in each range (xk, x_{k+1}] applies its corresponding function `fun_k`. The last range (x_{n-1},
+    +inf) applies the last function `fun_n`.
+    """
+    def __init__(self, u, points: list, funs: list, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.points = points
+        self.funs = funs
+
+        self.y = Algeb(info='Output of piecewise function', tex_name='y')
+        self.vars = {'y': self.y}
+
+    def define(self):
+        args = []
+        i = 0
+        for i in range(len(self.points)):
+            args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
+        args.append(f'({self.funs[i+1]}, True)')
+
+        args_comma = ', '.join(args)
+        pw_fun = f'Piecewise({args_comma})'
+
+        self.y.v_str = pw_fun
+        self.y.e_str = f'{pw_fun} - {self.name}_y'
+
+
+class MagneticQuadSat(Piecewise):
+    """
+    A saturation block takes an input signal and outputs the saturated signal.
+
+    This block is experimental and has not been fully tested.
+    """
+    def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
+        uname = u.name
+        self.s10 = s10
+        self.s12 = s12
+
+        points = [0, 0.8]
+        c0 = [15, -24, 10]
+        c1 = [-27.5, 50, -22.5]
+        c2 = [12.5, -25, 12.5]
+
+        funs = ['0',
+                f'{uname}',
+                f'(0.8*{c0[0]} + {c0[1]} * (1 - {s10.name}) + 1.2 * {c0[2]} * (1-{s12.name})) + \
+                  (0.8*{c1[0]} + {c1[1]} * (1 - {s10.name}) + 1.2 * {c1[2]} * (1-{s12.name})) * {uname}  + \
+                  (0.8*{c2[0]} + {c2[1]} * (1 - {s10.name}) + 1.2 * {c2[2]} * (1-{s12.name})) * {uname} ** 2',
+                ]
+        super().__init__(u=u, points=points, funs=funs, name=name, tex_name=tex_name, info=info)
+
+
+class MagneticExpSat(Piecewise):
+    """
+    Exponential saturation function for generator magnetization
+
+    This block is experimental and has not been fully tested.
+    """
+    def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
+        uname = u.name
+        self.s10 = s10
+        self.s12 = s12
+
+        points = [0, 1.0, 1.2]
+        funs = ['0',
+                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))',
+                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))',
+                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))'
+                ]
+        super().__init__(u=u, points=points, funs=funs, name=name, tex_name=tex_name, info=info)

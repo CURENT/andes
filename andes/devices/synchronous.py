@@ -8,6 +8,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.discrete import Selector  # NOQA
 from andes.core.service import ConstService, ExtService  # NOQA
+from andes.core.block import MagneticQuadSat, MagneticExpSat  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -30,8 +31,8 @@ class GENCLSData(ModelData):
 
         self.kp = NumParam(default=0, info="active power feedback gain", tex_name='k_p')
         self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
-        self.S10 = NumParam(default=0, info="first saturation factor", tex_name='S_{10}')
-        self.S12 = NumParam(default=0, info="second saturation factor", tex_name='S_{20}')
+        self.S10 = NumParam(default=1, info="first saturation factor", tex_name='S_{1.0}')
+        self.S12 = NumParam(default=1, info="second saturation factor", tex_name='S_{1.2}')
 
         self.coi = IdxParam(model='COI', info="center of inertia index")
 
@@ -95,6 +96,7 @@ class GENBase(Model):
                              tex_name='I_{dq_{max}}')
 
         self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce, tex_name=r'I_{dq,max}')
+        self.sat = MagneticQuadSat(self.vd, self.S10, self.S12, tex_name='{sat}')
 
     @staticmethod
     def _vf0(**kwargs):

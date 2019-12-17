@@ -81,6 +81,9 @@ class PVModel(Model):
                              qlim_zl * (qmin - q) + \
                              qlim_zu * (qmax - q))"
 
+        # NOTE: the line below fails at TDS
+        # self.q.e_str = "Piecewise((qmin - q, q < qmin), (qmax - q, q > qmax), (v0 - v, True))"
+
 
 class PV(PVData, PVModel):
     def __init__(self, system=None, config=None):
