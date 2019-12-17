@@ -453,7 +453,7 @@ class Model(object):
             # pull in sub-variables from control blocks
             for var_name, var_instance in value.export().items():
                 var_instance.name = f'{value.name}_{var_name}'
-                var_instance.tex_name = rf'{var_instance.tex_name}_{value.tex_name}'
+                var_instance.tex_name = rf'{var_instance.tex_name}^{value.tex_name}'
                 self.__setattr__(var_instance.name, var_instance)
 
         super(Model, self).__setattr__(key, value)
@@ -737,6 +737,7 @@ class Model(object):
                 s_syms[name] = sympify(instance.v_str, locals=self.input_syms)
                 s_lambdify[name] = lambdify(inputs_list, s_syms[name], 'numpy')
             else:
+                s_syms[name] = 0
                 s_lambdify[name] = 0
 
         self.s_matrix = Matrix(list(s_syms.values()))

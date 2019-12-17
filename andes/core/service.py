@@ -21,9 +21,10 @@ class BaseService(object):
     owner : Model
         The hosting/owner model instance
     """
-    def __init__(self, name: str = None, tex_name: str = None):
+    def __init__(self, name: str = None, tex_name: str = None, info: str = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
+        self.into = info
         self.owner = None
 
     def get_names(self):
@@ -87,8 +88,8 @@ class ConstService(BaseService):
     def __init__(self,
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
-                 name=None, tex_name=None):
-        super().__init__(name=name, tex_name=tex_name)
+                 name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.

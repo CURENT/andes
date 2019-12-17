@@ -1,6 +1,7 @@
 from andes.core.var import Algeb, State
 from typing import Optional
 from andes.core.discrete import HardLimiter
+from andes.core.service import ConstService
 
 
 class Block(object):
@@ -86,7 +87,7 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars = {}
+        self.vars = dict()
 
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
@@ -595,7 +596,6 @@ class MagneticQuadSat(Piecewise):
     This block is experimental and has not been fully tested.
     """
     def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
-        uname = u.name
         self.s10 = s10
         self.s12 = s12
 
@@ -604,13 +604,23 @@ class MagneticQuadSat(Piecewise):
         c1 = [-27.5, 50, -22.5]
         c2 = [12.5, -25, 12.5]
 
-        funs = ['0',
-                f'{uname}',
-                f'(0.8*{c0[0]} + {c0[1]} * (1 - {s10.name}) + 1.2 * {c0[2]} * (1-{s12.name})) + \
-                  (0.8*{c1[0]} + {c1[1]} * (1 - {s10.name}) + 1.2 * {c1[2]} * (1-{s12.name})) * {uname}  + \
-                  (0.8*{c2[0]} + {c2[1]} * (1 - {s10.name}) + 1.2 * {c2[2]} * (1-{s12.name})) * {uname} ** 2',
-                ]
-        super().__init__(u=u, points=points, funs=funs, name=name, tex_name=tex_name, info=info)
+        self.c0 = ConstService(v_str=f'0.8*{c0[0]} + {c0[1]} * (1 - {s10.name}) + 1.2 * {c0[2]} * (1-{s12.name})',
+                               tex_name='c_0', info='Constant coefficient in quadratic saturation')
+        self.c1 = ConstService(v_str=f'0.8*{c1[0]} + {c1[1]} * (1 - {s10.name}) + 1.2 * {c1[2]} * (1-{s12.name})',
+                               tex_name='c_1')
+        self.c2 = ConstService(v_str=f'0.8*{c2[0]} + {c2[1]} * (1 - {s10.name}) + 1.2 * {c2[2]} * (1-{s12.name})',
+                               tex_name='c_2')
+
+        super().__init__(u=u, points=points, funs=None, name=name, tex_name=tex_name, info=info)
+
+        self.vars.update({'c0': self.c0, 'c1': self.c1, 'c2': self.c2})
+
+    def define(self):
+        self.funs = ['0',
+                     f'{self.u.name}',
+                     f'{self.name}_c0 + {self.name}_c1*{self.u.name} + {self.name}_c2 * {self.u.name}**2'
+                     ]
+        super().define()
 
 
 class MagneticExpSat(Piecewise):
