@@ -10,6 +10,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def testlines(fid):
+    return True  # hard coded yet
+
+
 def write(system, outfile, skip_empty=True, overwrite=None):
     """
     Write loaded ANDES system data into an xlsx file

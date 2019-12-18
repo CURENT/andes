@@ -76,6 +76,7 @@ class PFlow(ProgramBase):
         """
         system = self.system
         self._initialize()
+        logger.info('Power flow calculation with Newton Raphson method:')
         if system.dae.m == 0:
             logger.error("Loaded case file contains no element.")
             return False
@@ -101,6 +102,9 @@ class PFlow(ProgramBase):
                 name = system.dae.xy_name[max_idx]
                 logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
                 logger.info(f'Largest mismatch on equation associated with <{name}>')
+
+        else:
+            logger.info(f'Power flow converged in {self.niter+1} iterations.')
 
         return self.converged
 

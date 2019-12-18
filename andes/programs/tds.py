@@ -53,7 +53,7 @@ class TDS(ProgramBase):
         system.store_switch_times(self.tds_models)
         return system.dae.xy
 
-    def run_implicit(self, tspan, verbose=False):
+    def run_implicit(self, tspan=(0, 20), verbose=False):
         # ret = False
         system = self.system
         dae = self.system.dae
@@ -62,6 +62,8 @@ class TDS(ProgramBase):
         self.config.t0, self.config.tf = tspan
 
         self._initialize()
+
+        logger.info('Time Domain Simulation:')
 
         while system.dae.t < self.config.tf and (not self.busted):
             if self.calc_h() == 0:
@@ -72,7 +74,8 @@ class TDS(ProgramBase):
                 # store values
                 dae.store_yt_single()
                 dae.store_x_single()
-                # TODO: dae.store_c_single()
+
+                dae.t += self.h
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
@@ -80,7 +83,6 @@ class TDS(ProgramBase):
                     self.next_pc += 10
                     logger.info(' ({:.0f}%) time = {:.4f}s, niter = {}'
                                 .format(100 * dae.t / config.tf, dae.t, self.niter))
-                dae.t += self.h
 
             # check if the next step is critical time
             if self.is_switch_time():

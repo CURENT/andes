@@ -1,6 +1,6 @@
 import logging
 from distutils.spawn import find_executable
-from typing import Optional, Union
+from typing import Optional, Union, Callable
 
 import numpy as np
 from cvxopt.base import spmatrix
@@ -322,6 +322,7 @@ class DAE(object):
              grid: Optional[bool] = True,
              left: Optional[Union[int, float]] = None,
              right: Optional[Union[int, float]] = None,
+             fun: Optional[Callable] = None,
              fig=None,
              ax=None):
         if var not in ('x', 'y', 'c'):
@@ -340,6 +341,10 @@ class DAE(object):
         else:
             # slice values
             value_array = self.ts.__dict__[var][:, idx]
+
+        # apply callable function `fun`
+        if fun is not None:
+            value_array = fun(value_array)
 
         legend_list = self._get_legend(var, idx)
 

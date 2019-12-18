@@ -9,7 +9,7 @@ from andes.common.utils import to_number
 logger = logging.getLogger(__name__)
 
 
-def is_format(fid):
+def testlines(fid):
     """Check the raw file for frequency base"""
     first = fid.readline()
     first = first.strip().split('/')
@@ -123,7 +123,7 @@ def read(system, file):
             sw[idx] = a0
         param = {'idx': idx, 'name': data[1], 'Vn': data[2],
                  'v0': data[7], 'a0': a0,
-                 'area': data[4], 'region': data[5], 'owner': data[6]}
+                 'area': data[4], 'zone': data[5], 'owner': data[6]}
         system.add('Bus', param)
 
     max_bus = max(max_bus)

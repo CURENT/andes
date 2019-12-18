@@ -36,7 +36,7 @@ def elapsed(t0=0.0):
     return now, dt_str
 
 
-def get_config_load_path(conf_path=None, file_name='andes.conf'):
+def get_config_load_path(conf_path=None, file_name='andes.rc'):
     """
     Return config file load path
 
@@ -48,6 +48,8 @@ def get_config_load_path(conf_path=None, file_name='andes.conf'):
     Parameters
     ----------
     conf_path
+
+    file_name
 
     Returns
     -------

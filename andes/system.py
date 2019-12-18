@@ -36,6 +36,7 @@ from andes.devices import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
 from andes.common.config import Config
+from andes.variables.fileman import FileMan
 
 IP_ADD = False
 if hasattr(spmatrix, 'ipadd'):
@@ -72,6 +73,10 @@ class System(object):
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
                                      )))
+
+        self.files = FileMan()
+        if options is not None:
+            self.files.set(**options)
 
         self.dae = DAE(config=self._config_from_file)
         # routine import comes after model import; routines need to query model flags
@@ -491,7 +496,7 @@ class System(object):
                 np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
     @staticmethod
-    def _get_pkl_path():
+    def get_pkl_path():
         pkl_name = 'calls.pkl'
         andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
 
@@ -518,14 +523,14 @@ class System(object):
         import dill
         dill.settings['recurse'] = True
 
-        pkl_path = self._get_pkl_path()
+        pkl_path = self.get_pkl_path()
         dill.dump(self.calls, open(pkl_path, 'wb'))
 
     def undill_calls(self):
         import dill
         dill.settings['recurse'] = True
 
-        pkl_path = self._get_pkl_path()
+        pkl_path = self.get_pkl_path()
 
         if not os.path.isfile(pkl_path):
             self.prepare()

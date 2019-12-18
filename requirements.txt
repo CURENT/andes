@@ -1,3 +1,5 @@
 cvxopt>=1.2.2
 numpy
 scipy
+xlrd
+pandas

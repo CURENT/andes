@@ -2,9 +2,9 @@
 ANDES: ANother Dynamic Energy System simulator
 ==============================================
 
-.. image:: https://img.shields.io/travis/cuihantao/andes.svg
-    :alt: Travis CI Build Status
-    :target: https://travis-ci.org/cuihantao/andes
+.. image:: https://github.com/cuihantao/andes/workflows/Python%20application/badge.svg
+    :alt: GitHub Action Status
+    :target: https://github.com/cuihantao/andes/actions
 
 .. image:: https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master
     :alt: Azure Pipeline build status

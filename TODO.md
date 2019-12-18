@@ -69,6 +69,8 @@
 - [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
 - [x] LaTeX names in blocks and limiters
 - [x] Input switch. If input equals 1, 2, 3, or 4; Discrete
+- [x] Quadratic and exponential saturation for generators
+- [x] Piecewise nonlinear functions (block.Piecewise)
 *   Test anti-windup limiter
 *   Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
  service subclass)
@@ -80,6 +82,9 @@
 *   Define general hooks - when should the connectivity check happen
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs)
 alongside equations
+
+### Usability
+*   Set up command line interface
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians

@@ -1,38 +1,13 @@
-#!/usr/bin/env python3
-
-# ANDES, a power system simulation tool for research.
-#
-# Copyright 2015-2017 Hantao Cui
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-Andes main entry points
-"""
-
 import cProfile
 import glob
-import io
 import logging
 import os
-import pathlib
 import platform
 import pprint
-import pstats
-import sys
+import pstats  # NOQA
 from argparse import ArgumentParser
-from multiprocessing import Process
-from subprocess import call
-from time import sleep, strftime
+from multiprocessing import Process  # NOQA
+from time import strftime
 
 import andes.common.utils
 from andes.common.utils import elapsed
@@ -117,8 +92,7 @@ def preamble():
     except OSError:
         username = ''
 
-    logger.info('Session: {}{}'.format(username,
-                                       strftime("%m/%d/%Y %I:%M:%S %p")))
+    logger.info('Session: {}{}'.format(username, strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('')
 
 
@@ -136,9 +110,7 @@ def cli_parser():
 
     # general options
     general_group = parser.add_argument_group('General options')
-    general_group.add_argument('-r', '--routine', choices=[],
-                               help='Routine to run', nargs='*',
-                               default=['pflow'], )
+    general_group.add_argument('-r', '--routine', choices=['tds'], help='Routine to run')
     general_group.add_argument('--edit-config', help='Quick edit of the config file',
                                default='', nargs='?', type=str)
     general_group.add_argument('--license', action='store_true', help='Display software license')
@@ -217,281 +189,17 @@ def cli_parser():
     dev_group.add_argument(
         '--profile', action='store_true', help='Enable Python cProfiler')
     dev_group.add_argument(
-        '--ncpu', help='Number of parallel processes', type=int, default=0)
+        '--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
     dev_group.add_argument(
         '--show-data', type=str, help='Show model data converted to system base', nargs='*'
     )
     dev_group.add_argument(
         '-x', '--exit', help='Exit before running routine', action='store_true', dest='exit_now'
     )
+    dev_group.add_argument('--prepare', help='Prepare the numerical equations and save to file',
+                           action='store_true')
 
     return parser
-
-
-def cli_new(parser):
-    """
-    Do parse with the provided CLI parser
-
-    Parameters
-    ----------
-    parser : ArgumentParser
-        An ArgumentParser instance for parsing the command line arguments
-
-    Returns
-    -------
-    Namespace
-        A namespace containing the parsed arguments
-
-    """
-    args = parser.parse_args()
-    return args
-
-
-def andeshelp(group=None, category=None, model_list=None, model_format=None, model_var=None,
-              quick_help=None, help_option=None, help_config=None, export='plain', data_example=None, **kwargs):
-    """
-    Print the requested help and documentation to stdout.
-
-    Parameters
-    ----------
-    group : None or str
-        Name of a group whose model names will be printed
-
-    category : None or str
-        Name of a category whose models will be printed
-
-    model_list : bool
-        If ``True``, print the full model list.
-
-    model_format : None or str
-        Names of models whose parameter definitions will be printed. Model
-        names are separated by comma without space.
-
-    model_var : None or str
-        A pair of model name and parameter name separated by dot. For
-        example, ``Bus.voltage`` stands for the ``voltage`` parameter of
-        ``Bus``.
-
-    quick_help : None or str
-        Name of a model to print a quick help of parameter definitions.
-
-    help_option : None or str
-        A pair of config name and option name separated by dot. For example,
-        ``System.sparselib`` stands for the ``sparselib`` option of
-        the ``System`` config.
-
-    help_config : None or str
-        Config names whose option definitions will be printed. Configs are
-        separated by comma without space. For example, ``System,Pflow``. In
-        the naming convention, the first letter is captialized.
-
-    export : None or {'plain', 'latex'}
-        Formatting style available in plain text or LaTex format. This option
-        has not been implemented.
-
-    data_example : str, optional
-        Print example data for a specified model. The data can be used to construct
-        a dm data file.
-
-    kwargs : None or dict
-        Other keyword arguments
-
-    Returns
-    -------
-    bool
-        True if any help function is executed.
-
-    Notes
-    -----
-    The outputs can be written to a text file using shell command,
-    for example, ::
-
-        andes -q Bus > bus_help.txt
-
-    """
-    out = []
-
-    if not (group or category or model_list or model_format
-            or model_var or quick_help or help_option or help_config or data_example):
-        return False
-
-    from andes.models import all_models_list
-
-    if category:
-        raise NotImplementedError
-
-    if model_list:
-        raise NotImplementedError
-
-    system = System()
-
-    # print example data
-    if data_example is not None:
-        out.append(system.get_data_example(data_example))
-
-    if model_format:
-        if model_format.lower() == 'all':
-            model_format = all_models_list
-        else:
-            model_format = model_format.split(',')
-
-        for item in model_format:
-            if item not in all_models_list:
-                logger.warning('Model <{}> does not exist.'.format(item))
-                model_format.remove(item)
-
-        if len(model_format) > 0:
-            for item in model_format:
-                out.append(system.__dict__[item].doc(export=export))
-
-    if model_var:
-        model_var = model_var.split('.')
-
-        if len(model_var) == 1:
-            logger.error('Model and parameter not separated by dot.')
-
-        elif len(model_var) > 2:
-            logger.error('Model parameter not specified correctly.')
-
-        else:
-            dev, var = model_var
-            if not hasattr(system, dev):
-                logger.error('Model <{}> does not exist.'.format(dev))
-            else:
-                if var not in system.__dict__[dev]._data.keys():
-                    logger.error(
-                        'Model <{}> does not have parameter <{}>.'.format(
-                            dev, var))
-                else:
-                    c1 = system.__dict__[dev]._descr.get(var, 'no Description')
-                    c2 = system.__dict__[dev]._data.get(var)
-                    c3 = system.__dict__[dev]._units.get(var, 'no Unit')
-                    out.append('{}: {}, default = {:g} {}'.format(
-                        '.'.join(model_var), c1, c2, c3))
-
-    if group:
-        group_dict = {}
-        match = []
-
-        for model in all_models_list:
-            g = system.__dict__[model]._group
-            if g not in group_dict:
-                group_dict[g] = []
-            group_dict[g].append(model)
-
-        if group.lower() == 'all':
-            match = sorted(list(group_dict.keys()))
-
-        else:
-            group = [group]
-            # search for ``group`` in all group names and store in ``match``
-            for item in group_dict.keys():
-                if group[0].lower() in item.lower():
-                    match.append(item)
-
-        # if group name not found
-        if len(match) == 0:
-            out.append('Group <{:s}> not found.'.format(group[0]))
-
-        for item in match:
-            group_models = sorted(list(group_dict[item]))
-            out.append('<{:s}>'.format(item))
-            out.append(', '.join(group_models))
-            out.append('')
-
-    if quick_help:
-        if quick_help not in all_models_list:
-            out.append('Model <{}> does not exist.'.format(quick_help))
-        else:
-            out.append(system.__dict__[quick_help].doc(export=export))
-
-    if help_option:
-        raise NotImplementedError
-
-    if help_config:
-
-        all_config = ['system', 'pflow', 'tds', 'eig']
-
-        if help_config.lower() == 'all':
-            help_config = all_config
-
-        else:
-            help_config = help_config.split(',')
-
-            for item in help_config:
-                if item.lower() not in all_config:
-                    logger.warning('Config <{}> does not exist.'.format(item))
-                    help_config.remove(item)
-
-        if len(help_config) > 0:
-            for item in help_config:
-                if item == 'system':
-                    out.append(system.config.doc(export=export))
-                else:
-                    out.append(system.__dict__[item.lower()].config.doc(
-                        export=export))
-
-    print('\n'.join(out))  # NOQA
-
-    return True
-
-
-def edit_conf(edit_config='', load_config=None, **kwargs):
-    """
-    Edit the Andes config file which occurs first in the search path.
-
-    Parameters
-    ----------
-    edit_config : bool
-        If ``True``, try to open up an editor and edit the config file.
-        Otherwise returns.
-
-    load_config : None or str, optional
-        Path to the config file, which will be placed to the first in the
-        search order.
-
-    kwargs : dict
-        Other keyword arguments.
-
-    Returns
-    -------
-    bool
-        ``True`` is a config file is found and an editor is opened. ``False``
-        if ``edit_config`` is False.
-
-    """
-    ret = False
-
-    # no `edit-config` supplied
-    if edit_config == '':
-        return ret
-
-    conf_path = andes.common.utils.get_config_load_path(load_config)
-
-    if conf_path is not None:
-        logger.info('Editing config file {}'.format(conf_path))
-
-        if edit_config is None:
-            # use the following default editors
-            if platform.system() == 'Linux':
-                editor = os.environ.get('EDITOR', 'gedit')
-            elif platform.system() == 'Darwin':
-                editor = os.environ.get('EDITOR', 'vim')
-            elif platform.system() == 'Windows':
-                editor = 'notepad.exe'
-        else:
-            # use `edit_config` as default editor
-            editor = edit_config
-
-        call([editor, conf_path])
-        ret = True
-
-    else:
-        logger.info('Config file does not exist. Save config with \'andes '
-                    '--save-config\'')
-        ret = True
-
-    return ret
 
 
 def remove_output(clean=False, **kwargs):
@@ -538,140 +246,61 @@ def remove_output(clean=False, **kwargs):
     return True
 
 
-def search(**kwargs):
-    """
-    Search for models whose names matches the given pattern. Print the
-    results to stdout.
+def run(case, options=None):
+    t0, _ = elapsed()
 
-    .. deprecated :: 1.0.0
-        `search` will be moved to ``andeshelp`` in future versions.
+    if options is None:
+        options = {}
 
-    Parameters
-    ----------
-    search : str
-        Partial or full name of the model to search for
+    if case is not None:
+        options['case'] = case
 
-    kwargs : dict
-        Other keyword arguments.
+    # enable profiler if requested
+    pr = cProfile.Profile()
+    if options.get('profile') is True:
+        pr.enable()
 
-    Returns
-    -------
-    list
-        The list of model names that match the given pattern.
-    """
+    system = System(options=options)
+    system.undill_calls()
 
-    from andes.models import all_models
-    out = []
+    if not andes.io.guess(system):
+        return
 
-    search_str = kwargs.get('search', None)
-    if not search_str:
-        return out
+    if not andes.io.parse(system):
+        return
 
-    keys = sorted(list(all_models.keys()))
+    system.setup()
 
-    for key in keys:
-        vals = all_models[key]
-        val = list(vals.keys())
-        val = sorted(val)
+    system.PFlow.nr()
 
-        for item in val:
-            if search_str.lower() in item.lower():
-                out.append(key + '.' + item)
+    if options.get('routine') == 'tds':
+        system.TDS.run_implicit()
 
-    if out:
-        print('Search result: <file.model> containing <{}>'.format(search_str))
-        print(' '.join(out))
-    else:
-        print('No model containing <{:s}> found'.format(search_str))
-
-    return out
-
-
-def save_config(save_config='', **kwargs):
-    """
-    Save the Andes config to a file at the path specified by ``save_config``.
-    The save action will not run if `save_config = ''`.
-
-    Parameters
-    ----------
-    save_config : None or str, optional, ('' by default)
-        Path to the file to save the config file. If the path is an emtpy
-        string, the save action will not run. Save to
-        `~/.andes/andes.conf` if ``None``.
-
-    kwargs : dict, optional
-        Other keyword arguments
-
-    Returns
-    -------
-    bool
-        ``True`` is the save action is run. ``False`` otherwise.
-    """
-    ret = False
-    cf_path = save_config
-
-    # no ``--save-config ``
-    if cf_path == '':
-        return ret
-
-    if cf_path is None:
-        cf_path = 'andes.conf'
-        home = str(pathlib.Path.home())
-
-        path = os.path.join(home, '.andes')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        cf_path = os.path.join(path, cf_path)
-
-    ps = System()
-    ps.dump_config(cf_path)
-    ret = True
-
-    return ret
+    return system
 
 
 def main(args=None):
-    """
-    The main function of the Andes command-line tool.
-
-    This function executes the following workflow:
-
-     * Parse the command line inputs
-     * Show the tool preamble
-     * Output the requested helps, edit/save configs or remove outputs. Exit
-       the main program if any of the above is executed
-     * Process the input files and call ``main.run()`` using single- or
-       multi-processing
-     * Show the execution time and exit
-
-    Returns
-    -------
-    None
-    """
     t0, _ = elapsed()
 
     # parser command line arguments
     if args is None:
         parser = cli_parser()
-        args = vars(cli_new(parser))
+        args = vars(parser.parse_args())
     elif not isinstance(args, dict):
         args = vars(args)
 
     # configure stream handler verbose level
     config_logger(log_path=andes.common.utils.get_log_dir(), file=True, stream=True,
                   stream_level=args.get('verbose', logging.INFO))
-
     # show preamble
     preamble()
 
-    # ----- Debug only -----
-    # logger.debug('command line arguments:')
-    # logger.debug(pprint.pformat(args))
-    # ----------------------
+    system = System()
+    pkl_path = system.get_pkl_path()
 
-    if andeshelp(**args) or search(**args) or edit_conf(**args) or remove_output(**args) or save_config(**args):
-        return
+    if args.get('prepare') is True or (not os.path.isfile(pkl_path)):
+        system.prepare()
+        logger.info('Symbolic to numeric preparation completed.')
 
     # process input files
     filename = args.get('filename', ())
@@ -683,9 +312,6 @@ def main(args=None):
 
     # preprocess cli args
     path = args.get('input_path', os.getcwd())
-    ncpu = args.get('ncpu', 0)
-    if ncpu == 0 or ncpu > os.cpu_count():
-        ncpu = os.cpu_count()
 
     cases = []
 
@@ -710,173 +336,7 @@ def main(args=None):
     if len(valid_cases) <= 0:
         pass
     elif len(valid_cases) == 1:
-        run(valid_cases[0], **args)
-    else:
-        # set verbose level for multi processing
-        logger.info('Processing {} jobs on {} CPUs'.format(len(valid_cases), ncpu))
-        logger.handlers[1].setLevel(logging.WARNING)
-
-        # start processes
-        jobs = []
-        for idx, file in enumerate(valid_cases):
-            args['pid'] = idx
-            job = Process(
-                name='Process {0:d}'.format(idx),
-                target=run,
-                args=(file,),
-                kwargs=args)
-            jobs.append(job)
-            job.start()
-
-            start_msg = 'Process {:d} <{:s}> started.'.format(idx, file)
-            print(start_msg)
-            logger.debug(start_msg)
-
-            if (idx % ncpu == ncpu - 1) or (idx == len(valid_cases) - 1):
-                sleep(0.1)
-                for job in jobs:
-                    job.join()
-                jobs = []
-
-        # restore command line output when all jobs are done
-        logger.handlers[1].setLevel(logging.INFO)
-
-    t0, s0 = elapsed(t0)
-
-    if len(valid_cases) == 1:
-        logger.info('-> Single process finished in {:s}.'.format(s0))
-    elif len(valid_cases) >= 2:
-        logger.info('-> Multiple processes finished in {:s}.'.format(s0))
-
-    return
-
-
-def run(case, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit_now=False, **kwargs):
-    """
-    Entry function to run a single case study. This function executes the
-    following workflow:
-
-     * Turn on cProfile if requested
-     * Populate a ``System`` object
-     * Parse the input files using io filters
-     * Dump the case file is requested
-     * Set up the system
-     * Run the specified routine(s)
-
-    Parameters
-    ----------
-    case : str
-        Path to the case file
-
-    profile : bool, optional
-        Enable cProfile if ``True``.
-
-    dump_raw : ``False`` or str, optional
-        Path to the file to dump the system parameters in the dm format
-
-    routine : Iterable, optional
-        A list of routines to run in sequence (``('pflow')`` as default)
-
-    pid : idx, optional
-        Process idx of the current run
-
-    kwargs : dict, optional
-        Other keyword arguments
-
-    Returns
-    -------
-    System
-        Andes System object
-
-    """
-    t0, _ = elapsed()
-
-    # enable profiler if requested
-    pr = cProfile.Profile()
-    if profile is True:
-        pr.enable()
-
-    system = System(case, **kwargs)
-
-    # guess format and parse data
-    if not andes.io.guess(system):
-        return
-
-    if not andes.io.parse(system):
-        return
-
-    # dump system as raw file if requested
-    if dump_raw:
-        andes.io.dump_raw(system)
-
-    system.setup()
-
-    # show data
-    if show_data is not None:
-        if len(show_data) == 0:
-            show_data = sorted(system.devman.devices)
-
-        for mdl in show_data:
-            if system.__dict__[mdl].n == 0:
-                continue
-            logger.info('Model <{}> data in system base'.format(mdl))
-            logger.info(system.__dict__[mdl].data_to_df(sysbase=True).to_string())
-        logger.info('')
-
-    if routine is None or exit_now is True:
-        logger.info('No routine provided. Set argument `routine` to continue')
-    else:
-        if isinstance(routine, str):
-            routine = [routine]
-
-        # run power flow first
-        if 'pflow' in routine:
-            routine.remove('pflow')
-
-        system.pflow.run()
-        system.tds.init()
-        system.report.write(content='powerflow')
-
-        # run the rest of the routines
-        for r in routine:
-            system.__dict__[r.lower()].run()
-
-    # Disable profiler and output results
-    if profile:
-        pr.disable()
-
-        if system.files.no_output:
-            s = io.StringIO()
-            nlines = 40
-            ps = pstats.Stats(pr, stream=sys.stdout).sort_stats('cumtime')
-            ps.print_stats(nlines)
-            logger.info(s.getvalue())
-            s.close()
-        else:
-            s = open(system.files.prof, 'w')
-            nlines = 999
-            ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
-            ps.print_stats(nlines)
-            s.close()
-            logger.info('cProfile results for job{:s} written.'.format(
-                ' ' + str(pid) if pid >= 0 else ''))
-
-    if pid >= 0:
-        _, s = elapsed(t0)
-        msg_finish = 'Process {:d} finished in {:s}.'.format(pid, s)
-        logger.info(msg_finish)
-        print(msg_finish)
-
-    return system
-
-
-def run_stock(rpath, routine=None, profile=False, dump_raw=False, pid=-1, show_data=None, exit_now=False,
-              **kwargs):
-    """Run a stock case distributed with andes"""
-    case_path = andes.common.stock_case.get_stock_case(rpath)
-
-    return run(case_path, routine=routine, profile=profile, dump_raw=dump_raw, pid=pid,
-               show_data=show_data, exit_now=exit_now, **kwargs)
+        run(valid_cases[0], options=args)
 
 
 if __name__ == '__main__':
