@@ -6,25 +6,23 @@ import numpy.linalg
 from cvxopt import matrix, spmatrix, mul, div
 from cvxopt.lapack import gesv
 
-from andes.config.eig import Eig
-from andes.consts import pi
+from math import pi
 from andes.io.txt import dump_data
 from andes.common.utils import elapsed
-from andes.utils.solver import Solver
-from andes.routines.base import RoutineBase
+from andes.routines.base import BaseRoutine
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'
 
 
-class EIG(RoutineBase):
+class EIG(BaseRoutine):
     """
     Eigenvalue analysis routine
     """
-    def __init__(self, system, rc=None):
-        self.system = system
-        self.solver = Solver(system.config.sparselib)
-        self.config = Eig(rc=rc)
+    def __init__(self, system, config):
+        super().__init__(system=system, config=config)
+
+        self.config.add(plot=False)
 
         # internal flags and storages
         self.As = None
@@ -43,10 +41,10 @@ class EIG(RoutineBase):
         """
         system = self.system
 
-        Gyx = matrix(system.dae.Gx)
-        self.solver.linsolve(system.dae.Gy, Gyx)
+        gyx = matrix(system.dae.gx)
+        self.solver.linsolve(system.dae.gy, gyx)
 
-        self.As = matrix(system.dae.Fx - system.dae.Fy * Gyx)
+        self.As = matrix(system.dae.fx - system.dae.fy * gyx)
 
         # ------------------------------------------------------
         # TODO: use scipy eigs
@@ -112,25 +110,28 @@ class EIG(RoutineBase):
         ret = False
         system = self.system
 
-        if system.pflow.solved is False:
-            logger.warning(
-                'Power flow not solved. Eig analysis will not continue.')
+        if system.PFlow.converged is False:
+            logger.warning('Power flow not solved. Eig analysis will not continue.')
             return ret
-        elif system.dae.n == 0:
+        else:
+            if system.TDS.initialized is False:
+                system.TDS._initialize()
+                system.TDS._implicit_step()
+
+        if system.dae.n == 0:
             logger.warning('No dynamic model. Eig analysis will not continue.')
             return ret
 
         t1, s = elapsed()
         logger.info('-> Eigenvalue Analysis:')
 
-        system.dae.factorize = True
-        system.call.int()
-
         self.calc_state_matrix()
         self.calc_part_factor()
 
         self.dump_results()
-        self.plot_results()
+
+        if self.config.plot:
+            self.plot()
         ret = True
 
         _, s = elapsed(t1)
@@ -138,7 +139,7 @@ class EIG(RoutineBase):
 
         return ret
 
-    def plot_results(self):
+    def plot(self):
         try:
             plt = importlib.import_module('matplotlib.pyplot')
         except ImportError:
@@ -171,12 +172,11 @@ class EIG(RoutineBase):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
-        if self.config.plot:
-            fig, ax = plt.subplots()
-            ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
-            ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
-            ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
-            plt.show()
+        fig, ax = plt.subplots()
+        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
+        plt.show()
 
     def dump_results(self):
         """
@@ -234,7 +234,7 @@ class EIG(RoutineBase):
         for prow in range(neig):
             temp_row = partfact[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
-            var_assoc.append(system.varname.unamex[name_idx])
+            var_assoc.append(system.dae.x_name[name_idx])
 
         pf = []
         for prow in range(neig):
@@ -243,7 +243,7 @@ class EIG(RoutineBase):
                 temp_row.append(round(partfact[prow, pcol], 5))
             pf.append(temp_row)
 
-        text.append(system.report.info)
+        text.append('')
         header.append([''])
         rowname.append(['EIGENVALUE ANALYSIS REPORT'])
         data.append('')
@@ -274,7 +274,7 @@ class EIG(RoutineBase):
                 text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(
                     idx + 1, nblock))
                 header.append(numeral[start:end])
-                rowname.append(system.varname.unamex)
+                rowname.append(system.dae.x_name)
                 data.append(pf[start:end])
 
         dump_data(text, header, rowname, data, system.files.eig)

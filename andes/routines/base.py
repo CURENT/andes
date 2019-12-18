@@ -3,7 +3,7 @@ from andes.common.config import Config
 from collections import OrderedDict
 
 
-class ProgramBase(object):
+class BaseRoutine(object):
 
     def __init__(self, system=None, config=None):
         self.system = system

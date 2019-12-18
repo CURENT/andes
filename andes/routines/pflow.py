@@ -1,6 +1,6 @@
 import numpy as np
 from collections import OrderedDict
-from andes.routines.base import ProgramBase
+from andes.routines.base import BaseRoutine
 from cvxopt import matrix, sparse
 from scipy.optimize import newton_krylov
 
@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class PFlow(ProgramBase):
+class PFlow(BaseRoutine):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)

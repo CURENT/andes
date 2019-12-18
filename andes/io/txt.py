@@ -2,7 +2,7 @@ import os
 
 from cvxopt import matrix
 
-from andes.utils.tab import simpletab
+from andes.common.tab import simpletab
 
 
 def format_newline():

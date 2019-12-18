@@ -1,6 +1,6 @@
 import numpy as np  # NOQA
 from collections import OrderedDict
-from andes.routines.base import ProgramBase
+from andes.routines.base import BaseRoutine
 from cvxopt import matrix, sparse, spdiag  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence
@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class TDS(ProgramBase):
+class TDS(BaseRoutine):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
@@ -38,6 +38,8 @@ class TDS(ProgramBase):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
 
+        self.initialized = False
+
     def _initialize(self):
         system = self.system
         self._reset()
@@ -51,6 +53,7 @@ class TDS(ProgramBase):
         system.vars_to_models()
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
+        self.initialized = True
         return system.dae.xy
 
     def run_implicit(self, tspan=(0, 20), verbose=False):
@@ -350,6 +353,8 @@ class TDS(ProgramBase):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
         self.system.dae.t = 0.0
+
+        self.initialized = False
 
     def _g_wrapper(self, y=None):
         """
