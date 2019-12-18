@@ -87,7 +87,7 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars = dict()
+        self.vars: dict = dict()
 
         self.ifx, self.jfx, self.vfx = list(), list(), list()
         self.ify, self.jfy, self.vfy = list(), list(), list()
@@ -630,14 +630,19 @@ class MagneticExpSat(Piecewise):
     This block is experimental and has not been fully tested.
     """
     def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
-        uname = u.name
         self.s10 = s10
         self.s12 = s12
 
         points = [0, 1.0, 1.2]
-        funs = ['0',
-                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))',
-                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))',
-                f'{s10.name} * {uname} ^ (log({s12.name}/{s10.name}) / log(1.2))'
-                ]
-        super().__init__(u=u, points=points, funs=funs, name=name, tex_name=tex_name, info=info)
+        self.c = ConstService(v_str=f'log({s12.name} / {s10.name}) / log(1.2)')
+
+        super().__init__(u=u, points=points, funs=None, name=name, tex_name=tex_name, info=info)
+        self.vars.update({'c': self.c})
+
+    def define(self):
+        self.funs = ['0',
+                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c',
+                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c',
+                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c'
+                     ]
+        super().define()

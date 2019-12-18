@@ -1,7 +1,7 @@
 """
 Synchronous generator classes
 """
-import numpy as np
+import numpy as np  # NOQA
 import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
@@ -91,12 +91,12 @@ class GENBase(Model):
         self.vf0 = ConstService(v_numeric=self._vf0, tex_name=r'v_{f0}')
 
         # --------------------------------------------------Experimental-----
-        self.Idq_max = Algeb(v_str='maximum(Id, Iq)', diag_eps=1e-6,
-                             e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
-                             tex_name='I_{dq_{max}}')
-
-        self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce, tex_name=r'I_{dq,max}')
-        self.sat = MagneticQuadSat(self.vd, self.S10, self.S12, tex_name='{sat}')
+        # self.Idq_max = Algeb(v_str='maximum(Id, Iq)', diag_eps=1e-6,
+        #                      e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
+        #                      tex_name='I_{dq_{max}}')
+        #
+        # self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce, tex_name=r'I_{dq,max}')
+        # self.sat = MagneticQuadSat(self.vd, self.S10, self.S12, tex_name='{sat}')
 
     @staticmethod
     def _vf0(**kwargs):
