@@ -1,5 +1,5 @@
 from collections import OrderedDict
 
-all_programs = OrderedDict([('pflow', ['PFlow']),
+all_routines = OrderedDict([('pflow', ['PFlow']),
                             ('tds', ['TDS'])
                             ])

@@ -12,4 +12,4 @@ from andes.system import System  # NOQA
 __author__ = 'Hantao Cui'
 
 __all__ = ['main', 'plot', 'system',
-           'common', 'core', 'devices', 'io', 'programs', 'variables']
+           'common', 'core', 'devices', 'io', 'routines', 'variables']

@@ -1,6 +1,6 @@
 import numpy as np
 from collections import OrderedDict
-from andes.programs.base import ProgramBase
+from andes.routines.base import ProgramBase
 from cvxopt import matrix, sparse
 from scipy.optimize import newton_krylov
 

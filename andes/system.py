@@ -31,7 +31,7 @@ from typing import List, Dict, Tuple, Union, Optional  # NOQA
 from andes.common.utils import get_config_load_path
 
 from andes.variables.dae import DAE
-from andes.programs import all_programs
+from andes.routines import all_routines
 from andes.devices import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
@@ -704,9 +704,9 @@ class System(object):
         -------
         None
         """
-        for file, cls_list in all_programs.items():
+        for file, cls_list in all_routines.items():
             for cls_name in cls_list:
-                file = importlib.import_module('andes.programs.' + file)
+                file = importlib.import_module('andes.routines.' + file)
                 the_class = getattr(file, cls_name)
                 attr_name = cls_name
                 self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)

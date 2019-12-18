@@ -1,5 +1,8 @@
 import numpy as np
 from typing import Optional  # NOQA
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Discrete(object):

@@ -1,6 +1,6 @@
 import numpy as np  # NOQA
 from collections import OrderedDict
-from andes.programs.base import ProgramBase
+from andes.routines.base import ProgramBase
 from cvxopt import matrix, sparse, spdiag  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence
