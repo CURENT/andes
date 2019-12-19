@@ -102,6 +102,8 @@ class PFlow(BaseRoutine):
                 name = system.dae.xy_name[max_idx]
                 logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
                 logger.info(f'Largest mismatch on equation associated with <{name}>')
+            else:
+                logger.info(f'Power flow calculation failed in {self.niter + 1} iterations.')
 
         else:
             logger.info(f'Power flow converged in {self.niter+1} iterations.')

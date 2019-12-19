@@ -52,7 +52,7 @@ class PVModel(Model):
         self.flags.update({'pflow': True,
                            'collate': True})
 
-        self.config.add(OrderedDict((('pv2pq', 1),
+        self.config.add(OrderedDict((('pv2pq', 0),
                                      ('npv2pq', 1))))
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
