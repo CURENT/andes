@@ -22,7 +22,7 @@ class EIG(BaseRoutine):
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
-        self.config.add(plot=False)
+        self.config.add(plot=0)
 
         # internal flags and storages
         self.As = None

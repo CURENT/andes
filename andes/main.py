@@ -343,10 +343,10 @@ def run(case, options=None):
 
     system.setup()
 
-    if options['dump'] != '':
+    if options.get('dump', '') != '':
         andes.io.xlsx.write(system, system.files.dump)
 
-    if options['exit']:
+    if options.get('exit'):
         return system
 
     system.PFlow.nr()
