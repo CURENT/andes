@@ -38,7 +38,7 @@ def write(system, outfile, skip_empty=True, overwrite=None):
         if overwrite is None:
             choice = input(f'xlsx file {outfile} already exist. Overwrite? [y/N]').lower()
             if len(choice) == 0 or choice[0] != 'y':
-                logger.info('No config file overwritten.')
+                logger.info('No ANDES xlsx file overwritten.')
                 return False
         elif overwrite is False:
             return False
@@ -51,6 +51,7 @@ def write(system, outfile, skip_empty=True, overwrite=None):
         instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
 
     writer.save()
+    logger.info(f'xlsx file written to <{outfile}>')
     return True
 
 

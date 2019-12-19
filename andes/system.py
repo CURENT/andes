@@ -56,7 +56,7 @@ class System(object):
                  options: Optional[Dict] = None,
                  ):
         self.name = name
-        self.options = options  # options from command line or so
+        self.options = {} if options is None else options
         self.calls = OrderedDict()
         self.models = OrderedDict()
         self.groups = OrderedDict()
@@ -395,13 +395,13 @@ class System(object):
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
 
-            logger.debug(f'Jac <{j_name}>, row={ii}')
+            # logger.debug(f'Jac <{j_name}>, row={ii}')
 
             for name, mdl in models.items():
                 row_idx = mdl.row_of(f'{j_name}')
                 col_idx = mdl.col_of(f'{j_name}')
 
-                logger.debug(f'Model <{name}>, row={row_idx}')
+                # logger.debug(f'Model <{name}>, row={row_idx}')
                 ii.extend(row_idx)
                 jj.extend(col_idx)
                 vv.extend(np.zeros(len(np.array(row_idx))))

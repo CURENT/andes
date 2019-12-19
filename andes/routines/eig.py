@@ -278,4 +278,4 @@ class EIG(BaseRoutine):
                 data.append(pf[start:end])
 
         dump_data(text, header, rowname, data, system.files.eig)
-        logger.info('report saved.')
+        logger.info(f'Report saved to <{system.files.eig}>.')

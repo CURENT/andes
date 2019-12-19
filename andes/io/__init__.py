@@ -3,6 +3,8 @@ import logging
 import os
 
 from andes.common.utils import elapsed
+from andes.io import xlsx  # NOQA
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,7 @@ def parse(system):
         return False
 
     # try parsing the base case file
-    logger.info('Parsing input file <{:s}>'.format(system.files.fullname))
+    logger.info('Parsing input file <{:s}>'.format(system.files.case))
 
     if not parser.read(system, system.files.case):
         logger.error(

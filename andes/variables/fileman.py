@@ -38,6 +38,7 @@ class FileMan(object):
 
         self.no_output = True
         self.output = None
+        self.dump = None
         self.lst = None
         self.eig = None
         self.dat = None
@@ -55,7 +56,7 @@ class FileMan(object):
         output_path = kwargs.get('output_path', os.getcwd())
         output = kwargs.get('output')  # base file name for the output
         pert = kwargs.get('pert')
-
+        dump = kwargs.get('dump')
         if case is None:
             return
 
@@ -79,6 +80,8 @@ class FileMan(object):
         self.addfile = self.get_fullpath(addfile)
         self.pert = self.get_fullpath(pert)
         self.dynfile = self.get_fullpath(dynfile)
+        if dump is None:
+            dump = self.name
 
         # use the path where andes is executed as the default output path
         self.output_path = os.getcwd() if not output_path else output_path
@@ -89,6 +92,7 @@ class FileMan(object):
             self.eig = None
             self.dat = None
             self.prof = None
+            self.dump = None
         else:
             self.no_output = False
             if not output:
@@ -102,6 +106,7 @@ class FileMan(object):
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
             self.prof = os.path.join(self.output_path, prof + '.txt')
+            self.dump = os.path.join(self.output_path, dump + '.xlsx')
 
     def get_fullpath(self, fullname=None):
         """

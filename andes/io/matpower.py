@@ -9,7 +9,7 @@ from ..consts import deg2rad
 logger = logging.getLogger(__name__)
 
 
-def is_format(fid):
+def testlines(fid):
     return True  # hard coded
 
 

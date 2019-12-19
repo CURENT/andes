@@ -21,6 +21,10 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),  # suggested step size
                                      ('max_iter', 20),
                                      )))
+        # overwrite `tf` from command line
+        if system.options.get('tf') is not None:
+            self.config.tf = system.options.get('tf')
+
         self.tds_models = system.get_models_with_flag('tds')
         self.pflow_tds_models = system.get_models_with_flag(('tds', 'pflow'))
 
@@ -56,13 +60,11 @@ class TDS(BaseRoutine):
         self.initialized = True
         return system.dae.xy
 
-    def run_implicit(self, tspan=(0, 20), verbose=False):
+    def run_implicit(self, verbose=False):
         # ret = False
         system = self.system
         dae = self.system.dae
         config = self.config
-
-        self.config.t0, self.config.tf = tspan
 
         self._initialize()
 

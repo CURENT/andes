@@ -65,7 +65,8 @@ class Config(object):
                     try:
                         val = float(val)
                     except ValueError:
-                        logger.debug(f'Non-numeric value in config {key} = {val}')
+                        # logger.debug(f'Non-numeric value in config {key} = {val}')
+                        pass
 
             self.__dict__[key] = val
 

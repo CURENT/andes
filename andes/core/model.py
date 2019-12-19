@@ -539,7 +539,7 @@ class Model(object):
         """
         if self.n == 0:
             return
-        logger.debug(f'{self.class_name}: calling eval_service()')
+        # logger.debug(f'{self.class_name}: calling eval_service()')
 
         if self.calls.s_lambdify is not None and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
@@ -1002,7 +1002,6 @@ class Model(object):
         if self.n == 0:
             return
 
-        logger.debug(f'{self.class_name}: calling g_update()')
         # update equations for algebraic variables supplied with `g_numeric`
         # evaluate numerical function calls
         kwargs = self.get_inputs()
