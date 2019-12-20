@@ -4,3 +4,4 @@ scipy
 xlrd
 pandas
 dill
+xlsxwriter
