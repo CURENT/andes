@@ -132,6 +132,7 @@ class ModelData(object):
         if not hasattr(self, 'cache'):
             self.cache = Cache()
         self.cache.add_callback('dict', self.as_dict)
+        self.cache.add_callback('dict_in', lambda: self.as_dict(True))
         self.cache.add_callback('df', self.as_df)
         self.cache.add_callback('df_in', self.as_df_in)
 
@@ -309,7 +310,7 @@ class Model(object):
 
     num_params : OrderedDict
         {name: instance} of numerical parameters, including internal
-        and external onesd
+        and external ones
     """
 
     def __init__(self, system=None, config=None):
@@ -1238,9 +1239,6 @@ class Model(object):
 
         This function should append indices to `_ifx`, `_jfx`, and `_vfx`.
         It is only called once in `store_sparse_pattern`.
-
-        Example
-        -------
         """
         pass
 

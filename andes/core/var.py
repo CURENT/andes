@@ -2,7 +2,7 @@ from typing import Optional, Union, List
 
 import numpy as np
 from andes.core.param import BaseParam
-from andes.devices.group import GroupBase
+from andes.models.group import GroupBase
 from numpy import ndarray
 
 

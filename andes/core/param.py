@@ -3,7 +3,7 @@ from typing import Optional, Union, Callable
 import math
 import numpy as np
 import logging
-from andes.devices.group import GroupBase
+from andes.models.group import GroupBase
 logger = logging.getLogger(__name__)
 
 

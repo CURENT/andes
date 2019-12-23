@@ -3,7 +3,7 @@ from collections import OrderedDict
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam # NOQA
 from andes.core.var import Algeb, ExtAlgeb  # NOQA
-from andes.core.discrete import Comparer  # NOQA
+from andes.core.discrete import Limiter  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -31,15 +31,11 @@ class PQ(PQData, Model):
         self.flags.update({'pflow': True})
         self.config.add(OrderedDict((('pq2z', 1), )))
 
-        self.tex_names.update({'vcmp_zl': 'z_{vl}',
-                               'vcmp_zi': 'z_{vi}',
-                               'vcmp_zu': 'z_{vu}'})
-
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')
 
-        self.vcmp = Comparer(u=self.v, lower=self.vmin, upper=self.vmax,
-                             enable=self.config.pq2z)
+        self.vcmp = Limiter(u=self.v, lower=self.vmin, upper=self.vmax,
+                            enable=self.config.pq2z)
 
         self.a.e_str = "u * (p0 * vcmp_zi + \
                              p0 * vcmp_zl * (v ** 2 / vmin ** 2) + \

@@ -407,10 +407,3 @@ class DeadBand(Limiter):
         self.zu = zu.astype(np.float64)
         self.zl = zl.astype(np.float64)
         self.zi = zi.astype(np.float64)
-
-
-class NonLinearGain(Discrete):
-    """
-    Non-linear gain function
-    """
-    pass

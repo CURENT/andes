@@ -9,7 +9,7 @@ class BaseService(object):
     Base class for Service.
 
     Service is a v-provider type for holding internal and temporary values. Subclasses need to implement ``v``
-    as a member attribute or using a property descriptor.
+    as a member attribute or using a property decorator.
 
     Parameters
     ----------
@@ -368,7 +368,7 @@ class RandomService(ConstService):
     @property
     def v(self):
         """
-        This class has `v` wrapped by a property descriptor.
+        This class has `v` wrapped by a property decorator.
 
         Returns
         -------

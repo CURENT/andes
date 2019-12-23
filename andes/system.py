@@ -32,7 +32,7 @@ from andes.common.utils import get_config_load_path
 
 from andes.variables.dae import DAE
 from andes.routines import all_routines
-from andes.devices import non_jit
+from andes.models import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
 from andes.common.config import Config
@@ -650,7 +650,7 @@ class System(object):
         -------
 
         """
-        module = importlib.import_module('andes.devices.group')
+        module = importlib.import_module('andes.models.group')
         for m in inspect.getmembers(module, inspect.isclass):
             name = m[0]
             cls = m[1]
@@ -673,7 +673,7 @@ class System(object):
         # non-JIT models
         for file, cls_list in non_jit.items():
             for model_name in cls_list:
-                the_module = importlib.import_module('andes.devices.' + file)
+                the_module = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_module, model_name)
                 self.__dict__[model_name] = the_class(system=self, config=self._config_from_file)
                 self.models[model_name] = self.__dict__[model_name]

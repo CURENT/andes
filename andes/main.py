@@ -203,19 +203,19 @@ def cli_parser():
 def edit_conf(edit_config='', load_config=None):
     """
     Edit the Andes config file which occurs first in the search path.
+
     Parameters
     ----------
     edit_config : bool
-        If ``True``, try to open up an editor and edit the config file.
-        Otherwise returns.
+        If ``True``, try to open up an editor and edit the config file. Otherwise returns.
+
     load_config : None or str, optional
-        Path to the config file, which will be placed to the first in the
-        search order.
+        Path to the config file, which will be placed to the first in the search order.
+
     Returns
     -------
     bool
-        ``True`` is a config file is found and an editor is opened. ``False``
-        if ``edit_config`` is False.
+        ``True`` is a config file is found and an editor is opened. ``False`` if ``edit_config`` is False.
     """
     ret = False
 
@@ -288,14 +288,15 @@ def save_config(cf_path=None):
     """
     Save the Andes config to a file at the path specified by ``save_config``.
     The save action will not run if `save_config = ''`.
+
     Parameters
     ----------
-    save_config : None or str, optional, ('' by default)
+    cf_path : None or str, optional, ('' by default)
+
         Path to the file to save the config file. If the path is an emtpy
         string, the save action will not run. Save to
         `~/.andes/andes.conf` if ``None``.
-    kwargs : dict, optional
-        Other keyword arguments
+
     Returns
     -------
     bool
