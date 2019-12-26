@@ -762,7 +762,21 @@ equations to maintain consistency between equations and Jacobians.
 
 Blocks
 ======================================
+The block library contains commonly used transfer functions and nonlinear functions. Variables and equations are
+pre-defined for blocks to be used as lego pieces for scripting DAE models. The base class for blocks is
+:py:mod:`andes.core.block.Block`.
 
+The supported blocks include ``Lag``, ``LeadLag``, ``Washout``, ``LeadLagLimit``, ``PIController``. In addition,
+the base class for piece-wise nonlinear functions, ``PieceWise`` is provided. ``PieceWise`` is used for
+implementing the quadratic saturation function ``MagneticQuadSat`` and exponential saturation function
+``MagneticExpSat``.
+
+All variables in a block must be defined as attributes in the constructor, just like variable definition in
+models. The difference is that the variables are "exported" from a block to the capturing model. All exported
+variables need to placed in a dictionary, ``self.vars`` at the end of the block constructor.
+
+
+Blocks can be nexted as advanced usage. See the API documentation for more details.
 
 Example: GENROU
 ======================================

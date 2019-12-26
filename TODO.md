@@ -76,15 +76,11 @@
  service subclass)
 *   Iterative initialization for equations (half done with Newton Krylov)
 *   Deal with two-terminal and multi-terminal devices
-*   Add a more generic parser for PSSE RAW
-*   Allow for semi-implicit method formulation
-*   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
-*   Export power flow iteration steps for debugging; export limiter status (get_inputs)
-alongside equations
+*   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
 
 ### Usability
-*   Set up command line interface
+- [x] Set up command line interface
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians
@@ -114,3 +110,6 @@ alongside equations
 *   Solve non-linear initialization equations
 *   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
 *   Use `multiprocessing` to call g_update and f_update
+*   Add a more generic parser for PSSE RAW
+*   Allow for semi-implicit method formulation
+*   Allow for semi-analytical derivation of equations

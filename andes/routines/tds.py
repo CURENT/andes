@@ -172,24 +172,11 @@ class TDS(BaseRoutine):
 
     def run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
         """
+        Run integration with ``scipy.odeint``.
 
         Warnings
         --------
-        This routine is not fully working. The time-based switching is not handled correctly.
-
-        Parameters
-        ----------
-        tspan
-        x0
-        asolver
-        verbose
-        h
-        hmax
-        hmin
-
-        Returns
-        -------
-
+        Function is NOT working. The time-based switching is not handled correctly.
         """
         self._initialize()
         if x0 is None:
@@ -215,6 +202,14 @@ class TDS(BaseRoutine):
         return ret
 
     def run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
+        """
+        Run integration with ``scipy.solve_ivp``.
+
+        Warnings
+        --------
+        Function not fully implemented. Discontinuities are not properly handled by this wrapper.
+
+        """
         self._initialize()
         if x0 is None:
             x0 = self.system.dae.x
