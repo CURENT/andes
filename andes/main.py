@@ -271,7 +271,8 @@ def remove_output():
         if file.endswith('_eig.txt') or \
                 file.endswith('_out.txt') or \
                 file.endswith('_out.lst') or \
-                file.endswith('_out.dat') or \
+                file.endswith('_out.npy') or \
+                file.endswith('_out.csv') or \
                 file.endswith('_prof.txt'):
             found = True
             try:
@@ -361,6 +362,7 @@ def run(case, options=None):
     routine = options.get('routine')
     if routine == 'tds':
         system.TDS.run_implicit()
+        system.TDS.save_output()
     elif routine == 'eig':
         system.EIG.run()
 

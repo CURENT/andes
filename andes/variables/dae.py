@@ -296,3 +296,33 @@ class DAE(object):
     def store_xt_array(self, x, t):
         self.ts.x = x
         self.ts.t_x = t
+
+    def write_lst(self, lst_path):
+        """
+        Dump the variable name lst file
+        :return: succeed flag
+        """
+
+        out = ''
+        template = '{:>6g}, {:>25s}, {:>35s}\n'
+
+        # header line
+        out += template.format(0, 'Time [s]', '$Time\\ [s]$')
+
+        # output variable indices
+        idx = list(range(self.m + self.n))
+
+        # variable names concatenated
+        uname = self.xy_name
+        fname = self.xy_tex_name
+
+        for e, i in enumerate(idx):
+            # `idx` in the lst file is always consecutive
+            out += template.format(e + 1, uname[i], fname[i])
+
+        with open(lst_path, 'w') as f:
+            f.write(out)
+        return True
+
+    def write_npy(self, dat_path):
+        np.save(dat_path, self.ts.txy)

@@ -29,7 +29,9 @@ from distutils.spawn import find_executable
 
 import numpy as np
 from andes.core.var import Algeb, State
+from andes.main import config_logger
 
+config_logger(log_file=None)
 logger = logging.getLogger(__name__)
 
 try:
@@ -49,21 +51,21 @@ class TDSData(object):
     plotting data
     """
 
-    def __init__(self, mode='file', file_name_full=None, dae=None, path=None):
+    def __init__(self, file_name_full=None, mode='file', dae=None, path=None):
         # paths and file names
         self._mode = mode
         self.file_name_full = file_name_full
         self.dae = dae
         self._path = path if path else os.getcwd()
         self.file_name = None
-        self._dat_file = None
+        self._npy_file = None
         self._lst_file = None
 
         # data members for raw data
         self._idx = []  # indices of variables
         self._uname = []  # unformatted variable names
         self._fname = []  # formatted variable names
-        self._data = []  # data loaded from dat file
+        self._data = []  # data loaded from file
 
         # auxillary data members for fast query
         self.t = []
@@ -71,11 +73,12 @@ class TDSData(object):
 
         if self._mode == 'file':
             self.file_name, _ = os.path.splitext(file_name_full)
-            self._dat_file = os.path.join(self._path, self.file_name + '.dat')
+            self._npy_file = os.path.join(self._path, self.file_name + '.npy')
             self._lst_file = os.path.join(self._path, self.file_name + '.lst')
+            self._csv_file = os.path.join(self._path, self.file_name + '.csv')
 
             self.load_lst()
-            self.load_dat()
+            self.load_npy_or_csv()
         elif self._mode == 'memory':
             self.load_dae()
         else:
@@ -156,9 +159,9 @@ class TDSData(object):
 
         return found_idx, found_names
 
-    def load_dat(self, delimiter=','):
+    def load_npy_or_csv(self, delimiter=','):
         """
-        Load the dat file into internal data structures `self._data`
+        Load the npy or csv file into internal data structures `self._data`
 
         Parameters
         ----------
@@ -170,9 +173,9 @@ class TDSData(object):
         None
         """
         try:
-            data = np.loadtxt(self._dat_file, delimiter=',')
-        except ValueError:
-            data = np.loadtxt(self._dat_file)
+            data = np.load(self._npy_file)
+        except FileNotFoundError:
+            data = np.loadtxt(self._csv_file, delimiter=delimiter, skiprows=1)
 
         self._data = data
 
@@ -215,7 +218,7 @@ class TDSData(object):
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
 
-    def export_csv(self, path, idx=None, header=None, formatted=False,
+    def export_csv(self, path=None, idx=None, header=None, formatted=False,
                    sort_idx=True, fmt='%.18e'):
         """
         Export to a csv file
@@ -237,6 +240,8 @@ class TDSData(object):
         fmt : str
             cell formatter
         """
+        if not path:
+            path = self._csv_file
         if not idx:
             idx = self._idx
         if not header:
@@ -251,10 +256,12 @@ class TDSData(object):
             fd.write(','.join(header) + '\n')
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
+        logger.info(f'CSV data saved in <{path}>.')
+
     def plot(self, yidx, xidx=(0,), a=None, y_calc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
-             latex=True, dpi=200, save=None, show=True, **kwargs):
+             latex=True, dpi=200, savefig=None, show=True, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -311,7 +318,7 @@ class TDSData(object):
         return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                               left=left, right=right, ymin=ymin, ymax=ymax,
                               xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
-                              latex=latex, dpi=dpi, save=save, show=show, **kwargs)
+                              latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
@@ -325,7 +332,7 @@ class TDSData(object):
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, greyscale=False, save=None, show=True, **kwargs):
+                  latex=True, dpi=150, greyscale=False, savefig=None, show=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -377,8 +384,8 @@ class TDSData(object):
             Dots per inch for screen print or save
         greyscale : bool
             True to use greyscale, False otherwise
-        save : bool
-            True to save to png file
+        savefig : bool
+            True to save to png figure file
         show : bool
             True to show the image
 
@@ -451,7 +458,7 @@ class TDSData(object):
 
         plt.draw()
 
-        if save:
+        if savefig:
             count = 1
 
             while True:
@@ -483,7 +490,7 @@ def tdsplot_parse():
         A dict of the command line arguments
     """
     parser = ArgumentParser(prog='tdsplot')
-    parser.add_argument('datfile', nargs=1, default=[], help='dat file name.')
+    parser.add_argument('filename', nargs=1, default=[], help='data file name.')
     parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
     parser.add_argument('y', nargs='*', help='y axis variable index')
     parser.add_argument('--xmin', type=float, help='x axis minimum value', dest='left')
@@ -496,14 +503,16 @@ def tdsplot_parse():
     parser.add_argument('-x', '--xlabel', type=str, help='manual x-axis text label')
     parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
 
-    parser.add_argument('-s', '--save', action='store_true', help='save to file')
+    parser.add_argument('-s', '--savefig', action='store_true', help='save figure to file')
     parser.add_argument('-g', '--grid', action='store_true', help='grid on')
-    parser.add_argument('-d', '--no_latex', action='store_false', dest='latex', help='disable LaTex formatting')
+    parser.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
 
-    parser.add_argument('-n', '--no_show', action='store_false', dest='show', help='do not show the plot window')
+    parser.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
 
     parser.add_argument('--ytimes', type=str, help='y switch_times')
     parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
+
+    parser.add_argument('-c', '--tocsv', help='convert .npy output to a csv file', action='store_true')
 
     args = parser.parse_args()
     return vars(args)
@@ -624,14 +633,14 @@ def eig_plot(name, args):
         pass
 
 
-def tdsplot(datfile, y, x=(0,), **kwargs):
+def tdsplot(filename, y, x=(0,), tocsv=False, **kwargs):
     """
     TDS plot main function based on the new TDSData class
 
     Parameters
     ----------
-    datfile : str
-        Path to the andes tds output data file (.dat or .lst file)
+    filename : str
+        Path to the ANDES TDS output data file. Works without extension.
     x : list or int, optional
         The index for the x-axis variable. x=0 by default for time
     y : list or int
@@ -643,8 +652,11 @@ def tdsplot(datfile, y, x=(0,), **kwargs):
     """
 
     # single data file
-    if len(datfile) == 1:
-        tds_data = TDSData(datfile[0])
+    if len(filename) == 1:
+        tds_data = TDSData(filename[0])
+        if tocsv is True:
+            tds_data.export_csv()
+            return
         y_num = parse_y(y, lower=0, upper=tds_data.nvars)
         tds_data.plot(xidx=x, yidx=y_num, **kwargs)
         return tds_data

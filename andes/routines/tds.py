@@ -206,6 +206,17 @@ class TDS(BaseRoutine):
 
         return self.converged
 
+    def save_output(self):
+        if self.system.files.no_output:
+            return False
+        else:
+            t0, _ = elapsed()
+            self.system.dae.write_lst(self.system.files.lst)
+            self.system.dae.write_npy(self.system.files.npy)
+            _, s1 = elapsed(t0)
+            logger.info(f'TDS outputs saved in {s1}.')
+            return True
+
     def _run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
         """
         Run integration with ``scipy.odeint``.

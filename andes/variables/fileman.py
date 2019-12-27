@@ -41,7 +41,7 @@ class FileMan(object):
         self.dump = None
         self.lst = None
         self.eig = None
-        self.dat = None
+        self.npy = None
         self.prof = None
 
     def set(self, case=None, **kwargs):
@@ -90,7 +90,7 @@ class FileMan(object):
             self.output = None
             self.lst = None
             self.eig = None
-            self.dat = None
+            self.npy = None
             self.prof = None
             self.dump = None
         else:
@@ -101,7 +101,7 @@ class FileMan(object):
             eig = add_suffix(self.name, 'eig')
 
             self.lst = os.path.join(self.output_path, output + '.lst')
-            self.dat = os.path.join(self.output_path, output + '.dat')
+            self.npy = os.path.join(self.output_path, output + '.npy')
             self.output = os.path.join(self.output_path, output + '.txt')
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
