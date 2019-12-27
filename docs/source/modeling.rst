@@ -329,12 +329,12 @@ config, service or variables can be used in equation strings.
 
 The above example is overly simplified. Further, our ``PQ`` model wants a feature to switch itself to
 a constant impedance if the voltage is out of the range ``(vmin, vmax)``. To implement this, we need to
-introduce a discrete component called ``Comparer``, which yields three arrays of binary flags, ``zi``, ``zl``, and
+introduce a discrete component called ``Limiter``, which yields three arrays of binary flags, ``zi``, ``zl``, and
 ``zu`` indicating in the range, below lower limit, and above upper limit, respectively.
 
-First, create an attribute ``vcmp`` as a ``Comparer`` instance ::
+First, create an attribute ``vcmp`` as a ``Limiter`` instance ::
 
-        self.vcmp = Comparer(u=self.v, lower=self.vmin, upper=self.vmax,
+        self.vcmp = Limiter(u=self.v, lower=self.vmin, upper=self.vmax,
                              enable=self.config.pq2z)
 
 where ``self.config.pq2z`` is a flag to turn this feature on or off.After this line, we can use ``vcmp_zi``,

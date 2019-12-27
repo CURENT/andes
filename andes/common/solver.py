@@ -15,7 +15,9 @@ except ImportError:
 
 class Solver(object):
     """
-    Sparse matrix solver class. Wraps UMFPACK and KLU with a unified interface.
+    A sparse matrix solver class.
+
+    This class wraps ``cvxopt.umfpack`` and ``cvxoptklu.klu`` with a unified interface.
     """
 
     def __init__(self, sparselib='umfpack'):
@@ -30,21 +32,18 @@ class Solver(object):
         if globals()[sparselib] is None:
             self.sparselib = 'umfpack'
 
-    def symbolic(self, A):
+    def _symbolic(self, A):
         """
-        Return the symbolic factorization of sparse matrix ``A``
+        Return the symbolic factorization of sparse matrix ``A``.
 
         Parameters
         ----------
-        sparselib
-            Library name in ``umfpack`` and ``klu``
         A
-            Sparse matrix
+            Sparse matrix to be factorized.
 
         Returns
-        symbolic factorization
         -------
-
+        A C-object of the symbolic factorization.
         """
 
         if self.sparselib == 'umfpack':
@@ -56,21 +55,20 @@ class Solver(object):
         elif self.sparselib in ('spsolve', 'cupy'):
             raise NotImplementedError
 
-    def numeric(self, A, F):
+    def _numeric(self, A, F):
         """
-        Return the numeric factorization of sparse matrix ``A`` using symbolic factorization ``F``
+        Return the numeric factorization of sparse matrix ``A`` using symbolic factorization ``F``.
 
         Parameters
         ----------
         A
-            Sparse matrix
+            Sparse matrix for the equation set coefficients.
         F
-            Symbolic factorization
+            The symbolic factorization of a matrix with the same non-zero shape as ``A``.
 
         Returns
         -------
-        N
-            Numeric factorization of ``A``
+        The numeric factorization of ``A``.
         """
         if self.sparselib == 'umfpack':
             return umfpack.numeric(A, F)
@@ -84,12 +82,11 @@ class Solver(object):
     def _solve(self, A, F, N, b):
         """
         Solve linear system ``Ax = b`` using numeric factorization ``N`` and symbolic factorization ``F``.
-        Store the solution in ``b``.
 
         Parameters
         ----------
         A
-            Sparse matrix
+            Sparse matrix.
         F
             Symbolic factorization
         N
@@ -99,7 +96,7 @@ class Solver(object):
 
         Returns
         -------
-        None
+        The solution as a ``cvxopt.matrix``.
         """
         if self.sparselib == 'umfpack':
             umfpack.solve(A, N, b)
@@ -117,33 +114,37 @@ class Solver(object):
         Solve linear system ``Ax = b`` using numeric factorization ``N`` and symbolic factorization ``F``.
         Store the solution in ``b``.
 
+        This function caches the symbolic factorization in ``self.F`` and is faster in general.
+        Will attempt ``Solver.linsolve`` if the cached symbolic factorization is invalid.
+
         Parameters
         ----------
         A
-            Sparse matrix
+            Sparse matrix for the equation set coefficients.
         F
-            Symbolic factorization
+            The symbolic factorization of A or a matrix with the same non-zero shape as ``A``.
         N
-            Numeric factorization
+            Numeric factorization of A.
         b
-            RHS of the equation
+            RHS of the equation.
 
         Returns
         -------
-        None
+        numpy.ndarray
+            The solution in a 1-D ndarray
         """
         self.A = A
         self.b = b
 
         if self.sparselib in ('umfpack', 'klu'):
             if self.factorize is True:
-                self.F = self.symbolic(self.A)
+                self.F = self._symbolic(self.A)
                 self.factorize = False
 
             try:
-                self.N = self.numeric(self.A, self.F)
+                self.N = self._numeric(self.A, self.F)
                 self._solve(self.A, self.F, self.N, self.b)
-                return self.b
+                return np.ravel(self.b)
             except ValueError:
                 logger.debug('Unexpected symbolic factorization.')
                 self.factorize = True
@@ -157,7 +158,10 @@ class Solver(object):
 
     def linsolve(self, A, b):
         """
-        Solve linear equation set ``Ax = b`` and store the solutions in ``b``.
+        Solve linear equation set ``Ax = b`` and returns the solutions in a 1-D array.
+
+        This function performs both symbolic and numeric factorizations every time, and can be slower than
+        ``Solver.solve``.
 
         Parameters
         ----------
@@ -169,21 +173,21 @@ class Solver(object):
 
         Returns
         -------
-        None
+        The solution in a 1-D np array.
         """
         if self.sparselib == 'umfpack':
             try:
                 umfpack.linsolve(A, b)
             except ArithmeticError:
                 logger.error('Singular matrix. Case is not solvable')
-            return b
+            return np.ravel(b)
 
         elif self.sparselib == 'klu':
             try:
                 klu.linsolve(A, b)
             except ArithmeticError:
                 logger.error('Singular matrix. Case is not solvable')
-            return b
+            return np.ravel(b)
 
         elif self.sparselib in ('spsolve', 'cupy'):
             ccs = A.CCS

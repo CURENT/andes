@@ -206,7 +206,7 @@ def read(system, file):
 
         vf = system.Bus.Vn.v[system.Bus.idx2uid(fbus)]
         vt = system.Bus.Vn.v[system.Bus.idx2uid(tbus)]
-        system.add('Line', u=status,
+        system.add('Line', u=status, name=f'Line {fbus:.0f}-{tbus:.0f}',
                    Vn1=vf, Vn2=vt,
                    bus1=fbus, bus2=tbus,
                    r=r, x=x, b=b,

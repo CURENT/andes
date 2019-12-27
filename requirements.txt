@@ -5,3 +5,4 @@ xlrd
 pandas
 dill
 xlsxwriter
+tqdm

@@ -1,10 +1,12 @@
 import numpy as np  # NOQA
 from collections import OrderedDict
 from andes.routines.base import BaseRoutine
+from andes.common.utils import elapsed
 from cvxopt import matrix, sparse, spdiag  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence
 from scipy.integrate import solve_ivp, odeint
+from tqdm import tqdm
 
 import logging
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ class TDS(BaseRoutine):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
-        self.next_pc = 0.1
+        self.next_pc = 0
 
         self.converged = False
         self.busted = False
@@ -41,10 +43,21 @@ class TDS(BaseRoutine):
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = []
+        self.pbar = None
 
         self.initialized = False
 
     def _initialize(self):
+        """
+        Initialize the status, storage and values for TDS.
+
+        Returns
+        -------
+        array-like
+            The initial values of xy.
+
+        """
+        t0, _ = elapsed()
         system = self.system
         self._reset()
         system.set_address(models=self.tds_models)
@@ -58,18 +71,28 @@ class TDS(BaseRoutine):
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
         self.initialized = True
+
+        _, s1 = elapsed(t0)
+        self.pbar.write(f"Initialization completed in {s1}.")
         return system.dae.xy
 
     def run_implicit(self, verbose=False):
-        # ret = False
+        """
+        Run the implicit numerical integration for TDS.
+
+        Parameters
+        ----------
+        verbose : bool
+            verbosity flag for single integration steps
+        """
         system = self.system
         dae = self.system.dae
         config = self.config
 
+        logger.info('Time Domain Simulation:')
         self._initialize()
 
-        logger.info('Time Domain Simulation:')
-
+        t0, _ = elapsed()
         while system.dae.t < self.config.tf and (not self.busted):
             if self.calc_h() == 0:
                 logger.error("Time step calculated to zero. Simulation terminated.")
@@ -84,22 +107,30 @@ class TDS(BaseRoutine):
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
-                if perc > self.next_pc or dae.t == config.tf:
-                    self.next_pc += 10
-                    logger.info(' ({:.0f}%) time = {:.4f}s, niter = {}'
-                                .format(100 * dae.t / config.tf, dae.t, self.niter))
+                if perc >= self.next_pc:
+                    self.pbar.update(1)
+                    self.next_pc += 1
 
             # check if the next step is critical time
             if self.is_switch_time():
                 self._last_switch_t = system.switch_times[self._switch_idx]
                 system.switch_action(self.pflow_tds_models)
 
+        self.pbar.close()
+        _, s1 = elapsed(t0)
+        logger.info(f'Simulation completed in {s1}.')
+
     def _implicit_step(self, verbose=False):
         """
-        Implicit step
+        Integrate for a single given step.
+
+        This function has an internal Newton-Raphson loop for algebraized semi-explicit DAE.
+        The function returns the convergence status when done but does NOT progress simulation time.
 
         Returns
         -------
+        bool
+            Convergence status in ``self.converged``.
 
         """
         system = self.system
@@ -170,7 +201,7 @@ class TDS(BaseRoutine):
 
         return self.converged
 
-    def run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
+    def _run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
         """
         Run integration with ``scipy.odeint``.
 
@@ -201,7 +232,7 @@ class TDS(BaseRoutine):
         self.system.dae.store_xt_array(ret[0], times)
         return ret
 
-    def run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
+    def _run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
         """
         Run integration with ``scipy.solve_ivp``.
 
@@ -226,21 +257,20 @@ class TDS(BaseRoutine):
 
     def calc_h(self):
         """
-        Set the time step during time domain simulations
+        Calculate the time step size during the TDS.
 
-        Parameters
-        ----------
-        convergence: bool
-            truth value of the convergence of the last step
-        niter: int
-            current iteration count
-        t: float
-            current simulation time
+        Notes
+        -----
+        A heuristic function is used for variable time step size ::
+
+                 min(0.50 * h, hmin), if niter >= 15
+            h =  max(1.10 * h, hmax), if niter <= 6
+                 min(0.95 * h, hmin), otherwise
 
         Returns
         -------
         float
-            computed time step size
+            computed time step size stored in ``self.h``
         """
         system = self.system
         config = self.config
@@ -277,11 +307,7 @@ class TDS(BaseRoutine):
 
     def _calc_h_first(self):
         """
-        Compute the first time step and save to ``self.h``
-
-        Returns
-        -------
-        None
+        Compute the first time step and save to ``self.h``.
         """
         system = self.system
         config = self.config
@@ -320,6 +346,9 @@ class TDS(BaseRoutine):
         return self.h
 
     def _has_more_switch(self):
+        """
+        Check if there are more switching events in the ``System.switch_times`` list.
+        """
         ret = False
         if len(self.system.switch_times) > 0:
             if self._switch_idx + 1 < len(self.system.switch_times):
@@ -327,6 +356,16 @@ class TDS(BaseRoutine):
         return ret
 
     def is_switch_time(self):
+        """
+        Return if the current time is a switching time for time domain simulation.
+
+        Time is approximated with a tolerance of 1e-8.
+
+        Returns
+        -------
+        bool
+            ``True`` if is a switching time; ``False`` otherwise.
+        """
         ret = False
         if self._has_more_switch():
             next_idx = self._switch_idx + 1
@@ -350,6 +389,7 @@ class TDS(BaseRoutine):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
         self.system.dae.t = 0.0
+        self.pbar = tqdm(total=100, ncols=80, unit='%')
 
         self.initialized = False
 

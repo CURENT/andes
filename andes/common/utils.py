@@ -12,76 +12,75 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def list_flatten(idx):
-    if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
-        return functools.reduce(operator.iconcat, idx, [])
+def list_flatten(input_list):
+    """Flatten a multi-dimensional list into a flat 1-D list."""
+    if len(input_list) > 0 and isinstance(input_list[0], (list, np.ndarray)):
+        return functools.reduce(operator.iconcat, input_list, [])
     else:
-        return idx
+        return input_list
 
 
 def elapsed(t0=0.0):
-    """get elapsed time from the give time
-
-    Returns:
-        now: the absolute time now
-        dt_str: elapsed time in string
-        """
-    now = time()
-    dt = now - t0
-    dt_sec = Decimal(str(dt)).quantize(Decimal('.0001'), rounding=ROUND_DOWN)
-    if dt_sec <= 1:
-        dt_str = str(dt_sec) + ' second'
-    else:
-        dt_str = str(dt_sec) + ' seconds'
-    return now, dt_str
-
-
-def get_config_load_path(conf_path=None, file_name='andes.rc'):
     """
-    Return config file load path
-
-    Priority:
-        1. conf_path
-        2. current directory
-        3. home directory
-
-    Parameters
-    ----------
-    conf_path
-
-    file_name
+    Get the elapsed time from the give time.
+    If the start time is not given, returns the unix-time.
 
     Returns
     -------
+    t : float
+        Elapsed time from the given time; Otherwise the epoch time.
+    s : str
+        The elapsed time in seconds in a string
+    """
+    t = time()
+    dt = t - t0
+    dt_sec = Decimal(str(dt)).quantize(Decimal('.0001'), rounding=ROUND_DOWN)
+    if dt_sec <= 1:
+        s = str(dt_sec) + ' second'
+    else:
+        s = str(dt_sec) + ' seconds'
+    return t, s
 
+
+def get_config_path(file_name='andes.rc'):
+    """
+    Return the path of the config file to be loaded.
+
+    Search Priority: 1. current directory; 2. home directory.
+
+    Parameters
+    ----------
+    file_name : str, optional
+        Config file name with the default as ``andes.rc``.
+
+    Returns
+    -------
+    Config path in string if found; None otherwise.
     """
 
-    if conf_path is None:
-        # test ./andes.conf
-        if os.path.isfile(file_name):
-            conf_path = file_name
-        # test ~/andes.conf
-        home_dir = os.path.expanduser('~')
-        if os.path.isfile(os.path.join(home_dir, '.andes', file_name)):
-            conf_path = os.path.join(home_dir, '.andes', file_name)
+    conf_path = None
+    home_dir = os.path.expanduser('~')
 
-    else:
-        logger.debug('Found config file at {}.'.format(conf_path))
+    # test ./andes.conf
+    if os.path.isfile(file_name):
+        conf_path = file_name
+    # test ~/andes.conf
+    elif os.path.isfile(os.path.join(home_dir, '.andes', file_name)):
+        conf_path = os.path.join(home_dir, '.andes', file_name)
 
     return conf_path
 
 
 def get_log_dir():
     """
-    Get a directory for logging.
+    Get the directory for log file.
 
-    On Linux or macOS, '/tmp/andes' is the default. On Windows,
-    '%APPDATA%/andes' is the default.
+    On Linux or macOS, ``/tmp/andes`` is the default. On Windows, ``%APPDATA%/andes`` is the default.
 
     Returns
     -------
     str
-        Path to the logging directory
+        The path to the temporary logging directory
     """
     path = ''
     if platform.system() in ('Linux', 'Darwin'):

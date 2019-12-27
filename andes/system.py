@@ -28,7 +28,7 @@ from cvxopt import spmatrix
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional  # NOQA
 
-from andes.common.utils import get_config_load_path
+from andes.common.utils import get_config_path
 
 from andes.variables.dae import DAE
 from andes.routines import all_routines
@@ -65,7 +65,7 @@ class System(object):
 
         # get and load default config file
         self.config = Config(self.__class__.__name__)
-        self._config_path = get_config_load_path(file_name='andes.rc') if not config_path else config_path
+        self._config_path = get_config_path() if not config_path else config_path
         self._config_from_file = self.load_config(self._config_path)
         self.config.load(self._config_from_file)  # only load config for system and routines
 
@@ -805,7 +805,7 @@ class System(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug(f'Config: Loaded from file {conf_path}')
+        logger.debug(f'Config: Loaded from file <{conf_path}>.')
         return conf
 
     def save_config(self, file_path=None):

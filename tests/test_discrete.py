@@ -2,7 +2,7 @@ import unittest
 
 from andes.core.var import Algeb
 from andes.core.param import NumParam
-from andes.core.discrete import Comparer, SortedLimiter, Switcher
+from andes.core.discrete import Limiter, SortedLimiter, Switcher
 
 import numpy as np
 
@@ -17,14 +17,14 @@ class TestDiscrete(unittest.TestCase):
         self.u.v = np.array([-3, -1.1,  -5, 0,   1,   2,   3,  10])
         self.lower.v = np.array([-2,   -1, 0.5, 0, 0.5, 1.5,   2,   3])
 
-    def test_comparer(self):
+    def test_limiter(self):
         """
-        Tests for `Comparer` class
+        Tests for `Limiter` class
         Returns
         -------
 
         """
-        self.cmp = Comparer(self.u, self.lower, self.upper)
+        self.cmp = Limiter(self.u, self.lower, self.upper)
         self.cmp.check_var()
 
         self.assertSequenceEqual(self.cmp.zl.tolist(),
@@ -42,7 +42,7 @@ class TestDiscrete(unittest.TestCase):
         -------
 
         """
-        self.cmp = Comparer(self.u, self.lower, self.upper)
+        self.cmp = Limiter(self.u, self.lower, self.upper)
         self.cmp.check_var()
 
         self.rcmp = SortedLimiter(self.u, self.lower, self.upper, n_select=1)

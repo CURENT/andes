@@ -1,8 +1,6 @@
 import os
-
-from cvxopt import matrix
-
-from andes.common.tab import simpletab
+import numpy as np
+from andes.common.tab import SimpleTab
 
 
 def format_newline():
@@ -18,12 +16,8 @@ def format_item(item, val):
 
 
 def format_table(header, data, title=None):
-    # fmt = ".4g"
-    # return tabulate(data, headers=header, floatfmt=fmt)
-    table = simpletab(data=data, header=header)
+    table = SimpleTab(data=data, header=header)
     return table.draw()
-    # return []
-    # pass
 
 
 def dump_data(text, header, rowname, data, file, width=14, precision=5):
@@ -35,9 +29,7 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
         for Text, Header, Rowname, Data in zip(text, header, rowname, data):
             # Write Text
             if Text:
-                fid.writelines(
-                    Text
-                )
+                fid.writelines(Text)
 
             # Write Header
             if Header:
@@ -54,19 +46,15 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
                 for idx, item in enumerate(Rowname):  # write by row as always
                     if not Data:
                         out = ''
-                    elif isinstance(Data[0], list):  # list of list in Data
+                    elif isinstance(Data, (int, float)):
+                        out = [Data]
+                    elif isinstance(Data[0], (int, float)):  # is a list of numbers
+                        out = [Data[idx]]
+                    elif isinstance(Data[0], (list, np.ndarray)):  # list of list in Data
                         ncol = len(Data)
                         out = [Data[i][idx] for i in range(ncol)]
-                    elif isinstance(Data[0],
-                                    (int, float)):  # Is just a list of numbers
-                        ncol = 1
-                        out = [Data[idx]]
-                    elif isinstance(Data, (int, float)):
-                        ncol = 1
-                        out = [Data]
-                    elif isinstance(Data, matrix):  # Data is a matrix
-                        pass
                     else:
+                        print(Data)
                         print('Unexpected Data during output, in formats/txt.py')
 
                     s = '{:{width}s}'  # for row header

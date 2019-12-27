@@ -1,8 +1,12 @@
 import numpy as np
-from collections import OrderedDict
-from andes.routines.base import BaseRoutine
-from cvxopt import matrix, sparse
 from scipy.optimize import newton_krylov
+
+from collections import OrderedDict
+from cvxopt import matrix, sparse
+
+from andes.common.utils import elapsed
+from andes.routines.base import BaseRoutine
+from andes.variables.report import Report
 
 import logging
 logger = logging.getLogger(__name__)
@@ -13,7 +17,8 @@ class PFlow(BaseRoutine):
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
-                                     ('max_iter', 20))))
+                                     ('max_iter', 20),
+                                     ('flat_start', 0))))
         self.models = system.get_models_with_flag('pflow')
 
         self.converged = False
@@ -81,6 +86,7 @@ class PFlow(BaseRoutine):
             logger.error("Loaded case file contains no element.")
             return False
 
+        t0, _ = elapsed()
         self.niter = 0
         while True:
             mis = self.nr_step()
@@ -96,6 +102,8 @@ class PFlow(BaseRoutine):
                 break
             self.niter += 1
 
+        _, s1 = elapsed(t0)
+
         if not self.converged:
             if abs(self.mis[-1] - self.mis[-2]) < self.config.tol:
                 max_idx = np.argmax(np.abs(system.dae.xy))
@@ -106,9 +114,14 @@ class PFlow(BaseRoutine):
                 logger.info(f'Power flow calculation failed in {self.niter + 1} iterations.')
 
         else:
-            logger.info(f'Power flow converged in {self.niter+1} iterations.')
+            logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
 
         return self.converged
+
+    def write_report(self):
+        if self.system.files.no_output is False:
+            r = Report(self.system)
+            r.write()
 
     def _fg_wrapper(self, xy):
         """

@@ -6,9 +6,7 @@ logger = logging.getLogger(__name__)
 
 class Config(object):
     """
-    Class for storing model configurations that will be used in equations and routines.
-
-    All config entries must be numerical.
+    A class for storing system, model and routine configurations.
     """
 
     def __init__(self, name, dct=None, **kwargs):
@@ -18,15 +16,7 @@ class Config(object):
 
     def load(self, config):
         """
-        Load from ConfigParser config object
-
-        Parameters
-        ----------
-        config
-
-        Returns
-        -------
-
+        Load from a ConfigParser object, ``config``.
         """
         if config is None:
             return
@@ -36,16 +26,9 @@ class Config(object):
 
     def add(self, dct=None, **kwargs):
         """
-        Add additional configs. Existing configs will not be overwritten.
+        Add config fields from a dictionary or keyword args.
 
-        Parameters
-        ----------
-        dct
-        kwargs
-
-        Returns
-        -------
-
+        Existing configs will NOT be overwritten.
         """
         if dct is not None:
             self._add(**dct)
@@ -65,12 +48,14 @@ class Config(object):
                     try:
                         val = float(val)
                     except ValueError:
-                        # logger.debug(f'Non-numeric value in config {key} = {val}')
                         pass
 
             self.__dict__[key] = val
 
     def as_dict(self):
+        """
+        Return the config fields and values in an ``OrderedDict``.
+        """
         out = []
         for key, val in self.__dict__.items():
             if not key.startswith('_'):

@@ -6,6 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class Discrete(object):
+    """
+    Base class for discrete components which exports boolean flags.
+    """
 
     def __init__(self, name=None, tex_name=None):
         self.name = name
@@ -71,12 +74,6 @@ class Limiter(Discrete):
         Flags for within the limits
     zu : array-like
         Flags for violating the upper limit
-
-    Notes
-    -----
-    One common pitfall is to confuse the output and input variables. The correct variable for input `u` should
-    be the variable *before* the limiter. The output variable is not involved in limiter classes; they are
-    handled in the equation associated with the output variable.
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None):
@@ -108,17 +105,6 @@ class Limiter(Discrete):
         self.zu = self.zu.astype(np.float64)
         self.zl = self.zl.astype(np.float64)
         self.zi = self.zi.astype(np.float64)
-
-
-class Comparer(Limiter):
-    """
-    A value comparer. This class is an alias of Limiter.
-
-    .. deprecated:: soon
-        The `Comparer` class will be deprecated as it is identical to Limiter because Limiter no longer sets the
-        variable value. Now, A Limiter is essentially a comparer.
-    """
-    pass
 
 
 class SortedLimiter(Limiter):
@@ -201,6 +187,9 @@ class AntiWindupLimiter(WindupLimiter):
         pass
 
     def check_eq(self):
+        """
+        Check the variables and equations and set the limiter flags.
+        """
         super().check_var()
         self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
         self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
@@ -209,6 +198,9 @@ class AntiWindupLimiter(WindupLimiter):
                           self.zl.astype(np.bool))).astype(np.float64)
 
     def set_eq(self):
+        """
+        Reset differential equation values based on limiter flags.
+        """
         self.state.e = self.state.e * self.zi
 
 
@@ -256,20 +248,20 @@ class Selector(Discrete):
         self._inputs = None
         self._outputs = None
 
-    def get_names(self):
-        return [f'{self.name}_s' + str(i) for i in range(len(self.input_vars))]
+        for i in range(len(self.input_vars)):
+            self.__dict__[f's{i}'] = 0
 
-    def get_values(self):
-        return self._s
+        self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
+        self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
 
     def check_var(self):
         """
-        Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input
+        Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input.
         """
         self._inputs = [self.input_vars[i].v for i in range(self.n)]
         self._outputs = self.fun(self._inputs)
         for i in range(self.n):
-            self._s[i] = np.equal(self._inputs[i], self._outputs).astype(int)
+            self.__dict__[f's{i}'] = np.equal(self._inputs[i], self._outputs).astype(int)
 
 
 class Switcher(Discrete):
@@ -293,6 +285,7 @@ class Switcher(Discrete):
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
 
     def check_var(self):
+        """Set the switcher flags based on inputs. Uses cached flags if cache is set to True."""
         if self.cache and self._eval:
             return
         for i in range(len(self.option)):
@@ -344,17 +337,23 @@ class DeadBand(Limiter):
     Assume the pre-deadband input variable is `var_in` and the post-deadband variable is `var_out`. First, define a
     deadband instance `db` in the model using ::
 
-        self.db = DeadBand(u=self.var_in, center=self.dbc, lower=self.dbl, upper=self.dbu)
+        self.db = DeadBand(u=self.var_in,
+                           center=self.dbc,
+                           lower=self.dbl,
+                           upper=self.dbu)
 
     To implement a no-memory deadband whose output returns to center when the input is within the band,
     the equation for `var` can be written as ::
 
-        var_out.e_str = 'var_in * (1 - db_zi) + (dbc * db_zi) - var_out'
+        var_out.e_str = 'var_in * (1 - db_zi) + \
+                         (dbc * db_zi) - var_out'
 
     To implement a deadband whose output is pegged at the nearest deadband bounds, the equation for `var` can be
     provided as ::
 
-        var_out.e_str = 'var_in * (1 - db_zi) + dbl * db_zlr + dbu * db_zur - var_out'
+        var_out.e_str = 'var_in * (1 - db_zi) + \
+                         dbl * db_zlr + \
+                         dbu * db_zur - var_out'
 
     """
     def __init__(self, u, center, lower, upper, enable=True):
@@ -374,7 +373,7 @@ class DeadBand(Limiter):
 
     def check_var(self):
         """
-        Updates five flags: zi, zu, zl; zur, and zlr based on the following rules
+        Updates five flags: zi, zu, zl; zur, and zlr based on the following rules:
 
         zu:
           1 if u > upper; 0 otherwise.

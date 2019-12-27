@@ -211,10 +211,6 @@ class Block(object):
         Function call to update algebraic equation values.
 
         This function should modify the ``e`` value of block ``Algeb`` and ``ExtAlgeb`` in place.
-
-        Returns
-        -------
-        None
         """
         pass
 
@@ -223,14 +219,7 @@ class Block(object):
         Function call to update differential equation values.
 
         This function should modify the ``e`` value of block ``State`` and ``ExtState`` in place.
-
-        Returns
-        -------
-        None
         """
-        pass
-
-    def c_numeric(self, **kwargs):
         pass
 
     def j_numeric(self):
@@ -247,19 +236,8 @@ class Block(object):
 
     @property
     def class_name(self):
-        """Return the class name"""
+        """Return the class name."""
         return self.__class__.__name__
-
-
-class SampleAndHolder(Block):
-    """
-    Sample and hold block
-
-    Warnings
-    --------
-    Not implemented yet.
-    """
-    pass
 
 
 class PIController(Block):
@@ -576,6 +554,11 @@ class Piecewise(Block):
         self.vars = {'y': self.y}
 
     def define(self):
+        """
+        Build the equation string for the piecewise equations.
+
+        ``self.funs`` needs to be provided with the function strings corresponding to each range.
+        """
         args = []
         i = 0
         for i in range(len(self.points)):
@@ -616,6 +599,7 @@ class MagneticQuadSat(Piecewise):
         self.vars.update({'c0': self.c0, 'c1': self.c1, 'c2': self.c2})
 
     def define(self):
+        """Define the quadratic saturation function."""
         self.funs = ['0',
                      f'{self.u.name}',
                      f'{self.name}_c0 + {self.name}_c1*{self.u.name} + {self.name}_c2 * {self.u.name}**2'
@@ -640,6 +624,7 @@ class MagneticExpSat(Piecewise):
         self.vars.update({'c': self.c})
 
     def define(self):
+        """Define the exponential saturation function."""
         self.funs = ['0',
                      f'{self.s10.name} * {self.u.name} ^ {self.name}_c',
                      f'{self.s10.name} * {self.u.name} ^ {self.name}_c',

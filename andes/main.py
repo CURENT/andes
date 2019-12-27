@@ -1,6 +1,7 @@
 import cProfile
 import glob
 import logging
+import coloredlogs
 import os
 import io
 import sys
@@ -21,7 +22,7 @@ logger.setLevel(logging.INFO)
 
 
 def config_logger(logger=None, name='andes', log_file='andes.log', log_path='', stream=True, file=False,
-                  stream_level=logging.INFO, file_level=logging.DEBUG):
+                  stream_level=logging.INFO, file_level=logging.DEBUG, color=True):
     """
     Configure a logger for the andes package with options for a `FileHandler`
     and a `StreamHandler`. This function is called at the beginning of
@@ -75,6 +76,9 @@ def config_logger(logger=None, name='andes', log_file='andes.log', log_path='', 
             logger.debug(f'Logging to file {log_full_path}')
 
         globals()['logger'] = logger
+
+    if color:
+        coloredlogs.install(logger=logger, level=stream_level, fmt='%(message)s')
 
 
 def preamble():
@@ -200,7 +204,7 @@ def cli_parser():
     return parser
 
 
-def edit_conf(edit_config='', load_config=None):
+def edit_conf(edit_config=''):
     """
     Edit the Andes config file which occurs first in the search path.
 
@@ -208,9 +212,6 @@ def edit_conf(edit_config='', load_config=None):
     ----------
     edit_config : bool
         If ``True``, try to open up an editor and edit the config file. Otherwise returns.
-
-    load_config : None or str, optional
-        Path to the config file, which will be placed to the first in the search order.
 
     Returns
     -------
@@ -223,7 +224,7 @@ def edit_conf(edit_config='', load_config=None):
     if edit_config == '':
         return ret
 
-    conf_path = andes.common.utils.get_config_load_path(load_config)
+    conf_path = andes.common.utils.get_config_path()
 
     if conf_path is not None:
         logger.info('Editing config file {}'.format(conf_path))
@@ -284,14 +285,14 @@ def remove_output():
     return True
 
 
-def save_config(cf_path=None):
+def save_config(config_path=None):
     """
     Save the Andes config to a file at the path specified by ``save_config``.
     The save action will not run if `save_config = ''`.
 
     Parameters
     ----------
-    cf_path : None or str, optional, ('' by default)
+    config_path : None or str, optional, ('' by default)
 
         Path to the file to save the config file. If the path is an emtpy
         string, the save action will not run. Save to
@@ -305,14 +306,17 @@ def save_config(cf_path=None):
     ret = False
 
     # no ``--save-config ``
-    if cf_path == '':
+    if config_path == '':
         return ret
 
-    if cf_path is None:
-        cf_path = andes.common.utils.get_config_load_path()
+    if config_path is None:
+        config_path = andes.common.utils.get_config_path()
+
+    if os.path.isdir(config_path):
+        config_path = os.path.join(config_path, 'andes.rc')
 
     ps = System()
-    ps.save_config(cf_path)
+    ps.save_config(config_path)
     ret = True
 
     return ret
@@ -351,6 +355,8 @@ def run(case, options=None):
         return system
 
     system.PFlow.nr()
+    if system.PFlow.converged:
+        system.PFlow.write_report()
 
     routine = options.get('routine')
     if routine == 'tds':
@@ -424,7 +430,7 @@ def main(args=None):
         filename = [filename]
 
     if len(filename) == 0:
-        logger.info('error: no input file. Try \'andes -h\' for help.')
+        logger.error('error: no input file. Try \'andes -h\' for help.')
 
     # preprocess cli args
     path = args.get('input_path', os.getcwd())
@@ -436,7 +442,7 @@ def main(args=None):
         full_paths = os.path.abspath(os.path.join(path, file))
         found = glob.glob(full_paths)
         if len(found) == 0:
-            logger.info('error: file {} does not exist.'.format(full_paths))
+            logger.error('error: file {} does not exist.'.format(full_paths))
         else:
             cases += found
 

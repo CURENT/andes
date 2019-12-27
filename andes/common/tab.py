@@ -3,9 +3,15 @@ from andes.common.texttable import Texttable
 
 class Tab(Texttable):
     """
-    Use package texttable to create fine-formatted tables for setting helps
-    and device helps. Avoid using this class for static report formatting as
-    it may be slow.
+    Use package ``texttable`` to create well-formatted tables for setting helps
+    and device helps.
+
+    Parameters
+    ----------
+    export : ('plain', 'rest')
+        Export format in plain text or restructuredText.
+    max_width : int
+        Maximum table width. If there are equations in cells, set to 0 to disable wrapping.
     """
 
     def __init__(self,
@@ -28,11 +34,11 @@ class Tab(Texttable):
         if data is not None:
             self.add_rows(data, header=False)
 
-    def header(self, array):
-        Texttable.header(self, array)
-        # self.auto_style()
+    def header(self, header_list):
+        """Set the header with a list."""
+        Texttable.header(self, header_list)
 
-    def guess_header(self):
+    def _guess_header(self):
         if self._header:
             return
         header = ''
@@ -42,27 +48,13 @@ class Tab(Texttable):
             header = ['Parameter', 'Description', 'Value', 'Unit']
         self.header(header)
 
-    # def auto_style(self):
-    #     """
-    #     automatic styling according to _row_size
-    #     76 characters in a row
-    #     """
-    #     if self._row_size is None:
-    #         return
-    #     elif self._row_size == 3:
-    #         self.set_cols_align(['l', 'l', 'l'])
-    #         self.set_cols_valign(['t', 't', 't'])
-    #         self.set_cols_width([12, 54, 12])
-    #     elif self._row_size == 4:
-    #         self.set_cols_align(['l', 'l', 'l', 'l'])
-    #         self.set_cols_valign(['t', 't', 't', 't'])
-    #         self.set_cols_width([10, 40, 10, 10])
-    #         # TODO: third column use scientific notation for small values
-
     def set_title(self, val):
+        """
+        Set table title to ``val``.
+        """
         self._title = val
 
-    def add_left_space(self, nspace=1):
+    def _add_left_space(self, nspace=1):
         """elem_add n cols of spaces before the first col.
            (for texttable 0.8.3)"""
         sp = ' ' * nspace
@@ -70,9 +62,12 @@ class Tab(Texttable):
             item[0] = sp + item[0]
 
     def draw(self):
-        """generate texttable formatted string"""
-        self.guess_header()
-        self.add_left_space()
+        """
+        Draw the table and return it in a string.
+        """
+        self._guess_header()
+        self._add_left_space()
+
         # for Texttable, add a column of whitespace on the left for better visual effect
         if self._title and self._descr:
             pre = self._title + '\n' + self._descr + '\n\n'
@@ -86,8 +81,8 @@ class Tab(Texttable):
         return pre + str(Texttable.draw(self)) + empty_line
 
 
-class simpletab(object):
-    """A simple and faster table class for static report output"""
+class SimpleTab(object):
+    """A simple and faster table class for static report outputs."""
 
     def __init__(self, header=None, title=None, data=None, side=None):
         """header: a list of strings,
@@ -99,7 +94,7 @@ class simpletab(object):
         self.side = side
         self._width = [10] * len(header) if header else []
 
-    def guess_width(self):
+    def _guess_width(self):
         """auto fit column width"""
         if len(self.header) <= 4:
             nspace = 6
@@ -131,7 +126,9 @@ class simpletab(object):
             self._width[col] += width[col]
 
     def draw(self):
-        self.guess_width()
+        """Draw the stored table and return as a list (#TODO)"""
+
+        self._guess_width()
         data = list()
         out = ''
         fmt = 's'

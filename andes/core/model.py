@@ -1192,10 +1192,7 @@ class Model(object):
 
     def a_reset(self):
         """
-        Reset addresses to empty and reset flags['address']
-        Returns
-        -------
-
+        Reset addresses to empty and reset flags['address'] to ``False``.
         """
         if self.n == 0:
             return
@@ -1204,6 +1201,9 @@ class Model(object):
         self.flags['address'] = False
 
     def e_clear(self):
+        """
+        Clear equation value arrays associated with all internal variables.
+        """
         if self.n == 0:
             return
         for instance in self.cache.all_vars.values():
@@ -1211,26 +1211,24 @@ class Model(object):
 
     def v_numeric(self, **kwargs):
         """
-        Custom variable initialization function
+        Custom variable initialization function.
         """
         pass
 
     def g_numeric(self, **kwargs):
         """
-        Custom gcall functions. Modify equations directly
+        Custom gcall functions. Modify equations directly.
         """
         pass
 
     def f_numeric(self, **kwargs):
         """
-        Custom fcall functions. Modify equations directly
+        Custom fcall functions. Modify equations directly.
         """
         pass
 
-    def c_numeric(self, **kwargs):
-        pass
-
     def s_numeric(self, **kwargs):
+        """Custom service value functions. Modify ``Service.v`` directly."""
         pass
 
     def j_numeric(self, **kwargs):
@@ -1244,14 +1242,12 @@ class Model(object):
 
     def _param_doc(self, max_width=80, export='plain'):
         """
-        Export formatted model documentation as a string
+        Export formatted model parameter documentation as a string.
 
         Returns
         -------
         str
         """
-        # parameter documentation
-
         if len(self.params) == 0:
             return ''
 
@@ -1313,7 +1309,14 @@ class Model(object):
 
     @staticmethod
     def math_wrap(tex_str_list, export):
-        # only wrap when export format is ``rest``
+        """
+        Warp each string item in a list with latex math environment ``$...$``.
+
+        Parameters
+        ----------
+        export : str, ('rest', 'plain')
+            Export format. Only wrap equations if export format is ``rest``.
+        """
         if export != 'rest':
             return list(tex_str_list)
 
@@ -1387,6 +1390,21 @@ class Model(object):
         return ''
 
     def doc(self, max_width=80, export='plain'):
+        """
+        Return the model documentation in table-formatted string.
+
+        Parameters
+        ----------
+        max_width : int
+            Maximum table width. Automatically et to 0 if format is ``rest``.
+        export : str, ('plain', 'rest')
+            Export format. Use fancy table if is ``rest``.
+
+        Returns
+        -------
+        str
+            A string with the documentations.
+        """
         out = ''
         if export == 'rest':
             max_width = 0
@@ -1411,4 +1429,5 @@ class Model(object):
             self._service_doc(max_width=max_width, export=export) + \
             self._discrete_doc(max_width=max_width, export=export) + \
             self._block_doc(max_width=max_width, export=export)
+
         return out
