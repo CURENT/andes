@@ -44,6 +44,7 @@ class TDS(BaseRoutine):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
         self.pbar = None
+        self.plotter = None
 
         self.initialized = False
 
@@ -119,6 +120,10 @@ class TDS(BaseRoutine):
         self.pbar.close()
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
+
+        # load data into ``TDS.plot``
+        from andes.plot import TDSData  # NOQA
+        self.plotter = TDSData(mode='memory', dae=system.dae)
 
     def _implicit_step(self, verbose=False):
         """
@@ -390,6 +395,7 @@ class TDS(BaseRoutine):
         self.mis = []
         self.system.dae.t = 0.0
         self.pbar = tqdm(total=100, ncols=80, unit='%')
+        self.plotter = None
 
         self.initialized = False
 

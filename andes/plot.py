@@ -28,6 +28,7 @@ from argparse import ArgumentParser
 from distutils.spawn import find_executable
 
 import numpy as np
+from andes.core.var import Algeb, State
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +49,15 @@ class TDSData(object):
     plotting data
     """
 
-    def __init__(self, file_name_full, path=None):
+    def __init__(self, mode='file', file_name_full=None, dae=None, path=None):
         # paths and file names
+        self._mode = mode
+        self.file_name_full = file_name_full
+        self.dae = dae
         self._path = path if path else os.getcwd()
-
-        self.file_name, _ = os.path.splitext(file_name_full)
-
-        self._dat_file = os.path.join(self._path, self.file_name + '.dat')
-        self._lst_file = os.path.join(self._path, self.file_name + '.lst')
+        self.file_name = None
+        self._dat_file = None
+        self._lst_file = None
 
         # data members for raw data
         self._idx = []  # indices of variables
@@ -67,9 +69,28 @@ class TDSData(object):
         self.t = []
         self.nvars = 0  # total number of variables including `t`
 
-        # TODO: consider moving the loading calls outside __init__
-        self.load_lst()
-        self.load_dat()
+        if self._mode == 'file':
+            self.file_name, _ = os.path.splitext(file_name_full)
+            self._dat_file = os.path.join(self._path, self.file_name + '.dat')
+            self._lst_file = os.path.join(self._path, self.file_name + '.lst')
+
+            self.load_lst()
+            self.load_dat()
+        elif self._mode == 'memory':
+            self.load_dae()
+        else:
+            raise NotImplementedError(f'Unknown mode {self._mode}.')
+
+    def load_dae(self):
+        """Load from DAE time series"""
+        dae = self.dae
+        self.t = dae.ts.t_y
+        self.nvars = dae.n + dae.m + 1
+
+        self._idx = list(range(self.nvars))
+        self._uname = ['Time [s]'] + dae.x_name + dae.y_name
+        self._fname = ['$Time [s]$'] + dae.x_tex_name + dae.y_tex_name
+        self._data = dae.ts.txy
 
     def load_lst(self):
         """
@@ -230,7 +251,8 @@ class TDSData(object):
             fd.write(','.join(header) + '\n')
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
-    def plot(self, yidx, xidx=(0,), y_calc=None, left=None, right=None, ymin=None, ymax=None, ytimes=None,
+    def plot(self, yidx, xidx=(0,), a=None, y_calc=None,
+             left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
              latex=True, dpi=200, save=None, show=True, **kwargs):
         """
@@ -254,6 +276,17 @@ class TDSData(object):
         (fig, ax)
             Figure and axis handles
         """
+        if self._mode == 'memory':
+            if isinstance(yidx, (State, Algeb)):
+                offs = 1
+                if isinstance(yidx, Algeb):
+                    offs += self.dae.n
+
+                if a is None:
+                    yidx = yidx.a + offs
+                else:
+                    yidx = np.take(yidx.a, a) + offs
+
         x_value = self.get_values(xidx)
         y_value = self.get_values(yidx)
 
@@ -694,13 +727,13 @@ def label_texify(label):
     return '$' + label.replace(' ', r'\ ') + '$'
 
 
-def set_latex(with_latex=True):
+def set_latex(enable=True):
     """
     Enables latex for matplotlib based on the `with_latex` option and `dvipng` availability
 
     Parameters
     ----------
-    with_latex : bool, optional
+    enable : bool, optional
         True for latex on and False for off
 
     Returns
@@ -711,7 +744,7 @@ def set_latex(with_latex=True):
 
     has_dvipng = find_executable('dvipng')
 
-    if has_dvipng and with_latex:
+    if has_dvipng and enable:
         rc('text', usetex=True)
         return True
     else:

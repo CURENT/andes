@@ -1,15 +1,7 @@
 import logging
-from distutils.spawn import find_executable
-from typing import Optional, Union, Callable
-
 import numpy as np
 from cvxopt.base import spmatrix
-
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-
 from andes.common.config import Config
-from andes.core.var import BaseVar
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +13,10 @@ class DAETimeSeries(object):
         self.x = None
         self.y = None
         self.c = None
+
+    @property
+    def txy(self):
+        return np.hstack((self.t_y.reshape((-1, 1)), self.x, self.y))
 
 
 class DAE(object):
@@ -297,129 +293,6 @@ class DAE(object):
         else:
             self.ts.x = np.vstack((self.ts.x, self.x))
 
-    def store_c_single(self):
-        """
-        Store differential variable value
-
-        Returns
-        -------
-
-        """
-        raise NotImplementedError
-        # if self.ts.c is None:
-        #     self.ts.c = np.array(self.c)
-        # else:
-        #     self.ts.c = np.vstack((self.ts.c, self.c))
-
     def store_xt_array(self, x, t):
         self.ts.x = x
         self.ts.t_x = t
-
-    def plot(self,
-             var,
-             idx: Optional[Union[BaseVar, list, np.ndarray]] = None,
-             legend: Optional[bool] = False,
-             grid: Optional[bool] = True,
-             left: Optional[Union[int, float]] = None,
-             right: Optional[Union[int, float]] = None,
-             fun: Optional[Callable] = None,
-             fig=None,
-             ax=None):
-        if var not in ('x', 'y', 'c'):
-            raise ValueError('Only x, y or c is allowed for var')
-
-        # set latex option
-        self.set_latex(self.config.latex)
-
-        if isinstance(idx, BaseVar):
-            idx = idx.a
-        elif isinstance(idx, (int, np.int64)):
-            idx = [idx]
-
-        if idx is None or len(idx) == 0:
-            value_array = self.ts.__dict__[var]
-        else:
-            # slice values
-            value_array = self.ts.__dict__[var][:, idx]
-
-        # apply callable function `fun`
-        if fun is not None:
-            value_array = fun(value_array)
-
-        legend_list = self._get_legend(var, idx)
-
-        # get the correct time array
-        if self.ts.__dict__['t_' + var] is not None:
-            t_array = self.ts.__dict__['t_' + var]
-        else:
-            t_array = self.ts.t_y  # fallback
-
-        if not left:
-            left = t_array[0] - 1e-6
-        if not right:
-            right = t_array[-1] + 1e-6
-
-        # set latex
-        self.set_latex(self.config.latex)
-
-        if fig is None:
-            fig = plt.figure(dpi=self.config.dpi)
-            ax = plt.gca()
-
-        ls_list = ['-', '--', '-.', ':'] * (int(value_array.shape[1] / 4) + 1)
-
-        for i in range(value_array.shape[1]):
-            ax.plot(t_array,
-                    value_array[:, i],
-                    linestyle=ls_list[i],
-                    )
-
-        ax.set_xlim(left=left, right=right)
-        ax.ticklabel_format(useOffset=False)
-
-        if grid:
-            ax.grid(b=True, linestyle='--')
-
-        if legend is True:
-            ax.legend(legend_list)
-
-        return fig, ax
-
-    def set_latex(self, enable=1):
-        """
-        Enables latex for matplotlib based on the `with_latex` option and `dvipng` availability
-
-        Parameters
-        ----------
-        enable: bool, optional
-            True for latex on and False for off
-
-        Returns
-        -------
-        bool
-            True for latex on and False for off
-        """
-
-        if enable == 1:
-            if find_executable('dvipng'):
-                mpl.rc('text', usetex=True)
-                self.config.latex = 1
-                return True
-
-        mpl.rc('text', usetex=False)
-        self.config.latex = 0
-        return False
-
-    def _get_legend(self, var, idx=None):
-        attr_name = f'{var}_name'
-        attr_tex_name = f'{var}_tex_name'
-
-        if self.config.latex == 1:
-            out = self.__dict__[attr_tex_name]
-        else:
-            out = self.__dict__[attr_name]
-
-        if (idx is not None) and len(idx) > 0:
-            out = [out[i] for i in idx]
-
-        return out
