@@ -384,6 +384,8 @@ def run_case(case, routine=None, profile=False, convert='', **kwargs):
 def run(filename, input_path='', ncpu=1, **kwargs):
     if len(filename) == 0:
         logger.info('info: no input file. Try \'andes run -h\' for help.')
+    elif isinstance(filename, str):
+        filename = [filename]
 
     system = None
     cases = []
