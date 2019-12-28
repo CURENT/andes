@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # ANDES, a power system simulation tool for research.
 #
 # Copyright 2015-2019 Hantao Cui
@@ -23,26 +21,17 @@ Andes plotting tool
 import logging
 import os
 import re
-import sys
-from argparse import ArgumentParser
 from distutils.spawn import find_executable
 
 import numpy as np
 from andes.core.var import Algeb, State
 from andes.main import config_logger
 
+from matplotlib import rc
+from matplotlib import pyplot as plt
+
 config_logger(log_file=None)
 logger = logging.getLogger(__name__)
-
-try:
-    from matplotlib import rc
-    from matplotlib import pyplot as plt
-except ImportError:
-    logger.critical('Package <matplotlib> not found')
-    sys.exit(1)
-
-lfile = []
-dfile = []
 
 
 class TDSData(object):
@@ -261,7 +250,7 @@ class TDSData(object):
     def plot(self, yidx, xidx=(0,), a=None, y_calc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
-             latex=True, dpi=200, savefig=None, show=True, **kwargs):
+             latex=True, dpi=200, savefig=None, show=True, use_bqplot=False, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -315,10 +304,18 @@ class TDSData(object):
         if y_calc is not None:
             y_value = y_calc(y_value)
 
-        return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
-                              left=left, right=right, ymin=ymin, ymax=ymax,
-                              xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
-                              latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
+        if use_bqplot is True or (use_bqplot is None and is_notebook()):
+
+            return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
+                                    left=left, right=right, ymin=ymin, ymax=ymax,
+                                    xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
+                                    latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
+
+        else:
+            return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
+                                  left=left, right=right, ymin=ymin, ymax=ymax,
+                                  xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
+                                  latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
@@ -330,9 +327,33 @@ class TDSData(object):
         """
         pass
 
+    def bqplot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
+                    left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
+                    latex=True, dpi=150, greyscale=False, savefig=None, show=True, **kwargs):
+        """
+        Plot with ``bqplot``. Experimental and imcomplete.
+        """
+
+        from bqplot import pyplot as plt
+        if not isinstance(ydata, np.ndarray):
+            TypeError("ydata must be numpy array. Retrieve with get_values().")
+
+        if ydata.ndim == 1:
+            ydata = ydata.reshape((-1, 1))
+
+        plt.figure(dpi=dpi)
+        plt.plot(xdata, ydata.transpose(),
+                 linewidth=1.5,
+                 )
+
+        if yheader:
+            plt.label(yheader)
+
+        plt.show()
+
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, greyscale=False, savefig=None, show=True, **kwargs):
+                  latex=True, dpi=100, greyscale=False, savefig=None, show=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -416,21 +437,23 @@ class TDSData(object):
         if not right:
             right = xdata[-1] + 1e-6
 
-        linestyles = ['-', '--', '-.', ':'] * len(ydata)
+        line_styles = ['-', '--', '-.', ':'] * int(len(ydata) / 4 + 1)
 
         if not (fig and ax):
             fig = plt.figure(dpi=dpi)
             ax = plt.gca()
 
-        for i in range(n_lines):
-            ax.plot(xdata, ydata[:, i],
-                    ls=linestyles[i],
-                    label=(yheader[i] if yheader else None),
-                    linewidth=1,
-                    )
+        if greyscale:
+            plt.gray()
 
-        # for line, label in zip(line_objects, yheader):
-        #     plt.legend(line, label)
+        for i in range(n_lines):
+            ax.plot(xdata,
+                    ydata[:, i],
+                    ls=line_styles[i],
+                    label=yheader[i] if yheader else None,
+                    linewidth=1,
+                    color='0.2' if greyscale else None,
+                    )
 
         if xlabel:
             if using_latex:
@@ -445,7 +468,6 @@ class TDSData(object):
                 ax.set_ylabel(ylabel)
 
         ax.ticklabel_format(useOffset=False)
-
         ax.set_xlim(left=left, right=right)
         ax.set_ylim(ymin=ymin, ymax=ymax)
 
@@ -469,53 +491,15 @@ class TDSData(object):
 
             try:
                 fig.savefig(outfile, dpi=dpi)
-                logger.info('Figure saved to file {}'.format(outfile))
+                logger.info(f'Figure saved to <{outfile}>')
             except IOError:
-                logger.error('* Error occurred. Try disabling LaTex with "-d".')
+                logger.error('* An unknown error occurred. Try disabling LaTeX with "-d".')
                 return
 
         if show:
             plt.show()
 
         return fig, ax
-
-
-def tdsplot_parse():
-    """
-    command line input parser for tdsplot
-
-    Returns
-    -------
-    dict
-        A dict of the command line arguments
-    """
-    parser = ArgumentParser(prog='tdsplot')
-    parser.add_argument('filename', nargs=1, default=[], help='data file name.')
-    parser.add_argument('x', nargs=1, type=int, help='x axis variable index')
-    parser.add_argument('y', nargs='*', help='y axis variable index')
-    parser.add_argument('--xmin', type=float, help='x axis minimum value', dest='left')
-    parser.add_argument('--xmax', type=float, help='x axis maximum value', dest='right')
-    parser.add_argument('--ymax', type=float, help='y axis maximum value')
-    parser.add_argument('--ymin', type=float, help='y axis minimum value')
-
-    parser.add_argument('--checkinit', action='store_true', help='check initialization value')
-
-    parser.add_argument('-x', '--xlabel', type=str, help='manual x-axis text label')
-    parser.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
-
-    parser.add_argument('-s', '--savefig', action='store_true', help='save figure to file')
-    parser.add_argument('-g', '--grid', action='store_true', help='grid on')
-    parser.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
-
-    parser.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
-
-    parser.add_argument('--ytimes', type=str, help='y switch_times')
-    parser.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
-
-    parser.add_argument('-c', '--tocsv', help='convert .npy output to a csv file', action='store_true')
-
-    args = parser.parse_args()
-    return vars(args)
 
 
 def parse_y(y, upper, lower=0):
@@ -664,19 +648,6 @@ def tdsplot(filename, y, x=(0,), tocsv=False, **kwargs):
         raise NotImplementedError("Plotting multiple data files are not supported yet")
 
 
-def tdsplot_main():
-    """
-    Entry function for tds plot. Parses command line arguments and calls `tdsplog`
-
-    Returns
-    -------
-    None
-
-    """
-    args = tdsplot_parse()
-    tdsplot(**args)
-
-
 def check_init(yval, yl):
     """"Check initialization by comparing t=0 and t=end values"""
     suspect = []
@@ -764,11 +735,14 @@ def set_latex(enable=True):
         return False
 
 
-def main(cli=True, **args):
-    logger.warning('andesplot is deprecated and will be remove in future versions. '
-                   'Use "tdsplot" for TDS data or "eigplot" for EIG data.')
-    tdsplot_main()
-
-
-if __name__ == "__main__":
-    main(cli=True)
+def is_notebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter

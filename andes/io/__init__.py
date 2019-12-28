@@ -85,13 +85,14 @@ def parse(system):
 
     t, _ = elapsed()
 
+    # exit when no input format is given
+    if not system.files.input_format:
+        if not guess(system):
+            logger.error('Input format is not specified and cannot be inferred.')
+            return False
+
     input_format = system.files.input_format
     add_format = system.files.add_format
-    # exit when no input format is given
-    if not input_format:
-        logger.error(
-            'No input format found. Specify or guess a format before parsing.')
-        return False
 
     # exit if the format parser could not be imported
     try:
@@ -100,9 +101,7 @@ def parse(system):
         if add_format:
             addparser = importlib.import_module('.' + add_format, __name__)
     except ImportError:
-        logger.error(
-            'Parser for {:s} format not found. Program will exit.'.format(
-                input_format))
+        logger.error(f'Parser for {input_format} format not found. Program will exit.')
         return False
 
     # try parsing the base case file
@@ -133,23 +132,22 @@ def parse(system):
             return False
 
     _, s = elapsed(t)
-    logger.debug('Case file {:s} parsed in {:s}.'.format(
-        system.files.fullname, s))
+    logger.info(f'Input file {system.files.fullname} parsed in {s}.')
 
     return True
 
 
-def dump_raw(system):
+def dump(system, output_format='xlsx'):
+    if system.files.no_output:
+        return
+
+    outfile = system.files.dump
+    writer = importlib.import_module('.' + output_format, __name__)
+
     t, _ = elapsed()
-
-    outfile = system.files.dump_raw
-    dmparser = importlib.import_module('.' + 'dome', __name__)
-
-    ret = dmparser.write(outfile, system)
-
+    ret = writer.write(system, outfile)
     _, s = elapsed(t)
     if ret:
-        logger.info('Raw file dump {:s} written in {:s}.'.format(
-            system.files.dump_raw, s))
+        logger.info(f'Converted file {system.files.dump} written in {s}.')
     else:
-        logger.error('Dump raw file failed.')
+        logger.error('Format conversion aborted.')

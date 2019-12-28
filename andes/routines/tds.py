@@ -74,7 +74,7 @@ class TDS(BaseRoutine):
         self.initialized = True
 
         _, s1 = elapsed(t0)
-        self.pbar.write(f"Initialization completed in {s1}.")
+        logger.info(f"Initialization completed in {s1}.")
         return system.dae.xy
 
     def run_implicit(self, verbose=False):
@@ -90,8 +90,9 @@ class TDS(BaseRoutine):
         dae = self.system.dae
         config = self.config
 
-        logger.info('Time Domain Simulation:')
+        logger.info('-> Time Domain Simulation:')
         self._initialize()
+        self.pbar = tqdm(total=100, ncols=80, unit='%')
 
         t0, _ = elapsed()
         while system.dae.t < self.config.tf and (not self.busted):
@@ -356,7 +357,7 @@ class TDS(BaseRoutine):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
         self.system.dae.t = 0.0
-        self.pbar = tqdm(total=100, ncols=80, unit='%')
+        self.pbar = None
         self.plotter = None
 
         self.initialized = False

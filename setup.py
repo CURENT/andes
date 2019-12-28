@@ -45,8 +45,6 @@ setup(
     entry_points={
         'console_scripts': [
             'andes = andes.main:main',
-            'andesplot = andes.plot:main',
-            'tdsplot = andes.plot:tdsplot_main'
         ],
     },
     include_package_data=True,

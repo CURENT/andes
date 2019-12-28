@@ -81,7 +81,7 @@ class PFlow(BaseRoutine):
         """
         system = self.system
         self._initialize()
-        logger.info('Power flow calculation with Newton Raphson method:')
+        logger.info('-> Power flow calculation with Newton Raphson method:')
         if system.dae.m == 0:
             logger.error("Loaded case file contains no element.")
             return False

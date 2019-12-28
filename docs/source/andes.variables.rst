@@ -36,14 +36,6 @@ andes.variables.varname module
    :undoc-members:
    :show-inheritance:
 
-andes.variables.varout module
------------------------------
-
-.. automodule:: andes.variables.varout
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 Module contents
 ---------------

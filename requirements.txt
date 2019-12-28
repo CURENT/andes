@@ -1,4 +1,4 @@
-cvxopt>=1.2.2
+cvxopt>=1.2.3
 numpy
 scipy
 xlrd
@@ -6,3 +6,5 @@ pandas
 dill
 xlsxwriter
 tqdm
+matplotlib
+coloredlogs

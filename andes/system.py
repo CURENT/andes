@@ -54,9 +54,12 @@ class System(object):
                  name: Optional[str] = None,
                  config_path: Optional[str] = None,
                  options: Optional[Dict] = None,
+                 **kwargs
                  ):
         self.name = name
         self.options = {} if options is None else options
+        if kwargs:
+            self.options.update(kwargs)
         self.calls = OrderedDict()
         self.models = OrderedDict()
         self.groups = OrderedDict()
@@ -75,8 +78,8 @@ class System(object):
                                      )))
 
         self.files = FileMan()
-        if options is not None:
-            self.files.set(**options)
+        if self.options is not None:
+            self.files.set(**self.options)
 
         self.dae = DAE()
         # routine import comes after model import; routines need to query model flags
@@ -826,7 +829,7 @@ class System(object):
             home_dir = os.path.expanduser('~')
             file_path = os.path.join(home_dir, '.andes', 'andes.rc')
 
-        if os.path.isfile(file_path):
+        elif os.path.isfile(file_path):
             choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
             if len(choice) == 0 or choice[0] != 'y':
                 logger.info('No config file overwritten.')
@@ -836,4 +839,4 @@ class System(object):
         with open(file_path, 'w') as f:
             conf.write(f)
 
-        logger.info('Config: written to {}'.format(file_path))
+        logger.info(f'Config: written to {file_path}')
