@@ -87,7 +87,7 @@ class TDSData(object):
     def load_dae(self):
         """Load from DAE time series"""
         dae = self.dae
-        self.t = dae.ts.t_y
+        self.t = dae.ts.t
         self.nvars = dae.n + dae.m + 1
 
         self._idx = list(range(self.nvars))

@@ -101,9 +101,7 @@ class TDS(BaseRoutine):
 
             if self._implicit_step(verbose):
                 # store values
-                dae.store_yt_single()
-                dae.store_x_single()
-
+                dae.store_txy()
                 dae.t += self.h
 
                 # show progress in percentage
@@ -121,7 +119,7 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
 
-        # load data into ``TDS.plot``
+        # load data into ``TDS.plotter``
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=system.dae)
 
@@ -177,6 +175,7 @@ class TDS(BaseRoutine):
             self.mis.append(mis)
             self.niter += 1
 
+            # non-convergence cases
             if mis <= self.config.tol:
                 self.converged = True
                 break
@@ -185,10 +184,8 @@ class TDS(BaseRoutine):
                 self.niter = self.config.max_iter + 1
                 self.busted = True
                 break
-            if self.niter > 5:
-                logger.debug('debug - niter > 5')
             if self.niter > self.config.max_iter:
-                logger.debug(f'Maximum iteration {self.config.max_iter} reached for t={dae.t}, h={self.h:.4f}')
+                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.4f}, h={self.h:.4f}')
                 break
             if mis > 1000 and (mis > 1e4 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
@@ -207,6 +204,14 @@ class TDS(BaseRoutine):
         return self.converged
 
     def save_output(self):
+        """
+        Save the simulation data into two files: a lst file and a npy file.
+
+        Returns
+        -------
+        bool
+            True if files are written. False otherwise.
+        """
         if self.system.files.no_output:
             return False
         else:
@@ -216,60 +221,6 @@ class TDS(BaseRoutine):
             _, s1 = elapsed(t0)
             logger.info(f'TDS outputs saved in {s1}.')
             return True
-
-    def _run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
-        """
-        Run integration with ``scipy.odeint``.
-
-        Warnings
-        --------
-        Function is NOT working. The time-based switching is not handled correctly.
-        """
-        self._initialize()
-        if x0 is None:
-            x0 = self.system.dae.x
-        times = np.arange(tspan[0], tspan[1], h)
-
-        # build critical time list
-        tcrit = np.hstack([np.linspace(i, i+0.5, 100) for i in self.system.switch_times])
-        ret = odeint(self._solve_ivp_wrapper,
-                     x0,
-                     times,
-                     tfirst=True,
-                     args=(asolver, verbose),
-                     full_output=True,
-                     hmax=hmax,
-                     hmin=hmin,
-                     tcrit=tcrit
-                     )
-
-        # store the last step algebraic variables
-        self.system.dae.store_yt_single()
-        self.system.dae.store_xt_array(ret[0], times)
-        return ret
-
-    def _run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
-        """
-        Run integration with ``scipy.solve_ivp``.
-
-        Warnings
-        --------
-        Function not fully implemented. Discontinuities are not properly handled by this wrapper.
-
-        """
-        self._initialize()
-        if x0 is None:
-            x0 = self.system.dae.x
-        ret = solve_ivp(lambda t, x: self._solve_ivp_wrapper(t, x, asolver, verbose=verbose),
-                        tspan,
-                        x0,
-                        method=method)
-
-        # store the last step algebraic variables
-        self.system.dae.store_yt_single()
-
-        self.system.dae.store_xt_array(np.transpose(ret.y), ret.t)
-        return ret
 
     def calc_h(self):
         """
@@ -410,6 +361,10 @@ class TDS(BaseRoutine):
 
         self.initialized = False
 
+    # ==================================================
+    # The following code are NOT fully functional !!!
+    # ==================================================
+
     def _g_wrapper(self, y=None):
         """
         Wrapper for algebraic equations for general solver
@@ -495,3 +450,57 @@ class TDS(BaseRoutine):
         system.l_update_eq(models=self.pflow_tds_models)
 
         return dae.f
+
+    def _run_odeint(self, tspan, x0=None, asolver=None, verbose=False, h=0.05, hmax=0, hmin=0):
+        """
+        Run integration with ``scipy.odeint``.
+
+        Warnings
+        --------
+        Function is NOT working. The time-based switching is not handled correctly.
+        """
+        self._initialize()
+        if x0 is None:
+            x0 = self.system.dae.x
+        times = np.arange(tspan[0], tspan[1], h)
+
+        # build critical time list
+        tcrit = np.hstack([np.linspace(i, i+0.5, 100) for i in self.system.switch_times])
+        ret = odeint(self._solve_ivp_wrapper,
+                     x0,
+                     times,
+                     tfirst=True,
+                     args=(asolver, verbose),
+                     full_output=True,
+                     hmax=hmax,
+                     hmin=hmin,
+                     tcrit=tcrit
+                     )
+
+        # store the last step algebraic variables
+        self.system.dae.store_yt_single()
+        self.system.dae.store_xt_array(ret[0], times)
+        return ret
+
+    def _run_solve_ivp(self, tspan, x0=None, asolver=None, method='RK45', verbose=False):
+        """
+        Run integration with ``scipy.solve_ivp``.
+
+        Warnings
+        --------
+        Function not fully implemented. Discontinuities are not properly handled by this wrapper.
+
+        """
+        self._initialize()
+        if x0 is None:
+            x0 = self.system.dae.x
+        ret = solve_ivp(lambda t, x: self._solve_ivp_wrapper(t, x, asolver, verbose=verbose),
+                        tspan,
+                        x0,
+                        method=method)
+
+        # store the last step algebraic variables
+        self.system.dae.store_yt_single()
+
+        self.system.dae.store_xt_array(np.transpose(ret.y), ret.t)
+        return ret

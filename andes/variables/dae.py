@@ -1,35 +1,43 @@
 import logging
 import numpy as np
-from cvxopt.base import spmatrix
-from andes.common.config import Config
+import pandas as pd
+from cvxopt import spmatrix
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
 
 class DAETimeSeries(object):
-    def __init__(self):
-        self.t_y = None
-        self.t_x = None
-        self.x = None
-        self.y = None
-        self.c = None
+    def __init__(self, dae=None):
+        self.dae = dae
+        self._data = OrderedDict()
+        self.t = None
+        self.xy = None
+        self.df = None
 
     @property
     def txy(self):
-        return np.hstack((self.t_y.reshape((-1, 1)), self.x, self.y))
+        """Return the values of [t, x, y] in an array."""
+        self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
+        self.t = self.df.index.to_numpy()
+        self.xy = self.df.to_numpy()
+        return np.hstack((self.t.reshape((-1, 1)), self.xy))
+
+    def store_txy(self, t, xy):
+        self._data[t] = xy
 
 
 class DAE(object):
     """
-    Numerical DAE class
+    The numerical DAE class.
     """
     jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
     jac_type = ('c', '')
 
-    def __init__(self, config):
+    def __init__(self):
 
         self.t = 0
-        self.ts = DAETimeSeries()
+        self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.k = 0, 0, 0
 
@@ -61,13 +69,8 @@ class DAE(object):
         self.itx, self.jtx, self.vtx = list(), list(), list()
         self.irx, self.jrx, self.vrx = list(), list(), list()
 
-        self.config = Config(self.__class__.__name__)
-        self.config.add({'latex': 1,
-                         'dpi': 150,
-                         })
-
     def clear_ts(self):
-        self.ts = DAETimeSeries()
+        self.ts = DAETimeSeries(self)
 
     def clear_array(self):
         """
@@ -235,18 +238,22 @@ class DAE(object):
 
     @property
     def xy(self):
+        """Return a concatenated array of [x, y]."""
         return np.hstack((self.x, self.y))
 
     @property
     def fg(self):
+        """Return a concatenated array of [f, g]."""
         return np.hstack((self.f, self.g))
 
     @property
     def xy_name(self):
+        """Return a concatenated list of all variable names without format."""
         return self.x_name + self.y_name
 
     @property
     def xy_tex_name(self):
+        """Return a concatenated list of all variable names in LaTeX format."""
         return self.x_tex_name + self.y_tex_name
 
     def get_name(self, arr):
@@ -259,43 +266,14 @@ class DAE(object):
         res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), value))
         logger.info(res)
 
-    def store_yt_single(self):
+    def store_txy(self):
         """
-        Store algebraic variable value and the corresponding t
-
+        Store t, and xy in the OrderedDict of DAETimeSeries
         Returns
         -------
 
         """
-        # store t
-        if self.ts.t_y is None:
-            self.ts.t_y = np.array([self.t])
-        else:
-            self.ts.t_y = np.hstack((self.ts.t_y, self.t))
-
-        # store y
-        if self.ts.y is None:
-            self.ts.y = np.array(self.y)
-        else:
-            self.ts.y = np.vstack((self.ts.y, self.y))
-
-    def store_x_single(self):
-        """
-        Store differential variable value
-
-        Returns
-        -------
-
-        """
-        # store x
-        if self.ts.x is None:
-            self.ts.x = np.array(self.x)
-        else:
-            self.ts.x = np.vstack((self.ts.x, self.x))
-
-    def store_xt_array(self, x, t):
-        self.ts.x = x
-        self.ts.t_x = t
+        self.ts.store_txy(self.t, self.xy)
 
     def write_lst(self, lst_path):
         """
@@ -324,5 +302,5 @@ class DAE(object):
             f.write(out)
         return True
 
-    def write_npy(self, dat_path):
-        np.save(dat_path, self.ts.txy)
+    def write_npy(self, npy_path):
+        np.save(npy_path, self.ts.txy)

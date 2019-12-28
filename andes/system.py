@@ -78,7 +78,7 @@ class System(object):
         if options is not None:
             self.files.set(**options)
 
-        self.dae = DAE(config=self._config_from_file)
+        self.dae = DAE()
         # routine import comes after model import; routines need to query model flags
         self._group_import()
         self._model_import()

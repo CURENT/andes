@@ -281,7 +281,7 @@ def remove_output():
             except IOError:
                 logger.error('Error removing file <{:s}>.'.format(file))
     if not found:
-        logger.info('no output found in the working directory.')
+        logger.info('No output file found in the working directory.')
 
     return True
 
@@ -432,7 +432,7 @@ def main(args=None):
         filename = [filename]
 
     if len(filename) == 0:
-        logger.error('error: no input file. Try \'andes -h\' for help.')
+        logger.info('info: no input file. Try \'andes -h\' for help.')
 
     # preprocess cli args
     path = args.get('input_path', os.getcwd())
