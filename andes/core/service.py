@@ -1,7 +1,7 @@
-import numpy as np
 from typing import Optional, Union, Callable
 from andes.core.param import RefParam, BaseParam
 from andes.utils.func import list_flatten
+from andes.shared import np, ndarray
 
 
 class BaseService(object):
@@ -92,7 +92,7 @@ class ConstService(BaseService):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, np.ndarray] = 0.
+        self.v: Union[float, int, ndarray] = 0.
 
 
 class ExtService(BaseService):

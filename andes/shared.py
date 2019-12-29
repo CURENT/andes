@@ -9,30 +9,40 @@ Known issues ::
     got 216 from PyObject
         return f(*args, **kwds)
 """
-import importlib
+from andes.utils.lazyimport import LazyImport
+
+# ----------------------------------------
+# Packages
+np = LazyImport('import numpy')
+pd = LazyImport('import pandas')
+tqdm = LazyImport('from tqdm import tqdm')
+plt = LazyImport('from matplotlib import pyplot')
+mpl = LazyImport('import matplotlib')
+umfpack = LazyImport('from cvxopt import umfpack')
+cvxopt = LazyImport('import cvxopt')
+coloredlogs = LazyImport('import coloredlogs')
+Process = LazyImport('from multiprocessing import Process')
+# ----------------------------------------
+
+# ----------------------------------------
+# Types
+ndarray = LazyImport('from numpy import ndarray')
+spmatrix = LazyImport('from cvxopt import spmatrix')
+matrix = LazyImport('from cvxopt import matrix')
+sparse = LazyImport('from cvxopt import sparse')
+spdiag = LazyImport('from cvxopt import spdiag')
+# ----------------------------------------
+
+# ----------------------------------------
+# function calls
+newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
+fsolve = LazyImport('from scipy.optimize import fsolve')
+solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
+odeint = LazyImport('from scipy.integrate import odeint')
+# ----------------------------------------
+
 
 pi = 3.14159265358973
 jpi2 = 1.5707963267948966j
 rad2deg = 57.295779513082323
 deg2rad = 0.017453292519943
-
-pd = None
-newton_krylov = None
-
-
-def load_pandas():
-    """
-    Import pandas to globals() if not exist.
-    """
-    if globals()['pd'] is None:
-        globals()['pd'] = importlib.import_module('pandas')
-
-    return True
-
-
-def load_newton_krylov():
-    if globals()['newton_krylov'] is None:
-        optimize = importlib.import_module('scipy.optimize')
-        globals()['newton_krylov'] = getattr(optimize, 'newton_krylov')
-
-    return True

@@ -1,7 +1,6 @@
 """
 Synchronous generator classes
 """
-import numpy as np  # NOQA
 import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
@@ -9,6 +8,8 @@ from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.discrete import Selector  # NOQA
 from andes.core.service import ConstService, ExtService  # NOQA
 from andes.core.block import MagneticQuadSat, MagneticExpSat  # NOQA
+from andes.shared import np  # NOQA
+
 logger = logging.getLogger(__name__)
 
 

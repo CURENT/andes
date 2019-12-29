@@ -1,9 +1,9 @@
 from typing import Optional, Union, Callable
 
 import math
-import numpy as np
 import logging
 from andes.models.group import GroupBase
+from andes.shared import np
 logger = logging.getLogger(__name__)
 
 

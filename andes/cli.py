@@ -16,7 +16,7 @@ def create_parser():
     """
     The main level of command-line interface.
     """
-    parser = argparse.ArgumentParser(description='ANDES, a symbolic-numeric power system simulator.')
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
         '-v', '--verbose',
@@ -81,17 +81,12 @@ def create_parser():
     return parser
 
 
-def show_help_on_empty_command():
-    if len(sys.argv) == 1:  # sys.argv == ['/path/to/bin/conda-env']
-        sys.argv.append('--help')
-
-
 def preamble():
     """
     Log the ANDES command-line preamble at the `logging.INFO` level
     """
     from andes import __version__ as version
-    logger.info('ANDES {ver} (Build {b}, Python {p} on {os})'
+    logger.info('ANDES {ver} (Git commit id {b}, Python {p} on {os})'
                 .format(ver=version[:5], b=version[-8:],
                         p=platform.python_version(),
                         os=platform.system()))
@@ -106,7 +101,6 @@ def preamble():
 
 def main():
     """Main command-line interface"""
-    show_help_on_empty_command()
     parser = create_parser()
     args = parser.parse_args()
 
@@ -116,7 +110,10 @@ def main():
     logger.debug(args)
 
     module = importlib.import_module('andes.main')
-    func = getattr(module, args.command)
-    func(**vars(args))
 
-    return 0
+    if args.command is None:
+        parser.parse_args(sys.argv.append('--help'))
+
+    else:
+        func = getattr(module, args.command)
+        func(**vars(args))

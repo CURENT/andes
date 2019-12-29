@@ -43,6 +43,7 @@ class FileMan(object):
         self.eig = None
         self.npy = None
         self.prof = None
+        self.prof_raw = None
 
     def set(self, case=None, **kwargs):
 
@@ -92,6 +93,7 @@ class FileMan(object):
             self.eig = None
             self.npy = None
             self.prof = None
+            self.prof_raw = None
             self.dump = None
         else:
             self.no_output = False
@@ -106,6 +108,7 @@ class FileMan(object):
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
             self.prof = os.path.join(self.output_path, prof + '.txt')
+            self.prof_raw = os.path.join(self.output_path, prof + '.prof')
             self.dump = os.path.join(self.output_path, dump + '.xlsx')
 
     def get_fullpath(self, fullname=None):

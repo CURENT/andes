@@ -1,12 +1,12 @@
-import numpy as np  # NOQA
 from collections import OrderedDict
+
 from andes.routines.base import BaseRoutine
-from andes.utils.misc import elapsed
-from cvxopt import matrix, sparse, spdiag  # NOQA
-from scipy.optimize import fsolve, newton_krylov
+from andes.utils.misc import elapsed, is_notebook
+from andes.shared import tqdm, np
+from andes.shared import matrix, sparse, spdiag
+from andes.shared import newton_krylov, fsolve, solve_ivp, odeint
+
 from scipy.optimize.nonlin import NoConvergence
-from scipy.integrate import solve_ivp, odeint
-from tqdm import tqdm
 
 import logging
 logger = logging.getLogger(__name__)
@@ -123,8 +123,9 @@ class TDS(BaseRoutine):
         logger.info(f'Simulation completed in {s1}.')
 
         # load data into ``TDS.plotter``
-        from andes.plot import TDSData  # NOQA
-        self.plotter = TDSData(mode='memory', dae=system.dae)
+        if is_notebook():
+            from andes.plot import TDSData  # NOQA
+            self.plotter = TDSData(mode='memory', dae=system.dae)
 
     def _implicit_step(self, verbose=False):
         """

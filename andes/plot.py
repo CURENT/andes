@@ -23,14 +23,10 @@ import os
 import re
 from distutils.spawn import find_executable
 
-import numpy as np
-
 from andes.utils.misc import is_notebook
 from andes.core.var import Algeb, State
 from andes.main import config_logger
-
-from matplotlib import rc
-from matplotlib import pyplot as plt
+from andes.shared import np, mpl, plt
 
 config_logger(log_file=None)
 logger = logging.getLogger(__name__)
@@ -429,7 +425,7 @@ class TDSData(object):
 
         n_lines = ydata.shape[1]
 
-        rc('font', family='Arial', size=12)
+        mpl.rc('font', family='Arial', size=12)
 
         using_latex = set_latex(latex)
 
@@ -730,8 +726,8 @@ def set_latex(enable=True):
     has_dvipng = find_executable('dvipng')
 
     if has_dvipng and enable:
-        rc('text', usetex=True)
+        mpl.rc('text', usetex=True)
         return True
     else:
-        rc('text', usetex=False)
+        mpl.rc('text', usetex=False)
         return False

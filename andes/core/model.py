@@ -17,21 +17,20 @@
 """
 Base class for building ANDES models
 """
+import logging
 from collections import OrderedDict
 
-import logging
-import numpy as np
-
-import andes.shared
 from andes.core.config import Config
-from andes.utils.func import list_flatten
-from andes.utils.tab import Tab
-
 from andes.core.discrete import Discrete
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
+
+from andes.utils.func import list_flatten
+from andes.utils.tab import Tab
+
+from andes.shared import np, pd, newton_krylov
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +210,7 @@ class ModelData(object):
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
         """
-        andes.shared.load_pandas()
-        out = andes.shared.pd.DataFrame(self.as_dict()).set_index('uid')
+        out = pd.DataFrame(self.as_dict()).set_index('uid')
 
         return out
 
@@ -226,8 +224,7 @@ class ModelData(object):
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
         """
-        andes.shared.load_pandas()
-        out = andes.shared.pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
+        out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
 
         return out
 
@@ -617,8 +614,7 @@ class Model(object):
         def init_wrap(x0):
             return self._init_wrap(x0, non_vars_list)
 
-        andes.shared.load_newton_krylov()
-        sol = andes.shared.newton_krylov(init_wrap, vars_array)
+        sol = newton_krylov(init_wrap, vars_array)
 
         for i, var in enumerate(self.cache.all_vars.values()):
             var.v = sol[i*self.n: (i+1) * self.n]

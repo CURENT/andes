@@ -2,7 +2,7 @@ import sys
 import os
 import threading  # NOQA
 import andes
-from andes.utils.math import to_number
+from andes.utils.misc import to_number
 
 try:
     import flask

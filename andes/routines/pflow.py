@@ -1,12 +1,9 @@
-import numpy as np
-
 from collections import OrderedDict
-from cvxopt import matrix, sparse
 
-import andes.shared
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
+from andes.shared import np, matrix, sparse, newton_krylov
 
 import logging
 logger = logging.getLogger(__name__)
@@ -166,9 +163,8 @@ class PFlow(BaseRoutine):
         system = self.system
         system.initialize()
         v0 = system.dae.xy
-        andes.shared.load_newton_krylov()
         try:
-            ret = andes.shared.newton_krylov(self._fg_wrapper, v0, verbose=verbose)
+            ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
         except ValueError as e:
             logger.error('Mismatch is not correctable. Equations may be intrinsically unsolvable.')
             raise e

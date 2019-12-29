@@ -1,7 +1,6 @@
 #!/bin/bash python
 import glob
 import logging
-import coloredlogs
 import os
 import io
 import sys
@@ -9,7 +8,6 @@ import platform
 import pprint
 import cProfile
 import pstats
-from multiprocessing import Process
 from subprocess import call
 from time import sleep
 from typing import Optional, Union
@@ -18,6 +16,7 @@ import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.misc import get_config_path
+from andes.shared import coloredlogs, Process
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -88,7 +87,7 @@ def config_logger(logger=None,
 
         globals()['logger'] = logger
 
-    if color:
+    if (not is_interactive()) and color:
         coloredlogs.install(logger=logger, level=stream_level, fmt='%(message)s')
 
 
@@ -195,6 +194,7 @@ def remove_output():
                 file.endswith('_out.lst') or \
                 file.endswith('_out.npy') or \
                 file.endswith('_out.csv') or \
+                file.endswith('_prof.prof') or \
                 file.endswith('_prof.txt'):
             found = True
             try:
@@ -265,7 +265,9 @@ def run_case(case, routine=None, profile=False, convert='', **kwargs):
             with open(system.files.prof, 'w') as s:
                 ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
                 ps.print_stats(nlines)
-            logger.info(f'cProfile data written to <{system.files.prof}>')
+                ps.dump_stats(system.files.prof_raw)
+            logger.info(f'cProfile text data written to <{system.files.prof}>.')
+            logger.info(f'cProfile raw data written to <{system.files.prof_raw}. View it with \'snakeviz\'.')
 
     return system
 
@@ -296,8 +298,8 @@ def run(filename, input_path='', ncpu=1, **kwargs):
     for case in unique_cases:
         if os.path.isfile(case):
             valid_cases.append(case)
-
-    logger.debug('Found files: ' + pprint.pformat(valid_cases))
+    if len(valid_cases):
+        logger.debug('Found files: ' + pprint.pformat(valid_cases))
 
     t0, _ = elapsed()
     if len(valid_cases) <= 0:

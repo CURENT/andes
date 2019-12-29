@@ -1,7 +1,7 @@
 import functools
 import operator
 
-import numpy as np
+from andes.shared import np
 
 
 def list_flatten(input_list):

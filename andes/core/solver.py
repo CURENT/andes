@@ -1,8 +1,6 @@
-import numpy as np
-
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
-from cvxopt import umfpack, matrix
+from andes.shared import np, matrix, umfpack
 
 import logging
 logger = logging.getLogger(__name__)

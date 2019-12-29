@@ -1,5 +1,6 @@
 import logging
-import numpy as np
+from andes.shared import np
+
 logger = logging.getLogger(__name__)
 
 

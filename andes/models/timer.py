@@ -1,7 +1,7 @@
 from andes.core.param import TimerParam, IdxParam, DataParam
 from andes.core.model import Model, ModelData
+from andes.shared import np
 import logging
-import numpy as np
 logger = logging.getLogger(__name__)
 
 

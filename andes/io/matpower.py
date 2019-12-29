@@ -2,9 +2,8 @@
 """
 import logging
 import re
-import numpy as np
 
-from andes.shared import deg2rad
+from andes.shared import deg2rad, np
 
 logger = logging.getLogger(__name__)
 

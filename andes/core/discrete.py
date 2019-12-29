@@ -1,6 +1,6 @@
-import numpy as np
-from typing import Optional
 import logging
+from typing import Optional
+from andes.shared import np
 
 logger = logging.getLogger(__name__)
 

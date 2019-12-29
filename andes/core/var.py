@@ -1,9 +1,8 @@
 from typing import Optional, Union, List
 
-import numpy as np
 from andes.core.param import BaseParam
 from andes.models.group import GroupBase
-from numpy import ndarray
+from andes.shared import np, ndarray
 
 
 class BaseVar(object):

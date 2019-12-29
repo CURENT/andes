@@ -1,6 +1,6 @@
 import os
-import numpy as np
 from andes.utils.tab import SimpleTab
+from andes.shared import np
 
 
 def format_newline():

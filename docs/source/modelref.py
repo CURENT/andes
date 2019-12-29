@@ -2,11 +2,11 @@
 This file is used to generate reStructuredText tables for Group and Model references
 """
 
-import andes
 import dill
+from andes.system import System
 dill.settings['recurse'] = True
 
-ss = andes.system.System()
+ss = System()
 ss.prepare()
 
 out = ''

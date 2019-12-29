@@ -1,7 +1,6 @@
 import os
 import unittest
 import dill
-import numpy as np  # NOQA
 from andes.system import System
 from andes.io import xlsx
 

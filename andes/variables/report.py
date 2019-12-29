@@ -1,13 +1,12 @@
 import logging
-import numpy as np
 from time import strftime
-
-from andes.io.txt import dump_data
+from collections import OrderedDict
 
 from andes import __version__ as version
+from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
+from andes.shared import np
 
-from collections import OrderedDict
 logger = logging.getLogger(__name__)
 all_formats = {}
 

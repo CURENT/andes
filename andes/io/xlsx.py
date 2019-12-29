@@ -7,7 +7,8 @@ data is easier to read and edit.
 import os
 import logging
 import warnings
-import andes.shared
+from andes.shared import pd
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,8 +45,7 @@ def write(system, outfile, skip_empty=True, overwrite=None):
         elif overwrite is False:
             return False
 
-    andes.shared.load_pandas()
-    writer = andes.shared.pd.ExcelWriter(outfile, engine='xlsxwriter')
+    writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
 
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
@@ -73,11 +73,10 @@ def read(system, infile):
     System
         System instance after succeeded
     """
-    andes.shared.load_pandas()
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-        df_models = andes.shared.pd.read_excel(infile, sheet_name=None, index_col=0)
+        df_models = pd.read_excel(infile, sheet_name=None, index_col=0)
 
     for name, df in df_models.items():
         for row in df.to_dict(orient='record'):

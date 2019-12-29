@@ -1,8 +1,8 @@
-import numpy as np
 from andes.core.param import RefParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
 from andes.core.service import ReducerService, RepeaterService
+from andes.shared import np
 
 
 class AreaData(ModelData):

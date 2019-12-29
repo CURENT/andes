@@ -3,8 +3,7 @@ import unittest
 from andes.core.var import Algeb
 from andes.core.param import NumParam
 from andes.core.discrete import Limiter, SortedLimiter, Switcher
-
-import numpy as np
+from andes.shared import np
 
 
 class TestDiscrete(unittest.TestCase):

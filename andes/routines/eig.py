@@ -1,15 +1,14 @@
 import importlib
 import logging
-from math import ceil
+from math import ceil, pi
 
-import numpy.linalg
-from cvxopt import matrix, spmatrix, mul, div
+from cvxopt import mul, div
 from cvxopt.lapack import gesv
 
-from math import pi
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
+from andes.shared import np, matrix, spmatrix
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'
@@ -64,7 +63,7 @@ class EIG(BaseRoutine):
         -------
         None
         """
-        self.eigs = numpy.linalg.eigvals(self.As)
+        self.eigs = np.linalg.eigvals(self.As)
         # TODO: use scipy.sparse.linalg.eigs(self.As)
 
         return self.eigs
@@ -77,14 +76,14 @@ class EIG(BaseRoutine):
         -------
 
         """
-        mu, N = numpy.linalg.eig(self.As)
+        mu, N = np.linalg.eig(self.As)
         # TODO: use scipy.sparse.linalg.eigs(self.As)
 
         N = matrix(N)
         n = len(mu)
         idx = range(n)
 
-        mu_complex = numpy.array([0] * n, dtype=complex)
+        mu_complex = np.array([0] * n, dtype=complex)
         W = matrix(spmatrix(1.0, idx, idx, (n, n), N.typecode))
         gesv(N, W)
 
