@@ -1,6 +1,6 @@
 import pprint
-from collections import OrderedDict
 import logging
+from collections import OrderedDict
 logger = logging.getLogger(__name__)
 
 

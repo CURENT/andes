@@ -8,12 +8,13 @@ from _pydecimal import Decimal, ROUND_DOWN
 from time import time
 import numpy as np
 
-
 logger = logging.getLogger(__name__)
 
 
 def list_flatten(input_list):
-    """Flatten a multi-dimensional list into a flat 1-D list."""
+    """
+    Flatten a multi-dimensional list into a flat 1-D list.
+    """
     if len(input_list) > 0 and isinstance(input_list[0], (list, np.ndarray)):
         return functools.reduce(operator.iconcat, input_list, [])
     else:
@@ -120,3 +121,21 @@ def to_number(s):
     elif ret == 'None':
         ret = None
     return ret
+
+
+def is_notebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
+
+
+def is_interactive():
+    import __main__ as main
+    return not hasattr(main, '__file__')

@@ -26,7 +26,7 @@ import inspect
 import numpy as np
 from cvxopt import spmatrix
 from collections import OrderedDict
-from typing import List, Dict, Tuple, Union, Optional  # NOQA
+from typing import List, Dict, Tuple, Union, Optional
 
 from andes.common.utils import get_config_path
 
@@ -539,7 +539,7 @@ class System(object):
             self.prepare()
 
         self.calls = dill.load(open(pkl_path, 'rb'))
-        logger.debug('System undill: loaded <calls.pkl> file.')
+        logger.debug(f'System undill: loaded <{pkl_path}> file.')
         for name, model_call in self.calls.items():
             self.__dict__[name].calls = model_call
 

@@ -75,6 +75,8 @@ class TDS(BaseRoutine):
 
         _, s1 = elapsed(t0)
         logger.info(f"Initialization completed in {s1}.")
+        if system.dae.n == 0:
+            logger.warning('No dynamic component loaded.')
         return system.dae.xy
 
     def run_implicit(self, verbose=False):

@@ -24,6 +24,8 @@ import re
 from distutils.spawn import find_executable
 
 import numpy as np
+
+from andes.common.utils import is_notebook
 from andes.core.var import Algeb, State
 from andes.main import config_logger
 
@@ -733,16 +735,3 @@ def set_latex(enable=True):
     else:
         rc('text', usetex=False)
         return False
-
-
-def is_notebook():
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter

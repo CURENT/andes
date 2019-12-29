@@ -2,7 +2,7 @@ import numpy as np
 
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
-from cvxopt import umfpack, matrix  # NOQA
+from cvxopt import umfpack, matrix
 
 import logging
 logger = logging.getLogger(__name__)

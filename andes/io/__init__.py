@@ -3,7 +3,6 @@ import logging
 import os
 
 from andes.common.utils import elapsed
-from andes.io import xlsx  # NOQA
 
 
 logger = logging.getLogger(__name__)

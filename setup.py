@@ -6,7 +6,7 @@ import versioneer
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
 # to ensure that we error out properly for people with outdated setuptools
 # and/or pip.
-if sys.version_info < (3, 7):
+if sys.version_info < (3, 6):
     error = """
 andes does not support Python <= {0}.{1}.
 Python 3.7 and above is required. Check your Python version like so:
@@ -17,7 +17,7 @@ This may be due to an out-of-date pip. Make sure you have pip >= 9.0.1.
 Upgrade pip like so:
 
 pip install --upgrade pip
-""".format(3, 6)
+""".format(3, 5)
     sys.exit(error)
 
 here = path.abspath(path.dirname(__file__))
@@ -44,7 +44,7 @@ setup(
     packages=find_packages(exclude=['docs', 'tests', 'demos', 'cards']),
     entry_points={
         'console_scripts': [
-            'andes = andes.main:main',
+            'andes = andes.cli:main',
         ],
     },
     include_package_data=True,

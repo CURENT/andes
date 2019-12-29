@@ -1,8 +1,8 @@
 import logging
 import numpy as np
-import pandas as pd
 from cvxopt import spmatrix
 from collections import OrderedDict
+import andes.shared
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,8 @@ class DAETimeSeries(object):
     @property
     def txy(self):
         """Return the values of [t, x, y] in an array."""
-        self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
+        andes.shared.load_pandas()
+        self.df = andes.shared.pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
         self.t = self.df.index.to_numpy()
         self.xy = self.df.to_numpy()
         return np.hstack((self.t.reshape((-1, 1)), self.xy))

@@ -4,7 +4,7 @@ import logging
 import re
 import numpy as np
 
-from ..consts import deg2rad
+from andes.shared import deg2rad
 
 logger = logging.getLogger(__name__)
 

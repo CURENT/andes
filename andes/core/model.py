@@ -19,11 +19,10 @@ Base class for building ANDES models
 """
 from collections import OrderedDict
 
-import importlib
 import logging
 import numpy as np
-from scipy.optimize import newton_krylov
 
+import andes.shared
 from andes.common.config import Config
 from andes.core.discrete import Discrete
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
@@ -34,21 +33,6 @@ from andes.common.utils import list_flatten
 from andes.common.tab import Tab
 
 logger = logging.getLogger(__name__)
-pd = None
-
-
-def load_pd():
-    """
-    Import pandas to globals() if not exist.
-    """
-    if globals()['pd'] is None:
-        try:
-            globals()['pd'] = importlib.import_module('pandas')
-        except ImportError:
-            logger.warning("Pandas import error.")
-            return False
-
-    return True
 
 
 class Cache(object):
@@ -226,10 +210,8 @@ class ModelData(object):
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
         """
-        if not load_pd():
-            return None
-
-        out = pd.DataFrame(self.as_dict()).set_index('uid')
+        andes.shared.load_pandas()
+        out = andes.shared.pd.DataFrame(self.as_dict()).set_index('uid')
 
         return out
 
@@ -243,10 +225,8 @@ class ModelData(object):
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
         """
-        if not load_pd():
-            return None
-
-        out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
+        andes.shared.load_pandas()
+        out = andes.shared.pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
 
         return out
 
@@ -636,7 +616,8 @@ class Model(object):
         def init_wrap(x0):
             return self._init_wrap(x0, non_vars_list)
 
-        sol = newton_krylov(init_wrap, vars_array)
+        andes.shared.load_newton_krylov()
+        sol = andes.shared.newton_krylov(init_wrap, vars_array)
 
         for i, var in enumerate(self.cache.all_vars.values()):
             var.v = sol[i*self.n: (i+1) * self.n]
@@ -662,7 +643,7 @@ class Model(object):
         -------
 
         """
-        from sympy import Symbol, Matrix, sympify, lambdify  # NOQA
+        from sympy import Symbol, Matrix
 
         # clear symbols storage
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()

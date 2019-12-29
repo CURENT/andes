@@ -1,6 +1,5 @@
 import unittest
 
-import numpy as np  # NOQA
 from andes.system import System
 import dill
 
