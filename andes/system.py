@@ -28,14 +28,14 @@ from cvxopt import spmatrix
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
-from andes.common.utils import get_config_path
+from andes.utils.misc import get_config_path
 
 from andes.variables.dae import DAE
 from andes.routines import all_routines
 from andes.models import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
-from andes.common.config import Config
+from andes.core.config import Config
 from andes.variables.fileman import FileMan
 
 IP_ADD = False

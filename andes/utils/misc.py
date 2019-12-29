@@ -1,24 +1,11 @@
-import functools
-import operator
 import logging
 import os
 import platform
 import tempfile
 from _pydecimal import Decimal, ROUND_DOWN
 from time import time
-import numpy as np
 
 logger = logging.getLogger(__name__)
-
-
-def list_flatten(input_list):
-    """
-    Flatten a multi-dimensional list into a flat 1-D list.
-    """
-    if len(input_list) > 0 and isinstance(input_list[0], (list, np.ndarray)):
-        return functools.reduce(operator.iconcat, input_list, [])
-    else:
-        return input_list
 
 
 def elapsed(t0=0.0):

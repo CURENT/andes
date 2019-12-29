@@ -16,8 +16,8 @@ from typing import Optional, Union
 
 import andes
 from andes.system import System
-from andes.common.utils import elapsed, is_interactive
-from andes.common.utils import get_config_path
+from andes.utils.misc import elapsed, is_interactive
+from andes.utils.misc import get_config_path
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

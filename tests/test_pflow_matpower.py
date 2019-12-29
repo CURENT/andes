@@ -1,7 +1,7 @@
 import unittest
 import os
 import andes
-from andes.common.cases import get_case
+from andes.utils.cases import get_case
 
 
 class TestMATPOWER(unittest.TestCase):

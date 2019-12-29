@@ -8,7 +8,7 @@ from cvxopt.lapack import gesv
 
 from math import pi
 from andes.io.txt import dump_data
-from andes.common.utils import elapsed
+from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 
 logger = logging.getLogger(__name__)

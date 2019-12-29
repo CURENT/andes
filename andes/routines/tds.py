@@ -1,7 +1,7 @@
 import numpy as np  # NOQA
 from collections import OrderedDict
 from andes.routines.base import BaseRoutine
-from andes.common.utils import elapsed
+from andes.utils.misc import elapsed
 from cvxopt import matrix, sparse, spdiag  # NOQA
 from scipy.optimize import fsolve, newton_krylov
 from scipy.optimize.nonlin import NoConvergence

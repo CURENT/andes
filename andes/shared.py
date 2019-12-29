@@ -1,4 +1,14 @@
-"""useful constants"""
+"""
+Shared constants and delayed imports.
+
+Known issues ::
+
+    1) The delayed import of pandas and newton_krylov will cause a ``RuntimeWarning``
+
+    RuntimeWarning: numpy.ufunc size changed, may indicate binary incompatibility. Expected 192 from C header,
+    got 216 from PyObject
+        return f(*args, **kwds)
+"""
 import importlib
 
 pi = 3.14159265358973

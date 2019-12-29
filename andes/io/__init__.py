@@ -2,7 +2,7 @@ import importlib
 import logging
 import os
 
-from andes.common.utils import elapsed
+from andes.utils.misc import elapsed
 
 
 logger = logging.getLogger(__name__)

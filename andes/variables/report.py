@@ -5,7 +5,7 @@ from time import strftime
 from andes.io.txt import dump_data
 
 from andes import __version__ as version
-from ..common.utils import elapsed
+from andes.utils.misc import elapsed
 
 from collections import OrderedDict
 logger = logging.getLogger(__name__)

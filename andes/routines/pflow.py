@@ -4,7 +4,7 @@ from collections import OrderedDict
 from cvxopt import matrix, sparse
 
 import andes.shared
-from andes.common.utils import elapsed
+from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
 

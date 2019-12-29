@@ -25,7 +25,7 @@ from distutils.spawn import find_executable
 
 import numpy as np
 
-from andes.common.utils import is_notebook
+from andes.utils.misc import is_notebook
 from andes.core.var import Algeb, State
 from andes.main import config_logger
 

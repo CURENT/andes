@@ -23,14 +23,15 @@ import logging
 import numpy as np
 
 import andes.shared
-from andes.common.config import Config
+from andes.core.config import Config
+from andes.utils.func import list_flatten
+from andes.utils.tab import Tab
+
 from andes.core.discrete import Discrete
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
-from andes.common.utils import list_flatten
-from andes.common.tab import Tab
 
 logger = logging.getLogger(__name__)
 

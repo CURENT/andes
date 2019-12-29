@@ -7,7 +7,7 @@ import importlib
 
 from time import strftime
 from andes.main import config_logger
-from andes.common.utils import get_log_dir
+from andes.utils.misc import get_log_dir
 
 logger = logging.getLogger(__name__)
 

@@ -3,8 +3,8 @@
 import logging
 import re
 
-from andes.consts import deg2rad
-from andes.common.utils import to_number
+from andes.shared import deg2rad
+from andes.utils.misc import to_number
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Union, Callable
 from andes.core.param import RefParam, BaseParam
-from andes.common.utils import list_flatten
+from andes.utils.func import list_flatten
 
 
 class BaseService(object):
