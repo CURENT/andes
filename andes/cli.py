@@ -7,7 +7,7 @@ import importlib
 
 from time import strftime
 from andes.main import config_logger
-from andes.utils.misc import get_log_dir
+from andes.utils.paths import get_log_dir
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +67,6 @@ def create_parser():
     plot.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
     plot.add_argument('-c', '--tocsv', help='convert .npy output to a csv file', action='store_true')
 
-    prep = sub_parsers.add_parser('prepare')  # NOQA
-
     misc = sub_parsers.add_parser('misc')
     config_exclusive = misc.add_mutually_exclusive_group()
     config_exclusive.add_argument('--edit-config', help='Quick edit of the config file',
@@ -77,6 +75,10 @@ def create_parser():
                                   nargs='?', type=str, default='')
     misc.add_argument('--license', action='store_true', help='Display software license')
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
+
+    prep = sub_parsers.add_parser('prepare')  # NOQA
+
+    selftest = sub_parsers.add_parser('selftest')  # NOQA
 
     return parser
 

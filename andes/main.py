@@ -15,8 +15,9 @@ from typing import Optional, Union
 import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
-from andes.utils.misc import get_config_path
-from andes.shared import coloredlogs, Process
+from andes.utils.paths import get_config_path
+from andes.utils.paths import tests_root
+from andes.shared import coloredlogs, Process, unittest
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -366,3 +367,10 @@ def prepare(**kwargs):
     sys.prepare()
     logger.info('Symbolic to numeric preparation completed.')
     return True
+
+
+def selftest(**kwargs):
+    test_directory = tests_root()
+
+    suite = unittest.TestLoader().discover(test_directory)
+    unittest.TextTestRunner(verbosity=2).run(suite)

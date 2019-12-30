@@ -26,7 +26,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
-from andes.utils.misc import get_config_path
+from andes.utils.paths import get_config_path
 from andes.variables.dae import DAE
 from andes.routines import all_routines
 from andes.models import non_jit
