@@ -68,13 +68,13 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ANDES'
-copyright = '2019, Hantao Cui'
+copyright = '2020, Hantao Cui'
 author = 'Hantao Cui'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+
 import andes
 # The short X.Y version.
 version = andes.__version__

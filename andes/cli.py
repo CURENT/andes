@@ -32,7 +32,7 @@ def create_parser():
                                         )
 
     run = sub_parsers.add_parser('run')
-    run.add_argument('filename', help='Case file name', nargs='*')
+    run.add_argument('filename', help='Case file name. Power flow is calculated by default.', nargs='*')
     run.add_argument('-r', '--routine',
                      action='store', help='Simulation routine to run.',
                      choices=('tds', 'eig'))
@@ -70,13 +70,13 @@ def create_parser():
     prep = sub_parsers.add_parser('prepare')  # NOQA
 
     misc = sub_parsers.add_parser('misc')
-    misc.add_argument('--license', action='store_true', help='Display software license')
-    misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
     config_exclusive = misc.add_mutually_exclusive_group()
     config_exclusive.add_argument('--edit-config', help='Quick edit of the config file',
                                   default='', nargs='?', type=str)
     config_exclusive.add_argument('--save-config', help='save configuration to file name',
                                   nargs='?', type=str, default='')
+    misc.add_argument('--license', action='store_true', help='Display software license')
+    misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
     return parser
 

@@ -41,7 +41,7 @@ setup(
     author="Hantao Cui",
     author_email='cuihantao@gmail.com',
     url='https://github.com/cuihantao/andes',
-    packages=find_packages(exclude=['docs', 'tests', 'demos', 'cards']),
+    packages=find_packages(exclude=['docs', 'tests']),
     entry_points={
         'console_scripts': [
             'andes = andes.cli:main',

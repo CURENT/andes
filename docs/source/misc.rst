@@ -20,3 +20,10 @@ The bases for DC system are
 - :math:`S_b^{dc}`: power in MVA. It is assumed to be the same as :math:`S_b^{ac}`.
 
 - :math:`V_b^{dc}`: voltage in kV.
+
+Profiling Import
+========================================
+To speed up the command-line program, import profiling is used to breakdown the program loading time.
+
+With tool ``profimp``, ``andes`` can be profiled with ``profimp "import andes" --html > andes_import.htm``. The
+report can be viewed in any web browser.

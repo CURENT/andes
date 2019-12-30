@@ -277,7 +277,7 @@ def run(filename, input_path='', ncpu=1, **kwargs):
         config_logger(file=False)
 
     if len(filename) == 0:
-        logger.info('info: no input file. Try \'andes run -h\' for help.')
+        logger.info('info: no input file. Use \'andes run -h\' for help.')
     elif isinstance(filename, str):
         filename = [filename]
 
@@ -358,7 +358,7 @@ def misc(edit_config='', save_config='', license=False, clean=True, **kwargs):
         remove_output()
         return True
 
-    logger.info('info: no option specified. Try \'andes misc -h\' for help.')
+    logger.info('info: no option specified. Use \'andes misc -h\' for help.')
 
 
 def prepare(**kwargs):
