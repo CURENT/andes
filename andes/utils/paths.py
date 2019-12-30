@@ -23,9 +23,6 @@ def get_case(rpath):
     case_path = os.path.join(cases_root(), rpath)
     case_path = os.path.normpath(case_path)
 
-    if not os.path.isfile(case_path):
-        raise FileNotFoundError(f"Path {rpath} is not a valid case file.")
-
     return case_path
 
 

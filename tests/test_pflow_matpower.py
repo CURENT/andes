@@ -8,6 +8,7 @@ class TestMATPOWER(unittest.TestCase):
 
     def setUp(self) -> None:
         self.cases = ('case5.m', 'case14.m', 'case300.m', 'case9241pegase.m')
+        self.cases = ('*.m',)
 
     def test_pflow_mpc(self):
         for case in self.cases:

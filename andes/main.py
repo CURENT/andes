@@ -374,4 +374,4 @@ def selftest(**kwargs):
     test_directory = tests_root()
 
     suite = unittest.TestLoader().discover(test_directory)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.TextTestRunner(verbosity=3).run(suite)
