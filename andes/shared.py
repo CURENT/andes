@@ -9,19 +9,19 @@ Known issues ::
     got 216 from PyObject
         return f(*args, **kwds)
 """
-# from andes.utils.lazyimport import LazyImport
-#
+from andes.utils.lazyimport import LazyImport
+
 # # ----------------------------------------
 # # Packages
 # np = LazyImport('import numpy')
-# pd = LazyImport('import pandas')
 # tqdm = LazyImport('from tqdm import tqdm')
-# plt = LazyImport('from matplotlib import pyplot')
-# mpl = LazyImport('import matplotlib')
+pd = LazyImport('import pandas')
+plt = LazyImport('from matplotlib import pyplot')
+mpl = LazyImport('import matplotlib')
+Process = LazyImport('from multiprocessing import Process')
 # umfpack = LazyImport('from cvxopt import umfpack')
 # cvxopt = LazyImport('import cvxopt')
 # coloredlogs = LazyImport('import coloredlogs')
-# Process = LazyImport('from multiprocessing import Process')
 # # ----------------------------------------
 #
 # # ----------------------------------------
@@ -35,27 +35,20 @@ Known issues ::
 #
 # # ----------------------------------------
 # # function calls
-# newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
-# fsolve = LazyImport('from scipy.optimize import fsolve')
-# solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
-# odeint = LazyImport('from scipy.integrate import odeint')
+newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
+fsolve = LazyImport('from scipy.optimize import fsolve')
+solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
+odeint = LazyImport('from scipy.integrate import odeint')
 # # ----------------------------------------
 
 import numpy as np  # NOQA
-import pandas as pd  # NOQA
 from tqdm import tqdm  # NOQA
-from matplotlib import pyplot as plt  # NOQA
-import matplotlib as mpl  # NOQA
 from cvxopt import umfpack  # NOQA
 import cvxopt  # NOQA
 import coloredlogs  # NOQA
-from multiprocessing import Process  # NOQA
 
 from numpy import ndarray  # NOQA
 from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-
-from scipy.optimize import fsolve, newton_krylov  # NOQA
-from scipy.integrate import solve_ivp, odeint  # NOQA
 
 pi = 3.14159265358973
 jpi2 = 1.5707963267948966j
