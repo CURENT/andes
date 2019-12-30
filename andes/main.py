@@ -309,7 +309,7 @@ def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
         system = run_case(valid_cases[0], **kwargs)
     else:
         logger.info('Processing {} jobs on {} CPUs'.format(len(valid_cases), ncpu))
-        logger.handlers[1].setLevel(logging.WARNING)
+        logger.handlers[0].setLevel(logging.WARNING)
 
         # start processes
         jobs = []
@@ -329,7 +329,7 @@ def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
                 jobs = []
 
         # restore command line output when all jobs are done
-        logger.handlers[1].setLevel(logging.INFO)
+        logger.handlers[0].setLevel(logging.INFO)
 
     t0, s0 = elapsed(t0)
 
