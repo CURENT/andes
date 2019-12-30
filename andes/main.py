@@ -370,7 +370,7 @@ def prepare(**kwargs):
 
 
 def selftest(**kwargs):
-    logger.handlers[1].setLevel(logging.WARNING)
+    logger.handlers[0].setLevel(logging.WARNING)
     test_directory = tests_root()
 
     suite = unittest.TestLoader().discover(test_directory)
