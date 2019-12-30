@@ -3,6 +3,8 @@ import os
 import andes
 from andes.utils.paths import get_case
 
+andes.main.config_logger(stream_level=30, file=False)
+
 
 class TestMATPOWER(unittest.TestCase):
 
@@ -13,4 +15,4 @@ class TestMATPOWER(unittest.TestCase):
     def test_pflow_mpc(self):
         for case in self.cases:
             case_path = get_case(os.path.join('matpower', case))
-            andes.main.run(case_path, no_output=True, verbose=30)
+            andes.main.run(case_path, no_output=True)
