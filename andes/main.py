@@ -273,9 +273,9 @@ def run_case(case, routine=None, profile=False, convert='', **kwargs):
     return system
 
 
-def run(filename, input_path='', ncpu=1, **kwargs):
+def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
     if is_interactive():
-        config_logger(file=False)
+        config_logger(file=False, stream_level=verbose)
 
     if len(filename) == 0:
         logger.info('info: no input file. Use \'andes run -h\' for help.')
@@ -309,7 +309,7 @@ def run(filename, input_path='', ncpu=1, **kwargs):
         system = run_case(valid_cases[0], **kwargs)
     else:
         logger.info('Processing {} jobs on {} CPUs'.format(len(valid_cases), ncpu))
-        logger.handlers[0].setLevel(logging.WARNING)
+        logger.handlers[1].setLevel(logging.WARNING)
 
         # start processes
         jobs = []
@@ -329,7 +329,7 @@ def run(filename, input_path='', ncpu=1, **kwargs):
                 jobs = []
 
         # restore command line output when all jobs are done
-        logger.handlers[0].setLevel(logging.INFO)
+        logger.handlers[1].setLevel(logging.INFO)
 
     t0, s0 = elapsed(t0)
 
@@ -370,6 +370,7 @@ def prepare(**kwargs):
 
 
 def selftest(**kwargs):
+    logger.handlers[1].setLevel(logging.WARNING)
     test_directory = tests_root()
 
     suite = unittest.TestLoader().discover(test_directory)

@@ -39,4 +39,4 @@ class Test5Bus(unittest.TestCase):
 
     def test_tds_init(self):
         self.ss.PFlow.nr()
-        self.ss.TDS.run_implicit([0, 5])
+        self.ss.TDS.run_implicit([0, 20])

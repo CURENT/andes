@@ -12,4 +12,4 @@ class TestMATPOWER(unittest.TestCase):
     def test_pflow_mpc(self):
         for case in self.cases:
             case_path = get_case(os.path.join('matpower', case))
-            andes.main.run(case_path, no_output=True)
+            andes.main.run(case_path, no_output=True, verbose=30)
