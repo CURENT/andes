@@ -9,7 +9,7 @@ non_jit = OrderedDict([
     ('shunt', ['Shunt']),
     ('line', ['Line']),
     ('area', ['Area']),
-    ('synchronous', ['GENCLS']),
+    ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2']),
     ('timer', ['Toggler']),
 ])
