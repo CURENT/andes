@@ -78,6 +78,7 @@
 *   Deal with two-terminal and multi-terminal devices
 *   Define general hooks - when should the connectivity check happen
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
+*   Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
 
 ### Usability
 - [x] Set up command line interface

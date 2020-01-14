@@ -201,11 +201,11 @@ class GENROUModel(object):
         self.gq2 = ConstService(v_str='(xq1 - xq2) / (xq1 - xl) ** 2',
                                 tex_name=r"\gamma_{q2}")
 
-        self.e1q = State(tex_name=r"e'_q",
-                         e_str='(-e1q - (xd - xd1) * (Id - gd2 * psi2d - (1 - gd1) * Id + gd2 * e1q) + vf) / Td10')
-
         self.e1d = State(tex_name=r"e'_d",
                          e_str='(-e1d + (xq - xq1) * (Iq - gq2 * psi2q - (1 - gq1) * Iq - gd2 * e1d)) / Tq10')
+
+        self.e1q = State(tex_name=r"e'_q",
+                         e_str='(-e1q - (xd - xd1) * (Id - gd2 * psi2d - (1 - gd1) * Id + gd2 * e1q) + vf) / Td10')
 
         self.psi2d = State(tex_name=r"\psi''_d",
                            e_str='(-psi2d + e1q - (xd1 - xl) * Id) / Td20')

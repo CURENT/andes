@@ -909,23 +909,23 @@ Parameters
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
 |  syn   |                       |        | IdxParam  | Synchronous generator idx    |         | mandatory  |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  R     | :math:`R`             | *pu*   | NumParam  | Speed regulation gain        | 0.050   |            |
+|  R     | :math:`R`             | *p.u.* | NumParam  | Speed regulation gain        | 0.050   |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  pmax  | :math:`p_{max}`       | *pu*   | NumParam  | Maximum power output         | 999     | power      |
+|  pmax  | :math:`p_{max}`       | *p.u.* | NumParam  | Maximum power output         | 999     | power      |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  pmin  | :math:`p_{min}`       | *pu*   | NumParam  | Minimum power output         | 0       | power      |
+|  pmin  | :math:`p_{min}`       | *p.u.* | NumParam  | Minimum power output         | 0       | power      |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  wref0 | :math:`\omega_{ref0}` | *pu*   | NumParam  | Base speed reference         | 1       |            |
+|  wref0 | :math:`\omega_{ref0}` | *p.u.* | NumParam  | Base speed reference         | 1       |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  dbl   | :math:`L_{db}`        | *pu*   | NumParam  | Deadband lower limit         | -0.000  |            |
+|  dbl   | :math:`L_{db}`        | *p.u.* | NumParam  | Deadband lower limit         | -0.000  |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  dbu   | :math:`U_{db}`        | *pu*   | NumParam  | Deadband upper limit         | 0.000   |            |
+|  dbu   | :math:`U_{db}`        | *p.u.* | NumParam  | Deadband upper limit         | 0.000   |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  dbc   | :math:`C_{db}`        | *pu*   | NumParam  | Deadband neutral value       | 0       |            |
+|  dbc   | :math:`C_{db}`        | *p.u.* | NumParam  | Deadband neutral value       | 0       |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  T1    |                       |        | NumParam  | Transient gain time          | 0.200   |            |
+|  T1    | :math:`T_1`           |        | NumParam  | Transient gain time          | 0.200   |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
-|  T2    |                       |        | NumParam  | Governor time constant       | 10      |            |
+|  T2    | :math:`T_2`           |        | NumParam  | Governor time constant       | 10      |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+
 |  Sn    | :math:`S_m`           | *MVA*  | ExtParam  | Rated power from generator   |         |            |
 +--------+-----------------------+--------+-----------+------------------------------+---------+------------+

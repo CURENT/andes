@@ -10,19 +10,19 @@ class TGBaseData(ModelData):
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen', info='Synchronous generator idx', mandatory=True)
-        self.R = NumParam(info='Speed regulation gain', tex_name='R', default=0.05, unit='pu')
+        self.R = NumParam(info='Speed regulation gain', tex_name='R', default=0.05, unit='p.u.')
         self.pmax = NumParam(info='Maximum power output', tex_name='p_{max}', power=True, default=999.0,
-                             unit='pu')
+                             unit='p.u.')
         self.pmin = NumParam(info='Minimum power output', tex_name='p_{min}', power=True, default=0.0,
-                             unit='pu')
+                             unit='p.u.')
         self.wref0 = NumParam(info='Base speed reference', tex_name=r'\omega_{ref0}', default=1.0,
-                              unit='pu')
+                              unit='p.u.')
         self.dbl = NumParam(info='Deadband lower limit', tex_name='L_{db}', default=-0.0001,
-                            unit='pu')
+                            unit='p.u.')
         self.dbu = NumParam(info='Deadband upper limit', tex_name='U_{db}', default=0.0001,
-                            unit='pu')
+                            unit='p.u.')
         self.dbc = NumParam(info='Deadband neutral value', tex_name='C_{db}', default=0.0,
-                            unit='pu')
+                            unit='p.u.')
 
 
 class TGBase(Model):
@@ -53,8 +53,8 @@ class TGBase(Model):
 class TG2Data(TGBaseData):
     def __init__(self):
         super().__init__()
-        self.T1 = NumParam(info='Transient gain time', default=0.2)
-        self.T2 = NumParam(info='Governor time constant', default=10.0)
+        self.T1 = NumParam(info='Transient gain time', default=0.2, tex_name='T_1')
+        self.T2 = NumParam(info='Governor time constant', default=10.0, tex_name='T_2')
 
 
 class TG2(TG2Data, TGBase):
