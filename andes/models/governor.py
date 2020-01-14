@@ -37,15 +37,15 @@ class TGBase(Model):
                            info='Rated power from generator', unit='MVA', export=False)
         self.Vn = ExtParam(src='Vn', model='SynGen', indexer=self.syn, tex_name='V_m',
                            info='Rated voltage from generator', unit='kV', export=False)
-        self.pm0 = ExtService(src='pm', model='SynGen', indexer=self.syn, tex_name='p_{m0}')
+        self.tm0 = ExtService(src='tm', model='SynGen', indexer=self.syn, tex_name=r'\tau_{m0}')
         self.omega = ExtState(src='omega', model='SynGen', indexer=self.syn, tex_name=r'\omega',
                               info='Generator speed')
-        self.pm = ExtAlgeb(src='pm', model='SynGen', indexer=self.syn, tex_name='P_m',
-                           e_str='u*(pout - pm0)')
+        self.tm = ExtAlgeb(src='tm', model='SynGen', indexer=self.syn, tex_name=r'\tau_m',
+                           e_str='u*(pout - tm0)')
         self.pnl = Algeb(info='Power output before hard limiter', tex_name='P_{nl}',
-                         v_str='pm0')
+                         v_str='tm0')
         self.pout = Algeb(info='Turbine power output after limiter', tex_name='P_{out}',
-                          v_str='pm0')
+                          v_str='tm0')
         self.wref = Algeb(info='Speed referemce variable', tex_name=r'\omega_{ref}',
                           v_str='wref0', e_str='wref0 - wref')
 
@@ -82,7 +82,7 @@ class TG2(TG2Data, TGBase):
         self.plim = HardLimiter(u=self.pnl, lower=self.pmin, upper=self.pmax,
                                 enable=self.config.hardlimit)
 
-        self.pnl.e_str = 'pm0 + leadlag_y - pnl'
+        self.pnl.e_str = 'tm0 + leadlag_y - pnl'
         self.pout.e_str = 'pnl * plim_zi + pmax * plim_zu + pmin * plim_zl - pout'
 
 # Developing a model (use TG2 as an example)

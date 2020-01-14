@@ -48,7 +48,7 @@ class GENBase(Model):
         self.delta = State(v_str='delta0', tex_name=r'\delta',
                            e_str='u * fn * (omega - 1)')
         self.omega = State(v_str='u', tex_name=r'\omega',
-                           e_str='(u / M ) * (pm - pe - D * (omega - 1))')
+                           e_str='(u / M ) * (tm - te - D * (omega - 1))')
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
@@ -66,8 +66,10 @@ class GENBase(Model):
         self.vd = Algeb(v_str='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
         self.vq = Algeb(v_str='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
 
-        self.pm = Algeb(v_str='pm0', v_setter=True, e_str='pm0 - pm', tex_name=r'P_m')
-        self.pe = Algeb(v_str='p0', v_setter=True, e_str='psid * Iq - psiq * Id - pe', tex_name=r'P_e')
+        self.tm = Algeb(info='mechanical torque', tex_name=r'\tau_m',
+                        v_str='tm0', v_setter=True, e_str='tm0 - tm')
+        self.te = Algeb(info='electric torque', tex_name=r'\tau_e',
+                        v_str='p0', v_setter=True, e_str='psid * Iq - psiq * Id - te', )
         self.vf = Algeb(v_str='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
 
         # ----------service consts for initialization----------
@@ -90,7 +92,8 @@ class GENBase(Model):
         self.vd0 = ConstService(v_str='re(vdq)', tex_name=r'V_{d0}')
         self.vq0 = ConstService(v_str='im(vdq)', tex_name=r'V_{q0}')
 
-        self.pm0 = ConstService(v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)', tex_name=r'P_{m0}')
+        self.tm0 = ConstService(tex_name=r'\tau_{m0}',
+                                v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
         self.vf0 = ConstService(tex_name=r'v_{f0}')
 
         # --------------------------------------------------Experimental-----

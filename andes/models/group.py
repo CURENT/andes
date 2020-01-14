@@ -240,7 +240,7 @@ class SynGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn'))
-        self.common_vars.extend(('omega', 'delta', 'pm'))
+        self.common_vars.extend(('omega', 'delta', 'tm'))
 
 
 class TurbineGov(GroupBase):
