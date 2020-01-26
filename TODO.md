@@ -79,6 +79,7 @@
 *   Define general hooks - when should the connectivity check happen
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
 *   Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
+*   Add ``Model._int`` for internal indexer
 
 ### Usability
 - [x] Set up command line interface

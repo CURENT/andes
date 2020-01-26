@@ -343,11 +343,13 @@ class Model(object):
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'), ))
         self.input_syms = OrderedDict()
         self.vars_syms = OrderedDict()
+        self.iter_syms = OrderedDict()
         self.vars_syms_list = list()
         self.non_vars_syms = OrderedDict()  # input_syms - vars_syms
+        self.non_iter_syms = OrderedDict()  # input_syms - iter_syms
 
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
-        self.f_matrix, self.g_matrix, self.c_syms_matrix = list(), list(), list()
+        self.f_matrix, self.g_matrix = list(), list()
         self.f_print, self.g_print, self.c_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
@@ -379,6 +381,7 @@ class Model(object):
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
+        self.cache.add_callback('iter_vars', self._iter_vars)
         self.cache.add_callback('all_vars_names', self._all_vars_names)
         self.cache.add_callback('all_params', self._all_params)
         self.cache.add_callback('all_params_names', self._all_params_names)
@@ -547,29 +550,33 @@ class Model(object):
         """
         Generate lambda functions for initial values
         """
+        logger.debug(f'Generating initializers for {self.class_name}')
         from sympy import sympify, lambdify, Matrix
         from sympy.printing import latex
 
         init_lambda_list = OrderedDict()
         init_latex = OrderedDict()
+        init_seq_list = []
         init_g_list = []   # initialization equations in g(x, y) = 0 form
 
         input_syms_list = list(self.input_syms)
 
         for name, instance in self.cache.all_vars.items():
-            if instance.v_str is None:
-                init_lambda_list[name] = 0
-                init_latex[name] = ''
-
-                init_g_list.append(sympify(f'0 - {name}', locals=self.input_syms))
-            else:
+            if instance.v_str is not None:
                 sympified = sympify(instance.v_str, locals=self.input_syms)
                 lambdified = lambdify(input_syms_list, sympified, 'numpy')
                 init_lambda_list[name] = lambdified
                 init_latex[name] = latex(sympified.subs(self.tex_names))
+                init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.input_syms))
 
-                init_g_list.append(sympify(f'{instance.v_str} - {name}', locals=self.input_syms))
+            if instance.v_iter is not None:
+                sympified = sympify(instance.v_iter, locals=self.input_syms)
+                init_g_list.append(sympified)
+                # TODO: the line below will cause an issue if we evaluate the sequential ones after iterative
+                # init_lambda_list[name] = 0
+                init_latex[name] = latex(sympified.subs(self.tex_names))
 
+        self.init_seq = Matrix(init_seq_list)
         self.init_std = Matrix(init_g_list)
         self.init_dstd = Matrix([])
         if len(self.init_std) > 0:
@@ -577,14 +584,14 @@ class Model(object):
 
         self.calls.init_lambdify = init_lambda_list
         self.calls.init_latex = init_latex
-        self.calls.init_std = lambdify((list(self.vars_syms), list(self.non_vars_syms)), self.init_std, 'numpy')
+        self.calls.init_std = lambdify((list(self.iter_syms), list(self.non_iter_syms)), self.init_std, 'numpy')
 
     def _init_wrap(self, x0, params):
         """
         A wrapper for converting the initialization equations into standard forms g(x) = 0, where x is an array.
         """
         vars_input = []
-        for i in range(len(self.cache.all_vars)):
+        for i, instance in enumerate(self.cache.iter_vars.values()):
             vars_input.append(x0[i * self.n: (i+1) * self.n])
 
         return np.ravel(self.calls.init_std(vars_input, params))
@@ -595,28 +602,28 @@ class Model(object):
         """
         inputs = self.get_inputs(refresh=True)
 
-        vars_input = OrderedDict()
-        non_vars_input = OrderedDict(inputs)
+        iter_input = OrderedDict()
+        non_iter_input = OrderedDict(inputs)  # include non-iter variables and other params/configs
 
-        for name in self.cache.all_vars:
-            vars_input[name] = inputs[name]
-            non_vars_input.pop(name)
+        for name, instance in self.cache.iter_vars.items():
+            iter_input[name] = inputs[name]
+            non_iter_input.pop(name)
 
-        vars_array = list(vars_input.values())
-        non_vars_list = list(non_vars_input.values())
+        iter_array = list(iter_input.values())
+        non_iter_list = list(non_iter_input.values())
 
-        for i in range(len(vars_array)):
-            if isinstance(vars_array[i], (float, int, np.int64, np.float64)):
-                vars_array[i] = np.ones(self.n) * vars_array[i]
+        for i in range(len(iter_array)):
+            if isinstance(iter_array[i], (float, int, np.int64, np.float64)):
+                iter_array[i] = np.ones(self.n) * iter_array[i]
 
-        vars_array = np.ravel(vars_array)
+        iter_array = np.ravel(iter_array)
 
         def init_wrap(x0):
-            return self._init_wrap(x0, non_vars_list)
+            return self._init_wrap(x0, non_iter_list)
 
-        sol = newton_krylov(init_wrap, vars_array)
+        sol = newton_krylov(init_wrap, iter_array)
 
-        for i, var in enumerate(self.cache.all_vars.values()):
+        for i, var in enumerate(self.cache.iter_vars.values()):
             var.v = sol[i*self.n: (i+1) * self.n]
 
     def generate_symbols(self):
@@ -640,11 +647,12 @@ class Model(object):
         -------
 
         """
+        logger.debug(f'Generating symbols for {self.class_name}')
         from sympy import Symbol, Matrix
 
         # clear symbols storage
         self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
-        self.f_matrix, self.g_matrix, self.c_syms_matrix = Matrix([]), Matrix([]), Matrix([])
+        self.f_matrix, self.g_matrix = Matrix([]), Matrix([])
 
         # process tex_names defined in model
         # -----------------------------------------------------------
@@ -661,6 +669,8 @@ class Model(object):
         for var in self.cache.all_vars_names:
             self.vars_syms[var] = Symbol(var)
             self.input_syms[var] = Symbol(var)
+            if self.__dict__[var].v_iter is not None:
+                self.iter_syms[var] = Symbol(var)
 
         for key in self.config.as_dict():
             self.input_syms[key] = Symbol(key)
@@ -674,8 +684,11 @@ class Model(object):
 
         # build ``non_vars_syms`` by removing ``vars_syms`` keys from a copy of ``input_syms``
         self.non_vars_syms = OrderedDict(self.input_syms)
+        self.non_iter_syms = OrderedDict(self.input_syms)
         for key in self.vars_syms:
             self.non_vars_syms.pop(key)
+        for key in self.iter_syms:
+            self.non_iter_syms.pop(key)
 
         self.vars_syms_list = list(self.vars_syms.values())  # useful for ``.jacobian()``
 
@@ -701,11 +714,9 @@ class Model(object):
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_syms)
         self.g_matrix = Matrix(self.g_syms)
-        self.h_matrix = Matrix(self.h_syms)
 
         self.calls.g_lambdify = lambdify(inputs_list, self.g_matrix, 'numpy')
         self.calls.f_lambdify = lambdify(inputs_list, self.f_matrix, 'numpy')
-        self.calls.h_lambdify = lambdify(inputs_list, self.h_matrix, 'numpy')
 
         # convert service equations
         # Service equations are converted sequentially because Services can be interdependent
@@ -788,6 +799,7 @@ class Model(object):
 
     def generate_pretty_print(self):
         """Generate pretty print variables and equations"""
+        logger.debug(f"Generating pretty prints for {self.class_name}")
         from sympy import Matrix
         from sympy.printing import latex
 
@@ -799,7 +811,6 @@ class Model(object):
         # get pretty printing equations by substituting symbols
         self.f_print = self.f_matrix.subs(self.tex_names)
         self.g_print = self.g_matrix.subs(self.tex_names)
-        self.h_print = self.h_matrix.subs(self.tex_names)
         self.s_print = self.s_matrix.subs(self.tex_names)
 
         # store latex strings
@@ -811,7 +822,6 @@ class Model(object):
 
         self.calls.f_latex = [latex(item) for item in self.f_print]
         self.calls.g_latex = [latex(item) for item in self.g_print]
-        self.calls.h_latex = [latex(item) for item in self.h_print]
         self.calls.s_latex = [latex(item) for item in self.s_print]
 
         self.df_print = self.df_sparse.subs(self.tex_names)
@@ -918,6 +928,12 @@ class Model(object):
                             self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
 
     def initialize(self):
+        """
+        Initialization sequence:
+        1. Sequential initialization based on the order of definition
+        2. Use Newton-Krylov method for iterative initialization
+        3. Custom init
+        """
         if self.n == 0:
             return
 
@@ -925,13 +941,6 @@ class Model(object):
         self.s_update()
 
         logger.debug(f'{self.class_name}: calling initialize()')
-
-        # experimental: user Newton-Krylov solver for dynamic initialization
-        # ----------------------------------------
-        # if self.flags['nr_init']:
-        #     self.solve_initialization()
-        #     return
-        # ----------------------------------------
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
@@ -948,9 +957,29 @@ class Model(object):
             else:
                 instance.v = init_fun
 
+        # experimental: user Newton-Krylov solver for dynamic initialization
+        # ----------------------------------------
+        if self.flags['nr_init']:
+            self.solve_initialization()
+        # ----------------------------------------
+
         # call custom variable initializer after lambdified initializers
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
+
+    def get_init_order(self):
+        """
+        Get variable initialization order
+
+        Returns
+        -------
+
+        """
+        out = []
+        for name, instance in self.vars_decl_order.items():
+            out.append(name)
+
+        logger.info(f'Initialization order: {",".join(out)}')
 
     def f_update(self):
         if self.n == 0:
@@ -1088,6 +1117,14 @@ class Model(object):
                            list(self.algebs.items()) +
                            list(self.algebs_ext.items())
                            )
+
+    def _iter_vars(self):
+        """Variables to be iteratively initialized"""
+        all_vars = OrderedDict(self.cache.all_vars)
+        for name, instance in self.cache.all_vars.items():
+            if not instance.v_iter:
+                all_vars.pop(name)
+        return all_vars
 
     def _all_vars_names(self):
         out = []
@@ -1314,8 +1351,8 @@ class Model(object):
         table = Tab(title='Equations', max_width=max_width, export=export)
 
         call_store = self.system.calls[self.class_name]
-        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex + call_store.c_latex, export=export)
-        tex_eqs = self.math_wrap(call_store.f_latex + call_store.g_latex + call_store.h_latex, export=export)
+        tex_names = self.math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+        tex_eqs = self.math_wrap(call_store.f_latex + call_store.g_latex, export=export)
 
         rows = []
         for i, var in enumerate(self.cache.all_vars.values()):

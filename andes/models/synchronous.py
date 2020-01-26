@@ -5,9 +5,9 @@ import logging
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.discrete import Selector  # NOQA
+from andes.core.discrete import Selector, LessThan  # NOQA
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.block import MagneticQuadSat, MagneticExpSat  # NOQA
+from andes.core.block import MagneticQuadSat, MagneticExpSat, Block  # NOQA
 from andes.shared import np  # NOQA
 
 logger = logging.getLogger(__name__)
@@ -34,15 +34,16 @@ class GENBaseData(ModelData):
 
         self.kp = NumParam(default=0, info="active power feedback gain", tex_name='k_p')
         self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
-        self.S10 = NumParam(default=1, info="first saturation factor", tex_name='S_{1.0}')
-        self.S12 = NumParam(default=1, info="second saturation factor", tex_name='S_{1.2}')
+        self.S10 = NumParam(default=0.0, info="first saturation factor", tex_name='S_{1.0}')
+        self.S12 = NumParam(default=1.0, info="second saturation factor", tex_name='S_{1.2}', non_zero=True)
 
 
 class GENBase(Model):
     def __init__(self, system, config):
         super().__init__(system, config)
         self.group = 'SynGen'
-        self.flags.update({'tds': True})
+        self.flags.update({'tds': True,
+                           'nr_init': True})
 
         # state variables
         self.delta = State(v_str='delta0', tex_name=r'\delta',
@@ -60,8 +61,8 @@ class GENBase(Model):
 
         # algebraic variables
         # Need to be provided by specific generator models
-        self.Id = Algeb(v_str='Id0', tex_name=r'I_d')  # to be completed by subclasses
-        self.Iq = Algeb(v_str='Iq0', tex_name=r'I_q')  # to be completed
+        self.Id = Algeb(v_str='Id0', tex_name=r'I_d', e_str='')  # to be completed by subclasses
+        self.Iq = Algeb(v_str='Iq0', tex_name=r'I_q', e_str='')  # to be completed
 
         self.vd = Algeb(v_str='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
         self.vq = Algeb(v_str='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
@@ -76,13 +77,71 @@ class GENBase(Model):
         self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='P_0')
         self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='Q_0')
 
+    def v_numeric(self, **kwargs):
+        # disable corresponding `StaticGen`
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+
+
+class Flux0(object):
+    """
+    Flux model without electro-magnetic transients and ignore speed deviation
+    """
+
+    def __init__(self):
+        self.psid = Algeb(tex_name=r'\psi_d',
+                          v_str='psid0',
+                          e_str='u * (ra * Iq + vq) - psid')
+        self.psiq = Algeb(tex_name=r'\psi_q',
+                          v_str='psiq0',
+                          e_str='u * (ra * Id + vd) + psiq')
+
+        self.Id.e_str += ' + psid'
+        self.Iq.e_str += ' + psiq'
+
+
+class Flux1(object):
+    """
+    Flux model without electro-magnetic transients but consider speed deviation
+    """
+
+    def __init__(self):
+        self.psid = Algeb(tex_name=r'\psi_d',
+                          v_str='psid0',
+                          e_str='u * (ra * Iq + vq) - omega * psid')
+        self.psiq = Algeb(tex_name=r'\psi_q',
+                          v_str='psiq0',
+                          e_str='u * (ra * Id + vd) + omega * psiq')
+
+        self.Id.e_str += ' + psid'
+        self.Iq.e_str += ' + psiq'
+
+
+class Flux2(object):
+    """
+    Flux model with electro-magnetic transients
+    """
+
+    def __init__(self):
+        self.psid = State(tex_name=r'\psi_d',
+                          v_str='psid0',
+                          e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)')
+        self.psiq = State(tex_name=r'\psi_q',
+                          v_str='psiq0',
+                          e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)')
+
+        self.Id.e_str += ' + psid'
+        self.Iq.e_str += ' + psiq'
+
+
+class GENCLSModel(object):
+    def __init__(self):
         # internal voltage and rotor angle calculation
         self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c')
         self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S')
         self._I = ConstService(v_str='_S / conj(_V)', tex_name='I_c')
-        self._E = ConstService(v_str='_V + _I * (ra + 1j * xq)', tex_name='E')
-        self._deltac = ConstService(v_str='log(_E / abs(_E))', tex_name=r'\delta_c')
-        self.delta0 = ConstService(v_str='u * im(_deltac)', tex_name=r'\delta_0')
+        self._E = ConstService(tex_name='E')
+        self._deltac = ConstService(tex_name=r'\delta_c')
+        self.delta0 = ConstService(tex_name=r'\delta_0')
 
         self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
         self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
@@ -94,67 +153,19 @@ class GENBase(Model):
 
         self.tm0 = ConstService(tex_name=r'\tau_{m0}',
                                 v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
+        self.psid0 = ConstService(tex_name=r"\psi_{d0}",
+                                  v_str='u * (ra * Iq0) + vq0')
+        self.psiq0 = ConstService(tex_name=r"\psi_{q0}",
+                                  v_str='-u * (ra * Id0) - vd0')
         self.vf0 = ConstService(tex_name=r'v_{f0}')
 
-        # --------------------------------------------------Experimental-----
-        # self.Idq_max = Algeb(v_str='maximum(Id, Iq)', diag_eps=1e-6,
-        #                      e_str='Idqs_s0 * Id + Idqs_s1 * Iq - Idq_max',
-        #                      tex_name='I_{dq_{max}}')
-        #
-        # self.Idqs = Selector(self.Id, self.Iq, fun=np.maximum.reduce, tex_name=r'I_{dq,max}')
-        # self.sat = MagneticQuadSat(self.vd, self.S10, self.S12, tex_name='{sat}')
+        # initialization of internal voltage and delta
+        self._E.v_str = '_V + _I * (ra + 1j * xq)'
+        self._deltac.v_str = 'log(_E / abs(_E))'
+        self.delta0.v_str = 'u * im(_deltac)'
 
-    def v_numeric(self, **kwargs):
-        # disable corresponding `StaticGen`
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
-
-
-class Flux0(object):
-    """
-    Flux model without electro-magnetic transients and ignore speed deviation
-    """
-    def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d', v_str='u * (ra * Iq0) + vq0',
-                          e_str='u * (ra * Iq + vq) - psid')
-        self.psiq = Algeb(tex_name=r'\psi_q', v_str='-u * (ra * Id0) - vd0',
-                          e_str='u * (ra * Id + vd) + psiq')
-
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
-
-
-class Flux1(object):
-    """
-    Flux model without electro-magnetic transients but consider speed deviation
-    """
-    def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d', v_str='u * (ra * Iq0) + vq0',
-                          e_str='u * (ra * Iq + vq) - omega * psid')
-        self.psiq = Algeb(tex_name=r'\psi_q', v_str='-u * (ra * Id0) - vd0',
-                          e_str='u * (ra * Id + vd) + omega * psiq')
-
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
-
-
-class Flux2(object):
-    """
-    Flux model with electro-magnetic transients
-    """
-    def __init__(self):
-        self.psid = State(tex_name=r'\psi_d', v_str='u * (ra * Iq0) + vq0',
-                          e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)')
-        self.psiq = State(tex_name=r'\psi_q', v_str='-u * (ra * Id0) - vd0',
-                          e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)')
-
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
-
-
-class GENCLSModel(object):
-    def __init__(self):
-        self.Id.e_str = 'xq * Id - vf'
-        self.Iq.e_str = 'xq * Iq'
+        self.Id.e_str += ' + xq * Id - vf'
+        self.Iq.e_str += ' + xq * Iq'
         self.vf0.v_str = '(vq0 + ra * Iq0) + xq * Id0'
 
 
@@ -172,23 +183,23 @@ class GENROUData(GENBaseData):
         self.xd = NumParam(default=1.9, info='d-axis synchronous reactance',
                            tex_name=r'x_d', z=True)
         self.xd1 = NumParam(default=0.302, info='d-axis transient reactance',
-                            tex_name=r"x'_d", z=True)
+                            tex_name=r"x \prime_d", z=True)
         self.xd2 = NumParam(default=0.204, info='d-axis sub-transient reactance',
-                            tex_name=r"x''_d", z=True)
+                            tex_name=r"x \prime \prime_d", z=True)
 
         self.xq1 = NumParam(default=0.5, info='q-axis transient reactance',
-                            tex_name=r"x'_q", z=True)
+                            tex_name=r"x \prime_q", z=True)
         self.xq2 = NumParam(default=0.3, info='q-axis sub-transient reactance',
-                            tex_name=r"x''_q", z=True)
+                            tex_name=r"x \prime \prime_q", z=True)
 
         self.Td10 = NumParam(default=8.0, info='d-axis transient time constant',
-                             tex_name=r"T'_{d0}")
+                             tex_name=r"T \prime_{d0}")
         self.Td20 = NumParam(default=0.04, info='d-axis sub-transient time constant',
-                             tex_name=r"T''_{d0}")
+                             tex_name=r"T \prime \prime_{d0}")
         self.Tq10 = NumParam(default=0.8, info='q-axis transient time constant',
-                             tex_name=r"T'_{q0}")
+                             tex_name=r"T \prime_{q0}")
         self.Tq20 = NumParam(default=0.02, info='q-axis sub-transient time constant',
-                             tex_name=r"T''_{q0}")
+                             tex_name=r"T \prime \prime_{q0}")
         self.Taa = NumParam(default=0.0, info='d-axis additional leakage time constant',
                             tex_name=r"T_{aa}")
 
@@ -203,25 +214,124 @@ class GENROUModel(object):
                                 tex_name=r"\gamma_{d2}")
         self.gq2 = ConstService(v_str='(xq1 - xq2) / (xq1 - xl) ** 2',
                                 tex_name=r"\gamma_{q2}")
+        self.gqd = ConstService(v_str='(xq - xl) / (xd - xl)',
+                                tex_name=r"\gamma_{qd}")
 
-        self.e1d = State(tex_name=r"e'_d",
-                         e_str='(-e1d + (xq - xq1) * (Iq - gq2 * psi2q - (1 - gq1) * Iq - gd2 * e1d)) / Tq10')
+        # Saturation services
+        # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sa = 0, A = 1, B = 0
+        self.Sa = ConstService(v_str='sqrt((S10 * 1) / (S12 * 1.2))',
+                               tex_name=r"S_a")
+        self.SA = ConstService(v_str='1.2 + 0.2 / (Sa - 1)',
+                               tex_name='S_A')
+        self.SB = ConstService(v_str='((Sa < 0) + (Sa > 0)) * 1.2 * S12 * ((Sa - 1) / 0.2) ** 2',
+                               tex_name='S_B')
+
+        # internal voltage and rotor angle calculation
+        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c')
+        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S')
+        self._I = ConstService(v_str='_S / conj(_V)', tex_name='I_c')
+        self._E = ConstService(tex_name='E', v_str='_V + _I * (ra + 1j * xq)')
+
+        self._deltac = ConstService(tex_name=r'\delta_c',
+                                    v_str='log(_E / abs(_E))')
+        self.delta0 = ConstService(tex_name=r'\delta_0',
+                                   v_str='u * im(_deltac)')
+
+        self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
+        self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
+
+        self.Id0 = ConstService(v_str='re(Idq)', tex_name=r'I_{d0}')
+        self.Iq0 = ConstService(v_str='im(Idq)', tex_name=r'I_{q0}')
+        self.vd0 = ConstService(v_str='re(vdq)', tex_name=r'V_{d0}')
+        self.vq0 = ConstService(v_str='im(vdq)', tex_name=r'V_{q0}')
+
+        self.tm0 = ConstService(tex_name=r'\tau_{m0}',
+                                v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
+        self.psid0 = ConstService(tex_name=r"\psi_{d0}",
+                                  v_str='u * (ra * Iq0) + vq0')
+        self.psiq0 = ConstService(tex_name=r"\psi_{q0}",
+                                  v_str='-u * (ra * Id0) - vd0')
+
+        # initialization of internal voltage and delta
+        self.e1q0 = ConstService(tex_name="e'_{q0}",
+                                 v_str='psid0 + xd1 * Id0')
+
+        self.e1d0 = ConstService(tex_name="e'_{d0}",
+                                 v_str='-xq1 * Iq0 - psiq0')
+
+        self.e2q0 = ConstService(tex_name="e''_{q0}",
+                                 v_str='-e1d0 - (xq1 - xl) * Iq0')
+
+        self.psiaq0 = ConstService(tex_name=r"\psi_{aq0}",
+                                   v_str='-gq1 * e1d0 + gq2 * (xq1 - xl) * e2q0')
+
+        # below needs to be solved iteratively
+        # self.psiad0 = ConstService(tex_name=r"\psi_{ad0}", v_str='psid0 + xd2 * Id0')
+        # self.psia0 = ConstService(tex_name=r"\psi_{a0}",
+        #                           v_str='sqrt(psiad0 ** 2 + psiaq0 ** 2)')
+        # self.Se0 = ConstService(tex_name=r"S_{e0}", v_str='(psia0 >= SA) * (psia0 - SA) ** 2 * SB / psia0')
+        #
+        # self.e2d0 = ConstService(tex_name="e''_{d0}",
+        #                          v_str='e1q0 - (xd1 - xl) * Id0')  # only works for unsaturated
+        #
+        self.vf0 = ConstService(tex_name=r'v_{f0}')
+
+        self.psiaq = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
+                           v_str='psiaq0',
+                           e_str='psiq + xq2 * Iq - psiaq')
+
+        self.psiad = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
+                           v_str='1',
+                           v_iter='-psiad + gd1 * e1q + gd2 * (xd1 - xl) * e2d',
+                           # e_str='psid + xd2 * Id - psiad')
+                           e_str='-psiad + gd1 * e1q + gd2 * (xd1 - xl) * e2d')
+
+        self.psia = Algeb(tex_name=r"\psi_{a}", info='air gap flux magnitude',
+                          v_str='1',
+                          v_iter='-psia + sqrt(psiad ** 2 + psiaq ** 2)',
+                          e_str='sqrt(psiad **2 + psiaq ** 2) - psia')
+
+        self.Slt = LessThan(u=self.psia, bound=self.SA, equal=False, enable=True)
+
+        self.Se = Algeb(tex_name=r"SE(\psi_{a})", info='saturation output',
+                        v_str='0.5',
+                        v_iter='-Se + (psia >= SA) * (psia - SA) ** 2 * SB / psia',
+                        e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 
         self.e1q = State(tex_name=r"e'_q",
-                         e_str='(-e1q - (xd - xd1) * (Id - gd2 * psi2d - (1 - gd1) * Id + gd2 * e1q) + vf) / Td10')
+                         v_str='e1q0',
+                         e_str='(-e1q - (xd - xd1) * (Id - gd2 * e2d - (1 - gd1) * Id + gd2 * e1q) - '
+                               'Se * psiad + vf) / Td10')
+        self.e1d = State(tex_name=r"e'_d",
+                         v_str='e1d0',
+                         e_str='(-e1d + (xq - xq1) * (Iq - gq2 * e2q - (1 - gq1) * Iq - gq2 * e1d) + '
+                               'Se * gqd * psiaq) / Tq10')
 
-        self.psi2d = State(tex_name=r"\psi''_d",
-                           e_str='(-psi2d + e1q - (xd1 - xl) * Id) / Td20')
-        self.psi2q = State(tex_name=r"\psi''_q",
-                           e_str='(-psi2q - e2d - (xq1 - xl) * Iq) / Tq20')
+        self.e2d = State(tex_name=r"e''_d",
+                         v_str='1',
+                         # v_iter='-e2d + e1q - (xd1 - xl) * Id + Se * gqd * psiaq',
+                         v_iter='-e2d + e1q - (xd1 - xl) * Id',
+                         e_str='(-e2d + e1q - (xd1 - xl) * Id) / Td20')
 
-        self.Id.e_str = 'xd2 * Id - gd1 * e1q - (1 - gd1) * psi2d'
-        self.Iq.e_str = 'xq2 * Iq + gq1 * e1d - (1 - gq1) * psi2q'
+        self.e2q = State(tex_name=r"e''_q",
+                         v_str='e2q0',
+                         e_str='(-e2q - e1d - (xq1 - xl) * Iq) / Tq20')
+
+        self.Id.e_str += '+ xd2 * Id - gd1 * e1q - (1 - gd1) * e2d'
+        self.Iq.e_str += '+ xq2 * Iq + gq1 * e1d - (1 - gq1) * e2q'
+
+        self.vf.v_str = '0.5'
+        # self.vf.v_iter = '-e1q - (xd - xd1) * Id + vf - Se * psiad'
+        self.vf.v_iter = '-e1q - (xd - xd1) * (Id - gd2 * e2d - (1 - gd1) * Id + gd2 * e1q) - Se * psiad + vf'
 
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     def __init__(self, system, config):
         GENROUData.__init__(self)
         GENBase.__init__(self, system, config)
-        GENROUModel.__init__(self)
         Flux0.__init__(self)
+        GENROUModel.__init__(self)
+
+    def v_numeric(self, **kwargs):
+        GENBase.v_numeric(self, **kwargs)
+        self.vf0.v = self.vf.v

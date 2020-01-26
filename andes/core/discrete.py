@@ -50,6 +50,33 @@ class Discrete(object):
         return self.__class__.__name__
 
 
+class LessThan(Discrete):
+    """
+    Less than (<) comparison function
+    """
+    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None):
+        super().__init__(name=name, tex_name=tex_name)
+        self.u = u
+        self.bound = bound
+        self.equal = equal
+        self.enable = enable
+        self.z0 = 0  # if (u < bound) is False
+        self.z1 = 1  # if (u < bound) is True
+        self.export_flags = ['z0', 'z1']
+        self.export_flags_tex = ['z_0', 'z_1']
+
+    def check_var(self):
+        if not self.enable:
+            return
+
+        if not self.equal:
+            self.z1 = np.less(self.u.v, self.bound.v)
+        else:
+            self.z1 = np.less_equal(self.u.v, self.bound.v)
+
+        self.z0 = np.logical_not(self.z1)
+
+
 class Limiter(Discrete):
     """
     Base limiter class

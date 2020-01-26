@@ -522,6 +522,7 @@ class System(object):
         return out
 
     def dill_calls(self):
+        logger.debug("Dumping calls to andes.pkl with dill")
         import dill
         dill.settings['recurse'] = True
 
@@ -749,6 +750,7 @@ class System(object):
         self._call_models_method('e_clear', models)
 
     def _store_calls(self):
+        logger.debug("Collecting Model.calls into System.")
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
 

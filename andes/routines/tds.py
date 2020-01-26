@@ -127,6 +127,21 @@ class TDS(BaseRoutine):
             from andes.plot import TDSData  # NOQA
             self.plotter = TDSData(mode='memory', dae=system.dae)
 
+    def test_initialization(self):
+        """
+        Update f and g to see if initialization is successful
+        """
+
+        system = self.system
+        system.e_clear(models=self.pflow_tds_models)
+        system.l_update_var(models=self.pflow_tds_models)
+        system.f_update(models=self.pflow_tds_models)
+        system.g_update(models=self.pflow_tds_models)
+        system.l_update_eq(models=self.pflow_tds_models)
+        system.j_update(models=self.pflow_tds_models)
+
+        return
+
     def _implicit_step(self, verbose=False):
         """
         Integrate for a single given step.
