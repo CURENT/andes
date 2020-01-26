@@ -529,7 +529,11 @@ class Model(object):
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
-                    instance.v = func(**kwargs)
+                    try:
+                        instance.v = func(**kwargs)
+                    except Exception as e:  # NOQA:
+                        logger.error(f'Error evaluatin service {instance.name}, equation {instance.v_str}')
+                        raise e
                 else:
                     instance.v = func
 

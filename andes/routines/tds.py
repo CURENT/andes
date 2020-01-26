@@ -140,6 +140,11 @@ class TDS(BaseRoutine):
         system.l_update_eq(models=self.pflow_tds_models)
         system.j_update(models=self.pflow_tds_models)
 
+        if np.max(np.abs(np.hstack([system.dae.f, system.dae.g]))) < self.config.tol:
+            logger.info('Initialization tests passed.')
+        else:
+            logger.warning('Suspect initialization issue.')
+
         return
 
     def _implicit_step(self, verbose=False):

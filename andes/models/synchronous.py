@@ -43,7 +43,7 @@ class GENBase(Model):
         super().__init__(system, config)
         self.group = 'SynGen'
         self.flags.update({'tds': True,
-                           'nr_init': True})
+                           'nr_init': False})
 
         # state variables
         self.delta = State(v_str='delta0', tex_name=r'\delta',
@@ -95,8 +95,8 @@ class Flux0(object):
                           v_str='psiq0',
                           e_str='u * (ra * Id + vd) + psiq')
 
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
+        self.Id.e_str += '+ psid'
+        self.Iq.e_str += '+ psiq'
 
 
 class Flux1(object):
@@ -112,8 +112,8 @@ class Flux1(object):
                           v_str='psiq0',
                           e_str='u * (ra * Id + vd) + omega * psiq')
 
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
+        self.Id.e_str += '+ psid'
+        self.Iq.e_str += '+ psiq'
 
 
 class Flux2(object):
@@ -129,8 +129,8 @@ class Flux2(object):
                           v_str='psiq0',
                           e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)')
 
-        self.Id.e_str += ' + psid'
-        self.Iq.e_str += ' + psiq'
+        self.Id.e_str += '+ psid'
+        self.Iq.e_str += '+ psiq'
 
 
 class GENCLSModel(object):
@@ -164,8 +164,8 @@ class GENCLSModel(object):
         self._deltac.v_str = 'log(_E / abs(_E))'
         self.delta0.v_str = 'u * im(_deltac)'
 
-        self.Id.e_str += ' + xq * Id - vf'
-        self.Iq.e_str += ' + xq * Iq'
+        self.Id.e_str += '+ xq * Id - vf'
+        self.Iq.e_str += '+ xq * Iq'
         self.vf0.v_str = '(vq0 + ra * Iq0) + xq * Id0'
 
 
@@ -227,26 +227,56 @@ class GENROUModel(object):
                                tex_name='S_B')
 
         # internal voltage and rotor angle calculation
-        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c')
-        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S')
-        self._I = ConstService(v_str='_S / conj(_V)', tex_name='I_c')
-        self._E = ConstService(tex_name='E', v_str='_V + _I * (ra + 1j * xq)')
 
-        self._deltac = ConstService(tex_name=r'\delta_c',
-                                    v_str='log(_E / abs(_E))')
+        # Initialization reference: OpenIPSL at
+        #   https://github.com/OpenIPSL/OpenIPSL/blob/master/OpenIPSL/Electrical/Machines/PSSE/GENROU.mo
+
+        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex terminal voltage')
+        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S', info='complex terminal power')
+        self._Zs = ConstService(v_str='ra + 1j * xd2', tex_name='Z_s', info='equivalent impedance')
+        self._It = ConstService(v_str='_S / conj(_V)', tex_name='I_t', info='complex terminal current')
+        self._Is = ConstService(tex_name='I_s', v_str='_It + _V / _Zs', info='equivalent current source')
+
+        self.psia0 = ConstService(tex_name=r"\psi_{a0}", v_str='_Is * _Zs',
+                                  info='subtransient flux linkage in stator reference')
+        self.psia0_arg = ConstService(tex_name=r"\theta_{\psi a0}", v_str='arg(psia0)')
+        self.psia0_abs = ConstService(tex_name=r"|\psi_{a0}|", v_str='abs(psia0)')
+        self._It_arg = ConstService(tex_name=r"\theta_{It0}", v_str='arg(_It)')
+        self._psia0_It_arg = ConstService(tex_name=r"\theta_{\psi a It}",
+                                          v_str='psia0_arg - _It_arg')
+
+        self.Se0 = ConstService(tex_name=r"S_{e0}",
+                                v_str='(psia0_abs >= SA) * (psia0_abs - SA) ** 2 * SB / psia0_abs')
+
+        self._a = ConstService(tex_name=r"a", v_str='psia0_abs + psia0_abs * Se0 * gqd')
+        self._b = ConstService(tex_name=r"b", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
+
         self.delta0 = ConstService(tex_name=r'\delta_0',
-                                   v_str='u * im(_deltac)')
+                                   v_str='atan(_b * cos(_psia0_It_arg) / (_b * sin(_psia0_It_arg) - _a)) + '
+                                         'psia0_arg')
+        self._Tdq = ConstService(tex_name=r"T{dq}",
+                                 v_str='cos(delta0) - 1j * sin(delta0)')
+        self.psia0_dq = ConstService(tex_name=r"\psi_{a0,dq}",
+                                     v_str='psia0 * _Tdq')
+        self.It_dq = ConstService(tex_name=r"It_{dq}",
+                                  v_str='conj(_It * _Tdq)')
 
-        self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
-        self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
+        self.psiad0 = ConstService(tex_name=r"\psi_{ad0}",
+                                   v_str='re(psia0_dq)')
+        self.psiaq0 = ConstService(tex_name=r"\psi_{aq0}",
+                                   v_str='im(psia0_dq)')
 
-        self.Id0 = ConstService(v_str='re(Idq)', tex_name=r'I_{d0}')
-        self.Iq0 = ConstService(v_str='im(Idq)', tex_name=r'I_{q0}')
-        self.vd0 = ConstService(v_str='re(vdq)', tex_name=r'V_{d0}')
-        self.vq0 = ConstService(v_str='im(vdq)', tex_name=r'V_{q0}')
+        self.Id0 = ConstService(v_str='im(It_dq)', tex_name=r'I_{d0}')
+        self.Iq0 = ConstService(v_str='re(It_dq)', tex_name=r'I_{q0}')
+
+        self.vd0 = ConstService(v_str='-(psiaq0 - xq2*Iq0) - ra * Id0', tex_name=r'V_{d0}')
+        self.vq0 = ConstService(v_str='psiad0 - xd2*Id0 - ra*Iq0', tex_name=r'V_{q0}')
 
         self.tm0 = ConstService(tex_name=r'\tau_{m0}',
                                 v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
+
+        self.vf0 = ConstService(tex_name=r'v_{f0}', v_str='Se0 * psiad0 + psiad0 + (xd1 - xd2) * Id0 + (xd - '
+                                                          'xd1) * Id0')
         self.psid0 = ConstService(tex_name=r"\psi_{d0}",
                                   v_str='u * (ra * Iq0) + vq0')
         self.psiq0 = ConstService(tex_name=r"\psi_{q0}",
@@ -254,48 +284,36 @@ class GENROUModel(object):
 
         # initialization of internal voltage and delta
         self.e1q0 = ConstService(tex_name="e'_{q0}",
-                                 v_str='psid0 + xd1 * Id0')
+                                 v_str='Id0*gd1* (-xd + xd1) - Id0*gd2*(xd - xd1)*(xd1 - xl) - Se0*psiad0 + vf0')
 
         self.e1d0 = ConstService(tex_name="e'_{d0}",
-                                 v_str='-xq1 * Iq0 - psiq0')
+                                 v_str='Iq0*gq1*(xq - xq1) + Iq0*gq2*xl* (-xq + xq1) + Iq0*gq2*xq1 * (xq - xq1) +'
+                                       'Se0*gqd*psiaq0')
 
+        self.e2d0 = ConstService(tex_name="e''_{d0}",
+                                 v_str='Id0*gd1* (-xd + xd1) - Id0*(xd1 - xl)*(gd2*xd - gd2*xd1 + 1) - '
+                                       'Se0*psiad0 + vf0')
         self.e2q0 = ConstService(tex_name="e''_{q0}",
-                                 v_str='-e1d0 - (xq1 - xl) * Iq0')
+                                 v_str='Iq0*gq1*(-xq + xq1) + Iq0*gq2*xl*(xq - xq1) + '
+                                       'Iq0*gq2*xq1*(-xq + xq1) + Iq0*xl - Iq0*xq1 - Se0*gqd*psiaq0')
 
-        self.psiaq0 = ConstService(tex_name=r"\psi_{aq0}",
-                                   v_str='-gq1 * e1d0 + gq2 * (xq1 - xl) * e2q0')
-
-        # below needs to be solved iteratively
-        # self.psiad0 = ConstService(tex_name=r"\psi_{ad0}", v_str='psid0 + xd2 * Id0')
-        # self.psia0 = ConstService(tex_name=r"\psi_{a0}",
-        #                           v_str='sqrt(psiad0 ** 2 + psiaq0 ** 2)')
-        # self.Se0 = ConstService(tex_name=r"S_{e0}", v_str='(psia0 >= SA) * (psia0 - SA) ** 2 * SB / psia0')
-        #
-        # self.e2d0 = ConstService(tex_name="e''_{d0}",
-        #                          v_str='e1q0 - (xd1 - xl) * Id0')  # only works for unsaturated
-        #
-        self.vf0 = ConstService(tex_name=r'v_{f0}')
-
+        # begin variables and equations
         self.psiaq = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
                            v_str='psiaq0',
                            e_str='psiq + xq2 * Iq - psiaq')
 
         self.psiad = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
-                           v_str='1',
-                           v_iter='-psiad + gd1 * e1q + gd2 * (xd1 - xl) * e2d',
-                           # e_str='psid + xd2 * Id - psiad')
+                           v_str='psiad0',
                            e_str='-psiad + gd1 * e1q + gd2 * (xd1 - xl) * e2d')
 
         self.psia = Algeb(tex_name=r"\psi_{a}", info='air gap flux magnitude',
-                          v_str='1',
-                          v_iter='-psia + sqrt(psiad ** 2 + psiaq ** 2)',
+                          v_str='abs(psia0_dq)',
                           e_str='sqrt(psiad **2 + psiaq ** 2) - psia')
 
         self.Slt = LessThan(u=self.psia, bound=self.SA, equal=False, enable=True)
 
         self.Se = Algeb(tex_name=r"SE(\psi_{a})", info='saturation output',
-                        v_str='0.5',
-                        v_iter='-Se + (psia >= SA) * (psia - SA) ** 2 * SB / psia',
+                        v_str='Se0',
                         e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 
         self.e1q = State(tex_name=r"e'_q",
@@ -308,9 +326,7 @@ class GENROUModel(object):
                                'Se * gqd * psiaq) / Tq10')
 
         self.e2d = State(tex_name=r"e''_d",
-                         v_str='1',
-                         # v_iter='-e2d + e1q - (xd1 - xl) * Id + Se * gqd * psiaq',
-                         v_iter='-e2d + e1q - (xd1 - xl) * Id',
+                         v_str='e2d0',
                          e_str='(-e2d + e1q - (xd1 - xl) * Id) / Td20')
 
         self.e2q = State(tex_name=r"e''_q",
@@ -320,10 +336,6 @@ class GENROUModel(object):
         self.Id.e_str += '+ xd2 * Id - gd1 * e1q - (1 - gd1) * e2d'
         self.Iq.e_str += '+ xq2 * Iq + gq1 * e1d - (1 - gq1) * e2q'
 
-        self.vf.v_str = '0.5'
-        # self.vf.v_iter = '-e1q - (xd - xd1) * Id + vf - Se * psiad'
-        self.vf.v_iter = '-e1q - (xd - xd1) * (Id - gd2 * e2d - (1 - gd1) * Id + gd2 * e1q) - Se * psiad + vf'
-
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     def __init__(self, system, config):
@@ -331,7 +343,3 @@ class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
         GENBase.__init__(self, system, config)
         Flux0.__init__(self)
         GENROUModel.__init__(self)
-
-    def v_numeric(self, **kwargs):
-        GENBase.v_numeric(self, **kwargs)
-        self.vf0.v = self.vf.v
