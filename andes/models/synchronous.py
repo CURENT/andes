@@ -200,8 +200,6 @@ class GENROUData(GENBaseData):
                              tex_name=r"T \prime_{q0}")
         self.Tq20 = NumParam(default=0.02, info='q-axis sub-transient time constant',
                              tex_name=r"T \prime \prime_{q0}")
-        self.Taa = NumParam(default=0.0, info='d-axis additional leakage time constant',
-                            tex_name=r"T_{aa}")
 
 
 class GENROUModel(object):
@@ -254,11 +252,11 @@ class GENROUModel(object):
         self.delta0 = ConstService(tex_name=r'\delta_0',
                                    v_str='atan(_b * cos(_psia0_It_arg) / (_b * sin(_psia0_It_arg) - _a)) + '
                                          'psia0_arg')
-        self._Tdq = ConstService(tex_name=r"T{dq}",
+        self._Tdq = ConstService(tex_name=r"T_{dq}",
                                  v_str='cos(delta0) - 1j * sin(delta0)')
         self.psia0_dq = ConstService(tex_name=r"\psi_{a0,dq}",
                                      v_str='psia0 * _Tdq')
-        self.It_dq = ConstService(tex_name=r"It_{dq}",
+        self.It_dq = ConstService(tex_name=r"I_{t,dq}",
                                   v_str='conj(_It * _Tdq)')
 
         self.psiad0 = ConstService(tex_name=r"\psi_{ad0}",
@@ -312,7 +310,7 @@ class GENROUModel(object):
 
         self.Slt = LessThan(u=self.psia, bound=self.SA, equal=False, enable=True)
 
-        self.Se = Algeb(tex_name=r"SE(\psi_{a})", info='saturation output',
+        self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='Se0',
                         e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 

@@ -162,12 +162,13 @@ def read(system, file):
 
         uid = system.Bus.idx2uid(bus_idx)
         vn = system.Bus.Vn.v[uid]
+        a0 = system.Bus.a0.v[uid]
 
         if bus_idx in sw:
             system.add('Slack', idx=gen_idx, bus=bus_idx, busr=bus_idx,
                        name='Slack ' + str(bus_idx),
                        u=status,
-                       Vn=vn, v0=vg, p0=pg, q0=qg, a0=0,
+                       Vn=vn, v0=vg, p0=pg, q0=qg, a0=a0,
                        pmax=pmax, pmin=pmin,
                        qmax=qmax, qmin=qmin)
         else:

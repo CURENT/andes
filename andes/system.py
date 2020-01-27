@@ -146,7 +146,8 @@ class System(object):
 
     def add(self, model, param_dict=None, **kwargs):
         if model not in self.models:
-            raise KeyError(f"<{model}> is not an existing model.")
+            logger.warning(f"<{model}> is not an existing model.")
+            return
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 

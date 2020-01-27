@@ -146,7 +146,7 @@ def read(file, system, header=True):
     return retval
 
 
-def write(file, system):
+def write(file, system, **kwargs):
     """
     Write data in system to a dm file
     """

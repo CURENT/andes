@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
-    """Check the raw file for frequency base"""
+    """
+    Check the raw file for frequency base
+    """
     first = fid.readline()
     first = first.strip().split('/')
     first = first[0].split(',')
@@ -266,3 +268,22 @@ def read(system, file):
         # system.add('Region', param)
 
     return ret
+
+
+def read_add(system, file):
+    """
+    Read addition PSS/E dyr file.
+
+    TODO: implement this function
+
+    Parameters
+    ----------
+    system
+    file
+
+    Returns
+    -------
+
+    """
+
+    return True

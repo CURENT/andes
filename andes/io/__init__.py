@@ -3,12 +3,13 @@ import logging
 import os
 
 from andes.utils.misc import elapsed
+from andes.io import xlsx, dome, psse   # NOQA
 
 
 logger = logging.getLogger(__name__)
 
 # Input formats is a dictionary of supported format names and the accepted file extensions
-# The first file will be parsed by read() function and the addfile will be parsed by readadd()
+# The first file will be parsed by read() function and the addfile will be parsed by read_add()
 # Typically, column based formats, such as IEEE CDF and PSS/E RAW, are faster to parse
 
 input_formats = {
@@ -117,8 +118,8 @@ def parse(system):
         if not system.files.add_format:
             logger.error('Unknown addfile format.')
             return
-        logger.info('Parsing additional file {:s}.'.format(system.files.addfile))
-        if not addparser.readadd(system, system.files.case):
+        logger.info(f'Parsing additional file {system.files.addfile}')
+        if not addparser.read_add(system, system.files.case):
             logger.error('Error parsing addfile {:s} with {:s} parser.'.format(system.files.addfile, input_format))
             return False
 

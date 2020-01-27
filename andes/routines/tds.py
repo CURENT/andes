@@ -211,7 +211,7 @@ class TDS(BaseRoutine):
             if self.niter > self.config.max_iter:
                 logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.4f}, h={self.h:.4f}')
                 break
-            if mis > 1000 and (mis > 1e4 * self.mis[0]):
+            if mis > 1000 and (mis > 1e8 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
                 self.busted = True
                 break

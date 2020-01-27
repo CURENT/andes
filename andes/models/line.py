@@ -73,18 +73,18 @@ class Line(LineData, Model):
         self.ghk.v_str = 're(yhk)'
         self.bhk.v_str = 'im(yhk)'
 
-        self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk / tap ** 2)  - \
+        self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk) / tap ** 2  - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) + \
                                          bhk * sin(a1 - a2 - phi)) / tap)'
 
-        self.v1.e_str = 'u * (-v1 ** 2 * (bh + bhk / tap ** 2) - \
+        self.v1.e_str = 'u * (-v1 ** 2 * (bh + bhk) / tap ** 2 - \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) - \
                                          bhk * cos(a1 - a2 - phi)) / tap)'
 
-        self.a2.e_str = 'u * (v2 ** 2 * ghk - \
+        self.a2.e_str = 'u * (v2 ** 2 * (gh + ghk) - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) - \
                                          bhk * sin(a1 - a2 - phi)) / tap)'
 
-        self.v2.e_str = 'u * (-v2 ** 2 * bhk + \
+        self.v2.e_str = 'u * (-v2 ** 2 * (bh + bhk) + \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) + \
                                          bhk * cos(a1 - a2 - phi)) / tap)'

@@ -566,19 +566,20 @@ class Model(object):
         input_syms_list = list(self.input_syms)
 
         for name, instance in self.cache.all_vars.items():
-            if instance.v_str is not None:
-                sympified = sympify(instance.v_str, locals=self.input_syms)
-                lambdified = lambdify(input_syms_list, sympified, 'numpy')
-                init_lambda_list[name] = lambdified
-                init_latex[name] = latex(sympified.subs(self.tex_names))
-                init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.input_syms))
+            if instance.v_str is None and instance.v_iter is None:
+                init_latex[name] = 0
+            else:
+                if instance.v_str is not None:
+                    sympified = sympify(instance.v_str, locals=self.input_syms)
+                    lambdified = lambdify(input_syms_list, sympified, 'numpy')
+                    init_lambda_list[name] = lambdified
+                    init_latex[name] = latex(sympified.subs(self.tex_names))
+                    init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.input_syms))
 
-            if instance.v_iter is not None:
-                sympified = sympify(instance.v_iter, locals=self.input_syms)
-                init_g_list.append(sympified)
-                # TODO: the line below will cause an issue if we evaluate the sequential ones after iterative
-                # init_lambda_list[name] = 0
-                init_latex[name] = latex(sympified.subs(self.tex_names))
+                if instance.v_iter is not None:
+                    sympified = sympify(instance.v_iter, locals=self.input_syms)
+                    init_g_list.append(sympified)
+                    init_latex[name] = latex(sympified.subs(self.tex_names))
 
         self.init_seq = Matrix(init_seq_list)
         self.init_std = Matrix(init_g_list)

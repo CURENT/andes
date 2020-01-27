@@ -215,8 +215,10 @@ def print_license():
     return True
 
 
-def run_case(case, routine=None, profile=False, convert='', **kwargs):
-    """Run a single simulation case."""
+def run_case(case, routine=None, profile=False, convert='', convertall='', **kwargs):
+    """
+    Run a single simulation case.
+    """
 
     t0, _ = elapsed()
     if case is not None:
@@ -238,6 +240,10 @@ def run_case(case, routine=None, profile=False, convert='', **kwargs):
     # convert to format
     if convert != '':
         andes.io.dump(system, convert)
+        return system
+    # convert to xlsx with all model templates
+    if convertall != '':
+        andes.io.xlsx.write(system, system.files.dump, skip_empty=False)
         return system
 
     system.PFlow.nr()
