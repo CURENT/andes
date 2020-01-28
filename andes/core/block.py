@@ -1,6 +1,6 @@
 from andes.core.var import Algeb, State
 from typing import Optional
-from andes.core.discrete import HardLimiter
+from andes.core.discrete import HardLimiter, AntiWindupLimiter
 from andes.core.service import ConstService
 
 
@@ -418,6 +418,57 @@ class Lag(Block):
         self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
 
+class LagAntiWindup(Block):
+    r"""
+    Lag (low pass) transfer function block with anti-windup limiter ::
+
+                K
+        u -> ------ -> y
+             1 + sT
+
+    Exports one state variable `x` as the output.
+
+    Parameters
+    ----------
+    K
+        Gain
+    T
+        Time constant
+    u
+        Input variable
+
+    """
+    def __init__(self, u, K, T, lower, upper, name=None, info='Lag transfer function with non-windup limiter'):
+        super().__init__(name=name, info=info)
+        self.u = u
+        self.K = K
+        self.T = T
+        self.lower = lower
+        self.upper = upper
+
+        self.x = State(info='State in lag transfer function', tex_name="x'")
+        self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper)
+
+        self.vars = {'x': self.x, 'lim': self.lim}
+
+    def define(self):
+        r"""
+
+        Notes
+        -----
+        Equation and initial value
+
+        .. math ::
+
+            \dot{x'} = (u - x) / T
+
+            x'_0 = u
+
+        """
+        self.x.v_str = f'{self.u.name}'
+        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
+
+
 class LeadLag(Block):
     r"""
     Lead-Lag transfer function block in series implementation ::
@@ -502,7 +553,7 @@ class LeadLagLimit(Block):
         self.x = State(info='State in lead-lag transfer function', tex_name="x'")
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
         self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y')
-        self.lim = HardLimiter(u=self.y, lower=self.lower, upper=self.upper)
+        self.lim = HardLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 

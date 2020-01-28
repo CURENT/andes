@@ -179,8 +179,8 @@ class WindupLimiter(Limiter):
     def __init__(self, u, lower, upper, enable=True):
         super().__init__(u, lower, upper, enable=enable)
 
-    def set_eq(self):
-        self.u.e = self.u.e * self.zi
+    # def set_eq(self):
+    #     self.u.e = self.u.e * self.zi
 
 
 class AntiWindupLimiter(WindupLimiter):
