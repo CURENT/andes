@@ -71,15 +71,14 @@
 - [x] Input switch. If input equals 1, 2, 3, or 4; Discrete
 - [x] Quadratic and exponential saturation for generators
 - [x] Piecewise nonlinear functions (block.Piecewise)
-*   Test anti-windup limiter
-*   Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
+- [x] Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
  service subclass)
-*   Iterative initialization for equations (half done with Newton Krylov)
-*   Deal with two-terminal and multi-terminal devices
-*   Define general hooks - when should the connectivity check happen
+- [x] Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
-*   Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
+*   Test anti-windup limiter
+*   Deal with two-terminal and multi-terminal devices
 *   Add ``Model._int`` for internal indexer
+*   Iterative initialization for equations (half done with Newton Krylov)
 
 ### Usability
 - [x] Set up command line interface
@@ -107,6 +106,7 @@
 *   Restore compatibility with dome format
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
+*   Define general hooks - when should the connectivity check happen
 
 ## Later Versions
 *   Solve non-linear initialization equations
