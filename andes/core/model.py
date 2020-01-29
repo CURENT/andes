@@ -567,7 +567,7 @@ class Model(object):
 
         for name, instance in self.cache.all_vars.items():
             if instance.v_str is None and instance.v_iter is None:
-                init_latex[name] = 0
+                init_latex[name] = ''
             else:
                 if instance.v_str is not None:
                     sympified = sympify(instance.v_str, locals=self.input_syms)
@@ -947,6 +947,7 @@ class Model(object):
 
         logger.debug(f'{self.class_name}: calling initialize()')
 
+        ones = np.ones((self.n,))
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
                 continue
@@ -961,6 +962,10 @@ class Model(object):
                                  f'You might have undefined variable in the equation string.')
             else:
                 instance.v = init_fun
+
+            # convert a scalar to an array
+            if not isinstance(instance.v, np.ndarray):
+                instance.v = instance.v * ones
 
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
@@ -1002,6 +1007,7 @@ class Model(object):
                 instance.e += ret[idx][0]
             except TypeError as e:
                 logger.error(f"Error evaluating f for {instance.name} where e_str={instance.e_str}")
+                logger.error("You may have undefined symbols in differential equations.")
                 raise e
 
         # numerical calls defined in the model
@@ -1027,6 +1033,7 @@ class Model(object):
                 instance.e += ret[idx][0]
             except TypeError as e:
                 logger.error(f"Error evaluating g for {instance.name} where e_str={instance.e_str}")
+                logger.error("You may have undefined symbols in algebraic equations.")
                 raise e
 
         # numerical calls defined in the model

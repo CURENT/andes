@@ -129,8 +129,10 @@ class ExtService(BaseService):
                  model: str,
                  indexer: BaseParam,
                  name: str = None,
-                 tex_name: str = None):
-        super().__init__(name=name, tex_name=tex_name)
+                 tex_name: str = None,
+                 info=None,
+                 ):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.src = src
         self.model = model
         self.indexer = indexer

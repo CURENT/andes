@@ -368,10 +368,11 @@ def misc(edit_config='', save_config='', license=False, clean=True, **kwargs):
     logger.info('info: no option specified. Use \'andes misc -h\' for help.')
 
 
-def prepare(**kwargs):
+def prepare(quick=False, **kwargs):
+    logger.info('Numeric code preparation started...')
     sys = System()
-    sys.prepare()
-    logger.info('Symbolic to numeric preparation completed.')
+    sys.prepare(quick=quick)
+    logger.info('Successfully generated numerical code.')
     return True
 
 

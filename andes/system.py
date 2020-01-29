@@ -32,6 +32,7 @@ from andes.routines import all_routines
 from andes.models import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
+from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
 from andes.variables.fileman import FileMan
 
@@ -98,9 +99,10 @@ class System(object):
 
         self.x_adders, self.x_setters = list(), list()
         self.y_adders, self.y_setters = list(), list()
+        self.antiwindups = list()
         # ------------------------------
 
-    def prepare(self):
+    def prepare(self, quick=False):
         """
         Prepare classes and lambda functions
 
@@ -110,7 +112,8 @@ class System(object):
         self._generate_equations()
         self._generate_jacobians()
         self._generate_initializers()
-        self._generate_pretty_print()
+        if quick is False:
+            self._generate_pretty_print()
         self._check_group_common()
         self._store_calls()
         self.dill_calls()
@@ -281,6 +284,9 @@ class System(object):
                     self.__dict__[f'{var.v_code}_adders'].append(var)
                 else:
                     self.__dict__[f'{var.v_code}_setters'].append(var)
+            for item in mdl.discrete.values():
+                if isinstance(item, AntiWindupLimiter):
+                    self.antiwindups.append(item)
 
     def calc_pu_coeff(self):
         """
@@ -349,14 +355,17 @@ class System(object):
         self._e_to_dae('f')
         self._e_to_dae('g')
 
+        # update variable values set by anti-windup limiters
+        for item in self.antiwindups:
+            if len(item.x_set) > 0:
+                for key, val in item.x_set:
+                    np.put(self.dae.x, key, val)
+
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('f_update', models)
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('g_update', models)
-
-    # def c_update(self, models: Optional[Union[str, list, OrderedDict]] = None):
-    #     self._call_models_method('c_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         models = self._get_models(models)

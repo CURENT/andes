@@ -16,6 +16,8 @@ class Discrete(object):
         self.owner = None
         self.export_flags = []
         self.export_flags_tex = []
+        self.x_set = list()
+        self.y_set = list()  # NOT being used
 
     def check_var(self):
         pass
@@ -176,8 +178,8 @@ class HardLimiter(Limiter):
 
 
 class WindupLimiter(Limiter):
-    def __init__(self, u, lower, upper, enable=True):
-        super().__init__(u, lower, upper, enable=enable)
+    def __init__(self, u, lower, upper,  enable=True, name=None, tex_name=None):
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
 
     # def set_eq(self):
     #     self.u.e = self.u.e * self.zi
@@ -203,8 +205,11 @@ class AntiWindupLimiter(WindupLimiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True, state=None):
-        super().__init__(u, lower, upper, enable=enable)
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, state=None):
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
+        # self.ze = 1  # 1-if equation is valid; 0-equation needs to be reset
+        # self.export_flags.append('ze')
+        # self.export_flags_tex.append('z_e')
         self.state = state if state else u
 
     def check_var(self):
@@ -217,9 +222,12 @@ class AntiWindupLimiter(WindupLimiter):
         """
         Check the variables and equations and set the limiter flags.
         """
-        super().check_var()
-        self.zu = np.logical_and(self.zu, np.greater_equal(self.state.e, 0)).astype(np.float64)
-        self.zl = np.logical_and(self.zl, np.less_equal(self.state.e, 0)).astype(np.float64)
+        self.zu = np.greater(self.u.v, self.upper.v)
+        self.zl = np.less(self.u.v, self.lower.v)
+        self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
+
+        self.zu = np.logical_and(self.zu, np.greater(self.state.e, 0)).astype(np.float64)
+        self.zl = np.logical_and(self.zl, np.less(self.state.e, 0)).astype(np.float64)
         self.zi = np.logical_not(
             np.logical_or(self.zu.astype(np.bool),
                           self.zl.astype(np.bool))).astype(np.float64)
@@ -228,7 +236,11 @@ class AntiWindupLimiter(WindupLimiter):
         """
         Reset differential equation values based on limiter flags.
         """
-        self.state.e = self.state.e * self.zi
+        self.x_set = list()
+        if not np.all(self.zi):
+            self.state.e = self.state.e * self.zi
+            self.state.v = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
+            self.x_set.append((self.state.a, self.state.v))
 
 
 class Selector(Discrete):

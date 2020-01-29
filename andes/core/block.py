@@ -414,7 +414,7 @@ class Lag(Block):
             x'_0 = u
 
         """
-        self.x.v_str = f'{self.u.name}'
+        self.x.v_str = f'{self.u.name} * {self.K.name}'
         self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
 
@@ -447,7 +447,7 @@ class LagAntiWindup(Block):
         self.upper = upper
 
         self.x = State(info='State in lag transfer function', tex_name="x'")
-        self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper)
+        self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
 
         self.vars = {'x': self.x, 'lim': self.lim}
 
@@ -465,8 +465,8 @@ class LagAntiWindup(Block):
             x'_0 = u
 
         """
-        self.x.v_str = f'{self.u.name}'
-        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
+        self.x.v_str = f'{self.u.name} * {self.K.name}'
+        self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
 
 
 class LeadLag(Block):

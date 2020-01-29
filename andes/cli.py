@@ -78,6 +78,7 @@ def create_parser():
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
+    prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 

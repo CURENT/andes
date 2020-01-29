@@ -140,10 +140,13 @@ class TDS(BaseRoutine):
         system.l_update_eq(models=self.pflow_tds_models)
         system.j_update(models=self.pflow_tds_models)
 
-        if np.max(np.abs(np.hstack([system.dae.f, system.dae.g]))) < self.config.tol:
+        if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.info('Initialization tests passed.')
         else:
             logger.warning('Suspect initialization issue.')
+            fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
+            fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
+            logger.warning(f"Check variables {','.join(fail_names)}")
 
         return
 
@@ -180,16 +183,25 @@ class TDS(BaseRoutine):
             # lazy jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=self.pflow_tds_models)
+                self.solver.factorize = True
 
             # solve
             In = spdiag([1] * dae.n)
             self.Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
+            # reset q as well
             q = dae.x - self.x0 - self.h * 0.5 * (dae.f + self.f0)
+            for item in system.antiwindups:
+                if len(item.x_set) > 0:
+                    for key, val in item.x_set:
+                        np.put(q, key[np.where(item.zi == 0)], 0)
+
             qg = np.hstack((q, dae.g))
 
-            # set new values
             inc = self.solver.solve(self.Ac, -matrix(qg))
+            # reset really small values to avoid anti-windup limiter flag jumps
+            inc[np.where(np.abs(inc) < 1e-12)] = 0
+            # set new values
             dae.x += np.ravel(np.array(inc[:dae.n]))
             dae.y += np.ravel(np.array(inc[dae.n: dae.n + dae.m]))
             system.vars_to_models()
@@ -217,13 +229,12 @@ class TDS(BaseRoutine):
                 break
 
         if not self.converged:
+            if verbose:
+                logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
             dae.x = np.array(self.x0)
             dae.y = np.array(self.y0)
             dae.f = np.array(self.f0)
             system.vars_to_models()
-
-            if verbose:
-                logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
 
         return self.converged
 
