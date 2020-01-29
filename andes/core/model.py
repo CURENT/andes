@@ -435,7 +435,7 @@ class Model(object):
             # pull in sub-variables from control blocks
             for var_name, var_instance in value.export().items():
                 var_instance.name = f'{value.name}_{var_name}'
-                var_instance.tex_name = rf'{var_instance.tex_name}^{value.tex_name}'
+                var_instance.tex_name = f'{var_instance.tex_name}_{{{value.tex_name}}}'
                 self.__setattr__(var_instance.name, var_instance)
 
         super(Model, self).__setattr__(key, value)
@@ -1418,9 +1418,10 @@ class Model(object):
             class_names.append(p.class_name)
             eqs.append(p.e_str if p.e_str else '')
 
-        call_store = self.system.calls[self.class_name]
-        symbols = self.math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-        eqs_rest = self.math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = self.math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            eqs_rest = self.math_wrap(call_store.f_latex + call_store.g_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Equation (x\'=f or g=0)', eqs),
@@ -1449,9 +1450,10 @@ class Model(object):
             class_names.append(p.class_name)
             eqs.append(p.v_str if p.v_str else '')
 
-        call_store = self.system.calls[self.class_name]
-        symbols = self.math_wrap([item.tex_name for item in self.services.values()], export=export)
-        eqs_rest = self.math_wrap(call_store.s_latex, export=export)
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = self.math_wrap([item.tex_name for item in self.services.values()], export=export)
+            eqs_rest = self.math_wrap(call_store.s_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Equation', eqs),
@@ -1479,7 +1481,8 @@ class Model(object):
             names.append(p.name)
             class_names.append(p.class_name)
 
-        symbols = self.math_wrap([item.tex_name for item in self.discrete.values()], export=export)
+        if export == 'rest':
+            symbols = self.math_wrap([item.tex_name for item in self.discrete.values()], export=export)
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', class_names)])
 

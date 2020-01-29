@@ -145,8 +145,10 @@ class Solver(object):
                 return np.ravel(self.b)
             except ValueError:
                 logger.debug('Unexpected symbolic factorization.')
-                self.factorize = True
-                return self.linsolve(self.A, self.b)
+                self.F = self._symbolic(self.A)
+                self.N = self._numeric(self.A, self.F)
+                self._solve(self.A, self.F, self.N, self.b)
+                return np.ravel(self.b)
             except ArithmeticError:
                 logger.error('Jacobian matrix is singular.')
                 return np.ravel(matrix(1, self.b.size, 'd'))

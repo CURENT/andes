@@ -216,7 +216,6 @@ class TGOV1(TGOV1Data, TGBase):
                         tex_name=r"P_d",
                         v_str='tm0 * R',
                         e_str='wd + pref - pd')
-        self._ones = ConstService(v_str='1')
 
         self.lag = LagAntiWindup(u=self.pd,
                                  K=self.gain,
