@@ -337,6 +337,7 @@ class System(object):
 
             coeffs = {'voltage': Vn / Vb,
                       'power': Sn / Sb,
+                      'ipower': Sb / Sn,
                       'current': (Sn / Vn) / (Sb / Vb),
                       'z': Zn / Zb,
                       'y': Zb / Zn,

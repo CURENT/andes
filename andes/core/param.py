@@ -212,6 +212,9 @@ class NumParam(BaseParam):
     power : bool
         True if this parameter is a power per-unit quantity
         under the device base
+    ipower : bool
+        True if this parameter is an inverse-power per-unit
+        quantity under the device base
     voltage : bool
         True if the parameter is a voltage pu quantity
         under the device base
@@ -247,6 +250,7 @@ class NumParam(BaseParam):
                  non_zero: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
+                 ipower: bool = False,
                  voltage: bool = False,
                  current: bool = False,
                  z: bool = False,
@@ -263,6 +267,7 @@ class NumParam(BaseParam):
         self.property = dict(non_zero=non_zero,
                              mandatory=mandatory,
                              power=power,
+                             ipower=ipower,
                              voltage=voltage,
                              current=current,
                              z=z,
@@ -478,8 +483,11 @@ class ExtParam(NumParam):
 
             # TODO: the three lines below is a bit inefficient - 3x same loops
             self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
-            self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
-            self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+            try:
+                self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+            except KeyError:  # idx param without vin
+                pass
 
             # TODO: copy properties from models in the group
 
@@ -498,8 +506,11 @@ class ExtParam(NumParam):
 
             # pull in values
             self.v = parent_instance.v[uid]
-            self.vin = parent_instance.vin[uid]
-            self.pu_coeff = parent_instance.pu_coeff[uid]
+            try:
+                self.vin = parent_instance.vin[uid]
+                self.pu_coeff = parent_instance.pu_coeff[uid]
+            except KeyError:
+                pass
 
 
 class RefParam(BaseParam):

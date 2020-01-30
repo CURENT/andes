@@ -378,3 +378,6 @@ class RandomService(ConstService):
             Randomly generated service variables
         """
         return np.random.rand(self.n)
+
+
+# TODO: SafeInverse

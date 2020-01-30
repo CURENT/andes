@@ -13,10 +13,11 @@ class TGBaseData(ModelData):
                             info='Synchronous generator idx',
                             mandatory=True,
                             )
-        self.R = NumParam(info='Speed regulation gain',
+        self.R = NumParam(info='Speed regulation gain under machine base',
                           tex_name='R',
                           default=0.05,
                           unit='p.u.',
+                          ipower=True,
                           )
         self.wref0 = NumParam(info='Base speed reference',
                               tex_name=r'\omega_{ref0}',
@@ -59,6 +60,7 @@ class TGBase(Model):
                               indexer=self.syn,
                               tex_name=r'\omega',
                               info='Generator speed',
+                              unit='p.u.'
                               )
 
         self.gain = ConstService(v_str='u / R',
@@ -176,12 +178,16 @@ class TGOV1Data(TGBaseData):
         super().__init__()
         self.vmax = NumParam(info='Maximum valve position',
                              tex_name='V_{max}',
+                             unit='p.u.',
                              default=1.2,
-                             unit='p.u.')
+                             power=True,
+                             )
         self.vmin = NumParam(info='Minimum valve position',
                              tex_name='V_{min}',
+                             unit='p.u.',
                              default=0.0,
-                             unit='p.u.')
+                             power=True,
+                             )
 
         self.T1 = NumParam(info='Valve time constant',
                            default=0.1,
@@ -192,14 +198,15 @@ class TGOV1Data(TGBaseData):
         self.T3 = NumParam(info='Lead-lag lag time constant',
                            default=10.0,
                            tex_name='T_3')
-        self.DT = NumParam(info='Turbine damping coefficient',
+        self.Dt = NumParam(info='Turbine damping coefficient',
                            default=0.0,
-                           tex_name='D_T')
+                           tex_name='D_t',
+                           power=True,
+                           )
 
 
-class TGOV1(TGOV1Data, TGBase):
+class TGOV1Model(TGBase):
     def __init__(self, system, config):
-        TGOV1Data.__init__(self)
         TGBase.__init__(self, system, config)
 
         self.pref = Algeb(info='Reference input power',
@@ -208,17 +215,19 @@ class TGOV1(TGOV1Data, TGBase):
                           e_str='tm0 * R - pref',
                           )
         self.wd = Algeb(info='Generator speed deviation (positive for under speed)',
+                        unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
                         e_str='(wref - omega) - wd',
                         )
-        self.pd = Algeb(info='Pref plus speed deviation',
-                        tex_name=r"P_d",
-                        v_str='tm0 * R',
-                        e_str='wd + pref - pd')
+        self.pd = Algeb(info='Pref plus speed deviation after gain',
+                        unit='p.u.',
+                        tex_name="P_d",
+                        v_str='tm0',
+                        e_str='(wd + pref) * gain - pd')
 
         self.lag = LagAntiWindup(u=self.pd,
-                                 K=self.gain,
+                                 K=1.0,
                                  T=self.T1,
                                  lower=self.vmin,
                                  upper=self.vmax,
@@ -227,7 +236,16 @@ class TGOV1(TGOV1Data, TGBase):
                           T1=self.T2,
                           T2=self.T3,
                           )
-        self.pout.e_str = 'll_y + DT * wd - pout'
+        self.pout.e_str = '(ll_y + Dt * wd) - pout'
+
+
+class TGOV1(TGOV1Data, TGOV1Model):
+    """
+    TGOV1 model.
+    """
+    def __init__(self, system, config):
+        TGOV1Data.__init__(self)
+        TGOV1Model.__init__(self, system, config)
 
 # Developing a model (use TG2 as an example)
 # 0) Find the group class or write a new group class in group.py

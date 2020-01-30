@@ -47,7 +47,7 @@ class GENBase(Model):
 
         # state variables
         self.delta = State(v_str='delta0', tex_name=r'\delta',
-                           e_str='u * fn * (omega - 1)')
+                           e_str='u * (2 * pi * fn) * (omega - 1)')
         self.omega = State(v_str='u', tex_name=r'\omega',
                            e_str='(u / M ) * (tm - te - D * (omega - 1))')
 

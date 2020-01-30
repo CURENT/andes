@@ -214,7 +214,9 @@ class ACTopology(GroupBase):
 
 
 class StaticGen(GroupBase):
-    """Static generator group for power flow calculation"""
+    """
+    Static generator group for power flow calculation
+    """
     def __init__(self):
         super().__init__()
         self.common_params.extend(('p0', 'q0'))
@@ -226,25 +228,42 @@ class ACLine(GroupBase):
 
 
 class StaticLoad(GroupBase):
-    """Static load group"""
+    """
+    Static load group.
+    """
     pass
 
 
 class StaticShunt(GroupBase):
-    """Static shunt compensator group"""
+    """
+    Static shunt compensator group.
+    """
     pass
 
 
 class SynGen(GroupBase):
-    """Synchronous generator group"""
+    """
+    Synchronous generator group.
+    """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn'))
-        self.common_vars.extend(('omega', 'delta', 'tm'))
+        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus'))
+        self.common_vars.extend(('omega', 'delta', 'tm', 'vf'))
 
 
 class TurbineGov(GroupBase):
-    """Turbine governor group for synchronous generator"""
+    """
+    Turbine governor group for synchronous generator.
+    """
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('pout',))
+
+
+class Exciter(GroupBase):
+    """
+    Exciter group for synchronous generators.
+    """
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('vout', ))

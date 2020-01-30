@@ -4,6 +4,11 @@ from andes.core.discrete import HardLimiter, AntiWindupLimiter
 from andes.core.service import ConstService
 
 
+class DummyValues(object):
+    def __init__(self, name):
+        self.name = name
+
+
 class Block(object):
     r"""
     Base class for control blocks.
@@ -335,20 +340,32 @@ class Washout(Block):
     r"""
     Washout filter (high pass) block ::
 
-                sT1
+                sK
          u -> ------- -> y
-              1 + sT2
+              1 + sT
 
     """
 
-    def __init__(self, u, T, info=None, name=None):
+    def __init__(self, u, T, K, info=None, name=None):
         super().__init__(name=name, info=info)
-        self.T = T
-        self.u = u
+        if isinstance(T, (int, float)):
+            self.T = DummyValues(T)
+        else:
+            self.T = T
 
+        if isinstance(K, (int, float)):
+            self.K = DummyValues(K)
+        else:
+            self.K = K
+
+        self.KT = ConstService(info='Constant K/T',
+                               tex_name='(K/T)',
+                               v_str=f'{self.K.name} / {self.T.name}')
+
+        self.u = u
         self.x = State(info='State in washout filter', tex_name="x'")
         self.y = Algeb(info='Output of washout filter', tex_name=r'y')
-        self.vars = {'x': self.x, 'y': self.y}
+        self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
 
     def define(self):
         r"""
@@ -367,7 +384,7 @@ class Washout(Block):
         self.y.v_str = f'0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T.name}'
-        self.y.e_str = f'({self.u.name} - {self.name}_x) - {self.name}_y'
+        self.y.e_str = f'{self.name}_KT * ({self.u.name} - {self.name}_x) - {self.name}_y'
 
 
 class Lag(Block):
@@ -390,10 +407,14 @@ class Lag(Block):
         Input variable
 
     """
-    def __init__(self, u, K, T, name=None, info='Lag transfer function'):
+    def __init__(self, u, T, K, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
 
-        self.K = K
+        if isinstance(K, (int, float)):
+            self.K = DummyValues(K)
+        else:
+            self.K = K
+
         self.T = T
         self.u = u
         self.x = State(info='State in lag transfer function', tex_name="x'")
@@ -438,10 +459,14 @@ class LagAntiWindup(Block):
         Input variable
 
     """
-    def __init__(self, u, K, T, lower, upper, name=None, info='Lag transfer function with non-windup limiter'):
+    def __init__(self, u, T, K, lower, upper, name=None,
+                 info='Lag transfer function with non-windup limiter'):
         super().__init__(name=name, info=info)
+        if isinstance(K, (int, float)):
+            self.K = DummyValues(K)
+        else:
+            self.K = K
         self.u = u
-        self.K = K
         self.T = T
         self.lower = lower
         self.upper = upper
