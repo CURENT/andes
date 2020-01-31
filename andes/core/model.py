@@ -349,8 +349,8 @@ class Model(object):
         self.non_vars_syms = OrderedDict()  # input_syms - vars_syms
         self.non_iter_syms = OrderedDict()  # input_syms - iter_syms
 
-        self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
-        self.f_matrix, self.g_matrix = list(), list()
+        self.f_syms, self.g_syms = list(), list()
+        self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()
         self.f_print, self.g_print, self.c_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
@@ -590,7 +590,10 @@ class Model(object):
 
         self.calls.init_lambdify = init_lambda_list
         self.calls.init_latex = init_latex
-        self.calls.init_std = lambdify((list(self.iter_syms), list(self.non_iter_syms)), self.init_std, 'numpy')
+        self.calls.init_std = lambdify((list(self.iter_syms),
+                                        list(self.non_iter_syms)),
+                                       self.init_std,
+                                       'numpy')
 
     def _init_wrap(self, x0, params):
         """
@@ -657,7 +660,7 @@ class Model(object):
         from sympy import Symbol, Matrix
 
         # clear symbols storage
-        self.f_syms, self.g_syms, self.h_syms = list(), list(), list()
+        self.f_syms, self.g_syms = list(), list()
         self.f_matrix, self.g_matrix = Matrix([]), Matrix([])
 
         # process tex_names defined in model
@@ -714,15 +717,19 @@ class Model(object):
                     try:
                         dest.append(sympify(instance.e_str, locals=self.input_syms))
                     except TypeError as e:
-                        logger.error(f'Error sympifying equation <{instance.e_str}> for <{instance.name}>')
+                        logger.error(f'Error sympifying <{instance.e_str}> for <{instance.name}>')
                         raise e
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_syms)
         self.g_matrix = Matrix(self.g_syms)
 
-        self.calls.g_lambdify = lambdify(inputs_list, self.g_matrix, 'numpy')
-        self.calls.f_lambdify = lambdify(inputs_list, self.f_matrix, 'numpy')
+        self.calls.g_lambdify = lambdify(inputs_list,
+                                         self.g_matrix,
+                                         'numpy')
+        self.calls.f_lambdify = lambdify(inputs_list,
+                                         self.f_matrix,
+                                         'numpy')
 
         # convert service equations
         # Service equations are converted sequentially because Services can be interdependent
@@ -730,8 +737,11 @@ class Model(object):
         s_lambdify = OrderedDict()
         for name, instance in self.services.items():
             if instance.v_str is not None:
-                s_syms[name] = sympify(instance.v_str, locals=self.input_syms)
-                s_lambdify[name] = lambdify(inputs_list, s_syms[name], 'numpy')
+                s_syms[name] = sympify(instance.v_str,
+                                       locals=self.input_syms)
+                s_lambdify[name] = lambdify(inputs_list,
+                                            s_syms[name],
+                                            'numpy')
             else:
                 s_syms[name] = 0
                 s_lambdify[name] = 0

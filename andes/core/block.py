@@ -7,6 +7,7 @@ from andes.core.service import ConstService
 class DummyValues(object):
     def __init__(self, name):
         self.name = name
+        self.tex_name = name
 
 
 class Block(object):
@@ -359,7 +360,7 @@ class Washout(Block):
             self.K = K
 
         self.KT = ConstService(info='Constant K/T',
-                               tex_name='(K/T)',
+                               tex_name=f'({self.K.tex_name}/{self.T.tex_name})',
                                v_str=f'{self.K.name} / {self.T.name}')
 
         self.u = u

@@ -160,14 +160,18 @@ class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.Se0 = ConstService(info='Initial saturation output',
+                                tex_name='S_{e0}',
                                 v_str='Ae * exp(Be * vf0)',
                                 )
         self.vr0 = ConstService(info='Initial vr',
+                                tex_name='V_{r0}',
                                 v_str='(Ke + Se0) * vf0')
         self.vb0 = ConstService(info='Initial vb',
+                                tex_name='V_{b0}',
                                 v_str='vr0 / Ka')
 
         self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
                                   v_str='vb0 + v')
 
         self.Se = Algeb(info='Saturation output',
