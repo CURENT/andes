@@ -33,7 +33,7 @@ class Report(object):
         if system.PFlow.converged is True:
             info.append(f'Power flow converged in {system.PFlow.niter} iterations.\n')
             info.append('Flat-start: ' +
-                        ('Yes' if system.PFlow.config.flat_start else 'No') + '\n')
+                        ('Yes' if system.Bus.config.flat_start else 'No') + '\n')
 
         return info
 
