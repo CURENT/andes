@@ -327,13 +327,14 @@ class Model(object):
         self.calls = ModelCall()
 
         self.flags = dict(
+            collate=True,
             pflow=False,
             tds=False,  # if `tds` is False, `dae_t` cannot be used
-            nr_init=False,
+            series=False,
+            nr_iter=False,
             sys_base=False,
             address=False,
-            collate=True,
-            is_series=False,
+            initialized=False,
         )
 
         self.config = Config(name=self.class_name)
@@ -969,13 +970,15 @@ class Model(object):
 
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
-        if self.flags['nr_init']:
+        if self.flags['nr_iter']:
             self.solve_initialization()
         # ----------------------------------------
 
         # call custom variable initializer after lambdified initializers
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
+
+        self.flags['initialized'] = True
 
     def get_init_order(self):
         """

@@ -43,7 +43,7 @@ class GENBase(Model):
         super().__init__(system, config)
         self.group = 'SynGen'
         self.flags.update({'tds': True,
-                           'nr_init': False})
+                           'nr_iter': False})
 
         # state variables
         self.delta = State(v_str='delta0', tex_name=r'\delta',

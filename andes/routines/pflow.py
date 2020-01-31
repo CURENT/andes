@@ -14,8 +14,8 @@ class PFlow(BaseRoutine):
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
-                                     ('max_iter', 20),
-                                     ('flat_start', 0))))
+                                     ('max_iter', 25),
+                                     )))
         self.models = system.get_models_with_flag('pflow')
 
         self.converged = False
