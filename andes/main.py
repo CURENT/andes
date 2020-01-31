@@ -369,10 +369,12 @@ def misc(edit_config='', save_config='', license=False, clean=True, **kwargs):
 
 
 def prepare(quick=False, **kwargs):
+    t0, _ = elapsed()
     logger.info('Numeric code preparation started...')
     sys = System()
     sys.prepare(quick=quick)
-    logger.info('Successfully generated numerical code.')
+    _, s = elapsed(t0)
+    logger.info(f'Successfully generated numerical code in {s}.')
     return True
 
 

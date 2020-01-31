@@ -2,13 +2,11 @@
 Synchronous generator classes
 """
 import logging
-from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.discrete import Selector, LessThan  # NOQA
+from andes.core.model import Model, ModelData
+from andes.core.param import IdxParam, NumParam
+from andes.core.var import Algeb, State, ExtAlgeb
+from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.block import MagneticQuadSat, MagneticExpSat, Block  # NOQA
-from andes.shared import np  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -16,26 +14,75 @@ logger = logging.getLogger(__name__)
 class GENBaseData(ModelData):
     def __init__(self):
         super().__init__()
-        self.bus = IdxParam(model='Bus', info="interface bus id", mandatory=True)
-        self.gen = IdxParam(info="static generator index", mandatory=True)
-        self.coi = IdxParam(model='COI', info="center of inertia index")
+        self.bus = IdxParam(model='Bus',
+                            info="interface bus id",
+                            mandatory=True,
+                            )
+        self.gen = IdxParam(info="static generator index",
+                            mandatory=True,
+                            )
+        self.coi = IdxParam(model='COI',
+                            info="center of inertia index",
+                            )
 
-        self.Sn = NumParam(default=100.0, info="Power rating", tex_name='S_n')
-        self.Vn = NumParam(default=110.0, info="AC voltage rating", tex_name='V_n')
-        self.fn = NumParam(default=60.0, info="rated frequency", tex_name='f')
+        self.Sn = NumParam(default=100.0,
+                           info="Power rating",
+                           tex_name='S_n',
+                           )
+        self.Vn = NumParam(default=110.0,
+                           info="AC voltage rating",
+                           tex_name='V_n',
+                           )
+        self.fn = NumParam(default=60.0,
+                           info="rated frequency",
+                           tex_name='f',
+                           )
 
-        self.D = NumParam(default=0.0, info="Damping coefficient", power=True, tex_name='D')
-        self.M = NumParam(default=6, info="machine start up time (2H)", non_zero=True, power=True,
-                          tex_name='M')
-        self.ra = NumParam(default=0.0, info="armature resistance", z=True, tex_name='r_a')
-        self.xl = NumParam(default=0.0, info="leakage reactance", z=True, tex_name='x_l')
-        self.xq = NumParam(default=1.7, info="q-axis synchronous reactance", z=True, tex_name='x_q')
+        self.D = NumParam(default=0.0,
+                          info="Damping coefficient",
+                          power=True,
+                          tex_name='D'
+                          )
+        self.M = NumParam(default=6,
+                          info="machine start up time (2H)",
+                          non_zero=True,
+                          power=True,
+                          tex_name='M'
+                          )
+        self.ra = NumParam(default=0.0,
+                           info="armature resistance",
+                           z=True,
+                           tex_name='r_a'
+                           )
+        self.xl = NumParam(default=0.0,
+                           info="leakage reactance",
+                           z=True,
+                           tex_name='x_l'
+                           )
+        self.xq = NumParam(default=1.7,
+                           info="q-axis synchronous reactance",
+                           z=True,
+                           tex_name='x_q'
+                           )
         # NOTE: assume `xd1 = xq` for GENCLS, TODO: replace xq with xd1
 
-        self.kp = NumParam(default=0, info="active power feedback gain", tex_name='k_p')
-        self.kw = NumParam(default=0, info="speed feedback gain", tex_name='k_w')
-        self.S10 = NumParam(default=0.0, info="first saturation factor", tex_name='S_{1.0}')
-        self.S12 = NumParam(default=1.0, info="second saturation factor", tex_name='S_{1.2}', non_zero=True)
+        self.kp = NumParam(default=0,
+                           info="active power feedback gain",
+                           tex_name='k_p'
+                           )
+        self.kw = NumParam(default=0,
+                           info="speed feedback gain",
+                           tex_name='k_w'
+                           )
+        self.S10 = NumParam(default=0.0,
+                            info="first saturation factor",
+                            tex_name='S_{1.0}'
+                            )
+        self.S12 = NumParam(default=1.0,
+                            info="second saturation factor",
+                            tex_name='S_{1.2}',
+                            non_zero=True
+                            )
 
 
 class GENBase(Model):
@@ -43,39 +90,82 @@ class GENBase(Model):
         super().__init__(system, config)
         self.group = 'SynGen'
         self.flags.update({'tds': True,
-                           'nr_iter': False})
+                           'nr_iter': False,
+                           })
 
         # state variables
-        self.delta = State(v_str='delta0', tex_name=r'\delta',
+        self.delta = State(v_str='delta0',
+                           tex_name=r'\delta',
                            e_str='u * (2 * pi * fn) * (omega - 1)')
-        self.omega = State(v_str='u', tex_name=r'\omega',
+        self.omega = State(v_str='u',
+                           tex_name=r'\omega',
                            e_str='(u / M ) * (tm - te - D * (omega - 1))')
 
         # network algebraic variables
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
+        self.a = ExtAlgeb(model='Bus',
+                          src='a',
+                          indexer=self.bus,
+                          tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='-u * (vd * Id + vq * Iq)')
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
+                          e_str='-u * (vd * Id + vq * Iq)'
+                          )
+        self.v = ExtAlgeb(model='Bus',
+                          src='v',
+                          indexer=self.bus,
+                          tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-u * (vq * Id - vd * Iq)')
+                          e_str='-u * (vq * Id - vd * Iq)'
+                          )
 
         # algebraic variables
         # Need to be provided by specific generator models
-        self.Id = Algeb(v_str='Id0', tex_name=r'I_d', e_str='')  # to be completed by subclasses
-        self.Iq = Algeb(v_str='Iq0', tex_name=r'I_q', e_str='')  # to be completed
+        self.Id = Algeb(v_str='Id0',
+                        tex_name=r'I_d',
+                        e_str=''
+                        )  # to be completed by subclasses
+        self.Iq = Algeb(v_str='Iq0',
+                        tex_name=r'I_q',
+                        e_str=''
+                        )  # to be completed
 
-        self.vd = Algeb(v_str='vd0', e_str='v * sin(delta - a) - vd', tex_name=r'V_d')
-        self.vq = Algeb(v_str='vq0', e_str='v * cos(delta - a) - vq', tex_name=r'V_q')
+        self.vd = Algeb(v_str='vd0',
+                        e_str='v * sin(delta - a) - vd',
+                        tex_name=r'V_d',
+                        )
+        self.vq = Algeb(v_str='vq0',
+                        e_str='v * cos(delta - a) - vq',
+                        tex_name=r'V_q',
+                        )
 
-        self.tm = Algeb(info='mechanical torque', tex_name=r'\tau_m',
-                        v_str='tm0', v_setter=True, e_str='tm0 - tm')
-        self.te = Algeb(info='electric torque', tex_name=r'\tau_e',
-                        v_str='p0', v_setter=True, e_str='psid * Iq - psiq * Id - te', )
-        self.vf = Algeb(v_str='vf0', v_setter=True, e_str='vf0 - vf', tex_name=r'v_f')
+        self.tm = Algeb(info='mechanical torque',
+                        tex_name=r'\tau_m',
+                        v_str='tm0',
+                        v_setter=True,
+                        e_str='tm0 - tm'
+                        )
+        self.te = Algeb(info='electric torque',
+                        tex_name=r'\tau_e',
+                        v_str='p0',
+                        v_setter=True,
+                        e_str='psid * Iq - psiq * Id - te',
+                        )
+        self.vf = Algeb(v_str='vf0',
+                        v_setter=True,
+                        e_str='vf0 - vf',
+                        tex_name=r'v_f'
+                        )
 
         # ----------service consts for initialization----------
-        self.p0 = ExtService(model='StaticGen', src='p', indexer=self.gen, tex_name='P_0')
-        self.q0 = ExtService(model='StaticGen', src='q', indexer=self.gen, tex_name='Q_0')
+        self.p0 = ExtService(model='StaticGen',
+                             src='p',
+                             indexer=self.gen,
+                             tex_name='P_0',
+                             )
+        self.q0 = ExtService(model='StaticGen',
+                             src='q',
+                             indexer=self.gen,
+                             tex_name='Q_0',
+                             )
 
     def v_numeric(self, **kwargs):
         # disable corresponding `StaticGen`
@@ -90,10 +180,12 @@ class Flux0(object):
     def __init__(self):
         self.psid = Algeb(tex_name=r'\psi_d',
                           v_str='psid0',
-                          e_str='u * (ra * Iq + vq) - psid')
+                          e_str='u * (ra * Iq + vq) - psid',
+                          )
         self.psiq = Algeb(tex_name=r'\psi_q',
                           v_str='psiq0',
-                          e_str='u * (ra * Id + vd) + psiq')
+                          e_str='u * (ra * Id + vd) + psiq',
+                          )
 
         self.Id.e_str += '+ psid'
         self.Iq.e_str += '+ psiq'
@@ -107,10 +199,12 @@ class Flux1(object):
     def __init__(self):
         self.psid = Algeb(tex_name=r'\psi_d',
                           v_str='psid0',
-                          e_str='u * (ra * Iq + vq) - omega * psid')
+                          e_str='u * (ra * Iq + vq) - omega * psid',
+                          )
         self.psiq = Algeb(tex_name=r'\psi_q',
                           v_str='psiq0',
-                          e_str='u * (ra * Id + vd) + omega * psiq')
+                          e_str='u * (ra * Id + vd) + omega * psiq',
+                          )
 
         self.Id.e_str += '+ psid'
         self.Iq.e_str += '+ psiq'
@@ -124,10 +218,12 @@ class Flux2(object):
     def __init__(self):
         self.psid = State(tex_name=r'\psi_d',
                           v_str='psid0',
-                          e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)')
+                          e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)',
+                          )
         self.psiq = State(tex_name=r'\psi_q',
                           v_str='psiq0',
-                          e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)')
+                          e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)',
+                          )
 
         self.Id.e_str += '+ psid'
         self.Iq.e_str += '+ psiq'
@@ -136,20 +232,32 @@ class Flux2(object):
 class GENCLSModel(object):
     def __init__(self):
         # internal voltage and rotor angle calculation
-        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c')
-        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S')
-        self._I = ConstService(v_str='_S / conj(_V)', tex_name='I_c')
+        self._V = ConstService(v_str='v * exp(1j * a)',
+                               tex_name='V_c',
+                               )
+        self._S = ConstService(v_str='p0 - 1j * q0',
+                               tex_name='S',
+                               )
+        self._I = ConstService(v_str='_S / conj(_V)',
+                               tex_name='I_c',
+                               )
         self._E = ConstService(tex_name='E')
         self._deltac = ConstService(tex_name=r'\delta_c')
         self.delta0 = ConstService(tex_name=r'\delta_0')
 
-        self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))', tex_name='V_{dq}')
-        self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))', tex_name='I_{dq}')
+        self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))',
+                                tex_name='V_{dq}')
+        self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))',
+                                tex_name='I_{dq}')
 
-        self.Id0 = ConstService(v_str='re(Idq)', tex_name=r'I_{d0}')
-        self.Iq0 = ConstService(v_str='im(Idq)', tex_name=r'I_{q0}')
-        self.vd0 = ConstService(v_str='re(vdq)', tex_name=r'V_{d0}')
-        self.vq0 = ConstService(v_str='im(vdq)', tex_name=r'V_{q0}')
+        self.Id0 = ConstService(v_str='re(Idq)',
+                                tex_name=r'I_{d0}')
+        self.Iq0 = ConstService(v_str='im(Idq)',
+                                tex_name=r'I_{q0}')
+        self.vd0 = ConstService(v_str='re(vdq)',
+                                tex_name=r'V_{d0}')
+        self.vq0 = ConstService(v_str='im(vdq)',
+                                tex_name=r'V_{q0}')
 
         self.tm0 = ConstService(tex_name=r'\tau_{m0}',
                                 v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
