@@ -2,10 +2,11 @@
 
 import logging
 import re
+import os
 
-from andes.shared import deg2rad
+from andes.shared import deg2rad, pd, yaml
 from andes.utils.misc import to_number
-
+from collections import defaultdict
 logger = logging.getLogger(__name__)
 
 
@@ -285,5 +286,50 @@ def read_add(system, file):
     -------
 
     """
+
+    with open(file, 'r') as f:
+        input_list = [line.strip() for line in f]
+
+    # concatenate multi-line device data
+    all_dict = defaultdict(list)
+    data_list = list()
+    for i, line in enumerate(input_list):
+        if line == '':
+            continue
+        if '/' not in line:
+            data_list.append(line)
+        else:
+            data_list.append(line.split('/')[0])
+            data_str = ' '.join(data_list)
+            data_split = data_str.split("'")
+
+            model_name = data_split[1].strip()
+            all_dict[model_name].append(data_split[0] + data_split[2])
+            data_list = list()
+
+    # construct pandas dataframe for all models
+    df_dict = dict()
+    for key, val in all_dict.items():
+        df_1row = pd.DataFrame(val)
+        df_str = df_1row[0].str.split(expand=True)
+        df_dict[key] = df_str.astype(float)
+
+    # set header for each
+    dirname = os.path.dirname(__file__)
+    with open('{}/psse-dyr.yaml'.format(dirname), 'r') as f:
+        dyr_format = yaml.full_load(f)
+    dyr_dict = dict()
+
+    for item in dyr_format:
+        dyr_dict.update(item)
+
+    for key in df_dict:
+        if key in dyr_dict:
+            if 'inputs' in dyr_dict[key]:
+                df_dict[key].columns = dyr_dict[key]['inputs']
+
+    system.df_dict = df_dict
+
+    # TODO: Load data into models
 
     return True

@@ -176,13 +176,13 @@ class TG2(TG2Data, TGBase):
 class TGOV1Data(TGBaseData):
     def __init__(self):
         super().__init__()
-        self.vmax = NumParam(info='Maximum valve position',
+        self.VMAX = NumParam(info='Maximum valve position',
                              tex_name='V_{max}',
                              unit='p.u.',
                              default=1.2,
                              power=True,
                              )
-        self.vmin = NumParam(info='Minimum valve position',
+        self.VMIN = NumParam(info='Minimum valve position',
                              tex_name='V_{min}',
                              unit='p.u.',
                              default=0.0,
@@ -229,8 +229,8 @@ class TGOV1Model(TGBase):
         self.lag = LagAntiWindup(u=self.pd,
                                  K=1.0,
                                  T=self.T1,
-                                 lower=self.vmin,
-                                 upper=self.vmax,
+                                 lower=self.VMIN,
+                                 upper=self.VMAX,
                                  )
         self.ll = LeadLag(u=self.lag_x,
                           T1=self.T2,

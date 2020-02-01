@@ -1,0 +1,44 @@
+---
+- GENCLS:
+    inputs:
+        - bus
+        - ID
+        - H
+        - D
+    destination: GENCLS
+    outputs:
+        M: 2 * H
+        D: D
+- EXDC2:
+    inputs:
+        - bus
+        - ID
+        - TR
+        - KA
+        - TA
+        - TB
+        - TC
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF1
+        - TF1
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: EXDC2
+- TGOV1:
+    inputs:
+        - bus
+        - ID
+        - R
+        - T1
+        - VMAX
+        - VMIN
+        - T2
+        - T3
+        - Dt
+    destination: TGOV1

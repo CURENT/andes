@@ -44,10 +44,14 @@ class Line(LineData, Model):
         self.group = 'ACLine'
         self.flags['pflow'] = True
 
-        self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1')
-        self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2, tex_name='a_2')
-        self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1')
-        self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2')
+        self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1',
+                           info='phase angle of the from bus')
+        self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2, tex_name='a_2',
+                           info='phase angle of the to bus')
+        self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1',
+                           info='voltage magnitude of the from bus')
+        self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2',
+                           info='voltage magnitude of the to bus')
 
         self.gh = ConstService(tex_name='g_h')
         self.bh = ConstService(tex_name='b_h')

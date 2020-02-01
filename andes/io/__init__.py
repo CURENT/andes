@@ -119,7 +119,7 @@ def parse(system):
             logger.error('Unknown addfile format.')
             return
         logger.info(f'Parsing additional file {system.files.addfile}')
-        if not addparser.read_add(system, system.files.case):
+        if not addparser.read_add(system, system.files.addfile):
             logger.error('Error parsing addfile {:s} with {:s} parser.'.format(system.files.addfile, input_format))
             return False
 

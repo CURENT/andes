@@ -1383,7 +1383,7 @@ class Model(object):
             names.append(p.name)
             ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')
-            units.append(f'{p.unit}' if p.unit else '')
+            units.append(p.unit if p.unit else '')
 
             # collect properties
             all_properties = ['v_str', 'v_setter', 'e_setter', 'v_iter']
@@ -1398,7 +1398,7 @@ class Model(object):
             call_store = self.system.calls[self.class_name]
             symbols = self.math_wrap(call_store.x_latex + call_store.y_latex, export=export)
             ivs_rest = self.math_wrap(call_store.init_latex.values(), export=export)
-            units_rest = [f'*{item.unit}*' if item.unit else '' for item in self.params.values()]
+            units_rest = [f'*{item.unit}*' if item.unit else '' for item in self.cache.all_vars.values()]
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Initial Value', ivs),

@@ -89,61 +89,80 @@ class ExcBase(Model):
 class EXDC2Data(ExcBaseData):
     def __init__(self):
         super().__init__()
-        self.Tr = NumParam(info='Sensing time constant',
-                           tex_name='T_r',
+        self.TR = NumParam(info='Sensing time constant',
+                           tex_name='T_R',
                            default=1,
                            unit='p.u.',
                            )
-        self.Ta = NumParam(info='Lag time constant in anti-windup lag',
-                           tex_name='T_a',
+        self.TA = NumParam(info='Lag time constant in anti-windup lag',
+                           tex_name='T_A',
                            default=0.04,
                            unit='p.u.',
                            )
-        self.Tc = NumParam(info='Lead time constant in lead-lag',
-                           tex_name='T_c',
+        self.TC = NumParam(info='Lead time constant in lead-lag',
+                           tex_name='T_C',
                            default=1,
                            unit='p.u.',
                            )
-        self.Tb = NumParam(info='Lag time constant in lead-lag',
-                           tex_name='T_b',
+        self.TB = NumParam(info='Lag time constant in lead-lag',
+                           tex_name='T_B',
                            default=1,
                            unit='p.u.',
                            )
-        self.Te = NumParam(info='Exciter integrator time constant',
-                           tex_name='T_e',
+        self.TE = NumParam(info='Exciter integrator time constant',
+                           tex_name='T_E',
                            default=0.8,
                            unit='p.u.',
                            )
-        self.Tf = NumParam(info='Feedback washout time constant',
-                           tex_name='T_f',
-                           default=1,
-                           unit='p.u.',
-                           non_zero=True
-                           )
-
-        self.Kf = NumParam(info='Feedback washout gain',
-                           tex_name='K_f',
-                           default=0.03,
-                           unit='p.u.',
-                           )
-        self.Ka = NumParam(info='Gain in anti-windup lag TF',
-                           tex_name='K_a',
+        self.TF1 = NumParam(info='Feedback washout time constant',
+                            tex_name='T_{F1}',
+                            default=1,
+                            unit='p.u.',
+                            non_zero=True
+                            )
+        self.KF1 = NumParam(info='Feedback washout gain',
+                            tex_name='K_{F1}',
+                            default=0.03,
+                            unit='p.u.',
+                            )
+        self.KA = NumParam(info='Gain in anti-windup lag TF',
+                           tex_name='K_A',
                            default=40,
                            unit='p.u.',
                            )
-        self.Ke = NumParam(info='Gain added to saturation',
-                           tex_name='K_e',
+        self.KE = NumParam(info='Gain added to saturation',
+                           tex_name='K_E',
                            default=1,
                            unit='p.u.',
                            )
-        self.vrmax = NumParam(info='Maximum excitation limit',
-                              tex_name='V_{rmax}',
+        self.VRMAX = NumParam(info='Maximum excitation limit',
+                              tex_name='V_{RMAX}',
                               default=7.3,
                               unit='p.u.')
-        self.vrmin = NumParam(info='Minimum excitation limit',
-                              tex_name='V_{rmin}',
+        self.VRMIN = NumParam(info='Minimum excitation limit',
+                              tex_name='V_{RMIN}',
                               default=-7.3,
                               unit='p.u.')
+        self.E1 = NumParam(info='First saturation point',
+                           tex_name='E_1',
+                           default=0.0,
+                           unit='p.u.',
+                           )
+        self.SE1 = NumParam(info='Value at first saturation point',
+                            tex_name='S_{E1}',
+                            default=0.0,
+                            unit='p.u.',
+                            )
+        self.E2 = NumParam(info='Second saturation point',
+                           tex_name='E_2',
+                           default=0.0,
+                           unit='p.u.',
+                           )
+        self.SE2 = NumParam(info='Value at second saturation point',
+                            tex_name='S_{E2}',
+                            default=0.0,
+                            unit='p.u.',
+                            )
         self.Ae = NumParam(info='Gain in saturation',
                            tex_name='A_e',
                            default=0.0,
@@ -165,10 +184,10 @@ class EXDC2Model(ExcBase):
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
-                                v_str='(Ke + Se0) * vf0')
+                                v_str='(KE + Se0) * vf0')
         self.vb0 = ConstService(info='Initial vb',
                                 tex_name='V_{b0}',
-                                v_str='vr0 / Ka')
+                                v_str='vr0 / KA')
 
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
@@ -184,9 +203,9 @@ class EXDC2Model(ExcBase):
                         tex_name='V_p',
                         unit='p.u.',
                         v_str='vf0',
-                        e_str='(LA_x - Ke * vp - Se * vp) / Te')
+                        e_str='(LA_x - KE * vp - Se * vp) / TE')
 
-        self.LS = Lag(u=self.v, T=self.Tr, K=1.0, info='Sensing lag TF')
+        self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
 
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
@@ -202,20 +221,20 @@ class EXDC2Model(ExcBase):
                         )
 
         self.LL = LeadLag(u=self.vi,
-                          T1=self.Tc,
-                          T2=self.Tb,
+                          T1=self.TC,
+                          T2=self.TB,
                           info='Lead-lag for internal delays',
                           )
         self.LA = LagAntiWindup(u=self.LL_y,
-                                T=self.Ta,
-                                K=self.Ka,
-                                upper=self.vrmax,
-                                lower=self.vrmin,
+                                T=self.TA,
+                                K=self.KA,
+                                upper=self.VRMAX,
+                                lower=self.VRMIN,
                                 info='Anti-windup lag',
                                 )
         self.W = Washout(u=self.vp,
-                         T=self.Tf,
-                         K=self.Kf,
+                         T=self.TF1,
+                         K=self.KF1,
                          )
         self.vout.e_str = 'omega * vp - vout'
 

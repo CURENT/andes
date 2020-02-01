@@ -71,10 +71,13 @@ class TDS(BaseRoutine):
         system.vars_to_models()
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
-        self.initialized = True
+        self.initialized = self.test_initialization()
 
         _, s1 = elapsed(t0)
-        logger.info(f"Initialization completed in {s1}.")
+        if self.initialized is True:
+            logger.info(f"Initialization successful in {s1}.")
+        else:
+            logger.info(f"Initialization error in {s1}.")
         if system.dae.n == 0:
             logger.warning('No dynamic component loaded.')
         return system.dae.xy
@@ -142,13 +145,13 @@ class TDS(BaseRoutine):
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.info('Initialization tests passed.')
+            return True
         else:
             logger.warning('Suspect initialization issue.')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.warning(f"Check variables {','.join(fail_names)}")
-
-        return
+            logger.warning(f"Check variables {', '.join(fail_names)}")
+            return False
 
     def _implicit_step(self, verbose=False):
         """

@@ -59,6 +59,7 @@ coverage.xml
 *.log
 
 # Sphinx documentation
+docs/source/modelref.rst
 docs/build/
 docs/source/_build/
 docs/source/generated/

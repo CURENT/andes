@@ -24,7 +24,7 @@ class BaseService(object):
     def __init__(self, name: str = None, tex_name: str = None, info: str = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
-        self.into = info
+        self.info = info
         self.owner = None
 
     def get_names(self):

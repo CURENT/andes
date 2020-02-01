@@ -74,6 +74,7 @@
 - [x] Decide whether to keep Calc as Var or move it to service. (eliminated from VarBase subclasses; Likely a
  service subclass)
 - [x] Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
+- [x] Test initialization and report suspect issues
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
 *   Test anti-windup limiter
 *   Deal with two-terminal and multi-terminal devices
@@ -107,11 +108,11 @@
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
 *   Define general hooks - when should the connectivity check happen
+*   Draw block diagram from symbolic models using BDP (or SchemDraw)
 
 ## Later Versions
 *   Solve non-linear initialization equations
 *   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
-*   Use `multiprocessing` to call g_update and f_update
 *   Add a more generic parser for PSSE RAW
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations

@@ -21,6 +21,7 @@ plt = LazyImport('from matplotlib import pyplot')
 mpl = LazyImport('import matplotlib')
 Process = LazyImport('from multiprocessing import Process')
 unittest = LazyImport('import unittest')
+yaml = LazyImport('import yaml')
 # # ----------------------------------------
 
 # # ----------------------------------------
