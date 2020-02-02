@@ -209,34 +209,34 @@ class TGOV1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.pref = Algeb(info='Reference input power',
+        self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
                           v_str='tm0 * R',
                           e_str='tm0 * R - pref',
                           )
-        self.wd = Algeb(info='Generator speed deviation (positive for under speed)',
+        self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
                         e_str='(wref - omega) - wd',
                         )
-        self.pd = Algeb(info='Pref plus speed deviation after gain',
+        self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
                         e_str='(wd + pref) * gain - pd')
 
-        self.lag = LagAntiWindup(u=self.pd,
-                                 K=1.0,
+        self.LAG = LagAntiWindup(u=self.pd,
+                                 K=1,
                                  T=self.T1,
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
-        self.ll = LeadLag(u=self.lag_x,
+        self.LL = LeadLag(u=self.LAG_x,
                           T1=self.T2,
                           T2=self.T3,
                           )
-        self.pout.e_str = '(ll_y + Dt * wd) - pout'
+        self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 
 class TGOV1(TGOV1Data, TGOV1Model):
