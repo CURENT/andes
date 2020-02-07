@@ -1,8 +1,8 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
-from andes.core.var import Algeb, ExtState, ExtAlgeb
+from andes.core.var import Algeb, State, ExtState, ExtAlgeb
 from andes.core.service import ConstService, ExtService
-from andes.core.discrete import HardLimiter, DeadBand
+from andes.core.discrete import HardLimiter, DeadBand, AntiWindupLimiter
 from andes.core.block import LeadLag, LagAntiWindup
 
 
@@ -239,13 +239,58 @@ class TGOV1Model(TGBase):
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 
-class TGOV1(TGOV1Data, TGOV1Model):
+class TGOV1ModelAlt(TGBase):
+    def __init__(self, system, config):
+        TGBase.__init__(self, system, config)
+
+        self.pref = Algeb(info='Reference power input',
+                          tex_name='P_{ref}',
+                          v_str='tm0 * R',
+                          e_str='tm0 * R - pref',
+                          )
+        self.wd = Algeb(info='Generator under speed',
+                        unit='p.u.',
+                        tex_name=r'\omega_{dev}',
+                        v_str='0',
+                        e_str='(wref - omega) - wd',
+                        )
+        self.pd = Algeb(info='Pref plus under speed times gain',
+                        unit='p.u.',
+                        tex_name="P_d",
+                        v_str='tm0',
+                        e_str='(wd + pref) * gain - pd')
+
+        self.LAG_x = State(info='State in lag transfer function',
+                           tex_name=r"x'_{LAG}",
+                           e_str='LAG_lim_zi * (1 * pd - LAG_x) / T1',
+                           v_str='pd',
+                           )
+        self.LAG_lim = AntiWindupLimiter(u=self.LAG_x,
+                                         lower=self.VMIN,
+                                         upper=self.VMAX,
+                                         tex_name='lim_{lag}',
+                                         )
+        self.LL_x = State(info='State in lead-lag transfer function',
+                          tex_name="x'_{LL}",
+                          v_str='LAG_x',
+                          e_str='(LAG_x - LL_x) / T3',
+                          )
+        self.LL_y = Algeb(info='Lead-lag Output',
+                          tex_name='y_{LL}',
+                          v_str='LAG_x',
+                          e_str='T2 / T3 * (LAG_x - LL_x) + LL_x - LL_y',
+                          )
+
+        self.pout.e_str = '(LL_y + Dt * wd) - pout'
+
+
+class TGOV1(TGOV1Data, TGOV1ModelAlt):
     """
     TGOV1 model.
     """
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
-        TGOV1Model.__init__(self, system, config)
+        TGOV1ModelAlt.__init__(self, system, config)
 
 # Developing a model (use TG2 as an example)
 # 0) Find the group class or write a new group class in group.py

@@ -549,9 +549,9 @@ class LeadLag(Block):
         self.y.v_str = f'{self.u.name}'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
-        self.y.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + \
-                         {self.name}_x - \
-                         {self.name}_y'
+        self.y.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + ' \
+                       f'{self.name}_x - ' \
+                       f'{self.name}_y'
 
 
 class LeadLagLimit(Block):

@@ -349,7 +349,7 @@ class TDSData(object):
 
         plt.show()
 
-    def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
+    def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
                   latex=True, dpi=100, greyscale=False, savefig=None, show=True, **kwargs):
         """
@@ -435,7 +435,9 @@ class TDSData(object):
         if not right:
             right = xdata[-1] + 1e-6
 
-        line_styles = ['-', '--', '-.', ':'] * int(len(ydata) / 4 + 1)
+        if not line_styles:
+            line_styles = ['-', '--', '-.', ':']
+        line_styles = line_styles * int(len(ydata) / len(line_styles) + 1)
 
         if not (fig and ax):
             fig = plt.figure(dpi=dpi)
