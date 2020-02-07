@@ -7,6 +7,6 @@ pandas
 dill
 xlsxwriter
 tqdm
-yaml
+pyyaml
 matplotlib
 coloredlogs
