@@ -1,8 +1,5 @@
-andes package
-=============
-
 Subpackages
------------
+===========
 
 .. toctree::
 
@@ -14,7 +11,7 @@ Subpackages
    andes.variables
 
 Submodules
-----------
+==========
 
 andes.cli module
 ----------------
@@ -52,15 +49,6 @@ andes.system module
 -------------------
 
 .. automodule:: andes.system
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: andes
    :members:
    :undoc-members:
    :show-inheritance:

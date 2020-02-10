@@ -1,143 +1,228 @@
 .. _tutorial:
 
-******************
+********
 Tutorial
-******************
-This chapter describes the basic usage of a) the command-line interface, b)
-the Python functions for Notebook or IPython interactive environment.
+********
+This chapter describes the mose common usages.
+ANDES can be used as a command-line tool or as a library.
+The command-line interface (CLI) comes handy to run studies.
+As a library, it can be used interactively in the IPython shell or the Jupyter Notebook.
+
+Please use the following shortcuts if you are looking for particular topics.
 
 .. _sec-command:
 
 Command Line Usage
 =======================
 
-Command Line Options
---------------------
+Basic Usage
+-----------
 
-Andes is invoked from the command line using the command ``andes``. It prints
-out a splash screen with version and environment information and exits with a
-"no input" error. 
+ANDES is invoked from the command line using the command ``andes``.
+Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
+It prints out a preamble with version and environment information and help commands::
 
-::
+    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
+    Session: hcui7, 02/09/2020 08:34:35 PM
 
-    ANDES 0.6.8 (Build 9da49e2b, Python 3.7.3 on Darwin)
-    Session: hcui7, 10/23/2019 10:23:44 AM
+    usage: andes [-h] [-v {10,20,30,40,50}] {run,plot,misc,prepare,selftest} ...
 
-    error: no input file. Try 'andes -h' for help.
+    positional arguments:
+      {run,plot,misc,prepare,selftest}
+                            [run]: run simulation routine; [plot]: plot simulation
+                            results; [prepare]: run the symbolic-to-numeric
+                            preparation; [misc]: miscellaneous functions.
 
-Help for the command line options can be retrieved using the ``-h`` or
-``--help`` command, namely, ``andes -h``.
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v {10,20,30,40,50}, --verbose {10,20,30,40,50}
+                            Program logging level. Available levels are 10-DEBUG,
+                            20-INFO, 30-WARNING, 40-ERROR or 50-CRITICAL. The
+                            default level is 20-INFO.
 
-Frequently Used Options
------------------------
 
-``casename``
+The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
+of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
+in ``run``. The most commonly used commands will be explained in the following.
 
-The positional argument, path to the case file, is required for andes to
-populate the power system object and perform studies. The case file, however,
-is omitted if any utility options are specified in the optional arguments.
+andes selftest
+--------------
+After installing ANDES, it is encouraged to use ``andes selftest`` to run tests and check the basic functionality.
+It might take a minute to run the whole self-test suite. Results are printed as the tests proceed. An example
+output looks like ::
 
-To perform a power flow study on the file named ``ieee14.dm`` in the current
-directory, run 
+    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
+    Session: hcui7, 02/09/2020 08:44:07 PM
+
+    test_docs (test_1st_system.TestSystem) ... ok
+    test_limiter (test_discrete.TestDiscrete) ... ok
+    test_sorted_limiter (test_discrete.TestDiscrete) ... ok
+    test_switcher (test_discrete.TestDiscrete) ... ok
+    test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
+    test_count (test_pjm.Test5Bus) ... ok
+    test_idx (test_pjm.Test5Bus) ... ok
+    test_names (test_pjm.Test5Bus) ... ok
+    test_pflow (test_pjm.Test5Bus) ... ok
+    100%|██████████████████████████████████████████| 100/100 [00:02<00:00, 39.29%/s]
+    ok
+
+    ----------------------------------------------------------------------
+    Ran 10 tests in 21.289s
+
+    OK
+
+Test cases can grow, and there could be more cases than above. Make sure that all tests have passed.
+
+andes prepare
+-----------------
+The symbolically defined models in ANDES need to be generated into numerical code for simulation.
+The code generation can be manually called with ``andes prepare``.
+Generated code are stored in folder ``.andes/calls.pkl`` in your home directory.
+In addition, ``andes selftest`` implicitly calls the code generation.
+If you are using ANDES as a package in the user mode, you won't need to call it again.
+
+For developers, ``andes prepare`` needs to be called immediately following any model equation
+modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
+
+Option ``-q`` or ``--quick`` can be used to speed up the code generation.
+It skips the generation of LaTeX-formatted equations, which are only used in documentation and the interactive
+mode.
+
+andes run
+-------------
+``andes run`` is the entry point for power system analysis routines.
+``andes run`` takes one positional argument, ``filename`` , along with other optional keyword arguments.
+``filename`` is the test case path, either relative or absolute.
+Without other options, ANDES will run power flow calculation for the provided file.
+
+``andes run`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
+Accpeted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
+50 - CRITICAL.
+To show debugging outputs, use ``-v 10``.
+
+Power flow
+..........
+
+To perform a power flow study for test case named ``kundur_full.xlsx`` in the current directory, run
 
 .. code:: bash
 
-    andes ieee14.dm
+    andes run kundur_full.xlsx
 
-Andes also takes the full path to the case file, for example, 
-
-.. code:: bash
-
-    andes /home/hcui7/andes/cases/ieee14.dm
-
-Output files will be saved to the current directory where andes is called.
-
-Andes also takes multiple files or wildcard. Multiprocessing will be
-triggered if more than one valid input files are found. For example, to run
-power flow for files with a prefix of ``ieee1`` and a suffix (file extension)
-of ``.dm``, run
+The full path to the case file is also accepted, for example,
 
 .. code:: bash
 
-    andes ieee1*.dm
+    andes run /home/user/andes/cases/kundur/kundur_full.xlsx
 
-Andes will run the case files that match the pattern such as ``ieee14.dm``
-and ``ieee118.dm``.
+Power flow reports will be saved to the current directory in which andes is called.
+The power flow report contains four sections: a) system statistics, b) ac bus
+and dc node data, c) ac line data, and d) the initialized values of other
+algebraic variables and state variables.
 
-``-r, -routine {pflow, tds, eig}``
+Time Domain Simulation
+......................
 
-Option for specifying the analysis routine. `pflow` for power flow, `tds` for
-time domain simulation, and `eig` for eigenvalue analysis. `pflow` as the
-default is this option is not given.
+To run the time domain simulation (TDS) for ``kundur_full.xlsx``, run
 
-For example, to run time domain simulation for ``ieee14.dm`` in the current
+.. code:: bash
+
+    andes run kundur_full.xlsx -r tds
+
+The output looks like::
+
+    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
+    Session: hcui7, 02/09/2020 10:35:37 PM
+
+    Parsing input file </Users/hcui7/repos/andes/tests/kundur_full.xlsx>
+    Input file kundur_full.xlsx parsed in 0.5425 second.
+    -> Power flow calculation with Newton Raphson method:
+    0: |F(x)| = 14.9283
+    1: |F(x)| = 3.60859
+    2: |F(x)| = 0.170093
+    3: |F(x)| = 0.00203827
+    4: |F(x)| = 3.76414e-07
+    Converged in 5 iterations in 0.0080 second.
+    Report saved to </Users/hcui7/repos/andes/tests/kundur_full_out.txt> in 0.0036 second.
+    -> Time Domain Simulation:
+    Initialization tests passed.
+    Initialization successful in 0.0152 second.
+      0%|                                                    | 0/100 [00:00<?, ?%/s]
+      <Toggle 0>: Applying status toggle on Line idx=Line_8
+    100%|██████████████████████████████████████████| 100/100 [00:03<00:00, 28.99%/s]
+    Simulation completed in 3.4500 seconds.
+    TDS outputs saved in 0.0377 second.
+    -> Single process finished in 4.4310 seconds.
+
+This execution first solves the power flow as a starting point.
+Next, the numerical integration simulates 20 seconds, during which a predefined
+breaker opensat 2 seconds.
+
+TDS produces two output files by default: a NumPy data file ``ieee14_syn_out.npy``
+and a variable name list file ``ieee14_syn_out.lst``.
+The list file contains three columns: variable indices, variabla name in plain text, and variable
+name in LaTeX format.
+The variable indices are needed to plot the needed variable.
+
+Multiprocess
+............
+ANDES takes multiple files inputs or wildcard.
+Multiprocessing will be triggered if more than one valid input files are found.
+For example, to run power flow for files with a prefix of ``case5`` and a suffix (file extension)
+of ``.m``, run
+
+.. code:: bash
+
+    andes run case5*.m
+
+Test cases that match the pattern, including ``case5.m`` and ``case57.m``, will be processed.
+
+Routine
+.......
+Option ``-r`` or ``-routine`` is used for specifying the analysis routine, followed by the routine name.
+Available routine names include ``pflow, tds, eig``.
+`pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
+`pflow` is default even if ``-r`` is not given.
+
+For example, to run time-domain simulation for ``kundur_full.xlsx`` in the current
 directory, run
 
 .. code:: bash
 
-    andes ieee14.dm -r tds
+    andes run kundur_full.xlsx -r tds
 
-``-q, --quick-help``
+Convert
+.......
+ANDES recognizes a few input formats and can convert input systems into the ``xlsx`` format.
+This function is useful when one wants to use models that are unique in ANDES.
 
-Print out a quick help of parameter definitions of a single given model. For
-example, ``andes -q Bus`` prints out the parameter definition of the model
-``Bus``.
+The command for converting is ``--convert``, following the output format (only ``xlsx`` is currently supported).
+For example, to convert ``case5.m`` into the ``xlsx`` format, run
 
-Parameters with an asterisk ``*`` are mandatory. Parameters with a number
-sign ``#`` are per unit values in the element base.
+.. code:: bash
 
-``-d, --dump-raw``
+    andes run case5.m --convert xlsx
 
-Export the given case files to the DOME format supported by andes. 
+The output will look like ::
 
-``-v VERBOSE, --verbose VERBOSE``
+    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
+    Session: hcui7, 02/09/2020 10:22:14 PM
 
-Program verbosity level. 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
-50 - CRITICAL. For the most debugging output, use ``-v 10``.
+    Parsing input file </Users/hcui7/repos/andes/cases/matpower/case5.m>
+    CASE5  Power flow data for modified 5 bus, 5 gen case based on PJM 5-bus system
+    Input file case5.m parsed in 0.0033 second.
+    xlsx file written to </Users/hcui7/repos/andes/cases/matpower/case5.xlsx>
+    Converted file /Users/hcui7/repos/andes/cases/matpower/case5.xlsx written in 0.5079 second.
+    -> Single process finished in 0.8765 second.
 
-``-C, --clean``
+Note that ``--convert`` will only create sheets for existing models.
+In case one want to create template sheets to add models later, ``--convertall`` can be used.
 
-Option to remove any generated files. Removes files with any of the following
-suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
-``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
-
-``-g, --group``
-
-Option to print out all the models in a group. To print out all the groups
-and models they contain, run ``andes -g all``.
-
-``--help-config``
-
-Print out a table of help for the specified configurations. Available options
-are ``all``, ``system`` or any routine name such as ``pflow`` and ``eig``.
-
-For example, ``andes --help-config all`` prints out all the config helps.
-
-``--save-config``
-
-Saves all configs to a file. By default, save to ``~/.andes/andes.conf`` file.
-
-This file contains all the runtime configs for the system and routines.
-
-``--load-config``
-
-Load an Andes config file that occurs first in the following search path: a)
-the specified path, b) current directory, c) home directory
-
-``-v, --verbose``
-Verbosity level in (10, 20, 30, 40, 50) for (DEBUG, INFO, WARNING, ERROR,
-CRITICAL). The default is 20 (INFO). Set to 10 for debugging.
-
-Plotting Tool
--------------
-
-Andes comes with a command-line plotting tool, `tdsplot` for time-domain simulation
-output data. 
-
-usage: tdsplot [-h] [--xmin LEFT] [--xmax RIGHT] [--ymax YMAX] [--ymin YMIN]
-               [--checkinit] [-x XLABEL] [-y YLABEL] [-s] [-g] [-d] [-n]
-               [--ytimes YTIMES] [--dpi DPI]
-               datfile x [y [y ...]]
+andes plot
+--------------
+``andes plot`` is the command-line tool for plotting.
+It currently supports time-domain simulation data.
+Three positional arguments are required, and a dozen of optional arguments are supported.
 
 positional arguments:
   ========              =====================
@@ -170,119 +255,51 @@ optional arguments:
   --dpi DPI                     image resolution in dot per inch (DPI)
   ==========================    ======================================
 
-Examples
---------
-
-Power Flow Calculation
-----------------------
-
-The example test cases are in the ``cases`` folder of the package.
-
-Run power flow for ``ieee14_syn.dm`` using the command ::
-
-    ANDES 0.6.8 (Build 9da49e2b, Python 3.7.3 on Darwin)
-    Session: hcui7, 10/23/2019 11:18:32 AM
-
-    Parsing input file <ieee14_syn.dm>
-    -> Power flow study: NR method, non-flat start
-    Iter 1.  max mismatch = 2.1699877
-    Iter 2.  max mismatch = 0.2403104
-    Iter 3.  max mismatch = 0.0009915
-    Iter 4.  max mismatch = 0.0000001
-    Solution converged in 0.0027 second in 4 iterations
-    Report saved to <ieee14_syn_out.txt> in 0.0016 second.
-    -> Single process finished in 0.2191 second.
-
-The printed message shows that the power flow uses the Newton Raphson (NR)
-method with non-flat start. The solution process converges in four iterations
-in 0.002 seconds. The report is written to the file <ieee14_syn_out.txt>.
-
-The power flow report contains four sections: a) system statistics, b) ac bus
-and dc node data, c) ac line data, and d) the initialized values of other
-algebraic variables and state variables.
-
-
-Time Domain Simulation 
-----------------------
-
-The other most used routine of andes is the time domain simulation (TDS). 
-
-Change Run Config
------------------
-
-You can change the configuration of the power flow run by saving the config
-and editing it.
-
-Run ``andes --save-config`` to save the config file to the default location.
-Then, run ``andes --edit-config`` to edit it. On Microsoft Windows, it will
-open up a notepad. On Linux, it will use the ``$EDITOR`` environment variable
-or use ``gedit`` by default. On macOS, the default is vim.
-
-To change the power flow solution method, for example, from NR to Fast
-Decoupled Power Flow (FDPF), find ``method = NR `` in the ``[Pflow]`` section
-and modified it to
-
-    method = FDPF
-
-Note that FDPF is an available method. To view the available options, in a
-command line window, run ``andes --help-config pflow``.
-
-Time Domain Simulation
-----------------------
-
-To run the time domain simulation (TDS) for ``ieee14_syn.dm``, run ::
-
-    $ andes ieee14.dm -r tds
-    ANDES 0.5.5 (Build g651fdac, Python 3.5.2 on Linux)
-    Session: 09/06/2018 11:18:55 AM
-
-    Parsing input file <ieee14_syn.dm>
-    -> Power flow study: NR method, non-flat start
-    Iter 1.  max mismatch = 2.1699877
-    Iter 2.  max mismatch = 0.2403104
-    Iter 3.  max mismatch = 0.0009915
-    Iter 4.  max mismatch = 0.0000001
-    Solution converged in 0.0054 second in 4 iterations
-    report written to <ieee14_syn_out.txt> in 0.0019 second.
-    -> Time Domain Simulation: trapezoidal method, t=20 s
-    <Fault> Applying fault on Bus <4.0> at t=2.0.
-    <Fault> Clearing fault on Bus <4.0> at t=2.05.
-    Time domain simulation finished in 1.2613 seconds.
-    -> Single process finished in 1.3878 seconds.
-
-This execution first solves the power flow as a starting point. Next, the
-numerical integration is run to simulate 20 seconds during which a predefined
-fault on Bus 4 happens at 2 seconds.
-
-TDS produces two output files by default: a data file ``ieee14_syn_out.dat``
-and a variable name list file ``ieee14_syn_out.lst``. The list file contains
-three columns: variable indices, variabla name in plain text, and variable
-name in LaTeX format. The variable indices are needed to plot the needed
-variable.
-
-Plottting the TDS Results
--------------------------
-
 For example, to plot the generator speed variable of synchronous generator 1
 ``omega Syn 1`` versus time, read the indices of the variable (44) and time
-(0), run ::
+(0), run
 
-    andesplot ieee14_syn_out.dat 0 44
+.. code:: bash
 
-In this command, ``andesplot`` is a plotting tool for TDS output files.
-``ieee14_syn_out.dat`` is data file name. ``0`` is the index of ``Time`` for
+    andes plot ieee14_syn_out.npy 0 44
+
+In this command, ``ande splot`` is a plotting tool for TDS output files.
+``ieee14_syn_out.npy`` is data file name. ``0`` is the index of ``Time`` for
 the x-axis. ``44`` is the index of ``omega Syn 1``.
 
 The y-axis variabla indices can also be specified in the Python range fashion
-. For example, ``andesplot ieee14_syn_out.dat 0 44:69:6`` will plot the
+. For example, ``andes plot ieee14_syn_out.npy 0 44:69:6`` will plot the
 variables at indices 44, 50, 56, 62, and 68.
 
-``andesplot`` will attempt to render the image with LaTeX if ``dvipng``
+``andes plot`` will attempt to render the image with LaTeX if ``dvipng``
 program is in the search path. In case LaTeX is available but fails (happens
 on Windows), the option ``-d`` can be used to disable LaTeX rendering.
 
-A complete list of options for ``andesplot`` is available using ``andesplot
--h``.
+andes misc
+--------------
+``andes misc`` contains miscellaneous functions, such as configuration and output cleaning.
+
+``--save-config``
+
+Saves all configs to a file. By default, saves to ``~/.andes/andes.conf`` file.
+
+This file contains all the runtime configs for the system and routines.
+
+``--edit-config``
+
+You can change the configuration of ANDES run by saving the config and editing it.
+
+Run ``andes misc --save-config`` to save the config file to the default location.
+Then, run ``andes misc --edit-config`` to edit it. On Microsoft Windows, it will
+open up a notepad. On Linux, it will use the ``$EDITOR`` environment variable
+or use ``gedit`` by default. On macOS, the default is vim.
+
+``-C, --clean``
+
+Option to remove any generated files. Removes files with any of the following
+suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
+``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
+
 
 Interactive Usage
 =================

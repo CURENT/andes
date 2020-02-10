@@ -4,85 +4,117 @@
 Installation
 *************************
 
-User Mode Installation
-======================
-Conda Installation for Windows, macOS and Linux
-***********************************************
-ANDES can be installed in Python 3.7+. We recommend the Miniconda distribution
-that includes the conda package manager and Python.
+ANDES can be installed in Python 3.7+.
+
+Environment
+===========
+
+Setting Up Miniconda
+--------------------
+We recommend the Miniconda distribution that includes the conda package manager and Python.
 Downloaded and install the latest Miniconda (x64, with Python 3)
 from https://conda.io/miniconda.html.
 
-Open the Anaconda Prompt and create an environment for ANDES (optional)
+Step 1: Open the Anaconda Prompt and create an environment for ANDES (optional)
 
 .. code:: bash
 
      conda create --name andes python=3.7
      activate andes
 
-Add the conda-forge channel and set it as default
+You can skip this step to install ANDES to the base environment, though it is not recommended.
+
+Step 2: Add the ``conda-forge`` channel and set it as default
 
 .. code:: bash
 
      conda config --add channels conda-forge
      conda config --set channel_priority flexible
 
-Install ANDES from conda-forge
-
-.. code:: bash
-
-     conda install andes
-
 Existing Python Environment Installation
-****************************************
-
-If you prefer to use an existing Python installation,
-you can install ANDES with `pip`
+----------------------------------------
+This is for advanced user only.
+Instead of using Conda, if you prefer an existing Python environment,
+you can install ANDES with `pip`:
 
 .. code:: bash
 
       python3 -m pip install andes
 
-Pip will take care of the minimal dependency for ANDES.
-The following package installation are also recommended
+If you see a `Permission denied` error, you will need to
+install the packages locally with `--user`
+
+Install ANDES
+=============
+
+ANDES can be installed in the user mode and the development mode.
+If you want to use ANDES without modifying the source code, you can install it in the user mode.
+If you want to hack into the code and, for example, develop new models or routines, please install it in the
+development mode (recommended). The development mode has the same usage as the user mode.
+In addition, changes to the source code will be reflected immediately without having to re-install the package.
+
+User Mode Installation
+----------------------------------------
+
+In the Anaconda environment, run
 
 .. code:: bash
 
-      python3 -m pip install matplotlib pandas sympy cvxpy flask requests
+    conda install andes
 
-If you see a `Permission denied` error, you may need to
-install the packages locally with `--user`
 
-Development Mode
-================
-Alternative to installing as a distribution package, you may install ANDES
-in development mode so that your changes will take effect immediately.
+Developer Mode Installation (Recommended)
+-----------------------------------------
 
-We still recommend you install ANDES with conda first. Then, remove the ANDES
-package while preserving the dependent package with ::
+Step 1: Get ANDES source code
 
-      conda remove andes --force
+Download the ANDES source code from
+https://github.com/cuihantao/andes and extract all files to the path of your choice.
+You can also ``git clone`` the source code (recommended).
 
-Next, clone the ANDES source code from
-https://github.com/cuihantao/andes (or download and unzip it to the desired path).
-Change the working directory to the root folder of andes and run
+.. code:: bash
+
+    git clone https://github.com/cuihantao/andes
+
+Step 2: Install dependencies
+
+In the Anaconda environment, use ``cd`` to change directory to the ANDES root folder.
+
+Install dependencies with
+
+.. code:: bash
+
+    conda install --file requirements.txt
+
+Install development dependencies if you want to build documentation with
+
+.. code:: bash
+
+    conda install --file requirements-dev.txt
+
+Step 3: Install ANDES. You have two options: a) install as a
 
 .. code:: bash
 
       python3 -m pip install -e .
 
-Pip should take care of the rest.
+Pip will take care of the rest.
 
-Optional: Install `cvxoptklu` to use KLU for speed up.
+Optional Packages
+-----------------
+
+Install `cvxoptklu` to use KLU for speed up.
 `cvxoptklu` is a standalone KLU direct solver for linear equations.
 KLU is generally ~20% faster than UMFPACK.
 cvxoptklu requires a C compiler, and the `openblas` and
-`SuiteSparse` libraries. ::
+`SuiteSparse` libraries.
+
+.. code:: bash
 
       python3 -m install cvxoptklu
 
-Trouble-shooting
-================
-There is a known issue of CVXOPT with versions earlier than 1.2.2 in Windows.
-If the time-domain simulation crashes for the `cases/ieee14/ieee14_syn.dm`,
-please check and install the latest CVXOPT (=>1.2.2).
+Trouble-Shooting
+====================
+There is a known issue of CVXOPT with versions earlier than 1.2.2 in Windows for handling complex numbers.
+For stock cases, if you see obviously incorrect power flow results or experienced a crash running time-domain
+simulation, please install the latest CVXOPT (=>1.2.2) and double check with ``conda list`` or ``pip list``.

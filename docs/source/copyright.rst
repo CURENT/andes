@@ -5,7 +5,7 @@
 Copyright and License
 *********************
 
-| Copyright :raw-html:`&copy;` 2015-2019 Hantao Cui.
+| Copyright :raw-html:`&copy;` 2015-2020 Hantao Cui.
 
 ANDES is free software; you can redistribute it and/or modify it under
 the terms of the
