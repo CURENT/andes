@@ -120,7 +120,7 @@ The power flow report contains four sections: a) system statistics, b) ac bus
 and dc node data, c) ac line data, and d) the initialized values of other
 algebraic variables and state variables.
 
-Time Domain Simulation
+Time-domain simulation
 ......................
 
 To run the time domain simulation (TDS) for ``kundur_full.xlsx``, run
@@ -164,8 +164,8 @@ The list file contains three columns: variable indices, variabla name in plain t
 name in LaTeX format.
 The variable indices are needed to plot the needed variable.
 
-Multiprocess
-............
+Multiprocessing
+...............
 ANDES takes multiple files inputs or wildcard.
 Multiprocessing will be triggered if more than one valid input files are found.
 For example, to run power flow for files with a prefix of ``case5`` and a suffix (file extension)
@@ -190,6 +190,12 @@ directory, run
 .. code:: bash
 
     andes run kundur_full.xlsx -r tds
+
+Likewise, to run eigenvalue analysis for ``kundur_full.xlsx``, use
+
+.. code:: bash
+
+    andes run kundur_full.xlsx -r eig
 
 Convert
 .......
@@ -263,7 +269,7 @@ For example, to plot the generator speed variable of synchronous generator 1
 
     andes plot ieee14_syn_out.npy 0 44
 
-In this command, ``ande splot`` is a plotting tool for TDS output files.
+In this command, - ``ande splot`` is a plotting command for TDS output files.
 ``ieee14_syn_out.npy`` is data file name. ``0`` is the index of ``Time`` for
 the x-axis. ``44`` is the index of ``omega Syn 1``.
 
@@ -279,11 +285,9 @@ andes misc
 --------------
 ``andes misc`` contains miscellaneous functions, such as configuration and output cleaning.
 
-``--save-config``
-
-Saves all configs to a file. By default, saves to ``~/.andes/andes.conf`` file.
-
-This file contains all the runtime configs for the system and routines.
+``--save-config`` saves all configs to a file.
+By default, it saves to ``~/.andes/andes.conf`` file.
+This file contains all the runtime configs for the system routines, and models.
 
 ``--edit-config``
 
@@ -303,6 +307,77 @@ suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
 
 Interactive Usage
 =================
+This section is a tutorial for using ANDES in an interactive environment.
+All interactive shells are supported, including Python shell, IPython, Jupyter Notebook and Jupyter Lab.
+The examples below uses Jupyter Notebook.
+
+Jupyter Notebook
+----------------
+Jupyter notebook is used as an example. Jupyter notebook can be installed with
+
+.. code:: bash
+
+    conda install jupyter notebook
+
+After the installation, change directory to the folder that you wish to store notebooks,
+start the notebook with
+
+.. code:: bash
+
+    jupyter notebook
+
+A browser window should open automatically with the notebook browser loaded.
+To create a new notebook, use the "New" button at the top right corner.
+
+Import
+------
+Like other Python libraries, ANDES can be imported into an interactive Python environment.
+
+    >>> import andes
+    >>> andes.main.config_logger(log_file=None)
+
+The ``config_logger`` is needed to print logging information in the current session.
+Otherwise, information messages will be silenced, and only warnings and error will be printed.
+
+To enable debug messages, use
+
+    >>> andes.main.config_logger(stream_level=10, log_file=None)
+
+If you have not run ``andes prepare``, use the command once to generate code
+
+    >>> andes.main.prepare()
+
+
+Create A Test System
+--------------------
+Before running studies, a "System" object needs to be create to hold the system data.
+The System object can be created by passing the path to the case file the entrypoint function.
+For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
+
+    >>> ss = andes.main.run('kundur_full.xlsx')
+
+This function will parse the input file, run the power flow, and return the system as an object.
+Outputs will look like ::
+
+    Parsing input file </Users/hcui7/notebooks/kundur/kundur_full.xlsx>
+    Input file kundur_full.xlsx parsed in 0.4172 second.
+    -> Power flow calculation with Newton Raphson method:
+    0: |F(x)| = 14.9283
+    1: |F(x)| = 3.60859
+    2: |F(x)| = 0.170093
+    3: |F(x)| = 0.00203827
+    4: |F(x)| = 3.76414e-07
+    Converged in 5 iterations in 0.0222 second.
+    Report saved to </Users/hcui7/notebooks/kundur_full_out.txt> in 0.0015 second.
+    -> Single process finished in 0.4677 second.
+
+In this example, ``ss`` is an instance of ``andes.System``.
+It contains member attributes for models, routines, and numerical DAE.
+
+Naming convention for the ``System`` attributes are as follows
+
+- Model instances share the same name as the class names.
+- R
 
 Running Studies
 ---------------
@@ -313,20 +388,6 @@ whole package and set up the global logger using
 
     >>> import andes
     >>> andes.main.config_logger(log_file=None)
-
-Create an instance of Power System from the case file, for example, at ``
-ieee14_syn.dm``
-whole package and set up the global logger using
-
-    >>> import andes
-    >>> andes.main.config_logger(log_file=None)
-
-Create an instance of Power System from the case file, for example, at ``
-ieee14_syn.dm``
-whole package and set up the global logger using
-
-    >>> import andes
-    >>> andes.main.config_logger(logfile=None)
 
 Create an instance of Power System from the case file, for example, at ``
 ieee14_syn.dm`` ::
