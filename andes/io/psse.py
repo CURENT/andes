@@ -216,7 +216,7 @@ def read(system, file):
             system.add('Line', param)
         else:
             # I, J, K, CKT, CW, CZ, CM, MAG1, MAG2, NMETR, 'NAME', STAT, Ol, Fl,...,o4, F4
-            # R1—2, X1—2, SBASE1—2, R2—3, X2—3, SBASE2—3, R3—1, X3—1, SBASE3—1, VMSTAR, ANSTAR
+            # R1-2, X1-2, SBASE1-2, R2-3, X2-3, SBASE2-3, R3-1, X3-1, SBASE3-1, VMSTAR, ANSTAR
             # WINDV1, NOMV1, ANG1, RATA1, BATB1, RATC1, COD1, CONT1, RMA1, RMI1, VMA1, VMI1, NTP1, TAB1, CR1, CX1
             # WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
             # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
@@ -245,7 +245,7 @@ def read(system, file):
             xf_3_count += 1
 
     for data in raw['swshunt']:
-        # I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, ’RMIDNT’,
+        # I, MODSW, ADJM, STAT, VSWHI, VSWLO, SWREM, RMPCT, RMIDNT,
         # BINIT, N1, B1, N2, B2, ... N8, B8
         bus = data[0]
         vn = system.Bus.get(src='Vn', idx=bus, attr='v')

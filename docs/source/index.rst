@@ -20,31 +20,37 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 - Symbolic DAE modeling and automated code generation for numerical simulation.
 - Numerical DAE modeling for cases when symbolic implementations are difficult.
 - Rapid modeling library with transfer functions and discrete components.
-- Automatic sequential and iterative initialization for dynamic models.
-- Newton-Raphson power flow and trapezoidal method-based time domain simulation.
-- Complete documentation of supported DAE models.
+- Automatic sequential and iterative initialization (experimental) for dynamic models.
+- Newton-Raphson power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
+- Full equation documentation of supported DAE models.
 
-ANDES is currently under active development. Please report issues on the
-`GitHub Issues page <https://github.com/cuihantao/andes/issues>`_.
+ANDES is currently under active development.
+
+- Documentation:
+  `andes.readthedocs.io <https://andes.readthedocs.io>`_.
+- Report issues:
+  `GitHub Issues page <https://github.com/cuihantao/andes/issues>`_.
 
 .. toctree::
    :caption: ANDES Manual
-   :maxdepth: 1
+   :maxdepth: 3
+   :hidden:
 
    copyright.rst
    install.rst
    tutorial.rst
    formats.rst
    modeling.rst
-   misc.rst
    cases.rst
    modelref.rst
+   misc.rst
    release-notes.rst
 
 
 .. toctree::
+   :hidden:
    :caption: API References
-   :maxdepth: 1
+   :maxdepth: 3
 
    andes.rst
 

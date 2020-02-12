@@ -778,5 +778,108 @@ variables need to placed in a dictionary, ``self.vars`` at the end of the block 
 
 Blocks can be nexted as advanced usage. See the API documentation for more details.
 
-Example: GENROU
+Examples
 ======================================
+
+TGOV1
+-------
+The TGOV1 turbine governor model is used as a practical example using the library.
+
+This model is composed of a lead-lag transfer function and a first-order lag transfer function
+with an anti-windup limiter, which are sufficiently complex for demonstration.
+The corresponding differential equations and algebraic equations are given below.
+
+.. math::
+
+    \left[
+    \begin{matrix}
+    \dot{x}_{LG} \\
+    \dot{x}_{LL}
+    \end{matrix}
+    \right]
+    =
+    \left[
+    \begin{matrix}z_{i,lim}^{LG} \left(P_{d} - x_{LG}\right) / {T_1}
+    \\
+    \left(x_{LG} - x_{LL}\right) / T_3
+    \end{matrix}
+    \right]
+
+    \left[
+    \begin{matrix}
+    0 \\
+    0 \\
+    0 \\
+    0 \\
+    0 \\
+    0
+    \end{matrix}
+    \right]
+    =
+    \left[
+    \begin{matrix}
+    (1 - \omega) - \omega_{d} \\
+    R \times \tau_{m0} - P_{ref} \\
+    \left(P_{ref} + \omega_{d}\right)/R - P_{d}\\
+    D_{t} \omega_{d} + y_{LL}  - P_{OUT}\\
+    \frac{T_2}{T_3} \left(x_{LG} - x_{LL}\right) + x_{LL} - y_{LL}\\
+    u \left(P_{OUT} - \tau_{m0}\right)
+    \end{matrix}
+    \right]
+
+where *LG* and *LL* denote the lag block and the lead-lag block, :math:`\dot{x}_{LG}` and :math:`\dot{x}_{LL}`
+are the internal states, :math:`y_{LL}` is the lead-lag output, :math:`\omega` the generator speed,
+:math:`\omega_d` the generator under-speed, :math:`P_d` the droop output, :math:`\tau_{m0}` the steady-state
+torque input, and :math:`P_{OUT}` the turbine output that will be summed at the generator.
+
+The code for the above model is demonstrated as follows. The complete code can be found in
+``andes/models/governor.py``. ::
+
+    def __init__(self):
+      # 1. Declare parameters from case file inputs.
+      self.R = NumParam(info='Turbine governor droop',
+                        non_zero=True, ipower=True)
+      # Other parameters are omitted.
+
+      # 2. Declare external variables from generators.
+      self.omega = ExtState(src='omega',
+                     model='SynGen',
+                     indexer=self.syn,
+                     info='Generator speed')
+      self.tm = ExtAlgeb(src='tm',
+                  model='SynGen',
+                  indexer=self.syn,
+                  e_str='u*(pout-tm0)',
+                  info='Generator torque input')
+
+      # 3. Declare initial values from generators.
+      self.tm0 = ExtService(src='tm',
+                   model='SynGen',
+                   indexer=self.syn,
+                   info='Initial torque input')
+
+      # 4. Declare variables and equations.
+      self.pref = Algeb(info='Reference power input',
+                    v_str='tm0*R',
+                    e_str='tm0*R-pref')
+      self.wd = Algeb(info='Generator under speed',
+                  e_str='(1-omega)-wd')
+      self.pd = Algeb(info='Droop output',
+                  v_str='tm0',
+                  e_str='(wd+pref)/R-pd')
+      self.LG_x = State(info='State in the lag TF',
+                    v_str='pd',
+                    e_str='LG_lim_zi*(pd-LG_x)/T1')
+      self.LG_lim = AntiWindup(u=self.LG_x,
+                      lower=self.VMIN,
+                      upper=self.VMAX)
+      self.LL_x = State(info='State in the lead-lag TF',
+                    v_str='LG_x',
+                    e_str='(LG_x-LL_x)/T3')
+      self.LL_y = Algeb(info='Lead-lag Output',
+                    v_str='LG_x',
+                    e_str='T2/T3*(LG_x-LL_x)+LL_x-LL_y')
+      self.pout = Algeb(info='Turbine output power',
+                    v_str='tm0',
+                    e_str='(LL_y+Dt*wd)-pout')
+
