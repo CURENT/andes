@@ -9,10 +9,11 @@ recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat
 recursive-include cases tests
-recursive-include *.yaml
 
 include versioneer.py
 include andes/_version.py
+include andes/io/psse-dyr.yaml
+include andes/io/psse-modes.yaml
 
 # If including data files in the package, add them like:
 # include path/to/data_file

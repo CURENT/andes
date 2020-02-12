@@ -41,6 +41,6 @@ jobs:
     displayName: 'flake8 linting'
 
   - script: |
-      python setup.py checkdocs  # check documentation (README.rst)
+      # python setup.py checkdocs  # check documentation (README.rst)
       make -C docs html  # Build the documentation.
     displayName: 'make documentation'
