@@ -6,7 +6,7 @@ import dill
 dill.settings['recurse'] = True
 
 
-class TestSystem(unittest.TestCase):
+class TestCodegen(unittest.TestCase):
     def setUp(self) -> None:
         self.ss = System()
         system = self.ss

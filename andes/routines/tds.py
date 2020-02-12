@@ -20,8 +20,8 @@ class TDS(BaseRoutine):
                                      ('t0', 0.0),
                                      ('tf', 20.0),
                                      ('fixt', 1),
-                                     ('tstep', 1/30),  # suggested step size
-                                     ('max_iter', 20),
+                                     ('tstep', 1/30),  # recommended step size
+                                     ('max_iter', 10),
                                      )))
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:

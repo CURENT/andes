@@ -3,6 +3,7 @@ import unittest
 import dill
 from andes.system import System
 from andes.io import xlsx
+from andes.utils.paths import get_case
 
 dill.settings['recurse'] = True
 
@@ -13,7 +14,7 @@ class Test5Bus(unittest.TestCase):
         self.ss.undill_calls()
 
         # load from excel file
-        xlsx.read(self.ss, os.path.join(os.path.dirname(__file__), 'pjm5bus.xlsx'))
+        xlsx.read(self.ss, get_case('5bus/pjm5bus.xlsx'))
         self.ss.setup()
 
     def test_names(self):
@@ -36,6 +37,21 @@ class Test5Bus(unittest.TestCase):
     def test_pflow(self):
         self.ss.PFlow.nr()
         self.ss.PFlow.newton_krylov()
+
+    def test_tds_init(self):
+        self.ss.PFlow.nr()
+        self.ss.TDS.run_implicit([0, 20])
+
+
+class TestKundur2Area(unittest.TestCase):
+    """
+    Test Kundur's 2-area system
+    """
+    def setUp(self) -> None:
+        self.ss = System()
+        self.ss.undill_calls()
+        xlsx.read(self.ss, get_case('kundur/kundur_full.xlsx'))
+        self.ss.setup()
 
     def test_tds_init(self):
         self.ss.PFlow.nr()
