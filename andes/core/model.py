@@ -1,19 +1,3 @@
-# ANDES, a power system simulation tool for research.
-#
-# Copyright 2015-2020 Hantao Cui
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """
 Base class for building ANDES models
 """
@@ -503,11 +487,16 @@ class Model(object):
             instance.set_var()
         self.refresh_inputs()
 
-    def l_update_eq(self):
+    def l_check_eq(self):
         if self.n == 0:
             return
         for instance in self.discrete.values():
             instance.check_eq()
+
+    def l_set_eq(self):
+        if self.n == 0:
+            return
+        for instance in self.discrete.values():
             instance.set_eq()
         self.refresh_inputs()
 

@@ -46,7 +46,9 @@ class PFlow(BaseRoutine):
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_update_eq()
+        system.l_check_eq()
+        system.l_set_eq()
+        system.fg_to_dae()
         system.j_update()
 
         # prepare and solve linear equations
@@ -141,7 +143,9 @@ class PFlow(BaseRoutine):
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_update_eq()
+        system.l_check_eq()
+        system.l_set_eq()
+        system.fg_to_dae()
         return system.dae.fg
 
     def newton_krylov(self, verbose=False):

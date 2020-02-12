@@ -140,7 +140,9 @@ class TDS(BaseRoutine):
         system.l_update_var(models=self.pflow_tds_models)
         system.f_update(models=self.pflow_tds_models)
         system.g_update(models=self.pflow_tds_models)
-        system.l_update_eq(models=self.pflow_tds_models)
+        system.l_check_eq(models=self.pflow_tds_models)
+        system.l_set_eq(models=self.pflow_tds_models)
+        system.fg_to_dae()
         system.j_update(models=self.pflow_tds_models)
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
@@ -179,16 +181,20 @@ class TDS(BaseRoutine):
 
         while True:
             system.e_clear(models=self.pflow_tds_models)
+
             system.l_update_var(models=self.pflow_tds_models)
             system.f_update(models=self.pflow_tds_models)
             system.g_update(models=self.pflow_tds_models)
-            system.l_update_eq(models=self.pflow_tds_models)
+            system.l_check_eq(models=self.pflow_tds_models)
+            system.l_set_eq(models=self.pflow_tds_models)
+            system.fg_to_dae()
+
             # lazy jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=self.pflow_tds_models)
                 self.solver.factorize = True
 
-            # solve
+            # solve trapezoidal rule integration
             In = spdiag([1] * dae.n)
             self.Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
@@ -224,7 +230,7 @@ class TDS(BaseRoutine):
                 self.busted = True
                 break
             if self.niter > self.config.max_iter:
-                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.4f}, h={self.h:.4f}')
+                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, h={self.h:.6f}')
                 break
             if mis > 1000 and (mis > 1e8 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
@@ -323,7 +329,7 @@ class TDS(BaseRoutine):
             B = matrix(system.dae.gx)
             self.solver.linsolve(system.dae.gy, B)
             As = system.dae.fx - system.dae.fy * B
-            freq = abs(As[0, 0])
+            freq = max(abs(As[0, 0]), 1)
         else:
             freq = 20.0
 
@@ -335,7 +341,7 @@ class TDS(BaseRoutine):
 
         self.deltatmax = min(3 * tcycle, tspan / 100.0)
         self.deltat = min(tcycle, tspan / 100.0)
-        self.deltatmin = min(tcycle / 64, self.deltatmax / 20)
+        self.deltatmin = min(tcycle / 100, self.deltatmax / 20)
 
         if config.tstep <= 0:
             logger.warning('Fixed time step is negative or zero')
@@ -485,7 +491,9 @@ class TDS(BaseRoutine):
             raise NotImplementedError(f"Unknown algeb_solver {asolver}")
 
         system.f_update(models=self.pflow_tds_models)
-        system.l_update_eq(models=self.pflow_tds_models)
+        system.l_check_eq(models=self.pflow_tds_models)
+        system.l_set_eq(models=self.pflow_tds_models)
+        system.fg_to_dae()
 
         return dae.f
 

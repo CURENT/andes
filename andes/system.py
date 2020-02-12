@@ -350,9 +350,13 @@ class System(object):
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         self._call_models_method('l_update_var', models)
 
-    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        self._call_models_method('l_update_eq', models)
+    def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('l_check_eq', models)
 
+    def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        self._call_models_method('l_set_eq', models)
+
+    def fg_to_dae(self):
         self._e_to_dae('f')
         self._e_to_dae('g')
 

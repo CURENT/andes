@@ -1,4 +1,3 @@
-import importlib
 import logging
 from math import ceil, pi
 
@@ -8,7 +7,7 @@ from cvxopt.lapack import gesv
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
-from andes.shared import np, matrix, spmatrix
+from andes.shared import np, matrix, spmatrix, plt, mpl
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'
@@ -139,12 +138,7 @@ class EIG(BaseRoutine):
         return ret
 
     def plot(self):
-        try:
-            plt = importlib.import_module('matplotlib.pyplot')
-        except ImportError:
-            plt = None
-            logger.warning('Install matplotlib to plot eigenvalue map.')
-            return False
+        mpl.rc('font', family='Times New Roman', size=12)
 
         mu_real = self.mu.real()
         mu_imag = self.mu.imag()
@@ -171,10 +165,28 @@ class EIG(BaseRoutine):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
+        mpl.rc('text', usetex=True)
         fig, ax = plt.subplots()
-        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=26, color='green')
-        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=26, color='orange')
-        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=26, color='red')
+        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
+        ax.axhline(linewidth=0.5, color='grey', linestyle='--')
+        ax.axvline(linewidth=0.5, color='grey', linestyle='--')
+
+        # plot 5% damping lines
+        xleft = -6
+        xright = 0.5
+        xin = np.arange(xleft, 0, 0.01)
+        yneg = xin * 20
+        ypos = - xin * 20
+
+        ax.plot(xin, yneg, color='grey', linewidth=0.5, linestyle='--')
+        ax.plot(xin, ypos, color='grey', linewidth=0.5, linestyle='--')
+        ax.set_xlabel('Real')
+        ax.set_ylabel('Imaginary')
+        ax.set_xlim(left=xleft, right=xright)
+        ax.set_ylim(-8, 8)
+
         plt.show()
 
     def dump_results(self):
