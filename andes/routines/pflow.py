@@ -70,7 +70,7 @@ class PFlow(BaseRoutine):
 
         return mis
 
-    def nr(self):
+    def run(self):
         """
         Full Newton-Raphson method
 

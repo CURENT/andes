@@ -12,7 +12,9 @@ ANDES currently supports the following input formats:
 
 - ANDES Excel (.xlsx)
 - MATPOWER (.m)
-- Dome (.dm).
+- PSS/E RAW (.raw)
+- PSS/E DYR (.dyr), work in progress
+- Dome (.dm), work in progress
 
 
 ------------------------------

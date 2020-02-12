@@ -3,12 +3,12 @@
 ********
 Tutorial
 ********
-This chapter describes the mose common usages.
-ANDES can be used as a command-line tool or as a library.
+ANDES can be used as a command-line tool or a library.
 The command-line interface (CLI) comes handy to run studies.
 As a library, it can be used interactively in the IPython shell or the Jupyter Notebook.
+This chapter describes the most common usages.
 
-Please use the following shortcuts if you are looking for particular topics.
+Please see the cheatsheet if you are looking for quick help.
 
 .. _sec-command:
 
@@ -44,6 +44,7 @@ It prints out a preamble with version and environment information and help comma
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
 in ``run``. The most commonly used commands will be explained in the following.
+
 
 andes selftest
 --------------
@@ -99,6 +100,26 @@ Without other options, ANDES will run power flow calculation for the provided fi
 Accpeted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
 50 - CRITICAL.
 To show debugging outputs, use ``-v 10``.
+
+Routine
+.......
+Option ``-r`` or ``-routine`` is used for specifying the analysis routine, followed by the routine name.
+Available routine names include ``pflow, tds, eig``.
+`pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
+`pflow` is default even if ``-r`` is not given.
+
+For example, to run time-domain simulation for ``kundur_full.xlsx`` in the current
+directory, run
+
+.. code:: bash
+
+    andes run kundur_full.xlsx -r tds
+
+Likewise, to run eigenvalue analysis for ``kundur_full.xlsx``, use
+
+.. code:: bash
+
+    andes run kundur_full.xlsx -r eig
 
 Power flow
 ..........
@@ -177,28 +198,8 @@ of ``.m``, run
 
 Test cases that match the pattern, including ``case5.m`` and ``case57.m``, will be processed.
 
-Routine
-.......
-Option ``-r`` or ``-routine`` is used for specifying the analysis routine, followed by the routine name.
-Available routine names include ``pflow, tds, eig``.
-`pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
-`pflow` is default even if ``-r`` is not given.
-
-For example, to run time-domain simulation for ``kundur_full.xlsx`` in the current
-directory, run
-
-.. code:: bash
-
-    andes run kundur_full.xlsx -r tds
-
-Likewise, to run eigenvalue analysis for ``kundur_full.xlsx``, use
-
-.. code:: bash
-
-    andes run kundur_full.xlsx -r eig
-
-Convert
-.......
+Format converter
+................
 ANDES recognizes a few input formats and can convert input systems into the ``xlsx`` format.
 This function is useful when one wants to use models that are unique in ANDES.
 
@@ -222,7 +223,7 @@ The output will look like ::
     -> Single process finished in 0.8765 second.
 
 Note that ``--convert`` will only create sheets for existing models.
-In case one want to create template sheets to add models later, ``--convertall`` can be used.
+In case one want to create template sheets to add models later, ``--convertall`` can be used instead.
 
 andes plot
 --------------
@@ -238,6 +239,28 @@ positional arguments:
   x                     x axis variable index
   y                     y axis variable index
   ========              =====================
+
+For example, to plot the generator speed variable of synchronous generator 1
+``omega Syn 1`` versus time, read the indices of the variable (44) and time
+(0), run
+
+.. code:: bash
+
+    andes plot ieee14_syn_out.npy 0 44
+
+In this command, - ``ande splot`` is a plotting command for TDS output files.
+``ieee14_syn_out.npy`` is data file name. ``0`` is the index of ``Time`` for
+the x-axis. ``44`` is the index of ``omega Syn 1``.
+
+The y-axis variabla indices can also be specified in the Python range fashion
+. For example, ``andes plot ieee14_syn_out.npy 0 44:69:6`` will plot the
+variables at indices 44, 50, 56, 62, and 68.
+
+``andes plot`` will attempt to render the image with LaTeX if ``dvipng``
+program is in the search path. In case LaTeX is available but fails (happens
+on Windows), the option ``-d`` can be used to disable LaTeX rendering.
+
+Other optional arguments are listed in the following.
 
 optional arguments:
   ==========================    ======================================
@@ -261,48 +284,38 @@ optional arguments:
   --dpi DPI                     image resolution in dot per inch (DPI)
   ==========================    ======================================
 
-For example, to plot the generator speed variable of synchronous generator 1
-``omega Syn 1`` versus time, read the indices of the variable (44) and time
-(0), run
-
-.. code:: bash
-
-    andes plot ieee14_syn_out.npy 0 44
-
-In this command, - ``ande splot`` is a plotting command for TDS output files.
-``ieee14_syn_out.npy`` is data file name. ``0`` is the index of ``Time`` for
-the x-axis. ``44`` is the index of ``omega Syn 1``.
-
-The y-axis variabla indices can also be specified in the Python range fashion
-. For example, ``andes plot ieee14_syn_out.npy 0 44:69:6`` will plot the
-variables at indices 44, 50, 56, 62, and 68.
-
-``andes plot`` will attempt to render the image with LaTeX if ``dvipng``
-program is in the search path. In case LaTeX is available but fails (happens
-on Windows), the option ``-d`` can be used to disable LaTeX rendering.
-
 andes misc
 --------------
 ``andes misc`` contains miscellaneous functions, such as configuration and output cleaning.
 
-``--save-config`` saves all configs to a file.
-By default, it saves to ``~/.andes/andes.conf`` file.
-This file contains all the runtime configs for the system routines, and models.
+Configuration
+.............
+ANDES uses a configuration file to set runtime configs for the system routines, and models.
+``--save-config`` saves all configs to a file. By default, it saves to ``~/.andes/andes.conf`` file.
 
-``--edit-config``
-
-You can change the configuration of ANDES run by saving the config and editing it.
+With ``--edit-config``, you can edit the configuration of ANDES run by saving the config and editing it.
 
 Run ``andes misc --save-config`` to save the config file to the default location.
-Then, run ``andes misc --edit-config`` to edit it. On Microsoft Windows, it will
-open up a notepad. On Linux, it will use the ``$EDITOR`` environment variable
+Then, run ``andes misc --edit-config`` to edit it.
+On Microsoft Windows, it will open up a notepad.
+On Linux, it will use the ``$EDITOR`` environment variable
 or use ``gedit`` by default. On macOS, the default is vim.
 
+Cleanup
+.......
 ``-C, --clean``
 
 Option to remove any generated files. Removes files with any of the following
 suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
 ``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
+
+Cheatsheet
+----------
+A cheatsheet is available for quick lookup of supported commands.
+
+View the PDF version at
+
+https://www.cheatography.com//cuihantao/cheat-sheets/andes-for-power-system-simulation/pdf/
 
 
 Interactive Usage
@@ -348,8 +361,8 @@ If you have not run ``andes prepare``, use the command once to generate code
     >>> andes.main.prepare()
 
 
-Create A Test System
---------------------
+Create Test System
+------------------
 Before running studies, a "System" object needs to be create to hold the system data.
 The System object can be created by passing the path to the case file the entrypoint function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
@@ -376,98 +389,72 @@ It contains member attributes for models, routines, and numerical DAE.
 
 Naming convention for the ``System`` attributes are as follows
 
-- Model instances share the same name as the class names.
-- R
+- Model attributes share the same name as class names. For example, ``ss.Bus`` is the ``Bus`` instance.
+- Routine attributes share the same name as class names. For example, ``ss.PFlow`` and ``ss.TDS`` are the
+  routine instances.
+- The numerical DAE instance is in lower case ``ss.dae``.
+
+Inspect Parameter
+--------------------
+Parameters for the loaded system can be easily inspected in Jupyter Notebook using Pandas.
+
+Input parameters for each model instance is in the ``cache.df_in`` attribute.
+For example, to view the input parameters for ``Bus``, use ::
+
+    >>> ss.Bus.cache.df_in
+
+A table will be printed with the columns being each parameter and the rows being Bus instances.
+Parameter in the table is the same as the input file without per-unit conversion.
+
+Parameters are converted to per unit values under system base.
+To view the per unit values, use the ``cache.df`` attribute.
+For example, to view the system-base per unit value of ``GENROU``, use ::
+
+    >>> ss.GENROU.cache.df
 
 Running Studies
 ---------------
 
-The Andes Python APIs are loaded into an interactive Python environment
-(Python, IPython or Jupyter Notebook) using ``import``. To start, import the
-whole package and set up the global logger using
+Three routines are currently supported: PFlow, TDS and EIG.
+Each routine provides a ``run()`` method to execute.
+The System instance contains member attributes having the same names.
+For example, to run the time-domain simulation for ``ss``, use ::
 
-    >>> import andes
-    >>> andes.main.config_logger(log_file=None)
+    >>> ss.TDS.run()
 
-Create an instance of Power System from the case file, for example, at ``
-ieee14_syn.dm`` ::
+Plotting TDS Results
+--------------------
+TDS comes with a plotting utility for interactive usage.
+After running the simulation, a ``Plotter`` attributed will be created for ``TDS``.
+To use the plotter, provide the attribute instance of the variable to plot.
+For example, to plot all the generator speed, use ::
 
-    >>> ps = andes.system.PowerSystem('ieee14_syn.dm')
+    >>> ss.TDS.Plotter.plot(ss.GENROU.omega)
 
-Next, guess the input file format and parse the data into the system ::
+Optional indices is accepted to choose the specific elements to plot.
+It can be passed as a tuple to the ``a`` argument ::
 
-    >>> andes.filters.guess(ps)
-    'dome'
-    >>> andes.filters.parse(ps)
-    Parsing input file <ieee14_syn.dm>
-    True
+    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ))
 
-Next, set up the system structure using the parsed input data
+In the above example, the speed of the "zero-th" generator will be plotted.
 
-    >>> ps.setup()
-    <andes.system.PowerSystem at 0x7fd5ea96d4e0>
+Scaling
+.......
+A lambda function can be passed to argument ``y_calc`` to scale the values.
+This is useful to convert a per-unit variable to nominal.
+For example, to plot generator speed in Hertz, use ::
 
-To continue, run the power flow study using
+    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ),
+                            y_calc=lambda x: 60*x,
+                            )
 
-    >>> ps.pflow.run()
-    -> Power flow study: NR method, non-flat start
-    Iter 1.  max mismatch = 2.1699877
-    Iter 2.  max mismatch = 0.2403104
-    Iter 3.  max mismatch = 0.0009915
-    Iter 4.  max mismatch = 0.0000001
-    Solution converged in 0.0038 second in 4 iterations
-    Out[8]: (True, 4)
+Formatting
+..........
+A few formatting arguments are supported:
 
-To change the run config, change the attributes in ``ps.pflow.config``. The
-config options can be printed out with ``print(ps.pflow.config.doc())``.
-
-Before running the TDS or eigenvalue analysis, the dynamic components needs
-to be initialized with
-
-    >> ps.tds.init()
-
-Run the next analysis routine, for example, TDS, with
-
-    >>> ps.tds.run()
-    -> Time Domain Simulation: trapezoidal method, t=20 s
-    <Fault> Applying fault on Bus <4.0> at t=2.0.              |ETA:  0:00:00]
-    <Fault> Clearing fault on Bus <4.0> at t=2.05.
-    [100%|#####################################################|Time: 0:00:01]
-    Time domain simulation finished in 1.2599 seconds.
-    True
-
-Save the results to list and data files with
-
-    >>> ps.tds.dump_results()
-    Simulation data sumped in 0.0978 seconds.
-
-
-Plotting Results
-----------------
-
-The ``andes.plot`` package can be used interactively for plotting time-domain
-simulation results. Import functions from the package using
-
-    >>> from andes.plot import read_dat, read_label, do_plot
-
-Specify the files and the indices to plot using
-
-    >>> dat_file = 'ieee14_syn_out.dat'
-    >>> lst_file = 'ieee14_syn_out.lst'
-    >>> x_idx = [0]
-    >>> y_idx = [44, 50, 56]
-
-Call functions `read_dat` and `read_label` to read out the values and names based on the variable indices.
-
-    >>> x_dat, y_dat = read_dat(dat_file, x_idx, y_idx)
-    >>> x_name, y_name = read_label(lst_file, x_idx, y_idx)
-
-Call function `do_plot` to plot the curves
-
-    >>> fig, ax = do_plot(xdata=x_dat, ydata=y_dat, 
-                          xname=x_name, yname=y_name, 
-                          ylabel='Generator Speed [pu]', grid=True)
-
+- ``grid = True`` to turn on grid display
+- ``greyscale = True`` to switch to greyscale
+- ``ylabel`` takes a string for the y-axis label
 
 Pretty Print of Equations
 ----------------------------------------
@@ -479,11 +466,11 @@ To use this feature, symbolic equations need to be generated in the current sess
     dill.settings['recurse'] = True
 
     import andes
-    sys = andes.system.System()
-    sys.prepare()
+    ss = andes.system.System()
+    ss.prepare()
 
 This process may take several seconds to complete. Once done, equations can be viewed by accessing
-``sys.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationAttr>`` is the
+``ss.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationName>`` is the
 equation name.
 
 Supported equation names include the following:
@@ -494,8 +481,6 @@ Supported equation names include the following:
 - ``dg``: derivatives of ``g`` over all variables
 - ``s`` the value equations for service variables
 
-For example, to print the algebraic equations of model ``GENCLS``, one can use ``sys.GENCLS.g_print``.
+For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.g_print``.
 
-In addition to equations, all variable symbols can be printed at ``sys.<ModelName>.vars_print``.
-
-
+In addition to equations, all variable symbols can be printed at ``ss.<ModelName>.vars_print``.

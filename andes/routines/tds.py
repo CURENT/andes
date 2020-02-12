@@ -82,7 +82,7 @@ class TDS(BaseRoutine):
             logger.warning('No dynamic component loaded.')
         return system.dae.xy
 
-    def run_implicit(self, verbose=False):
+    def run(self, verbose=False):
         """
         Run the implicit numerical integration for TDS.
 

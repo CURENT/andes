@@ -29,23 +29,22 @@ ANDES is currently under active development. Please report issues on the
 
 .. toctree::
    :caption: ANDES Manual
-   :maxdepth: 2
+   :maxdepth: 1
 
    copyright.rst
-   release-notes.rst
    install.rst
    tutorial.rst
    formats.rst
    modeling.rst
    misc.rst
    cases.rst
-   cheatsheet.rst
    modelref.rst
+   release-notes.rst
 
 
 .. toctree::
    :caption: API References
-   :maxdepth: 2
+   :maxdepth: 1
 
    andes.rst
 

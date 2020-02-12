@@ -246,12 +246,12 @@ def run_case(case, routine=None, profile=False, convert='', convertall='', **kwa
         andes.io.xlsx.write(system, system.files.dump, skip_empty=False)
         return system
 
-    system.PFlow.nr()
+    system.PFlow.run()
     if system.PFlow.converged:
         system.PFlow.write_report()
 
     if routine == 'tds':
-        system.TDS.run_implicit()
+        system.TDS.run()
         system.TDS.save_output()
     elif routine == 'eig':
         system.EIG.run()

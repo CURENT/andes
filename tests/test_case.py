@@ -35,12 +35,12 @@ class Test5Bus(unittest.TestCase):
         self.assertSequenceEqual(self.ss.Area.idx, [1, 2, 3])
 
     def test_pflow(self):
-        self.ss.PFlow.nr()
+        self.ss.PFlow.run()
         self.ss.PFlow.newton_krylov()
 
     def test_tds_init(self):
-        self.ss.PFlow.nr()
-        self.ss.TDS.run_implicit([0, 20])
+        self.ss.PFlow.run()
+        self.ss.TDS.run([0, 20])
 
 
 class TestKundur2Area(unittest.TestCase):
@@ -54,5 +54,5 @@ class TestKundur2Area(unittest.TestCase):
         self.ss.setup()
 
     def test_tds_init(self):
-        self.ss.PFlow.nr()
-        self.ss.TDS.run_implicit([0, 20])
+        self.ss.PFlow.run()
+        self.ss.TDS.run([0, 20])

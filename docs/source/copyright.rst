@@ -5,6 +5,8 @@
 Copyright and License
 *********************
 
+GNU Public License v3
+*********************
 | Copyright :raw-html:`&copy;` 2015-2020 Hantao Cui.
 
 ANDES is free software; you can redistribute it and/or modify it under
