@@ -9,6 +9,7 @@ recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat
 recursive-include cases tests
+recursive-include *.yaml
 
 include versioneer.py
 include andes/_version.py
