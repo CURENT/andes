@@ -14,33 +14,27 @@ jobs:
         python.version: '3.7'
 
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-      architecture: 'x64'
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+
+  - script: conda create --yes --quiet --name andesEnv
+    displayName: Create Anaconda environment
 
   - script: |
+      call activate andesEnv
+      conda install --yes --quiet --name andesEnv python=%PYTHON_VERSION%
+    displayName: Install Anaconda packages
+
+  - script: |
+      call activate andesEnv
       python -m pip install --upgrade pip
+      pip install pytest pytest-azurepipelines
       pip install .
       pip install -r requirements-dev.txt
-    displayName: 'Install dependencies'
-
-  - script: |
-      pip install pytest pytest-azurepipelines
       pytest
-    displayName: 'pytest'
+    displayName: pytest
 
   - script: |
-      coverage run -m pytest  # Run the tests and check for test coverage.
-      coverage report -m  # Generate test coverage report.
-      codecov  # Upload the report to codecov.
-    displayName: 'coverage'
-
-  - script: |
-      flake8 --max-line-length=115  # Enforce code style (but relax line length limit a bit).
-    displayName: 'flake8 linting'
-
-  - script: |
-      # python setup.py checkdocs  # check documentation (README.rst)
+      call activate andesEnv
       make -C docs html  # Build the documentation.
     displayName: 'make documentation'

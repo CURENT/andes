@@ -429,7 +429,7 @@ class Model(object):
         if idx is None:
             logger.error("idx2uid cannot search for None idx")
             return None
-        if isinstance(idx, (float, int, str, np.int64, np.float64)):
+        if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
         elif isinstance(idx, (list, np.ndarray)):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):

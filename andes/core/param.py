@@ -333,8 +333,8 @@ class NumParam(BaseParam):
         # if np.sum(np.isnan(self.v)) > 0:
         #     raise ValueError(f'Param <{self.name} contains NaN.')
 
-        self.v[self.v == np.inf] = 1e10
-        self.v[self.v == -np.inf] = -1e10
+        self.v[self.v == np.inf] = 1e8
+        self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
         self.vin = np.array(self.v)
