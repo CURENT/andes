@@ -1,4 +1,6 @@
-"""Experimental Models"""
+"""
+Experimental Models
+"""
 from andes.core.model import ModelData, Model
 from andes.core.var import Algeb, State
 from andes.core.param import NumParam

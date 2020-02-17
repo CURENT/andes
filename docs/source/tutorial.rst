@@ -45,6 +45,10 @@ The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
 in ``run``. The most commonly used commands will be explained in the following.
 
+``andes`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
+Accpeted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
+50 - CRITICAL.
+To show debugging outputs, use ``-v 10``.
 
 andes selftest
 --------------
@@ -96,11 +100,6 @@ andes run
 ``filename`` is the test case path, either relative or absolute.
 Without other options, ANDES will run power flow calculation for the provided file.
 
-``andes run`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
-Accpeted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
-50 - CRITICAL.
-To show debugging outputs, use ``-v 10``.
-
 Routine
 .......
 Option ``-r`` or ``-routine`` is used for specifying the analysis routine, followed by the routine name.
@@ -115,11 +114,16 @@ directory, run
 
     andes run kundur_full.xlsx -r tds
 
+Two output files, ``kundur_full_out.lst`` and ``kundur_full_out.npy`` will be created for variable names
+and values, respectively.
+
 Likewise, to run eigenvalue analysis for ``kundur_full.xlsx``, use
 
 .. code:: bash
 
     andes run kundur_full.xlsx -r eig
+
+The eigenvalue report will be written in a text file named ``kundur_full_eig.txt``.
 
 Power flow
 ..........

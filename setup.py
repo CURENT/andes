@@ -22,7 +22,7 @@ pip install --upgrade pip
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.rst'), encoding='utf-8') as readme_file:
+with open(path.join(here, 'README.md'), encoding='utf-8') as readme_file:
     readme = readme_file.read()
 
 with open(path.join(here, 'requirements.txt')) as requirements_file:
@@ -36,8 +36,9 @@ setup(
     name='andes',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="Another Power System Simulator",
+    description="A Python-based tool for symbolic power system modeling and numerical analysis.",
     long_description=readme,
+    long_description_content_type='text/markdown',
     author="Hantao Cui",
     author_email='cuihantao@gmail.com',
     url='https://github.com/cuihantao/andes',
@@ -56,12 +57,12 @@ setup(
         ]
     },
     install_requires=requirements,
-    license="Apache Software License",
+    license="GNU Public License v3",
     classifiers=[
         'Development Status :: 4 - Beta',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: Apache Software License',
+        'OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Environment :: Console',
     ],
 )
