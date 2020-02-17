@@ -498,13 +498,17 @@ class TGOV1(TGOV1Data, TGOV1Model):
 One more step, the class needs to be added to the package `__init__.py` file to be loaded.
 Edit `andes/models/__init__.py` and add to `non_jit` whose keys are the file names and values are the classes in
 the file.
-To add `TGOV1`, locate the line 
+To add `TGOV1`, locate the line with key `governor` and add `TGOV1` to the value list so that it looks like
 
 ```python
+non_jit = OrderedDict([
+    # ...
     ('governor', ['TG2', 'TGOV1']),
+    # ...
+])
 ```
 
-Finally, run `andes prepare` to re-generate code for the new model. 
+Finally, run `andes prepare` from the command-line to re-generate code for the new model. 
 
 # API Reference
 The official [documentation][readthedocs] explains the complete list of modeling components.
