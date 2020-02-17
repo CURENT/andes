@@ -8,5 +8,5 @@ dill
 xlsxwriter
 tqdm
 pyyaml
-matplotlib
+matplotlib-base
 coloredlogs
