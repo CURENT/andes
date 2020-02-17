@@ -36,5 +36,5 @@ jobs:
 
   - script: |
       call activate andesEnv
-      make -C docs html  # Build the documentation.
+      make -C docs html
     displayName: 'make documentation'
