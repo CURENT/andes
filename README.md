@@ -35,7 +35,7 @@ Modeling DAE-based devices is as simple as describing the mathematical equations
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| TGOV1: ![](docs/source/images/example-tgov1/tgov1.png) <br><br> DAE: ![](docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](docs/source/images/example-tgov1/tgov1_class.png) |
+| Diagram: ![](docs/source/images/example-tgov1/tgov1.png) <br><br> DAE: ![](docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](docs/source/images/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document. 
 ANDES automatically generates model documentation, and the docs always stay up to date.
@@ -74,7 +74,6 @@ Technical details can be referred to our paper on arXiv.
    * [Step 4: Define Equations](#step-4-define-equations)
    * [Step 5: Define Initializers](#step-5-define-initializers)
 * [API Reference](#api-reference)
-* [System Requirements](#system-requirements)
 * [Get Involved](#get-involved)
 * [Who is Using ANDES?](#who-is-using-andes)
 
@@ -235,12 +234,15 @@ andes plot kundur_full_out.npy 0 2:21:6
 
 # Configure ANDES
 
-ANDES uses a configuration file to set runtime configs for the system routines, and models.
+ANDES uses a config file to set runtime configs for system, routines and models. 
+The config file is loaded at the time when ANDES is invoked or imported.
+
+At the command-line prompt, 
 
 - ``andes misc --save`` saves all configs to a file. By default, it goes to ``~/.andes/andes.conf``.
 - ``andes misc --edit`` is a shortcut for editing the config file. It takes an optional editor name. 
 
-About the default editor: 
+Without an editor name, the following default editor is used: 
 - On Microsoft Windows, it will open up a notepad.
 - On Linux, it will use the ``$EDITOR`` environment variable or use ``gedit`` by default.
 - On macOS, the default is vim.
@@ -248,26 +250,265 @@ About the default editor:
 # Format Converter
 
 ## Input Converter
+ANDES recognizes a few input formats (MATPOWER, PSS/E and ANDES xlsx) and can convert input to the `xlsx` format.
+This function is useful when one wants to use models that are unique in ANDES.
+ 
+- `andes run <CaseName> --convert` performs the conversion to `xlsx`. 
+- `andes run <CaseName> --convertall` performs the conversion and create empty sheets for all supported models.
 
 ## Output Converter
+The output converter is used to convert `.npy` output to a comma-separated (csv) file.
+ 
+To convert, do `andes plot <OutputName.npy> -c `
 
 # Model Development
+The steps to develop new models are outlined. 
+New models will need to be written in Python and incorporated in the ANDES source code.
+Models are placed under `andes/models` with a descriptive file name for the model type.
+
+If a new file is created, import the building block classes at the top of the file 
+
+```python
+from andes.core.model import ModelData, Model
+from andes.core.param import IdxParam, NumParam, ExtParam
+from andes.core.var import Algeb, State, ExtAlgeb, ExtState
+from andes.core.service import ConstService, ExtService
+from andes.core.discrete import AntiWindupLimiter
+```
+
+The TGOV1 model will be used to illustrate the model development process.
 
 ## Step 1: Define Parameters
+Create a class to hold parameters that will be loaded from the data file.
+The class inherits from `ModelData`
+
+```python
+
+class TGOV1Data(ModelData):
+    def __init__(self):
+        self.syn = IdxParam(model='SynGen',
+                            info='Synchronous generator idx',
+                            mandatory=True,
+                            )
+        self.R = NumParam(info='Speed regulation gain under machine base',
+                          tex_name='R',
+                          default=0.05,
+                          unit='p.u.',
+                          ipower=True,
+                          )
+        self.wref0 = NumParam(info='Base speed reference',
+                              tex_name=r'\omega_{ref0}',
+                              default=1.0,
+                              unit='p.u.',
+                              )
+
+        self.VMAX = NumParam(info='Maximum valve position',
+                             tex_name='V_{max}',
+                             unit='p.u.',
+                             default=1.2,
+                             power=True,
+                             )
+        self.VMIN = NumParam(info='Minimum valve position',
+                             tex_name='V_{min}',
+                             unit='p.u.',
+                             default=0.0,
+                             power=True,
+                             )
+
+        self.T1 = NumParam(info='Valve time constant',
+                           default=0.1,
+                           tex_name='T_1')
+        self.T2 = NumParam(info='Lead-lag lead time constant',
+                           default=0.2,
+                           tex_name='T_2')
+        self.T3 = NumParam(info='Lead-lag lag time constant',
+                           default=10.0,
+                           tex_name='T_3')
+        self.Dt = NumParam(info='Turbine damping coefficient',
+                           default=0.0,
+                           tex_name='D_t',
+                           power=True,
+                           )
+```
+
+Note that the example above has all the parameters loaded in one class. 
+In practice, it is recommended to create a base class for common parameters and let `TGOV2Data` inherit from it.
+See the code in `andes/models/governor.py` for the example. 
 
 ## Step 2: Define Externals
+Next, another class to hold the non-parameter instances is created. 
+The class inherits from `Model` and takes three positional arguments by the constructor.
+
+The code below defines parameters, variables and services retrieved from external models (specifically
+, generators).
+
+```python
+class TGOV1Model(Model):
+    def __init__(self, system, config):
+        self.Sn = ExtParam(src='Sn',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name='S_m',
+                           info='Rated power from generator',
+                           unit='MVA',
+                           export=False,
+                           )
+        self.Vn = ExtParam(src='Vn',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name='V_m',
+                           info='Rated voltage from generator',
+                           unit='kV',
+                           export=False,
+                           )
+        self.tm0 = ExtService(src='tm',
+                              model='SynGen',
+                              indexer=self.syn,
+                              tex_name=r'\tau_{m0}',
+                              info='Initial mechanical input')
+        self.omega = ExtState(src='omega',
+                              model='SynGen',
+                              indexer=self.syn,
+                              tex_name=r'\omega',
+                              info='Generator speed',
+                              unit='p.u.'
+                              )
+```
+In addition, a service can be defined for the inverse of the gain
+
+```python
+        self.gain = ConstService(v_str='u / R',
+                                 tex_name='G',
+                                 )
+```
 
 ## Step 3: Define Variables
+First of all, the turbine governor output modifies the generator power input. Therefore, the generator input
+variable should be retrieved by the governor. Next, internal variables can be defined.
 
+```python
+        # mechanical torque input of generators
+        self.tm = ExtAlgeb(src='tm',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'\tau_m',
+                           info='Mechanical power to generator',
+                           )
+
+        self.pout = Algeb(info='Turbine final output power',
+                          tex_name='P_{out}',
+                          )
+        self.wref = Algeb(info='Speed reference variable',
+                          tex_name=r'\omega_{ref}',
+                          )
+        
+        self.pref = Algeb(info='Reference power input',
+                          tex_name='P_{ref}',
+                          )
+        self.wd = Algeb(info='Generator under speed',
+                        unit='p.u.',
+                        tex_name=r'\omega_{dev}',
+                        )
+        self.pd = Algeb(info='Pref plus under speed times gain',
+                        unit='p.u.',
+                        tex_name="P_d",
+                        )
+
+        self.LAG_x = State(info='State in lag transfer function',
+                           tex_name=r"x'_{LAG}",
+                           )
+        self.LAG_lim = AntiWindupLimiter(u=self.LAG_x,
+                                         lower=self.VMIN,
+                                         upper=self.VMAX,
+                                         tex_name='lim_{lag}',
+                                         )
+        self.LL_x = State(info='State in lead-lag transfer function',
+                          tex_name="x'_{LL}",
+                          )
+        self.LL_y = Algeb(info='Lead-lag Output',
+                          tex_name='y_{LL}',
+                          )
+```
+ 
 ## Step 4: Define Equations
+Set up the equation associated with **each** variable.
+Algebraic equations are in the form of `g(x, y) = 0`.
+Differential equations are in the form of `f(x, y) = \dot{x}`. 
+
+```python
+        self.tm.e_str = 'u*(pout - tm0)'
+
+        self.wref.e_str = 'wref0 - wref'    
+        self.pref.e_str = 'tm0 * R - pref'
+        self.wd.e_str = '(wref - omega) - wd'
+        self.pd.e_str='(wd + pref) * gain - pd'
+
+        self.LAG_x.e_str = 'LAG_lim_zi * (1 * pd - LAG_x) / T1'
+
+        self.LL_x.e_str = '(LAG_x - LL_x) / T3'
+        self.LL_y.e_str='T2 / T3 * (LAG_x - LL_x) + LL_x - LL_y'
+        self.pout.e_str = '(LL_y + Dt * wd) - pout'
+```
 
 ## Step 5: Define Initializers
+Initializers are used to set up initial values for variables.
+Initializers are evaluated in the same sequence as the declaration of variables.
+Initializer evaluation results are set to the corresponding variable. 
+Usually, only internal variables (`Algeb` and `State`) require initializers.
+
+```python
+        self.wref.v_str = 'wref0'
+        self.pout.v_str = 'tm0'
+
+        self.LL_y.v_str = 'LAG_x'
+        self.LL_x.v_str = 'LAG_x'
+        self.LAG_x.v_str = 'pd'
+
+        self.pd.v_str = 'tm0'
+        self.wd.v_str = '0'
+        self.pref.v_str = 'tm0 * R'
+```
+
+Alternatively, equations and initializers can be passed to keyword arguments `e_str` and `v_str`, respectively
+, of the corresponding instance.
+ 
+## Step 6: Finalize
+This step provides additional information on the model. 
+The group to which the device belongs need to be specified, and the routine this model supports need to updated.
+
+For example, TGOV1 belongs to the `TurbineGov` group, which is defined in `andes/models/group.py`.
+TGOV1 participates in the time-domain simulation and is not involved in power flow. 
+The snipet below is added to the constructor of `class TGOV1Model`.
+
+```python
+        self.group = 'TurbineGov'
+        self.flags.update({'tds': True})
+```
+
+Next, a `TGOV1` class need to be created as the final class. It is a bit boilerplate as of the current
+implementation.
+
+```python
+class TGOV1(TGOV1Data, TGOV1Model):
+    def __init__(self, system, config):
+        TGOV1Data.__init__(self)
+        TGOV1Model.__init__(self, system, config)
+``` 
+
+One more step, the class needs to be added to the package `__init__.py` file to be loaded.
+Edit `andes/models/__init__.py` and add to `non_jit` whose keys are the file names and values are the classes in
+the file.
+To add `TGOV1`, locate the line 
+
+```python
+    ('governor', ['TG2', 'TGOV1']),
+```
+
+Finally, run `andes prepare` to re-generate code for the new model. 
 
 # API Reference
 The official [documentation][readthedocs] explains the complete list of modeling components.
 The most commonly used ones are highlighted in the following. 
-
-# System Requirements
 
 # Get Involved
 + Learn more about ANDES by reading the [documentation][readthedocs]
@@ -277,6 +518,8 @@ The most commonly used ones are highlighted in the following.
 + Check out and and cite our [paper][arxiv paper]
 
 # Who is Using ANDES?
+Please let us know if you are using ANDES for research or projects. 
+We kindly request you to cite our paper if you find ANDES useful.
 
 # Contributors
 
