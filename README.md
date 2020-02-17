@@ -73,6 +73,7 @@ Technical details can be referred to our paper on arXiv.
    * [Step 3: Define Variables](#step-3-define-variables)
    * [Step 4: Define Equations](#step-4-define-equations)
    * [Step 5: Define Initializers](#step-5-define-initializers)
+   * [Step 6: Finalize](#step-6-finalize)
 * [API Reference](#api-reference)
 * [Get Involved](#get-involved)
 * [Who is Using ANDES?](#who-is-using-andes)
@@ -532,8 +533,9 @@ Program of the National Science Foundation and the Department of Energy
 under NSF Award Number EEC-1041877 and the CURENT Industry Partnership
 Program.
 
-This project is inspired by the book [Power System Modelling and
-Scripting](http://www.python.org/) by Federico Milano.
+This project was originally inspired by the book 
+[Power System Modelling and Scripting](https://www.springer.com/gp/book/9783642136689)
+by Prof. Federico Milano.
 
 # License
 
