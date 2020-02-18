@@ -445,11 +445,11 @@ class System(object):
     def vars_to_models(self):
         for var in self.y_adders + self.y_setters:
             if var.n > 0:
-                var.v = self.dae.y[var.a]
+                var.v[:] = self.dae.y[var.a]
 
         for var in self.x_adders + self.x_setters:
             if var.n > 0:
-                var.v = self.dae.x[var.a]
+                var.v[:] = self.dae.x[var.a]
 
     def _v_to_dae(self, v_name):
         """

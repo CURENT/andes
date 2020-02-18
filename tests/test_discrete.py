@@ -24,6 +24,8 @@ class TestDiscrete(unittest.TestCase):
 
         """
         self.cmp = Limiter(self.u, self.lower, self.upper)
+        self.cmp.list2array(len(self.u.v))
+
         self.cmp.check_var()
 
         self.assertSequenceEqual(self.cmp.zl.tolist(),
@@ -42,9 +44,11 @@ class TestDiscrete(unittest.TestCase):
 
         """
         self.cmp = Limiter(self.u, self.lower, self.upper)
+        self.cmp.list2array(len(self.u.v))
         self.cmp.check_var()
 
         self.rcmp = SortedLimiter(self.u, self.lower, self.upper, n_select=1)
+        self.rcmp.list2array(len(self.u.v))
         self.rcmp.check_var()
 
         self.assertSequenceEqual(self.rcmp.zl.tolist(),
@@ -56,6 +60,7 @@ class TestDiscrete(unittest.TestCase):
 
         # test when no `n_select` is specified
         self.rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper)
+        self.rcmp_noselect.list2array(len(self.u.v))
         self.rcmp_noselect.check_var()
 
         self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),
@@ -68,6 +73,7 @@ class TestDiscrete(unittest.TestCase):
         # test when no `n_select` is over range
         self.rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper,
                                            n_select=999)
+        self.rcmp_noselect.list2array(len(self.u.v))
         self.rcmp_noselect.check_var()
 
         self.assertSequenceEqual(self.rcmp_noselect.zl.tolist(),
@@ -81,6 +87,7 @@ class TestDiscrete(unittest.TestCase):
         p = NumParam()
         p.v = np.array([0, 1, 2, 2, 1, 3, 1])
         switcher = Switcher(u=p, options=[0, 1, 2, 3, 4])
+        switcher.list2array(len(p.v))
 
         switcher.check_var()
 

@@ -353,13 +353,13 @@ class NumParam(BaseParam):
             An array with the pu conversion coefficients
         """
         self.pu_coeff = coeff
-        self.v = self.vin * self.pu_coeff
+        self.v[:] = self.vin * self.pu_coeff
 
     def restore(self):
         """
         Restore parameter to the original input by copying ``self.vin`` to ``self.v``.
         """
-        self.v = np.array(self.vin)
+        self.v[:] = self.vin
 
 
 class TimerParam(NumParam):
