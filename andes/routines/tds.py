@@ -97,7 +97,7 @@ class TDS(BaseRoutine):
 
         logger.info('-> Time Domain Simulation:')
         self._initialize()
-        self.pbar = tqdm(total=100, ncols=80, unit='%')
+        self.pbar = tqdm(total=100, ncols=70, unit='%')
 
         t0, _ = elapsed()
         while system.dae.t < self.config.tf and (not self.busted):
