@@ -220,7 +220,6 @@ def run_case(case, routine=None, profile=False, convert='', convertall='', **kwa
     Run a single simulation case.
     """
 
-    t0, _ = elapsed()
     if case is not None:
         kwargs['case'] = case
 

@@ -1,7 +1,7 @@
 import logging
-from andes.core.model import Model, ModelData  # NOQA
-from andes.core.param import IdxParam, NumParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
+from andes.core.model import Model, ModelData
+from andes.core.param import IdxParam, NumParam
+from andes.core.var import ExtAlgeb
 logger = logging.getLogger(__name__)
 
 
