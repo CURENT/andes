@@ -37,9 +37,9 @@ class DAE(object):
         self.t = 0
         self.ts = DAETimeSeries(self)
 
-        self.m, self.n, self.k = 0, 0, 0
+        self.m, self.n = 0, 0
 
-        self.x, self.y, self.c = None, None, None
+        self.x, self.y = None, None
         self.f, self.g = None, None
 
         self.fx = None
@@ -88,7 +88,6 @@ class DAE(object):
         """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
-        self.c = np.zeros(self.k)
 
     def clear_ijv(self):
         self.ifx, self.jfx, self.vfx = list(), list(), list()

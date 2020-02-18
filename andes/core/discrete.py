@@ -51,6 +51,10 @@ class Discrete(object):
     def class_name(self):
         return self.__class__.__name__
 
+    def list2array(self, n):
+        for flag in self.export_flags:
+            self.__dict__[flag] = self.__dict__[flag] * np.ones(n)
+
 
 class LessThan(Discrete):
     """
@@ -72,11 +76,11 @@ class LessThan(Discrete):
             return
 
         if not self.equal:
-            self.z1 = np.less(self.u.v, self.bound.v)
+            self.z1[:] = np.less(self.u.v, self.bound.v)
         else:
-            self.z1 = np.less_equal(self.u.v, self.bound.v)
+            self.z1[:] = np.less_equal(self.u.v, self.bound.v)
 
-        self.z0 = np.logical_not(self.z1)
+        self.z0[:] = np.logical_not(self.z1)
 
 
 class Limiter(Discrete):
@@ -127,13 +131,13 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu = np.greater_equal(self.u.v, self.upper.v)
-        self.zl = np.less_equal(self.u.v, self.lower.v)
-        self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
+        self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+        self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
-        self.zu = self.zu.astype(np.float64)
-        self.zl = self.zl.astype(np.float64)
-        self.zi = self.zi.astype(np.float64)
+        # self.zu = self.zu.astype(np.float64)
+        # self.zl = self.zl.astype(np.float64)
+        # self.zi = self.zi.astype(np.float64)
 
 
 class SortedLimiter(Limiter):
@@ -165,9 +169,9 @@ class SortedLimiter(Limiter):
             reset_in[highest_n] = 0
             reset_out = 1 - reset_in
 
-            self.zi = np.logical_or(reset_in, self.zi).astype(np.float64)
-            self.zl = np.logical_and(reset_out, self.zl).astype(np.float64)
-            self.zu = np.logical_and(reset_out, self.zu).astype(np.float64)
+            self.zi[:] = np.logical_or(reset_in, self.zi).astype(np.float64)
+            self.zl[:] = np.logical_and(reset_out, self.zl).astype(np.float64)
+            self.zu[:] = np.logical_and(reset_out, self.zu).astype(np.float64)
 
 
 class HardLimiter(Limiter):
@@ -222,13 +226,13 @@ class AntiWindupLimiter(WindupLimiter):
         """
         Check the variables and equations and set the limiter flags.
         """
-        self.zu = np.greater(self.u.v, self.upper.v)
-        self.zl = np.less(self.u.v, self.lower.v)
-        self.zi = np.logical_not(np.logical_or(self.zu, self.zl))
+        self.zu[:] = np.greater(self.u.v, self.upper.v)
+        self.zl[:] = np.less(self.u.v, self.lower.v)
+        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
-        self.zu = np.logical_and(self.zu, np.greater(self.state.e, 0)).astype(np.float64)
-        self.zl = np.logical_and(self.zl, np.less(self.state.e, 0)).astype(np.float64)
-        self.zi = np.logical_not(
+        self.zu[:] = np.logical_and(self.zu, np.greater(self.state.e, 0)).astype(np.float64)
+        self.zl[:] = np.logical_and(self.zl, np.less(self.state.e, 0)).astype(np.float64)
+        self.zi[:] = np.logical_not(
             np.logical_or(self.zu.astype(np.bool),
                           self.zl.astype(np.bool))).astype(np.float64)
 
@@ -300,7 +304,7 @@ class Selector(Discrete):
         self._inputs = [self.input_vars[i].v for i in range(self.n)]
         self._outputs = self.fun(self._inputs)
         for i in range(self.n):
-            self.__dict__[f's{i}'] = np.equal(self._inputs[i], self._outputs).astype(int)
+            self.__dict__[f's{i}'][:] = np.equal(self._inputs[i], self._outputs).astype(int)
 
 
 class Switcher(Discrete):
@@ -328,7 +332,7 @@ class Switcher(Discrete):
         if self.cache and self._eval:
             return
         for i in range(len(self.option)):
-            self.__dict__[f's{i}'] = np.equal(self.u.v, self.option[i]).astype(np.float64)
+            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.option[i]).astype(np.float64)
 
         self._eval = True
 
@@ -439,9 +443,9 @@ class DeadBand(Limiter):
         zi = np.logical_not(np.logical_or(zu, zl))
 
         # square return dead band
-        self.zur = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
-        self.zlr = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
+        self.zur[:] = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
+        self.zlr[:] = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
 
-        self.zu = zu.astype(np.float64)
-        self.zl = zl.astype(np.float64)
-        self.zi = zi.astype(np.float64)
+        self.zu[:] = zu.astype(np.float64)
+        self.zl[:] = zl.astype(np.float64)
+        self.zi[:] = zi.astype(np.float64)

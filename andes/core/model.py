@@ -485,7 +485,6 @@ class Model(object):
         for instance in self.discrete.values():
             instance.check_var()
             instance.set_var()
-        self.refresh_inputs()
 
     def l_check_eq(self):
         if self.n == 0:
@@ -498,20 +497,17 @@ class Model(object):
             return
         for instance in self.discrete.values():
             instance.set_eq()
-        self.refresh_inputs()
 
     def s_update(self):
         """
-        Evaluate service equations
+        Evaluate service equations.
 
-        This function is only evaluated at initialization, sequentially.
-        Returns
-        -------
-
+        This function is only evaluated at initialization.
+        Service values are updated sequentially.
+        The ``v`` attribute of services will change once.
         """
         if self.n == 0:
             return
-        # logger.debug(f'{self.class_name}: calling eval_service()')
 
         if self.calls.s_lambdify is not None and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
@@ -520,9 +516,10 @@ class Model(object):
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     try:
+                        # DO NOT use in-place operation since the return can be complex number
                         instance.v = func(**kwargs)
-                    except Exception as e:  # NOQA:
-                        logger.error(f'Error evaluatin service {instance.name}, equation {instance.v_str}')
+                    except Exception as e:  # NOQA
+                        logger.error(f'Error evaluating service {instance.name}, equation {instance.v_str}')
                         raise e
                 else:
                     instance.v = func
@@ -622,7 +619,7 @@ class Model(object):
         sol = newton_krylov(init_wrap, iter_array)
 
         for i, var in enumerate(self.cache.iter_vars.values()):
-            var.v = sol[i * self.n: (i + 1) * self.n]
+            var.v[:] = sol[i * self.n: (i + 1) * self.n]
 
     def generate_symbols(self):
         """
@@ -947,7 +944,6 @@ class Model(object):
 
         logger.debug(f'{self.class_name}: calling initialize()')
 
-        ones = np.ones((self.n,))
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
                 continue
@@ -956,16 +952,12 @@ class Model(object):
             init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
                 try:
-                    instance.v = init_fun(**kwargs)
+                    instance.v[:] = init_fun(**kwargs)
                 except TypeError:
                     logger.error(f'{self.class_name}: {instance.name} = {instance.v_str} error.'
                                  f'You might have undefined variable in the equation string.')
             else:
-                instance.v = init_fun
-
-            # convert a scalar to an array
-            if not isinstance(instance.v, np.ndarray):
-                instance.v = instance.v * ones
+                instance.v[:] = init_fun
 
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
@@ -981,10 +973,7 @@ class Model(object):
 
     def get_init_order(self):
         """
-        Get variable initialization order
-
-        Returns
-        -------
+        Get variable initialization order sent to logger.info.
 
         """
         out = []
@@ -994,10 +983,14 @@ class Model(object):
         logger.info(f'Initialization order: {",".join(out)}')
 
     def f_update(self):
+        """
+        Evaluate differential equations.
+        """
+
         if self.n == 0:
             return
 
-        # update equations for algebraic variables supplied with `g_numeric`
+        # update equations for algebraic variables supplied with `f_numeric`
         # evaluate numerical function calls
         kwargs = self.get_inputs()
 
@@ -1020,6 +1013,10 @@ class Model(object):
             instance.f_numeric(**kwargs)
 
     def g_update(self):
+        """
+        Evaluate algebraic equations.
+        """
+
         if self.n == 0:
             return
 
@@ -1044,22 +1041,6 @@ class Model(object):
         # numerical calls in blocks
         for instance in self.blocks.values():
             instance.g_numeric(**kwargs)
-
-    # def c_update(self):
-    #     if self.n == 0:
-    #         return
-    #     kwargs = self.get_inputs(refresh=True)
-    #     # call lambdified functions with use self.call
-    #     ret = self.calls.h_lambdify(**kwargs)
-    #     for idx, instance in enumerate(self.calcs.values()):
-    #         instance.v = ret[idx][0]
-    #
-    #     # numerical calls defined in the model
-    #     self.c_numeric(**kwargs)
-    #
-    #     # numerical calls in blocks
-    #     for instance in self.blocks.values():
-    #         instance.c_numeric(**kwargs)
 
     def j_update(self):
         if self.n == 0:
@@ -1108,16 +1089,11 @@ class Model(object):
         if self.n == 0:
             return
 
-        action = False
         for timer in self.timer_params.values():
             if timer.callback is not None:
-                ret = timer.callback(timer.is_time(dae_t))
-                if ret is None or (ret is True):
-                    action = True
+                timer.callback(timer.is_time(dae_t))
 
         # TODO: consider `Block` with timer
-        if action:
-            self.refresh_inputs()
 
     @property
     def class_name(self):
@@ -1216,8 +1192,21 @@ class Model(object):
                    self.__dict__[f'v{name}'])
 
     def list2array(self):
-        for _, instance in self.num_params.items():
+        """
+        Convert all the value attributes ``v`` to NumPy arrays.
+
+        Value attribute arrays should remain in the same address afterwards.
+        Namely, all assignments to value array should be operated in place (e.g., with [:]).
+        """
+
+        for instance in self.num_params.values():
             instance.to_array()
+
+        for instance in self.cache.services_and_ext.values():
+            instance.v = np.zeros(self.n)
+
+        for instance in self.discrete.values():
+            instance.list2array(self.n)
 
     def a_reset(self):
         """
@@ -1236,7 +1225,7 @@ class Model(object):
         if self.n == 0:
             return
         for instance in self.cache.all_vars.values():
-            instance.e = np.zeros(instance.n)
+            instance.e[:] = 0
 
     def v_numeric(self, **kwargs):
         """

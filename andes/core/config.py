@@ -12,6 +12,7 @@ class Config(object):
     def __init__(self, name, dct=None, **kwargs):
         """Constructor with a dictionary or keyword arguments"""
         self._name = name
+        self._dict = OrderedDict()
         self.add(dct, **kwargs)
 
     def load(self, config):
@@ -52,16 +53,20 @@ class Config(object):
 
             self.__dict__[key] = val
 
-    def as_dict(self):
+    def as_dict(self, refresh=False):
         """
         Return the config fields and values in an ``OrderedDict``.
-        """
-        out = []
-        for key, val in self.__dict__.items():
-            if not key.startswith('_'):
-                out.append((key, val))
 
-        return OrderedDict(out)
+        Values are cached in `self._dict` unless refreshed.
+        """
+        if refresh is True or len(self._dict) == 0:
+            out = []
+            for key, val in self.__dict__.items():
+                if not key.startswith('_'):
+                    out.append((key, val))
+            self._dict = OrderedDict(out)
+
+        return self._dict
 
     def __repr__(self):
         return pprint.pformat(self.as_dict())
