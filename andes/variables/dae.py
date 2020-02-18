@@ -227,7 +227,6 @@ class DAE(object):
         -------
 
         """
-        pass
         self.x = np.append(self.x, np.zeros(self.n - len(self.x)))
         self.y = np.append(self.y, np.zeros(self.m - len(self.y)))
 

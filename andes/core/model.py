@@ -589,7 +589,7 @@ class Model(object):
         A wrapper for converting the initialization equations into standard forms g(x) = 0, where x is an array.
         """
         vars_input = []
-        for i, instance in enumerate(self.cache.iter_vars.values()):
+        for i, _ in enumerate(self.cache.iter_vars.values()):
             vars_input.append(x0[i * self.n: (i + 1) * self.n])
 
         return np.ravel(self.calls.init_std(vars_input, params))
@@ -603,7 +603,7 @@ class Model(object):
         iter_input = OrderedDict()
         non_iter_input = OrderedDict(inputs)  # include non-iter variables and other params/configs
 
-        for name, instance in self.cache.iter_vars.items():
+        for name, _ in self.cache.iter_vars.items():
             iter_input[name] = inputs[name]
             non_iter_input.pop(name)
 
@@ -988,7 +988,7 @@ class Model(object):
 
         """
         out = []
-        for name, instance in self.vars_decl_order.items():
+        for name in self.vars_decl_order.keys():
             out.append(name)
 
         logger.info(f'Initialization order: {",".join(out)}')
@@ -1099,7 +1099,7 @@ class Model(object):
         """
         out = []
         if self.n > 0:
-            for name, instance in self.timer_params.items():
+            for instance in self.timer_params.values():
                 out.append(instance.v)
 
         return out
@@ -1285,7 +1285,7 @@ class Model(object):
         info, defaults, properties = list(), list(), list()
         units_rest = list()
 
-        for i, p in enumerate(self.params.values()):
+        for p in self.params.values():
             names.append(p.name)
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
@@ -1415,7 +1415,7 @@ class Model(object):
         names, symbols = list(), list()
         eqs, eqs_rest, class_names = list(), list(), list()
 
-        for i, p in enumerate(self.cache.all_vars.values()):
+        for p in self.cache.all_vars.values():
             names.append(p.name)
             class_names.append(p.class_name)
             eqs.append(p.e_str if p.e_str else '')
@@ -1447,7 +1447,7 @@ class Model(object):
         names, symbols = list(), list()
         eqs, eqs_rest, class_names = list(), list(), list()
 
-        for i, p in enumerate(self.services.values()):
+        for p in self.services.values():
             names.append(p.name)
             class_names.append(p.class_name)
             eqs.append(p.v_str if p.v_str else '')
@@ -1479,7 +1479,7 @@ class Model(object):
         names, symbols = list(), list()
         class_names = list()
 
-        for i, p in enumerate(self.discrete.values()):
+        for p in self.discrete.values():
             names.append(p.name)
             class_names.append(p.class_name)
 

@@ -13,7 +13,7 @@ Version](https://img.shields.io/pypi/v/andes.svg)](https://pypi.python.org/pypi/
 
 A Python-based tool for symbolic power system modeling and numerical analysis.
 
-# Why ANDES?
+# Why ANDES
 
 ANDES is by far easier to use for modeling power system devices than other 
 simulation tools such as 
@@ -45,13 +45,13 @@ The screenshot below is the generated documentation for the implemented TGOV1 mo
 
 In addition, ANDES features
 
-- Power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
-- Support PSS/E raw and dyr inputs among other formats.
-- Symbolic DAE modeling and automated code generation for numerical simulation.
-- Numerical DAE modeling for cases when symbolic implementations are difficult.
-- Modeling library with common transfer functions and discontinuous blocks.
-- Automatic sequential and iterative initialization (experimental) for dynamic models.
-- Full equation documentation of supported DAE models.
+-   Power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
+-   Support PSS/E raw and dyr inputs among other formats.
+-   Symbolic DAE modeling and automated code generation for numerical simulation.
+-   Numerical DAE modeling for cases when symbolic implementations are difficult.
+-   Modeling library with common transfer functions and discontinuous blocks.
+-   Automatic sequential and iterative initialization (experimental) for dynamic models.
+-   Full equation documentation of supported DAE models.
 
 ANDES is currently under active development.
 Visit the documentation to learn more about ANDES.

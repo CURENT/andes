@@ -168,14 +168,14 @@ class System(object):
             n_end = n0 + len(mdl.states) * n
 
             if not collate:
-                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                for idx, item in enumerate(mdl.algebs.values()):
                     item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n))
-                for idx, (name, item) in enumerate(mdl.states.items()):
+                for idx, item in enumerate(mdl.states.values()):
                     item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n))
             else:
-                for idx, (name, item) in enumerate(mdl.algebs.items()):
+                for idx, item in enumerate(mdl.algebs.values()):
                     item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)))
-                for idx, (name, item) in enumerate(mdl.states.items()):
+                for idx, item in enumerate(mdl.states.values()):
                     item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)))
 
             self.dae.m = m_end
@@ -217,11 +217,11 @@ class System(object):
             mdl_name = mdl.class_name
             for name, item in mdl.algebs.items():
                 for uid, addr in enumerate(item.a):
-                    self.dae.y_name[addr] = f'{mdl_name} {item.name} {uid}'
+                    self.dae.y_name[addr] = f'{mdl_name} {name} {uid}'
                     self.dae.y_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
             for name, item in mdl.states.items():
                 for uid, addr in enumerate(item.a):
-                    self.dae.x_name[addr] = f'{mdl_name} {item.name} {uid}'
+                    self.dae.x_name[addr] = f'{mdl_name} {name} {uid}'
                     self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
 
     def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
@@ -230,7 +230,7 @@ class System(object):
 
         for mdl in models.values():
             # link externals first
-            for name, instance in mdl.services_ext.items():
+            for instance in mdl.services_ext.values():
                 ext_name = instance.model
                 try:
                     ext_model = self.__dict__[ext_name]
@@ -284,7 +284,7 @@ class System(object):
 
         # for each model, get external parameters with `link_external` and then calculate the pu coeff
         for mdl in self.models.values():
-            for name, instance in mdl.params_ext.items():
+            for instance in mdl.params_ext.values():
                 ext_name = instance.model
                 try:
                     ext_model = self.__dict__[ext_name]
@@ -399,7 +399,7 @@ class System(object):
 
             # logger.debug(f'Jac <{j_name}>, row={ii}')
 
-            for name, mdl in models.items():
+            for mdl in models.values():
                 row_idx = mdl.row_of(f'{j_name}')
                 col_idx = mdl.col_of(f'{j_name}')
 
