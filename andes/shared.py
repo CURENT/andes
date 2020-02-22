@@ -14,23 +14,19 @@ Known issues ::
 """
 from andes.utils.lazyimport import LazyImport
 
-# # ----------------------------------------
-# # Packages
+# Packages
 pd = LazyImport('import pandas')
 plt = LazyImport('from matplotlib import pyplot')
 mpl = LazyImport('import matplotlib')
 Process = LazyImport('from multiprocessing import Process')
 unittest = LazyImport('import unittest')
 yaml = LazyImport('import yaml')
-# # ----------------------------------------
 
-# # ----------------------------------------
-# # function calls
+# function calls
 newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
 fsolve = LazyImport('from scipy.optimize import fsolve')
 solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
 odeint = LazyImport('from scipy.integrate import odeint')
-# # ----------------------------------------
 
 import numpy as np  # NOQA
 from tqdm import tqdm  # NOQA
@@ -41,7 +37,6 @@ import coloredlogs  # NOQA
 from numpy import ndarray  # NOQA
 from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
 
-pi = 3.14159265358973
 jpi2 = 1.5707963267948966j
 rad2deg = 57.295779513082323
 deg2rad = 0.017453292519943
