@@ -36,6 +36,7 @@ class System(object):
     New power system class
     """
     def __init__(self,
+                 case: Optional[str] = None,
                  name: Optional[str] = None,
                  config_path: Optional[str] = None,
                  options: Optional[Dict] = None,
@@ -63,11 +64,11 @@ class System(object):
                                      )))
 
         self.files = FileMan()
-        if self.options is not None:
-            self.files.set(**self.options)
+        self.files.set(case=case, **self.options)
 
         self.dae = DAE()
-        # routine import comes after model import; routines need to query model flags
+
+        # dynamic imports: routine import need to query model flags
         self._group_import()
         self._model_import()
         self._routine_import()

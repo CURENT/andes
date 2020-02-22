@@ -15,6 +15,7 @@ class PFlow(BaseRoutine):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
                                      ('max_iter', 25),
+                                     ('report', 1),
                                      )))
         self.models = system.get_models_with_flag('pflow')
 
@@ -31,6 +32,7 @@ class PFlow(BaseRoutine):
         self.niter = None
         self.mis = []
         self.system.initialize(self.models)
+        logger.info('Power flow initialized.')
         return self.system.dae.xy
 
     def nr_step(self):
@@ -79,8 +81,8 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        self._initialize()
         logger.info('-> Power flow calculation with Newton Raphson method:')
+        self._initialize()
         if system.dae.m == 0:
             logger.error("Loaded case file contains no element.")
             return False
@@ -114,6 +116,8 @@ class PFlow(BaseRoutine):
 
         else:
             logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
+            if self.config.report:
+                system.PFlow.write_report()
 
         return self.converged
 

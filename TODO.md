@@ -75,8 +75,9 @@
  service subclass)
 - [x] Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
 - [x] Test initialization and report suspect issues
+- [x] Test anti-windup limiter
+*   `System.reset()` not working after `TDS.run`
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
-*   Test anti-windup limiter
 *   Deal with two-terminal and multi-terminal devices
 *   Add ``Model._int`` for internal indexer
 *   Iterative initialization for equations (half done with Newton Krylov)
@@ -99,19 +100,18 @@
 ### Blocks
 - [x] Value selector
 
-## Version 0.7.1
+## Version 0.8.0
 ## Milestones
 
 ### To-do bullets
-*   A working `GENROU` model with saturation function
-*   Restore compatibility with dome format
+-   [x] A working `GENROU` model with saturation function
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
 *   Define general hooks - when should the connectivity check happen
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
 
 ## Later Versions
-*   Solve non-linear initialization equations
+*   Restore compatibility with dome format
 *   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
 *   Add a more generic parser for PSSE RAW
 *   Allow for semi-implicit method formulation
