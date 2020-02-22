@@ -61,8 +61,8 @@ class BaseVar(object):
 
         self.n = 0
         self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)  # address array
-        self.v: Optional[Union[ndarray, float]] = 0  # variable value array
-        self.e: Optional[Union[ndarray, float]] = 0   # equation value array
+        self.v: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)  # variable value array
+        self.e: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)   # equation value array
 
         self.v_str = v_str  # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
@@ -76,8 +76,8 @@ class BaseVar(object):
 
     def reset(self):
         self.a = np.array([], dtype=int)
-        self.v = 0
-        self.e = 0
+        self.v = np.array([], dtype=np.float)
+        self.e = np.array([], dtype=np.float)
 
     def __repr__(self):
         span = []

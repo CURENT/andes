@@ -26,6 +26,8 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 
 ANDES is currently under active development.
 
+- Jupyter Notebook Examples:
+  `Checkout on GitHub <https://github.com/cuihantao/andes/tree/master/examples>`_.
 - Documentation:
   `andes.readthedocs.io <https://andes.readthedocs.io>`_.
 - Report issues:

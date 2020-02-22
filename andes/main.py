@@ -215,28 +215,30 @@ def print_license():
     return True
 
 
-def run_case(case, routine=None, profile=False, convert='', convertall='', **kwargs):
-    """
-    Run a single simulation case.
-    """
-
-    if case is not None:
-        kwargs['case'] = case
-
-    # enable profiler if requested
-    pr = cProfile.Profile()
-    if profile is True:
-        pr.enable()
-
-    system = System(options=kwargs)
+def load(case, **kwargs):
+    """Load a case and set up without running. Return a system"""
+    system = System(case=case, options=kwargs)
     system.undill_calls()
 
     if not andes.io.parse(system):
         return
 
     system.setup()
+    return system
 
-    # convert to format
+
+def run_case(case, routine=None, profile=False, convert='', convertall='', **kwargs):
+    """
+    Run a single simulation case.
+    """
+    pr = cProfile.Profile()
+    # enable profiler if requested
+    if profile is True:
+        pr.enable()
+
+    system = load(case, **kwargs)
+
+    # convert to the requested format
     if convert != '':
         andes.io.dump(system, convert)
         return system
@@ -246,14 +248,13 @@ def run_case(case, routine=None, profile=False, convert='', convertall='', **kwa
         return system
 
     system.PFlow.run()
-    if system.PFlow.converged:
-        system.PFlow.write_report()
 
-    if routine == 'tds':
-        system.TDS.run()
-        system.TDS.save_output()
-    elif routine == 'eig':
-        system.EIG.run()
+    if routine is not None:
+        routine = routine.lower()
+        if routine == 'tds':
+            system.TDS.run()
+        elif routine == 'eig':
+            system.EIG.run()
 
     # Disable profiler and output results
     if profile:
@@ -351,10 +352,10 @@ def plot(**kwargs):
     tdsplot(**kwargs)
 
 
-def misc(edit_config='', save_config='', license=False, clean=True, **kwargs):
+def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
     if edit_conf(edit_config):
         return True
-    if license:
+    if show_license:
         print_license()
         return True
     if save_config != '':

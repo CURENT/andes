@@ -435,12 +435,12 @@ In the above example, the speed of the "zero-th" generator will be plotted.
 
 Scaling
 .......
-A lambda function can be passed to argument ``y_calc`` to scale the values.
+A lambda function can be passed to argument ``ycalc`` to scale the values.
 This is useful to convert a per-unit variable to nominal.
 For example, to plot generator speed in Hertz, use ::
 
     >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ),
-                            y_calc=lambda x: 60*x,
+                            ycalc=lambda x: 60*x,
                             )
 
 Formatting

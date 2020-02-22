@@ -1,4 +1,8 @@
-"""PSS/E file parser"""
+"""
+PSS/E file parser.
+
+Include a RAW parser and a DYR parser.
+"""
 
 import logging
 import re
@@ -6,6 +10,7 @@ import os
 
 from andes.shared import deg2rad, pd, yaml
 from andes.utils.misc import to_number
+from andes.utils.develop import warn_experimental
 from collections import defaultdict
 logger = logging.getLogger(__name__)
 
@@ -286,6 +291,8 @@ def read_add(system, file):
     -------
 
     """
+
+    warn_experimental("PSS/E dyr support is incomplete.")
 
     with open(file, 'r') as f:
         input_list = [line.strip() for line in f]

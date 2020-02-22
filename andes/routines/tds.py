@@ -125,10 +125,15 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
 
-        # load data into ``TDS.plotter``
+        system.TDS.save_output()
+
+        # load data into ``TDS.plotter`` in the notebook mode
         if is_notebook():
-            from andes.plot import TDSData  # NOQA
-            self.plotter = TDSData(mode='memory', dae=system.dae)
+            self.load_plotter()
+
+    def load_plotter(self):
+        from andes.plot import TDSData  # NOQA
+        self.plotter = TDSData(mode='memory', dae=self.system.dae)
 
     def test_initialization(self):
         """
@@ -149,7 +154,7 @@ class TDS(BaseRoutine):
             logger.info('Initialization tests passed.')
             return True
         else:
-            logger.warning('Suspect initialization issue.')
+            logger.warning('Suspect initialization issue!')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.warning(f"Check variables {', '.join(fail_names)}")

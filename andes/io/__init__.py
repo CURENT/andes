@@ -137,9 +137,12 @@ def parse(system):
     return True
 
 
-def dump(system, output_format='xlsx'):
+def dump(system, output_format):
     if system.files.no_output:
         return
+
+    if output_format is None:
+        output_format = 'xlsx'
 
     outfile = system.files.dump
     writer = importlib.import_module('.' + output_format, __name__)
