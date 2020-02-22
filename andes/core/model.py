@@ -1357,7 +1357,7 @@ class Model(object):
         ivs, properties, info = list(), list(), list()
         units_rest, ivs_rest = list(), list()
 
-        for i, p in enumerate(self.cache.all_vars.values()):
+        for p in self.cache.all_vars.values():
             names.append(p.name)
             ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')

@@ -97,7 +97,7 @@ def get_case(rpath):
     return case_path
 
 
-def list_cases(rpath='.'):
+def list_cases(rpath='.', no_print=False):
     """
     List stock cases under a given folder relative to ``cases``
     """
@@ -105,8 +105,14 @@ def list_cases(rpath='.'):
     case_path = os.path.normpath(case_path)
 
     tree = DisplayablePath.make_tree(pathlib.Path(case_path))
+    out = ''
     for path in tree:
-        print(path.displayable())
+        out += path.displayable()
+
+    if no_print is False:
+        print(out)
+    else:
+        return out
 
 
 def get_config_path(file_name='andes.rc'):

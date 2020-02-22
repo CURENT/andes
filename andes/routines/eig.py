@@ -188,6 +188,8 @@ class EIG(BaseRoutine):
 
         plt.show()
 
+        return fig, ax
+
     def dump_results(self):
         """
         Save eigenvalue analysis reports

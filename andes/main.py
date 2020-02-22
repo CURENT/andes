@@ -352,10 +352,10 @@ def plot(**kwargs):
     tdsplot(**kwargs)
 
 
-def misc(edit_config='', save_config='', license=False, clean=True, **kwargs):
+def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
     if edit_conf(edit_config):
         return True
-    if license:
+    if show_license:
         print_license()
         return True
     if save_config != '':

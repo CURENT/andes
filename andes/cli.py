@@ -74,7 +74,7 @@ def create_parser():
                                   default='', nargs='?', type=str)
     config_exclusive.add_argument('--save-config', help='save configuration to file name',
                                   nargs='?', type=str, default='')
-    misc.add_argument('--license', action='store_true', help='Display software license')
+    misc.add_argument('--license', action='store_true', help='Display software license', dest='show_license')
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
@@ -100,6 +100,7 @@ def preamble():
         username = ''
 
     logger.info('Session: {}{}'.format(username, strftime("%m/%d/%Y %I:%M:%S %p")))
+    logger.info('This program comes with ABSOLUTELY NO WARRANTY.')
     logger.info('')
 
 
