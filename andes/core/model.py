@@ -333,9 +333,10 @@ class Model(object):
         self.non_vars_syms = OrderedDict()  # input_syms - vars_syms
         self.non_iter_syms = OrderedDict()  # input_syms - iter_syms
 
+        self.vars_print = list()
         self.f_syms, self.g_syms = list(), list()
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()
-        self.f_print, self.g_print, self.c_print = list(), list(), list()
+        self.f_print, self.g_print, self.s_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
         # ----- ONLY FOR CUSTOM NUMERICAL JACOBIAN FUNCTIONS -----
@@ -806,7 +807,7 @@ class Model(object):
         from sympy.printing import latex
 
         # equation symbols for pretty printing
-        self.f_print, self.g_print, self.c_print = Matrix([]), Matrix([]), Matrix([])
+        self.f_print, self.g_print = Matrix([]), Matrix([])
 
         self.vars_print = Matrix(list(self.vars_syms.values())).subs(self.tex_names)
 
@@ -820,7 +821,6 @@ class Model(object):
         ny = len(self.g_print)
         self.calls.x_latex = [latex(item) for item in self.vars_print[:nx]]
         self.calls.y_latex = [latex(item) for item in self.vars_print[nx:nx + ny]]
-        self.calls.c_latex = [latex(item) for item in self.vars_print[nx + ny:]]
 
         self.calls.f_latex = [latex(item) for item in self.f_print]
         self.calls.g_latex = [latex(item) for item in self.g_print]

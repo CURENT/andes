@@ -43,17 +43,19 @@ class TDSData(object):
         self.nvars = 0  # total number of variables including `t`
 
         if self._mode == 'file':
-            self.file_name, _ = os.path.splitext(file_name_full)
-            self._npy_file = os.path.join(self._path, self.file_name + '.npy')
-            self._lst_file = os.path.join(self._path, self.file_name + '.lst')
-            self._csv_file = os.path.join(self._path, self.file_name + '.csv')
-
+            self._process_names()
             self.load_lst()
             self.load_npy_or_csv()
         elif self._mode == 'memory':
             self.load_dae()
         else:
             raise NotImplementedError(f'Unknown mode {self._mode}.')
+
+    def _process_names(self):
+        self.file_name, _ = os.path.splitext(self.file_name_full)
+        self._npy_file = os.path.join(self._path, self.file_name + '.npy')
+        self._lst_file = os.path.join(self._path, self.file_name + '.lst')
+        self._csv_file = os.path.join(self._path, self.file_name + '.csv')
 
     def load_dae(self):
         """Load from DAE time series"""
@@ -65,6 +67,8 @@ class TDSData(object):
         self._uname = ['Time [s]'] + dae.x_name + dae.y_name
         self._fname = ['$Time [s]$'] + dae.x_tex_name + dae.y_tex_name
         self._data = dae.ts.txy
+
+        self.file_name = dae.system.files.name
 
     def load_lst(self):
         """
@@ -96,7 +100,7 @@ class TDSData(object):
         self._uname = uname
         self.nvars = len(uname)
 
-    def find_var_idx(self, query, exclude=None, formatted=False):
+    def find(self, query, exclude=None, formatted=False):
         """
         Return variable names and indices matching `query`
 
@@ -229,7 +233,7 @@ class TDSData(object):
 
         logger.info(f'CSV data saved in <{path}>.')
 
-    def plot(self, yidx, xidx=(0,), a=None, y_calc=None,
+    def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
              latex=True, dpi=200, savefig=None, show=True, use_bqplot=False, **kwargs):
@@ -237,7 +241,7 @@ class TDSData(object):
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
 
-        Note that `ytimes` and `y_calc` are applied sequentially if apply.
+        Note that `ytimes` and `ycalc` are applied sequentially if apply.
 
         Refer to `plot_data()` for the definition of arguments.
 
@@ -282,9 +286,9 @@ class TDSData(object):
         if y_scale_func:
             y_value = y_scale_func(y_value)
 
-        # `y_calc` is a callback function for manipulating data
-        if y_calc is not None:
-            y_value = y_calc(y_value)
+        # `ycalc` is a callback function for manipulating data
+        if ycalc is not None:
+            y_value = ycalc(y_value)
 
         if use_bqplot is True or (use_bqplot is None and is_notebook()):
 

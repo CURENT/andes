@@ -249,10 +249,12 @@ def run_case(case, routine=None, profile=False, convert='', convertall='', **kwa
 
     system.PFlow.run()
 
-    if routine == 'tds':
-        system.TDS.run()
-    elif routine == 'eig':
-        system.EIG.run()
+    if routine is not None:
+        routine = routine.lower()
+        if routine == 'tds':
+            system.TDS.run()
+        elif routine == 'eig':
+            system.EIG.run()
 
     # Disable profiler and output results
     if profile:

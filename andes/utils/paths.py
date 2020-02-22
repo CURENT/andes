@@ -4,6 +4,77 @@ Utility functions for loading andes stock test cases
 import os
 import platform
 import tempfile
+import pathlib
+
+
+class DisplayablePath(object):
+    display_filename_prefix_middle = '├──'
+    display_filename_prefix_last = '└──'
+    display_parent_prefix_middle = '    '
+    display_parent_prefix_last = '│   '
+
+    def __init__(self, path, parent_path, is_last):
+        self.path = pathlib.Path(str(path))
+        self.parent = parent_path
+        self.is_last = is_last
+        if self.parent:
+            self.depth = self.parent.depth + 1
+        else:
+            self.depth = 0
+
+    @property
+    def displayname(self):
+        if self.path.is_dir():
+            return self.path.name + '/'
+        return self.path.name
+
+    @classmethod
+    def make_tree(cls, root, parent=None, is_last=False, criteria=None):
+        root = pathlib.Path(str(root))
+        criteria = criteria or cls._default_criteria
+
+        displayable_root = cls(root, parent, is_last)
+        yield displayable_root
+
+        children = sorted(list(path
+                               for path in root.iterdir()
+                               if criteria(path)),
+                          key=lambda s: str(s).lower())
+        count = 1
+        for path in children:
+            is_last = count == len(children)
+            if path.is_dir():
+                yield from cls.make_tree(path,
+                                         parent=displayable_root,
+                                         is_last=is_last,
+                                         criteria=criteria)
+            else:
+                yield cls(path, displayable_root, is_last)
+            count += 1
+
+    @classmethod
+    def _default_criteria(cls, path):
+        return True
+
+    def displayable(self):
+        if self.parent is None:
+            return self.displayname
+
+        _filename_prefix = (self.display_filename_prefix_last
+                            if self.is_last
+                            else self.display_filename_prefix_middle)
+
+        parts = ['{!s} {!s}'.format(_filename_prefix,
+                                    self.displayname)]
+
+        parent = self.parent
+        while parent and parent.parent is not None:
+            parts.append(self.display_parent_prefix_middle
+                         if parent.is_last
+                         else self.display_parent_prefix_last)
+            parent = parent.parent
+
+        return ''.join(reversed(parts))
 
 
 def cases_root():
@@ -24,6 +95,18 @@ def get_case(rpath):
     case_path = os.path.normpath(case_path)
 
     return case_path
+
+
+def list_cases(rpath='.'):
+    """
+    List stock cases under a given folder relative to ``cases``
+    """
+    case_path = os.path.join(cases_root(), rpath)
+    case_path = os.path.normpath(case_path)
+
+    tree = DisplayablePath.make_tree(pathlib.Path(case_path))
+    for path in tree:
+        print(path.displayable())
 
 
 def get_config_path(file_name='andes.rc'):
@@ -53,6 +136,27 @@ def get_config_path(file_name='andes.rc'):
         conf_path = os.path.join(home_dir, '.andes', file_name)
 
     return conf_path
+
+
+def get_pkl_path():
+    """
+    Get the path to the picked/dilled function calls.
+
+    Returns
+    -------
+    str
+        Path to the calls.pkl file
+
+    """
+    pkl_name = 'calls.pkl'
+    andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
+
+    if not os.path.exists(andes_path):
+        os.makedirs(andes_path)
+
+    pkl_path = os.path.join(andes_path, pkl_name)
+
+    return pkl_path
 
 
 def get_log_dir():

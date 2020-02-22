@@ -32,8 +32,8 @@ class DAE(object):
     jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
     jac_type = ('c', '')
 
-    def __init__(self):
-
+    def __init__(self, system):
+        self.system = system
         self.t = 0
         self.ts = DAETimeSeries(self)
 

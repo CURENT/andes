@@ -2,7 +2,6 @@
 System class for power system data and methods
 """
 
-import pathlib
 import configparser
 import importlib
 import logging
@@ -11,7 +10,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
-from andes.utils.paths import get_config_path
+from andes.variables.fileman import FileMan
 from andes.variables.dae import DAE
 from andes.routines import all_routines
 from andes.models import non_jit
@@ -19,7 +18,7 @@ from andes.core.param import BaseParam
 from andes.core.model import Model
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
-from andes.variables.fileman import FileMan
+from andes.utils.paths import get_config_path, get_pkl_path
 
 from andes.shared import np, spmatrix
 
@@ -56,7 +55,7 @@ class System(object):
         self.config = Config(self.__class__.__name__)
         self._config_path = get_config_path() if not config_path else config_path
         self._config_from_file = self.load_config(self._config_path)
-        self.config.load(self._config_from_file)  # only load config for system and routines
+        self.config.load(self._config_from_file)
 
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
@@ -66,7 +65,7 @@ class System(object):
         self.files = FileMan()
         self.files.set(case=case, **self.options)
 
-        self.dae = DAE()
+        self.dae = DAE(system=self)
 
         # dynamic imports: routine import need to query model flags
         self._group_import()
@@ -502,18 +501,6 @@ class System(object):
             if var.n > 0:
                 np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
-    @staticmethod
-    def get_pkl_path():
-        pkl_name = 'calls.pkl'
-        andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
-
-        if not os.path.exists(andes_path):
-            os.makedirs(andes_path)
-
-        pkl_path = os.path.join(andes_path, pkl_name)
-
-        return pkl_path
-
     def get_models_with_flag(self, flag: Optional[Union[str, Tuple]] = None):
         if isinstance(flag, str):
             flag = [flag]
@@ -531,14 +518,14 @@ class System(object):
         import dill
         dill.settings['recurse'] = True
 
-        pkl_path = self.get_pkl_path()
+        pkl_path = get_pkl_path()
         dill.dump(self.calls, open(pkl_path, 'wb'))
 
     def undill_calls(self):
         import dill
         dill.settings['recurse'] = True
 
-        pkl_path = self.get_pkl_path()
+        pkl_path = get_pkl_path()
 
         if not os.path.isfile(pkl_path):
             self.prepare()

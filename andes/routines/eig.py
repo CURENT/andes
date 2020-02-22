@@ -137,7 +137,8 @@ class EIG(BaseRoutine):
 
         return ret
 
-    def plot(self):
+    def plot(self, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
+             linewidth=0.5, dpi=150):
         mpl.rc('font', family='Times New Roman', size=12)
 
         mu_real = self.mu.real()
@@ -166,7 +167,7 @@ class EIG(BaseRoutine):
                 'System is small-signal stable in the initial neighbourhood.')
 
         mpl.rc('text', usetex=True)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=dpi)
         ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
         ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
         ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
@@ -174,18 +175,16 @@ class EIG(BaseRoutine):
         ax.axvline(linewidth=0.5, color='grey', linestyle='--')
 
         # plot 5% damping lines
-        xleft = -6
-        xright = 0.5
-        xin = np.arange(xleft, 0, 0.01)
-        yneg = xin * 20
-        ypos = - xin * 20
+        xin = np.arange(left, 0, 0.01)
+        yneg = xin / damping
+        ypos = - xin / damping
 
-        ax.plot(xin, yneg, color='grey', linewidth=0.5, linestyle='--')
-        ax.plot(xin, ypos, color='grey', linewidth=0.5, linestyle='--')
+        ax.plot(xin, yneg, color='grey', linewidth=linewidth, linestyle='--')
+        ax.plot(xin, ypos, color='grey', linewidth=linewidth, linestyle='--')
         ax.set_xlabel('Real')
         ax.set_ylabel('Imaginary')
-        ax.set_xlim(left=xleft, right=xright)
-        ax.set_ylim(-8, 8)
+        ax.set_xlim(left=left, right=right)
+        ax.set_ylim(ymin, ymax)
 
         plt.show()
 
