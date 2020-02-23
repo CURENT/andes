@@ -8,8 +8,10 @@ include requirements-dev.txt
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
-recursive-include docs *.rst conf.py Makefile make.bat
-recursive-include cases tests
+recursive-include docs *.rst *.png conf.py Makefile make.bat
+recursive-include cases *.xlsx *.m *.raw *.dyr
+recursive-include tests
+recursive-include examples *.ipynb
 
 include versioneer.py
 include andes/_version.py
