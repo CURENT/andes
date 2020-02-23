@@ -519,7 +519,8 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-        dill.dump(self.calls, open(pkl_path, 'wb'))
+        with open(pkl_path, 'wb') as f:
+            dill.dump(self.calls, f)
 
     def undill_calls(self):
         import dill
@@ -530,7 +531,8 @@ class System(object):
         if not os.path.isfile(pkl_path):
             self.prepare()
 
-        self.calls = dill.load(open(pkl_path, 'rb'))
+        with open(pkl_path, 'rb') as f:
+            self.calls = dill.load(f)
         logger.debug(f'System undill: loaded <{pkl_path}> file.')
         for name, model_call in self.calls.items():
             self.__dict__[name].calls = model_call
