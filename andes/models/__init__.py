@@ -4,6 +4,7 @@ from collections import OrderedDict  # NOQA
 
 non_jit = OrderedDict([
     ('bus', ['Bus']),
+    ('dcbase', ['Node', 'R']),
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),
     ('shunt', ['Shunt']),

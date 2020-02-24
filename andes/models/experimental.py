@@ -20,6 +20,7 @@ class PI2Data(ModelData):
 class PI2Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
+        self.group = 'Experimental'
         self.flags.update({'tds': True})
         self.uin = State(v_str=0,
                          e_str='Piecewise((0, dae_t<= 0), (1, dae_t <= 2), (-1, dae_t <6), (1, True))',
