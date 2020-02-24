@@ -126,7 +126,6 @@ class DC2Term(ModelData, Model):
 class Ground(ModelData, Model):
     def __init__(self, system, config):
         ModelData.__init__(self)
-        self.group = 'DCLink'
         self.node = IdxParam(default=None,
                              tex_name='node',
                              info='Node index',
@@ -140,6 +139,7 @@ class Ground(ModelData, Model):
                                 )
         Model.__init__(self, system, config)
         self.flags.update({'pflow': True})
+        self.group = 'DCLink'
         self.v = ExtAlgeb(model='Node',
                           src='v',
                           indexer=self.node,
