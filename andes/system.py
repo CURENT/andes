@@ -282,8 +282,8 @@ class System(object):
         """
         Sb = self.config.mva
 
-        # for each model, get external parameters with `link_external` and then calculate the pu coeff
         for mdl in self.models.values():
+            # get external parameters with `link_external` and then calculate the pu coeff
             for instance in mdl.params_ext.values():
                 ext_name = instance.model
                 try:
@@ -296,7 +296,7 @@ class System(object):
                 except IndexError:
                     raise IndexError(f'Model <{mdl.class_name}> param <{instance.name}> link parameter error')
 
-            # default Sn to Sb if not provided. Some controllers might not have Sn or Vn
+            # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.params:
                 Sn = mdl.Sn.v
             else:
@@ -305,20 +305,29 @@ class System(object):
             # If both Vn and Vn1 are not provided, default to Vn = Vb = 1
             # test if is shunt-connected or series-connected to bus, or unconnected to bus
             Vb, Vn = 1, 1
-            if 'bus' in mdl.params or 'bus1' in mdl.params:
-                if 'bus' in mdl.params:
-                    Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
-                    Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
-                elif 'bus1' in mdl.params:
-                    Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
-                    Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
+            if 'bus' in mdl.params:
+                Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
+                Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
+            elif 'bus1' in mdl.params:
+                Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
+                Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
 
-            Zn = (Vn ** 2 / Sn)
-            Zb = (Vb ** 2 / Sb)
+            Zn = Vn ** 2 / Sn
+            Zb = Vb ** 2 / Sb
 
-            if 'node' in mdl.params or 'node1' in mdl.params:
-                raise NotImplementedError('Per unit conversion for DC models is not implemented')
-            # TODO: handle DC voltages similarly
+            # process dc parameter pu conversion
+            Vdcb, Vdcn, Idcn = 1, 1, 1
+            if 'node' in mdl.params:
+                Vdcb = self.Node.get(src='Vdcn', idx=mdl.node.v, attr='v')
+                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.params else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+            elif 'node1' in mdl.params:
+                Vdcb = self.Node.get(src='Vdcn', idx=mdl.node1.v, attr='v')
+                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.params else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+            Idcb = Sb / Vdcb
+            Rb = Vdcb / Idcb
+            Rn = Vdcn / Idcn
 
             coeffs = {'voltage': Vn / Vb,
                       'power': Sn / Sb,
@@ -326,6 +335,10 @@ class System(object):
                       'current': (Sn / Vn) / (Sb / Vb),
                       'z': Zn / Zb,
                       'y': Zb / Zn,
+                      'dc_voltage': Vdcn / Vdcb,
+                      'dc_current': Idcn / Idcb,
+                      'r': Rn / Rb,
+                      'g': Rb / Rn,
                       }
 
             for prop, coeff in coeffs.items():

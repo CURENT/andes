@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 class NodeData(ModelData):
     def __init__(self):
+        """
+        DC Node data.
+        """
         super().__init__()
         self.Vdcn = NumParam(default=100,
                              info='DC voltage rating',
@@ -48,6 +51,9 @@ class NodeData(ModelData):
 
 
 class Node(NodeData, Model):
+    """
+    DC Node model.
+    """
     def __init__(self, system, config):
         NodeData.__init__(self)
         Model.__init__(self, system=system, config=config)
@@ -85,12 +91,18 @@ class DC2Term(ModelData, Model):
                               mandatory=True,
                               model='Node',
                               )
-        self.Vdcn = NumParam(default=100,
-                             info='DC voltage rating',
-                             unit='kV',
-                             non_zero=True,
-                             tex_name='V_{dcn}',
-                             )
+        self.Vdcn1 = NumParam(default=100,
+                              info='DC voltage rating on node 1',
+                              unit='kV',
+                              non_zero=True,
+                              tex_name='V_{dcn1}',
+                              )
+        self.Vdcn2 = NumParam(default=100,
+                              info='DC voltage rating on node 2',
+                              unit='kV',
+                              non_zero=True,
+                              tex_name='V_{dcn2}',
+                              )
         self.Idcn = NumParam(default=1,
                              info='DC current rating',
                              unit='kA',
