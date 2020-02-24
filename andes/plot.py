@@ -717,6 +717,7 @@ def set_latex(enable=True):
 
     if has_dvipng and enable:
         mpl.rc('text', usetex=True)
+        logger.info('Using LaTeX for rendering. If it takes too long, use option `-d` to disable it.')
         return True
     else:
         mpl.rc('text', usetex=False)
