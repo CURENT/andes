@@ -278,3 +278,8 @@ class Exciter(GroupBase):
 class Experimental(GroupBase):
     """Experimantal group"""
     pass
+
+
+class DCLink(GroupBase):
+    """Basic DC links"""
+    pass

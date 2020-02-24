@@ -114,17 +114,19 @@ class DC2Term(ModelData, Model):
         self.v1 = ExtAlgeb(model='Node',
                            src='v',
                            indexer=self.node1,
+                           info='DC voltage on node 1',
                            )
         self.v2 = ExtAlgeb(model='Node',
                            src='v',
                            indexer=self.node2,
+                           info='DC voltage on node 2',
                            )
 
 
 class Ground(ModelData, Model):
     def __init__(self, system, config):
         ModelData.__init__(self)
-        self.flags['pflow'] = True
+        self.group = 'DCLink'
         self.node = IdxParam(default=None,
                              tex_name='node',
                              info='Node index',
@@ -137,6 +139,7 @@ class Ground(ModelData, Model):
                                 unit='p.u.',
                                 )
         Model.__init__(self, system, config)
+        self.flags.update({'pflow': True})
         self.v = ExtAlgeb(model='Node',
                           src='v',
                           indexer=self.node,
@@ -156,7 +159,7 @@ class R(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags['pflow'] = True
-
+        self.group = 'DCLink'
         self.R = NumParam(unit='p.u.',
                           info='DC line resistance',
                           non_zero=True,
@@ -179,6 +182,7 @@ class L(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags['pflow'] = True
+        self.group = 'DCLink'
 
         self.L = NumParam(unit='p.u.',
                           info='DC line inductance',
@@ -202,6 +206,7 @@ class C(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags['pflow'] = True
+        self.group = 'DCLink'
 
         self.C = NumParam(unit='p.u.',
                           info='DC capacitance',
@@ -225,25 +230,197 @@ class C(DC2Term):
 
 
 class RLs(DC2Term):
-    # TODO
-    pass
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+        self.group = 'DCLink'
+
+        self.R = NumParam(unit='p.u.',
+                          info='DC line resistance',
+                          non_zero=True,
+                          default=0.01,
+                          r=True,
+                          )
+        self.L = NumParam(unit='p.u.',
+                          info='DC line inductance',
+                          non_zero=True,
+                          default=0.001,
+                          r=True,
+                          )
+        self.IL = State(tex_name='I_L',
+                        info='Inductance current',
+                        unit='p.u.',
+                        e_str='u * (v1 - v2 - R * IL) / L',
+                        v_str='(v1 - v2) / R',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='-u * IL - Idc',
+                         v_str='-(v1 - v2) / R',
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
 
 
 class RCp(DC2Term):
-    # TODO
-    pass
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+        self.group = 'DCLink'
+
+        self.R = NumParam(unit='p.u.',
+                          info='DC line resistance',
+                          non_zero=True,
+                          default=0.01,
+                          r=True,
+                          )
+        self.C = NumParam(unit='p.u.',
+                          info='DC capacitance',
+                          non_zero=True,
+                          default=0.001,
+                          g=True,
+                          )
+        self.vC = State(tex_name='I_C',
+                        info='Capacitor current',
+                        unit='p.u.',
+                        e_str='-u * (Idc - vC/R) / C',
+                        v_str='v1 - v2',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='vC - (v1 - v2)',
+                         v_str='-(v1 - v2) / R',
+                         diag_eps=1e-6,
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
 
 
 class RLCp(DC2Term):
-    # TODO
-    pass
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+        self.group = 'DCLink'
+
+        self.R = NumParam(unit='p.u.',
+                          info='DC line resistance',
+                          non_zero=True,
+                          default=0.01,
+                          r=True,
+                          )
+        self.L = NumParam(unit='p.u.',
+                          info='DC line inductance',
+                          non_zero=True,
+                          default=0.001,
+                          r=True,
+                          )
+        self.C = NumParam(unit='p.u.',
+                          info='DC capacitance',
+                          non_zero=True,
+                          default=0.001,
+                          g=True,
+                          )
+        self.IL = State(tex_name='I_L',
+                        info='Inductance current',
+                        unit='p.u.',
+                        e_str='u * vC / L',
+                        )
+        self.vC = State(tex_name='I_C',
+                        info='Capacitor current',
+                        unit='p.u.',
+                        e_str='-u * (Idc - vC/R - IL) / C',
+                        v_str='v1 - v2',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='vC - (v1 - v2)',
+                         v_str='-(v1 - v2) / R',
+                         diag_eps=1e-6,
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
 
 
 class RCs(DC2Term):
-    # TODO
-    pass
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+        self.group = 'DCLink'
+
+        self.R = NumParam(unit='p.u.',
+                          info='DC line resistance',
+                          non_zero=True,
+                          default=0.01,
+                          r=True,
+                          )
+        self.C = NumParam(unit='p.u.',
+                          info='DC capacitance',
+                          non_zero=True,
+                          default=0.001,
+                          g=True,
+                          )
+        self.vC = State(tex_name='I_C',
+                        info='Capacitor current',
+                        unit='p.u.',
+                        e_str='-u * Idc / C',
+                        v_str='v1 - v2',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='vC - (v1 - v2) - Idc * R',
+                         v_str='-(v1 - v2) / R',
+                         diag_eps=1e-6,
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
 
 
 class RLCs(DC2Term):
-    # TODO
-    pass
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+        self.group = 'DCLink'
+
+        self.R = NumParam(unit='p.u.',
+                          info='DC line resistance',
+                          non_zero=True,
+                          default=0.01,
+                          r=True,
+                          )
+        self.L = NumParam(unit='p.u.',
+                          info='DC line inductance',
+                          non_zero=True,
+                          default=0.001,
+                          r=True,
+                          )
+        self.C = NumParam(unit='p.u.',
+                          info='DC capacitance',
+                          non_zero=True,
+                          default=0.001,
+                          g=True,
+                          )
+        self.IL = State(tex_name='I_L',
+                        info='Inductance current',
+                        unit='p.u.',
+                        e_str='u * (v1 - v2 - R * IL - vC) / L',
+                        v_str='0',
+                        )
+        self.vC = State(tex_name='I_C',
+                        info='Capacitor current',
+                        unit='p.u.',
+                        e_str='u * IL / C',
+                        v_str='v1 - v2',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='-IL - Idc',
+                         v_str='0',
+                         diag_eps=1e-6,
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
