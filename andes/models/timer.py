@@ -18,6 +18,7 @@ class Toggler(TogglerData, Model):
         TogglerData.__init__(self)
         Model.__init__(self, system, config)
         self.flags.update({'tds': True})
+        self.group = 'TimedEvent'
 
         self.t.callback = self._u_switch
 

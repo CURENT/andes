@@ -219,6 +219,11 @@ class DCTopology(GroupBase):
         self.common_vars.extend(('v',))
 
 
+class Collection(GroupBase):
+    """Collection of topology models"""
+    pass
+
+
 class StaticGen(GroupBase):
     """
     Static generator group for power flow calculation
@@ -282,4 +287,14 @@ class Experimental(GroupBase):
 
 class DCLink(GroupBase):
     """Basic DC links"""
+    pass
+
+
+class StaticACDC(GroupBase):
+    """AC DC device for power flow"""
+    pass
+
+
+class TimedEvent(GroupBase):
+    """Timed event group"""
     pass

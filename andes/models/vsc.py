@@ -35,6 +35,7 @@ class VSCStatic(ACDC2Term):
 
         # define variables and equations
         self.flags.update({'pflow': True})
+        self.group = 'StaticACDC'
 
         self.ash = Algeb(info='voltage phase behind the transformer',
                          unit='rad',
