@@ -121,12 +121,42 @@ class DC2Term(ModelData, Model):
                            )
 
 
+class Ground(ModelData, Model):
+    def __init__(self, system, config):
+        ModelData.__init__(self)
+        self.flags['pflow'] = True
+        self.node = IdxParam(default=None,
+                             tex_name='node',
+                             info='Node index',
+                             mandatory=True,
+                             model='Node',
+                             )
+        self.voltage = NumParam(default=0.0,
+                                tex_name='V_0',
+                                info='Ground voltage (typically 0)',
+                                unit='p.u.',
+                                )
+        Model.__init__(self, system, config)
+        self.v = ExtAlgeb(model='Node',
+                          src='v',
+                          indexer=self.node,
+                          e_str='-Idc'
+                          )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Ficticious current injection from ground',
+                         e_str='v - voltage',
+                         diag_eps=1e-6,
+                         )
+
+
 class R(DC2Term):
     """
     Resistive dc line
     """
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+
         self.R = NumParam(unit='p.u.',
                           info='DC line resistance',
                           non_zero=True,
@@ -140,3 +170,80 @@ class R(DC2Term):
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
+
+
+class L(DC2Term):
+    """
+    Inductive dc line
+    """
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+
+        self.L = NumParam(unit='p.u.',
+                          info='DC line inductance',
+                          non_zero=True,
+                          default=0.001,
+                          r=True,
+                          )
+        self.IL = State(tex_name='I_L',
+                        info='Inductance current',
+                        unit='p.u.',
+                        e_str='-u * (v1 - v2) / L',
+                        )
+        self.v1.e_str = '-IL'
+        self.v2.e_str = '+IL'
+
+
+class C(DC2Term):
+    """
+    Capacitive dc branch
+    """
+    def __init__(self, system, config):
+        DC2Term.__init__(self, system, config)
+        self.flags['pflow'] = True
+
+        self.C = NumParam(unit='p.u.',
+                          info='DC capacitance',
+                          non_zero=True,
+                          default=0.001,
+                          g=True,
+                          )
+        self.vC = State(tex_name='I_C',
+                        info='Capacitor current',
+                        unit='p.u.',
+                        e_str='-u * Idc / C',
+                        )
+        self.Idc = Algeb(tex_name='I_{dc}',
+                         info='Current from node 2 to 1',
+                         unit='p.u.',
+                         e_str='vC - (v1 - v2)',
+                         diag_eps=1e-6,
+                         )
+        self.v1.e_str = '-Idc'
+        self.v2.e_str = '+Idc'
+
+
+class RLs(DC2Term):
+    # TODO
+    pass
+
+
+class RCp(DC2Term):
+    # TODO
+    pass
+
+
+class RLCp(DC2Term):
+    # TODO
+    pass
+
+
+class RCs(DC2Term):
+    # TODO
+    pass
+
+
+class RLCs(DC2Term):
+    # TODO
+    pass
