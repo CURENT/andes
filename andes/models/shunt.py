@@ -10,7 +10,7 @@ class ShuntData(ModelData):
     def __init__(self, system=None, name=None):
         super().__init__(system, name)
 
-        self.bus = IdxParam(model='Bus', info="idx of connected bus")
+        self.bus = IdxParam(model='Bus', info="idx of connected bus", mandatory=True)
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
