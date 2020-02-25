@@ -210,11 +210,12 @@ class Ground(ModelData, Model):
         self.v = ExtAlgeb(model='Node',
                           src='v',
                           indexer=self.node,
-                          e_str='-Idc'
+                          e_str='-Idc',
                           )
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Ficticious current injection from ground',
                          e_str='v - voltage',
+                         v_str='0',
                          diag_eps=1e-6,
                          )
 

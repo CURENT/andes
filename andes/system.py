@@ -16,6 +16,7 @@ from andes.routines import all_routines
 from andes.models import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
+from andes.core.var import ExtVar
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
 from andes.utils.paths import get_config_path, get_pkl_path
@@ -485,10 +486,11 @@ class System(object):
 
         for var in self.__dict__[f'{v_name}_adders']:
             # NOTE:
-            # No need to skip `adder` vars that does not provide a `v_init`.
             # For power flow, they will be initialized to zero.
             # For TDS initialization, they will remain their value.
-            if var.v_str is None or (var.n == 0):
+            if var.n == 0:
+                continue
+            if (var.v_str is None) and isinstance(var, ExtVar):
                 continue
             if var.owner.flags['initialized'] is False:
                 continue
