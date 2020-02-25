@@ -2,7 +2,6 @@
 Base class for building ANDES models
 """
 import logging
-import pprint
 from collections import OrderedDict
 
 from andes.core.config import Config

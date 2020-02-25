@@ -371,8 +371,8 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, **kwarg
 def prepare(quick=False, **kwargs):
     t0, _ = elapsed()
     logger.info('Numeric code preparation started...')
-    sys = System()
-    sys.prepare(quick=quick)
+    system = System()
+    system.prepare(quick=quick)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
     return True
@@ -384,3 +384,25 @@ def selftest(**kwargs):
 
     suite = unittest.TestLoader().discover(test_directory)
     unittest.TextTestRunner(verbosity=3).run(suite)
+
+
+def doc(model=None, list_models=False, **kwargs):
+    system = System()
+    if model is not None:
+        if model in system.__dict__ and hasattr(system.__dict__[model], 'doc'):
+            logger.info(system.__dict__[model].doc())
+        else:
+            logger.error(f'Model <{model}> does not exist.')
+
+    elif list_models is True:
+        m_names = list()
+        for g in system.groups:
+            for m in system.groups[g].models:
+                m_names.append(m)
+
+        m_names.sort()
+        logger.info('List of supported models:')
+        logger.info(', '.join(m_names))
+
+    else:
+        logger.info('info: no option specified. Use \'andes doc -h\' for help.')
