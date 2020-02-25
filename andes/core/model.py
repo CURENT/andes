@@ -517,12 +517,8 @@ class Model(object):
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
-                    try:
-                        # DO NOT use in-place operation since the return can be complex number
-                        instance.v = func(**kwargs)
-                    except Exception as e:  # NOQA
-                        logger.error(f'Error evaluating service {instance.name}, equation {instance.v_str}')
-                        raise e
+                    # DO NOT use in-place operation since the return can be complex number
+                    instance.v = func(**kwargs)
                 else:
                     instance.v = func
 
@@ -560,6 +556,7 @@ class Model(object):
             else:
                 if instance.v_str is not None:
                     sympified = sympify(instance.v_str, locals=self.input_syms)
+                    self._check_expr_symbols(sympified)
                     lambdified = lambdify(input_syms_list, sympified, 'numpy')
                     init_lambda_list[name] = lambdified
                     init_latex[name] = latex(sympified.subs(self.tex_names))
@@ -567,6 +564,7 @@ class Model(object):
 
                 if instance.v_iter is not None:
                     sympified = sympify(instance.v_iter, locals=self.input_syms)
+                    self._check_expr_symbols(sympified)
                     init_g_list.append(sympified)
                     init_latex[name] = latex(sympified.subs(self.tex_names))
 
@@ -689,6 +687,12 @@ class Model(object):
 
         self.vars_syms_list = list(self.vars_syms.values())  # useful for ``.jacobian()``
 
+    def _check_expr_symbols(self, expr):
+        """Check if expression contains unknown symbols"""
+        for item in expr.free_symbols:
+            if item not in self.input_syms.values():
+                raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
+
     def generate_equations(self):
         logger.debug(f'Generating equations for {self.__class__.__name__}')
         from sympy import Matrix, sympify, lambdify
@@ -703,7 +707,9 @@ class Model(object):
                     dest.append(0)
                 else:
                     try:
-                        dest.append(sympify(instance.e_str, locals=self.input_syms))
+                        expr = sympify(instance.e_str, locals=self.input_syms)
+                        self._check_expr_symbols(expr)
+                        dest.append(expr)
                     except TypeError as e:
                         logger.error(f'Error sympifying <{instance.e_str}> for <{instance.name}>')
                         raise e
@@ -725,8 +731,9 @@ class Model(object):
         s_lambdify = OrderedDict()
         for name, instance in self.services.items():
             if instance.v_str is not None:
-                s_syms[name] = sympify(instance.v_str,
-                                       locals=self.input_syms)
+                expr = sympify(instance.v_str, locals=self.input_syms)
+                self._check_expr_symbols(expr)
+                s_syms[name] = expr
                 s_lambdify[name] = lambdify(inputs_list,
                                             s_syms[name],
                                             'numpy')
@@ -952,11 +959,7 @@ class Model(object):
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
-                try:
-                    instance.v[:] = init_fun(**kwargs)
-                except TypeError:
-                    logger.error(f'{self.class_name}: {instance.name} = {instance.v_str} error.'
-                                 f'You might have undefined variable in the equation string.')
+                instance.v[:] = init_fun(**kwargs)
             else:
                 instance.v[:] = init_fun
 
@@ -999,12 +1002,7 @@ class Model(object):
         ret = self.calls.f_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
-            try:
-                instance.e += ret[idx][0]
-            except TypeError as e:
-                logger.error(f"Error evaluating f for {instance.name} where e_str={instance.e_str}")
-                logger.error("You may have undefined symbols in differential equations.")
-                raise e
+            instance.e += ret[idx][0]
 
         # numerical calls defined in the model
         self.f_numeric(**kwargs)
@@ -1029,14 +1027,7 @@ class Model(object):
         ret = self.calls.g_lambdify(**kwargs)
 
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
-            try:
-                instance.e += ret[idx][0]
-            except TypeError as e:
-                logger.error(f"Error evaluating g for {instance.name} where e_str={instance.e_str}")
-                logger.error("You may have undefined symbols in algebraic equations.")
-                logger.error(ret[idx][0])
-                logger.error(pprint.pformat(self.get_inputs()))
-                raise e
+            instance.e += ret[idx][0]
 
         # numerical calls defined in the model
         self.g_numeric(**kwargs)
