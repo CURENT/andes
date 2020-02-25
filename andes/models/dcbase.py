@@ -26,7 +26,6 @@ class NodeData(ModelData):
                              )
         self.v0 = NumParam(default=1.0,
                            info="initial voltage magnitude",
-                           non_zero=True,
                            tex_name=r'V_{dc0}',
                            unit='p.u.',
                            )
@@ -69,7 +68,7 @@ class Node(NodeData, Model):
                        tex_name='V_{dc}',
                        info='voltage magnitude',
                        unit='p.u.',
-                       # diag_eps=1e-6,
+                       diag_eps=1e-6,
                        )
 
         self.v.v_str = 'flat_start * 1 + ' \

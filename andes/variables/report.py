@@ -134,7 +134,7 @@ class Report(object):
             if hasattr(system, 'Node') and system.Node.n:
                 text.append(['NODE DATA:\n'])
                 header.append(['V(pu)'])
-                row_name.append(system.Node.name)
+                row_name.append(system.Node.name.v)
                 data.append([system.Node.v.v])
             # ----------------------------------------
 

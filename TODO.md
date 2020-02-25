@@ -104,12 +104,13 @@
 ## Milestones
 
 ### To-do bullets
--   [x] A working `GENROU` model with saturation function
+- [x] A working `GENROU` model with saturation function
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
 *   Define general hooks - when should the connectivity check happen
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
 *   Check if config is valid boolean values.
+*   Fix the model connectivity status `u` in interface equations 
 
 ## Later Versions
 *   Restore compatibility with dome format

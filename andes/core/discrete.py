@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Union, Tuple
 from andes.shared import np
 
 logger = logging.getLogger(__name__)
@@ -312,9 +312,9 @@ class Switcher(Discrete):
     Switcher class based on input parameters.
 
     The switch class takes one v-provider, compares the input with each value in the option list, and exports
-    one flag array for each option.
+    one flag array for each option. The flags are 0-indexed.
     """
-    def __init__(self, u, options: list, name: str = None, tex_name: str = None, cache=True):
+    def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
         self.option: list = options

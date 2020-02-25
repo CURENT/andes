@@ -2,6 +2,7 @@
 Base class for building ANDES models
 """
 import logging
+import pprint
 from collections import OrderedDict
 
 from andes.core.config import Config
@@ -1033,6 +1034,8 @@ class Model(object):
             except TypeError as e:
                 logger.error(f"Error evaluating g for {instance.name} where e_str={instance.e_str}")
                 logger.error("You may have undefined symbols in algebraic equations.")
+                logger.error(ret[idx][0])
+                logger.error(pprint.pformat(self.get_inputs()))
                 raise e
 
         # numerical calls defined in the model
