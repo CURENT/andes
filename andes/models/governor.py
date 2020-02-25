@@ -31,9 +31,6 @@ class TGBase(Model):
         Model.__init__(self, system, config)
         self.group = 'TurbineGov'
         self.flags.update({'tds': True})
-        self.config.add({'deadband': 0,
-                         'hardlimit': 1})
-
         self.Sn = ExtParam(src='Sn',
                            model='SynGen',
                            indexer=self.syn,
@@ -71,7 +68,7 @@ class TGBase(Model):
                            model='SynGen',
                            indexer=self.syn,
                            tex_name=r'\tau_m',
-                           e_str='u*(pout - tm0)',
+                           e_str='u * (pout - tm0)',
                            info='Mechanical power to generator',
                            )
         self.pout = Algeb(info='Turbine final output power',
@@ -130,10 +127,12 @@ class TG2(TG2Data, TGBase):
     def __init__(self, system, config):
         TG2Data.__init__(self)
         TGBase.__init__(self, system, config)
+        self.config.add({'deadband': 0,
+                         'hardlimit': 1})
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}',
                          v_str='0',
-                         e_str='(wref - omega) - w_d',
+                         e_str='u * (wref - omega) - w_d',
                          )
         self.w_db = DeadBand(u=self.w_d,
                              center=self.dbc,
@@ -144,10 +143,10 @@ class TG2(TG2Data, TGBase):
         self.w_dm = Algeb(info='Measured speed deviation after dead band',
                           tex_name=r'\omega_{dm}',
                           v_str='0',
-                          e_str='(1 - w_db_zi) * w_d + \
-                            w_db_zlr * dbl + \
-                            w_db_zur * dbu - \
-                            w_dm')
+                          e_str='(1 - w_db_zi) * w_d + '
+                                'w_db_zlr * dbl + '
+                                'w_db_zur * dbu - '
+                                'w_dm')
 
         self.w_dmg = Algeb(info='Speed deviation after dead band after gain',
                            tex_name=r'\omega_{dmG}',
@@ -252,7 +251,7 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='(wref - omega) - wd',
+                        e_str='u * (wref - omega) - wd',
                         )
         self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',

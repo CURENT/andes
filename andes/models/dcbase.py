@@ -191,6 +191,10 @@ class ACDC2Term(ModelData, Model):
 
 
 class Ground(ModelData, Model):
+    """
+    Ground model that sets the voltage of the connected DC node.
+    """
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.node = IdxParam(default=None,
@@ -214,10 +218,11 @@ class Ground(ModelData, Model):
                           )
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Ficticious current injection from ground',
-                         e_str='v - voltage',
+                         e_str='u * (v - voltage)',
                          v_str='0',
                          diag_eps=1e-6,
                          )
+        self.v.e_str = '-Idc'
 
 
 class R(DC2Term):
@@ -284,7 +289,7 @@ class C(DC2Term):
                           default=0.001,
                           g=True,
                           )
-        self.vC = State(tex_name='I_C',
+        self.vC = State(tex_name='v_C',
                         info='Capacitor current',
                         unit='p.u.',
                         v_str='0',
@@ -294,7 +299,8 @@ class C(DC2Term):
                          info='Current from node 2 to 1',
                          unit='p.u.',
                          v_str='0',
-                         e_str='vC - (v1 - v2)',
+                         e_str='u * (vC - (v1 - v2)) + '
+                               '(1 - u) * Idc',
                          diag_eps=1e-6,
                          )
         self.v1.e_str = '-Idc'
@@ -329,7 +335,7 @@ class RLs(DC2Term):
                          info='Current from node 2 to 1',
                          unit='p.u.',
                          e_str='-u * IL - Idc',
-                         v_str='-(v1 - v2) / R',
+                         v_str='-u * (v1 - v2) / R',
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
@@ -353,7 +359,7 @@ class RCp(DC2Term):
                           default=0.001,
                           g=True,
                           )
-        self.vC = State(tex_name='I_C',
+        self.vC = State(tex_name='v_C',
                         info='Capacitor current',
                         unit='p.u.',
                         e_str='-u * (Idc - vC/R) / C',
@@ -362,7 +368,8 @@ class RCp(DC2Term):
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Current from node 2 to 1',
                          unit='p.u.',
-                         e_str='vC - (v1 - v2)',
+                         e_str='u * (vC - (v1 - v2)) + '
+                               '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
                          diag_eps=1e-6,
                          )
@@ -400,7 +407,7 @@ class RLCp(DC2Term):
                         v_str='0',
                         e_str='u * vC / L',
                         )
-        self.vC = State(tex_name='I_C',
+        self.vC = State(tex_name='v_C',
                         info='Capacitor current',
                         unit='p.u.',
                         e_str='-u * (Idc - vC/R - IL) / C',
@@ -409,7 +416,8 @@ class RLCp(DC2Term):
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Current from node 2 to 1',
                          unit='p.u.',
-                         e_str='vC - (v1 - v2)',
+                         e_str='u * (vC - (v1 - v2)) + '
+                               '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
                          diag_eps=1e-6,
                          )
@@ -435,7 +443,7 @@ class RCs(DC2Term):
                           default=0.001,
                           g=True,
                           )
-        self.vC = State(tex_name='I_C',
+        self.vC = State(tex_name='v_C',
                         info='Capacitor current',
                         unit='p.u.',
                         e_str='-u * Idc / C',
@@ -444,7 +452,8 @@ class RCs(DC2Term):
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Current from node 2 to 1',
                          unit='p.u.',
-                         e_str='vC - (v1 - v2) - Idc * R',
+                         e_str='u * (vC - (v1 - v2) - Idc * R) + '
+                               '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
                          diag_eps=1e-6,
                          )
@@ -482,7 +491,7 @@ class RLCs(DC2Term):
                         e_str='u * (v1 - v2 - R * IL - vC) / L',
                         v_str='0',
                         )
-        self.vC = State(tex_name='I_C',
+        self.vC = State(tex_name='v_C',
                         info='Capacitor current',
                         unit='p.u.',
                         e_str='u * IL / C',
