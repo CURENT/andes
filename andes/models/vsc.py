@@ -77,6 +77,7 @@ class VSCShunt(ACDC2Term):
                          )
         self.pdc = Algeb(info='DC power injection',
                          tex_name="P_{dc}",
+                         v_str='0',
                          e_str='gsh * vsh * vsh - gsh * v * vsh * cos(a - ash) + '
                                'bsh * v * vsh * sin(a - ash) + pdc',
                          )

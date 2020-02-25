@@ -244,6 +244,7 @@ class System(object):
 
             # Might need to relay data back and forth ????
             # send data back and forth
+            # TODO: re-think over the adder-setter approach
             self.vars_to_dae()
             self.vars_to_models()
 
@@ -466,7 +467,10 @@ class System(object):
 
     def _v_to_dae(self, v_name):
         """
-        Helper function for collecting variable values into dae structures `x` and `y`
+        Helper function for collecting variable values into dae structures `x` and `y`.
+
+        This function must be called with x and y both being zeros.
+        Otherwise, adders will be summed again, causing an error.
 
         Parameters
         ----------
@@ -480,7 +484,10 @@ class System(object):
             raise KeyError(f'{v_name} is not a valid var name')
 
         for var in self.__dict__[f'{v_name}_adders']:
-            # NOTE: Need to skip vars that are not initializers for re-entrance
+            # NOTE:
+            # No need to skip `adder` vars that does not provide a `v_init`.
+            # For power flow, they will be initialized to zero.
+            # For TDS initialization, they will remain their value.
             if var.v_str is None or (var.n == 0):
                 continue
             if var.owner.flags['initialized'] is False:

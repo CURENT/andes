@@ -236,6 +236,7 @@ class R(DC2Term):
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Current from node 2 to 1',
                          unit='p.u.',
+                         v_str='u * (v2 - v1) / R',
                          e_str='u * (v2 - v1) / R - Idc',
                          )
         self.v1.e_str = '-Idc'
@@ -260,6 +261,7 @@ class L(DC2Term):
         self.IL = State(tex_name='I_L',
                         info='Inductance current',
                         unit='p.u.',
+                        v_str='0',
                         e_str='-u * (v1 - v2) / L',
                         )
         self.v1.e_str = '-IL'
@@ -284,11 +286,13 @@ class C(DC2Term):
         self.vC = State(tex_name='I_C',
                         info='Capacitor current',
                         unit='p.u.',
+                        v_str='0',
                         e_str='-u * Idc / C',
                         )
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Current from node 2 to 1',
                          unit='p.u.',
+                         v_str='0',
                          e_str='vC - (v1 - v2)',
                          diag_eps=1e-6,
                          )
@@ -392,6 +396,7 @@ class RLCp(DC2Term):
         self.IL = State(tex_name='I_L',
                         info='Inductance current',
                         unit='p.u.',
+                        v_str='0',
                         e_str='u * vC / L',
                         )
         self.vC = State(tex_name='I_C',
