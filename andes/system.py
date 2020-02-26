@@ -16,6 +16,7 @@ from andes.routines import all_routines
 from andes.models import non_jit
 from andes.core.param import BaseParam
 from andes.core.model import Model
+from andes.core.var import ExtVar
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
 from andes.utils.paths import get_config_path, get_pkl_path
@@ -244,6 +245,7 @@ class System(object):
 
             # Might need to relay data back and forth ????
             # send data back and forth
+            # TODO: re-think over the adder-setter approach
             self.vars_to_dae()
             self.vars_to_models()
 
@@ -282,8 +284,8 @@ class System(object):
         """
         Sb = self.config.mva
 
-        # for each model, get external parameters with `link_external` and then calculate the pu coeff
         for mdl in self.models.values():
+            # get external parameters with `link_external` and then calculate the pu coeff
             for instance in mdl.params_ext.values():
                 ext_name = instance.model
                 try:
@@ -296,7 +298,7 @@ class System(object):
                 except IndexError:
                     raise IndexError(f'Model <{mdl.class_name}> param <{instance.name}> link parameter error')
 
-            # default Sn to Sb if not provided. Some controllers might not have Sn or Vn
+            # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.params:
                 Sn = mdl.Sn.v
             else:
@@ -305,20 +307,29 @@ class System(object):
             # If both Vn and Vn1 are not provided, default to Vn = Vb = 1
             # test if is shunt-connected or series-connected to bus, or unconnected to bus
             Vb, Vn = 1, 1
-            if 'bus' in mdl.params or 'bus1' in mdl.params:
-                if 'bus' in mdl.params:
-                    Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
-                    Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
-                elif 'bus1' in mdl.params:
-                    Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
-                    Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
+            if 'bus' in mdl.params:
+                Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
+                Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
+            elif 'bus1' in mdl.params:
+                Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
+                Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
 
-            Zn = (Vn ** 2 / Sn)
-            Zb = (Vb ** 2 / Sb)
+            Zn = Vn ** 2 / Sn
+            Zb = Vb ** 2 / Sb
 
-            if 'node' in mdl.params or 'node1' in mdl.params:
-                raise NotImplementedError('Per unit conversion for DC models is not implemented')
-            # TODO: handle DC voltages similarly
+            # process dc parameter pu conversion
+            Vdcb, Vdcn, Idcn = 1, 1, 1
+            if 'node' in mdl.params:
+                Vdcb = self.Node.get(src='Vdcn', idx=mdl.node.v, attr='v')
+                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.params else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+            elif 'node1' in mdl.params:
+                Vdcb = self.Node.get(src='Vdcn', idx=mdl.node1.v, attr='v')
+                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.params else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+            Idcb = Sb / Vdcb
+            Rb = Vdcb / Idcb
+            Rn = Vdcn / Idcn
 
             coeffs = {'voltage': Vn / Vb,
                       'power': Sn / Sb,
@@ -326,6 +337,10 @@ class System(object):
                       'current': (Sn / Vn) / (Sb / Vb),
                       'z': Zn / Zb,
                       'y': Zb / Zn,
+                      'dc_voltage': Vdcn / Vdcb,
+                      'dc_current': Idcn / Idcb,
+                      'r': Rn / Rb,
+                      'g': Rb / Rn,
                       }
 
             for prop, coeff in coeffs.items():
@@ -453,7 +468,10 @@ class System(object):
 
     def _v_to_dae(self, v_name):
         """
-        Helper function for collecting variable values into dae structures `x` and `y`
+        Helper function for collecting variable values into dae structures `x` and `y`.
+
+        This function must be called with x and y both being zeros.
+        Otherwise, adders will be summed again, causing an error.
 
         Parameters
         ----------
@@ -467,8 +485,12 @@ class System(object):
             raise KeyError(f'{v_name} is not a valid var name')
 
         for var in self.__dict__[f'{v_name}_adders']:
-            # NOTE: Need to skip vars that are not initializers for re-entrance
-            if var.v_str is None or (var.n == 0):
+            # NOTE:
+            # For power flow, they will be initialized to zero.
+            # For TDS initialization, they will remain their value.
+            if var.n == 0:
+                continue
+            if (var.v_str is None) and isinstance(var, ExtVar):
                 continue
             if var.owner.flags['initialized'] is False:
                 continue
@@ -519,7 +541,8 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-        dill.dump(self.calls, open(pkl_path, 'wb'))
+        with open(pkl_path, 'wb') as f:
+            dill.dump(self.calls, f)
 
     def undill_calls(self):
         import dill
@@ -530,7 +553,8 @@ class System(object):
         if not os.path.isfile(pkl_path):
             self.prepare()
 
-        self.calls = dill.load(open(pkl_path, 'rb'))
+        with open(pkl_path, 'rb') as f:
+            self.calls = dill.load(f)
         logger.debug(f'System undill: loaded <{pkl_path}> file.')
         for name, model_call in self.calls.items():
             self.__dict__[name].calls = model_call

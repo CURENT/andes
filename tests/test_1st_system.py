@@ -1,9 +1,5 @@
 import unittest
-
 from andes.system import System
-import dill
-
-dill.settings['recurse'] = True
 
 
 class TestCodegen(unittest.TestCase):

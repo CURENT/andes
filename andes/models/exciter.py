@@ -62,7 +62,7 @@ class ExcBase(Model):
                            model='SynGen',
                            indexer=self.syn,
                            tex_name=r'v_f',
-                           e_str='u*(vout - vf0)',
+                           e_str='u * (vout - vf0)',
                            info='Excitation field voltage to generator',
                            )
         # from bus, get a and v

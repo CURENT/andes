@@ -10,8 +10,8 @@ class BusData(ModelData):
     """
     Class for Bus data
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         self.Vn = NumParam(default=110,
                            info="AC voltage rating",
                            unit='kV',
@@ -91,7 +91,7 @@ class Bus(Model, BusData):
                        unit='p.u.',
                        )
 
-        # optional initial values
+        # initial values
         self.a.v_str = 'flat_start * 1e-8 + ' \
                        '(1 - flat_start) * a0'
         self.v.v_str = 'flat_start * 1 + ' \

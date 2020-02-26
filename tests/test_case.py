@@ -1,10 +1,7 @@
 import unittest
-import dill
 from andes.system import System
 from andes.io import xlsx
 from andes.utils.paths import get_case
-
-dill.settings['recurse'] = True
 
 
 class Test5Bus(unittest.TestCase):

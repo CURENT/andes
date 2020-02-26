@@ -273,15 +273,3 @@ class ExtState(ExtVar):
 class ExtAlgeb(ExtVar):
     e_code = 'g'
     v_code = 'y'
-
-
-# class Calc(BaseVar):
-#     """
-#     Calculated variable class, an alias of the `BaseVar`.
-#
-#     This class is meant for internally calculated variables
-#     such as line flow power.
-#     """
-#     def __init__(self, **kwargs):
-#         super(Calc, self).__init__(**kwargs)
-#         self.addressable = False

@@ -213,6 +213,17 @@ class ACTopology(GroupBase):
         self.common_vars.extend(('a', 'v'))
 
 
+class DCTopology(GroupBase):
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('v',))
+
+
+class Collection(GroupBase):
+    """Collection of topology models"""
+    pass
+
+
 class StaticGen(GroupBase):
     """
     Static generator group for power flow calculation
@@ -267,3 +278,23 @@ class Exciter(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('vout', ))
+
+
+class Experimental(GroupBase):
+    """Experimantal group"""
+    pass
+
+
+class DCLink(GroupBase):
+    """Basic DC links"""
+    pass
+
+
+class StaticACDC(GroupBase):
+    """AC DC device for power flow"""
+    pass
+
+
+class TimedEvent(GroupBase):
+    """Timed event group"""
+    pass

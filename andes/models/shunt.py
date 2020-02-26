@@ -10,7 +10,7 @@ class ShuntData(ModelData):
     def __init__(self, system=None, name=None):
         super().__init__(system, name)
 
-        self.bus = IdxParam(model='Bus', info="idx of connected bus")
+        self.bus = IdxParam(model='Bus', info="idx of connected bus", mandatory=True)
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
@@ -29,5 +29,5 @@ class Shunt(ShuntData, Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')
 
-        self.a.e_str = 'v**2 * g'
-        self.v.e_str = '-v**2 * b'
+        self.a.e_str = 'u * v**2 * g'
+        self.v.e_str = '-u * v**2 * b'

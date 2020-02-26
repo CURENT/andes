@@ -76,6 +76,7 @@
 - [x] Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
 - [x] Test initialization and report suspect issues
 - [x] Test anti-windup limiter
+- [x] Added expression symbol checking. Undefined symbols will be thown as ValueError during preparation
 *   `System.reset()` not working after `TDS.run`
 *   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
 *   Deal with two-terminal and multi-terminal devices
@@ -104,11 +105,13 @@
 ## Milestones
 
 ### To-do bullets
--   [x] A working `GENROU` model with saturation function
+- [x] A working `GENROU` model with saturation function
 *   A refreshed raw file reader to build data into `ModelData`
 *   A refreshed dyr file reader
 *   Define general hooks - when should the connectivity check happen
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
+*   Check if config is valid boolean values.
+- [x] Fix the model connectivity status `u` in interface equations 
 
 ## Later Versions
 *   Restore compatibility with dome format
