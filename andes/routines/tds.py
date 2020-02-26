@@ -82,6 +82,23 @@ class TDS(BaseRoutine):
             logger.warning('No dynamic component loaded.')
         return system.dae.xy
 
+    def summary(self):
+        """
+        Print out a summary to logger.info.
+
+        Returns
+        -------
+
+        """
+        out = list()
+        fixed_or_variable = 'fixed' if self.config.fixt == 1.0 else 'variable'
+        out.append(f'Method: {self.config.sparselib}')
+        out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s, '
+                   f'{fixed_or_variable} step h={self.config.tstep}s')
+
+        out_str = '\n'.join(out)
+        logger.info(out_str)
+
     def run(self, verbose=False):
         """
         Run the implicit numerical integration for TDS.
@@ -96,6 +113,7 @@ class TDS(BaseRoutine):
         config = self.config
 
         logger.info('-> Time Domain Simulation:')
+        self.summary()
         self._initialize()
         self.pbar = tqdm(total=100, ncols=70, unit='%')
 
@@ -151,7 +169,7 @@ class TDS(BaseRoutine):
         system.j_update(models=self.pflow_tds_models)
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
-            logger.info('Initialization tests passed.')
+            logger.debug('Initialization tests passed.')
             return True
         else:
             logger.warning('Suspect initialization issue!')
@@ -346,7 +364,7 @@ class TDS(BaseRoutine):
 
         self.deltatmax = min(3 * tcycle, tspan / 100.0)
         self.deltat = min(tcycle, tspan / 100.0)
-        self.deltatmin = min(tcycle / 100, self.deltatmax / 20)
+        self.deltatmin = min(tcycle / 500, self.deltatmax / 20)
 
         if config.tstep <= 0:
             logger.warning('Fixed time step is negative or zero')
@@ -356,7 +374,7 @@ class TDS(BaseRoutine):
         if config.fixt:
             self.deltat = config.tstep
             if config.tstep < self.deltatmin:
-                logger.warning('Fixed time step is smaller than the estimated minimum')
+                logger.warning('Fixed time step is smaller than the estimated minimum.')
 
         self.h = self.deltat
         return self.h
