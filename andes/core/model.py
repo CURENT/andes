@@ -107,6 +107,9 @@ class ModelData(object):
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
         self.name = DataParam(info='device name', tex_name='name')
 
+    def __len__(self):
+        return self.n
+
     def __setattr__(self, key, value):
         if isinstance(value, BaseParam):
             value.owner = self
@@ -379,6 +382,7 @@ class Model(object):
 
         # cached dictionary of inputs
         self._input = OrderedDict()
+        self._input_z = OrderedDict()
 
     def __setattr__(self, key, value):
         if isinstance(value, (BaseVar, BaseService, Discrete, Block)):
@@ -467,10 +471,11 @@ class Model(object):
         for instance in self.services_ext.values():
             self._input[instance.name] = instance.v
 
-        # updated discrete flags every call
+        # discrete flags
         for instance in self.discrete.values():
             for name, val in zip(instance.get_names(), instance.get_values()):
                 self._input[name] = val
+                self._input_z[name] = val
 
         # append all variable values
         for instance in self.cache.all_vars.values():

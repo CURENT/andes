@@ -125,7 +125,7 @@ class TDS(BaseRoutine):
 
             if self._implicit_step(verbose):
                 # store values
-                dae.store_txy()
+                dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=self.pflow_tds_models))
                 dae.t += self.h
 
                 # show progress in percentage
