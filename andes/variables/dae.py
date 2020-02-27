@@ -218,6 +218,26 @@ class DAE(object):
                                        self.col_of(name),
                                        self.get_size(name), 'd')
 
+    def _compare_pattern(self, name):
+        """
+        Compare the sparsity pattern for the given Jacobian name.
+
+        This function is for debugging the symbolic factorization error / sparsity pattern change.
+        To use, add the following line in `System.j_update` for each `j_name` at the end:
+
+            self.dae._compare_pattern(j_name)
+        """
+        self.__dict__[f'{name}_tpl'] = spmatrix(self.val_of(name),
+                                                self.row_of(name),
+                                                self.col_of(name),
+                                                self.get_size(name), 'd')
+        m_before = self.__dict__[f'{name}_tpl']
+        m_after = self.__dict__[name]
+
+        for i in range(len(m_after)):
+            if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
+                raise KeyError
+
     def resize_array(self):
         """
         Resize arrays to the new `m` and `n`
