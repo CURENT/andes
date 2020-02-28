@@ -543,7 +543,7 @@ class System(object):
         -------
         numpy.array
         """
-        if self.config.store_z != 1.0:
+        if self.config.store_z != 1:
             return None
 
         z_dict = list()

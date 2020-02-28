@@ -92,6 +92,7 @@ class TDS(BaseRoutine):
         """
         out = list()
         fixed_or_variable = 'fixed' if self.config.fixt == 1.0 else 'variable'
+        out.append('-> Time Domain Simulation:')
         out.append(f'Method: {self.config.sparselib}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s, '
                    f'{fixed_or_variable} step h={self.config.tstep}s')
@@ -112,18 +113,17 @@ class TDS(BaseRoutine):
         dae = self.system.dae
         config = self.config
 
-        logger.info('-> Time Domain Simulation:')
         self.summary()
         self._initialize()
         self.pbar = tqdm(total=100, ncols=70, unit='%')
 
         t0, _ = elapsed()
-        while system.dae.t < self.config.tf and (not self.busted):
+        while (system.dae.t < self.config.tf) and (not self.busted):
             if self.calc_h() == 0:
                 logger.error("Time step calculated to zero. Simulation terminated.")
                 break
 
-            if self._implicit_step(verbose):
+            if self._implicit_step():
                 # store values
                 dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=self.pflow_tds_models))
                 dae.t += self.h
@@ -138,6 +138,7 @@ class TDS(BaseRoutine):
             if self.is_switch_time():
                 self._last_switch_t = system.switch_times[self._switch_idx]
                 system.switch_action(self.pflow_tds_models)
+                system.vars_to_models()
 
         self.pbar.close()
         _, s1 = elapsed(t0)
@@ -178,7 +179,7 @@ class TDS(BaseRoutine):
             logger.warning(f"Check variables {', '.join(fail_names)}")
             return False
 
-    def _implicit_step(self, verbose=False):
+    def _implicit_step(self):
         """
         Integrate for a single given step.
 
@@ -243,17 +244,20 @@ class TDS(BaseRoutine):
             self.mis.append(mis)
             self.niter += 1
 
-            # non-convergence cases
             if mis <= self.config.tol:
                 self.converged = True
+                break
+
+            # non-convergence cases
+            if self.niter > self.config.max_iter:
+                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
+                             f'h={self.h:.6f}, mis={mis:.4g} on '
+                             f'{system.dae.xy_name[np.argmax(mis)]}')
                 break
             if np.isnan(inc).any():
                 logger.error(f'NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 self.busted = True
-                break
-            if self.niter > self.config.max_iter:
-                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, h={self.h:.6f}')
                 break
             if mis > 1000 and (mis > 1e8 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
@@ -261,8 +265,6 @@ class TDS(BaseRoutine):
                 break
 
         if not self.converged:
-            if verbose:
-                logger.info(f'  Not converged, time={dae.t:.4f}s, h={self.h:.4f}, mis={mis:.4g}')
             dae.x = np.array(self.x0)
             dae.y = np.array(self.y0)
             dae.f = np.array(self.f0)

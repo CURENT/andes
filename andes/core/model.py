@@ -526,8 +526,12 @@ class Model(object):
                 else:
                     instance.v = func
 
-        # NOTE: some numerical calls depend on other service values, so they are evaluated
-        #       after lambdified calls
+                if not isinstance(instance.v, np.ndarray):
+                    instance.v = instance.v * np.ones(self.n)
+
+        # NOTE:
+        # Some numerical calls depend on other service values.
+        # They are evaluated after lambdified calls
 
         # Apply both the individual `v_numeric` and Model-level `s_numeric`
         for instance in self.services.values():

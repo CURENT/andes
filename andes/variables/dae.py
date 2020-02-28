@@ -19,7 +19,9 @@ class DAETimeSeries(object):
 
     @property
     def txyz(self):
-        """Return the values of [t, x, y, z] in an array."""
+        """
+        Return the values of [t, x, y, z] in an array.
+        """
         self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
         self.t = self.df.index.to_numpy()
         self.xy = self.df.to_numpy()
