@@ -21,7 +21,7 @@ class TDS(BaseRoutine):
                                      ('tf', 20.0),
                                      ('fixt', 1),
                                      ('tstep', 1/30),  # recommended step size
-                                     ('max_iter', 10),
+                                     ('max_iter', 15),
                                      )))
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -251,8 +251,8 @@ class TDS(BaseRoutine):
             # non-convergence cases
             if self.niter > self.config.max_iter:
                 logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
-                             f'h={self.h:.6f}, mis={mis:.4g} on '
-                             f'{system.dae.xy_name[np.argmax(mis)]}')
+                             f'h={self.h:.6f}, mis={mis:.4g} '
+                             f'({system.dae.xy_name[np.argmax(inc)]})')
                 break
             if np.isnan(inc).any():
                 logger.error(f'NaN found in solution. Convergence not likely')

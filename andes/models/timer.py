@@ -57,7 +57,7 @@ class Fault(ModelData, Model):
                              callback=self.clear_fault,
                              )
         self.xf = NumParam(info='Fault to ground impedance',
-                           default=1e-6,
+                           default=1e-4,
                            tex_name='x_f',
                            )
         self.rf = NumParam(info='Fault to ground resistance',

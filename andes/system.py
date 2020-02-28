@@ -805,16 +805,16 @@ class System(object):
         self._call_models_method('list2array', self.models)
 
     def set_config(self, config=None):
-        # NOTE: No need to call `set_config` for models since
-        # the config is passed during model import
+        """
+        Set configuration for the System object.
+
+        Config for models are routines are passed directly to their constructors.
+        """
         if config is not None:
             # set config for system
             if self.__class__.__name__ in config:
                 self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
-
-        else:
-            logger.warning('No config provided.')
 
     def get_config(self):
         """Get config data from models
