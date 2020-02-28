@@ -151,7 +151,7 @@ class Solver(object):
                 return np.ravel(self.b)
             except ArithmeticError:
                 logger.error('Jacobian matrix is singular.')
-                return np.ravel(matrix(1, self.b.size, 'd'))
+                return np.ravel(matrix(np.nan, self.b.size, 'd'))
 
         elif self.sparselib in ('spsolve', 'cupy'):
             return self.linsolve(A, b)

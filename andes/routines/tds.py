@@ -232,6 +232,14 @@ class TDS(BaseRoutine):
             qg = np.hstack((q, dae.g))
 
             inc = self.solver.solve(self.Ac, -matrix(qg))
+
+            # check for np.nan first
+            if np.isnan(inc).any():
+                logger.error(f'NaN found in solution. Convergence not likely')
+                self.niter = self.config.max_iter + 1
+                self.busted = True
+                break
+
             # reset really small values to avoid anti-windup limiter flag jumps
             inc[np.where(np.abs(inc) < 1e-12)] = 0
             # set new values
@@ -244,20 +252,15 @@ class TDS(BaseRoutine):
             self.mis.append(mis)
             self.niter += 1
 
+            # converged
             if mis <= self.config.tol:
                 self.converged = True
                 break
-
             # non-convergence cases
             if self.niter > self.config.max_iter:
                 logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
                              f'h={self.h:.6f}, mis={mis:.4g} '
                              f'({system.dae.xy_name[np.argmax(inc)]})')
-                break
-            if np.isnan(inc).any():
-                logger.error(f'NaN found in solution. Convergence not likely')
-                self.niter = self.config.max_iter + 1
-                self.busted = True
                 break
             if mis > 1000 and (mis > 1e8 * self.mis[0]):
                 logger.error(f'Error increased too quickly. Convergence not likely.')
