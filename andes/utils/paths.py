@@ -80,7 +80,7 @@ class DisplayablePath(object):
 def cases_root():
     """Return the root path to the stock cases"""
     dir_name = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(dir_name, '..', '..', 'cases')
+    return os.path.join(dir_name, '..', 'cases')
 
 
 def tests_root():
