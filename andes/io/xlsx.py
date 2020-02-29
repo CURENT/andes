@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
-    return True  # hard coded yet
+    # hard coded yet
+    return True
 
 
-def write(system, outfile, skip_empty=True, overwrite=None):
+def write(system, outfile, skip_empty=True, overwrite=None, add_sheet=None):
     """
     Write loaded ANDES system data into an xlsx file
 
@@ -30,6 +31,8 @@ def write(system, outfile, skip_empty=True, overwrite=None):
         Skip output of empty models (n = 0)
     overwrite : bool
         None to prompt for overwrite selection; True to overwrite; False to not overwrite
+    add_sheet : str, optional
+        An optional model to be added to the output spreadsheet
 
     Returns
     -------
@@ -51,6 +54,19 @@ def write(system, outfile, skip_empty=True, overwrite=None):
         if skip_empty and instance.n == 0:
             continue
         instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
+
+    if add_sheet is not None:
+        if ',' in add_sheet:
+            add_sheet = add_sheet.split(',')
+        else:
+            add_sheet = [add_sheet]
+
+        for item in add_sheet:
+            if item in system.models:
+                system.models[item].cache.df_in.to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
+                logger.info(f'<{item}> template sheet added.')
+            else:
+                logger.error(f'<{item}> is not a valid model name.')
 
     writer.save()
     logger.info(f'xlsx file written to <{outfile}>')

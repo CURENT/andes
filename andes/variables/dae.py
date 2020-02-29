@@ -9,20 +9,34 @@ class DAETimeSeries(object):
     def __init__(self, dae=None):
         self.dae = dae
         self._data = OrderedDict()
-        self.t = None
-        self.xy = None
+        self._z = OrderedDict()
+
+        self.t = np.array([])
+        self.xy = np.array([])
+        self.z = np.array([])
         self.df = None
+        self.df_z = None
 
     @property
-    def txy(self):
-        """Return the values of [t, x, y] in an array."""
+    def txyz(self):
+        """
+        Return the values of [t, x, y, z] in an array.
+        """
         self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
         self.t = self.df.index.to_numpy()
         self.xy = self.df.to_numpy()
-        return np.hstack((self.t.reshape((-1, 1)), self.xy))
 
-    def store_txy(self, t, xy):
+        if len(self._z):
+            self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
+            self.z = self.df_z.to_numpy()
+            return np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
+        else:
+            return np.hstack((self.t.reshape((-1, 1)), self.xy))
+
+    def store_txyz(self, t, xy, z=None):
         self._data[t] = xy
+        if z is not None:
+            self._z[t] = z
 
 
 class DAE(object):
@@ -37,10 +51,9 @@ class DAE(object):
         self.t = 0
         self.ts = DAETimeSeries(self)
 
-        self.m, self.n = 0, 0
-
-        self.x, self.y = None, None
-        self.f, self.g = None, None
+        self.m, self.n, self.o = 0, 0, 0
+        self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
+        self.f, self.g = np.array([]), np.array([])
 
         self.fx = None
         self.fy = None
@@ -58,6 +71,7 @@ class DAE(object):
 
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
+        self.z_name, self.z_tex_name = [], []
 
         # ----- indices of sparse matrices -----
         self.ifx, self.jfx, self.vfx = list(), list(), list()
@@ -76,6 +90,7 @@ class DAE(object):
         """
         self.clear_fg()
         self.clear_xy()
+        self.clear_z()
 
     def clear_fg(self):
         """Resets equation arrays to empty
@@ -88,6 +103,12 @@ class DAE(object):
         """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)
+
+    def clear_z(self):
+        """
+        Reset status arrays to empty
+        """
+        self.z = np.zeros(self.n)
 
     def clear_ijv(self):
         self.ifx, self.jfx, self.vfx = list(), list(), list()
@@ -109,6 +130,7 @@ class DAE(object):
         self.n = 0
         self.clear_fg()
         self.clear_xy()
+        self.clear_z()
         self.clear_ijv()
         self.clear_ts()
 
@@ -132,6 +154,8 @@ class DAE(object):
                 ret.append(self.n)
             elif char in ('g', 'y', 'r'):
                 ret.append(self.m)
+            elif char == 'z':
+                ret.append(self.o)
         return tuple(ret)
 
     def store_sparse_ijv(self, name, row, col, val):
@@ -218,6 +242,26 @@ class DAE(object):
                                        self.col_of(name),
                                        self.get_size(name), 'd')
 
+    def _compare_pattern(self, name):
+        """
+        Compare the sparsity pattern for the given Jacobian name.
+
+        This function is for debugging the symbolic factorization error / sparsity pattern change.
+        To use, add the following line in `System.j_update` for each `j_name` at the end:
+
+            self.dae._compare_pattern(j_name)
+        """
+        self.__dict__[f'{name}_tpl'] = spmatrix(self.val_of(name),
+                                                self.row_of(name),
+                                                self.col_of(name),
+                                                self.get_size(name), 'd')
+        m_before = self.__dict__[f'{name}_tpl']
+        m_after = self.__dict__[name]
+
+        for i in range(len(m_after)):
+            if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
+                raise KeyError
+
     def resize_array(self):
         """
         Resize arrays to the new `m` and `n`
@@ -228,6 +272,7 @@ class DAE(object):
         """
         self.x = np.append(self.x, np.zeros(self.n - len(self.x)))
         self.y = np.append(self.y, np.zeros(self.m - len(self.y)))
+        self.z = np.append(self.z, np.zeros(self.o - len(self.z)))
 
         self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
         self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
@@ -236,6 +281,11 @@ class DAE(object):
     def xy(self):
         """Return a concatenated array of [x, y]."""
         return np.hstack((self.x, self.y))
+
+    @property
+    def xyz(self):
+        """Return a concatenated array of [x, y]."""
+        return np.hstack((self.x, self.y, self.z))
 
     @property
     def fg(self):
@@ -248,12 +298,22 @@ class DAE(object):
         return self.x_name + self.y_name
 
     @property
+    def xyz_name(self):
+        """Return a concatenated list of all variable names without format."""
+        return self.x_name + self.y_name + self.z_name
+
+    @property
     def xy_tex_name(self):
         """Return a concatenated list of all variable names in LaTeX format."""
         return self.x_tex_name + self.y_tex_name
 
+    @property
+    def xyz_tex_name(self):
+        """Return a concatenated list of all variable names in LaTeX format."""
+        return self.x_tex_name + self.y_tex_name + self.z_tex_name
+
     def get_name(self, arr):
-        mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y'}
+        mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y', 'z': 'z'}
         return self.__dict__[mapping[arr] + '_name']
 
     def print_array(self, name, value=None):
@@ -261,15 +321,6 @@ class DAE(object):
             value = self.__dict__[name]
         res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), value))
         logger.info(res)
-
-    def store_txy(self):
-        """
-        Store t, and xy in the OrderedDict of DAETimeSeries
-        Returns
-        -------
-
-        """
-        self.ts.store_txy(self.t, self.xy)
 
     def write_lst(self, lst_path):
         """
@@ -284,11 +335,11 @@ class DAE(object):
         out += template.format(0, 'Time [s]', '$Time\\ [s]$')
 
         # output variable indices
-        idx = list(range(self.m + self.n))
+        idx = list(range(self.m + self.n + self.o))
 
         # variable names concatenated
-        uname = self.xy_name
-        fname = self.xy_tex_name
+        uname = self.xyz_name
+        fname = self.xyz_tex_name
 
         for e, i in enumerate(idx):
             # `idx` in the lst file is always consecutive
@@ -299,4 +350,4 @@ class DAE(object):
         return True
 
     def write_npy(self, npy_path):
-        np.save(npy_path, self.ts.txy)
+        np.save(npy_path, self.ts.txyz)

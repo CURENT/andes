@@ -227,7 +227,7 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convertall='', **kwargs):
+def run_case(case, routine=None, profile=False, convert='', convert_all='', add_sheet=None, **kwargs):
     """
     Run a single simulation case.
     """
@@ -243,8 +243,13 @@ def run_case(case, routine=None, profile=False, convert='', convertall='', **kwa
         andes.io.dump(system, convert)
         return system
     # convert to xlsx with all model templates
-    if convertall != '':
+    elif convert_all != '':
         andes.io.xlsx.write(system, system.files.dump, skip_empty=False)
+        return system
+    # add template sheet
+    elif add_sheet is not None:
+        andes.io.xlsx.write(system, system.files.dump, skip_empty=True,
+                            overwrite=True, add_sheet=add_sheet)
         return system
 
     system.PFlow.run()

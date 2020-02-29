@@ -61,12 +61,12 @@ class TDSData(object):
         """Load from DAE time series"""
         dae = self.dae
         self.t = dae.ts.t
-        self.nvars = dae.n + dae.m + 1
+        self.nvars = dae.n + dae.m + dae.o + 1
 
         self._idx = list(range(self.nvars))
-        self._uname = ['Time [s]'] + dae.x_name + dae.y_name
-        self._fname = ['$Time [s]$'] + dae.x_tex_name + dae.y_tex_name
-        self._data = dae.ts.txy
+        self._uname = ['Time [s]'] + dae.x_name + dae.y_name + dae.z_name
+        self._fname = ['$Time [s]$'] + dae.x_tex_name + dae.y_tex_name + dae.z_tex_name
+        self._data = dae.ts.txyz
 
         self.file_name = dae.system.files.name
 

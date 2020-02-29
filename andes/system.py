@@ -61,6 +61,7 @@ class System(object):
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
+                                     ('store_z', 0),
                                      )))
 
         self.files = FileMan()
@@ -224,6 +225,17 @@ class System(object):
                 for uid, addr in enumerate(item.a):
                     self.dae.x_name[addr] = f'{mdl_name} {name} {uid}'
                     self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
+
+            # add discrete flag names
+            if self.config.store_z == 1:
+                for item in mdl.discrete.values():
+                    if mdl.flags['initialized']:
+                        continue
+                    for name, tex_name in zip(item.get_names(), item.get_tex_names()):
+                        for uid in range(mdl.n):
+                            self.dae.z_name.append(f'{mdl_name} {name} {uid}')
+                            self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
+                            self.dae.o += 1
 
     def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
         if models is None:
@@ -523,6 +535,25 @@ class System(object):
             if var.n > 0:
                 np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
+    def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Get all discrete status flags in a numpy array.
+
+        Returns
+        -------
+        numpy.array
+        """
+        if self.config.store_z != 1:
+            return None
+
+        z_dict = list()
+        for mdl in models.values():
+            if mdl.n == 0 or len(mdl._input_z) == 0:
+                continue
+            z_dict.append(np.concatenate(list((mdl._input_z.values()))))
+
+        return np.concatenate(z_dict)
+
     def get_models_with_flag(self, flag: Optional[Union[str, Tuple]] = None):
         if isinstance(flag, str):
             flag = [flag]
@@ -774,16 +805,16 @@ class System(object):
         self._call_models_method('list2array', self.models)
 
     def set_config(self, config=None):
-        # NOTE: No need to call `set_config` for models since
-        # the config is passed during model import
+        """
+        Set configuration for the System object.
+
+        Config for models are routines are passed directly to their constructors.
+        """
         if config is not None:
             # set config for system
             if self.__class__.__name__ in config:
                 self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
-
-        else:
-            logger.warning('No config provided.')
 
     def get_config(self):
         """Get config data from models
