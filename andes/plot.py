@@ -605,7 +605,7 @@ def eig_plot(name, args):
         pass
 
 
-def tdsplot(filename, y, x=(0,), tocsv=False, **kwargs):
+def tdsplot(filename, y, x=(0,), tocsv=False, find=None, exclude=None, **kwargs):
     """
     TDS plot main function based on the new TDSData class
 
@@ -628,6 +628,12 @@ def tdsplot(filename, y, x=(0,), tocsv=False, **kwargs):
         tds_data = TDSData(filename[0])
         if tocsv is True:
             tds_data.export_csv()
+            return
+        if find is not None:
+            print(tds_data.find(query=find, exclude=exclude))
+            return
+        if len(y) == 0:
+            logger.error('Must specify Y indices to plot.')
             return
         y_num = parse_y(y, lower=0, upper=tds_data.nvars)
         tds_data.plot(xidx=x, yidx=y_num, **kwargs)
