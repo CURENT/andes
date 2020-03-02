@@ -298,3 +298,8 @@ class StaticACDC(GroupBase):
 class TimedEvent(GroupBase):
     """Timed event group"""
     pass
+
+
+class FreqMeasurement(GroupBase):
+    """Frequency measurements."""
+    pass
