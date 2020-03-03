@@ -437,7 +437,10 @@ class System(object):
                         val = float(val)
                     if isinstance(val, (int, float)) or len(val) > 0:
                         try:
-                            self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                            if not IP_ADD:
+                                self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                            else:
+                                self.dae.__dict__[j_name].ipadd(val, row, col)
                         except TypeError as e:
                             logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
                                          f'j_size={j_size}')
