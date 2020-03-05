@@ -615,15 +615,16 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-
         if not os.path.isfile(pkl_path):
             self.prepare()
 
         with open(pkl_path, 'rb') as f:
             self.calls = dill.load(f)
         logger.debug(f'System undill: loaded <{pkl_path}> file.')
+
         for name, model_call in self.calls.items():
-            self.__dict__[name].calls = model_call
+            if name in self.__dict__:
+                self.__dict__[name].calls = model_call
 
     def _get_models(self, models):
         if models is None:
