@@ -37,6 +37,12 @@ import coloredlogs  # NOQA
 from numpy import ndarray  # NOQA
 from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
 
+try:
+    from cvxoptklu import klu
+except ImportError:
+    klu = None
+
+
 jpi2 = 1.5707963267948966j
 rad2deg = 57.295779513082323
 deg2rad = 0.017453292519943
