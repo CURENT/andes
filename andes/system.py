@@ -430,9 +430,6 @@ class System(object):
 
             for mdl in models.values():
                 for row, col, val in mdl.zip_ijv(j_name):
-                    if isinstance(val, np.float64):
-                        # Workaround for CVXOPT's handling of np.float64
-                        val = float(val)
                     try:
                         if self.config.ipadd and IP_ADD:
                             self.dae.__dict__[j_name].ipadd(val, row, col)
