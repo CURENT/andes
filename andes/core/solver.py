@@ -1,14 +1,9 @@
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
-from andes.shared import np, matrix, umfpack
+from andes.shared import np, matrix, umfpack, klu
 
 import logging
 logger = logging.getLogger(__name__)
-
-try:
-    from cvxoptklu import klu
-except ImportError:
-    klu = None
 
 
 class Solver(object):
@@ -26,7 +21,7 @@ class Solver(object):
         self.factorize = True
         self.use_linsolve = False
 
-        # input checking
+        # check if the sparselib is imported successfully
         if globals()[sparselib] is None:
             self.sparselib = 'umfpack'
 

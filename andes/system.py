@@ -22,13 +22,12 @@ from andes.core.config import Config
 from andes.utils.paths import get_config_path, get_pkl_path
 
 from andes.shared import np, spmatrix
+logger = logging.getLogger(__name__)
 
-IP_ADD = False
 if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
-
-
-logger = logging.getLogger(__name__)
+else:
+    IP_ADD = False
 
 
 class System(object):
@@ -62,6 +61,7 @@ class System(object):
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
                                      ('store_z', 0),
+                                     ('ipadd', 1),
                                      )))
 
         self.files = FileMan()
@@ -430,18 +430,15 @@ class System(object):
 
             for mdl in models.values():
                 for row, col, val in mdl.zip_ijv(j_name):
-                    # TODO: use `spmatrix.ipadd` if available
-                    # TODO: fix `ipadd` to get rid of type checking
-                    if isinstance(val, np.float64):
-                        # Workaround for CVXOPT's handling of np.float64
-                        val = float(val)
-                    if isinstance(val, (int, float)) or len(val) > 0:
-                        try:
+                    try:
+                        if self.config.ipadd and IP_ADD:
+                            self.dae.__dict__[j_name].ipadd(val, row, col)
+                        else:
                             self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
-                        except TypeError as e:
-                            logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
-                                         f'j_size={j_size}')
-                            raise e
+                    except TypeError as e:
+                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
+                                     f'j_size={j_size}')
+                        raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
         models = self._get_models(models)
