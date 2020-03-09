@@ -147,10 +147,6 @@ class Limiter(Discrete):
         self.zl[:] = np.less_equal(self.u.v, self.lower.v)
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
-        # self.zu = self.zu.astype(np.float64)
-        # self.zl = self.zl.astype(np.float64)
-        # self.zi = self.zi.astype(np.float64)
-
 
 class SortedLimiter(Limiter):
     """
@@ -196,9 +192,6 @@ class HardLimiter(Limiter):
 class WindupLimiter(Limiter):
     def __init__(self, u, lower, upper,  enable=True, name=None, tex_name=None):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
-
-    # def set_eq(self):
-    #     self.u.e = self.u.e * self.zi
 
 
 class AntiWindupLimiter(WindupLimiter):
