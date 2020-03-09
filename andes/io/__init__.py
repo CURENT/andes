@@ -96,7 +96,6 @@ def parse(system):
     # exit if the format parser could not be imported
     try:
         parser = importlib.import_module('.' + input_format, __name__)
-        dmparser = importlib.import_module('.' + 'dome', __name__)
         if add_format:
             addparser = importlib.import_module('.' + add_format, __name__)
     except ImportError:
