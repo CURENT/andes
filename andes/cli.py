@@ -55,7 +55,7 @@ def create_parser():
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='data file name.')
     plot.add_argument('x', nargs='?', type=int, help='x axis variable index', default='0')
-    plot.add_argument('y', nargs='*', help='y axis variable indices. Space separated or Python ranges accepted.')
+    plot.add_argument('y', nargs='*', help='y axis variable indices. Space separated or ranges accepted')
     plot.add_argument('--xmin', type=float, help='x axis minimum value', dest='left')
     plot.add_argument('--xmax', type=float, help='x axis maximum value', dest='right')
     plot.add_argument('--ymax', type=float, help='y axis maximum value')
