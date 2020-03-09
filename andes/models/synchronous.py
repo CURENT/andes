@@ -324,12 +324,12 @@ class GENROUModel(object):
                                 tex_name=r"\gamma_{qd}")
 
         # Saturation services
-        # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sa = 0, A = 1, B = 0
-        self.Sa = ConstService(v_str='sqrt((S10 * 1) / (S12 * 1.2))',
-                               tex_name=r"S_a")
-        self.SA = ConstService(v_str='1.2 + 0.2 / (Sa - 1)',
+        # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sat = 0, A = 1, B = 0
+        self.Sat = ConstService(v_str='sqrt((S10 * 1) / (S12 * 1.2))',
+                                tex_name=r"S_{at}")
+        self.SA = ConstService(v_str='1.2 + 0.2 / (Sat - 1)',
                                tex_name='S_A')
-        self.SB = ConstService(v_str='((Sa < 0) + (Sa > 0)) * 1.2 * S12 * ((Sa - 1) / 0.2) ** 2',
+        self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0)) * 1.2 * S12 * ((Sat - 1) / 0.2) ** 2',
                                tex_name='S_B')
 
         # internal voltage and rotor angle calculation

@@ -281,7 +281,7 @@ class PIController(Block):
         self.ki = ki
 
         self.xi = State(info="Integration value of PI controller")
-        self.y = Algeb(info="Integration value of PI controller")
+        self.y = Algeb(info="Output value")
 
         self.vars = {'xi': self.xi, 'y': self.y}
 
@@ -317,7 +317,7 @@ class PIControllerNumeric(Block):
         self.ki = ki
 
         self.xi = State(info="Integration value of PI controller")
-        self.y = Algeb(info="Integration value of PI controller")
+        self.y = Algeb(info="Output value")
 
         self.vars = {'xi': self.xi, 'y': self.y}
 

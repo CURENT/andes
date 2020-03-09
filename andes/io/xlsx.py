@@ -49,12 +49,29 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
             return False
 
     writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
+    writer = _write_system(system, writer, skip_empty)
+    writer = _add_book(system, writer, add_book)
 
+    writer.save()
+    logger.info(f'xlsx file written to <{outfile}>')
+    return True
+
+
+def _write_system(system, writer, skip_empty):
+    """
+    Write the system to pandas ExcelWriter
+    """
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
             continue
         instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
+    return writer
 
+
+def _add_book(system, writer, add_book):
+    """
+    Add workbook to an existing pandas ExcelWriter
+    """
     if add_book is not None:
         if ',' in add_book:
             add_book = add_book.split(',')
@@ -67,10 +84,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
                 logger.info(f'<{item}> template sheet added.')
             else:
                 logger.error(f'<{item}> is not a valid model name.')
-
-    writer.save()
-    logger.info(f'xlsx file written to <{outfile}>')
-    return True
+    return writer
 
 
 def read(system, infile):

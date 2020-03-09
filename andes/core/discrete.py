@@ -20,15 +20,27 @@ class Discrete(object):
         self.y_set = list()  # NOT being used
 
     def check_var(self):
+        """
+        This function is called in ``l_update_var`` before evaluating equations.
+
+        It should update internal flags only.
+        """
         pass
 
     def check_eq(self):
-        pass
+        """
+        This function is called in ``l_update_eq`` after updating equations.
 
-    def set_var(self):
+        It should update internal flags only.
+        """
         pass
 
     def set_eq(self):
+        """
+        This function is used exclusively by AntiWindup for appending equations and values to ``x_set``.
+
+        It is called after ``check_eq``.
+        """
         pass
 
     def get_names(self):
@@ -211,9 +223,6 @@ class AntiWindupLimiter(WindupLimiter):
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, state=None):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
-        # self.ze = 1  # 1-if equation is valid; 0-equation needs to be reset
-        # self.export_flags.append('ze')
-        # self.export_flags_tex.append('z_e')
         self.state = state if state else u
 
     def check_var(self):
