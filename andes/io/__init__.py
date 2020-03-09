@@ -121,14 +121,6 @@ def parse(system):
             logger.error('Error parsing addfile {:s} with {:s} parser.'.format(system.files.addfile, input_format))
             return False
 
-    # Try parsing the dynfile with dm parser
-    if system.files.dynfile:
-        logger.info('Parsing input file {:s}.'.format(
-            system.files.dynfile))
-        if not dmparser.read(system, system.files.case):
-            logger.error('Error parsing dynfile {:s} with dm format parser.'.format(system.files.dynfile))
-            return False
-
     _, s = elapsed(t)
     logger.info(f'Input file {system.files.fullname} parsed in {s}.')
 
