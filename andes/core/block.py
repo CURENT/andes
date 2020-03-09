@@ -1,6 +1,6 @@
 from andes.core.var import Algeb, State
 from typing import Optional, Iterable
-from andes.core.discrete import HardLimiter, AntiWindupLimiter
+from andes.core.discrete import AntiWindupLimiter
 from andes.core.service import ConstService
 
 
@@ -596,7 +596,7 @@ class LeadLagLimit(Block):
         self.x = State(info='State in lead-lag transfer function', tex_name="x'")
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
         self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y')
-        self.lim = HardLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
+        self.lim = AntiWindupLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 

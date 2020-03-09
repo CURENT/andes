@@ -9,4 +9,4 @@ class TestCLI(unittest.TestCase):
 
     def test_misc(self):
         andes.main.misc(show_license=True)
-        andes.main.misc(clean=True)
+        andes.main.misc(save_config=None)

@@ -3,7 +3,7 @@ import logging
 import os
 
 from andes.utils.misc import elapsed
-from andes.io import xlsx, dome, psse   # NOQA
+from andes.io import xlsx, psse   # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # Typically, column based formats, such as IEEE CDF and PSS/E RAW, are faster to parse
 
 input_formats = {
-    'dome': 'dm',
     'xlsx': 'xlsx',
     'matpower': 'm',
     'psse': ['raw', 'dyr'],
@@ -97,7 +96,6 @@ def parse(system):
     # exit if the format parser could not be imported
     try:
         parser = importlib.import_module('.' + input_format, __name__)
-        dmparser = importlib.import_module('.' + 'dome', __name__)
         if add_format:
             addparser = importlib.import_module('.' + add_format, __name__)
     except ImportError:
@@ -123,14 +121,6 @@ def parse(system):
             logger.error('Error parsing addfile {:s} with {:s} parser.'.format(system.files.addfile, input_format))
             return False
 
-    # Try parsing the dynfile with dm parser
-    if system.files.dynfile:
-        logger.info('Parsing input file {:s}.'.format(
-            system.files.dynfile))
-        if not dmparser.read(system, system.files.case):
-            logger.error('Error parsing dynfile {:s} with dm format parser.'.format(system.files.dynfile))
-            return False
-
     _, s = elapsed(t)
     logger.info(f'Input file {system.files.fullname} parsed in {s}.')
 
@@ -138,6 +128,16 @@ def parse(system):
 
 
 def dump(system, output_format):
+    """
+    Dump the System data into the requested output format.
+
+    Parameters
+    ----------
+    system
+        System object
+    output_format : str
+        Output format name. 'xlsx' will be used if is None.
+    """
     if system.files.no_output:
         return
 

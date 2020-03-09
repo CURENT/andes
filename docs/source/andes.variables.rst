@@ -28,14 +28,6 @@ andes.variables.report module
    :undoc-members:
    :show-inheritance:
 
-andes.variables.varname module
-------------------------------
-
-.. automodule:: andes.variables.varname
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 Module contents
 ---------------
