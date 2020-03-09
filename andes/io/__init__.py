@@ -128,6 +128,16 @@ def parse(system):
 
 
 def dump(system, output_format):
+    """
+    Dump the System data into the requested output format.
+
+    Parameters
+    ----------
+    system
+        System object
+    output_format : str
+        Output format name. 'xlsx' will be used if is None.
+    """
     if system.files.no_output:
         return
 

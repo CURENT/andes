@@ -63,3 +63,6 @@ class TestNPCCRAW(unittest.TestCase):
     def test_npcc_raw(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'))
         andes.main.misc(clean=True)
+
+    def test_npcc_raw_tds(self):
+        self.ss = andes.run(get_case('npcc/npcc48.raw'), routine='TDS', no_output=True, profile=True)
