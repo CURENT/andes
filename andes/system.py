@@ -19,16 +19,16 @@ from andes.core.model import Model
 from andes.core.var import ExtVar
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
+from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path
 
 from andes.shared import np, spmatrix
+logger = logging.getLogger(__name__)
 
-IP_ADD = False
 if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
-
-
-logger = logging.getLogger(__name__)
+else:
+    IP_ADD = False
 
 
 class System(object):
@@ -62,6 +62,7 @@ class System(object):
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
                                      ('store_z', 0),
+                                     ('ipadd', 1),
                                      )))
 
         self.files = FileMan()
@@ -135,6 +136,11 @@ class System(object):
         self.setup()
 
     def add(self, model, param_dict=None, **kwargs):
+        """
+        Add a device instance for an existing model.
+
+        This methods registers the index to the group.
+        """
         if model not in self.models:
             logger.warning(f"<{model}> is not an existing model.")
             return
@@ -152,6 +158,9 @@ class System(object):
         group.add(idx=idx, model=self.__dict__[model])
 
     def set_address(self, models=None):
+        """
+        Set addresses for differential and algebraic variables.
+        """
         if models is None:
             models = self._models_with_flag['pflow']
 
@@ -210,7 +219,9 @@ class System(object):
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
 
     def set_dae_names(self, models=None):
-        # store variable names
+        """
+        Set variable names for differential and algebraic variables, and discrete flags.
+        """
 
         if models is None:
             models = self._models_with_flag['pflow']
@@ -238,6 +249,11 @@ class System(object):
                             self.dae.o += 1
 
     def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Initialize the variables in the model.
+
+        For each model in sequence, initializes external services and internal variables.
+        """
         if models is None:
             models = self._models_with_flag['pflow']
 
@@ -262,6 +278,9 @@ class System(object):
             self.vars_to_models()
 
     def store_adder_setter(self, models=None):
+        """
+        Store the adders and setters for variables and equations.
+        """
         models = self._get_models(models)
 
         self.f_adders, self.f_setters = list(), list()
@@ -289,7 +308,8 @@ class System(object):
 
     def calc_pu_coeff(self):
         """
-        Calculate per unit conversion factor; store input parameters to `vin`, and perform the conversion
+        Calculate per unit conversion factor; store input parameters to `vin`, and perform the conversion.
+
         Returns
         -------
 
@@ -360,12 +380,28 @@ class System(object):
                     p.set_pu_coeff(coeff)
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Update variabe-based discrete components.
+
+        This function is evaluated before equation updates.
+        """
         self._call_models_method('l_update_var', models)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Update equation-dependent discrete components.
+
+        This function is evaluated after equation updates.
+        """
         self._call_models_method('l_check_eq', models)
 
     def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Force set equations after evaluating equations.
+
+        This function is evaluated afte ``l_check_eq``.
+        Currently, it is only used by anti-windup limiters to record changes.
+        """
         self._call_models_method('l_set_eq', models)
 
     def fg_to_dae(self):
@@ -395,18 +431,15 @@ class System(object):
 
             for mdl in models.values():
                 for row, col, val in mdl.zip_ijv(j_name):
-                    # TODO: use `spmatrix.ipadd` if available
-                    # TODO: fix `ipadd` to get rid of type checking
-                    if isinstance(val, np.float64):
-                        # Workaround for CVXOPT's handling of np.float64
-                        val = float(val)
-                    if isinstance(val, (int, float)) or len(val) > 0:
-                        try:
+                    try:
+                        if self.config.ipadd and IP_ADD:
+                            self.dae.__dict__[j_name].ipadd(val, row, col)
+                        else:
                             self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
-                        except TypeError as e:
-                            logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
-                                         f'j_size={j_size}')
-                            raise e
+                    except TypeError as e:
+                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
+                                     f'j_size={j_size}')
+                        raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
         models = self._get_models(models)
@@ -580,15 +613,16 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-
         if not os.path.isfile(pkl_path):
             self.prepare()
 
         with open(pkl_path, 'rb') as f:
             self.calls = dill.load(f)
         logger.debug(f'System undill: loaded <{pkl_path}> file.')
+
         for name, model_call in self.calls.items():
-            self.__dict__[name].calls = model_call
+            if name in self.__dict__:
+                self.__dict__[name].calls = model_call
 
     def _get_models(self, models):
         if models is None:
@@ -888,3 +922,27 @@ class System(object):
             conf.write(f)
 
         logger.info(f'Config: written to {file_path}')
+
+    def supported_models(self):
+        """
+        Return the support group names and model names in a table.
+
+        Returns
+        -------
+        str
+            A string for the group and model table
+        """
+
+        pairs = list()
+        for g in self.groups:
+            models = list()
+            for m in self.groups[g].models:
+                models.append(m)
+            pairs.append((g, ', '.join(models)))
+
+        tab = Tab(title='Supported Groups and Models',
+                  header=['Group', 'Models'],
+                  data=pairs,
+                  )
+
+        return tab.draw()

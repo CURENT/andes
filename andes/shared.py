@@ -28,14 +28,22 @@ fsolve = LazyImport('from scipy.optimize import fsolve')
 solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
 odeint = LazyImport('from scipy.integrate import odeint')
 
+import coloredlogs  # NOQA
 import numpy as np  # NOQA
 from tqdm import tqdm  # NOQA
-from cvxopt import umfpack  # NOQA
-import cvxopt  # NOQA
-import coloredlogs  # NOQA
 
-from numpy import ndarray  # NOQA
+import cvxopt  # NOQA
+from cvxopt import umfpack  # NOQA
 from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+from numpy import ndarray  # NOQA
+
+from andes.utils.texttable import Texttable  # NOQA
+
+try:
+    from cvxoptklu import klu
+except ImportError:
+    klu = None
+
 
 jpi2 = 1.5707963267948966j
 rad2deg = 57.295779513082323

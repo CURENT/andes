@@ -15,8 +15,7 @@ from typing import Optional, Union
 import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
-from andes.utils.paths import get_config_path
-from andes.utils.paths import tests_root
+from andes.utils.paths import get_config_path, tests_root
 from andes.shared import coloredlogs, Process, unittest
 
 logger = logging.getLogger(__name__)
@@ -227,7 +226,7 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convert_all='', add_sheet=None, **kwargs):
+def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None, **kwargs):
     """
     Run a single simulation case.
     """
@@ -246,10 +245,10 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
     elif convert_all != '':
         andes.io.xlsx.write(system, system.files.dump, skip_empty=False)
         return system
-    # add template sheet
-    elif add_sheet is not None:
+    # add template workbook
+    elif add_book is not None:
         andes.io.xlsx.write(system, system.files.dump, skip_empty=True,
-                            overwrite=True, add_sheet=add_sheet)
+                            overwrite=True, add_book=add_book)
         return system
 
     system.PFlow.run()
@@ -391,23 +390,16 @@ def selftest(**kwargs):
     unittest.TextTestRunner(verbosity=3).run(suite)
 
 
-def doc(model=None, list_models=False, **kwargs):
+def doc(attribute=None, list_supported=False, **kwargs):
     system = System()
-    if model is not None:
-        if model in system.__dict__ and hasattr(system.__dict__[model], 'doc'):
-            logger.info(system.__dict__[model].doc())
+    if attribute is not None:
+        if attribute in system.__dict__ and hasattr(system.__dict__[attribute], 'doc'):
+            logger.info(system.__dict__[attribute].doc())
         else:
-            logger.error(f'Model <{model}> does not exist.')
+            logger.error(f'Model <{attribute}> does not exist.')
 
-    elif list_models is True:
-        m_names = list()
-        for g in system.groups:
-            for m in system.groups[g].models:
-                m_names.append(m)
-
-        m_names.sort()
-        logger.info('List of supported models:')
-        logger.info(', '.join(m_names))
+    elif list_supported is True:
+        logger.info(system.supported_models())
 
     else:
         logger.info('info: no option specified. Use \'andes doc -h\' for help.')

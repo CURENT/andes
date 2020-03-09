@@ -13,7 +13,7 @@ Please see the cheatsheet if you are looking for quick help.
 .. _sec-command:
 
 Command Line Usage
-=======================
+==================
 
 Basic Usage
 -----------
@@ -189,6 +189,23 @@ The list file contains three columns: variable indices, variabla name in plain t
 name in LaTeX format.
 The variable indices are needed to plot the needed variable.
 
+Disable output
+..............
+The output files can be disabled with option ``--no-output`` or ``-n``.
+It is useful when only computation is needed without saving the results.
+
+Profiling
+.........
+Profiling is useful for analyzing the computation time and code efficiency.
+Option ``--profile`` enables the profiling of ANDES execution.
+The profiling output will be written in two files in the current folder, one ending with ``_prof.txt`` and the
+other one with ``_prof.prof``.
+
+The text file can be opened with a text editor, and the ``.prof`` file can be visualized with ``snakeviz``,
+which can be installed with ``pip install snakeviz``.
+
+If the output is disabled, profiling results will be printed to stdio.
+
 Multiprocessing
 ...............
 ANDES takes multiple files inputs or wildcard.
@@ -201,6 +218,9 @@ of ``.m``, run
     andes run case5*.m
 
 Test cases that match the pattern, including ``case5.m`` and ``case57.m``, will be processed.
+
+Option ``--ncpu NCPU`` can be used to specify the maximum number of parallel processes.
+By default, all cores will be used. A small number can be specified to increase operation system responsiveness.
 
 Format converter
 ................
@@ -227,7 +247,15 @@ The output will look like ::
     -> Single process finished in 0.8765 second.
 
 Note that ``--convert`` will only create sheets for existing models.
-In case one want to create template sheets to add models later, ``--convertall`` can be used instead.
+
+In case one wants to create template sheets to add models later, ``--convert-all`` can be used instead.
+
+If one wants to add workbooks to an existing xlsx file, use option ``--add-book ADD_BOOK``, where ``ADD_BOOK``
+can be a single model name or comma-separated model names (without any space).
+
+.. Warning::
+    With ``--add-book``, the xlsx file will be overwritten.
+    Any **empty or non-existent models** will be REMOVED.
 
 andes plot
 --------------
@@ -288,8 +316,17 @@ optional arguments:
   --dpi DPI                     image resolution in dot per inch (DPI)
   ==========================    ======================================
 
+andes doc
+---------
+``andes doc`` is a tool for quick lookup of model documentation.
+The basic usage of ``andes doc`` is to provide a model name as the positional argument.
+It will print out model parameters, variables, and equations to the stdio.
+
+It is intended as a quick way for documentation.
+If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_
+
 andes misc
---------------
+----------
 ``andes misc`` contains miscellaneous functions, such as configuration and output cleaning.
 
 Configuration
@@ -480,6 +517,92 @@ For example, to print the algebraic equations of model ``GENCLS``, one can use `
 
 In addition to equations, all variable symbols can be printed at ``ss.<ModelName>.vars_print``.
 
+.. _formats:
+
+I/O Formats
+===========
+
+Input Formats
+-------------
+
+ANDES currently supports the following input formats:
+
+- ANDES Excel (.xlsx)
+- MATPOWER (.m)
+- PSS/E RAW (.raw)
+- PSS/E DYR (.dyr), work in progress
+- Dome (.dm), work in progress
+
+
+ANDES xlsx Format
+-----------------
+
+The ANDES xlsx format is a newly introduced format since v0.8.0.
+This format uses Microsoft Excel for conveniently viewing and editing model parameters.
+You can use `LibreOffice <https://www.libreoffice.org>`_ or `WPS Office <https://www.wps.com/>`_ alternatively to
+Microsoft Excel.
+
+xlsx Format Definition
+......................
+
+The ANDES xlsx format contains multiple workbooks (tabs at the bottom).
+Each workbook contains the parameters of all instances of the model, whose name is the workbook name.
+The first row in a worksheet is used for the names of parameters available to the model.
+Starting from the second row, each row corresponds to an instance with the parameters in the corresponding columns.
+An example of the ``Bus`` workbook is shown in the following.
+
+.. image:: images/tutorial/xlsx-bus.png
+   :width: 600
+   :alt: Example workbook for Bus
+
+A few columns are used across all models, including ``uid``, ``idx``, ``name`` and ``u``.
+
+- ``uid`` is an internally generated unique instance index. This column can be left empty if the xlsx file is
+  being manually created. Exporting the xlsx file with ``--convert`` will automatically assign the ``uid``.
+- ``idx`` is the unique instance index for referencing. An unique ``idx`` should be provided explicitly for each
+  instance. Accepted types for ``idx`` include numbers and strings without spaces.
+- ``name`` is the instance name.
+- ``u`` is the connectivity status of the instance. Accepted values are 0 and 1. Unexpected behaviors may occur
+  if other numerical values are assigned.
+
+As mentioned above, ``idx`` is the unique index for an instance to be referenced.
+For example, a PQ instance can reference a Bus instance so that the PQ is connected to the Bus.
+This is done through providing the ``idx`` of the desired bus as the ``bus`` parameter of the PQ.
+
+.. image:: images/tutorial/xlsx-pq.png
+   :width: 600
+   :alt: Example workbook for PQ
+
+In the example PQ workbook shown above, there are two PQ instances on buses with ``idx`` being 7 and 8,
+respectively.
+
+Convert to xlsx
+...............
+Please refer to the the ``--convert`` command for converting a recognized file to xlsx.
+
+Data Consistency
+................
+
+Input data needs to have consistent types for ``idx``. Both string and numerical types are allowed
+for ``idx``, but the original type and the referencing type must be the same. For example,
+suppose we have a bus and a connected PQ.
+The Bus device may use ``1`` or ``'1'`` as its ``idx``, as long as the
+PQ device uses the same value for its ``bus`` parameter.
+
+
+The ANDES xlsx reader will try to convert data into numerical types when possible.
+This is especially relevant when the input ``idx`` is string literal of numbers,
+the exported file will have them converted to numbers.
+The conversion does not affect the consistency of data.
+
+Parameter Check
+...............
+The following parameter checks are applied after converting input values to array:
+
+- Any ``NaN`` values will raise a ``ValueError``
+- Any ``inf`` will be replaced with :math:`10^{8}`, and ``-inf`` will be replaced with :math:`-10^{8}`.
+
+
 Cheatsheet
 ===========
 A cheatsheet is available for quick lookup of supported commands.
@@ -488,8 +611,8 @@ View the PDF version at
 
 https://www.cheatography.com//cuihantao/cheat-sheets/andes-for-power-system-simulation/pdf/
 
-Documentation
-=============
+Make Documentation
+==================
 
 The documentation can be made locally into a variety of formats.
 To make HTML documentation, change directory to ``docs``, and do

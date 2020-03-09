@@ -199,3 +199,6 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'matplotlib': ('https://matplotlib.org', None),
 }
+
+# Favorite icon
+html_favicon = 'images/curent.ico'

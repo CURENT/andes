@@ -1,5 +1,5 @@
 from andes.core.var import Algeb, State
-from typing import Optional
+from typing import Optional, Iterable
 from andes.core.discrete import HardLimiter, AntiWindupLimiter
 from andes.core.service import ConstService
 
@@ -245,6 +245,16 @@ class Block(object):
         """Return the class name."""
         return self.__class__.__name__
 
+    @staticmethod
+    def enforce_tex_name(fields):
+        """Enforce tex_name is not None"""
+        if not isinstance(fields, Iterable):
+            fields = [fields]
+
+        for field in fields:
+            if field.tex_name is None:
+                raise NameError(f'tex_name for <{field.name}> cannot be None')
+
 
 class PIController(Block):
     """
@@ -359,6 +369,8 @@ class Washout(Block):
         else:
             self.K = K
 
+        self.enforce_tex_name((self.K, self.T))
+
         self.KT = ConstService(info='Constant K/T',
                                tex_name=f'({self.K.tex_name}/{self.T.tex_name})',
                                v_str=f'{self.K.name} / {self.T.name}')
@@ -410,14 +422,14 @@ class Lag(Block):
     """
     def __init__(self, u, T, K, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
-
+        self.u = u
+        self.T = T
         if isinstance(K, (int, float)):
             self.K = DummyValues(K)
         else:
             self.K = K
 
-        self.T = T
-        self.u = u
+        self.enforce_tex_name((self.K, self.T))
         self.x = State(info='State in lag transfer function', tex_name="x'")
 
         self.vars = {'x': self.x}
@@ -471,6 +483,8 @@ class LagAntiWindup(Block):
         self.T = T
         self.lower = lower
         self.upper = upper
+
+        self.enforce_tex_name((self.T, self.K))
 
         self.x = State(info='State in lag transfer function', tex_name="x'")
         self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
@@ -526,6 +540,8 @@ class LeadLag(Block):
         self.u = u
         self.safe_div = safe_div  # TODO: implement me
 
+        self.enforce_tex_name((self.T1, self.T2))
+
         self.x = State(info='State in lead-lag transfer function', tex_name="x'")
         self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y')
         self.vars = {'x': self.x, 'y': self.y}
@@ -575,6 +591,7 @@ class LeadLagLimit(Block):
         self.u = u
         self.lower = lower
         self.upper = upper
+        self.enforce_tex_name((self.T1, self.T2))
 
         self.x = State(info='State in lead-lag transfer function', tex_name="x'")
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')

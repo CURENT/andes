@@ -27,6 +27,7 @@ def create_parser():
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run]: run simulation routine; '
                                                              '[plot]: plot simulation results; '
+                                                             '[doc]: quick documentation;'
                                                              '[prepare]: run the symbolic-to-numeric preparation; '
                                                              '[misc]: miscellaneous functions.'
                                         )
@@ -48,18 +49,19 @@ def create_parser():
     run.add_argument('--convert', help='Convert to format.', type=str, default='', nargs='?')
     run.add_argument('--convert-all', help='Convert to format with all templates.', type=str, default='',
                      nargs='?')
-    run.add_argument('--add-sheet', help='Add a template sheet for the specified model.', type=str)
+    run.add_argument('--add-book', help='Add a template workbook for the specified model.', type=str)
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='data file name.')
-    plot.add_argument('x', nargs=1, type=int, help='x axis variable index')
-    plot.add_argument('y', nargs='*', help='y axis variable index')
+    plot.add_argument('x', nargs='?', type=int, help='x axis variable index', default='0')
+    plot.add_argument('y', nargs='*', help='y axis variable indices. Space separated or ranges accepted')
     plot.add_argument('--xmin', type=float, help='x axis minimum value', dest='left')
     plot.add_argument('--xmax', type=float, help='x axis maximum value', dest='right')
     plot.add_argument('--ymax', type=float, help='y axis maximum value')
     plot.add_argument('--ymin', type=float, help='y axis minimum value')
-    plot.add_argument('--checkinit', action='store_true', help='check initialization value')
+    plot.add_argument('--find', type=str, help='find variable indices that matches the given pattern')
+    plot.add_argument('--exclude ', type=str, help='exclude pattern in find')
     plot.add_argument('-x', '--xlabel', type=str, help='manual x-axis text label')
     plot.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
     plot.add_argument('-s', '--savefig', action='store_true', help='save figure to file')
@@ -83,10 +85,10 @@ def create_parser():
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
 
     doc = sub_parsers.add_parser('doc')  # NOQA
-    doc.add_argument('model', help='Model name to get documentation', nargs='?')
+    doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')
     doc.add_argument('--config', '-c', help='Config help')
     doc.add_argument('--list', '-l', help='List supported models and groups', action='store_true',
-                     dest='list_models')
+                     dest='list_supported')
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 

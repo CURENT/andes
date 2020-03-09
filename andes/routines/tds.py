@@ -95,7 +95,7 @@ class TDS(BaseRoutine):
         out.append('-> Time Domain Simulation:')
         out.append(f'Method: {self.config.sparselib}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s, '
-                   f'{fixed_or_variable} step h={self.config.tstep}s')
+                   f'{fixed_or_variable} step h={self.config.tstep:.4g}s')
 
         out_str = '\n'.join(out)
         logger.info(out_str)
