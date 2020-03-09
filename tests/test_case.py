@@ -1,4 +1,5 @@
 import unittest
+import andes
 from andes.system import System
 from andes.io import xlsx
 from andes.utils.paths import get_case
@@ -44,11 +45,21 @@ class TestKundur2Area(unittest.TestCase):
     Test Kundur's 2-area system
     """
     def setUp(self) -> None:
-        self.ss = System()
-        self.ss.undill_calls()
-        xlsx.read(self.ss, get_case('kundur/kundur_full.xlsx'))
-        self.ss.setup()
+        self.ss = andes.run(get_case('kundur/kundur_full.xlsx'))
 
-    def test_tds_init(self):
-        self.ss.PFlow.run()
+    def test_tds_run(self):
         self.ss.TDS.run([0, 20])
+        andes.main.misc(clean=True)
+
+    def test_eig_run(self):
+        self.ss.EIG.run()
+        andes.main.misc(clean=True)
+
+
+class TestNPCCRAW(unittest.TestCase):
+    """
+    Test NPCC system in the RAW format
+    """
+    def test_npcc_raw(self):
+        self.ss = andes.run(get_case('npcc/npcc48.raw'))
+        andes.main.misc(clean=True)
