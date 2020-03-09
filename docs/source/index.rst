@@ -28,10 +28,12 @@ ANDES is currently under active development.
 
 - Jupyter Notebook Examples:
   `Checkout on GitHub <https://github.com/cuihantao/andes/tree/master/examples>`_.
-- Documentation:
+- Online Documentation:
   `andes.readthedocs.io <https://andes.readthedocs.io>`_.
+- PDF Documentation:
+  `download from andes.readthedocs.io <https://andes.readthedocs.io/_/downloads/en/stable/pdf/>`_.
 - Report issues:
-  `GitHub Issues page <https://github.com/cuihantao/andes/issues>`_.
+  `GitHub issues page <https://github.com/cuihantao/andes/issues>`_.
 
 .. toctree::
    :caption: ANDES Manual
@@ -41,7 +43,6 @@ ANDES is currently under active development.
    copyright.rst
    install.rst
    tutorial.rst
-   formats.rst
    modeling.rst
    cases.rst
    modelref.rst

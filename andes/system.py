@@ -19,6 +19,7 @@ from andes.core.model import Model
 from andes.core.var import ExtVar
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.config import Config
+from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path
 
 from andes.shared import np, spmatrix
@@ -921,3 +922,27 @@ class System(object):
             conf.write(f)
 
         logger.info(f'Config: written to {file_path}')
+
+    def supported_models(self):
+        """
+        Return the support group names and model names in a table.
+
+        Returns
+        -------
+        str
+            A string for the group and model table
+        """
+
+        pairs = list()
+        for g in self.groups:
+            models = list()
+            for m in self.groups[g].models:
+                models.append(m)
+            pairs.append((g, ', '.join(models)))
+
+        tab = Tab(title='Supported Groups and Models',
+                  header=['Group', 'Models'],
+                  data=pairs,
+                  )
+
+        return tab.draw()

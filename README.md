@@ -255,7 +255,8 @@ ANDES recognizes a few input formats (MATPOWER, PSS/E and ANDES xlsx) and can co
 This function is useful when one wants to use models that are unique in ANDES.
  
 - `andes run <CaseName> --convert` performs the conversion to `xlsx`. 
-- `andes run <CaseName> --convertall` performs the conversion and create empty sheets for all supported models.
+- `andes run <CaseName> --convert-all` performs the conversion and create empty sheets for all supported models.
+- `andes run <CaseName> --add-book
 
 ## Output Converter
 The output converter is used to convert `.npy` output to a comma-separated (csv) file.

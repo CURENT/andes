@@ -17,7 +17,7 @@ def testlines(fid):
     return True
 
 
-def write(system, outfile, skip_empty=True, overwrite=None, add_sheet=None):
+def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
     """
     Write loaded ANDES system data into an xlsx file
 
@@ -31,7 +31,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_sheet=None):
         Skip output of empty models (n = 0)
     overwrite : bool
         None to prompt for overwrite selection; True to overwrite; False to not overwrite
-    add_sheet : str, optional
+    add_book : str, optional
         An optional model to be added to the output spreadsheet
 
     Returns
@@ -55,13 +55,13 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_sheet=None):
             continue
         instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
 
-    if add_sheet is not None:
-        if ',' in add_sheet:
-            add_sheet = add_sheet.split(',')
+    if add_book is not None:
+        if ',' in add_book:
+            add_book = add_book.split(',')
         else:
-            add_sheet = [add_sheet]
+            add_book = [add_book]
 
-        for item in add_sheet:
+        for item in add_book:
             if item in system.models:
                 system.models[item].cache.df_in.to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
                 logger.info(f'<{item}> template sheet added.')

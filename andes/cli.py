@@ -27,6 +27,7 @@ def create_parser():
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run]: run simulation routine; '
                                                              '[plot]: plot simulation results; '
+                                                             '[doc]: quick documentation;'
                                                              '[prepare]: run the symbolic-to-numeric preparation; '
                                                              '[misc]: miscellaneous functions.'
                                         )
@@ -48,7 +49,7 @@ def create_parser():
     run.add_argument('--convert', help='Convert to format.', type=str, default='', nargs='?')
     run.add_argument('--convert-all', help='Convert to format with all templates.', type=str, default='',
                      nargs='?')
-    run.add_argument('--add-sheet', help='Add a template sheet for the specified model.', type=str)
+    run.add_argument('--add-book', help='Add a template workbook for the specified model.', type=str)
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
 
     plot = sub_parsers.add_parser('plot')
@@ -85,10 +86,10 @@ def create_parser():
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
 
     doc = sub_parsers.add_parser('doc')  # NOQA
-    doc.add_argument('model', help='Model name to get documentation', nargs='?')
+    doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')
     doc.add_argument('--config', '-c', help='Config help')
     doc.add_argument('--list', '-l', help='List supported models and groups', action='store_true',
-                     dest='list_models')
+                     dest='list_supported')
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 
