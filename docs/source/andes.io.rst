@@ -4,14 +4,6 @@ andes.io package
 Submodules
 ----------
 
-andes.io.dome module
---------------------
-
-.. automodule:: andes.io.dome
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.io.em\_psse module
 ------------------------
 
