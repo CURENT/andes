@@ -385,6 +385,11 @@ class Model(object):
         self._input_z = OrderedDict()
 
     def _register_attribute(self, key, value):
+        """
+        Register a pair of attributes to the model instance.
+
+        This function is called within ``__setattr__``.
+        """
         if isinstance(value, Algeb):
             self.algebs[key] = value
         elif isinstance(value, ExtAlgeb):
@@ -414,6 +419,9 @@ class Model(object):
                 self.__setattr__(var_instance.name, var_instance)
 
     def _check_attribute(self, key, value):
+        """
+        Check the attribute pair for valid names.
+        """
         if isinstance(value, (BaseVar, BaseService, Discrete, Block)):
             if not value.owner:
                 value.owner = self
@@ -515,12 +523,12 @@ class Model(object):
 
         This function is only evaluated at initialization.
         Service values are updated sequentially.
-        The ``v`` attribute of services will change once.
+        The ``v`` attribute of services will be assigned at a new memory.
         """
         if self.n == 0:
             return
 
-        if self.calls.s_lambdify is not None and len(self.calls.s_lambdify):
+        if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
 
                 func = self.calls.s_lambdify[name]
@@ -541,7 +549,7 @@ class Model(object):
         # Apply both the individual `v_numeric` and Model-level `s_numeric`
         for instance in self.services.values():
             func = instance.v_numeric
-            if func is not None and callable(func):
+            if callable(func):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
 
@@ -877,8 +885,8 @@ class Model(object):
 
         if (not self.flags['address']) or (self.n == 0):
             # Note:
-            # if `self.n` is 0, skipping the processes below will avoid appending empty lists/arrays and
-            # non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`
+            # If self.n == 0, skipping the processes below will avoid appending empty lists/arrays and
+            # non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`.
             #
             # If we don't want to check `self.n`, we can check if len(row) == 0 or len(col) == 0 below instead.
             return
@@ -903,12 +911,12 @@ class Model(object):
 
                     row_idx = self.__dict__[row_name].a
                     col_idx = self.__dict__[col_name].a
+                    if len(row_idx) == 0 and len(col_idx) == 0:
+                        continue
                     if len(row_idx) != len(col_idx):
                         logger.error(f'row {row_name}, row_idx: {row_idx}')
                         logger.error(f'col {col_name}, col_idx: {col_idx}')
                         raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
-                    elif len(row_idx) == 0 and len(col_idx) == 0:
-                        continue
 
                     self.__dict__[f'i{j_name}{j_type}'].append(row_idx)
                     self.__dict__[f'j{j_name}{j_type}'].append(col_idx)
@@ -922,12 +930,12 @@ class Model(object):
                                          self.__dict__[f'_j{j_name}{j_type}'],
                                          self.__dict__[f'_v{j_name}{j_type}']):
 
+                    if len(row) == 0 and len(col) == 0:
+                        continue
                     if len(row) != len(col):
                         logger.error(f'row_idx: {row}')
                         logger.error(f'col_idx: {col}')
                         raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
-                    elif len(row) == 0 and len(col) == 0:
-                        continue
 
                     self.__dict__[f'i{j_name}{j_type}'].append(row)
                     self.__dict__[f'j{j_name}{j_type}'].append(col)
@@ -1287,6 +1295,7 @@ class Model(object):
             info.append(p.info if p.info else '')
             defaults.append(p.default if p.default is not None else '')
             units.append(f'{p.unit}' if p.unit else '')
+            units_rest.append(f'*{p.unit}*' if p.unit else '')
 
             plist = []
             for key, val in p.property.items():
@@ -1298,7 +1307,6 @@ class Model(object):
         if export == 'rest':
             symbols = [item.tex_name for item in self.params.values()]
             symbols = self.math_wrap(symbols, export=export)
-            units_rest = [f'*{item.unit}*' if item.unit else '' for item in self.params.values()]
         else:
             symbols = [item.name for item in self.params.values()]
 
@@ -1369,6 +1377,7 @@ class Model(object):
             ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')
             units.append(p.unit if p.unit else '')
+            units_rest.append(f'*{p.unit}*' if p.unit else '')
 
             # collect properties
             all_properties = ['v_str', 'v_setter', 'e_setter', 'v_iter']
@@ -1383,7 +1392,6 @@ class Model(object):
             call_store = self.system.calls[self.class_name]
             symbols = self.math_wrap(call_store.x_latex + call_store.y_latex, export=export)
             ivs_rest = self.math_wrap(call_store.init_latex.values(), export=export)
-            units_rest = [f'*{item.unit}*' if item.unit else '' for item in self.cache.all_vars.values()]
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Initial Value', ivs),

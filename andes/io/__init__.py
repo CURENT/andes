@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 # Typically, column based formats, such as IEEE CDF and PSS/E RAW, are faster to parse
 
 input_formats = {
-    'xlsx': 'xlsx',
-    'matpower': 'm',
-    'psse': ['raw', 'dyr'],
+    'xlsx': ('xlsx',),
+    'matpower': ('m', ),
+    'psse': ('raw', 'dyr'),
 }
 
 # Output formats is a dictionary of supported output formats and their extensions
@@ -34,45 +34,32 @@ def guess(system):
         maybe.append(files.input_format)
     # first, guess by extension
     for key, val in input_formats.items():
-        if isinstance(val, list):
-            for item in val:
-                if files.ext.strip('.').lower() == item:
-                    maybe.append(key)
-        else:
-            if files.ext.strip('.').lower() == val:
-                maybe.append(key)
+        if files.ext.strip('.').lower() in val:
+            maybe.append(key)
 
     # second, guess by lines
     true_format = ''
     with open(files.case, 'r') as fid:
         for item in maybe:
-            try:
-                parser = importlib.import_module('.' + item, __name__)
-                testlines = getattr(parser, 'testlines')
-                if testlines(fid):
-                    true_format = item
-                    break
-            except ImportError:
-                logger.debug('Parser for {:s} format is not found. '
-                             'Format guess will continue.'.format(item))
+            parser = importlib.import_module('.' + item, __name__)
+            testlines = getattr(parser, 'testlines')
+            if testlines(fid):
+                true_format = item
+                files.input_format = true_format
+                logger.debug(f'Input format guessed as {true_format}.')
+                break
 
-    if true_format:
-        logger.debug('Input format guessed as {:s}.'.format(true_format))
-    else:
+    if not true_format:
         logger.error('Unable to determine case format.')
-
-    files.input_format = true_format
 
     # guess addfile format
     if files.addfile:
         _, add_ext = os.path.splitext(files.addfile)
         for key, val in input_formats.items():
-            if isinstance(val, list):
-                if add_ext[1:] in val:
-                    files.add_format = key
-            else:
-                if add_ext[1:] == val:
-                    files.add_format = key
+            if add_ext[1:] in val:
+                files.add_format = key
+                logger.debug(f'Addfile format guessed as {key}.')
+                break
 
     return true_format
 
