@@ -3,7 +3,7 @@ import logging
 import os
 
 from andes.utils.misc import elapsed
-from andes.io import xlsx, dome, psse   # NOQA
+from andes.io import xlsx, psse   # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # Typically, column based formats, such as IEEE CDF and PSS/E RAW, are faster to parse
 
 input_formats = {
-    'dome': 'dm',
     'xlsx': 'xlsx',
     'matpower': 'm',
     'psse': ['raw', 'dyr'],

@@ -1,23 +1,5 @@
 import os
-from andes.utils.tab import SimpleTab
 from andes.shared import np
-
-
-def format_newline():
-    return '\n'
-
-
-def format_title(item):
-    return item
-
-
-def format_item(item, val):
-    return '{:20s} {:s}'.format(item, str(val))
-
-
-def format_table(header, data, title=None):
-    table = SimpleTab(data=data, header=header)
-    return table.draw()
 
 
 def dump_data(text, header, rowname, data, file, width=14, precision=5):
