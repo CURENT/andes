@@ -347,7 +347,7 @@ class RepeaterService(OperationService):
             return self._v
 
 
-class RandomService(ConstService):
+class RandomService(BaseService):
     """
     A service variable for generating random numbers.
 

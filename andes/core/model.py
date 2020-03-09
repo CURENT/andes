@@ -384,23 +384,7 @@ class Model(object):
         self._input = OrderedDict()
         self._input_z = OrderedDict()
 
-    def __setattr__(self, key, value):
-        if isinstance(value, (BaseVar, BaseService, Discrete, Block)):
-            if not value.owner:
-                value.owner = self
-            if not value.name:
-                value.name = key
-            if not value.tex_name:
-                value.tex_name = key
-            if key in self.__dict__:
-                logger.warning(f"{self.class_name}: redefinition of member <{key}>")
-
-        # store the variable declaration order
-        if isinstance(value, BaseVar):
-            value.id = len(self._all_vars())  # NOT in use yet
-            self.vars_decl_order[key] = value
-
-        # store instances to the corresponding OrderedDict
+    def _register_attribute(self, key, value):
         if isinstance(value, Algeb):
             self.algebs[key] = value
         elif isinstance(value, ExtAlgeb):
@@ -420,6 +404,7 @@ class Model(object):
             self.services_ext[key] = value
         elif isinstance(value, (OperationService, RandomService)):
             self.services_ops[key] = value
+
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks
@@ -427,6 +412,27 @@ class Model(object):
                 var_instance.name = f'{value.name}_{var_name}'
                 var_instance.tex_name = f'{var_instance.tex_name}_{{{value.tex_name}}}'
                 self.__setattr__(var_instance.name, var_instance)
+
+    def _check_attribute(self, key, value):
+        if isinstance(value, (BaseVar, BaseService, Discrete, Block)):
+            if not value.owner:
+                value.owner = self
+            if not value.name:
+                value.name = key
+            if not value.tex_name:
+                value.tex_name = key
+            if key in self.__dict__:
+                logger.warning(f"{self.class_name}: redefinition of member <{key}>")
+
+    def __setattr__(self, key, value):
+        self._check_attribute(key, value)
+
+        # store the variable declaration order
+        if isinstance(value, BaseVar):
+            value.id = len(self._all_vars())  # NOT in use yet
+            self.vars_decl_order[key] = value
+
+        self._register_attribute(key, value)
 
         super(Model, self).__setattr__(key, value)
 
@@ -490,7 +496,6 @@ class Model(object):
             return
         for instance in self.discrete.values():
             instance.check_var()
-            instance.set_var()
 
     def l_check_eq(self):
         if self.n == 0:
