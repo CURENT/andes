@@ -1,6 +1,7 @@
 import logging
-from math import ceil, pi
+import scipy.io
 
+from math import ceil, pi
 from cvxopt import mul, div
 from cvxopt.lapack import gesv
 
@@ -104,7 +105,7 @@ class EIG(BaseRoutine):
 
         return self.mu, self.part_fact
 
-    def run(self, **kwargs):
+    def run(self):
         ret = False
         system = self.system
 
@@ -126,7 +127,10 @@ class EIG(BaseRoutine):
         self.calc_state_matrix()
         self.calc_part_factor()
 
-        self.dump_results()
+        if not self.system.files.no_output:
+            self.write_report()
+            if system.options.get('state_matrix') is True:
+                self.export_state_matrix()
 
         if self.config.plot:
             self.plot()
@@ -190,7 +194,25 @@ class EIG(BaseRoutine):
 
         return fig, ax
 
-    def dump_results(self):
+    def export_state_matrix(self):
+        """
+        Export As to a ``<CaseName>_As.mat`` file.
+
+        Returns
+        -------
+        bool
+            True if successful
+
+        """
+        system = self.system
+        out = {'As': self.As,
+               'x_name': np.array(system.dae.x_name, dtype=np.object),
+               }
+        scipy.io.savemat(system.files.mat, mdict=out)
+        logger.info(f'State matrix saved to <{system.files.mat}>.')
+        return True
+
+    def write_report(self):
         """
         Save eigenvalue analysis reports
 
@@ -201,9 +223,6 @@ class EIG(BaseRoutine):
         system = self.system
         mu = self.mu
         partfact = self.part_fact
-
-        if system.files.no_output:
-            return
 
         text = []
         header = []
