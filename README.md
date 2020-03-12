@@ -54,8 +54,13 @@ In addition, ANDES features
 -   Full equation documentation of supported DAE models.
 
 ANDES is currently under active development.
-Visit the documentation to learn more about ANDES.
-Technical details can be referred to our paper on arXiv.
+Use the following resources to get involved.
+
++ Learn more about ANDES by reading the [documentation][readthedocs]
++ Report bugs or issues by submitting a [GitHub issue][GitHub issues]
++ Submit contributions using [pull requests][GitHub pull requests]
++ Read release notes highlighted [here][release notes]
++ Check out and and cite our [paper][arxiv paper]
 
 # Table of Contents
 * [Get Started with ANDES](#get-started-with-andes)
@@ -75,7 +80,6 @@ Technical details can be referred to our paper on arXiv.
    * [Step 5: Define Initializers](#step-5-define-initializers)
    * [Step 6: Finalize](#step-6-finalize)
 * [API Reference](#api-reference)
-* [Get Involved](#get-involved)
 * [Who is Using ANDES?](#who-is-using-andes)
 
 # Get Started with ANDES
@@ -515,13 +519,6 @@ Finally, run `andes prepare` from the command-line to re-generate code for the n
 # API Reference
 The official [documentation][readthedocs] explains the complete list of modeling components.
 The most commonly used ones are highlighted in the following. 
-
-# Get Involved
-+ Learn more about ANDES by reading the [documentation][readthedocs]
-+ Report bugs or issues by submitting a [GitHub issue][GitHub issues]
-+ Submit contributions using [pull requests][GitHub pull requests]
-+ Read release notes highlighted [here][release notes]
-+ Check out and and cite our [paper][arxiv paper]
 
 # Who is Using ANDES?
 Please let us know if you are using ANDES for research or projects. 
