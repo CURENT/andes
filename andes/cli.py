@@ -36,7 +36,7 @@ def create_parser():
     run.add_argument('filename', help='Case file name. Power flow is calculated by default.', nargs='*')
     run.add_argument('-r', '--routine',
                      action='store', help='Simulation routine to run.',
-                     choices=('tds', 'eig'))
+                     choices=('tds', 'eig', 'red'))
     run.add_argument('-p', '--input-path', help='Path to case files', type=str, default='')
     run.add_argument('-a', '--addfile', help='Additional files used by some formats.')
     run.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')

@@ -64,7 +64,8 @@ class EIG(BaseRoutine):
         None
         """
         self.eigs = np.linalg.eigvals(self.As)
-        # TODO: use scipy.sparse.linalg.eigs(self.As)
+        # TODO: use
+        # scipy.sparse.linalg.eigs(self.As)
 
         return self.eigs
 
@@ -77,7 +78,8 @@ class EIG(BaseRoutine):
 
         """
         mu, N = np.linalg.eig(self.As)
-        # TODO: use scipy.sparse.linalg.eigs(self.As)
+        # TODO: use
+        # scipy.sparse.linalg.eigs(self.As)
 
         N = matrix(N)
         n = len(mu)
