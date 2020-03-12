@@ -42,6 +42,7 @@ class FileMan(object):
         self.lst = None
         self.eig = None
         self.npy = None
+        self.mat = None
         self.prof = None
         self.prof_raw = None
 
@@ -92,6 +93,7 @@ class FileMan(object):
             self.lst = None
             self.eig = None
             self.npy = None
+            self.mat = None
             self.prof = None
             self.prof_raw = None
             self.dump = None
@@ -101,6 +103,7 @@ class FileMan(object):
                 output = add_suffix(self.name, 'out')
             prof = add_suffix(self.name, 'prof')
             eig = add_suffix(self.name, 'eig')
+            mat = add_suffix(self.name, 'As')
 
             self.lst = os.path.join(self.output_path, output + '.lst')
             self.npy = os.path.join(self.output_path, output + '.npy')
@@ -108,6 +111,7 @@ class FileMan(object):
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
             self.prof = os.path.join(self.output_path, prof + '.txt')
+            self.mat = os.path.join(self.output_path, mat + '.mat')
             self.prof_raw = os.path.join(self.output_path, prof + '.prof')
             self.dump = os.path.join(self.output_path, dump + '.xlsx')
 

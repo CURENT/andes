@@ -1,15 +1,11 @@
 # ANDES
 
-[![GitHub Action
-Status](https://github.com/cuihantao/andes/workflows/Python%20application/badge.svg)](https://github.com/cuihantao/andes/actions)
-[![Azure Pipeline build
-status](https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master)](https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master)
-[![Codecov
-Coverage](https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg)](https://codecov.io/gh/cuihantao/andes)
-[![Codacy
-Badge](https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da)](https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard)
-[![PyPI
-Version](https://img.shields.io/pypi/v/andes.svg)](https://pypi.python.org/pypi/andes)
+[![GitHub Action Status](https://github.com/cuihantao/andes/workflows/Python%20application/badge.svg)](https://github.com/cuihantao/andes/actions)
+[![Azure Pipeline build status](https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master)](https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master)
+[![Documentation Status](https://readthedocs.org/projects/andes/badge/?version=latest)](https://andes.readthedocs.io/en/latest/?badge=latest)
+[![Codecov Coverage](https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg)](https://codecov.io/gh/cuihantao/andes)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da)](https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard)
+[![PyPI Version](https://img.shields.io/pypi/v/andes.svg)](https://pypi.python.org/pypi/andes)
 
 A Python-based tool for symbolic power system modeling and numerical analysis.
 
@@ -54,8 +50,13 @@ In addition, ANDES features
 -   Full equation documentation of supported DAE models.
 
 ANDES is currently under active development.
-Visit the documentation to learn more about ANDES.
-Technical details can be referred to our paper on arXiv.
+Use the following resources to get involved.
+
++ Learn more about ANDES by reading the [documentation][readthedocs]
++ Report bugs or issues by submitting a [GitHub issue][GitHub issues]
++ Submit contributions using [pull requests][GitHub pull requests]
++ Read release notes highlighted [here][release notes]
++ Check out and and cite our [paper][arxiv paper]
 
 # Table of Contents
 * [Get Started with ANDES](#get-started-with-andes)
@@ -75,7 +76,6 @@ Technical details can be referred to our paper on arXiv.
    * [Step 5: Define Initializers](#step-5-define-initializers)
    * [Step 6: Finalize](#step-6-finalize)
 * [API Reference](#api-reference)
-* [Get Involved](#get-involved)
 * [Who is Using ANDES?](#who-is-using-andes)
 
 # Get Started with ANDES
@@ -515,13 +515,6 @@ Finally, run `andes prepare` from the command-line to re-generate code for the n
 # API Reference
 The official [documentation][readthedocs] explains the complete list of modeling components.
 The most commonly used ones are highlighted in the following. 
-
-# Get Involved
-+ Learn more about ANDES by reading the [documentation][readthedocs]
-+ Report bugs or issues by submitting a [GitHub issue][GitHub issues]
-+ Submit contributions using [pull requests][GitHub pull requests]
-+ Read release notes highlighted [here][release notes]
-+ Check out and and cite our [paper][arxiv paper]
 
 # Who is Using ANDES?
 Please let us know if you are using ANDES for research or projects. 
