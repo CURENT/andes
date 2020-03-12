@@ -544,5 +544,5 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 [GitHub contributors]:   https://github.com/cuihantao/andes/graphs/contributors
 [readthedocs]:           https://andes.readthedocs.io
 [release notes]:         https://andes.readthedocs.io/en/latest/release-notes.html 
-[arxiv paper]:           https://TODO
+[arxiv paper]:           https://arxiv.org/abs/2002.09455
 [tutorial]:              https://andes.readthedocs.io/en/latest/tutorial.html#interactive-usage
