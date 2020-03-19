@@ -48,17 +48,17 @@ loaded. In other words, any symbolic processing for particular test systems must
 ``System.prepare()``.
 
 The package used for serializing/de-serializing numerical calls is ``dill``. The serialized file will be named
-``calls.pkl`` and placed under ``<HomeDir>/.andes/``. As a note, the ``dill_calls()`` method has set the flag
+``calls.pkl`` and placed under ``<HomeDir>/.andes/``. As a note, the ``dill()`` method has set the flag
 ``dill.settings['recurse'] = True`` to ensure a successful recursive serialization.
 
-If no change is made to models, the call to ``prepare()`` afterwards can be replaced with ``undill_calls()``,
+If no change is made to models, the call to ``prepare()`` afterwards can be replaced with ``undill()``,
 which is fast to execute.
 
 See for details:
 
 :py:mod:`andes.system.System.prepare()` : symbolic-to-numerical preparation
 
-:py:mod:`andes.system.System.undill_calls()` : un-dill numerical calls
+:py:mod:`andes.system.System.undill()` : un-dill numerical calls
 
 Numerical Functions
 ----------------------------------------
