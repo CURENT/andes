@@ -359,7 +359,9 @@ def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
     system = None
 
     t0, _ = elapsed()
-    if len(cases) == 1:
+    if len(cases) == 0:
+        pass
+    elif len(cases) == 1:
         system = run_case(cases[0], **kwargs)
     else:
         _run_multiprocess(cases, ncpu, **kwargs)

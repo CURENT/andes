@@ -26,7 +26,19 @@ output_formats = ['']
 
 def guess(system):
     """
-    input format guess function. First guess by extension, then test by lines
+    Guess the input format based on extension and content.
+
+    Also stores the format name to `system.files.input_format`.
+
+    Parameters
+    ----------
+    system : System
+        System instance with the file name set to `system.files`
+
+    Returns
+    -------
+    str
+        format name
     """
     files = system.files
     maybe = []
@@ -66,7 +78,12 @@ def guess(system):
 
 def parse(system):
     """
-    Parse input file with the given format in system.files.input_format
+    Parse input file with the given format in `system.files.input_format`.
+
+    Returns
+    -------
+    bool
+        True if successful; False otherwise.
     """
 
     t, _ = elapsed()
@@ -123,12 +140,17 @@ def dump(system, output_format):
     system
         System object
     output_format : str
-        Output format name. 'xlsx' will be used if is None.
+        Output format name. 'xlsx' will be used if is not an instance of `str`.
+
+    Returns
+    -------
+    bool
+        True if successful; False otherwise.
     """
     if system.files.no_output:
         return
 
-    if output_format is None:
+    if not isinstance(output_format, str):
         output_format = 'xlsx'
 
     outfile = system.files.dump
@@ -139,5 +161,7 @@ def dump(system, output_format):
     _, s = elapsed(t)
     if ret:
         logger.info(f'Converted file {system.files.dump} written in {s}.')
+        return True
     else:
-        logger.error('Format conversion aborted.')
+        logger.error('Format conversion failed.')
+        return False
