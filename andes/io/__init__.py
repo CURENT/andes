@@ -123,12 +123,12 @@ def dump(system, output_format):
     system
         System object
     output_format : str
-        Output format name. 'xlsx' will be used if is None.
+        Output format name. 'xlsx' will be used if is not an instance of `str`.
     """
     if system.files.no_output:
         return
 
-    if output_format is None:
+    if not isinstance(output_format, str):
         output_format = 'xlsx'
 
     outfile = system.files.dump
