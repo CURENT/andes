@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class FileMan(object):
     """Define a File Manager class for System"""
 
-    def __init__(self):
+    def __init__(self, case=None, **kwargs):
         """
         Initialize the output file names.
         For inputs, all absolute paths will be respected; and all relative paths are relative to `input_path`.
@@ -45,6 +45,8 @@ class FileMan(object):
         self.mat = None
         self.prof = None
         self.prof_raw = None
+
+        self.set(case, **kwargs)
 
     def set(self, case=None, **kwargs):
 

@@ -8,7 +8,7 @@ from andes.utils.paths import get_case
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
         self.ss = System()
-        self.ss.undill_calls()
+        self.ss.undill()
 
         # load from excel file
         xlsx.read(self.ss, get_case('5bus/pjm5bus.xlsx'))

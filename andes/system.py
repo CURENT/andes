@@ -10,17 +10,12 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
-from andes.variables.fileman import FileMan
-from andes.variables.dae import DAE
-from andes.routines import all_routines
 from andes.models import non_jit
-from andes.core.param import BaseParam
-from andes.core.model import Model
-from andes.core.var import ExtVar
-from andes.core.discrete import AntiWindupLimiter
-from andes.core.config import Config
+from andes.variables import FileMan, DAE
+from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path
+from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
 
 from andes.shared import np, spmatrix
 logger = logging.getLogger(__name__)
@@ -33,7 +28,10 @@ else:
 
 class System(object):
     """
-    New power system class
+    The ANDES power system class.
+
+    This class stores model and routine instances as attributes. Model and routine attribute names are the same
+    as their class names. For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
     """
     def __init__(self,
                  case: Optional[str] = None,
@@ -43,20 +41,23 @@ class System(object):
                  **kwargs
                  ):
         self.name = name
-        self.options = {} if options is None else options
+        self.options = {}
+        if options is not None:
+            self.options.update(options)
         if kwargs:
             self.options.update(kwargs)
-        self.calls = OrderedDict()
-        self.models = OrderedDict()
-        self.groups = OrderedDict()
-        self.programs = OrderedDict()
-        self.switch_times = np.array([])
+        self.calls = OrderedDict()         # a dictionary with model names (keys) and their ``calls`` instance
+        self.models = OrderedDict()        # model names and instances
+        self.groups = OrderedDict()        # group names and instances
+        self.routines = OrderedDict()      # routine names and instances
+        self.switch_times = np.array([])   # an array of ordered event switching times
 
         # get and load default config file
-        self.config = Config(self.__class__.__name__)
-        self._config_path = get_config_path() if not config_path else config_path
-        self._config_from_file = self.load_config(self._config_path)
-        self.config.load(self._config_from_file)
+        self._config_path = get_config_path()
+        if config_path:
+            self._config_path = config_path
+        self._config_object = self.load_config(self._config_path)
+        self.config = Config(self.__class__.__name__, self._config_object)
 
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
@@ -65,20 +66,20 @@ class System(object):
                                      ('ipadd', 1),
                                      )))
 
-        self.files = FileMan()
-        self.files.set(case=case, **self.options)
-
+        # file path manager
+        self.files = FileMan(case=case, **self.options)
+        # numerical DAE storage
         self.dae = DAE(system=self)
 
-        # dynamic imports: routine import need to query model flags
+        # dynamic imports of groups, models and routines
         self._group_import()
         self._model_import()
-        self._routine_import()
+        self._routine_import()  # routine imports come after models
 
-        self._models_with_flag = {'pflow': self.get_models_with_flag('pflow'),
-                                  'tds': self.get_models_with_flag('tds'),
-                                  'pflow_and_tds': self.get_models_with_flag(('tds', 'pflow')),
-                                  }
+        self._models_flag = {'pflow': self.find_models('pflow'),
+                             'tds': self.find_models('tds'),
+                             'pflow_tds': self.find_models(('tds', 'pflow')),
+                             }
 
         # ------------------------------
         # FIXME: reduce clutter with defaultdict `adders` and `setters`, each with `x`, `y`, `f`, and `g`
@@ -104,13 +105,13 @@ class System(object):
             self._generate_pretty_print()
         self._check_group_common()
         self._store_calls()
-        self.dill_calls()
+        self.dill()
 
     def setup(self):
         """
-        Set up system for studies
+        Set up system for studies.
 
-        This function is to be called after all data are added.
+        This function is to be called after adding all device data.
         """
         self.set_address()
         self.set_dae_names()
@@ -122,13 +123,8 @@ class System(object):
 
     def reset(self):
         """
-        Reset to the state after reading data and setup (before power flow)
-
-        Returns
-        -------
-
+        Reset to the state after reading data and setup (before power flow).
         """
-
         self.dae.reset()
         self._call_models_method('a_reset', models=self.models)
         self.e_clear()
@@ -139,7 +135,7 @@ class System(object):
         """
         Add a device instance for an existing model.
 
-        This methods registers the index to the group.
+        This methods calls the ``add`` method of `model` and registers the device `idx` to group.
         """
         if model not in self.models:
             logger.warning(f"<{model}> is not an existing model.")
@@ -162,7 +158,7 @@ class System(object):
         Set addresses for differential and algebraic variables.
         """
         if models is None:
-            models = self._models_with_flag['pflow']
+            models = self._models_flag['pflow']
 
         # set internal variable addresses
         for mdl in models.values():
@@ -170,13 +166,12 @@ class System(object):
                 logger.debug(f'{mdl.class_name} addresses exist.')
                 continue
 
-            collate = mdl.flags['collate']
-
             n = mdl.n
             m0 = self.dae.m
             n0 = self.dae.n
             m_end = m0 + len(mdl.algebs) * n
             n_end = n0 + len(mdl.states) * n
+            collate = mdl.flags['collate']
 
             if not collate:
                 for idx, item in enumerate(mdl.algebs.values()):
@@ -191,7 +186,6 @@ class System(object):
 
             self.dae.m = m_end
             self.dae.n = n_end
-
             mdl.flags['address'] = True
 
         # set external variable addresses
@@ -222,9 +216,8 @@ class System(object):
         """
         Set variable names for differential and algebraic variables, and discrete flags.
         """
-
         if models is None:
-            models = self._models_with_flag['pflow']
+            models = self._models_flag['pflow']
 
         for mdl in models.values():
             mdl_name = mdl.class_name
@@ -255,7 +248,7 @@ class System(object):
         For each model in sequence, initializes external services and internal variables.
         """
         if models is None:
-            models = self._models_with_flag['pflow']
+            models = self._models_flag['pflow']
 
         for mdl in models.values():
             # link externals first
@@ -308,11 +301,10 @@ class System(object):
 
     def calc_pu_coeff(self):
         """
-        Calculate per unit conversion factor; store input parameters to `vin`, and perform the conversion.
+        Perform per unit value conversion.
 
-        Returns
-        -------
-
+        This function calculates the per unit conversion factors, stores input parameters to `vin`, and perform
+        the conversion.
         """
         Sb = self.config.mva
 
@@ -405,6 +397,12 @@ class System(object):
         self._call_models_method('l_set_eq', models)
 
     def fg_to_dae(self):
+        """
+        Collect equation values into the DAE arrays.
+
+        Additionally, the function resets the differential equations associated with variables pegged by
+        anti-windup limiters.
+        """
         self._e_to_dae('f')
         self._e_to_dae('g')
 
@@ -415,12 +413,33 @@ class System(object):
                     np.put(self.dae.x, key, val)
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Call the differential equation update method for each model.
+
+        Notes
+        -----
+        Updated equation values are not collected into DAE after this step.
+        """
         self._call_models_method('f_update', models)
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Call the algebraic equation update method for each model.
+
+        Notes
+        -----
+        Updated equation values are not collected into DAE after this step.
+        """
         self._call_models_method('g_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Call the Jacobian update method for each model.
+
+        Notes
+        -----
+        Updated Jacobians are reflected in the numerical DAE.
+        """
         models = self._get_models(models)
         self._call_models_method('j_update', models)
 
@@ -442,6 +461,9 @@ class System(object):
                         raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Collect and store the sparsity pattern of Jacobian matrices.
+        """
         models = self._get_models(models)
         self._call_models_method('store_sparse_pattern', models)
 
@@ -456,8 +478,6 @@ class System(object):
                 ii.extend(np.arange(self.dae.m))
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
-
-            # logger.debug(f'Jac <{j_name}>, row={ii}')
 
             for mdl in models.values():
                 row_idx = mdl.row_of(f'{j_name}')
@@ -493,16 +513,15 @@ class System(object):
         From variables to dae variables
 
         For adders, only those with `v_str` can set the value. ??????
-
-        Returns
-        -------
-
         """
         self.dae.clear_xy()
         self._v_to_dae('x')
         self._v_to_dae('y')
 
     def vars_to_models(self):
+        """
+        Send DAE variable values to models
+        """
         for var in self.y_adders + self.y_setters:
             if var.n > 0:
                 var.v[:] = self.dae.y[var.a]
@@ -520,11 +539,8 @@ class System(object):
 
         Parameters
         ----------
-        v_name
-
-        Returns
-        -------
-
+        v_name : 'x' or 'y'
+            Variable type name
         """
         if v_name not in ('x', 'y'):
             raise KeyError(f'{v_name} is not a valid var name')
@@ -552,11 +568,8 @@ class System(object):
 
         Parameters
         ----------
-        eq_name
-
-        Returns
-        -------
-
+        eq_name : 'x' or 'y'
+            Equation type name
         """
         if eq_name not in ('f', 'g'):
             raise KeyError(f'{eq_name} is not a valid eq name')
@@ -587,7 +600,21 @@ class System(object):
 
         return np.concatenate(z_dict)
 
-    def get_models_with_flag(self, flag: Optional[Union[str, Tuple]] = None):
+    def find_models(self, flag: Optional[Union[str, Tuple]] = None):
+        """
+        Find models whose ``flag`` field is True.
+
+        Parameters
+        ----------
+        flag : list, str
+            Flags to find
+
+        Returns
+        -------
+        OrderedDict
+            model name : model instance
+
+        """
         if isinstance(flag, str):
             flag = [flag]
 
@@ -599,8 +626,13 @@ class System(object):
                     break
         return out
 
-    def dill_calls(self):
-        logger.debug("Dumping calls to andes.pkl with dill")
+    def dill(self):
+        """
+        Serialize generated functions in ``System.calls`` with dill.
+
+        The serialized file will be stored to ``~/calls.pkl``.
+        """
+        logger.debug("Dumping calls to calls.pkl with dill")
         import dill
         dill.settings['recurse'] = True
 
@@ -608,7 +640,10 @@ class System(object):
         with open(pkl_path, 'wb') as f:
             dill.dump(self.calls, f)
 
-    def undill_calls(self):
+    def undill(self):
+        """
+        Deserialize the function calls from `calls.pkl` with dill.
+        """
         import dill
         dill.settings['recurse'] = True
 
@@ -625,8 +660,13 @@ class System(object):
                 self.__dict__[name].calls = model_call
 
     def _get_models(self, models):
+        """
+        Helper function for sanitizing the ``models`` input.
+
+        The output is an OrderedDict of model names and instances.
+        """
         if models is None:
-            models = self._models_with_flag['pflow']
+            models = self._models_flag['pflow']
         if isinstance(models, str):
             models = {models: self.__dict__[models]}
         elif isinstance(models, Model):
@@ -644,6 +684,9 @@ class System(object):
         return models
 
     def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+        """
+        Wrapper to call model methods.
+        """
         if not isinstance(models, OrderedDict):
             models = self._get_models(models)
         for mdl in models.values():
@@ -651,15 +694,11 @@ class System(object):
 
     def _check_group_common(self):
         """
-        Check if all group common variables and parameters are met
+        Check if all group common variables and parameters are met.
 
         Raises
         ------
         KeyError if any parameter or value is not provided
-
-        Returns
-        -------
-        None
         """
         for group in self.groups.values():
             for item in group.common_params:
@@ -676,11 +715,7 @@ class System(object):
 
     def _collect_ref_param(self):
         """
-        Collect indices into `RefParam` for all models
-
-        Returns
-        -------
-
+        Collect indices into `RefParam` for all models.
         """
         # FIXME: too many safe-checking here. Even the model can be non-existent.
 
@@ -728,11 +763,7 @@ class System(object):
 
     def _group_import(self):
         """
-        Import groups defined in `devices/group.py`
-
-        Returns
-        -------
-
+        Import groups defined in `devices/group.py`.
         """
         module = importlib.import_module('andes.models.group')
         for m in inspect.getmembers(module, inspect.isclass):
@@ -749,32 +780,31 @@ class System(object):
 
         Models defined in ``jits`` and ``non_jits`` in ``models/__init__.py``
         will be imported and instantiated accordingly.
-
-        Returns
-        -------
-        None
         """
         # non-JIT models
         for file, cls_list in non_jit.items():
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_module, model_name)
-                self.__dict__[model_name] = the_class(system=self, config=self._config_from_file)
+                self.__dict__[model_name] = the_class(system=self, config=self._config_object)
                 self.models[model_name] = self.__dict__[model_name]
 
                 # link to the group
                 group_name = self.__dict__[model_name].group
                 self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
 
+        # *** JIT import code ***
         # import JIT models
         # for file, pair in jits.items():
         #     for cls, name in pair.items():
         #         self.__dict__[name] = JIT(self, file, cls, name)
+        # ***********************
 
     def _routine_import(self):
         """
         Dynamically import routines as defined in ``routines/__init__.py``.
 
+        # *** DOCS FROM OLDER VERSION ***
         The command-line argument ``--routine`` is defined in ``__cli__`` in
         each routine file. A routine instance will be stored in the system
         instance with the name being all lower case.
@@ -783,20 +813,25 @@ class System(object):
         ``routines/pflow.py`` where ``__cli__ = 'pflow'``. The class name
         for the routine should be ``Pflow``. The routine instance will be
         saved to ``PowerSystem.pflow``.
-
-        Returns
-        -------
-        None
+        # *******************************
         """
         for file, cls_list in all_routines.items():
             for cls_name in cls_list:
                 file = importlib.import_module('andes.routines.' + file)
                 the_class = getattr(file, cls_name)
                 attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=self._config_from_file)
-                self.programs[attr_name] = self.__dict__[attr_name]
+                self.__dict__[attr_name] = the_class(system=self, config=self._config_object)
+                self.routines[attr_name] = self.__dict__[attr_name]
 
     def store_switch_times(self, models=None):
+        """
+        Store event switching time in a sorted Numpy array at ``System.switch_times``.
+
+        Returns
+        -------
+        array-like
+            self.switch_times
+        """
         models = self._get_models(models)
         out = []
         for instance in models.values():
@@ -811,26 +846,32 @@ class System(object):
         return self.switch_times
 
     def switch_action(self, models=None):
+        """
+        Invoke the actions associated with switch times.
+        """
         models = self._get_models(models)
         for instance in models.values():
             instance.switch_action(self.dae.t)
 
     def _p_restore(self):
         """
-        Restore parameters stored in `pin`
-        Returns
-        -------
-
+        Restore parameters stored in `pin`.
         """
         for model in self.models.values():
             for param in model.num_params.values():
                 param.restore()
 
     def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Clear DAE equation arrays.
+        """
         self.dae.clear_fg()
         self._call_models_method('e_clear', models)
 
     def _store_calls(self):
+        """
+        Collect and store model calls into system.
+        """
         logger.debug("Collecting Model.calls into System.")
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
@@ -851,7 +892,8 @@ class System(object):
                 logger.debug("Config: set for System")
 
     def get_config(self):
-        """Get config data from models
+        """
+        Get config data from models
 
         Returns
         -------
@@ -861,7 +903,7 @@ class System(object):
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
 
-        all_with_config = OrderedDict(list(self.programs.items()) +
+        all_with_config = OrderedDict(list(self.routines.items()) +
                                       list(self.models.items()))
 
         for name, instance in all_with_config.items():
@@ -902,10 +944,6 @@ class System(object):
         file_path : str
             path to the configuration file. The user will be prompted if the
             file already exists.
-
-        Returns
-        -------
-        None
         """
         if file_path is None:
             home_dir = os.path.expanduser('~')
@@ -930,7 +968,7 @@ class System(object):
         Returns
         -------
         str
-            A string for the group and model table
+            A table-formatted string for the groups and models
         """
 
         pairs = list()
@@ -938,7 +976,8 @@ class System(object):
             models = list()
             for m in self.groups[g].models:
                 models.append(m)
-            pairs.append((g, ', '.join(models)))
+            if len(models) > 0:
+                pairs.append((g, ', '.join(models)))
 
         tab = Tab(title='Supported Groups and Models',
                   header=['Group', 'Models'],
