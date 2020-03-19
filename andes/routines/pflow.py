@@ -17,7 +17,7 @@ class PFlow(BaseRoutine):
                                      ('max_iter', 25),
                                      ('report', 1),
                                      )))
-        self.models = system.get_models_with_flag('pflow')
+        self.models = system.find_models('pflow')
 
         self.converged = False
         self.inc = None

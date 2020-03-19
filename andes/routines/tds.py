@@ -24,8 +24,8 @@ class TDS(BaseRoutine):
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
 
-        self.tds_models = system.get_models_with_flag('tds')
-        self.pflow_tds_models = system.get_models_with_flag(('tds', 'pflow'))
+        self.tds_models = system.find_models('tds')
+        self.pflow_tds_models = system.find_models(('tds', 'pflow'))
 
         # to be computed
         self.deltat = 0

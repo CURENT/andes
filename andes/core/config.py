@@ -10,7 +10,9 @@ class Config(object):
     """
 
     def __init__(self, name, dct=None, **kwargs):
-        """Constructor with a dictionary or keyword arguments"""
+        """
+        Constructor with a dictionary or keyword arguments
+        """
         self._name = name
         self._dict = OrderedDict()
         self.add(dct, **kwargs)
