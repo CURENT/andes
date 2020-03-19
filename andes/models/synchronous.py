@@ -94,10 +94,14 @@ class GENBase(Model):
                            })
 
         # state variables
-        self.delta = State(v_str='delta0',
+        self.delta = State(info='rotor angle',
+                           unit='rad',
+                           v_str='delta0',
                            tex_name=r'\delta',
                            e_str='u * (2 * pi * fn) * (omega - 1)')
-        self.omega = State(v_str='u',
+        self.omega = State(info='rotor speed',
+                           unit='pu (Hz)',
+                           v_str='u',
                            tex_name=r'\omega',
                            e_str='(u / M ) * (tm - te - D * (omega - 1))')
 
@@ -119,20 +123,24 @@ class GENBase(Model):
 
         # algebraic variables
         # Need to be provided by specific generator models
-        self.Id = Algeb(v_str='Id0',
+        self.Id = Algeb(info='d-axis current',
+                        v_str='Id0',
                         tex_name=r'I_d',
                         e_str=''
                         )  # to be completed by subclasses
-        self.Iq = Algeb(v_str='Iq0',
+        self.Iq = Algeb(info='q-axis current',
+                        v_str='Iq0',
                         tex_name=r'I_q',
                         e_str=''
                         )  # to be completed
 
-        self.vd = Algeb(v_str='vd0',
+        self.vd = Algeb(info='d-axis voltage',
+                        v_str='vd0',
                         e_str='v * sin(delta - a) - vd',
                         tex_name=r'V_d',
                         )
-        self.vq = Algeb(v_str='vq0',
+        self.vq = Algeb(info='q-axis voltage',
+                        v_str='vq0',
                         e_str='v * cos(delta - a) - vq',
                         tex_name=r'V_q',
                         )
@@ -149,7 +157,9 @@ class GENBase(Model):
                         v_setter=True,
                         e_str='psid * Iq - psiq * Id - te',
                         )
-        self.vf = Algeb(v_str='vf0',
+        self.vf = Algeb(info='excitation voltage',
+                        unit='pu',
+                        v_str='vf0',
                         v_setter=True,
                         e_str='vf0 - vf',
                         tex_name=r'v_f'
@@ -178,11 +188,13 @@ class Flux0(object):
     """
 
     def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d',
+        self.psid = Algeb(info='d-axis flux',
+                          tex_name=r'\psi_d',
                           v_str='psid0',
                           e_str='u * (ra * Iq + vq) - psid',
                           )
-        self.psiq = Algeb(tex_name=r'\psi_q',
+        self.psiq = Algeb(info='q-axis flux',
+                          tex_name=r'\psi_q',
                           v_str='psiq0',
                           e_str='u * (ra * Id + vd) + psiq',
                           )
@@ -197,11 +209,13 @@ class Flux1(object):
     """
 
     def __init__(self):
-        self.psid = Algeb(tex_name=r'\psi_d',
+        self.psid = Algeb(info='d-axis flux',
+                          tex_name=r'\psi_d',
                           v_str='psid0',
                           e_str='u * (ra * Iq + vq) - omega * psid',
                           )
-        self.psiq = Algeb(tex_name=r'\psi_q',
+        self.psiq = Algeb(info='q-axis flux',
+                          tex_name=r'\psi_q',
                           v_str='psiq0',
                           e_str='u * (ra * Id + vd) + omega * psiq',
                           )
@@ -216,11 +230,13 @@ class Flux2(object):
     """
 
     def __init__(self):
-        self.psid = State(tex_name=r'\psi_d',
+        self.psid = State(info='d-axis flux',
+                          tex_name=r'\psi_d',
                           v_str='psid0',
                           e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)',
                           )
-        self.psiq = State(tex_name=r'\psi_q',
+        self.psiq = State(info='q-axis flux',
+                          tex_name=r'\psi_q',
                           v_str='psiq0',
                           e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)',
                           )
@@ -422,20 +438,24 @@ class GENROUModel(object):
                         v_str='Se0',
                         e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 
-        self.e1q = State(tex_name=r"e'_q",
+        self.e1q = State(info='q-axis transient voltage',
+                         tex_name=r"e'_q",
                          v_str='e1q0',
                          e_str='(-e1q - (xd - xd1) * (Id - gd2 * e2d - (1 - gd1) * Id + gd2 * e1q) - '
                                'Se * psiad + vf) / Td10')
-        self.e1d = State(tex_name=r"e'_d",
+        self.e1d = State(info='d-axis transient voltage',
+                         tex_name=r"e'_d",
                          v_str='e1d0',
                          e_str='(-e1d + (xq - xq1) * (Iq - gq2 * e2q - (1 - gq1) * Iq - gq2 * e1d) + '
                                'Se * gqd * psiaq) / Tq10')
 
-        self.e2d = State(tex_name=r"e''_d",
+        self.e2d = State(info='d-axis sub-transient voltage',
+                         tex_name=r"e''_d",
                          v_str='e2d0',
                          e_str='(-e2d + e1q - (xd1 - xl) * Id) / Td20')
 
-        self.e2q = State(tex_name=r"e''_q",
+        self.e2q = State(info='q-axis sub-transient voltage',
+                         tex_name=r"e''_q",
                          v_str='e2q0',
                          e_str='(-e2q - e1d - (xq1 - xl) * Iq) / Tq20')
 
