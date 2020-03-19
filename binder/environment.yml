@@ -1,0 +1,63 @@
+name: andes_fresh
+channels:
+  - http://conda.anaconda.org/gurobi
+  - conda-forge
+  - defaults
+dependencies:
+  - andes=0.8.2=py37_0
+  - ca-certificates=2019.11.28=hecc5488_0
+  - certifi=2019.11.28=py37hc8dfbb8_1
+  - coloredlogs=14.0=py37hc8dfbb8_1
+  - cvxopt=1.2.4=py37hae5b90f_202
+  - cycler=0.10.0=py_2
+  - dill=0.3.1.1=py37hc8dfbb8_1
+  - dsdp=5.8=h7674d01_1203
+  - fftw=3.3.8=nompi_h44ae4c8_1110
+  - freetype=2.10.1=h8da9a1a_0
+  - glpk=4.65=h65ac59c_1002
+  - gmp=6.2.0=h4a8c4bd_2
+  - gsl=2.6=ha2d443c_0
+  - humanfriendly=8.1=py37hc8dfbb8_1
+  - kiwisolver=1.1.0=py37ha1cc60f_1
+  - libblas=3.8.0=16_openblas
+  - libcblas=3.8.0=16_openblas
+  - libcxx=9.0.1=1
+  - libffi=3.2.1=h4a8c4bd_1007
+  - libgfortran=4.0.0=2
+  - liblapack=3.8.0=16_openblas
+  - libopenblas=0.3.9=h3d69b6c_0
+  - libpng=1.6.37=hbbe82c9_1
+  - llvm-openmp=9.0.1=h28b9765_2
+  - matplotlib-base=3.2.1=py37hddda452_0
+  - metis=5.1.0=h4a8c4bd_1005
+  - mpmath=1.1.0=py_0
+  - ncurses=6.1=h0a44026_1002
+  - numpy=1.18.1=py37hde6bac1_0
+  - openssl=1.1.1e=h0b31af3_0
+  - pandas=1.0.3=py37h94625e5_0
+  - pip=20.0.2=py_2
+  - pyparsing=2.4.6=py_0
+  - python=3.7.6=hfa4aa89_4_cpython
+  - python-dateutil=2.8.1=py_0
+  - python_abi=3.7=1_cp37m
+  - pytz=2019.3=py_0
+  - pyyaml=5.3.1=py37h9bfed18_0
+  - readline=8.0=hcfe32e1_0
+  - scipy=1.4.1=py37h82752d6_0
+  - setuptools=46.0.0=py37hc8dfbb8_2
+  - six=1.14.0=py_1
+  - sqlite=3.30.1=h93121df_0
+  - suitesparse=5.6.0=h0e59142_0
+  - sympy=1.5.1=py37hc8dfbb8_2
+  - tbb=2019.9=ha1b3eb9_1
+  - tk=8.6.10=hbbe82c9_0
+  - tornado=6.0.4=py37h9bfed18_1
+  - tqdm=4.43.0=py_0
+  - wheel=0.34.2=py_1
+  - xlrd=1.2.0=py_0
+  - xlsxwriter=1.2.8=py_0
+  - xz=5.2.4=h1de35cc_1001
+  - yaml=0.2.2=h0b31af3_1
+  - zlib=1.2.11=h0b31af3_1006
+prefix: /Users/hcui7/miniconda3/envs/andes_fresh
+
