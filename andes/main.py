@@ -406,7 +406,7 @@ def prepare(quick=False, **kwargs):
     system.prepare(quick=quick)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
-    return True
+    return system
 
 
 def selftest(**kwargs):
