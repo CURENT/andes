@@ -163,7 +163,9 @@ class System(object):
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags['address'] is True:
-                logger.debug(f'{mdl.class_name} addresses exist.')
+                logger.debug(f'{mdl.class_name:10s}: addresses exist.')
+                continue
+            if mdl.n == 0:
                 continue
 
             n = mdl.n
@@ -512,7 +514,9 @@ class System(object):
         """
         From variables to dae variables
 
-        For adders, only those with `v_str` can set the value. ??????
+        Warnings
+        --------
+        For adders, only those with `v_str` can set the value.
         """
         self.dae.clear_xy()
         self._v_to_dae('x')

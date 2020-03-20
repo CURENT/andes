@@ -1,14 +1,17 @@
 .. _modeling:
 
-**********************
+********
 Modeling
-**********************
+********
+This chapter contains advanced topics on modeling and simulation and how they are implemented in ANDES.
+It aims to provide an in-depth explanation of how the ANDES framework is set up for symbolic modeling and
+numerical simulation. It also provides an example for interested users to implement customized DAE models.
 
 System
-======================================
+======
 
 Overview
-----------------------------------------
+--------
 :py:mod:`andes.System` is the top-level class for organizing and orchestrating a power system model. The
 System class contains models and routines for modeling and simulation. ``System`` provides methods for
 automatically importing groups, models, and routines at ``System`` creation.
@@ -19,14 +22,14 @@ function calls, respectively. In these dictionaries, the keys are name strings a
 corresponding instances.
 
 Dynamic Imports
-````````````````````````````````````````
+```````````````
 Groups, models and routine programs are dynamically imported at the creation of a ``System`` instance. In
 detail, *all classes* defined in ``andes.models.group`` are imported and instantiated.
 For models and groups, only the classes defined in the corresponding ``__init__.py`` files are imported and
 instantiated in the order of definition.
 
-Symbolic-to-Numeric Preparation
-````````````````````````````````````````
+Code Generation
+```````````````
 Before the first use, all symbolic equations need to be generated into numerical function calls for accelerating
 the numerical simulation. Since the symbolic to numeric generation is slow, these numerical
 function calls (Python Callables), once generated, can be serialized into a file to speed up future. When models
@@ -39,11 +42,11 @@ In the first use of ANDES in an interactive environment, one would do ::
     sys = andes.System()
     sys.prepare()
 
-It may take several seconds to a few minutes to finish the preparation. This process is automatically invoked
+It may take several seconds to a few minutes to finish the code generation. This process is automatically invoked
 for the first time ANDES is run command line. The preparation process can be manually triggered with
 ``andes --prepare``.
 
-The symbolic-to-numeric generation is independent of test systems and needs to happen before a test system is
+The symbolic-to-numeric code generation is independent of test systems and needs to happen before a test system is
 loaded. In other words, any symbolic processing for particular test systems must not be included in
 ``System.prepare()``.
 
@@ -61,10 +64,10 @@ See for details:
 :py:mod:`andes.system.System.undill()` : un-dill numerical calls
 
 Numerical Functions
-----------------------------------------
+-------------------
 
 DAE Arrays and Sparse Matrices
-````````````````````````````````````````
+``````````````````````````````
 ``System`` contains an instance of the numerical DAE class, ``System.dae``, for storing the numerical values of
 variables, equations and first order derivatives (Jacobian matrices). Variable values and equation values are
 stored in ``np.ndarray``, while Jacobians are stored in ``CVXOPT.spmatrix``. Defined arrays and descriptions are
@@ -94,7 +97,7 @@ Note that DAE does not store the original variable at a particular address. Conv
 variable is stored in the variable instance. See Subsection Variables for more details.
 
 Model and DAE Values
-````````````````````````````````````````
+````````````````````
 ANDES uses a decentralized architecture between models and DAE value arrays. In this architecture, variables are
 initialized and equations are evaluated inside each model. Since the equation system is solved simultaneously,
 ``System`` provides methods for collecting initial values and equation values into ``DAE``, as well as copying
@@ -113,7 +116,7 @@ See for more details:
 
 
 Model Functions
-````````````````````````````````````````
+```````````````
 ``System`` functions as an orchestrator for calling shared member methods of models. These methods are defined
 for initialization, equation update, Jacobian update, and discrete flags update.
 
@@ -134,7 +137,7 @@ for initialization, equation update, Jacobian update, and discrete flags update.
 +--------------------------------------+------------------------------------------+
 
 Sparse Matrix Patterns
-````````````````````````````````````````
+``````````````````````
 The largest overhead in building and solving nonlinear equations is the building of Jacobian matrices. This is
 especially relevant when we use the implicit integration approach which algebraized the differential equations.
 Given the unique data structure of power system models, the sparse matrices for Jacobians are built model by
@@ -165,7 +168,7 @@ See for details:
 :py:mod:`andes.System.store_sparse_patterns` : store sparse patterns from models
 
 Configuration
-----------------------------------------
+-------------
 Each model and routine program has a member attribute ``config`` for model-specific or routine-specific
 configurations. ``System`` also stores ``config`` for system-specific configurations. In addition, ``System``
 manages collecting all configs, saving in a config file, and loading the config file.
@@ -177,7 +180,6 @@ the config file takes precedence over default config values.
 Again, configs from files is passed to model constructors during instantiation. If one needs to modify the
 config for a run, it needs to be done before the ``System`` instantiation. Directly modifying ``Model.config``
 may not take effect or have side effect in the current implementation.
-
 
 See for details:
 
@@ -191,7 +193,7 @@ See for details:
 
 
 Models
-======================================
+======
 This section introduces the modeling of power system devices. The terminology "model" is used to describe the
 mathematical representation of a type of device, such as synchronous generators and turine governors. The
 terminology "device" is used to describe a particular instance of a model, for example, a specific generator.
@@ -203,7 +205,7 @@ variables, and DAE variables. It provides API for converting symbolic equations,
 updating equations.
 
 Parameters from Inputs
-----------------------------------------
+----------------------
 Class ``ModelData`` needs to be inherited to create the class holding the input parameters for a new model. The
 recommended name for the derived class is the model name with ``Data``. In ``__init__`` of the derived class,
 the input parameters can be defined. Note that two default parameters, ``u`` (connection status, ``NumParam``),
@@ -236,7 +238,7 @@ types of parameters also exist. For example, to store the idx of ``Owner``, ``PQ
         self.owner = IdxParam(model='Owner', info="owner idx")
 
 ``Model.cache``
-````````````````````````````````````````
+```````````````
 ``ModelData`` uses a lightweight class ``Cache`` for caching its data as a dictionary or a pandas Dataframe.
 Four attributes are defined for ``ModelData.cache``:
 
@@ -249,7 +251,7 @@ Other attributes can be added, if necessary, by registering with ``cache.add_cal
 callback function needs to be provided. See the source code of ``ModelData`` for details.
 
 Parameter Requirements for Voltage Rating
-```````````````````````````````````````````````
+`````````````````````````````````````````
 If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
 its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
 voltages.
@@ -261,7 +263,7 @@ will be converted consistently.
 
 
 Defining a DAE Model
-----------------------------------------
+--------------------
 After subclassing ``ModelData``, ``Model`` needs to be derived to complete a DAE model. Subclasses of Model
 defines DAE variables, service variables, and other types of parameters, in the constructor ``__init__``, to
 complete a model.
@@ -355,7 +357,7 @@ Finally, to let ANDES pick up the model, the model name needs to be added to ``m
 examples in the ``OrderedDict``, where the key is the file name, and the value is the class name.
 
 Dynamicity Under the Hood
-----------------------------------------
+-------------------------
 The magic for automatic creation of variables are all hidden in ``Model.__setattr__``, and the code is
 incredible simple. It sets the name, tex_name, and owner model of the attribute instance and, more importantly,
 does the book keeping. In particular, when the attribute is a ``Block`` subclass, ``__setattr__`` captures the
@@ -369,7 +371,7 @@ In the numerical evaluation phase, ``Model`` provides a method, ``get_inputs`` t
 arrays in a dictionary, which can be effortlessly passed to numerical functions.
 
 Commonly Used Attributes in Models
-``````````````````````````````````````````````````
+``````````````````````````````````
 The following ``Model`` attributes are commonly used for debugging. If the attribute if an ``OrderedDict``, the
 key is usually the attribute name, and the value is the instance.
 
@@ -382,7 +384,7 @@ key is usually the attribute name, and the value is the instance.
 - ``services_ext``, an ``OrderedDict`` for externally retrieved services.
 
 Attributes in ``Model.cache``
-````````````````````````````````````````
+`````````````````````````````
 Attributes in ``Model.cache`` are additional book-keeping structures for variables, parameters and services. THe
 following attributes are defined in ``Model.cache``.
 
@@ -397,28 +399,28 @@ following attributes are defined in ``Model.cache``.
 - ``vars_ext``, an ``OrderedDict`` of all external variables, states and then algebs
 
 Equation Generation
------------------------------
+-------------------
 ``Model`` handles the symbolic to numeric generation when called. The equation generation is a multi-step
 process with symbol preparation, equation generation, Jacobian generation, initializer generation, and pretty
 print generation.
 
-The symbol preparation prepares ``OrderedDict``s of ``input_syms``, ``vars_syms`` and ``non_vars_syms`.
+The symbol preparation prepares ``OrderedDict`` of ``input_syms``, ``vars_syms`` and ``non_vars_syms``.
 ``input_syms`` contains all possible symbols in equations, including variables, parameters, discrete flags, and
 config flags. ``input_syms`` has the same variables as what ``get_inputs()`` returns. Besides, ``vars_syms`` are
 the variable-only symbols, which are useful when getting the Jacobian matrices. ``non_vars_syms`` contains the
 symbols in ``input_syms`` but not in ``var_syms``.
 
 Next, function ``generate_equation`` converts each DAE equation set to one numerical function calls and store
-it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are``f_lambdify``
+it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are ``f_lambdify``
 and ``g_lambdify``. Differently, service variables will be generated one by one and store in an ``OrderedDict``
 in ``Model.calls.s_lambdify``.
 
 
 Jacobian Storage
-----------------------------------------
+----------------
 
 Abstract Jacobian Storage
-````````````````````````````````````````
+`````````````````````````
 Using the ``.jacobian`` method on ``sympy.Matrix``, the symbolic Jacobians can be easily obtains. The complexity
 lies in the storage of the Jacobian elements. Observed that the Jacobian equation generation happens before any
 system is loaded, thus only the variable indices in the variable array is available. For each non-zero item in each
@@ -443,7 +445,7 @@ In terms of the non-constant entries in Jacobians, the callable functions are st
 list of callables, while ``_vgyc`` is a list of constant numbers.
 
 Concrete Jacobian Storage
-````````````````````````````````````````
+`````````````````````````
 When a specific system is loaded and the addresses are assigned to variables, the abstract Jacobian triplets,
 more specifically, the rows and columns, are replaced with the array of addresses. The new addresses and values
 will be stored in ``Model`` attributes with the names ``{i, j, v}{Jacobian Name}{c or None}``. Note that there
@@ -463,7 +465,7 @@ When a specific system is loaded, for example, a 5-bus system, the addresses for
 and store ``[11, 13, 15``, and ``[5, 7, 9]``.
 
 Initialization
-------------------------------
+--------------
 Value providers such as services and DAE variables need to be initialized. Services are initialized before
 any DAE variable. Both Services and DAE Variables are initialized *sequentially* in the order of declaration.
 
@@ -475,7 +477,7 @@ ANDES has an *experimental* Newton-Krylov method based iterative initialization.
 will be initialized using the iterative approach
 
 Additional Numerical Equations
-----------------------------------------
+------------------------------
 Addition numerical equations are allowed to complete the "hybrid symbolic-numeric" framework. Numerical function
 calls are useful when the model DAE is non-standard or hard to be generalized. Since the
 symbolic-to-numeric generation is an additional layer on top of the numerical simulation, it is fundamentally
@@ -505,7 +507,7 @@ instead of ``ReducerService``, ``RepeaterService`` and external variables.
 
 
 Parameters
-==============================
+==========
 Parameters, in the scope of atoms, are data provided to equations. Parameters are usually read from input data
 files and pre-processed before numerical simulation.
 
@@ -532,7 +534,7 @@ given in the table below.
 
 
 Variables
-==============================
+=========
 DAE Variables, or variables for short, are unknowns to be solved using numerical or analytical methods.
 A variable stores values, equation values, and addresses in the DAE array. The base class for variables is
 ``VarBase``. In this subsection, ``VarBase`` is used to represent any subclass of ``VarBase`` list in the table
@@ -562,7 +564,7 @@ Each device attached to a particular bus needs to access the value and impose th
 It can be done with ``ExtAlgeb`` or ``ExtState``, which links with an existing variable from a model or a group.
 
 Variable, Equation and Address
-------------------------------------------------
+------------------------------
 Subclasses of ``VarBase`` are value providers and equation providers.
 Each ``VarBase`` has member attributes ``v`` and ``e`` for variable values and equation values, respectively.
 The initial value of ``v`` is set by the initialization routine, and the initial value of ``e`` is set to zero.
@@ -577,7 +579,7 @@ the addresses of the ``a`` variable for all the five ``Bus`` devices. Convention
 assigned ``np.array([0, 1, 2, 3, 4])``.
 
 Value and Equation Strings
-----------------------------------------
+--------------------------
 The most important feature of the symbolic framework is allowing to define equations using strings.
 There are three types of strings for a variable, stored in the following member attributes, respectively:
 
@@ -589,7 +591,7 @@ The difference between ``v_str`` and ``v_iter`` should be clearly noted. ``v_str
 initial value, while all ``v_iter`` equations are solved numerically using the Newton-Krylov iterative method.
 
 Values Between DAE and Models
-----------------------------------------
+-----------------------------
 ANDES adopts a decentralized architecture which provides each model a copy of variable values before equation
 evaluation. This architecture allows to parallelize the equation evaluation (in theory, or in practice if one
 works round the Python GIL). However, this architecture requires a coherent protocol for updating the DAE arrays
@@ -606,7 +608,7 @@ In addition, ``VarBase`` provides two flags, ``v_setter`` and ``e_setter``, for 
 needs to overwrite the variable or equation values.
 
 Flags for Value Overwriting
-----------------------------------------
+---------------------------
 ``VarBase`` have special flags for handling value initialization and equation values.
 This is only relevant for public or external variables.
 The ``v_setter`` is used to indicate whether a particular ``VarBase`` instance sets the initial value.
@@ -618,7 +620,7 @@ If one of the variable or external variable has ``v_setter is True``, it will, a
 DAE array to its value. Only one ``VarBase`` of the same address is allowed to have ``v_setter == True``.
 
 The ``v_setter`` Example
-----------------------------------------
+------------------------
 A Bus is allowed to default the initial voltage magnitude to 1 and the voltage phase angle to 0.
 If a PV device is connected to a Bus device, the PV should be allowed to override the voltage initial value
 with the voltage set point.
@@ -645,7 +647,7 @@ During the value collection into ``DAE.y`` by the ``System`` class, ``PV.v``, as
 overwrite the voltage magnitude for Bus devices with the indices provided in ``PV.bus``.
 
 Services
-======================================
+========
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
 constants but can be used for special operations to work around restrictions in the symbolic framework.
 Services are value providers, meaning each service has an attribute ``v`` for storing service values. The
@@ -664,7 +666,7 @@ base class of services is ``BaseService``, and the supported services are listd 
 +------------------+-----------------------------------------------------------------+
 
 ``ConstService``
-----------------------------------------
+----------------
 The most commonly used service is ``ConstService``.  It is used to store an array of constants, whose value is
 evaluated from a provided symbolic string. They are only evaluated once in the model initialization phase, ahead
 of variable initialization. ``ConstService`` comes handy when one wants to calculate intermediate constants from
@@ -683,7 +685,7 @@ strings.
 For more details, see the API doc: :py:mod:`andes.core.service.ConstService`
 
 ``ExtService``
-----------------------------------------
+--------------
 Service constants whose value is retrieved from an external model or group. Using ``ExtService`` is
 similar to using external variables. The values of ``ExtService`` will be retrieved once during the
 initialization phase before ``ConstService`` evaluation.
@@ -713,7 +715,7 @@ Both types are for advanced users. For more details and examples, please refer t
 
 
 Discrete
-======================================
+========
 The discrete component library contains a special type of block for modeling the discontinuity in power system
 devices. Such continuities can be device-level physical constraints or algorithmic limits imposed on controllers.
 
@@ -761,7 +763,7 @@ equations to maintain consistency between equations and Jacobians.
 
 
 Blocks
-======================================
+======
 The block library contains commonly used transfer functions and nonlinear functions. Variables and equations are
 pre-defined for blocks to be used as lego pieces for scripting DAE models. The base class for blocks is
 :py:mod:`andes.core.block.Block`.
@@ -779,10 +781,10 @@ variables need to placed in a dictionary, ``self.vars`` at the end of the block 
 Blocks can be nexted as advanced usage. See the API documentation for more details.
 
 Examples
-======================================
+========
 
 TGOV1
--------
+-----
 The TGOV1 turbine governor model is used as a practical example using the library.
 
 This model is composed of a lead-lag transfer function and a first-order lag transfer function
