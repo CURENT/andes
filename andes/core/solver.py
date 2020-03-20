@@ -208,3 +208,8 @@ class Solver(object):
                 x = cu_lsqr(cu_A, cu_b)
 
                 return np.ravel(cp.asnumpy(x[0]))
+
+    def remove_pycapsule(self):
+        self.F = None
+        self.A = None
+        self.N = None

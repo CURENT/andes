@@ -872,6 +872,11 @@ class System(object):
         self.dae.clear_fg()
         self._call_models_method('e_clear', models)
 
+    def remove_pycapsule(self):
+        """Remove PyCapsule objects in solvers"""
+        for r in self.routines.values():
+            r.solver.remove_pycapsule()
+
     def _store_calls(self):
         """
         Collect and store model calls into system.

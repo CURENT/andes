@@ -225,7 +225,8 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None, **kwargs):
+def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None,
+             remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -279,6 +280,9 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
             logger.info(f'cProfile text data written to <{system.files.prof}>.')
             logger.info(f'cProfile raw data written to <{system.files.prof_raw}. View it with \'snakeviz\'.')
 
+    if remove_pycapsule is True:
+        system.remove_pycapsule()
+
     return system
 
 
@@ -321,25 +325,35 @@ def _find_cases(filename, path):
     return valid_cases
 
 
-def _run_multiprocess(cases, ncpu, **kwargs):
+def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
+                      **kwargs):
     """
-    Run multiprocessing jobs
+    Run multiprocessing jobs.
 
-    Returns
-    -------
-
+    Parameters
+    ----------
+    ncpu : int, optional = os.cpu_cout()
+        Number of cpu cores to use in parallel
     """
-    logger.info('Processing {} jobs on {} CPUs'.format(len(cases), ncpu))
-    logger.handlers[0].setLevel(logging.WARNING)
+    logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
+    log_files = []
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, logging.StreamHandler):
+            h.setLevel(verbose)
+        if isinstance(h, logging.FileHandler):
+            h.setLevel(logging.DEBUG)
+            log_files.append(h.baseFilename)
 
     # start processes
     jobs = []
     for idx, file in enumerate(cases):
-        job = Process(name=f'Process {idx:d}', target=run_case, args=(file,), kwargs=kwargs)
+        job = Process(name=f'Process {idx:d}',
+                      target=run_case, args=(file,),
+                      kwargs=kwargs)
         jobs.append(job)
         job.start()
 
-        start_msg = f'Process {idx:d} <{file:s}> started.'
+        start_msg = f'Job {idx:d} (PID={job.pid}) <{file:s}> started.'
         print(start_msg)
         logger.debug(start_msg)
 
@@ -350,10 +364,38 @@ def _run_multiprocess(cases, ncpu, **kwargs):
             jobs = []
 
     # restore command line output when all jobs are done
-    logger.handlers[0].setLevel(logging.INFO)
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, logging.StreamHandler):
+            h.setLevel(logging.INFO)
+
+    if len(log_files) > 0:
+        log_paths = '\n'.join(log_files)
+        logger.info('')
+        logger.info(f'Log saved to <{log_paths}>.')
 
 
-def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
+def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
+    """
+    Entry point to run ANDES routines.
+
+    Parameters
+    ----------
+    filename : str
+        file name (or pattern)
+    input_path : str, optional
+        input search path
+    verbose : int, 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL)
+        Verbosity level
+    ncpu : int, optional
+        Number of cpu cores to use in parallel
+    kwargs
+        Other supported keyword arguments
+    Returns
+    -------
+    System
+        An instance
+
+    """
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
@@ -366,7 +408,7 @@ def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
     elif len(cases) == 1:
         system = run_case(cases[0], **kwargs)
     else:
-        _run_multiprocess(cases, ncpu, **kwargs)
+        _run_multiprocess(cases, ncpu=ncpu, verbose=logging.WARNING, **kwargs)
 
     t0, s0 = elapsed(t0)
 

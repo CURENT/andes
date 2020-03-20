@@ -3,6 +3,7 @@ import andes
 from andes.system import System
 from andes.io import xlsx
 from andes.utils.paths import get_case
+import os
 
 
 class Test5Bus(unittest.TestCase):
@@ -80,4 +81,14 @@ class TestNPCCRAW(unittest.TestCase):
         andes.main.misc(clean=True)
 
     def test_npcc_raw_tds(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'), routine='TDS', no_output=True, profile=True)
+        self.ss = andes.run(get_case('npcc/npcc48.raw'),
+                            verbose=50,
+                            routine='TDS',
+                            no_output=True,
+                            profile=True,
+                            )
+
+    def test_npcc_raw_convert(self):
+        self.ss = andes.run(get_case('npcc/npcc48.raw'),
+                            convert=True)
+        os.remove(self.ss.files.dump)

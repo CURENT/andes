@@ -23,7 +23,6 @@ class Cache(object):
     """
     Class for caching the return value of callback functions.
     """
-
     def __init__(self):
         self._callbacks = {}
 
