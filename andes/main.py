@@ -212,7 +212,9 @@ def print_license():
 
 
 def load(case, **kwargs):
-    """Load a case and set up without running. Return a system"""
+    """
+    Load a case and set up without running. Return a system
+    """
     system = System(case=case, options=kwargs)
     system.undill()
 

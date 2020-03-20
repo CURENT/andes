@@ -1132,8 +1132,7 @@ class Model(object):
 
         # update service values
         self.s_update()
-
-        logger.debug(f'{self.class_name}: calling initialize()')
+        logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
@@ -1419,6 +1418,7 @@ class Model(object):
         for var in self.cache.all_vars.values():
             var.reset()
         self.flags['address'] = False
+        self.flags['initialized'] = False
 
     def e_clear(self):
         """
