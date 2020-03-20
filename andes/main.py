@@ -325,6 +325,20 @@ def _find_cases(filename, path):
     return valid_cases
 
 
+def _set_logger_level(logger, type_to_set, level):
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, type_to_set):
+            h.setLevel(level)
+
+
+def _find_log_path(logger):
+    out = []
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, logging.FileHandler):
+            out.append(h.baseFilename)
+    return out
+
+
 def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
                       **kwargs):
     """
@@ -336,13 +350,8 @@ def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
         Number of cpu cores to use in parallel
     """
     logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
-    log_files = []
-    for ii, h in enumerate(logger.handlers):
-        if isinstance(h, logging.StreamHandler):
-            h.setLevel(verbose)
-        if isinstance(h, logging.FileHandler):
-            h.setLevel(logging.DEBUG)
-            log_files.append(h.baseFilename)
+    _set_logger_level(logger, logging.StreamHandler, verbose)
+    _set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
     # start processes
     jobs = []
@@ -361,17 +370,16 @@ def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
             sleep(0.1)
             for job in jobs:
                 job.join()
+                logger.debug(f'Job {idx:d} (PID={job.pid}) <{file:s}> joined.')
             jobs = []
 
     # restore command line output when all jobs are done
-    for ii, h in enumerate(logger.handlers):
-        if isinstance(h, logging.StreamHandler):
-            h.setLevel(logging.INFO)
+    _set_logger_level(logger, logging.StreamHandler, logging.INFO)
 
+    log_files = _find_log_path(logger)
     if len(log_files) > 0:
         log_paths = '\n'.join(log_files)
-        logger.info('')
-        logger.info(f'Log saved to <{log_paths}>.')
+        print(f'\nLog saved to <{log_paths}>.')
 
 
 def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
@@ -403,11 +411,9 @@ def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
     system = None
 
     t0, _ = elapsed()
-    if len(cases) == 0:
-        pass
-    elif len(cases) == 1:
+    if len(cases) == 1:
         system = run_case(cases[0], **kwargs)
-    else:
+    elif len(cases) > 1:
         _run_multiprocess(cases, ncpu=ncpu, verbose=logging.WARNING, **kwargs)
 
     t0, s0 = elapsed(t0)
@@ -415,7 +421,7 @@ def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
     if len(cases) == 1:
         logger.info(f'-> Single process finished in {s0}.')
     elif len(cases) >= 2:
-        logger.info(f'-> Multiple processes finished in {s0}.')
+        print(f'-> Multiprocessing finished in {s0}.')
 
     return system
 
