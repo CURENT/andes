@@ -57,7 +57,8 @@ class System(object):
         if config_path:
             self._config_path = config_path
         self._config_object = self.load_config(self._config_path)
-        self.config = Config(self.__class__.__name__, self._config_object)
+        self.config = Config(self.__class__.__name__)
+        self.config.load(self._config_object)
 
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
@@ -124,7 +125,14 @@ class System(object):
     def reset(self):
         """
         Reset to the state after reading data and setup (before power flow).
+
+        Warnings
+        --------
+        If TDS is initialized, reset will lead to unpredictable state.
         """
+        if self.TDS.initialized is True:
+            logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
+            return
         self.dae.reset()
         self._call_models_method('a_reset', models=self.models)
         self.e_clear()
