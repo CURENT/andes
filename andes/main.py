@@ -9,14 +9,14 @@ import pprint
 import cProfile
 import pstats
 from subprocess import call
-from time import sleep
 from typing import Optional, Union
 
 import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, tests_root
-from andes.shared import coloredlogs, Process, unittest
+from andes.shared import coloredlogs, unittest
+from andes.shared import Pool
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -225,7 +225,8 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None, **kwargs):
+def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None,
+             remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -279,6 +280,9 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
             logger.info(f'cProfile text data written to <{system.files.prof}>.')
             logger.info(f'cProfile raw data written to <{system.files.prof_raw}. View it with \'snakeviz\'.')
 
+    if remove_pycapsule is True:
+        system.remove_pycapsule()
+
     return system
 
 
@@ -321,39 +325,75 @@ def _find_cases(filename, path):
     return valid_cases
 
 
-def _run_multiprocess(cases, ncpu, **kwargs):
+def _set_logger_level(logger, type_to_set, level):
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, type_to_set):
+            h.setLevel(level)
+
+
+def _find_log_path(logger):
+    out = []
+    for ii, h in enumerate(logger.handlers):
+        if isinstance(h, logging.FileHandler):
+            out.append(h.baseFilename)
+    return out
+
+
+def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.INFO, mp_verbose=logging.WARNING,
+                      **kwargs):
     """
-    Run multiprocessing jobs
+    Run multiprocessing jobs.
 
-    Returns
-    -------
-
+    Parameters
+    ----------
+    ncpu : int, optional = os.cpu_cout()
+        Number of cpu cores to use in parallel
+    mp_verbose : 10 - 50
+        Verbosity level during multiprocessing
+    verbose : 10, 20, 30, 40, 50
+        Verbosity level outside multiprocessing
     """
-    logger.info('Processing {} jobs on {} CPUs'.format(len(cases), ncpu))
-    logger.handlers[0].setLevel(logging.WARNING)
+    logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
+    _set_logger_level(logger, logging.StreamHandler, mp_verbose)
+    _set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
-    # start processes
-    jobs = []
-    for idx, file in enumerate(cases):
-        job = Process(name=f'Process {idx:d}', target=run_case, args=(file,), kwargs=kwargs)
-        jobs.append(job)
-        job.start()
-
-        start_msg = f'Process {idx:d} <{file:s}> started.'
-        print(start_msg)
-        logger.debug(start_msg)
-
-        if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
-            sleep(0.1)
-            for job in jobs:
-                job.join()
-            jobs = []
+    from functools import partial
+    pool = Pool(ncpu)
+    ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
 
     # restore command line output when all jobs are done
-    logger.handlers[0].setLevel(logging.INFO)
+    _set_logger_level(logger, logging.StreamHandler, verbose)
+
+    log_files = _find_log_path(logger)
+    if len(log_files) > 0:
+        log_paths = '\n'.join(log_files)
+        print(f'Log saved to <{log_paths}>.')
+
+    return ret
 
 
-def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), **kwargs):
+    """
+    Entry point to run ANDES routines.
+
+    Parameters
+    ----------
+    filename : str
+        file name (or pattern)
+    input_path : str, optional
+        input search path
+    verbose : int, 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL)
+        Verbosity level
+    ncpu : int, optional
+        Number of cpu cores to use in parallel
+    kwargs
+        Other supported keyword arguments
+    Returns
+    -------
+    System
+        An instance
+
+    """
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
@@ -361,29 +401,31 @@ def run(filename, input_path='', ncpu=1, verbose=20, **kwargs):
     system = None
 
     t0, _ = elapsed()
-    if len(cases) == 0:
-        pass
-    elif len(cases) == 1:
+    if len(cases) == 1:
         system = run_case(cases[0], **kwargs)
-    else:
-        _run_multiprocess(cases, ncpu, **kwargs)
+    elif len(cases) > 1:
+        system = _run_multiprocess(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
 
     t0, s0 = elapsed(t0)
 
     if len(cases) == 1:
         logger.info(f'-> Single process finished in {s0}.')
     elif len(cases) >= 2:
-        logger.info(f'-> Multiple processes finished in {s0}.')
+        print(f'-> Multiprocessing finished in {s0}.')
 
     return system
 
 
 def plot(**kwargs):
+    """Wrapper for the plot tool."""
     from andes.plot import tdsplot
     tdsplot(**kwargs)
 
 
 def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
+    """
+    Misc functions.
+    """
     if edit_conf(edit_config):
         return True
     if show_license:
@@ -400,18 +442,25 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, **kwarg
 
 
 def prepare(quick=False, **kwargs):
+    """
+    Run code generation.
+
+    Returns
+    -------
+    System object
+    """
     t0, _ = elapsed()
     logger.info('Numeric code preparation started...')
     system = System()
     system.prepare(quick=quick)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
-    return True
+    return system
 
 
 def selftest(**kwargs):
     """
-    Run unit tests
+    Run unit tests.
     """
     logger.handlers[0].setLevel(logging.WARNING)
     sys.stdout = open(os.devnull, 'w')  # suppress print statements

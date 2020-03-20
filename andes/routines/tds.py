@@ -1,3 +1,4 @@
+import sys
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
@@ -112,7 +113,7 @@ class TDS(BaseRoutine):
 
         self.summary()
         self._initialize()
-        self.pbar = tqdm(total=100, ncols=70, unit='%')
+        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout)
 
         t0, _ = elapsed()
         while (system.dae.t < self.config.tf) and (not self.busted):

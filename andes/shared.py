@@ -1,7 +1,9 @@
 """
 Shared constants and delayed imports.
 
-Known issues ::
+PAST NOTES
+**********
+Known issues of LazyImport ::
 
     1) The delayed import of pandas and newton_krylov will cause a ``RuntimeWarning``
 
@@ -11,23 +13,23 @@ Known issues ::
 
     2) High overhead when called hundreds of thousands times. For example, NumPy must not be imported with
     LazyImport.
+
+    3) Prevents from serialization due to recursion depth.
 """
-from andes.utils.lazyimport import LazyImport
 
-# Packages
-pd = LazyImport('import pandas')
-plt = LazyImport('from matplotlib import pyplot')
-mpl = LazyImport('import matplotlib')
-Process = LazyImport('from multiprocessing import Process')
-unittest = LazyImport('import unittest')
-yaml = LazyImport('import yaml')
+import pandas as pd  # NOQA
+import matplotlib as mpl  # NOQA
+from matplotlib import pyplot as plt  # NOQA
+from pathos.multiprocessing import Pool  # NOQA
+import unittest  # NOQA
+import yaml  # NOQA
 
-# function calls
-newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
-fsolve = LazyImport('from scipy.optimize import fsolve')
-solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
-odeint = LazyImport('from scipy.integrate import odeint')
+from scipy.optimize import newton_krylov  # NOQA
+from scipy.optimize import fsolve  # NOQA
+from scipy.integrate import solve_ivp  # NOQA
+from scipy.integrate import odeint  # NOQA
 
+import math
 import coloredlogs  # NOQA
 import numpy as np  # NOQA
 from tqdm import tqdm  # NOQA
@@ -45,6 +47,23 @@ except ImportError:
     klu = None
 
 
-jpi2 = 1.5707963267948966j
-rad2deg = 57.295779513082323
-deg2rad = 0.017453292519943
+deg2rad = math.pi/180
+
+
+# *** Deprecated  ***
+#
+# # Packages
+# pd = LazyImport('import pandas')
+# plt = LazyImport('from matplotlib import pyplot')
+# mpl = LazyImport('import matplotlib')
+# Pool = LazyImport('from pathos.multiprocessing import Pool')
+# unittest = LazyImport('import unittest')
+# yaml = LazyImport('import yaml')
+#
+# # function calls
+# newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
+# fsolve = LazyImport('from scipy.optimize import fsolve')
+# solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
+# odeint = LazyImport('from scipy.integrate import odeint')
+#
+# *** Deprecated  ***

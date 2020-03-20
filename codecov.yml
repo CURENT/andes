@@ -3,3 +3,5 @@ codecov:
 
 ignore:
   - "andes/_version.py"
+  - "andes/utils/texttable.py"
+  - "andes/utils/lazyimport.py"

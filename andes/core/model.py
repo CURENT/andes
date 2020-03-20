@@ -23,11 +23,13 @@ class Cache(object):
     """
     Class for caching the return value of callback functions.
     """
-
     def __init__(self):
         self._callbacks = {}
 
     def __getattr__(self, item):
+        if item == "_callbacks":
+            return self.__getattribute__(item)
+
         if item not in self.__dict__:
             if item in self._callbacks:
                 self.__dict__[item] = self._call(item)

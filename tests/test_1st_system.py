@@ -1,12 +1,10 @@
 import unittest
-from andes.system import System
+import andes
 
 
 class TestCodegen(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = System()
-        system = self.ss
-        system.prepare()
+        self.ss = andes.main.prepare()
 
     def test_docs(self):
         out = ''
