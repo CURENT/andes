@@ -494,7 +494,11 @@ class Model(object):
             logger.error("idx2uid cannot search for None idx")
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
-            return self.uid[idx]
+            try:
+                return self.uid[idx]
+            except KeyError as e:
+                print(self.system.files.case)
+                raise e
         elif isinstance(idx, (list, np.ndarray)):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
