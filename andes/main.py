@@ -408,11 +408,16 @@ def prepare(quick=False, **kwargs):
 
 
 def selftest(**kwargs):
+    """
+    Run unit tests
+    """
     logger.handlers[0].setLevel(logging.WARNING)
-    test_directory = tests_root()
+    sys.stdout = open(os.devnull, 'w')  # suppress print statements
 
+    test_directory = tests_root()
     suite = unittest.TestLoader().discover(test_directory)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+    sys.stdout = sys.__stdout__
 
 
 def doc(attribute=None, list_supported=False, **kwargs):
