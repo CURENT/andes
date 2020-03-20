@@ -460,6 +460,9 @@ class GENROUModel(object):
 
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
+    """
+    Round rotor generator with quadratic saturation
+    """
     def __init__(self, system, config):
         GENROUData.__init__(self)
         GENBase.__init__(self, system, config)

@@ -637,6 +637,13 @@ class Piecewise(Block):
     This block takes a list of N points, [x0, x1, ...x_{n-1}] and a list of N+1 functions [fun0, ..., fun_n].
     Inputs in each range (xk, x_{k+1}] applies its corresponding function `fun_k`. The last range (x_{n-1},
     +inf) applies the last function `fun_n`.
+
+    Parameters
+    ----------
+    points : list
+        A list of piecewise points. Need to be provided in the constructor function.
+    funs : list
+        A list of strings for the piecewise functions. Need to be provided in the overloaded `define` function.
     """
     def __init__(self, u, points: list, funs: list, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -664,64 +671,3 @@ class Piecewise(Block):
 
         self.y.v_str = pw_fun
         self.y.e_str = f'{pw_fun} - {self.name}_y'
-
-
-class MagneticQuadSat(Piecewise):
-    """
-    A saturation block takes an input signal and outputs the saturated signal.
-
-    This block is experimental and has not been fully tested.
-    """
-    def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
-        self.s10 = s10
-        self.s12 = s12
-
-        points = [0, 0.8]
-        c0 = [15, -24, 10]
-        c1 = [-27.5, 50, -22.5]
-        c2 = [12.5, -25, 12.5]
-
-        self.c0 = ConstService(v_str=f'0.8*{c0[0]} + {c0[1]} * (1 - {s10.name}) + 1.2 * {c0[2]} * (1-{s12.name})',
-                               tex_name='c_0', info='Constant coefficient in quadratic saturation')
-        self.c1 = ConstService(v_str=f'0.8*{c1[0]} + {c1[1]} * (1 - {s10.name}) + 1.2 * {c1[2]} * (1-{s12.name})',
-                               tex_name='c_1')
-        self.c2 = ConstService(v_str=f'0.8*{c2[0]} + {c2[1]} * (1 - {s10.name}) + 1.2 * {c2[2]} * (1-{s12.name})',
-                               tex_name='c_2')
-
-        super().__init__(u=u, points=points, funs=None, name=name, tex_name=tex_name, info=info)
-
-        self.vars.update({'c0': self.c0, 'c1': self.c1, 'c2': self.c2})
-
-    def define(self):
-        """Define the quadratic saturation function."""
-        self.funs = ['0',
-                     f'{self.u.name}',
-                     f'{self.name}_c0 + {self.name}_c1*{self.u.name} + {self.name}_c2 * {self.u.name}**2'
-                     ]
-        super().define()
-
-
-class MagneticExpSat(Piecewise):
-    """
-    Exponential saturation function for generator magnetization
-
-    This block is experimental and has not been fully tested.
-    """
-    def __init__(self, u, s10, s12, name=None, tex_name=None, info=None):
-        self.s10 = s10
-        self.s12 = s12
-
-        points = [0, 1.0, 1.2]
-        self.c = ConstService(v_str=f'log({s12.name} / {s10.name}) / log(1.2)')
-
-        super().__init__(u=u, points=points, funs=None, name=name, tex_name=tex_name, info=info)
-        self.vars.update({'c': self.c})
-
-    def define(self):
-        """Define the exponential saturation function."""
-        self.funs = ['0',
-                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c',
-                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c',
-                     f'{self.s10.name} * {self.u.name} ^ {self.name}_c'
-                     ]
-        super().define()
