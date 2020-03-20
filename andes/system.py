@@ -514,7 +514,9 @@ class System(object):
         """
         From variables to dae variables
 
-        For adders, only those with `v_str` can set the value. ??????
+        Warnings
+        --------
+        For adders, only those with `v_str` can set the value.
         """
         self.dae.clear_xy()
         self._v_to_dae('x')

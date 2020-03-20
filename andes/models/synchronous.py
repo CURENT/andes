@@ -397,8 +397,7 @@ class GENROUModel(object):
         self.tm0 = ConstService(tex_name=r'\tau_{m0}',
                                 v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
 
-        self.vf0 = ConstService(tex_name=r'v_{f0}', v_str='Se0 * psiad0 + psiad0 + (xd1 - xd2) * Id0 + (xd - '
-                                                          'xd1) * Id0')
+        self.vf0 = ConstService(tex_name=r'v_{f0}', v_str='(Se0 + 1)*psiad0 + (xd - xd2) * Id0')
         self.psid0 = ConstService(tex_name=r"\psi_{d0}",
                                   v_str='u * (ra * Iq0) + vq0')
         self.psiq0 = ConstService(tex_name=r"\psi_{q0}",
@@ -406,18 +405,15 @@ class GENROUModel(object):
 
         # initialization of internal voltage and delta
         self.e1q0 = ConstService(tex_name="e'_{q0}",
-                                 v_str='Id0*gd1* (-xd + xd1) - Id0*gd2*(xd - xd1)*(xd1 - xl) - Se0*psiad0 + vf0')
+                                 v_str='Id0*(-xd + xd1) - Se0*psiad0 + vf0')
 
         self.e1d0 = ConstService(tex_name="e'_{d0}",
-                                 v_str='Iq0*gq1*(xq - xq1) + Iq0*gq2*xl* (-xq + xq1) + Iq0*gq2*xq1 * (xq - xq1) +'
-                                       'Se0*gqd*psiaq0')
+                                 v_str='Iq0*(xq - xq1) + Se0*gqd*psiaq0')
 
         self.e2d0 = ConstService(tex_name="e''_{d0}",
-                                 v_str='Id0*gd1* (-xd + xd1) - Id0*(xd1 - xl)*(gd2*xd - gd2*xd1 + 1) - '
-                                       'Se0*psiad0 + vf0')
+                                 v_str='Id0*(xl - xd) - Se0*psiad0 + vf0')
         self.e2q0 = ConstService(tex_name="e''_{q0}",
-                                 v_str='Iq0*gq1*(-xq + xq1) + Iq0*gq2*xl*(xq - xq1) + '
-                                       'Iq0*gq2*xq1*(-xq + xq1) + Iq0*xl - Iq0*xq1 - Se0*gqd*psiaq0')
+                                 v_str='Iq0*(xl - xq) - Se0*gqd*psiaq0')
 
         # begin variables and equations
         self.psiaq = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
