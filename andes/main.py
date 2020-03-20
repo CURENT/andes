@@ -9,14 +9,14 @@ import pprint
 import cProfile
 import pstats
 from subprocess import call
-from time import sleep
 from typing import Optional, Union
 
 import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, tests_root
-from andes.shared import coloredlogs, Process, unittest
+from andes.shared import coloredlogs, unittest
+from andes.shared import Pool
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -339,7 +339,7 @@ def _find_log_path(logger):
     return out
 
 
-def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
+def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.INFO, mp_verbose=logging.WARNING,
                       **kwargs):
     """
     Run multiprocessing jobs.
@@ -348,41 +348,31 @@ def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.WARNING,
     ----------
     ncpu : int, optional = os.cpu_cout()
         Number of cpu cores to use in parallel
+    mp_verbose : 10 - 50
+        Verbosity level during multiprocessing
+    verbose : 10, 20, 30, 40, 50
+        Verbosity level outside multiprocessing
     """
     logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
-    _set_logger_level(logger, logging.StreamHandler, verbose)
+    _set_logger_level(logger, logging.StreamHandler, mp_verbose)
     _set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
-    # start processes
-    jobs = []
-    for idx, file in enumerate(cases):
-        job = Process(name=f'Process {idx:d}',
-                      target=run_case, args=(file,),
-                      kwargs=kwargs)
-        jobs.append(job)
-        job.start()
-
-        start_msg = f'Job {idx:d} (PID={job.pid}) <{file:s}> started.'
-        print(start_msg)
-        logger.debug(start_msg)
-
-        if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
-            sleep(0.1)
-            for job in jobs:
-                job.join()
-                logger.debug(f'Job {idx:d} (PID={job.pid}) <{file:s}> joined.')
-            jobs = []
+    from functools import partial
+    pool = Pool(ncpu)
+    ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
 
     # restore command line output when all jobs are done
-    _set_logger_level(logger, logging.StreamHandler, logging.INFO)
+    _set_logger_level(logger, logging.StreamHandler, verbose)
 
     log_files = _find_log_path(logger)
     if len(log_files) > 0:
         log_paths = '\n'.join(log_files)
-        print(f'\nLog saved to <{log_paths}>.')
+        print(f'Log saved to <{log_paths}>.')
+
+    return ret
 
 
-def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -414,7 +404,7 @@ def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
     if len(cases) == 1:
         system = run_case(cases[0], **kwargs)
     elif len(cases) > 1:
-        _run_multiprocess(cases, ncpu=ncpu, verbose=logging.WARNING, **kwargs)
+        system = _run_multiprocess(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
 
     t0, s0 = elapsed(t0)
 
@@ -427,11 +417,15 @@ def run(filename, input_path='', verbose=20, ncpu=os.cpu_count(), **kwargs):
 
 
 def plot(**kwargs):
+    """Wrapper for the plot tool."""
     from andes.plot import tdsplot
     tdsplot(**kwargs)
 
 
 def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
+    """
+    Misc functions.
+    """
     if edit_conf(edit_config):
         return True
     if show_license:
@@ -448,6 +442,13 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, **kwarg
 
 
 def prepare(quick=False, **kwargs):
+    """
+    Run code generation.
+
+    Returns
+    -------
+    System object
+    """
     t0, _ = elapsed()
     logger.info('Numeric code preparation started...')
     system = System()
@@ -459,7 +460,7 @@ def prepare(quick=False, **kwargs):
 
 def selftest(**kwargs):
     """
-    Run unit tests
+    Run unit tests.
     """
     logger.handlers[0].setLevel(logging.WARNING)
     sys.stdout = open(os.devnull, 'w')  # suppress print statements

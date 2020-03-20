@@ -10,3 +10,4 @@ tqdm
 pyyaml
 matplotlib
 coloredlogs
+pathos
