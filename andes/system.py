@@ -30,8 +30,9 @@ class System(object):
     """
     The ANDES power system class.
 
-    This class stores model and routine instances as attributes. Model and routine attribute names are the same
-    as their class names. For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
+    This class stores model and routine instances as attributes.
+    Model and routine attribute names are the same as their class names.
+    For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
     """
     def __init__(self,
                  case: Optional[str] = None,
@@ -82,15 +83,16 @@ class System(object):
                              'pflow_tds': self.find_models(('tds', 'pflow')),
                              }
 
-        # ------------------------------
-        # FIXME: reduce clutter with defaultdict `adders` and `setters`, each with `x`, `y`, `f`, and `g`
-        self.f_adders, self.f_setters = list(), list()
-        self.g_adders, self.g_setters = list(), list()
-
-        self.x_adders, self.x_setters = list(), list()
-        self.y_adders, self.y_setters = list(), list()
+        self._adders = dict(f=list(), g=list(), x=list(), y=list())
+        self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
-        # ------------------------------
+
+    def _clear_adder_setter(self):
+        """
+        Clear adders and setters storage
+        """
+        self._adders = dict(f=list(), g=list(), x=list(), y=list())
+        self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
     def prepare(self, quick=False):
         """
@@ -285,26 +287,21 @@ class System(object):
         Store the adders and setters for variables and equations.
         """
         models = self._get_models(models)
-
-        self.f_adders, self.f_setters = list(), list()
-        self.g_adders, self.g_setters = list(), list()
-
-        self.x_adders, self.x_setters = list(), list()
-        self.y_adders, self.y_setters = list(), list()
+        self._clear_adder_setter()
 
         for mdl in models.values():
             if not mdl.n:
                 continue
             for var in mdl.cache.all_vars.values():
                 if var.e_setter is False:
-                    self.__dict__[f'{var.e_code}_adders'].append(var)
+                    self._adders[var.e_code].append(var)
                 else:
-                    self.__dict__[f'{var.e_code}_setters'].append(var)
+                    self._setters[var.e_code].append(var)
 
                 if var.v_setter is False:
-                    self.__dict__[f'{var.v_code}_adders'].append(var)
+                    self._adders[var.v_code].append(var)
                 else:
-                    self.__dict__[f'{var.v_code}_setters'].append(var)
+                    self._setters[var.v_code].append(var)
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindupLimiter):
                     self.antiwindups.append(item)
@@ -534,11 +531,11 @@ class System(object):
         """
         Send DAE variable values to models
         """
-        for var in self.y_adders + self.y_setters:
+        for var in self._adders['y'] + self._setters['y']:
             if var.n > 0:
                 var.v[:] = self.dae.y[var.a]
 
-        for var in self.x_adders + self.x_setters:
+        for var in self._adders['x'] + self._setters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
@@ -557,18 +554,19 @@ class System(object):
         if v_name not in ('x', 'y'):
             raise KeyError(f'{v_name} is not a valid var name')
 
-        for var in self.__dict__[f'{v_name}_adders']:
+        for var in self._adders[v_name]:
             # NOTE:
             # For power flow, they will be initialized to zero.
             # For TDS initialization, they will remain their value.
             if var.n == 0:
                 continue
-            if (var.v_str is None) and isinstance(var, ExtVar):
+            if isinstance(var, ExtVar) and (var.v_str is None):
                 continue
             if var.owner.flags['initialized'] is False:
                 continue
             np.add.at(self.dae.__dict__[v_name], var.a, var.v)
-        for var in self.__dict__[f'{v_name}_setters']:
+
+        for var in self._setters[v_name]:
             if var.owner.flags['initialized'] is False:
                 continue
             if var.n > 0:
@@ -586,10 +584,10 @@ class System(object):
         if eq_name not in ('f', 'g'):
             raise KeyError(f'{eq_name} is not a valid eq name')
 
-        for var in self.__dict__[f'{eq_name}_adders']:
+        for var in self._adders[eq_name]:
             if var.n > 0:
                 np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
-        for var in self.__dict__[f'{eq_name}_setters']:
+        for var in self._setters[eq_name]:
             if var.n > 0:
                 np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
