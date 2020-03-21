@@ -55,6 +55,11 @@ class Test5Bus(unittest.TestCase):
         self.ss.PFlow.run()
         self.ss.TDS.run([0, 20])
 
+    def test_alter_param(self):
+        self.ss.PV.alter('v0', 2, 0.98)
+        self.assertEqual(self.ss.PV.v0.v[1], 0.98)
+        self.ss.PFlow.run()
+
 
 class TestKundur2Area(unittest.TestCase):
     """
