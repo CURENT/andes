@@ -494,11 +494,7 @@ class Model(object):
             logger.error("idx2uid cannot search for None idx")
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
-            try:
-                return self.uid[idx]
-            except KeyError as e:
-                print(self.system.files.case)
-                raise e
+            return self.uid[idx]
         elif isinstance(idx, (list, np.ndarray)):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
@@ -556,6 +552,15 @@ class Model(object):
         """
         uid = self.idx2uid(idx)
         self.__dict__[src].__dict__[attr][uid] = value
+
+    def alter(self, src, idx, value):
+        """
+        Alter input parameter value.
+
+        This function converts the new parameter to per unit.
+        """
+        self.set(src, idx, 'vin', value)
+        self.__dict__[src].v[:] = self.__dict__[src].vin * self.__dict__[src].pu_coeff
 
     def get_inputs(self, refresh=False):
         """
