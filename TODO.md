@@ -82,6 +82,8 @@
 *   Deal with two-terminal and multi-terminal devices
 *   Add ``Model._int`` for internal indexer
 *   Iterative initialization for equations (half done with Newton Krylov)
+*   Batch simulation with in-place parameter modification
+*   Control feedback, possibly with perturbation files
 
 ### Usability
 - [x] Set up command line interface

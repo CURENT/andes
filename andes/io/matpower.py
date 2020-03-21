@@ -16,7 +16,7 @@ def read(system, file):
     """Read a MATPOWER data file into mpc and build andes device elements"""
     func = re.compile(r'function\s')
     mva = re.compile(r'\s*mpc.baseMVA\s*=\s*')
-    bus = re.compile(r'\s*mpc.bus\s*=\s*\[')
+    bus = re.compile(r'\s*mpc.bus\s*=\s*\[?')
     gen = re.compile(r'\s*mpc.gen\s*=\s*\[')
     branch = re.compile(r'\s*mpc.branch\s*=\s*\[')
     area = re.compile(r'\s*mpc.areas\s*=\s*\[')
@@ -24,7 +24,6 @@ def read(system, file):
     bus_name = re.compile(r'\s*mpc.bus_name\s*=\s*{')
     end = re.compile(r'\s*\];?')
     has_digit = re.compile(r'.*\d+\s*]?;?')
-    comment = re.compile(r'\s*%.*')
 
     ret = True
     field = None
@@ -48,8 +47,8 @@ def read(system, file):
             continue
         elif func.search(line):  # skip function declaration
             continue
-        elif comment.search(line):  # for comment lines
-            if info:
+        elif len(line.split('%')[0]) == 0:
+            if info is True:
                 logger.info(line[1:])
                 info = False
             else:
@@ -92,9 +91,16 @@ def read(system, file):
             else:
                 if not has_digit.search(line):
                     continue
+                line = line.split('%')[0].strip()
                 line = line.split(';')
                 for item in line:
-                    data = np.array([float(val) for val in item.split()])
+                    if not has_digit.search(item):
+                        continue
+                    try:
+                        data = np.array([float(val) for val in item.split()])
+                    except Exception as e:
+                        logger.error(f'Error parsing {system.files.case}')
+                        raise e
                     mpc[field].append(data)
 
     fid.close()

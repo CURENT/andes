@@ -31,11 +31,15 @@ dependencies:
   - matplotlib-base=3.2.1=py37hddda452_0
   - metis=5.1.0=h4a8c4bd_1005
   - mpmath=1.1.0=py_0
+  - multiprocess=0.70.9=py37h9bfed18_1
   - ncurses=6.1=h0a44026_1002
   - numpy=1.18.1=py37hde6bac1_0
   - openssl=1.1.1e=h0b31af3_0
   - pandas=1.0.3=py37h94625e5_0
+  - pathos=0.2.5=py_0
   - pip=20.0.2=py_2
+  - pox=0.2.7=py_0
+  - ppft=1.6.6.1=py37hc8dfbb8_1
   - pyparsing=2.4.6=py_0
   - python=3.7.6=hfa4aa89_4_cpython
   - python-dateutil=2.8.1=py_0

@@ -327,7 +327,7 @@ class NumParam(BaseParam):
 
         # data quality check
         # ----------------------------------------
-        self.v = np.array(self.v)
+        self.v = np.array(self.v, dtype=float)
 
         # NOTE: temporarily disabled due to nested parameters
         # if np.sum(np.isnan(self.v)) > 0:
@@ -337,7 +337,7 @@ class NumParam(BaseParam):
         self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
-        self.vin = np.array(self.v)
+        self.vin = np.array(self.v, dtype=float)
         self.pu_coeff = np.ones_like(self.v)
 
     def set_pu_coeff(self, coeff):
@@ -358,6 +358,8 @@ class NumParam(BaseParam):
     def restore(self):
         """
         Restore parameter to the original input by copying ``self.vin`` to ``self.v``.
+
+        `pu_coeff` will not be overwritten.
         """
         self.v[:] = self.vin
 

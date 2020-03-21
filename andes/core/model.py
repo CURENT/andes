@@ -553,6 +553,15 @@ class Model(object):
         uid = self.idx2uid(idx)
         self.__dict__[src].__dict__[attr][uid] = value
 
+    def alter(self, src, idx, value):
+        """
+        Alter input parameter value.
+
+        This function converts the new parameter to per unit.
+        """
+        self.set(src, idx, 'vin', value)
+        self.__dict__[src].v[:] = self.__dict__[src].vin * self.__dict__[src].pu_coeff
+
     def get_inputs(self, refresh=False):
         """
         Get an OrderedDict of the inputs to the numerical function calls.
