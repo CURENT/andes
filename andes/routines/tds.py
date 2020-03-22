@@ -153,7 +153,6 @@ class TDS(BaseRoutine):
                 system.switch_action(self.pflow_tds_models)
                 system.vars_to_models()
 
-        self.pbar.close()
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
 
@@ -465,7 +464,7 @@ class TDS(BaseRoutine):
         system = self.system
         if system.files.pert:
             if not os.path.isfile(system.files.pert):
-                logger.warning(f'Pert file not found at {system.files.pert}.')
+                logger.warning(f'Pert file not found at <{system.files.pert}>.')
                 return False
 
             sys.path.append(system.files.case_path)
