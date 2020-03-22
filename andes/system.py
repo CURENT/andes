@@ -17,7 +17,7 @@ from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path
 from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
 
-from andes.shared import np, spmatrix
+from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
 
 if hasattr(spmatrix, 'ipadd'):
@@ -452,68 +452,64 @@ class System(object):
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
-        for j_name in self.dae.jac_name:
+        for j_name in jac_names:
             j_size = self.dae.get_size(j_name)
 
             for mdl in models.values():
-                for row, col, val in mdl.zip_ijv(j_name):
+                for rows, cols, vals in mdl.triplets.zip_ijv(j_name):
                     try:
                         if self.config.ipadd and IP_ADD:
-                            self.dae.__dict__[j_name].ipadd(val, row, col)
+                            self.dae.__dict__[j_name].ipadd(vals, rows, cols)
                         else:
-                            self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                            self.dae.__dict__[j_name] += spmatrix(vals, rows, cols, j_size, 'd')
                     except TypeError as e:
-                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
+                        logger.error("Error adding Jacobian triplets to existing sparsity pattern.")
+                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={rows}, col={cols}, val={vals}, '
                                      f'j_size={j_size}')
                         raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Collect and store the sparsity pattern of Jacobian matrices.
+
+        This is a runtime function specific to cases.
+
+        Notes
+        -----
+        For `gy` matrix, always make sure the diagonal is reserved.
+        It is a safeguard if the modeling user omitted the diagonal
+        term in the equations.
         """
         models = self._get_models(models)
         self._call_models_method('store_sparse_pattern', models)
 
         # add variable jacobian values
-        for j_name in self.dae.jac_name:
+        for jname in jac_names:
             ii, jj, vv = list(), list(), list()
 
-            # for `gy` matrix, always make sure the diagonal is reserved
-            # It is a safeguard if the modeling user omitted the diagonal
-            # term in the equations
-            if j_name == 'gy':
+            if jname == 'gy':
                 ii.extend(np.arange(self.dae.m))
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
 
             for mdl in models.values():
-                row_idx = mdl.row_of(f'{j_name}')
-                col_idx = mdl.col_of(f'{j_name}')
-
-                # logger.debug(f'Model <{name}>, row={row_idx}')
-                ii.extend(row_idx)
-                jj.extend(col_idx)
-                vv.extend(np.zeros(len(np.array(row_idx))))
-
-                # add the constant jacobian values
-                for row, col, val in mdl.zip_ijv(f'{j_name}c'):
+                for row, col, val in mdl.triplets.zip_ijv(jname):
                     ii.extend(row)
                     jj.extend(col)
-
-                    if isinstance(val, (float, int)):
-                        vv.extend(val * np.ones(len(row)))
-                    elif isinstance(val, (list, np.ndarray)):
-                        vv.extend(val)
-                    else:
-                        raise TypeError(f'Unknown type {type(val)} in constant jacobian {j_name}')
+                    vv.extend(np.zeros_like(row))
+                for row, col, val in mdl.triplets.zip_ijv(jname + 'c'):
+                    # process constant Jacobians separately
+                    ii.extend(row)
+                    jj.extend(col)
+                    vv.extend(val * np.ones_like(row))
 
             if len(ii) > 0:
-                ii = np.array(ii).astype(int)
-                jj = np.array(jj).astype(int)
-                vv = np.array(vv).astype(float)
+                ii = np.array(ii, dtype=int)
+                jj = np.array(jj, dtype=int)
+                vv = np.array(vv, dtype=float)
 
-            self.dae.store_sparse_ijv(j_name, ii, jj, vv)
-            self.dae.build_pattern(j_name)
+            self.dae.store_sparse_ijv(jname, ii, jj, vv)
+            self.dae.build_pattern(jname)
 
     def vars_to_dae(self):
         """

@@ -1,6 +1,6 @@
 import logging
-from collections import OrderedDict
-from andes.shared import pd, np, spmatrix
+from collections import OrderedDict, defaultdict
+from andes.shared import pd, np, spmatrix, jac_names
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,6 @@ class DAE(object):
     """
     The numerical DAE class.
     """
-    jac_name = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
-    jac_type = ('c', '')
-
     def __init__(self, system):
         self.system = system
         self.t = 0
@@ -62,24 +59,14 @@ class DAE(object):
         self.tx = None
         self.rx = None
 
-        self.fx_pattern = None
-        self.fy_pattern = None
-        self.gx_pattern = None
-        self.gy_pattern = None
-        self.tx_pattern = None
-        self.rx_pattern = None
-
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []
 
         # ----- indices of sparse matrices -----
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-        self.itx, self.jtx, self.vtx = list(), list(), list()
-        self.irx, self.jrx, self.vrx = list(), list(), list()
+        self.ijac = defaultdict(list)
+        self.jjac = defaultdict(list)
+        self.vjac = defaultdict(list)
 
     def clear_ts(self):
         self.ts = DAETimeSeries(self)
@@ -111,19 +98,17 @@ class DAE(object):
         self.z = np.zeros(self.n)
 
     def clear_ijv(self):
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-        self.itx, self.jtx, self.vtx = list(), list(), list()
-        self.irx, self.jrx, self.vrx = list(), list(), list()
+        for jname in jac_names:
+            self.ijac[jname] = list()
+            self.jjac[jname] = list()
+            self.vjac[jname] = list()
 
     def restore_sparse(self):
         """
         Restore all sparse arrays to shape with non-zero constants
         """
-        for name in self.jac_name:
-            self.build_pattern(name)
+        for jname in jac_names:
+            self.build_pattern(jname)
 
     def reset(self):
         self.m = 0
@@ -159,15 +144,16 @@ class DAE(object):
         return tuple(ret)
 
     def store_sparse_ijv(self, name, row, col, val):
-        """Store the sparse pattern triplets.
+        """
+        Store the sparse pattern triplets.
 
-        This function is to be called after building the sparse pattern
-        in System.
+        This function is to be called by System after building the complete sparsity pattern for each Jacobian
+        matrix.
 
         Parameters
         ----------
         name : str
-            sparse matrix name
+            sparse Jacobian matrix name
         row : np.ndarray
             all row indices
         col : np.ndarray
@@ -175,56 +161,9 @@ class DAE(object):
         val : np.ndarray
             all values
         """
-        self.__dict__[f'i{name}'] = row
-        self.__dict__[f'j{name}'] = col
-        self.__dict__[f'v{name}'] = val
-
-    def row_of(self, name):
-        """Get the row indices of the named sparse matrix.
-
-        Parameters
-        ----------
-        name : str
-            name of the sparse matrix
-
-        Returns
-        -------
-        np.ndarray
-            row indices
-        """
-        return self.__dict__[f'i{name}']
-
-    def col_of(self, name):
-        """
-        Get the col indices of the named sparse matrix.
-
-        Parameters
-        ----------
-        name : str
-            name of the sparse matrix
-
-        Returns
-        -------
-        np.ndarray
-            col indices
-        """
-        return self.__dict__[f'j{name}']
-
-    def val_of(self, name):
-        """
-        Get the values of the named sparse matrix.
-
-        Parameters
-        ----------
-        name : str
-            name of the sparse matrix
-
-        Returns
-        -------
-        np.ndarray
-            values
-        """
-        return self.__dict__[f'v{name}']
+        self.ijac[name] = row
+        self.jjac[name] = col
+        self.vjac[name] = val
 
     def build_pattern(self, name):
         """
@@ -237,9 +176,7 @@ class DAE(object):
         name : name
             jac name
         """
-        self.__dict__[name] = spmatrix(self.val_of(name),
-                                       self.row_of(name),
-                                       self.col_of(name),
+        self.__dict__[name] = spmatrix(self.vjac[name], self.ijac[name], self.jjac[name],
                                        self.get_size(name), 'd')
 
     def _compare_pattern(self, name):
@@ -251,9 +188,7 @@ class DAE(object):
 
             self.dae._compare_pattern(j_name)
         """
-        self.__dict__[f'{name}_tpl'] = spmatrix(self.val_of(name),
-                                                self.row_of(name),
-                                                self.col_of(name),
+        self.__dict__[f'{name}_tpl'] = spmatrix(self.vjac[name], self.ijac[name], self.jjac[name],
                                                 self.get_size(name), 'd')
         m_before = self.__dict__[f'{name}_tpl']
         m_after = self.__dict__[name]

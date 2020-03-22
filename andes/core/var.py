@@ -57,7 +57,7 @@ class BaseVar(object):
 
         self.tex_name = tex_name if tex_name else name
         self.owner = None  # instance of the owner Model
-        self.id = None
+        self.id = None     # variable internal index inside a model (assigned in run time)
 
         self.n = 0
         self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)  # address array

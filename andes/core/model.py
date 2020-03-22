@@ -2,7 +2,7 @@
 Base class for building ANDES models
 """
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from andes.core.config import Config
 from andes.core.discrete import Discrete
@@ -10,11 +10,13 @@ from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.block import Block
 from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
+from andes.core.triplet import JacTriplet
 
 from andes.utils.func import list_flatten
 from andes.utils.tab import Tab
 
 from andes.shared import np, pd, newton_krylov
+from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
 
@@ -266,19 +268,36 @@ class ModelCall(object):
         self.init_lambdify = None
         self.s_lambdify = None
 
-        self._ifx, self._jfx, self._vfx = list(), list(), list()
-        self._ify, self._jfy, self._vfy = list(), list(), list()
-        self._igx, self._jgx, self._vgx = list(), list(), list()
-        self._igy, self._jgy, self._vgy = list(), list(), list()
-        self._itx, self._jtx, self._vtx = list(), list(), list()
-        self._irx, self._jrx, self._vrx = list(), list(), list()
+        self.ijac = defaultdict(list)
+        self.jjac = defaultdict(list)
+        self.vjac = defaultdict(list)
 
-        self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
-        self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
-        self._igxc, self._jgxc, self._vgxc = list(), list(), list()
-        self._igyc, self._jgyc, self._vgyc = list(), list(), list()
-        self._itxc, self._jtxc, self._vtxc = list(), list(), list()
-        self._irxc, self._jrxc, self._vrxc = list(), list(), list()
+    def clear_ijv(self):
+        for jname in jac_names:
+            for jtype in jac_types:
+                self.ijac[jname + jtype] = list()
+                self.jjac[jname + jtype] = list()
+                self.vjac[jname + jtype] = list()
+
+    def append_ijv(self, j_full_name, ii, jj, vv):
+        if not isinstance(ii, int):
+            raise ValueError("i index must be an integer")
+        if not isinstance(jj, int):
+            raise ValueError("j index must be an integer")
+        if not isinstance(vv, (int, float)) and (not callable(vv)):
+            raise ValueError("j index must be numerical or callable")
+
+        self.ijac[j_full_name].append(ii)
+        self.jjac[j_full_name].append(jj)
+        self.vjac[j_full_name].append(vv)
+
+    def zip_ijv(self, j_full_name):
+        """
+        Return a zipped iterator for the rows, cols and vals for the specified matrix name.
+        """
+        return zip(self.ijac[j_full_name],
+                   self.jjac[j_full_name],
+                   self.vjac[j_full_name])
 
 
 class Model(object):
@@ -369,31 +388,7 @@ class Model(object):
         self.f_print, self.g_print, self.s_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
-        # ----- ONLY FOR CUSTOM NUMERICAL JACOBIAN FUNCTIONS -----
-        self._ifx, self._jfx, self._vfx = list(), list(), list()
-        self._ify, self._jfy, self._vfy = list(), list(), list()
-        self._igx, self._jgx, self._vgx = list(), list(), list()
-        self._igy, self._jgy, self._vgy = list(), list(), list()
-        self._itx, self._jtx, self._vtx = list(), list(), list()
-        self._irx, self._jrx, self._vrx = list(), list(), list()
-
-        self._ifxc, self._jfxc, self._vfxc = list(), list(), list()
-        self._ifyc, self._jfyc, self._vfyc = list(), list(), list()
-        self._igxc, self._jgxc, self._vgxc = list(), list(), list()
-        self._igyc, self._jgyc, self._vgyc = list(), list(), list()
-        self._itxc, self._jtxc, self._vtxc = list(), list(), list()
-        self._irxc, self._jrxc, self._vrxc = list(), list(), list()
-        # -------------------------------------------------------
-
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-
-        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
-        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
-        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
-        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
+        self.triplets = JacTriplet()
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
@@ -937,16 +932,7 @@ class Model(object):
 
         # clear storage
         self.df_syms, self.dg_syms = Matrix([]), Matrix([])
-
-        self.calls._ifx, self.calls._jfx, self.calls._vfx = list(), list(), list()
-        self.calls._ify, self.calls._jfy, self.calls._vfy = list(), list(), list()
-        self.calls._igx, self.calls._jgx, self.calls._vgx = list(), list(), list()
-        self.calls._igy, self.calls._jgy, self.calls._vgy = list(), list(), list()
-
-        self.calls._ifxc, self.calls._jfxc, self.calls._vfxc = list(), list(), list()
-        self.calls._ifyc, self.calls._jfyc, self.calls._vfyc = list(), list(), list()
-        self.calls._igxc, self.calls._jgxc, self.calls._vgxc = list(), list(), list()
-        self.calls._igyc, self.calls._jgyc, self.calls._vgyc = list(), list(), list()
+        self.calls.clear_ijv()
 
         # NOTE: SymPy does not allow getting the derivative of an empty array
         if len(self.g_matrix) > 0:
@@ -977,11 +963,8 @@ class Model(object):
                 eqn = self.cache.all_vars[eq_name]
                 var = self.cache.all_vars[var_name]
 
-                jac_name = f'{eqn.e_code}{var.v_code}'
-
-                self.calls.__dict__[f'_i{jac_name}'].append(e_idx)
-                self.calls.__dict__[f'_j{jac_name}'].append(v_idx)
-                self.calls.__dict__[f'_v{jac_name}'].append(lambdify(syms_list, e_symbolic))
+                jname = f'{eqn.e_code}{var.v_code}'
+                self.calls.append_ijv(jname, e_idx, v_idx, lambdify(syms_list, e_symbolic))
 
         # The for loop below is intended to add an epsilon small value to the diagonal of gy matrix.
         # The user should take care of the algebraic equations by using `diag_eps` in Algeb definition
@@ -991,9 +974,7 @@ class Model(object):
                 continue
             e_idx = algebs_and_ext_list.index(var.name)
             v_idx = vars_syms_list.index(var.name)
-            self.calls.__dict__[f'_igyc'].append(e_idx)
-            self.calls.__dict__[f'_jgyc'].append(v_idx)
-            self.calls.__dict__[f'_vgyc'].append(var.diag_eps)
+            self.calls.append_ijv('gyc', e_idx, v_idx, var.diag_eps)
 
     def generate_pretty_print(self):
         """
@@ -1038,96 +1019,50 @@ class Model(object):
         a) generated constant and variable Jacobians
         c) user-provided constant and variable Jacobians,
         d) user-provided block constant and variable Jacobians
+
+        Notes
+        -----
+        If `self.n == 0`, skipping this function will avoid appending empty lists/arrays and
+        non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`.
         """
 
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-        self.itx, self.jtx, self.vtx = list(), list(), list()
-        self.irx, self.jrx, self.vrx = list(), list(), list()
-
-        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
-        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
-        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
-        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
-        self.itxc, self.jtxc, self.vtxc = list(), list(), list()
-        self.irxc, self.jrxc, self.vrxc = list(), list(), list()
-
-        if (not self.flags['address']) or (self.n == 0):
-            # Note:
-            # If self.n == 0, skipping the processes below will avoid appending empty lists/arrays and
-            # non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`.
-            #
-            # If we don't want to check `self.n`, we can check if len(row) == 0 or len(col) == 0 below instead.
+        self.triplets.clear_ijv()
+        if self.n == 0:
+            return
+        if self.flags['address'] is False:
             return
 
+        # store model-level user-defined Jacobians
         self.j_numeric()
-        # store block jacobians to block instances
+        # store and merge user-defined Jacobians in blocks
         for instance in self.blocks.values():
             instance.j_numeric()
+            self.triplets.merge(instance.triplets)
 
         var_names_list = list(self.cache.all_vars.keys())
         eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
                     'g': var_names_list[len(self.cache.states_and_ext):]}
 
-        for j_name in self.system.dae.jac_name:
-            for j_type in self.system.dae.jac_type:
-                # generated lambda functions
-                for row, col, val in zip(self.calls.__dict__[f'_i{j_name}{j_type}'],
-                                         self.calls.__dict__[f'_j{j_name}{j_type}'],
-                                         self.calls.__dict__[f'_v{j_name}{j_type}']):
-                    row_name = eq_names[j_name[0]][row]  # separate states and algebs
-                    col_name = var_names_list[col]
+        # prepare all combinations of Jacobian names (fx, fxc, gx, gxc, etc.)
 
-                    row_idx = self.__dict__[row_name].a
-                    col_idx = self.__dict__[col_name].a
-                    if len(row_idx) == 0 and len(col_idx) == 0:
-                        continue
-                    if len(row_idx) != len(col_idx):
-                        logger.error(f'row {row_name}, row_idx: {row_idx}')
-                        logger.error(f'col {col_name}, col_idx: {col_idx}')
-                        raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
+        for j_full_name in jac_full_names:
+            for row, col, val in self.calls.zip_ijv(j_full_name):
+                row_name = eq_names[j_full_name[0]][row]  # where jname[0] is the equation name (f, g, r, t)
+                col_name = var_names_list[col]
 
-                    self.__dict__[f'i{j_name}{j_type}'].append(row_idx)
-                    self.__dict__[f'j{j_name}{j_type}'].append(col_idx)
-                    if j_type == 'c':
-                        self.__dict__[f'v{j_name}{j_type}'].append(val)
-                    else:
-                        self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
+                row_idx = self.__dict__[row_name].a
+                col_idx = self.__dict__[col_name].a
 
-                # user-provided numerical jacobians
-                for row, col, val in zip(self.__dict__[f'_i{j_name}{j_type}'],
-                                         self.__dict__[f'_j{j_name}{j_type}'],
-                                         self.__dict__[f'_v{j_name}{j_type}']):
+                if len(row_idx) != len(col_idx):
+                    logger.error(f'row {row_name}, row_idx: {row_idx}')
+                    logger.error(f'col {col_name}, col_idx: {col_idx}')
+                    raise ValueError(f'{self.class_name}: non-matching row_idx and col_idx')
 
-                    if len(row) == 0 and len(col) == 0:
-                        continue
-                    if len(row) != len(col):
-                        logger.error(f'row_idx: {row}')
-                        logger.error(f'col_idx: {col}')
-                        raise ValueError(f'Model {self.class_name} has non-matching row_idx and col_idx')
-
-                    self.__dict__[f'i{j_name}{j_type}'].append(row)
-                    self.__dict__[f'j{j_name}{j_type}'].append(col)
-
-                    if j_type == 'c':
-                        self.__dict__[f'v{j_name}{j_type}'].append(val)
-                    else:
-                        self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
-
-                # user-provided numerical jacobians in blocks
-                for instance in list(self.blocks.values()):
-                    for row, col, val in zip(instance.__dict__[f'i{j_name}{j_type}'],
-                                             instance.__dict__[f'j{j_name}{j_type}'],
-                                             instance.__dict__[f'v{j_name}{j_type}']):
-                        self.__dict__[f'i{j_name}{j_type}'].append(row)
-                        self.__dict__[f'j{j_name}{j_type}'].append(col)
-
-                        if j_type == 'c':
-                            self.__dict__[f'v{j_name}{j_type}'].append(val)
-                        else:
-                            self.__dict__[f'v{j_name}{j_type}'].append(np.zeros(self.n))
+                if j_full_name[-1] == 'c':
+                    value = val * np.ones(self.n)
+                else:
+                    value = np.zeros(self.n)
+                self.triplets.append_ijv(j_full_name, row_idx, col_idx, value)
 
     def initialize(self):
         """
@@ -1241,27 +1176,10 @@ class Model(object):
             return
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
-
         kwargs = self.get_inputs()
         for name in jac_set:
-            idx = 0
-
-            # generated lambda Jacobian functions first
-            fun_list = self.calls.__dict__[f'_v{name}']
-            for fun in fun_list:
-                self.__dict__[f'v{name}'][idx][:] = fun(**kwargs)
-                idx += 1
-
-            # call numerical Jacobian functions for blocks
-            for instance in self.blocks.values():
-                for fun in instance.__dict__[f'v{name}']:
-                    self.__dict__[f'v{name}'][idx][:] = fun(**kwargs)
-                    idx += 1
-
-            # call numerical Jacobians for self
-            for fun in self.__dict__[f'_v{name}']:
-                self.__dict__[f'v{name}'][idx][:] = fun(**kwargs)
-                idx += 1
+            for idx, fun in enumerate(self.calls.vjac[name]):
+                self.triplets.vjac[name][idx] = fun(**kwargs)
 
     def get_times(self):
         """
@@ -1367,41 +1285,6 @@ class Model(object):
     def _vars_int(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.algebs.items()))
-
-    def row_of(self, name):
-        """
-        Return the row index in a flattened arrays for the specified jacobian matrix
-
-        Parameters
-        ----------
-        name : str
-            name of the jacobian matrix
-        """
-        return np.ravel(np.array(self.__dict__[f'i{name}']))
-
-    def col_of(self, name):
-        """
-        Return the col index in a flattened arrays for the specified jacobian matrix
-
-        Parameters
-        ----------
-        name : str
-            name of the jacobian matrix
-        """
-        return np.ravel(np.array(self.__dict__[f'j{name}']))
-
-    def zip_ijv(self, name):
-        """
-        Return a zipped iterator for the rows, cols and vals for the specified matrix
-
-        Parameters
-        ----------
-        name : str
-            jac name
-        """
-        return zip(self.__dict__[f'i{name}'],
-                   self.__dict__[f'j{name}'],
-                   self.__dict__[f'v{name}'])
 
     def list2array(self):
         """
