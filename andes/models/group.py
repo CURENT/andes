@@ -20,6 +20,11 @@ class GroupBase(object):
     def class_name(self):
         return self.__class__.__name__
 
+    @property
+    def n(self):
+        """Total number of devices"""
+        return len(self._idx2model)
+
     def add_model(self, name, instance):
         if name not in self.models:
             self.models[name] = instance
