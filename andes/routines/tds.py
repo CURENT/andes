@@ -1,4 +1,6 @@
 import sys
+import os
+import importlib
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
@@ -35,6 +37,7 @@ class TDS(BaseRoutine):
         self.h = 0
         self.next_pc = 0
 
+        # internal status
         self.converged = False
         self.busted = False
         self.niter = 0
@@ -42,8 +45,8 @@ class TDS(BaseRoutine):
         self._last_switch_t = -999  # the last critical time
         self.mis = []
         self.pbar = None
+        self.callpert = None
         self.plotter = None
-
         self.initialized = False
 
     def _initialize(self):
@@ -71,13 +74,16 @@ class TDS(BaseRoutine):
         system.store_switch_times(self.tds_models)
         self.initialized = self.test_initialization()
 
+        self._load_pert()
         _, s1 = elapsed(t0)
+
         if self.initialized is True:
             logger.info(f"Initialization successful in {s1}.")
         else:
             logger.info(f"Initialization error in {s1}.")
+
         if system.dae.n == 0:
-            logger.warning('No dynamic component loaded.')
+            tqdm.write('No dynamic component loaded.')
         return system.dae.xy
 
     def summary(self):
@@ -89,11 +95,14 @@ class TDS(BaseRoutine):
 
         """
         out = list()
-        fixed_or_variable = 'fixed' if self.config.fixt == 1.0 else 'variable'
-        out.append('-> Time Domain Simulation:')
-        out.append(f'Method: {self.config.sparselib}')
-        out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s, '
-                   f'{fixed_or_variable} step h={self.config.tstep:.4g}s')
+        fixed_or_variable = 'Fixed' if self.config.fixt == 1 else 'Variable'
+        out.append('-> Time Domain Simulation Summary:')
+        out.append(f'Sparse Solver: {self.config.sparselib.upper()}')
+        out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')
+        if self.config.fixt == 1:
+            out.append(f'Fixed step size: h={self.config.tstep:.4g}s')
+        else:
+            out.append(f'Variable step size: h0={self.config.tstep:.4g}s')
 
         out_str = '\n'.join(out)
         logger.info(out_str)
@@ -118,8 +127,13 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
         while (system.dae.t < self.config.tf) and (not self.busted):
             if self.calc_h() == 0:
-                logger.error("Time step calculated to zero. Simulation terminated.")
+                self.pbar.close()
+                logger.error(f"Time step calculated to zero.")
+                logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
                 break
+
+            if self.callpert is not None:
+                self.callpert(dae.t, system)
 
             if self._implicit_step():
                 # store values
@@ -149,14 +163,16 @@ class TDS(BaseRoutine):
             self.load_plotter()
 
     def load_plotter(self):
+        """
+        Manually load a plotter into ``TDS.plotter``.
+        """
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
 
     def test_initialization(self):
         """
-        Update f and g to see if initialization is successful
+        Update f and g to see if initialization is successful.
         """
-
         system = self.system
         system.e_clear(models=self.pflow_tds_models)
         system.l_update_var(models=self.pflow_tds_models)
@@ -171,10 +187,10 @@ class TDS(BaseRoutine):
             logger.debug('Initialization tests passed.')
             return True
         else:
-            logger.warning('Suspect initialization issue!')
+            logger.error('Suspect initialization issue!')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.warning(f"Check variables {', '.join(fail_names)}")
+            logger.error(f"Check variables {', '.join(fail_names)}")
             return False
 
     def _implicit_step(self):
@@ -233,6 +249,7 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
+                self.pbar.close()
                 logger.error(f'NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 self.busted = True
@@ -261,6 +278,7 @@ class TDS(BaseRoutine):
                              f'({system.dae.xy_name[np.argmax(inc)]})')
                 break
             if mis > 1000 and (mis > 1e8 * self.mis[0]):
+                self.pbar.close()
                 logger.error(f'Error increased too quickly. Convergence not likely.')
                 self.busted = True
                 break
@@ -430,3 +448,23 @@ class TDS(BaseRoutine):
         self.plotter = None
 
         self.initialized = False
+
+    def _load_pert(self):
+        """
+        Load perturbation files to ``self.callpert``.
+        """
+        system = self.system
+        if system.files.pert:
+            if not os.path.isfile(system.files.pert):
+                logger.warning('Pert file not found.')
+                return False
+            try:
+                sys.path.append(system.files.case_path)
+                name, ext = os.path.splitext(system.files.pert)
+                module = importlib.import_module(name)
+                self.callpert = getattr(module, 'pert')
+                return True
+            except ImportError:
+                logger.warning('Pert file is discarded due to import errors.')
+                self.callpert = None
+                return False

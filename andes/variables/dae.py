@@ -34,6 +34,18 @@ class DAETimeSeries(object):
             return np.hstack((self.t.reshape((-1, 1)), self.xy))
 
     def store_txyz(self, t, xy, z=None):
+        """
+        Store t, xy, and z in internal storage, respectively.
+
+        Parameters
+        ----------
+        t : float
+            simulation time
+        xy : array-like
+            array data for states and algebraic variables
+        z : array-like or None
+            discrete flags data
+        """
         self._data[t] = xy
         if z is not None:
             self._z[t] = z
