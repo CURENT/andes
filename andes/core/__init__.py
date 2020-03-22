@@ -19,3 +19,5 @@ from andes.core.block import Block, Washout, Lag,  LeadLag, Piecewise  # NOQA
 from andes.core.block import LagAntiWindup, LeadLagLimit  # NOQA
 
 from andes.core.config import Config  # NOQA
+
+from andes.core.triplet import JacTriplet  # NOQA

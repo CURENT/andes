@@ -22,16 +22,19 @@ ANDES is invoked from the command line using the command ``andes``.
 Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
 It prints out a preamble with version and environment information and help commands::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 08:34:35 PM
+    ANDES 0.8.1 (Git commit id c954fc10, Python 3.7.1 on Darwin)
+    Session: hcui7, 03/22/2020 11:08:19 AM
+    This program comes with ABSOLUTELY NO WARRANTY.
 
-    usage: andes [-h] [-v {10,20,30,40,50}] {run,plot,misc,prepare,selftest} ...
+    usage: andes [-h] [-v {10,20,30,40,50}]
+                 {run,plot,misc,prepare,doc,selftest} ...
 
     positional arguments:
-      {run,plot,misc,prepare,selftest}
+      {run,plot,misc,prepare,doc,selftest}
                             [run]: run simulation routine; [plot]: plot simulation
-                            results; [prepare]: run the symbolic-to-numeric
-                            preparation; [misc]: miscellaneous functions.
+                            results; [doc]: quick documentation;[prepare]: run the
+                            symbolic-to-numeric preparation; [misc]: miscellaneous
+                            functions.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -39,7 +42,6 @@ It prints out a preamble with version and environment information and help comma
                             Program logging level. Available levels are 10-DEBUG,
                             20-INFO, 30-WARNING, 40-ERROR or 50-CRITICAL. The
                             default level is 20-INFO.
-
 
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
@@ -56,23 +58,37 @@ After installing ANDES, it is encouraged to use ``andes selftest`` to run tests 
 It might take a minute to run the whole self-test suite. Results are printed as the tests proceed. An example
 output looks like ::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 08:44:07 PM
+    ANDES 0.8.1 (Git commit id gc954fc1, Python 3.7.3 on Linux)
+    Session: hcui7, 03/22/2020 11:02:35 AM
+    This program comes with ABSOLUTELY NO WARRANTY.
 
-    test_docs (test_1st_system.TestSystem) ... ok
+    test_docs (test_1st_system.TestCodegen) ... ok
+    test_alter_param (test_case.Test5Bus) ... ok
+    test_as_df (test_case.Test5Bus) ... ok
+    test_cache_refresn (test_case.Test5Bus) ... ok
+    test_count (test_case.Test5Bus) ... ok
+    test_idx (test_case.Test5Bus) ... ok
+    test_init_order (test_case.Test5Bus) ... ok
+    test_names (test_case.Test5Bus) ... ok
+    test_pflow (test_case.Test5Bus) ... ok
+    test_pflow_reset (test_case.Test5Bus) ... ok
+    test_tds_init (test_case.Test5Bus) ... ok
+    test_eig_run (test_case.TestKundur2Area) ... ok
+    test_tds_run (test_case.TestKundur2Area) ... ok
+    test_npcc_raw (test_case.TestNPCCRAW) ... ok
+    test_npcc_raw_convert (test_case.TestNPCCRAW) ... ok
+    test_npcc_raw_tds (test_case.TestNPCCRAW) ... No dynamic component loaded.
+    ok
+    test_main_doc (test_cli.TestCLI) ... ok
+    test_misc (test_cli.TestCLI) ... ok
     test_limiter (test_discrete.TestDiscrete) ... ok
     test_sorted_limiter (test_discrete.TestDiscrete) ... ok
     test_switcher (test_discrete.TestDiscrete) ... ok
+    test_tree (test_paths.TestPaths) ... ok
     test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
-    test_count (test_pjm.Test5Bus) ... ok
-    test_idx (test_pjm.Test5Bus) ... ok
-    test_names (test_pjm.Test5Bus) ... ok
-    test_pflow (test_pjm.Test5Bus) ... ok
-    100%|██████████████████████████████████████████| 100/100 [00:02<00:00, 39.29%/s]
-    ok
 
     ----------------------------------------------------------------------
-    Ran 10 tests in 21.289s
+    Ran 23 tests in 13.834s
 
     OK
 
