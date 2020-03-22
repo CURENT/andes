@@ -256,8 +256,6 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
             system.TDS.run()
         elif routine == 'eig':
             system.EIG.run()
-        elif routine == 'red':
-            system.RED.run()
 
     # Disable profiler and output results
     if profile:
