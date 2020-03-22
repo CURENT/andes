@@ -25,3 +25,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: Build HTML documentation
+      run : |
+        make -C docs html
