@@ -1,4 +1,4 @@
-name: andes_fresh
+name: andes_binder
 channels:
   - http://conda.anaconda.org/gurobi
   - conda-forge
@@ -60,8 +60,8 @@ dependencies:
   - wheel=0.34.2=py_1
   - xlrd=1.2.0=py_0
   - xlsxwriter=1.2.8=py_0
-  - xz=5.2.4=h1de35cc_1001
+  - xz=5.2.4=h0b31af3_1002
   - yaml=0.2.2=h0b31af3_1
   - zlib=1.2.11=h0b31af3_1006
-prefix: /Users/hcui7/miniconda3/envs/andes_fresh
+prefix: /Users/hcui7/miniconda3/envs/andes_binder
 

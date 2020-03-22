@@ -4,6 +4,11 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.8.3
+------
+- Improved code base for Jacobian triplet storage.
+- On-the-fly parameter alteration for power flow calculations.
+
 v0.8.0 (2020-02-12)
 -------------------
 - First release of the hybrid symbolic-numeric framework in ANDES.

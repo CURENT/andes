@@ -60,6 +60,14 @@ andes.core.solver module
    :undoc-members:
    :show-inheritance:
 
+andes.core.triplet module
+-------------------------
+
+.. automodule:: andes.core.triplet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 andes.core.var module
 ---------------------
 

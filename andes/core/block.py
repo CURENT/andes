@@ -2,6 +2,7 @@ from andes.core.var import Algeb, State
 from typing import Optional, Iterable
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.service import ConstService
+from andes.core.triplet import JacTriplet
 
 
 class DummyValues(object):
@@ -94,20 +95,7 @@ class Block(object):
         self.info = info
         self.owner = None
         self.vars: dict = dict()
-
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
-        self.itx, self.jtx, self.vtx = list(), list(), list()
-        self.irx, self.jrx, self.vrx = list(), list(), list()
-
-        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
-        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
-        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
-        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
-        self.itxc, self.jtxc, self.vtxc = list(), list(), list()
-        self.irxc, self.jrxc, self.vrxc = list(), list(), list()
+        self.triplets = JacTriplet()
 
     def __setattr__(self, key, value):
         # handle sub-blocks by prepending self.name
@@ -131,17 +119,11 @@ class Block(object):
 
     def j_reset(self):
         """
-        Helper function to clear the lists holding the numerical jacobians
-        """
-        self.ifx, self.jfx, self.vfx = list(), list(), list()
-        self.ify, self.jfy, self.vfy = list(), list(), list()
-        self.igx, self.jgx, self.vgx = list(), list(), list()
-        self.igy, self.jgy, self.vgy = list(), list(), list()
+        Helper function to clear the lists holding the numerical Jacobians.
 
-        self.ifxc, self.jfxc, self.vfxc = list(), list(), list()
-        self.ifyc, self.jfyc, self.vfyc = list(), list(), list()
-        self.igxc, self.jgxc, self.vgxc = list(), list(), list()
-        self.igyc, self.jgyc, self.vgyc = list(), list(), list()
+        This function should be only called once at the beginning of ``j_numeric`` in blocks.
+        """
+        self.triplets.clear_ijv()
 
     def define(self):
         """
@@ -330,17 +312,10 @@ class PIControllerNumeric(Block):
     def j_numeric(self):
         self.j_reset()
 
-        self.ifyc.append(self.xi.a)
-        self.jfyc.append(self.u.a)
-        self.vfyc.append(-self.ki.v)
-
-        self.igyc.append(self.y.a)
-        self.jgyc.append(self.u.v)
-        self.vgyc.append(-self.kp.v)
-
-        self.igxc.append(self.y.a)
-        self.jgxc.append(self.xi.a)
-        self.vgxc.append(1)
+        # TODO: test the following code
+        self.triplets.append_ijv('fyc', self.xi.id, self.u.id, -self.ki.v)
+        self.triplets.append_ijv('gyc', self.y.id, self.u.id, -self.kp.v)
+        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, 1)
 
     def define(self):
         """Skip the symbolic definition"""

@@ -17,7 +17,7 @@ from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path
 from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
 
-from andes.shared import np, spmatrix
+from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
 
 if hasattr(spmatrix, 'ipadd'):
@@ -30,8 +30,9 @@ class System(object):
     """
     The ANDES power system class.
 
-    This class stores model and routine instances as attributes. Model and routine attribute names are the same
-    as their class names. For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
+    This class stores model and routine instances as attributes.
+    Model and routine attribute names are the same as their class names.
+    For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
     """
     def __init__(self,
                  case: Optional[str] = None,
@@ -82,15 +83,16 @@ class System(object):
                              'pflow_tds': self.find_models(('tds', 'pflow')),
                              }
 
-        # ------------------------------
-        # FIXME: reduce clutter with defaultdict `adders` and `setters`, each with `x`, `y`, `f`, and `g`
-        self.f_adders, self.f_setters = list(), list()
-        self.g_adders, self.g_setters = list(), list()
-
-        self.x_adders, self.x_setters = list(), list()
-        self.y_adders, self.y_setters = list(), list()
+        self._adders = dict(f=list(), g=list(), x=list(), y=list())
+        self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
-        # ------------------------------
+
+    def _clear_adder_setter(self):
+        """
+        Clear adders and setters storage
+        """
+        self._adders = dict(f=list(), g=list(), x=list(), y=list())
+        self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
     def prepare(self, quick=False):
         """
@@ -285,26 +287,21 @@ class System(object):
         Store the adders and setters for variables and equations.
         """
         models = self._get_models(models)
-
-        self.f_adders, self.f_setters = list(), list()
-        self.g_adders, self.g_setters = list(), list()
-
-        self.x_adders, self.x_setters = list(), list()
-        self.y_adders, self.y_setters = list(), list()
+        self._clear_adder_setter()
 
         for mdl in models.values():
             if not mdl.n:
                 continue
             for var in mdl.cache.all_vars.values():
                 if var.e_setter is False:
-                    self.__dict__[f'{var.e_code}_adders'].append(var)
+                    self._adders[var.e_code].append(var)
                 else:
-                    self.__dict__[f'{var.e_code}_setters'].append(var)
+                    self._setters[var.e_code].append(var)
 
                 if var.v_setter is False:
-                    self.__dict__[f'{var.v_code}_adders'].append(var)
+                    self._adders[var.v_code].append(var)
                 else:
-                    self.__dict__[f'{var.v_code}_setters'].append(var)
+                    self._setters[var.v_code].append(var)
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindupLimiter):
                     self.antiwindups.append(item)
@@ -455,68 +452,64 @@ class System(object):
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
-        for j_name in self.dae.jac_name:
+        for j_name in jac_names:
             j_size = self.dae.get_size(j_name)
 
             for mdl in models.values():
-                for row, col, val in mdl.zip_ijv(j_name):
+                for rows, cols, vals in mdl.triplets.zip_ijv(j_name):
                     try:
                         if self.config.ipadd and IP_ADD:
-                            self.dae.__dict__[j_name].ipadd(val, row, col)
+                            self.dae.__dict__[j_name].ipadd(vals, rows, cols)
                         else:
-                            self.dae.__dict__[j_name] += spmatrix(val, row, col, j_size, 'd')
+                            self.dae.__dict__[j_name] += spmatrix(vals, rows, cols, j_size, 'd')
                     except TypeError as e:
-                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={row}, col={col}, val={val}, '
+                        logger.error("Error adding Jacobian triplets to existing sparsity pattern.")
+                        logger.error(f'{mdl.class_name}: j_name {j_name}, row={rows}, col={cols}, val={vals}, '
                                      f'j_size={j_size}')
                         raise e
 
     def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Collect and store the sparsity pattern of Jacobian matrices.
+
+        This is a runtime function specific to cases.
+
+        Notes
+        -----
+        For `gy` matrix, always make sure the diagonal is reserved.
+        It is a safeguard if the modeling user omitted the diagonal
+        term in the equations.
         """
         models = self._get_models(models)
         self._call_models_method('store_sparse_pattern', models)
 
         # add variable jacobian values
-        for j_name in self.dae.jac_name:
+        for jname in jac_names:
             ii, jj, vv = list(), list(), list()
 
-            # for `gy` matrix, always make sure the diagonal is reserved
-            # It is a safeguard if the modeling user omitted the diagonal
-            # term in the equations
-            if j_name == 'gy':
+            if jname == 'gy':
                 ii.extend(np.arange(self.dae.m))
                 jj.extend(np.arange(self.dae.m))
                 vv.extend(np.zeros(self.dae.m))
 
             for mdl in models.values():
-                row_idx = mdl.row_of(f'{j_name}')
-                col_idx = mdl.col_of(f'{j_name}')
-
-                # logger.debug(f'Model <{name}>, row={row_idx}')
-                ii.extend(row_idx)
-                jj.extend(col_idx)
-                vv.extend(np.zeros(len(np.array(row_idx))))
-
-                # add the constant jacobian values
-                for row, col, val in mdl.zip_ijv(f'{j_name}c'):
+                for row, col, val in mdl.triplets.zip_ijv(jname):
                     ii.extend(row)
                     jj.extend(col)
-
-                    if isinstance(val, (float, int)):
-                        vv.extend(val * np.ones(len(row)))
-                    elif isinstance(val, (list, np.ndarray)):
-                        vv.extend(val)
-                    else:
-                        raise TypeError(f'Unknown type {type(val)} in constant jacobian {j_name}')
+                    vv.extend(np.zeros_like(row))
+                for row, col, val in mdl.triplets.zip_ijv(jname + 'c'):
+                    # process constant Jacobians separately
+                    ii.extend(row)
+                    jj.extend(col)
+                    vv.extend(val * np.ones_like(row))
 
             if len(ii) > 0:
-                ii = np.array(ii).astype(int)
-                jj = np.array(jj).astype(int)
-                vv = np.array(vv).astype(float)
+                ii = np.array(ii, dtype=int)
+                jj = np.array(jj, dtype=int)
+                vv = np.array(vv, dtype=float)
 
-            self.dae.store_sparse_ijv(j_name, ii, jj, vv)
-            self.dae.build_pattern(j_name)
+            self.dae.store_sparse_ijv(jname, ii, jj, vv)
+            self.dae.build_pattern(jname)
 
     def vars_to_dae(self):
         """
@@ -534,11 +527,11 @@ class System(object):
         """
         Send DAE variable values to models
         """
-        for var in self.y_adders + self.y_setters:
+        for var in self._adders['y'] + self._setters['y']:
             if var.n > 0:
                 var.v[:] = self.dae.y[var.a]
 
-        for var in self.x_adders + self.x_setters:
+        for var in self._adders['x'] + self._setters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
@@ -557,18 +550,19 @@ class System(object):
         if v_name not in ('x', 'y'):
             raise KeyError(f'{v_name} is not a valid var name')
 
-        for var in self.__dict__[f'{v_name}_adders']:
+        for var in self._adders[v_name]:
             # NOTE:
             # For power flow, they will be initialized to zero.
             # For TDS initialization, they will remain their value.
             if var.n == 0:
                 continue
-            if (var.v_str is None) and isinstance(var, ExtVar):
+            if isinstance(var, ExtVar) and (var.v_str is None):
                 continue
             if var.owner.flags['initialized'] is False:
                 continue
             np.add.at(self.dae.__dict__[v_name], var.a, var.v)
-        for var in self.__dict__[f'{v_name}_setters']:
+
+        for var in self._setters[v_name]:
             if var.owner.flags['initialized'] is False:
                 continue
             if var.n > 0:
@@ -586,10 +580,10 @@ class System(object):
         if eq_name not in ('f', 'g'):
             raise KeyError(f'{eq_name} is not a valid eq name')
 
-        for var in self.__dict__[f'{eq_name}_adders']:
+        for var in self._adders[eq_name]:
             if var.n > 0:
                 np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
-        for var in self.__dict__[f'{eq_name}_setters']:
+        for var in self._setters[eq_name]:
             if var.n > 0:
                 np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
