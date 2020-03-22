@@ -96,7 +96,7 @@ class Slack(SlackData, PVModel):
         SlackData.__init__(self)
         PVModel.__init__(self, system, config)
 
-        self.config.add(OrderedDict((('av2pv', 0.),
+        self.config.add(OrderedDict((('av2pv', 0),
                                      )))
         self.a.v_setter = True
         self.a.v_str = 'a0'
