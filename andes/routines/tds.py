@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class TDS(BaseRoutine):
-
+    """
+    Time-domain simulation routine.
+    """
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-4),
@@ -22,6 +24,7 @@ class TDS(BaseRoutine):
                                      ('fixt', 1),
                                      ('tstep', 1/30),  # recommended step size
                                      ('max_iter', 15),
+                                     ('shrinkt', 1),    # shrink step size if `max_iter` is reached
                                      )))
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -95,7 +98,6 @@ class TDS(BaseRoutine):
 
         """
         out = list()
-        fixed_or_variable = 'Fixed' if self.config.fixt == 1 else 'Variable'
         out.append('-> Time Domain Simulation Summary:')
         out.append(f'Sparse Solver: {self.config.sparselib.upper()}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')
@@ -128,7 +130,6 @@ class TDS(BaseRoutine):
         while (system.dae.t < self.config.tf) and (not self.busted):
             if self.calc_h() == 0:
                 self.pbar.close()
-                logger.error(f"Time step calculated to zero.")
                 logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
                 break
 
@@ -219,7 +220,6 @@ class TDS(BaseRoutine):
 
         while True:
             system.e_clear(models=self.pflow_tds_models)
-
             system.l_update_var(models=self.pflow_tds_models)
             system.f_update(models=self.pflow_tds_models)
             system.g_update(models=self.pflow_tds_models)
@@ -333,21 +333,30 @@ class TDS(BaseRoutine):
         if system.dae.t == 0:
             return self._calc_h_first()
 
-        if self.converged:
-            if self.niter >= 15:
-                self.deltat = max(self.deltat * 0.5, self.deltatmin)
-            elif self.niter <= 6:
-                self.deltat = min(self.deltat * 1.1, self.deltatmax)
-            else:
-                self.deltat = max(self.deltat * 0.95, self.deltatmin)
-
-            # adjust fixed time step if niter is high
-            if config.fixt:
-                self.deltat = min(config.tstep, self.deltat)
-        else:
-            self.deltat *= 0.9
-            if self.deltat < self.deltatmin:
+        if config.fixt and not config.shrinkt:
+            if not self.converged:
                 self.deltat = 0
+                self.pbar.close()
+                logger.error(f"Simulation does not converge for the given step size h={self.config.tstep:.4f}.")
+                logger.error(f"Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink.")
+        else:
+            if self.converged:
+                if self.niter >= 15:
+                    self.deltat = max(self.deltat * 0.5, self.deltatmin)
+                elif self.niter <= 6:
+                    self.deltat = min(self.deltat * 1.1, self.deltatmax)
+                else:
+                    self.deltat = max(self.deltat * 0.95, self.deltatmin)
+
+                # for converged cases, set step size back to the initial `config.tstep`
+                if config.fixt:
+                    self.deltat = min(config.tstep, self.deltat)
+            else:
+                self.deltat *= 0.9
+                if self.deltat < self.deltatmin:
+                    self.deltat = 0
+                    self.pbar.close()
+                    logger.error(f"Time step calculated to zero. Convergence not likely.")
 
         # last step size
         if system.dae.t + self.deltat > config.tf:
@@ -456,15 +465,14 @@ class TDS(BaseRoutine):
         system = self.system
         if system.files.pert:
             if not os.path.isfile(system.files.pert):
-                logger.warning('Pert file not found.')
+                logger.warning(f'Pert file not found at {system.files.pert}.')
                 return False
-            try:
-                sys.path.append(system.files.case_path)
-                name, ext = os.path.splitext(system.files.pert)
-                module = importlib.import_module(name)
-                self.callpert = getattr(module, 'pert')
-                return True
-            except ImportError:
-                logger.warning('Pert file is discarded due to import errors.')
-                self.callpert = None
-                return False
+
+            sys.path.append(system.files.case_path)
+            _, full_name = os.path.split(system.files.pert)
+            name, ext = os.path.splitext(full_name)
+
+            module = importlib.import_module(name)
+            self.callpert = getattr(module, 'pert')
+            logger.info(f'Perturbation file {system.files.pert} loaded.')
+            return True
