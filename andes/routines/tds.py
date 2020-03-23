@@ -153,6 +153,7 @@ class TDS(BaseRoutine):
                 system.switch_action(self.pflow_tds_models)
                 system.vars_to_models()
 
+        self.pbar.close()
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
 
@@ -473,5 +474,5 @@ class TDS(BaseRoutine):
 
             module = importlib.import_module(name)
             self.callpert = getattr(module, 'pert')
-            logger.info(f'Perturbation file {system.files.pert} loaded.')
+            logger.info(f'Perturbation file <{system.files.pert}> loaded.')
             return True

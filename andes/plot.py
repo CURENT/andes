@@ -236,7 +236,7 @@ class TDSData(object):
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
-             latex=True, dpi=200, savefig=None, show=True, use_bqplot=False, **kwargs):
+             latex=True, dpi=150, savefig=None, show=True, use_bqplot=False, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -427,9 +427,11 @@ class TDSData(object):
             line_styles = ['-', '--', '-.', ':']
         line_styles = line_styles * int(len(ydata) / len(line_styles) + 1)
 
+        hold = True
         if not (fig and ax):
             fig = plt.figure(dpi=dpi)
             ax = plt.gca()
+            hold = False
 
         if greyscale:
             plt.gray()
@@ -456,8 +458,12 @@ class TDSData(object):
                 ax.set_ylabel(ylabel)
 
         ax.ticklabel_format(useOffset=False)
-        ax.set_xlim(left=left, right=right)
-        ax.set_ylim(ymin=ymin, ymax=ymax)
+
+        if not hold:
+            ax.set_xlim(left=left, right=right)
+            ax.set_ylim(bottom=ymin, top=ymax)
+        else:
+            ax.autoscale(axis='y')
 
         if grid:
             ax.grid(b=True, linestyle='--')
@@ -723,7 +729,6 @@ def set_latex(enable=True):
 
     if has_dvipng and enable:
         mpl.rc('text', usetex=True)
-        logger.info('Using LaTeX for rendering. If it takes too long, use option `-d` to disable it.')
         return True
     else:
         mpl.rc('text', usetex=False)
