@@ -751,6 +751,10 @@ class System(object):
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.ref_params[n].v[uid].append(model_idx)
 
+    def _generate_pycode_file(self):
+        """Generate empty files for storing lambdified Python code (TODO)"""
+        self._call_models_method('generate_pycode_file', self.models)
+
     def _generate_initializers(self):
         # TODO: consider both JIT and non-JIT models
         self._call_models_method('generate_initializers', self.models)
