@@ -6,7 +6,7 @@ import platform
 import importlib
 
 from time import strftime
-from andes.main import config_logger
+from andes.main import config_logger, find_log_path
 from andes.utils.paths import get_log_dir
 
 logger = logging.getLogger(__name__)
@@ -112,6 +112,7 @@ def preamble():
 
     logger.info('Session: {}{}'.format(username, strftime("%m/%d/%Y %I:%M:%S %p")))
     logger.info('This program comes with ABSOLUTELY NO WARRANTY.')
+    logger.debug(f'Logging to file {find_log_path(logging.getLogger("andes"))[0]}')
     logger.info('')
 
 

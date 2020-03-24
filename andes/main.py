@@ -14,7 +14,7 @@ from typing import Optional, Union
 import andes
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
-from andes.utils.paths import get_config_path, tests_root
+from andes.utils.paths import get_config_path, tests_root, get_log_dir
 from andes.shared import coloredlogs, unittest
 from andes.shared import Pool
 
@@ -22,12 +22,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def config_logger(logger=None,
-                  stream=True,
-                  file=False,
+def config_logger(stream=True,
+                  file=True,
                   stream_level=logging.INFO,
                   log_file='andes.log',
-                  log_path='',
+                  log_path=get_log_dir(),
                   file_level=logging.DEBUG,
                   ):
     """
@@ -37,8 +36,6 @@ def config_logger(logger=None,
 
     Parameters
     ----------
-    logger
-        Existing logger.
     stream : bool, optional
         Create a `StreamHandler` for `stdout` if ``True``.
         If ``False``, the handler will not be created.
@@ -58,9 +55,8 @@ def config_logger(logger=None,
     None
 
     """
-    if not logger:
-        logger = logging.getLogger('andes')
-        logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger('andes')
+    logger.setLevel(logging.DEBUG)
 
     if not len(logger.handlers):
         if stream is True:
@@ -80,7 +76,6 @@ def config_logger(logger=None,
             fh.setLevel(file_level)
             fh.setFormatter(fh_formatter)
             logger.addHandler(fh)
-            logger.debug(f'Logging to file {log_full_path}')
 
         globals()['logger'] = logger
 
@@ -325,15 +320,17 @@ def _find_cases(filename, path):
     return valid_cases
 
 
-def _set_logger_level(logger, type_to_set, level):
-    for ii, h in enumerate(logger.handlers):
+def set_logger_level(lg, type_to_set, level):
+    """Set logging level for the given type of handler."""
+    for ii, h in enumerate(lg.handlers):
         if isinstance(h, type_to_set):
             h.setLevel(level)
 
 
-def _find_log_path(logger):
+def find_log_path(lg):
+    """Find the file paths of the FileHandlers."""
     out = []
-    for ii, h in enumerate(logger.handlers):
+    for ii, h in enumerate(lg.handlers):
         if isinstance(h, logging.FileHandler):
             out.append(h.baseFilename)
     return out
@@ -354,17 +351,17 @@ def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.INFO, mp_verbo
         Verbosity level outside multiprocessing
     """
     logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
-    _set_logger_level(logger, logging.StreamHandler, mp_verbose)
-    _set_logger_level(logger, logging.FileHandler, logging.DEBUG)
+    set_logger_level(logger, logging.StreamHandler, mp_verbose)
+    set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
     from functools import partial
     pool = Pool(ncpu)
     ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
 
     # restore command line output when all jobs are done
-    _set_logger_level(logger, logging.StreamHandler, verbose)
+    set_logger_level(logger, logging.StreamHandler, verbose)
 
-    log_files = _find_log_path(logger)
+    log_files = find_log_path(logger)
     if len(log_files) > 0:
         log_paths = '\n'.join(log_files)
         print(f'Log saved to <{log_paths}>.')
