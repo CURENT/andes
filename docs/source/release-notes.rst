@@ -4,10 +4,15 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
-v0.8.3
-------
-- Improved code base for Jacobian triplet storage.
+v0.8.3 (2020-03-24)
+-------------------
+- Improved code base for Jacobian triplet storage (see ``andes.core.triplet.JacTriplet``).
 - On-the-fly parameter alteration for power flow calculations.
+- Exported frequently used functions to the root package
+  (``andes.config_logger``, ``andes.run``, ``andes.prepare`` and ``andes.load``).
+- Return a list of System objects when multiprocessing in an interactive environment.
+- Exported classes to `andes.core`.
+- Various bug fixes and documentation improvements.
 
 v0.8.0 (2020-02-12)
 -------------------

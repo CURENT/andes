@@ -27,20 +27,20 @@ For the Kundur's two-area system with GENROU, TGOV1 and EXDC2, ANDES produces al
 
 | Generator Speed | Excitation Voltage |
 | --------------- | ------------------ |
-| ![](docs/source/images/example-kundur/omega.png) | ![](docs/source/images/example-kundur/efd.png) |
+| ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-kundur/omega.png) | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-kundur/efd.png) |
 
 ANDES provides a descriptive modeling framework in a scripting environment.
 Modeling DAE-based devices is as simple as describing the mathematical equations.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram: ![](docs/source/images/example-tgov1/tgov1.png) <br><br> DAE: ![](docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](docs/source/images/example-tgov1/tgov1_class.png) |
+| Diagram: ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1.png) <br><br> DAE: ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document. 
 ANDES automatically generates model documentation, and the docs always stay up to date.
 The screenshot below is the generated documentation for the implemented TGOV1 model.
 
-![](docs/source/images/misc/doc-screenshot.png)
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/misc/doc-screenshot.png)
 
 In addition, ANDES features
 
@@ -546,6 +546,11 @@ The most commonly used ones are highlighted in the following.
 # Who is Using ANDES?
 Please let us know if you are using ANDES for research or projects. 
 We kindly request you to cite our paper if you find ANDES useful.
+
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/nsf.jpg)
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
 
 # Contributors
 
