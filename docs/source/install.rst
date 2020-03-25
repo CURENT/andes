@@ -4,7 +4,7 @@
 Installation
 *************************
 
-ANDES can be installed in Python 3.7+.
+ANDES can be installed in Python 3.6+.
 
 Environment
 ===========
@@ -97,11 +97,6 @@ Install dependencies with
 .. code:: bash
 
     conda install --file requirements.txt
-
-Install development dependencies if you want to build documentation with
-
-.. code:: bash
-
     conda install --file requirements-dev.txt
 
 Step 3: Install ANDES in the development mode using
@@ -125,8 +120,4 @@ cvxoptklu requires a C compiler, and the `openblas` and
 
       python3 -m install cvxoptklu
 
-Trouble-Shooting
-====================
-There is a known issue of CVXOPT with versions earlier than 1.2.2 in Windows for handling complex numbers.
-For stock cases, if you see obviously incorrect power flow results or experienced a crash running time-domain
-simulation, please install the latest CVXOPT (=>1.2.2) and double check with ``conda list`` or ``pip list``.
+The installation of optional packages can be safely ignored and will not affect the functionality of ANDES.

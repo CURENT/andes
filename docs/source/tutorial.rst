@@ -22,16 +22,19 @@ ANDES is invoked from the command line using the command ``andes``.
 Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
 It prints out a preamble with version and environment information and help commands::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 08:34:35 PM
+    ANDES 0.8.1 (Git commit id c954fc10, Python 3.7.1 on Darwin)
+    Session: hcui7, 03/22/2020 11:08:19 AM
+    This program comes with ABSOLUTELY NO WARRANTY.
 
-    usage: andes [-h] [-v {10,20,30,40,50}] {run,plot,misc,prepare,selftest} ...
+    usage: andes [-h] [-v {10,20,30,40,50}]
+                 {run,plot,misc,prepare,doc,selftest} ...
 
     positional arguments:
-      {run,plot,misc,prepare,selftest}
+      {run,plot,misc,prepare,doc,selftest}
                             [run]: run simulation routine; [plot]: plot simulation
-                            results; [prepare]: run the symbolic-to-numeric
-                            preparation; [misc]: miscellaneous functions.
+                            results; [doc]: quick documentation;[prepare]: run the
+                            symbolic-to-numeric preparation; [misc]: miscellaneous
+                            functions.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -39,7 +42,6 @@ It prints out a preamble with version and environment information and help comma
                             Program logging level. Available levels are 10-DEBUG,
                             20-INFO, 30-WARNING, 40-ERROR or 50-CRITICAL. The
                             default level is 20-INFO.
-
 
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
@@ -56,23 +58,37 @@ After installing ANDES, it is encouraged to use ``andes selftest`` to run tests 
 It might take a minute to run the whole self-test suite. Results are printed as the tests proceed. An example
 output looks like ::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 08:44:07 PM
+    ANDES 0.8.1 (Git commit id gc954fc1, Python 3.7.3 on Linux)
+    Session: hcui7, 03/22/2020 11:02:35 AM
+    This program comes with ABSOLUTELY NO WARRANTY.
 
-    test_docs (test_1st_system.TestSystem) ... ok
+    test_docs (test_1st_system.TestCodegen) ... ok
+    test_alter_param (test_case.Test5Bus) ... ok
+    test_as_df (test_case.Test5Bus) ... ok
+    test_cache_refresn (test_case.Test5Bus) ... ok
+    test_count (test_case.Test5Bus) ... ok
+    test_idx (test_case.Test5Bus) ... ok
+    test_init_order (test_case.Test5Bus) ... ok
+    test_names (test_case.Test5Bus) ... ok
+    test_pflow (test_case.Test5Bus) ... ok
+    test_pflow_reset (test_case.Test5Bus) ... ok
+    test_tds_init (test_case.Test5Bus) ... ok
+    test_eig_run (test_case.TestKundur2Area) ... ok
+    test_tds_run (test_case.TestKundur2Area) ... ok
+    test_npcc_raw (test_case.TestNPCCRAW) ... ok
+    test_npcc_raw_convert (test_case.TestNPCCRAW) ... ok
+    test_npcc_raw_tds (test_case.TestNPCCRAW) ... No dynamic component loaded.
+    ok
+    test_main_doc (test_cli.TestCLI) ... ok
+    test_misc (test_cli.TestCLI) ... ok
     test_limiter (test_discrete.TestDiscrete) ... ok
     test_sorted_limiter (test_discrete.TestDiscrete) ... ok
     test_switcher (test_discrete.TestDiscrete) ... ok
+    test_tree (test_paths.TestPaths) ... ok
     test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
-    test_count (test_pjm.Test5Bus) ... ok
-    test_idx (test_pjm.Test5Bus) ... ok
-    test_names (test_pjm.Test5Bus) ... ok
-    test_pflow (test_pjm.Test5Bus) ... ok
-    100%|██████████████████████████████████████████| 100/100 [00:02<00:00, 39.29%/s]
-    ok
 
     ----------------------------------------------------------------------
-    Ran 10 tests in 21.289s
+    Ran 23 tests in 13.834s
 
     OK
 
@@ -107,12 +123,14 @@ Available routine names include ``pflow, tds, eig``.
 `pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
 `pflow` is default even if ``-r`` is not given.
 
-For example, to run time-domain simulation for ``kundur_full.xlsx`` in the current
-directory, run
+For example, to run time-domain simulation for ``kundur_full.xlsx`` in the *current directory*, run
 
 .. code:: bash
 
     andes run kundur_full.xlsx -r tds
+
+The file is located at ``andes/cases/kundur/kundur_full.xlsx`` relative to the source code root folder.
+Use ``cd`` to change directory to that folder on your machine.
 
 Two output files, ``kundur_full_out.lst`` and ``kundur_full_out.npy`` will be created for variable names
 and values, respectively.
@@ -379,18 +397,18 @@ Import
 Like other Python libraries, ANDES can be imported into an interactive Python environment.
 
     >>> import andes
-    >>> andes.main.config_logger(log_file=None)
+    >>> andes.config_logger()
 
 The ``config_logger`` is needed to print logging information in the current session.
 Otherwise, information messages will be silenced, and only warnings and error will be printed.
 
 To enable debug messages, use
 
-    >>> andes.main.config_logger(stream_level=10, log_file=None)
+    >>> andes.config_logger(stream_level=10)
 
 If you have not run ``andes prepare``, use the command once to generate code
 
-    >>> andes.main.prepare()
+    >>> andes.prepare()
 
 
 Create Test System
@@ -399,7 +417,7 @@ Before running studies, a "System" object needs to be create to hold the system 
 The System object can be created by passing the path to the case file the entrypoint function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
 
-    >>> ss = andes.main.run('kundur_full.xlsx')
+    >>> ss = andes.run('kundur_full.xlsx')
 
 This function will parse the input file, run the power flow, and return the system as an object.
 Outputs will look like ::
@@ -457,16 +475,16 @@ For example, to run the time-domain simulation for ``ss``, use ::
 Plotting TDS Results
 --------------------
 TDS comes with a plotting utility for interactive usage.
-After running the simulation, a ``Plotter`` attributed will be created for ``TDS``.
+After running the simulation, a ``plotter`` attributed will be created for ``TDS``.
 To use the plotter, provide the attribute instance of the variable to plot.
 For example, to plot all the generator speed, use ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega)
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega)
 
 Optional indices is accepted to choose the specific elements to plot.
 It can be passed as a tuple to the ``a`` argument ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ))
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ))
 
 In the above example, the speed of the "zero-th" generator will be plotted.
 
@@ -476,7 +494,7 @@ A lambda function can be passed to argument ``ycalc`` to scale the values.
 This is useful to convert a per-unit variable to nominal.
 For example, to plot generator speed in Hertz, use ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ),
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ),
                             ycalc=lambda x: 60*x,
                             )
 
@@ -494,16 +512,18 @@ Each ANDES models offers pretty print of LaTeX-formatted equations in the jupyte
 
 To use this feature, symbolic equations need to be generated in the current session using ::
 
-    import dill
-    dill.settings['recurse'] = True
-
     import andes
-    ss = andes.system.System()
+    ss = andes.System()
     ss.prepare()
 
 This process may take several seconds to complete. Once done, equations can be viewed by accessing
 ``ss.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationName>`` is the
 equation name.
+
+.. Note ::
+
+    Pretty print only works for the particular System instance whose ``prepare()`` method is called.
+    In the above example, pretty print only works for ``ss`` after calling ``prepare()``.
 
 Supported equation names include the following:
 

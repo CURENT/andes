@@ -71,7 +71,7 @@ class Bus(Model, BusData):
         BusData.__init__(self)
         Model.__init__(self, system=system, config=config)
 
-        self.config.add(OrderedDict((('flat_start', 0.0),
+        self.config.add(OrderedDict((('flat_start', 0),
                                      )))
 
         self.group = 'ACTopology'

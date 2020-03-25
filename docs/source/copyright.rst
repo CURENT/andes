@@ -28,4 +28,12 @@ Acknowledgement
 
 This work was supported in part by the Engineering Research Center Program of
 the National Science Foundation and the Department of Energy under NSF Award
-Number EEC-1041877 and the CURENT Industry Partnership Program.
+Number EEC-1041877 and the CURENT Industry Partnership Program. ANDES is made
+open source as part of the CURENT Large Scale Testbed project.
+
+This project was originally inspired by the book `Power System Modelling and Scripting <https://www.springer
+.com/gp/book/9783642136689>`_
+by `Prof. Federico Milano <http://faraday1.ucd.ie>`_.
+
+Special thanks to `Dr. Yichen Zhang <https://sites.google.com/view/yichenzhangee/home>`_ for the valuable
+feedback for improving the documentation.

@@ -121,3 +121,9 @@
 *   Add a more generic parser for PSSE RAW
 *   Allow for semi-implicit method formulation
 *   Allow for semi-analytical derivation of equations
+
+
+## Refactor Ideas
+*   Separate the solver class into an interface class + a couple of different solver classes
+*   Refactor the Model class to separate symbolic processor (class Syms ?)
+*   Allow adding routine without modifying code

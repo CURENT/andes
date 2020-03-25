@@ -117,7 +117,8 @@ Step 4: Download and Install ANDES
 
 - Extract the package to a folder where source code resides. Try to avoid spaces in any folder name.
 
-- Change directory to the ANDES root directory, which contains ``setup.py``. In the prompt, run
+- Change directory to the ANDES root directory, which contains ``setup.py``. In the prompt, run the following
+ commands in sequence.
 
 ```bash
 conda install --file requirements.txt --yes
@@ -172,7 +173,8 @@ To show debugging outputs, use `-v 10`.
 Pass the path to the case file to `andes run` to perform power flow calculation. 
 It is recommended to change directory to the folder containing the test case before running.
 
-The Kundur's two-area system can be located under `cases/kundur` with the name`kundur_full.xlsx`.
+The Kundur's two-area system can be located under `andes/cases/kundur` with the name`kundur_full.xlsx`.
+Locate the folder in your system and use `cd` to [change directory](https://en.wikipedia.org/wiki/Cd_(command).
 To run power flow calculation, do
 
 ```bash
@@ -257,14 +259,36 @@ Without an editor name, the following default editor is used:
 ANDES recognizes a few input formats (MATPOWER, PSS/E and ANDES xlsx) and can convert input to the `xlsx` format.
 This function is useful when one wants to use models that are unique in ANDES.
  
-- `andes run <CaseName> --convert` performs the conversion to `xlsx`. 
-- `andes run <CaseName> --convert-all` performs the conversion and create empty sheets for all supported models.
-- `andes run <CaseName> --add-book
+- `andes run CASENAME.ext --convert` performs the conversion to `xlsx`, where `CASENAME.ext` is the full test
+ case name.
+- `andes run CASENAME.ext --convert-all` performs the conversion and create empty sheets for all supported models.
+- `andes run CASENAME.xlsx --add-book ADD_BOOK`, where `ADD_BOOK` is the workbook name (the sane as the model
+ name) to be added.
+ 
+For example, to convert `wscc9.raw` in the current folder to the ANDES xlsx format, run 
+ 
+```bash
+andes run wscc9.raw --convert
+```
+The command will write the output to `wscc9.xlsx` in the current directory.
+
+To add models `GENROU` and `TGOV1` to the xlsx file `wscc9.xlsx`, run
+
+```bash
+andes run wscc9.xlsx --add-book GENROU,TGOV1
+```
 
 ## Output Converter
 The output converter is used to convert `.npy` output to a comma-separated (csv) file.
  
-To convert, do `andes plot <OutputName.npy> -c `
+To convert, do `andes plot OUTPUTNAME.npy -c `, where `OUTPUTNAME.npy` is the file name of the simulation output.
+
+For example, to convert `kundur_full_out.npy` (in the current directory) to a csv file, run
+
+```bash
+andes plot kundur_full_out.npy -c
+```
+The output will be written to `kundur_full_out.csv` in the current directory.
 
 # Model Development
 The steps to develop new models are outlined. 

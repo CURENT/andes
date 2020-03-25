@@ -1,17 +1,19 @@
 """
 Base class for building ANDES models
 """
+import os
 import logging
 from collections import OrderedDict, defaultdict
 
 from andes.core.config import Config
 from andes.core.discrete import Discrete
+from andes.core.block import Block
+from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.block import Block
 from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
-from andes.core.triplet import JacTriplet
 
+from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
 from andes.utils.tab import Tab
 
@@ -701,6 +703,15 @@ class Model(object):
 
         kwargs = self.get_inputs(refresh=True)
         self.s_numeric(**kwargs)
+
+    def generate_pycode_file(self):
+        """
+        Create output source code file for generated code
+        """
+        models_dir = os.path.join(get_pkl_path(), 'models')
+        os.makedirs(models_dir, exist_ok=True)
+        file = os.path.join(models_dir, self.class_name.lower() + '.py')
+        self.code_file = open(file, 'w')
 
     def generate_initializers(self):
         """

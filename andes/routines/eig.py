@@ -64,11 +64,12 @@ class EIG(BaseRoutine):
         None
         """
         self.eigs = np.linalg.eigvals(self.As)
-        # TODO: use scipy.sparse.linalg.eigs(self.As)
+        # TODO: use
+        # scipy.sparse.linalg.eigs(self.As)
 
         return self.eigs
 
-    def calc_part_factor(self):
+    def calc_part_factor(self, As=None):
         """
         Compute participation factor of states in eigenvalues
 
@@ -76,8 +77,9 @@ class EIG(BaseRoutine):
         -------
 
         """
-        mu, N = np.linalg.eig(self.As)
-        # TODO: use scipy.sparse.linalg.eigs(self.As)
+        if As is None:
+            As = self.As
+        mu, N = np.linalg.eig(As)
 
         N = matrix(N)
         n = len(mu)
@@ -141,12 +143,14 @@ class EIG(BaseRoutine):
 
         return ret
 
-    def plot(self, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
+    def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
              linewidth=0.5, dpi=150):
         mpl.rc('font', family='Times New Roman', size=12)
 
-        mu_real = self.mu.real()
-        mu_imag = self.mu.imag()
+        if mu is None:
+            mu = self.mu
+        mu_real = mu.real()
+        mu_imag = mu.imag()
         p_mu_real, p_mu_imag = list(), list()
         z_mu_real, z_mu_imag = list(), list()
         n_mu_real, n_mu_imag = list(), list()
@@ -171,7 +175,8 @@ class EIG(BaseRoutine):
                 'System is small-signal stable in the initial neighbourhood.')
 
         mpl.rc('text', usetex=True)
-        fig, ax = plt.subplots(dpi=dpi)
+        if fig is None or ax is None:
+            fig, ax = plt.subplots(dpi=dpi)
         ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
         ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
         ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
@@ -190,8 +195,7 @@ class EIG(BaseRoutine):
         ax.set_xlim(left=left, right=right)
         ax.set_ylim(ymin, ymax)
 
-        plt.show()
-
+        # plt.show()
         return fig, ax
 
     def export_state_matrix(self):

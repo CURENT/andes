@@ -56,12 +56,12 @@ class PQ(PQData, Model):
                            'tds': True,
                            })
         self.config.add(OrderedDict((('pq2z', 1),
-                                     ('p2p', 0),
-                                     ('p2i', 0),  # not in use
-                                     ('p2z', 1),
-                                     ('q2q', 0),
-                                     ('q2i', 0),  # not in use
-                                     ('q2z', 1),
+                                     ('p2p', 0.0),
+                                     ('p2i', 0.0),  # not in use
+                                     ('p2z', 1.0),
+                                     ('q2q', 0.0),
+                                     ('q2i', 0.0),  # not in use
+                                     ('q2z', 1.0),
                                      )))
 
         self.a = ExtAlgeb(model='Bus',
