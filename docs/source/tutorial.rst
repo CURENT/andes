@@ -123,12 +123,14 @@ Available routine names include ``pflow, tds, eig``.
 `pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
 `pflow` is default even if ``-r`` is not given.
 
-For example, to run time-domain simulation for ``kundur_full.xlsx`` in the current
-directory, run
+For example, to run time-domain simulation for ``kundur_full.xlsx`` in the *current directory*, run
 
 .. code:: bash
 
     andes run kundur_full.xlsx -r tds
+
+The file is located at ``andes/cases/kundur/kundur_full.xlsx`` relative to the source code root folder.
+Use ``cd`` to change directory to that folder on your machine.
 
 Two output files, ``kundur_full_out.lst`` and ``kundur_full_out.npy`` will be created for variable names
 and values, respectively.
@@ -395,18 +397,18 @@ Import
 Like other Python libraries, ANDES can be imported into an interactive Python environment.
 
     >>> import andes
-    >>> andes.main.config_logger(log_file=None)
+    >>> andes.config_logger()
 
 The ``config_logger`` is needed to print logging information in the current session.
 Otherwise, information messages will be silenced, and only warnings and error will be printed.
 
 To enable debug messages, use
 
-    >>> andes.main.config_logger(stream_level=10, log_file=None)
+    >>> andes.config_logger(stream_level=10)
 
 If you have not run ``andes prepare``, use the command once to generate code
 
-    >>> andes.main.prepare()
+    >>> andes.prepare()
 
 
 Create Test System
@@ -415,7 +417,7 @@ Before running studies, a "System" object needs to be create to hold the system 
 The System object can be created by passing the path to the case file the entrypoint function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
 
-    >>> ss = andes.main.run('kundur_full.xlsx')
+    >>> ss = andes.run('kundur_full.xlsx')
 
 This function will parse the input file, run the power flow, and return the system as an object.
 Outputs will look like ::
@@ -473,16 +475,16 @@ For example, to run the time-domain simulation for ``ss``, use ::
 Plotting TDS Results
 --------------------
 TDS comes with a plotting utility for interactive usage.
-After running the simulation, a ``Plotter`` attributed will be created for ``TDS``.
+After running the simulation, a ``plotter`` attributed will be created for ``TDS``.
 To use the plotter, provide the attribute instance of the variable to plot.
 For example, to plot all the generator speed, use ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega)
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega)
 
 Optional indices is accepted to choose the specific elements to plot.
 It can be passed as a tuple to the ``a`` argument ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ))
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ))
 
 In the above example, the speed of the "zero-th" generator will be plotted.
 
@@ -492,7 +494,7 @@ A lambda function can be passed to argument ``ycalc`` to scale the values.
 This is useful to convert a per-unit variable to nominal.
 For example, to plot generator speed in Hertz, use ::
 
-    >>> ss.TDS.Plotter.plot(ss.GENROU.omega, a=(0, ),
+    >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ),
                             ycalc=lambda x: 60*x,
                             )
 
@@ -510,16 +512,18 @@ Each ANDES models offers pretty print of LaTeX-formatted equations in the jupyte
 
 To use this feature, symbolic equations need to be generated in the current session using ::
 
-    import dill
-    dill.settings['recurse'] = True
-
     import andes
-    ss = andes.system.System()
+    ss = andes.System()
     ss.prepare()
 
 This process may take several seconds to complete. Once done, equations can be viewed by accessing
 ``ss.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationName>`` is the
 equation name.
+
+.. Note ::
+
+    Pretty print only works for the particular System instance whose ``prepare()`` method is called.
+    In the above example, pretty print only works for ``ss`` after calling ``prepare()``.
 
 Supported equation names include the following:
 

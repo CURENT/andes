@@ -121,8 +121,11 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    config_logger(log_path=get_log_dir(), file=True, stream=True,
-                  stream_level=args.verbose)
+    config_logger(stream=True,
+                  stream_level=args.verbose,
+                  file=True,
+                  log_path=get_log_dir(),
+                  )
     preamble()
     logger.debug(args)
 

@@ -97,11 +97,6 @@ Install dependencies with
 .. code:: bash
 
     conda install --file requirements.txt
-
-Install development dependencies if you want to build documentation with
-
-.. code:: bash
-
     conda install --file requirements-dev.txt
 
 Step 3: Install ANDES in the development mode using

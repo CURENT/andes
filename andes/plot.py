@@ -51,6 +51,8 @@ class TDSData(object):
         else:
             raise NotImplementedError(f'Unknown mode {self._mode}.')
 
+        self._latex_warn = True
+
     def _process_names(self):
         self.file_name, _ = os.path.splitext(self.file_name_full)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
@@ -416,6 +418,13 @@ class TDSData(object):
         mpl.rc('font', family='Arial', size=12)
 
         using_latex = set_latex(latex)
+
+        if using_latex and self._latex_warn:
+            logger.info('Using LaTeX for rendering.')
+            logger.info('If the rendering takes too long or an error occurs:')
+            logger.info('a) If you are using `andes plot`, disable with optino "-d",')
+            logger.info('b) If you are using `plot()`, set "latex=False".')
+            self._latex_warn = False
 
         # set default x min based on simulation time
         if not left:

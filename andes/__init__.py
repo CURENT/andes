@@ -3,7 +3,7 @@ __version__ = get_versions()['version']
 del get_versions
 
 from andes import io  # NOQA
-from andes.main import run, load  # NOQA
+from andes.main import config_logger, run, load, prepare  # NOQA
 from andes import system  # NOQA
 from andes.system import System  # NOQA
 
