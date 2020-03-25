@@ -1,10 +1,9 @@
 name: andes_binder
 channels:
-  - http://conda.anaconda.org/gurobi
   - conda-forge
   - defaults
 dependencies:
-  - andes=0.8.2
+  - andes
   - ca-certificates=2019.11.28
   - certifi=2019.11.28
   - coloredlogs=14.0
@@ -23,7 +22,7 @@ dependencies:
   - libcblas=3.8.0
   - libcxx=9.0.1
   - libffi=3.2.1
-  - libgfortran=4.0.0
+  - libgfortran
   - liblapack=3.8.0
   - libopenblas=0.3.9
   - libpng=1.6.37
