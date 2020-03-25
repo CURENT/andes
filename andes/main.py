@@ -49,7 +49,8 @@ def config_logger(stream=True,
         get_log_dir() in utils.misc.
     stream_level : {10, 20, 30, 40, 50}, optional
         `StreamHandler` verbosity level.
-
+    file_level : {10, 20, 30, 40, 50}, optional
+        `FileHandler` verbosity level.
     Returns
     -------
     None
