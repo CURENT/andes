@@ -545,7 +545,7 @@ The most commonly used ones are highlighted in the following.
 
 # Who is Using ANDES?
 Please let us know if you are using ANDES for research or projects. 
-We kindly request you to cite our paper if you find ANDES useful.
+We kindly request you to cite our [paper](arxiv paper) if you find ANDES useful.
 
 ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/nsf.jpg)
 ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
