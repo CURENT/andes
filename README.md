@@ -545,12 +545,12 @@ The most commonly used ones are highlighted in the following.
 
 # Who is Using ANDES?
 Please let us know if you are using ANDES for research or projects. 
-We kindly request you to cite our [paper](arxiv paper) if you find ANDES useful.
+We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/nsf.jpg)
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
+![Natinoal Science Foundation](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/nsf.jpg)
+![US Department of Energy](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
+![CURENT ERC](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
+![Lawrence Livermore National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
 
 # Contributors
 
