@@ -90,9 +90,11 @@ class PQ(PQData, Model):
 
         self.Req = ConstService(info='Equivalent resistance',
                                 v_str='p0 / v0**2',
+                                tex_name='R_{eq}'
                                 )
         self.Xeq = ConstService(info='Equivalent reactance',
                                 v_str='q0 / v0**2',
+                                tex_name='X_{eq}'
                                 )
 
         self.vcmp = Limiter(u=self.v,

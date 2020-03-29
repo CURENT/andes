@@ -723,8 +723,6 @@ class System(object):
         """
         Collect indices into `RefParam` for all models.
         """
-        # FIXME: too many safe-checking here. Even the model can be non-existent.
-
         for model in self.models.values():
             for ref in model.ref_params.values():
                 ref.v = [list() for _ in range(model.n)]
@@ -752,11 +750,12 @@ class System(object):
                         dest_model.ref_params[n].v[uid].append(model_idx)
 
     def _generate_pycode_file(self):
-        """Generate empty files for storing lambdified Python code (TODO)"""
+        """
+        Generate empty files for storing lambdified Python code (TODO)
+        """
         self._call_models_method('generate_pycode_file', self.models)
 
     def _generate_initializers(self):
-        # TODO: consider both JIT and non-JIT models
         self._call_models_method('generate_initializers', self.models)
 
     def _generate_symbols(self):
@@ -879,7 +878,9 @@ class System(object):
         self._call_models_method('e_clear', models)
 
     def remove_pycapsule(self):
-        """Remove PyCapsule objects in solvers"""
+        """
+        Remove PyCapsule objects in solvers.
+        """
         for r in self.routines.values():
             r.solver.remove_pycapsule()
 
@@ -961,8 +962,9 @@ class System(object):
             file already exists.
         """
         if file_path is None:
-            home_dir = os.path.expanduser('~')
-            file_path = os.path.join(home_dir, '.andes', 'andes.rc')
+            andes_path = os.path.join(os.path.expanduser('~'), '.andes')
+            os.makedirs(andes_path, exist_ok=True)
+            file_path = os.path.join(andes_path, 'andes.rc')
 
         elif os.path.isfile(file_path):
             choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
