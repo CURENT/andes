@@ -180,7 +180,7 @@ def dump(system, output_format):
     ret = writer.write(system, system.files.dump)
     _, s = elapsed(t)
     if ret:
-        logger.info(f'Converted file {system.files.dump} written in {s}.')
+        logger.info(f'Format conversion completed in {s}.')
         return True
     else:
         logger.error('Format conversion failed.')
