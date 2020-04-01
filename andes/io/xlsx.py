@@ -4,16 +4,15 @@ Excel reader and writer for ANDES power system parameters
 This module utilizes xlsxwriter and pandas.Frame. While I like the simplicity of the dome format, spreadsheet
 data is easier to read and edit.
 """
-import os
 import logging
 import warnings
+from andes.utils.paths import confirm_overwrite
 from andes.shared import pd
 
 logger = logging.getLogger(__name__)
 
 
 def testlines(fid):
-    # hard coded yet
     return True
 
 
@@ -39,14 +38,8 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
     bool
         True if file written; False otherwise
     """
-    if os.path.isfile(outfile):
-        if overwrite is None:
-            choice = input(f'xlsx file {outfile} already exist. Overwrite? [y/N]').lower()
-            if len(choice) == 0 or choice[0] != 'y':
-                logger.info('No ANDES xlsx file overwritten.')
-                return False
-        elif overwrite is False:
-            return False
+    if not confirm_overwrite(outfile):
+        return False
 
     writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
     writer = _write_system(system, writer, skip_empty)
@@ -109,7 +102,7 @@ def read(system, infile):
         df_models = pd.read_excel(infile, sheet_name=None, index_col=0)
 
     for name, df in df_models.items():
-        for row in df.to_dict(orient='record'):
+        for row in df.to_dict(orient='records'):
             system.add(name, row)
 
     return system

@@ -25,11 +25,11 @@ def create_parser():
              '40-ERROR or 50-CRITICAL. The default level is 20-INFO.',
         type=int, default=20, choices=(10, 20, 30, 40, 50))
 
-    sub_parsers = parser.add_subparsers(dest='command', help='[run]: run simulation routine; '
-                                                             '[plot]: plot simulation results; '
-                                                             '[doc]: quick documentation;'
-                                                             '[prepare]: run the symbolic-to-numeric preparation; '
-                                                             '[misc]: miscellaneous functions.'
+    sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
+                                                             '[plot] plot simulation results; '
+                                                             '[doc] quick documentation; '
+                                                             '[prepare] run the symbolic-to-numeric preparation; '
+                                                             '[misc] miscellaneous functions.'
                                         )
 
     run = sub_parsers.add_parser('run')

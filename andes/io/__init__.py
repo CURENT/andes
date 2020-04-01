@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 input_formats = {
     'xlsx': ('xlsx',),
+    'json': ('json',),
     'matpower': ('m', ),
     'psse': ('raw', 'dyr'),
 }
@@ -21,7 +22,21 @@ input_formats = {
 # Output formats is a dictionary of supported output formats and their extensions
 # The static data will be written by write() function and the addfile by writeadd()
 
-output_formats = ['']
+output_formats = {
+    'xlsx': ('xlsx',),
+    'json': ('json',),
+}
+
+
+def get_output_ext(out_format):
+    if (out_format is None) or (out_format is True):
+        logger.warning('Dump to XLSX format by default')
+        return 'xlsx'
+    if out_format in output_formats:
+        return output_formats[out_format][0]
+    else:
+        logger.error(f"Dump format <{out_format}> not supported.")
+        return ''
 
 
 def guess(system):
@@ -150,14 +165,19 @@ def dump(system, output_format):
     if system.files.no_output:
         return
 
-    if not isinstance(output_format, str):
+    if (output_format is None) or (output_format is True):
         output_format = 'xlsx'
 
-    outfile = system.files.dump
+    output_ext = get_output_ext(output_format)
+    if output_ext == '':
+        return
+
+    system.files.dump = os.path.join(system.files.output_path,
+                                     system.files.name + '.' + get_output_ext(output_ext))
     writer = importlib.import_module('.' + output_format, __name__)
 
     t, _ = elapsed()
-    ret = writer.write(system, outfile)
+    ret = writer.write(system, system.files.dump)
     _, s = elapsed(t)
     if ret:
         logger.info(f'Converted file {system.files.dump} written in {s}.')
