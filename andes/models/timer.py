@@ -41,7 +41,7 @@ class Toggler(TogglerData, Model):
 
 class Fault(ModelData, Model):
     """
-    Three-phase to ground fault
+    Three-phase to ground fault.
     """
     def __init__(self, system, config):
         ModelData.__init__(self)
@@ -49,18 +49,22 @@ class Fault(ModelData, Model):
                             info="linked bus idx",
                             mandatory=True,
                             )
-        self.tf = TimerParam(info='Fault start time for the bus',
+        self.tf = TimerParam(info='Bus fault start time',
+                             unit='second',
                              mandatory=True,
                              callback=self.apply_fault,
                              )
-        self.tc = TimerParam(info='Fault end time for the bus',
+        self.tc = TimerParam(info='Bus fault end time',
+                             unit='second',
                              callback=self.clear_fault,
                              )
         self.xf = NumParam(info='Fault to ground impedance',
+                           unit='p.u.(sys)',
                            default=1e-4,
                            tex_name='x_f',
                            )
         self.rf = NumParam(info='Fault to ground resistance',
+                           unit='p.u.(sys)',
                            default=0,
                            tex_name='x_f',
                            )
@@ -74,6 +78,8 @@ class Fault(ModelData, Model):
         self.bf = ConstService(tex_name='b_{f}',
                                v_str='im(1/(rf + 1j * xf))',
                                )
+
+        # uf: an internal flag of whether the fault is in action (1) or not
         self.uf = ConstService(tex_name='u_f',
                                v_str='0',
                                )
@@ -82,13 +88,17 @@ class Fault(ModelData, Model):
                           src='a',
                           indexer=self.bus,
                           tex_name=r'\theta',
+                          info='Bus voltage angle',
+                          unit='p.u.(kV)',
                           e_str='u * uf * (v ** 2 * gf)',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
-                          e_str='u * uf * (v ** 2 * bf)',
+                          unit='p.u.(kV)',
+                          info='Bus voltage magnitude',
+                          e_str='-u * uf * (v ** 2 * bf)',
                           )
         self._vstore = np.array([])
 

@@ -4,6 +4,12 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.8.4
+-------------------
+- Added support for JSON case files. Convert existing case file to JSON with ``--convert json``.
+- Various bug fixes: Fault power injection fix;
+
+
 v0.8.3 (2020-03-25)
 -------------------
 - Improved storage for Jacobian triplets (see ``andes.core.triplet.JacTriplet``).
