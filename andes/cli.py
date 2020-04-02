@@ -62,6 +62,8 @@ def create_parser():
     plot.add_argument('--ymax', type=float, help='y axis maximum value')
     plot.add_argument('--ymin', type=float, help='y axis minimum value')
     plot.add_argument('--find', type=str, help='find variable indices that matches the given pattern')
+    plot.add_argument('--xargs', type=str, help='find variable indices and return as a shell argument to be '
+                                                'used with "| xargs andes plot"')
     plot.add_argument('--exclude ', type=str, help='exclude pattern in find')
     plot.add_argument('-x', '--xlabel', type=str, help='manual x-axis text label')
     plot.add_argument('-y', '--ylabel', type=str, help='y-axis text label')
@@ -126,10 +128,12 @@ def main():
                   file=True,
                   log_path=get_log_dir(),
                   )
-    preamble()
     logger.debug(args)
 
     module = importlib.import_module('andes.main')
+
+    if args.command != 'plot':
+        preamble()
 
     if args.command is None:
         parser.parse_args(sys.argv.append('--help'))

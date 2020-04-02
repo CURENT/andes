@@ -102,7 +102,7 @@ class TDSData(object):
         self._uname = uname
         self.nvars = len(uname)
 
-    def find(self, query, exclude=None, formatted=False):
+    def find(self, query, exclude=None, formatted=False, idx_only=False):
         """
         Return variable names and indices matching `query`
 
@@ -114,6 +114,8 @@ class TDSData(object):
             A string pattern to be excluded
         formatted : bool, optional
             True to return formatted names, False otherwise
+        idx_only : bool, optional
+            True if only return indices
 
         Returns
         -------
@@ -134,7 +136,10 @@ class TDSData(object):
                 found_idx.append(idx)
                 found_names.append(name)
 
-        return found_idx, found_names
+        if idx_only:
+            return found_idx
+        else:
+            return found_idx, found_names
 
     def load_npy_or_csv(self, delimiter=','):
         """
@@ -620,7 +625,7 @@ def eig_plot(name, args):
         pass
 
 
-def tdsplot(filename, y, x=(0,), tocsv=False, find=None, exclude=None, **kwargs):
+def tdsplot(filename, y, x=(0,), tocsv=False, find=None, xargs=None, exclude=None, **kwargs):
     """
     TDS plot main function based on the new TDSData class
 
@@ -632,6 +637,14 @@ def tdsplot(filename, y, x=(0,), tocsv=False, find=None, exclude=None, **kwargs)
         The index for the x-axis variable. x=0 by default for time
     y : list or int
         The indices for the y-axis variable
+    tocsv : bool
+        True if need to export to a csv file
+    find : str, optional
+        if not none, specify the variable name to find
+    xargs : str, optional
+        similar to find, but return the result indices with file name, x idx name for xargs
+    exclude : str, optional
+        variable name pattern to exclude
 
     Returns
     -------
@@ -645,7 +658,13 @@ def tdsplot(filename, y, x=(0,), tocsv=False, find=None, exclude=None, **kwargs)
             tds_data.export_csv()
             return
         if find is not None:
-            print(tds_data.find(query=find, exclude=exclude))
+            out = tds_data.find(query=find, exclude=exclude)
+            print(out)
+            return
+        if xargs is not None:
+            out = tds_data.find(query=xargs, exclude=exclude, idx_only=True)
+            out = [str(i) for i in out]
+            print(filename[0] + ' 0 ' + ' '.join(out))
             return
         if len(y) == 0:
             logger.error('Must specify Y indices to plot.')

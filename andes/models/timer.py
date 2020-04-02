@@ -103,7 +103,9 @@ class Fault(ModelData, Model):
         self._vstore = np.array([])
 
     def apply_fault(self, is_time: np.ndarray):
-        """Apply fault and store pre-fault bus voltages to ``self._vstore``."""
+        """
+        Apply fault and store pre-fault bus voltages to ``self._vstore``.
+        """
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 1
@@ -113,7 +115,9 @@ class Fault(ModelData, Model):
         return False
 
     def clear_fault(self, is_time: np.ndarray):
-        """Clear fault and restore pre-fault bus voltages."""
+        """
+        Clear fault and restore pre-fault bus voltages.
+        """
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
