@@ -97,3 +97,9 @@ class TestNPCCRAW(unittest.TestCase):
         self.ss = andes.run(get_case('npcc/npcc48.raw'),
                             convert=True)
         os.remove(self.ss.files.dump)
+
+    def test_npcc_raw2json_convert(self):
+        self.ss = andes.run(get_case('npcc/npcc48.raw'),
+                            convert='json')
+        self.ss2 = andes.run('npcc48.json')
+        os.remove(self.ss.files.dump)

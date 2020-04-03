@@ -4,6 +4,9 @@ from collections import OrderedDict
 
 
 class BaseRoutine(object):
+    """
+    Base routine class to provide instances for system, config, and solver.
+    """
 
     def __init__(self, system=None, config=None):
         self.system = system
@@ -12,7 +15,8 @@ class BaseRoutine(object):
         if config is not None:
             self.config.load(config)
 
-        self.config.add(OrderedDict((('sparselib', 'umfpack'), )))
+        self.config.add(OrderedDict((('sparselib', 'klu'),
+                                     )))
 
         self.solver = Solver(sparselib=self.config.sparselib)
 

@@ -1632,7 +1632,7 @@ class Model(object):
         out = ''
         if export == 'rest':
             max_width = 0
-            model_header = '--------------------------------------------------------------------------------\n'
+            model_header = '-' * 80 + '\n'
             out += f'.. _{self.class_name}:\n\n'
         else:
             model_header = ''
@@ -1644,7 +1644,7 @@ class Model(object):
             out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
 
         if self.__doc__ is not None:
-            out += self.__doc__
+            out += self.__doc__ + '\n'  # this fixes the indentation for the next line
 
         # add tables
         out += self._param_doc(max_width=max_width, export=export) + \

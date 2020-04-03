@@ -99,7 +99,7 @@ class TDS(BaseRoutine):
         """
         out = list()
         out.append('-> Time Domain Simulation Summary:')
-        out.append(f'Sparse Solver: {self.config.sparselib.upper()}')
+        out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')
         if self.config.fixt == 1:
             out.append(f'Fixed step size: h={self.config.tstep:.4g}s')

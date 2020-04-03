@@ -5,6 +5,9 @@ import os
 import platform
 import tempfile
 import pathlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DisplayablePath(object):
@@ -187,3 +190,16 @@ def get_log_dir():
     if not os.path.exists(path):
         os.makedirs(path)
     return path
+
+
+def confirm_overwrite(outfile, overwrite=None):
+    if os.path.isfile(outfile):
+        if overwrite is None:
+            choice = input(f'File <{outfile}> already exist. Overwrite? [y/N]').lower()
+            if len(choice) == 0 or choice[0] != 'y':
+                logger.warning(f'File <{outfile}> not overwritten.')
+                return False
+        elif overwrite is False:
+            return False
+
+    return True
