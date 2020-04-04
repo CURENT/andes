@@ -3,7 +3,7 @@ Synchronous generator classes
 """
 import logging
 from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam, DataParam
+from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
@@ -165,6 +165,11 @@ class GENBase(Model):
                         tex_name=r'v_f'
                         )
 
+        self.subidx = ExtParam(model='StaticGen',
+                               src='subidx',
+                               indexer=self.gen,
+                               tex_name='idx_{sub}',
+                               )
         # ----------service consts for initialization----------
         self.p0 = ExtService(model='StaticGen',
                              src='p',
@@ -176,11 +181,6 @@ class GENBase(Model):
                              indexer=self.gen,
                              tex_name='Q_0',
                              )
-        self.subidx = ExtService(model='StaticGen',
-                                 src='subidx',
-                                 indexer=self.gen,
-                                 tex_name='idx_{sub}',
-                                 )
 
     def v_numeric(self, **kwargs):
         # disable corresponding `StaticGen`

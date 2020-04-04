@@ -4,6 +4,7 @@ Base class for building ANDES models
 import os
 import logging
 from collections import OrderedDict, defaultdict
+from typing import Iterable
 
 from andes.core.config import Config
 from andes.core.discrete import Discrete
@@ -256,6 +257,53 @@ class ModelData(object):
                 out[name] = instance
 
         return out
+
+    def find_idx(self, keys, values):
+        """
+        Find `idx` of devices whose values match the given pattern.
+
+        Parameters
+        ----------
+        keys : str, array-like
+            A string or an array-like of strings containing the names of parameters for the search criteria
+        values : array, array of arrays
+            Values for the corresponding key to search for. If keys is a str, values should be an array of
+            elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
+
+        Returns
+        -------
+        list
+            indices of devices
+        """
+        if isinstance(keys, str):
+            keys = (keys, )
+            if not isinstance(values, (int, float, str)) and not isinstance(values, Iterable):
+                raise ValueError("value must be a string, scalar or an iterable")
+            elif len(values) > 0 and not isinstance(values[0], Iterable):
+                values = (values, )
+        elif isinstance(keys, Iterable):
+            if not isinstance(values, Iterable):
+                raise ValueError("value must be an iterable")
+            elif len(values) > 0 and not isinstance(values[0], Iterable):
+                raise ValueError("if keys is an iterable, values must be an iterable of iterables")
+            if len(keys) != len(values):
+                raise ValueError("keys and values must have the same length")
+
+        v_attrs = [self.__dict__[key].v for key in keys]
+
+        idxes = []
+        for v_search in zip(*values):
+            v_idx = None
+            for pos, v_attr in enumerate(zip(*v_attrs)):
+                if all([i == j for i, j in zip(v_search, v_attr)]):
+                    v_idx = self.idx[pos]
+                    break
+            if v_idx is None:
+                raise IndexError(f'{keys} = {v_search} not found in {self.__class__.__name__}')
+
+            idxes.append(v_idx)
+
+        return idxes
 
 
 class ModelCall(object):
