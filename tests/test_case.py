@@ -53,7 +53,8 @@ class Test5Bus(unittest.TestCase):
 
     def test_tds_init(self):
         self.ss.PFlow.run()
-        self.ss.TDS.run([0, 20])
+        self.ss.TDS.config.tf = 10
+        self.ss.TDS.run()
 
     def test_alter_param(self):
         self.ss.PV.alter('v0', 2, 0.98)
@@ -69,7 +70,8 @@ class TestKundur2Area(unittest.TestCase):
         self.ss = andes.run(get_case('kundur/kundur_full.xlsx'))
 
     def test_tds_run(self):
-        self.ss.TDS.run([0, 20])
+        self.ss.TDS.config.tf = 10
+        self.ss.TDS.run()
         andes.main.misc(clean=True)
 
     def test_eig_run(self):
@@ -91,6 +93,7 @@ class TestNPCCRAW(unittest.TestCase):
                             routine='TDS',
                             no_output=True,
                             profile=True,
+                            tf=10,
                             )
 
     def test_npcc_raw_convert(self):
