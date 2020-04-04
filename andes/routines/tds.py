@@ -21,10 +21,10 @@ class TDS(BaseRoutine):
         self.config.add(OrderedDict((('tol', 1e-4),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
-                                     ('fixt', 1),
-                                     ('tstep', 1/30),  # recommended step size
-                                     ('max_iter', 15),
+                                     ('fixt', 1),       # use fixed time step
                                      ('shrinkt', 1),    # shrink step size if `max_iter` is reached
+                                     ('tstep', 1/30),   # fixed step size / initial step size
+                                     ('max_iter', 15),
                                      )))
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:

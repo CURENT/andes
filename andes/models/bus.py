@@ -64,7 +64,13 @@ class BusData(ModelData):
 
 class Bus(Model, BusData):
     """
-    AC Bus model developed using the symbolic framework
+    AC Bus model.
+
+    Notes
+    -----
+    Bus implements two variables: voltage phase angle and voltage magnitude.
+    Corresponding power balance equation have the form of ``load - injection = 0``.
+    Namely, load is positively summed, while injections are negative.
     """
 
     def __init__(self, system=None, config=None):

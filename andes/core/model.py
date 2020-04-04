@@ -1644,7 +1644,8 @@ class Model(object):
             out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
 
         if self.__doc__ is not None:
-            out += self.__doc__ + '\n'  # this fixes the indentation for the next line
+            out += self.__doc__
+            out += '\n'  # this fixes the indentation for the next line
 
         # add tables
         out += self._param_doc(max_width=max_width, export=export) + \

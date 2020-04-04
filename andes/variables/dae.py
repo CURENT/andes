@@ -6,6 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class DAETimeSeries(object):
+    """
+    DAE time series data
+    """
     def __init__(self, dae=None):
         self.dae = dae
         self._data = OrderedDict()
@@ -17,21 +20,38 @@ class DAETimeSeries(object):
         self.df = None
         self.df_z = None
 
+        self._need_unpack = True
+
+    @property
+    def x(self):
+        return self.xy[:, 0:self.dae.n+1]
+
+    @property
+    def y(self):
+        indices = [0] + list(range(self.dae.n + 1, self.dae.n + self.dae.m + 1))
+        return self.xy[:, indices]
+
     @property
     def txyz(self):
         """
         Return the values of [t, x, y, z] in an array.
         """
+        self.unpack()
+        if len(self._z):
+            return np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
+        else:
+            return np.hstack((self.t.reshape((-1, 1)), self.xy))
+
+    def unpack(self):
+        """
+        Unpack data and make DataFrames and arrays.
+        """
         self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
         self.t = self.df.index.to_numpy()
         self.xy = self.df.to_numpy()
 
-        if len(self._z):
-            self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
-            self.z = self.df_z.to_numpy()
-            return np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
-        else:
-            return np.hstack((self.t.reshape((-1, 1)), self.xy))
+        self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
+        self.z = self.df_z.to_numpy()
 
     def store_txyz(self, t, xy, z=None):
         """

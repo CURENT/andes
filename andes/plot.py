@@ -625,7 +625,8 @@ def eig_plot(name, args):
         pass
 
 
-def tdsplot(filename, y, x=(0,), tocsv=False, find=None, xargs=None, exclude=None, **kwargs):
+def tdsplot(filename, y, x=(0,), tocsv=False,
+            find=None, xargs=None, exclude=None, **kwargs):
     """
     TDS plot main function based on the new TDSData class
 
