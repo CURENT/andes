@@ -20,9 +20,8 @@ def create_parser():
 
     parser.add_argument(
         '-v', '--verbose',
-        help='Program logging level. '
-             'Available levels are 10-DEBUG, 20-INFO, 30-WARNING, '
-             '40-ERROR or 50-CRITICAL. The default level is 20-INFO.',
+        help='Program logging level in 10-DEBUG, 20-INFO, 30-WARNING, '
+             '40-ERROR or 50-CRITICAL.',
         type=int, default=20, choices=(10, 20, 30, 40, 50))
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '

@@ -103,3 +103,4 @@ class TestNPCCRAW(unittest.TestCase):
                             convert='json')
         self.ss2 = andes.run('npcc48.json')
         os.remove(self.ss.files.dump)
+        andes.main.misc(clean=True)
