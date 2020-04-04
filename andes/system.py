@@ -276,9 +276,7 @@ class System(object):
             # initialize variables second
             mdl.initialize()
 
-            # Might need to relay data back and forth ????
-            # send data back and forth
-            # TODO: re-think over the adder-setter approach
+            # TODO: re-think over the adder-setter approach and reduce data copy
             self.vars_to_dae()
             self.vars_to_models()
 

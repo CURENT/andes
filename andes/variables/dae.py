@@ -1,5 +1,6 @@
 import logging
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
+from andes.core.triplet import JacTriplet
 from andes.shared import pd, np, spmatrix, jac_names
 
 logger = logging.getLogger(__name__)
@@ -11,15 +12,20 @@ class DAETimeSeries(object):
     """
     def __init__(self, dae=None):
         self.dae = dae
+
+        # internal dict storage
         self._data = OrderedDict()
         self._z = OrderedDict()
 
         self.t = np.array([])
         self.xy = np.array([])
         self.z = np.array([])
+
+        # data frame members
         self.df = None
         self.df_z = None
 
+        # flags
         self._need_unpack = True
 
     @property
@@ -84,21 +90,15 @@ class DAE(object):
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])
 
-        self.fx = None
-        self.fy = None
-        self.gx = None
-        self.gy = None
-        self.tx = None
-        self.rx = None
+        self.fx, self.fy = None, None
+        self.gx, self.gy = None, None
+        self.rx, self.tx = None, None
 
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []
 
-        # ----- indices of sparse matrices -----
-        self.ijac = defaultdict(list)
-        self.jjac = defaultdict(list)
-        self.vjac = defaultdict(list)
+        self.triplets = JacTriplet()
 
     def clear_ts(self):
         self.ts = DAETimeSeries(self)
@@ -130,10 +130,10 @@ class DAE(object):
         self.z = np.zeros(self.n)
 
     def clear_ijv(self):
-        for jname in jac_names:
-            self.ijac[jname] = list()
-            self.jjac[jname] = list()
-            self.vjac[jname] = list()
+        """
+        Clear stored triplets.
+        """
+        self.triplets.clear_ijv()
 
     def restore_sparse(self):
         """
@@ -193,9 +193,9 @@ class DAE(object):
         val : np.ndarray
             all values
         """
-        self.ijac[name] = row
-        self.jjac[name] = col
-        self.vjac[name] = val
+        self.triplets.ijac[name] = row
+        self.triplets.jjac[name] = col
+        self.triplets.vjac[name] = val
 
     def build_pattern(self, name):
         """
@@ -208,7 +208,9 @@ class DAE(object):
         name : name
             jac name
         """
-        self.__dict__[name] = spmatrix(self.vjac[name], self.ijac[name], self.jjac[name],
+        self.__dict__[name] = spmatrix(self.triplets.vjac[name],
+                                       self.triplets.ijac[name],
+                                       self.triplets.jjac[name],
                                        self.get_size(name), 'd')
 
     def _compare_pattern(self, name):
@@ -220,7 +222,9 @@ class DAE(object):
 
             self.dae._compare_pattern(j_name)
         """
-        self.__dict__[f'{name}_tpl'] = spmatrix(self.vjac[name], self.ijac[name], self.jjac[name],
+        self.__dict__[f'{name}_tpl'] = spmatrix(self.triplets.vjac[name],
+                                                self.triplets.ijac[name],
+                                                self.triplets.jjac[name],
                                                 self.get_size(name), 'd')
         m_before = self.__dict__[f'{name}_tpl']
         m_after = self.__dict__[name]
