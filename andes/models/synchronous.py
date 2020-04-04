@@ -3,7 +3,7 @@ Synchronous generator classes
 """
 import logging
 from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam
+from andes.core.param import IdxParam, NumParam, DataParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
@@ -103,7 +103,7 @@ class GENBase(Model):
                            unit='pu (Hz)',
                            v_str='u',
                            tex_name=r'\omega',
-                           e_str='(u / M ) * (tm - te - D * (omega - 1))')
+                           e_str='(u / M) * (tm - te - D * (omega - 1))')
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus',
@@ -176,6 +176,11 @@ class GENBase(Model):
                              indexer=self.gen,
                              tex_name='Q_0',
                              )
+        self.subidx = ExtService(model='StaticGen',
+                                 src='subidx',
+                                 indexer=self.gen,
+                                 tex_name='idx_{sub}',
+                                 )
 
     def v_numeric(self, **kwargs):
         # disable corresponding `StaticGen`

@@ -164,18 +164,20 @@ def read(system, file):
         #  0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
         #  I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
         bus = data[0]
+        subidx = data[1]
         vn = system.Bus.get(src='Vn', idx=bus, attr='v')
-        gen_mva = data[8]  # unused yet
+        gen_mva = data[8]
         gen_idx += 1
         status = data[14]
-        param = {'Sn': gen_mva, 'Vn': vn, 'u': status, 'idx': gen_idx, 'bus': bus,
-                 'p0': status * data[2] / mva,
-                 'q0': status * data[3] / mva,
+        param = {'Sn': gen_mva, 'Vn': vn,
+                 'u': status, 'idx': gen_idx, 'bus': bus, 'subidx': subidx,
+                 'p0': data[2] / mva,
+                 'q0': data[3] / mva,
                  'pmax': data[16] / mva, 'pmin': data[17] / mva,
                  'qmax': data[4] / mva, 'qmin': data[5] / mva,
                  'v0': data[6],
-                 'ra': data[9],  # ra  armature resistance
-                 'xs': data[10],  # xs synchronous reactance
+                 'ra': data[9],   # ra - armature resistance
+                 'xs': data[10],  # xs - synchronous reactance
                  }
         if data[0] in sw.keys():
             param.update({'a0': sw[data[0]]})

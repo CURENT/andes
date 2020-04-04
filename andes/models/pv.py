@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 from andes.core.model import Model, ModelData
-from andes.core.param import NumParam, IdxParam
+from andes.core.param import NumParam, IdxParam, DataParam
 from andes.core.var import Algeb, ExtAlgeb
 from andes.core.discrete import SortedLimiter
 
@@ -13,9 +13,9 @@ class PVData(ModelData):
         super().__init__()
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
-
-        self.bus = IdxParam(model='Bus', info="the idx of the installed bus")
-        self.busr = IdxParam(model='Bus', info="the idx of remotely controlled bus")
+        self.subidx = DataParam(info='index for generators on the same bus', export=False, tex_name='idx_{sub}')
+        self.bus = IdxParam(model='Bus', info="idx of the installed bus")
+        self.busr = IdxParam(model='Bus', info="bus idx for remote voltage control")
         self.p0 = NumParam(default=0.0, info="active power set point in system base", tex_name=r'p_0', unit='p.u.')
         self.q0 = NumParam(default=0.0, info="reactive power set point in system base", tex_name=r'q_0',
                            unit='p.u.')
@@ -44,7 +44,7 @@ class SlackData(PVData):
 
 class PVModel(Model):
     """
-    PV generator model (power flow) with q limit and PV-PQ conversion
+    PV generator model (power flow) with q limit and PV-PQ conversion.
     """
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
@@ -60,6 +60,7 @@ class PVModel(Model):
 
         self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=1e-6)
         self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=1e-6)
+
 
         # TODO: implement switching starting from the second iteration
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
