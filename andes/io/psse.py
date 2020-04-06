@@ -283,8 +283,6 @@ def read_add(system, file):
     """
     Read addition PSS/E dyr file.
 
-    TODO: implement this function
-
     Parameters
     ----------
     system
@@ -301,70 +299,67 @@ def read_add(system, file):
         input_list = [line.strip() for line in f]
 
     # concatenate multi-line device data
-    all_dict = defaultdict(list)
-    data_list = list()
+    input_concat_dict = defaultdict(list)
+    multi_line = list()
     for i, line in enumerate(input_list):
         if line == '':
             continue
         if '/' not in line:
-            data_list.append(line)
+            multi_line.append(line)
         else:
-            data_list.append(line.split('/')[0])
-            data_str = ' '.join(data_list)
-            data_split = data_str.split("'")
+            multi_line.append(line.split('/')[0])
+            single_line = ' '.join(multi_line)
+            single_list = single_line.split("'")
 
-            model_name = data_split[1].strip()
-            all_dict[model_name].append(data_split[0] + data_split[2])
-            data_list = list()
+            psse_model = single_list[1].strip()
+            input_concat_dict[psse_model].append(single_list[0] + single_list[2])
+            multi_line = list()
 
     # construct pandas dataframe for all models
-    dyr_data = dict()
-    for psse_model, dev_params in all_dict.items():
-        dev_params_num = [([to_number(single) for single in row.split()]) for row in dev_params]
-        dyr_data[psse_model] = pd.DataFrame(dev_params_num)
+    dyr_dict = dict()
+    for psse_model, all_rows in input_concat_dict.items():
+        dev_params_num = [([to_number(cell) for cell in row.split()]) for row in all_rows]
+        dyr_dict[psse_model] = pd.DataFrame(dev_params_num)
 
-    # set header for each
+    # read yaml and set header for each pss/e model
     dirname = os.path.dirname(__file__)
     with open('{}/psse-dyr.yaml'.format(dirname), 'r') as f:
-        dyr_dict = yaml.full_load(f)
+        dyr_yaml = yaml.full_load(f)
 
-    for psse_model in dyr_data:
-        if psse_model in dyr_dict:
-            if 'inputs' in dyr_dict[psse_model]:
-                dyr_data[psse_model].columns = dyr_dict[psse_model]['inputs']
+    for psse_model in dyr_dict:
+        if psse_model in dyr_yaml:
+            if 'inputs' in dyr_yaml[psse_model]:
+                dyr_dict[psse_model].columns = dyr_yaml[psse_model]['inputs']
 
-    system.df_dict = dyr_data
-    system.dyr_format = dyr_dict
-
-    # Load data into models
-    for psse_model in dyr_data:
-        if psse_model not in dyr_dict:
+    # load data into models
+    for psse_model in dyr_dict:
+        if psse_model not in dyr_yaml:
             logger.error(f"PSS/E Model <{psse_model}> is not supported.")
             continue
 
-        dest = dyr_dict[psse_model]['destination']
+        dest = dyr_yaml[psse_model]['destination']
         find = {}
 
-        if 'find' in dyr_dict[psse_model]:
-            for name, source in dyr_dict[psse_model]['find'].items():
+        if 'find' in dyr_yaml[psse_model]:
+            for name, source in dyr_yaml[psse_model]['find'].items():
                 for model, conditions in source.items():
                     cond_names = conditions.keys()
-                    cond_values = [dyr_data[psse_model][col] for col in conditions.values()]
+                    cond_values = [dyr_dict[psse_model][col] for col in conditions.values()]
                     find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
 
-        if 'get' in dyr_dict[psse_model]:
-            for name, source in dyr_dict[psse_model]['get'].items():
+        if 'get' in dyr_yaml[psse_model]:
+            for name, source in dyr_yaml[psse_model]['get'].items():
                 for model, conditions in source.items():
                     idx_name = conditions['idx']
-                    if idx_name in dyr_data[psse_model]:
-                        conditions['idx'] = dyr_data[psse_model][idx_name]
+                    if idx_name in dyr_dict[psse_model]:
+                        conditions['idx'] = dyr_dict[psse_model][idx_name]
                     else:
                         conditions['idx'] = find[idx_name]
                     find[name] = system.__dict__[model].get(**conditions)
 
-        if 'outputs' in dyr_dict[psse_model]:
-            output_keys = list(dyr_dict[psse_model]['outputs'].keys())
-            output_exprs = list(dyr_dict[psse_model]['outputs'].values())
+        if 'outputs' in dyr_yaml[psse_model]:
+            output_keys = list(dyr_yaml[psse_model]['outputs'].keys())
+            output_exprs = list(dyr_yaml[psse_model]['outputs'].values())
             out_dict = {}
 
             for idx in range(len(output_exprs)):
@@ -377,10 +372,10 @@ def read_add(system, file):
                     func = eval(func)
                     args = args.split(',')
                     argv = [pairs.split('.') for pairs in args]
-                    argv = [dyr_data[model][param] for model, param in argv]
+                    argv = [dyr_dict[model][param] for model, param in argv]
                     out_dict[output_keys[idx]] = func(*argv)
                 else:
-                    out_dict[output_keys[idx]] = dyr_data[psse_model][expr]
+                    out_dict[output_keys[idx]] = dyr_dict[psse_model][expr]
 
             df = pd.DataFrame.from_dict(out_dict)
             for row in df.to_dict(orient='records'):
