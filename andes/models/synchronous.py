@@ -24,7 +24,6 @@ class GENBaseData(ModelData):
         self.coi = IdxParam(model='COI',
                             info="center of inertia index",
                             )
-
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
                            tex_name='S_n',
@@ -169,6 +168,7 @@ class GENBase(Model):
                                src='subidx',
                                indexer=self.gen,
                                tex_name='idx_{sub}',
+                               export=False,
                                )
         # ----------service consts for initialization----------
         self.p0 = ExtService(model='StaticGen',

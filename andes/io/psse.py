@@ -72,7 +72,8 @@ def read(system, file):
     # parse file into `raw` with to_number conversions
     for num, line in enumerate(line_list):
         line = line.strip()
-        if num == 0:  # get basemva and frequency
+        # get basemva and nominal frequency
+        if num == 0:
             data = line.split('/')[0]
             data = data.split(',')
 
@@ -84,10 +85,10 @@ def read(system, file):
             version = int(data[2])
             if not version:
                 version = int(rawd.search(line).group(0).strip('rawd'))
-            logger.debug('PSSE raw version {} detected'.format(version))
+            logger.debug(f'PSSE raw version {version} detected')
 
             if version < 32 or version > 33:
-                logger.warning('RAW file version is not 32 or 33. Error may occur.')
+                warn_experimental('RAW file version is not 32 or 33. Error may occur.')
             continue
 
         elif num == 1 or num == 2:  # store the case info line
@@ -317,28 +318,74 @@ def read_add(system, file):
             data_list = list()
 
     # construct pandas dataframe for all models
-    df_dict = dict()
-    for key, val in all_dict.items():
-        df_1row = pd.DataFrame(val)
-        df_str = df_1row[0].str.split(expand=True)
-        df_dict[key] = df_str.astype(float)
+    dyr_data = dict()
+    for psse_model, dev_params in all_dict.items():
+        dev_params_num = [([to_number(single) for single in row.split()]) for row in dev_params]
+        dyr_data[psse_model] = pd.DataFrame(dev_params_num)
 
     # set header for each
     dirname = os.path.dirname(__file__)
     with open('{}/psse-dyr.yaml'.format(dirname), 'r') as f:
-        dyr_format = yaml.full_load(f)
-    dyr_dict = dict()
+        dyr_dict = yaml.full_load(f)
 
-    for item in dyr_format:
-        dyr_dict.update(item)
+    for psse_model in dyr_data:
+        if psse_model in dyr_dict:
+            if 'inputs' in dyr_dict[psse_model]:
+                dyr_data[psse_model].columns = dyr_dict[psse_model]['inputs']
 
-    for key in df_dict:
-        if key in dyr_dict:
-            if 'inputs' in dyr_dict[key]:
-                df_dict[key].columns = dyr_dict[key]['inputs']
+    system.df_dict = dyr_data
+    system.dyr_format = dyr_dict
 
-    system.df_dict = df_dict
+    # Load data into models
+    for psse_model in dyr_data:
+        if psse_model not in dyr_dict:
+            logger.warning(f"PSS/E Model <{psse_model}> is not supported.")
+            continue
 
-    # TODO: Load data into models
+        dest = dyr_dict[psse_model]['destination']
+        find = {}
+
+        if 'find' in dyr_dict[psse_model]:
+            for name, source in dyr_dict[psse_model]['find'].items():
+                for model, conditions in source.items():
+                    cond_names = conditions.keys()
+                    cond_values = [dyr_data[psse_model][col] for col in conditions.values()]
+                    find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
+
+        if 'get' in dyr_dict[psse_model]:
+            for name, source in dyr_dict[psse_model]['get'].items():
+                for model, conditions in source.items():
+                    idx_name = conditions['idx']
+                    if idx_name in dyr_data[psse_model]:
+                        conditions['idx'] = dyr_data[psse_model][idx_name]
+                    else:
+                        conditions['idx'] = find[idx_name]
+                    find[name] = system.__dict__[model].get(**conditions)
+
+        if 'outputs' in dyr_dict[psse_model]:
+            output_keys = list(dyr_dict[psse_model]['outputs'].keys())
+            output_exprs = list(dyr_dict[psse_model]['outputs'].values())
+            out_dict = {}
+
+            for idx in range(len(output_exprs)):
+                out_key = output_keys[idx]
+                expr = output_exprs[idx]
+                if expr in find:
+                    out_dict[out_key] = find[expr]
+                elif ';' in expr:
+                    args, func = expr.split(';')
+                    func = eval(func)
+                    args = args.split(',')
+                    argv = [pairs.split('.') for pairs in args]
+                    argv = [dyr_data[model][param] for model, param in argv]
+                    out_dict[output_keys[idx]] = func(*argv)
+                else:
+                    out_dict[output_keys[idx]] = dyr_data[psse_model][expr]
+
+            df = pd.DataFrame.from_dict(out_dict)
+            for row in df.to_dict(orient='records'):
+                system.add(dest, row)
+
+        system.link_ext_param(system.__dict__[dest])
 
     return True

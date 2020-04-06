@@ -53,6 +53,9 @@ class GroupBase(object):
         self._idx2model[idx] = model
 
     def idx2model(self, idx):
+        """
+        Find model name for the given idx
+        """
         ret = []
         for i in idx:
             try:
@@ -115,6 +118,22 @@ class GroupBase(object):
             uid = model.idx2uid(idx)
             instance = model.__dict__[src]
             instance.__dict__[attr][uid] = value[i]
+
+    def find_idx(self, keys, values):
+        indices_found = []
+        for model in self.models.values():
+            indices_found.append(model.find_idx(keys, values, allow_missing=True))
+
+        out = []
+        for idx, idx_found in enumerate(zip(*indices_found)):
+            if idx_found.count(False) == len(idx_found):
+                missing_values = [item[idx] for item in values]
+                raise IndexError(f'{keys} = {missing_values} not found in {self.__class__.__name__}')
+            for item in idx_found:
+                if item is not False:
+                    out.append(item)
+                    break
+        return out
 
     def _check_src(self, src: str):
         if src not in self.common_vars + self.common_params:
@@ -235,7 +254,7 @@ class StaticGen(GroupBase):
     """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('p0', 'q0', 'subidx'))
+        self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'subidx'))
         self.common_vars.extend(('p', 'q', 'a', 'v'))
 
 

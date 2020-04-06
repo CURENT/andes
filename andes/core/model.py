@@ -171,6 +171,8 @@ class ModelData(object):
         self.idx.append(idx)
         self.uid[idx] = self.n
         self.n += 1
+        if kwargs.get("name") is None:
+            kwargs["name"] = idx
 
         for name, instance in self.params.items():
             # TODO: Consider making `RefParam` not subclass of `BaseParam`
@@ -258,7 +260,7 @@ class ModelData(object):
 
         return out
 
-    def find_idx(self, keys, values):
+    def find_idx(self, keys, values, allow_missing=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -269,6 +271,8 @@ class ModelData(object):
         values : array, array of arrays
             Values for the corresponding key to search for. If keys is a str, values should be an array of
             elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
+        allow_missing : bool
+            Allow key, value to be not found. Used by groups.
 
         Returns
         -------
@@ -299,7 +303,10 @@ class ModelData(object):
                     v_idx = self.idx[pos]
                     break
             if v_idx is None:
-                raise IndexError(f'{keys} = {v_search} not found in {self.__class__.__name__}')
+                if allow_missing is False:
+                    raise IndexError(f'{keys} = {v_search} not found in {self.__class__.__name__}')
+                else:
+                    v_idx = False
 
             idxes.append(v_idx)
 
@@ -540,7 +547,7 @@ class Model(object):
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
-        elif isinstance(idx, (list, np.ndarray)):
+        elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
             return [self.uid[i] for i in idx]
@@ -570,6 +577,10 @@ class Model(object):
 
         """
         uid = self.idx2uid(idx)
+        if isinstance(self.__dict__[src].__dict__[attr], list):
+            if isinstance(uid, Iterable):
+                return [self.__dict__[src].__dict__[attr][i] for i in uid]
+
         return self.__dict__[src].__dict__[attr][uid]
 
     def set(self, src, idx, attr, value):

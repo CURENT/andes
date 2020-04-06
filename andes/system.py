@@ -304,6 +304,16 @@ class System(object):
                 if isinstance(item, AntiWindupLimiter):
                     self.antiwindups.append(item)
 
+    def link_ext_param(self, model):
+        for instance in model.params_ext.values():
+            ext_name = instance.model
+            ext_model = self.__dict__[ext_name]
+
+            try:
+                instance.link_external(ext_model)
+            except IndexError:
+                raise IndexError(f'Model <{model.class_name}> param <{instance.name}> link parameter error')
+
     def calc_pu_coeff(self):
         """
         Perform per unit value conversion.
@@ -315,17 +325,7 @@ class System(object):
 
         for mdl in self.models.values():
             # get external parameters with `link_external` and then calculate the pu coeff
-            for instance in mdl.params_ext.values():
-                ext_name = instance.model
-                try:
-                    ext_model = self.__dict__[ext_name]
-                except KeyError:
-                    raise KeyError(f'<{ext_name}> is not a model or group name.')
-
-                try:
-                    instance.link_external(ext_model)
-                except IndexError:
-                    raise IndexError(f'Model <{mdl.class_name}> param <{instance.name}> link parameter error')
+            self.link_ext_param(mdl)
 
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.params:
