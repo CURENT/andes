@@ -317,6 +317,7 @@ def _find_cases(filename, path):
         if os.path.isfile(case):
             valid_cases.append(case)
     if len(valid_cases):
+        valid_cases = sorted(valid_cases)
         logger.debug('Found files: ' + pprint.pformat(valid_cases))
 
     return valid_cases
@@ -374,6 +375,8 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     """
     from functools import partial
     pool = Pool(ncpu)
+    print("Cases are processed in the following order:")
+    print('\n'.join([f'"{name}"' for name in cases]))
     ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
 
     return ret

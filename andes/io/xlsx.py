@@ -57,6 +57,7 @@ def _write_system(system, writer, skip_empty):
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
             continue
+        instance.cache.refresh("df_in")
         instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
     return writer
 
