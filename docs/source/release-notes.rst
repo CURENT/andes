@@ -7,6 +7,7 @@ The APIs before v1.0.0 are in beta and may change without prior notice.
 v0.8.4
 -------------------
 - Added support for JSON case files. Convert existing case file to JSON with ``--convert json``.
+- Added support for PSS/E dyr files, loadable with ``-addfile ADDFILE``.
 - Added ``andes plot --xargs`` for searching variable name and plotting. See example 6.
 - Various bug fixes: Fault power injection fix;
 

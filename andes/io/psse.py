@@ -93,7 +93,7 @@ def read(system, file):
 
         elif num == 1 or num == 2:  # store the case info line
             if len(line) > 0:
-                logger.info(line)
+                logger.info("  " + line)
             continue
         elif num >= 3:
             if line[0:2] == '0 ' or line[0:3] == ' 0 ':  # end of block
