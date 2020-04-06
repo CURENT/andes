@@ -144,7 +144,7 @@ def parse(system):
     return True
 
 
-def dump(system, output_format):
+def dump(system, output_format, full_path=None, overwrite=False):
     """
     Dump the System data into the requested output format.
 
@@ -170,12 +170,16 @@ def dump(system, output_format):
     if output_ext == '':
         return
 
-    system.files.dump = os.path.join(system.files.output_path,
-                                     system.files.name + '.' + get_output_ext(output_ext))
+    if full_path is not None:
+        system.files.dump = full_path
+    else:
+        system.files.dump = os.path.join(system.files.output_path,
+                                         system.files.name + '.' + output_ext)
+
     writer = importlib.import_module('.' + output_format, __name__)
 
     t, _ = elapsed()
-    ret = writer.write(system, system.files.dump)
+    ret = writer.write(system, system.files.dump, overwrite=overwrite)
     _, s = elapsed(t)
     if ret:
         logger.info(f'Format conversion completed in {s}.')

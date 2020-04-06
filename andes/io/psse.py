@@ -323,7 +323,7 @@ def read_add(system, file):
 
     # read yaml and set header for each pss/e model
     dirname = os.path.dirname(__file__)
-    with open('{}/psse-dyr.yaml'.format(dirname), 'r') as f:
+    with open(f'{dirname}/psse-dyr.yaml', 'r') as f:
         dyr_yaml = yaml.full_load(f)
 
     for psse_model in dyr_dict:

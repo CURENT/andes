@@ -38,7 +38,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
     bool
         True if file written; False otherwise
     """
-    if not confirm_overwrite(outfile):
+    if not confirm_overwrite(outfile, overwrite=overwrite):
         return False
 
     writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
@@ -46,7 +46,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
     writer = _add_book(system, writer, add_book)
 
     writer.save()
-    logger.info(f'xlsx file written to <{outfile}>')
+    logger.info(f'xlsx file written to "{outfile}"')
     return True
 
 
