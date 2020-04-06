@@ -39,7 +39,7 @@ def write(system, outfile, skip_empty=True, overwrite=None):
 
     with open(outfile, 'w') as writer:
         _write_system(system, writer, skip_empty)
-    logger.info(f'JSON file written to <{outfile}>')
+    logger.info(f'JSON file written to "{outfile}"')
     return True
 
 

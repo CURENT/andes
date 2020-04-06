@@ -21,6 +21,7 @@ import pandas as pd  # NOQA
 import matplotlib as mpl  # NOQA
 from matplotlib import pyplot as plt  # NOQA
 from pathos.multiprocessing import Pool  # NOQA
+from multiprocessing import Process  # NOQA
 import unittest  # NOQA
 import yaml  # NOQA
 

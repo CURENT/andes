@@ -974,7 +974,7 @@ class System(object):
         with open(file_path, 'w') as f:
             conf.write(f)
 
-        logger.info(f'Config: written to {file_path}')
+        logger.info(f'Config written to "{file_path}"')
 
     def supported_models(self):
         """

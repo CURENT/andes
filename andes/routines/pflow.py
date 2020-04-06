@@ -80,7 +80,7 @@ class PFlow(BaseRoutine):
         out_str = '\n'.join(out)
         logger.info(out_str)
 
-    def run(self):
+    def run(self, **kwargs):
         """
         Full Newton-Raphson method
 

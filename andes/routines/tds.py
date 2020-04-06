@@ -110,14 +110,14 @@ class TDS(BaseRoutine):
         out_str = '\n'.join(out)
         logger.info(out_str)
 
-    def run(self, verbose=False):
+    def run(self, disable_pbar=False, **kwargs):
         """
         Run the implicit numerical integration for TDS.
 
         Parameters
         ----------
-        verbose : bool
-            verbosity flag for single integration steps
+        disable_pbar : bool
+            True to disable progress bar
         """
         system = self.system
         dae = self.system.dae
@@ -125,7 +125,7 @@ class TDS(BaseRoutine):
 
         self.summary()
         self._initialize()
-        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout)
+        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=disable_pbar)
 
         t0, _ = elapsed()
         while (system.dae.t < self.config.tf) and (not self.busted):
@@ -155,6 +155,8 @@ class TDS(BaseRoutine):
                 system.vars_to_models()
 
         self.pbar.close()
+        delattr(self, 'pbar')  # removed `pbar` so that System can be dilled
+
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
 

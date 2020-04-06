@@ -8,6 +8,7 @@ import platform
 import pprint
 import cProfile
 import pstats
+from time import sleep
 from subprocess import call
 from typing import Optional, Union
 
@@ -16,7 +17,7 @@ from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, tests_root, get_log_dir
 from andes.shared import coloredlogs, unittest
-from andes.shared import Pool
+from andes.shared import Pool, Process
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -247,14 +248,14 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
                             overwrite=True, add_book=add_book)
         return system
 
-    system.PFlow.run()
+    system.PFlow.run(**kwargs)
 
     if routine is not None:
         routine = routine.lower()
         if routine == 'tds':
-            system.TDS.run()
+            system.TDS.run(**kwargs)
         elif routine == 'eig':
-            system.EIG.run()
+            system.EIG.run(**kwargs)
 
     # Disable profiler and output results
     if profile:
@@ -316,6 +317,7 @@ def _find_cases(filename, path):
         if os.path.isfile(case):
             valid_cases.append(case)
     if len(valid_cases):
+        valid_cases = sorted(valid_cases)
         logger.debug('Found files: ' + pprint.pformat(valid_cases))
 
     return valid_cases
@@ -337,10 +339,30 @@ def find_log_path(lg):
     return out
 
 
-def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.INFO, mp_verbose=logging.WARNING,
-                      **kwargs):
+def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
+    # start processes
+    jobs = []
+    for idx, file in enumerate(cases):
+        job = Process(name=f'Process {idx:d}', target=run_case, args=(file,), kwargs=kwargs)
+        jobs.append(job)
+        job.start()
+        start_msg = f'Process {idx:d} for "{file:s}" started.'
+        print(start_msg)
+        logger.debug(start_msg)
+        if (idx % ncpu == ncpu - 1) or (idx == len(cases) - 1):
+            sleep(0.1)
+            for job in jobs:
+                job.join()
+            jobs = []
+
+    return True
+
+
+def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **kwargs):
     """
-    Run multiprocessing jobs.
+    Run multiprocessing jobs using Pool.
+
+    This function returns all System instances in a list, but requires longer computation time.
 
     Parameters
     ----------
@@ -351,26 +373,16 @@ def _run_multiprocess(cases, ncpu=os.cpu_count(), verbose=logging.INFO, mp_verbo
     verbose : 10, 20, 30, 40, 50
         Verbosity level outside multiprocessing
     """
-    logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
-    set_logger_level(logger, logging.StreamHandler, mp_verbose)
-    set_logger_level(logger, logging.FileHandler, logging.DEBUG)
-
     from functools import partial
     pool = Pool(ncpu)
+    print("Cases are processed in the following order:")
+    print('\n'.join([f'"{name}"' for name in cases]))
     ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
-
-    # restore command line output when all jobs are done
-    set_logger_level(logger, logging.StreamHandler, verbose)
-
-    log_files = find_log_path(logger)
-    if len(log_files) > 0:
-        log_paths = '\n'.join(log_files)
-        print(f'Log saved to <{log_paths}>.')
 
     return ret
 
 
-def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), **kwargs):
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -382,8 +394,12 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         input search path
     verbose : int, 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL)
         Verbosity level
+    mp_verbose : int
+        Verbosity level for multiprocessing tasks
     ncpu : int, optional
         Number of cpu cores to use in parallel
+    pool: bool, optional
+        Use Pool for multiprocessing to return a list of created Systems.
     kwargs
         Other supported keyword arguments
     Returns
@@ -402,7 +418,25 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     if len(cases) == 1:
         system = run_case(cases[0], **kwargs)
     elif len(cases) > 1:
-        system = _run_multiprocess(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+
+        # suppress logging output during multiprocessing
+        logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
+        set_logger_level(logger, logging.StreamHandler, mp_verbose)
+        set_logger_level(logger, logging.FileHandler, logging.DEBUG)
+
+        kwargs['disable_pbar'] = True
+        if pool is True:
+            system = _run_multiprocess_pool(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+        else:
+            system = _run_multiprocess_proc(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+
+        # restore command line output when all jobs are done
+        set_logger_level(logger, logging.StreamHandler, verbose)
+
+        log_files = find_log_path(logger)
+        if len(log_files) > 0:
+            log_paths = '\n'.join(log_files)
+            print(f'Log saved to "{log_paths}".')
 
     t0, s0 = elapsed(t0)
 
