@@ -20,9 +20,8 @@ def create_parser():
 
     parser.add_argument(
         '-v', '--verbose',
-        help='Program logging level. '
-             'Available levels are 10-DEBUG, 20-INFO, 30-WARNING, '
-             '40-ERROR or 50-CRITICAL. The default level is 20-INFO.',
+        help='Program logging level in 10-DEBUG, 20-INFO, 30-WARNING, '
+             '40-ERROR or 50-CRITICAL.',
         type=int, default=20, choices=(10, 20, 30, 40, 50))
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
@@ -103,19 +102,17 @@ def preamble():
     Log the ANDES command-line preamble at the `logging.INFO` level
     """
     from andes import __version__ as version
-    logger.info('ANDES {ver} (Git commit id {b}, Python {p} on {os})'
-                .format(ver=version[:5], b=version[-8:],
-                        p=platform.python_version(),
-                        os=platform.system()))
-    try:
-        username = os.getlogin() + ', '
-    except OSError:
-        username = ''
 
-    logger.info('Session: {}{}'.format(username, strftime("%m/%d/%Y %I:%M:%S %p")))
-    logger.info('This program comes with ABSOLUTELY NO WARRANTY.')
+    py_version = platform.python_version()
+    system_name = platform.system()
+    date_time = strftime('%m/%d/%Y %I:%M:%S %p')
+    logger.info("\n"
+                rf"    _           _         | Version {version}" + '\n'
+                rf"   /_\  _ _  __| |___ ___ | Python {py_version} on {system_name}, {date_time}" + '\n'
+                rf"  / _ \| ' \/ _` / -_|_-< | " + "\n"
+                rf' /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.' + '\n')
+
     logger.debug(f'Logging to file {find_log_path(logging.getLogger("andes"))[0]}')
-    logger.info('')
 
 
 def main():

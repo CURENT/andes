@@ -1,17 +1,105 @@
 ---
-- GENCLS:
+GENCLS:
+    destination: GENCLS
     inputs:
-        - bus
+        - BUS
         - ID
         - H
         - D
-    destination: GENCLS
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+    get:
+        Sn:
+            StaticGen:
+                src: Sn
+                idx: gen
+        Vn:
+            Bus:
+                src: Vn
+                idx: BUS
+        ra:
+            StaticGen:
+                src: ra
+                idx: gen
+        xs:
+            StaticGen:
+                src: xs
+                idx: gen
     outputs:
-        M: 2 * H
+        bus: BUS
+        gen: gen
         D: D
-- EXDC2:
+        M: "GENCLS.H; lambda x: 2 * x"
+
+GENROU:
+    destination: GENROU
     inputs:
-        - bus
+        - BUS
+        - ID
+        - Td10
+        - Td20
+        - Tq10
+        - Tq20
+        - H
+        - D
+        - Xd
+        - Xq
+        - Xd1
+        - Xq1
+        - Xd2
+        - Xl
+        - S10
+        - S12
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+    get:
+        Sn:
+            StaticGen:
+                src: Sn
+                idx: gen
+        Vn:
+            Bus:
+                src: Vn
+                idx: BUS
+        ra:
+            StaticGen:
+                src: ra
+                idx: gen
+        xs:
+            StaticGen:
+                src: xs
+                idx: gen
+    outputs:
+        bus: BUS
+        gen: gen
+        Sn: Sn
+        Vn: Vn
+        D: D
+        M: "GENROU.H; lambda x: 2 * x"
+        ra: ra
+        xl: Xl
+        xd: Xd
+        xq: Xq
+        xd1: Xd1
+        xd2: Xd2
+        xq1: Xq1
+        xq2: Xd2
+        Td10: Td10
+        Tq10: Tq10
+        Td20: Td20
+        Tq20: Tq20
+        S10: S10
+        S12: S12
+
+EXDC2:
+    inputs:
+        - BUS
         - ID
         - TR
         - KA
@@ -30,9 +118,29 @@
         - E2
         - SE2
     destination: EXDC2
-- TGOV1:
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        TA: TA
+        TB: TB
+        TC: TC
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        KF1: KF1
+        TF1: TF1
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+TGOV1:
     inputs:
-        - bus
+        - BUS
         - ID
         - R
         - T1
@@ -42,3 +150,17 @@
         - T3
         - Dt
     destination: TGOV1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        R: R
+        T1: T1
+        VMAX: VMAX
+        VMIN: VMIN
+        T2: T2
+        T3: T3
+        Dt: Dt

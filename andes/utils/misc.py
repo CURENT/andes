@@ -32,25 +32,28 @@ def to_number(s):
     Convert a string to a number. If unsuccessful, return the de-blanked string.
     """
     ret = s
-    # try converting to float
-    try:
-        ret = float(s)
-    except ValueError:
-        ret = ret.strip('\'').strip()
 
-    # try converting to uid
-    try:
-        ret = int(s)
-    except ValueError:
-        pass
+    # remove single quotes
+    if "'" in ret:
+        ret = ret.strip("'").strip()
 
-    # try converting to boolean
+    # try converting to booleans / None
     if ret == 'True':
-        ret = True
+        return True
     elif ret == 'False':
-        ret = False
+        return False
     elif ret == 'None':
-        ret = None
+        return None
+
+    # try converting to float or int
+    try:
+        ret = int(ret)
+    except ValueError:
+        try:
+            ret = float(ret)
+        except ValueError:
+            pass
+
     return ret
 
 

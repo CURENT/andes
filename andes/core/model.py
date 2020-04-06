@@ -4,6 +4,7 @@ Base class for building ANDES models
 import os
 import logging
 from collections import OrderedDict, defaultdict
+from typing import Iterable
 
 from andes.core.config import Config
 from andes.core.discrete import Discrete
@@ -170,6 +171,8 @@ class ModelData(object):
         self.idx.append(idx)
         self.uid[idx] = self.n
         self.n += 1
+        if kwargs.get("name") is None:
+            kwargs["name"] = idx
 
         for name, instance in self.params.items():
             # TODO: Consider making `RefParam` not subclass of `BaseParam`
@@ -256,6 +259,58 @@ class ModelData(object):
                 out[name] = instance
 
         return out
+
+    def find_idx(self, keys, values, allow_missing=False):
+        """
+        Find `idx` of devices whose values match the given pattern.
+
+        Parameters
+        ----------
+        keys : str, array-like
+            A string or an array-like of strings containing the names of parameters for the search criteria
+        values : array, array of arrays
+            Values for the corresponding key to search for. If keys is a str, values should be an array of
+            elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
+        allow_missing : bool
+            Allow key, value to be not found. Used by groups.
+
+        Returns
+        -------
+        list
+            indices of devices
+        """
+        if isinstance(keys, str):
+            keys = (keys, )
+            if not isinstance(values, (int, float, str)) and not isinstance(values, Iterable):
+                raise ValueError("value must be a string, scalar or an iterable")
+            elif len(values) > 0 and not isinstance(values[0], Iterable):
+                values = (values, )
+        elif isinstance(keys, Iterable):
+            if not isinstance(values, Iterable):
+                raise ValueError("value must be an iterable")
+            elif len(values) > 0 and not isinstance(values[0], Iterable):
+                raise ValueError("if keys is an iterable, values must be an iterable of iterables")
+            if len(keys) != len(values):
+                raise ValueError("keys and values must have the same length")
+
+        v_attrs = [self.__dict__[key].v for key in keys]
+
+        idxes = []
+        for v_search in zip(*values):
+            v_idx = None
+            for pos, v_attr in enumerate(zip(*v_attrs)):
+                if all([i == j for i, j in zip(v_search, v_attr)]):
+                    v_idx = self.idx[pos]
+                    break
+            if v_idx is None:
+                if allow_missing is False:
+                    raise IndexError(f'{keys} = {v_search} not found in {self.__class__.__name__}')
+                else:
+                    v_idx = False
+
+            idxes.append(v_idx)
+
+        return idxes
 
 
 class ModelCall(object):
@@ -492,7 +547,7 @@ class Model(object):
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
-        elif isinstance(idx, (list, np.ndarray)):
+        elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
             return [self.uid[i] for i in idx]
@@ -522,6 +577,10 @@ class Model(object):
 
         """
         uid = self.idx2uid(idx)
+        if isinstance(self.__dict__[src].__dict__[attr], list):
+            if isinstance(uid, Iterable):
+                return [self.__dict__[src].__dict__[attr][i] for i in uid]
+
         return self.__dict__[src].__dict__[attr][uid]
 
     def set(self, src, idx, attr, value):
@@ -1644,7 +1703,8 @@ class Model(object):
             out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
 
         if self.__doc__ is not None:
-            out += self.__doc__ + '\n'  # this fixes the indentation for the next line
+            out += self.__doc__
+            out += '\n'  # this fixes the indentation for the next line
 
         # add tables
         out += self._param_doc(max_width=max_width, export=export) + \

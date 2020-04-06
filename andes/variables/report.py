@@ -172,4 +172,4 @@ class Report(object):
         dump_data(text, header, row_name, data, system.files.output)
 
         _, s = elapsed(t)
-        logger.info('Report saved to <{:s}> in {:s}.'.format(system.files.output, s))
+        logger.info(f'Report saved to "{system.files.output}" in {s}.')

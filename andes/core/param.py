@@ -307,7 +307,7 @@ class NumParam(BaseParam):
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
-            logger.warning(f'Parameter {self.name} of {self.owner.class_name} must be non-zero')
+            logger.debug(f'Parameter {self.name} of {self.owner.class_name} must be non-zero')
             value = self.default
 
         super(NumParam, self).add(value)
@@ -489,6 +489,8 @@ class ExtParam(NumParam):
                 self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
                 self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
             except KeyError:  # idx param without vin
+                pass
+            except TypeError:  # vin or pu_coeff is None
                 pass
 
             # TODO: copy properties from models in the group

@@ -21,10 +21,10 @@ class TDS(BaseRoutine):
         self.config.add(OrderedDict((('tol', 1e-4),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
-                                     ('fixt', 1),
-                                     ('tstep', 1/30),  # recommended step size
-                                     ('max_iter', 15),
+                                     ('fixt', 1),       # use fixed time step
                                      ('shrinkt', 1),    # shrink step size if `max_iter` is reached
+                                     ('tstep', 1/30),   # fixed step size / initial step size
+                                     ('max_iter', 15),
                                      )))
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -81,9 +81,9 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
-            logger.info(f"Initialization successful in {s1}.")
+            logger.info(f"Initialization was successful in {s1}.")
         else:
-            logger.info(f"Initialization error in {s1}.")
+            logger.info(f"Initialization failed in {s1}.")
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')
@@ -98,6 +98,7 @@ class TDS(BaseRoutine):
 
         """
         out = list()
+        out.append('')
         out.append('-> Time Domain Simulation Summary:')
         out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')

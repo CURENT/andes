@@ -300,9 +300,9 @@ def _find_cases(filename, path):
         filename = [filename]
 
     cases = []
+    logger.info(f'Working directory: "{os.getcwd()}"')
     for file in filename:
-        # use absolute path for cases which will be respected by FileMan
-        full_paths = os.path.abspath(os.path.join(path, file))
+        full_paths = os.path.join(path, file)
         found = glob.glob(full_paths)
         if len(found) == 0:
             logger.error('error: file {} does not exist.'.format(full_paths))
