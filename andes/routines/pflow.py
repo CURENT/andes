@@ -72,6 +72,14 @@ class PFlow(BaseRoutine):
 
         return mis
 
+    def summary(self):
+        out = list()
+        out.append('')
+        out.append('-> Power flow calculation')
+        out.append('Method: Full Newton-Raphson method')
+        out_str = '\n'.join(out)
+        logger.info(out_str)
+
     def run(self):
         """
         Full Newton-Raphson method
@@ -81,7 +89,7 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        logger.info('-> Power flow calculation with Newton Raphson method:')
+        self.summary()
         self._initialize()
         if system.dae.m == 0:
             logger.error("Loaded case contains no power flow element.")

@@ -254,7 +254,7 @@ class StaticGen(GroupBase):
     """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'subidx'))
+        self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
         self.common_vars.extend(('p', 'q', 'a', 'v'))
 
 

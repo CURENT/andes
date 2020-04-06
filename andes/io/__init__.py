@@ -122,12 +122,10 @@ def parse(system):
         return False
 
     # try parsing the base case file
-    logger.info('Parsing input file <{:s}>'.format(system.files.case))
+    logger.info(f'Parsing input file "{system.files.case}"')
 
     if not parser.read(system, system.files.case):
-        logger.error(
-            'Error parsing case file {:s} with {:s} format parser.'.format(
-                system.files.fullname, input_format))
+        logger.error(f'Error parsing case file {system.files.fullname} with {input_format} format parser.')
         return False
 
     # Try parsing the addfile
@@ -135,13 +133,13 @@ def parse(system):
         if not system.files.add_format:
             logger.error('Unknown addfile format.')
             return
-        logger.info(f'Parsing additional file {system.files.addfile}')
+        logger.info(f'Parsing additional file "{system.files.addfile}"')
         if not addparser.read_add(system, system.files.addfile):
-            logger.error('Error parsing addfile {:s} with {:s} parser.'.format(system.files.addfile, input_format))
+            logger.error(f'Error parsing addfile {system.files.addfile} with {input_format} parser.')
             return False
 
     _, s = elapsed(t)
-    logger.info(f'Input file {system.files.fullname} parsed in {s}.')
+    logger.info(f'Input file "{system.files.fullname}" parsed in {s}.')
 
     return True
 

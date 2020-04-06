@@ -22,11 +22,11 @@ GENCLS:
                 idx: BUS
         ra:
             StaticGen:
-                src: Vn
+                src: ra
                 idx: gen
         xs:
             StaticGen:
-                src: Vn
+                src: xs
                 idx: gen
     outputs:
         bus: BUS
@@ -69,11 +69,11 @@ GENROU:
                 idx: BUS
         ra:
             StaticGen:
-                src: Vn
+                src: ra
                 idx: gen
         xs:
             StaticGen:
-                src: Vn
+                src: xs
                 idx: gen
     outputs:
         bus: BUS

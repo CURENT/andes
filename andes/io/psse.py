@@ -339,7 +339,7 @@ def read_add(system, file):
     # Load data into models
     for psse_model in dyr_data:
         if psse_model not in dyr_dict:
-            logger.warning(f"PSS/E Model <{psse_model}> is not supported.")
+            logger.error(f"PSS/E Model <{psse_model}> is not supported.")
             continue
 
         dest = dyr_dict[psse_model]['destination']

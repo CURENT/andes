@@ -26,7 +26,7 @@ class FileMan(object):
         self.add_format = None
 
         self.case = None
-        self.case_path = os.getcwd()
+        self.case_path = ''
         self.fullname = None
         self.name = None
         self.ext = None
@@ -57,7 +57,7 @@ class FileMan(object):
         addfile = kwargs.get('addfile')
         no_output = kwargs.get('no_output')
         dynfile = kwargs.get('dynfile')
-        output_path = kwargs.get('output_path', os.getcwd())
+        output_path = kwargs.get('output_path')
         output = kwargs.get('output')  # base file name for the output
         pert = kwargs.get('pert')
         dump = kwargs.get('dump')
@@ -66,8 +66,8 @@ class FileMan(object):
 
         self.input_format = input_format
         self.add_format = add_format
-        self.input_path = input_path if input_path is not None else os.getcwd()
-        self.output_path = os.getcwd() if not output_path else output_path
+        self.input_path = input_path if input_path is not None else ''
+        self.output_path = output_path if output_path is not None else ''
 
         if os.path.isabs(case):
             self.case = case
@@ -87,8 +87,6 @@ class FileMan(object):
         if dump is None:
             dump = self.name
 
-        # use the path where andes is executed as the default output path
-        self.output_path = os.getcwd() if not output_path else output_path
         if no_output:
             self.no_output = True
             self.output = None

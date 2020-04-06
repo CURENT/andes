@@ -81,9 +81,9 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
-            logger.info(f"Initialization successful in {s1}.")
+            logger.info(f"Initialization was successful in {s1}.")
         else:
-            logger.info(f"Initialization error in {s1}.")
+            logger.info(f"Initialization failed in {s1}.")
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')
@@ -98,6 +98,7 @@ class TDS(BaseRoutine):
 
         """
         out = list()
+        out.append('')
         out.append('-> Time Domain Simulation Summary:')
         out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')
