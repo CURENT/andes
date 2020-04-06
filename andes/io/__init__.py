@@ -109,37 +109,29 @@ def parse(system):
             logger.error('Input format is not specified and cannot be inferred.')
             return False
 
-    input_format = system.files.input_format
-    add_format = system.files.add_format
-
-    # exit if the format parser could not be imported
-    try:
-        parser = importlib.import_module('.' + input_format, __name__)
-        if add_format:
-            addparser = importlib.import_module('.' + add_format, __name__)
-    except ImportError:
-        logger.error(f'Parser for {input_format} format not found. Program will exit.')
-        return False
-
     # try parsing the base case file
     logger.info(f'Parsing input file "{system.files.case}"')
-
+    input_format = system.files.input_format
+    parser = importlib.import_module('.' + input_format, __name__)
     if not parser.read(system, system.files.case):
         logger.error(f'Error parsing case file {system.files.fullname} with {input_format} format parser.')
         return False
 
+    _, s = elapsed(t)
+    logger.info(f'Input file parsed in {s}.')
+
     # Try parsing the addfile
+    t, _ = elapsed()
+
     if system.files.addfile:
-        if not system.files.add_format:
-            logger.error('Unknown addfile format.')
-            return
         logger.info(f'Parsing additional file "{system.files.addfile}"')
-        if not addparser.read_add(system, system.files.addfile):
+        add_format = system.files.add_format
+        add_parser = importlib.import_module('.' + add_format, __name__)
+        if not add_parser.read_add(system, system.files.addfile):
             logger.error(f'Error parsing addfile {system.files.addfile} with {input_format} parser.')
             return False
-
-    _, s = elapsed(t)
-    logger.info(f'Input file "{system.files.fullname}" parsed in {s}.')
+        _, s = elapsed(t)
+        logger.info(f'Addfile parsed in {s}.')
 
     return True
 

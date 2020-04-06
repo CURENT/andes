@@ -233,6 +233,8 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
         pr.enable()
 
     system = load(case, **kwargs)
+    if system is None:
+        return
 
     # convert to the requested format
     if convert != '':

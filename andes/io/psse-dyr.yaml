@@ -126,12 +126,14 @@ EXDC2:
     outputs:
         syn: syn
         TR: TR
+        KA: KA
         TA: TA
         TB: TB
         TC: TC
         VRMAX: VRMAX
         VRMIN: VRMIN
         KE: KE
+        TE: TE
         KF1: KF1
         TF1: TF1
         E1: E1
@@ -164,3 +166,15 @@ TGOV1:
         T2: T2
         T3: T3
         Dt: Dt
+
+# === Custom Models ===
+Toggler:
+    inputs:
+        - model
+        - dev
+        - t
+    destination: Toggler
+    outputs:
+        model: model
+        dev: dev
+        t: t
