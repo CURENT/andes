@@ -238,11 +238,11 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
 
     # convert to the requested format
     if convert != '':
-        andes.io.dump(system, convert)
+        andes.io.dump(system, convert, overwrite=None)
         return system
     # convert to xlsx with all model templates
     elif convert_all != '':
-        andes.io.xlsx.write(system, system.files.dump, skip_empty=False)
+        andes.io.xlsx.write(system, system.files.dump, skip_empty=False, overwrite=None)
         return system
     # add template workbook
     elif add_book is not None:

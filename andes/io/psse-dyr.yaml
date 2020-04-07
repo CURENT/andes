@@ -31,8 +31,12 @@ GENCLS:
     outputs:
         bus: BUS
         gen: gen
+        Sn: Sn
+        Vn: Vn
         D: D
         M: "GENCLS.H; lambda x: 2 * x"
+        ra: ra
+        xq: xs
 
 GENROU:
     destination: GENROU

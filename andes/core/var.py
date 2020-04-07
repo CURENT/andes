@@ -160,7 +160,6 @@ class State(BaseVar):
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
-                 
                  ):
         BaseVar.__init__(self, name=name,
                          tex_name=tex_name,
