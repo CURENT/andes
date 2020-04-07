@@ -60,17 +60,13 @@ class Test5Bus(unittest.TestCase):
         self.ss.PFlow.run()
 
 
-class TestKundur2Area(unittest.TestCase):
+class TestKundur2AreaXLSX(unittest.TestCase):
     """
     Test Kundur's 2-area system
     """
     def setUp(self) -> None:
         xlsx = get_case("kundur/kundur_full.xlsx")
-        raw = get_case("kundur/kundur_full.raw")
-        dyr = get_case("kundur/kundur_full.dyr")
-
         self.ss = andes.run(xlsx)
-        self.ss_psse = andes.run(raw, addfile=dyr)
 
     def test_xlsx_tds_run(self):
         self.ss.TDS.config.tf = 10
@@ -80,6 +76,16 @@ class TestKundur2Area(unittest.TestCase):
     def test_xlsx_eig_run(self):
         self.ss.EIG.run()
         andes.main.misc(clean=True)
+
+
+class TestKundur2AreaPSSE(unittest.TestCase):
+    """
+    Test Kundur's 2-area system
+    """
+    def setUp(self) -> None:
+        raw = get_case("kundur/kundur_full.raw")
+        dyr = get_case("kundur/kundur_full.dyr")
+        self.ss_psse = andes.run(raw, addfile=dyr)
 
     def test_psse_tds_run(self):
         self.ss_psse.TDS.config.tf = 10
