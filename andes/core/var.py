@@ -70,7 +70,7 @@ class BaseVar(object):
 
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
-        self.addressable = addressable  # True if this var needs to be assigned an address
+        self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export  # True if this var's value needs to exported
         self.diag_eps = diag_eps  # small value to be added to the jacobian matrix
 
@@ -146,6 +146,35 @@ class State(BaseVar):
     """
     e_code = 'f'
     v_code = 'x'
+
+    def __init__(self,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 unit: Optional[str] = None,
+                 v_str: Optional[str] = None,
+                 v_iter: Optional[str] = None,
+                 e_str: Optional[str] = None,
+                 v_setter: Optional[bool] = False,
+                 e_setter: Optional[bool] = False,
+                 addressable: Optional[bool] = True,
+                 export: Optional[bool] = True,
+                 diag_eps: Optional[float] = 0.0,
+                 
+                 ):
+        BaseVar.__init__(self, name=name,
+                         tex_name=tex_name,
+                         info=info,
+                         unit=unit,
+                         v_str=v_str,
+                         v_iter=v_iter,
+                         e_str=e_str,
+                         v_setter=v_setter,
+                         e_setter=e_setter,
+                         addressable=addressable,
+                         export=export,
+                         diag_eps=diag_eps,
+                         )
 
 
 class ExtVar(BaseVar):
