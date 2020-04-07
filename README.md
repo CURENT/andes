@@ -286,12 +286,23 @@ For example, to convert `wscc9.raw` in the current folder to the ANDES xlsx form
 andes run wscc9.raw --convert
 ```
 The command will write the output to `wscc9.xlsx` in the current directory.
+An additional `dyr` file can be included through `--addfile`, as shown in 
+[Step 2: Dynamic Analysis](#step-2-dynamic-analyses).
+Power flow models and dynamic models will be consolidated and written to a single xlsx file.
 
-To add models `GENROU` and `TGOV1` to the xlsx file `wscc9.xlsx`, run
+### Adding Model Template to an Existing xlsx File 
+To add new models to an existing `xlsx` file, one needs to create new workbooks (shown tabs at the bottom),
+`--add-book` can add model templates to an existing xlsx file.
+To add models `GENROU` and `TGOV1` to the xlsx  file `wscc9.xlsx`, run
 
 ```bash
 andes run wscc9.xlsx --add-book GENROU,TGOV1
 ```
+Two workbooks named "GENROU" and "TGOV1" will appear in the new `wscc9.xlsx` file.
+
+**Warning**: `--add-book` will *overwrite* the original file. 
+All empty workbooks will be discarded.
+It is recommended to make copies to backup your cases.
 
 ## Output Converter
 The output converter is used to convert `.npy` output to a comma-separated (csv) file.
