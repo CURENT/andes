@@ -34,11 +34,11 @@ class PQData(ModelData):
                            tex_name=r'q_0',
                            unit='p.u.',
                            )
-        self.vmax = NumParam(default=1.1,
+        self.vmax = NumParam(default=1.2,
                              info='max voltage before switching to impedance',
                              tex_name=r'v_{max}',
                              )
-        self.vmin = NumParam(default=0.9,
+        self.vmin = NumParam(default=0.8,
                              info='min voltage before switching to impedance',
                              tex_name=r'v_{min}',
                              )
