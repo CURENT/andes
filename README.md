@@ -142,23 +142,26 @@ ANDES is invoked from the command line using the command `andes`.
 Running `andes` without any input is equal to `andes -h` or `andes --help`, 
 which prints out a preamble and help commands:
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 08:34:35 PM
-    
-    usage: andes [-h] [-v {10,20,30,40,50}] {run,plot,misc,prepare,selftest} ...
-    
+        _           _         | Version 0.8.3.post24+g8caf858a
+       /_\  _ _  __| |___ ___ | Python 3.7.1 on Darwin, 04/06/2020 08:47:43 PM
+      / _ \| ' \/ _` / -_|_-< |
+     /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.
+
+    usage: andes [-h] [-v {10,20,30,40,50}]
+                 {run,plot,misc,prepare,doc,selftest} ...
+
     positional arguments:
-      {run,plot,misc,prepare,selftest}
-                            [run]: run simulation routine; [plot]: plot simulation
-                            results; [prepare]: run the symbolic-to-numeric
-                            preparation; [misc]: miscellaneous functions.
-    
+      {run,plot,misc,prepare,doc,selftest}
+                            [run] run simulation routine; [plot] plot simulation
+                            results; [doc] quick documentation; [prepare] run the
+                            symbolic-to-numeric preparation; [misc] miscellaneous
+                            functions.
+
     optional arguments:
       -h, --help            show this help message and exit
       -v {10,20,30,40,50}, --verbose {10,20,30,40,50}
-                            Program logging level. Available levels are 10-DEBUG,
-                            20-INFO, 30-WARNING, 40-ERROR or 50-CRITICAL. The
-                            default level is 20-INFO.
+                            Program logging level in 10-DEBUG, 20-INFO,
+                            30-WARNING, 40-ERROR or 50-CRITICAL.
 
 The first level of commands are chosen from `{run,plot,misc,prepare,selftest}`.
 Each command contains a group of subcommands, which can be looked up by appending `-h` to the first-level command. 
