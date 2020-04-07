@@ -293,7 +293,7 @@ def read_add(system, file):
 
     """
 
-    warn_experimental("PSS/E dyr support is incomplete.")
+    warn_experimental("PSS/E dyr support")
 
     with open(file, 'r') as f:
         input_list = [line.strip() for line in f]
