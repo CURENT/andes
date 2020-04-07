@@ -47,20 +47,35 @@ class PQData(ModelData):
 
 
 class PQ(PQData, Model):
+    """
+    PQ load model.
+
+    Implements an automatic pq2z conversion during power flow when the voltage
+    is outside [vmin, vmax]. The conversion can be turned off by setting `pq2z`
+    to 0 in the Config file.
+
+    Before time-domain simulation, PQ load will be converted to impedance,
+    current source, and power source based on the weights in the Config file.
+
+    Weights (p2p, p2i, p2z) corresponds to the weights for constant power,
+    constant current and constant impedance. p2p, p2i and p2z must be in
+    decimal numbers and sum up exactly to 1. The same rule applies to
+    (q2q, q2i, q2z).
+    """
     def __init__(self, system=None, config=None):
         PQData.__init__(self)
         Model.__init__(self, system, config)
         self.group = 'StaticLoad'
-        # ``tds`` flag is added to retrieve initial voltage (for constant Z or constant I conversion)
+        # ``tds`` flag is needed to retrieve initial voltage (for constant Z/I conversion)
         self.flags.update({'pflow': True,
                            'tds': True,
                            })
         self.config.add(OrderedDict((('pq2z', 1),
                                      ('p2p', 0.0),
-                                     ('p2i', 0.0),  # not in use
+                                     ('p2i', 0.0),
                                      ('p2z', 1.0),
                                      ('q2q', 0.0),
-                                     ('q2i', 0.0),  # not in use
+                                     ('q2i', 0.0),
                                      ('q2z', 1.0),
                                      )))
 
@@ -88,14 +103,47 @@ class PQ(PQData, Model):
                              info='Initial voltage angle from power flow'
                              )
 
-        self.Req = ConstService(info='Equivalent resistance',
-                                v_str='p0 / v0**2',
+        # Rub, Xub, Rlb, Xlb are constant for both PF and TDS.
+        self.Rub = ConstService(info='Equivalent resistance at voltage upper bound',
+                                v_str='p0 / vmax**2',
+                                tex_name='R_{ub}'
+                                )
+        self.Xub = ConstService(info='Equivalent reactance at voltage upper bound',
+                                v_str='q0 / vmax**2',
+                                tex_name='X_{ub}'
+                                )
+        self.Rlb = ConstService(info='Equivalent resistance at voltage lower bound',
+                                v_str='p0 / vmin**2',
+                                tex_name='R_{lb}'
+                                )
+        self.Xlb = ConstService(info='Equivalent reactance at voltage lower bound',
+                                v_str='q0 / vmin**2',
+                                tex_name='X_{lb}'
+                                )
+
+        # Ppf, Qpf, Req, Xeq, Ipeq, Iqeq are only meaningful after initializing TDS
+        self.Ppf = ConstService(info='Actual P in power flow',
+                                v_str='(p0 * vcmp_zi + Rlb * vcmp_zl * v0**2 + Rub * vcmp_zu * v0**2)',
+                                tex_name='P_{pf}')
+        self.Qpf = ConstService(info='Actual Q in power flow',
+                                v_str='(q0 * vcmp_zi + Xlb * vcmp_zl * v0**2 + Xub * vcmp_zu * v0**2)',
+                                tex_name='P_{pf}')
+        self.Req = ConstService(info='Equivalent resistance at steady state',
+                                v_str='Ppf / v0**2',
                                 tex_name='R_{eq}'
                                 )
-        self.Xeq = ConstService(info='Equivalent reactance',
-                                v_str='q0 / v0**2',
+        self.Xeq = ConstService(info='Equivalent reactance at steady state',
+                                v_str='Qpf / v0**2',
                                 tex_name='X_{eq}'
                                 )
+        self.Ipeq = ConstService(info='Equivalent active current source at steady state',
+                                 v_str='Ppf / v0',
+                                 tex_name='I_{peq}'
+                                 )
+        self.Iqeq = ConstService(info='Equivalent reactive current source at steady state',
+                                 v_str='Qpf / v0',
+                                 tex_name='I_{qeq}'
+                                 )
 
         self.vcmp = Limiter(u=self.v,
                             lower=self.vmin,
@@ -104,25 +152,11 @@ class PQ(PQData, Model):
                             )
 
         self.a.e_str = "u * ((dae_t <= 0) | (p2p == 1)) * " \
-                       "(p0 * vcmp_zi + " \
-                       "p0 * vcmp_zl * (v ** 2 / vmin ** 2) + "\
-                       "p0 * vcmp_zu * (v ** 2 / vmax ** 2)) + " \
+                       "(p0 * vcmp_zi + Rlb * vcmp_zl * v**2 + Rub * vcmp_zu * v**2) + " \
                        "u * ((dae_t > 0) & (p2p != 1)) * " \
-                       "(p2p * p0 + p2z * Req * v**2)"
+                       "(p2p * Ppf + p2i * Ipeq * v + p2z * Req * v**2)"
 
         self.v.e_str = "u * ((dae_t <= 0) | (q2q == 1)) * " \
-                       "(q0 * vcmp_zi + " \
-                       "q0 * vcmp_zl * (v ** 2 / vmin ** 2) + " \
-                       "q0 * vcmp_zu * (v ** 2 / vmax ** 2)) + " \
+                       "(q0 * vcmp_zi + Xlb * vcmp_zl * v**2 + Xub * vcmp_zu * v**2) + " \
                        "u * ((dae_t > 0) & (q2q != 1)) * " \
-                       "(q2q * q0 + q2z * Xeq * v**2)"
-
-        # Experimental Zone Below
-        # self.v_ref = Algeb(info="Voltage reference for PI")
-        # self.kp = Service()
-        # self.ki = Service()
-
-        # self.kp.e_str = "1"
-        # self.ki.e_str = "1"
-        # self.pi = PIController(self.v, self.v_ref, self.kp, self.ki,
-        #                        info='PI controller for voltage')
+                       "(q2q * Qpf + q2i * Iqeq * v + q2z * Xeq * v**2)"
