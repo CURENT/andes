@@ -1,18 +1,16 @@
 import unittest
 import andes
-from andes.system import System
-from andes.io import xlsx
-from andes.utils.paths import get_case
 import os
+from andes.utils.paths import get_case
 
 
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = System()
+        self.ss = andes.System()
         self.ss.undill()
 
         # load from excel file
-        xlsx.read(self.ss, get_case('5bus/pjm5bus.xlsx'))
+        andes.io.xlsx.read(self.ss, get_case('5bus/pjm5bus.xlsx'))
         self.ss.setup()
 
     def test_names(self):
@@ -67,21 +65,40 @@ class TestKundur2Area(unittest.TestCase):
     Test Kundur's 2-area system
     """
     def setUp(self) -> None:
-        self.ss = andes.run(get_case('kundur/kundur_full.xlsx'))
+        xlsx = get_case("kundur/kundur_full.xlsx")
+        raw = get_case("kundur/kundur_full.raw")
+        dyr = get_case("kundur/kundur_full.dyr")
 
-    def test_tds_run(self):
+        self.ss = andes.run(xlsx)
+        self.ss_psse = andes.run(raw, addfile=dyr)
+
+    def test_xlsx_tds_run(self):
         self.ss.TDS.config.tf = 10
         self.ss.TDS.run()
         andes.main.misc(clean=True)
 
-    def test_eig_run(self):
+    def test_xlsx_eig_run(self):
         self.ss.EIG.run()
         andes.main.misc(clean=True)
+
+    def test_psse_tds_run(self):
+        self.ss_psse.TDS.config.tf = 10
+        self.ss_psse.TDS.run()
+        andes.main.misc(clean=True)
+
+    def test_psse_eig_run(self):
+        self.ss_psse.EIG.run()
+        andes.main.misc(clean=True)
+
+    def test_kundur_psse2xlsx(self):
+        output_name = 'test_kundur_convert.xlsx'
+        andes.io.dump(self.ss_psse, 'xlsx', full_path=output_name)
+        os.remove(output_name)
 
 
 class TestNPCCRAW(unittest.TestCase):
     """
-    Test NPCC system in the RAW format
+    Test NPCC system in the RAW format.
     """
     def test_npcc_raw(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'))
@@ -95,10 +112,13 @@ class TestNPCCRAW(unittest.TestCase):
                             profile=True,
                             tf=10,
                             )
+        self.ss.dae.print_array('f')
+        self.ss.dae.print_array('g')
+        self.ss.dae.print_array('f', tol=1e-4)
+        self.ss.dae.print_array('g', tol=1e-4)
 
     def test_npcc_raw_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'),
-                            convert=True)
+        self.ss = andes.run(get_case('npcc/npcc48.raw'), convert=True)
         os.remove(self.ss.files.dump)
 
     def test_npcc_raw2json_convert(self):
