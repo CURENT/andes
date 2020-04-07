@@ -287,10 +287,21 @@ class DAE(object):
         mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y', 'z': 'z'}
         return self.__dict__[mapping[arr] + '_name']
 
-    def print_array(self, name, value=None):
-        if value is None:
-            value = self.__dict__[name]
-        res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(self.get_name(name), value))
+    def print_array(self, name, values=None, tol=None):
+        if values is None:
+            values = self.__dict__[name]
+
+        indices = list(range(len(values)))
+        if tol is not None:
+            indices = np.where(abs(values) >= tol)
+            values = values[indices]
+
+        name_list = np.array(self.get_name(name))[indices]
+
+        if not len(name_list):
+            return
+        logger.info(f"Debug Print at {self.t:.4f}")
+        res = "\n".join("{:15s} {:<10.4g}".format(x, y) for x, y in zip(name_list, values))
         logger.info(res)
 
     def write_lst(self, lst_path):
