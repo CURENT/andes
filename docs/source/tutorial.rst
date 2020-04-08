@@ -43,7 +43,6 @@ It prints out a preamble with version and environment information and help comma
                             Program logging level in 10-DEBUG, 20-INFO,
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
-
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
 in ``run``. The most commonly used commands will be explained in the following.
@@ -292,13 +291,15 @@ It currently supports time-domain simulation data.
 Three positional arguments are required, and a dozen of optional arguments are supported.
 
 positional arguments:
-  ========              ===========================
-  Argument              Description
-  --------              ---------------------------
-  filename              simulation output file name
-  x                     x axis variable index
-  y                     y axis variable index
-  ========              ===========================
+  ==============              ===========================
+  Argument                    Description
+  --------------              ---------------------------
+  | filename                    simulation output file name, which should end with
+  |                             `out`. File extension can be omitted.
+  x                           the X-axis variable index, typically 0 for Time
+  y                           Y-axis variable indices. Space-separated indices or a
+                              colon-separated range is accepted
+  ==============              ===========================
 
 For example, to plot the generator speed variable of synchronous generator 1
 ``GENROU omega 0`` versus time, read the indices of the variable (2) and time
@@ -308,7 +309,7 @@ For example, to plot the generator speed variable of synchronous generator 1
 
     andes plot kundur_full_out.lst 0 2
 
-In this command, - ``andes plot`` is a plotting command for TDS output files.
+In this command, ``andes plot`` is the plotting command for TDS output files.
 ``kundur_full_out.lst`` is list file name. ``0`` is the index of ``Time`` for
 the x-axis. ``2`` is the index of ``GENROU omega 0``. Note that for the the file name,
 either ``kundur_full_out.lst`` or ``kundur_full_out.npy`` works, as the program will
@@ -326,28 +327,31 @@ LaTeX rendering.
 Other optional arguments are listed in the following.
 
 optional arguments:
-  ==========================    ======================================================
-  Argument                      Description
-  --------------------------    ------------------------------------------------------
-  -h, --help                    show this help message and exit
-  --xmin LEFT                   x axis minimum value
-  --xmax RIGHT                  x axis maximum value
-  --ymax YMAX                   y axis maximum value
-  --ymin YMIN                   y axis minimum value
-  --find FIND                   find variable indices that matches the given pattern
-  --xargs XARGS                 | find variable indices and return as a shell argument
-                                | to be used with "| xargs andes plot"
-  --exclude EXCLUDE             exclude pattern in find
-  -x XLABEL, --xlabel XLABEL    manual x-axis text label
-  -y YLABEL, --ylabel YLABEL    y-axis text label
-  -s, --savefig                 save figure to file
-  -g, --grid                    grid on
-  -d, --no-latex                disable LaTex formatting
-  -n, --no-show                 do not show the plot window
-  --ytimes YTIMES               y switch_times
-  --dpi DPI                     image resolution in dot per inch (DPI)
-  -c, --tocsv                   convert .npy output to a csv file
-  ==========================    ======================================================
+    ============================    ======================================================
+    Argument                        Description
+    ----------------------------    ------------------------------------------------------
+    optional arguments:
+    -h, --help                      show this help message and exit
+    --xmin LEFT                     minimum value for X axis
+    --xmax RIGHT                    maximum value for X axis
+    --ymax YMAX                     maximum value for Y axis
+    --ymin YMIN                     minimum value for Y axis
+    --find FIND                     find variable indices that matches the given pattern
+    | --xargs XARGS                 find variable indices and return as a list of
+    |                               arguments usable with "| xargs andes plot"
+    --exclude EXCLUDE               pattern to exclude in find or xargs results
+    -x XLABEL, --xlabel XLABEL      x-axis label text
+    -y YLABEL, --ylabel YLABEL      y-axis label text
+    -s, --savefig                   save figure. The default fault is `png`.
+    | -format SAVE_FORMAT           format for savefig. Common formats such as png, pdf, jpg are supported
+    --dpi DPI                       image resolution in dot per inch (DPI)
+    -g, --grid                      grid on
+    --greyscale                     greyscale on
+    -d, --no-latex                  disable LaTex formatting
+    -n, --no-show                   do not show the plot window
+    --ytimes YTIMES                 scale the y-axis values by YTIMES
+    -c, --tocsv                     convert npy output to csv
+    ============================    ======================================================
 
 andes doc
 ---------
