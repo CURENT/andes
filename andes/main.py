@@ -107,29 +107,30 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
 
     conf_path = get_config_path()
 
-    if conf_path is not None:
-        logger.info('Editing config file {}'.format(conf_path))
+    if conf_path is None:
+        logger.info('Config file does not exist. Automatically saving.')
+        system = System()
+        conf_path = system.save_config()
 
-        if edit_config is None:
-            # use the following default editors
-            if platform.system() == 'Linux':
-                editor = os.environ.get('EDITOR', 'gedit')
-            elif platform.system() == 'Darwin':
-                editor = os.environ.get('EDITOR', 'vim')
-            elif platform.system() == 'Windows':
-                editor = 'notepad.exe'
-        else:
-            # use `edit_config` as default editor
-            editor = edit_config
+    logger.info('Editing config file {}'.format(conf_path))
 
-        call([editor, conf_path])
-        ret = True
-
+    editor = ''
+    if edit_config is not None:
+        # use `edit_config` as default editor
+        editor = edit_config
     else:
-        logger.info('Config file does not exist. Save config with \'andes '
-                    '--save-config\'')
-        ret = True
+        # use the following default editors
+        if platform.system() == 'Linux':
+            editor = os.environ.get('EDITOR', 'gedit')
+        elif platform.system() == 'Darwin':
+            editor = os.environ.get('EDITOR', 'vim')
+        elif platform.system() == 'Windows':
+            editor = 'notepad.exe'
 
+    editor_cmd = editor.split()
+    editor_cmd.append(conf_path)
+    call(editor_cmd)
+    ret = True
     return ret
 
 

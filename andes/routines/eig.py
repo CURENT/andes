@@ -23,7 +23,7 @@ class EIG(BaseRoutine):
 
         self.config.add(plot=0)
 
-        # internal flags and storages
+        # internal flags and storage
         self.As = None
         self.eigs = None
         self.mu = None
@@ -39,20 +39,10 @@ class EIG(BaseRoutine):
             state matrix
         """
         system = self.system
-
         gyx = matrix(system.dae.gx)
         self.solver.linsolve(system.dae.gy, gyx)
 
         self.As = matrix(system.dae.fx - system.dae.fy * gyx)
-
-        # ------------------------------------------------------
-        # TODO: use scipy eigs
-        # self.As = sparse(self.As)
-        # I = np.array(self.As.I).reshape((-1,))
-        # J = np.array(self.As.J).reshape((-1,))
-        # V = np.array(self.As.V).reshape((-1,))
-        # self.As = csr_matrix((V, (I, J)), shape=self.As.size)
-        # ------------------------------------------------------
         return self.As
 
     def calc_eigvals(self):
@@ -64,9 +54,6 @@ class EIG(BaseRoutine):
         None
         """
         self.eigs = np.linalg.eigvals(self.As)
-        # TODO: use
-        # scipy.sparse.linalg.eigs(self.As)
-
         return self.eigs
 
     def calc_part_factor(self, As=None):

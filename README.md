@@ -177,7 +177,7 @@ Pass the path to the case file to `andes run` to perform power flow calculation.
 It is recommended to change directory to the folder containing the test case before running.
 
 The Kundur's two-area system can be located under `andes/cases/kundur` with the name`kundur_full.xlsx`.
-Locate the folder in your system and use `cd` to [change directory](https://en.wikipedia.org/wiki/Cd_(command).
+Locate the folder in your system and use `cd` to [change directory](https://en.wikipedia.org/wiki/Cd_(command)).
 To run power flow calculation, do
 
 ```bash

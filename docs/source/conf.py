@@ -202,3 +202,7 @@ intersphinx_mapping = {
 
 # Favorite icon
 html_favicon = 'images/curent.ico'
+
+
+# Disable smartquotes to display double dashes correctly
+smartquotes = False

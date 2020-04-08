@@ -127,7 +127,7 @@ class PQ(PQData, Model):
                                 tex_name='P_{pf}')
         self.Qpf = ConstService(info='Actual Q in power flow',
                                 v_str='(q0 * vcmp_zi + Xlb * vcmp_zl * v0**2 + Xub * vcmp_zu * v0**2)',
-                                tex_name='P_{pf}')
+                                tex_name='Q_{pf}')
         self.Req = ConstService(info='Equivalent resistance at steady state',
                                 v_str='Ppf / v0**2',
                                 tex_name='R_{eq}'

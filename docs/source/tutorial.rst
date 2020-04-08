@@ -8,7 +8,7 @@ The command-line interface (CLI) comes handy to run studies.
 As a library, it can be used interactively in the IPython shell or the Jupyter Notebook.
 This chapter describes the most common usages.
 
-Please see the cheatsheet if you are looking for quick help.
+Please see the cheat sheet if you are looking for quick help.
 
 .. _sec-command:
 
@@ -22,33 +22,34 @@ ANDES is invoked from the command line using the command ``andes``.
 Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
 It prints out a preamble with version and environment information and help commands::
 
-    ANDES 0.8.1 (Git commit id c954fc10, Python 3.7.1 on Darwin)
-    Session: hcui7, 03/22/2020 11:08:19 AM
-    This program comes with ABSOLUTELY NO WARRANTY.
+        _           _         | Version 0.8.4
+       /_\  _ _  __| |___ ___ | Python 3.7.1 on Darwin, 04/07/2020 10:22:17 PM
+      / _ \| ' \/ _` / -_|_-< |
+     /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.
 
     usage: andes [-h] [-v {10,20,30,40,50}]
                  {run,plot,misc,prepare,doc,selftest} ...
 
     positional arguments:
       {run,plot,misc,prepare,doc,selftest}
-                            [run]: run simulation routine; [plot]: plot simulation
-                            results; [doc]: quick documentation;[prepare]: run the
-                            symbolic-to-numeric preparation; [misc]: miscellaneous
+                            [run] run simulation routine; [plot] plot simulation
+                            results; [doc] quick documentation; [prepare] run the
+                            symbolic-to-numeric preparation; [misc] miscellaneous
                             functions.
 
     optional arguments:
       -h, --help            show this help message and exit
       -v {10,20,30,40,50}, --verbose {10,20,30,40,50}
-                            Program logging level. Available levels are 10-DEBUG,
-                            20-INFO, 30-WARNING, 40-ERROR or 50-CRITICAL. The
-                            default level is 20-INFO.
+                            Program logging level in 10-DEBUG, 20-INFO,
+                            30-WARNING, 40-ERROR or 50-CRITICAL.
+
 
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
 in ``run``. The most commonly used commands will be explained in the following.
 
 ``andes`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
-Accpeted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
+Accepted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
 50 - CRITICAL.
 To show debugging outputs, use ``-v 10``.
 
@@ -94,8 +95,15 @@ output looks like ::
 
 Test cases can grow, and there could be more cases than above. Make sure that all tests have passed.
 
+.. warning ::
+    ANDES is getting updates frequently. After updating your copy, please run
+    ``andes selftest`` to confirm the functionality. The command also makes sure the generated code is up to date.
+    See `andes prepare`_ for more details on automatic code generation.
+
 andes prepare
 -----------------
+.. _`andes prepare`:
+
 The symbolically defined models in ANDES need to be generated into numerical code for simulation.
 The code generation can be manually called with ``andes prepare``.
 Generated code are stored in folder ``.andes/calls.pkl`` in your home directory.
@@ -242,6 +250,8 @@ By default, all cores will be used. A small number can be specified to increase 
 
 Format converter
 ................
+.. _`format converter`:
+
 ANDES recognizes a few input formats and can convert input systems into the ``xlsx`` format.
 This function is useful when one wants to use models that are unique in ANDES.
 
@@ -282,66 +292,117 @@ It currently supports time-domain simulation data.
 Three positional arguments are required, and a dozen of optional arguments are supported.
 
 positional arguments:
-  ========              =====================
+  ========              ===========================
   Argument              Description
-  --------              ---------------------
-  datfile               dat file name.
+  --------              ---------------------------
+  filename              simulation output file name
   x                     x axis variable index
   y                     y axis variable index
-  ========              =====================
+  ========              ===========================
 
 For example, to plot the generator speed variable of synchronous generator 1
-``omega Syn 1`` versus time, read the indices of the variable (44) and time
+``GENROU omega 0`` versus time, read the indices of the variable (2) and time
 (0), run
 
 .. code:: bash
 
-    andes plot ieee14_syn_out.npy 0 44
+    andes plot kundur_full_out.lst 0 2
 
-In this command, - ``ande splot`` is a plotting command for TDS output files.
-``ieee14_syn_out.npy`` is data file name. ``0`` is the index of ``Time`` for
-the x-axis. ``44`` is the index of ``omega Syn 1``.
+In this command, - ``andes plot`` is a plotting command for TDS output files.
+``kundur_full_out.lst`` is list file name. ``0`` is the index of ``Time`` for
+the x-axis. ``2`` is the index of ``GENROU omega 0``. Note that for the the file name,
+either ``kundur_full_out.lst`` or ``kundur_full_out.npy`` works, as the program will
+automatically extract the file name.
 
 The y-axis variabla indices can also be specified in the Python range fashion
-. For example, ``andes plot ieee14_syn_out.npy 0 44:69:6`` will plot the
-variables at indices 44, 50, 56, 62, and 68.
+. For example, ``andes plot kundur_full_out.npy 0 2:21:6`` will plot the
+variables at indices 2, 8, 14 and 20.
 
-``andes plot`` will attempt to render the image with LaTeX if ``dvipng``
-program is in the search path. In case LaTeX is available but fails (happens
-on Windows), the option ``-d`` can be used to disable LaTeX rendering.
+``andes plot`` will attempt to render with LaTeX if ``dvipng`` program is in the search path.
+Figures rendered by LaTeX is considerably better in symbols quality but takes much longer time.
+In case LaTeX is available but fails (frequently happens on Windows), the option ``-d`` can be used to disable
+LaTeX rendering.
 
 Other optional arguments are listed in the following.
 
 optional arguments:
-  ==========================    ======================================
+  ==========================    ======================================================
   Argument                      Description
-  --------------------------    --------------------------------------
+  --------------------------    ------------------------------------------------------
   -h, --help                    show this help message and exit
   --xmin LEFT                   x axis minimum value
   --xmax RIGHT                  x axis maximum value
   --ymax YMAX                   y axis maximum value
   --ymin YMIN                   y axis minimum value
-  --checkinit                   check initialization value
-  -x XLABEL, --xlabel XLABEL
-                                manual x-axis text label
-  -y YLABEL, --ylabel YLABEL
-                                y-axis text label
-  -s, --save                    save to file
+  --find FIND                   find variable indices that matches the given pattern
+  --xargs XARGS                 | find variable indices and return as a shell argument
+                                | to be used with "| xargs andes plot"
+  --exclude EXCLUDE             exclude pattern in find
+  -x XLABEL, --xlabel XLABEL    manual x-axis text label
+  -y YLABEL, --ylabel YLABEL    y-axis text label
+  -s, --savefig                 save figure to file
   -g, --grid                    grid on
-  -d, --no_latex                disable LaTex formatting
-  -n, --no_show                 do not show the plot window
-  --ytimes YTIMES               y times
+  -d, --no-latex                disable LaTex formatting
+  -n, --no-show                 do not show the plot window
+  --ytimes YTIMES               y switch_times
   --dpi DPI                     image resolution in dot per inch (DPI)
-  ==========================    ======================================
+  -c, --tocsv                   convert .npy output to a csv file
+  ==========================    ======================================================
 
 andes doc
 ---------
 ``andes doc`` is a tool for quick lookup of model documentation.
 The basic usage of ``andes doc`` is to provide a model name as the positional argument.
 It will print out model parameters, variables, and equations to the stdio.
+If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_.
 
 It is intended as a quick way for documentation.
-If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_
+For example, to check the parameters for model ``Toggler``, run
+
+.. code-block:: shell-session
+
+    $ andes doc Toggler
+    Model <Toggler> in Group <TimedEvent>
+
+        Time-based connectivity status toggler.
+
+    Parameters
+
+     Name  |         Description          | Default | Unit |    Type    | Properties
+    -------+------------------------------+---------+------+------------+-----------
+     u     | connection status            | 1       | bool | NumParam   |
+     name  | device name                  |         |      | DataParam  |
+     model | Model or Group of the device |         |      | DataParam  | mandatory
+           | to control                   |         |      |            |
+     dev   | idx of the device to control |         |      | IdxParam   | mandatory
+     t     | switch time for connection   | -1      |      | TimerParam | mandatory
+           | status                       |         |      |            |
+
+To list all supported models, run
+
+.. code-block:: shell-session
+
+    $ andes doc -l
+    Supported Groups and Models
+
+         Group       |                   Models
+    -----------------+-------------------------------------------
+     ACLine          | Line
+     ACTopology      | Bus
+     Collection      | Area
+     DCLink          | Ground, R, L, C, RCp, RCs, RLs, RLCs, RLCp
+     DCTopology      | Node
+     Exciter         | EXDC2
+     Experimental    | PI2
+     FreqMeasurement | BusFreq, BusROCOF
+     StaticACDC      | VSCShunt
+     StaticGen       | PV, Slack
+     StaticLoad      | PQ
+     StaticShunt     | Shunt
+     SynGen          | GENCLS, GENROU
+     TimedEvent      | Toggler, Fault
+     TurbineGov      | TG2, TGOV1
+
 
 andes misc
 ----------
@@ -350,15 +411,21 @@ andes misc
 Configuration
 .............
 ANDES uses a configuration file to set runtime configs for the system routines, and models.
-``--save-config`` saves all configs to a file. By default, it saves to ``~/.andes/andes.conf`` file.
+``--save-config`` saves all configs to a file. By default, it saves to ``~/.andes/andes.conf`` file, where ``~``
+is the path to your home directory.
 
-With ``--edit-config``, you can edit the configuration of ANDES run by saving the config and editing it.
+With ``--edit-config``, you can edit ANDES configuration handy.
+The command will automatically save the configuration to the default location if not exist.
+The shorter version ``--edit`` can be used instead asn Python automatically matches it with ``--edit-config``.
 
-Run ``andes misc --save-config`` to save the config file to the default location.
-Then, run ``andes misc --edit-config`` to edit it.
-On Microsoft Windows, it will open up a notepad.
-On Linux, it will use the ``$EDITOR`` environment variable
-or use ``gedit`` by default. On macOS, the default is vim.
+You can pass an editor name to ``--edit``, such as ``--edit vim``.
+If the editor name is not provided, it will use the following defaults:
+- Microsoft Windows: notepad.
+- GNU/Linux: the ``$EDITOR`` environment variable, or ``gedit`` if not exist.
+
+For macOS users, the default is vim.
+If not familiar with vim, you can use nano with ``--edit nano`` or TextEdit with
+``--edit "open -a TextEdit"``.
 
 Cleanup
 .......
@@ -598,6 +665,7 @@ respectively.
 Convert to xlsx
 ...............
 Please refer to the the ``--convert`` command for converting a recognized file to xlsx.
+See `format converter`_ for more detail.
 
 Data Consistency
 ................

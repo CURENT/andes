@@ -103,7 +103,10 @@ class TDS(BaseRoutine):
         out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Simulation time: {self.config.t0}-{self.config.tf}s')
         if self.config.fixt == 1:
-            out.append(f'Fixed step size: h={self.config.tstep:.4g}s')
+            msg = f'Fixed step size: h={self.config.tstep:.4g}s'
+            if self.config.shrinkt == 1:
+                msg += ', shrink if not converged'
+            out.append(msg)
         else:
             out.append(f'Variable step size: h0={self.config.tstep:.4g}s')
 
