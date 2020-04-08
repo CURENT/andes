@@ -354,9 +354,55 @@ andes doc
 ``andes doc`` is a tool for quick lookup of model documentation.
 The basic usage of ``andes doc`` is to provide a model name as the positional argument.
 It will print out model parameters, variables, and equations to the stdio.
+If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_.
 
 It is intended as a quick way for documentation.
-If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_
+For example, to check the parameters for model ``Toggler``, run
+
+.. code-block:: shell-session
+
+    $ andes doc Toggler
+    Model <Toggler> in Group <TimedEvent>
+
+        Time-based connectivity status toggler.
+
+    Parameters
+
+     Name  |         Description          | Default | Unit |    Type    | Properties
+    -------+------------------------------+---------+------+------------+-----------
+     u     | connection status            | 1       | bool | NumParam   |
+     name  | device name                  |         |      | DataParam  |
+     model | Model or Group of the device |         |      | DataParam  | mandatory
+           | to control                   |         |      |            |
+     dev   | idx of the device to control |         |      | IdxParam   | mandatory
+     t     | switch time for connection   | -1      |      | TimerParam | mandatory
+           | status                       |         |      |            |
+
+To list all supported models, run
+
+.. code-block:: shell-session
+
+    $ andes doc -l
+    Supported Groups and Models
+
+         Group       |                   Models
+    -----------------+-------------------------------------------
+     ACLine          | Line
+     ACTopology      | Bus
+     Collection      | Area
+     DCLink          | Ground, R, L, C, RCp, RCs, RLs, RLCs, RLCp
+     DCTopology      | Node
+     Exciter         | EXDC2
+     Experimental    | PI2
+     FreqMeasurement | BusFreq, BusROCOF
+     StaticACDC      | VSCShunt
+     StaticGen       | PV, Slack
+     StaticLoad      | PQ
+     StaticShunt     | Shunt
+     SynGen          | GENCLS, GENROU
+     TimedEvent      | Toggler, Fault
+     TurbineGov      | TG2, TGOV1
+
 
 andes misc
 ----------
