@@ -66,16 +66,18 @@ def create_parser():
     plot.add_argument('--ymin', type=float, help='minimum value for Y axis')
     find_or_xargs = plot.add_mutually_exclusive_group()
     find_or_xargs.add_argument('--find', type=str, help='find variable indices that matches the given pattern')
-    find_or_xargs.add_argument('--xargs', type=str, help='find variable indices and return as a list of arguments '
-                                                         'usable with "| xargs andes plot"')
-    plot.add_argument('--exclude ', type=str, help='pattern to exclude in find or xargs results')
+    find_or_xargs.add_argument('-a', '--xargs', type=str,
+                               help='find variable indices and return as a list of arguments '
+                                    'usable with "|xargs andes plot"')
+    plot.add_argument('--exclude', type=str, help='pattern to exclude in find or xargs results')
     plot.add_argument('-x', '--xlabel', type=str, help='x-axis label text')
     plot.add_argument('-y', '--ylabel', type=str, help='y-axis label text')
-    plot.add_argument('-s', '--savefig', action='store_true', help='save figure to a png file')
-    plot.add_argument('-f', '--save-format', help='format for savefig. Common formats such as png, pdf, '
-                                                  'jpg are recognized')
+    plot.add_argument('-s', '--savefig', action='store_true', help='save figure. The default format is `png`')
+    plot.add_argument('-f', '--format', dest='save_format',
+                      help='format for savefig. Common formats such as png, pdf, jpg are supported')
     plot.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
     plot.add_argument('-g', '--grid', action='store_true', help='grid on')
+    plot.add_argument('--greyscale', action='store_true', help='greyscale on')
     plot.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
     plot.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
     plot.add_argument('--ytimes', type=str, help='scale the y-axis values by YTIMES')

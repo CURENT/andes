@@ -1,5 +1,5 @@
 """
-Andes plotting tool
+The Andes plotting tool.
 """
 
 import logging
@@ -18,17 +18,17 @@ logger = logging.getLogger(__name__)
 
 class TDSData(object):
     """
-    A time-domain simulation data container for loading, extracing and
-    plotting data
+    A data container for loading and plotting results from Andes time-domain simulation.
     """
 
-    def __init__(self, file_name_full=None, mode='file', dae=None, path=None):
+    def __init__(self, full_name=None, mode='file', dae=None, path=None):
         # paths and file names
         self._mode = mode
-        self.file_name_full = file_name_full
+        self.full_name = full_name
         self.dae = dae
         self._path = path if path else os.getcwd()
         self.file_name = None
+        self.file_ext = None
         self._npy_file = None
         self._lst_file = None
 
@@ -54,7 +54,7 @@ class TDSData(object):
         self._latex_warn = True
 
     def _process_names(self):
-        self.file_name, _ = os.path.splitext(self.file_name_full)
+        self.file_name, self.file_ext = os.path.splitext(self.full_name)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
         self._lst_file = os.path.join(self._path, self.file_name + '.lst')
         self._csv_file = os.path.join(self._path, self.file_name + '.csv')
@@ -75,12 +75,11 @@ class TDSData(object):
     def load_lst(self):
         """
         Load the lst file into internal data structures `_idx`, `_fname`, `_uname`, and counts the number of
-        variables to `nvars`
+        variables to `nvars`.
 
         Returns
         -------
         None
-
         """
         with open(self._lst_file, 'r') as fd:
             lines = fd.readlines()
@@ -104,7 +103,7 @@ class TDSData(object):
 
     def find(self, query, exclude=None, formatted=False, idx_only=False):
         """
-        Return variable names and indices matching `query`
+        Return variable names and indices matching `query`.
 
         Parameters
         ----------
@@ -143,7 +142,7 @@ class TDSData(object):
 
     def load_npy_or_csv(self, delimiter=','):
         """
-        Load the npy or csv file into internal data structures `self._data`
+        Load the npy or csv file into internal data structures `self._data`.
 
         Parameters
         ----------
@@ -163,7 +162,7 @@ class TDSData(object):
 
     def get_values(self, idx):
         """
-        Return the variable values at the given indices
+        Return the variable values at the given indices.
 
         Parameters
         ----------
@@ -179,7 +178,7 @@ class TDSData(object):
 
     def get_header(self, idx, formatted=False):
         """
-        Return a list of the variable names at the given indices
+        Return a list of the variable names at the given indices.
 
         Parameters
         ----------
@@ -203,7 +202,7 @@ class TDSData(object):
     def export_csv(self, path=None, idx=None, header=None, formatted=False,
                    sort_idx=True, fmt='%.18e'):
         """
-        Export to a csv file
+        Export to a csv file.
 
         Parameters
         ----------
@@ -242,7 +241,8 @@ class TDSData(object):
 
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
-             xlabel=None, ylabel=None, legend=True, grid=False,
+             xlabel=None, ylabel=None,
+             legend=True, grid=False, greyscale=False,
              latex=True, dpi=150, savefig=None, save_format=None, show=True,
              use_bqplot=False, **kwargs):
         """
@@ -286,7 +286,6 @@ class TDSData(object):
         y_header = self.get_header(yidx, formatted=latex)
 
         ytimes = float(ytimes) if ytimes is not None else ytimes
-
         if ytimes and (ytimes != 1):
             y_scale_func = scale_func(ytimes)
         else:
@@ -304,14 +303,14 @@ class TDSData(object):
 
             return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                     left=left, right=right, ymin=ymin, ymax=ymax,
-                                    xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
+                                    xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                     latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
                                     **kwargs)
 
         else:
             return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                   left=left, right=right, ymin=ymin, ymax=ymax,
-                                  xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
+                                  xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                   latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
                                   **kwargs)
 
@@ -463,13 +462,13 @@ class TDSData(object):
 
         if xlabel is not None:
             if using_latex:
-                ax.set_xlabel(label_texify(xlabel))
+                ax.set_xlabel(label_latexify(xlabel))
         else:
             ax.set_xlabel(xheader[0])
 
         if ylabel:
             if using_latex:
-                ax.set_ylabel(label_texify(ylabel))
+                ax.set_ylabel(label_latexify(ylabel))
             else:
                 ax.set_ylabel(ylabel)
 
@@ -630,8 +629,12 @@ def eig_plot(name, args):
         pass
 
 
-def tdsplot(filename, y, x=(0,), tocsv=False,
-            find=None, xargs=None, exclude=None, **kwargs):
+def tdsplot(filename, y, x=(0,),
+            tocsv=False,
+            find=None,
+            xargs=None,
+            exclude=None,
+            **kwargs):
     """
     TDS plot main function based on the new TDSData class
 
@@ -683,13 +686,20 @@ def tdsplot(filename, y, x=(0,), tocsv=False,
 
 
 def check_init(yval, yl):
-    """"Check initialization by comparing t=0 and t=end values"""
+    """"
+    Check initialization by comparing t=0 and t=end values for a flat run.
+
+    Warnings
+    --------
+    This function is deprecated as the initialization check feature is built into TDS.
+    See ``TDS.test_initialization()``.
+    """
     suspect = []
     for var, label in zip(yval, yl):
         if abs(var[0] - var[-1]) >= 1e-6:
             suspect.append(label)
     if suspect:
-        logger.error('Initialization failure:')
+        logger.error('Initialization failed:')
         logger.error(', '.join(suspect))
     else:
         logger.error('Initialization is correct.')
@@ -727,7 +737,7 @@ def scale_func(k):
     return lambda y_values_input: k * y_values_input
 
 
-def label_texify(label):
+def label_latexify(label):
     """
     Convert a label to latex format by appending surrounding $ and escaping spaces
 
@@ -746,7 +756,7 @@ def label_texify(label):
 
 def set_latex(enable=True):
     """
-    Enables latex for matplotlib based on the `with_latex` option and `dvipng` availability
+    Enables LaTeX for matplotlib based on the `with_latex` option and `dvipng` availability.
 
     Parameters
     ----------
@@ -756,11 +766,10 @@ def set_latex(enable=True):
     Returns
     -------
     bool
-        True for latex on and False for off
+        True for LaTeX on, False for off
     """
 
     has_dvipng = find_executable('dvipng')
-
     if has_dvipng and enable:
         mpl.rc('text', usetex=True)
         return True
