@@ -975,6 +975,7 @@ class System(object):
             conf.write(f)
 
         logger.info(f'Config written to "{file_path}"')
+        return file_path
 
     def supported_models(self):
         """
