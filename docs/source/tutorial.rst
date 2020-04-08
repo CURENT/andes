@@ -43,7 +43,6 @@ It prints out a preamble with version and environment information and help comma
                             Program logging level in 10-DEBUG, 20-INFO,
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
-
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
 in ``run``. The most commonly used commands will be explained in the following.
@@ -308,7 +307,7 @@ For example, to plot the generator speed variable of synchronous generator 1
 
     andes plot kundur_full_out.lst 0 2
 
-In this command, - ``andes plot`` is a plotting command for TDS output files.
+In this command, ``andes plot`` is the plotting command for TDS output files.
 ``kundur_full_out.lst`` is list file name. ``0`` is the index of ``Time`` for
 the x-axis. ``2`` is the index of ``GENROU omega 0``. Note that for the the file name,
 either ``kundur_full_out.lst`` or ``kundur_full_out.npy`` works, as the program will

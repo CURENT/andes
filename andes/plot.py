@@ -243,7 +243,8 @@ class TDSData(object):
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None, legend=True, grid=False,
-             latex=True, dpi=150, savefig=None, show=True, use_bqplot=False, **kwargs):
+             latex=True, dpi=150, savefig=None, save_format=None, show=True,
+             use_bqplot=False, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -279,6 +280,8 @@ class TDSData(object):
         x_value = self.get_values(xidx)
         y_value = self.get_values(yidx)
 
+        # header: names for variables
+        # axis labels: the texts next to axes
         x_header = self.get_header(xidx, formatted=latex)
         y_header = self.get_header(yidx, formatted=latex)
 
@@ -302,13 +305,15 @@ class TDSData(object):
             return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
-                                    latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
+                                    latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
+                                    **kwargs)
 
         else:
             return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid,
-                                  latex=latex, dpi=dpi, savefig=savefig, show=show, **kwargs)
+                                  latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
+                                  **kwargs)
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
@@ -322,7 +327,7 @@ class TDSData(object):
 
     def bqplot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
-                    latex=True, dpi=150, greyscale=False, savefig=None, show=True, **kwargs):
+                    latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True, **kwargs):
         """
         Plot with ``bqplot``. Experimental and imcomplete.
         """
@@ -346,7 +351,7 @@ class TDSData(object):
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=100, greyscale=False, savefig=None, show=True, **kwargs):
+                  latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -367,10 +372,10 @@ class TDSData(object):
             A list containing the variable names for the y-axis variable
 
         xlabel : str
-            A label for the x axis
+            Text label for the x axis
 
         ylabel : str
-            A label for the y axis
+            Text label for the y axis
 
         left : float
             The starting value of the x axis
@@ -393,16 +398,16 @@ class TDSData(object):
             Matplotlib axis object to draw the lines on
         latex : bool
             True to enable latex and False to disable
-
-        dpi : int
-            Dots per inch for screen print or save
         greyscale : bool
             True to use greyscale, False otherwise
         savefig : bool
             True to save to png figure file
+        save_format : str
+            File extension string (pdf, png or jpg) for the savefig format
+        dpi : int
+            Dots per inch for screen print or save. savefig uses a minimum of 200 dpi
         show : bool
             True to show the image
-
         kwargs
             Optional kwargs
 
@@ -411,22 +416,19 @@ class TDSData(object):
         (fig, ax)
             The figure and axis handles
         """
+        mpl.rc('font', family='Arial', size=12)
 
         if not isinstance(ydata, np.ndarray):
-            TypeError("ydata must be numpy array. Retrieve with get_values().")
+            TypeError("ydata must be a numpy array. Retrieve with get_values().")
 
         if ydata.ndim == 1:
             ydata = ydata.reshape((-1, 1))
 
         n_lines = ydata.shape[1]
 
-        mpl.rc('font', family='Arial', size=12)
-
         using_latex = set_latex(latex)
-
         if using_latex and self._latex_warn:
-            logger.info('Using LaTeX for rendering.')
-            logger.info('If the rendering takes too long or an error occurs:')
+            logger.info('Using LaTeX for rendering. If an error occurs:')
             logger.info('a) If you are using `andes plot`, disable with optino "-d",')
             logger.info('b) If you are using `plot()`, set "latex=False".')
             self._latex_warn = False
@@ -459,7 +461,7 @@ class TDSData(object):
                     color='0.2' if greyscale else None,
                     )
 
-        if xlabel:
+        if xlabel is not None:
             if using_latex:
                 ax.set_xlabel(label_texify(xlabel))
         else:
@@ -489,20 +491,23 @@ class TDSData(object):
         plt.draw()
 
         if savefig:
-            count = 1
+            if save_format is None:
+                save_format = 'png'
 
+            if dpi is None:
+                dpi = 200
+            else:
+                dpi = max(dpi, 200)
+
+            count = 1
             while True:
-                outfile = self.file_name + '_' + str(count) + '.png'
+                outfile = f'{self.file_name}_{count}.{save_format}'
                 if not os.path.isfile(outfile):
                     break
                 count += 1
 
-            try:
-                fig.savefig(outfile, dpi=dpi)
-                logger.info(f'Figure saved to <{outfile}>')
-            except IOError:
-                logger.error('* An unknown error occurred. Try disabling LaTeX with "-d".')
-                return
+            fig.savefig(outfile, dpi=dpi)
+            logger.info(f'Figure saved to "{outfile}".')
 
         if show:
             plt.show()
