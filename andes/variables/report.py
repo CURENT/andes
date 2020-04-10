@@ -142,7 +142,7 @@ class Report(object):
             # Line data
             text.append(['LINE DATA:\n'])
             header.append([
-                'From Bus', 'To Bus', 'P From (pu)', 'Q From (pu)',
+                'From Bus (idx)', 'To Bus (idx)', 'P From (pu)', 'Q From (pu)',
                 'P To (pu)', 'Q To(pu)'
             ])
             row_name.append(system.Line.name.v)
