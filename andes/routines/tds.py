@@ -398,7 +398,7 @@ class TDS(BaseRoutine):
             As = system.dae.fx - system.dae.fy * B
             freq = max(abs(As[0, 0]), 1)
         else:
-            freq = 20.0
+            freq = 30.0
 
         if freq > system.config.freq:
             freq = float(system.config.freq)
@@ -406,7 +406,7 @@ class TDS(BaseRoutine):
         tspan = abs(config.tf - config.t0)
         tcycle = 1 / freq
 
-        self.deltatmax = min(3 * tcycle, tspan / 100.0)
+        self.deltatmax = min(tcycle, tspan / 100.0)
         self.deltat = min(tcycle, tspan / 100.0)
         self.deltatmin = min(tcycle / 500, self.deltatmax / 20)
 
