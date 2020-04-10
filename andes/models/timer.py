@@ -58,12 +58,12 @@ class Fault(ModelData, Model):
                              unit='second',
                              callback=self.clear_fault,
                              )
-        self.xf = NumParam(info='Fault to ground impedance',
+        self.xf = NumParam(info='Fault to ground impedance (positive)',
                            unit='p.u.(sys)',
                            default=1e-4,
                            tex_name='x_f',
                            )
-        self.rf = NumParam(info='Fault to ground resistance',
+        self.rf = NumParam(info='Fault to ground resistance (positive)',
                            unit='p.u.(sys)',
                            default=0,
                            tex_name='x_f',
@@ -109,7 +109,8 @@ class Fault(ModelData, Model):
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 1
-                self._vstore = np.array(self.system.Bus.v.v)
+                # store voltages along with the rest of algebraic variables
+                self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
                 tqdm.write(f'<Fault {i}>: Applying fault on {self.bus.v[i]} at {self.tf.v[i]}.')
                 return True
         return False
@@ -121,7 +122,7 @@ class Fault(ModelData, Model):
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
-                self.system.dae.y[self.system.Bus.v.a] = self._vstore
+                self.system.dae.y[self.system.Bus.n:] = self._vstore
                 tqdm.write(f'<Fault {i}>: Clearing fault on {self.bus.v[i]} at {self.tc.v[i]}.')
                 return True
         return False

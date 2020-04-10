@@ -277,8 +277,8 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
                 ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
                 ps.print_stats(nlines)
                 ps.dump_stats(system.files.prof_raw)
-            logger.info(f'cProfile text data written to <{system.files.prof}>.')
-            logger.info(f'cProfile raw data written to <{system.files.prof_raw}. View it with \'snakeviz\'.')
+            logger.info(f'cProfile text data written to "{system.files.prof}".')
+            logger.info(f'cProfile raw data written to "{system.files.prof_raw}". View with tool `snakeviz`.')
 
     if remove_pycapsule is True:
         system.remove_pycapsule()
