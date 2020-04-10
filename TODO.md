@@ -1,22 +1,37 @@
-## Modular Refactorize
-*   Varout to DataFrame
-*   Optimize `_varname()` in models
+## Version 0.9.0
+
+### Milestones
+*   Robust iterative initialization
+*   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
+*   Help system and consistency check system for Config
+*   Refactor Model to separate symbolic processing part as `ModelSymbolic` -> `Model.sym`.
+*   Separate the solver class into an interface class + different solver classes
+
+### To-do bullets
+- [x] A working `GENROU` model with saturation function
+- [x] Fix the model connectivity status `u` in interface equations
+- [x] A refreshed raw file reader to build data into `ModelData` (partially refreshed)
+- [x] A refreshed dyr file reader
+*   Allow adding routine without modifying code
+*   Add ``Model._int`` for internal indexer
+*   Add a help system for Config
+*   Add consistency checks for Config
+*   Deal with two-terminal and multi-terminal devices
+*   Iterative initialization for equations (half done with Newton Krylov)
+*   Define general hooks - when should the connectivity check happen
+*   Draw block diagram from symbolic models using BDP (or SchemDraw)
+*   Example COI model
 
 
-## Performance Improvement
-*   Reduce the overhead in `VarOut.store()` and `TDS.dump_results()`
-    *   Impact: Low
-
-*   Reduce the overhead in `DAE.reset_Ac()`
-    *   Impact: High
-
-
-## New Functions
+## Later Versions
+*   Restore compatibility with dome format
+*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
+*   Allow for semi-analytical derivation of equations
 *   Root loci plots
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 
 
-## Version 0.7.0
+## Version 0.8.0 (Completed)
 
 ### Milestones
 - [x] A working `PQNew` class with an option to convert to Z; Allow config in models
@@ -24,6 +39,18 @@
 - [x] A working power flow routine fully generated from symbolic expressions
 - [x] A working `System` class providing parameter retrieval by group and model
 - [x] Time domain simulation using scipy.integrate (odeint and solve_ivp)
+
+### Features
+- [x] Symbolic DAE modeling and automated code generation for numerical simulation
+- [x] Numerical DAE modeling for scenarios when symbolic implementations are difficult
+- [x] Rapid modeling with block library with common transfer functions.
+- [x] Discrete component library such as hard limiter, dead band, and anti-windup limiter.
+- [x] Pretty printing of DAE and automatically derived Jacobians
+- [x] Newton-Raphson and Newton-Krylov power flow (with automatic handling of separated systems).
+- [x] Trapezoidal method for semi-explicit time domain simulation.
+
+### Usability
+- [x] Set up command line interface
 
 ### To-do bullets
 - [x] Clearly define interface variables `VarExt`
@@ -76,54 +103,12 @@
 - [x] Use SymPy to solve e1d, e1q, e2d and e2q equations for GENROU
 - [x] Test initialization and report suspect issues
 - [x] Test anti-windup limiter
-- [x] Added expression symbol checking. Undefined symbols will be thown as ValueError during preparation
-*   `System.reset()` not working after `TDS.run`
-*   Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations
-*   Deal with two-terminal and multi-terminal devices
-*   Add ``Model._int`` for internal indexer
-*   Iterative initialization for equations (half done with Newton Krylov)
-*   Batch simulation with in-place parameter modification
-*   Control feedback, possibly with perturbation files
-
-### Usability
-- [x] Set up command line interface
+- [x] Added expression symbol checking. Undefined symbols will throw ValueError during preparation
+- [x] `System.reset()` not working after `TDS.run`
+- [x] Export power flow iteration steps for debugging; export limiter status (get_inputs) alongside equations (implemented in _input_z)
+- [x] Batch simulation with in-place parameter modification (implemented with `Model.alter()`)
+- [x] Control feedback, possibly with perturbation files (control implemented in this approach has a "delay" of a step size)
+- [x] TimeSeries output to DataFrame (system.dae.ts.df)
 
 ### Examples
 - [x] implement a standalone PI controller with numerical jacobians
-
-### Features
-- [x] Symbolic DAE modeling and automated code generation for numerical simulation
-- [x] Numerical DAE modeling for scanrios when symbolic implementations are difficult
-- [x] Rapid modeling with block library with common transfer functions.
-- [x] Discrete component library such as hard limiter, dead band, and anti-windup limiter.
-- [x] Pretty printing of DAE and automatically derived Jacobians
-- [x] Newton-Raphson and Newton-Krylov power flow (with automatic handling of separated systems).
-- [x] Trapezoidal method for semi-explicit time domain simulation.
-
-### Blocks
-- [x] Value selector
-
-## Version 0.8.0
-## Milestones
-
-### To-do bullets
-- [x] A working `GENROU` model with saturation function
-*   A refreshed raw file reader to build data into `ModelData`
-*   A refreshed dyr file reader
-*   Define general hooks - when should the connectivity check happen
-*   Draw block diagram from symbolic models using BDP (or SchemDraw)
-*   Check if config is valid boolean values.
-- [x] Fix the model connectivity status `u` in interface equations 
-
-## Later Versions
-*   Restore compatibility with dome format
-*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
-*   Add a more generic parser for PSSE RAW
-*   Allow for semi-implicit method formulation
-*   Allow for semi-analytical derivation of equations
-
-
-## Refactor Ideas
-*   Separate the solver class into an interface class + a couple of different solver classes
-*   Refactor the Model class to separate symbolic processor (class Syms ?)
-*   Allow adding routine without modifying code
