@@ -244,7 +244,7 @@ class TDSData(object):
              xlabel=None, ylabel=None,
              legend=True, grid=False, greyscale=False,
              latex=True, dpi=150, savefig=None, save_format=None, show=True,
-             use_bqplot=False, **kwargs):
+             use_bqplot=False, latex_warn=True, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -305,6 +305,7 @@ class TDSData(object):
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                     latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
+                                    latex_warn=latex_warn,
                                     **kwargs)
 
         else:
@@ -312,6 +313,7 @@ class TDSData(object):
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                   latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
+                                  latex_warn=latex_warn,
                                   **kwargs)
 
     def data_to_df(self):
@@ -350,7 +352,8 @@ class TDSData(object):
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True, **kwargs):
+                  latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True,
+                  latex_warn=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -416,6 +419,7 @@ class TDSData(object):
             The figure and axis handles
         """
         mpl.rc('font', family='Arial', size=12)
+        self._latex_warn = latex_warn
 
         if not isinstance(ydata, np.ndarray):
             TypeError("ydata must be a numpy array. Retrieve with get_values().")
