@@ -60,11 +60,15 @@ def config_logger(stream=True,
     logger = logging.getLogger('andes')
     logger.setLevel(logging.DEBUG)
 
+    sh_formatter_str = '%(message)s'
+    if stream_level == 1:
+        sh_formatter_str = '%(name)s:%(lineno)d - %(levelname)s - %(message)s'
+        stream_level = 10
+
+    sh_formatter = logging.Formatter(sh_formatter_str)
     if not len(logger.handlers):
         if stream is True:
-            sh_formatter = logging.Formatter('%(message)s')
             sh = logging.StreamHandler()
-
             sh.setFormatter(sh_formatter)
             sh.setLevel(stream_level)
             logger.addHandler(sh)
@@ -72,8 +76,7 @@ def config_logger(stream=True,
         # file handler for level DEBUG and up
         if file is True and (log_file is not None):
             log_full_path = os.path.join(log_path, log_file)
-            fh_formatter = logging.Formatter(
-                '%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            fh_formatter = logging.Formatter('%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s')
             fh = logging.FileHandler(log_full_path)
             fh.setLevel(file_level)
             fh.setFormatter(fh_formatter)
@@ -82,7 +85,7 @@ def config_logger(stream=True,
         globals()['logger'] = logger
 
     if not is_interactive():
-        coloredlogs.install(logger=logger, level=stream_level, fmt='%(message)s')
+        coloredlogs.install(logger=logger, level=stream_level, fmt=sh_formatter_str)
 
 
 def edit_conf(edit_config: Optional[Union[str, bool]] = ''):

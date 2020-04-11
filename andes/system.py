@@ -657,7 +657,7 @@ class System(object):
 
         with open(pkl_path, 'rb') as f:
             self.calls = dill.load(f)
-        logger.debug(f'System undill: loaded <{pkl_path}> file.')
+        logger.debug(f'Undill loaded "{pkl_path}" file.')
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
@@ -946,7 +946,7 @@ class System(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug(f'Config: Loaded from file <{conf_path}>.')
+        logger.debug(f'Config loaded from file "{conf_path}".')
         return conf
 
     def save_config(self, file_path=None):

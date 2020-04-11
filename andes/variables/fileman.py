@@ -73,7 +73,6 @@ class FileMan(object):
             self.case = case
         else:
             self.case = self.get_fullpath(case)
-            logger.debug(self.case)
 
         # update `self.case_path` if `case` contains a path
         self.case_path, self.fullname = os.path.split(self.case)

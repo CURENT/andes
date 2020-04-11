@@ -22,7 +22,7 @@ def create_parser():
         '-v', '--verbose',
         help='Program logging level in 10-DEBUG, 20-INFO, 30-WARNING, '
              '40-ERROR or 50-CRITICAL.',
-        type=int, default=20, choices=(10, 20, 30, 40, 50))
+        type=int, default=20, choices=(1, 10, 20, 30, 40, 50))
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
                                                              '[plot] plot simulation results; '
