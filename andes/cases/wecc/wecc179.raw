@@ -1,6 +1,6 @@
 0,   100.00,  32, 0, 1, 60.00     / PSS(R)E 32 RAW created by rawd32  MON, APR 06 2020  13:06
-                               100.0
-
+WESTERN ELECTRICITY COORDINATING COUNCIL 179-BUS SYSTEM (MODIFIED)
+DISTRIBUTED WITH ANDES (https://github.com/cuihantao/andes)
      2,'CORONADO    ', 500.0000,1,   1,   1,   1,0.97947, -26.1745
      3,'CHOLLA      ', 345.0000,1,   1,   1,   1,0.97744, -16.9603
      4,'CORONADO    ',  20.0000,2,   1,   1,   1,1.04000, -19.6589
