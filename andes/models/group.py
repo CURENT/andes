@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable
 from andes.shared import np
 
 logger = logging.getLogger(__name__)
@@ -54,14 +55,21 @@ class GroupBase(object):
 
     def idx2model(self, idx):
         """
-        Find model name for the given idx
+        Find model name for the given idx.
         """
         ret = []
+        single = False
+        if not isinstance(idx, Iterable):
+            single = True
+            idx = (idx, )
         for i in idx:
             try:
                 ret.append(self._idx2model[i])
             except KeyError:
                 raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
+
+        if single:
+            ret = ret[0]
         return ret
 
     def get(self, src: str, idx, attr: str = 'v'):
@@ -167,15 +175,19 @@ class GroupBase(object):
                 # name is good
                 pass
             else:
-                logger.debug(f"{self.class_name}: conflict idx {idx}. Data may be inconsistent.")
+                logger.warning(f"Group <{self.class_name}>: idx={idx} is used by "
+                               f"{self.idx2model(idx).class_name}. "
+                               f"Data may be inconsistent.")
                 need_new = True
         else:
             need_new = True
 
         if need_new is True:
-            count = len(self._idx2model)
+            count = self.n
             while True:
-                idx = model_name + '_' + str(count)
+                # IMPORTANT: automatically assigned index is 1-indexed. Namely, `GENCLS_1` is the first generator.
+                # This is because when we say, for example, `GENCLS_10`, people usually assume it starts at 1.
+                idx = model_name + '_' + str(count + 1)
                 if idx not in self._idx2model:
                     break
                 else:

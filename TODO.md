@@ -29,6 +29,7 @@
 *   Allow for semi-analytical derivation of equations
 *   Root loci plots
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
+*   Allow simulating to a time, pause, and continue to a new ending time.
 
 
 ## Version 0.8.0 (Completed)
