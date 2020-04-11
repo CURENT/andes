@@ -1,8 +1,8 @@
 """
 Excel reader and writer for ANDES power system parameters
 
-This module utilizes xlsxwriter and pandas.Frame. While I like the simplicity of the dome format, spreadsheet
-data is easier to read and edit.
+This module utilizes xlsxwriter and pandas.Frame.
+While I like the simplicity of the dome format, spreadsheet data is easier to read and edit.
 """
 import logging
 import warnings
@@ -28,7 +28,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
         Path to the output file
     skip_empty : bool
         Skip output of empty models (n = 0)
-    overwrite : bool
+    overwrite : bool, optional
         None to prompt for overwrite selection; True to overwrite; False to not overwrite
     add_book : str, optional
         An optional model to be added to the output spreadsheet
