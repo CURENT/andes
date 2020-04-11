@@ -80,10 +80,8 @@ class Fault(ModelData, Model):
                                v_str='im(1/(rf + 1j * xf))',
                                )
 
-        # uf: an internal flag of whether the fault is in action (1) or not
-        self.uf = ConstService(tex_name='u_f',
-                               v_str='0',
-                               )
+        # uf: an internal flag of whether the fault is in action (1) or not (0)
+        self.uf = ConstService(tex_name='u_f', v_str='0')
 
         self.a = ExtAlgeb(model='Bus',
                           src='a',
@@ -105,27 +103,28 @@ class Fault(ModelData, Model):
 
     def apply_fault(self, is_time: np.ndarray):
         """
-        Apply fault and store pre-fault bus voltages to ``self._vstore``.
+        Apply fault and store pre-fault algebraic variables (voltages and other algevs) to ``self._vstore``.
         """
+        action = False
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 1
-                # store voltages along with the rest of algebraic variables
                 self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
                 tqdm.write(f'<Fault {self.idx[i]}>: '
                            f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]}sec.')
-                return True
-        return False
+                action = True
+        return action
 
     def clear_fault(self, is_time: np.ndarray):
         """
-        Clear fault and restore pre-fault bus voltages.
+        Clear fault and restore pre-fault bus algebraic variables (voltages and others).
         """
+        action = False
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
                 self.system.dae.y[self.system.Bus.n:] = self._vstore
                 tqdm.write(f'<Fault {self.idx[i]}>: '
                            f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]}sec.')
-                return True
-        return False
+                action = True
+        return action
