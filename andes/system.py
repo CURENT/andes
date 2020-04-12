@@ -691,10 +691,18 @@ class System(object):
         """
         Wrapper to call model methods.
         """
-        if not isinstance(models, OrderedDict):
+        single = False
+        if isinstance(models, Model):
+            models = {models.class_name: models}
+            single = True
+        if not isinstance(models, (OrderedDict, dict)):
             models = self._get_models(models)
-        for mdl in models.values():
-            getattr(mdl, method)()
+
+        ret = [getattr(mdl, method)() for mdl in models.values()]
+        if single is True:
+            ret = ret[0]
+
+        return ret
 
     def _check_group_common(self):
         """
