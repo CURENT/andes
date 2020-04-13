@@ -106,7 +106,8 @@ class Config(object):
                                   ('Value', value),
                                   ('Info', info),
                                   ('Acceptable values', alt)])
-        rest_dict = OrderedDict([('Option', tex),
+        rest_dict = OrderedDict([('Option', names),
+                                 ('Symbol', tex),
                                  ('Value', value),
                                  ('Info', info),
                                  ('Accepted values', alt)])
