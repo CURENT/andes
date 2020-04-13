@@ -80,6 +80,7 @@ class System(object):
                               store_z=(0, 1),
                               ipadd=(0, 1),
                               )
+        self.config.check()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
@@ -814,6 +815,7 @@ class System(object):
                 the_class = getattr(the_module, model_name)
                 self.__dict__[model_name] = the_class(system=self, config=self._config_object)
                 self.models[model_name] = self.__dict__[model_name]
+                self.models[model_name].config.check()
 
                 # link to the group
                 group_name = self.__dict__[model_name].group
