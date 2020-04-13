@@ -60,6 +60,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/source/modelref.rst
+docs/source/configref.rst
 docs/build/
 docs/source/_build/
 docs/source/generated/
