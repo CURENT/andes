@@ -1,9 +1,9 @@
 ## Version 0.9.0
 
 ### Milestones
-*   Robust iterative initialization
+- [x] Help system and consistency check system for Config
 *   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
-*   Help system and consistency check system for Config
+*   Robust iterative initialization
 *   Refactor Model to separate symbolic processing part as `ModelSymbolic` -> `Model.sym`.
 *   Separate the solver class into an interface class + different solver classes
 
@@ -15,12 +15,12 @@
 - [x] Add ``Model.int`` for internal indexer (implemented by replacing `Model.idx` as DataParam)
 - [x] Allow adding routine without modifying code (as long as routines are added to `Routines.all_routines`)
 - [x] Add a help system for Config
+- [x] Add consistency checks for Config
 *   Deal with two-terminal and multi-terminal devices
 *   Iterative initialization for equations (half done with Newton Krylov)
 *   Define general hooks - when should the connectivity check happen
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
 *   Example COI model
-*   Add consistency checks for Config
 
 
 ## Later Versions

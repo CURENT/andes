@@ -1,6 +1,7 @@
 import pprint
 import logging
 from collections import OrderedDict
+from typing import Iterable
 from andes.utils.tab import make_doc_table, math_wrap
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,24 @@ class Config(object):
         out += make_doc_table(title="", max_width=max_width, export=export,
                               plain_dict=plain_dict, rest_dict=rest_dict)
         return out
+
+    def check(self):
+        """
+        Check the validity of config values.
+        """
+        for key, val in self.as_dict().items():
+            if key not in self._alt:
+                continue
+
+            _alt = self._alt[key]
+            if not isinstance(_alt, Iterable):
+                continue
+            if isinstance(_alt, str):
+                continue
+            if val not in _alt:
+                raise ValueError(f"[{self._name}].{key}={val} is not a choice from {_alt}.")
+
+        return True
 
     @property
     def tex_names(self):
