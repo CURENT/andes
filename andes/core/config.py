@@ -86,9 +86,19 @@ class Config(object):
     def __repr__(self):
         return pprint.pformat(self.as_dict())
 
-    def doc(self, max_width=80, export='plain'):
+    def doc(self, max_width=80, export='plain', target=False, symbol=True):
+        out = ''
         if len(self.as_dict()) == 0:
-            return ''
+            return out
+
+        if export == 'rest' and target is True:
+            max_width = 0
+            model_header = '-' * 80 + '\n'
+            out += f'.. _{self._name}:\n\n'
+            out += model_header + f'{self._name}\n' + model_header
+        else:
+            model_header = '\n'
+            out += model_header + f'Config Fields in [{self._name}]\n' + model_header
 
         names, value, info = list(), list(), list()
         alt, tex = list(), list()
@@ -112,9 +122,12 @@ class Config(object):
                                  ('Info', info),
                                  ('Accepted values', alt)])
 
-        return make_doc_table(title=f'Config Fields in [{self._name}]',
-                              max_width=max_width, export=export,
+        if not symbol:
+            rest_dict.pop("Symbol")
+
+        out += make_doc_table(title="", max_width=max_width, export=export,
                               plain_dict=plain_dict, rest_dict=rest_dict)
+        return out
 
     @property
     def tex_names(self):

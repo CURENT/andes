@@ -46,6 +46,7 @@ ANDES is currently under active development.
    modeling.rst
    cases.rst
    modelref.rst
+   configref.rst
    misc.rst
    release-notes.rst
 
