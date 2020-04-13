@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class PFlow(BaseRoutine):
-
+    """
+    Power flow calculation routine.
+    """
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
@@ -37,10 +39,12 @@ class PFlow(BaseRoutine):
 
     def nr_step(self):
         """
-        Single stepping for Newton Raphson method
+        Single step using Newton-Raphson method.
+
         Returns
         -------
-
+        float
+            maximum absolute mismatch
         """
         system = self.system
         # evaluate discrete, differential, algebraic, and jacobians
@@ -73,6 +77,9 @@ class PFlow(BaseRoutine):
         return mis
 
     def summary(self):
+        """
+        Output a summary for the PFlow routine.
+        """
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
@@ -82,11 +89,12 @@ class PFlow(BaseRoutine):
 
     def run(self, **kwargs):
         """
-        Full Newton-Raphson method
+        Full Newton-Raphson method.
 
         Returns
         -------
-
+        bool
+            convergence status
         """
         system = self.system
         self.summary()
