@@ -79,3 +79,39 @@ class Tab(Texttable):
         else:
             pre = ''
         return pre + str(Texttable.draw(self)) + '\n\n'
+
+
+def make_doc_table(title, max_width, export, plain_dict, rest_dict):
+    """
+    Helper function to format documentation data into tables.
+    """
+    data_dict = rest_dict if export == 'rest' else plain_dict
+    table = Tab(title=title, max_width=max_width, export=export)
+    table.header(list(data_dict.keys()))
+    rows = list(map(list, zip(*list(data_dict.values()))))
+    table.add_rows(rows, header=False)
+
+    return table.draw()
+
+
+def math_wrap(tex_str_list, export):
+    """
+    Warp each string item in a list with latex math environment ``$...$``.
+
+    Parameters
+    ----------
+    tex_str_list : list
+        A list of equations to be wrapped
+    export : str, ('rest', 'plain')
+        Export format. Only wrap equations if export format is ``rest``.
+    """
+    if export != 'rest':
+        return list(tex_str_list)
+
+    out = []
+    for item in tex_str_list:
+        if item is None or item == '':
+            out.append('')
+        else:
+            out.append(rf':math:`{item}`')
+    return out

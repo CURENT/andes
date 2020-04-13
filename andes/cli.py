@@ -8,6 +8,7 @@ import importlib
 from time import strftime
 from andes.main import config_logger, find_log_path
 from andes.utils.paths import get_log_dir
+from andes.routines import routine_cli
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def create_parser():
         '-v', '--verbose',
         help='Program logging level in 10-DEBUG, 20-INFO, 30-WARNING, '
              '40-ERROR or 50-CRITICAL.',
-        type=int, default=20, choices=(10, 20, 30, 40, 50))
+        type=int, default=20, choices=(1, 10, 20, 30, 40, 50))
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
                                                              '[plot] plot simulation results; '
@@ -33,12 +34,12 @@ def create_parser():
 
     run = sub_parsers.add_parser('run')
     run.add_argument('filename', help='Case file name. Power flow is calculated by default.', nargs='*')
-    run.add_argument('-r', '--routine',
-                     action='store', help='Simulation routine to run.',
-                     choices=('tds', 'eig'))
+    run.add_argument('-r', '--routine', nargs='*', default=('pflow', ),
+                     action='store', help='Simulation routine(s). Single routine or multiple separated with '
+                                          'space. Run PFlow by default.',
+                     choices=list(routine_cli.keys()))
     run.add_argument('-p', '--input-path', help='Path to case files', type=str, default='')
     run.add_argument('-a', '--addfile', help='Additional files used by some formats.')
-    run.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')
     run.add_argument('-P', '--pert', help='Perturbation file path', default='')
     run.add_argument('-o', '--output-path', help='Output path prefix', type=str, default='')
     run.add_argument('-n', '--no-output', help='Force no output of any kind', action='store_true')
@@ -121,7 +122,9 @@ def preamble():
                 rf"  / _ \| ' \/ _` / -_|_-< | " + "\n"
                 rf' /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.' + '\n')
 
-    logger.debug(f'Logging to file {find_log_path(logging.getLogger("andes"))[0]}')
+    log_path = find_log_path(logging.getLogger("andes"))
+    if len(log_path):
+        logger.debug(f'Logging to file {log_path[0]}')
 
 
 def main():

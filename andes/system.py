@@ -68,10 +68,21 @@ class System(object):
                                      ('ipadd', 1),
                                      )))
 
-        # file path manager
-        self.files = FileMan(case=case, **self.options)
-        # numerical DAE storage
-        self.dae = DAE(system=self)
+        self.config.add_extra("_help",
+                              freq='base frequency [Hz]',
+                              mva='system base MVA',
+                              store_z='store limiter status in TDS output',
+                              ipadd='Use spmatrix.ipadd if available',
+                              )
+        self.config.add_extra("_alt",
+                              freq="float",
+                              mva="float",
+                              store_z=(0, 1),
+                              ipadd=(0, 1),
+                              )
+
+        self.files = FileMan(case=case, **self.options)    # file path manager
+        self.dae = DAE(system=self)                        # numerical DAE storage
 
         # dynamic imports of groups, models and routines
         self._group_import()
@@ -657,7 +668,7 @@ class System(object):
 
         with open(pkl_path, 'rb') as f:
             self.calls = dill.load(f)
-        logger.debug(f'System undill: loaded <{pkl_path}> file.')
+        logger.debug(f'Undill loaded "{pkl_path}" file.')
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
@@ -691,10 +702,18 @@ class System(object):
         """
         Wrapper to call model methods.
         """
-        if not isinstance(models, OrderedDict):
+        single = False
+        if isinstance(models, Model):
+            models = {models.class_name: models}
+            single = True
+        if not isinstance(models, (OrderedDict, dict)):
             models = self._get_models(models)
-        for mdl in models.values():
-            getattr(mdl, method)()
+
+        ret = [getattr(mdl, method)() for mdl in models.values()]
+        if single is True:
+            ret = ret[0]
+
+        return ret
 
     def _check_group_common(self):
         """
@@ -741,8 +760,8 @@ class System(object):
                     if n not in dest_model.ref_params:
                         continue
 
-                    for model_idx, dest_idx in zip(model.idx, ref.v):
-                        if dest_idx not in dest_model.idx:
+                    for model_idx, dest_idx in zip(model.idx.v, ref.v):
+                        if dest_idx not in dest_model.idx.v:
                             continue
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.ref_params[n].v[uid].append(model_idx)
@@ -946,7 +965,7 @@ class System(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug(f'Config: Loaded from file <{conf_path}>.')
+        logger.debug(f'Config loaded from file "{conf_path}".')
         return conf
 
     def save_config(self, file_path=None):

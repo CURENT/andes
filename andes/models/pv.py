@@ -54,6 +54,17 @@ class PVModel(Model):
 
         self.config.add(OrderedDict((('pv2pq', 0),
                                      ('npv2pq', 1))))
+        self.config.add_extra("_help",
+                              pv2pq="convert PV to PQ in PFlow at Q limits",
+                              npv2pq="max. # of pv2pq conversion in each iteration",
+                              )
+        self.config.add_extra("_alt",
+                              pv2pq=(0, 1),
+                              npv2pq=">=0"
+                              )
+        self.config.add_extra("_tex",
+                              pv2pq="z_{pv2pq}",
+                              )
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')
@@ -77,9 +88,9 @@ class PVModel(Model):
 
         # power injection equations g(y) = 0
         self.p.e_str = "u * (p0 - p)"
-        self.q.e_str = "u * (qlim_zi * (v0 - v) + \
-                             qlim_zl * (qmin - q) + \
-                             qlim_zu * (qmax - q))"
+        self.q.e_str = "u*(qlim_zi * (v0-v) + "\
+                       "qlim_zl * (qmin-q) + "\
+                       "qlim_zu * (qmax-q))"
 
         # NOTE: the line below fails at TDS
         # self.q.e_str = "Piecewise((qmin - q, q < qmin), (qmax - q, q > qmax), (v0 - v, True))"
@@ -98,12 +109,21 @@ class Slack(SlackData, PVModel):
 
         self.config.add(OrderedDict((('av2pv', 0),
                                      )))
+        self.config.add_extra("_help",
+                              av2pv="convert Slack to PV in PFlow at P limits",
+                              )
+        self.config.add_extra("_alt",
+                              av2pv=(0, 1),
+                              )
+        self.config.add_extra("_tex",
+                              av2pv="z_{a2pv}",
+                              )
         self.a.v_setter = True
         self.a.v_str = 'a0'
 
         self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
                                   enable=self.config.av2pv)
 
-        self.p.e_str = "u * (plim_zi * (a0 - a) + \
-                             plim_zl * (pmin - p) + \
-                             plim_zu * (pmax - p))"
+        self.p.e_str = "u*(plim_zi * (a0-a) + "\
+                       "plim_zl * (pmin-p) + "\
+                       "plim_zu * (pmax-p))"

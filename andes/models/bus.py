@@ -76,6 +76,15 @@ class Bus(Model, BusData):
 
         self.config.add(OrderedDict((('flat_start', 0),
                                      )))
+        self.config.add_extra("_help",
+                              flat_start="flat start for voltages",
+                              )
+        self.config.add_extra("_alt",
+                              flat_start=(0, 1),
+                              )
+        self.config.add_extra("_tex",
+                              flat_start="z_{flat}",
+                              )
 
         self.group = 'ACTopology'
         self.category = ['TransNode']

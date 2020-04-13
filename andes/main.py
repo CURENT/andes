@@ -14,6 +14,7 @@ from typing import Optional, Union
 
 import andes
 from andes.system import System
+from andes.routines import routine_cli
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, tests_root, get_log_dir
 from andes.shared import coloredlogs, unittest
@@ -60,11 +61,15 @@ def config_logger(stream=True,
     logger = logging.getLogger('andes')
     logger.setLevel(logging.DEBUG)
 
+    sh_formatter_str = '%(message)s'
+    if stream_level == 1:
+        sh_formatter_str = '%(name)s:%(lineno)d - %(levelname)s - %(message)s'
+        stream_level = 10
+
+    sh_formatter = logging.Formatter(sh_formatter_str)
     if not len(logger.handlers):
         if stream is True:
-            sh_formatter = logging.Formatter('%(message)s')
             sh = logging.StreamHandler()
-
             sh.setFormatter(sh_formatter)
             sh.setLevel(stream_level)
             logger.addHandler(sh)
@@ -72,8 +77,7 @@ def config_logger(stream=True,
         # file handler for level DEBUG and up
         if file is True and (log_file is not None):
             log_full_path = os.path.join(log_path, log_file)
-            fh_formatter = logging.Formatter(
-                '%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            fh_formatter = logging.Formatter('%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s')
             fh = logging.FileHandler(log_full_path)
             fh.setLevel(file_level)
             fh.setFormatter(fh_formatter)
@@ -82,7 +86,7 @@ def config_logger(stream=True,
         globals()['logger'] = logger
 
     if not is_interactive():
-        coloredlogs.install(logger=logger, level=stream_level, fmt='%(message)s')
+        coloredlogs.install(logger=logger, level=stream_level, fmt=sh_formatter_str)
 
 
 def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
@@ -223,7 +227,7 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None,
+def run_case(case, routine='pflow', profile=False, convert='', convert_all='', add_book=None,
              remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
@@ -251,14 +255,16 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
                             overwrite=True, add_book=add_book)
         return system
 
-    system.PFlow.run(**kwargs)
-
     if routine is not None:
-        routine = routine.lower()
-        if routine == 'tds':
-            system.TDS.run(**kwargs)
-        elif routine == 'eig':
-            system.EIG.run(**kwargs)
+        if isinstance(routine, str):
+            routine = [routine]
+        if 'pflow' in routine:
+            routine = list(routine)
+            routine.remove('pflow')
+
+        system.PFlow.run(**kwargs)
+        for r in routine:
+            system.__dict__[routine_cli[r]].run(**kwargs)
 
     # Disable profiler and output results
     if profile:
@@ -506,7 +512,10 @@ def selftest(**kwargs):
     sys.stdout = sys.__stdout__
 
 
-def doc(attribute=None, list_supported=False, **kwargs):
+def doc(attribute=None, list_supported=False, config=False, **kwargs):
+    """
+    Quick documentation from command-line.
+    """
     system = System()
     if attribute is not None:
         if attribute in system.__dict__ and hasattr(system.__dict__[attribute], 'doc'):

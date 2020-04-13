@@ -27,8 +27,8 @@ class Test5Bus(unittest.TestCase):
         self.assertEqual(self.ss.TG2.n, 4)
 
     def test_idx(self):
-        self.assertSequenceEqual(self.ss.Bus.idx, [0, 1, 2, 3, 4])
-        self.assertSequenceEqual(self.ss.Area.idx, [1, 2, 3])
+        self.assertSequenceEqual(self.ss.Bus.idx.v, [0, 1, 2, 3, 4])
+        self.assertSequenceEqual(self.ss.Area.idx.v, [1, 2, 3])
 
     def test_cache_refresn(self):
         self.ss.Bus.cache.refresh()
@@ -113,7 +113,7 @@ class TestNPCCRAW(unittest.TestCase):
     def test_npcc_raw_tds(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'),
                             verbose=50,
-                            routine='TDS',
+                            routine='tds',
                             no_output=True,
                             profile=True,
                             tf=10,

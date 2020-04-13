@@ -26,6 +26,24 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),   # fixed step size / initial step size
                                      ('max_iter', 15),
                                      )))
+        self.config.add_extra("_help",
+                              tol="convergence tolerance",
+                              t0="simulation starting time",
+                              tf="simulation ending time",
+                              fixt="use fixed step size (1) or variable (0)",
+                              shrinkt='shrink step size for fixed method if not converged',
+                              tstep='the initial step step size',
+                              max_iter='maximum number of iterations',
+                              )
+        self.config.add_extra("_alt",
+                              tol="float",
+                              t0=">=0",
+                              tf=">t0",
+                              fixt=(0, 1),
+                              shrinkt=(0, 1),
+                              tstep='float',
+                              max_iter='>=10',
+                              )
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')

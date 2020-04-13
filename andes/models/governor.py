@@ -129,6 +129,19 @@ class TG2(TG2Data, TGBase):
         TGBase.__init__(self, system, config)
         self.config.add({'deadband': 0,
                          'hardlimit': 1})
+        self.config.add_extra("_help",
+                              deadband="enable input dead band",
+                              hardlimit="enable output hard limit"
+                              )
+        self.config.add_extra("_alt",
+                              deadband=(0, 1),
+                              hardlimit=(0, 1),
+                              )
+        self.config.add_extra("_tex",
+                              deadband="z_{deadband}",
+                              hardlimit="z_{hardlimit}",
+                              )
+
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}',
                          v_str='0',

@@ -17,9 +17,14 @@ class BaseRoutine(object):
 
         self.config.add(OrderedDict((('sparselib', 'klu'),
                                      )))
+        self.config.add_extra("_help", sparselib="linear sparse solver name")
+        self.config.add_extra("_alt", sparselib=("klu", "umfpack"))
 
         self.solver = Solver(sparselib=self.config.sparselib)
 
     @property
     def class_name(self):
         return self.__class__.__name__
+
+    def doc(self, max_width=80, export='plain'):
+        return self.config.doc(max_width, export)

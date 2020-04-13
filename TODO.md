@@ -12,15 +12,15 @@
 - [x] Fix the model connectivity status `u` in interface equations
 - [x] A refreshed raw file reader to build data into `ModelData` (partially refreshed)
 - [x] A refreshed dyr file reader
-*   Allow adding routine without modifying code
-*   Add ``Model._int`` for internal indexer
-*   Add a help system for Config
-*   Add consistency checks for Config
+- [x] Add ``Model.int`` for internal indexer (implemented by replacing `Model.idx` as DataParam)
+- [x] Allow adding routine without modifying code (as long as routines are added to `Routines.all_routines`)
+- [x] Add a help system for Config
 *   Deal with two-terminal and multi-terminal devices
 *   Iterative initialization for equations (half done with Newton Krylov)
 *   Define general hooks - when should the connectivity check happen
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
 *   Example COI model
+*   Add consistency checks for Config
 
 
 ## Later Versions
