@@ -112,7 +112,6 @@ class ModelData(object):
         self.idx_params = OrderedDict()
         self.timer_params = OrderedDict()
         self.n = 0
-        self.idx = []
         self.uid = {}
 
         if not hasattr(self, 'cache'):
@@ -122,6 +121,7 @@ class ModelData(object):
         self.cache.add_callback('df', self.as_df)
         self.cache.add_callback('df_in', self.as_df_in)
 
+        self.idx = DataParam(info='unique device idx')
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
         self.name = DataParam(info='device name', tex_name='name')
 
@@ -152,7 +152,7 @@ class ModelData(object):
 
         super(ModelData, self).__setattr__(key, value)
 
-    def add(self, idx=None, **kwargs):
+    def add(self, **kwargs):
         """
         Add a device (an instance) to this model.
 
@@ -163,12 +163,10 @@ class ModelData(object):
 
         Parameters
         ----------
-        idx : str, optional, default is None
-            reference-able external index, will be automatically assigned if is None.
         kwargs
             model parameters are collected into the kwargs dictionary
         """
-        self.idx.append(idx)
+        idx = kwargs['idx']
         self.uid[idx] = self.n
         self.n += 1
         if kwargs.get("name") is None:
@@ -197,7 +195,6 @@ class ModelData(object):
         """
         out = dict()
         out['uid'] = np.arange(self.n)
-        out['idx'] = self.idx
 
         for name, instance in self.params.items():
             # skip non-exported parameters
@@ -266,12 +263,12 @@ class ModelData(object):
 
         Parameters
         ----------
-        keys : str, array-like
+        keys : str, array-like, Sized
             A string or an array-like of strings containing the names of parameters for the search criteria
         values : array, array of arrays
             Values for the corresponding key to search for. If keys is a str, values should be an array of
             elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_missing : bool
+        allow_missing : bool, Sized
             Allow key, value to be not found. Used by groups.
 
         Returns
@@ -300,7 +297,7 @@ class ModelData(object):
             v_idx = None
             for pos, v_attr in enumerate(zip(*v_attrs)):
                 if all([i == j for i, j in zip(v_search, v_attr)]):
-                    v_idx = self.idx[pos]
+                    v_idx = self.idx.v[pos]
                     break
             if v_idx is None:
                 if allow_missing is False:
@@ -379,7 +376,6 @@ class Model(object):
 
         # duplicate attributes from ModelData. Keep for now.
         self.n = 0
-        self.idx = []
         self.group = 'Undefined'
 
         if not hasattr(self, 'num_params'):
@@ -564,7 +560,7 @@ class Model(object):
         ----------
         src : str
             Name of the model property
-        idx : any
+        idx : str, int, float, array-like
             Indices of the devices
         attr : str, optional, default='v'
             The attribute of the property to get.
@@ -593,7 +589,7 @@ class Model(object):
         ----------
         src : str
             Name of the model property
-        idx : any
+        idx : str, int, float, array-like
             Indices of the devices
         attr : str, optional, default='v'
             The attribute of the property to get.

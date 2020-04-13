@@ -35,7 +35,7 @@ class Toggler(TogglerData, Model):
                 u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
                 instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
                 action = True
-                tqdm.write(f'<Toggle {self.idx[i]}>: '
+                tqdm.write(f'<Toggle {self.idx.v[i]}>: '
                            f'Status of {self.model.v[i]}.{self.dev.v[i]} changed to {1-u0} at t={self.t.v[i]}sec.')
         return action
 
@@ -110,7 +110,7 @@ class Fault(ModelData, Model):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 1
                 self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
-                tqdm.write(f'<Fault {self.idx[i]}>: '
+                tqdm.write(f'<Fault {self.idx.v[i]}>: '
                            f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]}sec.')
                 action = True
         return action
@@ -124,7 +124,7 @@ class Fault(ModelData, Model):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
                 self.system.dae.y[self.system.Bus.n:] = self._vstore
-                tqdm.write(f'<Fault {self.idx[i]}>: '
+                tqdm.write(f'<Fault {self.idx.v[i]}>: '
                            f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]}sec.')
                 action = True
         return action

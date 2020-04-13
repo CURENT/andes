@@ -749,8 +749,8 @@ class System(object):
                     if n not in dest_model.ref_params:
                         continue
 
-                    for model_idx, dest_idx in zip(model.idx, ref.v):
-                        if dest_idx not in dest_model.idx:
+                    for model_idx, dest_idx in zip(model.idx.v, ref.v):
+                        if dest_idx not in dest_model.idx.v:
                             continue
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.ref_params[n].v[uid].append(model_idx)
