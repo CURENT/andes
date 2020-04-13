@@ -22,6 +22,8 @@ class EIG(BaseRoutine):
         super().__init__(system=system, config=config)
 
         self.config.add(plot=0)
+        self.config.add_extra("_help", plot="show plot after computation")
+        self.config.add_extra("_alt", plot=(0, 1))
 
         # internal flags and storage
         self.As = None

@@ -19,6 +19,16 @@ class PFlow(BaseRoutine):
                                      ('max_iter', 25),
                                      ('report', 1),
                                      )))
+        self.config.add_extra("_help",
+                              tol="convergence tolerance",
+                              max_iter="max. number of iterations",
+                              report="write output report",
+                              )
+        self.config.add_extra("_alt",
+                              tol="float",
+                              max_iter=">=10",
+                              report=(0, 1),
+                              )
         self.models = system.find_models('pflow')
 
         self.converged = False

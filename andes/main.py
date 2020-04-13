@@ -512,7 +512,10 @@ def selftest(**kwargs):
     sys.stdout = sys.__stdout__
 
 
-def doc(attribute=None, list_supported=False, **kwargs):
+def doc(attribute=None, list_supported=False, config=False, **kwargs):
+    """
+    Quick documentation from command-line.
+    """
     system = System()
     if attribute is not None:
         if attribute in system.__dict__ and hasattr(system.__dict__[attribute], 'doc'):

@@ -20,7 +20,6 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-exec(open("modelref.py").read())
 
 # -- General configuration ------------------------------------------------
 
@@ -206,3 +205,6 @@ html_favicon = 'images/curent.ico'
 
 # Disable smartquotes to display double dashes correctly
 smartquotes = False
+
+# import and execute model reference generation script
+exec(open("modelref.py").read())

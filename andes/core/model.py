@@ -16,7 +16,7 @@ from andes.core.service import BaseService, ConstService, ExtService, OperationS
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
-from andes.utils.tab import Tab
+from andes.utils.tab import make_doc_table, math_wrap
 
 from andes.shared import np, pd, newton_krylov
 from andes.shared import jac_names, jac_types, jac_full_names
@@ -894,13 +894,18 @@ class Model(object):
             self.input_syms[var] = Symbol(var)
 
         for var in self.cache.all_vars_names:
-            self.vars_syms[var] = Symbol(var)
-            self.input_syms[var] = Symbol(var)
+            tmp = Symbol(var)
+            self.vars_syms[var] = tmp
+            self.input_syms[var] = tmp
             if self.__dict__[var].v_iter is not None:
-                self.iter_syms[var] = Symbol(var)
+                self.iter_syms[var] = tmp
 
+        # store tex names defined in `self.config`
         for key in self.config.as_dict():
-            self.input_syms[key] = Symbol(key)
+            tmp = Symbol(key)
+            self.input_syms[key] = tmp
+            if key in self.config.tex_names:
+                self.tex_names[tmp] = Symbol(self.config.tex_names[key])
 
         # store tex names for pretty printing replacement later
         for var in self.input_syms:
@@ -1464,7 +1469,7 @@ class Model(object):
         # symbols based on output format
         if export == 'rest':
             symbols = [item.tex_name for item in self.params.values()]
-            symbols = self._math_wrap(symbols, export=export)
+            symbols = math_wrap(symbols, export=export)
         else:
             symbols = [item.name for item in self.params.values()]
 
@@ -1484,47 +1489,11 @@ class Model(object):
                                  ('Properties', properties)])
 
         # convert to rows and export as table
-        return self._make_doc_table(title='Parameters',
-                                    max_width=max_width,
-                                    export=export,
-                                    plain_dict=plain_dict,
-                                    rest_dict=rest_dict)
-
-    @staticmethod
-    def _make_doc_table(title, max_width, export, plain_dict, rest_dict):
-        """
-        Helper function to format documentation data into tables.
-        """
-        data_dict = rest_dict if export == 'rest' else plain_dict
-        table = Tab(title=title, max_width=max_width, export=export)
-        table.header(list(data_dict.keys()))
-        rows = list(map(list, zip(*list(data_dict.values()))))
-        table.add_rows(rows, header=False)
-
-        return table.draw()
-
-    @staticmethod
-    def _math_wrap(tex_str_list, export):
-        """
-        Warp each string item in a list with latex math environment ``$...$``.
-
-        Parameters
-        ----------
-        tex_str_list : list
-            A list of equations to be wrapped
-        export : str, ('rest', 'plain')
-            Export format. Only wrap equations if export format is ``rest``.
-        """
-        if export != 'rest':
-            return list(tex_str_list)
-
-        out = []
-        for item in tex_str_list:
-            if item is None or item == '':
-                out.append('')
-            else:
-                out.append(rf':math:`{item}`')
-        return out
+        return make_doc_table(title='Parameters',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def _var_doc(self, max_width=80, export='plain'):
         # variable documentation
@@ -1553,8 +1522,8 @@ class Model(object):
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
-            symbols = self._math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = self._math_wrap(call_store.init_latex.values(), export=export)
+            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Initial Value', ivs),
@@ -1569,11 +1538,11 @@ class Model(object):
                                  ('Unit', units_rest),
                                  ('Properties', properties)])
 
-        return self._make_doc_table(title='Variables',
-                                    max_width=max_width,
-                                    export=export,
-                                    plain_dict=plain_dict,
-                                    rest_dict=rest_dict)
+        return make_doc_table(title='Variables',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def _eq_doc(self, max_width=80, export='plain'):
         # equation documentation
@@ -1589,8 +1558,8 @@ class Model(object):
 
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
-            symbols = self._math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            eqs_rest = self._math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Equation (x\'=f or g=0)', eqs),
@@ -1601,11 +1570,11 @@ class Model(object):
                                  ('Equation (x\'=f or g=0)', eqs_rest),
                                  ('Type', class_names)])
 
-        return self._make_doc_table(title='Equations',
-                                    max_width=max_width,
-                                    export=export,
-                                    plain_dict=plain_dict,
-                                    rest_dict=rest_dict)
+        return make_doc_table(title='Equations',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def _service_doc(self, max_width=80, export='plain'):
         if len(self.services) == 0:
@@ -1621,8 +1590,8 @@ class Model(object):
 
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
-            symbols = self._math_wrap([item.tex_name for item in self.services.values()], export=export)
-            eqs_rest = self._math_wrap(call_store.s_latex, export=export)
+            symbols = math_wrap([item.tex_name for item in self.services.values()], export=export)
+            eqs_rest = math_wrap(call_store.s_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Equation', eqs),
@@ -1633,11 +1602,11 @@ class Model(object):
                                  ('Equation', eqs_rest),
                                  ('Type', class_names)])
 
-        return self._make_doc_table(title='Services',
-                                    max_width=max_width,
-                                    export=export,
-                                    plain_dict=plain_dict,
-                                    rest_dict=rest_dict)
+        return make_doc_table(title='Services',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def _discrete_doc(self, max_width=80, export='plain'):
         if len(self.discrete) == 0:
@@ -1651,7 +1620,7 @@ class Model(object):
             class_names.append(p.class_name)
 
         if export == 'rest':
-            symbols = self._math_wrap([item.tex_name for item in self.discrete.values()], export=export)
+            symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', class_names)])
 
@@ -1659,11 +1628,11 @@ class Model(object):
                                  ('Symbol', symbols),
                                  ('Type', class_names)])
 
-        return self._make_doc_table(title='Discrete',
-                                    max_width=max_width,
-                                    export=export,
-                                    plain_dict=plain_dict,
-                                    rest_dict=rest_dict)
+        return make_doc_table(title='Discrete',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def _block_doc(self, max_width=80, export='plain'):
         return ''
@@ -1708,6 +1677,7 @@ class Model(object):
             self._eq_doc(max_width=max_width, export=export) + \
             self._service_doc(max_width=max_width, export=export) + \
             self._discrete_doc(max_width=max_width, export=export) + \
-            self._block_doc(max_width=max_width, export=export)
+            self._block_doc(max_width=max_width, export=export) + \
+            self.config.doc(max_width=max_width, export=export)
 
         return out

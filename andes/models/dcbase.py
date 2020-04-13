@@ -59,6 +59,15 @@ class Node(NodeData, Model):
 
         self.config.add(OrderedDict((('flat_start', 0),
                                      )))
+        self.config.add_extra("_help",
+                              flat_start="flat start for voltages",
+                              )
+        self.config.add_extra("_alt",
+                              flat_start=(0, 1),
+                              )
+        self.config.add_extra("_tex",
+                              flat_start="z_{flat}",
+                              )
 
         self.group = 'DCTopology'
         self.category = ['TransNode']
@@ -71,8 +80,8 @@ class Node(NodeData, Model):
                        diag_eps=1e-6,
                        )
 
-        self.v.v_str = 'flat_start * 1 + ' \
-                       '(1 - flat_start) * v0'
+        self.v.v_str = 'flat_start*1 + ' \
+                       '(1-flat_start)*v0'
 
 
 class DC2Term(ModelData, Model):

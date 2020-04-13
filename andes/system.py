@@ -68,10 +68,21 @@ class System(object):
                                      ('ipadd', 1),
                                      )))
 
-        # file path manager
-        self.files = FileMan(case=case, **self.options)
-        # numerical DAE storage
-        self.dae = DAE(system=self)
+        self.config.add_extra("_help",
+                              freq='base frequency [Hz]',
+                              mva='system base MVA',
+                              store_z='store limiter status in TDS output',
+                              ipadd='Use spmatrix.ipadd if available',
+                              )
+        self.config.add_extra("_alt",
+                              freq="float",
+                              mva="float",
+                              store_z=(0, 1),
+                              ipadd=(0, 1),
+                              )
+
+        self.files = FileMan(case=case, **self.options)    # file path manager
+        self.dae = DAE(system=self)                        # numerical DAE storage
 
         # dynamic imports of groups, models and routines
         self._group_import()
