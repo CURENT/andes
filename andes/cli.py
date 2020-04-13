@@ -8,6 +8,7 @@ import importlib
 from time import strftime
 from andes.main import config_logger, find_log_path
 from andes.utils.paths import get_log_dir
+from andes.routines import routine_cli
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +34,12 @@ def create_parser():
 
     run = sub_parsers.add_parser('run')
     run.add_argument('filename', help='Case file name. Power flow is calculated by default.', nargs='*')
-    run.add_argument('-r', '--routine',
-                     action='store', help='Simulation routine to run.',
-                     choices=('tds', 'eig'))
+    run.add_argument('-r', '--routine', nargs='*', default=('pflow', ),
+                     action='store', help='Simulation routine(s). Single routine or multiple separated with '
+                                          'space. Run PFlow by default.',
+                     choices=list(routine_cli.keys()))
     run.add_argument('-p', '--input-path', help='Path to case files', type=str, default='')
     run.add_argument('-a', '--addfile', help='Additional files used by some formats.')
-    run.add_argument('-D', '--dynfile', help='Additional dynamic file in dm format.')
     run.add_argument('-P', '--pert', help='Perturbation file path', default='')
     run.add_argument('-o', '--output-path', help='Output path prefix', type=str, default='')
     run.add_argument('-n', '--no-output', help='Force no output of any kind', action='store_true')

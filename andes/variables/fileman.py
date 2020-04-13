@@ -27,12 +27,12 @@ class FileMan(object):
 
         self.case = None
         self.case_path = ''
+        self.input_path = ''
         self.fullname = None
         self.name = None
         self.ext = None
         self.addfile = None
         self.pert = None
-        self.dynfile = None
 
         self.output_path = None
 
@@ -56,7 +56,6 @@ class FileMan(object):
 
         addfile = kwargs.get('addfile')
         no_output = kwargs.get('no_output')
-        dynfile = kwargs.get('dynfile')
         output_path = kwargs.get('output_path')
         output = kwargs.get('output')  # base file name for the output
         pert = kwargs.get('pert')
@@ -82,7 +81,6 @@ class FileMan(object):
 
         self.addfile = self.get_fullpath(addfile)
         self.pert = self.get_fullpath(pert)
-        self.dynfile = self.get_fullpath(dynfile)
         if dump is None:
             dump = self.name
 

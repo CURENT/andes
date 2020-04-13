@@ -14,6 +14,7 @@ from typing import Optional, Union
 
 import andes
 from andes.system import System
+from andes.routines import routine_cli
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, tests_root, get_log_dir
 from andes.shared import coloredlogs, unittest
@@ -226,7 +227,7 @@ def load(case, **kwargs):
     return system
 
 
-def run_case(case, routine=None, profile=False, convert='', convert_all='', add_book=None,
+def run_case(case, routine='pflow', profile=False, convert='', convert_all='', add_book=None,
              remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
@@ -254,14 +255,16 @@ def run_case(case, routine=None, profile=False, convert='', convert_all='', add_
                             overwrite=True, add_book=add_book)
         return system
 
-    system.PFlow.run(**kwargs)
-
     if routine is not None:
-        routine = routine.lower()
-        if routine == 'tds':
-            system.TDS.run(**kwargs)
-        elif routine == 'eig':
-            system.EIG.run(**kwargs)
+        if isinstance(routine, str):
+            routine = [routine]
+        if 'pflow' in routine:
+            routine = list(routine)
+            routine.remove('pflow')
+
+        system.PFlow.run(**kwargs)
+        for r in routine:
+            system.__dict__[routine_cli[r]].run(**kwargs)
 
     # Disable profiler and output results
     if profile:
