@@ -1168,7 +1168,7 @@ class Model(object):
             self.solve_initialization()
         # ----------------------------------------
 
-        # call custom variable initializer after lambdified initializers
+        # call custom variable initializer after generated initializers
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
@@ -1176,7 +1176,7 @@ class Model(object):
 
     def get_init_order(self):
         """
-        Get variable initialization order sent to logger.info.
+        Get variable initialization order and send to `logger.info`.
         """
         out = []
         for name in self.vars_decl_order.keys():
@@ -1196,9 +1196,8 @@ class Model(object):
         # evaluate numerical function calls
         kwargs = self.get_inputs()
 
-        # call lambdified functions with use self.call
+        # call lambda functions in self.call
         ret = self.calls.f_lambdify(**kwargs)
-
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
             instance.e += ret[idx][0]
 
@@ -1221,9 +1220,8 @@ class Model(object):
         # evaluate numerical function calls
         kwargs = self.get_inputs()
 
-        # call lambdified functions with use self.call
+        # call lambda functions stored in `self.calls`
         ret = self.calls.g_lambdify(**kwargs)
-
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
             instance.e += ret[idx][0]
 

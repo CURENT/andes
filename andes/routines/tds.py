@@ -21,9 +21,9 @@ class TDS(BaseRoutine):
         self.config.add(OrderedDict((('tol', 1e-4),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
-                                     ('fixt', 1),       # use fixed time step
-                                     ('shrinkt', 1),    # shrink step size if `max_iter` is reached
-                                     ('tstep', 1/30),   # fixed step size / initial step size
+                                     ('fixt', 1),
+                                     ('shrinkt', 1),
+                                     ('tstep', 1/30),
                                      ('max_iter', 15),
                                      )))
         self.config.add_extra("_help",

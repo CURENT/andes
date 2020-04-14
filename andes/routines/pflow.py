@@ -17,16 +17,22 @@ class PFlow(BaseRoutine):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
                                      ('max_iter', 25),
+                                     ('method', 'NR'),
+                                     ('n_factorize', 4),
                                      ('report', 1),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
                               max_iter="max. number of iterations",
+                              method="calculation method",
+                              n_factorize="first N iterations to factorize Jacobian in dishonest method",
                               report="write output report",
                               )
         self.config.add_extra("_alt",
                               tol="float",
+                              method=("NR", "dishonest"),
                               max_iter=">=10",
+                              n_factorize=">0",
                               report=(0, 1),
                               )
         self.models = system.find_models('pflow')
@@ -65,7 +71,12 @@ class PFlow(BaseRoutine):
         system.l_check_eq()
         system.l_set_eq()
         system.fg_to_dae()
-        system.j_update()
+
+        if self.config.method == 'NR':
+            system.j_update()
+        elif self.config.method == 'dishonest':
+            if self.niter < self.config.n_factorize:
+                system.j_update()
 
         # prepare and solve linear equations
         self.inc = -matrix([matrix(system.dae.f),
@@ -93,7 +104,7 @@ class PFlow(BaseRoutine):
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
-        out.append('Method: Full Newton-Raphson method')
+        out.append(f'Method: {self.config.method} method')
         out_str = '\n'.join(out)
         logger.info(out_str)
 
