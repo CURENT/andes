@@ -163,6 +163,9 @@ class PFlow(BaseRoutine):
         return self.converged
 
     def write_report(self):
+        """
+        Write power flow report to text file.
+        """
         if self.system.files.no_output is False:
             r = Report(self.system)
             r.write()
@@ -215,7 +218,7 @@ class PFlow(BaseRoutine):
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
         except ValueError as e:
-            logger.error('Mismatch is not correctable. Equations may be intrinsically unsolvable.')
+            logger.error('Mismatch is not correctable. Equations may be unsolvable.')
             raise e
 
         return ret

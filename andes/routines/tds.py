@@ -94,6 +94,8 @@ class TDS(BaseRoutine):
         system.vars_to_models()
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
+        self.eye = spdiag([1] * system.dae.n)
+        self.Teye = spdiag(matrix(system.dae.zf)) * spdiag([1] * system.dae.n)
 
         self.initialized = self.test_initialization()
         _, s1 = elapsed(t0)
@@ -264,12 +266,13 @@ class TDS(BaseRoutine):
                 system.j_update(models=self.pflow_tds_models)
                 self.solver.factorize = True
 
-            # solve trapezoidal rule integration
-            In = spdiag([1] * dae.n)
-            self.Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
+            # solve implicit trapezoidal method (ITM) integration
+            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
-            # reset q as well
+            # equation `q = 0` is the implicit form of differential equations using ITM
             q = dae.x - self.x0 - self.h * 0.5 * (dae.f + self.f0)
+
+            # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
                 if len(item.x_set) > 0:
                     for key, val in item.x_set:

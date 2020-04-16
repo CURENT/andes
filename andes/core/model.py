@@ -12,7 +12,7 @@ from andes.core.block import Block
 from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService, TimeConstant
+from andes.core.service import BaseService, ConstService, InverseTimeConstant
 from andes.core.service import ExtService, OperationService, RandomService
 
 from andes.utils.paths import get_pkl_path
@@ -485,7 +485,7 @@ class Model(object):
             self.discrete[key] = value
         elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
-        elif isinstance(value, TimeConstant):
+        elif isinstance(value, InverseTimeConstant):
             self.services[key] = value
             self.services_tc[value] = value
         elif isinstance(value, ExtService):
@@ -1155,10 +1155,10 @@ class Model(object):
         """
         if self.n == 0:
             return
+        logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         # update service values
         self.s_update()
-        logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
@@ -1200,9 +1200,6 @@ class Model(object):
 
         if self.n == 0:
             return
-
-        # update equations for algebraic variables supplied with `f_numeric`
-        # evaluate numerical function calls
         kwargs = self.get_inputs()
 
         # call lambda functions in self.call
@@ -1224,9 +1221,6 @@ class Model(object):
 
         if self.n == 0:
             return
-
-        # update equations for algebraic variables supplied with `g_numeric`
-        # evaluate numerical function calls
         kwargs = self.get_inputs()
 
         # call lambda functions stored in `self.calls`
@@ -1642,6 +1636,9 @@ class Model(object):
                               rest_dict=rest_dict)
 
     def _block_doc(self, max_width=80, export='plain'):
+        """
+        Documentation for blocks. To be implemented.
+        """
         return ''
 
     def doc(self, max_width=80, export='plain'):

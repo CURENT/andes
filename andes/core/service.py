@@ -95,13 +95,18 @@ class ConstService(BaseService):
         self.v: Union[float, int, ndarray] = 0.
 
 
-class TimeConstant(BaseService):
-    """
+class InverseTimeConstant(BaseService):
+    r"""
     Service for time constants.
 
     The construction an object takes an expression, which can be as simple as the name of an existing Param.
     The expression will be evaluated at the initialization and stored to the ``v`` attribute.
-    The element-wise inverse of the array will be stored in ``iv``.
+
+    Warnings
+    --------
+    The expression for `v_str` is the denominator expression.
+    For example, if the time constant T is associated with the differential equation
+    ``\dot{x} = (y - x) / T``, one need to supply ``v_str = 'T'``.
     """
     def __init__(self,
                  v_str: Optional[str] = None,
@@ -114,19 +119,19 @@ class TimeConstant(BaseService):
         self.v_numeric = v_numeric
         self.v_str = v_str
         self.v: Union[float, int, ndarray] = np.array([1.])
-        self.iv: Union[float, int, ndarray] = np.array([1.])
 
     def inverse(self):
         """
-        Calculate the multiplicative inverse and store to ``iv``.
+        Calculate the multiplicative inverse and store to ``v`` and ``iv``.
 
-        Entries whose absolute value are smaller than 1e-6 in ``v`` will be reset to 1.
-        Their multiplicative inverse (1/0) will be evaluated to zero.
+        For any element `x` in `self.v`:
+        - if |x| <= 1e-6:  1/x = 0
+        - else:            1/x = 1/x
         """
         idx = np.where(abs(self.v) <= 1e-6)
         self.v[idx] = 1
-        self.iv = 1 / self.v
-        self.iv[idx] = 0
+        self.v[:] = 1 / self.v
+        self.v[idx] = 0
 
 
 class ExtService(BaseService):

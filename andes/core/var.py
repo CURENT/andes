@@ -1,7 +1,7 @@
 from typing import Optional, Union, List
 
 from andes.core.param import BaseParam
-from andes.core.service import TimeConstant
+from andes.core.service import InverseTimeConstant
 from andes.models.group import GroupBase
 from andes.shared import np, ndarray
 
@@ -155,7 +155,7 @@ class State(BaseVar):
                  v_str: Optional[str] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
-                 t_const: Optional[TimeConstant] = None,
+                 t_const: Optional[InverseTimeConstant] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -332,7 +332,7 @@ class ExtState(ExtVar):
                  v_str: Optional[str] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
-                 t_const: Optional[TimeConstant] = None,
+                 t_const: Optional[InverseTimeConstant] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,

@@ -708,10 +708,10 @@ class System(object):
         """
         for var in self._adders['f']:
             if var.t_const is not None:
-                np.put(self.dae.zf, var.a, var.t_const.iv)
+                np.put(self.dae.zf, var.a, var.t_const.v)
         for var in self._setters['f']:
             if var.t_const is not None:
-                np.put(self.dae.zf, var.a, var.t_const.iv)
+                np.put(self.dae.zf, var.a, var.t_const.v)
 
     def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
         """
