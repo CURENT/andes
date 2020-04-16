@@ -487,7 +487,7 @@ class Model(object):
             self.services[key] = value
         elif isinstance(value, InverseTimeConstant):
             self.services[key] = value
-            self.services_tc[value] = value
+            self.services_tc[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (OperationService, RandomService)):
@@ -738,13 +738,16 @@ class Model(object):
 
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
-
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     # DO NOT use in-place operation since the return can be complex number
                     instance.v = func(**kwargs)
                 else:
+                    # warning:
+                    # If `v_str` of a Service is simply another variable, the function return will
+                    # point to the same address of the variable, not a copy. A copy is needed if one needs to
+                    # modify the auto-generated `v`. This is particularly relevant to InverseTimeConstant.
                     instance.v = func
 
                 if not isinstance(instance.v, np.ndarray):

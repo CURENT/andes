@@ -129,6 +129,9 @@ class InverseTimeConstant(BaseService):
         - else:            1/x = 1/x
         """
         idx = np.where(abs(self.v) <= 1e-6)
+
+        # Important!! Make a copy, as `self.v` could point to the same address of a parameter
+        self.v = np.array(self.v)
         self.v[idx] = 1
         self.v[:] = 1 / self.v
         self.v[idx] = 0

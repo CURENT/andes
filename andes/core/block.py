@@ -1,7 +1,7 @@
 from andes.core.var import Algeb, State
 from typing import Optional, Iterable
 from andes.core.discrete import AntiWindupLimiter
-from andes.core.service import ConstService
+from andes.core.service import ConstService, InverseTimeConstant
 from andes.core.triplet import JacTriplet
 
 
