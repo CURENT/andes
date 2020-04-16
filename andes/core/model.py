@@ -1541,37 +1541,70 @@ class Model(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _eq_doc(self, max_width=80, export='plain'):
+    def _eq_doc(self, max_width=80, export='plain', e_code=None):
+        out = ''
         # equation documentation
         if len(self.cache.all_vars) == 0:
-            return ''
-        names, symbols = list(), list()
-        eqs, eqs_rest, class_names = list(), list(), list()
+            return out
+        e2dict = {'f': self.cache.states_and_ext,
+                  'g': self.cache.algebs_and_ext,
+                  }
+        e2full = {'f': 'Differential',
+                  'g': 'Algebraic'}
 
-        for p in self.cache.all_vars.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            eqs.append(p.e_str if p.e_str else '')
+        e2form = {'f': "T x' = f(x, y)",
+                  'g': "0 = g(x, y)"}
 
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+        if e_code is None:
+            e_code = ('f', 'g')
+        elif isinstance(e_code, str):
+            e_code = (e_code, )
 
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Equation (x\'=f or g=0)', eqs),
-                                  ('Type', class_names)])
+        for e_name in e_code:
 
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Equation (x\'=f or g=0)', eqs_rest),
-                                 ('Type', class_names)])
+            if len(e2dict[e_name]) == 0:
+                continue
 
-        return make_doc_table(title='Equations',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
+            names, symbols = list(), list()
+            eqs, eqs_rest = list(), list()
+            lhs_names, lhs_tex_names = list(), list()
+            class_names = list()
+
+            for p in e2dict[e_name].values():
+                names.append(p.name)
+                class_names.append(p.class_name)
+                eqs.append(p.e_str if p.e_str else '')
+                if e_name == 'f':
+                    lhs_names.append(p.t_const.name if p.t_const else '')
+                    lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
+
+            if export == 'rest':
+                call_store = self.system.calls[self.class_name]
+                symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+                eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+
+            plain_dict = OrderedDict([('Name', names),
+                                      ('Type', class_names),
+                                      (f'RHS of Equation "{e2form[e_name]}"', eqs),
+                                      ])
+
+            rest_dict = OrderedDict([('Name', names),
+                                     ('Symbol', symbols),
+                                     ('Type', class_names),
+                                     (f'RHS of Equation "{e2form[e_name]}"', eqs_rest),
+                                     ])
+
+            if e_name == 'f':
+                plain_dict['T (LHS)'] = lhs_names
+                rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
+
+            out += make_doc_table(title=f'{e2full[e_name]} Equations',
+                                  max_width=max_width,
+                                  export=export,
+                                  plain_dict=plain_dict,
+                                  rest_dict=rest_dict)
+
+        return out
 
     def _service_doc(self, max_width=80, export='plain'):
         if len(self.services) == 0:
