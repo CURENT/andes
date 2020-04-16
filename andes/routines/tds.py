@@ -83,6 +83,7 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
         system = self.system
         self._reset()
+        self._load_pert()
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
 
@@ -93,9 +94,8 @@ class TDS(BaseRoutine):
         system.vars_to_models()
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
-        self.initialized = self.test_initialization()
 
-        self._load_pert()
+        self.initialized = self.test_initialization()
         _, s1 = elapsed(t0)
 
         if self.initialized is True:

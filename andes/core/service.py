@@ -95,6 +95,40 @@ class ConstService(BaseService):
         self.v: Union[float, int, ndarray] = 0.
 
 
+class TimeConstant(BaseService):
+    """
+    Service for time constants.
+
+    The construction an object takes an expression, which can be as simple as the name of an existing Param.
+    The expression will be evaluated at the initialization and stored to the ``v`` attribute.
+    The element-wise inverse of the array will be stored in ``iv``.
+    """
+    def __init__(self,
+                 v_str: Optional[str] = None,
+                 v_numeric: Optional[Callable] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 ):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.v_numeric = v_numeric
+        self.v_str = v_str
+        self.v: Union[float, int, ndarray] = np.array([1.])
+        self.iv: Union[float, int, ndarray] = np.array([1.])
+
+    def inverse(self):
+        """
+        Calculate the multiplicative inverse and store to ``iv``.
+
+        Entries whose absolute value are smaller than 1e-6 in ``v`` will be reset to 1.
+        Their multiplicative inverse (1/0) will be evaluated to zero.
+        """
+        idx = np.where(abs(self.v) <= 1e-6)
+        self.v[idx] = 1
+        self.iv = 1 / self.v
+        self.iv[idx] = 0
+
+
 class ExtService(BaseService):
     """
     Service constants whose value is from an external model or group.

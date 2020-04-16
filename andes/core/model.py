@@ -12,7 +12,8 @@ from andes.core.block import Block
 from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
+from andes.core.service import BaseService, ConstService, TimeConstant
+from andes.core.service import ExtService, OperationService, RandomService
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -399,6 +400,8 @@ class Model(object):
 
         # service/temporary variables
         self.services = OrderedDict()
+        # time-constant services
+        self.services_tc = OrderedDict()
         # external services (to be retrieved)
         self.services_ext = OrderedDict()
         # operational services (for special usages)
@@ -480,9 +483,11 @@ class Model(object):
             self.params_ext[key] = value
         elif isinstance(value, Discrete):
             self.discrete[key] = value
-        elif isinstance(value, ConstService):
-            # only services with `v_str`
+        elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
+        elif isinstance(value, TimeConstant):
+            self.services[key] = value
+            self.services_tc[value] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (OperationService, RandomService)):
@@ -755,6 +760,10 @@ class Model(object):
             if callable(func):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
+
+        # Evaluate TimeConstant multiplicative inverse
+        for instance in self.services_tc.values():
+            instance.inverse()
 
         kwargs = self.get_inputs(refresh=True)
         self.s_numeric(**kwargs)
@@ -1421,7 +1430,7 @@ class Model(object):
         Custom numeric update functions.
 
         This function should append indices to `_ifx`, `_jfx`, and append anonymous functions to `_vfx`.
-        It is only called once in `store_sparse_pattern`.
+        It is only called once by `store_sparse_pattern`.
         """
         pass
 

@@ -1,7 +1,7 @@
 from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService
+from andes.core.service import ConstService, ExtService, TimeConstant
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag
 
 
@@ -191,8 +191,12 @@ class EXDC2Model(ExcBase):
 
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
-                                  v_str='vb0 + v')
-
+                                  v_str='vb0 + v',
+                                  )
+        self.TEs = TimeConstant(info='Integrator time constant after safe checking',
+                                v_str='TE',
+                                tex_name='TE_s'
+                                )
         self.Se = Algeb(info='Saturation output',
                         tex_name='S_e',
                         unit='p.u.',
@@ -203,7 +207,9 @@ class EXDC2Model(ExcBase):
                         tex_name='V_p',
                         unit='p.u.',
                         v_str='vf0',
-                        e_str='(LA_x - KE * vp - Se * vp) / TE')
+                        e_str='(LA_x - KE * vp - Se * vp) / TEs',
+                        t_const=self.TEs,
+                        )
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
 

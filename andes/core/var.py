@@ -1,6 +1,7 @@
 from typing import Optional, Union, List
 
 from andes.core.param import BaseParam
+from andes.core.service import TimeConstant
 from andes.models.group import GroupBase
 from andes.shared import np, ndarray
 
@@ -48,7 +49,6 @@ class BaseVar(object):
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
-                 **kwargs
                  ):
 
         self.name = name
@@ -155,6 +155,7 @@ class State(BaseVar):
                  v_str: Optional[str] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
+                 t_const: Optional[TimeConstant] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -174,6 +175,7 @@ class State(BaseVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
+        self.t_const = t_const
 
 
 class ExtVar(BaseVar):
@@ -211,10 +213,32 @@ class ExtVar(BaseVar):
                  model: str,
                  src: str,
                  indexer: Optional[Union[List, ndarray, BaseParam]] = None,
-                 *args,
-                 **kwargs):
-        super().__init__(*args, **kwargs)
-        self.initialized = False
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 unit: Optional[str] = None,
+                 v_str: Optional[str] = None,
+                 v_iter: Optional[str] = None,
+                 e_str: Optional[str] = None,
+                 v_setter: Optional[bool] = False,
+                 e_setter: Optional[bool] = False,
+                 addressable: Optional[bool] = True,
+                 export: Optional[bool] = True,
+                 diag_eps: Optional[float] = 0.0,
+                 ):
+        super().__init__(name=name,
+                         tex_name=tex_name,
+                         info=info,
+                         unit=unit,
+                         v_str=v_str,
+                         v_iter=v_iter,
+                         e_str=e_str,
+                         v_setter=v_setter,
+                         e_setter=e_setter,
+                         addressable=addressable,
+                         export=export,
+                         diag_eps=diag_eps,
+                         )
         self.model = model
         self.src = src
         self.indexer = indexer
@@ -297,7 +321,77 @@ class ExtState(ExtVar):
     e_code = 'f'
     v_code = 'x'
 
+    def __init__(self,
+                 model: str,
+                 src: str,
+                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 unit: Optional[str] = None,
+                 v_str: Optional[str] = None,
+                 v_iter: Optional[str] = None,
+                 e_str: Optional[str] = None,
+                 t_const: Optional[TimeConstant] = None,
+                 v_setter: Optional[bool] = False,
+                 e_setter: Optional[bool] = False,
+                 addressable: Optional[bool] = True,
+                 export: Optional[bool] = True,
+                 diag_eps: Optional[float] = 0.0,
+                 ):
+        super().__init__(model=model,
+                         src=src,
+                         indexer=indexer,
+                         name=name,
+                         tex_name=tex_name,
+                         info=info,
+                         unit=unit,
+                         v_str=v_str,
+                         v_iter=v_iter,
+                         e_str=e_str,
+                         v_setter=v_setter,
+                         e_setter=e_setter,
+                         addressable=addressable,
+                         export=export,
+                         diag_eps=diag_eps,
+                         )
+        self.t_const = t_const
+
 
 class ExtAlgeb(ExtVar):
     e_code = 'g'
     v_code = 'y'
+
+    def __init__(self,
+                 model: str,
+                 src: str,
+                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 unit: Optional[str] = None,
+                 v_str: Optional[str] = None,
+                 v_iter: Optional[str] = None,
+                 e_str: Optional[str] = None,
+                 v_setter: Optional[bool] = False,
+                 e_setter: Optional[bool] = False,
+                 addressable: Optional[bool] = True,
+                 export: Optional[bool] = True,
+                 diag_eps: Optional[float] = 0.0,
+                 ):
+        super().__init__(model=model,
+                         src=src,
+                         indexer=indexer,
+                         name=name,
+                         tex_name=tex_name,
+                         info=info,
+                         unit=unit,
+                         v_str=v_str,
+                         v_iter=v_iter,
+                         e_str=e_str,
+                         v_setter=v_setter,
+                         e_setter=e_setter,
+                         addressable=addressable,
+                         export=export,
+                         diag_eps=diag_eps,
+                         )
