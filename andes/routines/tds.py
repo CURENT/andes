@@ -95,7 +95,7 @@ class TDS(BaseRoutine):
         system.initialize(self.tds_models)
         system.store_switch_times(self.tds_models)
         self.eye = spdiag([1] * system.dae.n)
-        self.Teye = spdiag(matrix(system.dae.zf)) * spdiag([1] * system.dae.n)
+        self.Teye = spdiag(system.dae.zf.tolist()) * self.eye
 
         self.initialized = self.test_initialization()
         _, s1 = elapsed(t0)

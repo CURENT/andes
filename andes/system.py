@@ -707,11 +707,11 @@ class System(object):
         Store the inverse time constant associated with equations
         """
         for var in self._adders['f']:
-            if var.t_const is not None:
-                np.put(self.dae.zf, var.a, var.t_const.v)
+            if var.it_const is not None:
+                np.put(self.dae.zf, var.a, var.it_const.v)
         for var in self._setters['f']:
-            if var.t_const is not None:
-                np.put(self.dae.zf, var.a, var.t_const.v)
+            if var.it_const is not None:
+                np.put(self.dae.zf, var.a, var.it_const.v)
 
     def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
         """

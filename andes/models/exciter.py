@@ -195,7 +195,7 @@ class EXDC2Model(ExcBase):
                                   )
         self.iTE = InverseTimeConstant(info='Inverse of integrator time constant',
                                        v_str='TE',
-                                       tex_name='TE_s'
+                                       tex_name='iTE'
                                        )
         self.Se = Algeb(info='Saturation output',
                         tex_name='S_e',
@@ -208,7 +208,7 @@ class EXDC2Model(ExcBase):
                         unit='p.u.',
                         v_str='vf0',
                         e_str='(LA_x - KE * vp - Se * vp)',
-                        t_const=self.iTE,
+                        it_const=self.iTE,
                         )
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')

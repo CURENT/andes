@@ -155,7 +155,7 @@ class State(BaseVar):
                  v_str: Optional[str] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
-                 t_const: Optional[InverseTimeConstant] = None,
+                 it_const: Optional[InverseTimeConstant] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -175,7 +175,7 @@ class State(BaseVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
-        self.t_const = t_const
+        self.it_const = it_const
 
 
 class ExtVar(BaseVar):
@@ -332,7 +332,7 @@ class ExtState(ExtVar):
                  v_str: Optional[str] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
-                 t_const: Optional[InverseTimeConstant] = None,
+                 it_const: Optional[InverseTimeConstant] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -355,7 +355,7 @@ class ExtState(ExtVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
-        self.t_const = t_const
+        self.it_const = it_const
 
 
 class ExtAlgeb(ExtVar):
