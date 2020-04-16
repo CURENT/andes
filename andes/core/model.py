@@ -12,7 +12,7 @@ from andes.core.block import Block
 from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService, InverseTimeConstant
+from andes.core.service import BaseService, ConstService
 from andes.core.service import ExtService, OperationService, RandomService
 
 from andes.utils.paths import get_pkl_path
@@ -485,9 +485,6 @@ class Model(object):
             self.discrete[key] = value
         elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
-        elif isinstance(value, InverseTimeConstant):
-            self.services[key] = value
-            self.services_tc[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (OperationService, RandomService)):
@@ -744,10 +741,6 @@ class Model(object):
                     # DO NOT use in-place operation since the return can be complex number
                     instance.v = func(**kwargs)
                 else:
-                    # warning:
-                    # If `v_str` of a Service is simply another variable, the function return will
-                    # point to the same address of the variable, not a copy. A copy is needed if one needs to
-                    # modify the auto-generated `v`. This is particularly relevant to InverseTimeConstant.
                     instance.v = func
 
                 if not isinstance(instance.v, np.ndarray):

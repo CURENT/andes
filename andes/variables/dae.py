@@ -119,7 +119,6 @@ class DAE(object):
         """
         self.f = np.zeros(self.n)
         self.g = np.zeros(self.m)
-        self.zf = np.ones(self.n)
 
     def clear_xy(self):
         """Reset variable arrays to empty
@@ -154,6 +153,8 @@ class DAE(object):
         self.clear_z()
         self.clear_ijv()
         self.clear_ts()
+
+        self.zf = np.ones(self.n)
 
     def get_size(self, name):
         """

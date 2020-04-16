@@ -1,7 +1,7 @@
 from andes.core.var import Algeb, State
 from typing import Optional, Iterable
 from andes.core.discrete import AntiWindupLimiter
-from andes.core.service import ConstService, InverseTimeConstant
+from andes.core.service import ConstService
 from andes.core.triplet import JacTriplet
 
 
@@ -405,7 +405,7 @@ class Lag(Block):
             self.K = K
 
         self.enforce_tex_name((self.K, self.T))
-        self.x = State(info='State in lag transfer function', tex_name="x'")
+        self.x = State(info='State in lag transfer function', tex_name="x'", t_const=self.T)
 
         self.vars = {'x': self.x}
 
@@ -424,7 +424,7 @@ class Lag(Block):
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
+        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x)'
 
 
 class LagAntiWindup(Block):

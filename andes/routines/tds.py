@@ -160,7 +160,7 @@ class TDS(BaseRoutine):
             if self.calc_h() == 0:
                 self.pbar.close()
                 logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
-                ret = False
+                ret = False   # FIXME: overwritten
                 break
 
             if self.callpert is not None:
@@ -270,7 +270,7 @@ class TDS(BaseRoutine):
             self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
             # equation `q = 0` is the implicit form of differential equations using ITM
-            q = dae.x - self.x0 - self.h * 0.5 * (dae.f + self.f0)
+            q = dae.zf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:

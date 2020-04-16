@@ -1,7 +1,7 @@
 from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService, InverseTimeConstant
+from andes.core.service import ConstService, ExtService
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag
 
 
@@ -193,10 +193,6 @@ class EXDC2Model(ExcBase):
                                   tex_name='V_{ref0}',
                                   v_str='vb0 + v',
                                   )
-        self.iTE = InverseTimeConstant(info='Inverse of integrator time constant',
-                                       v_str='TE',
-                                       tex_name='iTE'
-                                       )
         self.Se = Algeb(info='Saturation output',
                         tex_name='S_e',
                         unit='p.u.',
@@ -208,7 +204,7 @@ class EXDC2Model(ExcBase):
                         unit='p.u.',
                         v_str='vf0',
                         e_str='(LA_x - KE * vp - Se * vp)',
-                        it_const=self.iTE,
+                        t_const=self.TE,
                         )
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
