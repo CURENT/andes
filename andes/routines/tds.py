@@ -284,7 +284,6 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
-                self.pbar.close()
                 logger.error(f'NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 self.busted = True

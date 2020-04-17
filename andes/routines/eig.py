@@ -2,7 +2,7 @@ import logging
 import scipy.io
 
 from math import ceil, pi
-from cvxopt import mul, div
+from cvxopt import mul, div, spdiag
 from cvxopt.lapack import gesv
 
 from andes.io.txt import dump_data
@@ -41,10 +41,12 @@ class EIG(BaseRoutine):
             state matrix
         """
         system = self.system
+
+        inv_zf = spdiag((1 / system.dae.zf).tolist())
         gyx = matrix(system.dae.gx)
         self.solver.linsolve(system.dae.gy, gyx)
 
-        self.As = matrix(system.dae.fx - system.dae.fy * gyx)
+        self.As = matrix(mul(inv_zf, (system.dae.fx - system.dae.fy * gyx)))
         return self.As
 
     def calc_eigvals(self):
@@ -106,10 +108,13 @@ class EIG(BaseRoutine):
         else:
             if system.TDS.initialized is False:
                 system.TDS._initialize()
-                system.TDS._implicit_step()
 
         if system.dae.n == 0:
             logger.warning('No dynamic model. Eig analysis will not continue.')
+            return ret
+
+        if sum(system.dae.zf != 0) != len(system.dae.zf):
+            logger.error("System contains zero time constant. Eigenvalue analysis cannot continue.")
             return ret
 
         t1, s = elapsed()
