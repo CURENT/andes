@@ -291,15 +291,18 @@ It currently supports time-domain simulation data.
 Three positional arguments are required, and a dozen of optional arguments are supported.
 
 positional arguments:
-  ==============              ===========================
-  Argument                    Description
-  --------------              ---------------------------
-  | filename                    simulation output file name, which should end with
-  |                             `out`. File extension can be omitted.
-  x                           the X-axis variable index, typically 0 for Time
-  y                           Y-axis variable indices. Space-separated indices or a
-                              colon-separated range is accepted
-  ==============              ===========================
+
+    +----------------+----------------------------------------------------------------------+
+    | Argument       |             Description                                              |
+    +================+======================================================================+
+    | filename       |    simulation output file name, which should end with                |
+    |                |    `out`. File extension can be omitted.                             |
+    +----------------+----------------------------------------------------------------------+
+    | x              |    the X-axis variable index, typically 0 for Time                   |
+    +----------------+----------------------------------------------------------------------+
+    | y              |    Y-axis variable indices. Space-separated indices or a             |
+    |                |    colon-separated range is accepted                                 |
+    +----------------+----------------------------------------------------------------------+
 
 For example, to plot the generator speed variable of synchronous generator 1
 ``GENROU omega 0`` versus time, read the indices of the variable (2) and time
@@ -337,13 +340,17 @@ optional arguments:
     --ymax YMAX                     maximum value for Y axis
     --ymin YMIN                     minimum value for Y axis
     --find FIND                     find variable indices that matches the given pattern
-    | --xargs XARGS                 find variable indices and return as a list of
-    |                               arguments usable with "| xargs andes plot"
+    ----------------------------    ------------------------------------------------------
+    --xargs XARGS                   find variable indices and return as a list of
+                                    arguments usable with "| xargs andes plot"
+    ----------------------------    ------------------------------------------------------
     --exclude EXCLUDE               pattern to exclude in find or xargs results
     -x XLABEL, --xlabel XLABEL      x-axis label text
     -y YLABEL, --ylabel YLABEL      y-axis label text
     -s, --savefig                   save figure. The default fault is `png`.
-    | -format SAVE_FORMAT           format for savefig. Common formats such as png, pdf, jpg are supported
+    ----------------------------    ------------------------------------------------------
+    -format SAVE_FORMAT             format for savefig. Common formats such as png, pdf, jpg are supported
+    ----------------------------    ------------------------------------------------------
     --dpi DPI                       image resolution in dot per inch (DPI)
     -g, --grid                      grid on
     --greyscale                     greyscale on
