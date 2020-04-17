@@ -265,7 +265,7 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
                             self.dae.o += 1
 
-    def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Initialize the variables in the model.
 
@@ -286,7 +286,7 @@ class System(object):
                 instance.link_external(ext_model)
 
             # initialize variables second
-            mdl.initialize()
+            mdl.init()
 
             # TODO: re-think over the adder-setter approach and reduce data copy
             self.vars_to_dae()

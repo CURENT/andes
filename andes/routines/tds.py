@@ -70,7 +70,7 @@ class TDS(BaseRoutine):
         self.plotter = None
         self.initialized = False
 
-    def _initialize(self):
+    def init(self):
         """
         Initialize the status, storage and values for TDS.
 
@@ -92,7 +92,7 @@ class TDS(BaseRoutine):
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter(models=self.pflow_tds_models)
         system.vars_to_models()
-        system.initialize(self.tds_models)
+        system.init(self.tds_models)
         system.store_switch_times(self.tds_models)
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.zf.tolist()) * self.eye
@@ -152,7 +152,7 @@ class TDS(BaseRoutine):
             return ret
 
         self.summary()
-        self._initialize()
+        self.init()
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=disable_pbar)
 
         t0, _ = elapsed()

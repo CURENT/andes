@@ -43,13 +43,13 @@ class PFlow(BaseRoutine):
         self.niter = None
         self.mis = []
 
-    def _initialize(self):
+    def init(self):
         self.converged = False
         self.inc = None
         self.A = None
         self.niter = None
         self.mis = []
-        self.system.initialize(self.models)
+        self.system.init(self.models)
         logger.info('Power flow initialized.')
         return self.system.dae.xy
 
@@ -119,7 +119,7 @@ class PFlow(BaseRoutine):
         """
         system = self.system
         self.summary()
-        self._initialize()
+        self.init()
         if system.dae.m == 0:
             logger.error("Loaded case contains no power flow element.")
             return False
@@ -158,11 +158,11 @@ class PFlow(BaseRoutine):
         else:
             logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
             if self.config.report:
-                system.PFlow.write_report()
+                system.PFlow.report()
 
         return self.converged
 
-    def write_report(self):
+    def report(self):
         """
         Write power flow report to text file.
         """
@@ -213,7 +213,7 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        system.initialize()
+        system.init()
         v0 = system.dae.xy
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)

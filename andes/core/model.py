@@ -1140,7 +1140,7 @@ class Model(object):
                     value = np.zeros(self.n)
                 self.triplets.append_ijv(j_full_name, row_idx, col_idx, value)
 
-    def initialize(self):
+    def init(self):
         """
         Numerical initialization of a model.
 

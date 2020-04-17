@@ -113,6 +113,16 @@ class EIG(BaseRoutine):
 
         return self.mu, self.part_fact
 
+    def summary(self):
+        """
+        Print out a summary to ``logger.info``.
+        """
+        out = list()
+        out.append('')
+        out.append('-> Eigenvalue Analysis:')
+        out_str = '\n'.join(out)
+        logger.info(out_str)
+
     def run(self, **kwargs):
         ret = False
         system = self.system
@@ -122,7 +132,7 @@ class EIG(BaseRoutine):
             return ret
         else:
             if system.TDS.initialized is False:
-                system.TDS._initialize()
+                system.TDS.init()
 
         if system.dae.n == 0:
             logger.warning('No dynamic model. Eig analysis will not continue.')
@@ -132,14 +142,14 @@ class EIG(BaseRoutine):
             logger.error("System contains zero time constant. Eigenvalue analysis cannot continue.")
             return ret
 
+        self.summary()
         t1, s = elapsed()
-        logger.info('-> Eigenvalue Analysis:')
 
         self.calc_state_matrix()
         self.calc_part_factor()
 
         if not self.system.files.no_output:
-            self.write_report()
+            self.report()
             if system.options.get('state_matrix') is True:
                 self.export_state_matrix()
 
@@ -228,7 +238,7 @@ class EIG(BaseRoutine):
         logger.info(f'State matrix saved to "{system.files.mat}".')
         return True
 
-    def write_report(self):
+    def report(self):
         """
         Save eigenvalue analysis reports
 
@@ -238,7 +248,7 @@ class EIG(BaseRoutine):
         """
         system = self.system
         mu = self.mu
-        partfact = self.part_fact
+        part_fact = self.part_fact
 
         text = []
         header = []
@@ -248,9 +258,9 @@ class EIG(BaseRoutine):
         neig = len(mu)
         mu_real = mu.real()
         mu_imag = mu.imag()
-        npositive = sum(1 for x in mu_real if x > 0)
-        nzero = sum(1 for x in mu_real if x == 0)
-        nnegative = sum(1 for x in mu_real if x < 0)
+        n_positive = sum(1 for x in mu_real if x > 0)
+        n_zeros = sum(1 for x in mu_real if x == 0)
+        n_negative = sum(1 for x in mu_real if x < 0)
 
         numeral = []
         for idx, item in enumerate(range(neig)):
@@ -262,7 +272,7 @@ class EIG(BaseRoutine):
                 marker = ''
             numeral.append('#' + str(idx + 1) + marker)
 
-        # compute frequency, undamped frequency and damping
+        # compute frequency, un-damped frequency and damping
         freq = [0] * neig
         ufreq = [0] * neig
         damping = [0] * neig
@@ -279,7 +289,7 @@ class EIG(BaseRoutine):
         # obtain most associated variables
         var_assoc = []
         for prow in range(neig):
-            temp_row = partfact[prow, :]
+            temp_row = part_fact[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
             var_assoc.append(system.dae.x_name[name_idx])
 
@@ -287,7 +297,7 @@ class EIG(BaseRoutine):
         for prow in range(neig):
             temp_row = []
             for pcol in range(neig):
-                temp_row.append(round(partfact[prow, pcol], 5))
+                temp_row.append(round(part_fact[prow, pcol], 5))
             pf.append(temp_row)
 
         text.append('')
@@ -298,7 +308,7 @@ class EIG(BaseRoutine):
         text.append('STATISTICS\n')
         header.append([''])
         rowname.append(['Positives', 'Zeros', 'Negatives'])
-        data.append([npositive, nzero, nnegative])
+        data.append([n_positive, n_zeros, n_negative])
 
         text.append('EIGENVALUE DATA\n')
         header.append([
@@ -311,15 +321,15 @@ class EIG(BaseRoutine):
              list(mu_real),
              list(mu_imag), ufreq, freq, damping])
 
-        cpb = 7  # columns per block
-        nblock = int(ceil(neig / cpb))
+        n_cols = 7  # columns per block
+        n_block = int(ceil(neig / n_cols))
 
-        if nblock <= 100:
-            for idx in range(nblock):
-                start = cpb * idx
-                end = cpb * (idx + 1)
+        if n_block <= 100:
+            for idx in range(n_block):
+                start = n_cols * idx
+                end = n_cols * (idx + 1)
                 text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(
-                    idx + 1, nblock))
+                    idx + 1, n_block))
                 header.append(numeral[start:end])
                 rowname.append(system.dae.x_name)
                 data.append(pf[start:end])
