@@ -32,21 +32,36 @@ class EIG(BaseRoutine):
         self.part_fact = None
 
     def calc_state_matrix(self):
-        """
-        Return state matrix and store to ``self.As``
+        r"""
+        Return state matrix and store to ``self.As``.
+
+        Notes
+        -----
+        For systems with the form
+
+        .. math ::
+
+            T \dot{x} = f(x, y) \\
+            0 = g(x, y)
+
+        The state matrix is calculated from
+
+        .. math ::
+
+            A_s = T^{-1} (f_x - f_y * g_y^{-1} * g_x)
 
         Returns
         -------
-        matrix
+        cvxopt.matrix
             state matrix
         """
         system = self.system
 
-        inv_zf = spdiag((1 / system.dae.zf).tolist())
         gyx = matrix(system.dae.gx)
         self.solver.linsolve(system.dae.gy, gyx)
 
-        self.As = matrix(mul(inv_zf, (system.dae.fx - system.dae.fy * gyx)))
+        inv_zf = spdiag((1 / system.dae.zf).tolist())
+        self.As = matrix(inv_zf * (system.dae.fx - system.dae.fy * gyx))
         return self.As
 
     def calc_eigvals(self):
@@ -194,20 +209,23 @@ class EIG(BaseRoutine):
 
     def export_state_matrix(self):
         """
-        Export As to a ``<CaseName>_As.mat`` file.
+        Export state matrix to a ``<CaseName>_As.mat`` file with the variable name ``As``, where
+        ``<CaseName>`` is the test case name.
+
+        State variable names are stored in variables ``x_name`` and ``x_tex_name``.
 
         Returns
         -------
         bool
             True if successful
-
         """
         system = self.system
         out = {'As': self.As,
                'x_name': np.array(system.dae.x_name, dtype=np.object),
+               'x_tex_name': np.array(system.dae.x_tex_name, dtype=np.object),
                }
         scipy.io.savemat(system.files.mat, mdict=out)
-        logger.info(f'State matrix saved to <{system.files.mat}>.')
+        logger.info(f'State matrix saved to "{system.files.mat}".')
         return True
 
     def write_report(self):
@@ -307,4 +325,4 @@ class EIG(BaseRoutine):
                 data.append(pf[start:end])
 
         dump_data(text, header, rowname, data, system.files.eig)
-        logger.info(f'Report saved to <{system.files.eig}>.')
+        logger.info(f'Report saved to "{system.files.eig}".')
