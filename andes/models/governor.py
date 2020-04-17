@@ -274,7 +274,8 @@ class TGOV1ModelAlt(TGBase):
 
         self.LAG_x = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
-                           e_str='LAG_lim_zi * (1 * pd - LAG_x) / T1',
+                           e_str='LAG_lim_zi * (1 * pd - LAG_x)',
+                           t_const=self.T1,
                            v_str='pd',
                            )
         self.LAG_lim = AntiWindupLimiter(u=self.LAG_x,
@@ -285,7 +286,8 @@ class TGOV1ModelAlt(TGBase):
         self.LL_x = State(info='State in lead-lag transfer function',
                           tex_name="x'_{LL}",
                           v_str='LAG_x',
-                          e_str='(LAG_x - LL_x) / T3',
+                          e_str='(LAG_x - LL_x)',
+                          t_const=self.T3
                           )
         self.LL_y = Algeb(info='Lead-lag Output',
                           tex_name='y_{LL}',

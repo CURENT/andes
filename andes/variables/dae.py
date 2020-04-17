@@ -89,6 +89,9 @@ class DAE(object):
         self.m, self.n, self.o = 0, 0, 0
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])
+        # `self.zf` is the differential equation status array, 0 if the corresponding differential
+        # equation has a time constant of zero. 1 otherwise.
+        self.zf = np.array([])
 
         self.fx, self.fy = None, None
         self.gx, self.gy = None, None
@@ -150,6 +153,8 @@ class DAE(object):
         self.clear_z()
         self.clear_ijv()
         self.clear_ts()
+
+        self.zf = np.ones(self.n)
 
     def get_size(self, name):
         """
@@ -247,6 +252,7 @@ class DAE(object):
 
         self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
         self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
+        self.zf = np.append(self.zf, np.ones(self.n - len(self.zf)))
 
     @property
     def xy(self):

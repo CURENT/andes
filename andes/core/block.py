@@ -351,7 +351,7 @@ class Washout(Block):
                                v_str=f'{self.K.name} / {self.T.name}')
 
         self.u = u
-        self.x = State(info='State in washout filter', tex_name="x'")
+        self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
         self.y = Algeb(info='Output of washout filter', tex_name=r'y')
         self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
 
@@ -371,7 +371,7 @@ class Washout(Block):
         self.x.v_str = f'{self.u.name}'
         self.y.v_str = f'0'
 
-        self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T.name}'
+        self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.y.e_str = f'{self.name}_KT * ({self.u.name} - {self.name}_x) - {self.name}_y'
 
 
@@ -405,7 +405,8 @@ class Lag(Block):
             self.K = K
 
         self.enforce_tex_name((self.K, self.T))
-        self.x = State(info='State in lag transfer function', tex_name="x'")
+        self.x = State(info='State in lag transfer function', tex_name="x'",
+                       t_const=self.T)
 
         self.vars = {'x': self.x}
 
@@ -424,7 +425,7 @@ class Lag(Block):
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
+        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x)'
 
 
 class LagAntiWindup(Block):
@@ -461,7 +462,8 @@ class LagAntiWindup(Block):
 
         self.enforce_tex_name((self.T, self.K))
 
-        self.x = State(info='State in lag transfer function', tex_name="x'")
+        self.x = State(info='State in lag transfer function', tex_name="x'",
+                       t_const=self.T)
         self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
 
         self.vars = {'x': self.x, 'lim': self.lim}
@@ -481,7 +483,7 @@ class LagAntiWindup(Block):
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x) / {self.T.name}'
+        self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x)'
 
 
 class LeadLag(Block):
@@ -517,8 +519,8 @@ class LeadLag(Block):
 
         self.enforce_tex_name((self.T1, self.T2))
 
-        self.x = State(info='State in lead-lag transfer function', tex_name="x'")
-        self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y')
+        self.x = State(info='State in lead-lag transfer function', tex_name="x'", t_const=self.T2)
+        self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'x': self.x, 'y': self.y}
 
     def define(self):
@@ -531,18 +533,18 @@ class LeadLag(Block):
 
         .. math ::
 
-            \dot{x'} = (u - x') / T_2 \\
-            y = \frac {T_1} {T_2} * (u - x') + x' \\
+            T_2 \dot{x'} = (u - x') \\
+            T_2 * y = T_1 * (u - x') + T_2 * x' \\
             x'_0 = y_0 = u
 
         """
         self.x.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
 
-        self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
-        self.y.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + ' \
-                       f'{self.name}_x - ' \
-                       f'{self.name}_y'
+        self.x.e_str = f'({self.u.name} - {self.name}_x)'
+        self.y.e_str = f'{self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
+                       f'{self.name}_x * {self.T2.name} - ' \
+                       f'{self.name}_y * {self.T2.name}'
 
 
 class LeadLagLimit(Block):
@@ -568,9 +570,10 @@ class LeadLagLimit(Block):
         self.upper = upper
         self.enforce_tex_name((self.T1, self.T2))
 
-        self.x = State(info='State in lead-lag transfer function', tex_name="x'")
+        self.x = State(info='State in lead-lag transfer function', tex_name="x'", t_const=self.T2)
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
-        self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y')
+        self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y',
+                       diag_eps=1e-6)
         self.lim = AntiWindupLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
@@ -585,8 +588,8 @@ class LeadLagLimit(Block):
 
         .. math ::
 
-            \dot{x'} = (u - x') / T_2 \\
-            y = \frac {T_1} {T_2} * (u - x') + x' \\
+            T_2 \dot{x'} = (u - x') \\
+            T_2 y = T_1 * (u - x') + T_2 * x' \\
             x'_0 = y_0 = u
 
         """
@@ -594,10 +597,10 @@ class LeadLagLimit(Block):
         self.ynl.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
 
-        self.x.e_str = f'({self.u.name} - {self.name}_x) / {self.T2.name}'
-        self.ynl.e_str = f'{self.T1.name} / {self.T2.name} * ({self.u.name} - {self.name}_x) + ' \
-                         f'{self.name}_x - ' \
-                         f'{self.name}_ynl'
+        self.x.e_str = f'({self.u.name} - {self.name}_x)'
+        self.ynl.e_str = f'{self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
+                         f'{self.name}_x * {self.T2.name} - ' \
+                         f'{self.name}_ynl * {self.T2.name}'
 
         self.y.e_str = f'{self.name}_ynl * {self.name}_lim_zi + ' \
                        f'{self.lower.name} * {self.name}_lim_zl + ' \

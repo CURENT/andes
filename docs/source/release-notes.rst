@@ -4,13 +4,24 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
-v0.8.4
+v0.8.5 (2020-04-17)
+-------------------
+- Converted the differential equations to the form of ``T \dot{x} = f(x, y)``, where T is supplied to
+  ``t_const`` of ``State/ExtState``.
+- Added the support for Config fields in documentation (in ``andes doc`` and on readthedocs).
+- Added Config consistency checking.
+- Converted `Model.idx` from a list to `DataParam`.
+- Renamed the API of routines (summary, init, run, report).
+- Automatically generated indices now start at 1 (i.e., "GENCLS_1" is the first GENCLS device).
+- Added test cases for WECC system. The model with classical generators is verified against TSAT.
+- Minor features: `andes -v 1` for debug output with levels and line numbers.
+
+v0.8.4 (2020-04-07)
 -------------------
 - Added support for JSON case files. Convert existing case file to JSON with ``--convert json``.
 - Added support for PSS/E dyr files, loadable with ``-addfile ADDFILE``.
 - Added ``andes plot --xargs`` for searching variable name and plotting. See example 6.
 - Various bug fixes: Fault power injection fix;
-
 
 v0.8.3 (2020-03-25)
 -------------------

@@ -28,3 +28,15 @@ class BaseRoutine(object):
 
     def doc(self, max_width=80, export='plain'):
         return self.config.doc(max_width, export)
+
+    def init(self):
+        pass
+
+    def run(self, **kwargs):
+        raise NotImplementedError
+
+    def summary(self):
+        raise NotImplementedError
+
+    def report(self):
+        raise NotImplementedError

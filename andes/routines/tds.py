@@ -21,9 +21,9 @@ class TDS(BaseRoutine):
         self.config.add(OrderedDict((('tol', 1e-4),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
-                                     ('fixt', 1),       # use fixed time step
-                                     ('shrinkt', 1),    # shrink step size if `max_iter` is reached
-                                     ('tstep', 1/30),   # fixed step size / initial step size
+                                     ('fixt', 1),
+                                     ('shrinkt', 1),
+                                     ('tstep', 1/30),
                                      ('max_iter', 15),
                                      )))
         self.config.add_extra("_help",
@@ -70,7 +70,7 @@ class TDS(BaseRoutine):
         self.plotter = None
         self.initialized = False
 
-    def _initialize(self):
+    def init(self):
         """
         Initialize the status, storage and values for TDS.
 
@@ -83,6 +83,7 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
         system = self.system
         self._reset()
+        self._load_pert()
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
 
@@ -91,11 +92,12 @@ class TDS(BaseRoutine):
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter(models=self.pflow_tds_models)
         system.vars_to_models()
-        system.initialize(self.tds_models)
+        system.init(self.tds_models)
         system.store_switch_times(self.tds_models)
-        self.initialized = self.test_initialization()
+        self.eye = spdiag([1] * system.dae.n)
+        self.Teye = spdiag(system.dae.zf.tolist()) * self.eye
 
-        self._load_pert()
+        self.initialized = self.test_initialization()
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
@@ -150,7 +152,7 @@ class TDS(BaseRoutine):
             return ret
 
         self.summary()
-        self._initialize()
+        self.init()
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=disable_pbar)
 
         t0, _ = elapsed()
@@ -158,7 +160,7 @@ class TDS(BaseRoutine):
             if self.calc_h() == 0:
                 self.pbar.close()
                 logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
-                ret = False
+                ret = False   # FIXME: overwritten
                 break
 
             if self.callpert is not None:
@@ -264,12 +266,13 @@ class TDS(BaseRoutine):
                 system.j_update(models=self.pflow_tds_models)
                 self.solver.factorize = True
 
-            # solve trapezoidal rule integration
-            In = spdiag([1] * dae.n)
-            self.Ac = sparse([[In - self.h * 0.5 * dae.fx, dae.gx],
+            # solve implicit trapezoidal method (ITM) integration
+            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
-            # reset q as well
-            q = dae.x - self.x0 - self.h * 0.5 * (dae.f + self.f0)
+            # equation `q = 0` is the implicit form of differential equations using ITM
+            q = dae.zf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
+
+            # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
                 if len(item.x_set) > 0:
                     for key, val in item.x_set:
@@ -281,7 +284,6 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
-                self.pbar.close()
                 logger.error(f'NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 self.busted = True

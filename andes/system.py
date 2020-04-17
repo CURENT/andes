@@ -265,7 +265,7 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
                             self.dae.o += 1
 
-    def initialize(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Initialize the variables in the model.
 
@@ -286,11 +286,14 @@ class System(object):
                 instance.link_external(ext_model)
 
             # initialize variables second
-            mdl.initialize()
+            mdl.init()
 
             # TODO: re-think over the adder-setter approach and reduce data copy
             self.vars_to_dae()
             self.vars_to_models()
+
+        # store the inverse of time constants
+        self._store_zf()
 
     def store_adder_setter(self, models=None):
         """
@@ -698,6 +701,17 @@ class System(object):
                     raise TypeError(f'Unknown type {type(item)}')
         # do nothing for OrderedDict type
         return models
+
+    def _store_zf(self):
+        """
+        Store the inverse time constant associated with equations
+        """
+        for var in self._adders['f']:
+            if var.t_const is not None:
+                np.put(self.dae.zf, var.a, var.t_const.v)
+        for var in self._setters['f']:
+            if var.t_const is not None:
+                np.put(self.dae.zf, var.a, var.t_const.v)
 
     def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
         """

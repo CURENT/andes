@@ -12,7 +12,8 @@ from andes.core.block import Block
 from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService, ExtService, OperationService, RandomService
+from andes.core.service import BaseService, ConstService
+from andes.core.service import ExtService, OperationService, RandomService
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -399,6 +400,8 @@ class Model(object):
 
         # service/temporary variables
         self.services = OrderedDict()
+        # time-constant services
+        self.services_tc = OrderedDict()
         # external services (to be retrieved)
         self.services_ext = OrderedDict()
         # operational services (for special usages)
@@ -480,8 +483,7 @@ class Model(object):
             self.params_ext[key] = value
         elif isinstance(value, Discrete):
             self.discrete[key] = value
-        elif isinstance(value, ConstService):
-            # only services with `v_str`
+        elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
@@ -733,7 +735,6 @@ class Model(object):
 
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
-
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
@@ -755,6 +756,10 @@ class Model(object):
             if callable(func):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
+
+        # Evaluate TimeConstant multiplicative inverse
+        for instance in self.services_tc.values():
+            instance.inverse()
 
         kwargs = self.get_inputs(refresh=True)
         self.s_numeric(**kwargs)
@@ -1135,7 +1140,7 @@ class Model(object):
                     value = np.zeros(self.n)
                 self.triplets.append_ijv(j_full_name, row_idx, col_idx, value)
 
-    def initialize(self):
+    def init(self):
         """
         Numerical initialization of a model.
 
@@ -1146,10 +1151,10 @@ class Model(object):
         """
         if self.n == 0:
             return
+        logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         # update service values
         self.s_update()
-        logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
@@ -1168,7 +1173,7 @@ class Model(object):
             self.solve_initialization()
         # ----------------------------------------
 
-        # call custom variable initializer after lambdified initializers
+        # call custom variable initializer after generated initializers
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
@@ -1176,7 +1181,7 @@ class Model(object):
 
     def get_init_order(self):
         """
-        Get variable initialization order sent to logger.info.
+        Get variable initialization order and send to `logger.info`.
         """
         out = []
         for name in self.vars_decl_order.keys():
@@ -1191,14 +1196,10 @@ class Model(object):
 
         if self.n == 0:
             return
-
-        # update equations for algebraic variables supplied with `f_numeric`
-        # evaluate numerical function calls
         kwargs = self.get_inputs()
 
-        # call lambdified functions with use self.call
+        # call lambda functions in self.call
         ret = self.calls.f_lambdify(**kwargs)
-
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
             instance.e += ret[idx][0]
 
@@ -1216,14 +1217,10 @@ class Model(object):
 
         if self.n == 0:
             return
-
-        # update equations for algebraic variables supplied with `g_numeric`
-        # evaluate numerical function calls
         kwargs = self.get_inputs()
 
-        # call lambdified functions with use self.call
+        # call lambda functions stored in `self.calls`
         ret = self.calls.g_lambdify(**kwargs)
-
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
             instance.e += ret[idx][0]
 
@@ -1423,7 +1420,7 @@ class Model(object):
         Custom numeric update functions.
 
         This function should append indices to `_ifx`, `_jfx`, and append anonymous functions to `_vfx`.
-        It is only called once in `store_sparse_pattern`.
+        It is only called once by `store_sparse_pattern`.
         """
         pass
 
@@ -1544,37 +1541,70 @@ class Model(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _eq_doc(self, max_width=80, export='plain'):
+    def _eq_doc(self, max_width=80, export='plain', e_code=None):
+        out = ''
         # equation documentation
         if len(self.cache.all_vars) == 0:
-            return ''
-        names, symbols = list(), list()
-        eqs, eqs_rest, class_names = list(), list(), list()
+            return out
+        e2dict = {'f': self.cache.states_and_ext,
+                  'g': self.cache.algebs_and_ext,
+                  }
+        e2full = {'f': 'Differential',
+                  'g': 'Algebraic'}
 
-        for p in self.cache.all_vars.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            eqs.append(p.e_str if p.e_str else '')
+        e2form = {'f': "T x' = f(x, y)",
+                  'g': "0 = g(x, y)"}
 
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+        if e_code is None:
+            e_code = ('f', 'g')
+        elif isinstance(e_code, str):
+            e_code = (e_code, )
 
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Equation (x\'=f or g=0)', eqs),
-                                  ('Type', class_names)])
+        for e_name in e_code:
 
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Equation (x\'=f or g=0)', eqs_rest),
-                                 ('Type', class_names)])
+            if len(e2dict[e_name]) == 0:
+                continue
 
-        return make_doc_table(title='Equations',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
+            names, symbols = list(), list()
+            eqs, eqs_rest = list(), list()
+            lhs_names, lhs_tex_names = list(), list()
+            class_names = list()
+
+            for p in e2dict[e_name].values():
+                names.append(p.name)
+                class_names.append(p.class_name)
+                eqs.append(p.e_str if p.e_str else '')
+                if e_name == 'f':
+                    lhs_names.append(p.t_const.name if p.t_const else '')
+                    lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
+
+            if export == 'rest':
+                call_store = self.system.calls[self.class_name]
+                symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+                eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+
+            plain_dict = OrderedDict([('Name', names),
+                                      ('Type', class_names),
+                                      (f'RHS of Equation "{e2form[e_name]}"', eqs),
+                                      ])
+
+            rest_dict = OrderedDict([('Name', names),
+                                     ('Symbol', symbols),
+                                     ('Type', class_names),
+                                     (f'RHS of Equation "{e2form[e_name]}"', eqs_rest),
+                                     ])
+
+            if e_name == 'f':
+                plain_dict['T (LHS)'] = lhs_names
+                rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
+
+            out += make_doc_table(title=f'{e2full[e_name]} Equations',
+                                  max_width=max_width,
+                                  export=export,
+                                  plain_dict=plain_dict,
+                                  rest_dict=rest_dict)
+
+        return out
 
     def _service_doc(self, max_width=80, export='plain'):
         if len(self.services) == 0:
@@ -1635,6 +1665,9 @@ class Model(object):
                               rest_dict=rest_dict)
 
     def _block_doc(self, max_width=80, export='plain'):
+        """
+        Documentation for blocks. To be implemented.
+        """
         return ''
 
     def doc(self, max_width=80, export='plain'):

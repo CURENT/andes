@@ -123,7 +123,7 @@ for initialization, equation update, Jacobian update, and discrete flags update.
 +--------------------------------------+------------------------------------------+
 |            System Method             |               Description                |
 +======================================+==========================================+
-|  :py:mod:`andes.System.initialize`   | Variable initialization                  |
+|  :py:mod:`andes.System.init`         | Variable initialization                  |
 +--------------------------------------+------------------------------------------+
 |  :py:mod:`andes.System.f_update`     | Update differential equation             |
 +--------------------------------------+------------------------------------------+
