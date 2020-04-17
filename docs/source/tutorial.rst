@@ -355,12 +355,14 @@ optional arguments:
 
 andes doc
 ---------
-``andes doc`` is a tool for quick lookup of model documentation.
-The basic usage of ``andes doc`` is to provide a model name as the positional argument.
-It will print out model parameters, variables, and equations to the stdio.
+``andes doc`` is a tool for quick lookup of model and routine documentation.
+It is intended as a quick way for documentation.
+
+The basic usage of ``andes doc`` is to provide a model name or a routine name as the positional argument.
+For a model, it will print out model parameters, variables, and equations to the stdio.
+For a routine, it will print out fields in the Config file.
 If you are looking for full documentation, visit `andes.readthedocs.io <https://andes.readthedocs.io>`_.
 
-It is intended as a quick way for documentation.
 For example, to check the parameters for model ``Toggler``, run
 
 .. code-block:: shell-session
@@ -406,6 +408,26 @@ To list all supported models, run
      SynGen          | GENCLS, GENROU
      TimedEvent      | Toggler, Fault
      TurbineGov      | TG2, TGOV1
+
+To view the Config fields for a routine, run
+
+.. code-block:: shell-session
+
+    $ andes doc TDS
+    Config Fields in [TDS]
+
+      Option   | Value |                  Info                  | Acceptable values
+    -----------+-------+----------------------------------------+-------------------
+     sparselib | klu   | linear sparse solver name              | ('klu', 'umfpack')
+     tol       | 0.000 | convergence tolerance                  | float
+     t0        | 0     | simulation starting time               | >=0
+     tf        | 20    | simulation ending time                 | >t0
+     fixt      | 0     | use fixed step size (1) or variable    | (0, 1)
+               |       | (0)                                    |
+     shrinkt   | 1     | shrink step size for fixed method if   | (0, 1)
+               |       | not converged                          |
+     tstep     | 0.010 | the initial step step size             | float
+     max_iter  | 15    | maximum number of iterations           | >=10
 
 
 andes misc
