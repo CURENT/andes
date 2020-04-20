@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, List
 from andes.shared import np
 
 logger = logging.getLogger(__name__)
@@ -315,13 +315,46 @@ class Switcher(Discrete):
 
     The switch class takes one v-provider, compares the input with each value in the option list, and exports
     one flag array for each option. The flags are 0-indexed.
+
+    Exported flags are named with `_s0`, `_s1`, ..., with a total number of `len(options)`. See the examples
+    section.
+
+    Notes
+    -----
+    Switches needs to be distinguished from Selector.
+
+    Switcher is for generating flags indicating option selection based on an input parameter. Selector is
+    for generating flags at run time based on variable values and a selection function.
+
+    Examples
+    --------
+    The IEEEST model takes an input for selecting the signal. Options are 1 through 6.
+    One can construct ::
+
+        self.IC = NumParam(info='input code 1-6')  # input code
+        self.SW = Switcher(u=self.IC, options=[1, 2, 3, 4, 5, 6])
+
+    If the IC values from the data file ends up being ::
+
+        self.IC.v = np.array([1, 2, 2, 4, 6])
+
+    Then, the exported flag arrays will be ::
+
+        {'IC_s0': np.array([1, 0, 0, 0, 0]),
+         'IC_s1': np.array([0, 1, 1, 0, 0]),
+         'IC_s2': np.array([0, 0, 0, 0, 0]),
+         'IC_s3': np.array([0, 0, 0, 1, 0]),
+         'IC_s4': np.array([0, 0, 0, 0, 0]),
+         'IC_s5': np.array([0, 0, 0, 0, 1])
+        }
     """
+
     def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
-        self.option: list = options
+        self.option: Union[List, Tuple] = options
         self.cache: bool = cache
-        self._eval = False  # if the flags has been evaluated
+        self._eval: bool = False  # if the flags has been evaluated
 
         for i in range(len(options)):
             self.__dict__[f's{i}'] = 0
@@ -341,11 +374,11 @@ class Switcher(Discrete):
 
 class DeadBand(Limiter):
     """
-    Deadband with the direction of return.
+    Dead band with the direction of return.
 
     Parameters
     ----------
-    u
+    u : NumParam
         The pre-deadband input variable
     center : NumParam
         Neutral value of the output
@@ -418,6 +451,9 @@ class DeadBand(Limiter):
 
     def check_var(self):
         """
+        Notes
+        -----
+
         Updates five flags: zi, zu, zl; zur, and zlr based on the following rules:
 
         zu:
@@ -425,6 +461,7 @@ class DeadBand(Limiter):
 
         zl:
           1 if u < lower; 0 otherwise.
+
         zi:
           not(zu or zl);
 
