@@ -548,10 +548,10 @@ class LeadLag(Block):
     T2 : BaseParam
         Time constant 2
     """
-    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function'):
-        super().__init__(name=name, info=info)
-        self.T1 = T1
-        self.T2 = T2
+    def __init__(self, u, T1, T2, name=None, tex_name=None, info='Lead-lag transfer function'):
+        super().__init__(name=name, tex_name=None, info=info)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
         self.u = u
 
         self.enforce_tex_name((self.T1, self.T2))
@@ -570,9 +570,9 @@ class LeadLag(Block):
 
         .. math ::
 
-            T_2 \dot{x'} = (u - x') \\
-            T_2 * y = T_1 * (u - x') + T_2 * x' \\
-            x'_0 = y_0 = u
+            T_2 \dot{x'} &= (u - x') \\
+            T_2 * y &= T_1 * (u - x') + T_2 * x' \\
+            x'_0 &= y_0 = u
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -582,6 +582,56 @@ class LeadLag(Block):
         self.y.e_str = f'{self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
                        f'{self.name}_x * {self.T2.name} - ' \
                        f'{self.name}_y * {self.T2.name}'
+
+
+class LeadLag2ndOrd(Block):
+    r"""
+    Second-order lead-lag transfer function block ::
+
+             1 + sT3 + s^2 T4
+        u -> ----------------- -> y
+             1 + sT1 + s^2 T2
+
+    """
+
+    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info='2nd-order lead-lag'):
+        super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
+        self.T3 = dummify(T3)
+        self.T4 = dummify(T4)
+        self.enforce_tex_name((self.T1, self.T2, self.T3, self.T4))
+
+        self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x_1", t_const=self.T2)
+        self.x2 = State(info='State #2 in 2nd order lead-lag', tex_name='x_2')
+        self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
+
+        self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Implemented equations and initial values are
+
+        .. math ::
+            T_2 \dot{x}_1 &= u - x_2 - T_1 x_1 \\
+            \dot{x}_2 &= x_1 \\
+            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) \\
+            x_1^{(0)} &= 0 \\
+            x_2^{(0)} &= y^{(0)} = u
+
+        """
+        self.x1.e_str = f'{self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1'
+        self.x2.e_str = f'{self.name}_x1'
+        self.y.e_str = f'{self.T2.name} * {self.name}_x2 + {self.T2.name} * {self.T3.name} * {self.name}_x1 + ' \
+                       f'{self.T4.name} * ({self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1) - ' \
+                       f'{self.T2.name} * {self.name}_y'
+
+        self.x1.v_str = 0
+        self.x2.v_str = f'{self.u.name}'
+        self.y.v_str = f'{self.u.name}'
 
 
 class LeadLagLimit(Block):

@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 
 class DummyValue(object):
     """
-    Class for converting a scalar value to a v-provider parameter.
+    Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
+
+    A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
     """
     def __init__(self, name):
         self.name = name
