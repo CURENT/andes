@@ -416,10 +416,11 @@ class LagAntiWindup(Block):
     r"""
     Lag (low pass) transfer function block with anti-windup limiter ::
 
-                K
-        u -> ------ -> y
-             1 + sT
-
+                      /-- upper --
+                     K
+             u -> ------ -> y
+                  1 + sT
+        -- lower --/
     Exports one state variable `x` as the output.
 
     Parameters
@@ -636,12 +637,11 @@ class LeadLagLimit(Block):
     r"""
     Lead-Lag transfer function block with hard limiter (series implementation) ::
 
-                       ___upper___
-                      /
-                  1 + sT1
-           u ->   -------  -> y
-                  1 + sT2
-        __lower____/
+                                ___upper___
+              1 + sT1          /
+        u ->  -------  -> ynl / -> y
+              1 + sT2        /
+                  __lower___/
 
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
 
