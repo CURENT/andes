@@ -275,9 +275,8 @@ class PIController(Block):
         Equations implemented are
 
         .. math ::
-            \dot{x_i} = k_i * (ref - var)
-
-            y = x_i + k_i * (ref - var)
+            \dot{x_i} &= k_i * (ref - var) \\
+            y &= x_i + k_i * (ref - var)
         """
 
         self.xi.e_str = f'ki * ({self.ref.name} - {self.u.name})'
@@ -351,10 +350,10 @@ class Washout(Block):
         Equations and initial values:
 
         .. math ::
-            \dot{x'} = (u - x) / T \\
-            y = u - x \\
-            x'_0 = u \\
-            y_0 = 0
+            \dot{x'} &= (u - x) / T \\
+            y &= u - x \\
+            x'^{(0)} &= u \\
+            y^{(0)} &= 0
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -401,13 +400,12 @@ class Lag(Block):
 
         Notes
         -----
-        Equation and initial value
+        Equations and initial values are
 
         .. math ::
 
-            T \dot{x'} = (Ku - x)
-
-            x'_0 = u
+            T \dot{x'} &= (Ku - x) \\
+            x'^{(0)} &= u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
@@ -457,13 +455,12 @@ class LagAntiWindup(Block):
 
         Notes
         -----
-        Equation and initial value
+        Equations and initial values are
 
         .. math ::
 
-            T \dot{x'} = (u - x)
-
-            x'_0 = u
+            T \dot{x'} &= (u - x) \\
+            x'^{(0)} &= u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
@@ -515,17 +512,17 @@ class Lag2ndOrd(Block):
         Implemented equations and initial values are
 
         .. math ::
-            T_2 \dot{x} = Ku - y - T_1 x
 
-            \dot{y} = x
-
-            x_0 = 0
-
-            y_0 = K u
+            T_2 \dot{x} &= Ku - y - T_1 x \\
+            \dot{y} &= x \\
+            x^{(0)} &= 0 \\
+            y^{(0)} &= K u
         """
 
         self.x.v_str = 0
-        self.x.e_str = f'{self.u.name} * {self.K.name} - {self.name}_y - {self.T1.name} * {self.name}_x'
+        self.x.e_str = f'{self.u.name} * {self.K.name} - ' \
+                       f'{self.name}_y - ' \
+                       f'{self.T1.name} * {self.name}_x'
 
         self.y.v_str = f'{self.u.name} * {self.K.name}'
         self.y.e_str = f'{self.name}_x'
@@ -572,7 +569,7 @@ class LeadLag(Block):
 
             T_2 \dot{x'} &= (u - x') \\
             T_2 * y &= T_1 * (u - x') + T_2 * x' \\
-            x'_0 &= y_0 = u
+            x'^{(0)} &= y^{(0)} = u
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -625,7 +622,8 @@ class LeadLag2ndOrd(Block):
         """
         self.x1.e_str = f'{self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1'
         self.x2.e_str = f'{self.name}_x1'
-        self.y.e_str = f'{self.T2.name} * {self.name}_x2 + {self.T2.name} * {self.T3.name} * {self.name}_x1 + ' \
+        self.y.e_str = f'{self.T2.name} * {self.name}_x2 + ' \
+                       f'{self.T2.name} * {self.T3.name} * {self.name}_x1 + ' \
                        f'{self.T4.name} * ({self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1) - ' \
                        f'{self.T2.name} * {self.name}_y'
 
@@ -675,9 +673,9 @@ class LeadLagLimit(Block):
 
         .. math ::
 
-            T_2 \dot{x'} = (u - x') \\
-            T_2 y = T_1 * (u - x') + T_2 * x' \\
-            x'_0 = y_0 = u
+            T_2 \dot{x'} &= (u - x') \\
+            T_2 y &= T_1 * (u - x') + T_2 * x' \\
+            x'^{(0)} &= y^{(0)} = u
 
         """
         self.x.v_str = f'{self.u.name}'
