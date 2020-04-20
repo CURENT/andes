@@ -60,8 +60,8 @@ class EIG(BaseRoutine):
         gyx = matrix(system.dae.gx)
         self.solver.linsolve(system.dae.gy, gyx)
 
-        inv_zf = spdiag((1 / system.dae.zf).tolist())
-        self.As = matrix(inv_zf * (system.dae.fx - system.dae.fy * gyx))
+        iTf = spdiag((1 / system.dae.Tf).tolist())
+        self.As = matrix(iTf * (system.dae.fx - system.dae.fy * gyx))
         return self.As
 
     def calc_eigvals(self):
@@ -138,7 +138,7 @@ class EIG(BaseRoutine):
             logger.warning('No dynamic model. Eig analysis will not continue.')
             return ret
 
-        if sum(system.dae.zf != 0) != len(system.dae.zf):
+        if sum(system.dae.Tf != 0) != len(system.dae.Tf):
             logger.error("System contains zero time constant. Eigenvalue analysis cannot continue.")
             return ret
 
