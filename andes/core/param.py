@@ -7,6 +7,35 @@ from andes.shared import np
 logger = logging.getLogger(__name__)
 
 
+class DummyValue(object):
+    """
+    Class for converting a scalar value to a v-provider parameter.
+    """
+    def __init__(self, name):
+        self.name = name
+        self.tex_name = name
+
+
+def dummify(param):
+    """
+    Dummify scalar parameter and return a DummyValue object. Do nothing for BaseParam instances.
+
+    Parameters
+    ----------
+    param : float, int, BaseParam
+        parameter object or scalar value
+
+    Returns
+    -------
+    DummyValue(param) if param is a scalar; param itself, otherwise.
+
+    """
+    if isinstance(param, (int, float)):
+        return DummyValue(param)
+    else:
+        return param
+
+
 class BaseParam(object):
     """
     The base parameter class.

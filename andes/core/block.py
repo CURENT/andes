@@ -1,14 +1,9 @@
 from andes.core.var import Algeb, State
+from andes.core.param import dummify
 from typing import Optional, Iterable
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.service import ConstService
 from andes.core.triplet import JacTriplet
-
-
-class DummyValues(object):
-    def __init__(self, name):
-        self.name = name
-        self.tex_name = name
 
 
 class Block(object):
@@ -229,7 +224,9 @@ class Block(object):
 
     @staticmethod
     def enforce_tex_name(fields):
-        """Enforce tex_name is not None"""
+        """
+        Enforce tex_name is not None
+        """
         if not isinstance(fields, Iterable):
             fields = [fields]
 
@@ -334,16 +331,8 @@ class Washout(Block):
 
     def __init__(self, u, T, K, info=None, name=None):
         super().__init__(name=name, info=info)
-        if isinstance(T, (int, float)):
-            self.T = DummyValues(T)
-        else:
-            self.T = T
-
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
-
+        self.T = dummify(T)
+        self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
 
         self.KT = ConstService(info='Constant K/T',
@@ -398,11 +387,8 @@ class Lag(Block):
     def __init__(self, u, T, K, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
         self.u = u
-        self.T = T
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
+        self.T = dummify(T)
+        self.K = dummify(K)
 
         self.enforce_tex_name((self.K, self.T))
         self.x = State(info='State in lag transfer function', tex_name="x'",
@@ -419,7 +405,7 @@ class Lag(Block):
 
         .. math ::
 
-            \dot{x'} = (u - x) / T
+            T \dot{x'} = (Ku - x)
 
             x'_0 = u
 
@@ -451,12 +437,10 @@ class LagAntiWindup(Block):
     def __init__(self, u, T, K, lower, upper, name=None,
                  info='Lag transfer function with non-windup limiter'):
         super().__init__(name=name, info=info)
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
         self.u = u
-        self.T = T
+        self.T = dummify(T)
+        self.K = dummify(K)
+
         self.lower = lower
         self.upper = upper
 
@@ -486,6 +470,67 @@ class LagAntiWindup(Block):
         self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x)'
 
 
+class Lag2ndOrd(Block):
+    r"""
+    Second order lag transfer function (low-pass filter) ::
+
+                     K
+        u -> ----------------- -> y
+             1 + sT1 + s^2 T2
+
+    Exports one two state variables (`x`, `y`), where `y` is the output.
+
+    Parameters
+    ----------
+    u
+        Input
+    K
+        Gain
+    T1
+        First order time constant
+    T2
+        Second order time constant
+    """
+
+    def __init__(self, u, K, T1, T2, name=None, tex_name=None, info=None):
+        super(Lag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.K = dummify(K)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
+
+        self.enforce_tex_name((self.K, self.T1, self.T2))
+
+        self.x = State(info='State in 2nd order LPF', tex_name="x'", t_const=self.T2)
+        self.y = State(info='Output of 2nd order LPF', tex_name='y')
+
+        self.vars = {'x': self.x, 'y': self.y}
+
+    def define(self):
+        r"""
+
+        Notes
+        -------
+        Implemented equations and initial values are
+
+        .. math ::
+            T_2 \dot{x} = Ku - y - T_1 x
+
+            \dot{y} = x
+
+            x_0 = 0
+
+            y_0 = K u
+        """
+
+        self.x.v_str = 0
+        self.x.e_str = f'{self.u.name} * {self.K.name} - {self.name}_y - {self.T1.name} * {self.name}_x'
+
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'{self.name}_x'
+
+
 class LeadLag(Block):
     r"""
     Lead-Lag transfer function block in series implementation ::
@@ -511,8 +556,8 @@ class LeadLag(Block):
 
         self.enforce_tex_name((self.T1, self.T2))
 
-        self.x = State(info='State in lead-lag transfer function', tex_name="x'", t_const=self.T2)
-        self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y', diag_eps=1e-6)
+        self.x = State(info='State in lead-lag', tex_name="x'", t_const=self.T2)
+        self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'x': self.x, 'y': self.y}
 
     def define(self):
