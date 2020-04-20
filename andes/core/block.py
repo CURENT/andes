@@ -477,7 +477,7 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            \dot{x'} = (u - x) / T
+            T \dot{x'} = (u - x)
 
             x'_0 = u
 
@@ -498,24 +498,16 @@ class LeadLag(Block):
 
     Parameters
     ----------
-    T1
+    T1 : BaseParam
         Time constant 1
-    T2
+    T2 : BaseParam
         Time constant 2
-
-    Notes
-    -----
-    Future implementation will allow T2 to be zero with a safe division. Any division by zero will become zero.
-
-    c = np.divide(a, b, out=np.zeros_like(a), where=b!=0)
-
     """
-    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function', safe_div=True):
+    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function'):
         super().__init__(name=name, info=info)
         self.T1 = T1
         self.T2 = T2
         self.u = u
-        self.safe_div = safe_div  # TODO: implement me
 
         self.enforce_tex_name((self.T1, self.T2))
 
