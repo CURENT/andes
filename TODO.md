@@ -2,7 +2,7 @@
 
 ### Milestones
 - [x] Help system and consistency check system for Config
-*   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
+- [x] Handling of zero time constants (through `State.t_const`)
 *   Robust iterative initialization
 *   Refactor Model to separate symbolic processing part as `ModelSymbolic` -> `Model.sym`.
 *   Separate the solver class into an interface class + different solver classes
@@ -30,6 +30,7 @@
 *   Root loci plots
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 *   Allow simulating to a time, pause, and continue to a new ending time.
+*   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
 
 
 ## Version 0.8.0 (Completed)
