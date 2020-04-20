@@ -4,14 +4,6 @@ andes.io package
 Submodules
 ----------
 
-andes.io.em\_psse module
-------------------------
-
-.. automodule:: andes.io.em_psse
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.io.matpower module
 ------------------------
 
@@ -24,14 +16,6 @@ andes.io.psse module
 --------------------
 
 .. automodule:: andes.io.psse
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-andes.io.psse\_new module
--------------------------
-
-.. automodule:: andes.io.psse_new
    :members:
    :undoc-members:
    :show-inheritance:
