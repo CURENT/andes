@@ -124,7 +124,7 @@ class ModelData(object):
 
         self.idx = DataParam(info='unique device idx')
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-        self.name = DataParam(info='device name', tex_name='name')
+        self.name = DataParam(info='device name')
 
     def __len__(self):
         return self.n
