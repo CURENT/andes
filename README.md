@@ -591,6 +591,12 @@ This project was originally inspired by the book
 [Power System Modelling and Scripting](https://www.springer.com/gp/book/9783642136689)
 by Prof. Federico Milano.
 
+The following contributors are sincerely acknowledged:
+
+- Christopher Lackner: for contributing the EAGC model.
+- Qiwei Zhang: for contributing a solar PV model.
+- [Yichen Zhang](https://sites.google.com/view/yichenzhangee/home) for feedback on documentation.
+
 # License
 
 ANDES is licensed under the [GPL v3 License](./LICENSE).
