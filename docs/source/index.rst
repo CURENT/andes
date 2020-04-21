@@ -35,8 +35,7 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 - Newton-Raphson power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
 - Full equation documentation of supported DAE models.
 
-ANDES is currently under active development.
-Use the following resources in addition the tutorial to get involved.
+Use the following resources in addition to the tutorial to get involved.
 
 - Jupyter Notebook examples:
   `Checkout on GitHub <https://github.com/cuihantao/andes/tree/master/examples>`_.
@@ -55,10 +54,9 @@ Use the following resources in addition the tutorial to get involved.
 This work was supported in part by the Engineering Research Center Program of
 the National Science Foundation and the Department of Energy under NSF Award
 Number EEC-1041877 and the `CURENT <https://curent.utk.edu>`_ Industry Partnership Program.
-
 **ANDES is made open source as part of the CURENT Large Scale Testbed project.**
 
-ANDES is developed and maintained by `Hantao Cui <https://cuihantao.github.io>`_.
+ANDES is developed and actively maintained by `Hantao Cui <https://cuihantao.github.io>`_.
 See the GitHub repository for a full list of contributors.
 
 .. toctree::
