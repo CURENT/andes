@@ -365,10 +365,10 @@ class Washout(Block):
 
 class Lag(Block):
     r"""
-    Lag (low pass) transfer function block ::
+    Lag (low pass filter) transfer function block ::
 
                 K
-        u -> ------ -> y
+        u -> ------ -> x
              1 + sT
 
     Exports one state variable `x` as the output.
@@ -405,7 +405,7 @@ class Lag(Block):
         .. math ::
 
             T \dot{x'} &= (Ku - x) \\
-            x'^{(0)} &= u
+            x'^{(0)} &= K u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
@@ -414,15 +414,16 @@ class Lag(Block):
 
 class LagAntiWindup(Block):
     r"""
-    Lag (low pass) transfer function block with anti-windup limiter ::
+    Lag (low pass filter) transfer function block with an anti-windup limiter ::
 
                       /-- upper --
                      K
-             u -> ------ -> y
+             u -> ------ -> x
                   1 + sT
         -- lower --/
 
     Exports one state variable `x` as the output.
+    Exports one AntiWindupLimiter instance `lim`.
 
     Parameters
     ----------
@@ -461,8 +462,8 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            T \dot{x'} &= (u - x) \\
-            x'^{(0)} &= u
+            T \dot{x'} &= (Ku - x) \\
+            x'^{(0)} &= K u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
@@ -538,7 +539,7 @@ class LeadLag(Block):
         u -> ------- -> y
              1 + sT2
 
-    Exports two variables: state x and output y.
+    Exports two variables: internal state `x` and output algebraic variable `y`.
 
     Parameters
     ----------
@@ -591,6 +592,7 @@ class LeadLag2ndOrd(Block):
         u -> ----------------- -> y
              1 + sT1 + s^2 T2
 
+    Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
     """
 
     def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info='2nd-order lead-lag'):
@@ -644,7 +646,7 @@ class LeadLagLimit(Block):
               1 + sT2        /
                   __lower___/
 
-    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
+    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindupLimiter `lim`.
 
     """
     def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
@@ -670,7 +672,7 @@ class LeadLagLimit(Block):
         Notes
         -----
 
-        Implemented equations and initial values
+        Implemented control block equations (without limiter) and initial values
 
         .. math ::
 
