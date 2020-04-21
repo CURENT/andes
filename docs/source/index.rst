@@ -3,10 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-####
-Home
-####
-
 .. raw:: html
 
    <embed>
@@ -18,6 +14,9 @@ Home
    Python Software for Symbolic Power System Modeling and Numerical Analysis</p>
    </embed>
 
+****
+Home
+****
 
 ANDES is a Python-based free software package for power system simulation, control and analysis.
 It establishes a unique **hybrid symbolic-numeric framework** for modeling differential algebraic
@@ -53,31 +52,6 @@ Use the following resources in addition the tutorial to get involved.
   `command-line tutorial <https://git-scm.com/docs/gittutorial>`_, and
   `using GitHub Desktop <https://help.github.com/en/desktop/getting-started-with-github-desktop>`_.
 
-Acknowledgement
-***************
-
-This work was supported in part by the Engineering Research Center Program of
-the National Science Foundation and the Department of Energy under NSF Award
-Number EEC-1041877 and the CURENT Industry Partnership Program.
-
-**ANDES is made open source as part of the CURENT Large Scale Testbed project.**
-
-This project was originally inspired by the book `Power System Modelling and Scripting <https://www.springer
-.com/gp/book/9783642136689>`_
-by `Prof. Federico Milano <http://faraday1.ucd.ie>`_.
-
-Authors and Contributors
-************************
-
-ANDES is developed by `Hantao Cui <https://cuihantao.github.io>`_.
-
-The following contributors are sincerely acknowledged:
-
-- Christopher Lacknr: for contributing the EAGC model.
-- Qiwei Zhang: for contributing a solar PV model.
-- `Yichen Zhang <https://sites.google.com/view/yichenzhangee/home>`_: for feedback on documentation.
-
-
 .. toctree::
    :caption: ANDES Manual
    :maxdepth: 3
@@ -101,6 +75,29 @@ The following contributors are sincerely acknowledged:
 
    andes.rst
 
+Acknowledgement
+===============
+
+This work was supported in part by the Engineering Research Center Program of
+the National Science Foundation and the Department of Energy under NSF Award
+Number EEC-1041877 and the `CURENT <https://curent.utk.edu>`_ Industry Partnership Program.
+
+**ANDES is made open source as part of the CURENT Large Scale Testbed project.**
+
+This project was originally inspired by the book `Power System Modelling and Scripting <https://www.springer
+.com/gp/book/9783642136689>`_
+by `Prof. Federico Milano <http://faraday1.ucd.ie>`_.
+
+Authors and Contributors
+========================
+
+ANDES is developed by `Hantao Cui <https://cuihantao.github.io>`_.
+
+The following contributors are sincerely acknowledged:
+
+- Christopher Lacknr: for contributing the EAGC model.
+- Qiwei Zhang: for contributing a solar PV model.
+- `Yichen Zhang <https://sites.google.com/view/yichenzhangee/home>`_: for feedback on documentation.
 
 Indices and tables
 ==================
