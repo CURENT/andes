@@ -1,5 +1,7 @@
 # ANDES
 
+Python Software for Symbolic Power System Modeling and Numerical Analysis.
+
 [![GitHub Action Status](https://github.com/cuihantao/andes/workflows/Python%20application/badge.svg)](https://github.com/cuihantao/andes/actions)
 [![Azure Pipeline build status](https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master)](https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master)
 [![Codecov Coverage](https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg)](https://codecov.io/gh/cuihantao/andes)
@@ -9,8 +11,6 @@
 [![Conda Downloads](https://anaconda.org/conda-forge/andes/badges/downloads.svg)](https://anaconda.org/conda-forge/andes)
 [![Documentation Status](https://readthedocs.org/projects/andes/badge/?version=latest)](https://andes.readthedocs.io/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cuihantao/andes/master)
-
-A Python-based tool for symbolic power system modeling and numerical analysis.
 
 # Why ANDES
 
@@ -34,7 +34,7 @@ Modeling DAE-based devices is as simple as describing the mathematical equations
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram: ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1.png) <br><br> DAE: ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_class.png) |
+| Diagram: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1.png) <br><br> Write into DAEs: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document. 
 ANDES automatically generates model documentation, and the docs always stay up to date.
@@ -55,6 +55,8 @@ In addition, ANDES features
 ANDES is currently under active development.
 Use the following resources to get involved.
 
++ Check out examples in the [examples folder][examples]
++ Try in Jupyter Notebook on [Binder][Binder]
 + Learn more about ANDES by reading the [documentation][readthedocs]
 + Report bugs or issues by submitting a [GitHub issue][GitHub issues]
 + Submit contributions using [pull requests][GitHub pull requests]
@@ -589,6 +591,12 @@ This project was originally inspired by the book
 [Power System Modelling and Scripting](https://www.springer.com/gp/book/9783642136689)
 by Prof. Federico Milano.
 
+The following contributors are sincerely acknowledged:
+
+- Christopher Lackner: for contributing the EAGC model.
+- Qiwei Zhang: for contributing a solar PV model.
+- [Yichen Zhang](https://sites.google.com/view/yichenzhangee/home) for feedback on documentation.
+
 # License
 
 ANDES is licensed under the [GPL v3 License](./LICENSE).
@@ -604,3 +612,5 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 [release notes]:         https://andes.readthedocs.io/en/latest/release-notes.html 
 [arxiv paper]:           https://arxiv.org/abs/2002.09455
 [tutorial]:              https://andes.readthedocs.io/en/latest/tutorial.html#interactive-usage
+[examples]:              https://github.com/cuihantao/andes/tree/master/examples
+[Binder]:                https://mybinder.org/v2/gh/cuihantao/andes/master

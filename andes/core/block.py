@@ -1,14 +1,9 @@
 from andes.core.var import Algeb, State
+from andes.core.param import dummify
 from typing import Optional, Iterable
 from andes.core.discrete import AntiWindupLimiter
 from andes.core.service import ConstService
 from andes.core.triplet import JacTriplet
-
-
-class DummyValues(object):
-    def __init__(self, name):
-        self.name = name
-        self.tex_name = name
 
 
 class Block(object):
@@ -229,7 +224,9 @@ class Block(object):
 
     @staticmethod
     def enforce_tex_name(fields):
-        """Enforce tex_name is not None"""
+        """
+        Enforce tex_name is not None
+        """
         if not isinstance(fields, Iterable):
             fields = [fields]
 
@@ -278,9 +275,8 @@ class PIController(Block):
         Equations implemented are
 
         .. math ::
-            \dot{x_i} = k_i * (ref - var)
-
-            y = x_i + k_i * (ref - var)
+            \dot{x_i} &= k_i * (ref - var) \\
+            y &= x_i + k_i * (ref - var)
         """
 
         self.xi.e_str = f'ki * ({self.ref.name} - {self.u.name})'
@@ -334,16 +330,8 @@ class Washout(Block):
 
     def __init__(self, u, T, K, info=None, name=None):
         super().__init__(name=name, info=info)
-        if isinstance(T, (int, float)):
-            self.T = DummyValues(T)
-        else:
-            self.T = T
-
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
-
+        self.T = dummify(T)
+        self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
 
         self.KT = ConstService(info='Constant K/T',
@@ -352,7 +340,7 @@ class Washout(Block):
 
         self.u = u
         self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
-        self.y = Algeb(info='Output of washout filter', tex_name=r'y')
+        self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
 
     def define(self):
@@ -362,25 +350,25 @@ class Washout(Block):
         Equations and initial values:
 
         .. math ::
-            \dot{x'} = (u - x) / T \\
-            y = u - x \\
-            x'_0 = u \\
-            y_0 = 0
+            T \dot{x'} &= (u - x) \\
+            T y &= K (u - x) \\
+            x'^{(0)} &= u \\
+            y^{(0)} &= 0
 
         """
         self.x.v_str = f'{self.u.name}'
         self.y.v_str = f'0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
-        self.y.e_str = f'{self.name}_KT * ({self.u.name} - {self.name}_x) - {self.name}_y'
+        self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'
 
 
 class Lag(Block):
     r"""
-    Lag (low pass) transfer function block ::
+    Lag (low pass filter) transfer function block ::
 
                 K
-        u -> ------ -> y
+        u -> ------ -> x
              1 + sT
 
     Exports one state variable `x` as the output.
@@ -398,11 +386,8 @@ class Lag(Block):
     def __init__(self, u, T, K, name=None, info='Lag transfer function'):
         super().__init__(name=name, info=info)
         self.u = u
-        self.T = T
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
+        self.T = dummify(T)
+        self.K = dummify(K)
 
         self.enforce_tex_name((self.K, self.T))
         self.x = State(info='State in lag transfer function', tex_name="x'",
@@ -415,13 +400,12 @@ class Lag(Block):
 
         Notes
         -----
-        Equation and initial value
+        Equations and initial values are
 
         .. math ::
 
-            \dot{x'} = (u - x) / T
-
-            x'_0 = u
+            T \dot{x'} &= (Ku - x) \\
+            x'^{(0)} &= K u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
@@ -430,13 +414,16 @@ class Lag(Block):
 
 class LagAntiWindup(Block):
     r"""
-    Lag (low pass) transfer function block with anti-windup limiter ::
+    Lag (low pass filter) transfer function block with an anti-windup limiter ::
 
-                K
-        u -> ------ -> y
-             1 + sT
+                      /-- upper --
+                     K
+             u -> ------ -> x
+                  1 + sT
+        -- lower --/
 
     Exports one state variable `x` as the output.
+    Exports one AntiWindupLimiter instance `lim`.
 
     Parameters
     ----------
@@ -451,12 +438,10 @@ class LagAntiWindup(Block):
     def __init__(self, u, T, K, lower, upper, name=None,
                  info='Lag transfer function with non-windup limiter'):
         super().__init__(name=name, info=info)
-        if isinstance(K, (int, float)):
-            self.K = DummyValues(K)
-        else:
-            self.K = K
         self.u = u
-        self.T = T
+        self.T = dummify(T)
+        self.K = dummify(K)
+
         self.lower = lower
         self.upper = upper
 
@@ -473,17 +458,77 @@ class LagAntiWindup(Block):
 
         Notes
         -----
-        Equation and initial value
+        Equations and initial values are
 
         .. math ::
 
-            \dot{x'} = (u - x) / T
-
-            x'_0 = u
+            T \dot{x'} &= (Ku - x) \\
+            x'^{(0)} &= K u
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
         self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x)'
+
+
+class Lag2ndOrd(Block):
+    r"""
+    Second order lag transfer function (low-pass filter) ::
+
+                     K
+        u -> ----------------- -> y
+             1 + sT1 + s^2 T2
+
+    Exports one two state variables (`x`, `y`), where `y` is the output.
+
+    Parameters
+    ----------
+    u
+        Input
+    K
+        Gain
+    T1
+        First order time constant
+    T2
+        Second order time constant
+    """
+
+    def __init__(self, u, K, T1, T2, name=None, tex_name=None, info=None):
+        super(Lag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.K = dummify(K)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
+
+        self.enforce_tex_name((self.K, self.T1, self.T2))
+
+        self.x = State(info='State in 2nd order LPF', tex_name="x'", t_const=self.T2)
+        self.y = State(info='Output of 2nd order LPF', tex_name='y')
+
+        self.vars = {'x': self.x, 'y': self.y}
+
+    def define(self):
+        r"""
+
+        Notes
+        -------
+        Implemented equations and initial values are
+
+        .. math ::
+
+            T_2 \dot{x} &= Ku - y - T_1 x \\
+            \dot{y} &= x \\
+            x^{(0)} &= 0 \\
+            y^{(0)} &= K u
+        """
+
+        self.x.v_str = 0
+        self.x.e_str = f'{self.u.name} * {self.K.name} - ' \
+                       f'{self.name}_y - ' \
+                       f'{self.T1.name} * {self.name}_x'
+
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'{self.name}_x'
 
 
 class LeadLag(Block):
@@ -494,33 +539,25 @@ class LeadLag(Block):
         u -> ------- -> y
              1 + sT2
 
-    Exports two variables: state x and output y.
+    Exports two variables: internal state `x` and output algebraic variable `y`.
 
     Parameters
     ----------
-    T1
+    T1 : BaseParam
         Time constant 1
-    T2
+    T2 : BaseParam
         Time constant 2
-
-    Notes
-    -----
-    Future implementation will allow T2 to be zero with a safe division. Any division by zero will become zero.
-
-    c = np.divide(a, b, out=np.zeros_like(a), where=b!=0)
-
     """
-    def __init__(self, u, T1, T2, name=None, info='Lead-lag transfer function', safe_div=True):
-        super().__init__(name=name, info=info)
-        self.T1 = T1
-        self.T2 = T2
+    def __init__(self, u, T1, T2, name=None, tex_name=None, info='Lead-lag transfer function'):
+        super().__init__(name=name, tex_name=None, info=info)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
         self.u = u
-        self.safe_div = safe_div  # TODO: implement me
 
         self.enforce_tex_name((self.T1, self.T2))
 
-        self.x = State(info='State in lead-lag transfer function', tex_name="x'", t_const=self.T2)
-        self.y = Algeb(info='Output of lead-lag transfer function', tex_name=r'y', diag_eps=1e-6)
+        self.x = State(info='State in lead-lag', tex_name="x'", t_const=self.T2)
+        self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'x': self.x, 'y': self.y}
 
     def define(self):
@@ -533,9 +570,9 @@ class LeadLag(Block):
 
         .. math ::
 
-            T_2 \dot{x'} = (u - x') \\
-            T_2 * y = T_1 * (u - x') + T_2 * x' \\
-            x'_0 = y_0 = u
+            T_2 \dot{x'} &= (u - x') \\
+            T_2 * y &= T_1 * (u - x') + T_2 * x' \\
+            x'^{(0)} &= y^{(0)} = u
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -547,18 +584,69 @@ class LeadLag(Block):
                        f'{self.name}_y * {self.T2.name}'
 
 
+class LeadLag2ndOrd(Block):
+    r"""
+    Second-order lead-lag transfer function block ::
+
+             1 + sT3 + s^2 T4
+        u -> ----------------- -> y
+             1 + sT1 + s^2 T2
+
+    Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
+    """
+
+    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info='2nd-order lead-lag'):
+        super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
+        self.T3 = dummify(T3)
+        self.T4 = dummify(T4)
+        self.enforce_tex_name((self.T1, self.T2, self.T3, self.T4))
+
+        self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x'", t_const=self.T2)
+        self.x2 = State(info='State #2 in 2nd order lead-lag', tex_name="x''")
+        self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
+
+        self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Implemented equations and initial values are
+
+        .. math ::
+            T_2 \dot{x}_1 &= u - x_2 - T_1 x_1 \\
+            \dot{x}_2 &= x_1 \\
+            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) \\
+            x_1^{(0)} &= 0 \\
+            x_2^{(0)} &= y^{(0)} = u
+
+        """
+        self.x1.e_str = f'{self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1'
+        self.x2.e_str = f'{self.name}_x1'
+        self.y.e_str = f'{self.T2.name} * {self.name}_x2 + ' \
+                       f'{self.T2.name} * {self.T3.name} * {self.name}_x1 + ' \
+                       f'{self.T4.name} * ({self.u.name} - {self.name}_x2 - {self.T1.name} * {self.name}_x1) - ' \
+                       f'{self.T2.name} * {self.name}_y'
+
+        self.x1.v_str = 0
+        self.x2.v_str = f'{self.u.name}'
+        self.y.v_str = f'{self.u.name}'
+
+
 class LeadLagLimit(Block):
     r"""
     Lead-Lag transfer function block with hard limiter (series implementation) ::
 
-                       ___upper___
-                      /
-                  1 + sT1
-           u ->   -------  -> y
-                  1 + sT2
-        __lower____/
+                                ___upper___
+              1 + sT1          /
+        u ->  -------  -> ynl / -> y
+              1 + sT2        /
+                  __lower___/
 
-    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and limiter `lim`,
+    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindupLimiter `lim`.
 
     """
     def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
@@ -584,13 +672,13 @@ class LeadLagLimit(Block):
         Notes
         -----
 
-        Implemented equations and initial values
+        Implemented control block equations (without limiter) and initial values
 
         .. math ::
 
-            T_2 \dot{x'} = (u - x') \\
-            T_2 y = T_1 * (u - x') + T_2 * x' \\
-            x'_0 = y_0 = u
+            T_2 \dot{x'} &= (u - x') \\
+            T_2 y &= T_1 * (u - x') + T_2 * x' \\
+            x'^{(0)} &= y^{(0)} = u
 
         """
         self.x.v_str = f'{self.u.name}'

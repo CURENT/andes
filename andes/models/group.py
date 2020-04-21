@@ -295,7 +295,7 @@ class SynGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus'))
-        self.common_vars.extend(('omega', 'delta', 'tm', 'vf'))
+        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf'))
 
 
 class TurbineGov(GroupBase):
@@ -313,7 +313,15 @@ class Exciter(GroupBase):
     """
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('syn', ))
         self.common_vars.extend(('vout', ))
+
+
+class PSS(GroupBase):
+    """Power system stabilizer group."""
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('vsout', ))
 
 
 class Experimental(GroupBase):

@@ -298,13 +298,13 @@ class TGOV1ModelAlt(TGBase):
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 
-class TGOV1(TGOV1Data, TGOV1ModelAlt):
+class TGOV1(TGOV1Data, TGOV1Model):
     """
     TGOV1 model.
     """
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
-        TGOV1ModelAlt.__init__(self, system, config)
+        TGOV1Model.__init__(self, system, config)
 
 # Developing a model (use TG2 as an example)
 # 0) Find the group class or write a new group class in group.py

@@ -4,6 +4,16 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.8.6 (2020-04-21)
+-------------------
+This release contains important documentation fixes and two new blocks.
+
+- Fixed documentations in `andes doc` to address a misplacement of symbols and equations.
+- Converted all blocks to the division-free formulation (with `dae.zf` renamed to `dae.Tf`).
+- Fixed equation errors in the block documentation.
+- Implemented two new blocks: Lag2ndOrd and LeadLag2ndOrd.
+- Added a prototype for IEEEST stabilizer with some fixes needed.
+
 v0.8.5 (2020-04-17)
 -------------------
 - Converted the differential equations to the form of ``T \dot{x} = f(x, y)``, where T is supplied to

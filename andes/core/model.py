@@ -124,7 +124,7 @@ class ModelData(object):
 
         self.idx = DataParam(info='unique device idx')
         self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-        self.name = DataParam(info='device name', tex_name='name')
+        self.name = DataParam(info='device name')
 
     def __len__(self):
         return self.n
@@ -1542,26 +1542,25 @@ class Model(object):
                               rest_dict=rest_dict)
 
     def _eq_doc(self, max_width=80, export='plain', e_code=None):
-        out = ''
         # equation documentation
+        # TODO: this function needs a bit refactoring
+        out = ''
         if len(self.cache.all_vars) == 0:
             return out
-        e2dict = {'f': self.cache.states_and_ext,
-                  'g': self.cache.algebs_and_ext,
-                  }
-        e2full = {'f': 'Differential',
-                  'g': 'Algebraic'}
-
-        e2form = {'f': "T x' = f(x, y)",
-                  'g': "0 = g(x, y)"}
 
         if e_code is None:
             e_code = ('f', 'g')
         elif isinstance(e_code, str):
             e_code = (e_code, )
 
-        for e_name in e_code:
+        e2full = {'f': 'Differential',
+                  'g': 'Algebraic'}
+        e2form = {'f': "T x' = f(x, y)",
+                  'g': "0 = g(x, y)"}
 
+        e2dict = {'f': self.cache.states_and_ext,
+                  'g': self.cache.algebs_and_ext}
+        for e_name in e_code:
             if len(e2dict[e_name]) == 0:
                 continue
 
@@ -1578,15 +1577,20 @@ class Model(object):
                     lhs_names.append(p.t_const.name if p.t_const else '')
                     lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
 
-            if export == 'rest':
-                call_store = self.system.calls[self.class_name]
-                symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-                eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
-
             plain_dict = OrderedDict([('Name', names),
                                       ('Type', class_names),
                                       (f'RHS of Equation "{e2form[e_name]}"', eqs),
                                       ])
+
+            if export == 'rest':
+                call_store = self.system.calls[self.class_name]
+                e2var_sym = {'f': call_store.x_latex,
+                             'g': call_store.y_latex}
+                e2eq_sym = {'f': call_store.f_latex,
+                            'g': call_store.g_latex}
+
+                symbols = math_wrap(e2var_sym[e_name], export=export)
+                eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
 
             rest_dict = OrderedDict([('Name', names),
                                      ('Symbol', symbols),

@@ -1,10 +1,41 @@
-from typing import Optional, Union, Callable
+from typing import Optional, Union, Callable, List, Tuple
 
 import math
 import logging
 from andes.models.group import GroupBase
 from andes.shared import np
 logger = logging.getLogger(__name__)
+
+
+class DummyValue(object):
+    """
+    Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
+
+    A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
+    """
+    def __init__(self, name):
+        self.name = name
+        self.tex_name = name
+
+
+def dummify(param):
+    """
+    Dummify scalar parameter and return a DummyValue object. Do nothing for BaseParam instances.
+
+    Parameters
+    ----------
+    param : float, int, BaseParam
+        parameter object or scalar value
+
+    Returns
+    -------
+    DummyValue(param) if param is a scalar; param itself, otherwise.
+
+    """
+    if isinstance(param, (int, float)):
+        return DummyValue(param)
+    else:
+        return param
 
 
 class BaseParam(object):
@@ -202,6 +233,8 @@ class NumParam(BaseParam):
         True if this parameter is mandatory
     unit : str, optional
         Unit of the parameter
+    vrange : list, tuple, optional
+        Typical value range
 
     Other Parameters
     ----------------
@@ -247,6 +280,7 @@ class NumParam(BaseParam):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
+                 vrange: Optional[Union[List, Tuple]] = None,
                  non_zero: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
@@ -279,6 +313,7 @@ class NumParam(BaseParam):
 
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
+        self.vrange = vrange
 
     def add(self, value=None):
         """

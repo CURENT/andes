@@ -95,7 +95,7 @@ class TDS(BaseRoutine):
         system.init(self.tds_models)
         system.store_switch_times(self.tds_models)
         self.eye = spdiag([1] * system.dae.n)
-        self.Teye = spdiag(system.dae.zf.tolist()) * self.eye
+        self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
 
         self.initialized = self.test_initialization()
         _, s1 = elapsed(t0)
@@ -270,7 +270,7 @@ class TDS(BaseRoutine):
             self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
             # equation `q = 0` is the implicit form of differential equations using ITM
-            q = dae.zf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
+            q = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
