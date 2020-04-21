@@ -73,10 +73,12 @@ class PSSBase(Model):
                            tex_name=r'\tau_e', info='Generator electrical output',
                            )
         self.vf = ExtAlgeb(model='SynGen', src='vf', indexer=self.syn, tex_name='v_f',
+                           info='Generator excitation voltage',
                            e_str='u * vsout')
 
         # from Bus  #TODO: implement the optional BUSR
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
+                          info='Bus (or BUSR, if given) terminal voltage',
                           )
 
         # from Exciter
@@ -113,11 +115,11 @@ class IEEESTModel(PSSBase):
         self.signal.e_str = 'SW_s0 * (1-omega) + SW_s1 * 0 + SW_s2 * te + ' \
                             'SW_s3 * (tm-tm0) + SW_s4 *v + SW_s5 * 0 - signal'
 
-        self.L2 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)
+        self.F1 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)
 
-        self.LL2ND = LeadLag2ndOrd(u=self.L2_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6)
+        self.F2 = LeadLag2ndOrd(u=self.F1_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6)
 
-        self.LL1 = LeadLag(u=self.LL2ND_y, T1=self.T1, T2=self.T2)
+        self.LL1 = LeadLag(u=self.F2_y, T1=self.T1, T2=self.T2)
 
         self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4)
 
@@ -125,7 +127,8 @@ class IEEESTModel(PSSBase):
 
         self.VLIM = Limiter(u=self.WO_y, lower=self.LSMIN, upper=self.LSMAX, info='Vss limiter')
 
-        self.Vss = Algeb(tex_name='V_{ss}', e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
+        self.Vss = Algeb(tex_name='V_{ss}', info='Voltage output before output limiter',
+                         e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
 
         self.OLIM = Limiter(u=self.v, lower=self.VCL, upper=self.VCU, info='output limiter')
 
