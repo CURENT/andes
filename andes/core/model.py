@@ -1546,22 +1546,26 @@ class Model(object):
         # equation documentation
         if len(self.cache.all_vars) == 0:
             return out
-        e2dict = {'f': self.cache.states_and_ext,
-                  'g': self.cache.algebs_and_ext,
-                  }
-        e2full = {'f': 'Differential',
-                  'g': 'Algebraic'}
-
-        e2form = {'f': "T x' = f(x, y)",
-                  'g': "0 = g(x, y)"}
 
         if e_code is None:
             e_code = ('f', 'g')
         elif isinstance(e_code, str):
             e_code = (e_code, )
 
-        for e_name in e_code:
+        call_store = self.system.calls[self.class_name]
+        e2full = {'f': 'Differential',
+                  'g': 'Algebraic'}
+        e2form = {'f': "T x' = f(x, y)",
+                  'g': "0 = g(x, y)"}
 
+        e2dict = {'f': self.cache.states_and_ext,
+                  'g': self.cache.algebs_and_ext}
+        e2var_sym = {'f': call_store.x_latex,
+                     'g': call_store.y_latex}
+        e2eq_sym = {'f': call_store.f_latex,
+                    'g': call_store.g_latex}
+
+        for e_name in e_code:
             if len(e2dict[e_name]) == 0:
                 continue
 
@@ -1579,9 +1583,8 @@ class Model(object):
                     lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
 
             if export == 'rest':
-                call_store = self.system.calls[self.class_name]
-                symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-                eqs_rest = math_wrap(call_store.f_latex + call_store.g_latex, export=export)
+                symbols = math_wrap(e2var_sym[e_name], export=export)
+                eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
 
             plain_dict = OrderedDict([('Name', names),
                                       ('Type', class_names),

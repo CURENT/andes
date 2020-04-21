@@ -96,7 +96,6 @@ class IEEESTModel(PSSBase):
         super(IEEESTModel, self).__init__(system, config)
 
         self.KST5 = ConstService(v_str='KS * T5', tex_name='KS*T5')
-        self.zeros = ConstService(v_str='0')
         self.SW = Switcher(u=self.MODE,
                            options=[1, 2, 3, 4, 5, 6],
                            )
