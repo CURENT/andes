@@ -17,30 +17,31 @@ class IEEESTData(ModelData):
     def __init__(self):
         super(IEEESTData, self).__init__()
 
-        self.avr = IdxParam()
-        self.MODE = NumParam()
-        self.BUSR = IdxParam
+        self.avr = IdxParam(info='Exciter idx')
+        self.MODE = NumParam(info='Input signal selection')
+        self.BUSR = IdxParam('Remote bus idx (local if empty)')
 
-        self.A1 = NumParam(tex_name='A_1')
-        self.A2 = NumParam(tex_name='A_2')
-        self.A3 = NumParam(tex_name='A_3')
-        self.A4 = NumParam(tex_name='A_4')
-        self.A5 = NumParam(tex_name='A_5')
-        self.A6 = NumParam(tex_name='A_6')
+        self.A1 = NumParam(tex_name='A_1', info='filter time const. (pole)')
+        self.A2 = NumParam(tex_name='A_2', info='filter time const. (pole)')
+        self.A3 = NumParam(tex_name='A_3', info='filter time const. (pole)')
+        self.A4 = NumParam(tex_name='A_4', info='filter time const. (pole)')
+        self.A5 = NumParam(tex_name='A_5', info='filter time const. (zero)')
+        self.A6 = NumParam(tex_name='A_6', info='filter time const. (zero)')
 
-        self.T1 = NumParam(tex_name='T_1', vrange=[0, 10])
-        self.T2 = NumParam(tex_name='T_2', vrange=[0, 10])
-        self.T3 = NumParam(tex_name='T_3', vrange=[0, 10])
-        self.T4 = NumParam(tex_name='T_4', vrange=[0, 10])
-        self.T5 = NumParam(tex_name='T_5', vrange=[0, 10])
-        self.T6 = NumParam(tex_name='T_6', vrange=[0.04, 2])
+        self.T1 = NumParam(tex_name='T_1', vrange=[0, 10], info='first leadlag time const. (zero)')
+        self.T2 = NumParam(tex_name='T_2', vrange=[0, 10], info='first leadlag time const. (pole)')
+        self.T3 = NumParam(tex_name='T_3', vrange=[0, 10], info='second leadlag time const. (pole)')
+        self.T4 = NumParam(tex_name='T_4', vrange=[0, 10], info='second leadlag time const. (pole)')
+        self.T5 = NumParam(tex_name='T_5', vrange=[0, 10], info='washout time const. (zero)')
+        self.T6 = NumParam(tex_name='T_6', vrange=[0.04, 2], info='washout time const. (pole)')
 
-        self.KS = NumParam(tex_name='K_S')
-        self.LSMAX = NumParam(tex_name='L_{SMAX}', vrange=[0, 0.3])
-        self.LSMIN = NumParam(tex_name='L_{SMIN}', vrange=[-0.3, 0])
+        self.KS = NumParam(tex_name='K_S', info='Gain before washout')
+        self.LSMAX = NumParam(tex_name='L_{SMAX}', vrange=[0, 0.3], info='Max. output limit')
+        self.LSMIN = NumParam(tex_name='L_{SMIN}', vrange=[-0.3, 0], info='Min. output limit')
 
-        self.VCU = NumParam(tex_name='V_{CU}')  # TODO: allow ignoring zero elements in the output condition
-        self.VCL = NumParam(tex_name='V_{CL}')
+        # TODO: allow ignoring zero elements in the output condition
+        self.VCU = NumParam(tex_name='V_{CU}', info='Upper enabling bus voltage')
+        self.VCL = NumParam(tex_name='V_{CL}', info='Upper enabling bus voltage')
 
 
 class PSSBase(Model):
