@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable
+from typing import Optional, Union, Callable, List, Tuple
 
 import math
 import logging
@@ -233,6 +233,8 @@ class NumParam(BaseParam):
         True if this parameter is mandatory
     unit : str, optional
         Unit of the parameter
+    vrange : list, tuple, optional
+        Typical value range
 
     Other Parameters
     ----------------
@@ -278,6 +280,7 @@ class NumParam(BaseParam):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
+                 vrange: Optional[Union[List, Tuple]] = None,
                  non_zero: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
@@ -310,6 +313,7 @@ class NumParam(BaseParam):
 
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
+        self.vrange = vrange
 
     def add(self, value=None):
         """

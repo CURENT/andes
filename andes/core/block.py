@@ -326,6 +326,7 @@ class Washout(Block):
          u -> ------- -> y
               1 + sT
 
+    TODO: upgrade to the division-free form
     """
 
     def __init__(self, u, T, K, info=None, name=None):
@@ -421,6 +422,7 @@ class LagAntiWindup(Block):
              u -> ------ -> y
                   1 + sT
         -- lower --/
+
     Exports one state variable `x` as the output.
 
     Parameters
@@ -601,8 +603,8 @@ class LeadLag2ndOrd(Block):
         self.T4 = dummify(T4)
         self.enforce_tex_name((self.T1, self.T2, self.T3, self.T4))
 
-        self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x_1", t_const=self.T2)
-        self.x2 = State(info='State #2 in 2nd order lead-lag', tex_name='x_2')
+        self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x'", t_const=self.T2)
+        self.x2 = State(info='State #2 in 2nd order lead-lag', tex_name="x''")
         self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}

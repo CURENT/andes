@@ -1,3 +1,143 @@
 """
 Power system stabilizer models
 """
+from andes.core.param import NumParam, IdxParam, ExtParam
+from andes.core.var import Algeb, ExtAlgeb, ExtState
+from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, Washout
+from andes.core.service import ConstService, ExtService
+from andes.core.discrete import Switcher, Limiter
+from andes.core.model import ModelData, Model
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class IEEESTData(ModelData):
+    def __init__(self):
+        super(IEEESTData, self).__init__()
+
+        self.avr = IdxParam()
+        self.MODE = NumParam()
+        self.BUSR = IdxParam
+
+        self.A1 = NumParam(tex_name='A_1')
+        self.A2 = NumParam(tex_name='A_2')
+        self.A3 = NumParam(tex_name='A_3')
+        self.A4 = NumParam(tex_name='A_4')
+        self.A5 = NumParam(tex_name='A_5')
+        self.A6 = NumParam(tex_name='A_6')
+
+        self.T1 = NumParam(tex_name='T_1', vrange=[0, 10])
+        self.T2 = NumParam(tex_name='T_2', vrange=[0, 10])
+        self.T3 = NumParam(tex_name='T_3', vrange=[0, 10])
+        self.T4 = NumParam(tex_name='T_4', vrange=[0, 10])
+        self.T5 = NumParam(tex_name='T_5', vrange=[0, 10])
+        self.T6 = NumParam(tex_name='T_6', vrange=[0.04, 2])
+
+        self.KS = NumParam(tex_name='K_S')
+        self.LSMAX = NumParam(tex_name='L_{SMAX}', vrange=[0, 0.3])
+        self.LSMIN = NumParam(tex_name='L_{SMIN}', vrange=[-0.3, 0])
+
+        self.VCU = NumParam(tex_name='V_{CU}')  # TODO: allow ignoring zero elements in the output condition
+        self.VCL = NumParam(tex_name='V_{CL}')
+
+
+class PSSBase(Model):
+    """
+    PSS base model
+    """
+    def __init__(self, system, config):
+        super().__init__(system, config)
+        self.group = 'PSS'
+        self.flags.update({'tds': True})
+
+        self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False)
+        self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False)
+        self.Sn = ExtParam(model='SynGen', src='Sn', indexer=self.syn, tex_name='S_n',
+                           info='Generator power base', export=False)
+
+        # from SynGen
+        self.omega = ExtState(model='SynGen', src='omega', indexer=self.syn,
+                              tex_name=r'\omega', info='Generator speed', unit='p.u.',
+                              )
+
+        self.tm0 = ExtService(model='SynGen', src='tm', indexer=self.syn,
+                              tex_name=r'\tau_{m0}', info='Initial mechanical input',
+                              )
+        self.tm = ExtAlgeb(model='SynGen', src='tm', indexer=self.syn,
+                           tex_name=r'\tau_m', info='Generator mechanical input',
+                           )
+        self.te = ExtAlgeb(model='SynGen', src='te', indexer=self.syn,
+                           tex_name=r'\tau_e', info='Generator electrical output',
+                           )
+        self.vf = ExtAlgeb(model='SynGen', src='vf', indexer=self.syn, tex_name='v_f',
+                           e_str='u * vsout')
+
+        # from Bus  #TODO: implement the optional BUSR
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
+                          )
+
+        # from Exciter
+        self.vsout = Algeb(info='PSS output voltage to exciter',
+                           tex_name='v_{sout}',
+                           )  # `e_str` to be provided by specific models
+
+
+class IEEESTModel(PSSBase):
+    """
+    IEEEST Stabilizer equation.
+    """
+
+    def __init__(self, system, config):
+        super(IEEESTModel, self).__init__(system, config)
+
+        self.KST5 = ConstService(v_str='KS * T5', tex_name='KS*T5')
+        self.zeros = ConstService(v_str='0')
+        self.SW = Switcher(u=self.MODE,
+                           options=[1, 2, 3, 4, 5, 6],
+                           )
+
+        self.signal = Algeb(tex_name='S_{in}',
+                            info='Input signal',
+                            )
+        # input signals:
+        # 1 (s0) - Rotor speed deviation (p.u.)
+        # 2 (s1) - Bus frequency deviation (p.u.)                    # TODO: calculate freq without reimpl.
+        # 3 (s2) - Generator electrical power in Gen MVABase (p.u.)  # TODO: allow using system.config.mva
+        # 4 (s3) - Generator accelerating power (p.u.)
+        # 5 (s4) - Bus voltage (p.u.)
+        # 6 (s5) - Derivative of p.u. bus voltage                    # TODO: memory block for calc. of derivative
+
+        self.signal.e_str = 'SW_s0 * (1-omega) + SW_s1 * 0 + SW_s2 * te + ' \
+                            'SW_s3 * (tm-tm0) + SW_s4 *v + SW_s5 * 0 - signal'
+
+        self.L2 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)
+
+        self.LL2ND = LeadLag2ndOrd(u=self.L2_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6)
+
+        self.LL1 = LeadLag(u=self.LL2ND_y, T1=self.T1, T2=self.T2)
+
+        self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4)
+
+        self.WO = Washout(u=self.LL2_y, T=self.T6, K=self.KST5)  # WO_y == Vss
+
+        self.VLIM = Limiter(u=self.WO_y, lower=self.LSMIN, upper=self.LSMAX, info='Vss limiter')
+
+        self.Vss = Algeb(tex_name='V_{ss}', e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
+
+        self.OLIM = Limiter(u=self.v, lower=self.VCL, upper=self.VCU, info='output limiter')
+
+        # TODO: allow ignoring VCU or VCL when zero
+
+        self.vsout.e_str = 'OLIM_zi * Vss - vsout'
+
+
+class IEEEST(IEEESTData, IEEESTModel):
+    """
+    IEEEST stabilizer model.
+    """
+
+    def __init__(self, system, config):
+        IEEESTData.__init__(self)
+        IEEESTModel.__init__(self, system, config)

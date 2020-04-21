@@ -10,9 +10,10 @@ class Discrete(object):
     Base class for discrete components which exports boolean flags.
     """
 
-    def __init__(self, name=None, tex_name=None):
+    def __init__(self, name=None, tex_name=None, info=None):
         self.name = name
         self.tex_name = tex_name
+        self.info = info
         self.owner = None
         self.export_flags = []
         self.export_flags_tex = []
@@ -99,7 +100,7 @@ class Limiter(Discrete):
     """
     Base limiter class
 
-    This class compares values and sets limit values
+    This class compares values and sets limit values. Exported flags are `zi`, `zl` and `zu`.
 
     Parameters
     ----------
@@ -121,8 +122,8 @@ class Limiter(Discrete):
         Flags for violating the upper limit
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None):
-        super().__init__(name=name, tex_name=tex_name)
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = lower
         self.upper = upper
@@ -258,6 +259,11 @@ class Selector(Discrete):
 
     Names are in `s0`, `s1`, ... and `sn`
 
+    Warnings
+    --------
+    A potential bug when values in different inputs are equal.
+    FIXME: More than one flag will se true in this case.
+
     Examples
     --------
     Example 1: select the largest value between `v0` and `v1` and put it into vmax.
@@ -311,7 +317,7 @@ class Selector(Discrete):
 
 class Switcher(Discrete):
     """
-    Switcher class based on input parameters.
+    Switcher based on an input parameter.
 
     The switch class takes one v-provider, compares the input with each value in the option list, and exports
     one flag array for each option. The flags are 0-indexed.
