@@ -326,7 +326,6 @@ class Washout(Block):
          u -> ------- -> y
               1 + sT
 
-    TODO: upgrade to the division-free form
     """
 
     def __init__(self, u, T, K, info=None, name=None):
@@ -341,7 +340,7 @@ class Washout(Block):
 
         self.u = u
         self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
-        self.y = Algeb(info='Output of washout filter', tex_name=r'y')
+        self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
 
     def define(self):
@@ -351,8 +350,8 @@ class Washout(Block):
         Equations and initial values:
 
         .. math ::
-            \dot{x'} &= (u - x) / T \\
-            y &= u - x \\
+            T \dot{x'} &= (u - x) \\
+            T y &= K (u - x) \\
             x'^{(0)} &= u \\
             y^{(0)} &= 0
 
@@ -361,7 +360,7 @@ class Washout(Block):
         self.y.v_str = f'0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
-        self.y.e_str = f'{self.name}_KT * ({self.u.name} - {self.name}_x) - {self.name}_y'
+        self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'
 
 
 class Lag(Block):
