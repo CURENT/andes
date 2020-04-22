@@ -358,7 +358,7 @@ class GENROUModel(object):
         # Initialization reference: OpenIPSL at
         #   https://github.com/OpenIPSL/OpenIPSL/blob/master/OpenIPSL/Electrical/Machines/PSSE/GENROU.mo
 
-        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex terminal voltage')
+        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex bus voltage')
         self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S', info='complex terminal power')
         self._Zs = ConstService(v_str='ra + 1j * xd2', tex_name='Z_s', info='equivalent impedance')
         self._It = ConstService(v_str='_S / conj(_V)', tex_name='I_t', info='complex terminal current')

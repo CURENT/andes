@@ -80,16 +80,16 @@ class PSSBase(Model):
         self.te = ExtAlgeb(model='SynGen', src='te', indexer=self.syn,
                            tex_name=r'\tau_e', info='Generator electrical output',
                            )
-        self.vf = ExtAlgeb(model='SynGen', src='vf', indexer=self.syn, tex_name='v_f',
-                           info='Generator excitation voltage',
-                           e_str='u * vsout')
-
         # from Bus
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
                           info='Bus (or busr, if given) terminal voltage',
                           )
 
         # from Exciter
+        self.vi = ExtAlgeb(model='Exciter', src='vi', indexer=self.avr, tex_name='v_i',
+                           info='Exciter input voltage',
+                           e_str='u * vsout')
+
         self.vsout = Algeb(info='PSS output voltage to exciter',
                            tex_name='v_{sout}',
                            )  # `e_str` to be provided by specific models

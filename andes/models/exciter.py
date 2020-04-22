@@ -79,6 +79,11 @@ class ExcBase(Model):
                           info='Bus voltage magnitude',
                           )
 
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        )
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',
                           tex_name='v_{out}',
@@ -215,12 +220,9 @@ class EXDC2Model(ExcBase):
                           v_str='vref0',
                           e_str='vref0 - vref'
                           )
-        self.vi = Algeb(info='Total input voltages',
-                        tex_name='V_i',
-                        unit='p.u.',
-                        v_str='vb0',
-                        e_str='(vref - LS_x - W_y) - vi',
-                        )
+
+        self.vi.v_str = 'vb0'
+        self.vi.e_str = '(vref - LS_x - W_y) - vi'
 
         self.LL = LeadLag(u=self.vi,
                           T1=self.TC,

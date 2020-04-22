@@ -314,7 +314,7 @@ class Exciter(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('syn', ))
-        self.common_vars.extend(('vout', ))
+        self.common_vars.extend(('vout', 'vi', ))
 
 
 class PSS(GroupBase):
