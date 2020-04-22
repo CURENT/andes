@@ -328,7 +328,7 @@ class NumParam(BaseParam):
 
         See Also
         --------
-        BaseParam.add : add method of BaseParam
+        BaseParam.add : the add method of BaseParam
 
         """
 

@@ -3,8 +3,8 @@ Power system stabilizer models
 """
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
-from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, Washout
-from andes.core.service import ConstService, ExtService
+from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
+from andes.core.service import ExtService
 from andes.core.discrete import Switcher, Limiter
 from andes.core.model import ModelData, Model
 
@@ -98,7 +98,6 @@ class IEEESTModel(PSSBase):
     def __init__(self, system, config):
         super(IEEESTModel, self).__init__(system, config)
 
-        self.KST5 = ConstService(v_str='KS * T5', tex_name='KS*T5')
         self.SW = Switcher(u=self.MODE,
                            options=[1, 2, 3, 4, 5, 6],
                            )
@@ -125,7 +124,9 @@ class IEEESTModel(PSSBase):
 
         self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4)
 
-        self.WO = Washout(u=self.LL2_y, T=self.T6, K=self.KST5)  # WO_y == Vss
+        self.Vks = Gain(u=self.LL2_y, K=self.KS)
+
+        self.WO = WashoutOrLag(u=self.Vks_y, T=self.T6, K=self.T5, name='WO', zero_out=True)  # WO_y == Vss
 
         self.VLIM = Limiter(u=self.WO_y, lower=self.LSMIN, upper=self.LSMAX, info='Vss limiter')
 

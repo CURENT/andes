@@ -81,7 +81,8 @@ class LessThan(Discrete):
     -----
     If not enabled, the defaults are: z0 = 0, and z1 = 1.
     """
-    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False):
+    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False,
+                 z0=0, z1=1):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
         self.bound = bound
@@ -90,8 +91,8 @@ class LessThan(Discrete):
         self.cache: bool = cache
         self._eval: bool = False  # if has been eval'ed and cached
 
-        self.z0 = np.array([0])  # negation of `self.z1`
-        self.z1 = np.array([0])  # if the less-than condition (u < bound) is True
+        self.z0 = np.array([z0])  # negation of `self.z1`
+        self.z1 = np.array([z1])  # if the less-than condition (u < bound) is True
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 

@@ -1,8 +1,7 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
-from typing import Optional, Iterable
-from andes.core.discrete import AntiWindupLimiter
-from andes.core.service import ConstService
+from typing import Optional, Iterable, Dict, Union
+from andes.core.discrete import Discrete, AntiWindupLimiter, LessThan
 from andes.core.triplet import JacTriplet
 
 
@@ -89,14 +88,14 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars: dict = dict()
+        self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
         self.triplets = JacTriplet()
 
     def __setattr__(self, key, value):
         # handle sub-blocks by prepending self.name
         if isinstance(value, Block):
             if self.name is None:
-                raise ValueError(f"`name` must be specified when constructing {self.class_name} instances.")
+                raise ValueError(f"Must specify `name` for {self.class_name} any instance.")
             if not value.owner:
                 value.__dict__['owner'] = self
 
@@ -318,6 +317,35 @@ class PIControllerNumeric(Block):
         pass
 
 
+class Gain(Block):
+    r"""
+    Gain block ::
+
+        u -> K -> y
+
+    Exports an algebraic output `y`.
+    """
+    def __init__(self, u, K, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.enforce_tex_name((self.K, ))
+
+        self.y = Algeb(info='Gain output', tex_name='y')
+        self.vars = {'y': self.y}
+
+    def define(self):
+        r"""
+        Implemented equation is
+
+        .. math ::
+            y = K u
+
+        """
+        self.y.v_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+
+
 class Washout(Block):
     r"""
     Washout filter (high pass) block ::
@@ -326,22 +354,19 @@ class Washout(Block):
          u -> ------- -> y
               1 + sT
 
+    Exports state `x` (symbol `x'`) and output algebraic variable `y`.
     """
 
-    def __init__(self, u, T, K, info=None, name=None):
-        super().__init__(name=name, info=info)
+    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
         self.T = dummify(T)
         self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
 
-        self.KT = ConstService(info='Constant K/T',
-                               tex_name=f'({self.K.tex_name}/{self.T.tex_name})',
-                               v_str=f'{self.K.name} / {self.T.name}')
-
-        self.u = u
         self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
         self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-6)
-        self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
+        self.vars.update({'x': self.x, 'y': self.y})
 
     def define(self):
         r"""
@@ -361,6 +386,58 @@ class Washout(Block):
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'
+
+
+class WashoutOrLag(Washout):
+    """
+    Washout with the capability to convert to Lag when K = 0.
+
+    Can be enabled with `zero_out`. Need to provide `name` to construct.
+
+    Exports state `x` (symbol `x'`), output algebraic variable `y`, and a LessThan block `LT`.
+
+    Parameters
+    ----------
+    zero_out : bool, optional
+        If True, ``sT`` will become 1, and the washout will become a low-pass filter.
+        If False, functions as a regular Washout.
+    """
+    def __init__(self, u, T, K, name, zero_out=False, tex_name=None, info=None):
+        super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
+        self.zero_out = zero_out
+        self.LT = LessThan(K,
+                           dummify(0),
+                           equal=True,
+                           enable=zero_out,
+                           tex_name='LT',
+                           cache=True,
+                           z0=1, z1=0)
+
+        self.vars.update({'LT': self.LT})
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Equations and initial values:
+
+        .. math ::
+            T \dot{x'} &= (u - x) \\
+            T y = z_0 K (u-x) + z_1 Tx
+            x'^{(0)} &= u \\
+            y^{(0)} &= 0
+
+        where ``z_0`` is a flag array for the greater-than-zero elements, and ``z_1`` is that for the
+        less-than or equal-to zero elements.
+        """
+
+        super().define()
+
+        self.y.v_str = f'{self.name}_LT_z0 * 0 + {self.name}_LT_z1 * {self.name}_x'
+
+        self.y.e_str = f'{self.name}_LT_z0 * {self.K.name} * ({self.u.name} - {self.name}_x) + ' \
+                       f'{self.name}_LT_z1 * {self.T.name} * {self.name}_x - ' \
+                       f'{self.T.name} * {self.name}_y'
 
 
 class Lag(Block):
