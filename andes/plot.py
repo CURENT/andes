@@ -108,7 +108,7 @@ class TDSData(object):
         Parameters
         ----------
         query : str
-            The string for querying variables
+            The string for querying variables. Multiple conditions can be separated by comma without space.
         exclude  : str, optional
             A string pattern to be excluded
         formatted : bool, optional
@@ -127,13 +127,15 @@ class TDSData(object):
 
         found_idx, found_names = list(), list()
 
+        query_list = query.split(',')
         for idx, name in zip(self._idx, names):
-            if re.search(query, name):
-                if exclude and re.search(exclude, name):
-                    continue
+            for q in query_list:
+                if re.search(q, name):
+                    if exclude and re.search(exclude, name):
+                        continue
 
-                found_idx.append(idx)
-                found_names.append(name)
+                    found_idx.append(idx)
+                    found_names.append(name)
 
         if idx_only:
             return found_idx
