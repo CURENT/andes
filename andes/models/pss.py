@@ -18,7 +18,12 @@ class IEEESTData(ModelData):
         super(IEEESTData, self).__init__()
 
         self.avr = IdxParam(info='Exciter idx', mandatory=True)
-        self.MODE = NumParam(info='Input signal selection', mandatory=True)
+        self.MODE = NumParam(info='Input signal: '
+                                  '(1) speed dev. (2) bus f dev. '
+                                  '(3) Pelec in gen base (4) accelerating power '
+                                  '(5) Vbus (6) dVbus/dt',
+                             mandatory=True)
+
         self.BUSR = IdxParam(info='Remote bus idx (local if empty)')
 
         self.A1 = NumParam(default=1, tex_name='A_1', info='filter time const. (pole)')
@@ -96,7 +101,11 @@ class IEEESTModel(PSSBase):
     """
 
     def __init__(self, system, config):
-        super(IEEESTModel, self).__init__(system, config)
+        PSSBase.__init__(self, system, config)
+
+        self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
+                               info='Machine base to sys base factor for power',
+                               tex_name='(Sn/Sb)')
 
         self.SW = Switcher(u=self.MODE,
                            options=[1, 2, 3, 4, 5, 6],
@@ -105,16 +114,19 @@ class IEEESTModel(PSSBase):
         self.signal = Algeb(tex_name='S_{in}',
                             info='Input signal',
                             )
-        # input signals:
+        # input signals (MODE):
         # 1 (s0) - Rotor speed deviation (p.u.)
         # 2 (s1) - Bus frequency deviation (p.u.)                    # TODO: calculate freq without reimpl.
-        # 3 (s2) - Generator electrical power in Gen MVABase (p.u.)  # TODO: allow using system.config.mva
+        # 3 (s2) - Generator electrical power in Gen MVABase (p.u.)
         # 4 (s3) - Generator accelerating power (p.u.)
         # 5 (s4) - Bus voltage (p.u.)
         # 6 (s5) - Derivative of p.u. bus voltage                    # TODO: memory block for calc. of derivative
 
-        self.signal.e_str = 'SW_s0 * (1-omega) + SW_s1 * 0 + SW_s2 * te + ' \
-                            'SW_s3 * (tm-tm0) + SW_s4 *v + SW_s5 * 0 - signal'
+        self.signal.v_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
+                            'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0'
+
+        self.signal.e_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(te/SnSb) + ' \
+                            'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0 - signal'
 
         self.F1 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)
 
@@ -134,8 +146,6 @@ class IEEESTModel(PSSBase):
                          e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
 
         self.OLIM = Limiter(u=self.v, lower=self.VCL, upper=self.VCU, info='output limiter')
-
-        # TODO: allow ignoring VCU or VCL when zero
 
         self.vsout.e_str = 'OLIM_zi * Vss - vsout'
 

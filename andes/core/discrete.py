@@ -395,6 +395,13 @@ class Switcher(Discrete):
 
         self._eval = True
 
+    def list2array(self, n):
+        """
+        This forces to evaluate Switcher upon System setup
+        """
+        super().list2array(n)
+        self.check_var()
+
 
 class DeadBand(Limiter):
     """

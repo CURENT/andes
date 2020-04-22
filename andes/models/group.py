@@ -294,7 +294,7 @@ class SynGen(GroupBase):
     """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus'))
+        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
         self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf'))
 
 
