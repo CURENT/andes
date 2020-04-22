@@ -167,6 +167,36 @@ class ExtService(BaseService):
         self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr)
 
 
+class OptionalSelect(BaseService):
+    """
+    Class for selecting values for optional DataParam.
+
+    This service is a v-provider that uses optional DataParam if available with a fallback.
+
+    Notes
+    -----
+    An use case of OptionalSelect is remote bus. One can do ::
+
+        self.buss = OptionalSelect(option=self.busr, fallback=self.bus)
+
+    Then, pass ``self.buss`` instead of ``self.bus`` as indexer to retrieve voltages.
+    """
+
+    def __init__(self,
+                 optional,
+                 fallback,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,):
+        super().__init__(name=name, tex_name=tex_name, info=info,)
+        self.optional = optional
+        self.fallback = fallback
+
+    @property
+    def v(self):
+        return [opt if opt is not None else fb for opt, fb in zip(self.optional.v, self.fallback.v)]
+
+
 class OperationService(BaseService):
     """
     Base class for a type of Service which performs specific operations

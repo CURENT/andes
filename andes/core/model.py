@@ -391,24 +391,18 @@ class Model(object):
         self.algebs_ext = OrderedDict()       # external algebraic vars
         self.vars_decl_order = OrderedDict()  # variable in the order of declaration
 
-        # external parameters
-        self.params_ext = OrderedDict()
+        self.params_ext = OrderedDict()       # external parameters
 
-        # discrete and control blocks
-        self.discrete = OrderedDict()
-        self.blocks = OrderedDict()
+        self.discrete = OrderedDict()         # discrete comp.
+        self.blocks = OrderedDict()           # blocks
 
-        # service/temporary variables
-        self.services = OrderedDict()
-        # time-constant services
-        self.services_tc = OrderedDict()
-        # external services (to be retrieved)
-        self.services_ext = OrderedDict()
-        # operational services (for special usages)
-        self.services_ops = OrderedDict()
+        self.services = OrderedDict()         # service/temporary variables
+        self.services_tc = OrderedDict()      # time-constant services
+        self.services_ext = OrderedDict()     # external services (to be retrieved)
+        self.services_ops = OrderedDict()     # operational services (for special usages)
 
-        # cache callback and lambda function storage
-        self.calls = ModelCall()
+        self.calls = ModelCall()              # callback and LaTeX string storage
+        self.triplets = JacTriplet()          # Jacobian triplet storage
 
         # class behavior flags
         self.flags = dict(
@@ -422,8 +416,7 @@ class Model(object):
             initialized=False,  # True if variables have been initialized
         )
 
-        # model `config` that can be exported to the `andes.rc` file
-        self.config = Config(name=self.class_name)
+        self.config = Config(name=self.class_name)    # `config` that can be exported
         if config is not None:
             self.config.load(config)
 
@@ -444,8 +437,6 @@ class Model(object):
         self.f_print, self.g_print, self.s_print = list(), list(), list()
         self.df_print, self.dg_print = None, None
 
-        self.triplets = JacTriplet()
-
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
         self.cache.add_callback('iter_vars', self._iter_vars)
@@ -458,10 +449,8 @@ class Model(object):
         self.cache.add_callback('vars_ext', self._vars_ext)
         self.cache.add_callback('vars_int', self._vars_int)
 
-        # cached dictionary of inputs
-        self._input = OrderedDict()
-        # discrete flags in an OrderedDict
-        self._input_z = OrderedDict()
+        self._input = OrderedDict()          # cached dictionary of inputs
+        self._input_z = OrderedDict()        # discrete flags in an OrderedDict
 
     def _register_attribute(self, key, value):
         """

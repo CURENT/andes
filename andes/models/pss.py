@@ -4,7 +4,7 @@ Power system stabilizer models
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
-from andes.core.service import ExtService
+from andes.core.service import ExtService, OptionalSelect
 from andes.core.discrete import Switcher, Limiter
 from andes.core.model import ModelData, Model
 
@@ -24,7 +24,7 @@ class IEEESTData(ModelData):
                                   '(5) Vbus (6) dVbus/dt',
                              mandatory=True)
 
-        self.BUSR = IdxParam(info='Remote bus idx (local if empty)')
+        self.busr = IdxParam(info='Remote bus idx (local if empty)')
 
         self.A1 = NumParam(default=1, tex_name='A_1', info='filter time const. (pole)')
         self.A2 = NumParam(default=1, tex_name='A_2', info='filter time const. (pole)')
@@ -84,9 +84,9 @@ class PSSBase(Model):
                            info='Generator excitation voltage',
                            e_str='u * vsout')
 
-        # from Bus  #TODO: implement the optional BUSR
+        # from Bus
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
-                          info='Bus (or BUSR, if given) terminal voltage',
+                          info='Bus (or busr, if given) terminal voltage',
                           )
 
         # from Exciter
@@ -103,6 +103,9 @@ class IEEESTModel(PSSBase):
     def __init__(self, system, config):
         PSSBase.__init__(self, system, config)
 
+        self.buss = OptionalSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+        self.v.indexer = self.buss
+
         self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
                                info='Machine base to sys base factor for power',
                                tex_name='(Sn/Sb)')
@@ -116,11 +119,11 @@ class IEEESTModel(PSSBase):
                             )
         # input signals (MODE):
         # 1 (s0) - Rotor speed deviation (p.u.)
-        # 2 (s1) - Bus frequency deviation (p.u.)                    # TODO: calculate freq without reimpl.
-        # 3 (s2) - Generator electrical power in Gen MVABase (p.u.)
+        # 2 (s1) - Bus frequency deviation (p.u.)                 # TODO: calculate freq without reimpl.
+        # 3 (s2) - Generator P electrical in Gen MVABase (p.u.)
         # 4 (s3) - Generator accelerating power (p.u.)
         # 5 (s4) - Bus voltage (p.u.)
-        # 6 (s5) - Derivative of p.u. bus voltage                    # TODO: memory block for calc. of derivative
+        # 6 (s5) - Derivative of p.u. bus voltage                 # TODO: memory block for calc. of derivative
 
         self.signal.v_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
                             'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0'
