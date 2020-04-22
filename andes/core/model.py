@@ -1366,7 +1366,7 @@ class Model(object):
             instance.to_array()
 
         for instance in self.cache.services_and_ext.values():
-            instance.v = np.zeros(self.n)
+            instance.assign_memory(self.n)
 
         for instance in self.discrete.values():
             instance.list2array(self.n)

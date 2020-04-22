@@ -454,7 +454,7 @@ The shorter version ``--edit`` can be used instead asn Python automatically matc
 You can pass an editor name to ``--edit``, such as ``--edit vim``.
 If the editor name is not provided, it will use the following defaults:
 - Microsoft Windows: notepad.
-- GNU/Linux: the ``$EDITOR`` environment variable, or ``gedit`` if not exist.
+- GNU/Linux: the ``$EDITOR`` environment variable, or ``vim`` if not exist.
 
 For macOS users, the default is vim.
 If not familiar with vim, you can use nano with ``--edit nano`` or TextEdit with

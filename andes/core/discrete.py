@@ -71,21 +71,37 @@ class Discrete(object):
 
 class LessThan(Discrete):
     """
-    Less than (<) comparison function
+    Less than (<) comparison function.
+
+    Exports two flags: z1 and z0.
+    For elements satisfying the less-than condition, the corresponding z1 = 1.
+    z0 is the element-wise negation of z1.
+
+    Notes
+    -----
+    If not enabled, the defaults are: z0 = 0, and z1 = 1.
     """
-    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None):
+    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
         self.bound = bound
-        self.equal = equal
-        self.enable = enable
-        self.z0 = 0  # if (u < bound) is False
-        self.z1 = 1  # if (u < bound) is True
+        self.equal: bool = equal
+        self.enable: bool = enable
+        self.cache: bool = cache
+        self._eval: bool = False  # if has been eval'ed and cached
+
+        self.z0 = np.array([0])  # negation of `self.z1`
+        self.z1 = np.array([0])  # if the less-than condition (u < bound) is True
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
     def check_var(self):
+        """
+        If enabled, set flags based on inputs. Use cached values if enabled.
+        """
         if not self.enable:
+            return
+        if self.cache and self._eval:
             return
 
         if not self.equal:
@@ -95,12 +111,18 @@ class LessThan(Discrete):
 
         self.z0[:] = np.logical_not(self.z1)
 
+        self._eval = True
+
 
 class Limiter(Discrete):
     """
-    Base limiter class
+    Base limiter class.
 
     This class compares values and sets limit values. Exported flags are `zi`, `zl` and `zu`.
+
+    Notes
+    -----
+    If not enabled, the default flags are ``zu = zl = 0``, ``zi = 1``.
 
     Parameters
     ----------
@@ -128,19 +150,17 @@ class Limiter(Discrete):
         self.lower = lower
         self.upper = upper
         self.enable = enable
-        self.zu = 0
-        self.zl = 0
-        self.zi = 1
+
+        self.zu = np.array([0])
+        self.zl = np.array([0])
+        self.zi = np.array([1])
+
         self.export_flags = ['zl', 'zi', 'zu']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u']
 
     def check_var(self):
         """
-        Evaluate `self.zu` and `self.zl`
-
-        Returns
-        -------
-
+        Evaluate the flags.
         """
         if not self.enable:
             return
@@ -151,7 +171,7 @@ class Limiter(Discrete):
 
 class SortedLimiter(Limiter):
     """
-    A comparer with the top value selection
+    A comparer with the top value selection.
 
     """
 
@@ -185,17 +205,14 @@ class SortedLimiter(Limiter):
 
 class HardLimiter(Limiter):
     """
-    Hard limiter on an algebraic variable. This class is an alias of `Limiter`.
+    Hard limiter for algebraic or differential variable.
+
+    This class is just an alias of `Limiter` for clarity.
     """
     pass
 
 
-class WindupLimiter(Limiter):
-    def __init__(self, u, lower, upper,  enable=True, name=None, tex_name=None):
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
-
-
-class AntiWindupLimiter(WindupLimiter):
+class AntiWindupLimiter(Limiter):
     """
     Anti-windup limiter.
 
@@ -446,12 +463,14 @@ class DeadBand(Limiter):
         """
         super().__init__(u, lower, upper, enable=enable)
         self.center = center
-        # default state if enable is False
-        self.zi = 0.
-        self.zl = 0.
-        self.zu = 0.
-        self.zur = 0.
-        self.zlr = 0.
+
+        # default state if not enabled
+        self.zi = np.array([0.])
+        self.zl = np.array([0.])
+        self.zu = np.array([0.])
+        self.zur = np.array([0.])
+        self.zlr = np.array([0.])
+
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 

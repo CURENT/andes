@@ -39,7 +39,7 @@ class BaseVar(object):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 v_str: Optional[str] = None,
+                 v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
                  v_setter: Optional[bool] = False,
@@ -70,7 +70,7 @@ class BaseVar(object):
         self.e_setter = e_setter  # True if this var sets the equation value
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export  # True if this var's value needs to exported
-        self.diag_eps = diag_eps  # small value to be added to the jacobian matrix
+        self.diag_eps = diag_eps  # small value to be added to the Jacobian matrix
 
     def reset(self):
         self.a = np.array([], dtype=int)
@@ -150,7 +150,7 @@ class State(BaseVar):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 v_str: Optional[str] = None,
+                 v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
                  t_const: Optional[Union[BaseParam, DummyValue]] = None,
@@ -215,7 +215,7 @@ class ExtVar(BaseVar):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
-                 v_str: Optional[str] = None,
+                 v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
                  v_setter: Optional[bool] = False,

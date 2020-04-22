@@ -267,7 +267,7 @@ At the command-line prompt,
 
 Without an editor name, the following default editor is used: 
 - On Microsoft Windows, it will open up a notepad.
-- On Linux, it will use the ``$EDITOR`` environment variable or use ``gedit`` by default.
+- On Linux, it will use the ``$EDITOR`` environment variable or use ``vim`` by default.
 - On macOS, the default is vim.
 
 # Format Converter

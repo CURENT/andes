@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable
+from typing import Optional, Union, Callable, Type
 from andes.core.param import RefParam, BaseParam
 from andes.utils.func import list_flatten
 from andes.shared import np, ndarray
@@ -21,10 +21,11 @@ class BaseService(object):
     owner : Model
         The hosting/owner model instance
     """
-    def __init__(self, name: str = None, tex_name: str = None, info: str = None):
+    def __init__(self, name: str = None, tex_name: str = None, info: str = None, vtype: Type = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
+        self.vtype = type  # type for `v`. NOT IN USE.
         self.owner = None
 
     def get_names(self):
@@ -92,7 +93,11 @@ class ConstService(BaseService):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, ndarray] = 0.
+        self.v: Union[float, int, ndarray] = np.array([0.])
+
+    def assign_memory(self, n):
+        """Assign memory for ``self.v`` and set the array to zero."""
+        self.v = np.zeros(self.n)
 
 
 class ExtService(BaseService):
@@ -136,7 +141,11 @@ class ExtService(BaseService):
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.v = 0
+        self.v = np.array([0.])
+
+    def assign_memory(self, n):
+        """Assign memory for ``self.v`` and set the array to zero."""
+        self.v = np.zeros(self.n)
 
     def link_external(self, ext_model):
         """
@@ -378,6 +387,3 @@ class RandomService(BaseService):
             Randomly generated service variables
         """
         return np.random.rand(self.n)
-
-
-# TODO: SafeInverse
