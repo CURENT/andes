@@ -359,37 +359,3 @@ class ExtState(ExtVar):
 class ExtAlgeb(ExtVar):
     e_code = 'g'
     v_code = 'y'
-
-    def __init__(self,
-                 model: str,
-                 src: str,
-                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
-                 name: Optional[str] = None,
-                 tex_name: Optional[str] = None,
-                 info: Optional[str] = None,
-                 unit: Optional[str] = None,
-                 v_str: Optional[str] = None,
-                 v_iter: Optional[str] = None,
-                 e_str: Optional[str] = None,
-                 v_setter: Optional[bool] = False,
-                 e_setter: Optional[bool] = False,
-                 addressable: Optional[bool] = True,
-                 export: Optional[bool] = True,
-                 diag_eps: Optional[float] = 0.0,
-                 ):
-        super().__init__(model=model,
-                         src=src,
-                         indexer=indexer,
-                         name=name,
-                         tex_name=tex_name,
-                         info=info,
-                         unit=unit,
-                         v_str=v_str,
-                         v_iter=v_iter,
-                         e_str=e_str,
-                         v_setter=v_setter,
-                         e_setter=e_setter,
-                         addressable=addressable,
-                         export=export,
-                         diag_eps=diag_eps,
-                         )

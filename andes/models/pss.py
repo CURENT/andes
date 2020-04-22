@@ -28,21 +28,20 @@ class IEEESTData(ModelData):
         self.A5 = NumParam(default=1, tex_name='A_5', info='filter time const. (zero)')
         self.A6 = NumParam(default=1, tex_name='A_6', info='filter time const. (zero)')
 
-        self.T1 = NumParam(default=1, tex_name='T_1', vrange=[0, 10], info='first leadlag time const. (zero)')
-        self.T2 = NumParam(default=1, tex_name='T_2', vrange=[0, 10], info='first leadlag time const. (pole)')
-        self.T3 = NumParam(default=1, tex_name='T_3', vrange=[0, 10], info='second leadlag time const. (pole)')
-        self.T4 = NumParam(default=1, tex_name='T_4', vrange=[0, 10], info='second leadlag time const. (pole)')
-        self.T5 = NumParam(default=1, tex_name='T_5', vrange=[0, 10], info='washout time const. (zero)')
-        self.T6 = NumParam(default=1, tex_name='T_6', vrange=[0.04, 2], info='washout time const. (pole)')
+        self.T1 = NumParam(default=1, tex_name='T_1', vrange=(0, 10), info='first leadlag time const. (zero)')
+        self.T2 = NumParam(default=1, tex_name='T_2', vrange=(0, 10), info='first leadlag time const. (pole)')
+        self.T3 = NumParam(default=1, tex_name='T_3', vrange=(0, 10), info='second leadlag time const. (pole)')
+        self.T4 = NumParam(default=1, tex_name='T_4', vrange=(0, 10), info='second leadlag time const. (pole)')
+        self.T5 = NumParam(default=1, tex_name='T_5', vrange=(0, 10), info='washout time const. (zero)')
+        self.T6 = NumParam(default=1, tex_name='T_6', vrange=(0.04, 2), info='washout time const. (pole)')
 
         self.KS = NumParam(default=1, tex_name='K_S', info='Gain before washout')
-        self.LSMAX = NumParam(default=0.3, tex_name='L_{SMAX}', vrange=[0, 0.3], info='Max. output limit')
-        self.LSMIN = NumParam(default=-0.3, tex_name='L_{SMIN}', vrange=[-0.3, 0], info='Min. output limit')
+        self.LSMAX = NumParam(default=0.3, tex_name='L_{SMAX}', vrange=(0, 0.3), info='Max. output limit')
+        self.LSMIN = NumParam(default=-0.3, tex_name='L_{SMIN}', vrange=(-0.3, 0), info='Min. output limit')
 
-        # TODO: allow ignoring zero elements in the output condition
-        self.VCU = NumParam(default=1.2, tex_name='V_{CU}',
+        self.VCU = NumParam(default=999, tex_name='V_{CU}', vrange=(1, 1.2), non_zero=True,
                             unit='p.u.', info='Upper enabling bus voltage')
-        self.VCL = NumParam(default=0.8, tex_name='V_{CL}',
+        self.VCL = NumParam(default=-999, tex_name='V_{CL}', vrange=(0.8, 1), non_zero=True,
                             unit='p.u.', info='Upper enabling bus voltage')
 
 

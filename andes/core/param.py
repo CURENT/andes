@@ -12,10 +12,15 @@ class DummyValue(object):
     Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
 
     A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
+
+    Notes
+    -----
+    Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
     """
-    def __init__(self, name):
-        self.name = name
-        self.tex_name = name
+    def __init__(self, value):
+        self.name = value
+        self.tex_name = value
+        self.v = value
 
 
 def dummify(param):
@@ -342,7 +347,7 @@ class NumParam(BaseParam):
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
-            logger.debug(f'Parameter {self.name} of {self.owner.class_name} must be non-zero')
+            logger.debug(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         super(NumParam, self).add(value)
