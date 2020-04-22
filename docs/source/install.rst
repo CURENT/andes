@@ -15,26 +15,19 @@ We recommend the Miniconda distribution that includes the conda package manager 
 Downloaded and install the latest Miniconda (x64, with Python 3)
 from https://conda.io/miniconda.html.
 
-Step 1: Open the Anaconda Prompt and create an environment for ANDES (optional)
+Step 1: Open the Anaconda Prompt and create an environment for ANDES (recommended)
 
 .. code:: bash
 
      conda create --name andes python=3.7
 
-Activate the new environment. On Microsoft Windows, do
-
-.. code:: bash
-
-     activate andes
-
-On Linux or macOS, do
+Activate the new environment with
 
 .. code:: bash
 
      conda activate andes
 
-
-You can skip this step to install ANDES to the base environment, though it is not recommended.
+Environment activation needs to be executed every time a new Anaconda Prompt or shell is open.
 
 Step 2: Add the ``conda-forge`` channel and set it as default
 
