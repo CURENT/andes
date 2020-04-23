@@ -210,7 +210,16 @@ class TDS(BaseRoutine):
         """
         Update f and g to see if initialization is successful.
         """
-        system = self._fg_update(self.pflow_tds_models)
+        system = self.system
+        system.e_clear(models=self.pflow_tds_models)
+        system.l_update_var(models=self.pflow_tds_models)
+        system.f_update(models=self.pflow_tds_models)
+        system.g_update(models=self.pflow_tds_models)
+        system.l_check_eq(models=self.pflow_tds_models)
+        system.l_set_eq(models=self.pflow_tds_models)
+        system.fg_to_dae()
+        system.j_update(models=self.pflow_tds_models)
+
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')
             return True
@@ -220,21 +229,6 @@ class TDS(BaseRoutine):
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.error(f"Check variables {', '.join(fail_names)}")
             return False
-
-    def _fg_update(self, models):
-        """
-        Update both f and g equations.
-        """
-        system = self.system
-        system.e_clear(models=models)
-        system.l_update_var(models=models)
-        system.f_update(models=models)
-        system.g_update(models=models)
-        system.l_check_eq(models=models)
-        system.l_set_eq(models=models)
-        system.fg_to_dae()
-
-        return system
 
     def _implicit_step(self):
         """
@@ -261,8 +255,15 @@ class TDS(BaseRoutine):
         self.f0 = np.array(dae.f)
 
         while True:
-            self._fg_update(self.pflow_tds_models)
-            # lazy Jacobian update
+            system.e_clear(models=self.pflow_tds_models)
+            system.l_update_var(models=self.pflow_tds_models)
+            system.f_update(models=self.pflow_tds_models)
+            system.g_update(models=self.pflow_tds_models)
+            system.l_check_eq(models=self.pflow_tds_models)
+            system.l_set_eq(models=self.pflow_tds_models)
+            system.fg_to_dae()
+
+            # lazy jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=self.pflow_tds_models)
                 self.solver.factorize = True
