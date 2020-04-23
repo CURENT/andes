@@ -361,7 +361,7 @@ Dynamicity Under the Hood
 The magic for automatic creation of variables are all hidden in ``Model.__setattr__``, and the code is
 incredible simple. It sets the name, tex_name, and owner model of the attribute instance and, more importantly,
 does the book keeping. In particular, when the attribute is a ``Block`` subclass, ``__setattr__`` captures the
-exported instances, recirsively, and prepends the block name to exported ones. All these convenience owe to the
+exported instances, recursively, and prepends the block name to exported ones. All these convenience owe to the
 dynamic feature of Python.
 
 During the equation generation phase, the symbols created by checking the book-keeping attributes, such as
@@ -430,6 +430,11 @@ number or a callable function returning an array).
 Note that, again, a non-zero entry in a Jacobian matrix can be either a constant or an expression. For efficiency,
 constant numbers and lambdified callables are stored separately. Constant numbers, therefore, can be loaded into
 the sparse matrix pattern when a particular system is given.
+
+.. warning::
+
+    Data structure for the Jacobian storage has changed. Pending documentation update. Please check
+    :py:mod:`andes.core.triplet.JacTriplet` class for more details.
 
 The triplets, the equation (row) index, variable (column) index, and values (constant numbers or callable) are
 stored in ``Model`` attributes with the name of ``_{i, j, v}{Jacobian Name}{c or None}``, where
@@ -777,8 +782,48 @@ All variables in a block must be defined as attributes in the constructor, just 
 models. The difference is that the variables are "exported" from a block to the capturing model. All exported
 variables need to placed in a dictionary, ``self.vars`` at the end of the block constructor.
 
+Blocks can be nexted as advanced usage. See the following API documentation for more details.
 
-Blocks can be nexted as advanced usage. See the API documentation for more details.
+.. autoclass::
+    :noindex:
+    andes.core.block.Gain
+
+.. autoclass::
+    :noindex:
+    andes.core.block.Integrator
+
+.. autoclass::
+    :noindex:
+    andes.core.block.Lag
+
+.. autoclass::
+    :noindex:
+    andes.core.block.LagAntiWindup
+
+.. autoclass::
+    :noindex:
+    andes.core.block.Lag2ndOrder
+
+.. autoclass::
+    :noindex:
+    andes.core.block.LeadLag
+
+.. autoclass::
+    :noindex:
+    andes.core.block.LeadLagLimit
+
+.. autoclass::
+    :noindex:
+    andes.core.block.LeadLag2ndOrder
+
+.. autoclass::
+    :noindex:
+    andes.core.block.Washout
+
+.. autoclass::
+    :noindex:
+    andes.core.block.WashoutOrLag
+
 
 Examples
 ========
