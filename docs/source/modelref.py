@@ -1,9 +1,10 @@
 """
 This file is used to generate reStructuredText tables for Group and Model references.
 """
-
+import os
 import andes
 ss = andes.prepare()
+
 
 out = ''
 out += '.. _modelref:\n\n'
@@ -11,13 +12,27 @@ out += '****************\n'
 out += 'Model References\n'
 out += '****************\n'
 out += '\n'
+out += '.. toctree ::\n'
+out += '    :maxdepth: 2\n'
+out += '\n'
+
+file_tpl = '    groupdoc/{}\n'
 
 for group in ss.groups.values():
-    out += group.doc_all(export='rest')
+    out += file_tpl.format(group.class_name)
 
 with open('modelref.rst', 'w') as f:
     f.write(out)
 
+# write individual files
+
+os.makedirs('groupdoc', exist_ok=True)
+
+for group in ss.groups.values():
+    with open(f'groupdoc/{group.class_name}.rst', 'w') as f:
+        f.write(group.doc_all(export='rest'))
+
+# Config Reference Section
 
 out = ''
 out += '.. _configref:\n\n'
