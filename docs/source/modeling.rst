@@ -12,56 +12,53 @@ System
 
 Overview
 --------
-:py:mod:`andes.System` is the top-level class for organizing and orchestrating a power system model. The
-System class contains models and routines for modeling and simulation. ``System`` provides methods for
-automatically importing groups, models, and routines at ``System`` creation.
+System is the top-level class for organizing power system models and orchestrating calculations.
 
-``Systems`` contains a few special ``OrderedDict`` member attributes for housekeeping. These attributes include
-``models``, ``groups``, ``programs`` and ``calls`` for loaded models, groups, program routines, and numerical
-function calls, respectively. In these dictionaries, the keys are name strings and the values are the
-corresponding instances.
+.. autoclass:: andes.system.System
+    :noindex:
 
 Dynamic Imports
 ```````````````
-Groups, models and routine programs are dynamically imported at the creation of a ``System`` instance. In
-detail, *all classes* defined in ``andes.models.group`` are imported and instantiated.
-For models and groups, only the classes defined in the corresponding ``__init__.py`` files are imported and
-instantiated in the order of definition.
+System dynamically imports groups, models, and routines at creation.
+To add new models, groups or routines, edit the corresponding file by adding entries following examples.
+
+.. autofunction:: andes.system.System.import_models
+    :noindex:
+
+.. autofunction:: andes.system.System.import_groups
+    :noindex:
+
+.. autofunction:: andes.system.System.import_routines
+    :noindex:
 
 Code Generation
 ```````````````
-Before the first use, all symbolic equations need to be generated into numerical function calls for accelerating
-the numerical simulation. Since the symbolic to numeric generation is slow, these numerical
-function calls (Python Callables), once generated, can be serialized into a file to speed up future. When models
-are modified (such as adding new models or changing equation strings), the generation function needs to be
-executed again for code consistency.
+Under the hood, all symbolically defined equations need to be generated into anonymous function calls for
+accelerating numerical simulations.
+This process is automatically invoked for the first time ANDES is run command line.
+It takes several seconds up to a minute to finish the generation.
 
-In the first use of ANDES in an interactive environment, one would do ::
+.. note::
+    Code generation has been done if one has executed ``andes``, ``andes selftest``, or ``andes prepare``.
 
-    import andes
-    sys = andes.System()
-    sys.prepare()
+.. warning::
+    When models are modified (such as adding new models or changing equation strings), code generation needs
+    to be executed again for consistency. It can be more conveniently triggered from command line with
+    ``andes prepare``.
 
-It may take several seconds to a few minutes to finish the code generation. This process is automatically invoked
-for the first time ANDES is run command line. The preparation process can be manually triggered with
-``andes --prepare``.
+.. autofunction:: andes.system.System.prepare
+    :noindex:
 
-The symbolic-to-numeric code generation is independent of test systems and needs to happen before a test system is
-loaded. In other words, any symbolic processing for particular test systems must not be included in
-``System.prepare()``.
+Since the process is slow, generated numerical functions (Python Callable) will be serialized into a file
+for future speed up.
+The package used for serializing/de-serializing numerical calls is ``dill``.
+System has a function called ``dill`` for serializing using the ``dill`` package.
 
-The package used for serializing/de-serializing numerical calls is ``dill``. The serialized file will be named
-``calls.pkl`` and placed under ``<HomeDir>/.andes/``. As a note, the ``dill()`` method has set the flag
-``dill.settings['recurse'] = True`` to ensure a successful recursive serialization.
+.. autofunction:: andes.system.System.dill
+    :noindex:
 
-If no change is made to models, the call to ``prepare()`` afterwards can be replaced with ``undill()``,
-which is fast to execute.
-
-See for details:
-
-:py:mod:`andes.system.System.prepare()` : symbolic-to-numerical preparation
-
-:py:mod:`andes.system.System.undill()` : un-dill numerical calls
+.. autofunction:: andes.system.System.undill
+    :noindex:
 
 Numerical Functions
 -------------------

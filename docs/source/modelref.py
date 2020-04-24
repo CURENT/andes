@@ -5,6 +5,7 @@ import os
 import andes
 ss = andes.prepare()
 
+# write the top-level index file
 
 out = ''
 out += '.. _modelref:\n\n'

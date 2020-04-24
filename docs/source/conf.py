@@ -185,7 +185,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'andes', 'ANDES Manual',
-     author, 'andes', 'A Python package for power system simulation',
+     author, 'andes', 'Python Software for Symbolic Power System Modeling and Numerical Analysis',
      'Miscellaneous'),
 ]
 

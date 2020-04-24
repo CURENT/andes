@@ -28,11 +28,34 @@ else:
 
 class System(object):
     """
-    The ANDES power system class.
+    System contains models and routines for modeling and simulation.
 
-    This class stores model and routine instances as attributes.
+    System contains a several special `OrderedDict` member attributes for housekeeping.
+    These attributes include ``models``, ``groups``, ``routines`` and ``calls`` for loaded models, groups,
+    analysis routines, and generated numerical function calls, respectively.
+
+    Notes
+    -----
+    System stores model and routine instances as attributes.
     Model and routine attribute names are the same as their class names.
-    For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
+    For example, ``Bus`` is stored at ``system.Bus``, the power flow calculation routine is at
+    ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See attributes for the list of
+    attributes.
+
+    Attributes
+    ----------
+    dae : andes.variables.dae.DAE
+        Numerical DAE storage
+    files : andes.variables.fileman.FileMan
+        File path storage
+    config : andes.core.config.Config
+        System config storage
+    models : OrderedDict
+        model name and instance pairs
+    groups : OrderedDict
+        group name and instance pairs
+    routines : OrderedDict
+        routine name and instance pairs
     """
     def __init__(self,
                  case: Optional[str] = None,
@@ -86,9 +109,9 @@ class System(object):
         self.dae = DAE(system=self)                        # numerical DAE storage
 
         # dynamic imports of groups, models and routines
-        self._group_import()
-        self._model_import()
-        self._routine_import()  # routine imports come after models
+        self.import_groups()
+        self.import_models()
+        self.import_routines()  # routine imports come after models
 
         self._models_flag = {'pflow': self.find_models('pflow'),
                              'tds': self.find_models('tds'),
@@ -108,9 +131,33 @@ class System(object):
 
     def prepare(self, quick=False):
         """
-        Prepare classes and lambda functions
+        Generate numerical functions from symbolically defined models.
 
-        Anything in this function should be independent of test case
+        All procedures in this function must be independent of test case.
+
+        Parameters
+        ----------
+        quick : bool, optional
+            True to skip pretty-print generation to reduce code generation time.
+
+        Examples
+        --------
+        If one needs to print out LaTeX-formatted equations in a Jupyter Notebook, one need to generate such
+        equations with ::
+
+            import andes
+            sys = andes.prepare()
+
+        Alternatively, one can explicitly create a System and generate the code ::
+
+            import andes
+            sys = andes.System()
+            sys.prepare()
+
+        Warnings
+        --------
+        Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
+        the System instance on which prepare is called.
         """
         self._generate_symbols()
         self._generate_equations()
@@ -647,9 +694,14 @@ class System(object):
 
     def dill(self):
         """
-        Serialize generated functions in ``System.calls`` with dill.
+        Serialize generated numerical functions in `System.calls` with package `dill`.
 
-        The serialized file will be stored to ``~/calls.pkl``.
+        The serialized file will be stored to ``~/andes/calls.pkl``, where `~` is the home directory path.
+
+        Notes
+        -----
+        This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
+
         """
         logger.debug("Dumping calls to calls.pkl with dill")
         import dill
@@ -661,7 +713,10 @@ class System(object):
 
     def undill(self):
         """
-        Deserialize the function calls from `calls.pkl` with dill.
+        Deserialize the function calls from ``~/andes.calls.pkl`` with dill.
+
+        If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
+        acceleration.
         """
         import dill
         dill.settings['recurse'] = True
@@ -802,9 +857,12 @@ class System(object):
     def _generate_jacobians(self):
         self._call_models_method('generate_jacobians', self.models)
 
-    def _group_import(self):
+    def import_groups(self):
         """
-        Import groups defined in `devices/group.py`.
+        Import all groups classes defined in ``devices/group.py``.
+
+        Groups will be stored as instances with the name as class names.
+        All groups will be stored to dictionary ``System.groups``.
         """
         module = importlib.import_module('andes.models.group')
         for m in inspect.getmembers(module, inspect.isclass):
@@ -815,12 +873,21 @@ class System(object):
             self.__dict__[name] = cls()
             self.groups[name] = self.__dict__[name]
 
-    def _model_import(self):
+    def import_models(self):
         """
-        Import and instantiate the non-JIT models and the JIT models.
+        Import and instantiate models as System member attributes.
 
-        Models defined in ``jits`` and ``non_jits`` in ``models/__init__.py``
-        will be imported and instantiated accordingly.
+        Models defined in ``models/__init__.py`` will be instantiated `sequentially` as attributes with the same
+        name as the class name.
+        In addition, all models will be stored in dictionary ``System.models`` with model names as
+        keys and the corresponding instances as values.
+
+        Examples
+        --------
+        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the classical
+        generator object,
+
+        ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
         # non-JIT models
         for file, cls_list in non_jit.items():
@@ -842,20 +909,17 @@ class System(object):
         #         self.__dict__[name] = JIT(self, file, cls, name)
         # ***********************
 
-    def _routine_import(self):
+    def import_routines(self):
         """
-        Dynamically import routines as defined in ``routines/__init__.py``.
+        Import routines as defined in ``routines/__init__.py``.
 
-        # *** DOCS FROM OLDER VERSION ***
-        The command-line argument ``--routine`` is defined in ``__cli__`` in
-        each routine file. A routine instance will be stored in the system
-        instance with the name being all lower case.
+        Routines will be stored as instances with the name as class names.
+        All groups will be stored to dictionary ``System.groups``.
 
-        For example, a routine for power flow study should be defined in
-        ``routines/pflow.py`` where ``__cli__ = 'pflow'``. The class name
-        for the routine should be ``Pflow``. The routine instance will be
-        saved to ``PowerSystem.pflow``.
-        # *******************************
+        Examples
+        --------
+        ``System.PFlow`` is the power flow routine instance, and ``System.TDS`` and ``System.EIG`` are
+        time-domain analysis and eigenvalue analysis routines, respectively.
         """
         for file, cls_list in all_routines.items():
             for cls_name in cls_list:
