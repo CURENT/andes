@@ -782,47 +782,37 @@ All variables in a block must be defined as attributes in the constructor, just 
 models. The difference is that the variables are "exported" from a block to the capturing model. All exported
 variables need to placed in a dictionary, ``self.vars`` at the end of the block constructor.
 
-Blocks can be nexted as advanced usage. See the following API documentation for more details.
+Blocks can be nested as advanced usage. See the following API documentation for more details.
 
-.. autoclass::
+.. autoclass:: andes.core.block.Gain
     :noindex:
-    andes.core.block.Gain
 
-.. autoclass::
+.. autoclass:: andes.core.block.Integrator
     :noindex:
-    andes.core.block.Integrator
 
-.. autoclass::
+.. autoclass:: andes.core.block.Lag
     :noindex:
-    andes.core.block.Lag
 
-.. autoclass::
+.. autoclass:: andes.core.block.LagAntiWindup
     :noindex:
-    andes.core.block.LagAntiWindup
 
-.. autoclass::
+.. autoclass:: andes.core.block.Lag2ndOrd
     :noindex:
-    andes.core.block.Lag2ndOrder
 
-.. autoclass::
+.. autoclass:: andes.core.block.LeadLag
     :noindex:
-    andes.core.block.LeadLag
 
-.. autoclass::
+.. autoclass:: andes.core.block.LeadLagLimit
     :noindex:
-    andes.core.block.LeadLagLimit
 
-.. autoclass::
+.. autoclass:: andes.core.block.LeadLag2ndOrd
     :noindex:
-    andes.core.block.LeadLag2ndOrder
 
-.. autoclass::
+.. autoclass:: andes.core.block.Washout
     :noindex:
-    andes.core.block.Washout
 
-.. autoclass::
+.. autoclass:: andes.core.block.WashoutOrLag
     :noindex:
-    andes.core.block.WashoutOrLag
 
 
 Examples
