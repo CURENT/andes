@@ -394,20 +394,85 @@ instead of ``ReducerService``, ``RepeaterService`` and external variables.
     components and blocks.
 
 
+Atom Classes
+============
+ANDES contains three types of atom classes for building DAE models.
+These types are parameter, variable and service.
+
+v-provider
+----------
+
+Before addressing specific atom classes, the terminology `v-provider`, and `e-provider` are discussed.
+An `v-provider` class (or `v-provider` for short) references any class with a member attribute named ``v``,
+which should be a list or a 1-dimensional array of values.
+For example, all parameter classes are v-providers, since a parameter class should provide
+values for that parameter.
+
+.. note::
+    In fact, all types of atom classes are v-providers, meaning that an instance of an atom class must contain values.
+
+The values in the `v` attribute of a particular instance are values that will substitute the instance for computation.
+If in a model, one has a parameter ::
+
+    self.v0 = NumParam()
+    self.b = NumParam()
+
+    # where self.v0.v = np.array([1., 1.05, 1.1]
+    #   and self.b.v  = np.array([10., 10., 10.]
+
+Later, this parameter is used in an equation, such as ::
+
+    self.v = ExtAlgeb(model='Bus', src='v',
+                      indexer=self.bus,
+                      e_str='v0 **2 * b')
+
+While computing `v0 ** 2 * b`, `v0` and `b` will be substituted with the values in `self.v0.v` and `self.b.v`.
+
+Sharing this interface `v` allows interoperability among parameters and variables and services.
+In the above example, if one defines `v0` as a `ConstService` instance, such as ::
+
+    self.v0 = ConstService(v_str='1.0')
+
+Calculations will still work without modification.
+
+e-provider
+----------
+Similarly, an `e-provider` class (or `e-provider`) references any class with a member attribute named ``e``,
+which should be a 1-dimensional array of values.
+The values in the `e` array are the results from the equation and will be summed to the numerical DAE at the addresses
+specified by the attribute `a`.
+
+.. note::
+    Currently, only variables are `e-provider` types.
+
+If a model has an external variable that links to Bus.v (voltage), such as ::
+
+    self.v = ExtAlgeb(model='Bus', src='v',
+                      indexer=self.bus,
+                      e_str='v0 **2 * b')
+
+The addresses of the corresponding voltage variables will be retrieved into `self.a`,
+and the equation evaluation results will be stored in `self.v.e`
+
 Parameters
 ==========
-Parameters, in the scope of atoms, are data provided to equations. Parameters are usually read from input data
-files and pre-processed before numerical simulation.
 
-The base class for parameters in ANDES is ``BaseParam``, which defines interfaces for adding values and
-checking the number of values. ``BaseParam`` has its values stored in a plain list, the member attribute ``v``.
-Subclasses such as ``NumParam`` stores values using a NumPy ndarray. An overview of supported parameters is
-given in the table below.
+Background
+-----------
+
+Parameter is a type of building atom for DAE models.
+Most parameters are read directly from an input file and passed to equation,
+and other parameters can be calculated from existing parameters.
+
+The base class for parameters in ANDES is `BaseParam`, which defines interfaces for adding values and
+checking the number of values. `BaseParam` has its values stored in a plain list, the member attribute `v`.
+Subclasses such as `NumParam` stores values using a NumPy ndarray.
+An overview of supported parameters is given below.
 
 +---------------+----------------------------------------------------------------------------+
 |  Subclasses   |     Description                                                            |
 +===============+============================================================================+
-|  DataParam    | An alias of ``BaseParam``. Can be used for any non-numerical parameters.   |
+|  DataParam    | An alias of `BaseParam`. Can be used for any non-numerical parameters.     |
 +---------------+----------------------------------------------------------------------------+
 |  NumParam     | The numerical parameter type. Used for all parameters in equations         |
 +---------------+----------------------------------------------------------------------------+
@@ -420,6 +485,8 @@ given in the table below.
 |  RefParam     | Parameter for collecting ``idx`` of referencing devices                    |
 +---------------+----------------------------------------------------------------------------+
 
+.. automodule:: andes.core.param.BaseParam
+    :noindex:
 
 Variables
 =========

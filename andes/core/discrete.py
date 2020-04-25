@@ -520,3 +520,14 @@ class DeadBand(Limiter):
         self.zu[:] = zu.astype(np.float64)
         self.zl[:] = zl.astype(np.float64)
         self.zi[:] = zi.astype(np.float64)
+
+
+class Memory(Discrete):
+    """
+    Memory class to memorize past variable values.
+    """
+
+    def __init__(self, u, steps=1, name=None, tex_name=None, info=None):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.steps = steps

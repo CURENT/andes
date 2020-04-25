@@ -50,7 +50,7 @@ class BaseParam(object):
     This class provides the basic data structure and interfaces for all types of parameters. Parameters are from
     input files and in general constant once initialized.
 
-    Subclasses should overload the ``n()`` method for the total count of elements in the value
+    Subclasses should overload the `n()` method for the total count of elements in the value
     array.
 
     Parameters
