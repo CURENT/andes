@@ -509,7 +509,7 @@ class System(object):
         Call the Jacobian update method for models in sequence.
 
         The procedure is
-        - Restore the sparsity pattern with :py:function:: andes.variables.dae.DAE.restore_sparse()
+        - Restore the sparsity pattern with :py:func:`andes.variables.dae.DAE.restore_sparse`
         - For each sparse matrix in (fx, fy, gx, gy), evaluate the Jacobian function calls and add values.
 
         Notes

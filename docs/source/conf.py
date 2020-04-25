@@ -207,4 +207,4 @@ html_favicon = 'images/curent.ico'
 smartquotes = False
 
 # import and execute model reference generation script
-exec(open("modelref.py").read())
+# exec(open("modelref.py").read())

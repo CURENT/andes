@@ -34,7 +34,7 @@ class Block(object):
 
     Warnings
     --------
-    It is suggested to have at most one level of nesting to avoid messy variable names.
+    It is a good practice to avoid more than one level of nesting, to avoid multi-underscore variable names.
 
     Examples
     --------
@@ -46,7 +46,7 @@ class Block(object):
            |
         Lag B      exports (x, y)
 
-    SomeModel instance M contains an instance of Leadlag block named A, which contains an instance of a Lag block
+    SomeModel instance M contains an instance of LeadLag block named A, which contains an instance of a Lag block
     named B. Both A and B exports two variables ``x`` and ``y``.
 
     In the code of Model, the following code is used to instantiate LeadLag ::
@@ -67,19 +67,19 @@ class Block(object):
                 self.B = Lag(u=self.y, K=self.K, T=self.T)
                 self.vars = {..., 'A': self.A}
 
-    The ``__setattr__`` magic of LeadLag takes over the construction and assigns ``B.name`` as ``A_B``,
-    given A's name provided at run time. ``self.A`` is exported with the internal name ``A`` at the end.
+    The ``__setattr__`` magic of LeadLag takes over the construction and assigns `A_B` to `B.name`,
+    given A's name provided at run time. `self.A` is exported with the internal name `A` at the end.
 
-    Again, the LeadLag instance name (``A`` in this example) MUST be provided in SomeModel's constructor for the
+    Again, the LeadLag instance name (`A` in this example) MUST be provided in `SomeModel`'s constructor for the
     name prepending to work correctly. If there is more than one level of nesting, other than the leaf-level
     block, all parent blocks' names must be provided at instantiation.
 
-    When A is picked up by ``SomeModel.__setattr__``, B is captured from A's exports. Recursively, B's variables
-    are exported, Recall that ``B.name`` is ``A_B``, following the naming rule (parent block's name + variable
-    name), B's internal variables become ``A_B_x`` and ``A_B_y``.
+    When A is picked up by `SomeModel.__setattr__`, B is captured from A's exports. Recursively, B's variables
+    are exported, Recall that `B.name` is now `A_B`, following the naming rule (parent block's name + variable
+    name), B's internal variables become `A_B_x` and `A_B_y`.
 
-    In this way, B's ``define`` needs no modification since the naming rule is the same. For example,
-    B's internal y is always ``{self.name}_y``, although B has gotten a new name ``A_B``.
+    In this way, B's ``define()`` needs no modification since the naming rule is the same. For example,
+    B's internal y is always `{self.name}_y`, although B has gotten a new name `A_B`.
 
     """
 
@@ -371,7 +371,7 @@ class Integrator(Block):
         Implemented equation and the initial condition are
 
         .. math ::
-            \dot{y} = K u
+            \dot{y} = K u \\
             y^{(0)} = 0
 
         """
@@ -514,7 +514,7 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x) \\
+            T \dot{x'} &= (Ku - x') \\
             x'^{(0)} &= K u
 
         """
@@ -681,7 +681,7 @@ class LeadLag(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2 * y &= T_1 * (u - x') + T_2 * x' \\
+            T_2  y &= T_1  (u - x') + T_2  x' \\
             x'^{(0)} &= y^{(0)} = u
 
         """
@@ -787,7 +787,7 @@ class LeadLagLimit(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2 y &= T_1 * (u - x') + T_2 * x' \\
+            T_2 y &= T_1  (u - x') + T_2  x' \\
             x'^{(0)} &= y^{(0)} = u
 
         """

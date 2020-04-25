@@ -79,7 +79,7 @@ class LessThan(Discrete):
 
     Notes
     -----
-    If not enabled, the defaults are: z0 = 0, and z1 = 1.
+    The default z0 and z1, if not enabled, can be set through the constructor.
     """
     def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False,
                  z0=0, z1=1):
@@ -206,9 +206,7 @@ class SortedLimiter(Limiter):
 
 class HardLimiter(Limiter):
     """
-    Hard limiter for algebraic or differential variable.
-
-    This class is just an alias of `Limiter` for clarity.
+    Hard limiter for algebraic or differential variable. This class is an alias of `Limiter`.
     """
     pass
 
@@ -217,12 +215,13 @@ class AntiWindupLimiter(Limiter):
     """
     Anti-windup limiter.
 
-    The anti-windup limiter prevents the wind-up effect of a differential variable. The derivative of the
-    differential variable is reset if it continues to increase in the same direction after exceeding the limits.
+    Anti-windup limiter prevents the wind-up effect of a differential variable.
+    The derivative of the differential variable is reset if it continues to increase in the same direction
+    after exceeding the limits.
     During the derivative return, the limiter will be inactive ::
 
-      if x > xmax and x dot > 0: x = xmax and x dot = 0
-      if x < xmin and x dot < 0: x = xmin and x dot = 0
+        if x > xmax and x dot > 0: x = xmax and x dot = 0
+        if x < xmin and x dot < 0: x = xmin and x dot = 0
 
     This class takes one more optional parameter for specifying the equation.
 
@@ -404,7 +403,7 @@ class Switcher(Discrete):
 
 
 class DeadBand(Limiter):
-    """
+    r"""
     Dead band with the direction of return.
 
     Parameters

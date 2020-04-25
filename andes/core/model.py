@@ -47,7 +47,7 @@ class Cache(object):
 
     def add_callback(self, name: str, callback):
         """
-        Add a cache attribute and a callback function to update the attribute
+        Add a cache attribute and a callback function for updating the attribute.
 
         Parameters
         ----------
@@ -99,11 +99,58 @@ class Cache(object):
 
 
 class ModelData(object):
-    """
-    Class for holding model data.
+    r"""
+    Class for holding parameter data for a model.
 
     This class is designed to hold the parameter data separately from model equations.
     Models should inherit this class to define the parameters from input files.
+
+    Inherit this class to create the specific class for holding input parameters for a new model.
+    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENCLS`
+    should be named `GENCLSData`.
+
+    Parameters should be defined in the ``__init__`` function of the derived class.
+
+    Refer to :py:mod:`andes.core.param` for available parameter types.
+
+    Attributes
+    ----------
+    cache
+        A cache instance for different views of the internal data.
+
+    Notes
+    -----
+    Two default parameters, `u` (connection status of type :py:class:`andes.core.param.NumParam`),
+    and ``name`` (device name of type :py:class:`andes.core.param.DataParam`) are pre-defined in ``ModelData``,
+    and will be inherited by all models.
+
+    Examples
+    --------
+    If we want to build a class ``PQData`` (for static PQ load) with three parameters, `Vn`, `p0`
+    and `q0`, we can use the following ::
+
+        from andes.core.model import ModelData, Model
+        from andes.core.param import IdxParam, NumParam
+
+        class PQData(ModelData):
+            super().__init__()
+            self.Vn = NumParam(default=110,
+                               info="AC voltage rating",
+                               unit='kV', non_zero=True,
+                               tex_name=r'V_n')
+            self.p0 = NumParam(default=0,
+                               info='active power load in system base',
+                               tex_name=r'p_0', unit='p.u.')
+            self.q0 = NumParam(default=0,
+                               info='reactive power load in system base',
+                               tex_name=r'q_0', unit='p.u.')
+
+    In this example, all the three parameters are defined as :py:class:`andes.core.param.NumParam`.
+    In the full `PQData` class, other types of parameters also exist.
+    For example, to store the idx of `owner`, `PQData` uses ::
+
+        self.owner = IdxParam(model='Owner', info="owner idx")
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -232,7 +279,7 @@ class ModelData(object):
         Returns
         -------
         DataFrame
-            A dataframe containing all model data. An `uid` column is added.
+            A :py:class:`pandas.DataFrame` containing all model data. An `uid` column is prepended.
         """
         out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
 
@@ -356,20 +403,117 @@ class ModelCall(object):
 
 
 class Model(object):
-    """
+    r"""
     Base class for power system DAE models.
+
+
+    After subclassing `ModelData`, subclass `Model`` to complete a DAE model.
+    Subclasses of `Model` defines DAE variables, services, and other types of parameters,
+    in the constructor ``__init__``.
 
     Attributes
     ----------
-    n : int
-        The number of loaded elements.
-
-    idx : list
-        A list of all element idx.
-
     num_params : OrderedDict
         {name: instance} of numerical parameters, including internal
         and external ones
+
+    Examples
+    --------
+    Take the static PQ as an example, the subclass of `Model`, `PQ`, should looks like ::
+
+        class PQ(PQData, Model):
+            def __init__(self, system, config):
+                PQData.__init__(self)
+                Model.__init__(self, system, config)
+
+    Since `PQ` is calling the base class constructors, it is meant to be the final class and not further
+    derived.
+    It inherits from `PQData` and `Model` and must call constructors in the order of `PQData` and `Model`.
+    If the derived class of `Model` needs to be further derived, it should only derive from `Model`
+    and use a name ending with `Base`. See :py:class:`andes.models.synchronous.GENBASE`.
+
+    Next, in `PQ.__init__`, set proper flags to indicate the routines in which the model will be used ::
+
+        self.flags.update({'pflow': True})
+
+    Currently, flags `pflow` and `tds` are supported. Both are `False` by default, meaning the model is
+    neither used in power flow nor time-domain simulation. **A very common pitfall is forgetting to set the flag**.
+
+    Next, the group name can be provided. A group is a collection of models with common parameters and variables.
+    Devices idx of all models in the same group must be unique. To provide a group name, use ::
+
+        self.group = 'StaticLoad'
+
+    The group name must be an existing class name in :py:mod:`andes.models.group`.
+    The model will be added to the specified group and subject to the variable and parameter policy of the
+    group.
+    If not provided with a group class name, the model will be placed in the `Undefined` group.
+
+    Next, additional configuration flags can be added.
+    Configuration flags for models are load-time variables specifying the behavior of a model.
+    It can be exported to an `andes.rc` file and automatically loaded when creating the `System`.
+    Configuration flags can be used in equation strings, as long as they are numerical values.
+    To add config flags, use ::
+
+        self.config.add(OrderedDict((('pq2z', 1), )))
+
+    It is recommended to use `OrderedDict` instead of `dict`, although the syntax is verbose.
+    Note that booleans should be provided as integers (1, or 0), since `True` or `False` is interpreted as
+    a string when loaded from the `rc` file and will cause an error.
+
+    Next, it's time for variables and equations! The `PQ` class does not have internal variables itself.
+    It uses its `bus` parameter to fetch the corresponding `a` and `v` variables of buses.
+    Equation wise, it imposes an active power and a reactive power load equation.
+
+    To define external variables from `Bus`, use ::
+
+            self.a = ExtAlgeb(model='Bus', src='a',
+                              indexer=self.bus, tex_name=r'\theta')
+            self.v = ExtAlgeb(model='Bus', src='v',
+                              indexer=self.bus, tex_name=r'V')
+
+    Refer to the subsection Variables for more details.
+
+    The simplest `PQ` model will impose constant P and Q, coded as ::
+
+            self.a.e_str = "u * p"
+            self.v.e_str = "u * q"
+
+    where the `e_str` attribute is the equation string attribute. `u` is the connectivity status.
+    Any parameter, config, service or variables can be used in equation strings.
+    An addition variable `dae_t` for the current simulation time can be used if the model has flag `tds`.
+
+    The above example is overly simplified. Our `PQ` model wants a feature to switch itself to
+    a constant impedance if the voltage is out of the range `(vmin, vmax)`.
+    To implement this, we need to introduce a discrete component called `Limiter`, which yields three arrays
+    of binary flags, `zi`, `zl`, and `zu` indicating in range, below lower limit, and above upper limit,
+    respectively.
+
+    First, create an attribute `vcmp` as a `Limiter` instance ::
+
+            self.vcmp = Limiter(u=self.v, lower=self.vmin, upper=self.vmax,
+                                 enable=self.config.pq2z)
+
+    where `self.config.pq2z` is a flag to turn this feature on or off.
+    After this line, we can use `vcmp_zi`, `vcmp_zl`, and `vcmp_zu` in other equation strings. ::
+
+            self.a.e_str = "u * (p0 * vcmp_zi + \
+                                 p0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
+                                 p0 * vcmp_zu * (v ** 2 / vmax ** 2))"
+
+            self.v.e_str = "u * (q0 * vcmp_zi + \
+                                 q0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
+                                 q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
+
+    Note that `PQ.a.e_str` can use the three variables from `vcmp` even before defining `PQ.vcmp`, as long as
+    `PQ.vcmp` is defined, because `vcmp_zi` is just a string literal in `e_str`.
+
+    The two equations above implements a piecewise power injection equation. It selects the original power demand
+    if within range, and uses the calculated power when out of range.
+
+    Finally, to let ANDES pick up the model, the model name needs to be added to `models/__init__.py`.
+    Follow the examples in the `OrderedDict`, where the key is the file name, and the value is the class name.
+
     """
 
     def __init__(self, system=None, config=None):

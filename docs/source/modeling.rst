@@ -188,203 +188,98 @@ terminology "device" is used to describe a particular instance of a model, for e
 
 To define a model in ANDES, two classes, ``ModelData`` and ``Model`` need to be utilized. Class ``ModelData`` is
 used for defining parameters that will be provided from input files. It provides API for adding data from
-devices and managing the data. Class ``Model`` is used for defining other non-input parameters, service
+devices and managing the data.
+Class ``Model`` is used for defining other non-input parameters, service
 variables, and DAE variables. It provides API for converting symbolic equations, storing Jacobian patterns, and
 updating equations.
 
-Parameters from Inputs
-----------------------
-Class ``ModelData`` needs to be inherited to create the class holding the input parameters for a new model. The
-recommended name for the derived class is the model name with ``Data``. In ``__init__`` of the derived class,
-the input parameters can be defined. Note that two default parameters, ``u`` (connection status, ``NumParam``),
-and ``name`` (device name, ``DataParam``) are defined in ``ModelBase``), and it will apply to all subclasses.
+Model Data
+----------
+.. autoclass:: andes.core.model.ModelData
+    :noindex:
 
-Refer to the Parameters subsection for available parameter types.
+Cache
+`````
+`ModelData` uses a lightweight class :py:class:`andes.core.model.Cache` for caching its data as a dictionary
+or a pandas DataFrame. Four attributes are defined in `ModelData.cache`:
 
-For example, if we need to build the ``PQData`` class (for static PQ load) with three parameters, ``Vn``, ``p0``
-and ``q0``, we can use the following ::
+- `dict`: all data in a dictionary with the parameter names as keys and `v` values as arrays.
+- `dict_in`: the same as `dict` except that the values are from `v_in`, the original input.
+- `df`: all data in a pandas DataFrame.
+- `df_in`: the same as `df` except that the values are from `v_in`.
 
-    from andes.core.model import ModelData, Model
-    from andes.core.param import IdxParam, NumParam, DataParam
+Other attributes can be added by registering with `cache.add_callback`.
 
-    class PQData(ModelData):
-        super().__init__()
-        self.Vn = NumParam(default=110,
-                           info="AC voltage rating",
-                           unit='kV', non_zero=True,
-                           tex_name=r'V_n')
-        self.p0 = NumParam(default=0,
-                           info='active power load in system base',
-                           tex_name=r'p_0', unit='p.u.')
-        self.q0 = NumParam(default=0,
-                           info='reactive power load in system base',
-                           tex_name=r'q_0', unit='p.u.')
+.. autofunction:: andes.core.model.Cache.add_callback
+    :noindex:
 
-In this example, all the three parameters are defined as ``NumParam``. In the full ``PQData`` class, other
-types of parameters also exist. For example, to store the idx of ``Owner``, ``PQData`` has ::
-
-        self.owner = IdxParam(model='Owner', info="owner idx")
-
-``Model.cache``
-```````````````
-``ModelData`` uses a lightweight class ``Cache`` for caching its data as a dictionary or a pandas Dataframe.
-Four attributes are defined for ``ModelData.cache``:
-
-- ``dict``: all data in a dictionary with the parameter names as keys and ``v`` values as arrays.
-- ``dict_in``: the same as ``dict`` except that the values are from ``v_in``, the original input
-- ``df``: all data in a pandas DataFrame.
-- ``df_in``: the same as ``df`` except that the values are from ``v_in``
-
-Other attributes can be added, if necessary, by registering with ``cache.add_callback``. An argument-free
-callback function needs to be provided. See the source code of ``ModelData`` for details.
-
-Parameter Requirements for Voltage Rating
-`````````````````````````````````````````
-If a model is connected to an AC Bus or a DC Node, namely, ``bus``, ``bus1``, ``node``, or ``node1`` exist in
-its parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
+Define Voltage Ratings
+``````````````````````
+If a model is connected to an AC Bus or a DC Node, namely, if ``bus``, ``bus1``, ``node`` or ``node1`` exists
+as parameter, it must provide the corresponding parameter, ``Vn``, ``Vn1``, ``Vdcn`` or ``Vdcn1``, for rated
 voltages.
 
-Controllers not connected to Bus or Node will have its rated voltages omitted and thus ``Vb = Vn = 1``.
-In fact, controllers not directly connected to the network shall use per unit for voltage and current parameters
-. Controllers (such as a turine governor) may inherit rated power from controlled models and thus power parameters
+Controllers not connected to Bus or Node will have its rated voltages omitted and thus ``Vb = Vn = 1``, unless
+one uses :py:class:`andes.core.param.ExtParam` to retrieve the bus/node values.
+
+As a rule of thumb, controllers not directly connected to the network shall use system-base per unit for voltage
+and current parameters.
+Controllers (such as a turbine governor) may inherit rated power from controlled models and thus power parameters
 will be converted consistently.
 
 
-Defining a DAE Model
+Define a DAE Model
 --------------------
-After subclassing ``ModelData``, ``Model`` needs to be derived to complete a DAE model. Subclasses of Model
-defines DAE variables, service variables, and other types of parameters, in the constructor ``__init__``, to
-complete a model.
-
-Again, take the static PQ as an example, the subclass of ``Model``, ``PQ``, looks like ::
-
-
-    class PQ(PQData, Model):
-        def __init__(self, system=None, config=None):
-            PQData.__init__(self)
-            Model.__init__(self, system, config)
-
-In this case, ``PQ`` is meant to be the final class, not to be further derived. It inherits from ``PQData``
-and ``Model``, calls the constructors in the order of ``PQData`` and ``Model``. Note that if the derived class
-or ``Model`` is meant to be further derived, it should only derive from ``Model`` and use a name ending with
-``Base``. See ``GENBase`` in ``models/synchronous.py`` for example.
-
-Next, in ``PQ.__init__``, the proper flags for the routines the model will participate needs to be set. ::
-
-    self.flags.update({'pflow': True})
-
-Currently, flags ``pflow`` and ``tds`` are supported. They are ``False`` by default, meaning the model is
-neither used in power flow nor time-domain simulation. **A very common pitfall is forgetting to set the flag**.
-
-Next, the group name can be provided. A group is a collection of models with common parameters and variables.
-Devices idx of all models in the same group must be unique. To provide a group name, use ::
-
-    self.group = 'StaticLoad'
-
-The group name must be an existing class name in ``models/groups.py``. The model will be added to the specified
-group and subject to variable and parameter policy by the group. Otherwise, the model will be placed in the
-``Undefined`` group.
-
-Next, additional configuration flags can be added. Configuration flags for models are load-time variables
-specifying the behavior of a model. It can be exported to an ``andes.rc`` file and automatically loaded when
-creating the ``System``. Configuration flags can be used in equation strings, as long as they are numerical
-values. To add configuration flags, use ::
-
-    self.config.add(OrderedDict((('pq2z', 1), )))
-
-It is recommended to use ``OrderedDict``, although the syntax is a bit verbose. Note that booleans should be
-provided in integers (1, or 0), since ``True`` or ``False`` is interpreted as strings when loaded from an ``rc``
-file and will cause an error.
-
-Next, it's time for variables and equations! The ``PQ`` class does not have internal variables itself. It uses
-its ``bus`` attribute to fetch the corresponding ``a`` and ``v`` variables of buses. Equation wise, it imposes
-an active power and a reactive power demand equation.
-
-To define external variables from ``Bus``, use ::
-
-        self.a = ExtAlgeb(model='Bus', src='a',
-                          indexer=self.bus, tex_name=r'\theta')
-        self.v = ExtAlgeb(model='Bus', src='v',
-                          indexer=self.bus, tex_name=r'V')
-
-Refer to details in subsection Variables for more details.
-
-The simplest ``PQ`` model will impose constant P and Q, coded as ::
-
-        self.a.e_str = "u * p"
-        self.v.e_str = "u * q"
-
-where the ``e_str`` attribute is the equation string attribute. ``u`` is the connectivity status. Any parameter,
-config, service or variables can be used in equation strings.
-
-The above example is overly simplified. Further, our ``PQ`` model wants a feature to switch itself to
-a constant impedance if the voltage is out of the range ``(vmin, vmax)``. To implement this, we need to
-introduce a discrete component called ``Limiter``, which yields three arrays of binary flags, ``zi``, ``zl``, and
-``zu`` indicating in the range, below lower limit, and above upper limit, respectively.
-
-First, create an attribute ``vcmp`` as a ``Limiter`` instance ::
-
-        self.vcmp = Limiter(u=self.v, lower=self.vmin, upper=self.vmax,
-                             enable=self.config.pq2z)
-
-where ``self.config.pq2z`` is a flag to turn this feature on or off.After this line, we can use ``vcmp_zi``,
-``vcmp_zl``, and ``vcmp_zu`` in equation strings. ::
-
-        self.a.e_str = "u * (p0 * vcmp_zi + \
-                             p0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
-                             p0 * vcmp_zu * (v ** 2 / vmax ** 2))"
-
-        self.v.e_str = "u * (q0 * vcmp_zi + \
-                             q0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
-                             q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
-
-The two equations above implements a piecewise power injection equation. It selects the original power demand
-if within range, and uses the calculated power when out of range.
-
-Finally, to let ANDES pick up the model, the model name needs to be added to ``models/__init__.py``. Follow the
-examples in the ``OrderedDict``, where the key is the file name, and the value is the class name.
+.. autoclass:: andes.core.model.Model
+    :noindex:
 
 Dynamicity Under the Hood
 -------------------------
-The magic for automatic creation of variables are all hidden in ``Model.__setattr__``, and the code is
-incredible simple. It sets the name, tex_name, and owner model of the attribute instance and, more importantly,
-does the book keeping. In particular, when the attribute is a ``Block`` subclass, ``__setattr__`` captures the
-exported instances, recursively, and prepends the block name to exported ones. All these convenience owe to the
-dynamic feature of Python.
+The magic for automatic creation of variables are all hidden in :py:func:`andes.core.model.Model.__setattr__`,
+and the code is incredible simple.
+It sets the name, tex_name, and owner model of the attribute instance and, more importantly,
+does the book keeping.
+In particular, when the attribute is a :py:class:`andes.core.block.Block` subclass, ``__setattr__`` captures the
+exported instances, recursively, and prepends the block name to exported ones.
+All these convenience owe to the dynamic feature of Python.
 
-During the equation generation phase, the symbols created by checking the book-keeping attributes, such as
-``states`` and attributes in ``Model.cache``.
+During the code generation phase, the symbols are created by checking the book-keeping attributes, such as
+`states`, `algebs`, and attributes in `Model.cache`.
 
-In the numerical evaluation phase, ``Model`` provides a method, ``get_inputs`` to collect the variable value
-arrays in a dictionary, which can be effortlessly passed to numerical functions.
+In the numerical evaluation phase, `Model` provides a method, :py:func:`andes.core.model.get_inputs`, to
+collect the variable value arrays in a dictionary, which can be effortlessly passed as kwargs to numerical
+functions.
 
 Commonly Used Attributes in Models
 ``````````````````````````````````
-The following ``Model`` attributes are commonly used for debugging. If the attribute if an ``OrderedDict``, the
-key is usually the attribute name, and the value is the instance.
+The following ``Model`` attributes are commonly used for debugging.
+If the attribute is an `OrderedDict`, the keys are attribute names in str, and corresponding values are the
+instances.
 
-- ``params`` and ``params_ext``, two ``OrderedDict`` for internal and extenal parameters, respectively.
+- ``params`` and ``params_ext``, two `OrderedDict` for internal (both numerical and non-numerical) and external
+  parameters, respectively.
+- ``num_params`` for numerical parameters, both internal and external.
 - ``states`` and ``algebs``, two ``OrderedDict`` for state variables and algebraic variables, respectively.
 - ``states_ext`` and ``algebs_ext``, two ``OrderedDict`` for external states and algebraics.
-- ``discrete``, an ``OrderedDict`` for discrete components.
-- ``blocks``, an ``OrderedDict`` for blocks.
-- ``services``, an ``OrderedDict`` for services with ``v_str``.
-- ``services_ext``, an ``OrderedDict`` for externally retrieved services.
+- ``discrete``, an `OrderedDict` for discrete components.
+- ``blocks``, an `OrderedDict` for blocks.
+- ``services``, an `OrderedDict` for services with ``v_str``.
+- ``services_ext``, an `OrderedDict` for externally retrieved services.
 
-Attributes in ``Model.cache``
-`````````````````````````````
-Attributes in ``Model.cache`` are additional book-keeping structures for variables, parameters and services. THe
-following attributes are defined in ``Model.cache``.
+Attributes in `Model.cache`
+```````````````````````````
+Attributes in `Model.cache` are additional book-keeping structures for variables, parameters and services.
+The following attributes are defined.
 
-- ``all_vars``: all the variables
-- ``all_vars_names``, a list of all variable names
-- ``all_params``, all parameters
-- ``all_params_names``, a list of all parameter names
-- ``algebs_and_ext``, an ``OrderedDict`` of internal and external algebraic variables
-- ``states_and_ext``, an ``OrderedDict`` of internal and external differential variables
-- ``services_and_ext``, an ``OrderedDict`` of internal and external service variables.
-- ``vars_int``, an ``OrderedDict`` of all internal variables, states and then algebs
-- ``vars_ext``, an ``OrderedDict`` of all external variables, states and then algebs
+- ``all_vars``: all the variables.
+- ``all_vars_names``, a list of all variable names.
+- ``all_params``, all parameters.
+- ``all_params_names``, a list of all parameter names.
+- ``algebs_and_ext``, an `OrderedDict` of internal and external algebraic variables.
+- ``states_and_ext``, an `OrderedDict` of internal and external differential variables.
+- ``services_and_ext``, an `OrderedDict` of internal and external service variables.
+- ``vars_int``, an `OrderedDict` of all internal variables, states and then algebs.
+- ``vars_ext``, an `OrderedDict` of all external variables, states and then algebs.
 
 Equation Generation
 -------------------
@@ -709,57 +604,74 @@ Both types are for advanced users. For more details and examples, please refer t
 
 Discrete
 ========
+
+Background
+----------
 The discrete component library contains a special type of block for modeling the discontinuity in power system
 devices. Such continuities can be device-level physical constraints or algorithmic limits imposed on controllers.
 
-The base class for discrete components is :py:mod:`andes.core.discrete.Discrete`. ANDES includes the following
-types of discrete components
+The base class for discrete components is :py:mod:`andes.core.discrete.Discrete`.
 
-+--------------------+---------------------------------------------------------+
-|   Discrete Class   |                       Description                       |
-+====================+=========================================================+
-|  Limiter           | Basic limiter with upper and lower bound                |
-+--------------------+---------------------------------------------------------+
-|  SortedLimiter     | Limiter with the top N values flagged                   |
-+--------------------+---------------------------------------------------------+
-|  HardLimiter       | Hard limiter on algebraic variables                     |
-+--------------------+---------------------------------------------------------+
-|  WindupLimiter     | Windup limiter on state variables                       |
-+--------------------+---------------------------------------------------------+
-|  AntiWindupLimiter | Non-windup limiter on state variables                   |
-+--------------------+---------------------------------------------------------+
-|  DeadBand          | Deadband with return flags                              |
-+--------------------+---------------------------------------------------------+
-|  Selector          | Selector with values matching the output of the         |
-|                    | selection function                                      |
-+--------------------+---------------------------------------------------------+
-|  Switcher          | Input switcher with one array of flag for each input    |
-|                    | option                                                  |
-+--------------------+---------------------------------------------------------+
+.. autoclass:: andes.core.discrete.Discrete
+    :noindex:
 
-The uniqueness of discrete components is how it works. Discrete components take inputs, criteria, and exports a
-set of flags with the component-defined meanings. These exported flags can be used in algebraic or
-differential equations to build piece-wise equations.
+The uniqueness of discrete components is the way it works.
+Discrete components take inputs, criteria, and exports a set of flags with the component-defined meanings.
+These exported flags can be used in algebraic or differential equations to build piece-wise equations.
 
-For example, ``Limiter`` takes a v-provider as input, two v-providers as the upper and the lower bound. It
-yields three flags: ``zi`` (within bound), ``zl`` (below lower bound), and ``zu`` (above upper bound). See the
-code example in ``models/pv.py`` for an example voltage-based PQ-to-Z conversion. See the API references for
-more examples on all types of discrete components.
+For example, `Limiter` takes a v-provider as input, two v-providers as the upper and the lower bound.
+It exports three flags: `zi` (within bound), `zl` (below lower bound), and `zu` (above upper bound).
+See the code example in ``models/pv.py`` for an example voltage-based PQ-to-Z conversion.
 
-It is important to note when the flags are updated. Discrete subclasses can use
-four methods to check and update the value and equations. Among these methods, ``check_var`` and ``set_var`` are
-called *before* equation evaluation, and ``check_eq`` and ``set_eq`` are called *after* equation update. In the
-current implementation, ``check_var`` updates flags for variable-based discrete components (such as ``Limiter``)
-. ``check_eq`` updates flags for equation-involved discrete componets (such as ``AntiWindupLimiter``).
-``set_var`` is currently not used. It is recommended not to use ``set_var`` and, instead, use the flags in
-equations to maintain consistency between equations and Jacobians.
+It is important to note when the flags are updated.
+Discrete subclasses can use three methods to check and update the value and equations.
+Among these methods, `check_var` is called *before* equation evaluation, but `check_eq` and `set_eq` are
+called *after* equation update.
+In the current implementation, `check_var` updates flags for variable-based discrete components (such as
+`Limiter`).
+`check_eq` updates flags for equation-involved discrete components (such as `AntiWindupLimiter`).
+`set_var`` is currently only used by `AntiWindupLimiter` to store the pegged states.
 
+ANDES includes the following types of discrete components.
+
+Limiters
+--------
+.. autoclass:: andes.core.discrete.Limiter
+    :noindex:
+
+.. autoclass:: andes.core.discrete.SortedLimiter
+    :noindex:
+
+.. autoclass:: andes.core.discrete.HardLimiter
+    :noindex:
+
+.. autoclass:: andes.core.discrete.AntiWindupLimiter
+    :noindex:
+
+Comparers
+---------
+.. autoclass:: andes.core.discrete.LessThan
+    :noindex:
+
+.. autoclass:: andes.core.discrete.Selector
+    :noindex:
+
+.. autoclass:: andes.core.discrete.Switcher
+    :noindex:
+
+Deadband
+--------
+.. autoclass:: andes.core.discrete.DeadBand
+    :noindex:
 
 Blocks
 ======
-The block library contains commonly used transfer functions and nonlinear functions. Variables and equations are
-pre-defined for blocks to be used as lego pieces for scripting DAE models. The base class for blocks is
-:py:mod:`andes.core.block.Block`.
+
+Background
+----------
+The block library contains commonly used blocks (such as transfer functions and nonlinear functions).
+Variables and equations are pre-defined for blocks to be used as "lego pieces" for scripting DAE models.
+The base class for blocks is :py:mod:`andes.core.block.Block`.
 
 The supported blocks include ``Lag``, ``LeadLag``, ``Washout``, ``LeadLagLimit``, ``PIController``. In addition,
 the base class for piece-wise nonlinear functions, ``PieceWise`` is provided. ``PieceWise`` is used for
@@ -772,34 +684,49 @@ variables need to placed in a dictionary, ``self.vars`` at the end of the block 
 
 Blocks can be nested as advanced usage. See the following API documentation for more details.
 
-.. autoclass:: andes.core.block.Gain
+.. automodule:: andes.core.block.Block
     :noindex:
 
-.. autoclass:: andes.core.block.Integrator
+Transfer Functions
+------------------
+
+The following transfer function blocks have been implemented.
+They can be imported to build new models.
+
+Algebraic
+`````````
+.. automodule:: andes.core.block.Gain
     :noindex:
 
-.. autoclass:: andes.core.block.Lag
+First Order
+```````````
+.. automodule:: andes.core.block.Integrator
     :noindex:
 
-.. autoclass:: andes.core.block.LagAntiWindup
+.. automodule:: andes.core.block.Lag
     :noindex:
 
-.. autoclass:: andes.core.block.Lag2ndOrd
+.. automodule:: andes.core.block.LagAntiWindup
     :noindex:
 
-.. autoclass:: andes.core.block.LeadLag
+.. automodule:: andes.core.block.Washout
     :noindex:
 
-.. autoclass:: andes.core.block.LeadLagLimit
+.. automodule:: andes.core.block.WashoutOrLag
     :noindex:
 
-.. autoclass:: andes.core.block.LeadLag2ndOrd
+Second Order
+````````````
+.. automodule:: andes.core.block.LeadLag
     :noindex:
 
-.. autoclass:: andes.core.block.Washout
+.. automodule:: andes.core.block.LeadLagLimit
     :noindex:
 
-.. autoclass:: andes.core.block.WashoutOrLag
+.. automodule:: andes.core.block.Lag2ndOrd
+    :noindex:
+
+.. automodule:: andes.core.block.LeadLag2ndOrd
     :noindex:
 
 
