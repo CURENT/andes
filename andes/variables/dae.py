@@ -78,8 +78,56 @@ class DAETimeSeries(object):
 
 
 class DAE(object):
-    """
-    The numerical DAE class.
+    r"""
+    Class for storing numerical values of the DAE system, including variables, equations and first order
+    derivatives (Jacobian matrices).
+
+    Variable values and equation values are stored as :py:class:`numpy.ndarray`, while Jacobians are stored as
+    :py:class:`cvxopt.spmatrix`. The defined arrays and descriptions are as follows:
+
+    +-----------+---------------------------------------------+
+    | DAE Array |                 Description                 |
+    +===========+=============================================+
+    |  x        | Array for state variable values             |
+    +-----------+---------------------------------------------+
+    |  y        | Array for algebraic variable values         |
+    +-----------+---------------------------------------------+
+    |  z        | Array for 0/1 limiter states (if enabled)   |
+    +-----------+---------------------------------------------+
+    |  f        | Array for differential equation derivatives |
+    +-----------+---------------------------------------------+
+    |  Tf       | Left-hand side time constant array for f    |
+    +-----------+---------------------------------------------+
+    |  g        | Array for algebraic equation mismatches     |
+    +-----------+---------------------------------------------+
+
+    The defined scalar member attributes to store array sizes are
+
+    +-----------+---------------------------------------------+
+    | Scalar    |                 Description                 |
+    +===========+=============================================+
+    |  m        | The number of algebraic variables/equations |
+    +-----------+---------------------------------------------+
+    |  n        | The number of algebraic variables/equations |
+    +-----------+---------------------------------------------+
+    |  o        | The number of limiter state flags           |
+    +-----------+---------------------------------------------+
+
+    The derivatives of `f` and `g` with respect to `x` and `y` are stored in four :py:mod:`cvxopt.spmatrix`
+    sparse matrices:
+    **fx**, **fy**, **gx**, and **gy**,
+    where the first letter is the equation name, and the second letter is the variable name.
+
+    Notes
+    -----
+    DAE in ANDES is defined in the form of
+
+    .. math ::
+        T \dot{x} = f(x, y) \\
+        0 = g(x, y)
+
+    DAE does not keep track of the association of variable and address.
+    Only a variable instance keeps track of its addresses.
     """
     def __init__(self, system):
         self.system = system
@@ -120,7 +168,10 @@ class DAE(object):
         self.g = np.zeros(self.m)
 
     def clear_xy(self):
-        """Reset variable arrays to empty
+        """
+        Reset variable arrays to empty.
+
+        TODO: use in-place assignment instead of reassignment, where an extra resizing is needed.
         """
         self.x = np.zeros(self.n)
         self.y = np.zeros(self.m)

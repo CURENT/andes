@@ -14,7 +14,7 @@ from andes.models import non_jit
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
-from andes.utils.paths import get_config_path, get_pkl_path
+from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
 from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
 
 from andes.shared import np, spmatrix, jac_names
@@ -314,9 +314,13 @@ class System(object):
 
     def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Initialize the variables in the model.
+        Initialize the variables for each of the specified models.
 
-        For each model in sequence, initializes external services and internal variables.
+        For each model, the initialization procedure is:
+
+        - Get values for all `ExtService`.
+        - Call the model `init()` method, which initializes internal variables.
+        - Copy variables to DAE and then back to the model.
         """
         if models is None:
             models = self._models_flag['pflow']
@@ -440,17 +444,18 @@ class System(object):
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update variabe-based discrete components.
+        Update variable-based limiter discrete states.
 
-        This function is evaluated before equation updates.
+        This function is usually called before any equation evaluation.
         """
         self._call_models_method('l_update_var', models)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update equation-dependent discrete components.
+        Update equation-dependent limiter discrete components.
 
-        This function is evaluated after equation updates.
+        This function is usually called after differential equation updates.
+        Currently, it is used exclusively for collecting anti-windup limiter status.
         """
         self._call_models_method('l_check_eq', models)
 
@@ -481,31 +486,35 @@ class System(object):
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the differential equation update method for each model.
+        Call the differential equation update method for models in sequence.
 
         Notes
         -----
-        Updated equation values are not collected into DAE after this step.
+        Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
         self._call_models_method('f_update', models)
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the algebraic equation update method for each model.
+        Call the algebraic equation update method for models in sequence.
 
         Notes
         -----
-        Updated equation values are not collected into DAE after this step.
+        Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
         self._call_models_method('g_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the Jacobian update method for each model.
+        Call the Jacobian update method for models in sequence.
+
+        The procedure is
+        - Restore the sparsity pattern with :py:function:: andes.variables.dae.DAE.restore_sparse()
+        - For each sparse matrix in (fx, fy, gx, gy), evaluate the Jacobian function calls and add values.
 
         Notes
         -----
-        Updated Jacobians are reflected in the numerical DAE.
+        Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
         self._call_models_method('j_update', models)
@@ -573,11 +582,14 @@ class System(object):
 
     def vars_to_dae(self):
         """
-        From variables to dae variables
+        Copy variables values from models to `System.dae`.
+
+        This function clears `DAE.x` and `DAE.y` and collects values from models.
 
         Warnings
         --------
-        For adders, only those with `v_str` can set the value.
+        Variables with property `v_setter=False` will be added to variable only if `v_str` is not None.
+        It prevents read-intended :py:mod:`andes.core.var.ExtVar` values to be summed.
         """
         self.dae.clear_xy()
         self._v_to_dae('x')
@@ -585,7 +597,7 @@ class System(object):
 
     def vars_to_models(self):
         """
-        Send DAE variable values to models
+        Copy variable values from `System.dae` to models.
         """
         for var in self._adders['y'] + self._setters['y']:
             if var.n > 0:
@@ -628,9 +640,9 @@ class System(object):
             if var.n > 0:
                 np.put(self.dae.__dict__[v_name], var.a, var.v)
 
-    def _e_to_dae(self, eq_name):
+    def _e_to_dae(self, eq_name: str):
         """
-        Helper function for collecting equation values into dae structures `f` and `g`
+        Helper function for collecting equation values into `System.dae.f` and `System.dae.g`.
 
         Parameters
         ----------
@@ -969,7 +981,9 @@ class System(object):
 
     def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Clear DAE equation arrays.
+        Clear equation arrays in DAE and model variables.
+
+        This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
         self._call_models_method('e_clear', models)
@@ -1006,12 +1020,12 @@ class System(object):
 
     def get_config(self):
         """
-        Get config data from models
+        Collect config data from models.
 
         Returns
         -------
         dict
-            a dict containing the config from devices; class names are the keys
+            a dict containing the config from devices; class names are keys and configs in a dict are values.
         """
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
@@ -1028,12 +1042,12 @@ class System(object):
     @staticmethod
     def load_config(conf_path=None):
         """
-        Load config from an ``andes.rc`` file.
+        Load config from an rc-formatted file.
 
         Parameters
         ----------
         conf_path : None or str
-            Path to the Andes rc file. If ``None``, the function body
+            Path to the config file. If is `None`, the function body
             will not run.
 
         Returns
@@ -1048,15 +1062,22 @@ class System(object):
         logger.debug(f'Config loaded from file "{conf_path}".')
         return conf
 
-    def save_config(self, file_path=None):
+    def save_config(self, file_path=None, overwrite=False):
         """
-        Save system and routine configurations to an rc-formatted file.
+        Save all system, model, and routine configurations to an rc-formatted file.
 
         Parameters
         ----------
-        file_path : str
-            path to the configuration file. The user will be prompted if the
-            file already exists.
+        file_path : str, optional
+            path to the configuration file default to `~/andes/andes.rc`.
+        overwrite : bool, optional
+            If file exists, True to overwrite without confirmation.
+            Otherwise prompt for confirmation.
+
+        Warnings
+        --------
+        Saved config is loaded back and populated *at system instance creation time*.
+        Configs from the config file takes precedence over default config values.
         """
         if file_path is None:
             andes_path = os.path.join(os.path.expanduser('~'), '.andes')
@@ -1064,9 +1085,7 @@ class System(object):
             file_path = os.path.join(andes_path, 'andes.rc')
 
         elif os.path.isfile(file_path):
-            choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
-            if len(choice) == 0 or choice[0] != 'y':
-                logger.info('No config file overwritten.')
+            if not confirm_overwrite(file_path, overwrite=overwrite):
                 return
 
         conf = self.get_config()

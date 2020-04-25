@@ -17,6 +17,9 @@ System is the top-level class for organizing power system models and orchestrati
 .. autoclass:: andes.system.System
     :noindex:
 
+.. note::
+    `andes.System` is an alias of `andes.system.System`.
+
 Dynamic Imports
 ```````````````
 System dynamically imports groups, models, and routines at creation.
@@ -60,85 +63,40 @@ System has a function called ``dill`` for serializing using the ``dill`` package
 .. autofunction:: andes.system.System.undill
     :noindex:
 
-Numerical Functions
--------------------
+DAE Storage
+-----------
 
-DAE Arrays and Sparse Matrices
-``````````````````````````````
-``System`` contains an instance of the numerical DAE class, ``System.dae``, for storing the numerical values of
-variables, equations and first order derivatives (Jacobian matrices). Variable values and equation values are
-stored in ``np.ndarray``, while Jacobians are stored in ``CVXOPT.spmatrix``. Defined arrays and descriptions are
-as follows:
+``System.dae`` is an instance of the numerical DAE class.
 
-+-----------+---------------------------------------------+
-| DAE Array |                 Description                 |
-+===========+=============================================+
-|  x        | Array for state variable values             |
-+-----------+---------------------------------------------+
-|  y        | Array for algebraic variable values.        |
-+-----------+---------------------------------------------+
-|  f        | Array for differential equation derivatives |
-+-----------+---------------------------------------------+
-|  g        | Array for algebraic equation mismatches     |
-+-----------+---------------------------------------------+
-
-Since the system of equations for power system simulation is determined, the number of equations has to equal
-to the number of variables. In other words, ``x`` and ``f`` has the same length (stored in ``DAE.n``), and so do
-``y`` and ``g`` (stored in ``DAE.m``).
-
-
-The derivatives of ``f`` and ``g`` with respect to ``x`` and ``y`` are stored in four sparse matrices: ``fx``,
-``fy``, ``gx`` and ``gy``, where the first letter is the equation name, and the second letter is the variable name.
-
-Note that DAE does not store the original variable at a particular address. Conversely, the addresses of a
-variable is stored in the variable instance. See Subsection Variables for more details.
+.. autofunction:: andes.variables.dae.DAE
+    :noindex:
 
 Model and DAE Values
-````````````````````
-ANDES uses a decentralized architecture between models and DAE value arrays. In this architecture, variables are
-initialized and equations are evaluated inside each model. Since the equation system is solved simultaneously,
-``System`` provides methods for collecting initial values and equation values into ``DAE``, as well as copying
-updated variables to each model.
+--------------------
+ANDES uses a decentralized architecture between models and DAE value arrays.
+In this architecture, variables are initialized and equations are evaluated inside each model.
+Then, ``System`` provides methods for collecting initial values and equation values into ``DAE``, as well as
+copying solved values to each model.
 
-The collection of values from models need to follow protocols to avoid conflicts.  Details
-are given in the subsection Variables.
+The collection of values from models needs to follow protocols to avoid conflicts.
+Details are given in the subsection Variables.
 
-See for more details:
+.. autofunction:: andes.system.System.vars_to_dae
+    :noindex:
 
-:py:mod:`andes.System.vars_to_dae` : model -> DAE (for variable values)
+.. autofunction:: andes.system.System.vars_to_models
+    :noindex:
 
-:py:mod:`andes.System.vars_to_models` : DAE -> model (for variable values)
+.. autofunction:: andes.system.System._e_to_dae
+    :noindex:
 
-:py:mod:`andes.System._e_to_dae` : model -> DAE (for equation values)
-
-
-Model Functions
-```````````````
-``System`` functions as an orchestrator for calling shared member methods of models. These methods are defined
-for initialization, equation update, Jacobian update, and discrete flags update.
-
-+--------------------------------------+------------------------------------------+
-|            System Method             |               Description                |
-+======================================+==========================================+
-|  :py:mod:`andes.System.init`         | Variable initialization                  |
-+--------------------------------------+------------------------------------------+
-|  :py:mod:`andes.System.f_update`     | Update differential equation             |
-+--------------------------------------+------------------------------------------+
-|  :py:mod:`andes.System.g_update`     | Update algebraic equation                |
-+--------------------------------------+------------------------------------------+
-|  :py:mod:`andes.System.j_update`     | Update values in the Jacobians           |
-+--------------------------------------+------------------------------------------+
-|  :py:mod:`andes.System.l_update_var` | Discrete flags update based on variables |
-+--------------------------------------+------------------------------------------+
-|  :py:mod:`andes.System.l_update_eq`  | Discrete flags update based on equations |
-+--------------------------------------+------------------------------------------+
-
-Sparse Matrix Patterns
-``````````````````````
-The largest overhead in building and solving nonlinear equations is the building of Jacobian matrices. This is
-especially relevant when we use the implicit integration approach which algebraized the differential equations.
-Given the unique data structure of power system models, the sparse matrices for Jacobians are built model by
-model, incrementally.
+Matrix Sparsity Patterns
+````````````````````````
+The largest overhead in building and solving nonlinear equations is the building of Jacobian matrices.
+This is especially relevant when we use the implicit integration approach which algebraized the differential
+equations.
+Given the unique data structure of power system models, the sparse matrices for Jacobians are built
+**incrementally**, model after model.
 
 There are two common approaches to incrementally build a sparse matrix. The first one is to use simple in-place
 add on sparse matrices, such as doing ::
@@ -146,53 +104,86 @@ add on sparse matrices, such as doing ::
     self.fx += spmatrix(v, i, j, (n, n), 'd')
 
 Although the implementation is simple, this involves creating and discarding temporary objects on the right hand
-side and, even worse, changing the sparse pattern of ``self.fx``. The second approach is to store the rows,
-columns and values in an array-like object and construct the Jacobians at the end. This approach is very
-efficient but has one caveat: it does not allow accessing the sparse matrix while building.
+side and, even worse, changing the sparse pattern of ``self.fx``.
 
-ANDES uses a hybrid approach to avoid the change of sparse patterns by filling values into a known the sparse
-matrix pattern. ``System`` collects the indices of rows and columns for each Jacobian matrix. Before the
-in-place addition, ANDES builds a temporary zero-filled ``spmatrix`` in which Jacobian values are updated.
-Since these in-place add operations are only modifying existing values, it not change the pattern and thus will
-not incur value copying. In addition, updating sparse matrices can use the exact same code as the first approach.
+The second approach is to store the rows, columns and values in an array-like object and construct the Jacobians
+at the end.
+This approach is very efficient but has one caveat: it does not allow accessing the sparse matrix while building.
 
-Note that this approach still creates and discards temporary objects, it is feasible to write a C function which
-takes three array-likes and modify the sparse matrices in place. This is feature to be developed, and our
-prototype shows a promising speed up.
+ANDES uses a pre-allocation approach to avoid the change of sparse patterns by filling values into a known the
+sparse matrix pattern matrix.
+System collects the indices of rows and columns for each Jacobian matrix.
+Before in-place additions, ANDES builds a temporary zero-filled `spmatrix`, to which the actual Jacobian values
+are written later.
+Since these in-place add operations are only modifying existing values, it does not change the pattern and thus
+avoids memory copying.
+In addition, updating sparse matrices can be done with the exact same code as the first approach.
 
-See for details:
+Still, this approach creates and discards temporary objects.
+It is however feasible to write a C function which takes three array-likes and modify the sparse matrices in
+place.
+This is feature to be developed, and our prototype shows a promising acceleration up to 50%.
 
-:py:mod:`andes.System.store_sparse_patterns` : store sparse patterns from models
+.. autofunction:: andes.system.System.store_sparse_pattern
+    :noindex:
+
+Calling Model Methods
+---------------------
+
+System is an orchestrator for calling shared methods of models. These API methods are defined
+for initialization, equation update, Jacobian update, and discrete flags update.
+
+The following methods take an argument `models`, which should be an `OrderedDict` of models with names as keys
+and instances as values.
+
+.. autofunction:: andes.system.System.init
+    :noindex:
+
+.. autofunction:: andes.system.System.e_clear
+    :noindex:
+
+.. autofunction:: andes.system.System.l_update_var
+    :noindex:
+
+.. autofunction:: andes.system.System.f_update
+    :noindex:
+
+.. autofunction:: andes.system.System.l_check_eq
+    :noindex:
+
+.. autofunction:: andes.system.System.g_update
+    :noindex:
+
+.. autofunction:: andes.system.System.j_update
+    :noindex:
+
 
 Configuration
 -------------
-Each model and routine program has a member attribute ``config`` for model-specific or routine-specific
-configurations. ``System`` also stores ``config`` for system-specific configurations. In addition, ``System``
-manages collecting all configs, saving in a config file, and loading the config file.
+System, models and routines have a member attribute `config` for model-specific or routine-specific configurations.
+System manages all configs, including saving to a config file and loading back.
 
-The collected configs can be written to an ``andes.rc`` config file in ``<HomeDir>/.andes`` using
-``ConfigParser``. Saved config file can be loaded and populated *at system instance creation time*. Configs from
-the config file takes precedence over default config values.
+.. autofunction:: andes.system.System.get_config
+    :noindex:
 
-Again, configs from files is passed to model constructors during instantiation. If one needs to modify the
-config for a run, it needs to be done before the ``System`` instantiation. Directly modifying ``Model.config``
-may not take effect or have side effect in the current implementation.
+.. autofunction:: andes.system.System.save_config
+    :noindex:
 
-See for details:
+.. autofunction:: andes.system.System.load_config
+    :noindex:
 
-:py:mod:`andes.common.Config` : Config class
+.. warning::
 
-:py:mod:`andes.System.save_config` : Save config into ``<HomeDir>/andes.rc``
-
-:py:mod:`andes.System.load_config` : load config from ``<HomeDir>/andes.rc``
-
-:py:mod:`andes.System._model_import` : dynamic model instantiation with config as an argument
+    It is important to note that configs from files is passed to *model constructors* during instantiation.
+    If one needs to modify config for a run, it needs to be done before instantiating ``System``, or before running
+    ``andes`` from command line.
+    Directly modifying ``Model.config`` may not take effect or have side effect as for the current implementation.
 
 
 Models
 ======
 This section introduces the modeling of power system devices. The terminology "model" is used to describe the
-mathematical representation of a type of device, such as synchronous generators and turine governors. The
+mathematical representation of a *type* of device, such as synchronous generators or turbine governors. The
 terminology "device" is used to describe a particular instance of a model, for example, a specific generator.
 
 To define a model in ANDES, two classes, ``ModelData`` and ``Model`` need to be utilized. Class ``ModelData`` is
