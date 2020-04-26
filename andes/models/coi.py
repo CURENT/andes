@@ -15,10 +15,19 @@ class COIData(ModelData):
 
     def __init__(self):
         ModelData.__init__(self)
-        self.SynGen = RefParam(info='SynGen idx lists', export=False, )
+        self.SynGen = RefParam(info='Non-input SynGen idx lists', export=False)
 
 
 class COIModel(Model):
+    """
+    Implementation of COI.
+
+    To understand this model, please refer to
+    :py:class:`andes.core.service.NumReduce`,
+    :py:class:`andes.core.service.NumRepeat`,
+    :py:class:`andes.core.service.IdxFlatten`, and
+    :py:class:`andes.core.param.RefParam`.
+    """
 
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -44,18 +53,18 @@ class COIModel(Model):
                              tex_name=r'\delta_{gen}',
                              info='Linearly stored SynGen.delta',
                              )
-        self.ang0 = ExtService(model='SynGen',
-                               src='delta',
-                               indexer=self.SynGenIdx,
-                               tex_name=r'\delta_{gen,0}',
-                               info='Linearly stored initial delta',
+        self.d0 = ExtService(model='SynGen',
+                             src='delta',
+                             indexer=self.SynGenIdx,
+                             tex_name=r'\delta_{gen,0}',
+                             info='Linearly stored initial delta',
+                             )
+        self.d0avg = NumReduce(u=self.d0,
+                               tex_name=r'\delta_{gen,0,avg}',
+                               fun=np.average,
+                               ref=self.SynGen,
+                               info='Average initial delta',
                                )
-        self.ang0avg = NumReduce(u=self.ang0,
-                                 tex_name=r'\delta_{gen,0,avg}',
-                                 fun=np.average,
-                                 ref=self.SynGen,
-                                 info='Average initial rotor angle',
-                                 )
 
         self.Mt = NumReduce(u=self.M,
                             tex_name='M_t',
@@ -85,14 +94,15 @@ class COIModel(Model):
                            )
         self.delta = Algeb(tex_name=r'\delta_{coi}',
                            info='COI rotor angle',
-                           v_str='ang0avg',
+                           v_str='d0avg',
                            v_setter=True,
                            e_str='-delta',
                            diag_eps=1e-6,
                            )
 
-        # `omega_sub` or `delta_sub` cannot provide `v_str`.
-        # Otherwise, variable values will be incorrectly summed for `omega` and `delta`.
+        # Note:
+        # `omega_sub` or `delta_sub` must not provide `v_str`.
+        # Otherwise, values will be incorrectly summed for `omega` and `delta`.
         self.omega_sub = ExtAlgeb(model='COI',
                                   src='omega',
                                   e_str='M * wgen / Mtr',

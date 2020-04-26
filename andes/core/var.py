@@ -1,5 +1,6 @@
 from typing import Optional, Union, List
 from andes.core.param import BaseParam, DummyValue
+from andes.core.service import BaseService
 from andes.models.group import GroupBase
 from andes.shared import np, ndarray
 
@@ -190,7 +191,7 @@ class ExtVar(BaseVar):
         Name of the source model
     src : str
         Source variable name
-    indexer : BaseParam
+    indexer : BaseParam, BaseService
         A parameter of the hosting model, used as indices into
         the source model and variable. If is None, the source
         variable address will be fully copied.
@@ -210,7 +211,7 @@ class ExtVar(BaseVar):
     def __init__(self,
                  model: str,
                  src: str,
-                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
+                 indexer: Optional[Union[List, ndarray, BaseParam, BaseService]] = None,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
@@ -322,7 +323,7 @@ class ExtState(ExtVar):
     def __init__(self,
                  model: str,
                  src: str,
-                 indexer: Optional[Union[List, ndarray, BaseParam]] = None,
+                 indexer: Optional[Union[List, ndarray, BaseParam, BaseService]] = None,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
