@@ -330,7 +330,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import ConstService, ExtService
-from andes.core.discrete import AntiWindupLimiter
+from andes.core.discrete import AntiWindup
 ```
 
 The TGOV1 model will be used to illustrate the model development process.
@@ -474,11 +474,11 @@ variable should be retrieved by the governor. Next, internal variables can be de
         self.LAG_x = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
                            )
-        self.LAG_lim = AntiWindupLimiter(u=self.LAG_x,
-                                         lower=self.VMIN,
-                                         upper=self.VMAX,
-                                         tex_name='lim_{lag}',
-                                         )
+        self.LAG_lim = AntiWindup(u=self.LAG_x,
+                                  lower=self.VMIN,
+                                  upper=self.VMAX,
+                                  tex_name='lim_{lag}',
+                                  )
         self.LL_x = State(info='State in lead-lag transfer function',
                           tex_name="x'_{LL}",
                           )

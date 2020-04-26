@@ -13,7 +13,7 @@ from andes.core.service import BaseService, ConstService, ExtService  # NOQA
 from andes.core.service import OperationService, RandomService, NumReduce, NumRepeat, IdxRepeat  # NOQA
 
 from andes.core.discrete import Discrete, LessThan, Limiter, SortedLimiter, HardLimiter  # NOQA
-from andes.core.discrete import AntiWindupLimiter, Selector, Switcher, DeadBand  # NOQA
+from andes.core.discrete import AntiWindup, Selector, Switcher, DeadBand  # NOQA
 
 from andes.core.block import Block, Washout, Lag,  LeadLag, Piecewise  # NOQA
 from andes.core.block import LagAntiWindup, LeadLagLimit  # NOQA

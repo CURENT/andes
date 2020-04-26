@@ -211,7 +211,7 @@ class HardLimiter(Limiter):
     pass
 
 
-class AntiWindupLimiter(Limiter):
+class AntiWindup(Limiter):
     """
     Anti-windup limiter.
 

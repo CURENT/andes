@@ -15,7 +15,7 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
-from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
+from andes.core import Config, BaseParam, Model, ExtVar, AntiWindup
 
 from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
@@ -367,7 +367,7 @@ class System(object):
                 else:
                     self._setters[var.v_code].append(var)
             for item in mdl.discrete.values():
-                if isinstance(item, AntiWindupLimiter):
+                if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
 
     def link_ext_param(self, model):

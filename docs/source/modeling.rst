@@ -764,8 +764,8 @@ Among these methods, `check_var` is called *before* equation evaluation, but `ch
 called *after* equation update.
 In the current implementation, `check_var` updates flags for variable-based discrete components (such as
 `Limiter`).
-`check_eq` updates flags for equation-involved discrete components (such as `AntiWindupLimiter`).
-`set_var`` is currently only used by `AntiWindupLimiter` to store the pegged states.
+`check_eq` updates flags for equation-involved discrete components (such as `AntiWindup`).
+`set_var`` is currently only used by `AntiWindup` to store the pegged states.
 
 ANDES includes the following types of discrete components.
 
@@ -780,7 +780,7 @@ Limiters
 .. autoclass:: andes.core.discrete.HardLimiter
     :noindex:
 
-.. autoclass:: andes.core.discrete.AntiWindupLimiter
+.. autoclass:: andes.core.discrete.AntiWindup
     :noindex:
 
 Comparers

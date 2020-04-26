@@ -1,7 +1,7 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
 from typing import Optional, Iterable, Dict, Union
-from andes.core.discrete import Discrete, AntiWindupLimiter, LessThan
+from andes.core.discrete import Discrete, AntiWindup, LessThan
 from andes.core.triplet import JacTriplet
 
 
@@ -533,7 +533,7 @@ class LagAntiWindup(Block):
         -- lower --/
 
     Exports one state variable `x` as the output.
-    Exports one AntiWindupLimiter instance `lim`.
+    Exports one AntiWindup instance `lim`.
 
     Parameters
     ----------
@@ -559,7 +559,7 @@ class LagAntiWindup(Block):
 
         self.x = State(info='State in lag transfer function', tex_name="x'",
                        t_const=self.T)
-        self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
 
         self.vars = {'x': self.x, 'lim': self.lim}
 
@@ -756,7 +756,7 @@ class LeadLagLimit(Block):
               1 + sT2        /
                   __lower___/
 
-    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindupLimiter `lim`.
+    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindup `lim`.
 
     """
     def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
@@ -772,7 +772,7 @@ class LeadLagLimit(Block):
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
         self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y',
                        diag_eps=1e-6)
-        self.lim = AntiWindupLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
+        self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 

@@ -2,7 +2,7 @@ from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
 from andes.core.service import ConstService, ExtService
-from andes.core.discrete import HardLimiter, DeadBand, AntiWindupLimiter
+from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup
 
 
@@ -278,11 +278,11 @@ class TGOV1ModelAlt(TGBase):
                            t_const=self.T1,
                            v_str='pd',
                            )
-        self.LAG_lim = AntiWindupLimiter(u=self.LAG_x,
-                                         lower=self.VMIN,
-                                         upper=self.VMAX,
-                                         tex_name='lim_{lag}',
-                                         )
+        self.LAG_lim = AntiWindup(u=self.LAG_x,
+                                  lower=self.VMIN,
+                                  upper=self.VMAX,
+                                  tex_name='lim_{lag}',
+                                  )
         self.LL_x = State(info='State in lead-lag transfer function',
                           tex_name="x'_{LL}",
                           v_str='LAG_x',
