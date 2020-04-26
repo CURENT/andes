@@ -14,8 +14,8 @@ from andes.models import non_jit
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
-from andes.utils.paths import get_config_path, get_pkl_path
-from andes.core import Config, BaseParam, Model, ExtVar, AntiWindupLimiter
+from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
+from andes.core import Config, BaseParam, Model, ExtVar, AntiWindup
 
 from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
@@ -28,11 +28,34 @@ else:
 
 class System(object):
     """
-    The ANDES power system class.
+    System contains models and routines for modeling and simulation.
 
-    This class stores model and routine instances as attributes.
+    System contains a several special `OrderedDict` member attributes for housekeeping.
+    These attributes include ``models``, ``groups``, ``routines`` and ``calls`` for loaded models, groups,
+    analysis routines, and generated numerical function calls, respectively.
+
+    Notes
+    -----
+    System stores model and routine instances as attributes.
     Model and routine attribute names are the same as their class names.
-    For example, the ``Bus`` instance of ``system`` is accessible at ``system.Bus``.
+    For example, ``Bus`` is stored at ``system.Bus``, the power flow calculation routine is at
+    ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See attributes for the list of
+    attributes.
+
+    Attributes
+    ----------
+    dae : andes.variables.dae.DAE
+        Numerical DAE storage
+    files : andes.variables.fileman.FileMan
+        File path storage
+    config : andes.core.config.Config
+        System config storage
+    models : OrderedDict
+        model name and instance pairs
+    groups : OrderedDict
+        group name and instance pairs
+    routines : OrderedDict
+        routine name and instance pairs
     """
     def __init__(self,
                  case: Optional[str] = None,
@@ -86,9 +109,9 @@ class System(object):
         self.dae = DAE(system=self)                        # numerical DAE storage
 
         # dynamic imports of groups, models and routines
-        self._group_import()
-        self._model_import()
-        self._routine_import()  # routine imports come after models
+        self.import_groups()
+        self.import_models()
+        self.import_routines()  # routine imports come after models
 
         self._models_flag = {'pflow': self.find_models('pflow'),
                              'tds': self.find_models('tds'),
@@ -108,9 +131,33 @@ class System(object):
 
     def prepare(self, quick=False):
         """
-        Prepare classes and lambda functions
+        Generate numerical functions from symbolically defined models.
 
-        Anything in this function should be independent of test case
+        All procedures in this function must be independent of test case.
+
+        Parameters
+        ----------
+        quick : bool, optional
+            True to skip pretty-print generation to reduce code generation time.
+
+        Examples
+        --------
+        If one needs to print out LaTeX-formatted equations in a Jupyter Notebook, one need to generate such
+        equations with ::
+
+            import andes
+            sys = andes.prepare()
+
+        Alternatively, one can explicitly create a System and generate the code ::
+
+            import andes
+            sys = andes.System()
+            sys.prepare()
+
+        Warnings
+        --------
+        Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
+        the System instance on which prepare is called.
         """
         self._generate_symbols()
         self._generate_equations()
@@ -267,9 +314,13 @@ class System(object):
 
     def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Initialize the variables in the model.
+        Initialize the variables for each of the specified models.
 
-        For each model in sequence, initializes external services and internal variables.
+        For each model, the initialization procedure is:
+
+        - Get values for all `ExtService`.
+        - Call the model `init()` method, which initializes internal variables.
+        - Copy variables to DAE and then back to the model.
         """
         if models is None:
             models = self._models_flag['pflow']
@@ -316,7 +367,7 @@ class System(object):
                 else:
                     self._setters[var.v_code].append(var)
             for item in mdl.discrete.values():
-                if isinstance(item, AntiWindupLimiter):
+                if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
 
     def link_ext_param(self, model):
@@ -393,17 +444,18 @@ class System(object):
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update variabe-based discrete components.
+        Update variable-based limiter discrete states.
 
-        This function is evaluated before equation updates.
+        This function is usually called before any equation evaluation.
         """
         self._call_models_method('l_update_var', models)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update equation-dependent discrete components.
+        Update equation-dependent limiter discrete components.
 
-        This function is evaluated after equation updates.
+        This function is usually called after differential equation updates.
+        Currently, it is used exclusively for collecting anti-windup limiter status.
         """
         self._call_models_method('l_check_eq', models)
 
@@ -434,31 +486,35 @@ class System(object):
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the differential equation update method for each model.
+        Call the differential equation update method for models in sequence.
 
         Notes
         -----
-        Updated equation values are not collected into DAE after this step.
+        Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
         self._call_models_method('f_update', models)
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the algebraic equation update method for each model.
+        Call the algebraic equation update method for models in sequence.
 
         Notes
         -----
-        Updated equation values are not collected into DAE after this step.
+        Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
         self._call_models_method('g_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Call the Jacobian update method for each model.
+        Call the Jacobian update method for models in sequence.
+
+        The procedure is
+        - Restore the sparsity pattern with :py:func:`andes.variables.dae.DAE.restore_sparse`
+        - For each sparse matrix in (fx, fy, gx, gy), evaluate the Jacobian function calls and add values.
 
         Notes
         -----
-        Updated Jacobians are reflected in the numerical DAE.
+        Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
         self._call_models_method('j_update', models)
@@ -526,11 +582,14 @@ class System(object):
 
     def vars_to_dae(self):
         """
-        From variables to dae variables
+        Copy variables values from models to `System.dae`.
+
+        This function clears `DAE.x` and `DAE.y` and collects values from models.
 
         Warnings
         --------
-        For adders, only those with `v_str` can set the value.
+        Variables with property `v_setter=False` will be added to variable only if `v_str` is not None.
+        It prevents read-intended :py:mod:`andes.core.var.ExtVar` values to be summed.
         """
         self.dae.clear_xy()
         self._v_to_dae('x')
@@ -538,7 +597,7 @@ class System(object):
 
     def vars_to_models(self):
         """
-        Send DAE variable values to models
+        Copy variable values from `System.dae` to models.
         """
         for var in self._adders['y'] + self._setters['y']:
             if var.n > 0:
@@ -581,9 +640,9 @@ class System(object):
             if var.n > 0:
                 np.put(self.dae.__dict__[v_name], var.a, var.v)
 
-    def _e_to_dae(self, eq_name):
+    def _e_to_dae(self, eq_name: str):
         """
-        Helper function for collecting equation values into dae structures `f` and `g`
+        Helper function for collecting equation values into `System.dae.f` and `System.dae.g`.
 
         Parameters
         ----------
@@ -647,9 +706,14 @@ class System(object):
 
     def dill(self):
         """
-        Serialize generated functions in ``System.calls`` with dill.
+        Serialize generated numerical functions in `System.calls` with package `dill`.
 
-        The serialized file will be stored to ``~/calls.pkl``.
+        The serialized file will be stored to ``~/andes/calls.pkl``, where `~` is the home directory path.
+
+        Notes
+        -----
+        This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
+
         """
         logger.debug("Dumping calls to calls.pkl with dill")
         import dill
@@ -661,7 +725,10 @@ class System(object):
 
     def undill(self):
         """
-        Deserialize the function calls from `calls.pkl` with dill.
+        Deserialize the function calls from ``~/andes.calls.pkl`` with dill.
+
+        If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
+        acceleration.
         """
         import dill
         dill.settings['recurse'] = True
@@ -802,9 +869,12 @@ class System(object):
     def _generate_jacobians(self):
         self._call_models_method('generate_jacobians', self.models)
 
-    def _group_import(self):
+    def import_groups(self):
         """
-        Import groups defined in `devices/group.py`.
+        Import all groups classes defined in ``devices/group.py``.
+
+        Groups will be stored as instances with the name as class names.
+        All groups will be stored to dictionary ``System.groups``.
         """
         module = importlib.import_module('andes.models.group')
         for m in inspect.getmembers(module, inspect.isclass):
@@ -815,12 +885,21 @@ class System(object):
             self.__dict__[name] = cls()
             self.groups[name] = self.__dict__[name]
 
-    def _model_import(self):
+    def import_models(self):
         """
-        Import and instantiate the non-JIT models and the JIT models.
+        Import and instantiate models as System member attributes.
 
-        Models defined in ``jits`` and ``non_jits`` in ``models/__init__.py``
-        will be imported and instantiated accordingly.
+        Models defined in ``models/__init__.py`` will be instantiated `sequentially` as attributes with the same
+        name as the class name.
+        In addition, all models will be stored in dictionary ``System.models`` with model names as
+        keys and the corresponding instances as values.
+
+        Examples
+        --------
+        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the classical
+        generator object,
+
+        ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
         # non-JIT models
         for file, cls_list in non_jit.items():
@@ -842,20 +921,17 @@ class System(object):
         #         self.__dict__[name] = JIT(self, file, cls, name)
         # ***********************
 
-    def _routine_import(self):
+    def import_routines(self):
         """
-        Dynamically import routines as defined in ``routines/__init__.py``.
+        Import routines as defined in ``routines/__init__.py``.
 
-        # *** DOCS FROM OLDER VERSION ***
-        The command-line argument ``--routine`` is defined in ``__cli__`` in
-        each routine file. A routine instance will be stored in the system
-        instance with the name being all lower case.
+        Routines will be stored as instances with the name as class names.
+        All groups will be stored to dictionary ``System.groups``.
 
-        For example, a routine for power flow study should be defined in
-        ``routines/pflow.py`` where ``__cli__ = 'pflow'``. The class name
-        for the routine should be ``Pflow``. The routine instance will be
-        saved to ``PowerSystem.pflow``.
-        # *******************************
+        Examples
+        --------
+        ``System.PFlow`` is the power flow routine instance, and ``System.TDS`` and ``System.EIG`` are
+        time-domain analysis and eigenvalue analysis routines, respectively.
         """
         for file, cls_list in all_routines.items():
             for cls_name in cls_list:
@@ -905,7 +981,9 @@ class System(object):
 
     def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Clear DAE equation arrays.
+        Clear equation arrays in DAE and model variables.
+
+        This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
         self._call_models_method('e_clear', models)
@@ -942,12 +1020,12 @@ class System(object):
 
     def get_config(self):
         """
-        Get config data from models
+        Collect config data from models.
 
         Returns
         -------
         dict
-            a dict containing the config from devices; class names are the keys
+            a dict containing the config from devices; class names are keys and configs in a dict are values.
         """
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
@@ -964,12 +1042,12 @@ class System(object):
     @staticmethod
     def load_config(conf_path=None):
         """
-        Load config from an ``andes.rc`` file.
+        Load config from an rc-formatted file.
 
         Parameters
         ----------
         conf_path : None or str
-            Path to the Andes rc file. If ``None``, the function body
+            Path to the config file. If is `None`, the function body
             will not run.
 
         Returns
@@ -984,15 +1062,22 @@ class System(object):
         logger.debug(f'Config loaded from file "{conf_path}".')
         return conf
 
-    def save_config(self, file_path=None):
+    def save_config(self, file_path=None, overwrite=False):
         """
-        Save system and routine configurations to an rc-formatted file.
+        Save all system, model, and routine configurations to an rc-formatted file.
 
         Parameters
         ----------
-        file_path : str
-            path to the configuration file. The user will be prompted if the
-            file already exists.
+        file_path : str, optional
+            path to the configuration file default to `~/andes/andes.rc`.
+        overwrite : bool, optional
+            If file exists, True to overwrite without confirmation.
+            Otherwise prompt for confirmation.
+
+        Warnings
+        --------
+        Saved config is loaded back and populated *at system instance creation time*.
+        Configs from the config file takes precedence over default config values.
         """
         if file_path is None:
             andes_path = os.path.join(os.path.expanduser('~'), '.andes')
@@ -1000,9 +1085,7 @@ class System(object):
             file_path = os.path.join(andes_path, 'andes.rc')
 
         elif os.path.isfile(file_path):
-            choice = input(f'Config file {file_path} already exist. Overwrite? [y/N]').lower()
-            if len(choice) == 0 or choice[0] != 'y':
-                logger.info('No config file overwritten.')
+            if not confirm_overwrite(file_path, overwrite=overwrite):
                 return
 
         conf = self.get_config()

@@ -454,7 +454,7 @@ The shorter version ``--edit`` can be used instead asn Python automatically matc
 You can pass an editor name to ``--edit``, such as ``--edit vim``.
 If the editor name is not provided, it will use the following defaults:
 - Microsoft Windows: notepad.
-- GNU/Linux: the ``$EDITOR`` environment variable, or ``gedit`` if not exist.
+- GNU/Linux: the ``$EDITOR`` environment variable, or ``vim`` if not exist.
 
 For macOS users, the default is vim.
 If not familiar with vim, you can use nano with ``--edit nano`` or TextEdit with
@@ -465,7 +465,7 @@ Cleanup
 ``-C, --clean``
 
 Option to remove any generated files. Removes files with any of the following
-suffix: ``_out.txt`` (power flow report), ``_out.dat`` (time domain data),
+suffix: ``_out.txt`` (power flow report), ``_out.npy`` (time domain data),
 ``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
 
 Interactive Usage
@@ -636,6 +636,14 @@ Supported equation names include the following:
 For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.g_print``.
 
 In addition to equations, all variable symbols can be printed at ``ss.<ModelName>.vars_print``.
+
+Examples in Jupyter Notebook
+----------------------------
+Congratulations! You have finished the ANDES tutorial.
+Check out more examples in Jupyter Notebook in the `examples` folder of the repository at
+`here <https://github.com/cuihantao/andes/tree/master/examples>`_.
+You can run the examples in a live Jupyter Notebook online using
+`Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_.
 
 .. _formats:
 

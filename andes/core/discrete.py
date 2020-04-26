@@ -71,21 +71,38 @@ class Discrete(object):
 
 class LessThan(Discrete):
     """
-    Less than (<) comparison function
+    Less than (<) comparison function.
+
+    Exports two flags: z1 and z0.
+    For elements satisfying the less-than condition, the corresponding z1 = 1.
+    z0 is the element-wise negation of z1.
+
+    Notes
+    -----
+    The default z0 and z1, if not enabled, can be set through the constructor.
     """
-    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None):
+    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False,
+                 z0=0, z1=1):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
         self.bound = bound
-        self.equal = equal
-        self.enable = enable
-        self.z0 = 0  # if (u < bound) is False
-        self.z1 = 1  # if (u < bound) is True
+        self.equal: bool = equal
+        self.enable: bool = enable
+        self.cache: bool = cache
+        self._eval: bool = False  # if has been eval'ed and cached
+
+        self.z0 = np.array([z0])  # negation of `self.z1`
+        self.z1 = np.array([z1])  # if the less-than condition (u < bound) is True
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
     def check_var(self):
+        """
+        If enabled, set flags based on inputs. Use cached values if enabled.
+        """
         if not self.enable:
+            return
+        if self.cache and self._eval:
             return
 
         if not self.equal:
@@ -95,12 +112,18 @@ class LessThan(Discrete):
 
         self.z0[:] = np.logical_not(self.z1)
 
+        self._eval = True
+
 
 class Limiter(Discrete):
     """
-    Base limiter class
+    Base limiter class.
 
     This class compares values and sets limit values. Exported flags are `zi`, `zl` and `zu`.
+
+    Notes
+    -----
+    If not enabled, the default flags are ``zu = zl = 0``, ``zi = 1``.
 
     Parameters
     ----------
@@ -128,19 +151,17 @@ class Limiter(Discrete):
         self.lower = lower
         self.upper = upper
         self.enable = enable
-        self.zu = 0
-        self.zl = 0
-        self.zi = 1
+
+        self.zu = np.array([0])
+        self.zl = np.array([0])
+        self.zi = np.array([1])
+
         self.export_flags = ['zl', 'zi', 'zu']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u']
 
     def check_var(self):
         """
-        Evaluate `self.zu` and `self.zl`
-
-        Returns
-        -------
-
+        Evaluate the flags.
         """
         if not self.enable:
             return
@@ -151,7 +172,7 @@ class Limiter(Discrete):
 
 class SortedLimiter(Limiter):
     """
-    A comparer with the top value selection
+    A comparer with the top value selection.
 
     """
 
@@ -185,26 +206,22 @@ class SortedLimiter(Limiter):
 
 class HardLimiter(Limiter):
     """
-    Hard limiter on an algebraic variable. This class is an alias of `Limiter`.
+    Hard limiter for algebraic or differential variable. This class is an alias of `Limiter`.
     """
     pass
 
 
-class WindupLimiter(Limiter):
-    def __init__(self, u, lower, upper,  enable=True, name=None, tex_name=None):
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
-
-
-class AntiWindupLimiter(WindupLimiter):
+class AntiWindup(Limiter):
     """
     Anti-windup limiter.
 
-    The anti-windup limiter prevents the wind-up effect of a differential variable. The derivative of the
-    differential variable is reset if it continues to increase in the same direction after exceeding the limits.
+    Anti-windup limiter prevents the wind-up effect of a differential variable.
+    The derivative of the differential variable is reset if it continues to increase in the same direction
+    after exceeding the limits.
     During the derivative return, the limiter will be inactive ::
 
-      if x > xmax and x dot > 0: x = xmax and x dot = 0
-      if x < xmin and x dot < 0: x = xmin and x dot = 0
+        if x > xmax and x dot > 0: x = xmax and x dot = 0
+        if x < xmin and x dot < 0: x = xmin and x dot = 0
 
     This class takes one more optional parameter for specifying the equation.
 
@@ -377,9 +394,16 @@ class Switcher(Discrete):
 
         self._eval = True
 
+    def list2array(self, n):
+        """
+        This forces to evaluate Switcher upon System setup
+        """
+        super().list2array(n)
+        self.check_var()
+
 
 class DeadBand(Limiter):
-    """
+    r"""
     Dead band with the direction of return.
 
     Parameters
@@ -446,12 +470,14 @@ class DeadBand(Limiter):
         """
         super().__init__(u, lower, upper, enable=enable)
         self.center = center
-        # default state if enable is False
-        self.zi = 0.
-        self.zl = 0.
-        self.zu = 0.
-        self.zur = 0.
-        self.zlr = 0.
+
+        # default state if not enabled
+        self.zi = np.array([0.])
+        self.zl = np.array([0.])
+        self.zu = np.array([0.])
+        self.zur = np.array([0.])
+        self.zlr = np.array([0.])
+
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 
@@ -494,3 +520,14 @@ class DeadBand(Limiter):
         self.zu[:] = zu.astype(np.float64)
         self.zl[:] = zl.astype(np.float64)
         self.zi[:] = zi.astype(np.float64)
+
+
+class Memory(Discrete):
+    """
+    Memory class to memorize past variable values.
+    """
+
+    def __init__(self, u, steps=1, name=None, tex_name=None, info=None):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.steps = steps

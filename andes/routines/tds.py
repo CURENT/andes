@@ -57,6 +57,8 @@ class TDS(BaseRoutine):
         self.deltatmax = 0
         self.h = 0
         self.next_pc = 0
+        self.eye = None
+        self.Teye = None
 
         # internal status
         self.converged = False
@@ -277,7 +279,6 @@ class TDS(BaseRoutine):
                 if len(item.x_set) > 0:
                     for key, val in item.x_set:
                         np.put(q, key[np.where(item.zi == 0)], 0)
-
             qg = np.hstack((q, dae.g))
 
             inc = self.solver.solve(self.Ac, -matrix(qg))
@@ -289,11 +290,11 @@ class TDS(BaseRoutine):
                 self.busted = True
                 break
 
-            # reset really small values to avoid anti-windup limiter flag jumps
-            inc[np.where(np.abs(inc) < 1e-12)] = 0
+            inc[np.where(np.abs(inc) < 1e-12)] = 0  # reset really small values to reduce limiter chattering
             # set new values
             dae.x += np.ravel(np.array(inc[:dae.n]))
             dae.y += np.ravel(np.array(inc[dae.n: dae.n + dae.m]))
+
             system.vars_to_models()
 
             # calculate correction
@@ -479,6 +480,8 @@ class TDS(BaseRoutine):
         self.deltatmax = 0
         self.h = 0
         self.next_pc = 0.1
+        self.eye = None
+        self.Teye = None
 
         self.converged = False
         self.busted = False

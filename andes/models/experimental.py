@@ -4,7 +4,7 @@ Experimental Models
 from andes.core.model import ModelData, Model
 from andes.core.var import Algeb, State
 from andes.core.param import NumParam
-from andes.core.discrete import HardLimiter, AntiWindupLimiter  # NOQA
+from andes.core.discrete import HardLimiter, AntiWindup  # NOQA
 
 
 class PI2Data(ModelData):

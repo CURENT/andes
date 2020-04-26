@@ -12,10 +12,15 @@ class DummyValue(object):
     Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
 
     A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
+
+    Notes
+    -----
+    Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
     """
-    def __init__(self, name):
-        self.name = name
-        self.tex_name = name
+    def __init__(self, value):
+        self.name = value
+        self.tex_name = value
+        self.v = value
 
 
 def dummify(param):
@@ -45,7 +50,7 @@ class BaseParam(object):
     This class provides the basic data structure and interfaces for all types of parameters. Parameters are from
     input files and in general constant once initialized.
 
-    Subclasses should overload the ``n()`` method for the total count of elements in the value
+    Subclasses should overload the `n()` method for the total count of elements in the value
     array.
 
     Parameters
@@ -72,7 +77,14 @@ class BaseParam(object):
         arrays.
     property : dict
         A dict containing the truth values of the model properties.
+
+    Warnings
+    --------
+    The most distinct feature of BaseParam, DataParam and IdxParam is that
+    values are stored in a list without conversion to array.
+    BaseParam, DataParam or IdxParam are **not allowed** in equations.
     """
+
     def __init__(self,
                  default: Optional[Union[float, str, int]] = None,
                  name: Optional[str] = None,
@@ -165,25 +177,26 @@ class BaseParam(object):
 
 class DataParam(BaseParam):
     """
-    An alias of the ``BaseParam`` class.
+    An alias of the `BaseParam` class.
 
     This class is used for string parameters or non-computational numerical parameters.
-    This class does not provide a ``to_array`` method.
-    All input values will be stored in ``v`` as a list.
+    This class does not provide a `to_array` method.
+    All input values will be stored in `v` as a list.
 
     See Also
     --------
-    BaseParam : Base parameter class
+    andes.core.param.BaseParam : Base parameter class
+
     """
     pass
 
 
 class IdxParam(BaseParam):
     """
-    An alias of ``BaseParam`` with an additional storage of the owner model name
+    An alias of `BaseParam` with an additional storage of the owner model name
 
-    This class is intended for storing ``idx`` into other models. It can be used in the future for data
-    consistency check.
+    This class is intended for storing `idx` into other models.
+    It can be used in the future for data consistency check.
 
     Examples
     --------
@@ -213,7 +226,7 @@ class NumParam(BaseParam):
     """
     A computational numerical parameter.
 
-    Parameters defined using this class will have their ``v`` field converted to a NumPy.ndarray after adding.
+    Parameters defined using this class will have their `v` field converted to a NumPy array after adding.
     The original input values will be copied to `vin`, and the system-base per-unit conversion coefficients
     (through multiplication) will be stored in `pu_coeff`.
 
@@ -323,7 +336,7 @@ class NumParam(BaseParam):
 
         See Also
         --------
-        BaseParam.add : add method of BaseParam
+        BaseParam.add : the add method of BaseParam
 
         """
 
@@ -342,7 +355,7 @@ class NumParam(BaseParam):
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
-            logger.debug(f'Parameter {self.name} of {self.owner.class_name} must be non-zero')
+            logger.debug(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         super(NumParam, self).add(value)
@@ -403,17 +416,17 @@ class TimerParam(NumParam):
     """
     A parameter whose values are event occurrence times during the simulation.
 
-    The constructor takes an additional Callable ``self.callback`` for the action of the event.
-    ``TimerParam`` has a default value of -1, meaning deactivated.
+    The constructor takes an additional Callable `self.callback` for the action of the event.
+    `TimerParam` has a default value of -1, meaning deactivated.
 
     Examples
     --------
-    A connectivity status toggler class ``Toggler`` takes a parameter ``t`` for the toggle time.
+    A connectivity status toggler class `Toggler` takes a parameter `t` for the toggle time.
     Inside ``Toggler.__init__``, one would have ::
 
         self.t = TimerParam()
 
-    The ``Toggler`` class also needs to define a method for togging the connectivity status ::
+    The `Toggler` class also needs to define a method for togging the connectivity status ::
 
         def _u_switch(self, is_time: np.ndarray):
             action = False
@@ -429,7 +442,7 @@ class TimerParam(NumParam):
                     action = True
             return action
 
-    Finally, in ``Toggler.__init__``, assign the function as the callback for ``self.t`` ::
+    Finally, in ``Toggler.__init__``, assign the function as the callback for `self.t` ::
 
         self.t.callback = self._u_switch
 
@@ -452,7 +465,7 @@ class TimerParam(NumParam):
     def is_time(self, dae_t):
         """
         Element-wise check if the DAE time is the same as the parameter value. The current implementation uses
-        ``np.isclose``
+        `np.isclose`
 
         Parameters
         ----------
@@ -482,8 +495,8 @@ class ExtParam(NumParam):
     src : str
         The source parameter name
     indexer : BaseParam
-        A parameter defined in the model defining this ExtParam instance. ``indexer.v`` should contain indices into
-        ``model.src.v``. If is None, the source parameter values will be fully copied. If ``model`` is a group
+        A parameter defined in the model defining this ExtParam instance. `indexer.v` should contain indices into
+        `model.src.v`. If is None, the source parameter values will be fully copied. If `model` is a group
         name, the indexer cannot be None.
 
     Attributes
@@ -519,7 +532,12 @@ class ExtParam(NumParam):
         if isinstance(ext_model, GroupBase):
 
             # TODO: the three lines below is a bit inefficient - 3x same loops
-            self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+            try:
+                self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+
+            except IndexError:
+                pass
+
             try:
                 self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
                 self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
@@ -556,58 +574,61 @@ class RefParam(BaseParam):
     """
     A special type of reference collector parameter.
 
-    ``RefParam`` is used for collecting device indices of other models referencing the parent model of the
-    ``RefParam``. The ``v`` field will be a list of lists, each containing the ``idx`` of other models
+    `RefParam` is used for collecting device indices of other models referencing the parent model of the
+    `RefParam`. The `v``field will be a list of lists, each containing the `idx` of other models
     referencing each device of the parent model.
 
-    RefParam can be passed as indexer for params and vars, or shape for ``ReducerService`` and
-    ``RepeaterService``. See examples for illustration.
+    RefParam can be passed as indexer for params and vars, or shape for `NumReduce` and
+    `NumRepeat`. See examples for illustration.
 
     Examples
     --------
-    A Bus device has an ``IdxParam`` of ``area``, storing the ``idx`` of area to which the bus device belongs.
-    In ``Bus.__init__``, one has ::
+    A Bus device has an `IdxParam` of `area`, storing the `idx` of area to which the bus device belongs.
+    In ``Bus.__init__()``, one has ::
 
         self.area = IdxParam(model='Area')
 
-    Assume Bus has the following data ::
+    Suppose `Bus` has the following data
 
+        ====   ====  ====
         idx    area  Vn
+        ----   ----  ----
         1      1     110
         2      2     220
         3      1     345
         4      1     500
+        ====   ====  ====
 
     The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
     In ``Area.__init__``, one defines ::
 
         self.Bus = RefParam()
 
-    where the member attribute name ``Bus`` needs to match exactly model name that ``Area`` wants to collect
-    ``idx`` for.
-    Similarly, one can define ``self.ACTopology = RefParam()`` to collect devices in the ``ACTopology`` group
+    where the member attribute name `Bus` needs to match exactly model name that `Area` wants to collect
+    `idx` for.
+    Similarly, one can define ``self.ACTopology = RefParam()`` to collect devices in the `ACTopology` group
     that references Area.
 
-    The collection of ``idx`` happens in ``System._collect_ref_param``. It has to be noted that the specific
-    ``Area`` entry must exist to collect model idx-es referencing it. For example, if ``Area`` has the
-    following data ::
+    The collection of `idx` happens in :py:func:`andes.system.System._collect_ref_param`.
+    It has to be noted that the specific `Area` entry must exist to collect model idx-dx referencing it.
+    For example, if `Area` has the following data ::
 
         idx
         1
 
-    Then, only Bus 1, 3, and 4 will be collected into ``self.Bus.v``, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
+    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
 
-    If ``Area`` has data ::
+    If `Area` has data ::
 
         idx
         1
         2
 
-    Then, ``self.Bus.v`` will end up with ``[ [1, 3, 4], [2] ]``.
+    Then, `self.Bus.v` will end up with ``[ [1, 3, 4], [2] ]``.
 
     See Also
     --------
-    andes.core.service.ReducerService : A more complete example using RefParam to build the COI model
+    andes.core.service.NumReduce : A more complete example using RefParam to build the COI model
 
     """
     def __init__(self, **kwargs):

@@ -1,8 +1,7 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
-from typing import Optional, Iterable
-from andes.core.discrete import AntiWindupLimiter
-from andes.core.service import ConstService
+from typing import Optional, Iterable, Dict, Union
+from andes.core.discrete import Discrete, AntiWindup, LessThan
 from andes.core.triplet import JacTriplet
 
 
@@ -35,7 +34,7 @@ class Block(object):
 
     Warnings
     --------
-    It is suggested to have at most one level of nesting to avoid messy variable names.
+    It is a good practice to avoid more than one level of nesting, to avoid multi-underscore variable names.
 
     Examples
     --------
@@ -47,7 +46,7 @@ class Block(object):
            |
         Lag B      exports (x, y)
 
-    SomeModel instance M contains an instance of Leadlag block named A, which contains an instance of a Lag block
+    SomeModel instance M contains an instance of LeadLag block named A, which contains an instance of a Lag block
     named B. Both A and B exports two variables ``x`` and ``y``.
 
     In the code of Model, the following code is used to instantiate LeadLag ::
@@ -68,18 +67,18 @@ class Block(object):
                 self.B = Lag(u=self.y, K=self.K, T=self.T)
                 self.vars = {..., 'A': self.A}
 
-    The ``__setattr__`` magic of LeadLag takes over the construction and assigns ``B.name`` as ``A_B``,
-    given A's name provided at run time. ``self.A`` is exported with the internal name ``A`` at the end.
+    The ``__setattr__`` magic of LeadLag takes over the construction and assigns ``A_B`` to `B.name`,
+    given A's name provided at run time. `self.A` is exported with the internal name ``A`` at the end.
 
-    Again, the LeadLag instance name (``A`` in this example) MUST be provided in SomeModel's constructor for the
+    Again, the LeadLag instance name (`A` in this example) MUST be provided in `SomeModel`'s constructor for the
     name prepending to work correctly. If there is more than one level of nesting, other than the leaf-level
     block, all parent blocks' names must be provided at instantiation.
 
-    When A is picked up by ``SomeModel.__setattr__``, B is captured from A's exports. Recursively, B's variables
-    are exported, Recall that ``B.name`` is ``A_B``, following the naming rule (parent block's name + variable
+    When A is picked up by `SomeModel.__setattr__`, B is captured from A's exports. Recursively, B's variables
+    are exported, Recall that `B.name` is now ``A_B``, following the naming rule (parent block's name + variable
     name), B's internal variables become ``A_B_x`` and ``A_B_y``.
 
-    In this way, B's ``define`` needs no modification since the naming rule is the same. For example,
+    In this way, B's ``define()`` needs no modification since the naming rule is the same. For example,
     B's internal y is always ``{self.name}_y``, although B has gotten a new name ``A_B``.
 
     """
@@ -89,14 +88,14 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars: dict = dict()
+        self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
         self.triplets = JacTriplet()
 
     def __setattr__(self, key, value):
         # handle sub-blocks by prepending self.name
         if isinstance(value, Block):
             if self.name is None:
-                raise ValueError(f"`name` must be specified when constructing {self.class_name} instances.")
+                raise ValueError(f"Must specify `name` for {self.class_name} any instance.")
             if not value.owner:
                 value.__dict__['owner'] = self
 
@@ -318,6 +317,68 @@ class PIControllerNumeric(Block):
         pass
 
 
+class Gain(Block):
+    r"""
+    Gain block ::
+
+        u -> K -> y
+
+    Exports an algebraic output `y`.
+    """
+    def __init__(self, u, K, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.enforce_tex_name((self.K, ))
+
+        self.y = Algeb(info='Gain output', tex_name='y')
+        self.vars = {'y': self.y}
+
+    def define(self):
+        r"""
+        Implemented equation and the initial condition are
+
+        .. math ::
+            y = K u
+            y^{(0)} = K u^{(0)}
+
+        """
+        self.y.v_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+
+
+class Integrator(Block):
+    r"""
+    Integrator block ::
+
+        u -> K/s -> y
+
+    Exports a differential variable `y`. The initial output is specified by `y0` and default to zero.
+    """
+
+    def __init__(self, u, K, y0=0, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.enforce_tex_name((self.K, ))
+        self.y0 = y0
+
+        self.y = State(info='Integrator output', tex_name='y')
+        self.vars = {'y': self.y}
+
+    def define(self):
+        r"""
+        Implemented equation and the initial condition are
+
+        .. math ::
+            \dot{y} = K u \\
+            y^{(0)} = 0
+
+        """
+        self.y.v_str = self.y0
+        self.y.e_str = f'{self.K.name} * {self.u.name}'
+
+
 class Washout(Block):
     r"""
     Washout filter (high pass) block ::
@@ -326,22 +387,19 @@ class Washout(Block):
          u -> ------- -> y
               1 + sT
 
+    Exports state `x` (symbol `x'`) and output algebraic variable `y`.
     """
 
-    def __init__(self, u, T, K, info=None, name=None):
-        super().__init__(name=name, info=info)
+    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
         self.T = dummify(T)
         self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
 
-        self.KT = ConstService(info='Constant K/T',
-                               tex_name=f'({self.K.tex_name}/{self.T.tex_name})',
-                               v_str=f'{self.K.name} / {self.T.name}')
-
-        self.u = u
         self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
         self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-6)
-        self.vars = {'KT': self.KT, 'x': self.x, 'y': self.y}
+        self.vars.update({'x': self.x, 'y': self.y})
 
     def define(self):
         r"""
@@ -361,6 +419,58 @@ class Washout(Block):
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'
+
+
+class WashoutOrLag(Washout):
+    """
+    Washout with the capability to convert to Lag when K = 0.
+
+    Can be enabled with `zero_out`. Need to provide `name` to construct.
+
+    Exports state `x` (symbol `x'`), output algebraic variable `y`, and a LessThan block `LT`.
+
+    Parameters
+    ----------
+    zero_out : bool, optional
+        If True, ``sT`` will become 1, and the washout will become a low-pass filter.
+        If False, functions as a regular Washout.
+    """
+    def __init__(self, u, T, K, name, zero_out=False, tex_name=None, info=None):
+        super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
+        self.zero_out = zero_out
+        self.LT = LessThan(K,
+                           dummify(0),
+                           equal=True,
+                           enable=zero_out,
+                           tex_name='LT',
+                           cache=True,
+                           z0=1, z1=0)
+
+        self.vars.update({'LT': self.LT})
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Equations and initial values:
+
+        .. math ::
+            T \dot{x'} &= (u - x) \\
+            T y = z_0 K (u-x) + z_1 Tx
+            x'^{(0)} &= u \\
+            y^{(0)} &= 0
+
+        where ``z_0`` is a flag array for the greater-than-zero elements, and ``z_1`` is that for the
+        less-than or equal-to zero elements.
+        """
+
+        super().define()
+
+        self.y.v_str = f'{self.name}_LT_z0 * 0 + {self.name}_LT_z1 * {self.name}_x'
+
+        self.y.e_str = f'{self.name}_LT_z0 * {self.K.name} * ({self.u.name} - {self.name}_x) + ' \
+                       f'{self.name}_LT_z1 * {self.T.name} * {self.name}_x - ' \
+                       f'{self.T.name} * {self.name}_y'
 
 
 class Lag(Block):
@@ -404,7 +514,7 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x) \\
+            T \dot{x'} &= (Ku - x') \\
             x'^{(0)} &= K u
 
         """
@@ -423,7 +533,7 @@ class LagAntiWindup(Block):
         -- lower --/
 
     Exports one state variable `x` as the output.
-    Exports one AntiWindupLimiter instance `lim`.
+    Exports one AntiWindup instance `lim`.
 
     Parameters
     ----------
@@ -449,7 +559,7 @@ class LagAntiWindup(Block):
 
         self.x = State(info='State in lag transfer function', tex_name="x'",
                        t_const=self.T)
-        self.lim = AntiWindupLimiter(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
 
         self.vars = {'x': self.x, 'lim': self.lim}
 
@@ -571,7 +681,7 @@ class LeadLag(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2 * y &= T_1 * (u - x') + T_2 * x' \\
+            T_2  y &= T_1  (u - x') + T_2  x' \\
             x'^{(0)} &= y^{(0)} = u
 
         """
@@ -646,7 +756,7 @@ class LeadLagLimit(Block):
               1 + sT2        /
                   __lower___/
 
-    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindupLimiter `lim`.
+    Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindup `lim`.
 
     """
     def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
@@ -662,7 +772,7 @@ class LeadLagLimit(Block):
         self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
         self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y',
                        diag_eps=1e-6)
-        self.lim = AntiWindupLimiter(u=self.ynl, lower=self.lower, upper=self.upper)
+        self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 
@@ -677,7 +787,7 @@ class LeadLagLimit(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2 y &= T_1 * (u - x') + T_2 * x' \\
+            T_2 y &= T_1  (u - x') + T_2  x' \\
             x'^{(0)} &= y^{(0)} = u
 
         """

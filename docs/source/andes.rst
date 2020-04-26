@@ -3,12 +3,12 @@ Subpackages
 
 .. toctree::
 
-   andes.core
-   andes.io
-   andes.models
-   andes.routines
-   andes.utils
-   andes.variables
+   moduledoc/andes.core
+   moduledoc/andes.io
+   moduledoc/andes.models
+   moduledoc/andes.routines
+   moduledoc/andes.utils
+   moduledoc/andes.variables
 
 Submodules
 ==========

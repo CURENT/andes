@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable
+from andes.utils.func import list_flatten
 from andes.shared import np
 
 logger = logging.getLogger(__name__)
@@ -59,9 +59,12 @@ class GroupBase(object):
         """
         ret = []
         single = False
-        if not isinstance(idx, Iterable):
+        if not isinstance(idx, (list, tuple, np.ndarray)):
             single = True
             idx = (idx, )
+        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
+            idx = list_flatten(idx)
+
         for i in idx:
             try:
                 ret.append(self._idx2model[i])
@@ -136,7 +139,7 @@ class GroupBase(object):
         for idx, idx_found in enumerate(zip(*indices_found)):
             if idx_found.count(False) == len(idx_found):
                 missing_values = [item[idx] for item in values]
-                raise IndexError(f'{keys} = {missing_values} not found in {self.__class__.__name__}')
+                raise IndexError(f'{keys} = {missing_values} not found in {self.class_name}')
             for item in idx_found:
                 if item is not False:
                     out.append(item)
@@ -149,7 +152,7 @@ class GroupBase(object):
 
     def _check_idx(self, idx):
         if idx is None:
-            raise IndexError(f'{self.__class__.__name__}: idx cannot be None')
+            raise IndexError(f'{self.class_name}: idx cannot be None')
 
     def get_next_idx(self, idx=None, model_name=None):
         """
@@ -260,6 +263,11 @@ class Collection(GroupBase):
     pass
 
 
+class Calculation(GroupBase):
+    """Group of classes that calculates based on other models."""
+    pass
+
+
 class StaticGen(GroupBase):
     """
     Static generator group for power flow calculation
@@ -294,7 +302,7 @@ class SynGen(GroupBase):
     """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus'))
+        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
         self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf'))
 
 
@@ -314,7 +322,7 @@ class Exciter(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('syn', ))
-        self.common_vars.extend(('vout', ))
+        self.common_vars.extend(('vout', 'vi', ))
 
 
 class PSS(GroupBase):

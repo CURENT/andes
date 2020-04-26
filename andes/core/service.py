@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable
+from typing import Optional, Union, Callable, Type
 from andes.core.param import RefParam, BaseParam
 from andes.utils.func import list_flatten
 from andes.shared import np, ndarray
@@ -21,10 +21,11 @@ class BaseService(object):
     owner : Model
         The hosting/owner model instance
     """
-    def __init__(self, name: str = None, tex_name: str = None, info: str = None):
+    def __init__(self, name: str = None, tex_name: str = None, info: str = None, vtype: Type = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
+        self.vtype = type  # type for `v`. NOT IN USE.
         self.owner = None
 
     def get_names(self):
@@ -50,7 +51,7 @@ class BaseService(object):
         int
             The count of elements in this variable
         """
-        if isinstance(self.v, np.ndarray):
+        if isinstance(self.v, (list, np.ndarray)):
             return len(self.v)
         else:
             return 1
@@ -65,7 +66,7 @@ class BaseService(object):
 
 class ConstService(BaseService):
     """
-    Service "variables" that stays constant.
+    A type of Service that stays constant once initialized.
 
     ConstService are usually constants calculated from parameters. They are only evaluated once in the
     initialization phase before variables are initialized. Therefore, uninitialized variables must not be
@@ -92,7 +93,11 @@ class ConstService(BaseService):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, ndarray] = 0.
+        self.v: Union[float, int, ndarray] = np.array([0.])
+
+    def assign_memory(self, n):
+        """Assign memory for ``self.v`` and set the array to zero."""
+        self.v = np.zeros(self.n)
 
 
 class ExtService(BaseService):
@@ -128,6 +133,7 @@ class ExtService(BaseService):
                  model: str,
                  src: str,
                  indexer: BaseParam,
+                 attr='v',
                  name: str = None,
                  tex_name: str = None,
                  info=None,
@@ -136,7 +142,12 @@ class ExtService(BaseService):
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.v = 0
+        self.attr = attr
+        self.v = np.array([0.])
+
+    def assign_memory(self, n):
+        """Assign memory for ``self.v`` and set the array to zero."""
+        self.v = np.zeros(self.n)
 
     def link_external(self, ext_model):
         """
@@ -153,7 +164,37 @@ class ExtService(BaseService):
             return
 
         # the same `get` api for Group and Model
-        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr)
+
+
+class OptionalSelect(BaseService):
+    """
+    Class for selecting values for optional DataParam.
+
+    This service is a v-provider that uses optional DataParam if available with a fallback.
+
+    Notes
+    -----
+    An use case of OptionalSelect is remote bus. One can do ::
+
+        self.buss = OptionalSelect(option=self.busr, fallback=self.bus)
+
+    Then, pass ``self.buss`` instead of ``self.bus`` as indexer to retrieve voltages.
+    """
+
+    def __init__(self,
+                 optional,
+                 fallback,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,):
+        super().__init__(name=name, tex_name=tex_name, info=info,)
+        self.optional = optional
+        self.fallback = fallback
+
+    @property
+    def v(self):
+        return [opt if opt is not None else fb for opt, fb in zip(self.optional.v, self.fallback.v)]
 
 
 class OperationService(BaseService):
@@ -164,24 +205,30 @@ class OperationService(BaseService):
 
     See Also
     --------
-    ReducerService : Service for Reducing linearly stored 2-D services into 1-D
+    NumReduce : Service for Reducing linearly stored 2-D services into 1-D
 
-    RepeaterService : Service for repeating 1-D services following a sub-pattern
+    NumRepeat : Service for repeating 1-D NumParam/ v-array following a sub-pattern
+
+    IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
     def __init__(self,
-                 u,
                  ref: RefParam,
+                 u=None,
                  name=None,
                  tex_name=None,
+                 info=None,
                  ):
         self._v = None
-        super().__init__(name=name, tex_name=tex_name)
+        super().__init__(name=name, tex_name=tex_name, info=info,)
         self.u = u
         self.ref = ref
         self.v_str = None
 
     @property
     def v(self):
+        """
+        Return values stored in `self._v`. May be overloaded by subclasses.
+        """
         return self._v
 
     @v.setter
@@ -189,12 +236,12 @@ class OperationService(BaseService):
         self._v = value
 
 
-class ReducerService(OperationService):
+class NumReduce(OperationService):
     """
     A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 
-    ReducerService works with ExtParam whose ``v`` field is a list of lists. A reduce function
-    which takes an array-like and returns a scalar need to be supplied. ReducerService calls the reduce
+    NumReduce works with ExtParam whose `v` field is a list of lists. A reduce function
+    which takes an array-like and returns a scalar need to be supplied. NumReduce calls the reduce
     function on each of the lists and return all the scalars in an array.
 
     Parameters
@@ -221,22 +268,26 @@ class ReducerService(OperationService):
                     src='Vn',
                     indexer=self.Bus)
 
-                self.Vn_mean = ReducerService(u=self.Vn,
+                self.Vn_mean = NumReduce(u=self.Vn,
                     fun=np.mean,
                     ref=self.Bus)
 
-    Suppose we define two areas, 1 and 2, the Bus data looks like ::
+    Suppose we define two areas, 1 and 2, the Bus data looks like
 
+        ===   =====  ====
         idx    area  Vn
+        ---   -----  ----
         1      1     110
         2      2     220
         3      1     345
         4      1     500
+        ===   =====  ====
 
-    Then, ``self.Bus.v`` is a list of two lists ``[ [1, 3, 4], [2] ]``. ``self.Vn.v`` will be retrieved and
-    linearly stored as ``[110, 345, 500, 220]``. Based on the shape from ``self.Bus``, ``np.mean`` will be
-    called on ``[110, 345, 500]`` and ``[220]`` respectively. Thus, ``self.Vn_mean.v`` will become
-    ``[318.33, 220]``.
+    Then, `self.Bus.v` is a list of two lists ``[ [1, 3, 4], [2] ]``.
+    `self.Vn.v` will be retrieved and linearly stored as ``[110, 345, 500, 220]``.
+    Based on the shape from `self.Bus`, :py:func:`numpy.mean`
+    will be called on ``[110, 345, 500]`` and ``[220]`` respectively.
+    Thus, `self.Vn_mean.v` will become ``[318.33, 220]``.
 
     """
     def __init__(self,
@@ -245,8 +296,9 @@ class ReducerService(OperationService):
                  fun: Callable,
                  name=None,
                  tex_name=None,
+                 info=None,
                  ):
-        super().__init__(u=u, ref=ref, name=name, tex_name=tex_name)
+        super().__init__(u=u, ref=ref, name=name, tex_name=tex_name, info=info)
         self.fun = fun
 
     @property
@@ -269,68 +321,76 @@ class ReducerService(OperationService):
             return self._v
 
 
-class RepeaterService(OperationService):
+class NumRepeat(OperationService):
     r"""
     A helper Service type which repeats a v-provider's value based on the shape from a RefParam
 
     Examples
     --------
-    RepeaterService was originally designed for computing the inertia-weighted average rotor speed (center of
+    NumRepeat was originally designed for computing the inertia-weighted average rotor speed (center of
     inertia speed). COI speed is computed with
 
     .. math ::
         \omega_{COI} = \frac{ \sum{M_i * \omega_i} } {\sum{M_i}}
 
     The numerator can be calculated with a mix of RefParam, ExtParam and ExtState. The denominator needs to be
-    calculated with ReducerService and Service Repeat. That is, use ReducerService to calculate the sum,
-    and use RepeaterService to repeat the summed value for each device.
+    calculated with NumReduce and Service Repeat. That is, use NumReduce to calculate the sum,
+    and use NumRepeat to repeat the summed value for each device.
 
-    In the COI class, one would have ::
+    In the COI class, one would have
+
+    .. code-block :: python
 
         class COIModel(...):
             def __init__(...):
                 ...
                 self.SynGen = RefParam()
-
+                self.SynGenIdx = RefFlatten(ref=self.SynGen)
                 self.M = ExtParam(model='SynGen',
                                   src='M',
-                                  indexer=self.SynGen)
+                                  indexer=self.SynGenIdx)
 
-                self.w_sg = ExtState(model='SynGen',
+                self.wgen = ExtState(model='SynGen',
                                      src='omega',
-                                     indexer=self.SynGen)
+                                     indexer=self.SynGenIdx)
 
-                self.Mt = ReducerService(u=self.M,
-                                        fun=np.sum,
-                                        ref=self.SynGen)
-
-                self.Mtr = RepeaterService(u=self.M_sym,
+                self.Mt = NumReduce(u=self.M,
+                                         fun=np.sum,
                                          ref=self.SynGen)
 
-    Finally, one would define the center of inertia speed as ::
+                self.Mtr = NumRepeat(u=self.Mt,
+                                       ref=self.SynGen)
 
-        self.w_coi = Algeb(v_str='1', e_str='-w_coi')
+                self.pidx = IdxRepeat(u=self.idx,ref=self.SynGen)
 
-        self.w_coi_sub = ExtAlgeb(model='COI',
-                                  src='w_coi',
-                                  e_str='M * w_sg / Mtr',
-                                  v_str='M / Mtr',
-                                  indexer=self.padded_idx,  # TODO
-                                  )
+    Finally, one would define the center of inertia speed as
 
-    It is very worth noting that the implementation uses a trick to separate the average weighted sum into ``n``
+    .. code-block :: python
+
+        self.wcoi = Algeb(v_str='1', e_str='-wcoi')
+
+        self.wcoi_sub = ExtAlgeb(model='COI',
+                                 src='wcoi',
+                                 e_str='M * wgen / Mtr',
+                                 v_str='M / Mtr',
+                                 indexer=self.pidx,
+                                 )
+
+    It is very worth noting that the implementation uses a trick to separate the average weighted sum into `n`
     sub-equations, each calculating the :math:`(M_i * \omega_i) / (\sum{M_i})`. Since all the variables are
     preserved in the sub-equation, the derivatives can be calculated correctly.
 
     """
     def __init__(self,
+                 u,
+                 ref,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(u=u, ref=ref, **kwargs)
 
     @property
     def v(self):
         """
-        Return the values of the repeated values in a sequantial 1-D array
+        Return the values of the repeated values in a sequential 1-D array
 
         Returns
         -------
@@ -338,6 +398,7 @@ class RepeaterService(OperationService):
         """
         if self._v is None:
             self._v = np.zeros(len(list_flatten(self.ref.v)))
+
             idx = 0
             for i, v in enumerate(self.ref.v):
                 self._v[idx:idx + len(v)] = self.u.v[i]
@@ -347,9 +408,74 @@ class RepeaterService(OperationService):
             return self._v
 
 
+class IdxRepeat(OperationService):
+    """
+    Helper class to repeat IdxParam.
+
+    This class has the same functionality as :py:class:`andes.core.service.NumRepeat`
+    but only operates on IdxParam, DataParam or NumParam.
+    """
+    def __init__(self,
+                 u,
+                 ref,
+                 **kwargs):
+        super().__init__(u=u, ref=ref, **kwargs)
+
+    @property
+    def v(self):
+        if self._v is None:
+            self._v = [''] * len(list_flatten(self.ref.v))
+            idx = 0
+            for i, v in enumerate(self.ref.v):
+                for jj in range(idx, idx + len(v)):
+                    self._v[jj] = self.u.v[i]
+                idx += len(v)
+            return self._v
+        else:
+            return self._v
+
+
+class RefFlatten(OperationService):
+    """
+    A service type for flattening :py:class:`andes.core.param.RefParam` into a 1-D list.
+
+    Examples
+    --------
+    This class is used when one wants to pass `RefParam` values as indexer.
+
+    :py:class:`andes.models.coi.COI` collects referencing
+    :py:class:`andes.models.group.SynGen` with
+
+    .. code-block :: python
+
+        self.SynGen = RefParam(info='SynGen idx lists', export=False)
+
+    After collecting RefParams, `self.SynGen.v` will become a two-level list of indices,
+    where the first level correspond to each COI and the second level correspond to generators
+    of the COI.
+
+    Convert `self.SynGen` into 1-d as `self.SynGenIdx`, which can be passed as indexer for
+    retrieving other parameters and variables
+
+    .. code-block :: python
+
+        self.SynGenIdx = RefFlatten(ref=self.SynGen)
+
+        self.M = ExtParam(model='SynGen', src='M',
+                          indexer=self.SynGenIdx, export=False,
+                          )
+    """
+    def __init__(self, ref, **kwargs):
+        super().__init__(ref=ref, **kwargs)
+
+    @property
+    def v(self):
+        return list_flatten(self.ref.v)
+
+
 class RandomService(BaseService):
     """
-    A service variable for generating random numbers.
+    A service type for generating random numbers.
 
     Parameters
     ----------
@@ -378,6 +504,3 @@ class RandomService(BaseService):
             Randomly generated service variables
         """
         return np.random.rand(self.n)
-
-
-# TODO: SafeInverse

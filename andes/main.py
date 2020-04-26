@@ -125,7 +125,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
     else:
         # use the following default editors
         if platform.system() == 'Linux':
-            editor = os.environ.get('EDITOR', 'gedit')
+            editor = os.environ.get('EDITOR', 'vim')
         elif platform.system() == 'Darwin':
             editor = os.environ.get('EDITOR', 'vim')
         elif platform.system() == 'Windows':
