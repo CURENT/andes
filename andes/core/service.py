@@ -226,6 +226,9 @@ class OperationService(BaseService):
 
     @property
     def v(self):
+        """
+        Return values stored in `self._v`. May be overloaded by subclasses.
+        """
         return self._v
 
     @v.setter
@@ -269,18 +272,22 @@ class NumReduce(OperationService):
                     fun=np.mean,
                     ref=self.Bus)
 
-    Suppose we define two areas, 1 and 2, the Bus data looks like ::
+    Suppose we define two areas, 1 and 2, the Bus data looks like
 
+        ===   =====  ====
         idx    area  Vn
+        ---   -----  ----
         1      1     110
         2      2     220
         3      1     345
         4      1     500
+        ===   =====  ====
 
-    Then, ``self.Bus.v`` is a list of two lists ``[ [1, 3, 4], [2] ]``. ``self.Vn.v`` will be retrieved and
-    linearly stored as ``[110, 345, 500, 220]``. Based on the shape from ``self.Bus``, ``np.mean`` will be
-    called on ``[110, 345, 500]`` and ``[220]`` respectively. Thus, ``self.Vn_mean.v`` will become
-    ``[318.33, 220]``.
+    Then, `self.Bus.v` is a list of two lists ``[ [1, 3, 4], [2] ]``.
+    `self.Vn.v` will be retrieved and linearly stored as ``[110, 345, 500, 220]``.
+    Based on the shape from `self.Bus`, :py:func:`numpy.mean`
+    will be called on ``[110, 345, 500]`` and ``[220]`` respectively.
+    Thus, `self.Vn_mean.v` will become ``[318.33, 220]``.
 
     """
     def __init__(self,
@@ -330,7 +337,9 @@ class NumRepeat(OperationService):
     calculated with NumReduce and Service Repeat. That is, use NumReduce to calculate the sum,
     and use NumRepeat to repeat the summed value for each device.
 
-    In the COI class, one would have ::
+    In the COI class, one would have
+
+    .. code-block :: python
 
         class COIModel(...):
             def __init__(...):
@@ -354,7 +363,9 @@ class NumRepeat(OperationService):
 
                 self.pidx = IdxRepeat(u=self.idx,ref=self.SynGen)
 
-    Finally, one would define the center of inertia speed as ::
+    Finally, one would define the center of inertia speed as
+
+    .. code-block :: python
 
         self.wcoi = Algeb(v_str='1', e_str='-wcoi')
 
@@ -365,7 +376,7 @@ class NumRepeat(OperationService):
                                  indexer=self.pidx,
                                  )
 
-    It is very worth noting that the implementation uses a trick to separate the average weighted sum into ``n``
+    It is very worth noting that the implementation uses a trick to separate the average weighted sum into `n`
     sub-equations, each calculating the :math:`(M_i * \omega_i) / (\sum{M_i})`. Since all the variables are
     preserved in the sub-equation, the derivatives can be calculated correctly.
 

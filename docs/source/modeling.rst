@@ -666,11 +666,11 @@ base class of services is ``BaseService``, and the supported services are listd 
 +------------------+-----------------------------------------------------------------+
 |  ExtService      | External service for retrieving values from value providers.    |
 +------------------+-----------------------------------------------------------------+
-|  NumReduce  | The service type for reducing linear 2-D arrays into 1-D arrays |
+|  NumReduce       | The service type for reducing linear 2-D arrays into 1-D arrays |
 +------------------+-----------------------------------------------------------------+
-|  NumRepeat     | The service type for repeating a 1-D array to linear 2-D arrays |
+|  NumRepeat       | The service type for repeating a 1-D array to linear 2-D arrays |
 +------------------+-----------------------------------------------------------------+
-|  IdxRepeat     | The service type for repeating a 1-D list to linear 2-D list    |
+|  IdxRepeat       | The service type for repeating a 1-D list to linear 2-D list    |
 +------------------+-----------------------------------------------------------------+
 
 Internal Constants

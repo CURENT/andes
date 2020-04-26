@@ -103,7 +103,7 @@ class Fault(ModelData, Model):
 
     def apply_fault(self, is_time: np.ndarray):
         """
-        Apply fault and store pre-fault algebraic variables (voltages and other algevs) to ``self._vstore``.
+        Apply fault and store pre-fault algebraic variables (voltages and other algebs) to `self._vstore`.
         """
         action = False
         for i in range(self.n):

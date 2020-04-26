@@ -588,13 +588,16 @@ class RefParam(BaseParam):
 
         self.area = IdxParam(model='Area')
 
-    Assume Bus has the following data ::
+    Suppose `Bus` has the following data
 
+        ====   ====  ====
         idx    area  Vn
+        ----   ----  ----
         1      1     110
         2      2     220
         3      1     345
         4      1     500
+        ====   ====  ====
 
     The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
     In ``Area.__init__``, one defines ::
@@ -602,7 +605,7 @@ class RefParam(BaseParam):
         self.Bus = RefParam()
 
     where the member attribute name `Bus` needs to match exactly model name that `Area` wants to collect
-    ``idx`` for.
+    `idx` for.
     Similarly, one can define ``self.ACTopology = RefParam()`` to collect devices in the `ACTopology` group
     that references Area.
 
@@ -613,15 +616,15 @@ class RefParam(BaseParam):
         idx
         1
 
-    Then, only Bus 1, 3, and 4 will be collected into ``self.Bus.v``, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
+    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
 
-    If ``Area`` has data ::
+    If `Area` has data ::
 
         idx
         1
         2
 
-    Then, ``self.Bus.v`` will end up with ``[ [1, 3, 4], [2] ]``.
+    Then, `self.Bus.v` will end up with ``[ [1, 3, 4], [2] ]``.
 
     See Also
     --------
