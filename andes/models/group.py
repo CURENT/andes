@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable
+from andes.utils.func import list_flatten
 from andes.shared import np
 
 logger = logging.getLogger(__name__)
@@ -59,9 +59,12 @@ class GroupBase(object):
         """
         ret = []
         single = False
-        if not isinstance(idx, Iterable):
+        if not isinstance(idx, (list, tuple, np.ndarray)):
             single = True
             idx = (idx, )
+        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
+            idx = list_flatten(idx)
+
         for i in idx:
             try:
                 ret.append(self._idx2model[i])
@@ -257,6 +260,11 @@ class DCTopology(GroupBase):
 
 class Collection(GroupBase):
     """Collection of topology models"""
+    pass
+
+
+class Calculation(GroupBase):
+    """Group of classes that calculates based on other models."""
     pass
 
 

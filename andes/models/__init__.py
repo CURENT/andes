@@ -14,6 +14,7 @@ non_jit = OrderedDict([
     ('exciter', ['EXDC2']),
     ('pss', ['IEEEST']),
     ('measurement', ['BusFreq', 'BusROCOF']),
+    ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
     ('timer', ['Toggler', 'Fault']),

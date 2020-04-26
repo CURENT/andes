@@ -532,7 +532,12 @@ class ExtParam(NumParam):
         if isinstance(ext_model, GroupBase):
 
             # TODO: the three lines below is a bit inefficient - 3x same loops
-            self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+            try:
+                self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+
+            except IndexError:
+                pass
+
             try:
                 self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
                 self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
@@ -574,7 +579,7 @@ class RefParam(BaseParam):
     referencing each device of the parent model.
 
     RefParam can be passed as indexer for params and vars, or shape for `ReducerService` and
-    `RepeaterService`. See examples for illustration.
+    `NumRepeater`. See examples for illustration.
 
     Examples
     --------

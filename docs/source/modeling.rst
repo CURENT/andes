@@ -385,7 +385,7 @@ equations can be used.
 
 For interested readers, see the ``COI`` symbolic implementation which calculated the
 center-of-inertia speed of generators. The ``COI`` could have been implemented numerically with for loops
-instead of ``ReducerService``, ``RepeaterService`` and external variables.
+instead of ``ReducerService``, ``NumRepeater`` and external variables.
 
 ..
     Atoms
@@ -394,7 +394,7 @@ instead of ``ReducerService``, ``RepeaterService`` and external variables.
     components and blocks.
 
 
-Atom Classes
+Atom Types
 ============
 ANDES contains three types of atom classes for building DAE models.
 These types are parameter, variable and service.
@@ -668,7 +668,9 @@ base class of services is ``BaseService``, and the supported services are listd 
 +------------------+-----------------------------------------------------------------+
 |  ReducerService  | The service type for reducing linear 2-D arrays into 1-D arrays |
 +------------------+-----------------------------------------------------------------+
-|  RepeaterService | The service type for repeating 1-D arrays to linear 2-D arrays  |
+|  NumRepeater     | The service type for repeating a 1-D array to linear 2-D arrays |
++------------------+-----------------------------------------------------------------+
+|  IdxRepeater     | The service type for repeating a 1-D list to linear 2-D list    |
 +------------------+-----------------------------------------------------------------+
 
 Internal Constants
@@ -719,15 +721,17 @@ The retrieved addresses usually has a different length of the referencing model 
 Shape manipulator services can be used in such case.
 
 `ReducerService` is a helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
-`RepeaterService` is a helper Service type which repeats a 1-D value into linearly stored 2-D value based on the
+`NumRepeater` is a helper Service type which repeats a 1-D value into linearly stored 2-D value based on the
 shape from a `RefParam`.
 
 .. autoclass:: andes.core.service.ReducerService
     :noindex:
 
-.. autoclass:: andes.core.service.RepeaterService
+.. autoclass:: andes.core.service.NumRepeater
     :noindex:
 
+.. autoclass:: andes.core.service.IdxRepeater
+    :noindex:
 
 Discrete
 ========

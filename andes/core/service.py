@@ -51,7 +51,7 @@ class BaseService(object):
         int
             The count of elements in this variable
         """
-        if isinstance(self.v, np.ndarray):
+        if isinstance(self.v, (list, np.ndarray)):
             return len(self.v)
         else:
             return 1
@@ -207,16 +207,19 @@ class OperationService(BaseService):
     --------
     ReducerService : Service for Reducing linearly stored 2-D services into 1-D
 
-    RepeaterService : Service for repeating 1-D services following a sub-pattern
+    NumRepeater : Service for repeating 1-D NumParam/ v-array following a sub-pattern
+
+    IdxRepeater : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
     def __init__(self,
-                 u,
                  ref: RefParam,
+                 u=None,
                  name=None,
                  tex_name=None,
+                 info=None,
                  ):
         self._v = None
-        super().__init__(name=name, tex_name=tex_name)
+        super().__init__(name=name, tex_name=tex_name, info=info,)
         self.u = u
         self.ref = ref
         self.v_str = None
@@ -234,7 +237,7 @@ class ReducerService(OperationService):
     """
     A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 
-    ReducerService works with ExtParam whose ``v`` field is a list of lists. A reduce function
+    ReducerService works with ExtParam whose `v` field is a list of lists. A reduce function
     which takes an array-like and returns a scalar need to be supplied. ReducerService calls the reduce
     function on each of the lists and return all the scalars in an array.
 
@@ -286,8 +289,9 @@ class ReducerService(OperationService):
                  fun: Callable,
                  name=None,
                  tex_name=None,
+                 info=None,
                  ):
-        super().__init__(u=u, ref=ref, name=name, tex_name=tex_name)
+        super().__init__(u=u, ref=ref, name=name, tex_name=tex_name, info=info)
         self.fun = fun
 
     @property
@@ -310,13 +314,13 @@ class ReducerService(OperationService):
             return self._v
 
 
-class RepeaterService(OperationService):
+class NumRepeater(OperationService):
     r"""
     A helper Service type which repeats a v-provider's value based on the shape from a RefParam
 
     Examples
     --------
-    RepeaterService was originally designed for computing the inertia-weighted average rotor speed (center of
+    NumRepeater was originally designed for computing the inertia-weighted average rotor speed (center of
     inertia speed). COI speed is computed with
 
     .. math ::
@@ -324,7 +328,7 @@ class RepeaterService(OperationService):
 
     The numerator can be calculated with a mix of RefParam, ExtParam and ExtState. The denominator needs to be
     calculated with ReducerService and Service Repeat. That is, use ReducerService to calculate the sum,
-    and use RepeaterService to repeat the summed value for each device.
+    and use NumRepeater to repeat the summed value for each device.
 
     In the COI class, one would have ::
 
@@ -337,27 +341,29 @@ class RepeaterService(OperationService):
                                   src='M',
                                   indexer=self.SynGen)
 
-                self.w_sg = ExtState(model='SynGen',
+                self.wgen = ExtState(model='SynGen',
                                      src='omega',
                                      indexer=self.SynGen)
 
                 self.Mt = ReducerService(u=self.M,
-                                        fun=np.sum,
-                                        ref=self.SynGen)
-
-                self.Mtr = RepeaterService(u=self.M_sym,
+                                         fun=np.sum,
                                          ref=self.SynGen)
+
+                self.Mtr = NumRepeater(u=self.Mt,
+                                       ref=self.SynGen)
+
+                self.pidx = IdxRepeater(u=self.idx,ref=self.SynGen)
 
     Finally, one would define the center of inertia speed as ::
 
-        self.w_coi = Algeb(v_str='1', e_str='-w_coi')
+        self.wcoi = Algeb(v_str='1', e_str='-wcoi')
 
-        self.w_coi_sub = ExtAlgeb(model='COI',
-                                  src='w_coi',
-                                  e_str='M * w_sg / Mtr',
-                                  v_str='M / Mtr',
-                                  indexer=self.padded_idx,  # TODO
-                                  )
+        self.wcoi_sub = ExtAlgeb(model='COI',
+                                 src='wcoi',
+                                 e_str='M * wgen / Mtr',
+                                 v_str='M / Mtr',
+                                 indexer=self.pidx,
+                                 )
 
     It is very worth noting that the implementation uses a trick to separate the average weighted sum into ``n``
     sub-equations, each calculating the :math:`(M_i * \omega_i) / (\sum{M_i})`. Since all the variables are
@@ -365,13 +371,15 @@ class RepeaterService(OperationService):
 
     """
     def __init__(self,
+                 u,
+                 ref,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(u=u, ref=ref, **kwargs)
 
     @property
     def v(self):
         """
-        Return the values of the repeated values in a sequantial 1-D array
+        Return the values of the repeated values in a sequential 1-D array
 
         Returns
         -------
@@ -379,6 +387,7 @@ class RepeaterService(OperationService):
         """
         if self._v is None:
             self._v = np.zeros(len(list_flatten(self.ref.v)))
+
             idx = 0
             for i, v in enumerate(self.ref.v):
                 self._v[idx:idx + len(v)] = self.u.v[i]
@@ -386,6 +395,39 @@ class RepeaterService(OperationService):
             return self._v
         else:
             return self._v
+
+
+class IdxRepeater(OperationService):
+    """
+    Helper class to repeat IdxParam.
+    """
+    def __init__(self,
+                 u,
+                 ref,
+                 **kwargs):
+        super().__init__(u=u, ref=ref, **kwargs)
+
+    @property
+    def v(self):
+        if self._v is None:
+            self._v = [''] * len(list_flatten(self.ref.v))
+            idx = 0
+            for i, v in enumerate(self.ref.v):
+                for jj in range(idx, idx + len(v)):
+                    self._v[jj] = self.u.v[i]
+                idx += len(v)
+            return self._v
+        else:
+            return self._v
+
+
+class FlattenService(OperationService):
+    def __init__(self, ref, **kwargs):
+        super().__init__(ref=ref, **kwargs)
+
+    @property
+    def v(self):
+        return list_flatten(self.ref.v)
 
 
 class RandomService(BaseService):

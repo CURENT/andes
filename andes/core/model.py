@@ -13,7 +13,7 @@ from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService
-from andes.core.service import ExtService, OperationService, RandomService
+from andes.core.service import ExtService, NumRepeater, ReducerService, RandomService
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -620,7 +620,7 @@ class Model(object):
             self.services[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
-        elif isinstance(value, (OperationService, RandomService)):
+        elif isinstance(value, (NumRepeater, ReducerService, RandomService)):
             self.services_ops[key] = value
 
         elif isinstance(value, Block):
@@ -786,7 +786,7 @@ class Model(object):
 
         """
         # The order of inputs: `all_params` and then `all_vars`, finally `config`
-        # the below sequence should correspond to `self.all_param_names`
+        # the below sequence should correspond to `self.cache.all_params_names`
         for instance in self.num_params.values():
             self._input[instance.name] = instance.v
 
@@ -794,6 +794,9 @@ class Model(object):
             self._input[instance.name] = instance.v
 
         for instance in self.services_ext.values():
+            self._input[instance.name] = instance.v
+
+        for instance in self.services_ops.values():
             self._input[instance.name] = instance.v
 
         # discrete flags
@@ -820,7 +823,7 @@ class Model(object):
         -------
         None
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         for instance in self.discrete.values():
             instance.check_var()
@@ -835,7 +838,7 @@ class Model(object):
         -------
         None
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         for instance in self.discrete.values():
             instance.check_eq()
@@ -850,7 +853,7 @@ class Model(object):
         -------
         None
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         for instance in self.discrete.values():
             instance.set_eq()
@@ -863,9 +866,8 @@ class Model(object):
         Service values are updated sequentially.
         The ``v`` attribute of services will be assigned at a new memory.
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
-
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
                 func = self.calls.s_lambdify[name]
@@ -1236,8 +1238,9 @@ class Model(object):
         """
 
         self.triplets.clear_ijv()
-        if self.n == 0:
+        if self.n == 0:  # do not check `self.in_use` here
             return
+
         if self.flags['address'] is False:
             return
 
@@ -1282,7 +1285,7 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
@@ -1327,7 +1330,7 @@ class Model(object):
         Evaluate differential equations.
         """
 
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         kwargs = self.get_inputs()
 
@@ -1348,7 +1351,7 @@ class Model(object):
         Evaluate algebraic equations.
         """
 
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         kwargs = self.get_inputs()
 
@@ -1373,8 +1376,10 @@ class Model(object):
         -------
         None
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
+        if self.class_name == 'COI':
+            pass
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
         kwargs = self.get_inputs()
@@ -1411,7 +1416,7 @@ class Model(object):
         -------
         None
         """
-        if self.n == 0:
+        if (self.n == 0) or not (self.in_use):
             return
 
         for timer in self.timer_params.values():
@@ -1458,6 +1463,7 @@ class Model(object):
         return OrderedDict(list(self.num_params.items()) +
                            list(self.services.items()) +
                            list(self.services_ext.items()) +
+                           list(self.services_ops.items()) +
                            list(self.discrete.items())
                            )
 
@@ -1508,7 +1514,7 @@ class Model(object):
         """
         Reset addresses to empty and reset flags['address'] to ``False``.
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         for var in self.cache.all_vars.values():
             var.reset()
@@ -1519,7 +1525,7 @@ class Model(object):
         """
         Clear equation value arrays associated with all internal variables.
         """
-        if self.n == 0:
+        if (self.n == 0) or (not self.in_use):
             return
         for instance in self.cache.all_vars.values():
             instance.e[:] = 0
@@ -1556,6 +1562,15 @@ class Model(object):
         It is only called once by `store_sparse_pattern`.
         """
         pass
+
+    @property
+    def in_use(self):
+        """
+        Return model in-use status.
+
+        This is used by models with RefParam to disable equation/Jacobian computation when no model is referencing.
+        """
+        return True
 
     def _param_doc(self, max_width=80, export='plain'):
         """

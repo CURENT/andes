@@ -370,7 +370,7 @@ class DAE(object):
         template = '{:>6g}, {:>25s}, {:>35s}\n'
 
         # header line
-        out += template.format(0, 'Time [s]', '$Time\\ [s]$')
+        out += template.format(0, 'Time [s]', 'Time [s]')
 
         # output variable indices
         idx = list(range(self.m + self.n + self.o))
