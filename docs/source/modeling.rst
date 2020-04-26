@@ -607,7 +607,7 @@ The `v_setter` flag is checked when collecting data from models to the numerical
 If one of the variable or external variable has `v_setter is True`, it will, at the end, set the values in the
 DAE array to its value. Only one `VarBase` of the same address is allowed to have `v_setter == True`.
 
-The `v_setter` Example
+A `v_setter` Example
 ------------------------
 A Bus is allowed to default the initial voltage magnitude to 1 and the voltage phase angle to 0.
 If a PV device is connected to a Bus device, the PV should be allowed to override the voltage initial value

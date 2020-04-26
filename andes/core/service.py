@@ -443,8 +443,8 @@ class RefFlatten(OperationService):
     --------
     This class is used when one wants to pass `RefParam` values as indexer.
 
-    :py:class:`andes.models.coi.COI` collects referencing :py:class`andes.models.group.SynGen`
-    with
+    :py:class:`andes.models.coi.COI` collects referencing
+    :py:class:`andes.models.group.SynGen` with
 
     .. code-block :: python
 
