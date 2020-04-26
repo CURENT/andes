@@ -870,7 +870,10 @@ Examples
 
 TGOV1
 -----
-The TGOV1 turbine governor model is used as a practical example using the library.
+The TGOV1 turbine governor model is shown as a practical example using the library.
+
+.. image:: images/example-tgov1/tgov1.png
+    :align: center
 
 This model is composed of a lead-lag transfer function and a first-order lag transfer function
 with an anti-windup limiter, which are sufficiently complex for demonstration.
