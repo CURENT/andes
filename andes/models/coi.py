@@ -4,7 +4,8 @@ Classes for Center of Inertia calculation.
 import numpy as np
 
 from andes.core.param import RefParam, ExtParam
-from andes.core.service import NumRepeater, IdxRepeater, ReducerService, FlattenService, ExtService
+from andes.core.service import NumRepeat, IdxRepeat
+from andes.core.service import NumReduce, RefFlatten, ExtService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
 
@@ -24,7 +25,7 @@ class COIModel(Model):
         self.group = 'Calculation'
         self.flags.update({'tds': True})
 
-        self.SynGenIdx = FlattenService(ref=self.SynGen)
+        self.SynGenIdx = RefFlatten(ref=self.SynGen)
 
         self.M = ExtParam(model='SynGen', src='M',
                           indexer=self.SynGenIdx, export=False,
@@ -49,33 +50,32 @@ class COIModel(Model):
                                tex_name=r'\delta_{gen,0}',
                                info='Linearly stored initial delta',
                                )
-        self.ang0avg = ReducerService(u=self.ang0,
-                                      tex_name=r'\delta{gen,0,avg}',
-                                      fun=np.average,
-                                      ref=self.SynGen,
-                                      info='Average initial rotor angle',
-                                      )
-
-        self.Mt = ReducerService(u=self.M,
-                                 tex_name='M_t',
-                                 fun=np.sum,
+        self.ang0avg = NumReduce(u=self.ang0,
+                                 tex_name=r'\delta_{gen,0,avg}',
+                                 fun=np.average,
                                  ref=self.SynGen,
-                                 info='Summation of M by COI index',
+                                 info='Average initial rotor angle',
                                  )
 
-        self.Mtr = NumRepeater(u=self.Mt,
-                               tex_name='M_{tr}',
-                               ref=self.SynGen,
-                               info='Repeated summation of M',
-                               )
+        self.Mt = NumReduce(u=self.M,
+                            tex_name='M_t',
+                            fun=np.sum,
+                            ref=self.SynGen,
+                            info='Summation of M by COI index',
+                            )
 
-        self.pidx = IdxRepeater(u=self.idx, ref=self.SynGen)
+        self.Mtr = NumRepeat(u=self.Mt,
+                             tex_name='M_{tr}',
+                             ref=self.SynGen,
+                             info='Repeated summation of M',
+                             )
+
+        self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
 
         # Note: even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
-        #       When no SynGen is referencing any COI, to avoid singular Jacobian,
-        #       one needs to use `diag_eps`.
+        # When no SynGen is referencing any COI, j_update will not be called,
+        # and Jacobian will become singular. `diag_ep1e-6` needs to be used.
 
-        # `wcoi` must have `v_setter = True`, otherwise, values from `wcoi_sub` will be summed.
         self.omega = Algeb(tex_name=r'\omega_{coi}',
                            info='COI speed',
                            v_str='1',
@@ -91,6 +91,8 @@ class COIModel(Model):
                            diag_eps=1e-6,
                            )
 
+        # `omega_sub` or `delta_sub` cannot provide `v_str`.
+        # Otherwise, variable values will be incorrectly summed for `omega` and `delta`.
         self.omega_sub = ExtAlgeb(model='COI',
                                   src='omega',
                                   e_str='M * wgen / Mtr',

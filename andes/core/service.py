@@ -66,7 +66,7 @@ class BaseService(object):
 
 class ConstService(BaseService):
     """
-    Service "variables" that stays constant.
+    A type of Service that stays constant once initialized.
 
     ConstService are usually constants calculated from parameters. They are only evaluated once in the
     initialization phase before variables are initialized. Therefore, uninitialized variables must not be
@@ -205,11 +205,11 @@ class OperationService(BaseService):
 
     See Also
     --------
-    ReducerService : Service for Reducing linearly stored 2-D services into 1-D
+    NumReduce : Service for Reducing linearly stored 2-D services into 1-D
 
-    NumRepeater : Service for repeating 1-D NumParam/ v-array following a sub-pattern
+    NumRepeat : Service for repeating 1-D NumParam/ v-array following a sub-pattern
 
-    IdxRepeater : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
+    IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
     def __init__(self,
                  ref: RefParam,
@@ -233,12 +233,12 @@ class OperationService(BaseService):
         self._v = value
 
 
-class ReducerService(OperationService):
+class NumReduce(OperationService):
     """
     A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 
-    ReducerService works with ExtParam whose `v` field is a list of lists. A reduce function
-    which takes an array-like and returns a scalar need to be supplied. ReducerService calls the reduce
+    NumReduce works with ExtParam whose `v` field is a list of lists. A reduce function
+    which takes an array-like and returns a scalar need to be supplied. NumReduce calls the reduce
     function on each of the lists and return all the scalars in an array.
 
     Parameters
@@ -265,7 +265,7 @@ class ReducerService(OperationService):
                     src='Vn',
                     indexer=self.Bus)
 
-                self.Vn_mean = ReducerService(u=self.Vn,
+                self.Vn_mean = NumReduce(u=self.Vn,
                     fun=np.mean,
                     ref=self.Bus)
 
@@ -314,21 +314,21 @@ class ReducerService(OperationService):
             return self._v
 
 
-class NumRepeater(OperationService):
+class NumRepeat(OperationService):
     r"""
     A helper Service type which repeats a v-provider's value based on the shape from a RefParam
 
     Examples
     --------
-    NumRepeater was originally designed for computing the inertia-weighted average rotor speed (center of
+    NumRepeat was originally designed for computing the inertia-weighted average rotor speed (center of
     inertia speed). COI speed is computed with
 
     .. math ::
         \omega_{COI} = \frac{ \sum{M_i * \omega_i} } {\sum{M_i}}
 
     The numerator can be calculated with a mix of RefParam, ExtParam and ExtState. The denominator needs to be
-    calculated with ReducerService and Service Repeat. That is, use ReducerService to calculate the sum,
-    and use NumRepeater to repeat the summed value for each device.
+    calculated with NumReduce and Service Repeat. That is, use NumReduce to calculate the sum,
+    and use NumRepeat to repeat the summed value for each device.
 
     In the COI class, one would have ::
 
@@ -336,23 +336,23 @@ class NumRepeater(OperationService):
             def __init__(...):
                 ...
                 self.SynGen = RefParam()
-
+                self.SynGenIdx = RefFlatten(ref=self.SynGen)
                 self.M = ExtParam(model='SynGen',
                                   src='M',
-                                  indexer=self.SynGen)
+                                  indexer=self.SynGenIdx)
 
                 self.wgen = ExtState(model='SynGen',
                                      src='omega',
-                                     indexer=self.SynGen)
+                                     indexer=self.SynGenIdx)
 
-                self.Mt = ReducerService(u=self.M,
+                self.Mt = NumReduce(u=self.M,
                                          fun=np.sum,
                                          ref=self.SynGen)
 
-                self.Mtr = NumRepeater(u=self.Mt,
+                self.Mtr = NumRepeat(u=self.Mt,
                                        ref=self.SynGen)
 
-                self.pidx = IdxRepeater(u=self.idx,ref=self.SynGen)
+                self.pidx = IdxRepeat(u=self.idx,ref=self.SynGen)
 
     Finally, one would define the center of inertia speed as ::
 
@@ -397,9 +397,12 @@ class NumRepeater(OperationService):
             return self._v
 
 
-class IdxRepeater(OperationService):
+class IdxRepeat(OperationService):
     """
     Helper class to repeat IdxParam.
+
+    This class has the same functionality as :py:class:`andes.core.service.NumRepeat`
+    but only operates on IdxParam, DataParam or NumParam.
     """
     def __init__(self,
                  u,
@@ -421,7 +424,36 @@ class IdxRepeater(OperationService):
             return self._v
 
 
-class FlattenService(OperationService):
+class RefFlatten(OperationService):
+    """
+    A service type for flattening :py:class:`andes.core.param.RefParam` into a 1-D list.
+
+    Examples
+    --------
+    This class is used when one wants to pass `RefParam` values as indexer.
+
+    :py:class:`andes.models.coi.COI` collects referencing :py:class`andes.models.group.SynGen`
+    with
+
+    .. code-block :: python
+
+        self.SynGen = RefParam(info='SynGen idx lists', export=False)
+
+    After collecting RefParams, `self.SynGen.v` will become a two-level list of indices,
+    where the first level correspond to each COI and the second level correspond to generators
+    of the COI.
+
+    Convert `self.SynGen` into 1-d as `self.SynGenIdx`, which can be passed as indexer for
+    retrieving other parameters and variables
+
+    .. code-block :: python
+
+        self.SynGenIdx = RefFlatten(ref=self.SynGen)
+
+        self.M = ExtParam(model='SynGen', src='M',
+                          indexer=self.SynGenIdx, export=False,
+                          )
+    """
     def __init__(self, ref, **kwargs):
         super().__init__(ref=ref, **kwargs)
 
@@ -432,7 +464,7 @@ class FlattenService(OperationService):
 
 class RandomService(BaseService):
     """
-    A service variable for generating random numbers.
+    A service type for generating random numbers.
 
     Parameters
     ----------

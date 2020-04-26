@@ -578,8 +578,8 @@ class RefParam(BaseParam):
     `RefParam`. The `v``field will be a list of lists, each containing the `idx` of other models
     referencing each device of the parent model.
 
-    RefParam can be passed as indexer for params and vars, or shape for `ReducerService` and
-    `NumRepeater`. See examples for illustration.
+    RefParam can be passed as indexer for params and vars, or shape for `NumReduce` and
+    `NumRepeat`. See examples for illustration.
 
     Examples
     --------
@@ -625,7 +625,7 @@ class RefParam(BaseParam):
 
     See Also
     --------
-    andes.core.service.ReducerService : A more complete example using RefParam to build the COI model
+    andes.core.service.NumReduce : A more complete example using RefParam to build the COI model
 
     """
     def __init__(self, **kwargs):
