@@ -544,8 +544,7 @@ class Delay(Discrete):
 
         self.t = np.array([0])
         self.v = np.array([0])
-
-        self._v_store = np.zeros((0, 1))
+        self._v_mem = np.zeros((0, 1))
 
     def list2array(self, n):
         """
@@ -553,46 +552,50 @@ class Delay(Discrete):
         """
         super().list2array(n)
         if self.mode == 'step':
-            self._v_store = np.zeros((n, self.delay + 1))
+            self._v_mem = np.zeros((n, self.delay + 1))
         else:
-            self._v_store = np.zeros((n, 1))
+            self._v_mem = np.zeros((n, 1))
 
     def check_var(self, dae_t, *args, **kwargs):
 
+        # Storage:
+        # Output values is in the first col.
+        # Latest values are stored in /appended to the last column
         if dae_t == 0:
-            self._v_store[:] = self.u.v[:, None]
+            self._v_mem[:] = self.u.v[:, None]
 
         elif dae_t < self.t[-1]:
             self.t[-1] = dae_t
-            self._v_store[:, -1] = self.u.v
+            self._v_mem[:, -1] = self.u.v
 
         elif dae_t == self.t[-1]:
-            self._v_store[:, -1] = self.u.v
+            self._v_mem[:, -1] = self.u.v
 
         elif dae_t > self.t[-1]:
             if self.mode == 'step':
                 self.t[:-1] = self.t[1:]
                 self.t[-1] = dae_t
 
-                self._v_store[:, :-1] = self._v_store[:, 1:]
-                self._v_store[:, -1] = self.u.v
+                self._v_mem[:, :-1] = self._v_mem[:, 1:]
+                self._v_mem[:, -1] = self.u.v
             else:
                 self.t = np.append(self.t, dae_t)
-                self._v_store = np.hstack((self._v_store, self.u.v[:, None]))
+                self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
 
                 if dae_t - self.t[0] > self.delay:
                     t_interp = dae_t - self.delay
                     idx = np.argmax(self.t >= t_interp) - 1
-
-                    v_interp = interp_n2(t_interp, self.t[idx:idx+2], self._v_store[:, idx:idx+2])
+                    v_interp = interp_n2(t_interp,
+                                         self.t[idx:idx+2],
+                                         self._v_mem[:, idx:idx + 2])
 
                     self.t[idx] = t_interp
-                    self._v_store[:, idx] = v_interp
+                    self._v_mem[:, idx] = v_interp
 
                     self.t = np.delete(self.t, np.arange(0, idx))
-                    self._v_store = np.delete(self._v_store, np.arange(0, idx), axis=1)
+                    self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
 
-        self.v[:] = self._v_store[:, 0]
+        self.v[:] = self._v_mem[:, 0]
 
 
 class Average(Delay):
@@ -601,7 +604,7 @@ class Average(Delay):
     """
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
-        self.v[:] = np.average(self._v_store, axis=0)
+        self.v[:] = np.average(self._v_mem, axis=0)
 
 
 class Derivative(Delay):
@@ -609,8 +612,8 @@ class Derivative(Delay):
     Compute the derivative of an algebraic variable using numerical differentiation.
     """
     def __init__(self, u, name=None, tex_name=None, info=None):
-        Delay.__init__(u=u, mode='step', delay=1, name=name, tex_name=tex_name, info=info)
+        Delay.__init__(self, u=u, mode='step', delay=1, name=name, tex_name=tex_name, info=info)
 
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
-        self.v[:] = (self._v_store[:, 1] - self._v_store[:, 0]) / (self.t[1] - self.t[0])
+        self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])

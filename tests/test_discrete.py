@@ -134,5 +134,3 @@ class TestDelay(unittest.TestCase):
             dae_t += tstep
 
         np.testing.assert_almost_equal(self.vt, [(n_forward - 1) * tstep - self.time] * self.n)
-
-

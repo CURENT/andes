@@ -20,12 +20,18 @@ def interp_n2(t, x, y):
 
     Parameters
     ----------
-    t
-    x
-    y
+    t : float
+        Point for which the interpolation is calculated
+    x : 1-d array with two values
+        x-axis values
+    y : 2-d array with size N-by-2
+        Values corresponding to x
 
     Returns
     -------
+    N-by-1 array
+        interpolated values at `t`
 
     """
+
     return y[:, 0] + (t - x[0]) * (y[:, 1] - y[:, 0]) / (x[1] - x[0])

@@ -31,6 +31,10 @@ jobs:
     displayName: 'pytest'
 
   - script: |
+      make -C docs html  # Build the documentation.
+    displayName: 'make documentation'
+
+  - script: |
       coverage run -m pytest  # Run the tests and check for test coverage.
       coverage report -m  # Generate test coverage report.
       codecov  # Upload the report to codecov.
