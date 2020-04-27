@@ -378,7 +378,7 @@ class Switcher(Discrete):
     def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
-        self.option: Union[List, Tuple] = options
+        self.options: Union[List, Tuple] = options
         self.cache: bool = cache
         self._eval: bool = False  # if the flags has been evaluated
 
@@ -389,11 +389,20 @@ class Switcher(Discrete):
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
 
     def check_var(self, *args, **kwargs):
-        """Set the switcher flags based on inputs. Uses cached flags if cache is set to True."""
+        """
+        Set the switcher flags based on inputs. Uses cached flags if cache is set to True.
+
+        TODO: check if all inputs are valid
+        """
         if self.cache and self._eval:
             return
-        for i in range(len(self.option)):
-            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.option[i]).astype(np.float64)
+
+        for v in self.u.v:
+            if v not in self.options:
+                raise ValueError(f'option {v} is invalid for {self.owner.class_name}.{self.u.name}. '
+                                 f'Options are {self.options}.')
+        for i in range(len(self.options)):
+            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i]).astype(np.float64)
 
         self._eval = True
 
@@ -553,6 +562,7 @@ class Delay(Discrete):
         super().list2array(n)
         if self.mode == 'step':
             self._v_mem = np.zeros((n, self.delay + 1))
+            self.t = np.zeros(self.delay + 1)
         else:
             self._v_mem = np.zeros((n, 1))
 
@@ -604,7 +614,15 @@ class Average(Delay):
     """
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
-        self.v[:] = np.average(self._v_mem, axis=0)
+
+        if dae_t == 0:
+            self.v[:] = self._v_mem[:, -1]
+            self._v_mem[:, :-1] = 0
+            return
+        else:
+            nt = len(self.t)
+            self.v[:] = 0.5 * np.sum((self._v_mem[:, 1-nt:] + self._v_mem[:, -nt:-1]) *
+                                     (self.t[1:] - self.t[:-1]), axis=1) / (self.t[-1] - self.t[0])
 
 
 class Derivative(Delay):
@@ -612,8 +630,12 @@ class Derivative(Delay):
     Compute the derivative of an algebraic variable using numerical differentiation.
     """
     def __init__(self, u, name=None, tex_name=None, info=None):
-        Delay.__init__(self, u=u, mode='step', delay=1, name=name, tex_name=tex_name, info=info)
+        Delay.__init__(self, u=u, mode='step', delay=1,
+                       name=name, tex_name=tex_name, info=info)
 
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
-        self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
+        if dae_t == 0:
+            self.v[:] = 0
+        else:
+            self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])

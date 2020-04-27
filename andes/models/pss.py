@@ -5,7 +5,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
 from andes.core.service import ExtService, OptionalSelect
-from andes.core.discrete import Switcher, Limiter
+from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
 
 import logging
@@ -106,6 +106,8 @@ class IEEESTModel(PSSBase):
         self.buss = OptionalSelect(self.busr, self.bus, info='selected bus (bus or busr)')
         self.v.indexer = self.buss
 
+        self.dv = Derivative(self.v)
+
         self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
                                info='Machine base to sys base factor for power',
                                tex_name='(Sn/Sb)')
@@ -119,17 +121,17 @@ class IEEESTModel(PSSBase):
                             )
         # input signals (MODE):
         # 1 (s0) - Rotor speed deviation (p.u.)
-        # 2 (s1) - Bus frequency deviation (p.u.)                 # TODO: calculate freq without reimpl.
+        # 2 (s1) - Bus frequency deviation (p.u.)  # TODO: calculate freq without reimpl.
         # 3 (s2) - Generator P electrical in Gen MVABase (p.u.)
         # 4 (s3) - Generator accelerating power (p.u.)
         # 5 (s4) - Bus voltage (p.u.)
-        # 6 (s5) - Derivative of p.u. bus voltage                 # TODO: memory block for calc. of derivative
+        # 6 (s5) - Derivative of p.u. bus voltage
 
         self.signal.v_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
                             'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0'
 
         self.signal.e_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(te/SnSb) + ' \
-                            'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0 - signal'
+                            'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*dv_v - signal'
 
         self.F1 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)
 

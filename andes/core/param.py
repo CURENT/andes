@@ -519,8 +519,6 @@ class ExtParam(NumParam):
         """
         Update parameter values provided by external models. This needs to be called before pu conversion.
 
-        TODO: Check if the pu conversion is correct or not.
-
         Parameters
         ----------
         ext_model : Model, Group
@@ -530,11 +528,11 @@ class ExtParam(NumParam):
         self.parent_model = ext_model
 
         if isinstance(ext_model, GroupBase):
+            # copy properties from models in the group
 
-            # TODO: the three lines below is a bit inefficient - 3x same loops
+            # TODO: the three `get` calls below is a bit inefficient - same loops for three times
             try:
                 self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
-
             except IndexError:
                 pass
 
@@ -545,8 +543,6 @@ class ExtParam(NumParam):
                 pass
             except TypeError:  # vin or pu_coeff is None
                 pass
-
-            # TODO: copy properties from models in the group
 
         else:
             parent_instance = ext_model.__dict__[self.src]
