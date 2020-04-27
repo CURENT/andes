@@ -595,19 +595,22 @@ class Delay(Discrete):
         self.v[:] = self._v_store[:, 0]
 
 
-class Average(Discrete):
+class Average(Delay):
     """
     Compute the average of a BaseVar over a period of time or a number of samples.
     """
-    pass
+    def check_var(self, dae_t, *args, **kwargs):
+        Delay.check_var(self, dae_t, *args, **kwargs)
+        self.v[:] = np.average(self._v_store, axis=0)
 
 
-class Derivative(Discrete):
+class Derivative(Delay):
     """
     Compute the derivative of an algebraic variable using numerical differentiation.
     """
-    pass
+    def __init__(self, u, name=None, tex_name=None, info=None):
+        Delay.__init__(u=u, mode='step', delay=1, name=name, tex_name=tex_name, info=info)
 
-
-class Cumulation(Discrete):
-    pass
+    def check_var(self, dae_t, *args, **kwargs):
+        Delay.check_var(self, dae_t, *args, **kwargs)
+        self.v[:] = (self._v_store[:, 1] - self._v_store[:, 0]) / (self.t[1] - self.t[0])
