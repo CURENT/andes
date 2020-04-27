@@ -28,7 +28,6 @@ class COIModel(Model):
     :py:class:`andes.core.service.IdxFlatten`, and
     :py:class:`andes.core.param.RefParam`.
     """
-
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Calculation'
@@ -38,7 +37,7 @@ class COIModel(Model):
 
         self.M = ExtParam(model='SynGen', src='M',
                           indexer=self.SynGenIdx, export=False,
-                          info='Linearlly stored SynGen.M',
+                          info='Linearly stored SynGen.M',
                           )
 
         self.wgen = ExtState(model='SynGen',

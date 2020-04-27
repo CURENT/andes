@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 
 class Discrete(object):
     """
-    Base class for discrete components which exports boolean flags.
+    Base discrete class.
+
+    Discrete classes export flag arrays (usually boolean) .
     """
 
     def __init__(self, name=None, tex_name=None, info=None):
@@ -531,3 +533,21 @@ class Memory(Discrete):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.steps = steps
+
+
+class Average(Discrete):
+    """
+    Compute the average of a BaseVar over a period of time or a number of samples.
+    """
+    pass
+
+
+class Derivative(Discrete):
+    """
+    Compute the derivative of an algebraic variable using numerical differentiation.
+    """
+    pass
+
+
+class Cumulation(Discrete):
+    pass
