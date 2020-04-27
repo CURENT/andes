@@ -813,7 +813,7 @@ class Model(object):
         for key, val in self.config.as_dict().items():
             self._input[key] = val
 
-    def l_update_var(self):
+    def l_update_var(self, dae_t):
         """
         Call the ``check_var`` method of discrete components to update the internal status flags.
 
@@ -826,7 +826,7 @@ class Model(object):
         if (self.n == 0) or (not self.in_use):
             return
         for instance in self.discrete.values():
-            instance.check_var()
+            instance.check_var(dae_t)
 
     def l_check_eq(self):
         """
@@ -1568,7 +1568,8 @@ class Model(object):
         """
         Return model in-use status.
 
-        This is used by models with RefParam to disable equation/Jacobian computation when no model is referencing.
+        This is used by models with RefParam to disable Jacobian
+        computation when no model is referencing.
         """
         return True
 
@@ -1818,7 +1819,9 @@ class Model(object):
 
     def _block_doc(self, max_width=80, export='plain'):
         """
-        Documentation for blocks. To be implemented.
+        Documentation for blocks.
+
+        TODO: To be implemented.
         """
         return ''
 

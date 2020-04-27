@@ -195,7 +195,7 @@ class System(object):
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
-        self._call_models_method('a_reset', models=self.models)
+        self.call_model('a_reset', models=self.models)
         self.e_clear()
         self._p_restore()
         self.setup()
@@ -448,7 +448,7 @@ class System(object):
 
         This function is usually called before any equation evaluation.
         """
-        self._call_models_method('l_update_var', models)
+        self.call_model('l_update_var', models, self.dae.t)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -457,7 +457,7 @@ class System(object):
         This function is usually called after differential equation updates.
         Currently, it is used exclusively for collecting anti-windup limiter status.
         """
-        self._call_models_method('l_check_eq', models)
+        self.call_model('l_check_eq', models)
 
     def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -466,7 +466,7 @@ class System(object):
         This function is evaluated afte ``l_check_eq``.
         Currently, it is only used by anti-windup limiters to record changes.
         """
-        self._call_models_method('l_set_eq', models)
+        self.call_model('l_set_eq', models)
 
     def fg_to_dae(self):
         """
@@ -492,7 +492,7 @@ class System(object):
         -----
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
-        self._call_models_method('f_update', models)
+        self.call_model('f_update', models)
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -502,7 +502,7 @@ class System(object):
         -----
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
-        self._call_models_method('g_update', models)
+        self.call_model('g_update', models)
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -517,7 +517,7 @@ class System(object):
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
-        self._call_models_method('j_update', models)
+        self.call_model('j_update', models)
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
@@ -550,7 +550,7 @@ class System(object):
         term in the equations.
         """
         models = self._get_models(models)
-        self._call_models_method('store_sparse_pattern', models)
+        self.call_model('store_sparse_pattern', models)
 
         # add variable jacobian values
         for jname in jac_names:
@@ -780,26 +780,39 @@ class System(object):
             if var.t_const is not None:
                 np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+    def call_model(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """
-        Wrapper to call model methods.
-        """
-        single = False
-        if isinstance(models, Model):
-            models = {models.class_name: models}
-            single = True
-        if not isinstance(models, (OrderedDict, dict)):
-            models = self._get_models(models)
+        Call methods on the given models.
 
-        ret = [getattr(mdl, method)() for mdl in models.values()]
-        if single is True:
-            ret = ret[0]
+        Parameters
+        ----------
+        method : str
+            Name of the model method to be called
+        models : OrderedDict, list, str
+            Models on which the method will be called
+        args
+            Positional arguments to be passed to the model method
+        kwargs
+            Keyword arguments to be passed to the model method
+
+        Returns
+        -------
+        The return value of the models in an OrderedDict
+
+        """
+        models = self._get_models(models)
+
+        ret = OrderedDict()
+        for name, mdl in models.items():
+            ret[name] = getattr(mdl, method)(*args, **kwargs)
 
         return ret
 
     def _check_group_common(self):
         """
         Check if all group common variables and parameters are met.
+
+        This function is called at the end of code generation by `prepare`.
 
         Raises
         ------
@@ -852,22 +865,22 @@ class System(object):
         """
         Generate empty files for storing lambdified Python code (TODO)
         """
-        self._call_models_method('generate_pycode_file', self.models)
+        self.call_model('generate_pycode_file', self.models)
 
     def _generate_initializers(self):
-        self._call_models_method('generate_initializers', self.models)
+        self.call_model('generate_initializers', self.models)
 
     def _generate_symbols(self):
-        self._call_models_method('generate_symbols', self.models)
+        self.call_model('generate_symbols', self.models)
 
     def _generate_pretty_print(self):
-        self._call_models_method('generate_pretty_print', self.models)
+        self.call_model('generate_pretty_print', self.models)
 
     def _generate_equations(self):
-        self._call_models_method('generate_equations', self.models)
+        self.call_model('generate_equations', self.models)
 
     def _generate_jacobians(self):
-        self._call_models_method('generate_jacobians', self.models)
+        self.call_model('generate_jacobians', self.models)
 
     def import_groups(self):
         """
@@ -986,7 +999,7 @@ class System(object):
         This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
-        self._call_models_method('e_clear', models)
+        self.call_model('e_clear', models)
 
     def remove_pycapsule(self):
         """
@@ -1004,7 +1017,7 @@ class System(object):
             self.calls[name] = mdl.calls
 
     def _list2array(self):
-        self._call_models_method('list2array', self.models)
+        self.call_model('list2array', self.models)
 
     def set_config(self, config=None):
         """

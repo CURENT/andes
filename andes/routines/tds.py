@@ -199,6 +199,12 @@ class TDS(BaseRoutine):
 
         return ret
 
+    def rewind(self, t):
+        """
+        TODO: rewind to a past time.
+        """
+        pass
+
     def load_plotter(self):
         """
         Manually load a plotter into ``TDS.plotter``.

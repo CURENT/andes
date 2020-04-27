@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Union, Tuple, List
 from andes.shared import np
+from andes.utils.func import interp_n2
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class Discrete(object):
         self.x_set = list()
         self.y_set = list()  # NOT being used
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         This function is called in ``l_update_var`` before evaluating equations.
 
@@ -98,7 +99,7 @@ class LessThan(Discrete):
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         If enabled, set flags based on inputs. Use cached values if enabled.
         """
@@ -161,7 +162,7 @@ class Limiter(Discrete):
         self.export_flags = ['zl', 'zi', 'zu']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Evaluate the flags.
         """
@@ -184,7 +185,7 @@ class SortedLimiter(Limiter):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
         self.n_select = int(n_select) if n_select else 0
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         if not self.enable:
             return
         super().check_var()
@@ -238,7 +239,7 @@ class AntiWindup(Limiter):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
         self.state = state if state else u
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         This function is empty. Defers `check_var` to `check_eq`.
         """
@@ -324,7 +325,7 @@ class Selector(Discrete):
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input.
         """
@@ -387,7 +388,7 @@ class Switcher(Discrete):
         self.export_flags = [f's{i}' for i in range(len(options))]
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """Set the switcher flags based on inputs. Uses cached flags if cache is set to True."""
         if self.cache and self._eval:
             return
@@ -483,7 +484,7 @@ class DeadBand(Limiter):
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Notes
         -----
@@ -524,15 +525,74 @@ class DeadBand(Limiter):
         self.zi[:] = zi.astype(np.float64)
 
 
-class Memory(Discrete):
+class Delay(Discrete):
     """
-    Memory class to memorize past variable values.
+    Delay class to memorize past variable values.
     """
 
-    def __init__(self, u, steps=1, name=None, tex_name=None, info=None):
+    def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        if mode not in ('step', 'time'):
+            raise ValueError(f'mode {mode} is invalid. Must be in "step" or "time"')
+
         self.u = u
-        self.steps = steps
+        self.mode = mode
+        self.delay = delay
+        self.export_flags = ['v']
+        self.export_flags_tex = ['v']
+
+        self.t = np.array([0])
+        self.v = np.array([0])
+
+        self._v_store = np.zeros((0, 1))
+
+    def list2array(self, n):
+        """
+        Allocate memory for storage arrays.
+        """
+        super().list2array(n)
+        if self.mode == 'step':
+            self._v_store = np.zeros((n, self.delay + 1))
+        else:
+            self._v_store = np.zeros((n, 1))
+
+    def check_var(self, dae_t, *args, **kwargs):
+
+        if dae_t == 0:
+            self._v_store[:] = self.u.v[:, None]
+
+        elif dae_t < self.t[-1]:
+            self.t[-1] = dae_t
+            self._v_store[:, -1] = self.u.v
+
+        elif dae_t == self.t[-1]:
+            self._v_store[:, -1] = self.u.v
+
+        elif dae_t > self.t[-1]:
+            if self.mode == 'step':
+                self.t[:-1] = self.t[1:]
+                self.t[-1] = dae_t
+
+                self._v_store[:, :-1] = self._v_store[:, 1:]
+                self._v_store[:, -1] = self.u.v
+            else:
+                self.t = np.append(self.t, dae_t)
+                self._v_store = np.hstack((self._v_store, self.u.v[:, None]))
+
+                if dae_t - self.t[0] > self.delay:
+                    t_interp = dae_t - self.delay
+                    idx = np.argmax(self.t >= t_interp) - 1
+
+                    v_interp = interp_n2(t_interp, self.t[idx:idx+2], self._v_store[:, idx:idx+2])
+
+                    self.t[idx] = t_interp
+                    self._v_store[:, idx] = v_interp
+
+                    self.t = np.delete(self.t, np.arange(0, idx))
+                    self._v_store = np.delete(self._v_store, np.arange(0, idx), axis=1)
+
+        self.v[:] = self._v_store[:, 0]
 
 
 class Average(Discrete):
