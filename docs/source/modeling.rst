@@ -819,7 +819,7 @@ variables need to placed in a dictionary, ``self.vars`` at the end of the block 
 
 Blocks can be nested as advanced usage. See the following API documentation for more details.
 
-.. automodule:: andes.core.block.Block
+.. autoclass:: andes.core.block.Block
     :noindex:
 
 Transfer Functions
@@ -830,38 +830,38 @@ They can be imported to build new models.
 
 Algebraic
 `````````
-.. automodule:: andes.core.block.Gain
+.. autoclass:: andes.core.block.Gain
     :noindex:
 
 First Order
 ```````````
-.. automodule:: andes.core.block.Integrator
+.. autoclass:: andes.core.block.Integrator
     :noindex:
 
-.. automodule:: andes.core.block.Lag
+.. autoclass:: andes.core.block.Lag
     :noindex:
 
-.. automodule:: andes.core.block.LagAntiWindup
+.. autoclass:: andes.core.block.LagAntiWindup
     :noindex:
 
-.. automodule:: andes.core.block.Washout
+.. autoclass:: andes.core.block.Washout
     :noindex:
 
-.. automodule:: andes.core.block.WashoutOrLag
+.. autoclass:: andes.core.block.WashoutOrLag
     :noindex:
 
 Second Order
 ````````````
-.. automodule:: andes.core.block.LeadLag
+.. autoclass:: andes.core.block.LeadLag
     :noindex:
 
-.. automodule:: andes.core.block.LeadLagLimit
+.. autoclass:: andes.core.block.LeadLagLimit
     :noindex:
 
-.. automodule:: andes.core.block.Lag2ndOrd
+.. autoclass:: andes.core.block.Lag2ndOrd
     :noindex:
 
-.. automodule:: andes.core.block.LeadLag2ndOrd
+.. autoclass:: andes.core.block.LeadLag2ndOrd
     :noindex:
 
 
