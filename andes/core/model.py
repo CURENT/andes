@@ -1,5 +1,5 @@
 """
-Base class for building ANDES models
+Base class for building ANDES models.
 """
 import os
 import logging

@@ -169,7 +169,7 @@ class ExtService(BaseService):
 
 class BackRef(BaseService):
     """
-    A special type of reference collector parameter.
+    A special type of reference collector.
 
     `BackRef` is used for collecting device indices of other models referencing the parent model of the
     `BackRef`. The `v``field will be a list of lists, each containing the `idx` of other models
@@ -266,24 +266,27 @@ class OptionalSelect(BaseService):
 
 class DeviceFinder(BaseService):
     """
-    Service for finding indices of devices if not provided.
-    Create if not exist.
+    Service for finding indices of optionally linked devices.
+
+    If not provided, `DeviceFinder` will add devices at the beginning of `System.setup`.
 
     Examples
     --------
-    IEEEST PSS takes an optional `busf` (IdxParam) for specifying the connected BusFreq,
-    which is only needed for mode 6.
+    IEEEST stabilizer takes an optional `busf` (IdxParam) for specifying the connected BusFreq,
+    which is needed for mode 6. To avoid reimplementing `BusFreq` within IEEEST, one can do
 
-    If `busf` is not specified, `DeviceFinder` can help to find or create the indices of
-    BusFreq, based on the indices of the buses BusFreq needs to link to.
+    .. code-block :: python
 
-    u: busf
-    link: buss
-    idx_name: 'bus'
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 
-    If `busf` is None, a `BusFreq` device will be created to link to `buss` through
-    parameter `idx_name`
+    where `self.busf` is the optional input, `self.buss` is the bus indices that `busf` should measure,
+    and `idx_name` is the name of a BusFreq parameter through which the measured bus indices are specified.
+    For each `None` values in `self.busf`, a `BusFreq` is created to measure the corresponding bus in `self.buss`.
+
+    That is, ``BusFreq.[idx_name].v = [link]``. `DeviceFinder` will find / create `BusFreq` devices so that
+    the returned list of `BusFreq` indices are connected to `self.buss`, respectively.
     """
+
     def __init__(self, u, link, idx_name, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
 

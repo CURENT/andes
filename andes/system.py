@@ -31,14 +31,14 @@ class System(object):
     System contains models and routines for modeling and simulation.
 
     System contains a several special `OrderedDict` member attributes for housekeeping.
-    These attributes include ``models``, ``groups``, ``routines`` and ``calls`` for loaded models, groups,
+    These attributes include `models`, `groups`, `routines` and `calls` for loaded models, groups,
     analysis routines, and generated numerical function calls, respectively.
 
     Notes
     -----
     System stores model and routine instances as attributes.
     Model and routine attribute names are the same as their class names.
-    For example, ``Bus`` is stored at ``system.Bus``, the power flow calculation routine is at
+    For example, `Bus` is stored at ``system.Bus``, the power flow calculation routine is at
     ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See attributes for the list of
     attributes.
 

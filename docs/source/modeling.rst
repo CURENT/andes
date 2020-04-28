@@ -718,6 +718,9 @@ Shape manipulator services can be used in such case.
 `NumRepeat` is a helper Service type which repeats a 1-D value into linearly stored 2-D value based on the
 shape from a `BackRef`.
 
+.. autoclass:: andes.core.service.BackRef
+    :noindex:
+
 .. autoclass:: andes.core.service.NumReduce
     :noindex:
 
@@ -730,7 +733,9 @@ shape from a `BackRef`.
 .. autoclass:: andes.core.service.RefFlatten
     :noindex:
 
-.. autoclass:: andes.core.service.BackRef
+Device Finder
+-------------------------------------------
+.. autoclass:: andes.core.service.DeviceFinder
     :noindex:
 
 Discrete
