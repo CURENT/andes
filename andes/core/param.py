@@ -131,7 +131,7 @@ class BaseParam(object):
         if isinstance(self.v, list):
             self.v.append(value)
         else:
-            np.append(self.v, value)
+            self.v = np.append(self.v, value)
 
     def get_property(self, property_name: str):
         """

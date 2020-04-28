@@ -15,7 +15,7 @@ class BusFreq(ModelData, Model):
     """
     Bus frequency measurement.
 
-    Bus frequency output variable is `w`.
+    Bus frequency output variable is `f`.
     """
     def __init__(self, system, config):
         ModelData.__init__(self)
@@ -61,11 +61,11 @@ class BusFreq(ModelData, Model):
                           T=self.Tf,
                           info='angle washout',
                           )
-        self.w = State(info='post-delay output frequency',
+        self.f = State(info='post-delay output frequency',
                        unit='p.u. (Hz)',
-                       tex_name=r'\omega',
+                       tex_name='f',
                        v_str='1',
-                       e_str='1 + WO_y - w',
+                       e_str='1 + WO_y - f',
                        t_const=self.Tw
                        )
 
@@ -82,7 +82,7 @@ class BusROCOF(BusFreq):
                            info="frequency washout time constant",
                            tex_name='T_r')
 
-        self.Wf = Washout(u=self.w,
+        self.Wf = Washout(u=self.f,
                           K=1,
                           T=self.Tr,
                           info='frequency washout yielding ROCOF',

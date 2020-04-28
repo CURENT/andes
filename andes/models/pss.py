@@ -1,10 +1,10 @@
 """
-Power system stabilizer models
+Power system stabilizer models.
 """
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
-from andes.core.service import ExtService, OptionalSelect
+from andes.core.service import ExtService, OptionalSelect, DeviceFinder
 from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
 
@@ -24,7 +24,8 @@ class IEEESTData(ModelData):
                                   '(5) Vbus (6) dVbus/dt',
                              mandatory=True)
 
-        self.busr = IdxParam(info='Remote bus idx (local if empty)')
+        self.busr = IdxParam(info='Remote bus idx (local if empty)', model='Bus')
+        self.busf = IdxParam(info='BusFreq idx for mode 2', model='BusFreq')
 
         self.A1 = NumParam(default=1, tex_name='A_1', info='filter time const. (pole)')
         self.A2 = NumParam(default=1, tex_name='A_2', info='filter time const. (pole)')
@@ -59,14 +60,20 @@ class PSSBase(Model):
         self.group = 'PSS'
         self.flags.update({'tds': True})
 
+        # retrieve indices of connected generator, bus, and bus freq
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
                             info='Retrieved generator idx')
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
                             info='Retrieved bus idx')
+
+        self.buss = OptionalSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+
+        # from SynGen
         self.Sn = ExtParam(model='SynGen', src='Sn', indexer=self.syn, tex_name='S_n',
                            info='Generator power base', export=False)
 
-        # from SynGen
         self.omega = ExtState(model='SynGen', src='omega', indexer=self.syn,
                               tex_name=r'\omega', info='Generator speed', unit='p.u.',
                               )
@@ -81,9 +88,13 @@ class PSSBase(Model):
                            tex_name=r'\tau_e', info='Generator electrical output',
                            )
         # from Bus
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V',
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name=r'V',
                           info='Bus (or busr, if given) terminal voltage',
                           )
+
+        # from BusFreq
+        self.f = ExtState(model='BusFreq', src='f', indexer=self.busfreq, export=False,
+                          info='Bus frequency')
 
         # from Exciter
         self.vi = ExtAlgeb(model='Exciter', src='vi', indexer=self.avr, tex_name='v_i',
@@ -92,7 +103,7 @@ class PSSBase(Model):
 
         self.vsout = Algeb(info='PSS output voltage to exciter',
                            tex_name='v_{sout}',
-                           )  # `e_str` to be provided by specific models
+                           )  # `self.vsout.e_str` to be provided by specific models
 
 
 class IEEESTModel(PSSBase):
@@ -102,9 +113,6 @@ class IEEESTModel(PSSBase):
 
     def __init__(self, system, config):
         PSSBase.__init__(self, system, config)
-
-        self.buss = OptionalSelect(self.busr, self.bus, info='selected bus (bus or busr)')
-        self.v.indexer = self.buss
 
         self.dv = Derivative(self.v)
 
@@ -121,16 +129,16 @@ class IEEESTModel(PSSBase):
                             )
         # input signals (MODE):
         # 1 (s0) - Rotor speed deviation (p.u.)
-        # 2 (s1) - Bus frequency deviation (p.u.)  # TODO: calculate freq without reimpl.
+        # 2 (s1) - Bus frequency deviation (p.u.)
         # 3 (s2) - Generator P electrical in Gen MVABase (p.u.)
         # 4 (s3) - Generator accelerating power (p.u.)
         # 5 (s4) - Bus voltage (p.u.)
         # 6 (s5) - Derivative of p.u. bus voltage
 
-        self.signal.v_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
+        self.signal.v_str = 'SW_s0*(omega-1) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
                             'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0'
 
-        self.signal.e_str = 'SW_s0*(1-omega) + SW_s1*0 + SW_s2*(te/SnSb) + ' \
+        self.signal.e_str = 'SW_s0*(omega-1) + SW_s1*(f-1) + SW_s2*(te/SnSb) + ' \
                             'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*dv_v - signal'
 
         self.F1 = Lag2ndOrd(u=self.signal, K=1, T1=self.A1, T2=self.A2)

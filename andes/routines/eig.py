@@ -139,7 +139,8 @@ class EIG(BaseRoutine):
             return ret
 
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-            logger.error("System contains zero time constant. Eigenvalue analysis cannot continue.")
+            logger.error("System contains zero time constant(s). "
+                         "Eigenvalue analysis cannot continue.")
             return ret
 
         self.summary()

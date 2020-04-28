@@ -13,7 +13,7 @@ from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService
-from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService
+from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -326,15 +326,15 @@ class ModelData(object):
         """
         if isinstance(keys, str):
             keys = (keys, )
-            if not isinstance(values, (int, float, str)) and not isinstance(values, Iterable):
-                raise ValueError("value must be a string, scalar or an iterable")
+            if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
+                raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 values = (values, )
         elif isinstance(keys, Iterable):
             if not isinstance(values, Iterable):
-                raise ValueError("value must be an iterable")
+                raise ValueError(f"value must be an iterable, got {values}")
             elif len(values) > 0 and not isinstance(values[0], Iterable):
-                raise ValueError("if keys is an iterable, values must be an iterable of iterables")
+                raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
@@ -541,6 +541,7 @@ class Model(object):
         self.blocks = OrderedDict()           # blocks
 
         self.services = OrderedDict()         # service/temporary variables
+        self.services_fnd = OrderedDict()     # services to find/add devices
         self.services_tc = OrderedDict()      # time-constant services
         self.services_ext = OrderedDict()     # external services (to be retrieved)
         self.services_ops = OrderedDict()     # operational services (for special usages)
@@ -618,6 +619,8 @@ class Model(object):
             self.discrete[key] = value
         elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
+        elif isinstance(value, DeviceFinder):
+            self.services_fnd[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, RandomService)):
@@ -768,13 +771,13 @@ class Model(object):
 
         """
         if len(self._input) == 0 or refresh:
-            self._refresh_inputs()
+            self.refresh_inputs()
 
         # update`dae_t`
         self._input['dae_t'] = self.system.dae.t
         return self._input
 
-    def _refresh_inputs(self):
+    def refresh_inputs(self):
         """
         This is the helper function to refresh inputs.
 

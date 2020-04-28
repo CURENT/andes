@@ -175,11 +175,15 @@ class System(object):
 
         This function is to be called after adding all device data.
         """
+        self._collect_ref_param()
+        self._list2array()     # `list2array` must come before `link_ext_param`
+        self.link_ext_param()
+        self.find_devices()    # find or add required devices
+        self.calc_pu_coeff()
+
+        # assign address at the end before adding devices and processing parameters
         self.set_address()
         self.set_dae_names()
-        self._collect_ref_param()
-        self._list2array()
-        self.calc_pu_coeff()
         self.store_sparse_pattern()
         self.store_adder_setter()
 
@@ -221,6 +225,19 @@ class System(object):
         idx = group.get_next_idx(idx=idx, model_name=model)
         self.__dict__[model].add(idx=idx, **param_dict)
         group.add(idx=idx, model=self.__dict__[model])
+
+        return idx
+
+    def find_devices(self):
+        """
+        Add dependent devices for all model based on `DeviceFinder`.
+        """
+        for mdl in self.models.values():
+            if len(mdl.services_fnd) == 0:
+                continue
+
+            for fnd in mdl.services_fnd.values():
+                fnd.find_or_add(self)
 
     def set_address(self, models=None):
         """
@@ -370,15 +387,22 @@ class System(object):
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
 
-    def link_ext_param(self, model):
-        for instance in model.params_ext.values():
-            ext_name = instance.model
-            ext_model = self.__dict__[ext_name]
+    def link_ext_param(self, model=None):
+        if model is None:
+            models = self.models
+        else:
+            models = self._get_models(model)
 
-            try:
-                instance.link_external(ext_model)
-            except IndexError:
-                raise IndexError(f'Model <{model.class_name}> param <{instance.name}> link parameter error')
+        for model in models.values():
+            # get external parameters with `link_external` and then calculate the pu coeff
+            for instance in model.params_ext.values():
+                ext_name = instance.model
+                ext_model = self.__dict__[ext_name]
+
+                try:
+                    instance.link_external(ext_model)
+                except IndexError:
+                    raise IndexError(f'Model {model.class_name}.{instance.name} link parameter error')
 
     def calc_pu_coeff(self):
         """
@@ -390,8 +414,8 @@ class System(object):
         Sb = self.config.mva
 
         for mdl in self.models.values():
-            # get external parameters with `link_external` and then calculate the pu coeff
-            self.link_ext_param(mdl)
+            # before this step, `link_ext_param` has been called in `setup`.
+            self.link_ext_param({mdl.class_name: mdl})
 
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.params:

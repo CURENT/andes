@@ -197,6 +197,58 @@ class OptionalSelect(BaseService):
         return [opt if opt is not None else fb for opt, fb in zip(self.optional.v, self.fallback.v)]
 
 
+class DeviceFinder(BaseService):
+    """
+    Service for finding indices of devices if not provided.
+    Create if not exist.
+
+    Examples
+    --------
+    IEEEST PSS takes an optional `busf` (IdxParam) for specifying the connected BusFreq,
+    which is only needed for mode 6.
+
+    If `busf` is not specified, `DeviceFinder` can help to find or create the indices of
+    BusFreq, based on the indices of the buses BusFreq needs to link to.
+
+    u: busf
+    link: buss
+    idx_name: 'bus'
+
+    If `busf` is None, a `BusFreq` device will be created to link to `buss` through
+    parameter `idx_name`
+    """
+    def __init__(self, u, link, idx_name, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.model = u.model
+        self.idx_name = idx_name
+
+        if self.model is None:
+            raise ValueError(f'{u.owner.class_name}.{u.name} must contain "model".')
+
+        self.link = link
+
+    def find_or_add(self, system):
+        mdl = system.models[self.model]
+        found_idx = mdl.find_idx((self.idx_name, ), (self.link.v, ), allow_missing=True)
+
+        action = False
+        for ii, idx in enumerate(found_idx):
+            if idx is False:
+                action = True
+                new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
+                self.u.v[ii] = new_idx
+
+        if action:
+            mdl.list2array()
+            mdl.refresh_inputs()
+
+    @property
+    def v(self):
+        return self.u.v
+
+
 class OperationService(BaseService):
     """
     Base class for a type of Service which performs specific operations
