@@ -516,7 +516,11 @@ class System(object):
         -----
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
-        self.call_model('f_update', models)
+        try:
+            self.call_model('f_update', models)
+        except TypeError as e:
+            logger.error("f_update failed. Did you forget to run `andes prepare -q` after updating?")
+            raise e
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -526,7 +530,11 @@ class System(object):
         -----
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
-        self.call_model('g_update', models)
+        try:
+            self.call_model('g_update', models)
+        except TypeError as e:
+            logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
+            raise e
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
