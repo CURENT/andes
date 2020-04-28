@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 class BusFreq(ModelData, Model):
     """
     Bus frequency measurement.
+
+    Bus frequency output variable is `w`.
     """
     def __init__(self, system, config):
         ModelData.__init__(self)
