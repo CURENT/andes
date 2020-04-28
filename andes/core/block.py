@@ -659,7 +659,7 @@ class LeadLag(Block):
         Time constant 2
     """
     def __init__(self, u, T1, T2, name=None, tex_name=None, info='Lead-lag transfer function'):
-        super().__init__(name=name, tex_name=None, info=info)
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.u = u

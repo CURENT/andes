@@ -31,6 +31,5 @@ jobs:
     displayName: 'pytest'
 
   - script: |
-      # python setup.py checkdocs  # check documentation (README.rst)
       make -C docs html  # Build the documentation.
     displayName: 'make documentation'

@@ -31,14 +31,14 @@ class System(object):
     System contains models and routines for modeling and simulation.
 
     System contains a several special `OrderedDict` member attributes for housekeeping.
-    These attributes include ``models``, ``groups``, ``routines`` and ``calls`` for loaded models, groups,
+    These attributes include `models`, `groups`, `routines` and `calls` for loaded models, groups,
     analysis routines, and generated numerical function calls, respectively.
 
     Notes
     -----
     System stores model and routine instances as attributes.
     Model and routine attribute names are the same as their class names.
-    For example, ``Bus`` is stored at ``system.Bus``, the power flow calculation routine is at
+    For example, `Bus` is stored at ``system.Bus``, the power flow calculation routine is at
     ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See attributes for the list of
     attributes.
 
@@ -175,11 +175,15 @@ class System(object):
 
         This function is to be called after adding all device data.
         """
+        self.collect_ref()
+        self._list2array()     # `list2array` must come before `link_ext_param`
+        self.link_ext_param()
+        self.find_devices()    # find or add required devices
+        self.calc_pu_coeff()
+
+        # assign address at the end before adding devices and processing parameters
         self.set_address()
         self.set_dae_names()
-        self._collect_ref_param()
-        self._list2array()
-        self.calc_pu_coeff()
         self.store_sparse_pattern()
         self.store_adder_setter()
 
@@ -195,7 +199,7 @@ class System(object):
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
-        self._call_models_method('a_reset', models=self.models)
+        self.call_model('a_reset', models=self.models)
         self.e_clear()
         self._p_restore()
         self.setup()
@@ -221,6 +225,19 @@ class System(object):
         idx = group.get_next_idx(idx=idx, model_name=model)
         self.__dict__[model].add(idx=idx, **param_dict)
         group.add(idx=idx, model=self.__dict__[model])
+
+        return idx
+
+    def find_devices(self):
+        """
+        Add dependent devices for all model based on `DeviceFinder`.
+        """
+        for mdl in self.models.values():
+            if len(mdl.services_fnd) == 0:
+                continue
+
+            for fnd in mdl.services_fnd.values():
+                fnd.find_or_add(self)
 
     def set_address(self, models=None):
         """
@@ -370,15 +387,22 @@ class System(object):
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
 
-    def link_ext_param(self, model):
-        for instance in model.params_ext.values():
-            ext_name = instance.model
-            ext_model = self.__dict__[ext_name]
+    def link_ext_param(self, model=None):
+        if model is None:
+            models = self.models
+        else:
+            models = self._get_models(model)
 
-            try:
-                instance.link_external(ext_model)
-            except IndexError:
-                raise IndexError(f'Model <{model.class_name}> param <{instance.name}> link parameter error')
+        for model in models.values():
+            # get external parameters with `link_external` and then calculate the pu coeff
+            for instance in model.params_ext.values():
+                ext_name = instance.model
+                ext_model = self.__dict__[ext_name]
+
+                try:
+                    instance.link_external(ext_model)
+                except IndexError:
+                    raise IndexError(f'Model {model.class_name}.{instance.name} link parameter error')
 
     def calc_pu_coeff(self):
         """
@@ -390,8 +414,8 @@ class System(object):
         Sb = self.config.mva
 
         for mdl in self.models.values():
-            # get external parameters with `link_external` and then calculate the pu coeff
-            self.link_ext_param(mdl)
+            # before this step, `link_ext_param` has been called in `setup`.
+            self.link_ext_param({mdl.class_name: mdl})
 
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.params:
@@ -448,7 +472,7 @@ class System(object):
 
         This function is usually called before any equation evaluation.
         """
-        self._call_models_method('l_update_var', models)
+        self.call_model('l_update_var', models, self.dae.t)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -457,7 +481,7 @@ class System(object):
         This function is usually called after differential equation updates.
         Currently, it is used exclusively for collecting anti-windup limiter status.
         """
-        self._call_models_method('l_check_eq', models)
+        self.call_model('l_check_eq', models)
 
     def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -466,7 +490,7 @@ class System(object):
         This function is evaluated afte ``l_check_eq``.
         Currently, it is only used by anti-windup limiters to record changes.
         """
-        self._call_models_method('l_set_eq', models)
+        self.call_model('l_set_eq', models)
 
     def fg_to_dae(self):
         """
@@ -492,7 +516,11 @@ class System(object):
         -----
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
-        self._call_models_method('f_update', models)
+        try:
+            self.call_model('f_update', models)
+        except TypeError as e:
+            logger.error("f_update failed. Did you forget to run `andes prepare -q` after updating?")
+            raise e
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -502,7 +530,11 @@ class System(object):
         -----
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
-        self._call_models_method('g_update', models)
+        try:
+            self.call_model('g_update', models)
+        except TypeError as e:
+            logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
+            raise e
 
     def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -517,7 +549,7 @@ class System(object):
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
-        self._call_models_method('j_update', models)
+        self.call_model('j_update', models)
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
@@ -550,7 +582,7 @@ class System(object):
         term in the equations.
         """
         models = self._get_models(models)
-        self._call_models_method('store_sparse_pattern', models)
+        self.call_model('store_sparse_pattern', models)
 
         # add variable jacobian values
         for jname in jac_names:
@@ -756,7 +788,7 @@ class System(object):
         if isinstance(models, str):
             models = {models: self.__dict__[models]}
         elif isinstance(models, Model):
-            models = {models.class_name, models}
+            models = {models.class_name: models}
         elif isinstance(models, list):
             models = OrderedDict()
             for item in models:
@@ -780,26 +812,39 @@ class System(object):
             if var.t_const is not None:
                 np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def _call_models_method(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]]):
+    def call_model(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """
-        Wrapper to call model methods.
-        """
-        single = False
-        if isinstance(models, Model):
-            models = {models.class_name: models}
-            single = True
-        if not isinstance(models, (OrderedDict, dict)):
-            models = self._get_models(models)
+        Call methods on the given models.
 
-        ret = [getattr(mdl, method)() for mdl in models.values()]
-        if single is True:
-            ret = ret[0]
+        Parameters
+        ----------
+        method : str
+            Name of the model method to be called
+        models : OrderedDict, list, str
+            Models on which the method will be called
+        args
+            Positional arguments to be passed to the model method
+        kwargs
+            Keyword arguments to be passed to the model method
+
+        Returns
+        -------
+        The return value of the models in an OrderedDict
+
+        """
+        models = self._get_models(models)
+
+        ret = OrderedDict()
+        for name, mdl in models.items():
+            ret[name] = getattr(mdl, method)(*args, **kwargs)
 
         return ret
 
     def _check_group_common(self):
         """
         Check if all group common variables and parameters are met.
+
+        This function is called at the end of code generation by `prepare`.
 
         Raises
         ------
@@ -818,12 +863,12 @@ class System(object):
                         raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
                                        f'in model <{model.class_name}>')
 
-    def _collect_ref_param(self):
+    def collect_ref(self):
         """
-        Collect indices into `RefParam` for all models.
+        Collect indices into `BackRef` for all models.
         """
         for model in self.models.values():
-            for ref in model.ref_params.values():
+            for ref in model.services_ref.values():
                 ref.v = [list() for _ in range(model.n)]
 
         for model in self.models.values():
@@ -839,35 +884,35 @@ class System(object):
                     continue
 
                 for n in (model.class_name, model.group):
-                    if n not in dest_model.ref_params:
+                    if n not in dest_model.services_ref:
                         continue
 
                     for model_idx, dest_idx in zip(model.idx.v, ref.v):
                         if dest_idx not in dest_model.idx.v:
                             continue
                         uid = dest_model.idx2uid(dest_idx)
-                        dest_model.ref_params[n].v[uid].append(model_idx)
+                        dest_model.services_ref[n].v[uid].append(model_idx)
 
     def _generate_pycode_file(self):
         """
         Generate empty files for storing lambdified Python code (TODO)
         """
-        self._call_models_method('generate_pycode_file', self.models)
+        self.call_model('generate_pycode_file', self.models)
 
     def _generate_initializers(self):
-        self._call_models_method('generate_initializers', self.models)
+        self.call_model('generate_initializers', self.models)
 
     def _generate_symbols(self):
-        self._call_models_method('generate_symbols', self.models)
+        self.call_model('generate_symbols', self.models)
 
     def _generate_pretty_print(self):
-        self._call_models_method('generate_pretty_print', self.models)
+        self.call_model('generate_pretty_print', self.models)
 
     def _generate_equations(self):
-        self._call_models_method('generate_equations', self.models)
+        self.call_model('generate_equations', self.models)
 
     def _generate_jacobians(self):
-        self._call_models_method('generate_jacobians', self.models)
+        self.call_model('generate_jacobians', self.models)
 
     def import_groups(self):
         """
@@ -986,7 +1031,7 @@ class System(object):
         This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
-        self._call_models_method('e_clear', models)
+        self.call_model('e_clear', models)
 
     def remove_pycapsule(self):
         """
@@ -1004,7 +1049,7 @@ class System(object):
             self.calls[name] = mdl.calls
 
     def _list2array(self):
-        self._call_models_method('list2array', self.models)
+        self.call_model('list2array', self.models)
 
     def set_config(self, config=None):
         """

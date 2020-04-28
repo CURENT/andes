@@ -1,7 +1,7 @@
-from andes.core.param import RefParam, ExtParam
+from andes.core.param import ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
-from andes.core.service import NumReduce, NumRepeat
+from andes.core.service import NumReduce, NumRepeat, BackRef
 from andes.shared import np
 
 
@@ -18,8 +18,8 @@ class Area(AreaData, Model):
         self.flags.update({'pflow': True,
                            'tds': True})
 
-        self.Bus = RefParam(export=False)
-        self.ACTopology = RefParam(export=False)
+        self.Bus = BackRef()
+        self.ACTopology = BackRef()
 
         # --------------------Experiment Zone--------------------
         self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.ACTopology, export=False)

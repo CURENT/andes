@@ -104,7 +104,7 @@ class Bus(Model, BusData):
                        )
 
         # initial values
-        self.a.v_str = 'flat_start * 1e-8 + ' \
-                       '(1 - flat_start) * a0'
-        self.v.v_str = 'flat_start * 1 + ' \
-                       '(1 - flat_start) * v0'
+        self.a.v_str = 'flat_start*1e-8 + ' \
+                       '(1-flat_start)*a0'
+        self.v.v_str = 'flat_start*1 + ' \
+                       '(1-flat_start)*v0'

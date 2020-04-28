@@ -1,13 +1,16 @@
 import logging
 from typing import Optional, Union, Tuple, List
 from andes.shared import np
+from andes.utils.func import interp_n2
 
 logger = logging.getLogger(__name__)
 
 
 class Discrete(object):
     """
-    Base class for discrete components which exports boolean flags.
+    Base discrete class.
+
+    Discrete classes export flag arrays (usually boolean) .
     """
 
     def __init__(self, name=None, tex_name=None, info=None):
@@ -20,7 +23,7 @@ class Discrete(object):
         self.x_set = list()
         self.y_set = list()  # NOT being used
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         This function is called in ``l_update_var`` before evaluating equations.
 
@@ -96,7 +99,7 @@ class LessThan(Discrete):
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         If enabled, set flags based on inputs. Use cached values if enabled.
         """
@@ -159,7 +162,7 @@ class Limiter(Discrete):
         self.export_flags = ['zl', 'zi', 'zu']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Evaluate the flags.
         """
@@ -182,7 +185,7 @@ class SortedLimiter(Limiter):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
         self.n_select = int(n_select) if n_select else 0
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         if not self.enable:
             return
         super().check_var()
@@ -236,7 +239,7 @@ class AntiWindup(Limiter):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
         self.state = state if state else u
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         This function is empty. Defers `check_var` to `check_eq`.
         """
@@ -322,7 +325,7 @@ class Selector(Discrete):
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input.
         """
@@ -375,7 +378,7 @@ class Switcher(Discrete):
     def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
         super().__init__(name=name, tex_name=tex_name)
         self.u = u
-        self.option: Union[List, Tuple] = options
+        self.options: Union[List, Tuple] = options
         self.cache: bool = cache
         self._eval: bool = False  # if the flags has been evaluated
 
@@ -385,12 +388,21 @@ class Switcher(Discrete):
         self.export_flags = [f's{i}' for i in range(len(options))]
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
 
-    def check_var(self):
-        """Set the switcher flags based on inputs. Uses cached flags if cache is set to True."""
+    def check_var(self, *args, **kwargs):
+        """
+        Set the switcher flags based on inputs. Uses cached flags if cache is set to True.
+
+        TODO: check if all inputs are valid
+        """
         if self.cache and self._eval:
             return
-        for i in range(len(self.option)):
-            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.option[i]).astype(np.float64)
+
+        for v in self.u.v:
+            if v not in self.options:
+                raise ValueError(f'option {v} is invalid for {self.owner.class_name}.{self.u.name}. '
+                                 f'Options are {self.options}.')
+        for i in range(len(self.options)):
+            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i]).astype(np.float64)
 
         self._eval = True
 
@@ -481,7 +493,7 @@ class DeadBand(Limiter):
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 
-    def check_var(self):
+    def check_var(self, *args, **kwargs):
         """
         Notes
         -----
@@ -522,12 +534,126 @@ class DeadBand(Limiter):
         self.zi[:] = zi.astype(np.float64)
 
 
-class Memory(Discrete):
+class Delay(Discrete):
     """
-    Memory class to memorize past variable values.
+    Delay class to memorize past variable values.
+
+    TODO: Add documentation.
     """
 
-    def __init__(self, u, steps=1, name=None, tex_name=None, info=None):
+    def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        if mode not in ('step', 'time'):
+            raise ValueError(f'mode {mode} is invalid. Must be in "step" or "time"')
+
         self.u = u
-        self.steps = steps
+        self.mode = mode
+        self.delay = delay
+        self.export_flags = ['v']
+        self.export_flags_tex = ['v']
+
+        self.t = np.array([0])
+        self.v = np.array([0])
+        self._v_mem = np.zeros((0, 1))
+        self.rewind = False
+
+    def list2array(self, n):
+        """
+        Allocate memory for storage arrays.
+        """
+        super().list2array(n)
+        if self.mode == 'step':
+            self._v_mem = np.zeros((n, self.delay + 1))
+            self.t = np.zeros(self.delay + 1)
+        else:
+            self._v_mem = np.zeros((n, 1))
+
+    def check_var(self, dae_t, *args, **kwargs):
+
+        # Storage:
+        # Output values is in the first col.
+        # Latest values are stored in /appended to the last column
+        self.rewind = False
+
+        if dae_t == 0:
+            self._v_mem[:] = self.u.v[:, None]
+
+        elif dae_t < self.t[-1]:
+            self.rewind = True
+            self.t[-1] = dae_t
+            self._v_mem[:, -1] = self.u.v
+
+        elif dae_t == self.t[-1]:
+            self._v_mem[:, -1] = self.u.v
+
+        elif dae_t > self.t[-1]:
+            if self.mode == 'step':
+                self.t[:-1] = self.t[1:]
+                self.t[-1] = dae_t
+
+                self._v_mem[:, :-1] = self._v_mem[:, 1:]
+                self._v_mem[:, -1] = self.u.v
+            else:
+                self.t = np.append(self.t, dae_t)
+                self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
+
+                if dae_t - self.t[0] > self.delay:
+                    t_interp = dae_t - self.delay
+                    idx = np.argmax(self.t >= t_interp) - 1
+                    v_interp = interp_n2(t_interp,
+                                         self.t[idx:idx+2],
+                                         self._v_mem[:, idx:idx + 2])
+
+                    self.t[idx] = t_interp
+                    self._v_mem[:, idx] = v_interp
+
+                    self.t = np.delete(self.t, np.arange(0, idx))
+                    self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
+
+        self.v[:] = self._v_mem[:, 0]
+
+    def __repr__(self):
+        out = ''
+        out += f'v:\n {self.v}\n'
+        out += f't:\n {self.t}\n'
+        out += f'_v_men: \n {self._v_mem}\n'
+        return out
+
+
+class Average(Delay):
+    """
+    Compute the average of a BaseVar over a period of time or a number of samples.
+    """
+    def check_var(self, dae_t, *args, **kwargs):
+        Delay.check_var(self, dae_t, *args, **kwargs)
+
+        if dae_t == 0:
+            self.v[:] = self._v_mem[:, -1]
+            self._v_mem[:, :-1] = 0
+            return
+        else:
+            nt = len(self.t)
+            self.v[:] = 0.5 * np.sum((self._v_mem[:, 1-nt:] + self._v_mem[:, -nt:-1]) *
+                                     (self.t[1:] - self.t[:-1]), axis=1) / (self.t[-1] - self.t[0])
+
+
+class Derivative(Delay):
+    """
+    Compute the derivative of an algebraic variable using numerical differentiation.
+    """
+    def __init__(self, u, name=None, tex_name=None, info=None):
+        Delay.__init__(self, u=u, mode='step', delay=1,
+                       name=name, tex_name=tex_name, info=info)
+
+    def check_var(self, dae_t, *args, **kwargs):
+        Delay.check_var(self, dae_t, *args, **kwargs)
+
+        # Note:
+        #    Very small derivatives (< 1e-8) could cause numerical problems (chattering).
+        #    Need to reset the output to zero following a rewind.
+        if (dae_t == 0) or (self.rewind is True):
+            self.v[:] = 0
+        else:
+            self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
+            self.v[np.where(self.v < 1e-8)] = 0

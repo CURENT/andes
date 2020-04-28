@@ -18,8 +18,8 @@ class LineData(ModelData):
         self.Vn1 = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_{n1}')
         self.Vn2 = NumParam(default=110.0, info="rated voltage of bus2", non_zero=True, tex_name=r'V_{n2}')
 
-        self.r = NumParam(default=0, info="connection line resistance", tex_name='r')
-        self.x = NumParam(default=1e-8, info="connection line reactance", tex_name='x')
+        self.r = NumParam(default=1e-8, info="line resistance", tex_name='r')
+        self.x = NumParam(default=1e-8, info="line reactance", tex_name='x')
         self.b = NumParam(default=0.0, info="shared shunt susceptance")
         self.g = NumParam(default=0.0, info="shared shunt conductance")
         self.b1 = NumParam(default=0.0, info="from-side susceptance", tex_name='b_1')
@@ -72,7 +72,7 @@ class Line(LineData, Model):
 
         self.yh.v_str = 'u * (gh + 1j * bh)'
         self.yk.v_str = 'u * (gk + 1j * bk)'
-        self.yhk.v_str = 'u / (r + 1j * x)'
+        self.yhk.v_str = 'u/((r+1e-8) + 1j*(x+1e-8))'
 
         self.ghk.v_str = 're(yhk)'
         self.bhk.v_str = 'im(yhk)'

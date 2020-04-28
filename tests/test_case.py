@@ -66,6 +66,7 @@ class TestKundur2AreaXLSX(unittest.TestCase):
     """
     def setUp(self) -> None:
         xlsx = get_case("kundur/kundur_full.xlsx")
+        self.pss = get_case("kundur/kundur_pss.xlsx")
         self.ss = andes.run(xlsx)
 
     def test_xlsx_tds_run(self):
@@ -76,6 +77,9 @@ class TestKundur2AreaXLSX(unittest.TestCase):
     def test_xlsx_eig_run(self):
         self.ss.EIG.run()
         andes.main.misc(clean=True)
+
+    def test_kundur_pss(self):
+        andes.run(self.pss, routine='tds', no_output=True, tf=10)
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):

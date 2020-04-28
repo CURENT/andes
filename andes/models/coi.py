@@ -3,8 +3,8 @@ Classes for Center of Inertia calculation.
 """
 import numpy as np
 
-from andes.core.param import RefParam, ExtParam
-from andes.core.service import NumRepeat, IdxRepeat
+from andes.core.param import ExtParam
+from andes.core.service import NumRepeat, IdxRepeat, BackRef
 from andes.core.service import NumReduce, RefFlatten, ExtService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
@@ -15,7 +15,6 @@ class COIData(ModelData):
 
     def __init__(self):
         ModelData.__init__(self)
-        self.SynGen = RefParam(info='Non-input SynGen idx lists', export=False)
 
 
 class COIModel(Model):
@@ -26,19 +25,20 @@ class COIModel(Model):
     :py:class:`andes.core.service.NumReduce`,
     :py:class:`andes.core.service.NumRepeat`,
     :py:class:`andes.core.service.IdxFlatten`, and
-    :py:class:`andes.core.param.RefParam`.
+    :py:class:`andes.core.service.BackRef`.
     """
-
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Calculation'
         self.flags.update({'tds': True})
 
+        self.SynGen = BackRef(info='Back reference to SynGen idx')
+
         self.SynGenIdx = RefFlatten(ref=self.SynGen)
 
         self.M = ExtParam(model='SynGen', src='M',
                           indexer=self.SynGenIdx, export=False,
-                          info='Linearlly stored SynGen.M',
+                          info='Linearly stored SynGen.M',
                           )
 
         self.wgen = ExtState(model='SynGen',

@@ -483,8 +483,6 @@ An overview of supported parameters is given below.
 +---------------+----------------------------------------------------------------------------+
 |  TimerParam   | Parameter for storing the action time of events                            |
 +---------------+----------------------------------------------------------------------------+
-|  RefParam     | Parameter for collecting `idx` of referencing devices                      |
-+---------------+----------------------------------------------------------------------------+
 
 Data Parameters
 ---------------
@@ -510,11 +508,6 @@ External Parameters
 Timer Parameter
 ---------------
 .. autoclass:: andes.core.param.TimerParam
-    :noindex:
-
-Back Reference Parameter
-------------------------
-.. autoclass:: andes.core.param.RefParam
     :noindex:
 
 
@@ -716,13 +709,17 @@ Shape Manipulators
 This section is for advanced model developer.
 
 All generated equations operate on 1-dimensional arrays and can use algebraic calculations only.
-In some cases, one model would use `RefParam` to retrieve 2-dimensional indices and will use such indices to retrieve variable addresses.
+In some cases, one model would use `BackRef` to retrieve 2-dimensional indices and will use such indices to
+retrieve variable addresses.
 The retrieved addresses usually has a different length of the referencing model and cannot be used directly for calculation.
 Shape manipulator services can be used in such case.
 
 `NumReduce` is a helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 `NumRepeat` is a helper Service type which repeats a 1-D value into linearly stored 2-D value based on the
-shape from a `RefParam`.
+shape from a `BackRef`.
+
+.. autoclass:: andes.core.service.BackRef
+    :noindex:
 
 .. autoclass:: andes.core.service.NumReduce
     :noindex:
@@ -736,6 +733,10 @@ shape from a `RefParam`.
 .. autoclass:: andes.core.service.RefFlatten
     :noindex:
 
+Device Finder
+-------------------------------------------
+.. autoclass:: andes.core.service.DeviceFinder
+    :noindex:
 
 Discrete
 ========
@@ -819,7 +820,7 @@ variables need to placed in a dictionary, ``self.vars`` at the end of the block 
 
 Blocks can be nested as advanced usage. See the following API documentation for more details.
 
-.. automodule:: andes.core.block.Block
+.. autoclass:: andes.core.block.Block
     :noindex:
 
 Transfer Functions
@@ -830,38 +831,38 @@ They can be imported to build new models.
 
 Algebraic
 `````````
-.. automodule:: andes.core.block.Gain
+.. autoclass:: andes.core.block.Gain
     :noindex:
 
 First Order
 ```````````
-.. automodule:: andes.core.block.Integrator
+.. autoclass:: andes.core.block.Integrator
     :noindex:
 
-.. automodule:: andes.core.block.Lag
+.. autoclass:: andes.core.block.Lag
     :noindex:
 
-.. automodule:: andes.core.block.LagAntiWindup
+.. autoclass:: andes.core.block.LagAntiWindup
     :noindex:
 
-.. automodule:: andes.core.block.Washout
+.. autoclass:: andes.core.block.Washout
     :noindex:
 
-.. automodule:: andes.core.block.WashoutOrLag
+.. autoclass:: andes.core.block.WashoutOrLag
     :noindex:
 
 Second Order
 ````````````
-.. automodule:: andes.core.block.LeadLag
+.. autoclass:: andes.core.block.LeadLag
     :noindex:
 
-.. automodule:: andes.core.block.LeadLagLimit
+.. autoclass:: andes.core.block.LeadLagLimit
     :noindex:
 
-.. automodule:: andes.core.block.Lag2ndOrd
+.. autoclass:: andes.core.block.Lag2ndOrd
     :noindex:
 
-.. automodule:: andes.core.block.LeadLag2ndOrd
+.. autoclass:: andes.core.block.LeadLag2ndOrd
     :noindex:
 
 

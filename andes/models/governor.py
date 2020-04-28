@@ -47,6 +47,8 @@ class TGBase(Model):
                            unit='kV',
                            export=False,
                            )
+
+        # Note: changing `tm0` is not allowed in any time!!
         self.tm0 = ExtService(src='tm',
                               model='SynGen',
                               indexer=self.syn,
@@ -63,6 +65,12 @@ class TGBase(Model):
         self.gain = ConstService(v_str='u / R',
                                  tex_name='G',
                                  )
+
+        # Note: changing `paux0` is allowed.
+        # It is a way how one can input from external programs such as reinforcement learning.
+        self.paux0 = ConstService(v_str='0',
+                                  tex_name='P_{aux0}',
+                                  info='const. auxiliary input')
 
         self.tm = ExtAlgeb(src='tm',
                            model='SynGen',
@@ -145,7 +153,7 @@ class TG2(TG2Data, TGBase):
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}',
                          v_str='0',
-                         e_str='u * (wref - omega) - w_d',
+                         e_str='u*(wref-omega) - w_d',
                          )
         self.w_db = DeadBand(u=self.w_d,
                              center=self.dbc,
@@ -226,6 +234,14 @@ class TGOV1Model(TGBase):
                           v_str='tm0 * R',
                           e_str='tm0 * R - pref',
                           )
+
+        # TODO: fix the initialization of `pref` when `paux` is not zero
+        self.paux = Algeb(info='Auxiliary power input',
+                          tex_name='P_{aux}',
+                          v_str='paux0',
+                          e_str='paux0 - paux',
+                          )
+
         self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
@@ -236,7 +252,7 @@ class TGOV1Model(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
-                        e_str='(wd + pref) * gain - pd')
+                        e_str='(wd + pref + paux) * gain - pd')
 
         self.LAG = LagAntiWindup(u=self.pd,
                                  K=1,

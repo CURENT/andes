@@ -1,5 +1,5 @@
 from typing import Optional, Union, Callable, Type
-from andes.core.param import RefParam, BaseParam
+from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
 from andes.shared import np, ndarray
 
@@ -167,6 +167,73 @@ class ExtService(BaseService):
         self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr)
 
 
+class BackRef(BaseService):
+    """
+    A special type of reference collector.
+
+    `BackRef` is used for collecting device indices of other models referencing the parent model of the
+    `BackRef`. The `v``field will be a list of lists, each containing the `idx` of other models
+    referencing each device of the parent model.
+
+    BackRef can be passed as indexer for params and vars, or shape for `NumReduce` and
+    `NumRepeat`. See examples for illustration.
+
+    Examples
+    --------
+    A Bus device has an `IdxParam` of `area`, storing the `idx` of area to which the bus device belongs.
+    In ``Bus.__init__()``, one has ::
+
+        self.area = IdxParam(model='Area')
+
+    Suppose `Bus` has the following data
+
+        ====   ====  ====
+        idx    area  Vn
+        ----   ----  ----
+        1      1     110
+        2      2     220
+        3      1     345
+        4      1     500
+        ====   ====  ====
+
+    The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
+    In ``Area.__init__``, one defines ::
+
+        self.Bus = BackRef()
+
+    where the member attribute name `Bus` needs to match exactly model name that `Area` wants to collect
+    `idx` for.
+    Similarly, one can define ``self.ACTopology = BackRef()`` to collect devices in the `ACTopology` group
+    that references Area.
+
+    The collection of `idx` happens in :py:func:`andes.system.System._collect_ref_param`.
+    It has to be noted that the specific `Area` entry must exist to collect model idx-dx referencing it.
+    For example, if `Area` has the following data ::
+
+        idx
+        1
+
+    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
+
+    If `Area` has data ::
+
+        idx
+        1
+        2
+
+    Then, `self.Bus.v` will end up with ``[ [1, 3, 4], [2] ]``.
+
+    See Also
+    --------
+    andes.core.service.NumReduce : A more complete example using BackRef to build the COI model
+
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.export = False
+        self.v = list()
+
+
 class OptionalSelect(BaseService):
     """
     Class for selecting values for optional DataParam.
@@ -197,6 +264,61 @@ class OptionalSelect(BaseService):
         return [opt if opt is not None else fb for opt, fb in zip(self.optional.v, self.fallback.v)]
 
 
+class DeviceFinder(BaseService):
+    """
+    Service for finding indices of optionally linked devices.
+
+    If not provided, `DeviceFinder` will add devices at the beginning of `System.setup`.
+
+    Examples
+    --------
+    IEEEST stabilizer takes an optional `busf` (IdxParam) for specifying the connected BusFreq,
+    which is needed for mode 6. To avoid reimplementing `BusFreq` within IEEEST, one can do
+
+    .. code-block :: python
+
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+
+    where `self.busf` is the optional input, `self.buss` is the bus indices that `busf` should measure,
+    and `idx_name` is the name of a BusFreq parameter through which the measured bus indices are specified.
+    For each `None` values in `self.busf`, a `BusFreq` is created to measure the corresponding bus in `self.buss`.
+
+    That is, ``BusFreq.[idx_name].v = [link]``. `DeviceFinder` will find / create `BusFreq` devices so that
+    the returned list of `BusFreq` indices are connected to `self.buss`, respectively.
+    """
+
+    def __init__(self, u, link, idx_name, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.model = u.model
+        self.idx_name = idx_name
+
+        if self.model is None:
+            raise ValueError(f'{u.owner.class_name}.{u.name} must contain "model".')
+
+        self.link = link
+
+    def find_or_add(self, system):
+        mdl = system.models[self.model]
+        found_idx = mdl.find_idx((self.idx_name, ), (self.link.v, ), allow_missing=True)
+
+        action = False
+        for ii, idx in enumerate(found_idx):
+            if idx is False:
+                action = True
+                new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
+                self.u.v[ii] = new_idx
+
+        if action:
+            mdl.list2array()
+            mdl.refresh_inputs()
+
+    @property
+    def v(self):
+        return self.u.v
+
+
 class OperationService(BaseService):
     """
     Base class for a type of Service which performs specific operations
@@ -212,7 +334,7 @@ class OperationService(BaseService):
     IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
     def __init__(self,
-                 ref: RefParam,
+                 ref: BackRef,
                  u=None,
                  name=None,
                  tex_name=None,
@@ -248,8 +370,8 @@ class NumReduce(OperationService):
     ----------
     u : ExtParam
         Input ExtParam whose ``v`` contains linearly stored 2-dimensional values
-    ref : RefParam
-        The RefParam whose 2-dimensional shapes are used for indexing
+    ref : BackRef
+        The BackRef whose 2-dimensional shapes are used for indexing
     fun : Callable
         The callable for converting a 1-D array-like to a scalar
 
@@ -261,7 +383,7 @@ class NumReduce(OperationService):
             def __init__(...):
                 ...
                 # backward reference from `Bus`
-                self.Bus = RefParam()
+                self.Bus = BackRef()
 
                 # collect the Vn in an 1-D array
                 self.Vn = ExtParam(model='Bus',
@@ -292,7 +414,7 @@ class NumReduce(OperationService):
     """
     def __init__(self,
                  u,
-                 ref: RefParam,
+                 ref: BackRef,
                  fun: Callable,
                  name=None,
                  tex_name=None,
@@ -323,7 +445,7 @@ class NumReduce(OperationService):
 
 class NumRepeat(OperationService):
     r"""
-    A helper Service type which repeats a v-provider's value based on the shape from a RefParam
+    A helper Service type which repeats a v-provider's value based on the shape from a BackRef
 
     Examples
     --------
@@ -333,7 +455,7 @@ class NumRepeat(OperationService):
     .. math ::
         \omega_{COI} = \frac{ \sum{M_i * \omega_i} } {\sum{M_i}}
 
-    The numerator can be calculated with a mix of RefParam, ExtParam and ExtState. The denominator needs to be
+    The numerator can be calculated with a mix of BackRef, ExtParam and ExtState. The denominator needs to be
     calculated with NumReduce and Service Repeat. That is, use NumReduce to calculate the sum,
     and use NumRepeat to repeat the summed value for each device.
 
@@ -344,7 +466,7 @@ class NumRepeat(OperationService):
         class COIModel(...):
             def __init__(...):
                 ...
-                self.SynGen = RefParam()
+                self.SynGen = BackRef()
                 self.SynGenIdx = RefFlatten(ref=self.SynGen)
                 self.M = ExtParam(model='SynGen',
                                   src='M',
@@ -437,20 +559,20 @@ class IdxRepeat(OperationService):
 
 class RefFlatten(OperationService):
     """
-    A service type for flattening :py:class:`andes.core.param.RefParam` into a 1-D list.
+    A service type for flattening :py:class:`andes.core.service.BackRef` into a 1-D list.
 
     Examples
     --------
-    This class is used when one wants to pass `RefParam` values as indexer.
+    This class is used when one wants to pass `BackRef` values as indexer.
 
     :py:class:`andes.models.coi.COI` collects referencing
     :py:class:`andes.models.group.SynGen` with
 
     .. code-block :: python
 
-        self.SynGen = RefParam(info='SynGen idx lists', export=False)
+        self.SynGen = BackRef(info='SynGen idx lists', export=False)
 
-    After collecting RefParams, `self.SynGen.v` will become a two-level list of indices,
+    After collecting BackRefs, `self.SynGen.v` will become a two-level list of indices,
     where the first level correspond to each COI and the second level correspond to generators
     of the COI.
 

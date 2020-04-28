@@ -1,8 +1,8 @@
 import unittest
 
 from andes.core.var import Algeb
-from andes.core.param import NumParam
-from andes.core.discrete import Limiter, SortedLimiter, Switcher
+from andes.core.param import NumParam, DummyValue
+from andes.core.discrete import Limiter, SortedLimiter, Switcher, Delay, Derivative, Average
 from andes.shared import np
 
 
@@ -96,3 +96,90 @@ class TestDiscrete(unittest.TestCase):
         self.assertSequenceEqual(switcher.s2.tolist(), [0, 0, 1, 1, 0, 0, 0])
         self.assertSequenceEqual(switcher.s3.tolist(), [0, 0, 0, 0, 0, 1, 0])
         self.assertSequenceEqual(switcher.s4.tolist(), [0, 0, 0, 0, 0, 0, 0])
+
+
+class TestDelay(unittest.TestCase):
+    def setUp(self) -> None:
+        self.n = 5   # number of input values to delay
+        self.step = 2  # steps of delay
+        self.time = 1.0  # delay period in second
+
+        self.data = DummyValue(0)
+        self.data.v = np.zeros(self.n)
+
+        self.dstep = Delay(u=self.data, mode='step', delay=self.step)
+        self.dstep.list2array(self.n)
+
+        self.dtime = Delay(u=self.data, mode='time', delay=self.time)
+        self.dtime.list2array(self.n)
+
+        self.avg = Average(u=self.data, mode='step', delay=1)
+        self.avg.list2array(self.n)
+
+        self.v = self.dstep.v
+        self.vt = self.dtime.v
+        self.va = self.avg.v
+
+        self.n_forward = 5
+        self.tstep = 0.2
+        self.dae_t = 0
+        self.k = 0.2
+
+    def test_delay_step(self):
+        for i in range(self.n_forward):
+            self.dstep.check_var(i)
+            self.data.v += 1
+
+        self.assertSequenceEqual(self.v.tolist(), [self.n_forward - self.step - 1] * self.n)
+
+    def test_delay_time(self):
+        self.n_forward = 10
+        for i in range(self.n_forward):
+            self.data.v[:] = self.dae_t
+            self.dtime.check_var(self.dae_t)
+            self.dae_t += self.tstep
+
+        np.testing.assert_almost_equal(self.vt, [(self.n_forward - 1) * self.tstep - self.time] * self.n)
+
+    def test_average(self):
+        for i in range(self.n_forward):
+            self.data.v[:] = self.dae_t * self.k
+            self.avg.check_var(self.dae_t)
+
+            if self.dae_t == 0:
+                np.testing.assert_almost_equal(self.va, 0)
+            else:
+                np.testing.assert_almost_equal(self.va, 0.5 * (2 * self.dae_t - self.tstep) * self.k)
+
+            self.dae_t += self.tstep
+
+
+class TestDerivative(unittest.TestCase):
+    """
+    Test `andes.core.discrete.Derivative`
+    """
+    def setUp(self) -> None:
+        self.n = 5
+        self.data = DummyValue(0)
+        self.data.v = np.zeros(self.n)
+
+        self.der = Derivative(u=self.data)
+        self.der.list2array(self.n)
+        self.v = self.der.v
+
+        self.n_forward = 10
+        self.k = 0.2
+        self.t_step = 0.1
+        self.dae_t = 0
+
+    def test_derivative(self):
+        for i in range(self.n_forward):
+            self.data.v[:] = self.dae_t * self.k
+            self.der.check_var(self.dae_t)
+
+            if self.dae_t == 0:
+                np.testing.assert_almost_equal(self.v, 0)
+            else:
+                np.testing.assert_almost_equal(self.v, self.k)
+
+            self.dae_t += self.t_step

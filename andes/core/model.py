@@ -1,5 +1,5 @@
 """
-Base class for building ANDES models
+Base class for building ANDES models.
 """
 import os
 import logging
@@ -10,10 +10,10 @@ from andes.core.config import Config
 from andes.core.discrete import Discrete
 from andes.core.block import Block
 from andes.core.triplet import JacTriplet
-from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
+from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService
-from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService
+from andes.core.service import BaseService, ConstService, BackRef
+from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -156,7 +156,6 @@ class ModelData(object):
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
         self.num_params = OrderedDict()
-        self.ref_params = OrderedDict()
         self.idx_params = OrderedDict()
         self.timer_params = OrderedDict()
         self.n = 0
@@ -189,8 +188,6 @@ class ModelData(object):
 
         if isinstance(value, NumParam):
             self.num_params[key] = value
-        elif isinstance(value, RefParam):
-            self.ref_params[key] = value
         elif isinstance(value, IdxParam):
             self.idx_params[key] = value
 
@@ -221,10 +218,6 @@ class ModelData(object):
             kwargs["name"] = idx
 
         for name, instance in self.params.items():
-            # TODO: Consider making `RefParam` not subclass of `BaseParam`
-            # skip `RefParam` because it is collected outside `add`
-            if isinstance(instance, RefParam):
-                continue
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:
@@ -326,15 +319,15 @@ class ModelData(object):
         """
         if isinstance(keys, str):
             keys = (keys, )
-            if not isinstance(values, (int, float, str)) and not isinstance(values, Iterable):
-                raise ValueError("value must be a string, scalar or an iterable")
+            if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
+                raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 values = (values, )
         elif isinstance(keys, Iterable):
             if not isinstance(values, Iterable):
-                raise ValueError("value must be an iterable")
+                raise ValueError(f"value must be an iterable, got {values}")
             elif len(values) > 0 and not isinstance(values[0], Iterable):
-                raise ValueError("if keys is an iterable, values must be an iterable of iterables")
+                raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
@@ -541,6 +534,8 @@ class Model(object):
         self.blocks = OrderedDict()           # blocks
 
         self.services = OrderedDict()         # service/temporary variables
+        self.services_ref = OrderedDict()
+        self.services_fnd = OrderedDict()     # services to find/add devices
         self.services_tc = OrderedDict()      # time-constant services
         self.services_ext = OrderedDict()     # external services (to be retrieved)
         self.services_ops = OrderedDict()     # operational services (for special usages)
@@ -618,6 +613,10 @@ class Model(object):
             self.discrete[key] = value
         elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
+        elif isinstance(value, DeviceFinder):
+            self.services_fnd[key] = value
+        elif isinstance(value, BackRef):
+            self.services_ref[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, RandomService)):
@@ -768,13 +767,13 @@ class Model(object):
 
         """
         if len(self._input) == 0 or refresh:
-            self._refresh_inputs()
+            self.refresh_inputs()
 
         # update`dae_t`
         self._input['dae_t'] = self.system.dae.t
         return self._input
 
-    def _refresh_inputs(self):
+    def refresh_inputs(self):
         """
         This is the helper function to refresh inputs.
 
@@ -813,7 +812,7 @@ class Model(object):
         for key, val in self.config.as_dict().items():
             self._input[key] = val
 
-    def l_update_var(self):
+    def l_update_var(self, dae_t):
         """
         Call the ``check_var`` method of discrete components to update the internal status flags.
 
@@ -826,7 +825,7 @@ class Model(object):
         if (self.n == 0) or (not self.in_use):
             return
         for instance in self.discrete.values():
-            instance.check_var()
+            instance.check_var(dae_t)
 
     def l_check_eq(self):
         """
@@ -1568,7 +1567,8 @@ class Model(object):
         """
         Return model in-use status.
 
-        This is used by models with RefParam to disable equation/Jacobian computation when no model is referencing.
+        This is used by models with BackRef to disable Jacobian
+        computation when no model is referencing.
         """
         return True
 
@@ -1818,7 +1818,9 @@ class Model(object):
 
     def _block_doc(self, max_width=80, export='plain'):
         """
-        Documentation for blocks. To be implemented.
+        Documentation for blocks.
+
+        TODO: To be implemented.
         """
         return ''
 

@@ -274,7 +274,7 @@ def read(system, file):
         # """ID, NAME"""
         param = {'idx': data[0], 'name': data[1]}
         # TODO: add back
-        # system.add('Region', param)
+        # system.add('Zone', param)
 
     return ret
 
