@@ -483,8 +483,6 @@ An overview of supported parameters is given below.
 +---------------+----------------------------------------------------------------------------+
 |  TimerParam   | Parameter for storing the action time of events                            |
 +---------------+----------------------------------------------------------------------------+
-|  RefParam     | Parameter for collecting `idx` of referencing devices                      |
-+---------------+----------------------------------------------------------------------------+
 
 Data Parameters
 ---------------
@@ -510,11 +508,6 @@ External Parameters
 Timer Parameter
 ---------------
 .. autoclass:: andes.core.param.TimerParam
-    :noindex:
-
-Back Reference Parameter
-------------------------
-.. autoclass:: andes.core.param.RefParam
     :noindex:
 
 
@@ -716,13 +709,14 @@ Shape Manipulators
 This section is for advanced model developer.
 
 All generated equations operate on 1-dimensional arrays and can use algebraic calculations only.
-In some cases, one model would use `RefParam` to retrieve 2-dimensional indices and will use such indices to retrieve variable addresses.
+In some cases, one model would use `BackRef` to retrieve 2-dimensional indices and will use such indices to
+retrieve variable addresses.
 The retrieved addresses usually has a different length of the referencing model and cannot be used directly for calculation.
 Shape manipulator services can be used in such case.
 
 `NumReduce` is a helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
 `NumRepeat` is a helper Service type which repeats a 1-D value into linearly stored 2-D value based on the
-shape from a `RefParam`.
+shape from a `BackRef`.
 
 .. autoclass:: andes.core.service.NumReduce
     :noindex:
@@ -736,6 +730,8 @@ shape from a `RefParam`.
 .. autoclass:: andes.core.service.RefFlatten
     :noindex:
 
+.. autoclass:: andes.core.service.BackRef
+    :noindex:
 
 Discrete
 ========

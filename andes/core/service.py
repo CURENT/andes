@@ -368,7 +368,7 @@ class NumReduce(OperationService):
     u : ExtParam
         Input ExtParam whose ``v`` contains linearly stored 2-dimensional values
     ref : BackRef
-        The RefParam whose 2-dimensional shapes are used for indexing
+        The BackRef whose 2-dimensional shapes are used for indexing
     fun : Callable
         The callable for converting a 1-D array-like to a scalar
 
@@ -380,7 +380,7 @@ class NumReduce(OperationService):
             def __init__(...):
                 ...
                 # backward reference from `Bus`
-                self.Bus = RefParam()
+                self.Bus = BackRef()
 
                 # collect the Vn in an 1-D array
                 self.Vn = ExtParam(model='Bus',
@@ -569,7 +569,7 @@ class RefFlatten(OperationService):
 
         self.SynGen = BackRef(info='SynGen idx lists', export=False)
 
-    After collecting RefParams, `self.SynGen.v` will become a two-level list of indices,
+    After collecting BackRefs, `self.SynGen.v` will become a two-level list of indices,
     where the first level correspond to each COI and the second level correspond to generators
     of the COI.
 
