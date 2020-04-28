@@ -354,4 +354,6 @@ class TimedEvent(GroupBase):
 
 class FreqMeasurement(GroupBase):
     """Frequency measurements."""
-    pass
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('f', ))

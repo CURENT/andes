@@ -175,7 +175,7 @@ class System(object):
 
         This function is to be called after adding all device data.
         """
-        self._collect_ref_param()
+        self.collect_ref()
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
         self.find_devices()    # find or add required devices
@@ -855,12 +855,12 @@ class System(object):
                         raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
                                        f'in model <{model.class_name}>')
 
-    def _collect_ref_param(self):
+    def collect_ref(self):
         """
-        Collect indices into `RefParam` for all models.
+        Collect indices into `BackRef` for all models.
         """
         for model in self.models.values():
-            for ref in model.ref_params.values():
+            for ref in model.services_ref.values():
                 ref.v = [list() for _ in range(model.n)]
 
         for model in self.models.values():
@@ -876,14 +876,14 @@ class System(object):
                     continue
 
                 for n in (model.class_name, model.group):
-                    if n not in dest_model.ref_params:
+                    if n not in dest_model.services_ref:
                         continue
 
                     for model_idx, dest_idx in zip(model.idx.v, ref.v):
                         if dest_idx not in dest_model.idx.v:
                             continue
                         uid = dest_model.idx2uid(dest_idx)
-                        dest_model.ref_params[n].v[uid].append(model_idx)
+                        dest_model.services_ref[n].v[uid].append(model_idx)
 
     def _generate_pycode_file(self):
         """

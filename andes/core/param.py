@@ -68,7 +68,7 @@ class BaseParam(object):
         True if this parameter is mandatory
     export : bool
         True if the parameter will be exported when dumping data into files. True for most parameters.
-        False for ``RefParam``.
+        False for ``BackRef``.
 
     Attributes
     ----------
@@ -219,7 +219,7 @@ class IdxParam(BaseParam):
                  model: Optional[str] = None):
         super().__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit, mandatory=mandatory,
                          export=export)
-        self.model = model  # must be a `Model` name for building RefParam - Not checked yet
+        self.model = model  # must be a `Model` name for building BackRef - Not checked yet
 
 
 class NumParam(BaseParam):
@@ -564,69 +564,3 @@ class ExtParam(NumParam):
                 self.pu_coeff = parent_instance.pu_coeff[uid]
             except KeyError:
                 pass
-
-
-class RefParam(BaseParam):
-    """
-    A special type of reference collector parameter.
-
-    `RefParam` is used for collecting device indices of other models referencing the parent model of the
-    `RefParam`. The `v``field will be a list of lists, each containing the `idx` of other models
-    referencing each device of the parent model.
-
-    RefParam can be passed as indexer for params and vars, or shape for `NumReduce` and
-    `NumRepeat`. See examples for illustration.
-
-    Examples
-    --------
-    A Bus device has an `IdxParam` of `area`, storing the `idx` of area to which the bus device belongs.
-    In ``Bus.__init__()``, one has ::
-
-        self.area = IdxParam(model='Area')
-
-    Suppose `Bus` has the following data
-
-        ====   ====  ====
-        idx    area  Vn
-        ----   ----  ----
-        1      1     110
-        2      2     220
-        3      1     345
-        4      1     500
-        ====   ====  ====
-
-    The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
-    In ``Area.__init__``, one defines ::
-
-        self.Bus = RefParam()
-
-    where the member attribute name `Bus` needs to match exactly model name that `Area` wants to collect
-    `idx` for.
-    Similarly, one can define ``self.ACTopology = RefParam()`` to collect devices in the `ACTopology` group
-    that references Area.
-
-    The collection of `idx` happens in :py:func:`andes.system.System._collect_ref_param`.
-    It has to be noted that the specific `Area` entry must exist to collect model idx-dx referencing it.
-    For example, if `Area` has the following data ::
-
-        idx
-        1
-
-    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
-
-    If `Area` has data ::
-
-        idx
-        1
-        2
-
-    Then, `self.Bus.v` will end up with ``[ [1, 3, 4], [2] ]``.
-
-    See Also
-    --------
-    andes.core.service.NumReduce : A more complete example using RefParam to build the COI model
-
-    """
-    def __init__(self, **kwargs):
-        super(RefParam, self).__init__(**kwargs)
-        self.export = False

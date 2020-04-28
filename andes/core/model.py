@@ -10,9 +10,9 @@ from andes.core.config import Config
 from andes.core.discrete import Discrete
 from andes.core.block import Block
 from andes.core.triplet import JacTriplet
-from andes.core.param import BaseParam, RefParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
+from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService
+from andes.core.service import BaseService, ConstService, BackRef
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 
 from andes.utils.paths import get_pkl_path
@@ -156,7 +156,6 @@ class ModelData(object):
     def __init__(self, *args, **kwargs):
         self.params = OrderedDict()
         self.num_params = OrderedDict()
-        self.ref_params = OrderedDict()
         self.idx_params = OrderedDict()
         self.timer_params = OrderedDict()
         self.n = 0
@@ -189,8 +188,6 @@ class ModelData(object):
 
         if isinstance(value, NumParam):
             self.num_params[key] = value
-        elif isinstance(value, RefParam):
-            self.ref_params[key] = value
         elif isinstance(value, IdxParam):
             self.idx_params[key] = value
 
@@ -221,10 +218,6 @@ class ModelData(object):
             kwargs["name"] = idx
 
         for name, instance in self.params.items():
-            # TODO: Consider making `RefParam` not subclass of `BaseParam`
-            # skip `RefParam` because it is collected outside `add`
-            if isinstance(instance, RefParam):
-                continue
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:
@@ -541,6 +534,7 @@ class Model(object):
         self.blocks = OrderedDict()           # blocks
 
         self.services = OrderedDict()         # service/temporary variables
+        self.services_ref = OrderedDict()
         self.services_fnd = OrderedDict()     # services to find/add devices
         self.services_tc = OrderedDict()      # time-constant services
         self.services_ext = OrderedDict()     # external services (to be retrieved)
@@ -621,6 +615,8 @@ class Model(object):
             self.services[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
+        elif isinstance(value, BackRef):
+            self.services_ref[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, RandomService)):
@@ -1571,7 +1567,7 @@ class Model(object):
         """
         Return model in-use status.
 
-        This is used by models with RefParam to disable Jacobian
+        This is used by models with BackRef to disable Jacobian
         computation when no model is referencing.
         """
         return True

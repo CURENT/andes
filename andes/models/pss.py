@@ -7,6 +7,7 @@ from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Ga
 from andes.core.service import ExtService, OptionalSelect, DeviceFinder
 from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
+from collections import OrderedDict
 
 import logging
 
@@ -93,7 +94,7 @@ class PSSBase(Model):
                           )
 
         # from BusFreq
-        self.f = ExtState(model='BusFreq', src='f', indexer=self.busfreq, export=False,
+        self.f = ExtState(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
                           info='Bus frequency')
 
         # from Exciter
@@ -113,6 +114,12 @@ class IEEESTModel(PSSBase):
 
     def __init__(self, system, config):
         PSSBase.__init__(self, system, config)
+
+        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
+        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        self.config.add_extra('_alt', {'freq_model': ('BusFreq', )})
+
+        self.busf.model = self.config.freq_model
 
         self.dv = Derivative(self.v)
 
@@ -167,7 +174,7 @@ class IEEEST(IEEESTData, IEEESTModel):
     """
     IEEEST stabilizer model.
 
-    Mode 2 is yet to be implemented.
+    Automatically adds frequency measurement if not provided.
 
     Blocks are named "F1", "F2", "LL1", "LL2" and "WO" in sequence.
     Two limiters are named "VLIM" and "OLIM" in sequence.
