@@ -51,6 +51,7 @@ class BusFreq(ModelData, Model):
                           tex_name=r'V',
                           )
         self.ad = Algeb(info='angle deviation',
+                        unit='rad',
                         tex_name=r'\theta_d',
                         v_str='0',
                         e_str='(a - a0) - ad',
@@ -58,12 +59,14 @@ class BusFreq(ModelData, Model):
         self.WO = Washout(u=self.ad,
                           K=self.iwn,
                           T=self.Tf,
-                          info='angle washout yielding frequency',
+                          info='angle washout',
                           )
-        self.w = State(info='frequency after output delay',
+        self.w = State(info='post-delay output frequency',
+                       unit='p.u. (Hz)',
                        tex_name=r'\omega',
                        v_str='1',
-                       e_str='(1 + WO_y - w) / Tw',
+                       e_str='1 + WO_y - w',
+                       t_const=self.Tw
                        )
 
 
@@ -75,7 +78,9 @@ class BusROCOF(BusFreq):
     """
     def __init__(self, system, config):
         BusFreq.__init__(self, system, config)
-        self.Tr = NumParam(default=0.1, info="frequency washout time constant", tex_name='T_r')
+        self.Tr = NumParam(default=0.1,
+                           info="frequency washout time constant",
+                           tex_name='T_r')
 
         self.Wf = Washout(u=self.w,
                           K=1,
