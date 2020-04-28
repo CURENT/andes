@@ -4,6 +4,17 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.8.7 (2020-04-28)
+-------------------
+- Changed `RefParam` to a service type called `BackRef`.
+- Added `DeviceFinder`, a service type to find device idx when not provided.
+  `DeviceFinder` will also automatically add devices if not found.
+- Added `OptionalSelect`, a service type to select optional parameters if provided
+  and select fallback ones otherwise.
+- Added discrete types `Derivative`, `Delay`, and `Average`,
+- Implemented full IEEEST stabilizer.
+- Implemented COI for generator speed and angle measurement.
+
 v0.8.6 (2020-04-21)
 -------------------
 This release contains important documentation fixes and two new blocks.
