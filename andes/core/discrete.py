@@ -537,6 +537,8 @@ class DeadBand(Limiter):
 class Delay(Discrete):
     """
     Delay class to memorize past variable values.
+
+    TODO: Add documentation.
     """
 
     def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
@@ -554,6 +556,7 @@ class Delay(Discrete):
         self.t = np.array([0])
         self.v = np.array([0])
         self._v_mem = np.zeros((0, 1))
+        self.rewind = False
 
     def list2array(self, n):
         """
@@ -571,10 +574,13 @@ class Delay(Discrete):
         # Storage:
         # Output values is in the first col.
         # Latest values are stored in /appended to the last column
+        self.rewind = False
+
         if dae_t == 0:
             self._v_mem[:] = self.u.v[:, None]
 
         elif dae_t < self.t[-1]:
+            self.rewind = True
             self.t[-1] = dae_t
             self._v_mem[:, -1] = self.u.v
 
@@ -607,6 +613,13 @@ class Delay(Discrete):
 
         self.v[:] = self._v_mem[:, 0]
 
+    def __repr__(self):
+        out = ''
+        out += f'v:\n {self.v}\n'
+        out += f't:\n {self.t}\n'
+        out += f'_v_men: \n {self._v_mem}\n'
+        return out
+
 
 class Average(Delay):
     """
@@ -635,7 +648,12 @@ class Derivative(Delay):
 
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
-        if dae_t == 0:
+
+        # Note:
+        #    Very small derivatives (< 1e-8) could cause numerical problems (chattering).
+        #    Need to reset the output to zero following a rewind.
+        if (dae_t == 0) or (self.rewind is True):
             self.v[:] = 0
         else:
             self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
+            self.v[np.where(self.v < 1e-8)] = 0

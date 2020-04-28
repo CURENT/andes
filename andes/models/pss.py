@@ -159,6 +159,8 @@ class IEEEST(IEEESTData, IEEESTModel):
     """
     IEEEST stabilizer model.
 
+    Mode 2 is yet to be implemented.
+
     Blocks are named "F1", "F2", "LL1", "LL2" and "WO" in sequence.
     Two limiters are named "VLIM" and "OLIM" in sequence.
     """
