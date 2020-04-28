@@ -780,7 +780,7 @@ class System(object):
         if isinstance(models, str):
             models = {models: self.__dict__[models]}
         elif isinstance(models, Model):
-            models = {models.class_name, models}
+            models = {models.class_name: models}
         elif isinstance(models, list):
             models = OrderedDict()
             for item in models:

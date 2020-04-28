@@ -145,7 +145,7 @@ class TG2(TG2Data, TGBase):
         self.w_d = Algeb(info='Generator speed deviation before dead band (positive for under speed)',
                          tex_name=r'\omega_{dev}',
                          v_str='0',
-                         e_str='u * (wref - omega) - w_d',
+                         e_str='u*(wref-omega) - w_d',
                          )
         self.w_db = DeadBand(u=self.w_d,
                              center=self.dbc,
