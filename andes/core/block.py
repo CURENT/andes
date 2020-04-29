@@ -90,6 +90,11 @@ class Block(object):
         self.owner = None
         self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
         self.triplets = JacTriplet()
+        self.flags = dict(
+            f_num=False,        # True if the block defines `f_numeric`
+            g_num=False,        # True if the block defines `g_numeric`
+            j_num=False,        # True if the block defines `j_numeric`
+        )
 
     def __setattr__(self, key, value):
         # handle sub-blocks by prepending self.name
@@ -297,6 +302,7 @@ class PIControllerNumeric(Block):
         self.y = Algeb(info="Output value")
 
         self.vars = {'xi': self.xi, 'y': self.y}
+        self.flags.update({'f_num': True, 'g_num': True, 'j_num': True})
 
     def g_numeric(self, **kwargs):
         self.y.e = self.kp.v * (self.ref.v - self.u.v) + self.xi.v
