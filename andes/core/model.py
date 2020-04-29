@@ -118,6 +118,10 @@ class ModelData(object):
     cache
         A cache instance for different views of the internal data.
 
+    flags : dict
+        Flags to control the routine and functions that get called. If the model is using user-defined
+        numerical calls, set `f_num`, `g_num` and `j_num` properly.
+
     Notes
     -----
     Two default parameters, `u` (connection status of type :py:class:`andes.core.param.NumParam`),
@@ -550,6 +554,9 @@ class Model(object):
             tds=False,          # True if called during tds; if is False, ``dae_t`` cannot be used
             series=False,       # True if is series device
             nr_iter=False,      # True if require iterative initialization
+            f_num=False,        # True if the model defines `f_numeric`
+            g_num=False,        # True if the model defines `g_numeric`
+            j_num=False,        # True if the model defines `j_numeric`
             sys_base=False,     # True if is parameters have been converted to system base
             address=False,      # True if address is assigned
             initialized=False,  # True if variables have been initialized
@@ -1244,11 +1251,14 @@ class Model(object):
             return
 
         # store model-level user-defined Jacobians
-        self.j_numeric()
+        if self.flags['j_num'] is True:
+            self.j_numeric()
+
         # store and merge user-defined Jacobians in blocks
         for instance in self.blocks.values():
-            instance.j_numeric()
-            self.triplets.merge(instance.triplets)
+            if instance.flags['j_num'] is True:
+                instance.j_numeric()
+                self.triplets.merge(instance.triplets)
 
         var_names_list = list(self.cache.all_vars.keys())
         eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
@@ -1332,18 +1342,21 @@ class Model(object):
         if (self.n == 0) or (not self.in_use):
             return
         kwargs = self.get_inputs()
+        args = kwargs.values()
 
         # call lambda functions in self.call
-        ret = self.calls.f_lambdify(**kwargs)
+        ret = self.calls.f_lambdify(*args)
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
             instance.e += ret[idx][0]
 
-        # numerical calls defined in the model
-        self.f_numeric(**kwargs)
+        # user-defined numerical calls defined in the model
+        if self.flags['f_num'] is True:
+            self.f_numeric(**kwargs)
 
-        # numerical calls in blocks
+        # user-defined numerical calls in blocks
         for instance in self.blocks.values():
-            instance.f_numeric(**kwargs)
+            if instance.flags['f_num'] is True:
+                instance.f_numeric(**kwargs)
 
     def g_update(self):
         """
@@ -1353,18 +1366,21 @@ class Model(object):
         if (self.n == 0) or (not self.in_use):
             return
         kwargs = self.get_inputs()
+        args = kwargs.values()
 
         # call lambda functions stored in `self.calls`
-        ret = self.calls.g_lambdify(**kwargs)
+        ret = self.calls.g_lambdify(*args)
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
             instance.e += ret[idx][0]
 
         # numerical calls defined in the model
-        self.g_numeric(**kwargs)
+        if self.flags['g_num'] is True:
+            self.g_numeric(**kwargs)
 
         # numerical calls in blocks
         for instance in self.blocks.values():
-            instance.g_numeric(**kwargs)
+            if instance.flags['g_num'] is True:
+                instance.g_numeric(**kwargs)
 
     def j_update(self):
         """
