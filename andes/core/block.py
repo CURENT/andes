@@ -325,9 +325,11 @@ class PIControllerNumeric(Block):
 
 class Gain(Block):
     r"""
-    Gain block ::
+    Gain block. ::
 
-        u -> K -> y
+             ┌───┐
+        u -> │ K │ -> y
+             └───┘
 
     Exports an algebraic output `y`.
     """
@@ -345,7 +347,7 @@ class Gain(Block):
         Implemented equation and the initial condition are
 
         .. math ::
-            y = K u
+            y = K u \\
             y^{(0)} = K u^{(0)}
 
         """
@@ -355,11 +357,14 @@ class Gain(Block):
 
 class Integrator(Block):
     r"""
-    Integrator block ::
+    Integrator block. ::
 
-        u -> K/s -> y
+             ┌─────┐
+        u -> │ K/s │ -> y
+             └─────┘
 
-    Exports a differential variable `y`. The initial output is specified by `y0` and default to zero.
+    Exports a differential variable `y`.
+    The initial output is specified by `y0` and default to zero.
     """
 
     def __init__(self, u, K, y0=0, name=None, tex_name=None, info=None):
@@ -387,11 +392,13 @@ class Integrator(Block):
 
 class Washout(Block):
     r"""
-    Washout filter (high pass) block ::
+    Washout filter (high pass) block. ::
 
-                sK
-         u -> ------- -> y
-              1 + sT
+             ┌────────┐
+             │   sK   │
+        u -> │ ────── │ -> y
+             │ 1 + sT │
+             └────────┘
 
     Exports state `x` (symbol `x'`) and output algebraic variable `y`.
     """
@@ -414,8 +421,8 @@ class Washout(Block):
         Equations and initial values:
 
         .. math ::
-            T \dot{x'} &= (u - x) \\
-            T y &= K (u - x) \\
+            T \dot{x'} &= (u - x') \\
+            T y &= K (u - x') \\
             x'^{(0)} &= u \\
             y^{(0)} &= 0
 
@@ -461,8 +468,8 @@ class WashoutOrLag(Washout):
         Equations and initial values:
 
         .. math ::
-            T \dot{x'} &= (u - x) \\
-            T y = z_0 K (u-x) + z_1 Tx
+            T \dot{x'} &= (u - x') \\
+            T y = z_0 K (u - x') + z_1 T x
             x'^{(0)} &= u \\
             y^{(0)} &= 0
 
@@ -481,13 +488,20 @@ class WashoutOrLag(Washout):
 
 class Lag(Block):
     r"""
-    Lag (low pass filter) transfer function block ::
+    Lag (low pass filter) transfer function. ::
 
-                K
-        u -> ------ -> x
-             1 + sT
+             ┌────────┐
+             │    K   │
+        u -> │ ────── │ -> x
+             │ 1 + sT │
+             └────────┘
 
     Exports one state variable `x` as the output.
+
+    Warnings
+    --------
+    The current version exports `x` as the output instead of `y`.
+    It it subject to change in future versions.
 
     Parameters
     ----------
@@ -499,8 +513,8 @@ class Lag(Block):
         Input variable
 
     """
-    def __init__(self, u, T, K, name=None, info='Lag transfer function'):
-        super().__init__(name=name, info=info)
+    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T = dummify(T)
         self.K = dummify(K)
@@ -530,13 +544,17 @@ class Lag(Block):
 
 class LagAntiWindup(Block):
     r"""
-    Lag (low pass filter) transfer function block with an anti-windup limiter ::
+    Lag (low pass filter) transfer function block with an anti-windup limiter. ::
 
-                      /-- upper --
-                     K
-             u -> ------ -> x
-                  1 + sT
-        -- lower --/
+                     upper
+                   /¯¯¯¯¯¯
+             ┌────────┐
+             │    K   │
+        u -> │ ────── │ -> x
+             │ 1 + sT │
+             └────────┘
+           ______/
+           lower
 
     Exports one state variable `x` as the output.
     Exports one AntiWindup instance `lim`.
@@ -551,9 +569,9 @@ class LagAntiWindup(Block):
         Input variable
 
     """
-    def __init__(self, u, T, K, lower, upper, name=None,
-                 info='Lag transfer function with non-windup limiter'):
-        super().__init__(name=name, info=info)
+    def __init__(self, u, T, K, lower, upper,
+                 name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T = dummify(T)
         self.K = dummify(K)
@@ -563,7 +581,7 @@ class LagAntiWindup(Block):
 
         self.enforce_tex_name((self.T, self.K))
 
-        self.x = State(info='State in lag transfer function', tex_name="x'",
+        self.x = State(info='State in lag TF', tex_name="x'",
                        t_const=self.T)
         self.lim = AntiWindup(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
 
@@ -590,9 +608,11 @@ class Lag2ndOrd(Block):
     r"""
     Second order lag transfer function (low-pass filter) ::
 
-                     K
-        u -> ----------------- -> y
-             1 + sT1 + s^2 T2
+             ┌──────────────────┐
+             │         K        │
+        u -> │ ──────────────── │ -> y
+             │ 1 + sT1 + s^2 T2 │
+             └──────────────────┘
 
     Exports one two state variables (`x`, `y`), where `y` is the output.
 
@@ -651,9 +671,11 @@ class LeadLag(Block):
     r"""
     Lead-Lag transfer function block in series implementation ::
 
-             1 + sT1
-        u -> ------- -> y
-             1 + sT2
+             ┌─────────┐
+             │ 1 + sT1 │
+        u -> │ ─────── │ -> y
+             │ 1 + sT2 │
+             └─────────┘
 
     Exports two variables: internal state `x` and output algebraic variable `y`.
 
@@ -664,7 +686,7 @@ class LeadLag(Block):
     T2 : BaseParam
         Time constant 2
     """
-    def __init__(self, u, T1, T2, name=None, tex_name=None, info='Lead-lag transfer function'):
+    def __init__(self, u, T1, T2, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
@@ -704,14 +726,16 @@ class LeadLag2ndOrd(Block):
     r"""
     Second-order lead-lag transfer function block ::
 
-             1 + sT3 + s^2 T4
-        u -> ----------------- -> y
-             1 + sT1 + s^2 T2
+             ┌──────────────────┐
+             │ 1 + sT3 + s^2 T4 │
+        u -> │ ──────────────── │ -> y
+             │ 1 + sT1 + s^2 T2 │
+             └──────────────────┘
 
     Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
     """
 
-    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info='2nd-order lead-lag'):
+    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info=None):
         super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T1 = dummify(T1)
@@ -756,17 +780,18 @@ class LeadLagLimit(Block):
     r"""
     Lead-Lag transfer function block with hard limiter (series implementation) ::
 
-                                ___upper___
-              1 + sT1          /
-        u ->  -------  -> ynl / -> y
-              1 + sT2        /
-                  __lower___/
+             ┌─────────┐          upper
+             │ 1 + sT1 │         /¯¯¯¯¯
+        u -> │ ─────── │ -> ynl / -> y
+             │ 1 + sT2 │  _____/
+             └─────────┘  lower
 
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindup `lim`.
 
     """
-    def __init__(self, u, T1, T2, lower, upper, name=None, info='Lead-lag transfer function'):
-        super().__init__(name=name, info=info)
+    def __init__(self, u, T1, T2, lower, upper,
+                 name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = T1
         self.T2 = T2
         self.u = u
@@ -774,9 +799,9 @@ class LeadLagLimit(Block):
         self.upper = upper
         self.enforce_tex_name((self.T1, self.T2))
 
-        self.x = State(info='State in lead-lag transfer function', tex_name="x'", t_const=self.T2)
-        self.ynl = Algeb(info='Output of lead-lag transfer function before limiter', tex_name=r'y_{nl}')
-        self.y = Algeb(info='Output of lead-lag transfer function after limiter', tex_name=r'y',
+        self.x = State(info='State in lead-lag TF', tex_name="x'", t_const=self.T2)
+        self.ynl = Algeb(info='Output of lead-lag TF before limiter', tex_name=r'y_{nl}')
+        self.y = Algeb(info='Output of lead-lag TF after limiter', tex_name=r'y',
                        diag_eps=1e-6)
         self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
 

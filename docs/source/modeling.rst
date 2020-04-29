@@ -832,37 +832,47 @@ They can be imported to build new models.
 Algebraic
 `````````
 .. autoclass:: andes.core.block.Gain
+    :members: define
     :noindex:
 
 First Order
 ```````````
 .. autoclass:: andes.core.block.Integrator
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Lag
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LagAntiWindup
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Washout
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.WashoutOrLag
+    :members: define
     :noindex:
 
 Second Order
 ````````````
 .. autoclass:: andes.core.block.LeadLag
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LeadLagLimit
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Lag2ndOrd
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LeadLag2ndOrd
+    :members: define
     :noindex:
 
 

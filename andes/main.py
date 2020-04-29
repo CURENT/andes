@@ -28,7 +28,7 @@ def config_logger(stream=True,
                   file=True,
                   stream_level=logging.INFO,
                   log_file='andes.log',
-                  log_path=get_log_dir(),
+                  log_path=None,
                   file_level=logging.DEBUG,
                   ):
     """
@@ -60,6 +60,9 @@ def config_logger(stream=True,
     """
     logger = logging.getLogger('andes')
     logger.setLevel(logging.DEBUG)
+
+    if log_path is None:
+        log_path = get_log_dir()
 
     sh_formatter_str = '%(message)s'
     if stream_level == 1:

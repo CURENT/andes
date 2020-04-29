@@ -1140,7 +1140,7 @@ class System(object):
         logger.info(f'Config written to "{file_path}"')
         return file_path
 
-    def supported_models(self):
+    def supported_models(self, export='plain'):
         """
         Return the support group names and model names in a table.
 
@@ -1161,6 +1161,7 @@ class System(object):
         tab = Tab(title='Supported Groups and Models',
                   header=['Group', 'Models'],
                   data=pairs,
+                  export=export,
                   )
 
         return tab.draw()

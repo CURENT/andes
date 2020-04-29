@@ -13,6 +13,10 @@ out += '****************\n'
 out += 'Model References\n'
 out += '****************\n'
 out += '\n'
+
+out += ss.supported_models(export='rest')
+
+out += '\n'
 out += '.. toctree ::\n'
 out += '    :maxdepth: 2\n'
 out += '\n'

@@ -16,6 +16,8 @@
 - [x] Allow adding routine without modifying code (as long as routines are added to `Routines.all_routines`)
 - [x] Add a help system for Config
 - [x] Add consistency checks for Config
+*   Return an error state to system if a simulation routine fails
+*   Re-evaluate the decentralized equation evaluation method
 *   Deal with two-terminal and multi-terminal devices
 *   Iterative initialization for equations (half done with Newton Krylov)
 *   Define general hooks - when should the connectivity check happen
