@@ -9,7 +9,7 @@ import versioneer
 if sys.version_info < (3, 6):
     error = """
 andes does not support Python <= {0}.{1}.
-Python 3.7 and above is required. Check your Python version like so:
+Python 3.6 and above is required. Check your Python version like so:
 
 python3 --version
 
@@ -17,7 +17,7 @@ This may be due to an out-of-date pip. Make sure you have pip >= 9.0.1.
 Upgrade pip like so:
 
 pip install --upgrade pip
-""".format(3, 5)
+""".format(3, 6)
     sys.exit(error)
 
 here = path.abspath(path.dirname(__file__))
@@ -36,7 +36,7 @@ setup(
     name='andes',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="A Python-based tool for symbolic power system modeling and numerical analysis.",
+    description="Python software for symbolic power system modeling and numerical analysis.",
     long_description=readme,
     long_description_content_type='text/markdown',
     author="Hantao Cui",
