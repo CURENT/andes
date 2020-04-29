@@ -4,6 +4,17 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.8.8 (2020-04-28)
+-------------------
+This update contains a quick but significant fix to boost the simulation speed by avoiding
+calls to empty user-defined numerical calls.
+
+- In `Model.flags` and `Block.flags`, added `f_num`, `g_num` and `j_num` to indicate
+  if user-defined numerical calls exist.
+- In `Model.f_update`, `Model.g_update` and `Model.j_update`, check the above flags
+  to avoid unnecessary calls to empty numeric functions.
+- For the `kundur_pss.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
+
 v0.8.7 (2020-04-28)
 -------------------
 - Changed `RefParam` to a service type called `BackRef`.
