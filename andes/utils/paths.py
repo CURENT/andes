@@ -108,10 +108,11 @@ def list_cases(rpath='.', no_print=False):
     case_path = os.path.normpath(case_path)
 
     tree = DisplayablePath.make_tree(pathlib.Path(case_path))
-    out = ''
+    out = []
     for path in tree:
-        out += path.displayable()
+        out.append(path.displayable())
 
+    out = '\n'.join(out)
     if no_print is False:
         print(out)
     else:
