@@ -159,12 +159,7 @@ class System(object):
         Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
         the System instance on which prepare is called.
         """
-        self._generate_symbols()
-        self._generate_equations()
-        self._generate_jacobians()
-        self._generate_initializers()
-        if quick is False:
-            self._generate_pretty_print()
+        self.call_model('prepare', models=self.models, quick=quick)
         self._check_group_common()
         self._store_calls()
         self.dill()
@@ -892,27 +887,6 @@ class System(object):
                             continue
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.services_ref[n].v[uid].append(model_idx)
-
-    def _generate_pycode_file(self):
-        """
-        Generate empty files for storing lambdified Python code (TODO)
-        """
-        self.call_model('generate_pycode_file', self.models)
-
-    def _generate_initializers(self):
-        self.call_model('generate_initializers', self.models)
-
-    def _generate_symbols(self):
-        self.call_model('generate_symbols', self.models)
-
-    def _generate_pretty_print(self):
-        self.call_model('generate_pretty_print', self.models)
-
-    def _generate_equations(self):
-        self.call_model('generate_equations', self.models)
-
-    def _generate_jacobians(self):
-        self.call_model('generate_jacobians', self.models)
 
     def import_groups(self):
         """
