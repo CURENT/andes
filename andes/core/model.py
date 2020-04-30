@@ -566,8 +566,9 @@ class Model(object):
             self.config.load(config)
 
         self.calls = ModelCall()              # callback and LaTeX string storage
-        self.syms = SymProcessor(self)            # symbolic processor instance
         self.triplets = JacTriplet()          # Jacobian triplet storage
+        self.syms = SymProcessor(self)            # symbolic processor instance
+        self.docum = Documenter(self)
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
@@ -901,7 +902,7 @@ class Model(object):
 
         return np.ravel(self.calls.init_std(vars_input, params))
 
-    def solve_initialization(self):
+    def init_iter(self):
         """
         Solve the initialization equation using the Newton-Krylov method.
         """
@@ -1022,7 +1023,7 @@ class Model(object):
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
         if self.flags['nr_iter']:
-            self.solve_initialization()
+            self.init_iter()
         # ----------------------------------------
 
         # call custom variable initializer after generated initializers
@@ -1295,304 +1296,16 @@ class Model(object):
         """
         return True
 
-    def _param_doc(self, max_width=80, export='plain'):
-        """
-        Export formatted model parameter documentation as a string.
-
-        Parameters
-        ----------
-        max_width : int, optional = 80
-            Maximum table width. If export format is ``rest`` it will be unlimited.
-
-        export : str, optional = 'plain'
-            Export format, 'plain' for plain text, 'rest' for restructuredText.
-
-        Returns
-        -------
-        str
-            Tabulated output in a string
-        """
-        if len(self.params) == 0:
-            return ''
-
-        # prepare temporary lists
-        names, units, class_names = list(), list(), list()
-        info, defaults, properties = list(), list(), list()
-        units_rest = list()
-
-        for p in self.params.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            info.append(p.info if p.info else '')
-            defaults.append(p.default if p.default is not None else '')
-            units.append(f'{p.unit}' if p.unit else '')
-            units_rest.append(f'*{p.unit}*' if p.unit else '')
-
-            plist = []
-            for key, val in p.property.items():
-                if val is True:
-                    plist.append(key)
-            properties.append(','.join(plist))
-
-        # symbols based on output format
-        if export == 'rest':
-            symbols = [item.tex_name for item in self.params.values()]
-            symbols = math_wrap(symbols, export=export)
-        else:
-            symbols = [item.name for item in self.params.values()]
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Description', info),
-                                  ('Default', defaults),
-                                  ('Unit', units),
-                                  ('Type', class_names),
-                                  ('Properties', properties)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Description', info),
-                                 ('Default', defaults),
-                                 ('Unit', units_rest),
-                                 ('Type', class_names),
-                                 ('Properties', properties)])
-
-        # convert to rows and export as table
-        return make_doc_table(title='Parameters',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _var_doc(self, max_width=80, export='plain'):
-        # variable documentation
-        if len(self.cache.all_vars) == 0:
-            return ''
-
-        names, symbols, units = list(), list(), list()
-        ivs, properties, info = list(), list(), list()
-        units_rest, ivs_rest = list(), list()
-
-        for p in self.cache.all_vars.values():
-            names.append(p.name)
-            ivs.append(p.v_str if p.v_str else '')
-            info.append(p.info if p.info else '')
-            units.append(p.unit if p.unit else '')
-            units_rest.append(f'*{p.unit}*' if p.unit else '')
-
-            # collect properties
-            all_properties = ['v_str', 'v_setter', 'e_setter', 'v_iter']
-            plist = []
-            for item in all_properties:
-                if (p.__dict__[item] is not None) and (p.__dict__[item] is not False):
-                    plist.append(item)
-            properties.append(','.join(plist))
-
-        # replace with latex math expressions if export is ``rest``
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Initial Value', ivs),
-                                  ('Description', info),
-                                  ('Unit', units),
-                                  ('Properties', properties)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Initial Value', ivs_rest),
-                                 ('Description', info),
-                                 ('Unit', units_rest),
-                                 ('Properties', properties)])
-
-        return make_doc_table(title='Variables',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _eq_doc(self, max_width=80, export='plain', e_code=None):
-        # equation documentation
-        # TODO: this function needs a bit refactoring
-        out = ''
-        if len(self.cache.all_vars) == 0:
-            return out
-
-        if e_code is None:
-            e_code = ('f', 'g')
-        elif isinstance(e_code, str):
-            e_code = (e_code, )
-
-        e2full = {'f': 'Differential',
-                  'g': 'Algebraic'}
-        e2form = {'f': "T x' = f(x, y)",
-                  'g': "0 = g(x, y)"}
-
-        e2dict = {'f': self.cache.states_and_ext,
-                  'g': self.cache.algebs_and_ext}
-        for e_name in e_code:
-            if len(e2dict[e_name]) == 0:
-                continue
-
-            names, symbols = list(), list()
-            eqs, eqs_rest = list(), list()
-            lhs_names, lhs_tex_names = list(), list()
-            class_names = list()
-
-            for p in e2dict[e_name].values():
-                names.append(p.name)
-                class_names.append(p.class_name)
-                eqs.append(p.e_str if p.e_str else '')
-                if e_name == 'f':
-                    lhs_names.append(p.t_const.name if p.t_const else '')
-                    lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
-
-            plain_dict = OrderedDict([('Name', names),
-                                      ('Type', class_names),
-                                      (f'RHS of Equation "{e2form[e_name]}"', eqs),
-                                      ])
-
-            if export == 'rest':
-                call_store = self.system.calls[self.class_name]
-                e2var_sym = {'f': call_store.x_latex,
-                             'g': call_store.y_latex}
-                e2eq_sym = {'f': call_store.f_latex,
-                            'g': call_store.g_latex}
-
-                symbols = math_wrap(e2var_sym[e_name], export=export)
-                eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
-
-            rest_dict = OrderedDict([('Name', names),
-                                     ('Symbol', symbols),
-                                     ('Type', class_names),
-                                     (f'RHS of Equation "{e2form[e_name]}"', eqs_rest),
-                                     ])
-
-            if e_name == 'f':
-                plain_dict['T (LHS)'] = lhs_names
-                rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
-
-            out += make_doc_table(title=f'{e2full[e_name]} Equations',
-                                  max_width=max_width,
-                                  export=export,
-                                  plain_dict=plain_dict,
-                                  rest_dict=rest_dict)
-
-        return out
-
-    def _service_doc(self, max_width=80, export='plain'):
-        if len(self.services) == 0:
-            return ''
-
-        names, symbols = list(), list()
-        eqs, eqs_rest, class_names = list(), list(), list()
-
-        for p in self.services.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            eqs.append(p.v_str if p.v_str else '')
-
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap([item.tex_name for item in self.services.values()], export=export)
-            eqs_rest = math_wrap(call_store.s_latex, export=export)
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Equation', eqs),
-                                  ('Type', class_names)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Equation', eqs_rest),
-                                 ('Type', class_names)])
-
-        return make_doc_table(title='Services',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _discrete_doc(self, max_width=80, export='plain'):
-        if len(self.discrete) == 0:
-            return ''
-
-        names, symbols = list(), list()
-        class_names = list()
-
-        for p in self.discrete.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-
-        if export == 'rest':
-            symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Type', class_names)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Type', class_names)])
-
-        return make_doc_table(title='Discrete',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _block_doc(self, max_width=80, export='plain'):
-        """
-        Documentation for blocks.
-
-        TODO: To be implemented.
-        """
-        return ''
-
     def doc(self, max_width=80, export='plain'):
         """
-        Return the model documentation in table-formatted string.
-
-        Parameters
-        ----------
-        max_width : int
-            Maximum table width. Automatically et to 0 if format is ``rest``.
-        export : str, ('plain', 'rest')
-            Export format. Use fancy table if is ``rest``.
-
-        Returns
-        -------
-        str
-            A string with the documentations.
+        Retrieve model documentation as a string.
         """
-        out = ''
-        if export == 'rest':
-            max_width = 0
-            model_header = '-' * 80 + '\n'
-            out += f'.. _{self.class_name}:\n\n'
-        else:
-            model_header = ''
-
-        if export == 'rest':
-            out += model_header + f'{self.class_name}\n' + model_header
-            out += f'\nGroup {self.group}_\n\n'
-        else:
-            out += model_header + f'Model <{self.class_name}> in Group <{self.group}>\n' + model_header
-
-        if self.__doc__ is not None:
-            out += self.__doc__
-            out += '\n'  # this fixes the indentation for the next line
-
-        # add tables
-        out += self._param_doc(max_width=max_width, export=export) + \
-            self._var_doc(max_width=max_width, export=export) + \
-            self._eq_doc(max_width=max_width, export=export) + \
-            self._service_doc(max_width=max_width, export=export) + \
-            self._discrete_doc(max_width=max_width, export=export) + \
-            self._block_doc(max_width=max_width, export=export) + \
-            self.config.doc(max_width=max_width, export=export)
-
-        return out
+        return self.docum.get(max_width=max_width, export=export)
 
     def prepare(self, quick=False):
+        """
+        Symbolic processing and code generation.
+        """
         logger.debug(f"Code generation for {self.class_name}")
         self.syms.generate_symbols()
         self.syms.generate_equations()
@@ -1907,3 +1620,315 @@ class SymProcessor(object):
         """
         models_dir = os.path.join(get_pkl_path(), 'models')
         os.makedirs(models_dir, exist_ok=True)
+
+
+class Documenter(object):
+    """
+    Helper class for documenting models.
+    """
+    def __init__(self, parent):
+        self.parent = parent
+        self.system = parent.system
+        self.class_name = parent.class_name
+        self.config = parent.config
+        self.cache = parent.cache
+        self.params = parent.params
+        self.services = parent.services
+        self.discrete = parent.discrete
+
+    def _param_doc(self, max_width=80, export='plain'):
+        """
+        Export formatted model parameter documentation as a string.
+
+        Parameters
+        ----------
+        max_width : int, optional = 80
+            Maximum table width. If export format is ``rest`` it will be unlimited.
+
+        export : str, optional = 'plain'
+            Export format, 'plain' for plain text, 'rest' for restructuredText.
+
+        Returns
+        -------
+        str
+            Tabulated output in a string
+        """
+        if len(self.params) == 0:
+            return ''
+
+        # prepare temporary lists
+        names, units, class_names = list(), list(), list()
+        info, defaults, properties = list(), list(), list()
+        units_rest = list()
+
+        for p in self.params.values():
+            names.append(p.name)
+            class_names.append(p.class_name)
+            info.append(p.info if p.info else '')
+            defaults.append(p.default if p.default is not None else '')
+            units.append(f'{p.unit}' if p.unit else '')
+            units_rest.append(f'*{p.unit}*' if p.unit else '')
+
+            plist = []
+            for key, val in p.property.items():
+                if val is True:
+                    plist.append(key)
+            properties.append(','.join(plist))
+
+        # symbols based on output format
+        if export == 'rest':
+            symbols = [item.tex_name for item in self.params.values()]
+            symbols = math_wrap(symbols, export=export)
+        else:
+            symbols = [item.name for item in self.params.values()]
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Description', info),
+                                  ('Default', defaults),
+                                  ('Unit', units),
+                                  ('Type', class_names),
+                                  ('Properties', properties)])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Description', info),
+                                 ('Default', defaults),
+                                 ('Unit', units_rest),
+                                 ('Type', class_names),
+                                 ('Properties', properties)])
+
+        # convert to rows and export as table
+        return make_doc_table(title='Parameters',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _var_doc(self, max_width=80, export='plain'):
+        # variable documentation
+        if len(self.cache.all_vars) == 0:
+            return ''
+
+        names, symbols, units = list(), list(), list()
+        ivs, properties, info = list(), list(), list()
+        units_rest, ivs_rest = list(), list()
+
+        for p in self.cache.all_vars.values():
+            names.append(p.name)
+            ivs.append(p.v_str if p.v_str else '')
+            info.append(p.info if p.info else '')
+            units.append(p.unit if p.unit else '')
+            units_rest.append(f'*{p.unit}*' if p.unit else '')
+
+            # collect properties
+            all_properties = ['v_str', 'v_setter', 'e_setter', 'v_iter']
+            plist = []
+            for item in all_properties:
+                if (p.__dict__[item] is not None) and (p.__dict__[item] is not False):
+                    plist.append(item)
+            properties.append(','.join(plist))
+
+        # replace with latex math expressions if export is ``rest``
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Initial Value', ivs),
+                                  ('Description', info),
+                                  ('Unit', units),
+                                  ('Properties', properties)])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Initial Value', ivs_rest),
+                                 ('Description', info),
+                                 ('Unit', units_rest),
+                                 ('Properties', properties)])
+
+        return make_doc_table(title='Variables',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _eq_doc(self, max_width=80, export='plain', e_code=None):
+        # equation documentation
+        # TODO: this function needs a bit refactoring
+        out = ''
+        if len(self.cache.all_vars) == 0:
+            return out
+
+        if e_code is None:
+            e_code = ('f', 'g')
+        elif isinstance(e_code, str):
+            e_code = (e_code,)
+
+        e2full = {'f': 'Differential',
+                  'g': 'Algebraic'}
+        e2form = {'f': "T x' = f(x, y)",
+                  'g': "0 = g(x, y)"}
+
+        e2dict = {'f': self.cache.states_and_ext,
+                  'g': self.cache.algebs_and_ext}
+        for e_name in e_code:
+            if len(e2dict[e_name]) == 0:
+                continue
+
+            names, symbols = list(), list()
+            eqs, eqs_rest = list(), list()
+            lhs_names, lhs_tex_names = list(), list()
+            class_names = list()
+
+            for p in e2dict[e_name].values():
+                names.append(p.name)
+                class_names.append(p.class_name)
+                eqs.append(p.e_str if p.e_str else '')
+                if e_name == 'f':
+                    lhs_names.append(p.t_const.name if p.t_const else '')
+                    lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
+
+            plain_dict = OrderedDict([('Name', names),
+                                      ('Type', class_names),
+                                      (f'RHS of Equation "{e2form[e_name]}"', eqs),
+                                      ])
+
+            if export == 'rest':
+                call_store = self.system.calls[self.class_name]
+                e2var_sym = {'f': call_store.x_latex,
+                             'g': call_store.y_latex}
+                e2eq_sym = {'f': call_store.f_latex,
+                            'g': call_store.g_latex}
+
+                symbols = math_wrap(e2var_sym[e_name], export=export)
+                eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
+
+            rest_dict = OrderedDict([('Name', names),
+                                     ('Symbol', symbols),
+                                     ('Type', class_names),
+                                     (f'RHS of Equation "{e2form[e_name]}"', eqs_rest),
+                                     ])
+
+            if e_name == 'f':
+                plain_dict['T (LHS)'] = lhs_names
+                rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
+
+            out += make_doc_table(title=f'{e2full[e_name]} Equations',
+                                  max_width=max_width,
+                                  export=export,
+                                  plain_dict=plain_dict,
+                                  rest_dict=rest_dict)
+
+        return out
+
+    def _service_doc(self, max_width=80, export='plain'):
+        if len(self.services) == 0:
+            return ''
+
+        names, symbols = list(), list()
+        eqs, eqs_rest, class_names = list(), list(), list()
+
+        for p in self.services.values():
+            names.append(p.name)
+            class_names.append(p.class_name)
+            eqs.append(p.v_str if p.v_str else '')
+
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = math_wrap([item.tex_name for item in self.services.values()], export=export)
+            eqs_rest = math_wrap(call_store.s_latex, export=export)
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Equation', eqs),
+                                  ('Type', class_names)])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Equation', eqs_rest),
+                                 ('Type', class_names)])
+
+        return make_doc_table(title='Services',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _discrete_doc(self, max_width=80, export='plain'):
+        if len(self.discrete) == 0:
+            return ''
+
+        names, symbols = list(), list()
+        class_names = list()
+
+        for p in self.discrete.values():
+            names.append(p.name)
+            class_names.append(p.class_name)
+
+        if export == 'rest':
+            symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Type', class_names)])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Type', class_names)])
+
+        return make_doc_table(title='Discrete',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _block_doc(self, max_width=80, export='plain'):
+        """
+        Documentation for blocks.
+
+        TODO: To be implemented.
+        """
+        return ''
+
+    def get(self, max_width=80, export='plain'):
+        """
+        Return the model documentation in table-formatted string.
+
+        Parameters
+        ----------
+        max_width : int
+            Maximum table width. Automatically et to 0 if format is ``rest``.
+        export : str, ('plain', 'rest')
+            Export format. Use fancy table if is ``rest``.
+
+        Returns
+        -------
+        str
+            A string with the documentations.
+        """
+        out = ''
+        if export == 'rest':
+            max_width = 0
+            model_header = '-' * 80 + '\n'
+            out += f'.. _{self.class_name}:\n\n'
+        else:
+            model_header = ''
+
+        if export == 'rest':
+            out += model_header + f'{self.class_name}\n' + model_header
+            out += f'\nGroup {self.parent.group}_\n\n'
+        else:
+            out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
+
+        if self.__doc__ is not None:
+            out += self.__doc__
+            out += '\n'  # this fixes the indentation for the next line
+
+        # add tables
+        out += self._param_doc(max_width=max_width, export=export) + \
+            self._var_doc(max_width=max_width, export=export) + \
+            self._eq_doc(max_width=max_width, export=export) + \
+            self._service_doc(max_width=max_width, export=export) + \
+            self._discrete_doc(max_width=max_width, export=export) + \
+            self._block_doc(max_width=max_width, export=export) + \
+            self.config.doc(max_width=max_width, export=export)
+
+        return out
