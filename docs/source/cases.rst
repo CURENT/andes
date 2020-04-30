@@ -7,9 +7,9 @@ Test Cases
 Directory
 =========
 
-ANDES comes with a few test cases in the ``cases`` folder.
-Currently, the Kundur's 2-area system (kundur_full.xlsx) and the WECC 179-bus system
-(wecc/wecc179.xlsx) has been verified against DSATools TSAT.
+ANDES comes with a several test cases in the ``andes/cases/`` folder.
+Currently, the Kundur's 2-area system (``kundur/kundur_full.xlsx``) and the WECC 179-bus system
+(``wecc/wecc179.xlsx``) has been verified against DSATools TSAT.
 The test case library will continue to build as more models get implemented.
 
 A tree view of the test directory is as follows. ::
