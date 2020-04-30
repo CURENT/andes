@@ -159,7 +159,18 @@ class System(object):
         Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
         the System instance on which prepare is called.
         """
-        self.call_model('prepare', models=self.models, quick=quick)
+        import sys
+        import math
+
+        total = len(self.models)
+        width = math.ceil(math.log(total, 10))
+        for idx, name in enumerate(self.models):
+            sys.stdout.write(f"Code generation for {name} ({idx:>{width}}/{total:>{width}}).\r")
+            sys.stdout.flush()
+
+            model = self.models[name]
+            model.prepare(quick=quick)
+
         self._check_group_common()
         self._store_calls()
         self.dill()

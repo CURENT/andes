@@ -1318,7 +1318,27 @@ class Model(object):
 class SymProcessor(object):
     """
     A helper class for symbolic processing and code generation.
+
+    Parameters
+    ----------
+    parent : Model
+        The `Model` instance to document
+
+    Attributes
+    ----------
+    xy : sympy.Matrix
+        variables pretty print in the order of State, ExtState, Algeb, ExtAlgeb
+    f : sympy.Matrix
+        differential equations pretty print
+    g : sympy.Matrix
+        algebraic equations pretty print
+    df : sympy.SparseMatrix
+        df /d (xy) pretty print
+    dg : sympy.SparseMatrix
+        dg /d (xy) pretty print
+
     """
+
     def __init__(self, parent):
 
         self.parent = parent
@@ -1462,7 +1482,9 @@ class SymProcessor(object):
         self.vars_list = list(self.vars_dict.values())  # useful for ``.jacobian()``
 
     def _check_expr_symbols(self, expr):
-        """Check if expression contains unknown symbols"""
+        """
+        Check if expression contains unknown symbols
+        """
         for item in expr.free_symbols:
             if item not in self.inputs_dict.values():
                 raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
@@ -1531,10 +1553,9 @@ class SymProcessor(object):
             col -> self.calls._jgy
             val -> self.calls._vgy
 
-        Returns
-        -------
-        None
         """
+        logger.debug(f'- Generating Jacobians for {self.class_name}')
+
         from sympy import SparseMatrix, lambdify, Matrix
 
         # clear storage
@@ -1573,8 +1594,8 @@ class SymProcessor(object):
                 jname = f'{eqn.e_code}{var.v_code}'
                 self.calls.append_ijv(jname, e_idx, v_idx, lambdify(syms_list, e_symbolic))
 
-        # The for loop below is intended to add an epsilon small value to the diagonal of gy matrix.
-        # The user should take care of the algebraic equations by using `diag_eps` in Algeb definition
+        # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
+        # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
         for var in self.parent.algebs.values():
             if var.diag_eps == 0.0:
@@ -1625,6 +1646,11 @@ class SymProcessor(object):
 class Documenter(object):
     """
     Helper class for documenting models.
+
+    Parameters
+    ----------
+    parent : Model
+        The `Model` instance to document
     """
     def __init__(self, parent):
         self.parent = parent
@@ -1919,7 +1945,8 @@ class Documenter(object):
             out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
 
         if self.__doc__ is not None:
-            out += self.__doc__
+            if self.parent.__doc__ is not None:
+                out += self.parent.__doc__
             out += '\n'  # this fixes the indentation for the next line
 
         # add tables
