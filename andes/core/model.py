@@ -1336,6 +1336,13 @@ class SymProcessor(object):
         df /d (xy) pretty print
     dg : sympy.SparseMatrix
         dg /d (xy) pretty print
+    input_dict : OrderedDict
+        All possible symbols in equations, including variables, parameters, discrete flags, and
+        config flags. It has the same variables as what ``get_inputs()`` returns.
+    vars_dict : OrderedDict
+        variable-only symbols, which are useful when getting the Jacobian matrices.
+    non_vars_dict : OrderedDict
+        symbols in ``input_syms`` but not in ``var_syms``.
 
     """
 

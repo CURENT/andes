@@ -283,15 +283,13 @@ The following attributes are defined.
 
 Equation Generation
 -------------------
-``Model`` handles the symbolic to numeric generation when called. The equation generation is a multi-step
-process with symbol preparation, equation generation, Jacobian generation, initializer generation, and pretty
-print generation.
+``Model.syms``, an instance of ``SymProcessor``, handles the symbolic to numeric generation when called. The
+equation generation is a multi-step process with symbol preparation, equation generation, Jacobian generation,
+initializer generation, and pretty print generation.
 
-The symbol preparation prepares ``OrderedDict`` of ``input_syms``, ``vars_syms`` and ``non_vars_syms``.
-``input_syms`` contains all possible symbols in equations, including variables, parameters, discrete flags, and
-config flags. ``input_syms`` has the same variables as what ``get_inputs()`` returns. Besides, ``vars_syms`` are
-the variable-only symbols, which are useful when getting the Jacobian matrices. ``non_vars_syms`` contains the
-symbols in ``input_syms`` but not in ``var_syms``.
+.. autoclass:: andes.core.model.SymProcessor
+    :members: generate_symbols, generate_equations, generate_jacobians, generate_init
+    :noindex:
 
 Next, function ``generate_equation`` converts each DAE equation set to one numerical function calls and store
 it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are ``f_lambdify``
