@@ -515,26 +515,26 @@ def plot(**kwargs):
     tdsplot(**kwargs)
 
 
-def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
+def misc(edit_config='', save_config='', show_license=False, clean=True, cli=False, **kwargs):
     """
     Misc functions.
     """
     if edit_conf(edit_config):
-        return True
+        return
     if show_license:
         print_license()
-        return True
+        return
     if save_config != '':
         save_conf(save_config)
-        return True
+        return
     if clean is True:
         remove_output()
-        return True
+        return
 
     logger.info('info: no option specified. Use \'andes misc -h\' for help.')
 
 
-def prepare(quick=False, **kwargs):
+def prepare(quick=False, cli=False, **kwargs):
     """
     Run code generation.
 
@@ -548,7 +548,11 @@ def prepare(quick=False, **kwargs):
     system.prepare(quick=quick)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
-    return system
+
+    if cli is True:
+        return 0
+    else:
+        return system
 
 
 def selftest(**kwargs):
