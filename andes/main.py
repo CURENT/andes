@@ -323,13 +323,14 @@ def _find_cases(filename, path):
     -------
 
     """
+    logger.info(f'Working directory: "{os.getcwd()}"')
+
     if len(filename) == 0:
         logger.info('info: no input file. Use \'andes run -h\' for help.')
     if isinstance(filename, str):
         filename = [filename]
 
     cases = []
-    logger.info(f'Working directory: "{os.getcwd()}"')
     for file in filename:
         full_paths = os.path.join(path, file)
         found = glob.glob(full_paths)
@@ -454,6 +455,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     cases = _find_cases(filename, input_path)
     system = None
 
+    ex_code = 0
+    if len(filename) and not len(cases):
+        ex_code = 1  # file specified but not found
+
     t0, _ = elapsed()
     if len(cases) == 1:
         system = run_case(cases[0], **kwargs)
@@ -480,10 +485,9 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     t0, s0 = elapsed(t0)
 
-    ex_code = 0
     if len(cases) == 1:
-        ex_code = system.exit_code
-    elif len(cases) >= 2:
+        ex_code += system.exit_code
+    elif len(cases) > 1:
         if isinstance(system, list):
             for s in system:
                 ex_code += s.exit_code
@@ -493,7 +497,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
             logger.info(f'-> Single process finished in {s0}.')
         else:
             logger.error(f'-> Single process finished with error in {s0}.')
-    else:
+    elif len(cases) > 1:
         if ex_code == 0:
             print(f'-> Multiprocessing finished in {s0}.')
         else:

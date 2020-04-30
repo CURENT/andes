@@ -149,4 +149,4 @@ def main():
 
     else:
         func = getattr(module, args.command)
-        func(cli=True, **vars(args))
+        return func(cli=True, **vars(args))
