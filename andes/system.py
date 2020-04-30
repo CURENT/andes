@@ -75,6 +75,7 @@ class System(object):
         self.groups = OrderedDict()        # group names and instances
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
+        self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
         # get and load default config file
         self._config_path = get_config_path()

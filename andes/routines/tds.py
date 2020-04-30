@@ -148,10 +148,11 @@ class TDS(BaseRoutine):
         dae = self.system.dae
         config = self.config
 
-        ret = False
+        succeed = False
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Simulation will not continue.')
-            return ret
+            system.exit_code = 1
+            return succeed
 
         self.summary()
         self.init()
@@ -162,7 +163,6 @@ class TDS(BaseRoutine):
             if self.calc_h() == 0:
                 self.pbar.close()
                 logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
-                ret = False   # FIXME: overwritten
                 break
 
             if self.callpert is not None:
@@ -186,18 +186,21 @@ class TDS(BaseRoutine):
                 system.vars_to_models()
 
         self.pbar.close()
-        delattr(self, 'pbar')  # removed `pbar` so that System can be dilled
+        delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
+
+        if (system.dae.t == self.config.tf) and (not self.busted):
+            succeed = True   # success flag
+            system.exit_code = 0
 
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
         system.TDS.save_output()
-        ret = True
 
-        # load data into ``TDS.plotter`` in the notebook mode
+        # load data into `TDS.plotter` in the notebook mode
         if is_notebook():
             self.load_plotter()
 
-        return ret
+        return succeed
 
     def rewind(self, t):
         """

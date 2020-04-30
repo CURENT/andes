@@ -122,6 +122,7 @@ class PFlow(BaseRoutine):
         self.init()
         if system.dae.m == 0:
             logger.error("Loaded case contains no power flow element.")
+            system.exit_code = 1
             return False
 
         t0, _ = elapsed()
@@ -160,6 +161,7 @@ class PFlow(BaseRoutine):
             if self.config.report:
                 system.PFlow.report()
 
+        system.exit_code = 0 if self.converged else 1
         return self.converged
 
     def report(self):

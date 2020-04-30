@@ -368,6 +368,11 @@ def find_log_path(lg):
 
 
 def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
+    """
+    Run multiprocessing with `Process`.
+
+    Return values from `run_case` are not preserved. Always return `True` when done.
+    """
     # start processes
     jobs = []
     for idx, file in enumerate(cases):
@@ -410,7 +415,8 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     return ret
 
 
-def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False, **kwargs):
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
+        cli=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -430,6 +436,12 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Use Pool for multiprocessing to return a list of created Systems.
     kwargs
         Other supported keyword arguments
+
+    Other Parameters
+    ----------------
+    return_code : bool, optional
+        Return exit code instead of system instances
+
     Returns
     -------
     System
@@ -468,12 +480,29 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     t0, s0 = elapsed(t0)
 
+    ex_code = 0
     if len(cases) == 1:
-        logger.info(f'-> Single process finished in {s0}.')
+        ex_code = system.exit_code
     elif len(cases) >= 2:
-        print(f'-> Multiprocessing finished in {s0}.')
+        if isinstance(system, list):
+            for s in system:
+                ex_code += s.exit_code
 
-    return system
+    if len(cases) == 1:
+        if ex_code == 0:
+            logger.info(f'-> Single process finished in {s0}.')
+        else:
+            logger.error(f'-> Single process finished with error in {s0}.')
+    else:
+        if ex_code == 0:
+            print(f'-> Multiprocessing finished in {s0}.')
+        else:
+            print(f'-> Multiprocessing finished with error in {s0}.')
+
+    if cli is True:
+        return ex_code
+    else:
+        return system
 
 
 def plot(**kwargs):

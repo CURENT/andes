@@ -141,7 +141,7 @@ def main():
 
     module = importlib.import_module('andes.main')
 
-    if args.command != 'plot':
+    if args.command not in ('plot', 'doc'):
         preamble()
 
     if args.command is None:
@@ -149,4 +149,4 @@ def main():
 
     else:
         func = getattr(module, args.command)
-        func(**vars(args))
+        func(cli=True, **vars(args))
