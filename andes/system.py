@@ -1023,7 +1023,7 @@ class System(object):
         Remove PyCapsule objects in solvers.
         """
         for r in self.routines.values():
-            r.solver.remove_pycapsule()
+            r.solver.clear()
 
     def _store_calls(self):
         """
