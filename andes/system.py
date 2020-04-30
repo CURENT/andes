@@ -970,6 +970,7 @@ class System(object):
                 attr_name = cls_name
                 self.__dict__[attr_name] = the_class(system=self, config=self._config_object)
                 self.routines[attr_name] = self.__dict__[attr_name]
+                self.routines[attr_name].config.check()
 
     def store_switch_times(self, models=None):
         """
