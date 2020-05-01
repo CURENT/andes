@@ -548,7 +548,8 @@ class Model(object):
 
         # class behavior flags
         self.flags = dict(
-            collate=True,       # True: collate variables by device; False: by variable
+            collate=False,      # True: collate variables by device; False: by variable.
+                                # Non-collate (continuous memory) has faster computation speed.
             pflow=False,        # True: called during power flow
             tds=False,          # True if called during tds; if is False, ``dae_t`` cannot be used
             series=False,       # True if is series device
@@ -581,6 +582,11 @@ class Model(object):
         self.cache.add_callback('services_and_ext', self._services_and_ext)
         self.cache.add_callback('vars_ext', self._vars_ext)
         self.cache.add_callback('vars_int', self._vars_int)
+        self.cache.add_callback('v_getters', self._v_getters)
+        self.cache.add_callback('v_adders', self._v_adders)
+        self.cache.add_callback('v_setters', self._v_setters)
+        self.cache.add_callback('e_adders', self._e_adders)
+        self.cache.add_callback('e_setters', self._e_setters)
 
         self._input = OrderedDict()          # cached dictionary of inputs
         self._input_z = OrderedDict()        # discrete flags in an OrderedDict
@@ -1215,6 +1221,66 @@ class Model(object):
     def _vars_int(self):
         return OrderedDict(list(self.states.items()) +
                            list(self.algebs.items()))
+
+    def _v_getters(self):
+        out = OrderedDict()
+        for name, var in self.cache.all_vars.items():
+            if var.v_inplace:
+                continue
+            out[name] = var
+        return out
+
+    def _v_adders(self):
+        out = OrderedDict()
+        for name, var in self.cache.all_vars.items():
+            if var.v_inplace is True:
+                continue
+            if var.v_str is None and var.v_iter is None:
+                continue
+            if var.v_setter is True:
+                continue
+
+            out[name] = var
+        return out
+
+    def _v_setters(self):
+        out = OrderedDict()
+        for name, var in self.cache.all_vars.items():
+            if var.v_inplace is True:
+                continue
+            if var.v_str is None and var.v_iter is None:
+                continue
+            if var.v_setter is False:
+                continue
+
+            out[name] = var
+        return out
+
+    def _e_adders(self):
+        out = OrderedDict()
+        for name, var in self.cache.all_vars.items():
+            if var.e_inplace is True:
+                continue
+            if var.e_str is None:
+                continue
+            if var.e_setter is True:
+                continue
+
+            out[name] = var
+        return out
+
+    def _e_setters(self):
+        out = OrderedDict()
+        for name, var in self.cache.all_vars.items():
+            if var.e_inplace is True:
+                continue
+            if var.e_str is None:
+                continue
+            if var.e_setter is False:
+                continue
+
+            out[name] = var
+        return out
 
     def list2array(self):
         """

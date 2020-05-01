@@ -63,7 +63,7 @@ class PFlow(BaseRoutine):
             maximum absolute mismatch
         """
         system = self.system
-        # evaluate discrete, differential, algebraic, and jacobians
+        # evaluate discrete, differential, algebraic, and Jacobians
         system.e_clear()
         system.l_update_var()
         system.f_update()
@@ -188,14 +188,16 @@ class PFlow(BaseRoutine):
         system.dae.x = xy[:system.dae.n]
         system.dae.y = xy[system.dae.n:]
         system.vars_to_models()
-        system.e_clear()
+        system.vars_to_dae()
 
+        system.e_clear()
         system.l_update_var()
         system.f_update()
         system.g_update()
         system.l_check_eq()
         system.l_set_eq()
         system.fg_to_dae()
+
         return system.dae.fg
 
     def newton_krylov(self, verbose=False):

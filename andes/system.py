@@ -15,7 +15,7 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
-from andes.core import Config, BaseParam, Model, ExtVar, AntiWindup
+from andes.core import Config, BaseParam, Model, AntiWindup
 
 from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
@@ -119,6 +119,7 @@ class System(object):
                              'pflow_tds': self.find_models(('tds', 'pflow')),
                              }
 
+        self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
@@ -127,6 +128,7 @@ class System(object):
         """
         Clear adders and setters storage
         """
+        self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
@@ -190,7 +192,6 @@ class System(object):
         # assign address at the end before adding devices and processing parameters
         self.set_address()
         self.set_dae_names()
-        self.dae.resize_arrays()
 
         self.store_sparse_pattern()
         self.store_adder_setter()
@@ -271,14 +272,14 @@ class System(object):
 
             if not collate:
                 for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n))
+                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n), contiguous=True)
                 for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n))
+                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n), contiguous=True)
             else:
                 for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)))
+                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)), contiguous=False)
                 for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)))
+                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)), contiguous=False)
 
             self.dae.m = m_end
             self.dae.n = n_end
@@ -295,6 +296,12 @@ class System(object):
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
                 instance.link_external(ext_model)
+
+        # allocate memory for DAE arrays
+        self.dae.resize_arrays()
+
+        # set `v` and `e` in variables
+        self._set_var_arrays(models=models)
 
         # pre-allocate for names
         if len(self.dae.y_name) == 0:
@@ -337,6 +344,26 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
                             self.dae.o += 1
 
+    def _set_var_arrays(self, models=None):
+        """
+        Set arrays (`v` and `e`) in internal variables.
+
+        Parameters
+        ----------
+        models : OrderedDict, list, Model, optional
+            Models to execute.
+
+        """
+        if models is None:
+            models = self._models_flag['pflow']
+
+        for mdl in models.values():
+            if mdl.n == 0:
+                continue
+
+            for var in mdl.cache.vars_int.values():
+                var.set_arrays(self.dae)
+
     def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Initialize the variables for each of the specified models.
@@ -373,7 +400,7 @@ class System(object):
 
     def store_adder_setter(self, models=None):
         """
-        Store the adders and setters for variables and equations.
+        Store non-inplace adders and setters for variables and equations.
         """
         models = self._get_models(models)
         self._clear_adder_setter()
@@ -381,19 +408,28 @@ class System(object):
         for mdl in models.values():
             if not mdl.n:
                 continue
-            for var in mdl.cache.all_vars.values():
-                if var.e_setter is False:
-                    self._adders[var.e_code].append(var)
-                else:
-                    self._setters[var.e_code].append(var)
 
-                if var.v_setter is False:
-                    self._adders[var.v_code].append(var)
-                else:
-                    self._setters[var.v_code].append(var)
+            # ``getters` that retrieve variable values from DAE
+            for var in mdl.cache.v_getters.values():
+                self._getters[var.v_code].append(var)
+
+            # ``adders`` that add variable values to the DAE array
+            for var in mdl.cache.v_adders.values():
+                self._adders[var.v_code].append(var)
+            for var in mdl.cache.e_adders.values():
+                self._adders[var.e_code].append(var)
+
+            # ``setters`` that force set variable values in the DAE array
+            for var in mdl.cache.v_setters.values():
+                self._setters[var.v_code].append(var)
+            for var in mdl.cache.e_setters.values():
+                self._setters[var.e_code].append(var)
+
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
+
+        return
 
     def link_ext_param(self, model=None):
         if model is None:
@@ -625,13 +661,8 @@ class System(object):
         Copy variables values from models to `System.dae`.
 
         This function clears `DAE.x` and `DAE.y` and collects values from models.
-
-        Warnings
-        --------
-        Variables with property `v_setter=False` will be added to variable only if `v_str` is not None.
-        It prevents read-intended :py:mod:`andes.core.var.ExtVar` values to be summed.
         """
-        self.dae.clear_xy()
+        # self.dae.clear_xy()
         self._v_to_dae('x')
         self._v_to_dae('y')
 
@@ -639,11 +670,12 @@ class System(object):
         """
         Copy variable values from `System.dae` to models.
         """
-        for var in self._adders['y'] + self._setters['y']:
+
+        for var in self._getters['y']:
             if var.n > 0:
                 var.v[:] = self.dae.y[var.a]
 
-        for var in self._adders['x'] + self._setters['x']:
+        for var in self._getters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
@@ -665,10 +697,10 @@ class System(object):
         for var in self._adders[v_name]:
             # NOTE:
             # For power flow, they will be initialized to zero.
-            # For TDS initialization, they will remain their value.
+            # For TDS initialization, they will remain at their values.
             if var.n == 0:
                 continue
-            if isinstance(var, ExtVar) and (var.v_str is None):
+            if var.v_inplace is True:
                 continue
             if var.owner.flags['initialized'] is False:
                 continue

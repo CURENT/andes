@@ -50,7 +50,7 @@ class PVModel(Model):
         super().__init__(system, config)
         self.group = 'StaticGen'
         self.flags.update({'pflow': True,
-                           'collate': True})
+                           })
 
         self.config.add(OrderedDict((('pv2pq', 0),
                                      ('npv2pq', 1))))

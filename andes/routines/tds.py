@@ -89,7 +89,6 @@ class TDS(BaseRoutine):
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
 
-        system.dae.resize_arrays()
         system.dae.clear_ts()
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter(models=self.pflow_tds_models)
