@@ -103,7 +103,7 @@ add on sparse matrices, such as doing ::
 
     self.fx += spmatrix(v, i, j, (n, n), 'd')
 
-Although the implementation is simple, this involves creating and discarding temporary objects on the right hand
+Although the implementation is simple, it involves creating and discarding temporary objects on the right hand
 side and, even worse, changing the sparse pattern of ``self.fx``.
 
 The second approach is to store the rows, columns and values in an array-like object and construct the Jacobians
@@ -247,7 +247,7 @@ During the code generation phase, the symbols are created by checking the book-k
 `states`, `algebs`, and attributes in `Model.cache`.
 
 In the numerical evaluation phase, `Model` provides a method, :py:func:`andes.core.model.get_inputs`, to
-collect the variable value arrays in a dictionary, which can be effortlessly passed as kwargs to numerical
+collect the variable value arrays in a dictionary, which can be effortlessly passed as arguments to numerical
 functions.
 
 Commonly Used Attributes in Models
@@ -302,7 +302,7 @@ Jacobian Storage
 
 Abstract Jacobian Storage
 `````````````````````````
-Using the ``.jacobian`` method on ``sympy.Matrix``, the symbolic Jacobians can be easily obtains. The complexity
+Using the ``.jacobian`` method on ``sympy.Matrix``, the symbolic Jacobians can be easily obtained. The complexity
 lies in the storage of the Jacobian elements. Observed that the Jacobian equation generation happens before any
 system is loaded, thus only the variable indices in the variable array is available. For each non-zero item in each
 Jacobian matrix, ANDES stores the equation index, variable index, and the Jacobian value (either a constant
@@ -648,7 +648,7 @@ Services
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
 constants but can be used for special operations to work around restrictions in the symbolic framework.
 Services are value providers, meaning each service has an attribute ``v`` for storing service values. The
-base class of services is ``BaseService``, and the supported services are listd as follows.
+base class of services is ``BaseService``, and the supported services are listed as follows.
 
 +------------------+-----------------------------------------------------------------+
 |      Class       |                           Description                           |

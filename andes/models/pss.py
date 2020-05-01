@@ -161,20 +161,19 @@ class IEEESTModel(PSSBase):
 
 class IEEEST(IEEESTData, IEEESTModel):
     """
-    IEEEST stabilizer model.
-
-    Automatically adds frequency measurement if not provided.
+    IEEEST stabilizer model. Automatically adds frequency measurement devices if not provided.
 
     Input signals (MODE):
-    1 (s0) - Rotor speed deviation (p.u.)
-    2 (s1) - Bus frequency deviation (p.u.)
-    3 (s2) - Generator P electrical in Gen MVABase (p.u.)
-    4 (s3) - Generator accelerating power (p.u.)
-    5 (s4) - Bus voltage (p.u.)
-    6 (s5) - Derivative of p.u. bus voltage
 
-    Blocks are named "F1", "F2", "LL1", "LL2" and "WO" in sequence.
-    Two limiters are named "VLIM" and "OLIM" in sequence.
+    1 (s0) - Rotor speed deviation (p.u.),
+    2 (s1) - Bus frequency deviation (p.u.),
+    3 (s2) - Generator P electrical in Gen MVABase (p.u.),
+    4 (s3) - Generator accelerating power (p.u.),
+    5 (s4) - Bus voltage (p.u.),
+    6 (s5) - Derivative of p.u. bus voltage.
+
+    Blocks are named `F1`, `F2`, `LL1`, `LL2` and `WO` in sequence.
+    Two limiters are named `VLIM` and `OLIM` in sequence.
     """
 
     def __init__(self, system, config):

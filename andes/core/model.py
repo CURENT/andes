@@ -494,13 +494,13 @@ class Model(object):
     where `self.config.pq2z` is a flag to turn this feature on or off.
     After this line, we can use `vcmp_zi`, `vcmp_zl`, and `vcmp_zu` in other equation strings. ::
 
-            self.a.e_str = "u * (p0 * vcmp_zi + \
-                                 p0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
-                                 p0 * vcmp_zu * (v ** 2 / vmax ** 2))"
+            self.a.e_str = "u * (p0 * vcmp_zi + " \
+                           "p0 * vcmp_zl * (v ** 2 / vmin ** 2) + " \
+                           "p0 * vcmp_zu * (v ** 2 / vmax ** 2))"
 
-            self.v.e_str = "u * (q0 * vcmp_zi + \
-                                 q0 * vcmp_zl * (v ** 2 / vmin ** 2) + \
-                                 q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
+            self.v.e_str = "u * (q0 * vcmp_zi + " \
+                           "q0 * vcmp_zl * (v ** 2 / vmin ** 2) + "\
+                           "q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
 
     Note that `PQ.a.e_str` can use the three variables from `vcmp` even before defining `PQ.vcmp`, as long as
     `PQ.vcmp` is defined, because `vcmp_zi` is just a string literal in `e_str`.

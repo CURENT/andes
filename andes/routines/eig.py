@@ -164,7 +164,7 @@ class EIG(BaseRoutine):
         return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             linewidth=0.5, dpi=150):
+             linewidth=0.5, dpi=150, show=True):
         mpl.rc('font', family='Times New Roman', size=12)
 
         if mu is None:
@@ -215,7 +215,8 @@ class EIG(BaseRoutine):
         ax.set_xlim(left=left, right=right)
         ax.set_ylim(ymin, ymax)
 
-        # plt.show()
+        if show is True:
+            plt.show()
         return fig, ax
 
     def export_state_matrix(self):

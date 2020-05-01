@@ -165,7 +165,7 @@ which prints out a preamble and help commands:
                             Program logging level in 10-DEBUG, 20-INFO,
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
-The first level of commands are chosen from `{run,plot,misc,prepare,selftest}`.
+The first level of commands are chosen from `{run,plot,doc,misc,prepare,selftest}`.
 Each command contains a group of subcommands, which can be looked up by appending `-h` to the first-level command. 
 For example, use `andes run -h` to look up the subcommands in `run`. 
 
