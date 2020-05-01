@@ -297,21 +297,20 @@ class DAE(object):
         """
         self.x = self._extend_or_slice(self.x, self.n)
         self.y = self._extend_or_slice(self.y, self.m)
+        self.z = self._extend_or_slice(self.z, self.o)
 
         self.f = self._extend_or_slice(self.f, self.n)
         self.g = self._extend_or_slice(self.g, self.m)
-        self.Tf = self._extend_or_slice(self.Tf, self.n)
+        self.Tf = self._extend_or_slice(self.Tf, self.n, fill_func=np.ones)
 
-        self.z = self._extend_or_slice(self.z, self.o)
-
-    def _extend_or_slice(self, array, new_size):
+    def _extend_or_slice(self, array, new_size, fill_func=np.zeros):
         """
         Helper function for ``self.resize_arrays`` to grow or shrink arrays.
         """
-        # if new_size > len(array):
-        array = np.append(array, np.zeros(new_size - len(array)))
-        # else:
-        #     array = array[0:new_size]
+        if new_size > len(array):
+            array = np.append(array, fill_func(new_size - len(array)))
+        else:
+            array = array[0:new_size]
         return array
 
     @property

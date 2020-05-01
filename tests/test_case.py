@@ -73,13 +73,15 @@ class TestKundur2AreaXLSX(unittest.TestCase):
         self.ss.TDS.config.tf = 10
         self.ss.TDS.run()
         andes.main.misc(clean=True)
+        self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
     def test_xlsx_eig_run(self):
         self.ss.EIG.run()
         andes.main.misc(clean=True)
 
     def test_kundur_pss(self):
-        andes.run(self.pss, routine='tds', no_output=True, tf=10)
+        ss = andes.run(self.pss, routine='tds', no_output=True, tf=10)
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):
@@ -95,10 +97,13 @@ class TestKundur2AreaPSSE(unittest.TestCase):
         self.ss_psse.TDS.config.tf = 10
         self.ss_psse.TDS.run()
         andes.main.misc(clean=True)
+        self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
     def test_psse_eig_run(self):
         self.ss_psse.EIG.run()
         andes.main.misc(clean=True)
+
+        self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
     def test_kundur_psse2xlsx(self):
         output_name = 'test_kundur_convert.xlsx'

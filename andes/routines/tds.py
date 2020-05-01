@@ -191,6 +191,8 @@ class TDS(BaseRoutine):
         if (system.dae.t == self.config.tf) and (not self.busted):
             succeed = True   # success flag
             system.exit_code = 0
+        else:
+            system.exit_code = 1
 
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
@@ -400,6 +402,7 @@ class TDS(BaseRoutine):
                 if self.deltat < self.deltatmin:
                     self.deltat = 0
                     self.pbar.close()
+                    self.busted = True
                     logger.error(f"Time step calculated to zero. Convergence not likely.")
 
         # last step size
