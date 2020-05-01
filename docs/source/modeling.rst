@@ -148,7 +148,7 @@ and instances as values.
 .. autofunction:: andes.system.System.f_update
     :noindex:
 
-.. autofunction:: andes.system.System.l_check_eq
+.. autofunction:: andes.system.System.l_update_eq
     :noindex:
 
 .. autofunction:: andes.system.System.g_update
