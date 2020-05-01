@@ -288,21 +288,31 @@ class DAE(object):
             if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
                 raise KeyError
 
-    def resize_array(self):
+    def resize_arrays(self):
         """
-        Resize arrays to the new `m` and `n`
+        Resize arrays to the new sizes `m` and `n`, and `o`.
 
-        Returns
-        -------
-
+        If ``m > len(self.y)`` or ``n > len(self.x``, arrays will be extended.
+        Otherwise, new empty arrays will be sliced, starting from 0 to the given size.
         """
-        self.x = np.append(self.x, np.zeros(self.n - len(self.x)))
-        self.y = np.append(self.y, np.zeros(self.m - len(self.y)))
-        self.z = np.append(self.z, np.zeros(self.o - len(self.z)))
+        self.x = self._extend_or_slice(self.x, self.n)
+        self.y = self._extend_or_slice(self.y, self.m)
 
-        self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
-        self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
-        self.Tf = np.append(self.Tf, np.ones(self.n - len(self.Tf)))
+        self.f = self._extend_or_slice(self.f, self.n)
+        self.g = self._extend_or_slice(self.g, self.m)
+        self.Tf = self._extend_or_slice(self.Tf, self.n)
+
+        self.z = self._extend_or_slice(self.z, self.o)
+
+    def _extend_or_slice(self, array, new_size):
+        """
+        Helper function for ``self.resize_arrays`` to grow or shrink arrays.
+        """
+        # if new_size > len(array):
+        array = np.append(array, np.zeros(new_size - len(array)))
+        # else:
+        #     array = array[0:new_size]
+        return array
 
     @property
     def xy(self):
