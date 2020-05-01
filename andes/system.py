@@ -518,22 +518,14 @@ class System(object):
         """
         self.call_models('l_update_var', models, self.dae.t)
 
-    def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update equation-dependent limiter discrete components.
+        First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
+        Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
 
         This function is usually called after differential equation updates.
-        Currently, it is used exclusively for collecting anti-windup limiter status.
         """
         self.call_models('l_check_eq', models)
-
-    def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        """
-        Force set equations after evaluating equations.
-
-        This function is evaluated afte ``l_check_eq``.
-        Currently, it is only used by anti-windup limiters to record changes.
-        """
         self.call_models('l_set_eq', models)
 
     def fg_to_dae(self):

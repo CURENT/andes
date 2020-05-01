@@ -33,7 +33,7 @@ class Discrete(object):
 
     def check_eq(self):
         """
-        This function is called in ``l_update_eq`` after updating equations.
+        This function is called in ``l_check_eq`` after updating equations.
 
         It should update internal flags only.
         """

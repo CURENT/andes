@@ -225,8 +225,7 @@ class TDS(BaseRoutine):
         system.l_update_var(models=self.pflow_tds_models)
         system.f_update(models=self.pflow_tds_models)
         system.g_update(models=self.pflow_tds_models)
-        system.l_check_eq(models=self.pflow_tds_models)
-        system.l_set_eq(models=self.pflow_tds_models)
+        system.l_update_eq(models=self.pflow_tds_models)
         system.fg_to_dae()
         system.j_update(models=self.pflow_tds_models)
 
@@ -269,8 +268,7 @@ class TDS(BaseRoutine):
             system.l_update_var(models=self.pflow_tds_models)
             system.f_update(models=self.pflow_tds_models)
             system.g_update(models=self.pflow_tds_models)
-            system.l_check_eq(models=self.pflow_tds_models)
-            system.l_set_eq(models=self.pflow_tds_models)
+            system.l_update_eq(models=self.pflow_tds_models)
             system.fg_to_dae()
 
             # lazy jacobian update

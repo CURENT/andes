@@ -68,8 +68,7 @@ class PFlow(BaseRoutine):
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_check_eq()
-        system.l_set_eq()
+        system.l_update_eq()
         system.fg_to_dae()
 
         if self.config.method == 'NR':
@@ -193,8 +192,7 @@ class PFlow(BaseRoutine):
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_check_eq()
-        system.l_set_eq()
+        system.l_update_eq()
         system.fg_to_dae()
 
         return system.dae.fg
