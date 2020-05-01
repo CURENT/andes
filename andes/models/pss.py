@@ -21,7 +21,7 @@ class IEEESTData(ModelData):
         self.avr = IdxParam(info='Exciter idx', mandatory=True)
         self.MODE = NumParam(info='Input signal', mandatory=True)
 
-        self.busr = IdxParam(info='Remote bus idx (local if empty)', model='Bus')
+        self.busr = IdxParam(info='Optional remote bus idx', model='Bus')
         self.busf = IdxParam(info='BusFreq idx for mode 2', model='BusFreq')
 
         self.A1 = NumParam(default=1, tex_name='A_1', info='filter time const. (pole)')

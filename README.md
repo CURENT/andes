@@ -489,8 +489,8 @@ variable should be retrieved by the governor. Next, internal variables can be de
  
 ## Step 4: Define Equations
 Set up the equation associated with **each** variable.
-Algebraic equations are in the form of `g(x, y) = 0`.
-Differential equations are in the form of `f(x, y) = \dot{x}`. 
+Algebraic equations are in the form of `0 = g(x, y)`.
+Differential equations are in the form of `T \dot{x} = f(x, y)`. 
 
 ```python
         self.tm.e_str = 'u*(pout - tm0)'

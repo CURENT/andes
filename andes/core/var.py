@@ -136,6 +136,13 @@ class State(BaseVar):
     """
     Differential variable class, an alias of the `BaseVar`.
 
+    Parameters
+    ----------
+    t_const : BaseParam, DummyValue
+        Left-hand time constant for the differential equation.
+        Time constants will not be evaluated as part of the differential equation.
+        They will be collected to array `dae.Tf` to multiply to the right-hand side `dae.f`.
+
     Attributes
     ----------
     e_code : str
@@ -317,6 +324,15 @@ class ExtVar(BaseVar):
 
 
 class ExtState(ExtVar):
+    """
+    External state variable type.
+
+    Parameters
+    ----------
+    t_const : BaseParam, DummyValue
+        Left-hand time constant for the differential equation.
+
+    """
     e_code = 'f'
     v_code = 'x'
 
