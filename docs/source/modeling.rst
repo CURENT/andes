@@ -513,13 +513,13 @@ Variables
 =========
 DAE Variables, or variables for short, are unknowns to be solved using numerical or analytical methods.
 A variable stores values, equation values, and addresses in the DAE array. The base class for variables is
-`VarBase`.
-In this subsection, `VarBase` is used to represent any subclass of `VarBase` list in the table below.
+`BaseVar`.
+In this subsection, `BaseVar` is used to represent any subclass of `VarBase` list in the table below.
 
 +-----------+---------------------------------------------------------------------------------------+
 |   Class   |                                      Description                                      |
 +===========+=======================================================================================+
-|  State    | A state variable and an associated differential equation :math:`T\dot{x} = \textbf{f}`|
+|  State    | A state variable and associated diff. equation :math:`\textbf{T} \dot{x} = \textbf{f}`|
 +-----------+---------------------------------------------------------------------------------------+
 |  Algeb    | An algebraic variable and an associated algebraic equation :math:`0 = \textbf{g}`     |
 +-----------+---------------------------------------------------------------------------------------+
@@ -528,7 +528,7 @@ In this subsection, `VarBase` is used to represent any subclass of `VarBase` lis
 |  ExtAlgeb | An external algebraic variable and part of the algebraic equation                     |
 +-----------+---------------------------------------------------------------------------------------+
 
-`VarBase` has two types: the differential variable type `State` and the algebraic variable type `Algeb`.
+`BaseVar` has two types: the differential variable type `State` and the algebraic variable type `Algeb`.
 State variables are described by differential equations, whereas algebraic variables are described by
 algebraic equations. State variables can only change continuously, while algebraic variables
 can be discontinuous.
@@ -542,14 +542,14 @@ It can be done with `ExtAlgeb` or `ExtState`, which links with an existing varia
 
 Variable, Equation and Address
 ------------------------------
-Subclasses of `VarBase` are value providers and equation providers.
-Each `VarBase` has member attributes `v` and `e` for variable values and equation values, respectively.
+Subclasses of `BaseVar` are value providers and equation providers.
+Each `BaseVar` has member attributes `v` and `e` for variable values and equation values, respectively.
 The initial value of `v` is set by the initialization routine, and the initial value of `e` is set to zero.
 In the process of power flow calculation or time domain simulation, `v` is not directly modifiable by models
 but rather updated after solving non-linear equations. `e` is updated by the models and summed up before
 solving equations.
 
-Each `VarBase` also stores addresses of this variable, for all devices, in its member attribute `a`. The
+Each `BaseVar` also stores addresses of this variable, for all devices, in its member attribute `a`. The
 addresses are *0-based* indices into the numerical DAE array, `f` or `g`, based on the variable type.
 
 For example, `Bus` has ``self.a = Algeb()`` as the voltage phase angle variable.
@@ -573,30 +573,30 @@ Values Between DAE and Models
 ANDES adopts a decentralized architecture which provides each model a copy of variable values before equation
 evaluation. This architecture allows to parallelize the equation evaluation (in theory, or in practice if one
 works round the Python GIL). However, this architecture requires a coherent protocol for updating the DAE arrays
-and the ``VarBase`` arrays. More specifically, how the variable and equations values from model ``VarBase``
+and the ``BaseVar`` arrays. More specifically, how the variable and equations values from model ``VarBase``
 should be summed up or forcefully set at the DAE arrays needs to be defined.
 
-The protocol is relevant when a model defines subclasses of `VarBase` that are supposed to be "public".
+The protocol is relevant when a model defines subclasses of `BaseVar` that are supposed to be "public".
 Other models share this variable with `ExtAlgeb` or `ExtState`.
 
 By default, all `v` and `e` at the same address are summed up.
 This is the most common case, such as a Bus connected by multiple devices: power injections from
 devices should be summed up.
 
-In addition, `VarBase` provides two flags, `v_setter` and `e_setter`, for cases when one `VarBase`
+In addition, `BaseVar` provides two flags, `v_setter` and `e_setter`, for cases when one `VarBase`
 needs to overwrite the variable or equation values.
 
 Flags for Value Overwriting
 ---------------------------
-`VarBase` have special flags for handling value initialization and equation values.
+`BaseVar` have special flags for handling value initialization and equation values.
 This is only relevant for public or external variables.
-The `v_setter` is used to indicate whether a particular `VarBase` instance sets the initial value.
-The `e_setter` flag indicates whether the equation associated with a `VarBase` sets the equation value.
+The `v_setter` is used to indicate whether a particular `BaseVar` instance sets the initial value.
+The `e_setter` flag indicates whether the equation associated with a `BaseVar` sets the equation value.
 
 The `v_setter` flag is checked when collecting data from models to the numerical DAE array. If
 `v_setter is False`, variable values of the same address will be added.
 If one of the variable or external variable has `v_setter is True`, it will, at the end, set the values in the
-DAE array to its value. Only one `VarBase` of the same address is allowed to have `v_setter == True`.
+DAE array to its value. Only one `BaseVar` of the same address is allowed to have `v_setter == True`.
 
 A `v_setter` Example
 ------------------------
