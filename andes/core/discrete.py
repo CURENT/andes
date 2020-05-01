@@ -33,7 +33,7 @@ class Discrete(object):
 
     def check_eq(self):
         """
-        This function is called in ``l_update_eq`` after updating equations.
+        This function is called in ``l_check_eq`` after updating equations.
 
         It should update internal flags only.
         """
@@ -58,6 +58,23 @@ class Discrete(object):
         return [f'{self.name}_{flag}' for flag in self.export_flags]
 
     def get_tex_names(self):
+        """
+        Return tex_names of exported flags.
+
+        TODO: Fix the bug described in the warning below.
+
+        Warnings
+        --------
+        If underscore `_` appears in both flag tex_name and `self.tex_name` (for example, when this discrete is
+        within a block), the exported tex_name will become invalid for SymPy.
+        Variable name substitution will fail.
+
+        Returns
+        -------
+        list
+            A list of tex_names for all exported flags.
+        """
+
         return [rf'{flag_tex}^{self.tex_name}' for flag_tex in self.export_flags_tex]
 
     def get_values(self):

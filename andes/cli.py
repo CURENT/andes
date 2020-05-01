@@ -84,6 +84,12 @@ def create_parser():
     plot.add_argument('--ytimes', type=str, help='scale the y-axis values by YTIMES')
     plot.add_argument('-c', '--tocsv', help='convert npy output to csv', action='store_true')
 
+    doc = sub_parsers.add_parser('doc')  # NOQA
+    doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')
+    doc.add_argument('--config', '-c', help='Config help')
+    doc.add_argument('--list', '-l', help='List supported models and groups', action='store_true',
+                     dest='list_supported')
+
     misc = sub_parsers.add_parser('misc')
     config_exclusive = misc.add_mutually_exclusive_group()
     config_exclusive.add_argument('--edit-config', help='Quick edit of the config file',
@@ -95,12 +101,6 @@ def create_parser():
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
-
-    doc = sub_parsers.add_parser('doc')  # NOQA
-    doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')
-    doc.add_argument('--config', '-c', help='Config help')
-    doc.add_argument('--list', '-l', help='List supported models and groups', action='store_true',
-                     dest='list_supported')
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 
@@ -141,7 +141,7 @@ def main():
 
     module = importlib.import_module('andes.main')
 
-    if args.command != 'plot':
+    if args.command not in ('plot', 'doc'):
         preamble()
 
     if args.command is None:
@@ -149,4 +149,4 @@ def main():
 
     else:
         func = getattr(module, args.command)
-        func(**vars(args))
+        return func(cli=True, **vars(args))

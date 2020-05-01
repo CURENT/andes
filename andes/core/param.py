@@ -172,7 +172,7 @@ class BaseParam(object):
     @property
     def n(self):
         """Return the count of elements in the value array."""
-        return len(self.v) if self.v else 0
+        return len(self.v)
 
 
 class DataParam(BaseParam):

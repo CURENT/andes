@@ -103,7 +103,7 @@ add on sparse matrices, such as doing ::
 
     self.fx += spmatrix(v, i, j, (n, n), 'd')
 
-Although the implementation is simple, this involves creating and discarding temporary objects on the right hand
+Although the implementation is simple, it involves creating and discarding temporary objects on the right hand
 side and, even worse, changing the sparse pattern of ``self.fx``.
 
 The second approach is to store the rows, columns and values in an array-like object and construct the Jacobians
@@ -148,7 +148,7 @@ and instances as values.
 .. autofunction:: andes.system.System.f_update
     :noindex:
 
-.. autofunction:: andes.system.System.l_check_eq
+.. autofunction:: andes.system.System.l_update_eq
     :noindex:
 
 .. autofunction:: andes.system.System.g_update
@@ -247,7 +247,7 @@ During the code generation phase, the symbols are created by checking the book-k
 `states`, `algebs`, and attributes in `Model.cache`.
 
 In the numerical evaluation phase, `Model` provides a method, :py:func:`andes.core.model.get_inputs`, to
-collect the variable value arrays in a dictionary, which can be effortlessly passed as kwargs to numerical
+collect the variable value arrays in a dictionary, which can be effortlessly passed as arguments to numerical
 functions.
 
 Commonly Used Attributes in Models
@@ -283,15 +283,13 @@ The following attributes are defined.
 
 Equation Generation
 -------------------
-``Model`` handles the symbolic to numeric generation when called. The equation generation is a multi-step
-process with symbol preparation, equation generation, Jacobian generation, initializer generation, and pretty
-print generation.
+``Model.syms``, an instance of ``SymProcessor``, handles the symbolic to numeric generation when called. The
+equation generation is a multi-step process with symbol preparation, equation generation, Jacobian generation,
+initializer generation, and pretty print generation.
 
-The symbol preparation prepares ``OrderedDict`` of ``input_syms``, ``vars_syms`` and ``non_vars_syms``.
-``input_syms`` contains all possible symbols in equations, including variables, parameters, discrete flags, and
-config flags. ``input_syms`` has the same variables as what ``get_inputs()`` returns. Besides, ``vars_syms`` are
-the variable-only symbols, which are useful when getting the Jacobian matrices. ``non_vars_syms`` contains the
-symbols in ``input_syms`` but not in ``var_syms``.
+.. autoclass:: andes.core.model.SymProcessor
+    :members: generate_symbols, generate_equations, generate_jacobians, generate_init
+    :noindex:
 
 Next, function ``generate_equation`` converts each DAE equation set to one numerical function calls and store
 it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are ``f_lambdify``
@@ -304,7 +302,7 @@ Jacobian Storage
 
 Abstract Jacobian Storage
 `````````````````````````
-Using the ``.jacobian`` method on ``sympy.Matrix``, the symbolic Jacobians can be easily obtains. The complexity
+Using the ``.jacobian`` method on ``sympy.Matrix``, the symbolic Jacobians can be easily obtained. The complexity
 lies in the storage of the Jacobian elements. Observed that the Jacobian equation generation happens before any
 system is loaded, thus only the variable indices in the variable array is available. For each non-zero item in each
 Jacobian matrix, ANDES stores the equation index, variable index, and the Jacobian value (either a constant
@@ -515,13 +513,13 @@ Variables
 =========
 DAE Variables, or variables for short, are unknowns to be solved using numerical or analytical methods.
 A variable stores values, equation values, and addresses in the DAE array. The base class for variables is
-`VarBase`.
-In this subsection, `VarBase` is used to represent any subclass of `VarBase` list in the table below.
+`BaseVar`.
+In this subsection, `BaseVar` is used to represent any subclass of `VarBase` list in the table below.
 
 +-----------+---------------------------------------------------------------------------------------+
 |   Class   |                                      Description                                      |
 +===========+=======================================================================================+
-|  State    | A state variable and an associated differential equation :math:`T\dot{x} = \textbf{f}`|
+|  State    | A state variable and associated diff. equation :math:`\textbf{T} \dot{x} = \textbf{f}`|
 +-----------+---------------------------------------------------------------------------------------+
 |  Algeb    | An algebraic variable and an associated algebraic equation :math:`0 = \textbf{g}`     |
 +-----------+---------------------------------------------------------------------------------------+
@@ -530,7 +528,7 @@ In this subsection, `VarBase` is used to represent any subclass of `VarBase` lis
 |  ExtAlgeb | An external algebraic variable and part of the algebraic equation                     |
 +-----------+---------------------------------------------------------------------------------------+
 
-`VarBase` has two types: the differential variable type `State` and the algebraic variable type `Algeb`.
+`BaseVar` has two types: the differential variable type `State` and the algebraic variable type `Algeb`.
 State variables are described by differential equations, whereas algebraic variables are described by
 algebraic equations. State variables can only change continuously, while algebraic variables
 can be discontinuous.
@@ -544,14 +542,14 @@ It can be done with `ExtAlgeb` or `ExtState`, which links with an existing varia
 
 Variable, Equation and Address
 ------------------------------
-Subclasses of `VarBase` are value providers and equation providers.
-Each `VarBase` has member attributes `v` and `e` for variable values and equation values, respectively.
+Subclasses of `BaseVar` are value providers and equation providers.
+Each `BaseVar` has member attributes `v` and `e` for variable values and equation values, respectively.
 The initial value of `v` is set by the initialization routine, and the initial value of `e` is set to zero.
 In the process of power flow calculation or time domain simulation, `v` is not directly modifiable by models
 but rather updated after solving non-linear equations. `e` is updated by the models and summed up before
 solving equations.
 
-Each `VarBase` also stores addresses of this variable, for all devices, in its member attribute `a`. The
+Each `BaseVar` also stores addresses of this variable, for all devices, in its member attribute `a`. The
 addresses are *0-based* indices into the numerical DAE array, `f` or `g`, based on the variable type.
 
 For example, `Bus` has ``self.a = Algeb()`` as the voltage phase angle variable.
@@ -575,30 +573,30 @@ Values Between DAE and Models
 ANDES adopts a decentralized architecture which provides each model a copy of variable values before equation
 evaluation. This architecture allows to parallelize the equation evaluation (in theory, or in practice if one
 works round the Python GIL). However, this architecture requires a coherent protocol for updating the DAE arrays
-and the ``VarBase`` arrays. More specifically, how the variable and equations values from model ``VarBase``
+and the ``BaseVar`` arrays. More specifically, how the variable and equations values from model ``VarBase``
 should be summed up or forcefully set at the DAE arrays needs to be defined.
 
-The protocol is relevant when a model defines subclasses of `VarBase` that are supposed to be "public".
+The protocol is relevant when a model defines subclasses of `BaseVar` that are supposed to be "public".
 Other models share this variable with `ExtAlgeb` or `ExtState`.
 
 By default, all `v` and `e` at the same address are summed up.
 This is the most common case, such as a Bus connected by multiple devices: power injections from
 devices should be summed up.
 
-In addition, `VarBase` provides two flags, `v_setter` and `e_setter`, for cases when one `VarBase`
+In addition, `BaseVar` provides two flags, `v_setter` and `e_setter`, for cases when one `VarBase`
 needs to overwrite the variable or equation values.
 
 Flags for Value Overwriting
 ---------------------------
-`VarBase` have special flags for handling value initialization and equation values.
+`BaseVar` have special flags for handling value initialization and equation values.
 This is only relevant for public or external variables.
-The `v_setter` is used to indicate whether a particular `VarBase` instance sets the initial value.
-The `e_setter` flag indicates whether the equation associated with a `VarBase` sets the equation value.
+The `v_setter` is used to indicate whether a particular `BaseVar` instance sets the initial value.
+The `e_setter` flag indicates whether the equation associated with a `BaseVar` sets the equation value.
 
 The `v_setter` flag is checked when collecting data from models to the numerical DAE array. If
 `v_setter is False`, variable values of the same address will be added.
 If one of the variable or external variable has `v_setter is True`, it will, at the end, set the values in the
-DAE array to its value. Only one `VarBase` of the same address is allowed to have `v_setter == True`.
+DAE array to its value. Only one `BaseVar` of the same address is allowed to have `v_setter == True`.
 
 A `v_setter` Example
 ------------------------
@@ -650,7 +648,7 @@ Services
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
 constants but can be used for special operations to work around restrictions in the symbolic framework.
 Services are value providers, meaning each service has an attribute ``v`` for storing service values. The
-base class of services is ``BaseService``, and the supported services are listd as follows.
+base class of services is ``BaseService``, and the supported services are listed as follows.
 
 +------------------+-----------------------------------------------------------------+
 |      Class       |                           Description                           |
@@ -832,37 +830,47 @@ They can be imported to build new models.
 Algebraic
 `````````
 .. autoclass:: andes.core.block.Gain
+    :members: define
     :noindex:
 
 First Order
 ```````````
 .. autoclass:: andes.core.block.Integrator
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Lag
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LagAntiWindup
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Washout
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.WashoutOrLag
+    :members: define
     :noindex:
 
 Second Order
 ````````````
 .. autoclass:: andes.core.block.LeadLag
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LeadLagLimit
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.Lag2ndOrd
+    :members: define
     :noindex:
 
 .. autoclass:: andes.core.block.LeadLag2ndOrd
+    :members: define
     :noindex:
 
 

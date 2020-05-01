@@ -153,7 +153,7 @@ class DAE(object):
     def clear_ts(self):
         self.ts = DAETimeSeries(self)
 
-    def clear_array(self):
+    def clear_arrays(self):
         """
         Reset equation and variable arrays to empty.
         """
@@ -164,23 +164,21 @@ class DAE(object):
     def clear_fg(self):
         """Resets equation arrays to empty
         """
-        self.f = np.zeros(self.n)
-        self.g = np.zeros(self.m)
+        self.f[:] = 0
+        self.g[:] = 0
 
     def clear_xy(self):
         """
         Reset variable arrays to empty.
-
-        TODO: use in-place assignment instead of reassignment, where an extra resizing is needed.
         """
-        self.x = np.zeros(self.n)
-        self.y = np.zeros(self.m)
+        self.x[:] = 0
+        self.y[:] = 0
 
     def clear_z(self):
         """
         Reset status arrays to empty
         """
-        self.z = np.zeros(self.n)
+        self.z[:] = 0
 
     def clear_ijv(self):
         """
@@ -196,15 +194,16 @@ class DAE(object):
             self.build_pattern(jname)
 
     def reset(self):
+        """
+        Reset array sizes to zero and clear all arrays.
+        """
+        self.t = 0
         self.m = 0
         self.n = 0
-        self.clear_fg()
-        self.clear_xy()
-        self.clear_z()
+        self.o = 0
+        self.resize_arrays()
         self.clear_ijv()
         self.clear_ts()
-
-        self.Tf = np.ones(self.n)
 
     def get_size(self, name):
         """
@@ -288,21 +287,30 @@ class DAE(object):
             if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
                 raise KeyError
 
-    def resize_array(self):
+    def resize_arrays(self):
         """
-        Resize arrays to the new `m` and `n`
+        Resize arrays to the new sizes `m` and `n`, and `o`.
 
-        Returns
-        -------
-
+        If ``m > len(self.y)`` or ``n > len(self.x``, arrays will be extended.
+        Otherwise, new empty arrays will be sliced, starting from 0 to the given size.
         """
-        self.x = np.append(self.x, np.zeros(self.n - len(self.x)))
-        self.y = np.append(self.y, np.zeros(self.m - len(self.y)))
-        self.z = np.append(self.z, np.zeros(self.o - len(self.z)))
+        self.x = self._extend_or_slice(self.x, self.n)
+        self.y = self._extend_or_slice(self.y, self.m)
+        self.z = self._extend_or_slice(self.z, self.o)
 
-        self.f = np.append(self.f, np.zeros(self.n - len(self.f)))
-        self.g = np.append(self.g, np.zeros(self.m - len(self.g)))
-        self.Tf = np.append(self.Tf, np.ones(self.n - len(self.Tf)))
+        self.f = self._extend_or_slice(self.f, self.n)
+        self.g = self._extend_or_slice(self.g, self.m)
+        self.Tf = self._extend_or_slice(self.Tf, self.n, fill_func=np.ones)
+
+    def _extend_or_slice(self, array, new_size, fill_func=np.zeros):
+        """
+        Helper function for ``self.resize_arrays`` to grow or shrink arrays.
+        """
+        if new_size > len(array):
+            array = np.append(array, fill_func(new_size - len(array)))
+        else:
+            array = array[0:new_size]
+        return array
 
     @property
     def xy(self):

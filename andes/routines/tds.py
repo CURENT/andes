@@ -89,7 +89,6 @@ class TDS(BaseRoutine):
         system.set_address(models=self.tds_models)
         system.set_dae_names(models=self.tds_models)
 
-        system.dae.resize_array()
         system.dae.clear_ts()
         system.store_sparse_pattern(models=self.pflow_tds_models)
         system.store_adder_setter(models=self.pflow_tds_models)
@@ -99,7 +98,7 @@ class TDS(BaseRoutine):
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
 
-        self.initialized = self.test_initialization()
+        self.initialized = self.test_init()
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
@@ -148,10 +147,11 @@ class TDS(BaseRoutine):
         dae = self.system.dae
         config = self.config
 
-        ret = False
+        succeed = False
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Simulation will not continue.')
-            return ret
+            system.exit_code = 1
+            return succeed
 
         self.summary()
         self.init()
@@ -162,7 +162,6 @@ class TDS(BaseRoutine):
             if self.calc_h() == 0:
                 self.pbar.close()
                 logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
-                ret = False   # FIXME: overwritten
                 break
 
             if self.callpert is not None:
@@ -186,18 +185,23 @@ class TDS(BaseRoutine):
                 system.vars_to_models()
 
         self.pbar.close()
-        delattr(self, 'pbar')  # removed `pbar` so that System can be dilled
+        delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
+
+        if (system.dae.t == self.config.tf) and (not self.busted):
+            succeed = True   # success flag
+            system.exit_code = 0
+        else:
+            system.exit_code = 1
 
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
         system.TDS.save_output()
-        ret = True
 
-        # load data into ``TDS.plotter`` in the notebook mode
+        # load data into `TDS.plotter` in the notebook mode
         if is_notebook():
             self.load_plotter()
 
-        return ret
+        return succeed
 
     def rewind(self, t):
         """
@@ -212,18 +216,12 @@ class TDS(BaseRoutine):
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
 
-    def test_initialization(self):
+    def test_init(self):
         """
         Update f and g to see if initialization is successful.
         """
         system = self.system
-        system.e_clear(models=self.pflow_tds_models)
-        system.l_update_var(models=self.pflow_tds_models)
-        system.f_update(models=self.pflow_tds_models)
-        system.g_update(models=self.pflow_tds_models)
-        system.l_check_eq(models=self.pflow_tds_models)
-        system.l_set_eq(models=self.pflow_tds_models)
-        system.fg_to_dae()
+        self._fg_update(self.pflow_tds_models)
         system.j_update(models=self.pflow_tds_models)
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
@@ -235,6 +233,18 @@ class TDS(BaseRoutine):
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.error(f"Check variables {', '.join(fail_names)}")
             return False
+
+    def _fg_update(self, models):
+        """
+        Update `f` and `g` equations.
+        """
+        system = self.system
+        system.e_clear(models=models)
+        system.l_update_var(models=models)
+        system.f_update(models=models)
+        system.g_update(models=models)
+        system.l_update_eq(models=models)
+        system.fg_to_dae()
 
     def _implicit_step(self):
         """
@@ -261,13 +271,7 @@ class TDS(BaseRoutine):
         self.f0 = np.array(dae.f)
 
         while True:
-            system.e_clear(models=self.pflow_tds_models)
-            system.l_update_var(models=self.pflow_tds_models)
-            system.f_update(models=self.pflow_tds_models)
-            system.g_update(models=self.pflow_tds_models)
-            system.l_check_eq(models=self.pflow_tds_models)
-            system.l_set_eq(models=self.pflow_tds_models)
-            system.fg_to_dae()
+            self._fg_update(models=self.pflow_tds_models)
 
             # lazy jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
@@ -397,6 +401,7 @@ class TDS(BaseRoutine):
                 if self.deltat < self.deltatmin:
                     self.deltat = 0
                     self.pbar.close()
+                    self.busted = True
                     logger.error(f"Time step calculated to zero. Convergence not likely.")
 
         # last step size

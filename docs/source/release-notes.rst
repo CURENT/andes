@@ -4,6 +4,26 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.9.0 (2020-05-01)
+-------------------
+This version accelerates computations by up to 30%.
+
+- Models with flag ``collate=False``, which is the new default,
+  will slice DAE arrays for all internal vars to reduce copying back and forth.
+- The change above greatly reduced computation time.
+  For ``kundur_pss.xlsx``, simulation time is down from 3.0 sec to 2.1 sec.
+- The side-effects include a change in variable ordering in output lst file.
+  It also eliminated the feasibility of evaluating model equations in
+  parallel, which has not been implemented and does not seem promising in Python.
+- Separated symbolic processor and documentation generator from Model into
+  ``SymProcessor`` and ``Documenter`` classes.
+- ``andes prepare`` now shows progress in the console.
+- Store exit code in ``System.exit_code`` and returns to system when called
+  from CLI.
+- Refactored the solver interface.
+- Patched Config.check for routines.
+- SciPy Newton-Krylov power flow solver is no longer supported.
+
 v0.8.8 (2020-04-28)
 -------------------
 This update contains a quick but significant fix to boost the simulation speed by avoiding

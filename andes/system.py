@@ -15,7 +15,7 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
-from andes.core import Config, BaseParam, Model, ExtVar, AntiWindup
+from andes.core import Config, BaseParam, Model, AntiWindup
 
 from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
@@ -75,6 +75,7 @@ class System(object):
         self.groups = OrderedDict()        # group names and instances
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
+        self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
         # get and load default config file
         self._config_path = get_config_path()
@@ -118,6 +119,7 @@ class System(object):
                              'pflow_tds': self.find_models(('tds', 'pflow')),
                              }
 
+        self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
@@ -126,6 +128,7 @@ class System(object):
         """
         Clear adders and setters storage
         """
+        self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
@@ -159,12 +162,17 @@ class System(object):
         Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
         the System instance on which prepare is called.
         """
-        self._generate_symbols()
-        self._generate_equations()
-        self._generate_jacobians()
-        self._generate_initializers()
-        if quick is False:
-            self._generate_pretty_print()
+        import math
+
+        total = len(self.models)
+        width = math.ceil(math.log(total, 10))
+        for idx, name in enumerate(self.models):
+            print(f"\r\x1b[K Code generation for {name} ({idx:>{width}}/{total:>{width}}).",
+                  end='\r', flush=True)
+
+            model = self.models[name]
+            model.prepare(quick=quick)
+
         self._check_group_common()
         self._store_calls()
         self.dill()
@@ -184,6 +192,7 @@ class System(object):
         # assign address at the end before adding devices and processing parameters
         self.set_address()
         self.set_dae_names()
+
         self.store_sparse_pattern()
         self.store_adder_setter()
 
@@ -199,7 +208,7 @@ class System(object):
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
-        self.call_model('a_reset', models=self.models)
+        self.call_models('a_reset', models=self.models)
         self.e_clear()
         self._p_restore()
         self.setup()
@@ -263,14 +272,14 @@ class System(object):
 
             if not collate:
                 for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n))
+                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n), contiguous=True)
                 for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n))
+                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n), contiguous=True)
             else:
                 for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)))
+                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)), contiguous=False)
                 for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)))
+                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)), contiguous=False)
 
             self.dae.m = m_end
             self.dae.n = n_end
@@ -287,6 +296,12 @@ class System(object):
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
                 instance.link_external(ext_model)
+
+        # allocate memory for DAE arrays
+        self.dae.resize_arrays()
+
+        # set `v` and `e` in variables
+        self._set_var_arrays(models=models)
 
         # pre-allocate for names
         if len(self.dae.y_name) == 0:
@@ -329,6 +344,26 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
                             self.dae.o += 1
 
+    def _set_var_arrays(self, models=None):
+        """
+        Set arrays (`v` and `e`) in internal variables.
+
+        Parameters
+        ----------
+        models : OrderedDict, list, Model, optional
+            Models to execute.
+
+        """
+        if models is None:
+            models = self._models_flag['pflow']
+
+        for mdl in models.values():
+            if mdl.n == 0:
+                continue
+
+            for var in mdl.cache.vars_int.values():
+                var.set_arrays(self.dae)
+
     def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Initialize the variables for each of the specified models.
@@ -357,7 +392,7 @@ class System(object):
             mdl.init()
 
             # TODO: re-think over the adder-setter approach and reduce data copy
-            self.vars_to_dae()
+            self.vars_to_dae(mdl)
             self.vars_to_models()
 
         # store the inverse of time constants
@@ -365,7 +400,7 @@ class System(object):
 
     def store_adder_setter(self, models=None):
         """
-        Store the adders and setters for variables and equations.
+        Store non-inplace adders and setters for variables and equations.
         """
         models = self._get_models(models)
         self._clear_adder_setter()
@@ -373,19 +408,28 @@ class System(object):
         for mdl in models.values():
             if not mdl.n:
                 continue
-            for var in mdl.cache.all_vars.values():
-                if var.e_setter is False:
-                    self._adders[var.e_code].append(var)
-                else:
-                    self._setters[var.e_code].append(var)
 
-                if var.v_setter is False:
-                    self._adders[var.v_code].append(var)
-                else:
-                    self._setters[var.v_code].append(var)
+            # ``getters` that retrieve variable values from DAE
+            for var in mdl.cache.v_getters.values():
+                self._getters[var.v_code].append(var)
+
+            # ``adders`` that add variable values to the DAE array
+            for var in mdl.cache.v_adders.values():
+                self._adders[var.v_code].append(var)
+            for var in mdl.cache.e_adders.values():
+                self._adders[var.e_code].append(var)
+
+            # ``setters`` that force set variable values in the DAE array
+            for var in mdl.cache.v_setters.values():
+                self._setters[var.v_code].append(var)
+            for var in mdl.cache.e_setters.values():
+                self._setters[var.e_code].append(var)
+
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
+
+        return
 
     def link_ext_param(self, model=None):
         if model is None:
@@ -468,29 +512,21 @@ class System(object):
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update variable-based limiter discrete states.
+        Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
-        This function is usually called before any equation evaluation.
+        This function is must be called before any equation evaluation.
         """
-        self.call_model('l_update_var', models, self.dae.t)
+        self.call_models('l_update_var', models, self.dae.t)
 
-    def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update equation-dependent limiter discrete components.
+        First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
+        Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
 
-        This function is usually called after differential equation updates.
-        Currently, it is used exclusively for collecting anti-windup limiter status.
+        This function is must be called after differential equation updates.
         """
-        self.call_model('l_check_eq', models)
-
-    def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
-        """
-        Force set equations after evaluating equations.
-
-        This function is evaluated afte ``l_check_eq``.
-        Currently, it is only used by anti-windup limiters to record changes.
-        """
-        self.call_model('l_set_eq', models)
+        self.call_models('l_check_eq', models)
+        self.call_models('l_set_eq', models)
 
     def fg_to_dae(self):
         """
@@ -517,7 +553,7 @@ class System(object):
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
         try:
-            self.call_model('f_update', models)
+            self.call_models('f_update', models)
         except TypeError as e:
             logger.error("f_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
@@ -531,7 +567,7 @@ class System(object):
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
         try:
-            self.call_model('g_update', models)
+            self.call_models('g_update', models)
         except TypeError as e:
             logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
@@ -549,7 +585,7 @@ class System(object):
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
-        self.call_model('j_update', models)
+        self.call_models('j_update', models)
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
@@ -582,7 +618,7 @@ class System(object):
         term in the equations.
         """
         models = self._get_models(models)
-        self.call_model('store_sparse_pattern', models)
+        self.call_models('store_sparse_pattern', models)
 
         # add variable jacobian values
         for jname in jac_names:
@@ -612,34 +648,29 @@ class System(object):
             self.dae.store_sparse_ijv(jname, ii, jj, vv)
             self.dae.build_pattern(jname)
 
-    def vars_to_dae(self):
+    def vars_to_dae(self, model):
         """
         Copy variables values from models to `System.dae`.
 
         This function clears `DAE.x` and `DAE.y` and collects values from models.
-
-        Warnings
-        --------
-        Variables with property `v_setter=False` will be added to variable only if `v_str` is not None.
-        It prevents read-intended :py:mod:`andes.core.var.ExtVar` values to be summed.
         """
-        self.dae.clear_xy()
-        self._v_to_dae('x')
-        self._v_to_dae('y')
+        self._v_to_dae('x', model)
+        self._v_to_dae('y', model)
 
     def vars_to_models(self):
         """
         Copy variable values from `System.dae` to models.
         """
-        for var in self._adders['y'] + self._setters['y']:
+
+        for var in self._getters['y']:
             if var.n > 0:
                 var.v[:] = self.dae.y[var.a]
 
-        for var in self._adders['x'] + self._setters['x']:
+        for var in self._getters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
-    def _v_to_dae(self, v_name):
+    def _v_to_dae(self, v_code, model):
         """
         Helper function for collecting variable values into dae structures `x` and `y`.
 
@@ -648,29 +679,24 @@ class System(object):
 
         Parameters
         ----------
-        v_name : 'x' or 'y'
+        v_code : 'x' or 'y'
             Variable type name
         """
-        if v_name not in ('x', 'y'):
-            raise KeyError(f'{v_name} is not a valid var name')
+        if model.n == 0:
+            return
+        if model.flags['initialized'] is False:
+            return
 
-        for var in self._adders[v_name]:
-            # NOTE:
-            # For power flow, they will be initialized to zero.
-            # For TDS initialization, they will remain their value.
-            if var.n == 0:
+        for var in model.cache.v_adders.values():
+            if var.v_code != v_code:
                 continue
-            if isinstance(var, ExtVar) and (var.v_str is None):
-                continue
-            if var.owner.flags['initialized'] is False:
-                continue
-            np.add.at(self.dae.__dict__[v_name], var.a, var.v)
+            np.add.at(self.dae.__dict__[v_code], var.a, var.v)
 
-        for var in self._setters[v_name]:
+        for var in self._setters[v_code]:
             if var.owner.flags['initialized'] is False:
                 continue
             if var.n > 0:
-                np.put(self.dae.__dict__[v_name], var.a, var.v)
+                np.put(self.dae.__dict__[v_code], var.a, var.v)
 
     def _e_to_dae(self, eq_name: str):
         """
@@ -812,7 +838,7 @@ class System(object):
             if var.t_const is not None:
                 np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def call_model(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
+    def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """
         Call methods on the given models.
 
@@ -893,27 +919,6 @@ class System(object):
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.services_ref[n].v[uid].append(model_idx)
 
-    def _generate_pycode_file(self):
-        """
-        Generate empty files for storing lambdified Python code (TODO)
-        """
-        self.call_model('generate_pycode_file', self.models)
-
-    def _generate_initializers(self):
-        self.call_model('generate_initializers', self.models)
-
-    def _generate_symbols(self):
-        self.call_model('generate_symbols', self.models)
-
-    def _generate_pretty_print(self):
-        self.call_model('generate_pretty_print', self.models)
-
-    def _generate_equations(self):
-        self.call_model('generate_equations', self.models)
-
-    def _generate_jacobians(self):
-        self.call_model('generate_jacobians', self.models)
-
     def import_groups(self):
         """
         Import all groups classes defined in ``devices/group.py``.
@@ -985,6 +990,7 @@ class System(object):
                 attr_name = cls_name
                 self.__dict__[attr_name] = the_class(system=self, config=self._config_object)
                 self.routines[attr_name] = self.__dict__[attr_name]
+                self.routines[attr_name].config.check()
 
     def store_switch_times(self, models=None):
         """
@@ -1031,14 +1037,14 @@ class System(object):
         This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
-        self.call_model('e_clear', models)
+        self.call_models('e_clear', models)
 
     def remove_pycapsule(self):
         """
         Remove PyCapsule objects in solvers.
         """
         for r in self.routines.values():
-            r.solver.remove_pycapsule()
+            r.solver.clear()
 
     def _store_calls(self):
         """
@@ -1049,7 +1055,7 @@ class System(object):
             self.calls[name] = mdl.calls
 
     def _list2array(self):
-        self.call_model('list2array', self.models)
+        self.call_models('list2array', self.models)
 
     def set_config(self, config=None):
         """
@@ -1140,7 +1146,7 @@ class System(object):
         logger.info(f'Config written to "{file_path}"')
         return file_path
 
-    def supported_models(self):
+    def supported_models(self, export='plain'):
         """
         Return the support group names and model names in a table.
 
@@ -1161,6 +1167,7 @@ class System(object):
         tab = Tab(title='Supported Groups and Models',
                   header=['Group', 'Models'],
                   data=pairs,
+                  export=export,
                   )
 
         return tab.draw()

@@ -35,21 +35,22 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 - Newton-Raphson power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
 - Full equation documentation of supported DAE models.
 
-Use the following resources in addition to the tutorial to get involved.
+ANDES is currently under active development.
+Use the following resources, in addition to the tutorial, to get involved.
 
-- Jupyter Notebook examples:
-  `Checkout on GitHub <https://github.com/cuihantao/andes/tree/master/examples>`_.
-- Try ANDES in Jupyter Notebook:
-  `with Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_.
-- Online manual:
-  `https://andes.readthedocs.io <https://andes.readthedocs.io>`_.
-- PDF manual:
-  `download <https://andes.readthedocs.io/_/downloads/en/stable/pdf/>`_.
-- Report issues:
-  `GitHub issues page <https://github.com/cuihantao/andes/issues>`_.
-- Learn version control:
-  `command-line tutorial <https://git-scm.com/docs/gittutorial>`_, and
-  `using GitHub Desktop <https://help.github.com/en/desktop/getting-started-with-github-desktop>`_.
+- Checkout the Notebook examples in the
+  `examples folder <https://github.com/cuihantao/andes/tree/master/examples>`_
+- Try ANDES in Jupyter Notebook
+  `with Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_
+- Read the online manual at
+  `https://andes.readthedocs.io <https://andes.readthedocs.io>`_
+- Download the PDF manual at
+  `download <https://andes.readthedocs.io/_/downloads/en/stable/pdf/>`_
+- Report issues in the
+  `GitHub issues page <https://github.com/cuihantao/andes/issues>`_
+- Learn version control with
+  `the command-line git <https://git-scm.com/docs/gittutorial>`_ or
+  `GitHub Desktop <https://help.github.com/en/desktop/getting-started-with-github-desktop>`_
 
 This work was supported in part by the Engineering Research Center Program of
 the National Science Foundation and the Department of Energy under NSF Award

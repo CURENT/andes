@@ -89,13 +89,11 @@ class DC2Term(ModelData, Model):
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.node1 = IdxParam(default=None,
-                              tex_name='node_1',
                               info='Node 1 index',
                               mandatory=True,
                               model='Node',
                               )
         self.node2 = IdxParam(default=None,
-                              tex_name='node_2',
                               info='Node 2 index',
                               mandatory=True,
                               model='Node',
@@ -141,13 +139,11 @@ class ACDC2Term(ModelData, Model):
                             mandatory=True,
                             )
         self.node1 = IdxParam(default=None,
-                              tex_name='node_1',
                               info='Node 1 index',
                               mandatory=True,
                               model='Node',
                               )
         self.node2 = IdxParam(default=None,
-                              tex_name='node_2',
                               info='Node 2 index',
                               mandatory=True,
                               model='Node',
@@ -207,7 +203,6 @@ class Ground(ModelData, Model):
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.node = IdxParam(default=None,
-                             tex_name='node',
                              info='Node index',
                              mandatory=True,
                              model='Node',
@@ -323,12 +318,14 @@ class RLs(DC2Term):
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
+                          tex_name='R',
                           info='DC line resistance',
                           non_zero=True,
                           default=0.01,
                           r=True,
                           )
         self.L = NumParam(unit='p.u.',
+                          tex_name='L',
                           info='DC line inductance',
                           non_zero=True,
                           default=0.001,
@@ -357,12 +354,14 @@ class RCp(DC2Term):
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
+                          tex_name='R',
                           info='DC line resistance',
                           non_zero=True,
                           default=0.01,
                           r=True,
                           )
         self.C = NumParam(unit='p.u.',
+                          tex_name='C',
                           info='DC capacitance',
                           non_zero=True,
                           default=0.001,
@@ -393,18 +392,21 @@ class RLCp(DC2Term):
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
+                          tex_name='R',
                           info='DC line resistance',
                           non_zero=True,
                           default=0.01,
                           r=True,
                           )
         self.L = NumParam(unit='p.u.',
+                          tex_name='L',
                           info='DC line inductance',
                           non_zero=True,
                           default=0.001,
                           r=True,
                           )
         self.C = NumParam(unit='p.u.',
+                          tex_name='C',
                           info='DC capacitance',
                           non_zero=True,
                           default=0.001,
@@ -441,12 +443,14 @@ class RCs(DC2Term):
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
+                          tex_name='R',
                           info='DC line resistance',
                           non_zero=True,
                           default=0.01,
                           r=True,
                           )
         self.C = NumParam(unit='p.u.',
+                          tex_name='C',
                           info='DC capacitance',
                           non_zero=True,
                           default=0.001,
@@ -477,18 +481,21 @@ class RLCs(DC2Term):
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
+                          tex_name='R',
                           info='DC line resistance',
                           non_zero=True,
                           default=0.01,
                           r=True,
                           )
         self.L = NumParam(unit='p.u.',
+                          tex_name='L',
                           info='DC line inductance',
                           non_zero=True,
                           default=0.001,
                           r=True,
                           )
         self.C = NumParam(unit='p.u.',
+                          tex_name='C',
                           info='DC capacitance',
                           non_zero=True,
                           default=0.001,

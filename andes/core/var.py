@@ -59,9 +59,12 @@ class BaseVar(object):
         self.id = None     # variable internal index inside a model (assigned in run time)
 
         self.n = 0
-        self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)  # address array
+        self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)        # address array
         self.v: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)  # variable value array
-        self.e: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)   # equation value array
+        self.e: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)  # equation value array
+
+        self.ae: Optional[Union[ndarray, List]] = np.array([], dtype=int)       # future equation address array
+        self.av: Optional[Union[ndarray, List]] = np.array([], dtype=int)       # future var. address array
 
         self.v_str = v_str  # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
@@ -72,6 +75,12 @@ class BaseVar(object):
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export  # True if this var's value needs to exported
         self.diag_eps = diag_eps  # small value to be added to the Jacobian matrix
+
+        # internal flags
+        self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
+
+        # NOTE:
+        # contiguous is only True for internal variables of models with flag ``collate`` equal to ``False``.
 
     def reset(self):
         self.a = np.array([], dtype=int)
@@ -95,19 +104,48 @@ class BaseVar(object):
 
         return f'{self.__class__.__name__}, {self.owner.__class__.__name__}.{self.name}{span}'
 
-    def set_address(self, addr):
+    def set_address(self, addr, contiguous=False):
         """
-        Set the address of this variables
+        Set the address of internal variables.
 
         Parameters
         ----------
         addr : array-like
             The assigned address for this variable
+        contiguous : bool, optional
+            If the addresses are contiguous
         """
         self.a = addr
         self.n = len(self.a)
-        self.v = np.zeros(self.n)
-        self.e = np.zeros(self.n)
+
+        # NOT IN USE
+        self.ae = np.array(self.a)
+        self.av = np.array(self.a)
+        # -----------
+
+        self._contiguous = contiguous
+
+    def set_arrays(self, dae):
+        """
+        Set the equation and values arrays.
+
+        It slicing into DAE (when contiguous) or allocating new memory (when not contiguous).
+
+        Parameters
+        ----------
+        dae : DAE
+            Reference to System.dae
+        """
+        slice_idx = slice(self.a[0], self.a[-1] + 1)
+        if self.v_inplace:
+            self.v = dae.__dict__[self.v_code][slice_idx]
+        else:
+            self.v = np.zeros(self.n)
+
+        if self.e_inplace:
+            self.e = dae.__dict__[self.e_code][slice_idx]
+        else:
+            self.e = np.zeros(self.n)
 
     def get_names(self):
         return [self.name]
@@ -115,6 +153,22 @@ class BaseVar(object):
     @property
     def class_name(self):
         return self.__class__.__name__
+
+    @property
+    def v_inplace(self):
+        """Return if ``self.v`` is in-place access to the DAE array."""
+        if (self.v_setter is False) and self._contiguous:
+            return True
+        else:
+            return False
+
+    @property
+    def e_inplace(self):
+        """Return if ``self.e`` is in-place access to the DAE array."""
+        if (self.e_setter is False) and self._contiguous:
+            return True
+        else:
+            return False
 
 
 class Algeb(BaseVar):
@@ -135,6 +189,13 @@ class Algeb(BaseVar):
 class State(BaseVar):
     """
     Differential variable class, an alias of the `BaseVar`.
+
+    Parameters
+    ----------
+    t_const : BaseParam, DummyValue
+        Left-hand time constant for the differential equation.
+        Time constants will not be evaluated as part of the differential equation.
+        They will be collected to array `dae.Tf` to multiply to the right-hand side `dae.f`.
 
     Attributes
     ----------
@@ -264,6 +325,14 @@ class ExtVar(BaseVar):
             idx += n
         return out
 
+    def set_address(self, addr, contiguous=False):
+        """Empty function."""
+        pass
+
+    def set_arrays(self, dae):
+        """Empty function."""
+        pass
+
     def link_external(self, ext_model):
         """
         Update variable addresses provided by external models
@@ -293,8 +362,6 @@ class ExtVar(BaseVar):
 
             self.a = ext_model.get(src=self.src, idx=self._idx, attr='a').astype(int)
             self.n = len(self.a)
-            self.v = np.zeros(self.n)
-            self.e = np.zeros(self.n)
 
         else:
             original_var = ext_model.__dict__[self.src]
@@ -312,11 +379,21 @@ class ExtVar(BaseVar):
 
             # set initial v and e values to zero
             self.n = len(self.a)
-            self.v = np.zeros(self.n)
-            self.e = np.zeros(self.n)
+
+        self.v = np.zeros(self.n)
+        self.e = np.zeros(self.n)
 
 
 class ExtState(ExtVar):
+    """
+    External state variable type.
+
+    Parameters
+    ----------
+    t_const : BaseParam, DummyValue
+        Left-hand time constant for the differential equation.
+
+    """
     e_code = 'f'
     v_code = 'x'
 

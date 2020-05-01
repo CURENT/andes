@@ -167,7 +167,6 @@ class GENBase(Model):
         self.subidx = ExtParam(model='StaticGen',
                                src='subidx',
                                indexer=self.gen,
-                               tex_name='idx_{sub}',
                                export=False,
                                )
         # ----------service consts for initialization----------
@@ -210,7 +209,7 @@ class Flux0(object):
 
 class Flux1(object):
     """
-    Flux model without electro-magnetic transients but consider speed deviation
+    Flux model without electro-magnetic transients but considers speed deviation.
     """
 
     def __init__(self):
@@ -231,7 +230,7 @@ class Flux1(object):
 
 class Flux2(object):
     """
-    Flux model with electro-magnetic transients
+    Flux model with electro-magnetic transients.
     """
 
     def __init__(self):

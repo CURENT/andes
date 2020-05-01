@@ -8,22 +8,97 @@ logger = logging.getLogger(__name__)
 
 class Solver(object):
     """
-    A sparse matrix solver class.
+    Sparse matrix solver class.
 
-    This class wraps ``cvxopt.umfpack`` and ``cvxoptklu.klu`` with a unified interface.
+    This class wraps UMFPACK, KLU, SciPy and CuPy solvers to provide an unified
+    interface for solving sparse linear equations ``Ax = b``.
+
+    Provides methods ``solve``, ``linsolve`` and ``clear``.
     """
 
     def __init__(self, sparselib='umfpack'):
         self.sparselib = sparselib
-        self.F = None
+
+        # check if `sparselib` library has been successfully imported
+        if (sparselib not in globals()) or globals()[sparselib] is None:
+            self.sparselib = 'umfpack'
+
+        # solvers
+        self.umfpack = UMFPACKSolver()
+        self.klu = KLUSolver()
+        self.spsolve = SpSolve()
+        self.cupy = CuPySolver()
+
+        self.worker = self.__dict__[self.sparselib]
+
+    def solve(self, A, b):
+        """
+        Solve linear equations and cache factorizations if possible.
+
+        Parameters
+        ----------
+        A : cvxopt.spmatrix
+            Sparse N-by-N matrix
+        b : cvxopt.matrix or numpy.ndarray
+            Dense N-by-1 matrix
+
+        Returns
+        -------
+        numpy.ndarray
+            Dense N-by-1 array
+        """
+        return self.worker.solve(A, b)
+
+    def linsolve(self, A, b):
+        """
+        Solve linear equations without caching facorization. Performs full factorization each call.
+
+        Parameters
+        ----------
+        A : cvxopt.spmatrix
+            Sparse N-by-N matrix
+        b : cvxopt.matrix or numpy.ndarray
+            Dense N-by-1 matrix
+
+        Returns
+        -------
+        numpy.ndarray
+            Dense N-by-1 array
+        """
+        return self.worker.linsolve(A, b)
+
+    def clear(self):
+        """
+        Remove all cached objects.
+        """
+        self.worker.clear()
+
+
+class SuiteSparseSolver(object):
+    """
+    Base SuiteSparse solver interface.
+
+    Need to be derived by specific solvers such as UMFPACK or KLU.
+    """
+
+    def __init__(self):
         self.A = None
-        self.N = None
+        self.b = None
+        self.F = None   # symbolic factorization
+        self.N = None   # numeric factorization
         self.factorize = True
         self.use_linsolve = False
 
-        # check if the sparselib is imported successfully
-        if globals()[sparselib] is None:
-            self.sparselib = 'umfpack'
+    def clear(self):
+        """
+        Remove all cached PyCapsule of C objects
+        """
+        self.A = None
+        self.b = None
+        self.F = None   # symbolic factorization
+        self.N = None   # numeric factorization
+        self.factorize = True
+        self.use_linsolve = False
 
     def _symbolic(self, A):
         """
@@ -38,15 +113,7 @@ class Solver(object):
         -------
         A C-object of the symbolic factorization.
         """
-
-        if self.sparselib == 'umfpack':
-            return umfpack.symbolic(A)
-
-        elif self.sparselib == 'klu':
-            return klu.symbolic(A)
-
-        elif self.sparselib in ('spsolve', 'cupy'):
-            raise NotImplementedError
+        pass
 
     def _numeric(self, A, F):
         """
@@ -63,14 +130,7 @@ class Solver(object):
         -------
         The numeric factorization of ``A``.
         """
-        if self.sparselib == 'umfpack':
-            return umfpack.numeric(A, F)
-
-        elif self.sparselib == 'klu':
-            return klu.numeric(A, F)
-
-        elif self.sparselib in ('spsolve', 'cupy'):
-            raise NotImplementedError
+        pass
 
     def _solve(self, A, F, N, b):
         """
@@ -91,16 +151,7 @@ class Solver(object):
         -------
         The solution as a ``cvxopt.matrix``.
         """
-        if self.sparselib == 'umfpack':
-            umfpack.solve(A, N, b)
-            return b
-
-        elif self.sparselib == 'klu':
-            klu.solve(A, F, N, b)
-            return b
-
-        elif self.sparselib in ('spsolve', 'cupy'):
-            raise NotImplementedError
+        pass
 
     def solve(self, A, b):
         """
@@ -129,27 +180,27 @@ class Solver(object):
         self.A = A
         self.b = b
 
-        if self.sparselib in ('umfpack', 'klu'):
-            if self.factorize is True:
-                self.F = self._symbolic(self.A)
-                self.factorize = False
+        if self.factorize is True:
+            self.F = self._symbolic(self.A)
+            self.factorize = False
 
-            try:
-                self.N = self._numeric(self.A, self.F)
-                self._solve(self.A, self.F, self.N, self.b)
-                return np.ravel(self.b)
-            except ValueError:
-                logger.debug('Unexpected symbolic factorization.')
-                self.F = self._symbolic(self.A)
-                self.N = self._numeric(self.A, self.F)
-                self._solve(self.A, self.F, self.N, self.b)
-                return np.ravel(self.b)
-            except ArithmeticError:
-                logger.error('Jacobian matrix is singular.')
-                return np.ravel(matrix(np.nan, self.b.size, 'd'))
+        try:
+            self.N = self._numeric(self.A, self.F)
+            self._solve(self.A, self.F, self.N, self.b)
 
-        elif self.sparselib in ('spsolve', 'cupy'):
-            return self.linsolve(A, b)
+            return np.ravel(self.b)
+        except ValueError:
+            logger.debug('Unexpected symbolic factorization.')
+
+            self.F = self._symbolic(self.A)
+            self.N = self._numeric(self.A, self.F)
+            self._solve(self.A, self.F, self.N, self.b)
+
+            return np.ravel(self.b)
+        except ArithmeticError:
+            logger.error('Jacobian matrix is singular.')
+
+            return np.ravel(matrix(np.nan, self.b.size, 'd'))
 
     def linsolve(self, A, b):
         """
@@ -170,46 +221,145 @@ class Solver(object):
         -------
         The solution in a 1-D np array.
         """
-        if self.sparselib == 'umfpack':
-            try:
-                umfpack.linsolve(A, b)
-            except ArithmeticError:
-                logger.error('Singular matrix. Case is not solvable')
-            return np.ravel(b)
+        raise NotImplementedError
 
-        elif self.sparselib == 'klu':
-            try:
-                klu.linsolve(A, b)
-            except ArithmeticError:
-                logger.error('Singular matrix. Case is not solvable')
-            return np.ravel(b)
 
-        elif self.sparselib in ('spsolve', 'cupy'):
-            ccs = A.CCS
-            size = A.size
-            data = np.array(ccs[2]).reshape((-1,))
-            indices = np.array(ccs[1]).reshape((-1,))
-            indptr = np.array(ccs[0]).reshape((-1,))
+class UMFPACKSolver(SuiteSparseSolver):
+    """
+    UMFPACK solver.
 
-            A = csc_matrix((data, indices, indptr), shape=size)
+    Utilizes ``cvxopt.umfpack`` for factorization.
+    """
+    def __init__(self):
+        super().__init__()
 
-            if self.sparselib == 'spsolve':
-                x = spsolve(A, b)
-                return np.ravel(x)
+    def _symbolic(self, A):
+        return umfpack.symbolic(A)
 
-            elif self.sparselib == 'cupy':
-                # delayed import for startup speed
-                import cupy as cp  # NOQA
-                from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
-                from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
+    def _numeric(self, A, F):
+        return umfpack.numeric(A, F)
 
-                cu_A = csc_cu(A)
-                cu_b = cp.array(np.array(b).reshape((-1,)))
-                x = cu_lsqr(cu_A, cu_b)
+    def _solve(self, A, F, N, b):
+        umfpack.solve(A, N, b)
 
-                return np.ravel(cp.asnumpy(x[0]))
+    def linsolve(self, A, b):
+        try:
+            umfpack.linsolve(A, b)
+        except ArithmeticError:
+            logger.error('Singular matrix. Case is not solvable')
+        return np.ravel(b)
 
-    def remove_pycapsule(self):
-        self.F = None
-        self.A = None
-        self.N = None
+
+class KLUSolver(SuiteSparseSolver):
+    """
+    KLU solver.
+
+    Requires package ``cvxoptklu``.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def _symbolic(self, A):
+        return klu.symbolic(A)
+
+    def _numeric(self, A, F):
+        return klu.numeric(A, F)
+
+    def _solve(self, A, F, N, b):
+        klu.solve(A, F, N, b)
+
+    def linsolve(self, A, b):
+        try:
+            klu.linsolve(A, b)
+        except ArithmeticError:
+            logger.error('Singular matrix. Case is not solvable')
+        return np.ravel(b)
+
+
+class SciPySolver(object):
+    """
+    Base class for scipy family solvers.
+    """
+    def __init__(self):
+        pass
+
+    def to_csc(self, A):
+        """
+        Convert A to scipy.sparse.csc_matrix.
+
+        Parameters
+        ----------
+        A : cvxopt.spmatrix
+            Sparse N-by-N matrix
+
+        Returns
+        -------
+        scipy.sparse.csc_matrix
+            Converted csc_matrix
+
+        """
+        ccs = A.CCS
+        size = A.size
+        data = np.array(ccs[2]).ravel()
+        indices = np.array(ccs[1]).ravel()
+        indptr = np.array(ccs[0]).ravel()
+        return csc_matrix((data, indices, indptr), shape=size)
+
+    def solve(self, A, b):
+        """
+        Solve linear systems.
+
+        Parameters
+        ----------
+        A : scipy.csc_matrix
+            Sparse N-by-N matrix
+        b : numpy.ndarray
+            Dense 1-dimensional array of size N
+
+        Returns
+        -------
+        np.ndarray
+            Solution x to `Ax = b`
+
+        """
+        raise NotImplementedError
+
+    def linsolve(self, A, b):
+        """
+        Exactly same functionality as `solve`.
+        """
+        return self.solve(A, b)
+
+    def clear(self):
+        pass
+
+
+class CuPySolver(SciPySolver):
+    """
+    CuPy lsqr solver (GPU-based).
+    """
+
+    def solve(self, A, b):
+
+        # delayed import for startup speed
+        import cupy as cp  # NOQA
+        from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
+        from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
+        A_csc = self.to_csc(A)
+
+        cu_A = csc_cu(A_csc)
+        cu_b = cp.array(np.array(b).ravel())
+        x = cu_lsqr(cu_A, cu_b)
+
+        return np.ravel(cp.asnumpy(x[0]))
+
+
+class SpSolve(SciPySolver):
+    """
+    scipy.sparse.linalg.spsolve Solver.
+    """
+
+    def solve(self, A, b):
+        A_csc = self.to_csc(A)
+        x = spsolve(A_csc, b)
+        return np.ravel(x)

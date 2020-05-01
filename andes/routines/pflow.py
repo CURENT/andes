@@ -63,13 +63,12 @@ class PFlow(BaseRoutine):
             maximum absolute mismatch
         """
         system = self.system
-        # evaluate discrete, differential, algebraic, and jacobians
+        # evaluate discrete, differential, algebraic, and Jacobians
         system.e_clear()
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_check_eq()
-        system.l_set_eq()
+        system.l_update_eq()
         system.fg_to_dae()
 
         if self.config.method == 'NR':
@@ -122,6 +121,7 @@ class PFlow(BaseRoutine):
         self.init()
         if system.dae.m == 0:
             logger.error("Loaded case contains no power flow element.")
+            system.exit_code = 1
             return False
 
         t0, _ = elapsed()
@@ -160,6 +160,7 @@ class PFlow(BaseRoutine):
             if self.config.report:
                 system.PFlow.report()
 
+        system.exit_code = 0 if self.converged else 1
         return self.converged
 
     def report(self):
@@ -186,14 +187,14 @@ class PFlow(BaseRoutine):
         system.dae.x = xy[:system.dae.n]
         system.dae.y = xy[system.dae.n:]
         system.vars_to_models()
-        system.e_clear()
 
+        system.e_clear()
         system.l_update_var()
         system.f_update()
         system.g_update()
-        system.l_check_eq()
-        system.l_set_eq()
+        system.l_update_eq()
         system.fg_to_dae()
+
         return system.dae.fg
 
     def newton_krylov(self, verbose=False):

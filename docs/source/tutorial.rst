@@ -616,9 +616,14 @@ To use this feature, symbolic equations need to be generated in the current sess
     ss = andes.System()
     ss.prepare()
 
+Or, more concisely, one can do ::
+
+    import andes
+    ss = andes.prepare()
+
 This process may take several seconds to complete. Once done, equations can be viewed by accessing
-``ss.<ModelName>.<EquationName>_print``, where ``<ModelName>`` is the model name and ``<EquationName>`` is the
-equation name.
+``ss.<ModelName>.syms.<PrintName>``, where ``<ModelName>`` is the model name and ``<PrintName>`` is the
+equation or Jacobian name.
 
 .. Note ::
 
@@ -627,15 +632,14 @@ equation name.
 
 Supported equation names include the following:
 
-- ``f``: differential equations for states :math:`\textbf{f}=\dot{x}`
-- ``g``: algebraic equations for algebraic variables :math:`\textbf{g}=0`
-- ``df``: derivatives of ``f`` over all variables
-- ``dg``: derivatives of ``g`` over all variables
-- ``s`` the value equations for service variables
+- ``xy``: variables in the order of `State`, `ExtState`, `Algeb` and `ExtAlgeb`
+- ``f``: the **right-hand side of** differential equations :math:`T \dot{x} = \vector{f}`
+- ``g``: implicit algebraic equations :math:`0 = \vector{g}`
+- ``df``: derivatives of ``f`` over all variables ``xy``
+- ``dg``: derivatives of ``g`` over all variables ``xy``
+- ``s``: the value equations for `ConstService`
 
-For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.g_print``.
-
-In addition to equations, all variable symbols can be printed at ``ss.<ModelName>.vars_print``.
+For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.syms.g``.
 
 Examples in Jupyter Notebook
 ----------------------------

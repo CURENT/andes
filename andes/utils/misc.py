@@ -20,7 +20,7 @@ def elapsed(t0=0.0):
     t = time()
     dt = t - t0
     dt_sec = Decimal(str(dt)).quantize(Decimal('.0001'), rounding=ROUND_DOWN)
-    if dt_sec <= 1:
+    if dt_sec == 1:
         s = str(dt_sec) + ' second'
     else:
         s = str(dt_sec) + ' seconds'

@@ -124,47 +124,47 @@ class EIG(BaseRoutine):
         logger.info(out_str)
 
     def run(self, **kwargs):
-        ret = False
+        succeed = False
         system = self.system
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Eig analysis will not continue.')
-            return ret
+            return succeed
         else:
             if system.TDS.initialized is False:
                 system.TDS.init()
 
         if system.dae.n == 0:
-            logger.warning('No dynamic model. Eig analysis will not continue.')
-            return ret
+            logger.error('No dynamic model. Eig analysis will not continue.')
 
-        if sum(system.dae.Tf != 0) != len(system.dae.Tf):
+        elif sum(system.dae.Tf != 0) != len(system.dae.Tf):
             logger.error("System contains zero time constant(s). "
                          "Eigenvalue analysis cannot continue.")
-            return ret
 
-        self.summary()
-        t1, s = elapsed()
+        else:
+            self.summary()
+            t1, s = elapsed()
 
-        self.calc_state_matrix()
-        self.calc_part_factor()
+            self.calc_state_matrix()
+            self.calc_part_factor()
 
-        if not self.system.files.no_output:
-            self.report()
-            if system.options.get('state_matrix') is True:
-                self.export_state_matrix()
+            if not self.system.files.no_output:
+                self.report()
+                if system.options.get('state_matrix') is True:
+                    self.export_state_matrix()
 
-        if self.config.plot:
-            self.plot()
-        ret = True
+            if self.config.plot:
+                self.plot()
+            _, s = elapsed(t1)
+            logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
-        _, s = elapsed(t1)
-        logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
+            succeed = True
 
-        return ret
+        system.exit_code = 0 if succeed else 1
+        return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             linewidth=0.5, dpi=150):
+             linewidth=0.5, dpi=150, show=True):
         mpl.rc('font', family='Times New Roman', size=12)
 
         if mu is None:
@@ -215,7 +215,8 @@ class EIG(BaseRoutine):
         ax.set_xlim(left=left, right=right)
         ax.set_ylim(ymin, ymax)
 
-        # plt.show()
+        if show is True:
+            plt.show()
         return fig, ax
 
     def export_state_matrix(self):

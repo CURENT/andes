@@ -28,7 +28,7 @@ def config_logger(stream=True,
                   file=True,
                   stream_level=logging.INFO,
                   log_file='andes.log',
-                  log_path=get_log_dir(),
+                  log_path=None,
                   file_level=logging.DEBUG,
                   ):
     """
@@ -60,6 +60,9 @@ def config_logger(stream=True,
     """
     logger = logging.getLogger('andes')
     logger.setLevel(logging.DEBUG)
+
+    if log_path is None:
+        log_path = get_log_dir()
 
     sh_formatter_str = '%(message)s'
     if stream_level == 1:
@@ -320,13 +323,14 @@ def _find_cases(filename, path):
     -------
 
     """
+    logger.info(f'Working directory: "{os.getcwd()}"')
+
     if len(filename) == 0:
         logger.info('info: no input file. Use \'andes run -h\' for help.')
     if isinstance(filename, str):
         filename = [filename]
 
     cases = []
-    logger.info(f'Working directory: "{os.getcwd()}"')
     for file in filename:
         full_paths = os.path.join(path, file)
         found = glob.glob(full_paths)
@@ -365,6 +369,11 @@ def find_log_path(lg):
 
 
 def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
+    """
+    Run multiprocessing with `Process`.
+
+    Return values from `run_case` are not preserved. Always return `True` when done.
+    """
     # start processes
     jobs = []
     for idx, file in enumerate(cases):
@@ -407,7 +416,8 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     return ret
 
 
-def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False, **kwargs):
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
+        cli=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -427,6 +437,12 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Use Pool for multiprocessing to return a list of created Systems.
     kwargs
         Other supported keyword arguments
+
+    Other Parameters
+    ----------------
+    return_code : bool, optional
+        Return exit code instead of system instances
+
     Returns
     -------
     System
@@ -438,6 +454,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     cases = _find_cases(filename, input_path)
     system = None
+
+    ex_code = 0
+    if len(filename) and not len(cases):
+        ex_code = 1  # file specified but not found
 
     t0, _ = elapsed()
     if len(cases) == 1:
@@ -466,11 +486,27 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     t0, s0 = elapsed(t0)
 
     if len(cases) == 1:
-        logger.info(f'-> Single process finished in {s0}.')
-    elif len(cases) >= 2:
-        print(f'-> Multiprocessing finished in {s0}.')
+        ex_code += system.exit_code
+    elif len(cases) > 1:
+        if isinstance(system, list):
+            for s in system:
+                ex_code += s.exit_code
 
-    return system
+    if len(cases) == 1:
+        if ex_code == 0:
+            logger.info(f'-> Single process finished in {s0}.')
+        else:
+            logger.error(f'-> Single process exit with an error in {s0}.')
+    elif len(cases) > 1:
+        if ex_code == 0:
+            print(f'-> Multiprocessing finished in {s0}.')
+        else:
+            print(f'-> Multiprocessing exit with an error in {s0}.')
+
+    if cli is True:
+        return ex_code
+    else:
+        return system
 
 
 def plot(**kwargs):
@@ -479,26 +515,26 @@ def plot(**kwargs):
     tdsplot(**kwargs)
 
 
-def misc(edit_config='', save_config='', show_license=False, clean=True, **kwargs):
+def misc(edit_config='', save_config='', show_license=False, clean=True, cli=False, **kwargs):
     """
     Misc functions.
     """
     if edit_conf(edit_config):
-        return True
+        return
     if show_license:
         print_license()
-        return True
+        return
     if save_config != '':
         save_conf(save_config)
-        return True
+        return
     if clean is True:
         remove_output()
-        return True
+        return
 
     logger.info('info: no option specified. Use \'andes misc -h\' for help.')
 
 
-def prepare(quick=False, **kwargs):
+def prepare(quick=False, cli=False, **kwargs):
     """
     Run code generation.
 
@@ -512,7 +548,11 @@ def prepare(quick=False, **kwargs):
     system.prepare(quick=quick)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
-    return system
+
+    if cli is True:
+        return 0
+    else:
+        return system
 
 
 def selftest(**kwargs):

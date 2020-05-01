@@ -3,9 +3,8 @@
 ### Milestones
 - [x] Help system and consistency check system for Config
 - [x] Handling of zero time constants (through `State.t_const`)
-*   Robust iterative initialization
-*   Refactor Model to separate symbolic processing part as `ModelSymbolic` -> `Model.sym`.
-*   Separate the solver class into an interface class + different solver classes
+- [x] Refactor Model to separate symbolic processing part as `ModelSymbolic` -> `Model.syms`.
+- [x] Separate the solver class into an interface class + different solver classes
 
 ### To-do bullets
 - [x] A working `GENROU` model with saturation function
@@ -16,14 +15,15 @@
 - [x] Allow adding routine without modifying code (as long as routines are added to `Routines.all_routines`)
 - [x] Add a help system for Config
 - [x] Add consistency checks for Config
-*   Deal with two-terminal and multi-terminal devices
-*   Iterative initialization for equations (half done with Newton Krylov)
-*   Define general hooks - when should the connectivity check happen
-*   Draw block diagram from symbolic models using BDP (or SchemDraw)
-*   Example COI model
+- [x] Return an error state to system if a simulation routine fails
+- [x] Example COI model
 
 
 ## Later Versions
+*   Robust iterative initialization
+*   Iterative initialization for equations (half done with Newton Krylov)
+*   Re-evaluate the decentralized equation evaluation method
+*   Deal with two-terminal and multi-terminal devices
 *   Restore compatibility with dome format
 *   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
 *   Allow for semi-analytical derivation of equations
@@ -31,6 +31,8 @@
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 *   Allow simulating to a time, pause, and continue to a new ending time.
 *   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
+*   Define general hooks - when should the connectivity check happen
+*   Draw block diagram from symbolic models using BDP (or SchemDraw)
 
 
 ## Version 0.8.0 (Completed)

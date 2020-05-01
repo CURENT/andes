@@ -109,7 +109,7 @@ class Config(object):
             value.append(self._dict[key])
             info.append(self._help[key] if key in self._help else '')
             alt.append(self._alt[key] if key in self._alt else '')
-            tex.append(self._tex[key] if key in self._tex else key)
+            tex.append(self._tex[key] if key in self._tex else '')
 
         tex = math_wrap(tex, export=export)
 
