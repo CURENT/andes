@@ -1317,6 +1317,8 @@ class Model(object):
         if (self.n == 0) or (not self.in_use):
             return
         for instance in self.cache.all_vars.values():
+            if instance.e_inplace:
+                continue
             instance.e[:] = 0
 
     def v_numeric(self, **kwargs):
