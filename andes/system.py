@@ -512,9 +512,9 @@ class System(object):
 
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
-        Update variable-based limiter discrete states.
+        Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
-        This function is usually called before any equation evaluation.
+        This function is must be called before any equation evaluation.
         """
         self.call_models('l_update_var', models, self.dae.t)
 
@@ -523,7 +523,7 @@ class System(object):
         First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
 
-        This function is usually called after differential equation updates.
+        This function is must be called after differential equation updates.
         """
         self.call_models('l_check_eq', models)
         self.call_models('l_set_eq', models)
