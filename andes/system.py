@@ -190,6 +190,8 @@ class System(object):
         # assign address at the end before adding devices and processing parameters
         self.set_address()
         self.set_dae_names()
+        self.dae.resize_arrays()
+
         self.store_sparse_pattern()
         self.store_adder_setter()
 

@@ -153,7 +153,7 @@ class DAE(object):
     def clear_ts(self):
         self.ts = DAETimeSeries(self)
 
-    def clear_array(self):
+    def clear_arrays(self):
         """
         Reset equation and variable arrays to empty.
         """
@@ -164,23 +164,21 @@ class DAE(object):
     def clear_fg(self):
         """Resets equation arrays to empty
         """
-        self.f = np.zeros(self.n)
-        self.g = np.zeros(self.m)
+        self.f[:] = 0
+        self.g[:] = 0
 
     def clear_xy(self):
         """
         Reset variable arrays to empty.
-
-        TODO: use in-place assignment instead of reassignment, where an extra resizing is needed.
         """
-        self.x = np.zeros(self.n)
-        self.y = np.zeros(self.m)
+        self.x[:] = 0
+        self.y[:] = 0
 
     def clear_z(self):
         """
         Reset status arrays to empty
         """
-        self.z = np.zeros(self.n)
+        self.z[:] = 0
 
     def clear_ijv(self):
         """
@@ -196,15 +194,16 @@ class DAE(object):
             self.build_pattern(jname)
 
     def reset(self):
+        """
+        Reset array sizes to zero and clear all arrays.
+        """
+        self.t = 0
         self.m = 0
         self.n = 0
-        self.clear_fg()
-        self.clear_xy()
-        self.clear_z()
+        self.o = 0
+        self.resize_arrays()
         self.clear_ijv()
         self.clear_ts()
-
-        self.Tf = np.ones(self.n)
 
     def get_size(self, name):
         """
