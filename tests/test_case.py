@@ -40,10 +40,6 @@ class Test5Bus(unittest.TestCase):
     def test_init_order(self):
         self.ss.Bus.get_init_order()
 
-    def test_pflow(self):
-        self.ss.PFlow.run()
-        self.ss.PFlow.newton_krylov()
-
     def test_pflow_reset(self):
         self.ss.PFlow.run()
         self.ss.reset()
