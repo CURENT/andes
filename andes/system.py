@@ -208,7 +208,7 @@ class System(object):
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
-        self.call_model('a_reset', models=self.models)
+        self.call_models('a_reset', models=self.models)
         self.e_clear()
         self._p_restore()
         self.setup()
@@ -392,7 +392,7 @@ class System(object):
             mdl.init()
 
             # TODO: re-think over the adder-setter approach and reduce data copy
-            self.vars_to_dae()
+            self.vars_to_dae(mdl)
             self.vars_to_models()
 
         # store the inverse of time constants
@@ -516,7 +516,7 @@ class System(object):
 
         This function is usually called before any equation evaluation.
         """
-        self.call_model('l_update_var', models, self.dae.t)
+        self.call_models('l_update_var', models, self.dae.t)
 
     def l_check_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -525,7 +525,7 @@ class System(object):
         This function is usually called after differential equation updates.
         Currently, it is used exclusively for collecting anti-windup limiter status.
         """
-        self.call_model('l_check_eq', models)
+        self.call_models('l_check_eq', models)
 
     def l_set_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -534,7 +534,7 @@ class System(object):
         This function is evaluated afte ``l_check_eq``.
         Currently, it is only used by anti-windup limiters to record changes.
         """
-        self.call_model('l_set_eq', models)
+        self.call_models('l_set_eq', models)
 
     def fg_to_dae(self):
         """
@@ -561,7 +561,7 @@ class System(object):
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
         try:
-            self.call_model('f_update', models)
+            self.call_models('f_update', models)
         except TypeError as e:
             logger.error("f_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
@@ -575,7 +575,7 @@ class System(object):
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
         try:
-            self.call_model('g_update', models)
+            self.call_models('g_update', models)
         except TypeError as e:
             logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
@@ -593,7 +593,7 @@ class System(object):
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
         models = self._get_models(models)
-        self.call_model('j_update', models)
+        self.call_models('j_update', models)
 
         self.dae.restore_sparse()
         # collect sparse values into sparse structures
@@ -626,7 +626,7 @@ class System(object):
         term in the equations.
         """
         models = self._get_models(models)
-        self.call_model('store_sparse_pattern', models)
+        self.call_models('store_sparse_pattern', models)
 
         # add variable jacobian values
         for jname in jac_names:
@@ -656,15 +656,14 @@ class System(object):
             self.dae.store_sparse_ijv(jname, ii, jj, vv)
             self.dae.build_pattern(jname)
 
-    def vars_to_dae(self):
+    def vars_to_dae(self, model):
         """
         Copy variables values from models to `System.dae`.
 
         This function clears `DAE.x` and `DAE.y` and collects values from models.
         """
-        # self.dae.clear_xy()
-        self._v_to_dae('x')
-        self._v_to_dae('y')
+        self._v_to_dae('x', model)
+        self._v_to_dae('y', model)
 
     def vars_to_models(self):
         """
@@ -679,7 +678,7 @@ class System(object):
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
-    def _v_to_dae(self, v_name):
+    def _v_to_dae(self, v_code, model):
         """
         Helper function for collecting variable values into dae structures `x` and `y`.
 
@@ -688,29 +687,24 @@ class System(object):
 
         Parameters
         ----------
-        v_name : 'x' or 'y'
+        v_code : 'x' or 'y'
             Variable type name
         """
-        if v_name not in ('x', 'y'):
-            raise KeyError(f'{v_name} is not a valid var name')
+        if model.n == 0:
+            return
+        if model.flags['initialized'] is False:
+            return
 
-        for var in self._adders[v_name]:
-            # NOTE:
-            # For power flow, they will be initialized to zero.
-            # For TDS initialization, they will remain at their values.
-            if var.n == 0:
+        for var in model.cache.v_adders.values():
+            if var.v_code != v_code:
                 continue
-            if var.v_inplace is True:
-                continue
-            if var.owner.flags['initialized'] is False:
-                continue
-            np.add.at(self.dae.__dict__[v_name], var.a, var.v)
+            np.add.at(self.dae.__dict__[v_code], var.a, var.v)
 
-        for var in self._setters[v_name]:
+        for var in self._setters[v_code]:
             if var.owner.flags['initialized'] is False:
                 continue
             if var.n > 0:
-                np.put(self.dae.__dict__[v_name], var.a, var.v)
+                np.put(self.dae.__dict__[v_code], var.a, var.v)
 
     def _e_to_dae(self, eq_name: str):
         """
@@ -852,7 +846,7 @@ class System(object):
             if var.t_const is not None:
                 np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def call_model(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
+    def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """
         Call methods on the given models.
 
@@ -1051,7 +1045,7 @@ class System(object):
         This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
         self.dae.clear_fg()
-        self.call_model('e_clear', models)
+        self.call_models('e_clear', models)
 
     def remove_pycapsule(self):
         """
@@ -1069,7 +1063,7 @@ class System(object):
             self.calls[name] = mdl.calls
 
     def _list2array(self):
-        self.call_model('list2array', self.models)
+        self.call_models('list2array', self.models)
 
     def set_config(self, config=None):
         """

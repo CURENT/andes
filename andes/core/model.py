@@ -548,7 +548,7 @@ class Model(object):
 
         # class behavior flags
         self.flags = dict(
-            collate=True,       # True: collate variables by device; False: by variable.
+            collate=False,      # True: collate variables by device; False: by variable.
                                 # Non-collate (continuous memory) has faster computation speed.
             pflow=False,        # True: called during power flow
             tds=False,          # True if called during tds; if is False, ``dae_t`` cannot be used

@@ -188,7 +188,6 @@ class PFlow(BaseRoutine):
         system.dae.x = xy[:system.dae.n]
         system.dae.y = xy[system.dae.n:]
         system.vars_to_models()
-        system.vars_to_dae()
 
         system.e_clear()
         system.l_update_var()
