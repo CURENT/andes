@@ -59,6 +59,8 @@ class TDS(BaseRoutine):
         self.next_pc = 0
         self.eye = None
         self.Teye = None
+        self.qg = np.array([])
+        self.tol_zero = self.config.tol / 100
 
         # internal status
         self.converged = False
@@ -66,7 +68,7 @@ class TDS(BaseRoutine):
         self.niter = 0
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
-        self.mis = []
+        self.mis = 1
         self.pbar = None
         self.callpert = None
         self.plotter = None
@@ -101,6 +103,7 @@ class TDS(BaseRoutine):
         system.store_switch_times(self.tds_models)
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
+        self.qg = np.zeros(system.dae.n + system.dae.m)
 
         self.initialized = self.test_init()
         _, s1 = elapsed(t0)
@@ -171,7 +174,7 @@ class TDS(BaseRoutine):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
 
-            if self._implicit_step():  # simulate the current step
+            if self._itm_step():  # simulate the current step
                 # store values
                 dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=self.pflow_tds_models))
                 dae.t += self.h
@@ -250,9 +253,9 @@ class TDS(BaseRoutine):
         system.l_update_eq(models=models)
         system.fg_to_dae()
 
-    def _implicit_step(self):
+    def _itm_step(self):
         """
-        Integrate for a single given step.
+        Integrate with Implicit Trapezoidal Method (ITM) to the current time.
 
         This function has an internal Newton-Raphson loop for algebraized semi-explicit DAE.
         The function returns the convergence status when done but does NOT progress simulation time.
@@ -266,7 +269,7 @@ class TDS(BaseRoutine):
         system = self.system
         dae = self.system.dae
 
-        self.mis = []
+        self.mis = 1
         self.niter = 0
         self.converged = False
 
@@ -285,17 +288,19 @@ class TDS(BaseRoutine):
             # solve implicit trapezoidal method (ITM) integration
             self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
-            # equation `q = 0` is the implicit form of differential equations using ITM
-            q = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
+
+            # equation `self.qg[:dae.n] = 0` is the implicit form of differential equations using ITM
+            self.qg[:dae.n] = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
                 if len(item.x_set) > 0:
                     for key, val in item.x_set:
-                        np.put(q, key[np.where(item.zi == 0)], 0)
-            qg = np.hstack((q, dae.g))
+                        np.put(self.qg, key[np.where(item.zi == 0)], 0)
 
-            inc = self.solver.solve(self.Ac, -matrix(qg))
+            self.qg[dae.n:] = dae.g
+
+            inc = self.solver.solve(self.Ac, -matrix(self.qg))
 
             # check for np.nan first
             if np.isnan(inc).any():
@@ -304,7 +309,9 @@ class TDS(BaseRoutine):
                 self.busted = True
                 break
 
-            inc[np.where(np.abs(inc) < 1e-12)] = 0  # reset really small values to reduce limiter chattering
+            # reset small values to reduce chattering
+            inc[np.where(np.abs(inc) < self.tol_zero)] = 0
+
             # set new values
             dae.x += inc[:dae.n].ravel()
             dae.y += inc[dae.n: dae.n + dae.m].ravel()
@@ -313,7 +320,9 @@ class TDS(BaseRoutine):
 
             # calculate correction
             mis = np.max(np.abs(inc))
-            self.mis.append(mis)
+            if self.niter == 0:
+                self.mis = mis
+
             self.niter += 1
 
             # converged
@@ -326,7 +335,7 @@ class TDS(BaseRoutine):
                              f'h={self.h:.6f}, mis={mis:.4g} '
                              f'({system.dae.xy_name[np.argmax(inc)]})')
                 break
-            if mis > 1000 and (mis > 1e8 * self.mis[0]):
+            if mis > 1000 and (mis > 1e8 * self.mis):
                 self.pbar.close()
                 logger.error(f'Error increased too quickly. Convergence not likely.')
                 self.busted = True
@@ -497,13 +506,14 @@ class TDS(BaseRoutine):
         self.next_pc = 0.1
         self.eye = None
         self.Teye = None
+        self.qg = np.array([])
 
         self.converged = False
         self.busted = False
         self.niter = 0
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
-        self.mis = []
+        self.mis = 1
         self.system.dae.t = 0.0
         self.pbar = None
         self.plotter = None
