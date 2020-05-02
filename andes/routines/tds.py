@@ -243,7 +243,7 @@ class TDS(BaseRoutine):
         Update `f` and `g` equations.
         """
         system = self.system
-        system.e_clear(models=models)
+        system.dae.clear_fg()
         system.l_update_var(models=models)
         system.f_update(models=models)
         system.g_update(models=models)

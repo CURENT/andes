@@ -1061,8 +1061,15 @@ class Model(object):
 
         # call lambda functions in self.call
         ret = self.calls.f_lambdify(*args)
+
+        # Note:
+        # In-place equations: added to the corresponding DAE array
+        # Non-inplace equations: set to internal array to overwrite old values (and avoid clearing)
         for idx, instance in enumerate(self.cache.states_and_ext.values()):
-            instance.e += ret[idx][0]
+            if instance.e_inplace:
+                instance.e += ret[idx][0]
+            else:
+                instance.e = ret[idx][0]
 
         # user-defined numerical calls defined in the model
         if self.flags['f_num'] is True:
@@ -1084,8 +1091,12 @@ class Model(object):
 
         # call lambda functions stored in `self.calls`
         ret = self.calls.g_lambdify(*args)
+
         for idx, instance in enumerate(self.cache.algebs_and_ext.values()):
-            instance.e += ret[idx][0]
+            if instance.e_inplace:
+                instance.e += ret[idx][0]
+            else:
+                instance.e = ret[idx][0]
 
         # numerical calls defined in the model
         if self.flags['g_num'] is True:
