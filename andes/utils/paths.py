@@ -159,7 +159,7 @@ def get_pkl_path():
 
     """
     pkl_name = 'calls.pkl'
-    andes_path = os.path.join(str(pathlib.Path.home()), '.andes')
+    andes_path = get_dot_andes_path()
 
     if not os.path.exists(andes_path):
         os.makedirs(andes_path)
@@ -167,6 +167,13 @@ def get_pkl_path():
     pkl_path = os.path.join(andes_path, pkl_name)
 
     return pkl_path
+
+
+def get_dot_andes_path():
+    """
+    Return the path to ``<HomeDir>/.andes``
+    """
+    return os.path.join(str(pathlib.Path.home()), '.andes')
 
 
 def get_log_dir():

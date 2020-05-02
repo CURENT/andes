@@ -10,6 +10,7 @@ from distutils.spawn import find_executable
 from andes.utils.misc import is_notebook
 from andes.core.var import Algeb, State
 from andes.main import config_logger
+from andes.utils.paths import get_dot_andes_path
 from andes.shared import np, mpl, plt
 
 config_logger(log_file=None)
@@ -245,7 +246,7 @@ class TDSData(object):
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None,
              legend=True, grid=False, greyscale=False,
-             latex=True, dpi=150, savefig=None, save_format=None, show=True,
+             latex=True, dpi=150, font_size=12, savefig=None, save_format=None, show=True,
              use_bqplot=False, latex_warn=True, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
@@ -306,16 +307,16 @@ class TDSData(object):
             return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                    latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
-                                    latex_warn=latex_warn,
+                                    latex=latex, dpi=dpi, font_size=font_size, savefig=savefig,
+                                    save_format=save_format, show=show, latex_warn=latex_warn,
                                     **kwargs)
 
         else:
             return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                  latex=latex, dpi=dpi, savefig=savefig, save_format=save_format, show=show,
-                                  latex_warn=latex_warn,
+                                  latex=latex, dpi=dpi, font_size=font_size, savefig=savefig,
+                                  save_format=save_format, show=show, latex_warn=latex_warn,
                                   **kwargs)
 
     def data_to_df(self):
@@ -354,7 +355,7 @@ class TDSData(object):
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True,
+                  latex=True, dpi=150, font_size=12, greyscale=False, savefig=None, save_format=None, show=True,
                   latex_warn=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
@@ -420,8 +421,10 @@ class TDSData(object):
         (fig, ax)
             The figure and axis handles
         """
-        mpl.rc('font', family='Arial', size=12)
-        self._latex_warn = latex_warn
+        mpl.rc('font', family='Arial', size=font_size)
+
+        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
+        self._latex_warn = latex_warn and (not os.path.isfile(no_warn_file))
 
         if not isinstance(ydata, np.ndarray):
             TypeError("ydata must be a numpy array. Retrieve with get_values().")
@@ -433,9 +436,16 @@ class TDSData(object):
 
         using_latex = set_latex(latex)
         if using_latex and self._latex_warn:
+            logger.info('Info:')
             logger.info('Using LaTeX for rendering. If an error occurs:')
-            logger.info('a) If you are using `andes plot`, disable with optino "-d",')
+            logger.info('a) If you are using `andes plot`, disable with option "-d",')
             logger.info('b) If you are using `plot()`, set "latex=False".')
+
+            try:
+                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
+                    pass
+            except OSError:
+                pass
             self._latex_warn = False
 
         # set default x min based on simulation time
