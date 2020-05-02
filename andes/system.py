@@ -114,10 +114,7 @@ class System(object):
         self.import_models()
         self.import_routines()  # routine imports come after models
 
-        self._models_flag = {'pflow': self.find_models('pflow'),
-                             'tds': self.find_models('tds'),
-                             'pflow_tds': self.find_models(('tds', 'pflow')),
-                             }
+        self._models_flag = {}
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -187,7 +184,13 @@ class System(object):
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
         self.find_devices()    # find or add required devices
+        # no device addition or removal after this point
         self.calc_pu_coeff()
+
+        # store models with routine flags
+        self._models_flag['pflow'] = self.find_models('pflow')
+        self._models_flag['tds'] = self.find_models('tds')
+        self._models_flag['pflow_tds'] = self.find_models(('tds', 'pflow'))
 
         # assign address at the end before adding devices and processing parameters
         self.set_address()
@@ -322,16 +325,29 @@ class System(object):
         if models is None:
             models = self._models_flag['pflow']
 
+        def append_model_name(model_name, idx):
+            out = ''
+            if isinstance(idx, str):
+                if model_name in idx:
+                    out = idx
+            else:
+                out = f'{model_name} {idx}'
+
+            # replaces `_` with space for LaTeX to continue
+            out = out.replace('_', ' ')
+            return out
+
         for mdl in models.values():
             mdl_name = mdl.class_name
+            idx = mdl.idx
             for name, item in mdl.algebs.items():
-                for uid, addr in enumerate(item.a):
-                    self.dae.y_name[addr] = f'{mdl_name} {name} {uid}'
-                    self.dae.y_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
+                for id, addr in zip(idx.v, item.a):
+                    self.dae.y_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
+                    self.dae.y_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
             for name, item in mdl.states.items():
-                for uid, addr in enumerate(item.a):
-                    self.dae.x_name[addr] = f'{mdl_name} {name} {uid}'
-                    self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
+                for id, addr in zip(idx.v, item.a):
+                    self.dae.x_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
+                    self.dae.x_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
 
             # add discrete flag names
             if self.config.store_z == 1:
@@ -339,9 +355,9 @@ class System(object):
                     if mdl.flags['initialized']:
                         continue
                     for name, tex_name in zip(item.get_names(), item.get_tex_names()):
-                        for uid in range(mdl.n):
-                            self.dae.z_name.append(f'{mdl_name} {name} {uid}')
-                            self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
+                        for id in idx.v:
+                            self.dae.z_name.append(f'{name} {append_model_name(mdl_name, id)}')
+                            self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
     def _set_var_arrays(self, models=None):
@@ -396,7 +412,7 @@ class System(object):
             self.vars_to_models()
 
         # store the inverse of time constants
-        self._store_Tf()
+        self._store_tf(models)
 
     def store_adder_setter(self, models=None):
         """
@@ -406,6 +422,10 @@ class System(object):
         self._clear_adder_setter()
 
         for mdl in models.values():
+            # Note:
+            #   We assume that a Model with no device is not addressed and, therefore,
+            #   contains no value in each variable.
+            #   It is always true for the current architecture.
             if not mdl.n:
                 continue
 
@@ -425,6 +445,7 @@ class System(object):
             for var in mdl.cache.e_setters.values():
                 self._setters[var.e_code].append(var)
 
+            # ``antiwindups`` stores all AntiWindup instances
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
@@ -711,11 +732,9 @@ class System(object):
             raise KeyError(f'{eq_name} is not a valid eq name')
 
         for var in self._adders[eq_name]:
-            if var.n > 0:
-                np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
+            np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
         for var in self._setters[eq_name]:
-            if var.n > 0:
-                np.put(self.dae.__dict__[eq_name], var.a, var.e)
+            np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
     def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -736,14 +755,22 @@ class System(object):
 
         return np.concatenate(z_dict)
 
-    def find_models(self, flag: Optional[Union[str, Tuple]] = None):
+    def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
-        Find models whose ``flag`` field is True.
+        Find models with at least one of the flags as True.
+
+        Warnings
+        --------
+        Checking the number of devices has been centralized into this function.
+        ``models`` passed to most System calls must be retrieved from here.
 
         Parameters
         ----------
         flag : list, str
             Flags to find
+
+        skip_zero : bool
+            Skip models with zero devices
 
         Returns
         -------
@@ -756,6 +783,11 @@ class System(object):
 
         out = OrderedDict()
         for name, mdl in self.models.items():
+
+            if skip_zero is True:
+                if (mdl.n == 0) or (not mdl.in_use):
+                    continue
+
             for f in flag:
                 if mdl.flags[f] is True:
                     out[name] = mdl
@@ -827,16 +859,15 @@ class System(object):
         # do nothing for OrderedDict type
         return models
 
-    def _store_Tf(self):
+    def _store_tf(self, models):
         """
-        Store the inverse time constant associated with equations
+        Store the inverse time constant associated with equations.
         """
-        for var in self._adders['f']:
-            if var.t_const is not None:
-                np.put(self.dae.Tf, var.a, var.t_const.v)
-        for var in self._setters['f']:
-            if var.t_const is not None:
-                np.put(self.dae.Tf, var.a, var.t_const.v)
+        models = self._get_models(models)
+        for mdl in models.values():
+            for var in mdl.cache.states_and_ext.values():
+                if var.t_const is not None:
+                    np.put(self.dae.Tf, var.a, var.t_const.v)
 
     def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """

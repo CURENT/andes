@@ -219,9 +219,9 @@ class SortedLimiter(Limiter):
             reset_in[highest_n] = 0
             reset_out = 1 - reset_in
 
-            self.zi[:] = np.logical_or(reset_in, self.zi).astype(np.float64)
-            self.zl[:] = np.logical_and(reset_out, self.zl).astype(np.float64)
-            self.zu[:] = np.logical_and(reset_out, self.zu).astype(np.float64)
+            self.zi[:] = np.logical_or(reset_in, self.zi)
+            self.zl[:] = np.logical_and(reset_out, self.zl)
+            self.zu[:] = np.logical_and(reset_out, self.zu)
 
 
 class HardLimiter(Limiter):
@@ -266,25 +266,35 @@ class AntiWindup(Limiter):
         """
         Check the variables and equations and set the limiter flags.
         """
-        self.zu[:] = np.greater(self.u.v, self.upper.v)
-        self.zl[:] = np.less(self.u.v, self.lower.v)
+        self.zu[:] = np.logical_and(np.greater(self.u.v, self.upper.v),
+                                    np.greater(self.state.e, 0))
+        self.zl[:] = np.logical_and(np.less(self.u.v, self.lower.v),
+                                    np.less(self.state.e, 0))
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
-
-        self.zu[:] = np.logical_and(self.zu, np.greater(self.state.e, 0)).astype(np.float64)
-        self.zl[:] = np.logical_and(self.zl, np.less(self.state.e, 0)).astype(np.float64)
-        self.zi[:] = np.logical_not(
-            np.logical_or(self.zu.astype(np.bool),
-                          self.zl.astype(np.bool))).astype(np.float64)
 
     def set_eq(self):
         """
         Reset differential equation values based on limiter flags.
+
+        Notes
+        -----
+        TODO: the current implementation reallocates memory for `self.x_set` in each call.
+        Consider improving for speed.
         """
+
+        # must flush the `x_set` list at the beginning
         self.x_set = list()
+
         if not np.all(self.zi):
             self.state.e = self.state.e * self.zi
             self.state.v = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
             self.x_set.append((self.state.a, self.state.v))
+
+        # Note:
+        # `System.fg_to_dae` is called after `System.l_update_eq`, which calls this function.
+        # Equation values set in `self.state.e` is collected by `System._e_to_dae`, while
+        # variable values are collected by the separate loop in `System.fg_to_dae`.
+        # Also, equation values are processed in `TDS` for resetting the `q`.
 
 
 class Selector(Discrete):
@@ -298,7 +308,7 @@ class Selector(Discrete):
 
     Warnings
     --------
-    A potential bug when values in different inputs are equal.
+    A potential bug when more than two inputs are provided, and values in different inputs are equal.
     FIXME: More than one flag will se true in this case.
 
     Examples
@@ -349,7 +359,7 @@ class Selector(Discrete):
         self._inputs = [self.input_vars[i].v for i in range(self.n)]
         self._outputs = self.fun(self._inputs)
         for i in range(self.n):
-            self.__dict__[f's{i}'][:] = np.equal(self._inputs[i], self._outputs).astype(int)
+            self.__dict__[f's{i}'][:] = np.equal(self._inputs[i], self._outputs)
 
 
 class Switcher(Discrete):
@@ -419,7 +429,7 @@ class Switcher(Discrete):
                 raise ValueError(f'option {v} is invalid for {self.owner.class_name}.{self.u.name}. '
                                  f'Options are {self.options}.')
         for i in range(len(self.options)):
-            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i]).astype(np.float64)
+            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i])
 
         self._eval = True
 
@@ -545,10 +555,6 @@ class DeadBand(Limiter):
         # square return dead band
         self.zur[:] = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
         self.zlr[:] = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
-
-        self.zu[:] = zu.astype(np.float64)
-        self.zl[:] = zl.astype(np.float64)
-        self.zi[:] = zi.astype(np.float64)
 
 
 class Delay(Discrete):

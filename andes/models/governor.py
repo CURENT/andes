@@ -81,7 +81,7 @@ class TGBase(Model):
                            )
         self.pout = Algeb(info='Turbine final output power',
                           tex_name='P_{out}',
-                          v_str='tm0',
+                          v_str='u*tm0',
                           )
         self.wref = Algeb(info='Speed reference variable',
                           tex_name=r'\omega_{ref}',
@@ -251,8 +251,8 @@ class TGOV1Model(TGBase):
         self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',
                         tex_name="P_d",
-                        v_str='tm0',
-                        e_str='(wd + pref + paux) * gain - pd')
+                        v_str='u * tm0',
+                        e_str='u*(wd + pref + paux) * gain - pd')
 
         self.LAG = LagAntiWindup(u=self.pd,
                                  K=1,

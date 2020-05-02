@@ -305,7 +305,7 @@ positional arguments:
     +----------------+----------------------------------------------------------------------+
 
 For example, to plot the generator speed variable of synchronous generator 1
-``GENROU omega 0`` versus time, read the indices of the variable (2) and time
+``omega GENROU 0`` versus time, read the indices of the variable (2) and time
 (0), run
 
 .. code:: bash
@@ -314,7 +314,7 @@ For example, to plot the generator speed variable of synchronous generator 1
 
 In this command, ``andes plot`` is the plotting command for TDS output files.
 ``kundur_full_out.lst`` is list file name. ``0`` is the index of ``Time`` for
-the x-axis. ``2`` is the index of ``GENROU omega 0``. Note that for the the file name,
+the x-axis. ``2`` is the index of ``omega GENROU 0``. Note that for the the file name,
 either ``kundur_full_out.lst`` or ``kundur_full_out.npy`` works, as the program will
 automatically extract the file name.
 

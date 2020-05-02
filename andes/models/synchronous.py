@@ -147,19 +147,16 @@ class GENBase(Model):
         self.tm = Algeb(info='mechanical torque',
                         tex_name=r'\tau_m',
                         v_str='tm0',
-                        v_setter=True,
                         e_str='tm0 - tm'
                         )
         self.te = Algeb(info='electric torque',
                         tex_name=r'\tau_e',
                         v_str='p0',
-                        v_setter=True,
                         e_str='psid * Iq - psiq * Id - te',
                         )
         self.vf = Algeb(info='excitation voltage',
                         unit='pu',
                         v_str='vf0',
-                        v_setter=True,
                         e_str='vf0 - vf',
                         tex_name=r'v_f'
                         )

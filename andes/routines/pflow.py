@@ -35,20 +35,22 @@ class PFlow(BaseRoutine):
                               n_factorize=">0",
                               report=(0, 1),
                               )
-        self.models = system.find_models('pflow')
 
         self.converged = False
         self.inc = None
         self.A = None
         self.niter = None
         self.mis = []
+        self.models = OrderedDict()
 
     def init(self):
+        self.models = self.system.find_models('pflow')
         self.converged = False
         self.inc = None
         self.A = None
         self.niter = None
         self.mis = []
+
         self.system.init(self.models)
         logger.info('Power flow initialized.')
         return self.system.dae.xy
@@ -64,18 +66,18 @@ class PFlow(BaseRoutine):
         """
         system = self.system
         # evaluate discrete, differential, algebraic, and Jacobians
-        system.e_clear()
-        system.l_update_var()
-        system.f_update()
-        system.g_update()
-        system.l_update_eq()
+        system.dae.clear_fg()
+        system.l_update_var(self.models)
+        system.f_update(self.models)
+        system.g_update(self.models)
+        system.l_update_eq(self.models)
         system.fg_to_dae()
 
         if self.config.method == 'NR':
-            system.j_update()
+            system.j_update(models=self.models)
         elif self.config.method == 'dishonest':
             if self.niter < self.config.n_factorize:
-                system.j_update()
+                system.j_update(self.models)
 
         # prepare and solve linear equations
         self.inc = -matrix([matrix(system.dae.f),
@@ -188,7 +190,7 @@ class PFlow(BaseRoutine):
         system.dae.y = xy[system.dae.n:]
         system.vars_to_models()
 
-        system.e_clear()
+        system.dae.clear_fg()
         system.l_update_var()
         system.f_update()
         system.g_update()
