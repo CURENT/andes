@@ -6,12 +6,12 @@ The APIs before v1.0.0 are in beta and may change without prior notice.
 
 v0.9.1 (2020-05-02)
 -------------------
-This version accelerates computations by about 30%.
+This version accelerates computations by about 35%.
 
 - Models with flag ``collate=False``, which is the new default,
   will slice DAE arrays for all internal vars to reduce copying back and forth.
 - The change above greatly reduced computation time.
-  For ``kundur_pss.xlsx``, simulation time is down from 2.50 sec to 1.72 sec.
+  For ``kundur_pss.xlsx``, simulation time is down from 2.50 sec to 1.64 sec.
 - The side-effects include a change in variable ordering in output lst file.
   It also eliminated the feasibility of evaluating model equations in
   parallel, which has not been implemented and does not seem promising in Python.
