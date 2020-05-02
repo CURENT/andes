@@ -396,7 +396,7 @@ class System(object):
             self.vars_to_models()
 
         # store the inverse of time constants
-        self._store_Tf()
+        self._store_Tf(models)
 
     def store_adder_setter(self, models=None):
         """
@@ -827,16 +827,15 @@ class System(object):
         # do nothing for OrderedDict type
         return models
 
-    def _store_Tf(self):
+    def _store_Tf(self, models):
         """
-        Store the inverse time constant associated with equations
+        Store the inverse time constant associated with equations.
         """
-        for var in self._adders['f']:
-            if var.t_const is not None:
-                np.put(self.dae.Tf, var.a, var.t_const.v)
-        for var in self._setters['f']:
-            if var.t_const is not None:
-                np.put(self.dae.Tf, var.a, var.t_const.v)
+        models = self._get_models(models)
+        for mdl in models.values():
+            for var in mdl.cache.states_and_ext.values():
+                if var.t_const is not None:
+                    np.put(self.dae.Tf, var.a, var.t_const.v)
 
     def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
         """
