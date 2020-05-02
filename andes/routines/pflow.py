@@ -35,20 +35,22 @@ class PFlow(BaseRoutine):
                               n_factorize=">0",
                               report=(0, 1),
                               )
-        self.models = system.find_models('pflow')
 
         self.converged = False
         self.inc = None
         self.A = None
         self.niter = None
         self.mis = []
+        self.models = OrderedDict()
 
     def init(self):
+        self.models = self.system.find_models('pflow')
         self.converged = False
         self.inc = None
         self.A = None
         self.niter = None
         self.mis = []
+
         self.system.init(self.models)
         logger.info('Power flow initialized.')
         return self.system.dae.xy

@@ -114,10 +114,7 @@ class System(object):
         self.import_models()
         self.import_routines()  # routine imports come after models
 
-        self._models_flag = {'pflow': self.find_models('pflow'),
-                             'tds': self.find_models('tds'),
-                             'pflow_tds': self.find_models(('tds', 'pflow')),
-                             }
+        self._models_flag = {}
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -187,7 +184,13 @@ class System(object):
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
         self.find_devices()    # find or add required devices
+        # no device addition or removal after this point
         self.calc_pu_coeff()
+
+        # store models with routine flags
+        self._models_flag['pflow'] = self.find_models('pflow')
+        self._models_flag['tds'] = self.find_models('tds')
+        self._models_flag['pflow_tds'] = self.find_models(('tds', 'pflow'))
 
         # assign address at the end before adding devices and processing parameters
         self.set_address()
@@ -396,7 +399,7 @@ class System(object):
             self.vars_to_models()
 
         # store the inverse of time constants
-        self._store_Tf(models)
+        self._store_tf(models)
 
     def store_adder_setter(self, models=None):
         """
@@ -406,6 +409,10 @@ class System(object):
         self._clear_adder_setter()
 
         for mdl in models.values():
+            # Note:
+            #   We assume that a Model with no device is not addressed and, therefore,
+            #   contains no value in each variable.
+            #   It is always true for the current architecture.
             if not mdl.n:
                 continue
 
@@ -425,6 +432,7 @@ class System(object):
             for var in mdl.cache.e_setters.values():
                 self._setters[var.e_code].append(var)
 
+            # ``antiwindups`` stores all AntiWindup instances
             for item in mdl.discrete.values():
                 if isinstance(item, AntiWindup):
                     self.antiwindups.append(item)
@@ -711,11 +719,9 @@ class System(object):
             raise KeyError(f'{eq_name} is not a valid eq name')
 
         for var in self._adders[eq_name]:
-            if var.n > 0:
-                np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
+            np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
         for var in self._setters[eq_name]:
-            if var.n > 0:
-                np.put(self.dae.__dict__[eq_name], var.a, var.e)
+            np.put(self.dae.__dict__[eq_name], var.a, var.e)
 
     def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
@@ -736,14 +742,22 @@ class System(object):
 
         return np.concatenate(z_dict)
 
-    def find_models(self, flag: Optional[Union[str, Tuple]] = None):
+    def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
-        Find models whose ``flag`` field is True.
+        Find models with at least one of the flags as True.
+
+        Warnings
+        --------
+        Checking the number of devices has been centralized into this function.
+        ``models`` passed to most System calls must be retrieved from here.
 
         Parameters
         ----------
         flag : list, str
             Flags to find
+
+        skip_zero : bool
+            Skip models with zero devices
 
         Returns
         -------
@@ -756,6 +770,11 @@ class System(object):
 
         out = OrderedDict()
         for name, mdl in self.models.items():
+
+            if skip_zero is True:
+                if (mdl.n == 0) or (not mdl.in_use):
+                    continue
+
             for f in flag:
                 if mdl.flags[f] is True:
                     out[name] = mdl
@@ -827,7 +846,7 @@ class System(object):
         # do nothing for OrderedDict type
         return models
 
-    def _store_Tf(self, models):
+    def _store_tf(self, models):
         """
         Store the inverse time constant associated with equations.
         """

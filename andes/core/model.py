@@ -1010,6 +1010,7 @@ class Model(object):
         """
         if (self.n == 0) or (not self.in_use):
             return
+
         logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         # update service values
@@ -1076,7 +1077,6 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-
         if (self.n == 0) or (not self.in_use):
             return
         kwargs = self.get_inputs()
@@ -1107,8 +1107,6 @@ class Model(object):
         """
         if (self.n == 0) or (not self.in_use):
             return
-        if self.class_name == 'COI':
-            pass
 
         jac_set = ('fx', 'fy', 'gx', 'gy')
         kwargs = self.get_inputs()
@@ -1145,7 +1143,7 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or not (self.in_use):
+        if (self.n == 0) or not self.in_use:
             return
 
         for timer in self.timer_params.values():

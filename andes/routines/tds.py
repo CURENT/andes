@@ -48,8 +48,8 @@ class TDS(BaseRoutine):
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
 
-        self.tds_models = system.find_models('tds')
-        self.pflow_tds_models = system.find_models(('tds', 'pflow'))
+        self.tds_models = OrderedDict()
+        self.pflow_tds_models = OrderedDict()
 
         # to be computed
         self.deltat = 0
@@ -84,6 +84,10 @@ class TDS(BaseRoutine):
         """
         t0, _ = elapsed()
         system = self.system
+
+        self.tds_models = system.find_models('tds')
+        self.pflow_tds_models = system.find_models(('tds', 'pflow'))
+
         self._reset()
         self._load_pert()
         system.set_address(models=self.tds_models)
@@ -167,7 +171,7 @@ class TDS(BaseRoutine):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
 
-            if self._implicit_step():
+            if self._implicit_step():  # simulate the current step
                 # store values
                 dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=self.pflow_tds_models))
                 dae.t += self.h
@@ -273,7 +277,7 @@ class TDS(BaseRoutine):
         while True:
             self._fg_update(models=self.pflow_tds_models)
 
-            # lazy jacobian update
+            # lazy Jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=self.pflow_tds_models)
                 self.solver.factorize = True
@@ -302,8 +306,8 @@ class TDS(BaseRoutine):
 
             inc[np.where(np.abs(inc) < 1e-12)] = 0  # reset really small values to reduce limiter chattering
             # set new values
-            dae.x += np.ravel(np.array(inc[:dae.n]))
-            dae.y += np.ravel(np.array(inc[dae.n: dae.n + dae.m]))
+            dae.x += inc[:dae.n].ravel()
+            dae.y += inc[dae.n: dae.n + dae.m].ravel()
 
             system.vars_to_models()
 
