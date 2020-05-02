@@ -66,18 +66,18 @@ class PFlow(BaseRoutine):
         """
         system = self.system
         # evaluate discrete, differential, algebraic, and Jacobians
-        system.e_clear()
-        system.l_update_var()
-        system.f_update()
-        system.g_update()
-        system.l_update_eq()
+        system.e_clear(self.models)
+        system.l_update_var(self.models)
+        system.f_update(self.models)
+        system.g_update(self.models)
+        system.l_update_eq(self.models)
         system.fg_to_dae()
 
         if self.config.method == 'NR':
-            system.j_update()
+            system.j_update(models=self.models)
         elif self.config.method == 'dishonest':
             if self.niter < self.config.n_factorize:
-                system.j_update()
+                system.j_update(self.models)
 
         # prepare and solve linear equations
         self.inc = -matrix([matrix(system.dae.f),
