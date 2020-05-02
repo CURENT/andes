@@ -77,7 +77,8 @@ def create_parser():
     plot.add_argument('-f', '--format', dest='save_format',
                       help='format for savefig. Common formats such as png, pdf, jpg are supported')
     plot.add_argument('--dpi', type=int, help='image resolution in dot per inch (DPI)')
-    plot.add_argument('--font-size', type=int, help='Text font size', default=12)
+    plot.add_argument('--font-size', type=float, help='Text font size', default=12)
+    plot.add_argument('--line-width', type=float, help='Plot line width', default=1.5)
     plot.add_argument('-g', '--grid', action='store_true', help='grid on')
     plot.add_argument('--greyscale', action='store_true', help='greyscale on')
     plot.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')

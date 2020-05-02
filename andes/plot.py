@@ -246,7 +246,7 @@ class TDSData(object):
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None,
              legend=True, grid=False, greyscale=False,
-             latex=True, dpi=150, font_size=12, savefig=None, save_format=None, show=True,
+             latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              use_bqplot=False, latex_warn=True, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
@@ -307,16 +307,16 @@ class TDSData(object):
             return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                    latex=latex, dpi=dpi, font_size=font_size, savefig=savefig,
-                                    save_format=save_format, show=show, latex_warn=latex_warn,
+                                    latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
+                                    savefig=savefig, save_format=save_format, show=show, latex_warn=latex_warn,
                                     **kwargs)
 
         else:
             return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                  latex=latex, dpi=dpi, font_size=font_size, savefig=savefig,
-                                  save_format=save_format, show=show, latex_warn=latex_warn,
+                                  latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
+                                  savefig=savefig, save_format=save_format, show=show, latex_warn=latex_warn,
                                   **kwargs)
 
     def data_to_df(self):
@@ -331,7 +331,8 @@ class TDSData(object):
 
     def bqplot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
-                    latex=True, dpi=150, greyscale=False, savefig=None, save_format=None, show=True, **kwargs):
+                    latex=True, dpi=150, line_width=1.0, greyscale=False, savefig=None, save_format=None,
+                    show=True, **kwargs):
         """
         Plot with ``bqplot``. Experimental and imcomplete.
         """
@@ -345,7 +346,7 @@ class TDSData(object):
 
         plt.figure(dpi=dpi)
         plt.plot(xdata, ydata.transpose(),
-                 linewidth=1.5,
+                 linewidth=line_width,
                  )
 
         if yheader:
@@ -355,8 +356,8 @@ class TDSData(object):
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, font_size=12, greyscale=False, savefig=None, save_format=None, show=True,
-                  latex_warn=True, **kwargs):
+                  latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
+                  save_format=None, show=True, latex_warn=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -411,6 +412,10 @@ class TDSData(object):
             File extension string (pdf, png or jpg) for the savefig format
         dpi : int
             Dots per inch for screen print or save. savefig uses a minimum of 200 dpi
+        line_width : float
+            Plot line width
+        font_size : float
+            Text font size (labels and legends)
         show : bool
             True to show the image
         kwargs
@@ -472,7 +477,7 @@ class TDSData(object):
                     ydata[:, i],
                     ls=line_styles[i],
                     label=yheader[i] if yheader else None,
-                    linewidth=1,
+                    linewidth=line_width,
                     color='0.2' if greyscale else None,
                     )
 

@@ -325,16 +325,29 @@ class System(object):
         if models is None:
             models = self._models_flag['pflow']
 
+        def append_model_name(model_name, idx):
+            out = ''
+            if isinstance(idx, str):
+                if model_name in idx:
+                    out = idx
+            else:
+                out = f'{model_name} {idx}'
+
+            # replaces `_` with space for LaTeX to continue
+            out = out.replace('_', ' ')
+            return out
+
         for mdl in models.values():
             mdl_name = mdl.class_name
+            idx = mdl.idx
             for name, item in mdl.algebs.items():
-                for uid, addr in enumerate(item.a):
-                    self.dae.y_name[addr] = f'{mdl_name} {name} {uid}'
-                    self.dae.y_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
+                for id, addr in zip(idx.v, item.a):
+                    self.dae.y_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
+                    self.dae.y_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
             for name, item in mdl.states.items():
-                for uid, addr in enumerate(item.a):
-                    self.dae.x_name[addr] = f'{mdl_name} {name} {uid}'
-                    self.dae.x_tex_name[addr] = rf'${item.tex_name}\ {mdl_name}\ {uid}$'
+                for id, addr in zip(idx.v, item.a):
+                    self.dae.x_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
+                    self.dae.x_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
 
             # add discrete flag names
             if self.config.store_z == 1:
@@ -342,9 +355,9 @@ class System(object):
                     if mdl.flags['initialized']:
                         continue
                     for name, tex_name in zip(item.get_names(), item.get_tex_names()):
-                        for uid in range(mdl.n):
-                            self.dae.z_name.append(f'{mdl_name} {name} {uid}')
-                            self.dae.z_tex_name.append(rf'${tex_name}\ {mdl_name}\ {uid}$')
+                        for id in idx.v:
+                            self.dae.z_name.append(f'{name} {append_model_name(mdl_name, id)}')
+                            self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
     def _set_var_arrays(self, models=None):
