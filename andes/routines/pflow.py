@@ -105,6 +105,7 @@ class PFlow(BaseRoutine):
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
+        out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Method: {self.config.method} method')
         out_str = '\n'.join(out)
         logger.info(out_str)
