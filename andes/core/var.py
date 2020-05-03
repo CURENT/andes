@@ -78,6 +78,8 @@ class BaseVar(object):
 
         # internal flags
         self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
+        self.e_inplace = False
+        self.v_inplace = False
 
         # NOTE:
         # contiguous is only True for internal variables of models with flag ``collate`` equal to ``False``.
@@ -125,6 +127,12 @@ class BaseVar(object):
 
         self._contiguous = contiguous
 
+        if (self.e_setter is False) and self._contiguous:
+            self.e_inplace = True
+
+        if (self.v_setter is False) and self._contiguous:
+            self.v_inplace = True
+
     def set_arrays(self, dae):
         """
         Set the equation and values arrays.
@@ -153,22 +161,6 @@ class BaseVar(object):
     @property
     def class_name(self):
         return self.__class__.__name__
-
-    @property
-    def v_inplace(self):
-        """Return if ``self.v`` is in-place access to the DAE array."""
-        if (self.v_setter is False) and self._contiguous:
-            return True
-        else:
-            return False
-
-    @property
-    def e_inplace(self):
-        """Return if ``self.e`` is in-place access to the DAE array."""
-        if (self.e_setter is False) and self._contiguous:
-            return True
-        else:
-            return False
 
 
 class Algeb(BaseVar):
