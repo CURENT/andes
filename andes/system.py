@@ -227,7 +227,7 @@ class System(object):
             return
         self.dae.reset()
         self.call_models('a_reset', models=self.models)
-        self.e_clear()
+        self.e_clear(models=self.models)
         self._p_restore()
         self.setup()
 
@@ -386,7 +386,7 @@ class System(object):
             for var in mdl.cache.vars_int.values():
                 var.set_arrays(self.dae)
 
-    def init(self, models: OrderedDict = None):
+    def init(self, models: OrderedDict):
         """
         Initialize the variables for each of the specified models.
 
@@ -1065,7 +1065,7 @@ class System(object):
             for param in model.num_params.values():
                 param.restore()
 
-    def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def e_clear(self, models: OrderedDict):
         """
         Clear equation arrays in DAE and model variables.
 

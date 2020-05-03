@@ -216,7 +216,7 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        system.init()
+        system.init(system.exist.pflow)
         v0 = system.dae.xy
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
