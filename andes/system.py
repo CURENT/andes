@@ -27,6 +27,16 @@ else:
     IP_ADD = False
 
 
+class ExistingModels(object):
+    """
+    Storage class for existing models
+    """
+    def __init__(self):
+        self.pflow = OrderedDict()
+        self.tds = OrderedDict()
+        self.pflow_tds = OrderedDict()
+
+
 class System(object):
     """
     System contains models and routines for modeling and simulation.
@@ -106,6 +116,7 @@ class System(object):
                               ipadd=(0, 1),
                               )
         self.config.check()
+        self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
@@ -114,8 +125,6 @@ class System(object):
         self.import_groups()
         self.import_models()
         self.import_routines()  # routine imports come after models
-
-        self._models_flag = {}
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -189,16 +198,21 @@ class System(object):
         self.calc_pu_coeff()
 
         # store models with routine flags
-        self._models_flag['pflow'] = self.find_models('pflow')
-        self._models_flag['tds'] = self.find_models('tds')
-        self._models_flag['pflow_tds'] = self.find_models(('tds', 'pflow'))
+        self.store_existing()
 
         # assign address at the end before adding devices and processing parameters
-        self.set_address()
-        self.set_dae_names()
+        self.set_address(self.exist.pflow)
+        self.set_dae_names(self.exist.pflow)
+        self.store_sparse_pattern(self.exist.pflow)
+        self.store_adder_setter(self.exist.pflow)
 
-        self.store_sparse_pattern()
-        self.store_adder_setter()
+    def store_existing(self):
+        """
+        Store existing models in `System.existing`.
+        """
+        self.exist.pflow = self.find_models('pflow')
+        self.exist.tds = self.find_models('tds')
+        self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
     def reset(self):
         """
@@ -252,13 +266,10 @@ class System(object):
             for fnd in mdl.services_fnd.values():
                 fnd.find_or_add(self)
 
-    def set_address(self, models=None):
+    def set_address(self, models):
         """
         Set addresses for differential and algebraic variables.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags['address'] is True:
@@ -319,13 +330,10 @@ class System(object):
             self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
 
-    def set_dae_names(self, models=None):
+    def set_dae_names(self, models):
         """
         Set variable names for differential and algebraic variables, and discrete flags.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         def append_model_name(model_name, idx):
             out = ''
             if isinstance(idx, str):
@@ -361,7 +369,7 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
-    def _set_var_arrays(self, models=None):
+    def _set_var_arrays(self, models):
         """
         Set arrays (`v` and `e`) in internal variables.
 
@@ -371,9 +379,6 @@ class System(object):
             Models to execute.
 
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         for mdl in models.values():
             if mdl.n == 0:
                 continue
@@ -381,7 +386,7 @@ class System(object):
             for var in mdl.cache.vars_int.values():
                 var.set_arrays(self.dae)
 
-    def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def init(self, models: OrderedDict = None):
         """
         Initialize the variables for each of the specified models.
 
@@ -391,9 +396,6 @@ class System(object):
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         for mdl in models.values():
             # link externals first
             for instance in mdl.services_ext.values():
@@ -415,11 +417,10 @@ class System(object):
         # store the inverse of time constants
         self._store_tf(models)
 
-    def store_adder_setter(self, models=None):
+    def store_adder_setter(self, models):
         """
         Store non-inplace adders and setters for variables and equations.
         """
-        models = self._get_models(models)
         self._clear_adder_setter()
 
         for mdl in models.values():
@@ -594,7 +595,7 @@ class System(object):
             logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
 
-    def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def j_update(self, models: OrderedDict):
         """
         Call the Jacobian update method for models in sequence.
 
@@ -606,7 +607,6 @@ class System(object):
         -----
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
-        models = self._get_models(models)
         self.call_models('j_update', models)
 
         self.dae.restore_sparse()
@@ -627,7 +627,7 @@ class System(object):
                                      f'j_size={j_size}')
                         raise e
 
-    def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def store_sparse_pattern(self, models: OrderedDict):
         """
         Collect and store the sparsity pattern of Jacobian matrices.
 
@@ -639,7 +639,6 @@ class System(object):
         It is a safeguard if the modeling user omitted the diagonal
         term in the equations.
         """
-        models = self._get_models(models)
         self.call_models('store_sparse_pattern', models)
 
         # add variable jacobian values
@@ -873,13 +872,12 @@ class System(object):
         """
         Store the inverse time constant associated with equations.
         """
-        models = self._get_models(models)
         for mdl in models.values():
             for var in mdl.cache.states_and_ext.values():
                 if var.t_const is not None:
                     np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
+    def call_models(self, method: str, models: OrderedDict, *args, **kwargs):
         """
         Call methods on the given models.
 
@@ -899,8 +897,6 @@ class System(object):
         The return value of the models in an OrderedDict
 
         """
-        models = self._get_models(models)
-
         ret = OrderedDict()
         for name, mdl in models.items():
             ret[name] = getattr(mdl, method)(*args, **kwargs)
@@ -1033,7 +1029,7 @@ class System(object):
                 self.routines[attr_name] = self.__dict__[attr_name]
                 self.routines[attr_name].config.check()
 
-    def store_switch_times(self, models=None):
+    def store_switch_times(self, models):
         """
         Store event switching time in a sorted Numpy array at ``System.switch_times``.
 
@@ -1042,7 +1038,6 @@ class System(object):
         array-like
             self.switch_times
         """
-        models = self._get_models(models)
         out = []
         for instance in models.values():
             out.extend(instance.get_times())
@@ -1055,11 +1050,10 @@ class System(object):
         self.switch_times = out
         return self.switch_times
 
-    def switch_action(self, models=None):
+    def switch_action(self, models):
         """
         Invoke the actions associated with switch times.
         """
-        models = self._get_models(models)
         for instance in models.values():
             instance.switch_action(self.dae.t)
 

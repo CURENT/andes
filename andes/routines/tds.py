@@ -48,9 +48,6 @@ class TDS(BaseRoutine):
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
 
-        self.tds_models = OrderedDict()
-        self.pflow_tds_models = OrderedDict()
-
         # to be computed
         self.deltat = 0
         self.deltatmin = 0
@@ -87,20 +84,17 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
         system = self.system
 
-        self.tds_models = system.find_models('tds')
-        self.pflow_tds_models = system.find_models(('tds', 'pflow'))
-
         self._reset()
         self._load_pert()
-        system.set_address(models=self.tds_models)
-        system.set_dae_names(models=self.tds_models)
+        system.set_address(models=system.exist.tds)
+        system.set_dae_names(models=system.exist.tds)
 
         system.dae.clear_ts()
-        system.store_sparse_pattern(models=self.pflow_tds_models)
-        system.store_adder_setter(models=self.pflow_tds_models)
+        system.store_sparse_pattern(models=system.exist.pflow_tds)
+        system.store_adder_setter(models=system.exist.pflow_tds)
         system.vars_to_models()
-        system.init(self.tds_models)
-        system.store_switch_times(self.tds_models)
+        system.init(system.exist.tds)
+        system.store_switch_times(system.exist.tds)
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
         self.qg = np.zeros(system.dae.n + system.dae.m)
@@ -176,7 +170,7 @@ class TDS(BaseRoutine):
 
             if self._itm_step():  # simulate the current step
                 # store values
-                dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=self.pflow_tds_models))
+                dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=system.exist.pflow_tds))
                 dae.t += self.h
 
                 # show progress in percentage
@@ -188,7 +182,7 @@ class TDS(BaseRoutine):
             # check if the next step is critical time
             if self.is_switch_time():
                 self._last_switch_t = system.switch_times[self._switch_idx]
-                system.switch_action(self.pflow_tds_models)
+                system.switch_action(system.exist.pflow_tds)
                 system.vars_to_models()
 
         self.pbar.close()
@@ -228,8 +222,8 @@ class TDS(BaseRoutine):
         Update f and g to see if initialization is successful.
         """
         system = self.system
-        self._fg_update(self.pflow_tds_models)
-        system.j_update(models=self.pflow_tds_models)
+        self._fg_update(system.exist.pflow_tds)
+        system.j_update(models=system.exist.pflow_tds)
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')
@@ -278,11 +272,11 @@ class TDS(BaseRoutine):
         self.f0 = np.array(dae.f)
 
         while True:
-            self._fg_update(models=self.pflow_tds_models)
+            self._fg_update(models=system.exist.pflow_tds)
 
             # lazy Jacobian update
             if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
-                system.j_update(models=self.pflow_tds_models)
+                system.j_update(models=system.exist.pflow_tds)
                 self.solver.factorize = True
 
             # solve implicit trapezoidal method (ITM) integration

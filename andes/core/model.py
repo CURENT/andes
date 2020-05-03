@@ -751,6 +751,8 @@ class Model(object):
         """
         Get an OrderedDict of the inputs to the numerical function calls.
 
+        # TODO: separate dae_t so that update functions can access a static property
+
         Parameters
         ----------
         refresh : bool
@@ -821,8 +823,6 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         for instance in self.discrete.values():
             instance.check_var(dae_t)
 
@@ -836,8 +836,6 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         for instance in self.discrete.values():
             instance.check_eq()
 
@@ -851,8 +849,6 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         for instance in self.discrete.values():
             instance.set_eq()
 
@@ -1365,6 +1361,8 @@ class Model(object):
 
         This is used by models with BackRef to disable Jacobian
         computation when no model is referencing.
+
+        # TODO: make this property static
         """
         return True
 
