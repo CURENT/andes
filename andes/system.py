@@ -171,16 +171,18 @@ class System(object):
         """
         import math
 
+        # consistency check for group parameters and variables
+        self._check_group_common()
+
         total = len(self.models)
         width = math.ceil(math.log(total, 10))
         for idx, name in enumerate(self.models):
-            print(f"\r\x1b[K Code generation for {name} ({idx:>{width}}/{total:>{width}}).",
+            print(f"\r\x1b[K Code generation for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
 
             model = self.models[name]
             model.prepare(quick=quick)
 
-        self._check_group_common()
         self._store_calls()
         self.dill()
 
@@ -410,7 +412,6 @@ class System(object):
             # initialize variables second
             mdl.init()
 
-            # TODO: re-think over the adder-setter approach and reduce data copy
             self.vars_to_dae(mdl)
             self.vars_to_models()
 
@@ -455,6 +456,9 @@ class System(object):
         return
 
     def link_ext_param(self, model=None):
+        """
+        Retrieve values for ``ExtParam`` for the given models.
+        """
         if model is None:
             models = self.models
         else:
@@ -833,11 +837,11 @@ class System(object):
                 self.calls = loaded_calls
                 logger.debug(f'Undill loaded "{pkl_path}" file.')
             else:
-                logger.info(f"Undilled calls are for version {ver}, regenerating")
+                logger.info(f'Undilled calls are for version {ver}, regenerating...')
                 self.prepare(quick=True)
 
         else:
-            logger.info("Generating numerical calls at the first launch.")
+            logger.info('Generating numerical calls at the first launch.')
             self.prepare()
 
         for name, model_call in self.calls.items():
@@ -851,7 +855,7 @@ class System(object):
         The output is an OrderedDict of model names and instances.
         """
         if models is None:
-            models = self._models_flag['pflow']
+            models = self.exist.pflow
         if isinstance(models, str):
             models = {models: self.__dict__[models]}
         elif isinstance(models, Model):
