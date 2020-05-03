@@ -486,7 +486,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     t0, s0 = elapsed(t0)
 
     if len(cases) == 1:
-        ex_code += system.exit_code
+        if system is not None:
+            ex_code += system.exit_code
+        else:
+            ex_code += 1
     elif len(cases) > 1:
         if isinstance(system, list):
             for s in system:
