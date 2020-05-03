@@ -561,6 +561,9 @@ class Model(object):
             initialized=False,  # True if variables have been initialized
         )
 
+        # `in_use` is used by models with `BackRef` when not reference
+        self.in_use = True      # True if this model is in use, False removes this model from all calls
+
         self.config = Config(name=self.class_name)    # `config` that can be exported
         if config is not None:
             self.config.load(config)
@@ -860,7 +863,7 @@ class Model(object):
         Service values are updated sequentially.
         The ``v`` attribute of services will be assigned at a new memory.
         """
-        if (self.n == 0) or (not self.in_use):
+        if (self.n == 0) or (self.in_use is False):
             return
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
@@ -1003,9 +1006,6 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        if (self.n == 0) or (not self.in_use):
-            return
-
         logger.debug(f'{self.class_name:<10s}: calling initialize()')
 
         # update service values
@@ -1049,8 +1049,6 @@ class Model(object):
         Evaluate differential equations.
         """
 
-        if (self.n == 0) or (not self.in_use):
-            return
         kwargs = self.get_inputs()
         args = kwargs.values()
 
@@ -1077,8 +1075,6 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         kwargs = self.get_inputs()
         args = kwargs.values()
 
@@ -1107,9 +1103,6 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or (not self.in_use):
-            return
-
         jac_set = ('fx', 'fy', 'gx', 'gy')
         kwargs = self.get_inputs()
         for name in jac_set:
@@ -1145,9 +1138,6 @@ class Model(object):
         -------
         None
         """
-        if (self.n == 0) or not self.in_use:
-            return
-
         for timer in self.timer_params.values():
             if timer.callback is not None:
                 timer.callback(timer.is_time(dae_t))
@@ -1282,6 +1272,21 @@ class Model(object):
             out[name] = var
         return out
 
+    def set_in_use(self):
+        """
+        Set the `in_use` attribute. Called at the end of ``System.collect_ref``.
+
+        This function is overloaded by models with `BackRef` to disable calls when no model is referencing.
+        Models with no back references will have internal variable addresses assigned but external addresses
+        being empty.
+
+        For internal equations that has external variables, the row indices will be non-zeros, while the col
+        indices will be empty, which causes an error when updating Jacobians.
+
+        Setting `self.in_use` to False when `len(back_ref_instance.v) == 0` avoids this error. See COI.
+        """
+        self.in_use = True
+
     def list2array(self):
         """
         Convert all the value attributes ``v`` to NumPy arrays.
@@ -1303,8 +1308,6 @@ class Model(object):
         """
         Reset addresses to empty and reset flags['address'] to ``False``.
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         for var in self.cache.all_vars.values():
             var.reset()
         self.flags['address'] = False
@@ -1314,8 +1317,6 @@ class Model(object):
         """
         Clear equation value arrays associated with all internal variables.
         """
-        if (self.n == 0) or (not self.in_use):
-            return
         for instance in self.cache.all_vars.values():
             if instance.e_inplace:
                 continue
@@ -1353,18 +1354,6 @@ class Model(object):
         It is only called once by `store_sparse_pattern`.
         """
         pass
-
-    @property
-    def in_use(self):
-        """
-        Return model in-use status.
-
-        This is used by models with BackRef to disable Jacobian
-        computation when no model is referencing.
-
-        # TODO: make this property static
-        """
-        return True
 
     def doc(self, max_width=80, export='plain'):
         """

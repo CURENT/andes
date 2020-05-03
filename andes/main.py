@@ -435,6 +435,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Number of cpu cores to use in parallel
     pool: bool, optional
         Use Pool for multiprocessing to return a list of created Systems.
+    cli : bool, optional
+        If is running from command-line. If True, returns exit code instead of System
     kwargs
         Other supported keyword arguments
 

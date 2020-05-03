@@ -30,7 +30,7 @@ class Test5Bus(unittest.TestCase):
         self.assertSequenceEqual(self.ss.Bus.idx.v, [0, 1, 2, 3, 4])
         self.assertSequenceEqual(self.ss.Area.idx.v, [1, 2, 3])
 
-    def test_cache_refresn(self):
+    def test_cache_refresh(self):
         self.ss.Bus.cache.refresh()
 
     def test_as_df(self):
@@ -138,3 +138,13 @@ class TestNPCCRAW(unittest.TestCase):
         self.ss2 = andes.run('npcc48.json')
         os.remove(self.ss.files.dump)
         andes.main.misc(clean=True)
+
+
+class TestCOI(unittest.TestCase):
+    def test_kundur_COI(self):
+        ss = get_case('kundur/kundur_coi.xlsx')
+        andes.run(ss, routine='tds', no_output=True, tf=0.1)
+
+    def test_kundur_COI_empty(self):
+        ss = get_case('kundur/kundur_coi_empty.xlsx')
+        andes.run(ss, routine='tds', no_output=True, tf=0.1)

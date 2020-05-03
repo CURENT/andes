@@ -819,7 +819,7 @@ class System(object):
         for name, mdl in self.models.items():
 
             if skip_zero is True:
-                if (mdl.n == 0) or (not mdl.in_use):
+                if (mdl.n == 0) or (mdl.in_use is False):
                     continue
 
             for f in flag:
@@ -989,6 +989,9 @@ class System(object):
                             continue
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.services_ref[n].v[uid].append(model_idx)
+
+            # set model ``in_use`` flag
+            model.set_in_use()
 
     def import_groups(self):
         """
