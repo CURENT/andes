@@ -1185,7 +1185,7 @@ class System(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug(f'Config loaded from file "{conf_path}".')
+        logger.info(f'Loaded config from file "{conf_path}"')
         return conf
 
     def save_config(self, file_path=None, overwrite=False):

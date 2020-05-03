@@ -1,6 +1,8 @@
 import unittest
 import andes
 import os
+import numpy as np
+import dill
 from andes.utils.paths import get_case
 
 
@@ -60,14 +62,23 @@ class TestKundur2AreaXLSX(unittest.TestCase):
     """
     Test Kundur's 2-area system
     """
+
     def setUp(self) -> None:
-        xlsx = get_case("kundur/kundur_full.xlsx")
-        self.pss = get_case("kundur/kundur_pss.xlsx")
-        self.ss = andes.run(xlsx)
+        self.xlsx = get_case("kundur/kundur_full.xlsx")
+        self.ss = andes.run(self.xlsx)
 
     def test_xlsx_tds_run(self):
+        test_dir = os.path.dirname(__file__)
+        f = open(os.path.join(test_dir, 'kundur_full_10s.pkl'), 'rb')
+        results = dill.load(f)
+        f.close()
+
         self.ss.TDS.config.tf = 10
         self.ss.TDS.run()
+
+        np.testing.assert_almost_equal(self.ss.dae.xy, results, decimal=4,
+                                       err_msg='Results for "kundur_full.xlsx" does not match.')
+
         andes.main.misc(clean=True)
         self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
@@ -75,8 +86,14 @@ class TestKundur2AreaXLSX(unittest.TestCase):
         self.ss.EIG.run()
         andes.main.misc(clean=True)
 
+
+class TestKundurPSS(unittest.TestCase):
+    """
+    Test Kundur's sytem with IEEEST PSS
+    """
     def test_kundur_pss(self):
-        ss = andes.run(self.pss, routine='tds', no_output=True, tf=10)
+        pss = get_case("kundur/kundur_pss.xlsx")
+        ss = andes.run(pss, routine='tds', no_output=True, tf=10)
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
@@ -84,6 +101,7 @@ class TestKundur2AreaPSSE(unittest.TestCase):
     """
     Test Kundur's 2-area system
     """
+
     def setUp(self) -> None:
         raw = get_case("kundur/kundur_full.raw")
         dyr = get_case("kundur/kundur_full.dyr")
@@ -111,6 +129,7 @@ class TestNPCCRAW(unittest.TestCase):
     """
     Test NPCC system in the RAW format.
     """
+
     def test_npcc_raw(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'))
         andes.main.misc(clean=True)
