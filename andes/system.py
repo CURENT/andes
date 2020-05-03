@@ -834,7 +834,7 @@ class System(object):
                 self.calls = loaded_calls
                 logger.debug(f'Undill loaded "{pkl_path}" file.')
             else:
-                logger.info(f"Undill loaded calls are for version {ver}, current version {__version__}.")
+                logger.info(f"Undilled calls are for version {ver}, regenerating")
                 self.prepare(quick=True)
 
         else:
