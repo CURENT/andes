@@ -546,7 +546,7 @@ def prepare(quick=False, cli=False, **kwargs):
     System object
     """
     t0, _ = elapsed()
-    logger.info('Numeric code preparation started...')
+    logger.info('Numeric code generation started...')
     system = System()
     system.prepare(quick=quick)
     _, s = elapsed(t0)

@@ -10,6 +10,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
+from andes import __version__
 from andes.models import non_jit
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
@@ -824,12 +825,21 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-        if not os.path.isfile(pkl_path):
-            self.prepare()
 
-        with open(pkl_path, 'rb') as f:
-            self.calls = dill.load(f)
-        logger.debug(f'Undill loaded "{pkl_path}" file.')
+        if os.path.isfile(pkl_path):
+            with open(pkl_path, 'rb') as f:
+                loaded_calls = dill.load(f)
+            ver = loaded_calls.get('__version__')
+            if ver == __version__:
+                self.calls = loaded_calls
+                logger.debug(f'Undill loaded "{pkl_path}" file.')
+            else:
+                logger.info(f"Undill loaded calls are for version {ver}, current version {__version__}.")
+                self.prepare(quick=True)
+
+        else:
+            logger.info("Generating numerical calls at the first launch.")
+            self.prepare()
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
@@ -1082,6 +1092,9 @@ class System(object):
         Collect and store model calls into system.
         """
         logger.debug("Collecting Model.calls into System.")
+
+        self.calls['__version__'] = __version__
+
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
 
