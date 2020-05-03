@@ -1708,9 +1708,9 @@ class SymProcessor(object):
         self.df = self.df_sparse.subs(self.tex_names)
         self.dg = self.dg_sparse.subs(self.tex_names)
 
-    def generate_pycode_file(self):
+    def generate_py_files(self):
         """
-        Create output source code file for generated code
+        Create output source code file for generated code. NOT WORKING NOW.
         """
         models_dir = os.path.join(get_pkl_path(), 'models')
         os.makedirs(models_dir, exist_ok=True)

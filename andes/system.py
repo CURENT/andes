@@ -186,6 +186,36 @@ class System(object):
         self._store_calls()
         self.dill()
 
+    def _prepare_mp(self, quick=False):
+        """
+        Code generation with multiprocessing. NOT WORKING NOW.
+
+        Warnings
+        --------
+        Function is not working. Serialization failed for `conj`.
+        """
+        from andes.shared import Pool
+        import dill
+        dill.settings['recurse'] = True
+
+        # consistency check for group parameters and variables
+        self._check_group_common()
+
+        def _prep_model(model: Model):
+            model.prepare(quick=quick)
+            return model
+
+        model_list = list(self.models.values())
+
+        # TODO: failed when serializing.
+        ret = Pool().map(_prep_model, model_list)
+
+        for idx, name in enumerate(self.models.keys()):
+            self.models[name] = ret[idx]
+
+        self._store_calls()
+        self.dill()
+
     def setup(self):
         """
         Set up system for studies.
