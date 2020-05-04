@@ -279,6 +279,9 @@ class TDS(BaseRoutine):
                 system.j_update(models=system.exist.pflow_tds)
                 self.solver.factorize = True
 
+            # TODO: set the `Tf` corresponding to the pegged anti-windup limiters to zero.
+            # Although this should not affect anything since corr. mismatches in `self.qg` are reset to zero
+
             # solve implicit trapezoidal method (ITM) integration
             self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
                               [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
@@ -288,9 +291,8 @@ class TDS(BaseRoutine):
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
-                if len(item.x_set) > 0:
-                    for key, val in item.x_set:
-                        np.put(self.qg, key[np.where(item.zi == 0)], 0)
+                for key, val in item.x_set:
+                    np.put(self.qg, key, 0)
 
             self.qg[dae.n:] = dae.g
 
@@ -326,8 +328,14 @@ class TDS(BaseRoutine):
             # non-convergence cases
             if self.niter > self.config.max_iter:
                 logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
-                             f'h={self.h:.6f}, mis={mis:.4g} '
-                             f'({system.dae.xy_name[np.argmax(inc)]})')
+                             f'h={self.h:.6f}, mis={mis:.4g} ')
+
+                # debug helpers
+                g_max = np.argmax(abs(dae.g))
+                inc_max = np.argmax(abs(inc))
+                self._debug_g(g_max)
+                self._debug_ac(inc_max)
+
                 break
             if mis > 1000 and (mis > 1e8 * self.mis):
                 self.pbar.close()
@@ -342,6 +350,62 @@ class TDS(BaseRoutine):
             system.vars_to_models()
 
         return self.converged
+
+    def _debug_g(self, y_idx):
+        """
+        Print out the associated variables with the given algebraic equation index.
+
+        Parameters
+        ----------
+        y_idx
+            Index of the equation into the `g` array. Diff. eqns. are not counted in.
+        """
+        y_idx = y_idx.tolist()
+        logger.debug(f'Max. algebraic mismatch associated with {self.system.dae.y_name[y_idx]} [y_idx={y_idx}]')
+        assoc_vars = self.system.dae.gy[y_idx, :]
+        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
+
+        logger.debug('')
+        logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
+        for v in vars_idx:
+            v = v.tolist()
+            logger.debug(f'{v:<10} {self.system.dae.y_name[v]:<20} {assoc_vars[v]:<20g}')
+
+        pass
+
+    def _debug_ac(self, xy_idx):
+        """
+        Debug Ac matrix by printing out equations and derivatives associated with the max. mismatch variable.
+
+        Parameters
+        ----------
+        xy_idx
+            Index of the maximum mismatch into the `xy` array.
+        """
+
+        xy_idx = xy_idx.tolist()
+        assoc_eqns = self.Ac[:, xy_idx]
+        assoc_vars = self.Ac[xy_idx, :]
+
+        eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
+        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
+
+        logger.debug(f'Max. correction is for variable {self.system.dae.xy_name[xy_idx]} [{xy_idx}]')
+        logger.debug(f'Associated equation value is {self.system.dae.fg[xy_idx]:<20g}.')
+        logger.debug('')
+
+        logger.debug(f'{"xy_index":<10} {"Equation":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        for eq in eqns_idx:
+            eq = eq.tolist()
+            logger.debug(f'{eq:<10} {self.system.dae.xy_name[eq]:<20} {assoc_eqns[eq]:<20g} '
+                         f'{self.system.dae.fg[eq]:<20g}')
+
+        logger.debug('')
+        logger.debug(f'{"xy_index":<10} {"Variable":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        for v in vars_idx:
+            v = v.tolist()
+            logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
+                         f'{self.system.dae.fg[v]:<20g}')
 
     def save_output(self):
         """
@@ -409,7 +473,7 @@ class TDS(BaseRoutine):
                     self.deltat = 0
                     self.pbar.close()
                     self.busted = True
-                    logger.error(f"Time step calculated to zero. Convergence not likely.")
+                    logger.error(f"Time step reduced to zero. Convergence not likely.")
 
         # last step size
         if system.dae.t + self.deltat > config.tf:

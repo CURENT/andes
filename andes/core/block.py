@@ -601,7 +601,7 @@ class LagAntiWindup(Block):
 
         """
         self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'{self.name}_lim_zi * ({self.K.name} * {self.u.name} - {self.name}_x)'
+        self.x.e_str = f'{self.K.name} * {self.u.name} - {self.name}_x'
 
 
 class Lag2ndOrd(Block):
