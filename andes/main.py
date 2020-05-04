@@ -195,6 +195,7 @@ def remove_output():
                 file.endswith('_out.txt') or \
                 file.endswith('_out.lst') or \
                 file.endswith('_out.npy') or \
+                file.endswith('_out.npz') or \
                 file.endswith('_out.csv') or \
                 file.endswith('_prof.prof') or \
                 file.endswith('_prof.txt'):
@@ -471,7 +472,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         set_logger_level(logger, logging.StreamHandler, mp_verbose)
         set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
-        kwargs['disable_pbar'] = True
+        kwargs['no_pbar'] = True
         if pool is True:
             system = _run_multiprocess_pool(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
         else:

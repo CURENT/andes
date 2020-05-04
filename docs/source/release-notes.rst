@@ -4,6 +4,17 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.9.2 (2020-05-04)
+-------------------
+This version contains bug fixes and performance tweaks.
+
+- Fixed an `AntiWindup` issue that causes variables to stuck at limits.
+- Allow ``TDS.run()`` to resume from a stopped simulation and run to the new
+  end time in ``TDS.config.tf``.
+- Improved TDS data dump speed by not constructing DataFrame by default.
+- Added tests for `kundur_full.xlsx` and `kundur_aw.xlsx` to ensure
+  results are the same as known values.
+
 v0.9.1 (2020-05-02)
 -------------------
 This version accelerates computations by about 35%.

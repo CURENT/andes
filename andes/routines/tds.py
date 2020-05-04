@@ -18,7 +18,7 @@ class TDS(BaseRoutine):
     """
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
-        self.config.add(OrderedDict((('tol', 1e-4),
+        self.config.add(OrderedDict((('tol', 1e-6),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
                                      ('fixt', 1),
@@ -62,6 +62,7 @@ class TDS(BaseRoutine):
         # internal status
         self.converged = False
         self.busted = False
+        self.err_msg = ''
         self.niter = 0
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
@@ -123,7 +124,7 @@ class TDS(BaseRoutine):
         out.append('')
         out.append('-> Time Domain Simulation Summary:')
         out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
-        out.append(f'Simulation time: {self.config.t0}-{self.config.tf}sec.')
+        out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf}sec.')
         if self.config.fixt == 1:
             msg = f'Fixed step size: h={1000 * self.config.tstep:.4g}msec.'
             if self.config.shrinkt == 1:
@@ -135,34 +136,48 @@ class TDS(BaseRoutine):
         out_str = '\n'.join(out)
         logger.info(out_str)
 
-    def run(self, disable_pbar=False, **kwargs):
+    def run(self, no_pbar=False, no_summary=False, **kwargs):
         """
         Run the implicit numerical integration for TDS.
 
         Parameters
         ----------
-        disable_pbar : bool
+        no_pbar : bool
             True to disable progress bar
+        no_summary : bool, optional
+            True to disable the display of summary
         """
         system = self.system
         dae = self.system.dae
         config = self.config
 
         succeed = False
+        resume = False
+
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Simulation will not continue.')
             system.exit_code = 1
             return succeed
 
-        self.summary()
-        self.init()
-        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=disable_pbar)
+        if no_summary is False:
+            self.summary()
+
+        # only initializing at t=0 allows to continue when `run` is called again.
+        if system.dae.t == 0:
+            self.init()
+        else:  # resume simulation
+            resume = True
+
+        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
+
+        if resume:
+            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)
+            self.next_pc = perc + 1
+            self.pbar.update(perc)
 
         t0, _ = elapsed()
         while (system.dae.t < self.config.tf) and (not self.busted):
             if self.calc_h() == 0:
-                self.pbar.close()
-                logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
                 break
 
             if self.callpert is not None:
@@ -188,7 +203,12 @@ class TDS(BaseRoutine):
         self.pbar.close()
         delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
 
-        if (system.dae.t == self.config.tf) and (not self.busted):
+        if self.busted:
+            logger.error(self.err_msg)
+            logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
+            system.exit_code = 1
+
+        elif system.dae.t == self.config.tf:
             succeed = True   # success flag
             system.exit_code = 0
         else:
@@ -300,7 +320,7 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
-                logger.error(f'NaN found in solution. Convergence not likely')
+                self.err_msg = f'NaN found in solution. Convergence not likely'
                 self.niter = self.config.max_iter + 1
                 self.busted = True
                 break
@@ -338,8 +358,7 @@ class TDS(BaseRoutine):
 
                 break
             if mis > 1000 and (mis > 1e8 * self.mis):
-                self.pbar.close()
-                logger.error(f'Error increased too quickly. Convergence not likely.')
+                self.err_msg = f'Error increased too quickly. Convergence not likely.'
                 self.busted = True
                 break
 
@@ -452,9 +471,9 @@ class TDS(BaseRoutine):
         if config.fixt and not config.shrinkt:
             if not self.converged:
                 self.deltat = 0
-                self.pbar.close()
-                logger.error(f"Simulation does not converge for the given step size h={self.config.tstep:.4f}.")
-                logger.error(f"Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink.")
+                self.busted = True
+                self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
+                self.err_msg += f"Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
         else:
             if self.converged:
                 if self.niter >= 15:
@@ -471,9 +490,8 @@ class TDS(BaseRoutine):
                 self.deltat *= 0.9
                 if self.deltat < self.deltatmin:
                     self.deltat = 0
-                    self.pbar.close()
+                    self.err_msg = f"Time step reduced to zero. Convergence not likely."
                     self.busted = True
-                    logger.error(f"Time step reduced to zero. Convergence not likely.")
 
         # last step size
         if system.dae.t + self.deltat > config.tf:
