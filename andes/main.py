@@ -471,7 +471,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         set_logger_level(logger, logging.StreamHandler, mp_verbose)
         set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
-        kwargs['disable_pbar'] = True
+        kwargs['no_pbar'] = True
         if pool is True:
             system = _run_multiprocess_pool(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
         else:
