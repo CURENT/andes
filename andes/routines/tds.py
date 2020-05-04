@@ -18,7 +18,7 @@ class TDS(BaseRoutine):
     """
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
-        self.config.add(OrderedDict((('tol', 1e-4),
+        self.config.add(OrderedDict((('tol', 1e-6),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
                                      ('fixt', 1),
