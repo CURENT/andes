@@ -145,7 +145,7 @@ class TDSData(object):
 
     def load_npy_or_csv(self, delimiter=','):
         """
-        Load the npy or csv file into internal data structures `self._data`.
+        Load the npy or csv file into internal data structures `self._xy`.
 
         Parameters
         ----------

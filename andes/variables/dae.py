@@ -14,7 +14,7 @@ class DAETimeSeries(object):
         self.dae = dae
 
         # internal dict storage
-        self._data = OrderedDict()
+        self._xy = OrderedDict()
         self._z = OrderedDict()
 
         self.t = np.array([])
@@ -24,9 +24,6 @@ class DAETimeSeries(object):
         # data frame members
         self.df = None
         self.df_z = None
-
-        # flags
-        self._need_unpack = True
 
     @property
     def x(self):
@@ -42,22 +39,40 @@ class DAETimeSeries(object):
         """
         Return the values of [t, x, y, z] in an array.
         """
-        self.unpack()
+        if len(self._xy) != len(self.t):
+            self.unpack()
+
         if len(self._z):
             return np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
         else:
             return np.hstack((self.t.reshape((-1, 1)), self.xy))
 
-    def unpack(self):
+    def unpack(self, df=False):
         """
-        Unpack data and make DataFrames and arrays.
-        """
-        self.df = pd.DataFrame.from_dict(self._data, orient='index', columns=self.dae.xy_name)
-        self.t = self.df.index.to_numpy()
-        self.xy = self.df.to_numpy()
+        Unpack stored data in `_xy` and `_z` into arrays `t`, `xy`, and `z`.
 
-        self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
-        self.z = self.df_z.to_numpy()
+        Parameters
+        ----------
+        df : bool
+            True to construct DataFrames `self.df` and `self.df_z` (time-consuming).
+        """
+        if df is True:
+            self.df = pd.DataFrame.from_dict(self._xy, orient='index', columns=self.dae.xy_name)
+            self.t = self.df.index.to_numpy()
+            self.xy = self.df.to_numpy()
+
+            self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
+            self.z = self.df_z.to_numpy()
+        else:
+            n_steps = len(self._xy)
+            self.t = np.array(list(self._xy.keys()))
+            self.xy = np.zeros((n_steps, self.dae.m + self.dae.n))
+            self.z = np.zeros((n_steps, self.dae.o))
+
+            for idx, (xy, z) in enumerate(zip(self._xy.values(),
+                                              self._z.values())):
+                self.xy[idx, :] = xy
+                self.z[idx, :] = z
 
     def store_txyz(self, t, xy, z=None):
         """
@@ -72,7 +87,7 @@ class DAETimeSeries(object):
         z : array-like or None
             discrete flags data
         """
-        self._data[t] = xy
+        self._xy[t] = xy
         if z is not None:
             self._z[t] = z
 
