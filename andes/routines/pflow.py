@@ -105,6 +105,7 @@ class PFlow(BaseRoutine):
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
+        out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
         out.append(f'Method: {self.config.method} method')
         out_str = '\n'.join(out)
         logger.info(out_str)
@@ -216,7 +217,7 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        system.init()
+        system.init(system.exist.pflow)
         v0 = system.dae.xy
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)

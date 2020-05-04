@@ -266,10 +266,10 @@ class AntiWindup(Limiter):
         """
         Check the variables and equations and set the limiter flags.
         """
-        self.zu[:] = np.logical_and(np.greater(self.u.v, self.upper.v),
-                                    np.greater(self.state.e, 0))
-        self.zl[:] = np.logical_and(np.less(self.u.v, self.lower.v),
-                                    np.less(self.state.e, 0))
+        self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
+                                    np.greater_equal(self.state.e, 0))
+        self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
+                                    np.less_equal(self.state.e, 0))
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
     def set_eq(self):
@@ -278,19 +278,21 @@ class AntiWindup(Limiter):
 
         Notes
         -----
-        TODO: the current implementation reallocates memory for `self.x_set` in each call.
-        Consider improving for speed.
+        The current implementation reallocates memory for `self.x_set` in each call.
+        Consider improving for speed. (TODO)
         """
 
         # must flush the `x_set` list at the beginning
         self.x_set = list()
 
         if not np.all(self.zi):
-            self.state.e = self.state.e * self.zi
-            self.state.v = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
-            self.x_set.append((self.state.a, self.state.v))
+            idx = np.where(self.zi == 0)
+            self.state.e[:] = self.state.e * self.zi
+            self.state.v[:] = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
+            self.x_set.append((self.state.a[idx], self.state.v[idx]))
+            logger.debug(f'AntiWindup for states {self.state.a[idx]}')
 
-        # Note:
+        # Very important note:
         # `System.fg_to_dae` is called after `System.l_update_eq`, which calls this function.
         # Equation values set in `self.state.e` is collected by `System._e_to_dae`, while
         # variable values are collected by the separate loop in `System.fg_to_dae`.

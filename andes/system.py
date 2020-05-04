@@ -10,6 +10,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
+from andes import __version__
 from andes.models import non_jit
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
@@ -24,6 +25,16 @@ if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
 else:
     IP_ADD = False
+
+
+class ExistingModels(object):
+    """
+    Storage class for existing models
+    """
+    def __init__(self):
+        self.pflow = OrderedDict()
+        self.tds = OrderedDict()
+        self.pflow_tds = OrderedDict()
 
 
 class System(object):
@@ -105,6 +116,7 @@ class System(object):
                               ipadd=(0, 1),
                               )
         self.config.check()
+        self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
@@ -113,8 +125,6 @@ class System(object):
         self.import_groups()
         self.import_models()
         self.import_routines()  # routine imports come after models
-
-        self._models_flag = {}
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -161,16 +171,48 @@ class System(object):
         """
         import math
 
+        # consistency check for group parameters and variables
+        self._check_group_common()
+
         total = len(self.models)
         width = math.ceil(math.log(total, 10))
         for idx, name in enumerate(self.models):
-            print(f"\r\x1b[K Code generation for {name} ({idx:>{width}}/{total:>{width}}).",
+            print(f"\r\x1b[K Code generation for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
 
             model = self.models[name]
             model.prepare(quick=quick)
 
+        self._store_calls()
+        self.dill()
+
+    def _prepare_mp(self, quick=False):
+        """
+        Code generation with multiprocessing. NOT WORKING NOW.
+
+        Warnings
+        --------
+        Function is not working. Serialization failed for `conj`.
+        """
+        from andes.shared import Pool
+        import dill
+        dill.settings['recurse'] = True
+
+        # consistency check for group parameters and variables
         self._check_group_common()
+
+        def _prep_model(model: Model):
+            model.prepare(quick=quick)
+            return model
+
+        model_list = list(self.models.values())
+
+        # TODO: failed when serializing.
+        ret = Pool().map(_prep_model, model_list)
+
+        for idx, name in enumerate(self.models.keys()):
+            self.models[name] = ret[idx]
+
         self._store_calls()
         self.dill()
 
@@ -188,16 +230,21 @@ class System(object):
         self.calc_pu_coeff()
 
         # store models with routine flags
-        self._models_flag['pflow'] = self.find_models('pflow')
-        self._models_flag['tds'] = self.find_models('tds')
-        self._models_flag['pflow_tds'] = self.find_models(('tds', 'pflow'))
+        self.store_existing()
 
         # assign address at the end before adding devices and processing parameters
-        self.set_address()
-        self.set_dae_names()
+        self.set_address(self.exist.pflow)
+        self.set_dae_names(self.exist.pflow)
+        self.store_sparse_pattern(self.exist.pflow)
+        self.store_adder_setter(self.exist.pflow)
 
-        self.store_sparse_pattern()
-        self.store_adder_setter()
+    def store_existing(self):
+        """
+        Store existing models in `System.existing`.
+        """
+        self.exist.pflow = self.find_models('pflow')
+        self.exist.tds = self.find_models('tds')
+        self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
     def reset(self):
         """
@@ -212,7 +259,7 @@ class System(object):
             return
         self.dae.reset()
         self.call_models('a_reset', models=self.models)
-        self.e_clear()
+        self.e_clear(models=self.models)
         self._p_restore()
         self.setup()
 
@@ -251,13 +298,10 @@ class System(object):
             for fnd in mdl.services_fnd.values():
                 fnd.find_or_add(self)
 
-    def set_address(self, models=None):
+    def set_address(self, models):
         """
         Set addresses for differential and algebraic variables.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags['address'] is True:
@@ -318,13 +362,10 @@ class System(object):
             self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
 
-    def set_dae_names(self, models=None):
+    def set_dae_names(self, models):
         """
         Set variable names for differential and algebraic variables, and discrete flags.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         def append_model_name(model_name, idx):
             out = ''
             if isinstance(idx, str):
@@ -360,7 +401,7 @@ class System(object):
                             self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
-    def _set_var_arrays(self, models=None):
+    def _set_var_arrays(self, models):
         """
         Set arrays (`v` and `e`) in internal variables.
 
@@ -370,9 +411,6 @@ class System(object):
             Models to execute.
 
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         for mdl in models.values():
             if mdl.n == 0:
                 continue
@@ -380,7 +418,7 @@ class System(object):
             for var in mdl.cache.vars_int.values():
                 var.set_arrays(self.dae)
 
-    def init(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def init(self, models: OrderedDict):
         """
         Initialize the variables for each of the specified models.
 
@@ -390,9 +428,6 @@ class System(object):
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
-        if models is None:
-            models = self._models_flag['pflow']
-
         for mdl in models.values():
             # link externals first
             for instance in mdl.services_ext.values():
@@ -407,18 +442,16 @@ class System(object):
             # initialize variables second
             mdl.init()
 
-            # TODO: re-think over the adder-setter approach and reduce data copy
             self.vars_to_dae(mdl)
             self.vars_to_models()
 
         # store the inverse of time constants
         self._store_tf(models)
 
-    def store_adder_setter(self, models=None):
+    def store_adder_setter(self, models):
         """
         Store non-inplace adders and setters for variables and equations.
         """
-        models = self._get_models(models)
         self._clear_adder_setter()
 
         for mdl in models.values():
@@ -453,6 +486,9 @@ class System(object):
         return
 
     def link_ext_param(self, model=None):
+        """
+        Retrieve values for ``ExtParam`` for the given models.
+        """
         if model is None:
             models = self.models
         else:
@@ -593,7 +629,7 @@ class System(object):
             logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
             raise e
 
-    def j_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def j_update(self, models: OrderedDict):
         """
         Call the Jacobian update method for models in sequence.
 
@@ -605,7 +641,6 @@ class System(object):
         -----
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
-        models = self._get_models(models)
         self.call_models('j_update', models)
 
         self.dae.restore_sparse()
@@ -626,7 +661,7 @@ class System(object):
                                      f'j_size={j_size}')
                         raise e
 
-    def store_sparse_pattern(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def store_sparse_pattern(self, models: OrderedDict):
         """
         Collect and store the sparsity pattern of Jacobian matrices.
 
@@ -638,7 +673,6 @@ class System(object):
         It is a safeguard if the modeling user omitted the diagonal
         term in the equations.
         """
-        models = self._get_models(models)
         self.call_models('store_sparse_pattern', models)
 
         # add variable jacobian values
@@ -785,7 +819,7 @@ class System(object):
         for name, mdl in self.models.items():
 
             if skip_zero is True:
-                if (mdl.n == 0) or (not mdl.in_use):
+                if (mdl.n == 0) or (mdl.in_use is False):
                     continue
 
             for f in flag:
@@ -824,12 +858,21 @@ class System(object):
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
-        if not os.path.isfile(pkl_path):
-            self.prepare()
 
-        with open(pkl_path, 'rb') as f:
-            self.calls = dill.load(f)
-        logger.debug(f'Undill loaded "{pkl_path}" file.')
+        if os.path.isfile(pkl_path):
+            with open(pkl_path, 'rb') as f:
+                loaded_calls = dill.load(f)
+            ver = loaded_calls.get('__version__')
+            if ver == __version__:
+                self.calls = loaded_calls
+                logger.debug(f'Undill loaded "{pkl_path}" file.')
+            else:
+                logger.info(f'Undilled calls are for version {ver}, regenerating...')
+                self.prepare(quick=True)
+
+        else:
+            logger.info('Generating numerical calls at the first launch.')
+            self.prepare()
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
@@ -842,7 +885,7 @@ class System(object):
         The output is an OrderedDict of model names and instances.
         """
         if models is None:
-            models = self._models_flag['pflow']
+            models = self.exist.pflow
         if isinstance(models, str):
             models = {models: self.__dict__[models]}
         elif isinstance(models, Model):
@@ -863,13 +906,12 @@ class System(object):
         """
         Store the inverse time constant associated with equations.
         """
-        models = self._get_models(models)
         for mdl in models.values():
             for var in mdl.cache.states_and_ext.values():
                 if var.t_const is not None:
                     np.put(self.dae.Tf, var.a, var.t_const.v)
 
-    def call_models(self, method: str, models: Optional[Union[str, list, Model, OrderedDict]], *args, **kwargs):
+    def call_models(self, method: str, models: OrderedDict, *args, **kwargs):
         """
         Call methods on the given models.
 
@@ -889,8 +931,6 @@ class System(object):
         The return value of the models in an OrderedDict
 
         """
-        models = self._get_models(models)
-
         ret = OrderedDict()
         for name, mdl in models.items():
             ret[name] = getattr(mdl, method)(*args, **kwargs)
@@ -949,6 +989,9 @@ class System(object):
                             continue
                         uid = dest_model.idx2uid(dest_idx)
                         dest_model.services_ref[n].v[uid].append(model_idx)
+
+            # set model ``in_use`` flag
+            model.set_in_use()
 
     def import_groups(self):
         """
@@ -1023,7 +1066,7 @@ class System(object):
                 self.routines[attr_name] = self.__dict__[attr_name]
                 self.routines[attr_name].config.check()
 
-    def store_switch_times(self, models=None):
+    def store_switch_times(self, models):
         """
         Store event switching time in a sorted Numpy array at ``System.switch_times``.
 
@@ -1032,7 +1075,6 @@ class System(object):
         array-like
             self.switch_times
         """
-        models = self._get_models(models)
         out = []
         for instance in models.values():
             out.extend(instance.get_times())
@@ -1045,11 +1087,10 @@ class System(object):
         self.switch_times = out
         return self.switch_times
 
-    def switch_action(self, models=None):
+    def switch_action(self, models):
         """
         Invoke the actions associated with switch times.
         """
-        models = self._get_models(models)
         for instance in models.values():
             instance.switch_action(self.dae.t)
 
@@ -1061,7 +1102,7 @@ class System(object):
             for param in model.num_params.values():
                 param.restore()
 
-    def e_clear(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def e_clear(self, models: OrderedDict):
         """
         Clear equation arrays in DAE and model variables.
 
@@ -1082,6 +1123,9 @@ class System(object):
         Collect and store model calls into system.
         """
         logger.debug("Collecting Model.calls into System.")
+
+        self.calls['__version__'] = __version__
+
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
 
@@ -1141,7 +1185,7 @@ class System(object):
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.debug(f'Config loaded from file "{conf_path}".')
+        logger.info(f'Loaded config from file "{conf_path}"')
         return conf
 
     def save_config(self, file_path=None, overwrite=False):

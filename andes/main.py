@@ -435,6 +435,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Number of cpu cores to use in parallel
     pool: bool, optional
         Use Pool for multiprocessing to return a list of created Systems.
+    cli : bool, optional
+        If is running from command-line. If True, returns exit code instead of System
     kwargs
         Other supported keyword arguments
 
@@ -486,7 +488,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     t0, s0 = elapsed(t0)
 
     if len(cases) == 1:
-        ex_code += system.exit_code
+        if system is not None:
+            ex_code += system.exit_code
+        else:
+            ex_code += 1
     elif len(cases) > 1:
         if isinstance(system, list):
             for s in system:
@@ -543,7 +548,7 @@ def prepare(quick=False, cli=False, **kwargs):
     System object
     """
     t0, _ = elapsed()
-    logger.info('Numeric code preparation started...')
+    logger.info('Numeric code generation started...')
     system = System()
     system.prepare(quick=quick)
     _, s = elapsed(t0)

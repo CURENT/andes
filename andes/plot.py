@@ -240,7 +240,7 @@ class TDSData(object):
             fd.write(','.join(header) + '\n')
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
-        logger.info(f'CSV data saved in <{path}>.')
+        logger.info(f'CSV data saved to "{path}".')
 
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,

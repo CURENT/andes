@@ -7,10 +7,10 @@ from andes.shared import np, ndarray
 
 class BaseVar(object):
     """
-    Base variable class
+    Base variable class.
 
-    This class can be used to instantiate a variable as
-    an attribute of a model class.
+    Derived classes `State` and `Algeb` should be used to build
+    model variables.
 
     Parameters
     ----------
@@ -56,15 +56,7 @@ class BaseVar(object):
 
         self.tex_name = tex_name if tex_name else name
         self.owner = None  # instance of the owner Model
-        self.id = None     # variable internal index inside a model (assigned in run time)
-
-        self.n = 0
-        self.a: Optional[Union[ndarray, List]] = np.array([], dtype=int)        # address array
-        self.v: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)  # variable value array
-        self.e: Optional[Union[ndarray, float]] = np.array([], dtype=np.float)  # equation value array
-
-        self.ae: Optional[Union[ndarray, List]] = np.array([], dtype=int)       # future equation address array
-        self.av: Optional[Union[ndarray, List]] = np.array([], dtype=int)       # future var. address array
+        self.id = None     # variable internal index inside a model (assigned in run time) FIXME: not in use
 
         self.v_str = v_str  # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
@@ -73,19 +65,40 @@ class BaseVar(object):
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
-        self.export = export  # True if this var's value needs to exported
-        self.diag_eps = diag_eps  # small value to be added to the Jacobian matrix
+        self.export = export            # True if this var's value needs to exported
+        self.diag_eps = diag_eps        # small diagonal value (1e-6) to be added to `dae.gy`
+
+        # attributes assigned by `set_address`
+        self.n = 0
+        self.a: ndarray = np.array([], dtype=int)       # address array
+        self.v: ndarray = np.array([], dtype=np.float)  # variable value array
+        self.e: ndarray = np.array([], dtype=np.float)  # equation value array
+
+        self.av: ndarray = np.array([], dtype=int)      # FIXME: future var. address array
+        self.ae: ndarray = np.array([], dtype=int)      # FIXME: future equation address array
 
         # internal flags
-        self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
-
         # NOTE:
         # contiguous is only True for internal variables of models with flag ``collate`` equal to ``False``.
+        self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
+
+        self.e_inplace = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
+        self.v_inplace = False    # True if `self.v` is in-place access to `System.dae.__dict__[self.v_code]`
 
     def reset(self):
+        """
+        Reset the internal numpy arrays and flags.
+        """
+        self.n = 0
         self.a = np.array([], dtype=int)
         self.v = np.array([], dtype=np.float)
         self.e = np.array([], dtype=np.float)
+        self.av = np.array([], dtype=int)
+        self.ae = np.array([], dtype=int)
+
+        self._contiguous = False
+        self.e_inplace = False
+        self.v_inplace = False
 
     def __repr__(self):
         span = []
@@ -104,13 +117,13 @@ class BaseVar(object):
 
         return f'{self.__class__.__name__}, {self.owner.__class__.__name__}.{self.name}{span}'
 
-    def set_address(self, addr, contiguous=False):
+    def set_address(self, addr: ndarray, contiguous=False):
         """
         Set the address of internal variables.
 
         Parameters
         ----------
-        addr : array-like
+        addr : ndarray
             The assigned address for this variable
         contiguous : bool, optional
             If the addresses are contiguous
@@ -124,6 +137,13 @@ class BaseVar(object):
         # -----------
 
         self._contiguous = contiguous
+
+        if self._contiguous:
+            if self.e_setter is False:
+                self.e_inplace = True
+
+            if self.v_setter is False:
+                self.v_inplace = True
 
     def set_arrays(self, dae):
         """
@@ -153,22 +173,6 @@ class BaseVar(object):
     @property
     def class_name(self):
         return self.__class__.__name__
-
-    @property
-    def v_inplace(self):
-        """Return if ``self.v`` is in-place access to the DAE array."""
-        if (self.v_setter is False) and self._contiguous:
-            return True
-        else:
-            return False
-
-    @property
-    def e_inplace(self):
-        """Return if ``self.e`` is in-place access to the DAE array."""
-        if (self.e_setter is False) and self._contiguous:
-            return True
-        else:
-            return False
 
 
 class Algeb(BaseVar):
@@ -388,52 +392,19 @@ class ExtState(ExtVar):
     """
     External state variable type.
 
-    Parameters
-    ----------
-    t_const : BaseParam, DummyValue
-        Left-hand time constant for the differential equation.
-
+    Warnings
+    --------
+    ``ExtState`` is not allowed to set ``t_const``, as it will conflict with the
+    source ``State`` variable. In fact, one should not set ``e_str`` for ``ExtState``.
     """
     e_code = 'f'
     v_code = 'x'
-
-    def __init__(self,
-                 model: str,
-                 src: str,
-                 indexer: Optional[Union[List, ndarray, BaseParam, BaseService]] = None,
-                 name: Optional[str] = None,
-                 tex_name: Optional[str] = None,
-                 info: Optional[str] = None,
-                 unit: Optional[str] = None,
-                 v_str: Optional[str] = None,
-                 v_iter: Optional[str] = None,
-                 e_str: Optional[str] = None,
-                 t_const: Optional[Union[BaseParam, DummyValue]] = None,
-                 v_setter: Optional[bool] = False,
-                 e_setter: Optional[bool] = False,
-                 addressable: Optional[bool] = True,
-                 export: Optional[bool] = True,
-                 diag_eps: Optional[float] = 0.0,
-                 ):
-        super().__init__(model=model,
-                         src=src,
-                         indexer=indexer,
-                         name=name,
-                         tex_name=tex_name,
-                         info=info,
-                         unit=unit,
-                         v_str=v_str,
-                         v_iter=v_iter,
-                         e_str=e_str,
-                         v_setter=v_setter,
-                         e_setter=e_setter,
-                         addressable=addressable,
-                         export=export,
-                         diag_eps=diag_eps,
-                         )
-        self.t_const = t_const
+    t_const = None
 
 
 class ExtAlgeb(ExtVar):
+    """
+    External algebraic variable type.
+    """
     e_code = 'g'
     v_code = 'y'

@@ -100,17 +100,60 @@ Step 3: Install ANDES in the development mode using
 
 Pip will take care of the rest.
 
-Optional Packages
------------------
+Performance Packages (Advanced)
+===============================
+The following two forks of ``cvxopt``, ``cvxoptklu``, ``cvxopt`` with ``spmatrix.ipadd``
+are optional but can significantly boost the performance of ANDES.
+**Installation requires a C compiler**, ``openblas`` and ``SuiteSparse`` libraries.
 
-Install `cvxoptklu` to use KLU for speed up.
-`cvxoptklu` is a standalone KLU direct solver for linear equations.
-KLU is generally ~20% faster than UMFPACK.
-cvxoptklu requires a C compiler, and the `openblas` and
-`SuiteSparse` libraries.
+.. note::
+
+    Performance packages can be safely skipped and will not affect the
+    functionality of ANDES.
+
+.. warning::
+
+    We have not tried to compile either package on Windows.
+    Refer to the CVXOPT installation instructions for Windows at
+    http://cvxopt.org/install/index.html#windows
+
+cxvoptklu
+---------
+``cvxoptklu`` is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
+In addition to UMFPACK, ``cvxoptklu`` interfaces ``cvxopt`` to KLU, which is
+roughly 20% faster than UMFPACK for circuit simulation based on our testing.
+
+To install ``cvxoptklu``, on Debian GNU/Linux, one can do
 
 .. code:: bash
 
-      python3 -m install cvxoptklu
+      sudo apt install libopenblas-dev libsuitesparse-dev
+      pip install cvxoptklu
 
-The installation of optional packages can be safely ignored and will not affect the functionality of ANDES.
+On macOS, one can install with homebrew using
+
+.. code:: bash
+
+    brew install openblas suitesparse
+    pip install cvxoptklu
+
+To install from source code, use the repository at
+https://github.com/cuihantao/cvxoptklu.
+
+CVXOPT with ipadd
+-----------------
+To install our fork of ``cvxopt`` with ``spmatrix.ipadd``, one need to clone the
+repository and compile from source.
+
+.. code:: bash
+
+    git clone https://github.com/curent/cvxopt
+    cd cvxopt
+    python setup.py build
+
+The compilation may display some warnings, but make sure there is no error.
+Then, install it with
+
+.. code:: bash
+
+    python setup.py install

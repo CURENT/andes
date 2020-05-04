@@ -116,9 +116,11 @@ class COIModel(Model):
                                   info='COI angle contribution of each generator'
                                   )
 
-    @property
-    def in_use(self):
-        return len(self.SynGenIdx.v) > 0
+    def set_in_use(self):
+        """
+        Set the ``Model.in_use`` flag based on ``len(self.SynGenIdx.v)``.
+        """
+        self.in_use = (len(self.SynGenIdx.v) > 0)
 
 
 class COI(COIData, COIModel):
