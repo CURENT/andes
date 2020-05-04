@@ -97,6 +97,25 @@ class TestKundurPSS(unittest.TestCase):
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
+class TestKundurAntiWindup(unittest.TestCase):
+
+    def test_aw_tds_run(self):
+        aw = get_case('kundur/kundur_aw.xlsx')
+        ss = andes.main.run(aw)
+        ss.TDS.config.tf = 10
+        ss.TDS.run()
+
+        test_dir = os.path.dirname(__file__)
+        f = open(os.path.join(test_dir, 'kundur_aw_10s.pkl'), 'rb')
+        results = dill.load(f)
+        f.close()
+
+        np.testing.assert_almost_equal(ss.dae.xy, results, decimal=4,
+                                       err_msg='Results for "kundur_aw.xlsx" does not match.')
+
+        andes.main.misc(clean=True)
+
+
 class TestKundur2AreaPSSE(unittest.TestCase):
     """
     Test Kundur's 2-area system
