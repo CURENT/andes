@@ -1,4 +1,25 @@
-## Version 0.9.0
+## Version 1.0.0
+
+## Milestones
+*   Renewable generator models (REGC_A, REEC_A, REPC_A)
+*   Robust iterative initialization for variables
+
+## To-do list
+*   Allow simulating to a time, pause, and continue to a new ending time.
+
+## Later Versions
+*   Generalize two-terminal and multi-terminal devices
+*   Allow for semi-analytical derivation of equations
+*   Define general hooks - when should the connectivity check happen
+
+## Help Wanted
+*   Restore compatibility with dome format
+*   Draw block diagram from symbolic models using BDP (or SchemDraw)
+*   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
+*   Root loci plots
+*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
+
+## Version 0.9.0 (completed)
 
 ### Milestones
 - [x] Help system and consistency check system for Config
@@ -17,23 +38,6 @@
 - [x] Add consistency checks for Config
 - [x] Return an error state to system if a simulation routine fails
 - [x] Example COI model
-
-
-## Later Versions
-*   Robust iterative initialization
-*   Iterative initialization for equations (half done with Newton Krylov)
-*   Re-evaluate the decentralized equation evaluation method
-*   Deal with two-terminal and multi-terminal devices
-*   Restore compatibility with dome format
-*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
-*   Allow for semi-analytical derivation of equations
-*   Root loci plots
-*   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
-*   Allow simulating to a time, pause, and continue to a new ending time.
-*   Handling of zero time constants through semi-implicit formulation (State.v_rhs, State.v_lhs)
-*   Define general hooks - when should the connectivity check happen
-*   Draw block diagram from symbolic models using BDP (or SchemDraw)
-
 
 ## Version 0.8.0 (Completed)
 
