@@ -169,6 +169,7 @@ class TestNPCCRAW(unittest.TestCase):
     def test_npcc_raw_convert(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'), convert=True)
         os.remove(self.ss.files.dump)
+        self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
     def test_npcc_raw2json_convert(self):
         self.ss = andes.run(get_case('npcc/npcc48.raw'),
@@ -176,13 +177,16 @@ class TestNPCCRAW(unittest.TestCase):
         self.ss2 = andes.run('npcc48.json')
         os.remove(self.ss.files.dump)
         andes.main.misc(clean=True)
+        self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
 
 
 class TestCOI(unittest.TestCase):
     def test_kundur_COI(self):
         ss = get_case('kundur/kundur_coi.xlsx')
-        andes.run(ss, routine='tds', no_output=True, tf=0.1)
+        exit_code = andes.run(ss, routine='tds', no_output=True, tf=0.1, cli=True)
+        self.assertEqual(exit_code, 0, "Exit code is not 0.")
 
     def test_kundur_COI_empty(self):
         ss = get_case('kundur/kundur_coi_empty.xlsx')
-        andes.run(ss, routine='tds', no_output=True, tf=0.1)
+        exit_code = andes.run(ss, routine='tds', no_output=True, tf=0.1, cli=True)
+        self.assertEqual(exit_code, 0, "Exit code is not 0.")
