@@ -5,8 +5,8 @@
 *   Robust iterative initialization for variables
 
 ## To-do list
-- [x] Improve the speed of `DAETimeSeries.unpack`
-*   Allow simulating to a time, pause, and continue to a new ending time.
+- [x] Improve the speed of `DAETimeSeries.unpack`.
+- [x] Allow simulating to a time, pause, and continue to a new ending time.
 *   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
 
 ## Later Versions
