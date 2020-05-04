@@ -397,10 +397,14 @@ class DAE(object):
 
     def write_npy(self, npy_path):
         """
-        Write TDS data into NumPy output files. Compress when the matrix is larger than 25 MB.
+        Write TDS data into NumPy output files.
+
+        TODO: Compress when the matrix is larger than 25 MB.
         """
         txyz_data = self.ts.txyz
-        if txyz_data.size > 3125000:  # 25 megabytes of flaot64
-            np.savez_compressed(npy_path, self.ts.txyz)
-        else:
-            np.save(npy_path, self.ts.txyz)
+
+        # if txyz_data.size > 3125000:  # 25 megabytes of flaot64
+        #     np.savez_compressed(npy_path, txyz_data)
+        # else:
+
+        np.save(npy_path, txyz_data)
