@@ -4,6 +4,12 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
+v0.9.2
+-------------------
+This version contains bug fixes and performance tweaks.
+
+- Fixed an `AntiWindup` issue that causes variables to stuck at limits.
+
 v0.9.1 (2020-05-02)
 -------------------
 This version accelerates computations by about 35%.
