@@ -52,8 +52,6 @@ class TDSData(object):
         else:
             raise NotImplementedError(f'Unknown mode {self._mode}.')
 
-        self._latex_warn = True
-
     def _process_names(self):
         self.file_name, self.file_ext = os.path.splitext(self.full_name)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
@@ -247,7 +245,7 @@ class TDSData(object):
              xlabel=None, ylabel=None,
              legend=True, grid=False, greyscale=False,
              latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
-             use_bqplot=False, latex_warn=True, **kwargs):
+             use_bqplot=False, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -308,7 +306,7 @@ class TDSData(object):
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                     latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                    savefig=savefig, save_format=save_format, show=show, latex_warn=latex_warn,
+                                    savefig=savefig, save_format=save_format, show=show,
                                     **kwargs)
 
         else:
@@ -316,7 +314,7 @@ class TDSData(object):
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                   latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                  savefig=savefig, save_format=save_format, show=show, latex_warn=latex_warn,
+                                  savefig=savefig, save_format=save_format, show=show,
                                   **kwargs)
 
     def data_to_df(self):
@@ -357,7 +355,7 @@ class TDSData(object):
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
-                  save_format=None, show=True, latex_warn=True, **kwargs):
+                  save_format=None, show=True, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -428,9 +426,6 @@ class TDSData(object):
         """
         mpl.rc('font', family='Arial', size=font_size)
 
-        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
-        self._latex_warn = latex_warn and (not os.path.isfile(no_warn_file))
-
         if not isinstance(ydata, np.ndarray):
             TypeError("ydata must be a numpy array. Retrieve with get_values().")
 
@@ -439,19 +434,7 @@ class TDSData(object):
 
         n_lines = ydata.shape[1]
 
-        using_latex = set_latex(latex)
-        if using_latex and self._latex_warn:
-            logger.info('Info:')
-            logger.info('Using LaTeX for rendering. If an error occurs:')
-            logger.info('a) If you are using `andes plot`, disable with option "-d",')
-            logger.info('b) If you are using `plot()`, set "latex=False".')
-
-            try:
-                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
-                    pass
-            except OSError:
-                pass
-            self._latex_warn = False
+        set_latex(latex)
 
         # set default x min based on simulation time
         if not left:
@@ -582,7 +565,7 @@ def parse_y(y, upper, lower=0):
             try:
                 y[idx] = int(item)
             except ValueError:
-                logger.warning('y contains non-numerical values <{}>. Parsing could not proceed.'.format(item))
+                logger.warning(f'y contains non-numerical values <{item}>. Parsing cannot proceed.')
                 return []
 
         y_from_range = list(range(*y))
@@ -787,9 +770,25 @@ def set_latex(enable=True):
     """
 
     has_dvipng = find_executable('dvipng')
+
     if has_dvipng and enable:
         mpl.rc('text', usetex=True)
+
+        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
+        if not os.path.isfile(no_warn_file):
+            logger.info('Info:')
+            logger.info('Using LaTeX for rendering. If an error occurs:')
+            logger.info('a) If you are using `andes plot`, disable with option "-d",')
+            logger.info('b) If you are using `plot()`, set "latex=False".')
+
+            try:
+                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
+                    pass
+            except OSError:
+                pass
+
         return True
+
     else:
         mpl.rc('text', usetex=False)
         return False

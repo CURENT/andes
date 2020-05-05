@@ -9,6 +9,7 @@ from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.shared import np, matrix, spmatrix, plt, mpl
+from andes.plot import set_latex
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'
@@ -164,7 +165,7 @@ class EIG(BaseRoutine):
         return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             linewidth=0.5, dpi=150, show=True):
+             line_width=0.5, dpi=150, show=True, latex=True):
         mpl.rc('font', family='Times New Roman', size=12)
 
         if mu is None:
@@ -194,9 +195,11 @@ class EIG(BaseRoutine):
             logger.info(
                 'System is small-signal stable in the initial neighbourhood.')
 
-        mpl.rc('text', usetex=True)
+        set_latex(latex)
+
         if fig is None or ax is None:
             fig, ax = plt.subplots(dpi=dpi)
+
         ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
         ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
         ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
@@ -208,8 +211,8 @@ class EIG(BaseRoutine):
         yneg = xin / damping
         ypos = - xin / damping
 
-        ax.plot(xin, yneg, color='grey', linewidth=linewidth, linestyle='--')
-        ax.plot(xin, ypos, color='grey', linewidth=linewidth, linestyle='--')
+        ax.plot(xin, yneg, color='grey', linewidth=line_width, linestyle='--')
+        ax.plot(xin, ypos, color='grey', linewidth=line_width, linestyle='--')
         ax.set_xlabel('Real')
         ax.set_ylabel('Imaginary')
         ax.set_xlim(left=left, right=right)
