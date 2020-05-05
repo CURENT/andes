@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - andes
+  - andes=0.9.2
   - ca-certificates=2019.11.28
   - certifi=2019.11.28
   - coloredlogs=14.0
