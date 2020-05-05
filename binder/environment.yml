@@ -7,7 +7,7 @@ dependencies:
   - ca-certificates=2019.11.28
   - certifi=2019.11.28
   - coloredlogs=14.0
-  - cvxopt=1.2.4
+  - cvxopt
   - cycler=0.10.0
   - dill=0.3.1.1
   - dsdp=5.8
@@ -32,7 +32,7 @@ dependencies:
   - mpmath=1.1.0
   - multiprocess=0.70.9
   - ncurses=6.1
-  - numpy=1.18.1
+  - numpy
   - openssl=1.1.1e
   - pandas=1.0.3
   - pathos=0.2.5
