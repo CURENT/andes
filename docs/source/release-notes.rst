@@ -4,7 +4,7 @@ Release Notes
 
 The APIs before v1.0.0 are in beta and may change without prior notice.
 
-v0.9.2 (2020-05-04)
+v0.9.3 (2020-05-05)
 -------------------
 This version contains bug fixes and performance tweaks.
 
@@ -14,6 +14,7 @@ This version contains bug fixes and performance tweaks.
 - Improved TDS data dump speed by not constructing DataFrame by default.
 - Added tests for `kundur_full.xlsx` and `kundur_aw.xlsx` to ensure
   results are the same as known values.
+- Other bug fixes.
 
 v0.9.1 (2020-05-02)
 -------------------

@@ -69,9 +69,11 @@ class DAETimeSeries(object):
             self.xy = np.zeros((n_steps, self.dae.m + self.dae.n))
             self.z = np.zeros((n_steps, self.dae.o))
 
-            for idx, (xy, z) in enumerate(zip(self._xy.values(),
-                                              self._z.values())):
+            # TODO: write test.
+            for idx, xy in enumerate(self._xy.values()):
                 self.xy[idx, :] = xy
+
+            for idx, z in enumerate(self._z.values()):
                 self.z[idx, :] = z
 
     def store_txyz(self, t, xy, z=None):
