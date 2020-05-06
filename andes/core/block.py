@@ -671,11 +671,11 @@ class LeadLag(Block):
     r"""
     Lead-Lag transfer function block in series implementation ::
 
-             ┌─────────┐
-             │ 1 + sT1 │
-        u -> │ ─────── │ -> y
-             │ 1 + sT2 │
-             └─────────┘
+             ┌───────────┐
+             │   1 + sT1 │
+        u -> │ K ─────── │ -> y
+             │   1 + sT2 │
+             └───────────┘
 
     Exports two variables: internal state `x` and output algebraic variable `y`.
 
@@ -686,10 +686,11 @@ class LeadLag(Block):
     T2 : BaseParam
         Time constant 2
     """
-    def __init__(self, u, T1, T2, name=None, tex_name=None, info=None):
+    def __init__(self, u, T1, T2, K=1, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
+        self.K = dummify(K)
         self.u = u
 
         self.enforce_tex_name((self.T1, self.T2))
@@ -709,7 +710,7 @@ class LeadLag(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2  y &= T_1  (u - x') + T_2  x' \\
+            T_2  y &= K T_1  (u - x') + K T_2  x' \\
             x'^{(0)} &= y^{(0)} = u
 
         """
@@ -717,8 +718,8 @@ class LeadLag(Block):
         self.y.v_str = f'{self.u.name}'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
-        self.y.e_str = f'{self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
-                       f'{self.name}_x * {self.T2.name} - ' \
+        self.y.e_str = f'{self.K.name} * {self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
+                       f'{self.K.name} * {self.name}_x * {self.T2.name} - ' \
                        f'{self.name}_y * {self.T2.name}'
 
 
