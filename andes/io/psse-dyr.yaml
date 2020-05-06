@@ -144,6 +144,31 @@ EXDC2:
         SE1: SE1
         E2: E2
         SE2: SE2
+SEXS:
+    inputs:
+        - BUS
+        - ID
+        - TATB
+        - TB
+        - K
+        - TE
+        - EMIN
+        - EMAX
+    destination: SEXS
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TATB: TATB
+        TB: TB
+        K: K
+        TE: TE
+        EMIN: EMIN
+        EMAX: EMAX
+
 TGOV1:
     inputs:
         - BUS

@@ -3,6 +3,7 @@
 ## Milestones
 *   Renewable generator models (REGC_A, REEC_A, REPC_A)
 *   Robust iterative initialization for variables
+*   Allow selection of output variables
 
 ## To-do list
 - [x] Improve the speed of `DAETimeSeries.unpack`.

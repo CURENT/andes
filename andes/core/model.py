@@ -1018,7 +1018,10 @@ class Model(object):
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
             if callable(init_fun):
-                instance.v[:] = init_fun(**kwargs)
+                try:
+                    instance.v[:] = init_fun(**kwargs)
+                except ValueError:
+                    pass
             else:
                 instance.v[:] = init_fun
 

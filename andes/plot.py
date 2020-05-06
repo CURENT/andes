@@ -484,7 +484,7 @@ class TDSData(object):
             ax.grid(b=True, linestyle='--')
 
         if legend:
-            if len(yheader) < 15:
+            if yheader is not None and len(yheader) < 15:
                 ax.legend()
 
         plt.draw()

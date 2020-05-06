@@ -156,7 +156,7 @@ class TDS(BaseRoutine):
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Simulation will not continue.')
-            system.exit_code = 1
+            system.exit_code += 1
             return succeed
 
         if no_summary is False:
@@ -206,13 +206,13 @@ class TDS(BaseRoutine):
         if self.busted:
             logger.error(self.err_msg)
             logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
-            system.exit_code = 1
+            system.exit_code += 1
 
         elif system.dae.t == self.config.tf:
             succeed = True   # success flag
-            system.exit_code = 0
+            system.exit_code += 0
         else:
-            system.exit_code = 1
+            system.exit_code += 1
 
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
@@ -253,6 +253,7 @@ class TDS(BaseRoutine):
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.error(f"Check variables {', '.join(fail_names)}")
+            system.exit_code += 1
             return False
 
     def _fg_update(self, models):
