@@ -79,22 +79,21 @@ class ExcBase(Model):
                           info='Bus voltage magnitude',
                           )
 
-        self.vref = Algeb(info='Reference voltage input',
-                          tex_name='V_{ref}',
-                          unit='p.u.',
-                          )
-
-        # summed input voltages (vref + v + vsout + ...); PSS outputs summed at vi
-        self.vi = Algeb(info='Summed input voltages',
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        )  # derived classes to-do: provide `v_str` and `e_str`
-
+                        )
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',
                           tex_name='v_{out}',
                           v_str='vf0',
-                          )  # derived classes to-do: provide `e_str`.
+                          )
+
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          )
 
 
 class EXDC2Data(ExcBaseData):
@@ -305,7 +304,12 @@ class SEXSModel(ExcBase):
 
         self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB)
 
-        self.LAW = LagAntiWindup(u=self.LL_y, T=self.TE, K=self.K, lower=self.EMIN, upper=self.EMAX)
+        self.LAW = LagAntiWindup(u=self.LL_y,
+                                 T=self.TE,
+                                 K=self.K,
+                                 lower=self.EMIN,
+                                 upper=self.EMAX,
+                                 )
 
         self.vref.v_str = 'vref0'
         self.vref.e_str = 'vref0 - vref'
