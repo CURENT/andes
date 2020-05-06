@@ -345,7 +345,12 @@ def read_add(system, file):
                 for model, conditions in source.items():
                     cond_names = conditions.keys()
                     cond_values = [dyr_dict[psse_model][col] for col in conditions.values()]
-                    find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
+                    try:
+                        find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
+                    except IndexError as e:
+                        logger.error("Data file contains references to unsupported devices.")
+                        logger.error(e)
+                        return False
 
         if 'get' in dyr_yaml[psse_model]:
             for name, source in dyr_yaml[psse_model]['get'].items():
