@@ -346,7 +346,7 @@ class ModelData(object):
                     break
             if v_idx is None:
                 if allow_missing is False:
-                    raise IndexError(f'{keys} = {v_search} not found in {self.__class__.__name__}')
+                    raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
                 else:
                     v_idx = False
 

@@ -226,7 +226,6 @@ IEEEST:
                 subidx: ID
         avr:
             Exciter:
-                bus: BUS
                 syn: syn
     outputs:
         avr: avr

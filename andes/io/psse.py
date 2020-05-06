@@ -316,7 +316,8 @@ def read_add(system, file):
             multi_line = list()
 
     # construct pandas dataframe for all models
-    dyr_dict = dict()
+    dyr_dict = dict()   # input data from dyr file
+
     for psse_model, all_rows in input_concat_dict.items():
         dev_params_num = [([to_number(cell) for cell in row.split()]) for row in all_rows]
         dyr_dict[psse_model] = pd.DataFrame(dev_params_num)
@@ -326,16 +327,26 @@ def read_add(system, file):
     with open(f'{dirname}/psse-dyr.yaml', 'r') as f:
         dyr_yaml = yaml.full_load(f)
 
+    sorted_models = sort_psse_models(dyr_yaml)
+
     for psse_model in dyr_dict:
         if psse_model in dyr_yaml:
             if 'inputs' in dyr_yaml[psse_model]:
                 dyr_dict[psse_model].columns = dyr_yaml[psse_model]['inputs']
 
+    logger.debug(f'dyr file contains models {list(dyr_dict.keys())}')
+
     # load data into models
-    for psse_model in dyr_dict:
+    for psse_model in sorted_models:
+        if psse_model not in dyr_dict:
+            # device not exist
+            continue
+
         if psse_model not in dyr_yaml:
             logger.error(f"PSS/E Model <{psse_model}> is not supported.")
             continue
+
+        logger.debug(f'Parsing PSS/E model {psse_model}')
 
         dest = dyr_yaml[psse_model]['destination']
         find = {}
@@ -344,7 +355,14 @@ def read_add(system, file):
             for name, source in dyr_yaml[psse_model]['find'].items():
                 for model, conditions in source.items():
                     cond_names = conditions.keys()
-                    cond_values = [dyr_dict[psse_model][col] for col in conditions.values()]
+                    cond_values = []
+
+                    for col in conditions.values():
+                        if col in find:
+                            cond_values.append(find[col])
+                        else:
+                            cond_values.append(dyr_dict[psse_model][col])
+
                     try:
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
                     except IndexError as e:
@@ -389,3 +407,24 @@ def read_add(system, file):
         system.link_ext_param(system.__dict__[dest])
 
     return True
+
+
+def sort_psse_models(dyr_yaml):
+    """
+    Sort supported models so that model names are ordered by dependency.
+    """
+    from andes.models import non_jit
+    from andes.utils.func import list_flatten
+    import operator
+
+    andes_models = list_flatten(list(non_jit.values()))
+    number = dict()
+
+    for psse_model in dyr_yaml:
+        dest = dyr_yaml[psse_model]['destination']
+        if dest in andes_models:
+            number[dest] = andes_models.index(dest)
+
+    sorted_models = sorted(number, key=operator.itemgetter(1))
+
+    return sorted_models
