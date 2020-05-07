@@ -139,7 +139,7 @@ class GroupBase(object):
         for idx, idx_found in enumerate(zip(*indices_found)):
             if idx_found.count(False) == len(idx_found):
                 missing_values = [item[idx] for item in values]
-                raise IndexError(f'{keys} = {missing_values} not found in {self.class_name}')
+                raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
             for item in idx_found:
                 if item is not False:
                     out.append(item)

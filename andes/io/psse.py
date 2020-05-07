@@ -334,7 +334,14 @@ def read_add(system, file):
             if 'inputs' in dyr_yaml[psse_model]:
                 dyr_dict[psse_model].columns = dyr_yaml[psse_model]['inputs']
 
-    logger.debug(f'dyr file contains models {list(dyr_dict.keys())}')
+    logger.debug(f'dyr contains models {", ".join(dyr_dict.keys())}')
+
+    # collect not supported models
+    not_supported = []
+    for model in dyr_dict:
+        if model not in sorted_models:
+            not_supported.append(model)
+    logger.debug(f'Not supported: {", ".join(not_supported)}')
 
     # load data into models
     for psse_model in sorted_models:
