@@ -435,11 +435,18 @@ class GENROUModel(object):
                         v_str='Se0',
                         e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 
+        # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
+        self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
+                            info='d-axis armature reaction over excitation current',
+                            unit='p.u (kV)',
+                            v_str='vf0',
+                            e_str='e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psiad - XadIfd',
+                            )
+
         self.e1q = State(info='q-axis transient voltage',
                          tex_name=r"e'_q",
                          v_str='e1q0',
-                         e_str='(-e1q - (xd - xd1) * (Id - gd2 * e2d - (1 - gd1) * Id + gd2 * e1q) - '
-                               'Se * psiad + vf) / Td10')
+                         e_str='(-XadIfd + vf) / Td10')
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
                          v_str='e1d0',
