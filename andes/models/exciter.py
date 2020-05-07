@@ -314,7 +314,7 @@ class SEXSModel(ExcBase):
         self.vref.v_str = 'vref0'
         self.vref.e_str = 'vref0 - vref'
 
-        self.vout.e_str = 'LAW_x/ - vout'
+        self.vout.e_str = 'LAW_x - vout'
 
         self.vi.e_str = '(vref - v) - vi'
         self.vi.v_str = 'vref0 - v'

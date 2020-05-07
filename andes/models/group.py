@@ -178,8 +178,7 @@ class GroupBase(object):
                 # name is good
                 pass
             else:
-                logger.warning(f"Group <{self.class_name}>: idx={idx} is used by "
-                               f"{self.idx2model(idx).class_name}. "
+                logger.warning(f"Group {self.class_name}: idx={idx} is used by {self.idx2model(idx).class_name}. "
                                f"Data may be inconsistent.")
                 need_new = True
         else:
