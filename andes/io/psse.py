@@ -344,6 +344,7 @@ def read_add(system, file):
     logger.debug(f'Not supported: {", ".join(not_supported)}')
 
     # load data into models
+    print(sorted_models)
     for psse_model in sorted_models:
         if psse_model not in dyr_dict:
             # device not exist
@@ -373,7 +374,7 @@ def read_add(system, file):
                     try:
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
                     except IndexError as e:
-                        logger.error("Data file contains references to unsupported devices.")
+                        logger.error("Data file may contain references to unsupported devices.")
                         logger.error(e)
                         return False
 
@@ -422,7 +423,6 @@ def sort_psse_models(dyr_yaml):
     """
     from andes.models import non_jit
     from andes.utils.func import list_flatten
-    import operator
 
     andes_models = list_flatten(list(non_jit.values()))
     number = dict()
@@ -432,6 +432,6 @@ def sort_psse_models(dyr_yaml):
         if dest in andes_models:
             number[dest] = andes_models.index(dest)
 
-    sorted_models = sorted(number, key=operator.itemgetter(1))
+    sorted_models = [k for k, v in sorted(number.items(), key=lambda item: item[1])]
 
     return sorted_models
