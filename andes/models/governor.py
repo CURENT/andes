@@ -438,6 +438,24 @@ class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
+        # self.syn2 = IdxParam(model='SynGen',
+        #                      info='Optional SynGen idx',
+        #                      )
+        #
+        # self.tm02 = ExtService(src='tm',
+        #                        model='SynGen',
+        #                        indexer=self.syn2,
+        #                        tex_name=r'\tau_{m02}',
+        #                        info='Initial mechanical input of syn2')
+        #
+        # self.tm2 = ExtAlgeb(src='tm',
+        #                     model='SynGen',
+        #                     indexer=self.syn2,
+        #                     tex_name=r'\tau_{m2}',
+        #                     # e_str='u * (pout - tm02)',
+        #                     info='Mechanical power to syn2',
+        #                     )
+
         self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
@@ -501,24 +519,34 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
     """
     IEEE Type 1 Speed-Governing Model
 
-    TODO: support power per unit conversion based on individual generators.
     TODO: allow connecting to the second generator
+
+    Notes from PowerWorld documentation:
+
+    https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf
+
+    ::
+
+        For the IEEEG1 model, if the turbine rating is omitted
+        then the MVABase of only the high-pressure generator is used.
 
     Notes from NEPLAN manual:
 
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf
 
-    For a tandem-compound turbine the parameters K2, K4, K6,
-    and K8 are ignored. For a cross- compound turbine,
-    two generators are connected to this turbine-governor model.
+    ::
 
-    Each generator must be represented in the load flow by data
-    on its own MVA base. The values of K1, K3, K5, K7
-    must be specified to describe the proportionate
-    development of power on the first turbine shaft.
-    K2, K4, K6, K8 must describe the second turbine shaft.
-    Normally K1 + K3 + K5 + K7 = 1.0 and K2 + K4 + K6 + K8 = 1.0
-    (if second generator is present).
+        For a tandem-compound turbine the parameters K2, K4, K6,
+        and K8 are ignored. For a cross- compound turbine,
+        two generators are connected to this turbine-governor model.
+
+        Each generator must be represented in the load flow by data
+        on its own MVA base. The values of K1, K3, K5, K7
+        must be specified to describe the proportionate
+        development of power on the first turbine shaft.
+        K2, K4, K6, K8 must describe the second turbine shaft.
+        Normally K1 + K3 + K5 + K7 = 1.0 and K2 + K4 + K6 + K8 = 1.0
+        (if second generator is present).
     """
 
     def __init__(self, system, config):

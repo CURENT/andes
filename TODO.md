@@ -11,6 +11,7 @@
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
 *   Remove `params_ext` from `params` in Model definition
 *   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
+*   Add a non-linear gain block like in PowerWorld IEEEG1_GE
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices
