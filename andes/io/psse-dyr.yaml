@@ -168,6 +168,42 @@ SEXS:
         TE: TE
         EMIN: EMIN
         EMAX: EMAX
+EXST1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - TC
+        - TB
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KC
+        - KF
+        - TF
+    destination: EXST1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        VIMAX: VIMAX
+        VIMIN: VIMIN
+        TC: TC
+        TB: TB
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KC: KC
+        KF: KF
+        TF: TF
 
 TGOV1:
     inputs:

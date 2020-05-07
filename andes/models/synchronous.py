@@ -161,6 +161,13 @@ class GENBase(Model):
                         tex_name=r'v_f'
                         )
 
+        self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
+                            info='d-axis armature reaction over excitation current',
+                            unit='p.u (kV)',
+                            v_str='vf0',
+                            e_str='vf0 - XadIfd'
+                            )  # e_str to be provided. Not available in GENCLS
+
         self.subidx = ExtParam(model='StaticGen',
                                src='subidx',
                                indexer=self.gen,
@@ -436,12 +443,7 @@ class GENROUModel(object):
                         e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
-        self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
-                            info='d-axis armature reaction over excitation current',
-                            unit='p.u (kV)',
-                            v_str='vf0',
-                            e_str='e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psiad - XadIfd',
-                            )
+        self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psiad - XadIfd'
 
         self.e1q = State(info='q-axis transient voltage',
                          tex_name=r"e'_q",

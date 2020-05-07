@@ -8,6 +8,7 @@
 ## To-do list
 - [x] Improve the speed of `DAETimeSeries.unpack`.
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
+*   Remove `params_ext` from `params` in Model definition
 *   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
 
 ## Later Versions

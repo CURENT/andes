@@ -253,6 +253,8 @@ class NumParam(BaseParam):
     ----------------
     non_zero : bool
         True if this parameter must be non-zero
+    positive: bool
+        True if this parameter must be positive
     mandatory : bool
         True if this parameter must not be None
     power : bool
@@ -285,6 +287,7 @@ class NumParam(BaseParam):
     dc_voltage : bool
         True if the parameter is a DC voltage pu quantity under
         device base
+
     """
 
     def __init__(self,
@@ -295,6 +298,7 @@ class NumParam(BaseParam):
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
                  non_zero: bool = False,
+                 positive: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
                  ipower: bool = False,
@@ -312,6 +316,7 @@ class NumParam(BaseParam):
                                        unit=unit, export=export)
 
         self.property = dict(non_zero=non_zero,
+                             positive=positive,
                              mandatory=mandatory,
                              power=power,
                              ipower=ipower,
@@ -356,6 +361,11 @@ class NumParam(BaseParam):
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
             logger.debug(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
+            value = self.default
+
+        # check for positive
+        if value is not None and value <= 0.0 and self.get_property('positive'):
+            logger.debug(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         super(NumParam, self).add(value)

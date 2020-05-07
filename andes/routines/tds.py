@@ -253,6 +253,15 @@ class TDS(BaseRoutine):
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.error(f"Check variables {', '.join(fail_names)}")
+
+            logger.error('Eqn. Mismatches:')
+            logger.error(system.dae.fg[fail_idx])
+            logger.error('')
+
+            logger.error('Variable Values:')
+            logger.error(system.dae.xy[fail_idx])
+
+            breakpoint()
             system.exit_code += 1
             return False
 

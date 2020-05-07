@@ -11,7 +11,7 @@ non_jit = OrderedDict([
     ('area', ['Area']),
     ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2', 'TGOV1']),
-    ('exciter', ['EXDC2', 'SEXS']),
+    ('exciter', ['EXDC2', 'EXST1', 'SEXS']),
     ('pss', ['IEEEST']),
     ('measurement', ['BusFreq', 'BusROCOF']),
     ('coi', ['COI', ]),
