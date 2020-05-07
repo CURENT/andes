@@ -399,10 +399,12 @@ class EXST1Model(ExcBase):
                                   v_str='v + vf0 / KA',
                                   )
 
-        self.LG = Lag(u=self.v, T=self.TR, K=1)
+        self.LG = Lag(u=self.v, T=self.TR, K=1,
+                      info='Sensing delay',
+                      )
 
         self.HLI = HardLimiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
-                               info='Hard limiter on input signal',
+                               info='Hard limiter on input',
                                )
 
         self.vl = Algeb(info='Input after limiter',
@@ -411,11 +413,11 @@ class EXST1Model(ExcBase):
                         e_str='HLI_zi*vi + HLI_zu*VIMAX + HLI_zl*VIMIN - vl',
                         )
 
-        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB)
+        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator')
 
         self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
 
-        self.WF = Washout(u=self.LR_x, T=self.TF, K=self.KF, info='Feedback washout')
+        self.WF = Washout(u=self.LR_x, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
         # the following uses `XadIfd` for `IIFD` in the PSS/E manual
         self.vfmax = Algeb(info='Upper bound of output limiter',
@@ -429,7 +431,8 @@ class EXST1Model(ExcBase):
                            e_str='VRMIN - KC * XadIfd - vfmin',
                            )
 
-        self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax)
+        self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax,
+                               info='Hard limiter on regulator output')
 
         self.vi.v_str = 'vf0 / KA'
         self.vi.e_str = '(vref - LG_x - WF_y) - vi'
@@ -439,7 +442,7 @@ class EXST1Model(ExcBase):
 
 class EXST1(EXST1Data, EXST1Model):
     """
-    EXST1 exciter.
+    EXST1-type static excitation system.
     """
 
     def __init__(self, system, config):

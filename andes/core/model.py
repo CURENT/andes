@@ -1726,6 +1726,7 @@ class Documenter(object):
         self.params = parent.params
         self.services = parent.services
         self.discrete = parent.discrete
+        self.blocks = parent.blocks
 
     def _param_doc(self, max_width=80, export='plain'):
         """
@@ -1949,21 +1950,24 @@ class Documenter(object):
         if len(self.discrete) == 0:
             return ''
 
-        names, symbols = list(), list()
+        names, symbols, info = list(), list(), list()
         class_names = list()
 
         for p in self.discrete.values():
             names.append(p.name)
             class_names.append(p.class_name)
+            info.append(p.info if p.info else '')
 
         if export == 'rest':
             symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
         plain_dict = OrderedDict([('Name', names),
-                                  ('Type', class_names)])
+                                  ('Type', class_names),
+                                  ('Info', info)])
 
         rest_dict = OrderedDict([('Name', names),
                                  ('Symbol', symbols),
-                                 ('Type', class_names)])
+                                 ('Type', class_names),
+                                 ('Info', info)])
 
         return make_doc_table(title='Discrete',
                               max_width=max_width,
@@ -1974,10 +1978,35 @@ class Documenter(object):
     def _block_doc(self, max_width=80, export='plain'):
         """
         Documentation for blocks.
-
-        TODO: To be implemented.
         """
-        return ''
+        if len(self.blocks) == 0:
+            return ''
+
+        names, symbols, info = list(), list(), list()
+        class_names = list()
+
+        for p in self.blocks.values():
+            names.append(p.name)
+            class_names.append(p.class_name)
+            info.append(p.info if p.info else '')
+
+        if export == 'rest':
+            symbols = math_wrap([item.tex_name for item in self.blocks.values()], export=export)
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Type', class_names),
+                                  ('Info', info)])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Type', class_names),
+                                 ('Info', info)])
+
+        return make_doc_table(title='Blocks',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
 
     def get(self, max_width=80, export='plain'):
         """
