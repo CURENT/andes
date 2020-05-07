@@ -2,6 +2,7 @@
 
 ## Milestones
 *   Renewable generator models (REGC_A, REEC_A, REPC_A)
+*   Limiter check and warning after initialization
 *   Robust iterative initialization for variables
 *   Allow selection of output variables
 

@@ -207,6 +207,10 @@ class IdxParam(BaseParam):
                 ...
                 self.bus = IdxParam(model='Bus')
 
+    Notes
+    -----
+    TODO: allowing specifying property `unique` limit 1 reference to the same device.
+    This will be useful when, for example, one connects two TGs to one SynGen.
     """
     def __init__(self,
                  default: Optional[Union[float, str, int]] = None,
@@ -251,6 +255,10 @@ class NumParam(BaseParam):
 
     Other Parameters
     ----------------
+    Sn : str
+        Name of the parameter for the device base power.
+    Vn : str
+        Name of the parameter for the device base voltage.
     non_zero : bool
         True if this parameter must be non-zero
     positive: bool
@@ -297,6 +305,8 @@ class NumParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
+                 Sn: str = 'Sn',
+                 Vn: str = 'Vn',
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -329,6 +339,8 @@ class NumParam(BaseParam):
                              dc_current=dc_current,
                              dc_voltage=dc_voltage)
 
+        self.Sn = Sn
+        self.Vn = Vn
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
         self.vrange = vrange

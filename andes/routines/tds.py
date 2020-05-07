@@ -252,7 +252,8 @@ class TDS(BaseRoutine):
             logger.error('Suspect initialization issue!')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.error(f"Check variables {', '.join(fail_names)}")
+            logger.error(f"Check variables:")
+            logger.error(f"{fail_names}")
 
             logger.error('Eqn. Mismatches:')
             logger.error(system.dae.fg[fail_idx])

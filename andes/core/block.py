@@ -367,12 +367,12 @@ class Integrator(Block):
     The initial output is specified by `y0` and default to zero.
     """
 
-    def __init__(self, u, K, y0=0, name=None, tex_name=None, info=None):
+    def __init__(self, u, K, y0, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.K = dummify(K)
+        self.y0 = dummify(y0)
         self.enforce_tex_name((self.K, ))
-        self.y0 = y0
 
         self.y = State(info='Integrator output', tex_name='y')
         self.vars = {'y': self.y}
@@ -386,7 +386,51 @@ class Integrator(Block):
             y^{(0)} = 0
 
         """
-        self.y.v_str = self.y0
+        self.y.v_str = f'{self.y0.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name}'
+
+
+class IntegratorAntiWindup(Block):
+    r"""
+    Integrator block with anti-windup limiter. ::
+
+                  upper
+                 /¯¯¯¯¯
+             ┌─────┐
+        u -> │ K/s │ -> y
+             └─────┘
+          _____/
+          lower
+
+    Exports a differential variable `y` and an AntiWindup `lim`.
+    The initial output must be specified through `y0`.
+    """
+
+    def __init__(self, u, K, y0, lower, upper, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.y0 = dummify(y0)
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+        self.enforce_tex_name((self.K, ))
+
+        self.y = State(info='AW Integrator output', tex_name='y')
+
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
+
+        self.vars = {'y': self.y, 'lim': self.lim}
+
+    def define(self):
+        r"""
+        Implemented equation and the initial condition are
+
+        .. math ::
+            \dot{y} = K u \\
+            y^{(0)} = 0
+
+        """
+        self.y.v_str = f'{self.y0.name}'
         self.y.e_str = f'{self.K.name} * {self.u.name}'
 
 
