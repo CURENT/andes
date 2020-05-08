@@ -139,7 +139,7 @@ class System(object):
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
-    def prepare(self, quick=False):
+    def prepare(self, quick=False, incremental=False):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -149,6 +149,13 @@ class System(object):
         ----------
         quick : bool, optional
             True to skip pretty-print generation to reduce code generation time.
+        incremental : bool, optional
+            True to generate only for modified models, incrementally.
+
+        Notes
+        -----
+        Option ``incremental`` compares the md5 checksum of all var and
+        service strings, and only regenerate for updated models.
 
         Examples
         --------
@@ -174,13 +181,30 @@ class System(object):
         # consistency check for group parameters and variables
         self._check_group_common()
 
+        loaded_calls = self._load_pkl()
+
+        if loaded_calls is None:
+            incremental = False
+            logger.debug('calls.pkl does not exist. Incremental codegen disabled.')
+
+        if quick is False and incremental is True:
+            incremental = False
+            logger.debug('Incremental codegen is only allowed in quick mode.')
+
         total = len(self.models)
         width = math.ceil(math.log(total, 10))
-        for idx, name in enumerate(self.models):
+        for idx, (name, model) in enumerate(self.models.items()):
+            if incremental and \
+                    name in loaded_calls and \
+                    hasattr(loaded_calls[name], 'md5'):
+                if loaded_calls[name].md5 == model.get_md5():
+                    model.calls = loaded_calls[name]
+                    print(f"\r\x1b[K Code generation skipped for {name} ({idx + 1:>{width}}/{total:>{width}}).",
+                          end='\r', flush=True)
+                    continue
+
             print(f"\r\x1b[K Code generation for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
-
-            model = self.models[name]
             model.prepare(quick=quick)
 
         self._store_calls()
@@ -847,6 +871,19 @@ class System(object):
         with open(pkl_path, 'wb') as f:
             dill.dump(self.calls, f)
 
+    @staticmethod
+    def _load_pkl():
+        import dill
+        dill.settings['recurse'] = True
+        pkl_path = get_pkl_path()
+
+        if os.path.isfile(pkl_path):
+            with open(pkl_path, 'rb') as f:
+                loaded_calls = dill.load(f)
+                return loaded_calls
+        else:
+            return None
+
     def undill(self):
         """
         Deserialize the function calls from ``~/andes.calls.pkl`` with dill.
@@ -854,21 +891,17 @@ class System(object):
         If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
         acceleration.
         """
-        import dill
-        dill.settings['recurse'] = True
 
-        pkl_path = get_pkl_path()
+        loaded_calls = self._load_pkl()
 
-        if os.path.isfile(pkl_path):
-            with open(pkl_path, 'rb') as f:
-                loaded_calls = dill.load(f)
+        if loaded_calls is not None:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug(f'Undill loaded "{pkl_path}" file.')
+                logger.debug(f'Undilled calls from "{get_pkl_path()}" file.')
             else:
                 logger.info(f'Undilled calls are for version {ver}, regenerating...')
-                self.prepare(quick=True)
+                self.prepare(quick=True, incremental=True)
 
         else:
             logger.info('Generating numerical calls at the first launch.')

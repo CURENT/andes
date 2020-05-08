@@ -540,7 +540,7 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, cli=Fal
     logger.info('info: no option specified. Use \'andes misc -h\' for help.')
 
 
-def prepare(quick=False, cli=False, **kwargs):
+def prepare(quick=False, incremental=False, cli=False, **kwargs):
     """
     Run code generation.
 
@@ -551,7 +551,7 @@ def prepare(quick=False, cli=False, **kwargs):
     t0, _ = elapsed()
     logger.info('Numeric code generation started...')
     system = System()
-    system.prepare(quick=quick)
+    system.prepare(quick=quick, incremental=incremental)
     _, s = elapsed(t0)
     logger.info(f'Successfully generated numerical code in {s}.')
 
