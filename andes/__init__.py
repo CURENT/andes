@@ -16,4 +16,5 @@ from andes.system import System  # NOQA
 __author__ = 'Hantao Cui'
 
 __all__ = ['main', 'plot', 'system', 'cli',
-           'utils', 'core', 'models', 'io', 'routines', 'variables']
+           'utils', 'core', 'models', 'io', 'routines', 'variables',
+           '__version__']

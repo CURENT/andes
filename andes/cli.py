@@ -103,6 +103,8 @@ def create_parser():
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
+    prep.add_argument('-i', '--incremental', action='store_true', help='Only incrementally generate for updated '
+                                                                       'models')
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 

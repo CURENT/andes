@@ -9,11 +9,9 @@ from distutils.spawn import find_executable
 
 from andes.utils.misc import is_notebook
 from andes.core.var import Algeb, State
-from andes.main import config_logger
 from andes.utils.paths import get_dot_andes_path
 from andes.shared import np, mpl, plt
 
-config_logger(log_file=None)
 logger = logging.getLogger(__name__)
 
 
@@ -484,7 +482,7 @@ class TDSData(object):
             ax.grid(b=True, linestyle='--')
 
         if legend:
-            if len(yheader) < 15:
+            if yheader is not None and len(yheader) < 15:
                 ax.legend()
 
         plt.draw()

@@ -207,6 +207,9 @@ class IdxParam(BaseParam):
                 ...
                 self.bus = IdxParam(model='Bus')
 
+    Notes
+    -----
+    This will be useful when, for example, one connects two TGs to one SynGen.
     """
     def __init__(self,
                  default: Optional[Union[float, str, int]] = None,
@@ -215,11 +218,22 @@ class IdxParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  mandatory: bool = False,
+                 unique: bool = False,
                  export: bool = True,
                  model: Optional[str] = None):
         super().__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit, mandatory=mandatory,
                          export=export)
+        self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
+
+    def add(self, value=None):
+        if self.get_property('unique'):
+            if value in self.v:
+                logger.error('Your input data may be inconsistent.')
+                raise IndexError(f'Unique parameter {self.owner.class_name}.{self.name} '
+                                 f'contains duplicate value <{value}>.')
+
+        super().add(value)
 
 
 class NumParam(BaseParam):
@@ -251,8 +265,14 @@ class NumParam(BaseParam):
 
     Other Parameters
     ----------------
+    Sn : str
+        Name of the parameter for the device base power.
+    Vn : str
+        Name of the parameter for the device base voltage.
     non_zero : bool
         True if this parameter must be non-zero
+    positive: bool
+        True if this parameter must be positive
     mandatory : bool
         True if this parameter must not be None
     power : bool
@@ -285,6 +305,7 @@ class NumParam(BaseParam):
     dc_voltage : bool
         True if the parameter is a DC voltage pu quantity under
         device base
+
     """
 
     def __init__(self,
@@ -294,7 +315,10 @@ class NumParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
+                 Sn: str = 'Sn',
+                 Vn: str = 'Vn',
                  non_zero: bool = False,
+                 positive: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
                  ipower: bool = False,
@@ -312,6 +336,7 @@ class NumParam(BaseParam):
                                        unit=unit, export=export)
 
         self.property = dict(non_zero=non_zero,
+                             positive=positive,
                              mandatory=mandatory,
                              power=power,
                              ipower=ipower,
@@ -324,6 +349,8 @@ class NumParam(BaseParam):
                              dc_current=dc_current,
                              dc_voltage=dc_voltage)
 
+        self.Sn = Sn
+        self.Vn = Vn
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
         self.vrange = vrange
@@ -356,6 +383,11 @@ class NumParam(BaseParam):
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
             logger.debug(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
+            value = self.default
+
+        # check for positive
+        if value is not None and value <= 0.0 and self.get_property('positive'):
+            logger.debug(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         super(NumParam, self).add(value)
@@ -514,6 +546,18 @@ class ExtParam(NumParam):
         self.src = src
         self.indexer = indexer
         self.parent_model = None   # parent model instance
+
+    def add(self, value=None):
+        """
+        ExtParam has an empty `add` method.
+        """
+        pass
+
+    def restore(self):
+        """
+        ExtParam has an empty `restore` method
+        """
+        pass
 
     def link_external(self, ext_model):
         """

@@ -3,6 +3,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag
+from andes.core.discrete import HardLimiter
 
 
 class ExcBaseData(ModelData):
@@ -65,6 +66,12 @@ class ExcBase(Model):
                            e_str='u * (vout - vf0)',
                            info='Excitation field voltage to generator',
                            )
+        self.XadIfd = ExtAlgeb(src='XadIfd',
+                               model='SynGen',
+                               indexer=self.syn,
+                               tex_name=r'X_{ad}I_{fd}',
+                               info='Armature reaction to excitation current',
+                               )
         # from bus, get a and v
         self.a = ExtAlgeb(model='Bus',
                           src='a',
@@ -89,6 +96,15 @@ class ExcBase(Model):
                           tex_name='v_{out}',
                           v_str='vf0',
                           )
+
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+        # Note:
+        # Subclasses need to define `self.vref0` in the appropriate place
 
 
 class EXDC2Data(ExcBaseData):
@@ -197,7 +213,8 @@ class EXDC2Model(ExcBase):
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
                                   v_str='vb0 + v',
-                                  )
+                                  )  # derived classes to-do: provide `v_str`
+
         self.Se = Algeb(info='Saturation output',
                         tex_name='S_e',
                         unit='p.u.',
@@ -208,18 +225,11 @@ class EXDC2Model(ExcBase):
                         tex_name='V_p',
                         unit='p.u.',
                         v_str='vf0',
-                        e_str='(LA_x - KE * vp - Se * vp)',
+                        e_str='LA_x - KE*vp - Se*vp',
                         t_const=self.TE,
                         )
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
-
-        self.vref = Algeb(info='Reference voltage input',
-                          tex_name='V_{ref}',
-                          unit='p.u.',
-                          v_str='vref0',
-                          e_str='vref0 - vref'
-                          )
 
         self.vi.v_str = 'vb0'
         self.vi.e_str = '(vref - LS_x - W_y) - vi'
@@ -250,3 +260,191 @@ class EXDC2(EXDC2Data, EXDC2Model):
     def __init__(self, system, config):
         EXDC2Data.__init__(self)
         EXDC2Model.__init__(self, system, config)
+
+
+class SEXSData(ExcBaseData):
+    """Data class for Simplified Excitation System model (SEXS)"""
+    def __init__(self):
+        ExcBaseData.__init__(self)
+        self.TATB = NumParam(default=0.4,
+                             tex_name='T_A/T_B',
+                             info='Time constant TA/TB',
+                             vrange=(0.05, 1),
+                             )
+        self.TB = NumParam(default=5,
+                           tex_name='T_B',
+                           info='Time constant TB in LL',
+                           vrange=(5, 20),
+                           )
+        self.K = NumParam(default=20,
+                          tex_name='K',
+                          info='Gain',
+                          non_zero=True,
+                          vrange=(20, 100),
+                          )
+        # 5 <= K * TA / TB <= 15
+        self.TE = NumParam(default='1',
+                           tex_name='T_E',
+                           info='AW Lag time constant',
+                           vrange=(0, 0.5),
+                           )
+        self.EMIN = NumParam(default=-99,
+                             tex_name='E_{MIN}',
+                             info='lower limit',
+                             )
+        self.EMAX = NumParam(default=99,
+                             tex_name='E_{MAX}',
+                             info='upper limit',
+                             vrange=(3, 6),
+                             )
+
+
+class SEXSModel(ExcBase):
+    def __init__(self, system, config):
+        ExcBase.__init__(self, system, config)
+
+        self.TA = ConstService(v_str='TATB * TB')
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='vf0/K + v',
+                                  )
+
+        self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB)
+
+        self.LAW = LagAntiWindup(u=self.LL_y,
+                                 T=self.TE,
+                                 K=self.K,
+                                 lower=self.EMIN,
+                                 upper=self.EMAX,
+                                 )
+
+        self.vout.e_str = 'LAW_x - vout'
+
+        self.vi.e_str = '(vref - v) - vi'
+        self.vi.v_str = 'vref0 - v'
+
+
+class SEXS(SEXSData, SEXSModel):
+    """Simplified Excitation System"""
+    def __init__(self, system, config):
+        SEXSData.__init__(self)
+        SEXSModel.__init__(self, system, config)
+
+
+class EXST1Data(ExcBaseData):
+    """Parameters for EXST1."""
+    def __init__(self):
+        ExcBaseData.__init__(self)
+
+        self.TR = NumParam(default=0.02,
+                           info='Measurement delay',
+                           tex_name='T_R',
+                           )
+        self.VIMAX = NumParam(default=0.2,
+                              info='Max. input voltage',
+                              tex_name='V_{IMAX}',
+                              )
+
+        self.VIMIN = NumParam(default=0,
+                              info='Min. input voltage',
+                              tex_name='V_{IMIN}',
+                              )
+        self.TC = NumParam(default=1,
+                           info='LL numerator',
+                           tex_name='T_C',
+                           )
+        self.TB = NumParam(default=1,
+                           info='LL denominator',
+                           tex_name='T_B',
+                           )
+        self.KA = NumParam(default=80,
+                           info='Regulator gain',
+                           tex_name='K_A',
+                           )
+        self.TA = NumParam(default=0.05,
+                           info='Regulator delay',
+                           tex_name='T_A',
+                           )
+        self.VRMAX = NumParam(default=8,
+                              info='Max. regulator output',
+                              tex_name='V_{RMAX}',
+                              )
+
+        self.VRMIN = NumParam(default=-3,
+                              info='Min. regulator output',
+                              tex_name='V_{RMIN}',
+                              )
+        self.KC = NumParam(default=0.2,
+                           info='Coef. for Ifd',
+                           tex_name='K_C',
+                           )
+        self.KF = NumParam(default=0.1,
+                           info='Feedback gain',
+                           tex_name='K_F',
+                           )
+        self.TF = NumParam(default=1.0,
+                           info='Feedback delay',
+                           tex_name='T_F',
+                           positive=True,
+                           )
+
+
+class EXST1Model(ExcBase):
+    def __init__(self, system, config):
+        ExcBase.__init__(self, system, config)
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vf0 / KA',
+                                  )
+
+        self.LG = Lag(u=self.v, T=self.TR, K=1,
+                      info='Sensing delay',
+                      )
+
+        self.HLI = HardLimiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
+                               info='Hard limiter on input',
+                               )
+
+        self.vl = Algeb(info='Input after limiter',
+                        tex_name='V_l',
+                        v_str='HLI_zi*vi + HLI_zu*VIMAX + HLI_zl*VIMIN',
+                        e_str='HLI_zi*vi + HLI_zu*VIMAX + HLI_zl*VIMIN - vl',
+                        )
+
+        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator')
+
+        self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
+
+        self.WF = Washout(u=self.LR_x, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+
+        # the following uses `XadIfd` for `IIFD` in the PSS/E manual
+        self.vfmax = Algeb(info='Upper bound of output limiter',
+                           tex_name='V_{fmax}',
+                           v_str='VRMAX - KC * XadIfd',
+                           e_str='VRMAX - KC * XadIfd - vfmax',
+                           )
+        self.vfmin = Algeb(info='Lower bound of output limiter',
+                           tex_name='V_{fmin}',
+                           v_str='VRMIN - KC * XadIfd',
+                           e_str='VRMIN - KC * XadIfd - vfmin',
+                           )
+
+        self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax,
+                               info='Hard limiter on regulator output')
+
+        self.vi.v_str = 'vf0 / KA'
+        self.vi.e_str = '(vref - LG_x - WF_y) - vi'
+
+        self.vout.e_str = 'LR_x*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu - vout'
+
+
+class EXST1(EXST1Data, EXST1Model):
+    """
+    EXST1-type static excitation system.
+    """
+
+    def __init__(self, system, config):
+        EXST1Data.__init__(self)
+        EXST1Model.__init__(self, system, config)

@@ -116,6 +116,9 @@ Option ``-q`` or ``--quick`` can be used to speed up the code generation.
 It skips the generation of LaTeX-formatted equations, which are only used in documentation and the interactive
 mode.
 
+Option ``-i`` or ``--incremental`` can be used to further speed up the code generation during model development.
+``andes prepare -qi`` only generates code for models with modified equations.
+
 andes run
 -------------
 ``andes run`` is the entry point for power system analysis routines.

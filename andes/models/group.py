@@ -139,7 +139,7 @@ class GroupBase(object):
         for idx, idx_found in enumerate(zip(*indices_found)):
             if idx_found.count(False) == len(idx_found):
                 missing_values = [item[idx] for item in values]
-                raise IndexError(f'{keys} = {missing_values} not found in {self.class_name}')
+                raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
             for item in idx_found:
                 if item is not False:
                     out.append(item)
@@ -178,8 +178,7 @@ class GroupBase(object):
                 # name is good
                 pass
             else:
-                logger.warning(f"Group <{self.class_name}>: idx={idx} is used by "
-                               f"{self.idx2model(idx).class_name}. "
+                logger.warning(f"Group {self.class_name}: idx={idx} is used by {self.idx2model(idx).class_name}. "
                                f"Data may be inconsistent.")
                 need_new = True
         else:
@@ -303,7 +302,7 @@ class SynGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
-        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf'))
+        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf', 'XadIfd'))
 
 
 class TurbineGov(GroupBase):

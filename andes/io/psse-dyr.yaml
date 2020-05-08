@@ -144,6 +144,67 @@ EXDC2:
         SE1: SE1
         E2: E2
         SE2: SE2
+SEXS:
+    inputs:
+        - BUS
+        - ID
+        - TATB
+        - TB
+        - K
+        - TE
+        - EMIN
+        - EMAX
+    destination: SEXS
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TATB: TATB
+        TB: TB
+        K: K
+        TE: TE
+        EMIN: EMIN
+        EMAX: EMAX
+EXST1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - TC
+        - TB
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KC
+        - KF
+        - TF
+    destination: EXST1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        VIMAX: VIMAX
+        VIMIN: VIMIN
+        TC: TC
+        TB: TB
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KC: KC
+        KF: KF
+        TF: TF
+
 TGOV1:
     inputs:
         - BUS
@@ -170,6 +231,66 @@ TGOV1:
         T2: T2
         T3: T3
         Dt: Dt
+
+IEEEG1:
+    inputs:
+        - BUS
+        - ID
+        - BUS2
+        - ID2
+        - K
+        - T1
+        - T2
+        - T3
+        - UO
+        - UC
+        - PMAX
+        - PMIN
+        - T4
+        - K1
+        - K2
+        - T5
+        - K3
+        - K4
+        - T6
+        - K5
+        - K6
+        - T7
+        - K7
+        - K8
+    destination: IEEEG1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+#        syn2:
+#            SynGen:
+#                bus: BUS2
+#                subidx: ID2
+    outputs:
+        syn: syn
+        K: K
+        T1: T1
+        T2: T2
+        T3: T3
+        UO: UO
+        UC: UC
+        PMAX: PMAX
+        PMIN: PMIN
+        T4: T4
+        K1: K1
+        K2: K2
+        T5: T5
+        K3: K3
+        K4: K4
+        T6: T6
+        K5: K5
+        K6: K6
+        T7: T7
+        K7: K7
+        K8: K8
+
 IEEEST:
     inputs:
         - BUS
@@ -201,7 +322,6 @@ IEEEST:
                 subidx: ID
         avr:
             Exciter:
-                bus: BUS
                 syn: syn
     outputs:
         avr: avr

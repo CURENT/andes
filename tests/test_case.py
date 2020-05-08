@@ -68,15 +68,21 @@ class TestKundur2AreaXLSX(unittest.TestCase):
         self.ss = andes.run(self.xlsx)
 
     def test_xlsx_tds_run(self):
+        self.ss.TDS.config.tf = 10
+        self.ss.TDS.run()
+
         test_dir = os.path.dirname(__file__)
         f = open(os.path.join(test_dir, 'kundur_full_10s.pkl'), 'rb')
         results = dill.load(f)
         f.close()
 
-        self.ss.TDS.config.tf = 10
-        self.ss.TDS.run()
+        ss = self.ss
+        self.indices = np.hstack((ss.GENROU.omega.a,
+                                  ss.dae.n + ss.GENROU.tm.a,
+                                  ss.dae.n + ss.GENROU.vf.a))
 
-        np.testing.assert_almost_equal(self.ss.dae.xy, results, decimal=4,
+        np.testing.assert_almost_equal(self.ss.dae.xy[self.indices],
+                                       results,
                                        err_msg='Results for "kundur_full.xlsx" does not match.')
 
         andes.main.misc(clean=True)
@@ -99,18 +105,26 @@ class TestKundurPSS(unittest.TestCase):
 
 class TestKundurAntiWindup(unittest.TestCase):
 
-    def test_aw_tds_run(self):
+    def setUp(self) -> None:
         aw = get_case('kundur/kundur_aw.xlsx')
-        ss = andes.main.run(aw)
-        ss.TDS.config.tf = 10
-        ss.TDS.run()
+        self.ss = andes.main.run(aw)
+
+    def test_aw_tds_run(self):
+        self.ss.TDS.config.tf = 10
+        self.ss.TDS.run()
 
         test_dir = os.path.dirname(__file__)
         f = open(os.path.join(test_dir, 'kundur_aw_10s.pkl'), 'rb')
         results = dill.load(f)
         f.close()
 
-        np.testing.assert_almost_equal(ss.dae.xy, results, decimal=4,
+        ss = self.ss
+        self.indices = np.hstack((ss.GENROU.omega.a,
+                                  ss.dae.n + ss.GENROU.tm.a,
+                                  ss.dae.n + ss.GENROU.vf.a))
+
+        np.testing.assert_almost_equal(self.ss.dae.xy[self.indices],
+                                       results,
                                        err_msg='Results for "kundur_aw.xlsx" does not match.')
 
         andes.main.misc(clean=True)
