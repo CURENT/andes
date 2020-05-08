@@ -1008,8 +1008,6 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        logger.debug(f'{self.class_name:<10s}: calling initialize()')
-
         # update service values
         self.s_update()
 

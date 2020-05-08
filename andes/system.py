@@ -898,7 +898,7 @@ class System(object):
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug(f'Undilled calls from "{get_pkl_path()}" file.')
+                logger.debug(f'Undilled calls from "{get_pkl_path()}" is current.')
             else:
                 logger.info(f'Undilled calls are for version {ver}, regenerating...')
                 self.prepare(quick=True, incremental=True)
