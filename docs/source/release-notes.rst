@@ -7,8 +7,9 @@ The APIs before v1.0.0 are in beta and may change without prior notice.
 v0.9.4
 -------------------
 
-- New models: exciters EXST1 (static), SEXS (simplified)
-
+- Added exciter models EXST1, SEXS and turbine governor model IEEEG1 (support
+  single output).
+- Allow to regenerate code for updated models through ``andes prepare -qi``.
 
 v0.9.3 (2020-05-05)
 -------------------

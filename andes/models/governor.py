@@ -472,6 +472,7 @@ class IEEEG1Model(TGBase):
 
         # `P0` == `tm0`
         self.vs = Algeb(info='Valve move speed',
+                        tex_name='V_s',
                         v_str='0',
                         e_str='(LL_y + tm0 - IAW_y) / T3 - vs',
                         )
@@ -483,6 +484,7 @@ class IEEEG1Model(TGBase):
                               )
 
         self.vsl = Algeb(info='Valve move speed after limiter',
+                         tex_name='V_{sl}',
                          v_str='vs * HL_zi + UC * HL_zl + UO * HL_zu',
                          e_str='vs * HL_zi + UC * HL_zl + UO * HL_zu - vsl',
                          )
@@ -504,11 +506,13 @@ class IEEEG1Model(TGBase):
         self.L7 = Lag(u=self.L6_x, T=self.T7, K=1)
 
         self.PHP = Algeb(info='HP output',
+                         tex_name='P_{HP}',
                          v_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x',
                          e_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x - PHP',
                          )
 
         self.PLP = Algeb(info='LP output',
+                         tex_name='P_{LP}',
                          v_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x',
                          e_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x - PLP',
                          )
