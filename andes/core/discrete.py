@@ -153,6 +153,10 @@ class Limiter(Discrete):
         Parameter instance for the lower limit
     upper : BaseParam
         Parameter instance for the upper limit
+    upper_only : bool
+        True to only use the upper limit
+    lower_only : bool
+        True to only use the lower limit
 
     Attributes
     ----------
@@ -165,19 +169,29 @@ class Limiter(Discrete):
         Flags for violating the upper limit
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
+                 lower_only=False, upper_only=False):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = lower
         self.upper = upper
         self.enable = enable
+        self.lower_only = lower_only
+        self.upper_only = upper_only
 
         self.zu = np.array([0])
         self.zl = np.array([0])
         self.zi = np.array([1])
 
-        self.export_flags = ['zl', 'zi', 'zu']
-        self.export_flags_tex = ['z_l', 'z_i', 'z_u']
+        self.export_flags = ['zi']
+        self.export_flags_tex = ['z_i']
+
+        if not self.upper_only:
+            self.export_flags.append('zl')
+            self.export_flags_tex.append('z_l')
+        if not self.lower_only:
+            self.export_flags.append('zu')
+            self.export_flags_tex.append('z_u')
 
     def check_var(self, *args, **kwargs):
         """
@@ -185,8 +199,12 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
-        self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+
+        if not self.lower_only:
+            self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+        if not self.upper_only:
+            self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
 
