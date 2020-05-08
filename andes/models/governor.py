@@ -12,6 +12,7 @@ class TGBaseData(ModelData):
         self.syn = IdxParam(model='SynGen',
                             info='Synchronous generator idx',
                             mandatory=True,
+                            unique=True,
                             )
         self.wref0 = NumParam(info='Base speed reference',
                               tex_name=r'\omega_{ref0}',

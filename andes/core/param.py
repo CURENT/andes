@@ -209,7 +209,6 @@ class IdxParam(BaseParam):
 
     Notes
     -----
-    TODO: allowing specifying property `unique` limit 1 reference to the same device.
     This will be useful when, for example, one connects two TGs to one SynGen.
     """
     def __init__(self,
@@ -219,11 +218,22 @@ class IdxParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  mandatory: bool = False,
+                 unique: bool = False,
                  export: bool = True,
                  model: Optional[str] = None):
         super().__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit, mandatory=mandatory,
                          export=export)
+        self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
+
+    def add(self, value=None):
+        if self.get_property('unique'):
+            if value in self.v:
+                logger.error('Your input data may be inconsistent.')
+                raise IndexError(f'Unique parameter {self.owner.class_name}.{self.name} '
+                                 f'contains duplicate value <{value}>.')
+
+        super().add(value)
 
 
 class NumParam(BaseParam):
@@ -536,6 +546,18 @@ class ExtParam(NumParam):
         self.src = src
         self.indexer = indexer
         self.parent_model = None   # parent model instance
+
+    def add(self, value=None):
+        """
+        ExtParam has an empty `add` method.
+        """
+        pass
+
+    def restore(self):
+        """
+        ExtParam has an empty `restore` method
+        """
+        pass
 
     def link_external(self, ext_model):
         """
