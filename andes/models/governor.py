@@ -270,7 +270,7 @@ class TGOV1Model(TGBase):
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
-        self.LL = LeadLag(u=self.LAG_x,
+        self.LL = LeadLag(u=self.LAG_y,
                           T1=self.T2,
                           T2=self.T3,
                           )
@@ -298,27 +298,27 @@ class TGOV1ModelAlt(TGBase):
                         v_str='tm0',
                         e_str='(wd + pref) * gain - pd')
 
-        self.LAG_x = State(info='State in lag transfer function',
+        self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
-                           e_str='LAG_lim_zi * (1 * pd - LAG_x)',
+                           e_str='LAG_lim_zi * (1 * pd - LAG_y)',
                            t_const=self.T1,
                            v_str='pd',
                            )
-        self.LAG_lim = AntiWindup(u=self.LAG_x,
+        self.LAG_lim = AntiWindup(u=self.LAG_y,
                                   lower=self.VMIN,
                                   upper=self.VMAX,
                                   tex_name='lim_{lag}',
                                   )
         self.LL_x = State(info='State in lead-lag transfer function',
                           tex_name="x'_{LL}",
-                          v_str='LAG_x',
-                          e_str='(LAG_x - LL_x)',
+                          v_str='LAG_y',
+                          e_str='(LAG_y - LL_x)',
                           t_const=self.T3
                           )
         self.LL_y = Algeb(info='Lead-lag Output',
                           tex_name='y_{LL}',
-                          v_str='LAG_x',
-                          e_str='T2 / T3 * (LAG_x - LL_x) + LL_x - LL_y',
+                          v_str='LAG_y',
+                          e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y',
                           )
 
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
@@ -498,22 +498,22 @@ class IEEEG1Model(TGBase):
 
         self.L4 = Lag(u=self.IAW_y, T=self.T4, K=1)
 
-        self.L5 = Lag(u=self.L4_x, T=self.T5, K=1)
+        self.L5 = Lag(u=self.L4_y, T=self.T5, K=1)
 
-        self.L6 = Lag(u=self.L5_x, T=self.T6, K=1)
+        self.L6 = Lag(u=self.L5_y, T=self.T6, K=1)
 
-        self.L7 = Lag(u=self.L6_x, T=self.T7, K=1)
+        self.L7 = Lag(u=self.L6_y, T=self.T7, K=1)
 
         self.PHP = Algeb(info='HP output',
                          tex_name='P_{HP}',
-                         v_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x',
-                         e_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x - PHP',
+                         v_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y',
+                         e_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y - PHP',
                          )
 
         self.PLP = Algeb(info='LP output',
                          tex_name='P_{LP}',
-                         v_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x',
-                         e_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x - PLP',
+                         v_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y',
+                         e_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y - PLP',
                          )
 
         self.pout.e_str = 'PHP - pout'

@@ -225,14 +225,14 @@ class EXDC2Model(ExcBase):
                         tex_name='V_p',
                         unit='p.u.',
                         v_str='vf0',
-                        e_str='LA_x - KE*vp - Se*vp',
+                        e_str='LA_y - KE*vp - Se*vp',
                         t_const=self.TE,
                         )
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
 
         self.vi.v_str = 'vb0'
-        self.vi.e_str = '(vref - LS_x - W_y) - vi'
+        self.vi.e_str = '(vref - LS_y - W_y) - vi'
 
         self.LL = LeadLag(u=self.vi,
                           T1=self.TC,
@@ -319,7 +319,7 @@ class SEXSModel(ExcBase):
                                  upper=self.EMAX,
                                  )
 
-        self.vout.e_str = 'LAW_x - vout'
+        self.vout.e_str = 'LAW_y - vout'
 
         self.vi.e_str = '(vref - v) - vi'
         self.vi.v_str = 'vref0 - v'
@@ -417,7 +417,7 @@ class EXST1Model(ExcBase):
 
         self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
 
-        self.WF = Washout(u=self.LR_x, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+        self.WF = Washout(u=self.LR_y, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
         # the following uses `XadIfd` for `IIFD` in the PSS/E manual
         self.vfmax = Algeb(info='Upper bound of output limiter',
@@ -435,9 +435,9 @@ class EXST1Model(ExcBase):
                                info='Hard limiter on regulator output')
 
         self.vi.v_str = 'vf0 / KA'
-        self.vi.e_str = '(vref - LG_x - WF_y) - vi'
+        self.vi.e_str = '(vref - LG_y - WF_y) - vi'
 
-        self.vout.e_str = 'LR_x*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu - vout'
+        self.vout.e_str = 'LR_y*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu - vout'
 
 
 class EXST1(EXST1Data, EXST1Model):

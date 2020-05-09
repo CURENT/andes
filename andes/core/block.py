@@ -537,16 +537,11 @@ class Lag(Block):
 
              ┌────────┐
              │    K   │
-        u -> │ ────── │ -> x
+        u -> │ ────── │ -> y
              │ 1 + sT │
              └────────┘
 
-    Exports one state variable `x` as the output.
-
-    Warnings
-    --------
-    The current version exports `x` as the output instead of `y`.
-    It it subject to change in future versions.
+    Exports one state variable `y` as the output.
 
     Parameters
     ----------
@@ -565,10 +560,10 @@ class Lag(Block):
         self.K = dummify(K)
 
         self.enforce_tex_name((self.K, self.T))
-        self.x = State(info='State in lag transfer function', tex_name="x'",
+        self.y = State(info='State in lag transfer function', tex_name="y",
                        t_const=self.T)
 
-        self.vars = {'x': self.x}
+        self.vars = {'y': self.y}
 
     def define(self):
         r"""
@@ -579,12 +574,12 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x') \\
-            x'^{(0)} &= K u
+            T \dot{y} &= (Ku - y) \\
+            y^{(0)} &= K u
 
         """
-        self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x)'
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
 
 
 class LagAntiWindup(Block):
@@ -595,14 +590,13 @@ class LagAntiWindup(Block):
                    /¯¯¯¯¯¯
              ┌────────┐
              │    K   │
-        u -> │ ────── │ -> x
+        u -> │ ────── │ -> y
              │ 1 + sT │
              └────────┘
            ______/
            lower
 
-    Exports one state variable `x` as the output.
-    Exports one AntiWindup instance `lim`.
+    Exports one state variable `y` as the output and one AntiWindup instance `lim`.
 
     Parameters
     ----------
@@ -626,11 +620,11 @@ class LagAntiWindup(Block):
 
         self.enforce_tex_name((self.T, self.K))
 
-        self.x = State(info='State in lag TF', tex_name="x'",
+        self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
-        self.lim = AntiWindup(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
 
-        self.vars = {'x': self.x, 'lim': self.lim}
+        self.vars = {'y': self.y, 'lim': self.lim}
 
     def define(self):
         r"""
@@ -641,12 +635,12 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x) \\
-            x'^{(0)} &= K u
+            T \dot{y} &= (Ku - y) \\
+            y^{(0)} &= K u
 
         """
-        self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'{self.K.name} * {self.u.name} - {self.name}_x'
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
 
 
 class Lag2ndOrd(Block):
