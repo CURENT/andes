@@ -47,7 +47,7 @@ It takes several seconds up to a minute to finish the generation.
 .. warning::
     When models are modified (such as adding new models or changing equation strings), code generation needs
     to be executed again for consistency. It can be more conveniently triggered from command line with
-    ``andes prepare``.
+    ``andes prepare -qi``.
 
 .. autofunction:: andes.system.System.prepare
     :noindex:
@@ -839,6 +839,10 @@ First Order
     :members: define
     :noindex:
 
+.. autoclass:: andes.core.block.IntegratorAntiWindup
+    :members: define
+    :noindex:
+
 .. autoclass:: andes.core.block.Lag
     :members: define
     :noindex:
@@ -871,6 +875,14 @@ Second Order
 
 .. autoclass:: andes.core.block.LeadLag2ndOrd
     :members: define
+    :noindex:
+
+Value Selector
+``````````````
+.. autoclass:: andes.core.block.HVGate
+    :noindex:
+
+.. autoclass:: andes.core.block.LVGate
     :noindex:
 
 

@@ -922,6 +922,45 @@ class HVGate(Block):
                        f'{self.name}_y'
 
 
+class LVGate(Block):
+    """
+    Low Value Gate. Outputs the minimum of the two inputs. ::
+
+              ┌─────────+
+        u1 -> │ LV Gate  \
+              │           > ->  y
+        u2 -> │  (MIN)   /
+              └─────────+
+
+    """
+    def __init__(self, u1, u2, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u1 = dummify(u1)
+        self.u2 = dummify(u2)
+        self.enforce_tex_name((u1, u2))
+
+        self.y = Algeb(info='LVGate output', tex_name='y')
+        self.sl = Selector(self.u1, self.u2, fun=np.minimum.reduce,
+                           info='LVGate Selector',
+                           )
+
+        self.vars = {'y': self.y, 'sl': self.sl}
+
+    def define(self):
+        """
+        Implemented equations and initial conditions
+
+        .. math ::
+
+            0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
+            y_0 = minimum(u_1, u_2)
+
+        """
+        self.y.v_str = f'minimum({self.u1.name}, {self.u2.name})'
+        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
+                       f'{self.name}_y'
+
+
 class Piecewise(Block):
     """
     Piecewise block.

@@ -356,6 +356,10 @@ class Selector(Discrete):
     See Also
     --------
     numpy.ufunc.reduce : NumPy reduce function
+
+    andes.core.block.HVGate
+
+    andes.core.block.LVGate
     """
     def __init__(self, *args, fun, tex_name=None, info=None):
         super().__init__(tex_name=tex_name, info=info)
