@@ -319,17 +319,17 @@ class AntiWindup(Limiter):
 
 class Selector(Discrete):
     """
-    Selection of variables using the provided reduce function.
+    Selection between two variables using the provided reduce function.
 
     The reduce function should take the given number of arguments. An example function is `np.maximum.reduce`
     which can be used to select the maximum.
 
-    Names are in `s0`, `s1`, ... and `sn`
+    Names are in `s0`, `s1`.
 
     Warnings
     --------
     A potential bug when more than two inputs are provided, and values in different inputs are equal.
-    FIXME: More than one flag will se true in this case.
+    Only two inputs are allowed.
 
     Examples
     --------
@@ -338,7 +338,7 @@ class Selector(Discrete):
     After the definitions of `v0` and `v1`, define the algebraic variable `vmax` for the largest value,
     and a selector `vs` ::
 
-        self.vmax = Algeb(v_str='maximum(v0, v1) - vmax',
+        self.vmax = Algeb(v_str='maximum(v0, v1)',
                           tex_name='v_{max}',
                           e_str='vs_s0 * v0 + vs_s1 * v1 - vmax')
 
@@ -357,17 +357,18 @@ class Selector(Discrete):
     --------
     numpy.ufunc.reduce : NumPy reduce function
     """
-    def __init__(self, *args, fun, tex_name=None):
-        super().__init__(tex_name=tex_name)
+    def __init__(self, *args, fun, tex_name=None, info=None):
+        super().__init__(tex_name=tex_name, info=info)
+        # TODO: only allow two inputs
         self.input_vars = args
         self.fun = fun
         self.n = len(args)
-        self._s = [0] * self.n
         self._inputs = None
         self._outputs = None
 
         for i in range(len(self.input_vars)):
-            self.__dict__[f's{i}'] = 0
+            # TODO: allow custom initial value
+            self.__dict__[f's{i}'] = np.array([0])
 
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
@@ -376,8 +377,15 @@ class Selector(Discrete):
         """
         Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input.
         """
-        self._inputs = [self.input_vars[i].v for i in range(self.n)]
-        self._outputs = self.fun(self._inputs)
+        if self._inputs is None:
+            # input is only evaluated at the first time due to memory stability
+            self._inputs = [self.input_vars[i].v for i in range(self.n)]
+
+        if self._outputs is None:
+            self._outputs = self.fun(self._inputs)
+        else:
+            self._outputs[:] = self.fun(self._inputs)
+
         for i in range(self.n):
             self.__dict__[f's{i}'][:] = np.equal(self._inputs[i], self._outputs)
 

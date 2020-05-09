@@ -1,8 +1,9 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
 from typing import Optional, Iterable, Dict, Union
-from andes.core.discrete import Discrete, AntiWindup, LessThan
+from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector
 from andes.core.triplet import JacTriplet
+import numpy as np
 
 
 class Block(object):
@@ -879,6 +880,45 @@ class LeadLagLimit(Block):
         self.y.e_str = f'{self.name}_ynl * {self.name}_lim_zi + ' \
                        f'{self.lower.name} * {self.name}_lim_zl + ' \
                        f'{self.upper.name} * {self.name}_lim_zu - ' \
+                       f'{self.name}_y'
+
+
+class HVGate(Block):
+    """
+    High Value Gate. Outputs the maximum of two inputs. ::
+
+              ┌─────────+
+        u1 -> │ HV Gate  \
+              │           > ->  y
+        u2 -> │  (MAX)   /
+              └─────────+
+
+    """
+    def __init__(self, u1, u2, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u1 = dummify(u1)
+        self.u2 = dummify(u2)
+        self.enforce_tex_name((u1, u2))
+
+        self.y = Algeb(info='HVGate output', tex_name='y')
+        self.sl = Selector(self.u1, self.u2, fun=np.maximum.reduce,
+                           info='HVGate Selector',
+                           )
+
+        self.vars = {'y': self.y, 'sl': self.sl}
+
+    def define(self):
+        """
+        Implemented equations and initial conditions
+
+        .. math ::
+
+            0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
+            y_0 = maximum(u_1, u_2)
+
+        """
+        self.y.v_str = f'maximum({self.u1.name}, {self.u2.name})'
+        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
                        f'{self.name}_y'
 
 
