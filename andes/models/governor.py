@@ -68,7 +68,7 @@ class TGBase(Model):
                            indexer=self.syn,
                            tex_name=r'\tau_m',
                            e_str='u * (pout - tm0)',
-                           info='Mechanical power to generator',
+                           info='Mechanical power interface to SynGen',
                            )
         self.pout = Algeb(info='Turbine final output power',
                           tex_name='P_{out}',
@@ -526,20 +526,15 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
 
     TODO: allow connecting to the second generator
 
-    Notes from PowerWorld documentation:
-
-    https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf
-
-    ::
+    Notes from `PowerWorld documentation
+    <https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/
+    Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf>`_ : ::
 
         For the IEEEG1 model, if the turbine rating is omitted
         then the MVABase of only the high-pressure generator is used.
 
-    Notes from NEPLAN manual:
-
-    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf
-
-    ::
+    Notes from `NEPLAN manual
+    <https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf>`_: ::
 
         For a tandem-compound turbine the parameters K2, K4, K6,
         and K8 are ignored. For a cross- compound turbine,
@@ -552,6 +547,7 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
         K2, K4, K6, K8 must describe the second turbine shaft.
         Normally K1 + K3 + K5 + K7 = 1.0 and K2 + K4 + K6 + K8 = 1.0
         (if second generator is present).
+
     """
 
     def __init__(self, system, config):
