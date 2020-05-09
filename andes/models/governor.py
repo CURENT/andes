@@ -70,6 +70,12 @@ class TGBase(Model):
                            e_str='u * (pout - tm0)',
                            info='Mechanical power interface to SynGen',
                            )
+        # `paux` must be zero upon initialization
+        self.paux = Algeb(info='Auxiliary power input',
+                          tex_name='P_{aux}',
+                          v_str='paux0',
+                          e_str='paux0 - paux',
+                          )
         self.pout = Algeb(info='Turbine final output power',
                           tex_name='P_{out}',
                           v_str='u*tm0',
@@ -244,13 +250,6 @@ class TGOV1Model(TGBase):
                           tex_name='P_{ref}',
                           v_str='tm0 * R',
                           e_str='tm0 * R - pref',
-                          )
-
-        # `paux` must be zero upon initialization
-        self.paux = Algeb(info='Auxiliary power input',
-                          tex_name='P_{aux}',
-                          v_str='paux0',
-                          e_str='paux0 - paux',
                           )
 
         self.wd = Algeb(info='Generator under speed',
@@ -474,7 +473,7 @@ class IEEEG1Model(TGBase):
         self.vs = Algeb(info='Valve move speed',
                         tex_name='V_s',
                         v_str='0',
-                        e_str='(LL_y + tm0 - IAW_y) / T3 - vs',
+                        e_str='(LL_y + tm0 + paux - IAW_y) / T3 - vs',
                         )
 
         self.HL = HardLimiter(u=self.vs,
