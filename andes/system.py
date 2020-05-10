@@ -329,11 +329,12 @@ class System(object):
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags['address'] is True:
-                logger.debug(f'{mdl.class_name:10s}: addresses exist.')
+                logger.debug(f'{mdl.class_name} address exists')
                 continue
             if mdl.n == 0:
                 continue
 
+            logger.debug(f'Setting address for {mdl.class_name}')
             n = mdl.n
             m0 = self.dae.m
             n0 = self.dae.n
