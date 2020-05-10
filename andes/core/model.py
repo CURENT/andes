@@ -1017,6 +1017,12 @@ class Model(object):
 
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
+
+            # TODO:
+            # for variables associated with limiters, limiters need to be evaluated
+            # before variable initialization.
+            # However, if any limit is hit, initialization is likely to fail.
+
             if callable(init_fun):
                 try:
                     instance.v[:] = init_fun(**kwargs)
@@ -1421,7 +1427,7 @@ class SymProcessor(object):
         df /d (xy) pretty print
     dg : sympy.SparseMatrix
         dg /d (xy) pretty print
-    input_dict : OrderedDict
+    inputs_dict : OrderedDict
         All possible symbols in equations, including variables, parameters, discrete flags, and
         config flags. It has the same variables as what ``get_inputs()`` returns.
     vars_dict : OrderedDict
@@ -1517,12 +1523,10 @@ class SymProcessor(object):
             name-symbol pair of all variables, in the order of (states_and_ext + algebs_and_ext)
 
         non_vars_dict : OrderedDict
-            name-symbol pair of alll non-variables, namely, (inputs_dict - vars_dict)
-
-        Returns
-        -------
+            name-symbol pair of all non-variables, namely, (inputs_dict - vars_dict)
 
         """
+
         logger.debug(f'- Generating symbols for {self.class_name}')
         from sympy import Symbol, Matrix
 
@@ -1575,7 +1579,7 @@ class SymProcessor(object):
 
     def _check_expr_symbols(self, expr):
         """
-        Check if expression contains unknown symbols
+        Check if expression contains unknown symbols.
         """
         for item in expr.free_symbols:
             if item not in self.inputs_dict.values():
@@ -1583,7 +1587,7 @@ class SymProcessor(object):
 
     def generate_equations(self):
         logger.debug(f'- Generating equations for {self.class_name}')
-        from sympy import Matrix, sympify, lambdify
+        from sympy import Matrix, sympify, lambdify, SympifyError
 
         self.calls.f_lambdify = OrderedDict()
         self.calls.g_lambdify = OrderedDict()
@@ -1599,7 +1603,12 @@ class SymProcessor(object):
                 if instance.e_str is None:
                     dest.append(0)
                 else:
-                    expr = sympify(instance.e_str, locals=self.inputs_dict)
+                    try:
+                        expr = sympify(instance.e_str, locals=self.inputs_dict)
+                    except SympifyError as e:
+                        logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                        raise e
+
                     self._check_expr_symbols(expr)
                     dest.append(expr)
                     lambda_func = lambdify(inputs_list, expr, 'numpy')
@@ -1615,7 +1624,11 @@ class SymProcessor(object):
         s_lambdify = OrderedDict()
         for name, instance in self.parent.services.items():
             if instance.v_str is not None:
-                expr = sympify(instance.v_str, locals=self.inputs_dict)
+                try:
+                    expr = sympify(instance.v_str, locals=self.inputs_dict)
+                except SympifyError as e:
+                    logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                    raise e
                 self._check_expr_symbols(expr)
                 s_syms[name] = expr
                 s_lambdify[name] = lambdify(inputs_list,
