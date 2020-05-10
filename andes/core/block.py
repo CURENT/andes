@@ -1,7 +1,7 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
 from typing import Optional, Iterable, Dict, Union, List, Tuple
-from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector
+from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
 from andes.core.triplet import JacTriplet
 import numpy as np
 
@@ -953,6 +953,72 @@ class LVGate(Block):
         self.y.v_str = f'minimum({self.u1.name}, {self.u2.name})'
         self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
                        f'{self.name}_y'
+
+
+class GainLimiter(Block):
+    """
+    Gain followed by a limiter.
+
+    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
+
+             ┌─────┐         upper
+             │     │        /¯¯¯¯¯
+        u -> │  K  │ -> x  / -> y
+             │     │ _____/
+             └─────┘ lower
+
+    Parameters
+    ----------
+    u : str, BaseVar
+        Input variable, or an equation string for constructing an anonymous variable
+
+    """
+
+    def __init__(self, u, K, upper, lower, no_upper=False, no_lower=False,
+                 name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.upper = upper
+        self.lower = lower
+
+        if (no_upper and no_lower) is True:
+            raise ValueError("no_upper or no_lower cannot both be True")
+
+        self.no_lower = no_lower
+        self.no_upper = no_upper
+
+        self.x = Algeb(info='Gain output before limiter')
+        self.y = Algeb(info='Gain output after limiter')
+
+        self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
+                               no_upper=no_upper, no_lower=no_lower)
+
+        self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
+
+    def define(self):
+        """
+        TODO: write docstring
+        """
+        if isinstance(self.u, str):
+            u_eqn = self.u
+        else:
+            u_eqn = self.u.name
+
+        self.x.v_str = f'{self.K.name} * {u_eqn}'
+        self.x.e_str = f'{self.K.name} * {u_eqn} - {self.name}_x'
+
+        self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
+        self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
+
+        if not self.no_upper:
+            self.y.e_str += f' + {self.name}_lim_zu*{self.upper.name}'
+            self.y.v_str += f' + {self.name}_lim_zu*{self.upper.name}'
+        if not self.no_lower:
+            self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name}'
+            self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name}'
+
+        self.y.e_str += f' - {self.name}_y'
 
 
 class Piecewise(Block):
