@@ -1,6 +1,6 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
-from typing import Optional, Iterable, Dict, Union
+from typing import Optional, Iterable, Dict, Union, List, Tuple
 from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector
 from andes.core.triplet import JacTriplet
 import numpy as np
@@ -957,26 +957,31 @@ class LVGate(Block):
 
 class Piecewise(Block):
     """
-    Piecewise block.
+    Piecewise block. Outputs an algebraic variable `y`.
 
-    This block takes a list of N points, [x0, x1, ...x_{n-1}] and a list of N+1 functions [fun0, ..., fun_n].
-    Inputs in each range (xk, x_{k+1}] applies its corresponding function `fun_k`. The last range (x_{n-1},
-    +inf) applies the last function `fun_n`.
+    This block takes a list of N points, [x0, x1, ...x_{n-1}] to define N+1 ranges,
+    namely (-inf, x0), (x0, x1), ..., (x_{n-1}, +inf).
+    and a list of N+1 functions [fun0, ..., fun_n].
+
+    Inputs that fall within each range applies the corresponding function.
+    The first range (-inf, x0) applies `fun_0`, and
+    the last range (x_{n-1}, +inf) applies the last function `fun_n`.
 
     Parameters
     ----------
-    points : list
+    points : list, tuple
         A list of piecewise points. Need to be provided in the constructor function.
-    funs : list
+    funs : list, tuple
         A list of strings for the piecewise functions. Need to be provided in the overloaded `define` function.
     """
-    def __init__(self, u, points: list, funs: list, name=None, tex_name=None, info=None):
+    def __init__(self, u, points: Union[List, Tuple], funs: Union[List, Tuple],
+                 name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.points = points
         self.funs = funs
 
-        self.y = Algeb(info='Output of piecewise function', tex_name='y')
+        self.y = Algeb(info='Output of piecewise', tex_name='y')
         self.vars = {'y': self.y}
 
     def define(self):
