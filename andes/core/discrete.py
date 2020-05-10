@@ -370,8 +370,8 @@ class Selector(Discrete):
         self._inputs = None
         self._outputs = None
 
+        # TODO: allow custom initial value
         for i in range(len(self.input_vars)):
-            # TODO: allow custom initial value
             self.__dict__[f's{i}'] = np.array([0])
 
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]

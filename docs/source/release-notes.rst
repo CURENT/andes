@@ -9,6 +9,7 @@ v0.9.4
 
 - Added exciter models EXST1, SEXS and turbine governor model IEEEG1 (support
   single output).
+- Added blocks HVGate and LVGate.
 - Allow to regenerate code for updated models through ``andes prepare -qi``.
 
 v0.9.3 (2020-05-05)

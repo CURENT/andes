@@ -553,7 +553,7 @@ class Lag(Block):
         Input variable
 
     """
-    def __init__(self, u, T, K=1, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T = dummify(T)
