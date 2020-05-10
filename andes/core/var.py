@@ -353,7 +353,16 @@ class ExtVar(BaseVar):
         ----------
         ext_model : Model
             Instance of the parent model
+
+        Warnings
+        --------
+        `link_external` does not check if the ExtVar type is the same
+        as the original variable to reduce performance overhead.
+        It will be a silent error (a dimension too small error from `dae.build_pattern`)
+        if a model uses `ExtAlgeb` to access a `State`, or vice versa.
+
         """
+
         self.parent = ext_model
 
         if isinstance(ext_model, GroupBase):
