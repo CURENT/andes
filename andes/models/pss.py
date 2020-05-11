@@ -4,7 +4,7 @@ Power system stabilizer models.
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
-from andes.core.service import ExtService, OptionalSelect, DeviceFinder
+from andes.core.service import ExtService, DataSelect, DeviceFinder
 from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
 from collections import OrderedDict
@@ -63,7 +63,7 @@ class PSSBase(Model):
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
                             info='Retrieved bus idx')
 
-        self.buss = OptionalSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
         self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 

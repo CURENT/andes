@@ -14,6 +14,7 @@ from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
+from andes.core.service import NumSelect
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -631,7 +632,8 @@ class Model(object):
             self.services_ref[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
-        elif isinstance(value, (NumRepeat, NumReduce, RandomService)):
+        elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
+                                RandomService)):
             self.services_ops[key] = value
 
         elif isinstance(value, Block):

@@ -546,7 +546,7 @@ class System(object):
             self.link_ext_param({mdl.class_name: mdl})
 
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
-            if 'Sn' in mdl.params:
+            if 'Sn' in mdl.__dict__:
                 Sn = mdl.Sn.v
             else:
                 Sn = Sb
@@ -554,26 +554,26 @@ class System(object):
             # If both Vn and Vn1 are not provided, default to Vn = Vb = 1
             # test if is shunt-connected or series-connected to bus, or unconnected to bus
             Vb, Vn = 1, 1
-            if 'bus' in mdl.params:
+            if 'bus' in mdl.__dict__:
                 Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
-                Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
-            elif 'bus1' in mdl.params:
+                Vn = mdl.Vn.v if 'Vn' in mdl.__dict__ else Vb
+            elif 'bus1' in mdl.__dict__:
                 Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
-                Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
+                Vn = mdl.Vn1.v if 'Vn1' in mdl.__dict__ else Vb
 
             Zn = Vn ** 2 / Sn
             Zb = Vb ** 2 / Sb
 
             # process dc parameter pu conversion
             Vdcb, Vdcn, Idcn = 1, 1, 1
-            if 'node' in mdl.params:
+            if 'node' in mdl.__dict__:
                 Vdcb = self.Node.get(src='Vdcn', idx=mdl.node.v, attr='v')
-                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.params else Vdcb
-                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
-            elif 'node1' in mdl.params:
+                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.__dict__ else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.__dict__ else (Sb / Vdcb)
+            elif 'node1' in mdl.__dict__:
                 Vdcb = self.Node.get(src='Vdcn', idx=mdl.node1.v, attr='v')
-                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.params else Vdcb
-                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.__dict__ else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.__dict__ else (Sb / Vdcb)
             Idcb = Sb / Vdcb
             Rb = Vdcb / Idcb
             Rn = Vdcn / Idcn

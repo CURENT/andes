@@ -1,7 +1,7 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
-from andes.core.service import ConstService, ExtService
+from andes.core.service import ConstService, ExtService, NumSelect
 from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
 
@@ -14,6 +14,11 @@ class TGBaseData(ModelData):
                             mandatory=True,
                             unique=True,
                             )
+        self.Tn = NumParam(info='Turbine power rating. Equal to Sn if not provided.',
+                           tex_name='T_n',
+                           unit='MVA',
+                           default=None,
+                           )
         self.wref0 = NumParam(info='Base speed reference',
                               tex_name=r'\omega_{ref0}',
                               default=1.0,
@@ -26,7 +31,7 @@ class TGBase(Model):
         Model.__init__(self, system, config)
         self.group = 'TurbineGov'
         self.flags.update({'tds': True})
-        self.Sn = ExtParam(src='Sn',
+        self.Sg = ExtParam(src='Sn',
                            model='SynGen',
                            indexer=self.syn,
                            tex_name='S_n',
@@ -34,6 +39,12 @@ class TGBase(Model):
                            unit='MVA',
                            export=False,
                            )
+        self.Sn = NumSelect(self.Tn,
+                            fallback=self.Sg,
+                            tex_name='S_n',
+                            info='Turbine or Gen rating',
+                            )
+
         self.Vn = ExtParam(src='Vn',
                            model='SynGen',
                            indexer=self.syn,

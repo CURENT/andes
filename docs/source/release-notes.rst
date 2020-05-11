@@ -2,7 +2,7 @@
 Release Notes
 =============
 
-The APIs before v1.0.0 are in beta and may change without prior notice.
+The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v0.9.4
 -------------------
@@ -16,6 +16,10 @@ v0.9.4
   equations).
 - Allow internal variables to be associated with a discrete component which
   will be updated before initialization (through BaseVar.discrete).
+- Allow turbine governors to specify an optional `Tn` (turbine rating). If
+  not provided, fall back to `Sn` retrieved from generators.
+- Renamed `OptionalSelect` to `DataSelect`; Added `NumSelect`, the array-based
+  version of `DataSelect`.
 - Allow to regenerate code for updated models through ``andes prepare -qi``.
 
 v0.9.3 (2020-05-05)
