@@ -1,7 +1,7 @@
 from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam, dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService
+from andes.core.service import ConstService, ExtService, VarService, PostInitService
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
 from andes.core.discrete import HardLimiter
 
@@ -86,23 +86,12 @@ class ExcBase(Model):
                           info='Bus voltage magnitude',
                           )
 
-        # input excitation voltages; PSS outputs summed at vi
-        self.vi = Algeb(info='Total input voltages',
-                        tex_name='V_i',
-                        unit='p.u.',
-                        )
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',
                           tex_name='v_{out}',
                           v_str='vf0',
                           )
 
-        self.vref = Algeb(info='Reference voltage input',
-                          tex_name='V_{ref}',
-                          unit='p.u.',
-                          v_str='vref0',
-                          e_str='vref0 - vref'
-                          )
         # Note:
         # Subclasses need to define `self.vref0` in the appropriate place
 
@@ -215,6 +204,13 @@ class EXDC2Model(ExcBase):
                                   v_str='vb0 + v',
                                   )  # derived classes to-do: provide `v_str`
 
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+
         self.Se = Algeb(info='Saturation output',
                         tex_name='S_e',
                         unit='p.u.',
@@ -231,6 +227,11 @@ class EXDC2Model(ExcBase):
 
         self.LS = Lag(u=self.v, T=self.TR, K=1.0, info='Sensing lag TF')
 
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        )
         self.vi.v_str = 'vb0'
         self.vi.e_str = '(vref - LS_y - W_y) - vi'
 
@@ -310,6 +311,20 @@ class SEXSModel(ExcBase):
                                   v_str='vf0/K + v',
                                   )
 
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        )
+        self.vi.e_str = '(vref - v) - vi'
+        self.vi.v_str = 'vref0 - v'
+
         self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB)
 
         self.LAW = LagAntiWindup(u=self.LL_y,
@@ -320,9 +335,6 @@ class SEXSModel(ExcBase):
                                  )
 
         self.vout.e_str = 'LAW_y - vout'
-
-        self.vi.e_str = '(vref - v) - vi'
-        self.vi.v_str = 'vref0 - v'
 
 
 class SEXS(SEXSData, SEXSModel):
@@ -399,6 +411,21 @@ class EXST1Model(ExcBase):
                                   v_str='v + vf0 / KA',
                                   )
 
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        )
+        self.vi.v_str = 'vf0 / KA'
+        self.vi.e_str = '(vref - LG_y - WF_y) - vi'
+
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay',
                       )
@@ -433,9 +460,6 @@ class EXST1Model(ExcBase):
 
         self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax,
                                info='Hard limiter on regulator output')
-
-        self.vi.v_str = 'vf0 / KA'
-        self.vi.e_str = '(vref - LG_y - WF_y) - vi'
 
         self.vout.e_str = 'LR_y*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu - vout'
 
@@ -605,30 +629,10 @@ class ESST3AModel(ExcBase):
                            info='q-axis machine current',
                            )
 
-        # TODO: calculate vref0
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  )
-
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
                       )
-
-        self.vi.e_str = '-LG_y + vref - vi'
-        self.vi.v_str = '-LG_y + vref'
-
-        self.HLI = HardLimiter(u=self.vi,
-                               lower=self.VIMIN,
-                               upper=self.VIMAX,
-                               info='Input limiter',
-                               )
-
-        self.vil = Algeb(info='Input voltage after limit',
-                         tex_name='V_{il}',
-                         v_str='HLI_zi*vi + HLI_zl*VIMIN + HLI_zu*VIMAX',
-                         e_str='HLI_zi*vi + HLI_zl*VIMIN + HLI_zu*VIMAX - vil'
-                         )
 
         self.UEL = Algeb(info='Interface var for under exc. limiter',
                          tex_name='U_{EL}',
@@ -636,40 +640,10 @@ class ESST3AModel(ExcBase):
                          e_str='0 - UEL'
                          )
 
-        self.HG = HVGate(u1=self.UEL, u2=self.vil, info='HVGate for under excitation',
-                         )
-
-        self.LL = LeadLag(u=self.HG_y, T1=self.TC, T2=self.TB,
-                          info='Regulator',
-                          )  # LL_y == VA
-
-        self.LAW1 = LagAntiWindup(u=self.LL_y,
-                                  T=self.TA,
-                                  K=self.KA,
-                                  lower=self.VRMIN,
-                                  upper=self.VRMAX,
-                                  info='Lag AW on VR',
-                                  )  # LAW1_y == VR
-
-        self.vrs = Algeb(tex_name='V_{RS}',
-                         info='VR subtract feedback VG',
-                         v_str='LAW1_y - VG_y',
-                         e_str='LAW1_y - VG_y - vrs',
-                         )
-
-        self.LAW2 = LagAntiWindup(u=self.vrs,
-                                  T=self.TM,
-                                  K=self.KM,
-                                  lower=self.VMMIN,
-                                  upper=self.VMMAX,
-                                  info='Lag AW on VM',
-                                  )  # LAW2_y == VM
-
-        self.VE = Algeb(tex_name='V_E',
-                        info='VE',
-                        v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
-                        e_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq)) - VE',
-                        )
+        self.VE = VarService(tex_name='V_E',
+                             info='VE',
+                             v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
+                             )
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
@@ -691,12 +665,81 @@ class ESST3AModel(ExcBase):
                               upper=self.VBMAX,
                               lower=self.VBMIN,
                               no_lower=True,
-                              info='VB with limiter')
+                              info='VB with limiter',
+                              )
+
+        self.VG = GainLimiter(u=self.vout,
+                              K=self.KG,
+                              upper=self.VGMAX,
+                              lower=self.VGMIN,
+                              no_lower=True,
+                              info='Feedback gain with HL',
+                              )
+
+        self.vrs = Algeb(tex_name='V_{RS}',
+                         info='VR subtract feedback VG',
+                         v_str='vf0 / VB_y / KM',
+                         e_str='LAW1_y - VG_y - vrs',
+                         )
+
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='(vrs + VG_y) / KA + v',
+                          e_str='vref0 - vref',
+                          )
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
+
+        # input excitation voltages; PSS outputs summed at vi
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        e_str='-LG_y + vref - vi',
+                        v_str='-v + vref',
+                        )
+
+        self.vil = Algeb(info='Input voltage after limit',
+                         tex_name='V_{il}',
+                         v_str='HLI_zi*vi + HLI_zl*VIMIN + HLI_zu*VIMAX',
+                         e_str='HLI_zi*vi + HLI_zl*VIMIN + HLI_zu*VIMAX - vil'
+                         )
+
+        self.HG = HVGate(u1=self.UEL,
+                         u2=self.vil,
+                         info='HVGate for under excitation',
+                         )
+
+        self.LL = LeadLag(u=self.HG_y, T1=self.TC, T2=self.TB,
+                          info='Regulator',
+                          )  # LL_y == VA
+
+        self.LAW1 = LagAntiWindup(u=self.LL_y,
+                                  T=self.TA,
+                                  K=self.KA,
+                                  lower=self.VRMIN,
+                                  upper=self.VRMAX,
+                                  info='Lag AW on VR',
+                                  )  # LAW1_y == VR
+
+        self.HLI = HardLimiter(u=self.vi,
+                               lower=self.VIMIN,
+                               upper=self.VIMAX,
+                               info='Input limiter',
+                               )
+
+        self.LAW2 = LagAntiWindup(u=self.vrs,
+                                  T=self.TM,
+                                  K=self.KM,
+                                  lower=self.VMMIN,
+                                  upper=self.VMMAX,
+                                  info='Lag AW on VM',
+                                  )  # LAW2_y == VM
 
         self.vout.e_str = 'VB_y * LAW2_y - vout'
-
-        self.VG = GainLimiter(u=self.vout, K=self.KG, upper=self.VGMAX, lower=self.VGMIN,
-                              no_lower=True, info='Feedback gain with HL')
 
 
 class ESST3A(ESST3AData, ESST3AModel):

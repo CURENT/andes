@@ -894,11 +894,11 @@ class HVGate(Block):
         self.u2 = dummify(u2)
         self.enforce_tex_name((u1, u2))
 
-        self.y = Algeb(info='HVGate output', tex_name='y')
         self.sl = Selector(self.u1, self.u2, fun=np.maximum.reduce,
                            info='HVGate Selector',
                            )
 
+        self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.sl)
         self.vars = {'y': self.y, 'sl': self.sl}
 
     def define(self):
@@ -910,8 +910,17 @@ class HVGate(Block):
             0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
             y_0 = maximum(u_1, u_2)
 
+        Notes
+        -----
+        In the implementation, one should not use ::
+
+            self.y.v_str = f'maximum({self.u1.name}, {self.u2.name})',
+
+        because SymPy processes this equation to `{self.u1.name}`.
+        Not sure if this is a bug or intended.
+
         """
-        self.y.v_str = f'maximum({self.u1.name}, {self.u2.name})'
+        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
         self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
                        f'{self.name}_y'
 
@@ -949,8 +958,12 @@ class LVGate(Block):
             0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
             y_0 = minimum(u_1, u_2)
 
+        Notes
+        -----
+        Same problem as `HVGate` as `minimum` does not sympify correctly.
+
         """
-        self.y.v_str = f'minimum({self.u1.name}, {self.u2.name})'
+        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
         self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
                        f'{self.name}_y'
 
@@ -988,8 +1001,8 @@ class GainLimiter(Block):
         self.no_lower = no_lower
         self.no_upper = no_upper
 
-        self.x = Algeb(info='Gain output before limiter')
-        self.y = Algeb(info='Gain output after limiter')
+        self.x = Algeb(info='Gain output before limiter', tex_name='x')
+        self.y = Algeb(info='Gain output after limiter', tex_name='y')
 
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
                                no_upper=no_upper, no_lower=no_lower)

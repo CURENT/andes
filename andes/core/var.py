@@ -1,5 +1,6 @@
 from typing import Optional, Union, List
 from andes.core.param import BaseParam, DummyValue
+from andes.core.discrete import Discrete
 from andes.core.service import BaseService
 from andes.models.group import GroupBase
 from andes.shared import np, ndarray
@@ -23,6 +24,9 @@ class BaseVar(object):
     tex_name : str
         LaTeX-formatted variable name. If is None, use `name`
         instead.
+    discrete : Discrete
+        Associated discrete component. Will call `check_var` on
+        the discrete component.
 
     Attributes
     ----------
@@ -43,6 +47,7 @@ class BaseVar(object):
                  v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
+                 discrete: Optional[Discrete] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -62,6 +67,7 @@ class BaseVar(object):
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
         self.e_str = e_str  # string for symbolic equation
 
+        self.discrete = discrete
         self.v_setter = v_setter  # True if this variable sets the variable value
         self.e_setter = e_setter  # True if this var sets the equation value
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
@@ -219,6 +225,7 @@ class State(BaseVar):
                  v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
+                 discrete: Optional[Discrete] = None,
                  t_const: Optional[Union[BaseParam, DummyValue]] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
@@ -233,6 +240,7 @@ class State(BaseVar):
                          v_str=v_str,
                          v_iter=v_iter,
                          e_str=e_str,
+                         discrete=discrete,
                          v_setter=v_setter,
                          e_setter=e_setter,
                          addressable=addressable,

@@ -470,6 +470,8 @@ class System(object):
             self.vars_to_dae(mdl)
             self.vars_to_models()
 
+        self.s_update_post(models)
+
         # store the inverse of time constants
         self._store_tf(models)
 
@@ -609,6 +611,23 @@ class System(object):
         """
         self.call_models('l_check_eq', models)
         self.call_models('l_set_eq', models)
+
+    def s_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Update variable services by calling ``s_update_var`` of models.
+
+        This function is must be called before any equation evaluation after
+        limiter update function `l_update_var`.
+        """
+        self.call_models('s_update_var', models)
+
+    def s_update_post(self, models: Optional[Union[str, List, OrderedDict]] = None):
+        """
+        Update variable services by calling ``s_update_post`` of models.
+
+        This function is called at the end of `System.init()`.
+        """
+        self.call_models('s_update_post', models)
 
     def fg_to_dae(self):
         """
