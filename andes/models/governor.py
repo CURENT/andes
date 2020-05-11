@@ -350,7 +350,9 @@ class IEEEG1Data(TGBaseData):
         TGBaseData.__init__(self)
         self.K = NumParam(default=20, tex_name='K',
                           info='Gain (1/R) in mach. base',
-                          unit='p.u. (power)', power=True, vrange=(5, 30),
+                          unit='p.u. (power)',
+                          power=True,
+                          vrange=(5, 30),
                           )
         self.T1 = NumParam(default=1, tex_name='T_1',
                            info='Gov. lag time const.',
@@ -470,7 +472,7 @@ class IEEEG1Model(TGBase):
                           )
 
         # `P0` == `tm0`
-        self.vs = Algeb(info='Valve move speed',
+        self.vs = Algeb(info='Valve speed',
                         tex_name='V_s',
                         v_str='0',
                         e_str='(LL_y + tm0 + paux - IAW_y) / T3 - vs',
