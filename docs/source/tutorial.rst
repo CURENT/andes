@@ -113,7 +113,7 @@ For developers, ``andes prepare`` needs to be called immediately following any m
 modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
 
 Option ``-q`` or ``--quick`` can be used to speed up the code generation.
-It skips the generation of LaTeX-formatted equations, which are only used in documentation and the interactive
+It skips the generation of :math:`\LaTeX`-formatted equations, which are only used in documentation and the interactive
 mode.
 
 Option ``-i`` or ``--incremental`` can be used to further speed up the code generation during model development.
@@ -214,7 +214,7 @@ breaker opensat 2 seconds.
 TDS produces two output files by default: a NumPy data file ``ieee14_syn_out.npy``
 and a variable name list file ``ieee14_syn_out.lst``.
 The list file contains three columns: variable indices, variabla name in plain text, and variable
-name in LaTeX format.
+name in the :math:`\LaTeX` format.
 The variable indices are needed to plot the needed variable.
 
 Disable output
@@ -325,10 +325,10 @@ The y-axis variabla indices can also be specified in the Python range fashion
 . For example, ``andes plot kundur_full_out.npy 0 2:21:6`` will plot the
 variables at indices 2, 8, 14 and 20.
 
-``andes plot`` will attempt to render with LaTeX if ``dvipng`` program is in the search path.
-Figures rendered by LaTeX is considerably better in symbols quality but takes much longer time.
-In case LaTeX is available but fails (frequently happens on Windows), the option ``-d`` can be used to disable
-LaTeX rendering.
+``andes plot`` will attempt to render with :math:`\LaTeX` if ``dvipng`` program is in the search path.
+Figures rendered by :math:`\LaTeX` is considerably better in symbols quality but takes much longer time.
+In case :math:`\LaTeX` is available but fails (frequently happens on Windows), the option ``-d`` can be used to disable
+:math:`\LaTeX` rendering.
 
 Other optional arguments are listed in the following.
 
@@ -357,7 +357,7 @@ optional arguments:
     --dpi DPI                       image resolution in dot per inch (DPI)
     -g, --grid                      grid on
     --greyscale                     greyscale on
-    -d, --no-latex                  disable LaTex formatting
+    -d, --no-latex                  disable LaTeX formatting
     -n, --no-show                   do not show the plot window
     --ytimes YTIMES                 scale the y-axis values by YTIMES
     -c, --tocsv                     convert npy output to csv
@@ -611,7 +611,7 @@ A few formatting arguments are supported:
 
 Pretty Print of Equations
 ----------------------------------------
-Each ANDES models offers pretty print of LaTeX-formatted equations in the jupyter notebook environment.
+Each ANDES models offers pretty print of :math:`\LaTeX`-formatted equations in the jupyter notebook environment.
 
 To use this feature, symbolic equations need to be generated in the current session using ::
 
@@ -636,8 +636,8 @@ equation or Jacobian name.
 Supported equation names include the following:
 
 - ``xy``: variables in the order of `State`, `ExtState`, `Algeb` and `ExtAlgeb`
-- ``f``: the **right-hand side of** differential equations :math:`T \dot{x} = \vector{f}`
-- ``g``: implicit algebraic equations :math:`0 = \vector{g}`
+- ``f``: the **right-hand side of** differential equations :math:`T \dot{\mathbf{x}} = \mathbf{f}`
+- ``g``: implicit algebraic equations :math:`0 = \mathbf{g}`
 - ``df``: derivatives of ``f`` over all variables ``xy``
 - ``dg``: derivatives of ``g`` over all variables ``xy``
 - ``s``: the value equations for `ConstService`
