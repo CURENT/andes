@@ -148,6 +148,8 @@ class ExtService(BaseService):
                  src: str,
                  indexer: BaseParam,
                  attr='v',
+                 allow_none=False,
+                 default=0,
                  name: str = None,
                  tex_name: str = None,
                  info=None,
@@ -157,6 +159,8 @@ class ExtService(BaseService):
         self.src = src
         self.indexer = indexer
         self.attr = attr
+        self.allow_none = allow_none
+        self.default = default
         self.v = np.array([0.])
 
     def assign_memory(self, n):
@@ -178,7 +182,10 @@ class ExtService(BaseService):
             return
 
         # the same `get` api for Group and Model
-        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr)
+        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr,
+                               allow_none=self.allow_none,
+                               default=self.default,
+                               )
 
 
 class BackRef(BaseService):

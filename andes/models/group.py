@@ -53,10 +53,13 @@ class GroupBase(object):
                            f'<{self._idx2model[idx].class_name}>')
         self._idx2model[idx] = model
 
-    def idx2model(self, idx):
+    def idx2model(self, idx, allow_none=False):
         """
         Find model name for the given idx.
+
+        If `allow_none` is True, will return None at the corr. position.
         """
+
         ret = []
         single = False
         if not isinstance(idx, (list, tuple, np.ndarray)):
@@ -67,7 +70,10 @@ class GroupBase(object):
 
         for i in idx:
             try:
-                ret.append(self._idx2model[i])
+                if i is None and allow_none:
+                    ret.append(None)
+                else:
+                    ret.append(self._idx2model[i])
             except KeyError:
                 raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
 
@@ -75,7 +81,7 @@ class GroupBase(object):
             ret = ret[0]
         return ret
 
-    def get(self, src: str, idx, attr: str = 'v'):
+    def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
         Based on the indexer, get the `attr` field of the `src` parameter or variable.
 
@@ -84,9 +90,13 @@ class GroupBase(object):
         src : str
             param or var name
         idx : array-like
-
+            device idx
         attr
             The attribute of the param or var to retrieve
+        allow_none : bool
+            True to allow None values in the indexer
+        default : float
+            If `allow_none` is true, the default value to use for None indexer.
 
         Returns
         -------
@@ -99,19 +109,26 @@ class GroupBase(object):
         if n == 0:
             return np.zeros(0)
 
-        ret = None
-        models = self.idx2model(idx)
+        ret = [''] * n
+        _type_set = False
+        models = self.idx2model(idx, allow_none=allow_none)
+
         for i, idx in enumerate(idx):
-            uid = models[i].idx2uid(idx)
-            instance = models[i].__dict__[src]
-            val = instance.__dict__[attr][uid]
+            if models[i] is not None:
+                uid = models[i].idx2uid(idx)
+                instance = models[i].__dict__[src]
+                val = instance.__dict__[attr][uid]
+            else:
+                val = default
 
             # deduce the type for ret
-            if ret is None:
+            if not _type_set:
                 if isinstance(val, str):
                     ret = [''] * n
                 else:
                     ret = np.zeros(n)
+                _type_set = True
+
             ret[i] = val
 
         return ret

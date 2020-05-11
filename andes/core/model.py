@@ -687,18 +687,19 @@ class Model(object):
             A list containing the unique indices of the devices
         """
         if idx is None:
-            logger.error("idx2uid cannot search for None idx")
+            logger.debug("idx2uid returned None for idx None")
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
         elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
-            return [self.uid[i] for i in idx]
+            return [self.uid[i] if i is not None else None
+                    for i in idx]
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
-    def get(self, src: str, idx, attr: str = 'v'):
+    def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
         Get the value of an attribute of a model property.
 
@@ -713,6 +714,10 @@ class Model(object):
         attr : str, optional, default='v'
             The attribute of the property to get.
             ``v`` for values, ``a`` for address, and ``e`` for equation value.
+        allow_none : bool
+            True to allow None values in the indexer
+        default : float
+            If `allow_none` is true, the default value to use for None indexer.
 
         Returns
         -------
@@ -723,7 +728,11 @@ class Model(object):
         uid = self.idx2uid(idx)
         if isinstance(self.__dict__[src].__dict__[attr], list):
             if isinstance(uid, Iterable):
-                return [self.__dict__[src].__dict__[attr][i] for i in uid]
+                if not allow_none and (uid is None or None in uid):
+                    raise KeyError('None not allowed in uid/idx. Enable through '
+                                   '`allow_none` and provide a `default` if needed.')
+                return [self.__dict__[src].__dict__[attr][i] if i is not None else default
+                        for i in uid]
 
         return self.__dict__[src].__dict__[attr][uid]
 
