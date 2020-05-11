@@ -70,7 +70,7 @@ class ExcBase(Model):
                                model='SynGen',
                                indexer=self.syn,
                                tex_name=r'X_{ad}I_{fd}',
-                               info='Armature reaction to excitation current',
+                               info='Armature excitation current',
                                )
         # from bus, get a and v
         self.a = ExtAlgeb(model='Bus',

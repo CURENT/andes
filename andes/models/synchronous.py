@@ -162,7 +162,7 @@ class GENBase(Model):
                         )
 
         self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
-                            info='d-axis armature reaction over excitation current',
+                            info='d-axis armature excitation current',
                             unit='p.u (kV)',
                             v_str='vf0',
                             e_str='vf0 - XadIfd'
