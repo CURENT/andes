@@ -91,6 +91,8 @@ def create_parser():
     doc.add_argument('--config', '-c', help='Config help')
     doc.add_argument('--list', '-l', help='List supported models and groups', action='store_true',
                      dest='list_supported')
+    doc.add_argument('--init-seq', help='Show model initialization sequence', action='store_true',
+                     )
 
     misc = sub_parsers.add_parser('misc')
     config_exclusive = misc.add_mutually_exclusive_group()

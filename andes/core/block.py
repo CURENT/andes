@@ -1,8 +1,9 @@
 from andes.core.var import Algeb, State
 from andes.core.param import dummify
-from typing import Optional, Iterable, Dict, Union
-from andes.core.discrete import Discrete, AntiWindup, LessThan
+from typing import Optional, Iterable, Dict, Union, List, Tuple
+from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
 from andes.core.triplet import JacTriplet
+import numpy as np
 
 
 class Block(object):
@@ -536,16 +537,11 @@ class Lag(Block):
 
              ┌────────┐
              │    K   │
-        u -> │ ────── │ -> x
+        u -> │ ────── │ -> y
              │ 1 + sT │
              └────────┘
 
-    Exports one state variable `x` as the output.
-
-    Warnings
-    --------
-    The current version exports `x` as the output instead of `y`.
-    It it subject to change in future versions.
+    Exports one state variable `y` as the output.
 
     Parameters
     ----------
@@ -557,17 +553,17 @@ class Lag(Block):
         Input variable
 
     """
-    def __init__(self, u, T, K=1, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T = dummify(T)
         self.K = dummify(K)
 
         self.enforce_tex_name((self.K, self.T))
-        self.x = State(info='State in lag transfer function', tex_name="x'",
+        self.y = State(info='State in lag transfer function', tex_name="y",
                        t_const=self.T)
 
-        self.vars = {'x': self.x}
+        self.vars = {'y': self.y}
 
     def define(self):
         r"""
@@ -578,12 +574,12 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x') \\
-            x'^{(0)} &= K u
+            T \dot{y} &= (Ku - y) \\
+            y^{(0)} &= K u
 
         """
-        self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'({self.K.name} * {self.u.name} - {self.name}_x)'
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
 
 
 class LagAntiWindup(Block):
@@ -594,14 +590,13 @@ class LagAntiWindup(Block):
                    /¯¯¯¯¯¯
              ┌────────┐
              │    K   │
-        u -> │ ────── │ -> x
+        u -> │ ────── │ -> y
              │ 1 + sT │
              └────────┘
            ______/
            lower
 
-    Exports one state variable `x` as the output.
-    Exports one AntiWindup instance `lim`.
+    Exports one state variable `y` as the output and one AntiWindup instance `lim`.
 
     Parameters
     ----------
@@ -625,11 +620,11 @@ class LagAntiWindup(Block):
 
         self.enforce_tex_name((self.T, self.K))
 
-        self.x = State(info='State in lag TF', tex_name="x'",
+        self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
-        self.lim = AntiWindup(u=self.x, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
 
-        self.vars = {'x': self.x, 'lim': self.lim}
+        self.vars = {'y': self.y, 'lim': self.lim}
 
     def define(self):
         r"""
@@ -640,12 +635,12 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            T \dot{x'} &= (Ku - x) \\
-            x'^{(0)} &= K u
+            T \dot{y} &= (Ku - y) \\
+            y^{(0)} &= K u
 
         """
-        self.x.v_str = f'{self.u.name} * {self.K.name}'
-        self.x.e_str = f'{self.K.name} * {self.u.name} - {self.name}_x'
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
 
 
 class Lag2ndOrd(Block):
@@ -882,28 +877,190 @@ class LeadLagLimit(Block):
                        f'{self.name}_y'
 
 
-class Piecewise(Block):
+class HVGate(Block):
     """
-    Piecewise block.
+    High Value Gate. Outputs the maximum of two inputs. ::
 
-    This block takes a list of N points, [x0, x1, ...x_{n-1}] and a list of N+1 functions [fun0, ..., fun_n].
-    Inputs in each range (xk, x_{k+1}] applies its corresponding function `fun_k`. The last range (x_{n-1},
-    +inf) applies the last function `fun_n`.
+              ┌─────────+
+        u1 -> │ HV Gate  \
+              │           > ->  y
+        u2 -> │  (MAX)   /
+              └─────────+
+
+    """
+    def __init__(self, u1, u2, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u1 = dummify(u1)
+        self.u2 = dummify(u2)
+        self.enforce_tex_name((u1, u2))
+
+        self.sl = Selector(self.u1, self.u2, fun=np.maximum.reduce,
+                           info='HVGate Selector',
+                           )
+
+        self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.sl)
+        self.vars = {'y': self.y, 'sl': self.sl}
+
+    def define(self):
+        """
+        Implemented equations and initial conditions
+
+        .. math ::
+
+            0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
+            y_0 = maximum(u_1, u_2)
+
+        Notes
+        -----
+        In the implementation, one should not use ::
+
+            self.y.v_str = f'maximum({self.u1.name}, {self.u2.name})',
+
+        because SymPy processes this equation to `{self.u1.name}`.
+        Not sure if this is a bug or intended.
+
+        """
+        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
+        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
+                       f'{self.name}_y'
+
+
+class LVGate(Block):
+    """
+    Low Value Gate. Outputs the minimum of the two inputs. ::
+
+              ┌─────────+
+        u1 -> │ LV Gate  \
+              │           > ->  y
+        u2 -> │  (MIN)   /
+              └─────────+
+
+    """
+    def __init__(self, u1, u2, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u1 = dummify(u1)
+        self.u2 = dummify(u2)
+        self.enforce_tex_name((u1, u2))
+
+        self.y = Algeb(info='LVGate output', tex_name='y')
+        self.sl = Selector(self.u1, self.u2, fun=np.minimum.reduce,
+                           info='LVGate Selector',
+                           )
+
+        self.vars = {'y': self.y, 'sl': self.sl}
+
+    def define(self):
+        """
+        Implemented equations and initial conditions
+
+        .. math ::
+
+            0 = s_0^{sl} u_1 + s_1^{sl} u_2 - y
+            y_0 = minimum(u_1, u_2)
+
+        Notes
+        -----
+        Same problem as `HVGate` as `minimum` does not sympify correctly.
+
+        """
+        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
+        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
+                       f'{self.name}_y'
+
+
+class GainLimiter(Block):
+    """
+    Gain followed by a limiter.
+
+    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
+
+             ┌─────┐         upper
+             │     │        /¯¯¯¯¯
+        u -> │  K  │ -> x  / -> y
+             │     │ _____/
+             └─────┘ lower
 
     Parameters
     ----------
-    points : list
+    u : str, BaseVar
+        Input variable, or an equation string for constructing an anonymous variable
+
+    """
+
+    def __init__(self, u, K, upper, lower, no_upper=False, no_lower=False,
+                 name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.upper = upper
+        self.lower = lower
+
+        if (no_upper and no_lower) is True:
+            raise ValueError("no_upper or no_lower cannot both be True")
+
+        self.no_lower = no_lower
+        self.no_upper = no_upper
+
+        self.x = Algeb(info='Gain output before limiter', tex_name='x')
+        self.y = Algeb(info='Gain output after limiter', tex_name='y')
+
+        self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
+                               no_upper=no_upper, no_lower=no_lower)
+
+        self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
+
+    def define(self):
+        """
+        TODO: write docstring
+        """
+        if isinstance(self.u, str):
+            u_eqn = self.u
+        else:
+            u_eqn = self.u.name
+
+        self.x.v_str = f'{self.K.name} * {u_eqn}'
+        self.x.e_str = f'{self.K.name} * {u_eqn} - {self.name}_x'
+
+        self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
+        self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
+
+        if not self.no_upper:
+            self.y.e_str += f' + {self.name}_lim_zu*{self.upper.name}'
+            self.y.v_str += f' + {self.name}_lim_zu*{self.upper.name}'
+        if not self.no_lower:
+            self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name}'
+            self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name}'
+
+        self.y.e_str += f' - {self.name}_y'
+
+
+class Piecewise(Block):
+    """
+    Piecewise block. Outputs an algebraic variable `y`.
+
+    This block takes a list of N points, [x0, x1, ...x_{n-1}] to define N+1 ranges,
+    namely (-inf, x0), (x0, x1), ..., (x_{n-1}, +inf).
+    and a list of N+1 functions [fun0, ..., fun_n].
+
+    Inputs that fall within each range applies the corresponding function.
+    The first range (-inf, x0) applies `fun_0`, and
+    the last range (x_{n-1}, +inf) applies the last function `fun_n`.
+
+    Parameters
+    ----------
+    points : list, tuple
         A list of piecewise points. Need to be provided in the constructor function.
-    funs : list
+    funs : list, tuple
         A list of strings for the piecewise functions. Need to be provided in the overloaded `define` function.
     """
-    def __init__(self, u, points: list, funs: list, name=None, tex_name=None, info=None):
+    def __init__(self, u, points: Union[List, Tuple], funs: Union[List, Tuple],
+                 name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.points = points
         self.funs = funs
 
-        self.y = Algeb(info='Output of piecewise function', tex_name='y')
+        self.y = Algeb(info='Output of piecewise', tex_name='y')
         self.vars = {'y': self.y}
 
     def define(self):

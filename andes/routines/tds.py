@@ -262,7 +262,8 @@ class TDS(BaseRoutine):
             logger.error('Variable Values:')
             logger.error(system.dae.xy[fail_idx])
 
-            breakpoint()
+            if system.options.get('verbose') == 1:
+                breakpoint()
             system.exit_code += 1
             return False
 
@@ -273,6 +274,7 @@ class TDS(BaseRoutine):
         system = self.system
         system.dae.clear_fg()
         system.l_update_var(models=models)
+        system.s_update_var(models=models)  # update VarService
         system.f_update(models=models)
         system.g_update(models=models)
         system.l_update_eq(models=models)

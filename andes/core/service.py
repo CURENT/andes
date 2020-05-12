@@ -89,7 +89,7 @@ class ConstService(BaseService):
     def __init__(self,
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
-                 name=None, tex_name=None, info=None):
+                 name: Optional[str] = None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
@@ -97,7 +97,21 @@ class ConstService(BaseService):
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(self.n)
+        self.v = np.zeros(n)
+
+
+class VarService(ConstService):
+    """
+    Variable service that gets updated in each step/loop as variables change.
+    """
+    pass
+
+
+class PostInitService(ConstService):
+    """
+    Constant service that gets stored once after init.
+    """
+    pass
 
 
 class ExtService(BaseService):
@@ -147,7 +161,7 @@ class ExtService(BaseService):
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(self.n)
+        self.v = np.zeros(n)
 
     def link_external(self, ext_model):
         """

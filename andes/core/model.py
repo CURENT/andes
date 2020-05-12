@@ -12,7 +12,7 @@ from andes.core.block import Block
 from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-from andes.core.service import BaseService, ConstService, BackRef
+from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 
 from andes.utils.paths import get_pkl_path
@@ -539,9 +539,10 @@ class Model(object):
         self.blocks = OrderedDict()           # blocks
 
         self.services = OrderedDict()         # service/temporary variables
-        self.services_ref = OrderedDict()
+        self.services_var = OrderedDict()     # variable services updated each step/iter
+        self.services_post = OrderedDict()    # post-initialization storage services
+        self.services_ref = OrderedDict()     # BackRef
         self.services_fnd = OrderedDict()     # services to find/add devices
-        self.services_tc = OrderedDict()      # time-constant services
         self.services_ext = OrderedDict()     # external services (to be retrieved)
         self.services_ops = OrderedDict()     # operational services (for special usages)
 
@@ -558,6 +559,8 @@ class Model(object):
             f_num=False,        # True if the model defines `f_numeric`
             g_num=False,        # True if the model defines `g_numeric`
             j_num=False,        # True if the model defines `j_numeric`
+            s_num=False,        # True if the model defines `s_numeric`
+            sv_num=False,       # True if the model defines `s_numeric_var`
             sys_base=False,     # True if is parameters have been converted to system base
             address=False,      # True if address is assigned
             initialized=False,  # True if variables have been initialized
@@ -617,6 +620,11 @@ class Model(object):
             self.discrete[key] = value
         elif isinstance(value, ConstService):   # services with only `v_str`
             self.services[key] = value
+            # store VarService in an additional dict
+            if isinstance(value, VarService):
+                self.services_var[key] = value
+            elif isinstance(value, PostInitService):
+                self.services_post[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
         elif isinstance(value, BackRef):
@@ -865,17 +873,20 @@ class Model(object):
         Service values are updated sequentially.
         The ``v`` attribute of services will be assigned at a new memory.
         """
-        if (self.n == 0) or (self.in_use is False):
-            return
+
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     # DO NOT use in-place operation since the return can be complex number
-                    instance.v = func(**kwargs)
+
+                    # TODO: enforce type for service
+                    # func may not return an existing array which belong to another variable.
+
+                    instance.v = np.array(func(**kwargs))
                 else:
-                    instance.v = func
+                    instance.v = np.array(func)
 
                 if not isinstance(instance.v, np.ndarray):
                     instance.v = instance.v * np.ones(self.n)
@@ -887,16 +898,49 @@ class Model(object):
         # Apply both the individual `v_numeric` and Model-level `s_numeric`
         for instance in self.services.values():
             func = instance.v_numeric
-            if callable(func):
+            if func is not None and callable(func):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
 
-        # Evaluate TimeConstant multiplicative inverse
-        for instance in self.services_tc.values():
-            instance.inverse()
+        if self.flags['s_num'] is True:
+            kwargs = self.get_inputs(refresh=True)
+            self.s_numeric(**kwargs)
 
-        kwargs = self.get_inputs(refresh=True)
-        self.s_numeric(**kwargs)
+    def s_update_var(self):
+        """
+        Update VarService.
+        """
+        kwargs = self.get_inputs()
+        if len(self.services_var):
+            for name, instance in self.services_var.items():
+                func = self.calls.s_lambdify[name]
+                if callable(func):
+                    instance.v[:] = func(**kwargs)
+
+            # Apply both the individual `v_numeric` and Model-level `s_numeric_var`
+            for instance in self.services_var.values():
+                func = instance.v_numeric
+                if func is not None and callable(func):
+                    instance.v[:] = func(**kwargs)
+
+        if self.flags['sv_num'] is True:
+            self.s_numeric_var(**kwargs)
+
+    def s_update_post(self):
+        """
+        Update post-initialization services
+        """
+
+        kwargs = self.get_inputs()
+        if len(self.services_post):
+            for name, instance in self.services_post.items():
+                func = self.calls.s_lambdify[name]
+                if callable(func):
+                    instance.v[:] = func(**kwargs)
+            for instance in self.services_post.values():
+                func = instance.v_numeric
+                if func is not None and callable(func):
+                    instance.v[:] = func(**kwargs)
 
     def _init_wrap(self, x0, params):
         """
@@ -1015,13 +1059,21 @@ class Model(object):
             if instance.v_str is None:
                 continue
 
+            # for variables associated with limiters, limiters need to be evaluated
+            # before variable initialization.
+            # However, if any limit is hit, initialization is likely to fail.
+
+            if instance.discrete is not None:
+                instance.discrete.check_var()
+
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
+
             if callable(init_fun):
                 try:
                     instance.v[:] = init_fun(**kwargs)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    raise e
             else:
                 instance.v[:] = init_fun
 
@@ -1031,7 +1083,7 @@ class Model(object):
             self.init_iter()
         # ----------------------------------------
 
-        # call custom variable initializer after generated initializers
+        # call custom variable initializer after generated init
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
@@ -1045,7 +1097,7 @@ class Model(object):
         for name in self.vars_decl_order.keys():
             out.append(name)
 
-        logger.info(f'Initialization order: {",".join(out)}')
+        logger.info(f'Initialization order: \n{", ".join(out)}')
 
     def f_update(self):
         """
@@ -1349,6 +1401,14 @@ class Model(object):
         """
         pass
 
+    def s_numeric_var(self, **kwargs):
+        """
+        Custom variable service value functions. Modify ``VarService.v`` directly.
+
+        This custom numerical function is evaluated at each step/iteration before equation update.
+        """
+        pass
+
     def j_numeric(self, **kwargs):
         """
         Custom numeric update functions.
@@ -1421,7 +1481,7 @@ class SymProcessor(object):
         df /d (xy) pretty print
     dg : sympy.SparseMatrix
         dg /d (xy) pretty print
-    input_dict : OrderedDict
+    inputs_dict : OrderedDict
         All possible symbols in equations, including variables, parameters, discrete flags, and
         config flags. It has the same variables as what ``get_inputs()`` returns.
     vars_dict : OrderedDict
@@ -1517,12 +1577,10 @@ class SymProcessor(object):
             name-symbol pair of all variables, in the order of (states_and_ext + algebs_and_ext)
 
         non_vars_dict : OrderedDict
-            name-symbol pair of alll non-variables, namely, (inputs_dict - vars_dict)
-
-        Returns
-        -------
+            name-symbol pair of all non-variables, namely, (inputs_dict - vars_dict)
 
         """
+
         logger.debug(f'- Generating symbols for {self.class_name}')
         from sympy import Symbol, Matrix
 
@@ -1575,7 +1633,7 @@ class SymProcessor(object):
 
     def _check_expr_symbols(self, expr):
         """
-        Check if expression contains unknown symbols
+        Check if expression contains unknown symbols.
         """
         for item in expr.free_symbols:
             if item not in self.inputs_dict.values():
@@ -1583,7 +1641,7 @@ class SymProcessor(object):
 
     def generate_equations(self):
         logger.debug(f'- Generating equations for {self.class_name}')
-        from sympy import Matrix, sympify, lambdify
+        from sympy import Matrix, sympify, lambdify, SympifyError
 
         self.calls.f_lambdify = OrderedDict()
         self.calls.g_lambdify = OrderedDict()
@@ -1599,7 +1657,12 @@ class SymProcessor(object):
                 if instance.e_str is None:
                     dest.append(0)
                 else:
-                    expr = sympify(instance.e_str, locals=self.inputs_dict)
+                    try:
+                        expr = sympify(instance.e_str, locals=self.inputs_dict)
+                    except SympifyError as e:
+                        logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                        raise e
+
                     self._check_expr_symbols(expr)
                     dest.append(expr)
                     lambda_func = lambdify(inputs_list, expr, 'numpy')
@@ -1615,7 +1678,11 @@ class SymProcessor(object):
         s_lambdify = OrderedDict()
         for name, instance in self.parent.services.items():
             if instance.v_str is not None:
-                expr = sympify(instance.v_str, locals=self.inputs_dict)
+                try:
+                    expr = sympify(instance.v_str, locals=self.inputs_dict)
+                except SympifyError as e:
+                    logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                    raise e
                 self._check_expr_symbols(expr)
                 s_syms[name] = expr
                 s_lambdify[name] = lambdify(inputs_list,

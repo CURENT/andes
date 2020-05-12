@@ -68,6 +68,7 @@ class PFlow(BaseRoutine):
         # evaluate discrete, differential, algebraic, and Jacobians
         system.dae.clear_fg()
         system.l_update_var(self.models)
+        system.s_update_var(self.models)
         system.f_update(self.models)
         system.g_update(self.models)
         system.l_update_eq(self.models)

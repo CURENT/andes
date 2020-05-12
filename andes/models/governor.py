@@ -68,8 +68,14 @@ class TGBase(Model):
                            indexer=self.syn,
                            tex_name=r'\tau_m',
                            e_str='u * (pout - tm0)',
-                           info='Mechanical power to generator',
+                           info='Mechanical power interface to SynGen',
                            )
+        # `paux` must be zero upon initialization
+        self.paux = Algeb(info='Auxiliary power input',
+                          tex_name='P_{aux}',
+                          v_str='paux0',
+                          e_str='paux0 - paux',
+                          )
         self.pout = Algeb(info='Turbine final output power',
                           tex_name='P_{out}',
                           v_str='u*tm0',
@@ -246,13 +252,6 @@ class TGOV1Model(TGBase):
                           e_str='tm0 * R - pref',
                           )
 
-        # `paux` must be zero upon initialization
-        self.paux = Algeb(info='Auxiliary power input',
-                          tex_name='P_{aux}',
-                          v_str='paux0',
-                          e_str='paux0 - paux',
-                          )
-
         self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
@@ -271,7 +270,7 @@ class TGOV1Model(TGBase):
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
-        self.LL = LeadLag(u=self.LAG_x,
+        self.LL = LeadLag(u=self.LAG_y,
                           T1=self.T2,
                           T2=self.T3,
                           )
@@ -299,27 +298,27 @@ class TGOV1ModelAlt(TGBase):
                         v_str='tm0',
                         e_str='(wd + pref) * gain - pd')
 
-        self.LAG_x = State(info='State in lag transfer function',
+        self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
-                           e_str='LAG_lim_zi * (1 * pd - LAG_x)',
+                           e_str='LAG_lim_zi * (1 * pd - LAG_y)',
                            t_const=self.T1,
                            v_str='pd',
                            )
-        self.LAG_lim = AntiWindup(u=self.LAG_x,
+        self.LAG_lim = AntiWindup(u=self.LAG_y,
                                   lower=self.VMIN,
                                   upper=self.VMAX,
                                   tex_name='lim_{lag}',
                                   )
         self.LL_x = State(info='State in lead-lag transfer function',
                           tex_name="x'_{LL}",
-                          v_str='LAG_x',
-                          e_str='(LAG_x - LL_x)',
+                          v_str='LAG_y',
+                          e_str='(LAG_y - LL_x)',
                           t_const=self.T3
                           )
         self.LL_y = Algeb(info='Lead-lag Output',
                           tex_name='y_{LL}',
-                          v_str='LAG_x',
-                          e_str='T2 / T3 * (LAG_x - LL_x) + LL_x - LL_y',
+                          v_str='LAG_y',
+                          e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y',
                           )
 
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
@@ -472,8 +471,9 @@ class IEEEG1Model(TGBase):
 
         # `P0` == `tm0`
         self.vs = Algeb(info='Valve move speed',
+                        tex_name='V_s',
                         v_str='0',
-                        e_str='(LL_y + tm0 - IAW_y) / T3 - vs',
+                        e_str='(LL_y + tm0 + paux - IAW_y) / T3 - vs',
                         )
 
         self.HL = HardLimiter(u=self.vs,
@@ -483,6 +483,7 @@ class IEEEG1Model(TGBase):
                               )
 
         self.vsl = Algeb(info='Valve move speed after limiter',
+                         tex_name='V_{sl}',
                          v_str='vs * HL_zi + UC * HL_zl + UO * HL_zu',
                          e_str='vs * HL_zi + UC * HL_zl + UO * HL_zu - vsl',
                          )
@@ -497,20 +498,22 @@ class IEEEG1Model(TGBase):
 
         self.L4 = Lag(u=self.IAW_y, T=self.T4, K=1)
 
-        self.L5 = Lag(u=self.L4_x, T=self.T5, K=1)
+        self.L5 = Lag(u=self.L4_y, T=self.T5, K=1)
 
-        self.L6 = Lag(u=self.L5_x, T=self.T6, K=1)
+        self.L6 = Lag(u=self.L5_y, T=self.T6, K=1)
 
-        self.L7 = Lag(u=self.L6_x, T=self.T7, K=1)
+        self.L7 = Lag(u=self.L6_y, T=self.T7, K=1)
 
         self.PHP = Algeb(info='HP output',
-                         v_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x',
-                         e_str='K1*L4_x + K3*L5_x + K5*L6_x + K7*L7_x - PHP',
+                         tex_name='P_{HP}',
+                         v_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y',
+                         e_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y - PHP',
                          )
 
         self.PLP = Algeb(info='LP output',
-                         v_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x',
-                         e_str='K2*L4_x + K4*L5_x + K6*L6_x + K8*L7_x - PLP',
+                         tex_name='P_{LP}',
+                         v_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y',
+                         e_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y - PLP',
                          )
 
         self.pout.e_str = 'PHP - pout'
@@ -522,20 +525,15 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
 
     TODO: allow connecting to the second generator
 
-    Notes from PowerWorld documentation:
-
-    https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf
-
-    ::
+    Notes from `PowerWorld documentation
+    <https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/
+    Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf>`_ : ::
 
         For the IEEEG1 model, if the turbine rating is omitted
         then the MVABase of only the high-pressure generator is used.
 
-    Notes from NEPLAN manual:
-
-    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf
-
-    ::
+    Notes from `NEPLAN manual
+    <https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf>`_: ::
 
         For a tandem-compound turbine the parameters K2, K4, K6,
         and K8 are ignored. For a cross- compound turbine,
@@ -548,6 +546,7 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
         K2, K4, K6, K8 must describe the second turbine shaft.
         Normally K1 + K3 + K5 + K7 = 1.0 and K2 + K4 + K6 + K8 = 1.0
         (if second generator is present).
+
     """
 
     def __init__(self, system, config):

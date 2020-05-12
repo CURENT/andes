@@ -153,6 +153,10 @@ class Limiter(Discrete):
         Parameter instance for the lower limit
     upper : BaseParam
         Parameter instance for the upper limit
+    no_lower : bool
+        True to only use the upper limit
+    no_upper : bool
+        True to only use the lower limit
 
     Attributes
     ----------
@@ -165,19 +169,29 @@ class Limiter(Discrete):
         Flags for violating the upper limit
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
+                 no_upper=False, no_lower=False):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = lower
         self.upper = upper
         self.enable = enable
+        self.no_upper = no_upper
+        self.no_lower = no_lower
 
         self.zu = np.array([0])
         self.zl = np.array([0])
         self.zi = np.array([1])
 
-        self.export_flags = ['zl', 'zi', 'zu']
-        self.export_flags_tex = ['z_l', 'z_i', 'z_u']
+        self.export_flags = ['zi']
+        self.export_flags_tex = ['z_i']
+
+        if not self.no_lower:
+            self.export_flags.append('zl')
+            self.export_flags_tex.append('z_l')
+        if not self.no_upper:
+            self.export_flags.append('zu')
+            self.export_flags_tex.append('z_u')
 
     def check_var(self, *args, **kwargs):
         """
@@ -185,8 +199,12 @@ class Limiter(Discrete):
         """
         if not self.enable:
             return
-        self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
-        self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+
+        if not self.no_upper:
+            self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+        if not self.no_lower:
+            self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
 
@@ -301,17 +319,17 @@ class AntiWindup(Limiter):
 
 class Selector(Discrete):
     """
-    Selection of variables using the provided reduce function.
+    Selection between two variables using the provided reduce function.
 
     The reduce function should take the given number of arguments. An example function is `np.maximum.reduce`
     which can be used to select the maximum.
 
-    Names are in `s0`, `s1`, ... and `sn`
+    Names are in `s0`, `s1`.
 
     Warnings
     --------
     A potential bug when more than two inputs are provided, and values in different inputs are equal.
-    FIXME: More than one flag will se true in this case.
+    Only two inputs are allowed.
 
     Examples
     --------
@@ -320,7 +338,7 @@ class Selector(Discrete):
     After the definitions of `v0` and `v1`, define the algebraic variable `vmax` for the largest value,
     and a selector `vs` ::
 
-        self.vmax = Algeb(v_str='maximum(v0, v1) - vmax',
+        self.vmax = Algeb(v_str='maximum(v0, v1)',
                           tex_name='v_{max}',
                           e_str='vs_s0 * v0 + vs_s1 * v1 - vmax')
 
@@ -338,18 +356,23 @@ class Selector(Discrete):
     See Also
     --------
     numpy.ufunc.reduce : NumPy reduce function
+
+    andes.core.block.HVGate
+
+    andes.core.block.LVGate
     """
-    def __init__(self, *args, fun, tex_name=None):
-        super().__init__(tex_name=tex_name)
+    def __init__(self, *args, fun, tex_name=None, info=None):
+        super().__init__(tex_name=tex_name, info=info)
+        # TODO: only allow two inputs
         self.input_vars = args
         self.fun = fun
         self.n = len(args)
-        self._s = [0] * self.n
         self._inputs = None
         self._outputs = None
 
+        # TODO: allow custom initial value
         for i in range(len(self.input_vars)):
-            self.__dict__[f's{i}'] = 0
+            self.__dict__[f's{i}'] = np.array([0])
 
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
@@ -358,8 +381,15 @@ class Selector(Discrete):
         """
         Set the i-th variable's flags to 1 if the return of the reduce function equals the i-th input.
         """
-        self._inputs = [self.input_vars[i].v for i in range(self.n)]
-        self._outputs = self.fun(self._inputs)
+        if self._inputs is None:
+            # input is only evaluated at the first time due to memory stability
+            self._inputs = [self.input_vars[i].v for i in range(self.n)]
+
+        if self._outputs is None:
+            self._outputs = self.fun(self._inputs)
+        else:
+            self._outputs[:] = self.fun(self._inputs)
+
         for i in range(self.n):
             self.__dict__[f's{i}'][:] = np.equal(self._inputs[i], self._outputs)
 

@@ -344,7 +344,6 @@ def read_add(system, file):
     logger.debug(f'Not supported: {", ".join(not_supported)}')
 
     # load data into models
-    print(sorted_models)
     for psse_model in sorted_models:
         if psse_model not in dyr_dict:
             # device not exist

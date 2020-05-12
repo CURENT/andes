@@ -471,10 +471,10 @@ variable should be retrieved by the governor. Next, internal variables can be de
                         tex_name="P_d",
                         )
 
-        self.LAG_x = State(info='State in lag transfer function',
-                           tex_name=r"x'_{LAG}",
+        self.LAG_y = State(info='State in lag transfer function',
+                           tex_name=r"y_{LAG}",
                            )
-        self.LAG_lim = AntiWindup(u=self.LAG_x,
+        self.LAG_lim = AntiWindup(u=self.LAG_y,
                                   lower=self.VMIN,
                                   upper=self.VMAX,
                                   tex_name='lim_{lag}',
@@ -500,10 +500,10 @@ Differential equations are in the form of `T \dot{x} = f(x, y)`.
         self.wd.e_str = '(wref - omega) - wd'
         self.pd.e_str='(wd + pref) * gain - pd'
 
-        self.LAG_x.e_str = 'LAG_lim_zi * (1 * pd - LAG_x) / T1'
+        self.LAG_x.e_str = 'LAG_lim_zi * (1 * pd - LAG_y) / T1'
 
-        self.LL_x.e_str = '(LAG_x - LL_x) / T3'
-        self.LL_y.e_str='T2 / T3 * (LAG_x - LL_x) + LL_x - LL_y'
+        self.LL_x.e_str = '(LAG_y - LL_x) / T3'
+        self.LL_y.e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y'
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 ```
 

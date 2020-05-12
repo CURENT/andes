@@ -7,8 +7,16 @@ The APIs before v1.0.0 are in beta and may change without prior notice.
 v0.9.4
 -------------------
 
-- New models: exciters EXST1 (static), SEXS (simplified)
-
+- Added exciter models EXST1, ESST3A, SEXS and turbine governor model
+  IEEEG1 (support single output).
+- Added blocks HVGate and LVGate with workaround for sympy.maximum/
+  minimum.
+- Added services `PostInitService` (for storing initialized values), and
+  `VarService` (variable services that get updated) after limiters and before
+  equations).
+- Allow internal variables to be associated with a discrete component which
+  will be updated before initialization (through BaseVar.discrete).
+- Allow to regenerate code for updated models through ``andes prepare -qi``.
 
 v0.9.3 (2020-05-05)
 -------------------
