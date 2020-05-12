@@ -188,6 +188,18 @@ class GENBase(Model):
                                indexer=self.gen,
                                export=False,
                                )
+
+        self.Vn_bus = ExtParam(model='Bus',
+                               src='Vn',
+                               indexer=self.bus,
+                               export=False,
+                               )
+
+        self._vnc = InitChecker(info='Vn and Bus Vn',
+                                v_str='Vn',
+                                equal=self.Vn_bus,
+                                )
+
         # ----------service consts for initialization----------
         self.p0 = ExtService(model='StaticGen',
                              src='p',

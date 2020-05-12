@@ -183,6 +183,8 @@ class InitChecker(PostInitService):
         upper bound
     equal : float, BaseParam, BaseVar, BaseService
         equality condition
+    enable : bool
+        True to enable checking
 
     Examples
     --------
@@ -205,26 +207,30 @@ class InitChecker(PostInitService):
     One can also pass float values from Config to make it
     adjustable as in our implementation of ``GENBase._vfc``.
     """
-    def __init__(self, lower=None, upper=None, equal=None, **kwargs):
+    def __init__(self, lower=None, upper=None, equal=None, enable=True, **kwargs):
         super().__init__(**kwargs)
         self.lower = dummify(lower) if lower is not None else None
         self.upper = dummify(upper) if upper is not None else None
         self.equal = dummify(equal) if equal is not None else None
+        self.enable = enable
 
     def check(self):
         """
         Check the bounds and equality conditions.
         """
+        if not self.enable:
+            return
 
-        checks = [(self.lower, np.less_equal, "lower limit"),
-                  (self.upper, np.greater_equal, "upper limit"),
-                  (self.equal, np.not_equal, 'equality condition')
+        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
+                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
+                  (self.equal, np.not_equal, 'values do not equal', "expected")
                   ]
 
         for check in checks:
             limit = check[0]
             func = check[1]
             text = check[2]
+            text2 = check[3]
             if limit is None:
                 continue
 
@@ -234,8 +240,8 @@ class InitChecker(PostInitService):
                 continue
             idx = [self.owner.idx.v[i] for i in pos]
             lim_v = limit.v * np.ones(self.n)
-            logger.warning(f'{self.owner.class_name} {self.info} violation of the {text}.')
-            logger.warning(f'idx={idx}, values={self.v[pos]}, limits={lim_v[pos]}')
+            logger.warning(f'{self.owner.class_name} {self.info} {text}.')
+            logger.warning(f'idx={idx}, values={self.v[pos]}, {text2}={lim_v[pos]}')
 
 
 class ExtService(BaseService):
