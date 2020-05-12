@@ -471,7 +471,7 @@ class System(object):
             self.vars_to_models()
 
             # bind calls after initialization
-            mdl.bcalls.bind()
+            mdl.bcalls.bind(mdl.calls, mdl._input_args)
 
         self.s_update_post(models)
 

@@ -148,7 +148,7 @@ class DAE(object):
     """
     def __init__(self, system):
         self.system = system
-        self.t = 0
+        self.t = np.array(0)
         self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.o = 0, 0, 0

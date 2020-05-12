@@ -366,6 +366,8 @@ class ModelCall(object):
 
         self.g_lambdify = OrderedDict()
         self.f_lambdify = OrderedDict()
+        self.f_args = OrderedDict()
+        self.g_args = OrderedDict()
 
         self.s_lambdify = OrderedDict()
         self.init_lambdify = OrderedDict()
@@ -587,7 +589,7 @@ class Model(object):
         self._input_z = OrderedDict()        # discrete flags in an OrderedDict
         self._input_args = defaultdict(list)
 
-        self.bcalls = CallBinder(self.calls, input_args=self._input_args)
+        self.bcalls = CallBinder()  # empty at the beginning
 
     def _register_attribute(self, key, value):
         """
@@ -765,8 +767,6 @@ class Model(object):
         """
         Get an OrderedDict of the inputs to the numerical function calls.
 
-        # TODO: separate dae_t so that update functions can access a static property
-
         Parameters
         ----------
         refresh : bool
@@ -780,12 +780,14 @@ class Model(object):
         OrderedDict
             The input name and value array pairs in an OrderedDict
 
+        Notes
+        -----
+        `dae.t` is now a numpy.ndarray which has stable memory.
+        There is no need to refresh `dat_t` in this version.
+
         """
         if len(self._input) == 0 or refresh:
             self.refresh_inputs()
-
-        # update`dae_t`
-        self._input['dae_t'] = self.system.dae.t
 
         # TODO: optimize the code below
         if len(self._input_args) == 0 or refresh:
@@ -831,6 +833,9 @@ class Model(object):
         # append config variables
         for key, val in self.config.as_dict().items():
             self._input[key] = val
+
+        # update`dae_t`
+        self._input['dae_t'] = self.system.dae.t
 
     def refresh_inputs_arg(self):
         """
@@ -1115,21 +1120,22 @@ class Model(object):
     def f_update(self):
         """
         Evaluate differential equations.
+
+        Notes
+        -----
+        In-place equations: added to the corresponding DAE array.
+        Non-inplace equations: in-place set to internal array to
+        overwrite old values (and avoid clearing).
         """
 
-        kwargs = self.get_inputs()
-        args = kwargs.values()
-
-        # # Note:
-        # # In-place equations: added to the corresponding DAE array
-        # # Non-inplace equations: set to internal array to overwrite old values (and avoid clearing)
-
-        for var, func in zip(self.cache.states_and_ext.values(), self.calls.f_lambdify.values()):
+        for name, func in self.bcalls.f_bind.items():
+            var = self.__dict__[name]
             if var.e_inplace:
-                var.e += func(*args)
+                var.e += func()
             else:
-                var.e[:] = func(*args)
+                var.e[:] = func()
 
+        kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
         if self.flags.f_num is True:
             self.f_numeric(**kwargs)
@@ -1143,16 +1149,14 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-        kwargs = self.get_inputs()
-        args = kwargs.values()
-
-        # call lambda functions stored in `self.calls`
-        for var, func in zip(self.cache.algebs_and_ext.values(), self.calls.g_lambdify.values()):
+        for name, func in self.bcalls.g_bind.items():
+            var = self.__dict__[name]
             if var.e_inplace:
-                var.e += func(*args)
+                var.e += func()
             else:
-                var.e[:] = func(*args)
+                var.e[:] = func()
 
+        kwargs = self.get_inputs()
         # numerical calls defined in the model
         if self.flags.g_num is True:
             self.g_numeric(**kwargs)
@@ -2177,15 +2181,13 @@ class CallBinder(object):
     """
     Class for binding ModelCall with the variable values.
     """
-    def __init__(self, calls, input_args):
-        self.calls = calls
-        self.input_args = input_args
+    def __init__(self,):
+        self.f_bind = OrderedDict()
+        self.g_bind = OrderedDict()
 
-        self.f_lambdify = OrderedDict()
-        self.g_lambdify = OrderedDict()
+    def bind(self, calls, input_args):
+        for name, func in calls.g_args.items():
+            self.g_bind[name] = partial(func, *input_args[name])
 
-    def bind(self):
-        for name, func in self.calls.g_lambdify.items():
-            self.g_lambdify[name] = partial(func, *self.input_args[name])
-        for name, func in self.calls.f_lambdify.items():
-            self.f_lambdify[name] = partial(func, *self.input_args[name])
+        for name, func in calls.f_args.items():
+            self.f_bind[name] = partial(func, *input_args[name])

@@ -185,7 +185,10 @@ class TDS(BaseRoutine):
 
             if self._itm_step():  # simulate the current step
                 # store values
-                dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=system.exist.pflow_tds))
+                dae.ts.store_txyz(dae.t.tolist(),
+                                  dae.xy,
+                                  self.system.get_z(models=system.exist.pflow_tds),
+                                  )
                 dae.t += self.h
 
                 # show progress in percentage
@@ -603,7 +606,7 @@ class TDS(BaseRoutine):
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
-        self.system.dae.t = 0.0
+        self.system.dae.t = np.array(0.0)
         self.pbar = None
         self.plotter = None
 
