@@ -1,9 +1,10 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
-from andes.core.service import ConstService, ExtService, NumSelect
+from andes.core.service import ConstService, ExtService, NumSelect, FlagNotNone, ParamCalc
 from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
+import numpy as np
 
 
 class TGBaseData(ModelData):
@@ -370,6 +371,10 @@ class IEEEG1Data(TGBaseData):
 
     def __init__(self):
         TGBaseData.__init__(self)
+
+        self.syn2 = IdxParam(model='SynGen',
+                             info='Optional SynGen idx',
+                             )
         self.K = NumParam(default=20, tex_name='K',
                           info='Gain (1/R) in mach. base',
                           unit='p.u. (power)',
@@ -462,15 +467,30 @@ class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config, add_sn=False)
 
+        self.Sg2 = ExtParam(src='Sn',
+                            model='SynGen',
+                            indexer=self.syn2,
+                            allow_none=True,
+                            default=0.0,
+                            tex_name='S_{n2}',
+                            info='Rated power of Syn2',
+                            unit='MVA',
+                            export=False,
+                            )
+        self.Sg12 = ParamCalc(self.Sg, self.Sg2, func=np.add,
+                              tex_name="S_{g12}",
+                              info='Sum of generator power ratings',
+                              )
         self.Sn = NumSelect(self.Tn,
-                            fallback=self.Sg,
+                            fallback=self.Sg12,
                             tex_name='S_n',
                             info='Turbine or Gen rating',
                             )
 
-        self.syn2 = IdxParam(model='SynGen',
-                             info='Optional SynGen idx',
-                             )
+        self.zsyn2 = FlagNotNone(self.syn2,
+                                 tex_name='z_{syn2}',
+                                 info='Exist flags for syn2',
+                                 )
 
         self.tm02 = ExtService(src='tm',
                                model='SynGen',
@@ -481,14 +501,14 @@ class IEEEG1Model(TGBase):
                                default=0.0,
                                )
 
-        # self.tm2 = ExtAlgeb(src='tm',
-        #                     model='SynGen',
-        #                     indexer=self.syn2,
-        #                     allow_none=True,
-        #                     tex_name=r'\tau_{m2}',
-        #                     e_str='u * (PLP - tm02)',
-        #                     info='Mechanical power to syn2',
-        #                     )
+        self.tm2 = ExtAlgeb(src='tm',
+                            model='SynGen',
+                            indexer=self.syn2,
+                            allow_none=True,
+                            tex_name=r'\tau_{m2}',
+                            e_str='zsyn2 * u * (PLP - tm02)',
+                            info='Mechanical power to syn2',
+                            )
 
         self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
@@ -556,8 +576,6 @@ class IEEEG1Model(TGBase):
 class IEEEG1(IEEEG1Data, IEEEG1Model):
     """
     IEEE Type 1 Speed-Governing Model
-
-    TODO: allow connecting to the second generator
 
     Notes from `PowerWorld documentation
     <https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/

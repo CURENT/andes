@@ -505,12 +505,16 @@ class ExtParam(NumParam):
                  model: str,
                  src: str,
                  indexer=None,
+                 allow_none=False,
+                 default=0.0,
                  **kwargs):
-        super(ExtParam, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.model = model
         self.src = src
         self.indexer = indexer
         self.parent_model = None   # parent model instance
+        self.allow_none = allow_none
+        self.default = default
 
     def add(self, value=None):
         """
@@ -541,19 +545,25 @@ class ExtParam(NumParam):
 
             # TODO: the three `get` calls below is a bit inefficient - same loops for three times
             try:
-                self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v')
+                self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v',
+                                       allow_none=self.allow_none, default=self.default)
             except IndexError:
                 pass
 
             try:
-                self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
-                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin')
+                self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin',
+                                         allow_none=self.allow_none, default=self.default)
+                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin',
+                                              allow_none=self.allow_none, default=self.default)
             except KeyError:  # idx param without vin
                 pass
             except TypeError:  # vin or pu_coeff is None
                 pass
 
         else:
+            if self.allow_none:
+                raise NotImplementedError(f"{self.name}: allow_none not implemented for Model")
+
             parent_instance = ext_model.__dict__[self.src]
             self.property = dict(parent_instance.property)
 

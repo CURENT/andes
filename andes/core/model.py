@@ -5,7 +5,6 @@ import os
 import logging
 from collections import OrderedDict, defaultdict
 from typing import Iterable
-from functools import partial
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -14,7 +13,7 @@ from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
-from andes.core.service import NumSelect
+from andes.core.service import NumSelect, FlagNotNone, ParamCalc
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -589,8 +588,6 @@ class Model(object):
         self._input_z = OrderedDict()        # discrete flags in an OrderedDict
         self._input_args = defaultdict(list)
 
-        self.bcalls = CallBinder()  # empty at the beginning
-
     def _register_attribute(self, key, value):
         """
         Register a pair of attributes to the model instance.
@@ -625,7 +622,8 @@ class Model(object):
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
-                                RandomService)):
+                                FlagNotNone, RandomService,
+                                ParamCalc)):
             self.services_ops[key] = value
 
         elif isinstance(value, Block):
@@ -789,7 +787,6 @@ class Model(object):
         if len(self._input) == 0 or refresh:
             self.refresh_inputs()
 
-        # TODO: optimize the code below
         if len(self._input_args) == 0 or refresh:
             self.refresh_inputs_arg()
 
@@ -1465,6 +1462,9 @@ class Model(object):
         """
         import hashlib
         md5 = hashlib.md5()
+
+        for name in self.cache.all_params.keys():
+            md5.update(str(name).encode())
 
         for item in self.cache.all_vars.values():
             if item.v_str is not None:
@@ -2179,19 +2179,3 @@ class Documenter(object):
             self.config.doc(max_width=max_width, export=export)
 
         return out
-
-
-class CallBinder(object):
-    """
-    Class for binding ModelCall with the variable values.
-    """
-    def __init__(self,):
-        self.f_bind = OrderedDict()
-        self.g_bind = OrderedDict()
-
-    def bind(self, calls, input_args):
-        for name, func in calls.g_args.items():
-            self.g_bind[name] = partial(func, *input_args[name])
-
-        for name, func in calls.f_args.items():
-            self.f_bind[name] = partial(func, *input_args[name])

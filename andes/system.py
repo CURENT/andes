@@ -470,9 +470,6 @@ class System(object):
             self.vars_to_dae(mdl)
             self.vars_to_models()
 
-            # bind calls after initialization
-            mdl.bcalls.bind(mdl.calls, mdl._input_args)
-
         self.s_update_post(models)
 
         # store the inverse of time constants
@@ -809,9 +806,6 @@ class System(object):
         eq_name : 'x' or 'y'
             Equation type name
         """
-        if eq_name not in ('f', 'g'):
-            raise KeyError(f'{eq_name} is not a valid eq name')
-
         for var in self._adders[eq_name]:
             np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
         for var in self._setters[eq_name]:

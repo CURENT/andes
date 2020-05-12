@@ -112,7 +112,7 @@ class BaseVar(object):
         span = []
         if 1 <= self.n <= 20:
             span = self.a.tolist()
-            span = ','.join([str(i) for i in span])
+            span = ', '.join([str(i) for i in span])
         elif self.n > 20:
             if not isinstance(self, ExtVar):
                 span.append(self.a[0])
@@ -344,7 +344,9 @@ class ExtVar(BaseVar):
         return out
 
     def set_address(self, addr, contiguous=False):
-        """Empty function."""
+        """
+        Empty function.
+        """
         pass
 
     def set_arrays(self, dae):
@@ -387,18 +389,21 @@ class ExtVar(BaseVar):
                 self._n = [len(self.indexer.v)]
                 self._idx = self.indexer.v
 
+            # use `0` for non-existent addresses (corr. to None in indexer)
             self.a = ext_model.get(src=self.src,
                                    idx=self._idx,
                                    attr='a',
                                    allow_none=self.allow_none,
-                                   default=-1,   # use `-1` for non-existent addresses (corr. to None in indexer)
+                                   default=0,
                                    ).astype(int)
             self.n = len(self.a)
 
         else:
             original_var = ext_model.__dict__[self.src]
 
-            # TODO: support allow_none
+            if self.allow_none:
+                raise NotImplementedError(f"{self.name}: allow_none not implemented for Model")
+
             if self.indexer is not None:
                 uid = ext_model.idx2uid(self.indexer.v)
             else:

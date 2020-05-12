@@ -25,7 +25,7 @@ class BaseService(object):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.vtype = type  # type for `v`. NOT IN USE.
+        self.vtype = vtype  # type for `v`. NOT IN USE.
         self.owner = None
 
     def get_names(self):
@@ -668,6 +668,48 @@ class NumSelect(OperationService):
                        for v1, v2 in zip(self.optional.v, self.fallback.v)]
 
             self._v = np.array(self._v)
+
+        return self._v
+
+
+class FlagNotNone(BaseService):
+    """
+    Class for flagging non-None indices as 1 and None indices as 0 in a numpy array.
+    """
+    def __init__(self, indexer, name=None, tex_name=None, info=None, cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.cache = cache
+        self.indexer = indexer
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None or not self.cache:
+            self._v = np.array([0 if i is None else 1 for i in self.indexer.v])
+
+        return self._v
+
+
+class ParamCalc(BaseService):
+    """
+    Parameter calculation service.
+
+    Useful to create parameters calculated instantly from existing ones.
+    """
+    def __init__(self, param1, param2, func, name=None, tex_name=None, info=None,
+                 cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.param1 = param1
+        self.param2 = param2
+        self.func = func
+        self.cache = cache
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None or not self.cache:
+            self._v = self.func(self.param1.v,
+                                self.param2.v)
 
         return self._v
 
