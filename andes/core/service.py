@@ -182,7 +182,9 @@ class InitChecker(PostInitService):
     upper : float, BaseParam, BaseVar, BaseService
         upper bound
     equal : float, BaseParam, BaseVar, BaseService
-        equality condition
+        values that the value from `v_str` should equal
+    not_equal : float, BaseParam, BaseVar, BaseService
+        values that should not equal
     enable : bool
         True to enable checking
 
@@ -207,11 +209,13 @@ class InitChecker(PostInitService):
     One can also pass float values from Config to make it
     adjustable as in our implementation of ``GENBase._vfc``.
     """
-    def __init__(self, lower=None, upper=None, equal=None, enable=True, **kwargs):
+    def __init__(self, lower=None, upper=None, equal=None, not_equal=None,
+                 enable=True, **kwargs):
         super().__init__(**kwargs)
         self.lower = dummify(lower) if lower is not None else None
         self.upper = dummify(upper) if upper is not None else None
         self.equal = dummify(equal) if equal is not None else None
+        self.not_equal = dummify(not_equal) if not_equal is not None else None
         self.enable = enable
 
     def check(self):
@@ -223,7 +227,8 @@ class InitChecker(PostInitService):
 
         checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
                   (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
-                  (self.equal, np.not_equal, 'values do not equal', "expected")
+                  (self.equal, np.not_equal, 'should be equal', "expected"),
+                  (self.not_equal, np.equal, 'should not be equal', "not expected")
                   ]
 
         for check in checks:

@@ -253,7 +253,7 @@ class TDS(BaseRoutine):
             logger.debug('Initialization tests passed.')
             return True
         else:
-            logger.error('Suspect initialization issue!')
+            logger.error('Suspect initialization issue! Simulation may crash!')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
             logger.error("Check variables:")

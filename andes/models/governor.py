@@ -1,7 +1,8 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
-from andes.core.service import ConstService, ExtService, NumSelect, FlagNotNone, ParamCalc
+from andes.core.service import ConstService, ExtService, NumSelect, FlagNotNone, ParamCalc, InitChecker
+from andes.core.service import PostInitService
 from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
 import numpy as np
@@ -466,6 +467,23 @@ class IEEEG1Data(TGBaseData):
 class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config, add_sn=False)
+
+        self._sumK14 = InitChecker(info='summation of K1-K4 and 0',
+                                   v_str='K1+K2+K3+K4',
+                                   not_equal=0.0,
+                                   )
+        self._sumKi = InitChecker(info='summation of K1-K8 and 1.0',
+                                  v_str='K1+K2+K3+K4+K5+K6+K7+K8',
+                                  equal=1,
+                                  )
+
+        self._tm0K2 = PostInitService(info='mul of tm0 and (K2+K4+K6+K8)',
+                                      v_str='tm0*(K2+K4+K6+K8)',
+                                      )
+        self._Pc = InitChecker(info='proportionality of tm0 and tm02',
+                               v_str='tm02*(K1+K3+K5+K7)',
+                               equal=self._tm0K2,
+                               )
 
         self.Sg2 = ExtParam(src='Sn',
                             model='SynGen',
