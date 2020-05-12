@@ -125,8 +125,8 @@ def preamble():
     logger.info("\n"
                 rf"    _           _         | Version {version}" + '\n'
                 rf"   /_\  _ _  __| |___ ___ | Python {py_version} on {system_name}, {date_time}" + '\n'
-                rf"  / _ \| ' \/ _` / -_|_-< | " + "\n"
-                rf' /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.' + '\n')
+                r"  / _ \| ' \/ _` / -_|_-< | " + "\n"
+                r' /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.' + '\n')
 
     log_path = find_log_path(logging.getLogger("andes"))
     if len(log_path):

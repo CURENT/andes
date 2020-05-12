@@ -148,6 +148,8 @@ class ExtService(BaseService):
                  src: str,
                  indexer: BaseParam,
                  attr='v',
+                 allow_none=False,
+                 default=0,
                  name: str = None,
                  tex_name: str = None,
                  info=None,
@@ -157,6 +159,8 @@ class ExtService(BaseService):
         self.src = src
         self.indexer = indexer
         self.attr = attr
+        self.allow_none = allow_none
+        self.default = default
         self.v = np.array([0.])
 
     def assign_memory(self, n):
@@ -178,7 +182,10 @@ class ExtService(BaseService):
             return
 
         # the same `get` api for Group and Model
-        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr)
+        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr,
+                               allow_none=self.allow_none,
+                               default=self.default,
+                               )
 
 
 class BackRef(BaseService):
@@ -248,19 +255,28 @@ class BackRef(BaseService):
         self.v = list()
 
 
-class OptionalSelect(BaseService):
+class DataSelect(BaseService):
     """
-    Class for selecting values for optional DataParam.
+    Class for selecting values for optional DataParam or NumParam.
 
     This service is a v-provider that uses optional DataParam if available with a fallback.
 
+    DataParam will be tested for `None`, and NumParam will be tested with `np.isnan()`.
+
     Notes
     -----
-    An use case of OptionalSelect is remote bus. One can do ::
+    An use case of DataSelect is remote bus. One can do ::
 
-        self.buss = OptionalSelect(option=self.busr, fallback=self.bus)
+        self.buss = DataSelect(option=self.busr, fallback=self.bus)
 
     Then, pass ``self.buss`` instead of ``self.bus`` as indexer to retrieve voltages.
+
+    Another use case is to allow an optional turbine rating. One can do ::
+
+        self.Tn = NumParam(default=None)
+        self.Sg = ExtParam(...)
+        self.Sn = DataSelect(Tn, Sg)
+
     """
 
     def __init__(self,
@@ -268,14 +284,21 @@ class OptionalSelect(BaseService):
                  fallback,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
-                 info: Optional[str] = None,):
+                 info: Optional[str] = None,
+                 ):
         super().__init__(name=name, tex_name=tex_name, info=info,)
         self.optional = optional
         self.fallback = fallback
+        self._v = None
 
     @property
     def v(self):
-        return [opt if opt is not None else fb for opt, fb in zip(self.optional.v, self.fallback.v)]
+        if self._v is None:
+            self._v = [v1 if v1 is not None
+                       else v2
+                       for v1, v2 in zip(self.optional.v, self.fallback.v)]
+
+        return self._v
 
 
 class DeviceFinder(BaseService):
@@ -348,16 +371,12 @@ class OperationService(BaseService):
     IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
     def __init__(self,
-                 ref: BackRef,
-                 u=None,
                  name=None,
                  tex_name=None,
                  info=None,
                  ):
         self._v = None
         super().__init__(name=name, tex_name=tex_name, info=info,)
-        self.u = u
-        self.ref = ref
         self.v_str = None
 
     @property
@@ -434,7 +453,9 @@ class NumReduce(OperationService):
                  tex_name=None,
                  info=None,
                  ):
-        super().__init__(u=u, ref=ref, name=name, tex_name=tex_name, info=info)
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.ref = ref
         self.fun = fun
 
     @property
@@ -521,7 +542,9 @@ class NumRepeat(OperationService):
                  u,
                  ref,
                  **kwargs):
-        super().__init__(u=u, ref=ref, **kwargs)
+        super().__init__(**kwargs)
+        self.u = u
+        self.ref = ref
 
     @property
     def v(self):
@@ -555,7 +578,9 @@ class IdxRepeat(OperationService):
                  u,
                  ref,
                  **kwargs):
-        super().__init__(u=u, ref=ref, **kwargs)
+        super().__init__(**kwargs)
+        self.u = u
+        self.ref = ref
 
     @property
     def v(self):
@@ -602,11 +627,49 @@ class RefFlatten(OperationService):
                           )
     """
     def __init__(self, ref, **kwargs):
-        super().__init__(ref=ref, **kwargs)
+        super().__init__(**kwargs)
+        self.ref = ref
 
     @property
     def v(self):
         return list_flatten(self.ref.v)
+
+
+class NumSelect(OperationService):
+    """
+    Class for selecting values for optional NumParam.
+
+    Notes
+    -----
+    One use case is to allow an optional turbine rating. One can do ::
+
+        self.Tn = NumParam(default=None)
+        self.Sg = ExtParam(...)
+        self.Sn = DataSelect(Tn, Sg)
+
+    """
+    def __init__(self,
+                 optional,
+                 fallback,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 ):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.optional = optional
+        self.fallback = fallback
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None:
+            self._v = [v1 if not np.isnan(v1)
+                       else v2
+                       for v1, v2 in zip(self.optional.v, self.fallback.v)]
+
+            self._v = np.array(self._v)
+
+        return self._v
 
 
 class RandomService(BaseService):

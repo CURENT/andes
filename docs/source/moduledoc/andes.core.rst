@@ -12,14 +12,6 @@ andes.core.block module
    :undoc-members:
    :show-inheritance:
 
-andes.core.config module
-------------------------
-
-.. automodule:: andes.core.config
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.core.discrete module
 --------------------------
 
@@ -60,10 +52,10 @@ andes.core.solver module
    :undoc-members:
    :show-inheritance:
 
-andes.core.triplet module
--------------------------
+andes.core.common module
+------------------------
 
-.. automodule:: andes.core.triplet
+.. automodule:: andes.core.common
    :members:
    :undoc-members:
    :show-inheritance:

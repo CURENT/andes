@@ -59,7 +59,7 @@ class System(object):
         Numerical DAE storage
     files : andes.variables.fileman.FileMan
         File path storage
-    config : andes.core.config.Config
+    config : andes.core.Config
         System config storage
     models : OrderedDict
         model name and instance pairs
@@ -328,7 +328,7 @@ class System(object):
         """
         # set internal variable addresses
         for mdl in models.values():
-            if mdl.flags['address'] is True:
+            if mdl.flags.address is True:
                 logger.debug(f'{mdl.class_name} address exists')
                 continue
             if mdl.n == 0:
@@ -340,7 +340,7 @@ class System(object):
             n0 = self.dae.n
             m_end = m0 + len(mdl.algebs) * n
             n_end = n0 + len(mdl.states) * n
-            collate = mdl.flags['collate']
+            collate = mdl.flags.collate
 
             if not collate:
                 for idx, item in enumerate(mdl.algebs.values()):
@@ -355,7 +355,7 @@ class System(object):
 
             self.dae.m = m_end
             self.dae.n = n_end
-            mdl.flags['address'] = True
+            mdl.flags.address = True
 
         # set external variable addresses
         for mdl in models.values():
@@ -418,7 +418,7 @@ class System(object):
             # add discrete flag names
             if self.config.store_z == 1:
                 for item in mdl.discrete.values():
-                    if mdl.flags['initialized']:
+                    if mdl.flags.initialized:
                         continue
                     for name, tex_name in zip(item.get_names(), item.get_tex_names()):
                         for id in idx.v:
@@ -469,6 +469,9 @@ class System(object):
 
             self.vars_to_dae(mdl)
             self.vars_to_models()
+
+            # bind calls after initialization
+            mdl.bcalls.bind(mdl.calls, mdl._input_args)
 
         self.s_update_post(models)
 
@@ -546,7 +549,7 @@ class System(object):
             self.link_ext_param({mdl.class_name: mdl})
 
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
-            if 'Sn' in mdl.params:
+            if 'Sn' in mdl.__dict__:
                 Sn = mdl.Sn.v
             else:
                 Sn = Sb
@@ -554,26 +557,26 @@ class System(object):
             # If both Vn and Vn1 are not provided, default to Vn = Vb = 1
             # test if is shunt-connected or series-connected to bus, or unconnected to bus
             Vb, Vn = 1, 1
-            if 'bus' in mdl.params:
+            if 'bus' in mdl.__dict__:
                 Vb = self.Bus.get(src='Vn', idx=mdl.bus.v, attr='v')
-                Vn = mdl.Vn.v if 'Vn' in mdl.params else Vb
-            elif 'bus1' in mdl.params:
+                Vn = mdl.Vn.v if 'Vn' in mdl.__dict__ else Vb
+            elif 'bus1' in mdl.__dict__:
                 Vb = self.Bus.get(src='Vn', idx=mdl.bus1.v, attr='v')
-                Vn = mdl.Vn1.v if 'Vn1' in mdl.params else Vb
+                Vn = mdl.Vn1.v if 'Vn1' in mdl.__dict__ else Vb
 
             Zn = Vn ** 2 / Sn
             Zb = Vb ** 2 / Sb
 
             # process dc parameter pu conversion
             Vdcb, Vdcn, Idcn = 1, 1, 1
-            if 'node' in mdl.params:
+            if 'node' in mdl.__dict__:
                 Vdcb = self.Node.get(src='Vdcn', idx=mdl.node.v, attr='v')
-                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.params else Vdcb
-                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
-            elif 'node1' in mdl.params:
+                Vdcn = mdl.Vdcn.v if 'Vdcn' in mdl.__dict__ else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.__dict__ else (Sb / Vdcb)
+            elif 'node1' in mdl.__dict__:
                 Vdcb = self.Node.get(src='Vdcn', idx=mdl.node1.v, attr='v')
-                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.params else Vdcb
-                Idcn = mdl.Idcn.v if 'Idcn' in mdl.params else (Sb / Vdcb)
+                Vdcn = mdl.Vdcn1.v if 'Vdcn1' in mdl.__dict__ else Vdcb
+                Idcn = mdl.Idcn.v if 'Idcn' in mdl.__dict__ else (Sb / Vdcb)
             Idcb = Sb / Vdcb
             Rb = Vdcb / Idcb
             Rn = Vdcn / Idcn
@@ -783,7 +786,7 @@ class System(object):
         """
         if model.n == 0:
             return
-        if model.flags['initialized'] is False:
+        if model.flags.initialized is False:
             return
 
         for var in model.cache.v_adders.values():
@@ -792,7 +795,7 @@ class System(object):
             np.add.at(self.dae.__dict__[v_code], var.a, var.v)
 
         for var in self._setters[v_code]:
-            if var.owner.flags['initialized'] is False:
+            if var.owner.flags.initialized is False:
                 continue
             if var.n > 0:
                 np.put(self.dae.__dict__[v_code], var.a, var.v)
@@ -867,7 +870,7 @@ class System(object):
                     continue
 
             for f in flag:
-                if mdl.flags[f] is True:
+                if mdl.flags.__dict__[f] is True:
                     out[name] = mdl
                     break
         return out

@@ -49,7 +49,7 @@ except ImportError:
 
 
 deg2rad = math.pi/180
-jac_names = ('fx', 'fy', 'gx', 'gy', 'rx', 'tx')
+jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 
 jac_full_names = list()

@@ -1,7 +1,8 @@
 import unittest
 
 from andes.core.var import Algeb
-from andes.core.param import NumParam, DummyValue
+from andes.core.param import NumParam
+from andes.core.common import DummyValue
 from andes.core.discrete import Limiter, SortedLimiter, Switcher, Delay, Derivative, Average
 from andes.shared import np
 

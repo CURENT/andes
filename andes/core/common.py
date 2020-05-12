@@ -1,9 +1,160 @@
 import pprint
-import logging
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from typing import Iterable
-from andes.utils.tab import make_doc_table, math_wrap
+import logging
+from andes.shared import jac_full_names, jac_names, jac_types
+from andes.utils.tab import math_wrap, make_doc_table
+
 logger = logging.getLogger(__name__)
+
+
+class ModelFlags(object):
+    """
+    Model flags.
+
+    Parameters
+    ----------
+    collate : bool
+        True: collate variables by device; False: by variable.
+        Non-collate (continuous memory) has faster computation speed.
+    pflow : bool
+        True: called during power flow
+    tds : bool
+        True if called during tds; if is False, ``dae_t`` cannot be used
+    series : bool
+        True if is series device
+    nr_iter : bool
+        True if is series device
+    f_num : bool
+        True if the model defines `f_numeric`
+    g_num : bool
+        True if the model defines `g_numeric`
+    j_num : bool
+        True if the model defines `j_numeric`
+    s_num : bool
+        True if the model defines `s_numeric`
+    sv_num : bool
+        True if the model defines `s_numeric_var`
+    """
+
+    def __init__(self, collate=False, pflow=False, tds=False, series=False,
+                 nr_iter=False, f_num=False, g_num=False, j_num=False,
+                 s_num=False, sv_num=False):
+
+        self.collate = collate
+        self.pflow = pflow
+        self.tds = tds
+        self.series = series
+        self.nr_iter = nr_iter
+        self.f_num = f_num
+        self.g_num = g_num
+        self.j_num = j_num
+        self.s_num = s_num
+        self.sv_num = sv_num
+        self.sys_base = False
+        self.address = False
+        self.initialized = False
+
+    def update(self, dct):
+        self.__dict__.update(dct)
+
+
+class DummyValue(object):
+    """
+    Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
+
+    A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
+
+    Notes
+    -----
+    Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
+    """
+    def __init__(self, value):
+        self.name = value
+        self.tex_name = value
+        self.v = value
+
+
+def dummify(param):
+    """
+    Dummify scalar parameter and return a DummyValue object. Do nothing for BaseParam instances.
+
+    Parameters
+    ----------
+    param : float, int, BaseParam
+        parameter object or scalar value
+
+    Returns
+    -------
+    DummyValue(param) if param is a scalar; param itself, otherwise.
+
+    """
+    if isinstance(param, (int, float)):
+        return DummyValue(param)
+    else:
+        return param
+
+
+class JacTriplet(object):
+    """
+    Storage class for Jacobian triplet lists.
+    """
+    def __init__(self):
+        self.ijac = defaultdict(list)
+        self.jjac = defaultdict(list)
+        self.vjac = defaultdict(list)
+
+    def clear_ijv(self):
+        """
+        Clear stored triplets for all sparse Jacobian matrices
+        """
+        for j_full_name in jac_full_names:
+            self.ijac[j_full_name] = list()
+            self.jjac[j_full_name] = list()
+            self.vjac[j_full_name] = list()
+
+    def append_ijv(self, j_full_name, ii, jj, vv):
+        """
+        Append triplets to the given sparse matrix triplets.
+
+        Parameters
+        ----------
+        j_full_name : str
+            Full name of the sparse Jacobian. If is a constant Jacobian, append 'c' to the Jacobian name.
+        ii : array-like
+            Row indices
+        jj : array-like
+            Column indices
+        vv : array-like
+            Value indices
+        """
+        if len(ii) == 0 and len(jj) == 0:
+            return
+        self.ijac[j_full_name].append(ii)
+        self.jjac[j_full_name].append(jj)
+        self.vjac[j_full_name].append(vv)
+
+    def ijv(self, j_full_name):
+        """
+        Return triplet lists in a tuple in the order or (ii, jj, vv)
+        """
+        return self.ijac[j_full_name], self.jjac[j_full_name], self.vjac[j_full_name]
+
+    def zip_ijv(self, j_full_name):
+        """
+        Return a zip iterator in the order of (ii, jj, vv)
+        """
+        return zip(*self.ijv(j_full_name))
+
+    def merge(self, triplet):
+        """
+        Merge another triplet into this one.
+        """
+        for jname in jac_names:
+            for jtype in jac_types:
+                self.ijac[jname + jtype] += triplet.ijac[jname + jtype]
+                self.jjac[jname + jtype] += triplet.jjac[jname + jtype]
+                self.vjac[jname + jtype] += triplet.vjac[jname + jtype]
 
 
 class Config(object):

@@ -1,8 +1,9 @@
-from andes.core.var import Algeb, State
-from andes.core.param import dummify
 from typing import Optional, Iterable, Dict, Union, List, Tuple
+
+from andes.core.var import Algeb, State
 from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
-from andes.core.triplet import JacTriplet
+from andes.core.common import JacTriplet
+from andes.core.common import ModelFlags, dummify
 import numpy as np
 
 
@@ -91,11 +92,7 @@ class Block(object):
         self.owner = None
         self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
         self.triplets = JacTriplet()
-        self.flags = dict(
-            f_num=False,        # True if the block defines `f_numeric`
-            g_num=False,        # True if the block defines `g_numeric`
-            j_num=False,        # True if the block defines `j_numeric`
-        )
+        self.flags = ModelFlags()  # f_num, g_num and j_num can be set
 
     def __setattr__(self, key, value):
         # handle sub-blocks by prepending self.name
@@ -473,7 +470,7 @@ class Washout(Block):
 
         """
         self.x.v_str = f'{self.u.name}'
-        self.y.v_str = f'0'
+        self.y.v_str = '0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'

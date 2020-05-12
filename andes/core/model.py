@@ -5,15 +5,16 @@ import os
 import logging
 from collections import OrderedDict, defaultdict
 from typing import Iterable
+from functools import partial
 
-from andes.core.config import Config
+from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
 from andes.core.block import Block
-from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
+from andes.core.service import NumSelect
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -365,8 +366,12 @@ class ModelCall(object):
 
         self.g_lambdify = OrderedDict()
         self.f_lambdify = OrderedDict()
-        self.init_lambdify = OrderedDict()
+        self.f_args = OrderedDict()
+        self.g_args = OrderedDict()
+
         self.s_lambdify = OrderedDict()
+        self.init_lambdify = OrderedDict()
+        self.args = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -548,23 +553,8 @@ class Model(object):
 
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),))
 
-        # class behavior flags
-        self.flags = dict(
-            collate=False,      # True: collate variables by device; False: by variable.
-                                # Non-collate (continuous memory) has faster computation speed.
-            pflow=False,        # True: called during power flow
-            tds=False,          # True if called during tds; if is False, ``dae_t`` cannot be used
-            series=False,       # True if is series device
-            nr_iter=False,      # True if require iterative initialization
-            f_num=False,        # True if the model defines `f_numeric`
-            g_num=False,        # True if the model defines `g_numeric`
-            j_num=False,        # True if the model defines `j_numeric`
-            s_num=False,        # True if the model defines `s_numeric`
-            sv_num=False,       # True if the model defines `s_numeric_var`
-            sys_base=False,     # True if is parameters have been converted to system base
-            address=False,      # True if address is assigned
-            initialized=False,  # True if variables have been initialized
-        )
+        # Model behavior flags
+        self.flags = ModelFlags()
 
         # `in_use` is used by models with `BackRef` when not reference
         self.in_use = True      # True if this model is in use, False removes this model from all calls
@@ -597,6 +587,9 @@ class Model(object):
 
         self._input = OrderedDict()          # cached dictionary of inputs
         self._input_z = OrderedDict()        # discrete flags in an OrderedDict
+        self._input_args = defaultdict(list)
+
+        self.bcalls = CallBinder()  # empty at the beginning
 
     def _register_attribute(self, key, value):
         """
@@ -631,7 +624,8 @@ class Model(object):
             self.services_ref[key] = value
         elif isinstance(value, ExtService):
             self.services_ext[key] = value
-        elif isinstance(value, (NumRepeat, NumReduce, RandomService)):
+        elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
+                                RandomService)):
             self.services_ops[key] = value
 
         elif isinstance(value, Block):
@@ -685,18 +679,19 @@ class Model(object):
             A list containing the unique indices of the devices
         """
         if idx is None:
-            logger.error("idx2uid cannot search for None idx")
+            logger.debug("idx2uid returned None for idx None")
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
         elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
-            return [self.uid[i] for i in idx]
+            return [self.uid[i] if i is not None else None
+                    for i in idx]
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
-    def get(self, src: str, idx, attr: str = 'v'):
+    def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
         Get the value of an attribute of a model property.
 
@@ -711,6 +706,10 @@ class Model(object):
         attr : str, optional, default='v'
             The attribute of the property to get.
             ``v`` for values, ``a`` for address, and ``e`` for equation value.
+        allow_none : bool
+            True to allow None values in the indexer
+        default : float
+            If `allow_none` is true, the default value to use for None indexer.
 
         Returns
         -------
@@ -721,7 +720,11 @@ class Model(object):
         uid = self.idx2uid(idx)
         if isinstance(self.__dict__[src].__dict__[attr], list):
             if isinstance(uid, Iterable):
-                return [self.__dict__[src].__dict__[attr][i] for i in uid]
+                if not allow_none and (uid is None or None in uid):
+                    raise KeyError('None not allowed in uid/idx. Enable through '
+                                   '`allow_none` and provide a `default` if needed.')
+                return [self.__dict__[src].__dict__[attr][i] if i is not None else default
+                        for i in uid]
 
         return self.__dict__[src].__dict__[attr][uid]
 
@@ -764,8 +767,6 @@ class Model(object):
         """
         Get an OrderedDict of the inputs to the numerical function calls.
 
-        # TODO: separate dae_t so that update functions can access a static property
-
         Parameters
         ----------
         refresh : bool
@@ -779,12 +780,19 @@ class Model(object):
         OrderedDict
             The input name and value array pairs in an OrderedDict
 
+        Notes
+        -----
+        `dae.t` is now a numpy.ndarray which has stable memory.
+        There is no need to refresh `dat_t` in this version.
+
         """
         if len(self._input) == 0 or refresh:
             self.refresh_inputs()
 
-        # update`dae_t`
-        self._input['dae_t'] = self.system.dae.t
+        # TODO: optimize the code below
+        if len(self._input_args) == 0 or refresh:
+            self.refresh_inputs_arg()
+
         return self._input
 
     def refresh_inputs(self):
@@ -825,6 +833,16 @@ class Model(object):
         # append config variables
         for key, val in self.config.as_dict().items():
             self._input[key] = val
+
+        # update`dae_t`
+        self._input['dae_t'] = self.system.dae.t
+
+    def refresh_inputs_arg(self):
+        """
+        Refresh inputs for each function with individual argument list.
+        """
+        for eq in self.calls.args:
+            self._input_args[eq] = [self._input[arg] for arg in self.calls.args[eq]]
 
     def l_update_var(self, dae_t):
         """
@@ -888,7 +906,7 @@ class Model(object):
                 else:
                     instance.v = np.array(func)
 
-                if not isinstance(instance.v, np.ndarray):
+                if instance.v.size == 1:
                     instance.v = instance.v * np.ones(self.n)
 
         # NOTE:
@@ -902,7 +920,7 @@ class Model(object):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
 
-        if self.flags['s_num'] is True:
+        if self.flags.s_num is True:
             kwargs = self.get_inputs(refresh=True)
             self.s_numeric(**kwargs)
 
@@ -923,7 +941,7 @@ class Model(object):
                 if func is not None and callable(func):
                     instance.v[:] = func(**kwargs)
 
-        if self.flags['sv_num'] is True:
+        if self.flags.sv_num is True:
             self.s_numeric_var(**kwargs)
 
     def s_update_post(self):
@@ -1005,16 +1023,16 @@ class Model(object):
         if self.n == 0:  # do not check `self.in_use` here
             return
 
-        if self.flags['address'] is False:
+        if self.flags.address is False:
             return
 
         # store model-level user-defined Jacobians
-        if self.flags['j_num'] is True:
+        if self.flags.j_num is True:
             self.j_numeric()
 
         # store and merge user-defined Jacobians in blocks
         for instance in self.blocks.values():
-            if instance.flags['j_num'] is True:
+            if instance.flags.j_num is True:
                 instance.j_numeric()
                 self.triplets.merge(instance.triplets)
 
@@ -1079,7 +1097,7 @@ class Model(object):
 
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
-        if self.flags['nr_iter']:
+        if self.flags.nr_iter:
             self.init_iter()
         # ----------------------------------------
 
@@ -1087,7 +1105,7 @@ class Model(object):
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
-        self.flags['initialized'] = True
+        self.flags.initialized = True
 
     def get_init_order(self):
         """
@@ -1102,51 +1120,51 @@ class Model(object):
     def f_update(self):
         """
         Evaluate differential equations.
+
+        Notes
+        -----
+        In-place equations: added to the corresponding DAE array.
+        Non-inplace equations: in-place set to internal array to
+        overwrite old values (and avoid clearing).
         """
-
-        kwargs = self.get_inputs()
-        args = kwargs.values()
-
-        # # Note:
-        # # In-place equations: added to the corresponding DAE array
-        # # Non-inplace equations: set to internal array to overwrite old values (and avoid clearing)
-
-        for var, func in zip(self.cache.states_and_ext.values(), self.calls.f_lambdify.values()):
+        for name, func in self.calls.f_args.items():
+            args = self._input_args[name]
+            var = self.__dict__[name]
             if var.e_inplace:
                 var.e += func(*args)
             else:
-                var.e = func(*args)
+                var.e[:] = func(*args)
 
+        kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
-        if self.flags['f_num'] is True:
+        if self.flags.f_num is True:
             self.f_numeric(**kwargs)
 
         # user-defined numerical calls in blocks
         for instance in self.blocks.values():
-            if instance.flags['f_num'] is True:
+            if instance.flags.f_num is True:
                 instance.f_numeric(**kwargs)
 
     def g_update(self):
         """
         Evaluate algebraic equations.
         """
-        kwargs = self.get_inputs()
-        args = kwargs.values()
-
-        # call lambda functions stored in `self.calls`
-        for var, func in zip(self.cache.algebs_and_ext.values(), self.calls.g_lambdify.values()):
+        for name, func in self.calls.g_args.items():
+            args = self._input_args[name]
+            var = self.__dict__[name]
             if var.e_inplace:
                 var.e += func(*args)
             else:
-                var.e = func(*args)
+                var.e[:] = func(*args)
 
+        kwargs = self.get_inputs()
         # numerical calls defined in the model
-        if self.flags['g_num'] is True:
+        if self.flags.g_num is True:
             self.g_numeric(**kwargs)
 
         # numerical calls in blocks
         for instance in self.blocks.values():
-            if instance.flags['g_num'] is True:
+            if instance.flags.g_num is True:
                 instance.g_numeric(**kwargs)
 
     def j_update(self):
@@ -1192,12 +1210,15 @@ class Model(object):
         Returns
         -------
         None
+
+        Warnings
+        --------
+        Timer exported from blocks are supposed to work
+        but have not been tested.
         """
         for timer in self.timer_params.values():
             if timer.callback is not None:
                 timer.callback(timer.is_time(dae_t))
-
-        # TODO: consider `Block` with timer
 
     @property
     def class_name(self):
@@ -1361,12 +1382,12 @@ class Model(object):
 
     def a_reset(self):
         """
-        Reset addresses to empty and reset flags['address'] to ``False``.
+        Reset addresses to empty and reset flags.address to ``False``.
         """
         for var in self.cache.all_vars.values():
             var.reset()
-        self.flags['address'] = False
-        self.flags['initialized'] = False
+        self.flags.address = False
+        self.flags.initialized = False
 
     def e_clear(self):
         """
@@ -1635,9 +1656,12 @@ class SymProcessor(object):
         """
         Check if expression contains unknown symbols.
         """
-        for item in expr.free_symbols:
+        fs = expr.free_symbols
+        for item in fs:
             if item not in self.inputs_dict.values():
                 raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
+
+        return fs
 
     def generate_equations(self):
         logger.debug(f'- Generating equations for {self.class_name}')
@@ -1645,14 +1669,20 @@ class SymProcessor(object):
 
         self.calls.f_lambdify = OrderedDict()
         self.calls.g_lambdify = OrderedDict()
+        self.calls.f_args = OrderedDict()
+        self.calls.g_args = OrderedDict()
+        self.calls.args = OrderedDict()
+
         self.f_list, self.g_list = list(), list()
 
         inputs_list = list(self.inputs_dict)
         iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
         dest_list = [self.f_list, self.g_list]
+        args_list = [self.calls.args, self.calls.args]
         dest_call = [self.calls.f_lambdify, self.calls.g_lambdify]
+        args_call = [self.calls.f_args, self.calls.g_args]
 
-        for it, dest, call in zip(iter_list, dest_list, dest_call):
+        for it, dest, call, arg, acall in zip(iter_list, dest_list, dest_call, args_list, args_call):
             for name, instance in it.items():
                 if instance.e_str is None:
                     dest.append(0)
@@ -1663,10 +1693,16 @@ class SymProcessor(object):
                         logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                         raise e
 
-                    self._check_expr_symbols(expr)
+                    free_syms = self._check_expr_symbols(expr)
                     dest.append(expr)
-                    lambda_func = lambdify(inputs_list, expr, 'numpy')
-                    call[name] = lambda_func
+
+                    # all possible arguments
+                    call[name] = lambdify(inputs_list, expr, 'numpy')
+
+                    # used argument
+                    arg[name] = [str(s) for s in free_syms]
+                    # only arguments used for each individual equation
+                    acall[name] = lambdify(free_syms, expr, 'numpy')
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -2143,3 +2179,19 @@ class Documenter(object):
             self.config.doc(max_width=max_width, export=export)
 
         return out
+
+
+class CallBinder(object):
+    """
+    Class for binding ModelCall with the variable values.
+    """
+    def __init__(self,):
+        self.f_bind = OrderedDict()
+        self.g_bind = OrderedDict()
+
+    def bind(self, calls, input_args):
+        for name, func in calls.g_args.items():
+            self.g_bind[name] = partial(func, *input_args[name])
+
+        for name, func in calls.f_args.items():
+            self.f_bind[name] = partial(func, *input_args[name])

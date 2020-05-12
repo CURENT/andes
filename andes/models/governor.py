@@ -1,7 +1,7 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
-from andes.core.service import ConstService, ExtService
+from andes.core.service import ConstService, ExtService, NumSelect
 from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
 
@@ -14,6 +14,11 @@ class TGBaseData(ModelData):
                             mandatory=True,
                             unique=True,
                             )
+        self.Tn = NumParam(info='Turbine power rating. Equal to Sn if not provided.',
+                           tex_name='T_n',
+                           unit='MVA',
+                           default=None,
+                           )
         self.wref0 = NumParam(info='Base speed reference',
                               tex_name=r'\omega_{ref0}',
                               default=1.0,
@@ -22,11 +27,21 @@ class TGBaseData(ModelData):
 
 
 class TGBase(Model):
-    def __init__(self, system, config):
+    """
+    Base Turbine Governor model.
+
+    Parameters
+    ----------
+    add_sn : bool
+        True to add `NumSelect` Sn; False to add later in custom models.
+        This is useful when the governor connects to two generators.
+
+    """
+    def __init__(self, system, config, add_sn=True):
         Model.__init__(self, system, config)
         self.group = 'TurbineGov'
         self.flags.update({'tds': True})
-        self.Sn = ExtParam(src='Sn',
+        self.Sg = ExtParam(src='Sn',
                            model='SynGen',
                            indexer=self.syn,
                            tex_name='S_n',
@@ -34,6 +49,13 @@ class TGBase(Model):
                            unit='MVA',
                            export=False,
                            )
+        if add_sn is True:
+            self.Sn = NumSelect(self.Tn,
+                                fallback=self.Sg,
+                                tex_name='S_n',
+                                info='Turbine or Gen rating',
+                                )
+
         self.Vn = ExtParam(src='Vn',
                            model='SynGen',
                            indexer=self.syn,
@@ -350,7 +372,9 @@ class IEEEG1Data(TGBaseData):
         TGBaseData.__init__(self)
         self.K = NumParam(default=20, tex_name='K',
                           info='Gain (1/R) in mach. base',
-                          unit='p.u. (power)', power=True, vrange=(5, 30),
+                          unit='p.u. (power)',
+                          power=True,
+                          vrange=(5, 30),
                           )
         self.T1 = NumParam(default=1, tex_name='T_1',
                            info='Gov. lag time const.',
@@ -436,23 +460,33 @@ class IEEEG1Data(TGBaseData):
 
 class IEEEG1Model(TGBase):
     def __init__(self, system, config):
-        TGBase.__init__(self, system, config)
+        TGBase.__init__(self, system, config, add_sn=False)
 
-        # self.syn2 = IdxParam(model='SynGen',
-        #                      info='Optional SynGen idx',
-        #                      )
-        #
-        # self.tm02 = ExtService(src='tm',
-        #                        model='SynGen',
-        #                        indexer=self.syn2,
-        #                        tex_name=r'\tau_{m02}',
-        #                        info='Initial mechanical input of syn2')
-        #
+        self.Sn = NumSelect(self.Tn,
+                            fallback=self.Sg,
+                            tex_name='S_n',
+                            info='Turbine or Gen rating',
+                            )
+
+        self.syn2 = IdxParam(model='SynGen',
+                             info='Optional SynGen idx',
+                             )
+
+        self.tm02 = ExtService(src='tm',
+                               model='SynGen',
+                               indexer=self.syn2,
+                               tex_name=r'\tau_{m02}',
+                               info='Initial mechanical input of syn2',
+                               allow_none=True,
+                               default=0.0,
+                               )
+
         # self.tm2 = ExtAlgeb(src='tm',
         #                     model='SynGen',
         #                     indexer=self.syn2,
+        #                     allow_none=True,
         #                     tex_name=r'\tau_{m2}',
-        #                     # e_str='u * (pout - tm02)',
+        #                     e_str='u * (PLP - tm02)',
         #                     info='Mechanical power to syn2',
         #                     )
 
@@ -470,7 +504,7 @@ class IEEEG1Model(TGBase):
                           )
 
         # `P0` == `tm0`
-        self.vs = Algeb(info='Valve move speed',
+        self.vs = Algeb(info='Valve speed',
                         tex_name='V_s',
                         v_str='0',
                         e_str='(LL_y + tm0 + paux - IAW_y) / T3 - vs',

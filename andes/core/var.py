@@ -1,5 +1,6 @@
 from typing import Optional, Union, List
-from andes.core.param import BaseParam, DummyValue
+from andes.core.param import BaseParam
+from andes.core.common import DummyValue
 from andes.core.discrete import Discrete
 from andes.core.service import BaseService
 from andes.models.group import GroupBase
@@ -90,6 +91,7 @@ class BaseVar(object):
 
         self.e_inplace = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
         self.v_inplace = False    # True if `self.v` is in-place access to `System.dae.__dict__[self.v_code]`
+        self.allow_none = False   # True to allow None in address (NOT IN USE)
 
     def reset(self):
         """
@@ -268,6 +270,8 @@ class ExtVar(BaseVar):
         A parameter of the hosting model, used as indices into
         the source model and variable. If is None, the source
         variable address will be fully copied.
+    allow_none : bool
+        True to allow None in indexer
 
     Attributes
     ----------
@@ -285,6 +289,7 @@ class ExtVar(BaseVar):
                  model: str,
                  src: str,
                  indexer: Optional[Union[List, ndarray, BaseParam, BaseService]] = None,
+                 allow_none: Optional[bool] = False,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
@@ -314,6 +319,7 @@ class ExtVar(BaseVar):
         self.model = model
         self.src = src
         self.indexer = indexer
+        self.allow_none = allow_none
         self.parent = None
         self._idx = None
         self._n = []
@@ -381,12 +387,18 @@ class ExtVar(BaseVar):
                 self._n = [len(self.indexer.v)]
                 self._idx = self.indexer.v
 
-            self.a = ext_model.get(src=self.src, idx=self._idx, attr='a').astype(int)
+            self.a = ext_model.get(src=self.src,
+                                   idx=self._idx,
+                                   attr='a',
+                                   allow_none=self.allow_none,
+                                   default=-1,   # use `-1` for non-existent addresses (corr. to None in indexer)
+                                   ).astype(int)
             self.n = len(self.a)
 
         else:
             original_var = ext_model.__dict__[self.src]
 
+            # TODO: support allow_none
             if self.indexer is not None:
                 uid = ext_model.idx2uid(self.indexer.v)
             else:

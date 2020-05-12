@@ -1,5 +1,6 @@
 from andes.core.model import ModelData, Model
-from andes.core.param import NumParam, IdxParam, ExtParam, dummify
+from andes.core.param import NumParam, IdxParam, ExtParam
+from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService, VarService, PostInitService
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
@@ -22,7 +23,7 @@ class ExcBase(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Exciter'
-        self.flags.update({'tds': True})
+        self.flags.tds = True
 
         # from synchronous generators, get Sn, Vn, bus; tm0; omega
         self.Sn = ExtParam(src='Sn',

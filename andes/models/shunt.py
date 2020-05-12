@@ -24,7 +24,7 @@ class Shunt(ShuntData, Model):
         ShuntData.__init__(self)
         Model.__init__(self, system, config)
         self.group = 'StaticShunt'
-        self.flags['pflow'] = True
+        self.flags.pflow = True
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')

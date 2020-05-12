@@ -140,7 +140,7 @@ class PFlow(BaseRoutine):
             elif self.niter > self.config.max_iter:
                 break
             elif np.isnan(mis).any():
-                logger.error(f'NaN found in solution. Convergence not likely')
+                logger.error('NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 break
             elif mis > 1e4 * self.mis[0]:

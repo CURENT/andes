@@ -1,5 +1,6 @@
 from andes.core.block import HVGate, LVGate
-from andes.core.var import DummyValue, Algeb
+from andes.core.var import Algeb
+from andes.core.common import DummyValue
 import numpy as np
 import unittest
 

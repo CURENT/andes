@@ -185,7 +185,10 @@ class TDS(BaseRoutine):
 
             if self._itm_step():  # simulate the current step
                 # store values
-                dae.ts.store_txyz(dae.t, dae.xy, self.system.get_z(models=system.exist.pflow_tds))
+                dae.ts.store_txyz(dae.t.tolist(),
+                                  dae.xy,
+                                  self.system.get_z(models=system.exist.pflow_tds),
+                                  )
                 dae.t += self.h
 
                 # show progress in percentage
@@ -252,7 +255,7 @@ class TDS(BaseRoutine):
             logger.error('Suspect initialization issue!')
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.error(f"Check variables:")
+            logger.error("Check variables:")
             logger.error(f"{fail_names}")
 
             logger.error('Eqn. Mismatches:')
@@ -333,7 +336,7 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
-                self.err_msg = f'NaN found in solution. Convergence not likely'
+                self.err_msg = 'NaN found in solution. Convergence not likely'
                 self.niter = self.config.max_iter + 1
                 self.busted = True
                 break
@@ -371,7 +374,7 @@ class TDS(BaseRoutine):
 
                 break
             if mis > 1000 and (mis > 1e8 * self.mis):
-                self.err_msg = f'Error increased too quickly. Convergence not likely.'
+                self.err_msg = 'Error increased too quickly. Convergence not likely.'
                 self.busted = True
                 break
 
@@ -486,7 +489,7 @@ class TDS(BaseRoutine):
                 self.deltat = 0
                 self.busted = True
                 self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
-                self.err_msg += f"Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
+                self.err_msg += "Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
         else:
             if self.converged:
                 if self.niter >= 15:
@@ -503,7 +506,7 @@ class TDS(BaseRoutine):
                 self.deltat *= 0.9
                 if self.deltat < self.deltatmin:
                     self.deltat = 0
-                    self.err_msg = f"Time step reduced to zero. Convergence not likely."
+                    self.err_msg = "Time step reduced to zero. Convergence not likely."
                     self.busted = True
 
         # last step size
@@ -603,7 +606,7 @@ class TDS(BaseRoutine):
         self._switch_idx = -1  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
-        self.system.dae.t = 0.0
+        self.system.dae.t = np.array(0.0)
         self.pbar = None
         self.plotter = None
 

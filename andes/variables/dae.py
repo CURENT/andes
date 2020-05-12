@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-from andes.core.triplet import JacTriplet
+from andes.core import JacTriplet
 from andes.shared import pd, np, spmatrix, jac_names
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class DAE(object):
     """
     def __init__(self, system):
         self.system = system
-        self.t = 0
+        self.t = np.array(0)
         self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.o = 0, 0, 0
