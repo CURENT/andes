@@ -368,6 +368,7 @@ class ModelCall(object):
         self.f_lambdify = OrderedDict()
         self.init_lambdify = OrderedDict()
         self.s_lambdify = OrderedDict()
+        self.args = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -1646,9 +1647,12 @@ class SymProcessor(object):
         """
         Check if expression contains unknown symbols.
         """
-        for item in expr.free_symbols:
+        fs = expr.free_symbols
+        for item in fs:
             if item not in self.inputs_dict.values():
                 raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
+
+        return fs
 
     def generate_equations(self):
         logger.debug(f'- Generating equations for {self.class_name}')
@@ -1656,14 +1660,17 @@ class SymProcessor(object):
 
         self.calls.f_lambdify = OrderedDict()
         self.calls.g_lambdify = OrderedDict()
+        self.calls.args = OrderedDict()
+
         self.f_list, self.g_list = list(), list()
 
         inputs_list = list(self.inputs_dict)
         iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
         dest_list = [self.f_list, self.g_list]
+        args_list = [self.calls.args, self.calls.args]
         dest_call = [self.calls.f_lambdify, self.calls.g_lambdify]
 
-        for it, dest, call in zip(iter_list, dest_list, dest_call):
+        for it, dest, call, arg in zip(iter_list, dest_list, dest_call, args_list):
             for name, instance in it.items():
                 if instance.e_str is None:
                     dest.append(0)
@@ -1674,10 +1681,11 @@ class SymProcessor(object):
                         logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                         raise e
 
-                    self._check_expr_symbols(expr)
+                    free_syms = self._check_expr_symbols(expr)
                     dest.append(expr)
                     lambda_func = lambdify(inputs_list, expr, 'numpy')
                     call[name] = lambda_func
+                    arg[name] = [str(s) for s in free_syms]
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
