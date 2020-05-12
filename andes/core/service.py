@@ -3,6 +3,8 @@ from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
 from andes.core.common import dummify
 from andes.shared import np, ndarray
+import logging
+logger = logging.getLogger(__name__)
 
 
 class BaseService(object):
@@ -179,6 +181,8 @@ class InitChecker(PostInitService):
         lower bound
     upper : float, BaseParam, BaseVar, BaseService
         upper bound
+    equal : float, BaseParam, BaseVar, BaseService
+        equality condition
 
     Examples
     --------
@@ -201,10 +205,37 @@ class InitChecker(PostInitService):
     One can also pass float values from Config to make it
     adjustable as in our implementation of ``GENBase._vfc``.
     """
-    def __init__(self, lower=None, upper=None, **kwargs):
+    def __init__(self, lower=None, upper=None, equal=None, **kwargs):
         super().__init__(**kwargs)
         self.lower = dummify(lower) if lower is not None else None
         self.upper = dummify(upper) if upper is not None else None
+        self.equal = dummify(equal) if equal is not None else None
+
+    def check(self):
+        """
+        Check the bounds and equality conditions.
+        """
+
+        checks = [(self.lower, np.less_equal, "lower limit"),
+                  (self.upper, np.greater_equal, "upper limit"),
+                  (self.equal, np.not_equal, 'equality condition')
+                  ]
+
+        for check in checks:
+            limit = check[0]
+            func = check[1]
+            text = check[2]
+            if limit is None:
+                continue
+
+            pos = np.argwhere(func(self.v, limit.v)).ravel()
+
+            if len(pos) == 0:
+                continue
+            idx = [self.owner.idx.v[i] for i in pos]
+            lim_v = limit.v * np.ones(self.n)
+            logger.warning(f'{self.owner.class_name} {self.info} violation of the {text}.')
+            logger.warning(f'idx={idx}, values={self.v[pos]}, limits={lim_v[pos]}')
 
 
 class ExtService(BaseService):

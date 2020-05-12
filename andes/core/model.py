@@ -1493,25 +1493,7 @@ class Model(object):
         Post init checking. Warns if values of `InitChecker` is not True.
         """
         for name, item in self.services_icheck.items():
-            checks = [(item.lower, np.less_equal, "lower"),
-                      (item.upper, np.greater_equal, "upper"),
-                      ]
-
-            for check in checks:
-                limit = check[0]
-                func = check[1]
-                text = check[2]
-                if limit is None:
-                    continue
-
-                pos = np.argwhere(func(item.v, limit.v)).ravel()
-
-                if len(pos) == 0:
-                    continue
-                idx = [self.idx.v[i] for i in pos]
-                lim_v = limit.v * np.ones(item.n)
-                logger.warning(f'{self.class_name} {item.info} violation of the {text} limit.')
-                logger.warning(f'idx={idx}, values={item.v[pos]}, limits={lim_v[pos]}')
+            item.check()
 
 
 class SymProcessor(object):
