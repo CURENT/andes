@@ -1,6 +1,7 @@
 from typing import Optional, Union, Callable, Type
 from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
+from andes.core.common import dummify
 from andes.shared import np, ndarray
 
 
@@ -112,6 +113,19 @@ class PostInitService(ConstService):
     Constant service that gets stored once after init.
     """
     pass
+
+
+class InitCheckService(PostInitService):
+    """
+    Class for checking init values. Takes hard-coded equation and values.
+
+    Values will be checked after init.
+    Values that are not True will be warned.
+    """
+    def __init__(self, lower=None, upper=None, **kwargs):
+        super().__init__(**kwargs)
+        self.lower = dummify(lower) if lower is not None else None
+        self.upper = dummify(upper) if upper is not None else None
 
 
 class ExtService(BaseService):

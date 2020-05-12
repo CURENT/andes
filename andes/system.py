@@ -594,6 +594,12 @@ class System(object):
                 for p in mdl.find_param(prop).values():
                     p.set_pu_coeff(coeff)
 
+    def post_init_check(self, models: Optional[Union[str, List, OrderedDict]]):
+        """
+        Calls post initialization check.
+        """
+        self.call_models('post_init_check', models)
+
     def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Update variable-based limiter discrete states by calling ``l_update_var`` of models.

@@ -7,6 +7,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
+from andes.core.service import InitCheckService
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,14 @@ class GENBase(Model):
         self.flags.update({'tds': True,
                            'nr_iter': False,
                            })
+        self.config.add(vf_lower=1.6,
+                        vf_upper=3.0,
+                        )
+
+        self.config.add_extra("_alt",
+                              vf_lower="lower limit for vf warning",
+                              vf_upper="upper limit for vf warning",
+                              )
 
         # state variables
         self.delta = State(info='rotor angle',
@@ -160,6 +169,12 @@ class GENBase(Model):
                         e_str='vf0 - vf',
                         tex_name=r'v_f'
                         )
+
+        self._vfc = InitCheckService(info='vf range limit',
+                                     v_str='vf',
+                                     lower=self.config.vf_lower,
+                                     upper=self.config.vf_upper,
+                                     )
 
         self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
                             info='d-axis armature excitation current',

@@ -88,6 +88,14 @@ class Discrete(object):
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n)
 
+    def warn_limit(self):
+        """
+        Warn if initialized at limits
+
+        TODO: implement me
+        """
+        pass
+
 
 class LessThan(Discrete):
     """
