@@ -470,12 +470,12 @@ class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config, add_sn=False)
 
-        # check if K1-K4 sums up to 1
-        self._sumK14 = ConstService(v_str='K1+K2+K3+K4',
-                                    info='summation of K1-K4',
+        # check if K1-K8 sums up to 1
+        self._sumK18 = ConstService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
+                                    info='summation of K1-K8',
                                     )
-        self._K14c1 = InitChecker(u=self._sumK14,
-                                  info='summation of K1-K4 and 1.0',
+        self._K18c1 = InitChecker(u=self._sumK18,
+                                  info='summation of K1-K8 and 1.0',
                                   equal=1,
                                   )
 
@@ -516,15 +516,6 @@ class IEEEG1Model(TGBase):
                                  info='Exist flags for syn2',
                                  )
 
-        # Check if K5-K8 sum to 1.0 if syn2 is present
-        self._sumK58 = ConstService(v_str='zsyn2*(K5+K6+K7+K8)',
-                                    info='summation of K5-K8',
-                                    )
-        self._K58c = InitChecker(u=self._sumK58,
-                                 info='summation of K5-K8 and 1.0',
-                                 equal=self.zsyn2,
-                                 )
-
         self.tm02 = ExtService(src='tm',
                                model='SynGen',
                                indexer=self.syn2,
@@ -533,6 +524,9 @@ class IEEEG1Model(TGBase):
                                allow_none=True,
                                default=0.0,
                                )
+        self.tm012 = ConstService(info='total turbine power',
+                                  v_str='tm0 + tm02',
+                                  )
 
         self.tm2 = ExtAlgeb(src='tm',
                             model='SynGen',
@@ -560,7 +554,7 @@ class IEEEG1Model(TGBase):
         self.vs = Algeb(info='Valve speed',
                         tex_name='V_s',
                         v_str='0',
-                        e_str='(LL_y + tm0 + paux - IAW_y) / T3 - vs',
+                        e_str='(LL_y + tm012 + paux - IAW_y) / T3 - vs',
                         )
 
         self.HL = HardLimiter(u=self.vs,
@@ -577,7 +571,7 @@ class IEEEG1Model(TGBase):
 
         self.IAW = IntegratorAntiWindup(u=self.vsl,
                                         K=1,
-                                        y0=self.tm0,
+                                        y0=self.tm012,
                                         lower=self.PMIN,
                                         upper=self.PMAX,
                                         info='Valve position integrator',
