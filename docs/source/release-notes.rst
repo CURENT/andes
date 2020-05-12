@@ -8,18 +8,19 @@ v0.9.4
 -------------------
 
 - Added exciter models EXST1, ESST3A, SEXS and turbine governor model
-  IEEEG1 (support single output).
+  IEEEG1 (fully support dual machines).
 - Added blocks HVGate and LVGate with workaround for sympy.maximum/
   minimum.
 - Added services `PostInitService` (for storing initialized values), and
   `VarService` (variable services that get updated) after limiters and before
   equations).
 - Added service `InitChecker` for checking initialization values against
-  typical values. Warnings will be issued when out of bound.
+  typical values. Warnings will be issued when out of bound or equality/
+  inequality conditions are not met.
 - Allow internal variables to be associated with a discrete component which
   will be updated before initialization (through BaseVar.discrete).
 - Allow turbine governors to specify an optional `Tn` (turbine rating). If
-  not provided, fall back to `Sn` retrieved from generators.
+  not provided, turbine rating will fall back to `Sn` (generator rating).
 - Renamed `OptionalSelect` to `DataSelect`; Added `NumSelect`, the array-based
   version of `DataSelect`.
 - Allow to regenerate code for updated models through ``andes prepare -qi``.
