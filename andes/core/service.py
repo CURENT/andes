@@ -104,23 +104,102 @@ class ConstService(BaseService):
 class VarService(ConstService):
     """
     Variable service that gets updated in each step/loop as variables change.
+
+    This class is useful when one has non-differentiable algebraic equations,
+    which make use of `abs()`, `re` and `im`.
+    Instead of creating `Algeb`, one can put the equation in `VarService`,
+    which will be updated before solving algebraic equations.
+
+    Examples
+    --------
+    In ESST3A model, the voltage and current sensors (vd + jvq), (Id + jIq)
+    estimate the sensed VE using equation
+
+    .. math ::
+
+        VE = | K_{PC}*(v_d + 1j v_q) + 1j (K_I + K_{PC}*X_L)*(I_d + 1j I_q)|
+
+    One can use `VarService` to implement this equation ::
+
+        self.VE = VarService(tex_name='V_E',
+                             info='VE',
+                             v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
+                             )
+
+    Warnings
+    --------
+    `VarService` is not solved with other algebraic equations, meaning that
+    there is one step "delay" between the algebraic variables and `VarService`.
+    Use an algebraic variable whenever possible.
     """
+
     pass
 
 
 class PostInitService(ConstService):
     """
     Constant service that gets stored once after init.
+
+    This service is useful when one need to store initialization
+    values stored in variables.
+
+    Examples
+    --------
+    In ESST3A model, the `vf` variable is initialized followed by other
+    variables. One can store the initial `vf` into `vf0` so that equation
+    ``vf - vf0 = 0`` will hold. ::
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
+
+    Since all `ConstService` are evaluated before equation evaluation,
+    without using PostInitService, one will need to create lots
+    of `ConstService` to store values in the initialization path
+    towards `vf0`, in order to correctly initialize `vf`.
     """
+
     pass
 
 
-class InitCheckService(PostInitService):
+class InitChecker(PostInitService):
     """
-    Class for checking init values. Takes hard-coded equation and values.
+    Class for checking init values against known typical values.
 
-    Values will be checked after init.
-    Values that are not True will be warned.
+    Instances will be stored in `Model.services_post` and
+    `Model.services_icheck`, which will be checked in
+    `Model.post_init_check()` after initialization.
+
+    Parameters
+    ----------
+    v_str : str
+        equation string for computing the post-init quantity
+    lower : float, BaseParam, BaseVar, BaseService
+        lower bound
+    upper : float, BaseParam, BaseVar, BaseService
+        upper bound
+
+    Examples
+    --------
+    Let's say generator excitation voltages are known to be in
+    the range of 1.6 - 3.0 per unit. One can add the following
+    instance to `GENBase` ::
+
+        self._vfc = InitChecker(info='vf range',
+                                v_str='vf',
+                                lower=1.8,
+                                upper=3.0,
+                                )
+
+    `v_str` can take a string of equation, like other services,
+    for the quantity under check.
+
+    `lower` and `upper` can also take v-providers instead of
+    float values.
+
+    One can also pass float values from Config to make it
+    adjustable as in our implementation of ``GENBase._vfc``.
     """
     def __init__(self, lower=None, upper=None, **kwargs):
         super().__init__(**kwargs)

@@ -13,7 +13,7 @@ from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
-from andes.core.service import NumSelect, FlagNotNone, ParamCalc, InitCheckService
+from andes.core.service import NumSelect, FlagNotNone, ParamCalc, InitChecker
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -618,7 +618,7 @@ class Model(object):
                 self.services_var[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
-                if isinstance(value, InitCheckService):
+                if isinstance(value, InitChecker):
                     self.services_icheck[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
@@ -1490,7 +1490,7 @@ class Model(object):
 
     def post_init_check(self):
         """
-        Post init checking. Warns if values of `InitCheckService` is not True.
+        Post init checking. Warns if values of `InitChecker` is not True.
         """
         for name, item in self.services_icheck.items():
             checks = [(item.lower, np.less_equal, "lower"),
@@ -1510,7 +1510,7 @@ class Model(object):
                     continue
                 idx = [self.idx.v[i] for i in pos]
                 lim_v = limit.v * np.ones(item.n)
-                logger.warning(f'{self.class_name} {item.info} violation of {text} limit.')
+                logger.warning(f'{self.class_name} {item.info} violation of the {text} limit.')
                 logger.warning(f'idx={idx}, values={item.v[pos]}, limits={lim_v[pos]}')
 
 

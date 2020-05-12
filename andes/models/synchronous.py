@@ -7,7 +7,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.service import InitCheckService
+from andes.core.service import InitChecker
 
 logger = logging.getLogger(__name__)
 
@@ -170,11 +170,11 @@ class GENBase(Model):
                         tex_name=r'v_f'
                         )
 
-        self._vfc = InitCheckService(info='vf range limit',
-                                     v_str='vf',
-                                     lower=self.config.vf_lower,
-                                     upper=self.config.vf_upper,
-                                     )
+        self._vfc = InitChecker(info='vf range',
+                                v_str='vf',
+                                lower=self.config.vf_lower,
+                                upper=self.config.vf_upper,
+                                )
 
         self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
                             info='d-axis armature excitation current',

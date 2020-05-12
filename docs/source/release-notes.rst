@@ -14,6 +14,8 @@ v0.9.4
 - Added services `PostInitService` (for storing initialized values), and
   `VarService` (variable services that get updated) after limiters and before
   equations).
+- Added service `InitChecker` for checking initialization values against
+  typical values. Warnings will be issued when out of bound.
 - Allow internal variables to be associated with a discrete component which
   will be updated before initialization (through BaseVar.discrete).
 - Allow turbine governors to specify an optional `Tn` (turbine rating). If
