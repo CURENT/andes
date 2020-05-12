@@ -170,8 +170,8 @@ class GENBase(Model):
                         tex_name=r'v_f'
                         )
 
-        self._vfc = InitChecker(info='vf range',
-                                v_str='vf',
+        self._vfc = InitChecker(u=self.vf,
+                                info='vf range',
                                 lower=self.config.vf_lower,
                                 upper=self.config.vf_upper,
                                 )
@@ -195,8 +195,8 @@ class GENBase(Model):
                                export=False,
                                )
 
-        self._vnc = InitChecker(info='Vn and Bus Vn',
-                                v_str='Vn',
+        self._vnc = InitChecker(u=self.Vn,
+                                info='Vn and Bus Vn',
                                 equal=self.Vn_bus,
                                 )
 

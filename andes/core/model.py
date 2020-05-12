@@ -618,8 +618,6 @@ class Model(object):
                 self.services_var[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
-                if isinstance(value, InitChecker):
-                    self.services_icheck[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
         elif isinstance(value, BackRef):
@@ -630,7 +628,8 @@ class Model(object):
                                 FlagNotNone, RandomService,
                                 ParamCalc)):
             self.services_ops[key] = value
-
+        elif isinstance(value, InitChecker):
+            self.services_icheck[key] = value
         elif isinstance(value, Block):
             self.blocks[key] = value
             # pull in sub-variables from control blocks

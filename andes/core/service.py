@@ -165,90 +165,6 @@ class PostInitService(ConstService):
     pass
 
 
-class InitChecker(PostInitService):
-    """
-    Class for checking init values against known typical values.
-
-    Instances will be stored in `Model.services_post` and
-    `Model.services_icheck`, which will be checked in
-    `Model.post_init_check()` after initialization.
-
-    Parameters
-    ----------
-    v_str : str
-        equation string for computing the post-init quantity
-    lower : float, BaseParam, BaseVar, BaseService
-        lower bound
-    upper : float, BaseParam, BaseVar, BaseService
-        upper bound
-    equal : float, BaseParam, BaseVar, BaseService
-        values that the value from `v_str` should equal
-    not_equal : float, BaseParam, BaseVar, BaseService
-        values that should not equal
-    enable : bool
-        True to enable checking
-
-    Examples
-    --------
-    Let's say generator excitation voltages are known to be in
-    the range of 1.6 - 3.0 per unit. One can add the following
-    instance to `GENBase` ::
-
-        self._vfc = InitChecker(info='vf range',
-                                v_str='vf',
-                                lower=1.8,
-                                upper=3.0,
-                                )
-
-    `v_str` can take a string of equation, like other services,
-    for the quantity under check.
-
-    `lower` and `upper` can also take v-providers instead of
-    float values.
-
-    One can also pass float values from Config to make it
-    adjustable as in our implementation of ``GENBase._vfc``.
-    """
-    def __init__(self, lower=None, upper=None, equal=None, not_equal=None,
-                 enable=True, **kwargs):
-        super().__init__(**kwargs)
-        self.lower = dummify(lower) if lower is not None else None
-        self.upper = dummify(upper) if upper is not None else None
-        self.equal = dummify(equal) if equal is not None else None
-        self.not_equal = dummify(not_equal) if not_equal is not None else None
-        self.enable = enable
-
-    def check(self):
-        """
-        Check the bounds and equality conditions.
-        """
-        if not self.enable:
-            return
-
-        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
-                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
-                  (self.equal, np.not_equal, 'should be equal', "expected"),
-                  (self.not_equal, np.equal, 'should not be equal', "not expected")
-                  ]
-
-        for check in checks:
-            limit = check[0]
-            func = check[1]
-            text = check[2]
-            text2 = check[3]
-            if limit is None:
-                continue
-
-            pos = np.argwhere(func(self.v, limit.v)).ravel()
-
-            if len(pos) == 0:
-                continue
-            idx = [self.owner.idx.v[i] for i in pos]
-            lim_v = limit.v * np.ones(self.n)
-            logger.warning(f'{self.owner.class_name} {self.info} {text}.')
-            logger.warning(f'idx={idx}, values={self.v[pos]}, {text2}={lim_v[pos]}')
-
-
 class ExtService(BaseService):
     """
     Service constants whose value is from an external model or group.
@@ -805,6 +721,98 @@ class NumSelect(OperationService):
             self._v = np.array(self._v)
 
         return self._v
+
+
+class InitChecker(OperationService):
+    """
+    Class for checking init values against known typical values.
+
+    Instances will be stored in `Model.services_post` and
+    `Model.services_icheck`, which will be checked in
+    `Model.post_init_check()` after initialization.
+
+    Parameters
+    ----------
+    v_str : str
+        equation string for computing the post-init quantity
+    lower : float, BaseParam, BaseVar, BaseService
+        lower bound
+    upper : float, BaseParam, BaseVar, BaseService
+        upper bound
+    equal : float, BaseParam, BaseVar, BaseService
+        values that the value from `v_str` should equal
+    not_equal : float, BaseParam, BaseVar, BaseService
+        values that should not equal
+    enable : bool
+        True to enable checking
+
+    Examples
+    --------
+    Let's say generator excitation voltages are known to be in
+    the range of 1.6 - 3.0 per unit. One can add the following
+    instance to `GENBase` ::
+
+        self._vfc = InitChecker(info='vf range',
+                                v_str='vf',
+                                lower=1.8,
+                                upper=3.0,
+                                )
+
+    `v_str` can take a string of equation, like other services,
+    for the quantity under check.
+
+    `lower` and `upper` can also take v-providers instead of
+    float values.
+
+    One can also pass float values from Config to make it
+    adjustable as in our implementation of ``GENBase._vfc``.
+    """
+    def __init__(self, u, lower=None, upper=None, equal=None, not_equal=None,
+                 enable=True, **kwargs):
+        super().__init__(**kwargs)
+        self.u = u
+        self.lower = dummify(lower) if lower is not None else None
+        self.upper = dummify(upper) if upper is not None else None
+        self.equal = dummify(equal) if equal is not None else None
+        self.not_equal = dummify(not_equal) if not_equal is not None else None
+        self.enable = enable
+
+    def check(self):
+        """
+        Check the bounds and equality conditions.
+        """
+        if not self.enable:
+            return
+
+        if self._v is None:
+            self._v = np.zeros_like(self.u.v)
+
+        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
+                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
+                  (self.equal, np.not_equal, 'should be equal', "expected"),
+                  (self.not_equal, np.equal, 'should not be equal', "not expected")
+                  ]
+
+        for check in checks:
+            limit = check[0]
+            func = check[1]
+            text = check[2]
+            text2 = check[3]
+            if limit is None:
+                continue
+
+            self.v[:] = np.logical_or(self.v, func(self.u.v, limit.v))
+
+            pos = np.argwhere(func(self.u.v, limit.v)).ravel()
+
+            if len(pos) == 0:
+                continue
+            idx = [self.owner.idx.v[i] for i in pos]
+            lim_v = limit.v * np.ones(self.n)
+            logger.warning(f'{self.owner.class_name} {self.info} {text}.')
+            logger.warning(f'idx={idx}, values={self.u.v[pos]}, {text2}={lim_v[pos]}')
+
+        self.v[:] = np.logical_not(self.v)
 
 
 class FlagNotNone(BaseService):

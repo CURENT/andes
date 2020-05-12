@@ -468,21 +468,30 @@ class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config, add_sn=False)
 
-        self._sumK14 = InitChecker(info='summation of K1-K4 and 0',
-                                   v_str='K1+K2+K3+K4',
-                                   not_equal=0.0,
-                                   )
-        self._sumKi = InitChecker(info='summation of K1-K8 and 1.0',
-                                  v_str='K1+K2+K3+K4+K5+K6+K7+K8',
-                                  equal=1,
-                                  )
-
+        self._sumK14 = PostInitService(v_str='K1+K2+K3+K4',
+                                       info='summation of K1-K4',
+                                       )
+        self._sumK18 = PostInitService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
+                                       info='summation of K1-K8',
+                                       )
         self._tm0K2 = PostInitService(info='mul of tm0 and (K2+K4+K6+K8)',
                                       v_str='tm0*(K2+K4+K6+K8)',
                                       )
-        self._Pc = InitChecker(info='proportionality of tm0 and tm02',
-                               v_str='tm02*(K1+K3+K5+K7)',
-                               equal=self._tm0K2,
+        self._tm02K1 = PostInitService(info='mul of tm02 and (K1+K3+K5+K6)',
+                                       v_str='tm02*(K1+K3+K5+K7)',
+                                       )
+
+        self._K14c = InitChecker(u=self._sumK14,
+                                 info='summation of K1-K4 and 0',
+                                 not_equal=0.0,
+                                 )
+        self._sumKi = InitChecker(u=self._sumK18,
+                                  info='summation of K1-K8 and 1.0',
+                                  equal=1.0,
+                                  )
+        self._Pc = InitChecker(u=self._tm0K2,
+                               info='proportionality of tm0 and tm02',
+                               equal=self._tm02K1,
                                )
 
         self.Sg2 = ExtParam(src='Sn',
