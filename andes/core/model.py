@@ -1127,13 +1127,13 @@ class Model(object):
         Non-inplace equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
-
-        for name, func in self.bcalls.f_bind.items():
+        for name, func in self.calls.f_args.items():
+            args = self._input_args[name]
             var = self.__dict__[name]
             if var.e_inplace:
-                var.e += func()
+                var.e += func(*args)
             else:
-                var.e[:] = func()
+                var.e[:] = func(*args)
 
         kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
@@ -1149,12 +1149,13 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-        for name, func in self.bcalls.g_bind.items():
+        for name, func in self.calls.g_args.items():
+            args = self._input_args[name]
             var = self.__dict__[name]
             if var.e_inplace:
-                var.e += func()
+                var.e += func(*args)
             else:
-                var.e[:] = func()
+                var.e[:] = func(*args)
 
         kwargs = self.get_inputs()
         # numerical calls defined in the model
@@ -1209,12 +1210,15 @@ class Model(object):
         Returns
         -------
         None
+
+        Warnings
+        --------
+        Timer exported from blocks are supposed to work
+        but have not been tested.
         """
         for timer in self.timer_params.values():
             if timer.callback is not None:
                 timer.callback(timer.is_time(dae_t))
-
-        # TODO: consider `Block` with timer
 
     @property
     def class_name(self):
