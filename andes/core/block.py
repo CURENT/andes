@@ -473,7 +473,7 @@ class Washout(Block):
 
         """
         self.x.v_str = f'{self.u.name}'
-        self.y.v_str = f'0'
+        self.y.v_str = '0'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.y.e_str = f'{self.K.name} * ({self.u.name} - {self.name}_x) - {self.T.name} * {self.name}_y'
