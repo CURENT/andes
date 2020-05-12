@@ -470,6 +470,9 @@ class System(object):
             self.vars_to_dae(mdl)
             self.vars_to_models()
 
+            # bind calls after initialization
+            mdl.bcalls.bind()
+
         self.s_update_post(models)
 
         # store the inverse of time constants

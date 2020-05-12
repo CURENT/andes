@@ -5,6 +5,7 @@ import os
 import logging
 from collections import OrderedDict, defaultdict
 from typing import Iterable
+from functools import partial
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -365,8 +366,9 @@ class ModelCall(object):
 
         self.g_lambdify = OrderedDict()
         self.f_lambdify = OrderedDict()
-        self.init_lambdify = OrderedDict()
+
         self.s_lambdify = OrderedDict()
+        self.init_lambdify = OrderedDict()
         self.args = OrderedDict()
 
         self.ijac = defaultdict(list)
@@ -583,6 +585,9 @@ class Model(object):
 
         self._input = OrderedDict()          # cached dictionary of inputs
         self._input_z = OrderedDict()        # discrete flags in an OrderedDict
+        self._input_args = defaultdict(list)
+
+        self.bcalls = CallBinder(self.calls, input_args=self._input_args)
 
     def _register_attribute(self, key, value):
         """
@@ -781,6 +786,10 @@ class Model(object):
 
         # update`dae_t`
         self._input['dae_t'] = self.system.dae.t
+
+        # TODO: optimize the code below
+        self.refresh_inputs_arg()
+
         return self._input
 
     def refresh_inputs(self):
@@ -821,6 +830,13 @@ class Model(object):
         # append config variables
         for key, val in self.config.as_dict().items():
             self._input[key] = val
+
+    def refresh_inputs_arg(self):
+        """
+        Refresh inputs for each function with individual argument list.
+        """
+        for eq in self.calls.args:
+            self._input_args[eq] = [self._input[arg] for arg in self.calls.args[eq]]
 
     def l_update_var(self, dae_t):
         """
@@ -884,7 +900,7 @@ class Model(object):
                 else:
                     instance.v = np.array(func)
 
-                if not isinstance(instance.v, np.ndarray):
+                if instance.v.size == 1:
                     instance.v = instance.v * np.ones(self.n)
 
         # NOTE:
@@ -1111,7 +1127,7 @@ class Model(object):
             if var.e_inplace:
                 var.e += func(*args)
             else:
-                var.e = func(*args)
+                var.e[:] = func(*args)
 
         # user-defined numerical calls defined in the model
         if self.flags.f_num is True:
@@ -1134,7 +1150,7 @@ class Model(object):
             if var.e_inplace:
                 var.e += func(*args)
             else:
-                var.e = func(*args)
+                var.e[:] = func(*args)
 
         # numerical calls defined in the model
         if self.flags.g_num is True:
@@ -1644,6 +1660,8 @@ class SymProcessor(object):
 
         self.calls.f_lambdify = OrderedDict()
         self.calls.g_lambdify = OrderedDict()
+        self.calls.f_args = OrderedDict()
+        self.calls.g_args = OrderedDict()
         self.calls.args = OrderedDict()
 
         self.f_list, self.g_list = list(), list()
@@ -1653,8 +1671,9 @@ class SymProcessor(object):
         dest_list = [self.f_list, self.g_list]
         args_list = [self.calls.args, self.calls.args]
         dest_call = [self.calls.f_lambdify, self.calls.g_lambdify]
+        args_call = [self.calls.f_args, self.calls.g_args]
 
-        for it, dest, call, arg in zip(iter_list, dest_list, dest_call, args_list):
+        for it, dest, call, arg, acall in zip(iter_list, dest_list, dest_call, args_list, args_call):
             for name, instance in it.items():
                 if instance.e_str is None:
                     dest.append(0)
@@ -1667,9 +1686,14 @@ class SymProcessor(object):
 
                     free_syms = self._check_expr_symbols(expr)
                     dest.append(expr)
-                    lambda_func = lambdify(inputs_list, expr, 'numpy')
-                    call[name] = lambda_func
+
+                    # all possible arguments
+                    call[name] = lambdify(inputs_list, expr, 'numpy')
+
+                    # used argument
                     arg[name] = [str(s) for s in free_syms]
+                    # only arguments used for each individual equation
+                    acall[name] = lambdify(free_syms, expr, 'numpy')
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -2146,3 +2170,21 @@ class Documenter(object):
             self.config.doc(max_width=max_width, export=export)
 
         return out
+
+
+class CallBinder(object):
+    """
+    Class for binding ModelCall with the variable values.
+    """
+    def __init__(self, calls, input_args):
+        self.calls = calls
+        self.input_args = input_args
+
+        self.f_lambdify = OrderedDict()
+        self.g_lambdify = OrderedDict()
+
+    def bind(self):
+        for name, func in self.calls.g_lambdify.items():
+            self.g_lambdify[name] = partial(func, *self.input_args[name])
+        for name, func in self.calls.f_lambdify.items():
+            self.f_lambdify[name] = partial(func, *self.input_args[name])
