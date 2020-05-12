@@ -733,8 +733,8 @@ class InitChecker(OperationService):
 
     Parameters
     ----------
-    v_str : str
-        equation string for computing the post-init quantity
+    u
+        v-provider to be checked
     lower : float, BaseParam, BaseVar, BaseService
         lower bound
     upper : float, BaseParam, BaseVar, BaseService
@@ -752,14 +752,11 @@ class InitChecker(OperationService):
     the range of 1.6 - 3.0 per unit. One can add the following
     instance to `GENBase` ::
 
-        self._vfc = InitChecker(info='vf range',
-                                v_str='vf',
+        self._vfc = InitChecker(u=self.vf,
+                                info='vf range',
                                 lower=1.8,
                                 upper=3.0,
                                 )
-
-    `v_str` can take a string of equation, like other services,
-    for the quantity under check.
 
     `lower` and `upper` can also take v-providers instead of
     float values.

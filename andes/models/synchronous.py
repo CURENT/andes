@@ -189,12 +189,11 @@ class GENBase(Model):
                                export=False,
                                )
 
-        self.Vn_bus = ExtParam(model='Bus',
-                               src='Vn',
-                               indexer=self.bus,
-                               export=False,
-                               )
-
+        # declaring `Vn_bus` as ExtParam will fail for PSS/E parser
+        self.Vn_bus = ExtService(model='Bus',
+                                 src='Vn',
+                                 indexer=self.bus,
+                                 )
         self._vnc = InitChecker(u=self.Vn,
                                 info='Vn and Bus Vn',
                                 equal=self.Vn_bus,

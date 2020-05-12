@@ -485,10 +485,10 @@ class IEEEG1Model(TGBase):
                                  info='summation of K1-K4 and 0',
                                  not_equal=0.0,
                                  )
-        self._sumKi = InitChecker(u=self._sumK18,
-                                  info='summation of K1-K8 and 1.0',
-                                  equal=1.0,
-                                  )
+        self._K18c = InitChecker(u=self._sumK18,
+                                 info='summation of K1-K8 and 1.0',
+                                 equal=1.0,
+                                 )
         self._Pc = InitChecker(u=self._tm0K2,
                                info='proportionality of tm0 and tm02',
                                equal=self._tm02K1,
