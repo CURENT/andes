@@ -42,7 +42,7 @@ class Line(LineData, Model):
         LineData.__init__(self)
         Model.__init__(self, system, config)
         self.group = 'ACLine'
-        self.flags['pflow'] = True
+        self.flags.pflow = True
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1',
                            info='phase angle of the from bus')

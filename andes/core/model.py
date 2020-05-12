@@ -6,6 +6,7 @@ import logging
 from collections import OrderedDict, defaultdict
 from typing import Iterable
 
+from andes.core.common import ModelFlags
 from andes.core.config import Config
 from andes.core.discrete import Discrete
 from andes.core.block import Block
@@ -550,23 +551,8 @@ class Model(object):
 
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),))
 
-        # class behavior flags
-        self.flags = dict(
-            collate=False,      # True: collate variables by device; False: by variable.
-                                # Non-collate (continuous memory) has faster computation speed.
-            pflow=False,        # True: called during power flow
-            tds=False,          # True if called during tds; if is False, ``dae_t`` cannot be used
-            series=False,       # True if is series device
-            nr_iter=False,      # True if require iterative initialization
-            f_num=False,        # True if the model defines `f_numeric`
-            g_num=False,        # True if the model defines `g_numeric`
-            j_num=False,        # True if the model defines `j_numeric`
-            s_num=False,        # True if the model defines `s_numeric`
-            sv_num=False,       # True if the model defines `s_numeric_var`
-            sys_base=False,     # True if is parameters have been converted to system base
-            address=False,      # True if address is assigned
-            initialized=False,  # True if variables have been initialized
-        )
+        # Model behavior flags
+        self.flags = ModelFlags()
 
         # `in_use` is used by models with `BackRef` when not reference
         self.in_use = True      # True if this model is in use, False removes this model from all calls
@@ -914,7 +900,7 @@ class Model(object):
                 kwargs = self.get_inputs(refresh=True)
                 instance.v = func(**kwargs)
 
-        if self.flags['s_num'] is True:
+        if self.flags.s_num is True:
             kwargs = self.get_inputs(refresh=True)
             self.s_numeric(**kwargs)
 
@@ -935,7 +921,7 @@ class Model(object):
                 if func is not None and callable(func):
                     instance.v[:] = func(**kwargs)
 
-        if self.flags['sv_num'] is True:
+        if self.flags.sv_num is True:
             self.s_numeric_var(**kwargs)
 
     def s_update_post(self):
@@ -1017,16 +1003,16 @@ class Model(object):
         if self.n == 0:  # do not check `self.in_use` here
             return
 
-        if self.flags['address'] is False:
+        if self.flags.address is False:
             return
 
         # store model-level user-defined Jacobians
-        if self.flags['j_num'] is True:
+        if self.flags.j_num is True:
             self.j_numeric()
 
         # store and merge user-defined Jacobians in blocks
         for instance in self.blocks.values():
-            if instance.flags['j_num'] is True:
+            if instance.flags.j_num is True:
                 instance.j_numeric()
                 self.triplets.merge(instance.triplets)
 
@@ -1091,7 +1077,7 @@ class Model(object):
 
         # experimental: user Newton-Krylov solver for dynamic initialization
         # ----------------------------------------
-        if self.flags['nr_iter']:
+        if self.flags.nr_iter:
             self.init_iter()
         # ----------------------------------------
 
@@ -1099,7 +1085,7 @@ class Model(object):
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
-        self.flags['initialized'] = True
+        self.flags.initialized = True
 
     def get_init_order(self):
         """
@@ -1130,12 +1116,12 @@ class Model(object):
                 var.e = func(*args)
 
         # user-defined numerical calls defined in the model
-        if self.flags['f_num'] is True:
+        if self.flags.f_num is True:
             self.f_numeric(**kwargs)
 
         # user-defined numerical calls in blocks
         for instance in self.blocks.values():
-            if instance.flags['f_num'] is True:
+            if instance.flags.f_num is True:
                 instance.f_numeric(**kwargs)
 
     def g_update(self):
@@ -1153,12 +1139,12 @@ class Model(object):
                 var.e = func(*args)
 
         # numerical calls defined in the model
-        if self.flags['g_num'] is True:
+        if self.flags.g_num is True:
             self.g_numeric(**kwargs)
 
         # numerical calls in blocks
         for instance in self.blocks.values():
-            if instance.flags['g_num'] is True:
+            if instance.flags.g_num is True:
                 instance.g_numeric(**kwargs)
 
     def j_update(self):
@@ -1373,12 +1359,12 @@ class Model(object):
 
     def a_reset(self):
         """
-        Reset addresses to empty and reset flags['address'] to ``False``.
+        Reset addresses to empty and reset flags.address to ``False``.
         """
         for var in self.cache.all_vars.values():
             var.reset()
-        self.flags['address'] = False
-        self.flags['initialized'] = False
+        self.flags.address = False
+        self.flags.initialized = False
 
     def e_clear(self):
         """

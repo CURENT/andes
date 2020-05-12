@@ -20,7 +20,7 @@ class BusFreq(ModelData, Model):
     def __init__(self, system, config):
         ModelData.__init__(self)
         Model.__init__(self, system, config)
-        self.flags['tds'] = True
+        self.flags.tds = True
         self.group = 'FreqMeasurement'
 
         # Parameters

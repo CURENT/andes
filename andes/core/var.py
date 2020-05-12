@@ -1,5 +1,6 @@
 from typing import Optional, Union, List
-from andes.core.param import BaseParam, DummyValue
+from andes.core.param import BaseParam
+from andes.core.common import DummyValue
 from andes.core.discrete import Discrete
 from andes.core.service import BaseService
 from andes.models.group import GroupBase

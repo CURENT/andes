@@ -328,7 +328,7 @@ class System(object):
         """
         # set internal variable addresses
         for mdl in models.values():
-            if mdl.flags['address'] is True:
+            if mdl.flags.address is True:
                 logger.debug(f'{mdl.class_name} address exists')
                 continue
             if mdl.n == 0:
@@ -340,7 +340,7 @@ class System(object):
             n0 = self.dae.n
             m_end = m0 + len(mdl.algebs) * n
             n_end = n0 + len(mdl.states) * n
-            collate = mdl.flags['collate']
+            collate = mdl.flags.collate
 
             if not collate:
                 for idx, item in enumerate(mdl.algebs.values()):
@@ -355,7 +355,7 @@ class System(object):
 
             self.dae.m = m_end
             self.dae.n = n_end
-            mdl.flags['address'] = True
+            mdl.flags.address = True
 
         # set external variable addresses
         for mdl in models.values():
@@ -418,7 +418,7 @@ class System(object):
             # add discrete flag names
             if self.config.store_z == 1:
                 for item in mdl.discrete.values():
-                    if mdl.flags['initialized']:
+                    if mdl.flags.initialized:
                         continue
                     for name, tex_name in zip(item.get_names(), item.get_tex_names()):
                         for id in idx.v:
@@ -783,7 +783,7 @@ class System(object):
         """
         if model.n == 0:
             return
-        if model.flags['initialized'] is False:
+        if model.flags.initialized is False:
             return
 
         for var in model.cache.v_adders.values():
@@ -792,7 +792,7 @@ class System(object):
             np.add.at(self.dae.__dict__[v_code], var.a, var.v)
 
         for var in self._setters[v_code]:
-            if var.owner.flags['initialized'] is False:
+            if var.owner.flags.initialized is False:
                 continue
             if var.n > 0:
                 np.put(self.dae.__dict__[v_code], var.a, var.v)
@@ -867,7 +867,7 @@ class System(object):
                     continue
 
             for f in flag:
-                if mdl.flags[f] is True:
+                if mdl.flags.__dict__[f] is True:
                     out[name] = mdl
                     break
         return out

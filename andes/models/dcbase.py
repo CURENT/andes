@@ -235,7 +235,7 @@ class R(DC2Term):
     """
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
         self.R = NumParam(unit='p.u.',
                           info='DC line resistance',
@@ -259,7 +259,7 @@ class L(DC2Term):
     """
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.L = NumParam(unit='p.u.',
@@ -284,7 +284,7 @@ class C(DC2Term):
     """
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.C = NumParam(unit='p.u.',
@@ -314,7 +314,7 @@ class C(DC2Term):
 class RLs(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
@@ -350,7 +350,7 @@ class RLs(DC2Term):
 class RCp(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
@@ -388,7 +388,7 @@ class RCp(DC2Term):
 class RLCp(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
@@ -439,7 +439,7 @@ class RLCp(DC2Term):
 class RCs(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',
@@ -477,7 +477,7 @@ class RCs(DC2Term):
 class RLCs(DC2Term):
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
-        self.flags['pflow'] = True
+        self.flags.pflow = True
         self.group = 'DCLink'
 
         self.R = NumParam(unit='p.u.',

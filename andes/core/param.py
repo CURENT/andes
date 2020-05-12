@@ -2,45 +2,10 @@ from typing import Optional, Union, Callable, List, Tuple
 
 import math
 import logging
+
 from andes.models.group import GroupBase
 from andes.shared import np
 logger = logging.getLogger(__name__)
-
-
-class DummyValue(object):
-    """
-    Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
-
-    A DummyValue object can be passed to Block, which utilizes the `name` field to dynamically generate equations.
-
-    Notes
-    -----
-    Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
-    """
-    def __init__(self, value):
-        self.name = value
-        self.tex_name = value
-        self.v = value
-
-
-def dummify(param):
-    """
-    Dummify scalar parameter and return a DummyValue object. Do nothing for BaseParam instances.
-
-    Parameters
-    ----------
-    param : float, int, BaseParam
-        parameter object or scalar value
-
-    Returns
-    -------
-    DummyValue(param) if param is a scalar; param itself, otherwise.
-
-    """
-    if isinstance(param, (int, float)):
-        return DummyValue(param)
-    else:
-        return param
 
 
 class BaseParam(object):
