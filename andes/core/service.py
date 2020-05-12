@@ -781,12 +781,15 @@ class InitChecker(OperationService):
         if not self.enable:
             return
 
+        def _not_all_close(a, b):
+            return np.logical_not(np.isclose(a, b))
+
         if self._v is None:
             self._v = np.zeros_like(self.u.v)
 
         checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
                   (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
-                  (self.equal, np.not_equal, 'should be equal', "expected"),
+                  (self.equal, _not_all_close, 'should be equal', "expected"),
                   (self.not_equal, np.equal, 'should not be equal', "not expected")
                   ]
 

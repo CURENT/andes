@@ -1106,6 +1106,9 @@ class Model(object):
         kwargs = self.get_inputs(refresh=True)
         self.v_numeric(**kwargs)
 
+        # call post initialization checking
+        self.post_init_check()
+
         self.flags.initialized = True
 
     def get_init_order(self):

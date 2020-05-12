@@ -39,7 +39,7 @@ class TGBase(Model):
         This is useful when the governor connects to two generators.
 
     """
-    def __init__(self, system, config, add_sn=True):
+    def __init__(self, system, config, add_sn=True, add_tm0=True):
         Model.__init__(self, system, config)
         self.group = 'TurbineGov'
         self.flags.update({'tds': True})
@@ -68,11 +68,13 @@ class TGBase(Model):
                            )
 
         # Note: changing `tm0` is not allowed in any time!!
-        self.tm0 = ExtService(src='tm',
-                              model='SynGen',
-                              indexer=self.syn,
-                              tex_name=r'\tau_{m0}',
-                              info='Initial mechanical input')
+        if add_tm0 is True:
+            self.tm0 = ExtService(src='tm',
+                                  model='SynGen',
+                                  indexer=self.syn,
+                                  tex_name=r'\tau_{m0}',
+                                  info='Initial mechanical input')
+
         self.omega = ExtState(src='omega',
                               model='SynGen',
                               indexer=self.syn,
@@ -416,7 +418,7 @@ class IEEEG1Data(TGBaseData):
                            info='Inlet piping/steam bowl time constant',
                            vrange=(0, 1.0),
                            )
-        self.K1 = NumParam(default=0.3, tex_name='K_1',
+        self.K1 = NumParam(default=0.5, tex_name='K_1',
                            info='Fraction of power from HP',
                            vrange=(0, 1.0),
                            )
@@ -428,11 +430,11 @@ class IEEEG1Data(TGBaseData):
                            info='Time constant of 2nd boiler pass',
                            vrange=(0, 10),
                            )
-        self.K3 = NumParam(default=0.4, tex_name='K_3',
+        self.K3 = NumParam(default=0.5, tex_name='K_3',
                            info='Fraction of HP shaft power after 2nd boiler pass',
                            vrange=(0, 0.5),
                            )
-        self.K4 = NumParam(default=0, tex_name='K_4',
+        self.K4 = NumParam(default=0.0, tex_name='K_4',
                            info='Fraction of LP shaft power after 2nd boiler pass',
                            vrange=(0,),
                            )
@@ -441,7 +443,7 @@ class IEEEG1Data(TGBaseData):
                            info='Time constant of 3rd boiler pass',
                            vrange=(0, 10),
                            )
-        self.K5 = NumParam(default=0.3, tex_name='K_5',
+        self.K5 = NumParam(default=0.0, tex_name='K_5',
                            info='Fraction of HP shaft power after 3rd boiler pass',
                            vrange=(0, 0.35),
                            )
@@ -468,27 +470,22 @@ class IEEEG1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config, add_sn=False)
 
-        self._sumK14 = PostInitService(v_str='K1+K2+K3+K4',
-                                       info='summation of K1-K4',
-                                       )
-        self._sumK18 = PostInitService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
-                                       info='summation of K1-K8',
-                                       )
+        # check if K1-K4 sums up to 1
+        self._sumK14 = ConstService(v_str='K1+K2+K3+K4',
+                                    info='summation of K1-K4',
+                                    )
+        self._K14c1 = InitChecker(u=self._sumK14,
+                                  info='summation of K1-K4 and 1.0',
+                                  equal=1,
+                                  )
+
+        # check if  `tm0 * (K2 + k4 + K6 + K8) = tm02 *(K1 + K3 + K5 + K7)
         self._tm0K2 = PostInitService(info='mul of tm0 and (K2+K4+K6+K8)',
-                                      v_str='tm0*(K2+K4+K6+K8)',
+                                      v_str='zsyn2*tm0*(K2+K4+K6+K8)',
                                       )
         self._tm02K1 = PostInitService(info='mul of tm02 and (K1+K3+K5+K6)',
                                        v_str='tm02*(K1+K3+K5+K7)',
                                        )
-
-        self._K14c = InitChecker(u=self._sumK14,
-                                 info='summation of K1-K4 and 0',
-                                 not_equal=0.0,
-                                 )
-        self._K18c = InitChecker(u=self._sumK18,
-                                 info='summation of K1-K8 and 1.0',
-                                 equal=1.0,
-                                 )
         self._Pc = InitChecker(u=self._tm0K2,
                                info='proportionality of tm0 and tm02',
                                equal=self._tm02K1,
@@ -517,6 +514,15 @@ class IEEEG1Model(TGBase):
         self.zsyn2 = FlagNotNone(self.syn2,
                                  tex_name='z_{syn2}',
                                  info='Exist flags for syn2',
+                                 )
+
+        # Check if K5-K8 sum to 1.0 if syn2 is present
+        self._sumK58 = ConstService(v_str='zsyn2*(K5+K6+K7+K8)',
+                                    info='summation of K5-K8',
+                                    )
+        self._K58c = InitChecker(u=self._sumK58,
+                                 info='summation of K5-K8 and 1.0',
+                                 equal=self.zsyn2,
                                  )
 
         self.tm02 = ExtService(src='tm',
@@ -603,6 +609,10 @@ class IEEEG1Model(TGBase):
 class IEEEG1(IEEEG1Data, IEEEG1Model):
     """
     IEEE Type 1 Speed-Governing Model
+
+    The speed deviation of generator 1 is measured.
+    If both generators are present, the turbine base will be
+    the total machine power rating, unless specified by `Tn`.
 
     Notes from `PowerWorld documentation
     <https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/

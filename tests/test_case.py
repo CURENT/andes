@@ -58,6 +58,27 @@ class Test5Bus(unittest.TestCase):
         self.ss.PFlow.run()
 
 
+def compare_results(case, pkl_name, tf=10):
+    case_path = get_case(case)
+    ss = andes.run(case_path)
+
+    ss.TDS.config.tf = tf
+    ss.TDS.run()
+
+    test_dir = os.path.dirname(__file__)
+    f = open(os.path.join(test_dir, pkl_name), 'rb')
+    results = dill.load(f)
+    f.close()
+
+    indices = np.hstack((ss.GENROU.omega.a,
+                         ss.dae.n + ss.GENROU.tm.a,
+                         ss.dae.n + ss.GENROU.vf.a))
+
+    np.testing.assert_almost_equal(ss.dae.xy[indices],
+                                   results)
+    return ss
+
+
 class TestKundur2AreaXLSX(unittest.TestCase):
     """
     Test Kundur's 2-area system
@@ -66,27 +87,6 @@ class TestKundur2AreaXLSX(unittest.TestCase):
     def setUp(self) -> None:
         self.xlsx = get_case("kundur/kundur_full.xlsx")
         self.ss = andes.run(self.xlsx)
-
-    def test_xlsx_tds_run(self):
-        self.ss.TDS.config.tf = 10
-        self.ss.TDS.run()
-
-        test_dir = os.path.dirname(__file__)
-        f = open(os.path.join(test_dir, 'kundur_full_10s.pkl'), 'rb')
-        results = dill.load(f)
-        f.close()
-
-        ss = self.ss
-        self.indices = np.hstack((ss.GENROU.omega.a,
-                                  ss.dae.n + ss.GENROU.tm.a,
-                                  ss.dae.n + ss.GENROU.vf.a))
-
-        np.testing.assert_almost_equal(self.ss.dae.xy[self.indices],
-                                       results,
-                                       err_msg='Results for "kundur_full.xlsx" does not match.')
-
-        andes.main.misc(clean=True)
-        self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
     def test_xlsx_eig_run(self):
         self.ss.EIG.run()
@@ -103,31 +103,22 @@ class TestKundurPSS(unittest.TestCase):
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
-class TestKundurAntiWindup(unittest.TestCase):
-
-    def setUp(self) -> None:
-        aw = get_case('kundur/kundur_aw.xlsx')
-        self.ss = andes.main.run(aw)
+class TestKnownResults(unittest.TestCase):
 
     def test_aw_tds_run(self):
-        self.ss.TDS.config.tf = 10
-        self.ss.TDS.run()
-
-        test_dir = os.path.dirname(__file__)
-        f = open(os.path.join(test_dir, 'kundur_aw_10s.pkl'), 'rb')
-        results = dill.load(f)
-        f.close()
-
-        ss = self.ss
-        self.indices = np.hstack((ss.GENROU.omega.a,
-                                  ss.dae.n + ss.GENROU.tm.a,
-                                  ss.dae.n + ss.GENROU.vf.a))
-
-        np.testing.assert_almost_equal(self.ss.dae.xy[self.indices],
-                                       results,
-                                       err_msg='Results for "kundur_aw.xlsx" does not match.')
-
+        ss = compare_results('kundur/kundur_aw.xlsx', 'kundur_aw_10s.pkl')
         andes.main.misc(clean=True)
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+    def test_full_run(self):
+        ss = compare_results('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl')
+        andes.main.misc(clean=True)
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+    def test_ieeeg1_run(self):
+        ss = compare_results('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl')
+        andes.main.misc(clean=True)
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):

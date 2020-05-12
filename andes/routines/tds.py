@@ -95,7 +95,6 @@ class TDS(BaseRoutine):
         system.store_adder_setter(models=system.exist.pflow_tds)
         system.vars_to_models()
         system.init(system.exist.tds)
-        system.post_init_check(system.exist.tds)
         system.store_switch_times(system.exist.tds)
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
