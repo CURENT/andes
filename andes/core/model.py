@@ -788,7 +788,8 @@ class Model(object):
         self._input['dae_t'] = self.system.dae.t
 
         # TODO: optimize the code below
-        self.refresh_inputs_arg()
+        if len(self._input_args) == 0 or refresh:
+            self.refresh_inputs_arg()
 
         return self._input
 
