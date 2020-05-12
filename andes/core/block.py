@@ -2,7 +2,7 @@ from typing import Optional, Iterable, Dict, Union, List, Tuple
 
 from andes.core.var import Algeb, State
 from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
-from andes.core.triplet import JacTriplet
+from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
 import numpy as np
 

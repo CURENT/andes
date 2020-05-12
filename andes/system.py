@@ -59,7 +59,7 @@ class System(object):
         Numerical DAE storage
     files : andes.variables.fileman.FileMan
         File path storage
-    config : andes.core.config.Config
+    config : andes.core.Config
         System config storage
     models : OrderedDict
         model name and instance pairs

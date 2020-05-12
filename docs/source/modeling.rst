@@ -315,7 +315,7 @@ the sparse matrix pattern when a particular system is given.
 .. warning::
 
     Data structure for the Jacobian storage has changed. Pending documentation update. Please check
-    :py:mod:`andes.core.triplet.JacTriplet` class for more details.
+    :py:mod:`andes.core.common.JacTriplet` class for more details.
 
 The triplets, the equation (row) index, variable (column) index, and values (constant numbers or callable) are
 stored in ``Model`` attributes with the name of ``_{i, j, v}{Jacobian Name}{c or None}``, where

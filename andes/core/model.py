@@ -6,11 +6,9 @@ import logging
 from collections import OrderedDict, defaultdict
 from typing import Iterable
 
-from andes.core.common import ModelFlags
-from andes.core.config import Config
+from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
 from andes.core.block import Block
-from andes.core.triplet import JacTriplet
 from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService

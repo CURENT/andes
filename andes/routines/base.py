@@ -1,5 +1,5 @@
 from andes.core.solver import Solver
-from andes.core.config import Config
+from andes.core import Config
 from collections import OrderedDict
 
 
