@@ -278,8 +278,8 @@ class AntiWindup(Limiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, state=None):
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None, state=None):
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
     def check_var(self, *args, **kwargs):

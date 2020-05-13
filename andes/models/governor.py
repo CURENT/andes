@@ -548,6 +548,7 @@ class IEEEG1Model(TGBase):
                           T1=self.T2,
                           T2=self.T1,
                           K=self.K,
+                          info='Signal conditioning for wd',
                           )
 
         # `P0` == `tm0`
@@ -577,13 +578,20 @@ class IEEEG1Model(TGBase):
                                         info='Valve position integrator',
                                         )
 
-        self.L4 = Lag(u=self.IAW_y, T=self.T4, K=1)
+        self.L4 = Lag(u=self.IAW_y, T=self.T4, K=1,
+                      info='first process',)
 
-        self.L5 = Lag(u=self.L4_y, T=self.T5, K=1)
+        self.L5 = Lag(u=self.L4_y, T=self.T5, K=1,
+                      info='second (reheat) process',
+                      )
 
-        self.L6 = Lag(u=self.L5_y, T=self.T6, K=1)
+        self.L6 = Lag(u=self.L5_y, T=self.T6, K=1,
+                      info='third process',
+                      )
 
-        self.L7 = Lag(u=self.L6_y, T=self.T7, K=1)
+        self.L7 = Lag(u=self.L6_y, T=self.T7, K=1,
+                      info='fourth (second reheat) process',
+                      )
 
         self.PHP = Algeb(info='HP output',
                          tex_name='P_{HP}',
@@ -605,31 +613,16 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
     IEEE Type 1 Speed-Governing Model
 
     The speed deviation of generator 1 is measured.
-    If both generators are present, the turbine base will be
-    the total machine power rating, unless specified by `Tn`.
+    If turbine rating `Tn` is not specified, the sum
+    of `Sn` of of connected generators will be used
 
-    Notes from `PowerWorld documentation
-    <https://www.powerworld.com/WebHelp/Content/TransientModels_PDF/
-    Generator/Governor/Governor%20IEEEG1%20and%20IEEEG1_GE.pdf>`_ : ::
+    If only one SynGen is connected, its `idx` must
+    be connect through `syn`, and `syn2` must be left blank.
 
-        For the IEEEG1 model, if the turbine rating is omitted
-        then the MVABase of only the high-pressure generator is used.
-
-    Notes from `NEPLAN manual
-    <https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf>`_: ::
-
-        For a tandem-compound turbine the parameters K2, K4, K6,
-        and K8 are ignored. For a cross- compound turbine,
-        two generators are connected to this turbine-governor model.
-
-        Each generator must be represented in the load flow by data
-        on its own MVA base. The values of K1, K3, K5, K7
-        must be specified to describe the proportionate
-        development of power on the first turbine shaft.
-        K2, K4, K6, K8 must describe the second turbine shaft.
-        Normally K1 + K3 + K5 + K7 = 1.0 and K2 + K4 + K6 + K8 = 1.0
-        (if second generator is present).
-
+    Each SynGen must provide data in its `Sn` base.
+    If the second generator is not present,
+    K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
+    In all cases, K1 + K2 + ... + K8 = 1.0.
     """
 
     def __init__(self, system, config):

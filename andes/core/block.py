@@ -415,7 +415,9 @@ class IntegratorAntiWindup(Block):
 
         self.y = State(info='AW Integrator output', tex_name='y')
 
-        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
+                              info='Limiter in integrator',
+                              )
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
