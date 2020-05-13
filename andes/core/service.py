@@ -1,7 +1,10 @@
 from typing import Optional, Union, Callable, Type
 from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
+from andes.core.common import dummify
 from andes.shared import np, ndarray
+import logging
+logger = logging.getLogger(__name__)
 
 
 class BaseService(object):
@@ -25,7 +28,7 @@ class BaseService(object):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.vtype = type  # type for `v`. NOT IN USE.
+        self.vtype = vtype  # type for `v`. NOT IN USE.
         self.owner = None
 
     def get_names(self):
@@ -103,14 +106,62 @@ class ConstService(BaseService):
 class VarService(ConstService):
     """
     Variable service that gets updated in each step/loop as variables change.
+
+    This class is useful when one has non-differentiable algebraic equations,
+    which make use of `abs()`, `re` and `im`.
+    Instead of creating `Algeb`, one can put the equation in `VarService`,
+    which will be updated before solving algebraic equations.
+
+    Examples
+    --------
+    In ESST3A model, the voltage and current sensors (vd + jvq), (Id + jIq)
+    estimate the sensed VE using equation
+
+    .. math ::
+
+        VE = | K_{PC}*(v_d + 1j v_q) + 1j (K_I + K_{PC}*X_L)*(I_d + 1j I_q)|
+
+    One can use `VarService` to implement this equation ::
+
+        self.VE = VarService(tex_name='V_E',
+                             info='VE',
+                             v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
+                             )
+
+    Warnings
+    --------
+    `VarService` is not solved with other algebraic equations, meaning that
+    there is one step "delay" between the algebraic variables and `VarService`.
+    Use an algebraic variable whenever possible.
     """
+
     pass
 
 
 class PostInitService(ConstService):
     """
     Constant service that gets stored once after init.
+
+    This service is useful when one need to store initialization
+    values stored in variables.
+
+    Examples
+    --------
+    In ESST3A model, the `vf` variable is initialized followed by other
+    variables. One can store the initial `vf` into `vf0` so that equation
+    ``vf - vf0 = 0`` will hold. ::
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
+
+    Since all `ConstService` are evaluated before equation evaluation,
+    without using PostInitService, one will need to create lots
+    of `ConstService` to store values in the initialization path
+    towards `vf0`, in order to correctly initialize `vf`.
     """
+
     pass
 
 
@@ -668,6 +719,140 @@ class NumSelect(OperationService):
                        for v1, v2 in zip(self.optional.v, self.fallback.v)]
 
             self._v = np.array(self._v)
+
+        return self._v
+
+
+class InitChecker(OperationService):
+    """
+    Class for checking init values against known typical values.
+
+    Instances will be stored in `Model.services_post` and
+    `Model.services_icheck`, which will be checked in
+    `Model.post_init_check()` after initialization.
+
+    Parameters
+    ----------
+    u
+        v-provider to be checked
+    lower : float, BaseParam, BaseVar, BaseService
+        lower bound
+    upper : float, BaseParam, BaseVar, BaseService
+        upper bound
+    equal : float, BaseParam, BaseVar, BaseService
+        values that the value from `v_str` should equal
+    not_equal : float, BaseParam, BaseVar, BaseService
+        values that should not equal
+    enable : bool
+        True to enable checking
+
+    Examples
+    --------
+    Let's say generator excitation voltages are known to be in
+    the range of 1.6 - 3.0 per unit. One can add the following
+    instance to `GENBase` ::
+
+        self._vfc = InitChecker(u=self.vf,
+                                info='vf range',
+                                lower=1.8,
+                                upper=3.0,
+                                )
+
+    `lower` and `upper` can also take v-providers instead of
+    float values.
+
+    One can also pass float values from Config to make it
+    adjustable as in our implementation of ``GENBase._vfc``.
+    """
+    def __init__(self, u, lower=None, upper=None, equal=None, not_equal=None,
+                 enable=True, **kwargs):
+        super().__init__(**kwargs)
+        self.u = u
+        self.lower = dummify(lower) if lower is not None else None
+        self.upper = dummify(upper) if upper is not None else None
+        self.equal = dummify(equal) if equal is not None else None
+        self.not_equal = dummify(not_equal) if not_equal is not None else None
+        self.enable = enable
+
+    def check(self):
+        """
+        Check the bounds and equality conditions.
+        """
+        if not self.enable:
+            return
+
+        def _not_all_close(a, b):
+            return np.logical_not(np.isclose(a, b))
+
+        if self._v is None:
+            self._v = np.zeros_like(self.u.v)
+
+        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
+                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
+                  (self.equal, _not_all_close, 'should be equal', "expected"),
+                  (self.not_equal, np.equal, 'should not be equal', "not expected")
+                  ]
+
+        for check in checks:
+            limit = check[0]
+            func = check[1]
+            text = check[2]
+            text2 = check[3]
+            if limit is None:
+                continue
+
+            self.v[:] = np.logical_or(self.v, func(self.u.v, limit.v))
+
+            pos = np.argwhere(func(self.u.v, limit.v)).ravel()
+
+            if len(pos) == 0:
+                continue
+            idx = [self.owner.idx.v[i] for i in pos]
+            lim_v = limit.v * np.ones(self.n)
+            logger.warning(f'{self.owner.class_name} {self.info} {text}.')
+            logger.warning(f'idx={idx}, values={self.u.v[pos]}, {text2}={lim_v[pos]}')
+
+        self.v[:] = np.logical_not(self.v)
+
+
+class FlagNotNone(BaseService):
+    """
+    Class for flagging non-None indices as 1 and None indices as 0 in a numpy array.
+    """
+    def __init__(self, indexer, name=None, tex_name=None, info=None, cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.cache = cache
+        self.indexer = indexer
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None or not self.cache:
+            self._v = np.array([0 if i is None else 1 for i in self.indexer.v])
+
+        return self._v
+
+
+class ParamCalc(BaseService):
+    """
+    Parameter calculation service.
+
+    Useful to create parameters calculated instantly from existing ones.
+    """
+    def __init__(self, param1, param2, func, name=None, tex_name=None, info=None,
+                 cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.param1 = param1
+        self.param2 = param2
+        self.func = func
+        self.cache = cache
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None or not self.cache:
+            self._v = self.func(self.param1.v,
+                                self.param2.v)
 
         return self._v
 

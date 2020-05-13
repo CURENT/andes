@@ -88,6 +88,14 @@ class Discrete(object):
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n)
 
+    def warn_limit(self):
+        """
+        Warn if initialized at limits
+
+        TODO: implement me
+        """
+        pass
+
 
 class LessThan(Discrete):
     """
@@ -270,8 +278,8 @@ class AntiWindup(Limiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, state=None):
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None, state=None):
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
     def check_var(self, *args, **kwargs):

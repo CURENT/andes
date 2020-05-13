@@ -121,7 +121,7 @@ class IEEESTModel(PSSBase):
 
         self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
                                info='Machine base to sys base factor for power',
-                               tex_name='(Sn/Sb)')
+                               tex_name='(Sb/Sn)')
 
         self.SW = Switcher(u=self.MODE,
                            options=[1, 2, 3, 4, 5, 6],
