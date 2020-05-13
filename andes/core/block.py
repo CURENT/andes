@@ -385,8 +385,12 @@ class Integrator(Block):
             y^{(0)} = 0
 
         """
+        if isinstance(self.u, str):
+            u_eqn = self.u
+        else:
+            u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * {u_eqn}'
 
 
 class IntegratorAntiWindup(Block):
@@ -432,8 +436,12 @@ class IntegratorAntiWindup(Block):
             y^{(0)} = 0
 
         """
+        if isinstance(self.u, str):
+            u_eqn = self.u
+        else:
+            u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * {u_eqn}'
 
 
 class Washout(Block):
@@ -623,7 +631,8 @@ class LagAntiWindup(Block):
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
-        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
+                              info='Limiter in Lag')
 
         self.vars = {'y': self.y, 'lim': self.lim}
 

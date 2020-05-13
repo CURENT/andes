@@ -18,8 +18,8 @@ class DAETimeSeries(object):
         self._z = OrderedDict()
 
         self.t = np.array([])
-        self.xy = np.array([])
-        self.z = np.array([])
+        self.xy = np.array([]).reshape((-1, 1))
+        self.z = np.array([]).reshape((-1, 1))
 
         # data frame members
         self.df = None
