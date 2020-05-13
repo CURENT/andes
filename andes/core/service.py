@@ -389,14 +389,19 @@ class DeviceFinder(BaseService):
 
     def find_or_add(self, system):
         mdl = system.models[self.model]
-        found_idx = mdl.find_idx((self.idx_name, ), (self.link.v, ), allow_missing=True)
+        found_idx = mdl.find_idx((self.idx_name, ), (self.link.v, ),
+                                 allow_none=True, default=None)
 
         action = False
         for ii, idx in enumerate(found_idx):
-            if idx is False:
+            if idx is None:
                 action = True
                 new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
                 self.u.v[ii] = new_idx
+
+                logger.warning(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
+                               f"added {self.model} <{new_idx}> "
+                               f"linked to {self.idx_name} <{self.link.v[ii]}>")
 
         if action:
             mdl.list2array()

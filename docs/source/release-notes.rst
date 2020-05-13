@@ -44,7 +44,7 @@ This version accelerates computations by about 35%.
 - Models with flag ``collate=False``, which is the new default,
   will slice DAE arrays for all internal vars to reduce copying back and forth.
 - The change above greatly reduced computation time.
-  For ``kundur_pss.xlsx``, simulation time is down from 2.50 sec to 1.64 sec.
+  For ``kundur_ieeest.xlsx``, simulation time is down from 2.50 sec to 1.64 sec.
 - The side-effects include a change in variable ordering in output lst file.
   It also eliminated the feasibility of evaluating model equations in
   parallel, which has not been implemented and does not seem promising in Python.
@@ -67,7 +67,7 @@ calls to empty user-defined numerical calls.
   if user-defined numerical calls exist.
 - In `Model.f_update`, `Model.g_update` and `Model.j_update`, check the above flags
   to avoid unnecessary calls to empty numeric functions.
-- For the `kundur_pss.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
+- For the `kundur_ieeest.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
 
 v0.8.7 (2020-04-28)
 -------------------

@@ -233,22 +233,26 @@ def print_license():
     return True
 
 
-def load(case, **kwargs):
+def load(case, codegen=False, setup=True, **kwargs):
     """
     Load a case and set up without running. Return a system
     """
     system = System(case=case, options=kwargs)
-    system.undill()
+    if codegen:
+        system.prepare()
+    else:
+        system.undill()
 
     if not andes.io.parse(system):
         return
 
-    system.setup()
+    if setup:
+        system.setup()
     return system
 
 
-def run_case(case, routine='pflow', profile=False, convert='', convert_all='', add_book=None,
-             remove_pycapsule=False, **kwargs):
+def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
+             add_book=None, codegen=False, remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -257,7 +261,7 @@ def run_case(case, routine='pflow', profile=False, convert='', convert_all='', a
     if profile is True:
         pr.enable()
 
-    system = load(case, **kwargs)
+    system = load(case, codegen=codegen, **kwargs)
     if system is None:
         return
 
@@ -418,7 +422,7 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
 
 
 def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
-        cli=False, **kwargs):
+        cli=False, codegen=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -436,15 +440,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Number of cpu cores to use in parallel
     pool: bool, optional
         Use Pool for multiprocessing to return a list of created Systems.
-    cli : bool, optional
-        If is running from command-line. If True, returns exit code instead of System
     kwargs
         Other supported keyword arguments
+    cli : bool, optional
+        If is running from command-line. If True, returns exit code instead of System
 
-    Other Parameters
-    ----------------
     return_code : bool, optional
         Return exit code instead of system instances
+    codegen : bool, optional
+        Run full code generation for System before loading case.
+        Only used for single test case.
 
     Returns
     -------
@@ -464,7 +469,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     t0, _ = elapsed()
     if len(cases) == 1:
-        system = run_case(cases[0], **kwargs)
+        system = run_case(cases[0], codegen=codegen, **kwargs)
     elif len(cases) > 1:
 
         # suppress logging output during multiprocessing

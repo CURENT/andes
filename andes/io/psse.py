@@ -360,7 +360,9 @@ def read_add(system, file):
 
         if 'find' in dyr_yaml[psse_model]:
             for name, source in dyr_yaml[psse_model]['find'].items():
+
                 for model, conditions in source.items():
+                    allow_none = conditions.pop('allow_none', 0)
                     cond_names = conditions.keys()
                     cond_values = []
 
@@ -371,7 +373,8 @@ def read_add(system, file):
                             cond_values.append(dyr_dict[psse_model][col])
 
                     try:
-                        find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
+                        find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
+                                                                     allow_none=allow_none)
                     except IndexError as e:
                         logger.error("Data file may contain references to unsupported devices.")
                         logger.error(e)

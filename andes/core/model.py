@@ -4,7 +4,7 @@ Base class for building ANDES models.
 import os
 import logging
 from collections import OrderedDict, defaultdict
-from typing import Iterable
+from typing import Iterable, Sized
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -303,7 +303,7 @@ class ModelData(object):
 
         return out
 
-    def find_idx(self, keys, values, allow_missing=False):
+    def find_idx(self, keys, values, allow_none=False, default=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -311,11 +311,13 @@ class ModelData(object):
         ----------
         keys : str, array-like, Sized
             A string or an array-like of strings containing the names of parameters for the search criteria
-        values : array, array of arrays
+        values : array, array of arrays, Sized
             Values for the corresponding key to search for. If keys is a str, values should be an array of
             elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_missing : bool, Sized
+        allow_none : bool, Sized
             Allow key, value to be not found. Used by groups.
+        default : bool
+            Default idx to return if not found (missing)
 
         Returns
         -------
@@ -326,13 +328,17 @@ class ModelData(object):
             keys = (keys,)
             if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
                 raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
+
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 values = (values,)
-        elif isinstance(keys, Iterable):
+
+        elif isinstance(keys, Sized):
             if not isinstance(values, Iterable):
                 raise ValueError(f"value must be an iterable, got {values}")
+
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
+
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
@@ -346,10 +352,10 @@ class ModelData(object):
                     v_idx = self.idx.v[pos]
                     break
             if v_idx is None:
-                if allow_missing is False:
+                if allow_none is False:
                     raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
                 else:
-                    v_idx = False
+                    v_idx = default
 
             idxes.append(v_idx)
 

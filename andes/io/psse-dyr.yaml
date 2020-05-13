@@ -264,10 +264,11 @@ IEEEG1:
             SynGen:
                 bus: BUS
                 subidx: ID
-#        syn2:
-#            SynGen:
-#                bus: BUS2
-#                subidx: ID2
+        syn2:
+            SynGen:
+                bus: BUS2
+                subidx: ID2
+                allow_none: 1
     outputs:
         syn: syn
         K: K
