@@ -572,6 +572,7 @@ class IEEEG1Model(TGBase):
                          )
 
         self.IAW = IntegratorAntiWindup(u=self.vsl,
+                                        T=1,
                                         K=1,
                                         y0=self.tm012,
                                         lower=self.PMIN,

@@ -357,22 +357,23 @@ class Integrator(Block):
     r"""
     Integrator block. ::
 
-             ┌─────┐
-        u -> │ K/s │ -> y
-             └─────┘
+             ┌──────┐
+        u -> │ K/sT │ -> y
+             └──────┘
 
     Exports a differential variable `y`.
     The initial output is specified by `y0` and default to zero.
     """
 
-    def __init__(self, u, K, y0, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.K = dummify(K)
+        self.T = dummify(T)
         self.y0 = dummify(y0)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K, self.T))
 
-        self.y = State(info='Integrator output', tex_name='y')
+        self.y = State(info='Integrator output', tex_name='y', t_const=self.T)
         self.vars = {'y': self.y}
 
     def define(self):
@@ -392,28 +393,29 @@ class IntegratorAntiWindup(Block):
     r"""
     Integrator block with anti-windup limiter. ::
 
-                  upper
-                 /¯¯¯¯¯
-             ┌─────┐
-        u -> │ K/s │ -> y
-             └─────┘
-          _____/
-          lower
+                   upper
+                  /¯¯¯¯¯
+             ┌──────┐
+        u -> │ K/sT │ -> y
+             └──────┘
+           _____/
+           lower
 
     Exports a differential variable `y` and an AntiWindup `lim`.
     The initial output must be specified through `y0`.
     """
 
-    def __init__(self, u, K, y0, lower, upper, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, lower, upper, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
+        self.T = dummify(T)
         self.K = dummify(K)
         self.y0 = dummify(y0)
         self.lower = dummify(lower)
         self.upper = dummify(upper)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K, self.T))
 
-        self.y = State(info='AW Integrator output', tex_name='y')
+        self.y = State(info='AW Integrator output', tex_name='y', t_const=self.T)
 
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
                               info='Limiter in integrator',
