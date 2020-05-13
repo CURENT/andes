@@ -4,7 +4,7 @@ from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
 from andes.core.service import InitChecker
-from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
+from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
 from andes.core.discrete import HardLimiter
 
 
@@ -177,55 +177,119 @@ class EXDC2Data(ExcBaseData):
                             )
 
 
+class ExcSaturation(Block):
+    """
+    Exciter saturation block to calculate Ae and Be from E1, SE1, E2 and SE2.
+
+    Input parameters will be corrected and the user will be warned.
+    To disable saturation, set either E1 or E2 to 0.
+
+    Parameters
+    ----------
+    E1 : BaseParam
+        First point of excitation field voltage
+    SE1: BaseParam
+        Coefficient corresponding to E1
+    E2 : BaseParam
+        Second point of excitation field voltage
+    SE2: BaseParam
+        Coefficient corresponding to E2
+
+    """
+    def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self._E1 = E1
+        self._E2 = E2
+        self._SE1 = SE1
+        self._SE2 = SE2
+
+        self.zE1 = FlagNotNone(self._E1, to_flag=0.,
+                               info='Flag non-zeros in E1',
+                               tex_name='z^{E1}',
+                               )
+        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
+                               info='Flag non-zeros in E2',
+                               tex_name='z^{E2}',
+                               )
+        self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
+                                info='Flag non-zeros in SE1',
+                                tex_name='z^{SE1}',
+                                )
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
+
+        # disallow E1 = E2 != 0 since the curve fitting will fail
+        self.E12c = InitChecker(
+            self._E1, not_equal=self._E2,
+            info='E1 and E2 after correction',
+            )
+
+        # data correction for E1, E2, SE1
+        self.E1 = ConstService(
+            tex_name='E^{1c}',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
+        )
+        self.SE1 = ConstService(
+            tex_name='SE^{1c}',
+            info='Corrected SE1 data',
+        )
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.Ae = ConstService(info='Saturation gain',
+                               tex_name='A^e',
+                               )
+        self.Be = ConstService(info='Exponential coef. in saturation',
+                               tex_name='B^e',
+                               )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zE1': self.zE1,
+            'zE2': self.zE2,
+            'zSE1': self.zSE1,
+            'zSE2': self.zSE2,
+            'Ae': self.Ae,
+            'Be': self.Be,
+        }
+
+    def define(self):
+        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+
+        self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
+
+        self.Ae.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
+                        f'{self.name}_E1*{self.name}_SE1*' \
+                        f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
+                        f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
+
+        self.Be.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
+                        f'({self.name}_E1 - {self.name}_E2)'
+
+
 class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        # disallow E1 = E2 since the curve fitting will fail
-
-        self._fE1 = FlagNotNone(self.E1, to_flag=0.,
-                                info='Flag non-zeros in E1')
-        self._fE2 = FlagNotNone(self.E2, to_flag=0.,
-                                info='Flag non-zeros in E2')
-        self._fSE1 = FlagNotNone(self.SE1, to_flag=0.,
-                                 info='Flag non-zeros in SE1')
-        self._fSE2 = FlagNotNone(self.SE2, to_flag=0.,
-                                 info='Flag non-zeros in SE2')
-
-        # data correction for E1, E2, SE1
-        self._E1 = ConstService(v_str='E1 + (1 - _fE1)',
-                                tex_name='E_{1c}',
-                                info='Corrected E1 data',
-                                )
-        self._E2 = ConstService(v_str='E2 + 2*(1 - _fE2)',
-                                tex_name='E_{2c}',
-                                info='Corrected E2 data',
-                                )
-        self._SE1 = ConstService(v_str='SE1 + (1 - _fSE1)',
-                                 tex_name='SE_{1c}',
-                                 info='Corrected SE1 data',
-                                 )
-        self._SE2 = ConstService(v_str='SE2 + 2*(1 - _fSE2)',
-                                 tex_name='SE_{2c}',
-                                 info='Corrected SE2 data',
+        self.SAT = ExcSaturation(self.E1, self.SE1, self.E2, self.SE2,
+                                 info='Field voltage saturation',
                                  )
 
-        self._E12c = InitChecker(self._E1, not_equal=self._E2,
-                                 info='E1 and E2 after correction',
-                                 )
-
-        self.Ae = ConstService(info='Saturation gain',
-                               tex_name='A_e',
-                               v_str='_fE1*_fE2 * _E1*_SE1*exp(E1*log(_E2*_SE2/(_E1*_SE1))/(_E1 - _E2))'
-                               )
-        self.Be = ConstService(info='Exponential coef. in saturation',
-                               tex_name='B_e',
-                               v_str='-log(_E2*_SE2/(_E1*_SE1))/(_E1 - _E2)'
-                               )
-
+        # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='Ae * exp(Be * vf0)',
+                                v_str='SAT_Ae * exp(SAT_Be * vf0)',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -250,7 +314,7 @@ class EXDC2Model(ExcBase):
                         tex_name='S_e',
                         unit='p.u.',
                         v_str='Se0',
-                        e_str='Ae * exp(Be * vout) - Se'
+                        e_str='SAT_Ae * exp(SAT_Be * vout) - Se'
                         )
         self.vp = State(info='Voltage after saturation feedback, before speed term',
                         tex_name='V_p',
@@ -285,6 +349,7 @@ class EXDC2Model(ExcBase):
         self.W = Washout(u=self.vp,
                          T=self.TF1,
                          K=self.KF1,
+                         info='Signal conditioner'
                          )
         self.vout.e_str = 'omega * vp - vout'
 
