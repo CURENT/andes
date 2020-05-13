@@ -238,7 +238,7 @@ class Config(object):
     def __repr__(self):
         return pprint.pformat(self.as_dict())
 
-    def doc(self, max_width=80, export='plain', target=False, symbol=True):
+    def doc(self, max_width=78, export='plain', target=False, symbol=True):
         out = ''
         if len(self.as_dict()) == 0:
             return out

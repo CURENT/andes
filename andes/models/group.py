@@ -148,6 +148,11 @@ class GroupBase(object):
             instance.__dict__[attr][uid] = value[i]
 
     def find_idx(self, keys, values, allow_none=False, default=None):
+        """
+        Find indices of devices that satisfy the given `key=value` condition.
+
+        This method iterates over all models in this group.
+        """
         indices_found = []
         # `indices_found` contains found indices returned from all models of this group
         for model in self.models.values():

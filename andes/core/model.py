@@ -1449,7 +1449,7 @@ class Model(object):
         """
         pass
 
-    def doc(self, max_width=80, export='plain'):
+    def doc(self, max_width=78, export='plain'):
         """
         Retrieve model documentation as a string.
         """
@@ -1878,7 +1878,7 @@ class Documenter(object):
         self.discrete = parent.discrete
         self.blocks = parent.blocks
 
-    def _param_doc(self, max_width=80, export='plain'):
+    def _param_doc(self, max_width=78, export='plain'):
         """
         Export formatted model parameter documentation as a string.
 
@@ -1946,7 +1946,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _var_doc(self, max_width=80, export='plain'):
+    def _var_doc(self, max_width=78, export='plain'):
         # variable documentation
         if len(self.cache.all_vars) == 0:
             return ''
@@ -1995,7 +1995,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _eq_doc(self, max_width=80, export='plain', e_code=None):
+    def _eq_doc(self, max_width=78, export='plain', e_code=None):
         # equation documentation
         # TODO: this function needs a bit refactoring
         out = ''
@@ -2064,7 +2064,7 @@ class Documenter(object):
 
         return out
 
-    def _service_doc(self, max_width=80, export='plain'):
+    def _service_doc(self, max_width=78, export='plain'):
         if len(self.services) == 0:
             return ''
 
@@ -2074,11 +2074,12 @@ class Documenter(object):
         for p in self.services.values():
             names.append(p.name)
             class_names.append(p.class_name)
+            symbols.append(p.tex_name if p.tex_name is not None else '')
             eqs.append(p.v_str if p.v_str else '')
 
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
-            symbols = math_wrap([item.tex_name for item in self.services.values()], export=export)
+            symbols = math_wrap(symbols, export=export)
             eqs_rest = math_wrap(call_store.s_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
@@ -2096,7 +2097,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _discrete_doc(self, max_width=80, export='plain'):
+    def _discrete_doc(self, max_width=78, export='plain'):
         if len(self.discrete) == 0:
             return ''
 
@@ -2125,7 +2126,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _block_doc(self, max_width=80, export='plain'):
+    def _block_doc(self, max_width=78, export='plain'):
         """
         Documentation for blocks.
         """
@@ -2158,7 +2159,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def get(self, max_width=80, export='plain'):
+    def get(self, max_width=78, export='plain'):
         """
         Return the model documentation in table-formatted string.
 

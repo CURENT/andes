@@ -28,7 +28,7 @@ class BaseRoutine(object):
     def class_name(self):
         return self.__class__.__name__
 
-    def doc(self, max_width=80, export='plain'):
+    def doc(self, max_width=78, export='plain'):
         return self.config.doc(max_width, export)
 
     def init(self):

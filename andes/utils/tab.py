@@ -20,7 +20,7 @@ class Tab(Texttable):
                  descr=None,
                  data=None,
                  export='plain',
-                 max_width=80):
+                 max_width=78):
         Texttable.__init__(self, max_width=max_width)
         if export == 'plain':
             self.set_chars(['-', '|', '+', '-'])
