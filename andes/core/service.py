@@ -4,6 +4,8 @@ from andes.utils.func import list_flatten
 from andes.core.common import dummify
 from andes.shared import np, ndarray
 import logging
+from collections import OrderedDict
+from andes.utils.tab import Tab
 logger = logging.getLogger(__name__)
 
 
@@ -815,7 +817,16 @@ class InitChecker(OperationService):
             idx = [self.owner.idx.v[i] for i in pos]
             lim_v = limit.v * np.ones(self.n)
             logger.warning(f'{self.owner.class_name} {self.info} {text}.')
-            logger.warning(f'idx={idx}, values={self.u.v[pos]}, {text2}={lim_v[pos]}')
+            err_dict = OrderedDict([('idx', idx),
+                                   ('values', self.u.v[pos]),
+                                   (f'{text2}', lim_v[pos]),
+                                    ])
+            tab = Tab()
+            data = list(map(list, zip(*err_dict.values())))
+            tab.header(list(err_dict.keys()))
+            tab.add_rows(data, header=None)
+
+            logger.warning(tab.draw())
 
         self.v[:] = np.logical_not(self.v)
 
@@ -836,6 +847,28 @@ class FlagNotNone(BaseService):
         if self._v is None or not self.cache:
             self._v = np.array([0 if i == self.to_flag else 1
                                 for i in self.indexer.v])
+
+        return self._v
+
+
+class Replace(BaseService):
+    """
+    Replace parameters with new values if the function returns True
+    """
+    def __init__(self, old_val, flt, new_val, name=None, tex_name=None, info=None, cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.cache = cache
+        self.filter = flt   # function
+        self.old_val = old_val
+        self.new_val = dummify(new_val)
+        self._v = None
+
+    @property
+    def v(self):
+        if self._v is None or not self.cache:
+            new_v = self.new_val.v * np.ones_like(self.old_val.v)
+            self._v = np.array([new_v[i] if self.filter(old_val) is True else old_val
+                                for i, old_val in enumerate(self.old_val.v)])
 
         return self._v
 

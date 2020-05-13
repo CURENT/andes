@@ -55,6 +55,7 @@ class ExcBase(Model):
                             tex_name='bus',
                             info='Bus idx of the generators',
                             export=False,
+                            dtype=str,
                             )
         self.omega = ExtState(src='omega',
                               model='SynGen',
@@ -908,8 +909,8 @@ class ESDC2AData(ExcBaseData):
                             unit='p.u.',
                             positive=True
                             )
-        self.SWITCH = NumParam(info='Switch that PSS/E did not implement',
-                               tex_name='S',
+        self.Switch = NumParam(info='Switch that PSS/E did not implement',
+                               tex_name='S_w',
                                default=0,
                                unit='bool',
                                )

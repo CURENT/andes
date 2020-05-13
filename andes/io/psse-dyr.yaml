@@ -169,6 +169,7 @@ SEXS:
         TE: TE
         EMIN: EMIN
         EMAX: EMAX
+
 EXST1:
     inputs:
         - BUS
@@ -205,6 +206,51 @@ EXST1:
         KC: KC
         KF: KF
         TF: TF
+
+ESDC2A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - TB
+        - TC
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF
+        - TF1
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: ESDC2A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KA: KA
+        TA: TA
+        TB: TB
+        TC: TC
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        TE: TE
+        KF: KF
+        TF1: TF1
+        Switch: Switch
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
 
 ESST3A:
     inputs:
@@ -383,7 +429,7 @@ IEEEST:
     outputs:
         avr: avr
         MODE: MODE
-        busr: BUSR
+        busr: "IEEEST.BUSR; lambda x: [None if (i == 0) else i for i in x]"
         A1: A1
         A2: A2
         A3: A3

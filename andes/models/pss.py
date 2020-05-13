@@ -4,7 +4,7 @@ Power system stabilizer models.
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain
-from andes.core.service import ExtService, DataSelect, DeviceFinder
+from andes.core.service import ExtService, DataSelect, DeviceFinder, Replace
 from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
 from collections import OrderedDict
@@ -21,8 +21,8 @@ class IEEESTData(ModelData):
         self.avr = IdxParam(info='Exciter idx', mandatory=True)
         self.MODE = NumParam(info='Input signal', mandatory=True)
 
-        self.busr = IdxParam(info='Optional remote bus idx', model='Bus')
-        self.busf = IdxParam(info='BusFreq idx for mode 2', model='BusFreq')
+        self.busr = IdxParam(info='Optional remote bus idx', model='Bus', default=None)
+        self.busf = IdxParam(info='BusFreq idx for mode 2', model='BusFreq', default=None)
 
         self.A1 = NumParam(default=1, tex_name='A_1', info='filter time const. (pole)')
         self.A2 = NumParam(default=1, tex_name='A_2', info='filter time const. (pole)')
@@ -42,9 +42,9 @@ class IEEESTData(ModelData):
         self.LSMAX = NumParam(default=0.3, tex_name='L_{SMAX}', vrange=(0, 0.3), info='Max. output limit')
         self.LSMIN = NumParam(default=-0.3, tex_name='L_{SMIN}', vrange=(-0.3, 0), info='Min. output limit')
 
-        self.VCU = NumParam(default=999, tex_name='V_{CU}', vrange=(1, 1.2), non_zero=True,
+        self.VCU = NumParam(default=999, tex_name='V_{CU}', vrange=(1, 1.2),
                             unit='p.u.', info='Upper enabling bus voltage')
-        self.VCL = NumParam(default=-999, tex_name='V_{CL}', vrange=(0.8, 1), non_zero=True,
+        self.VCL = NumParam(default=-999, tex_name='V_{CL}', vrange=(0.8, 1),
                             unit='p.u.', info='Upper enabling bus voltage')
 
 
@@ -57,11 +57,16 @@ class PSSBase(Model):
         self.group = 'PSS'
         self.flags.update({'tds': True})
 
+        self.VCUr = Replace(self.VCU, lambda x: x == 0, 999)
+        self.VCLr = Replace(self.VCL, lambda x: x == 0, 999)
+
         # retrieve indices of connected generator, bus, and bus freq
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
-                            info='Retrieved generator idx')
+                            info='Retrieved generator idx', dtype=str)
+
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
-                            info='Retrieved bus idx')
+                            info='Retrieved bus idx', dtype=str, default=None,
+                            )
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
@@ -154,7 +159,7 @@ class IEEESTModel(PSSBase):
         self.Vss = Algeb(tex_name='V_{ss}', info='Voltage output before output limiter',
                          e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
 
-        self.OLIM = Limiter(u=self.v, lower=self.VCL, upper=self.VCU, info='output limiter')
+        self.OLIM = Limiter(u=self.v, lower=self.VCLr, upper=self.VCUr, info='output limiter')
 
         self.vsout.e_str = 'OLIM_zi * Vss - vsout'
 
