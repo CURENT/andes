@@ -101,6 +101,7 @@ GENROU:
         S10: S10
         S12: S12
 
+# Exciter models
 EXDC2:
     inputs:
         - BUS
@@ -204,6 +205,61 @@ EXST1:
         KC: KC
         KF: KF
         TF: TF
+
+ESST3A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - KM
+        - TC
+        - TB
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KG
+        - KP
+        - KI
+        - VBMAX
+        - KC
+        - XL
+        - VGMAX
+        - THETAP
+        - TM
+        - VMMAX
+        - VMMIN
+    destination: ESST3A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        VIMAX: VIMAX
+        VIMIN: VIMIN
+        KM: KM
+        TC: TC
+        TB: TB
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KG: KG
+        KP: KP
+        KI: KI
+        VBMAX: VBMAX
+        KC: KC
+        XL: XL
+        VGMAX: VGMAX
+        THETAP: THETAP
+        TM: TM
+        VMMAX: VMMAX
+        VMMIN: VMMIN
 
 TGOV1:
     inputs:

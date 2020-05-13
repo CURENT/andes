@@ -473,6 +473,7 @@ class IEEEG1Model(TGBase):
         # check if K1-K8 sums up to 1
         self._sumK18 = ConstService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
                                     info='summation of K1-K8',
+                                    tex_name=r"\sum_{i=1}^8 K_i"
                                     )
         self._K18c1 = InitChecker(u=self._sumK18,
                                   info='summation of K1-K8 and 1.0',
