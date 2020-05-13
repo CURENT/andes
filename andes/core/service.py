@@ -824,16 +824,18 @@ class FlagNotNone(BaseService):
     """
     Class for flagging non-None indices as 1 and None indices as 0 in a numpy array.
     """
-    def __init__(self, indexer, name=None, tex_name=None, info=None, cache=True):
+    def __init__(self, indexer, to_flag=None, name=None, tex_name=None, info=None, cache=True):
         BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
         self.cache = cache
+        self.to_flag = to_flag
         self.indexer = indexer
         self._v = None
 
     @property
     def v(self):
         if self._v is None or not self.cache:
-            self._v = np.array([0 if i is None else 1 for i in self.indexer.v])
+            self._v = np.array([0 if i == self.to_flag else 1
+                                for i in self.indexer.v])
 
         return self._v
 

@@ -46,5 +46,5 @@ def compare_results(case, pkl_name, tf=10):
                          ss.dae.n + ss.GENROU.vf.a))
 
     np.testing.assert_almost_equal(ss.dae.xy[indices],
-                                   results)
+                                   results, err_msg=f"{case} test error")
     return ss

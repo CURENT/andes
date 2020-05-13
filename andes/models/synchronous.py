@@ -7,7 +7,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.service import InitChecker
+from andes.core.service import InitChecker, FlagNotNone
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,6 @@ class GENBaseData(ModelData):
         self.S12 = NumParam(default=1.0,
                             info="second saturation factor",
                             tex_name='S_{1.2}',
-                            non_zero=True
                             )
 
 
@@ -373,13 +372,19 @@ class GENROUModel(object):
         self.gqd = ConstService(v_str='(xq - xl) / (xd - xl)',
                                 tex_name=r"\gamma_{qd}")
 
+        # correct S12 to 1.0 if is zero
+        self._fS12 = FlagNotNone(self.S12, to_flag=0)
+        self._S12 = ConstService(v_str='S12 + (1-_fS12)',
+                                 info='Corrected S12',
+                                 tex_name='S_{1.2}'
+                                 )
         # Saturation services
         # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sat = 0, A = 1, B = 0
-        self.Sat = ConstService(v_str='sqrt((S10 * 1) / (S12 * 1.2))',
+        self.Sat = ConstService(v_str='sqrt((S10 * 1) / (_S12 * 1.2))',
                                 tex_name=r"S_{at}")
         self.SA = ConstService(v_str='1.2 + 0.2 / (Sat - 1)',
                                tex_name='S_A')
-        self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0)) * 1.2 * S12 * ((Sat - 1) / 0.2) ** 2',
+        self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0))*1.2*_S12 * ((Sat - 1) / 0.2) ** 2',
                                tex_name='S_B')
 
         # internal voltage and rotor angle calculation

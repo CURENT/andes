@@ -2,7 +2,8 @@ from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService, VarService, PostInitService
+from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
+from andes.core.service import InitChecker
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
 from andes.core.discrete import HardLimiter
 
@@ -156,39 +157,72 @@ class EXDC2Data(ExcBaseData):
                               unit='p.u.')
         self.E1 = NumParam(info='First saturation point',
                            tex_name='E_1',
-                           default=0.0,
+                           default=2.3,
                            unit='p.u.',
                            )
         self.SE1 = NumParam(info='Value at first saturation point',
                             tex_name='S_{E1}',
-                            default=0.0,
+                            default=0.1,
                             unit='p.u.',
                             )
         self.E2 = NumParam(info='Second saturation point',
                            tex_name='E_2',
-                           default=0.0,
+                           default=3.1,
                            unit='p.u.',
                            )
         self.SE2 = NumParam(info='Value at second saturation point',
                             tex_name='S_{E2}',
-                            default=0.0,
+                            default=0.33,
                             unit='p.u.',
                             )
-        self.Ae = NumParam(info='Gain in saturation',
-                           tex_name='A_e',
-                           default=0.0,
-                           unit='p.u.',
-                           )
-        self.Be = NumParam(info='Exponential coefficient in saturation',
-                           tex_name='B_e',
-                           default=0.0,
-                           unit='p.u.',
-                           )
 
 
 class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+
+        # disallow E1 = E2 since the curve fitting will fail
+
+        self._fE1 = FlagNotNone(self.E1, to_flag=0.,
+                                info='Flag non-zeros in E1')
+        self._fE2 = FlagNotNone(self.E2, to_flag=0.,
+                                info='Flag non-zeros in E2')
+        self._fSE1 = FlagNotNone(self.SE1, to_flag=0.,
+                                 info='Flag non-zeros in SE1')
+        self._fSE2 = FlagNotNone(self.SE2, to_flag=0.,
+                                 info='Flag non-zeros in SE2')
+
+        # data correction for E1, E2, SE1
+        self._E1 = ConstService(v_str='E1 + (1 - _fE1)',
+                                tex_name='E_{1c}',
+                                info='Corrected E1 data',
+                                )
+        self._E2 = ConstService(v_str='E2 + 2*(1 - _fE2)',
+                                tex_name='E_{2c}',
+                                info='Corrected E2 data',
+                                )
+        self._SE1 = ConstService(v_str='SE1 + (1 - _fSE1)',
+                                 tex_name='SE_{1c}',
+                                 info='Corrected SE1 data',
+                                 )
+        self._SE2 = ConstService(v_str='SE2 + 2*(1 - _fSE2)',
+                                 tex_name='SE_{2c}',
+                                 info='Corrected SE2 data',
+                                 )
+
+        self._E12c = InitChecker(self._E1, not_equal=self._E2,
+                                 info='E1 and E2 after correction',
+                                 )
+
+        self.Ae = ConstService(info='Saturation gain',
+                               tex_name='A_e',
+                               v_str='_fE1*_fE2 * _E1*_SE1*exp(E1*log(_E2*_SE2/(_E1*_SE1))/(_E1 - _E2))'
+                               )
+        self.Be = ConstService(info='Exponential coef. in saturation',
+                               tex_name='B_e',
+                               v_str='-log(_E2*_SE2/(_E1*_SE1))/(_E1 - _E2)'
+                               )
+
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
                                 v_str='Ae * exp(Be * vf0)',
