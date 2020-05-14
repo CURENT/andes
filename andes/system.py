@@ -594,7 +594,7 @@ class System(object):
                 for p in mdl.find_param(prop).values():
                     p.set_pu_coeff(coeff)
 
-    def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_var(self, models: OrderedDict):
         """
         Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
@@ -602,7 +602,7 @@ class System(object):
         """
         self.call_models('l_update_var', models, self.dae.t)
 
-    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_eq(self, models:  OrderedDict):
         """
         First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
@@ -612,7 +612,7 @@ class System(object):
         self.call_models('l_check_eq', models)
         self.call_models('l_set_eq', models)
 
-    def s_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def s_update_var(self, models: OrderedDict):
         """
         Update variable services by calling ``s_update_var`` of models.
 
@@ -621,7 +621,7 @@ class System(object):
         """
         self.call_models('s_update_var', models)
 
-    def s_update_post(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def s_update_post(self, models: OrderedDict):
         """
         Update variable services by calling ``s_update_post`` of models.
 

@@ -422,7 +422,7 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
 
 
 def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
-        cli=False, codegen=False, **kwargs):
+        cli=False, codegen=False, shell=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -457,6 +457,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance
 
     """
+
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
@@ -513,6 +514,14 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
             print(f'-> Multiprocessing finished in {s0}.')
         else:
             print(f'-> Multiprocessing exit with an error in {s0}.')
+
+    # IPython interactive shell
+    if shell is True:
+        try:
+            from IPython import embed
+            embed()
+        except ImportError:
+            logger.warning("IPython import error. Installed?")
 
     if cli is True:
         return ex_code

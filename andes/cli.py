@@ -53,6 +53,7 @@ def create_parser():
     run.add_argument('--state-matrix', help='Export state matrix to a .mat file. Need to run with `-r eig`',
                      action='store_true')
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
+    run.add_argument('--shell', action='store_true', help='Start in IPython shell')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '

@@ -8,6 +8,7 @@ from andes.core.service import ExtService, DataSelect, DeviceFinder, Replace
 from andes.core.discrete import Switcher, Limiter, Derivative
 from andes.core.model import ModelData, Model
 from collections import OrderedDict
+import numpy as np
 
 import logging
 
@@ -57,8 +58,8 @@ class PSSBase(Model):
         self.group = 'PSS'
         self.flags.update({'tds': True})
 
-        self.VCUr = Replace(self.VCU, lambda x: x == 0, 999)
-        self.VCLr = Replace(self.VCL, lambda x: x == 0, 999)
+        self.VCUr = Replace(self.VCU, lambda x: np.equal(x, 0.0), 999)
+        self.VCLr = Replace(self.VCL, lambda x: np.equal(x, 0.0), -999)
 
         # retrieve indices of connected generator, bus, and bus freq
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
