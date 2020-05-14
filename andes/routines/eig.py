@@ -115,7 +115,7 @@ class EIG(BaseRoutine):
         for item in idx:
             mu_real = float(mu[item].real)
             mu_imag = float(mu[item].imag)
-            mu_complex[item] = complex(round(mu_real, 4), round(mu_imag, 4))
+            mu_complex[item] = complex(round(mu_real, 5), round(mu_imag, 5))
             partfact[item, :] /= WN[item]
 
         # participation factor
@@ -267,6 +267,8 @@ class EIG(BaseRoutine):
         -------
         None
         """
+        from andes.variables.report import report_info
+
         system = self.system
         mu = self.mu
         part_fact = self.part_fact
@@ -323,7 +325,13 @@ class EIG(BaseRoutine):
                 temp_row.append(round(part_fact[prow, pcol], 5))
             pf.append(temp_row)
 
+        # opening info section
+        text.append(report_info(self.system))
+        header.append(None)
+        rowname.append(None)
+        data.append(None)
         text.append('')
+
         header.append([''])
         rowname.append(['EIGENVALUE ANALYSIS REPORT'])
         data.append('')
@@ -335,7 +343,7 @@ class EIG(BaseRoutine):
 
         text.append('EIGENVALUE DATA\n')
         header.append([
-            'Most Associated', 'Real', 'Imag', 'Damped Freq.', 'Frequency',
+            'Most Associated', 'Real', 'Imag.', 'Damped Freq.', 'Frequency',
             'Damping [%]'
         ])
         rowname.append(numeral)

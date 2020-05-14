@@ -11,6 +11,20 @@ logger = logging.getLogger(__name__)
 all_formats = {}
 
 
+def report_info(system):
+    info = list()
+    info.append('ANDES' + ' ' + version + '\n')
+    info.append('Copyright (C) 2015-2020 Hantao Cui\n\n')
+    info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
+    info.append('Case file: ' + system.files.case + '\n')
+    info.append('Report time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
+    if system.PFlow.converged is True:
+        info.append(f'Power flow converged in {system.PFlow.niter + 1} iterations.\n')
+        info.append('Flat-start: ' +
+                    ('Yes' if system.Bus.config.flat_start else 'No') + '\n')
+    return info
+
+
 class Report(object):
     """
     Report class to store system static analysis reports
@@ -23,19 +37,7 @@ class Report(object):
 
     @property
     def info(self):
-        system = self.system
-        info = list()
-        info.append('ANDES' + ' ' + version + '\n')
-        info.append('Copyright (C) 2015-2020 Hantao Cui\n\n')
-        info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
-        info.append('Case file: ' + system.files.case + '\n')
-        info.append('Report time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        if system.PFlow.converged is True:
-            info.append(f'Power flow converged in {system.PFlow.niter} iterations.\n')
-            info.append('Flat-start: ' +
-                        ('Yes' if system.Bus.config.flat_start else 'No') + '\n')
-
-        return info
+        return report_info(self.system)
 
     def update(self):
         """
