@@ -200,7 +200,7 @@ class SuiteSparseSolver(object):
             logger.error('Jacobian matrix is singular.')
             diag = self.A[0:self.A.size[0] ** 2:self.A.size[0]+1]
             idx = (np.argwhere(np.array(matrix(diag)).ravel() == 0.0)).ravel()
-            logger.error(f'The xy indices of associated variables:')
+            logger.error('The xy indices of associated variables:')
             logger.error(idx)
 
             return np.ravel(matrix(np.nan, self.b.size, 'd'))

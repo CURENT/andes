@@ -361,6 +361,12 @@ class GENROUData(GENBaseData):
 
 class GENROUModel(object):
     def __init__(self):
+        # parameter checking for `xl`
+        self._xlc = InitChecker(u=self.xl,
+                                info='xl and 85% of xd2',
+                                upper=self.xd2
+                                )
+
         self.gd1 = ConstService(v_str='(xd2 - xl) / (xd1 - xl)',
                                 tex_name=r"\gamma_{d1}")
         self.gq1 = ConstService(v_str='(xq2 - xl) / (xq1 - xl)',
