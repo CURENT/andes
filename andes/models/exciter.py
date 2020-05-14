@@ -995,11 +995,18 @@ class ESDC2AModel(ExcBase):
                          info='HVGate for under excitation',
                          )
 
-        self.LA = LagAntiWindup(u=self.LL_y,
+        self.VRU = VarService(v_str='VRMAXc * v',
+                              tex_name='V_T V_{RMAX}',
+                              )
+        self.VRL = VarService(v_str='VRMIN * v',
+                              tex_name='V_T V_{RMIN}',
+                              )
+
+        self.LA = LagAntiWindup(u=self.HG_y,
                                 T=self.TA,
                                 K=self.KA,
-                                upper=self.VRMAXc,
-                                lower=self.VRMIN,
+                                upper=self.VRU,
+                                lower=self.VRL,
                                 info='Anti-windup lag',
                                 )  # LA_y == VR
 

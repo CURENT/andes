@@ -23,7 +23,7 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
 
             # Append Rowname to Data
             # Data is a list of column lists
-            if Rowname:
+            if Rowname is not None:
                 ncol = 0
                 for idx, item in enumerate(Rowname):  # write by row as always
                     if not Data:
