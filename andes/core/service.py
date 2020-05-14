@@ -816,16 +816,16 @@ class InitChecker(OperationService):
                 continue
             idx = [self.owner.idx.v[i] for i in pos]
             lim_v = limit.v * np.ones(self.n)
-            logger.warning(f'{self.owner.class_name} {self.info} {text}.')
+
+            title = f'{self.owner.class_name} {self.info} {text}.'
+
             err_dict = OrderedDict([('idx', idx),
                                    ('values', self.u.v[pos]),
                                    (f'{text2}', lim_v[pos]),
                                     ])
-            tab = Tab()
             data = list(map(list, zip(*err_dict.values())))
-            tab.header(list(err_dict.keys()))
-            tab.add_rows(data, header=None)
 
+            tab = Tab(title=title, data=data, header=list(err_dict.keys()))
             logger.warning(tab.draw())
 
         self.v[:] = np.logical_not(self.v)

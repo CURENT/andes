@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
 from andes.utils.misc import elapsed, is_notebook
+from andes.utils.tab import Tab
 from andes.shared import tqdm, np
 from andes.shared import matrix, sparse, spdiag
 
@@ -252,18 +253,20 @@ class TDS(BaseRoutine):
             logger.debug('Initialization tests passed.')
             return True
         else:
-            logger.error('Suspect initialization issue! Simulation may crash!')
+
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.error("Check variables:")
-            logger.error(f"{fail_names}")
 
-            logger.error('Eqn. Mismatches:')
-            logger.error(system.dae.fg[fail_idx])
-            logger.error('')
+            title = 'Suspect initialization issue! Simulation may crash!'
+            err_data = {'Name': fail_names,
+                        'Var. Value': system.dae.xy[fail_idx],
+                        'Eqn. Mismatch': system.dae.fg[fail_idx],
+                        }
+            tab = Tab(title=title,
+                      header=err_data.keys(),
+                      data=list(map(list, zip(*err_data.values()))))
 
-            logger.error('Variable Values:')
-            logger.error(system.dae.xy[fail_idx])
+            logger.error(tab.draw())
 
             if system.options.get('verbose') == 1:
                 breakpoint()
