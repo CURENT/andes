@@ -1,7 +1,7 @@
 cvxopt>=1.2.3
 numpy
 scipy
-sympy
+sympy==1.5.1
 xlrd
 pandas
 dill
