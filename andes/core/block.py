@@ -1015,7 +1015,8 @@ class GainLimiter(Block):
         self.y = Algeb(info='Gain output after limiter', tex_name='y')
 
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
-                               no_upper=no_upper, no_lower=no_lower)
+                               no_upper=no_upper, no_lower=no_lower,
+                               tex_name='lim')
 
         self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
 

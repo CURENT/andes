@@ -61,11 +61,13 @@ Ready to contribute? Here's how to set up `andes` for local development.
 
     $ git clone git@github.com:your_name_here/andes.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have virtualenv wrapper installed, this is how you
+set up your fork for local development::
 
     $ mkvirtualenv andes
     $ cd andes/
     $ python setup.py develop
+    $ pip install requirements-dev.txt
 
 4. Create a branch for local development::
 
@@ -76,10 +78,8 @@ Ready to contribute? Here's how to set up `andes` for local development.
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
     $ flake8 andes tests
-    $ python setup.py test
-    $ tox
+    $ andes selftest
 
-   To get flake8 and tox, just pip install them into your virtualenv.
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -98,7 +98,19 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.7, 3.3, 3.4, 3.5 and for PyPy. Check
-   https://travis-ci.org/cuihantao/andes/pull_requests
+3. The pull request should work for Python 3.6 and up. Check
+   https://github.com/cuihantao/andes/actions
    and make sure that the tests pass for all supported Python versions.
 
+============
+Known Issues
+============
+
+Potential contributors are encouraged to review and resolve the following
+known issues, based on contributor's interest and expertise. Feel free
+to open an issue and solicit for directions from the author.
+
+Power Flow
+----------
+*   PQ to PV conversion not working for some cases. Need to implement
+    conversion starting from the given iteration.
