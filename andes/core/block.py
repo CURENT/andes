@@ -502,7 +502,7 @@ class WashoutOrLag(Washout):
         If True, ``sT`` will become 1, and the washout will become a low-pass filter.
         If False, functions as a regular Washout.
     """
-    def __init__(self, u, T, K, name, zero_out=False, tex_name=None, info=None):
+    def __init__(self, u, T, K, name=None, zero_out=False, tex_name=None, info=None):
         super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
         self.zero_out = zero_out
         self.LT = LessThan(K,

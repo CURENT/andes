@@ -347,7 +347,7 @@ class DataSelect(BaseService):
     @property
     def v(self):
         if self._v is None:
-            self._v = [v1 if v1 is not None
+            self._v = [v1 if v1 is not None and not np.isnan(v1)
                        else v2
                        for v1, v2 in zip(self.optional.v, self.fallback.v)]
 
@@ -401,9 +401,12 @@ class DeviceFinder(BaseService):
                 new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
                 self.u.v[ii] = new_idx
 
-                logger.warning(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
-                               f"added {self.model} <{new_idx}> "
-                               f"linked to {self.idx_name} <{self.link.v[ii]}>")
+                logger.info(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
+                            f"added {self.model} <{new_idx}> "
+                            f"on {self.idx_name} <{self.link.v[ii]}>")
+            else:
+                action = True
+                self.u.v[ii] = idx
 
         if action:
             mdl.list2array()

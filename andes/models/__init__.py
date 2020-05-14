@@ -12,7 +12,7 @@ non_jit = OrderedDict([
     ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2', 'TGOV1', 'IEEEG1']),
     ('exciter', ['EXDC2', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS']),
-    ('pss', ['IEEEST']),
+    ('pss', ['IEEEST', 'ST2CUT']),
     ('measurement', ['BusFreq', 'BusROCOF']),
     ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),

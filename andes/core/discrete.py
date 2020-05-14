@@ -479,14 +479,12 @@ class Switcher(Discrete):
     def check_var(self, *args, **kwargs):
         """
         Set the switcher flags based on inputs. Uses cached flags if cache is set to True.
-
-        TODO: check if all inputs are valid
         """
         if self.cache and self._eval:
             return
 
         for v in self.u.v:
-            if v not in self.options:
+            if v not in self.options and not np.isnan(v):
                 raise ValueError(f'option {v} is invalid for {self.owner.class_name}.{self.u.name}. '
                                  f'Options are {self.options}.')
         for i in range(len(self.options)):
