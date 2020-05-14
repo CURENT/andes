@@ -107,7 +107,7 @@ class TDS(BaseRoutine):
         if self.initialized is True:
             logger.info(f"Initialization was successful in {s1}.")
         else:
-            logger.info(f"Initialization failed in {s1}.")
+            logger.error(f"Initialization failed in {s1}.")
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')
@@ -248,6 +248,10 @@ class TDS(BaseRoutine):
         system = self.system
         self._fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
+
+        for model in system.exist.pflow_tds.values():
+            for item in model.discrete.values():
+                item.warn_init_limit()
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')

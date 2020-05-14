@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Union, Tuple, List
 from andes.shared import np
+from andes.utils.tab import Tab
 from andes.utils.func import interp_n2
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class Discrete(object):
         self.export_flags_tex = []
         self.x_set = list()
         self.y_set = list()  # NOT being used
+        self.warn_flags = []  # flags in `warn_flags` not initialized to zero will be warned
 
     def check_var(self, *args, **kwargs):
         """
@@ -88,13 +90,30 @@ class Discrete(object):
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n)
 
-    def warn_limit(self):
+    def warn_init_limit(self):
         """
-        Warn if initialized at limits
+        Warn if initialized at limits.
+        """
+        for f, limit in self.warn_flags:
+            if f not in self.export_flags:
+                logger.error(f'warn_flags contain unknown flag {f}')
+                continue
 
-        TODO: implement me
-        """
-        pass
+            pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
+            if not len(pos):
+                continue
+            err_msg = f'{self.owner.class_name}.{self.name} {self.__dict__[limit].name} limit violation'
+            err_data = {'idx': [self.owner.idx.v[i] for i in pos],
+                        'Flag': [f] * len(pos),
+                        'Input Value': self.u.v[pos],
+                        'Limit': self.__dict__[limit].v[pos]
+                        }
+
+            tab = Tab(title=err_msg,
+                      header=err_data.keys(),
+                      data=list(map(list, zip(*err_data.values()))))
+
+            logger.warning(tab.draw())
 
 
 class LessThan(Discrete):
@@ -197,9 +216,11 @@ class Limiter(Discrete):
         if not self.no_lower:
             self.export_flags.append('zl')
             self.export_flags_tex.append('z_l')
+            self.warn_flags.append(('zl', 'lower'))
         if not self.no_upper:
             self.export_flags.append('zu')
             self.export_flags_tex.append('z_u')
+            self.warn_flags.append(('zu', 'upper'))
 
     def check_var(self, *args, **kwargs):
         """

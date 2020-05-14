@@ -867,8 +867,8 @@ class Replace(BaseService):
     def v(self):
         if self._v is None or not self.cache:
             new_v = self.new_val.v * np.ones_like(self.old_val.v)
-            self._v = np.array([new_v[i] if self.filter(old_val) is True else old_val
-                                for i, old_val in enumerate(self.old_val.v)])
+            flt = self.filter(self.old_val.v)
+            self._v = new_v * flt + self.old_val.v * (1 - flt)
 
         return self._v
 
