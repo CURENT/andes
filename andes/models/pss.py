@@ -394,8 +394,8 @@ class ST2CUT(ST2CUTData, ST2CUTModel):
     6 (s6) - Derivative of p.u. bus voltage.
 
 
-    Blocks are named `F1`, `F2`, `LL1`, `LL2` and `WO` in sequence.
-    Two limiters are named `VLIM` and `OLIM` in sequence.
+    Blocks are named `LL1`, `LL2`, `LL3`, `LL4` in sequence.
+    Two limiters are named `VSS_lim` and `OLIM` in sequence.
     """
 
     def __init__(self, system, config):

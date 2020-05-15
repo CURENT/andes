@@ -288,7 +288,7 @@ def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
 
         system.PFlow.run(**kwargs)
         for r in routine:
-            system.__dict__[routine_cli[r]].run(**kwargs)
+            system.__dict__[routine_cli[r.lower()]].run(**kwargs)
 
     # Disable profiler and output results
     if profile:
