@@ -20,6 +20,8 @@ class PFlow(BaseRoutine):
                                      ('method', 'NR'),
                                      ('n_factorize', 4),
                                      ('report', 1),
+                                     ('degree', 0),
+                                     ('init_tds', 0),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -27,6 +29,8 @@ class PFlow(BaseRoutine):
                               method="calculation method",
                               n_factorize="first N iterations to factorize Jacobian in dishonest method",
                               report="write output report",
+                              degree='use degree in report',
+                              init_tds="initialize TDS after PFlow",
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -34,6 +38,8 @@ class PFlow(BaseRoutine):
                               max_iter=">=10",
                               n_factorize=">0",
                               report=(0, 1),
+                              degree=(0, 1),
+                              init_tds=(0, 1),
                               )
 
         self.converged = False
@@ -161,6 +167,8 @@ class PFlow(BaseRoutine):
 
         else:
             logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
+            if self.config.init_tds:
+                system.TDS.init()
             if self.config.report:
                 system.PFlow.report()
 

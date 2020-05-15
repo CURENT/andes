@@ -86,6 +86,9 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
         system = self.system
 
+        if self.initialized:
+            return system.dae.xy
+
         self._reset()
         self._load_pert()
         system.set_address(models=system.exist.tds)

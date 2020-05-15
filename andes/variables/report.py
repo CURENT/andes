@@ -125,30 +125,35 @@ class Report(object):
 
             # ----------------------------------------
             # Bus data
+            angle_unit = 'deg.' if system.PFlow.config.degree else 'rad.'
+            angles = np.rad2deg(system.Bus.a.v) \
+                if system.PFlow.config.degree == 1 else system.Bus.a.v
+
             text.append(['BUS DATA:\n'])
-            header.append(['Vm(pu)', 'Va(rad)'])
-            row_name.append(system.Bus.name.v)
-            data.append([system.Bus.v.v, system.Bus.a.v])
+            header.append(['Bus Name', 'Vm(pu)', f'Va({angle_unit})'])
+            row_name.append(system.Bus.idx.v)
+            data.append([system.Bus.name.v, system.Bus.v.v, angles])
             # ----------------------------------------
 
             # ----------------------------------------
             # Node data
             if hasattr(system, 'Node') and system.Node.n:
                 text.append(['NODE DATA:\n'])
-                header.append(['V(pu)'])
-                row_name.append(system.Node.name.v)
-                data.append([system.Node.v.v])
+                header.append(['Node Name', 'V(pu)'])
+                row_name.append(system.Node.idx.v)
+                data.append([system.Node.name.v, system.Node.v.v])
             # ----------------------------------------
 
             # ----------------------------------------
             # Line data
             text.append(['LINE DATA:\n'])
             header.append([
-                'From Bus (idx)', 'To Bus (idx)', 'P From (pu)', 'Q From (pu)',
-                'P To (pu)', 'Q To(pu)'
+                'Line Name', 'Fr. Bus (idx)', 'To Bus (idx)', 'P From (pu)', 'Q From (pu)',
+                'P To (pu)', 'Q To (pu)'
             ])
-            row_name.append(system.Line.name.v)
-            data.append([system.Line.bus1.v,
+            row_name.append(system.Line.idx.v)
+            data.append([system.Line.name.v,
+                         system.Line.bus1.v,
                          system.Line.bus2.v,
                          system.Line.a1.e,
                          system.Line.v1.e,

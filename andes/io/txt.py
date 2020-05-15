@@ -40,13 +40,13 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
                         print('Unexpected Data during output, in formats/txt.py')
 
                     s = '{:{width}s}'  # for row header
-                    for col in out:
+                    for ii, col in enumerate(out):
                         if isinstance(col, (int, float)):
-                            s += '{:{width}.{precision}g}'
+                            s += '{:>{width}.{precision}g}'
                         elif isinstance(col, str):
                             if len(col) > width:
-                                col = col[:width]
-                            s += '{:{width}s}'
+                                out[ii] = col[:width]
+                            s += '{:>{width}s}'
                         else:
                             pass
                     s += '\n'
