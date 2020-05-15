@@ -343,14 +343,20 @@ class EIG(BaseRoutine):
 
         text.append('EIGENVALUE DATA\n')
         header.append([
-            'Most Associated', 'Real', 'Imag.', 'Damped Freq.', 'Frequency',
-            'Damping [%]'
-        ])
+            'Most Associated',
+            'Real',
+            'Imag.',
+            'Damped Freq.',
+            'Frequency',
+            'Damping [%]'])
         rowname.append(numeral)
         data.append(
             [var_assoc,
              list(mu_real),
-             list(mu_imag), ufreq, freq, damping])
+             list(mu_imag),
+             ufreq,
+             freq,
+             damping])
 
         n_cols = 7  # columns per block
         n_block = int(ceil(neig / n_cols))

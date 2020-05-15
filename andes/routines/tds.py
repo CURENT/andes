@@ -71,6 +71,7 @@ class TDS(BaseRoutine):
         self.pbar = None
         self.callpert = None
         self.plotter = None
+        self.plt = None
         self.initialized = False
 
     def init(self):
@@ -243,6 +244,7 @@ class TDS(BaseRoutine):
         """
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
+        self.plt = self.plotter
 
     def test_init(self):
         """
@@ -613,12 +615,13 @@ class TDS(BaseRoutine):
         self.converged = False
         self.busted = False
         self.niter = 0
-        self._switch_idx = -1  # index into `System.switch_times`
+        self._switch_idx = -1       # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
         self.system.dae.t = np.array(0.0)
         self.pbar = None
         self.plotter = None
+        self.plt = None             # short name for `plotter`
 
         self.initialized = False
 
