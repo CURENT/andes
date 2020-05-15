@@ -42,8 +42,9 @@ class Test5Bus(unittest.TestCase):
 
     def test_pflow_reset(self):
         self.ss.PFlow.run()
-        self.ss.reset()
-        self.ss.PFlow.run()
+        if self.ss.PFlow.config.init_tds is False:
+            self.ss.reset()
+            self.ss.PFlow.run()
 
     def test_tds_init(self):
         self.ss.PFlow.run()

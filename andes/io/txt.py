@@ -47,6 +47,9 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
                             if len(col) > width:
                                 out[ii] = col[:width]
                             s += '{:>{width}s}'
+                        elif col is None:
+                            out[ii] = 'None'
+                            s += '{:>{width}s}'
                         else:
                             pass
                     s += '\n'
