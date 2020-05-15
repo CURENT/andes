@@ -36,7 +36,7 @@ GENCLS:
         D: D
         M: "GENCLS.H; lambda x: 2 * x"
         ra: ra
-        xq: xs
+        xd1: xs
 
 GENROU:
     destination: GENROU

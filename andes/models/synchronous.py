@@ -59,12 +59,9 @@ class GENBaseData(ModelData):
                            z=True,
                            tex_name='x_l'
                            )
-        self.xq = NumParam(default=1.7,
-                           info="q-axis synchronous reactance",
-                           z=True,
-                           tex_name='x_q'
-                           )
-        # NOTE: assume `xd1 = xq` for GENCLS, TODO: replace xq with xd1
+        self.xd1 = NumParam(default=0.302,
+                            info='d-axis transient reactance',
+                            tex_name=r"x \prime_d", z=True)
 
         self.kp = NumParam(default=0,
                            info="active power feedback gain",
@@ -170,7 +167,7 @@ class GENBase(Model):
                         )
 
         self._vfc = InitChecker(u=self.vf,
-                                info='vf range',
+                                info='(vf range)',
                                 lower=self.config.vf_lower,
                                 upper=self.config.vf_upper,
                                 )
@@ -281,6 +278,8 @@ class Flux2(object):
 class GENCLSModel(object):
     def __init__(self):
         # internal voltage and rotor angle calculation
+        self.xq = ExtService(model='GENCLS', src='xd1', indexer=self.idx,
+                             )
         self._V = ConstService(v_str='v * exp(1j * a)',
                                tex_name='V_c',
                                )
@@ -339,8 +338,11 @@ class GENROUData(GENBaseData):
         super().__init__()
         self.xd = NumParam(default=1.9, info='d-axis synchronous reactance',
                            tex_name=r'x_d', z=True)
-        self.xd1 = NumParam(default=0.302, info='d-axis transient reactance',
-                            tex_name=r"x \prime_d", z=True)
+        self.xq = NumParam(default=1.7,
+                           info="q-axis synchronous reactance",
+                           tex_name='x_q',
+                           z=True,
+                           )
         self.xd2 = NumParam(default=0.204, info='d-axis sub-transient reactance',
                             tex_name=r"x \prime \prime_d", z=True)
 
@@ -363,7 +365,7 @@ class GENROUModel(object):
     def __init__(self):
         # parameter checking for `xl`
         self._xlc = InitChecker(u=self.xl,
-                                info='xl and 85% of xd2',
+                                info='(xl <= xd2)',
                                 upper=self.xd2
                                 )
 
