@@ -8,7 +8,7 @@ import re
 from distutils.spawn import find_executable
 
 from andes.utils.misc import is_notebook
-from andes.core.var import Algeb, State
+from andes.core.var import BaseVar, Algeb, ExtAlgeb
 from andes.utils.paths import get_dot_andes_path
 from andes.shared import np, mpl, plt
 
@@ -266,9 +266,9 @@ class TDSData(object):
             Figure and axis handles
         """
         if self._mode == 'memory':
-            if isinstance(yidx, (State, Algeb)):
+            if isinstance(yidx, BaseVar):
                 offs = 1
-                if isinstance(yidx, Algeb):
+                if isinstance(yidx, (Algeb, ExtAlgeb)):
                     offs += self.dae.n
 
                 if a is None:
