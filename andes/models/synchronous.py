@@ -221,12 +221,12 @@ class Flux0(object):
         self.psid = Algeb(info='d-axis flux',
                           tex_name=r'\psi_d',
                           v_str='psid0',
-                          e_str='u * (ra * Iq + vq) - psid',
+                          e_str='u * (ra*Iq + vq) - psid',
                           )
         self.psiq = Algeb(info='q-axis flux',
                           tex_name=r'\psi_q',
                           v_str='psiq0',
-                          e_str='u * (ra * Id + vd) + psiq',
+                          e_str='u * (ra*Id + vd) + psiq',
                           )
 
         self.Id.e_str += '+ psid'
@@ -406,45 +406,45 @@ class GENROUModel(object):
         self._It = ConstService(v_str='_S / conj(_V)', tex_name='I_t', info='complex terminal current')
         self._Is = ConstService(tex_name='I_s', v_str='_It + _V / _Zs', info='equivalent current source')
 
-        self.psia0 = ConstService(tex_name=r"\psi_{a0}", v_str='_Is * _Zs',
+        self.psi20 = ConstService(tex_name=r"\psi''_0", v_str='_Is * _Zs',
                                   info='subtransient flux linkage in stator reference')
-        self.psia0_arg = ConstService(tex_name=r"\theta_{\psi a0}", v_str='arg(psia0)')
-        self.psia0_abs = ConstService(tex_name=r"|\psi_{a0}|", v_str='abs(psia0)')
+        self.psi20_arg = ConstService(tex_name=r"\theta_{\psi''0}", v_str='arg(psi20)')
+        self.psi20_abs = ConstService(tex_name=r"|\psi''_0|", v_str='abs(psi20)')
         self._It_arg = ConstService(tex_name=r"\theta_{It0}", v_str='arg(_It)')
-        self._psia0_It_arg = ConstService(tex_name=r"\theta_{\psi a It}",
-                                          v_str='psia0_arg - _It_arg')
+        self._psi20_It_arg = ConstService(tex_name=r"\theta_{\psi a It}",
+                                          v_str='psi20_arg - _It_arg')
 
         self.Se0 = ConstService(tex_name=r"S_{e0}",
-                                v_str='(psia0_abs >= SA) * (psia0_abs - SA) ** 2 * SB / psia0_abs')
+                                v_str='(psi20_abs >= SA) * (psi20_abs - SA) ** 2 * SB / psi20_abs')
 
-        self._a = ConstService(tex_name=r"a", v_str='psia0_abs + psia0_abs * Se0 * gqd')
+        self._a = ConstService(tex_name=r"a", v_str='psi20_abs + psi20_abs * Se0 * gqd')
         self._b = ConstService(tex_name=r"b", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
 
         self.delta0 = ConstService(tex_name=r'\delta_0',
-                                   v_str='atan(_b * cos(_psia0_It_arg) / (_b * sin(_psia0_It_arg) - _a)) + '
-                                         'psia0_arg')
+                                   v_str='atan(_b * cos(_psi20_It_arg) / (_b * sin(_psi20_It_arg) - _a)) + '
+                                         'psi20_arg')
         self._Tdq = ConstService(tex_name=r"T_{dq}",
                                  v_str='cos(delta0) - 1j * sin(delta0)')
-        self.psia0_dq = ConstService(tex_name=r"\psi_{a0,dq}",
-                                     v_str='psia0 * _Tdq')
+        self.psi20_dq = ConstService(tex_name=r"\psi''_{0,dq}",
+                                     v_str='psi20 * _Tdq')
         self.It_dq = ConstService(tex_name=r"I_{t,dq}",
                                   v_str='conj(_It * _Tdq)')
 
-        self.psiad0 = ConstService(tex_name=r"\psi_{ad0}",
-                                   v_str='re(psia0_dq)')
-        self.psiaq0 = ConstService(tex_name=r"\psi_{aq0}",
-                                   v_str='im(psia0_dq)')
+        self.psi2d0 = ConstService(tex_name=r"\psi_{ad0}",
+                                   v_str='re(psi20_dq)')
+        self.psi2q0 = ConstService(tex_name=r"\psi_{aq0}",
+                                   v_str='im(psi20_dq)')
 
         self.Id0 = ConstService(v_str='im(It_dq)', tex_name=r'I_{d0}')
         self.Iq0 = ConstService(v_str='re(It_dq)', tex_name=r'I_{q0}')
 
-        self.vd0 = ConstService(v_str='-(psiaq0 - xq2*Iq0) - ra * Id0', tex_name=r'V_{d0}')
-        self.vq0 = ConstService(v_str='psiad0 - xd2*Id0 - ra*Iq0', tex_name=r'V_{q0}')
+        self.vd0 = ConstService(v_str='-(psi2q0 - xq2*Iq0) - ra * Id0', tex_name=r'V_{d0}')
+        self.vq0 = ConstService(v_str='psi2d0 - xd2*Id0 - ra*Iq0', tex_name=r'V_{q0}')
 
         self.tm0 = ConstService(tex_name=r'\tau_{m0}',
                                 v_str='u * ((vq0 + ra * Iq0) * Iq0 + (vd0 + ra * Id0) * Id0)')
 
-        self.vf0 = ConstService(tex_name=r'v_{f0}', v_str='(Se0 + 1)*psiad0 + (xd - xd2) * Id0')
+        self.vf0 = ConstService(tex_name=r'v_{f0}', v_str='(Se0 + 1)*psi2d0 + (xd - xd2) * Id0')
         self.psid0 = ConstService(tex_name=r"\psi_{d0}",
                                   v_str='u * (ra * Iq0) + vq0')
         self.psiq0 = ConstService(tex_name=r"\psi_{q0}",
@@ -452,37 +452,37 @@ class GENROUModel(object):
 
         # initialization of internal voltage and delta
         self.e1q0 = ConstService(tex_name="e'_{q0}",
-                                 v_str='Id0*(-xd + xd1) - Se0*psiad0 + vf0')
+                                 v_str='Id0*(-xd + xd1) - Se0*psi2d0 + vf0')
 
         self.e1d0 = ConstService(tex_name="e'_{d0}",
-                                 v_str='Iq0*(xq - xq1) + Se0*gqd*psiaq0')
+                                 v_str='Iq0*(xq - xq1) + Se0*gqd*psi2q0')
 
         self.e2d0 = ConstService(tex_name="e''_{d0}",
-                                 v_str='Id0*(xl - xd) - Se0*psiad0 + vf0')
+                                 v_str='Id0*(xl - xd) - Se0*psi2d0 + vf0')
         self.e2q0 = ConstService(tex_name="e''_{q0}",
-                                 v_str='Iq0*(xl - xq) - Se0*gqd*psiaq0')
+                                 v_str='Iq0*(xl - xq) - Se0*gqd*psi2q0')
 
         # begin variables and equations
-        self.psiaq = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
-                           v_str='psiaq0',
-                           e_str='psiq + xq2 * Iq - psiaq')
+        self.psi2q = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
+                           v_str='psi2q0',
+                           e_str='psiq + xq2 * Iq - psi2q')
 
-        self.psiad = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
-                           v_str='psiad0',
-                           e_str='-psiad + gd1 * e1q + gd2 * (xd1 - xl) * e2d')
+        self.psi2d = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
+                           v_str='psi2d0',
+                           e_str='gd1*e1q + gd2*(xd1-xl)*e2d - psi2d')
 
-        self.psia = Algeb(tex_name=r"\psi_{a}", info='air gap flux magnitude',
-                          v_str='abs(psia0_dq)',
-                          e_str='sqrt(psiad **2 + psiaq ** 2) - psia')
+        self.psi2 = Algeb(tex_name=r"\psi''", info='air gap flux magnitude',
+                          v_str='abs(psi20_dq)',
+                          e_str='sqrt(psi2d **2 + psi2q ** 2) - psi2')
 
-        self.Slt = LessThan(u=self.psia, bound=self.SA, equal=False, enable=True)
+        self.Slt = LessThan(u=self.psi2, bound=self.SA, equal=False, enable=True)
 
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='Slt_z0 * (psia - SA) ** 2 * SB / psia - Se')
+                        e_str='Slt_z0 * (psi2 - SA) ** 2 * SB / psi2 - Se')
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
-        self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psiad - XadIfd'
+        self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psi2d - XadIfd'
 
         self.e1q = State(info='q-axis transient voltage',
                          tex_name=r"e'_q",
@@ -492,7 +492,7 @@ class GENROUModel(object):
                          tex_name=r"e'_d",
                          v_str='e1d0',
                          e_str='(-e1d + (xq - xq1) * (Iq - gq2 * e2q - (1 - gq1) * Iq - gq2 * e1d) + '
-                               'Se * gqd * psiaq) / Tq10')
+                               'Se * gqd * psi2q) / Tq10')
 
         self.e2d = State(info='d-axis sub-transient voltage',
                          tex_name=r"e''_d",
@@ -504,8 +504,9 @@ class GENROUModel(object):
                          v_str='e2q0',
                          e_str='(-e2q - e1d - (xq1 - xl) * Iq) / Tq20')
 
-        self.Id.e_str += '+ xd2 * Id - gd1 * e1q - (1 - gd1) * e2d'
         self.Iq.e_str += '+ xq2 * Iq + gq1 * e1d - (1 - gq1) * e2q'
+
+        self.Id.e_str += '+ xd2*Id - psi2d'
 
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
