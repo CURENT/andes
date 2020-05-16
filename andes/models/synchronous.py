@@ -92,7 +92,7 @@ class GENBase(Model):
                         vf_upper=5.0,
                         )
 
-        self.config.add_extra("_alt",
+        self.config.add_extra("_help",
                               vf_lower="lower limit for vf warning",
                               vf_upper="upper limit for vf warning",
                               )
@@ -417,7 +417,7 @@ class GENROUModel(object):
         self.Se0 = ConstService(tex_name=r"S_{e0}",
                                 v_str='(psi20_abs >= SA) * (psi20_abs - SA) ** 2 * SB / psi20_abs')
 
-        self._a = ConstService(tex_name=r"a", v_str='psi20_abs + psi20_abs * Se0 * gqd')
+        self._a = ConstService(tex_name=r"a", v_str='psi20_abs * (1 + Se0*gqd)')
         self._b = ConstService(tex_name=r"b", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
 
         self.delta0 = ConstService(tex_name=r'\delta_0',
@@ -504,7 +504,7 @@ class GENROUModel(object):
                          v_str='e2q0',
                          e_str='(-e2q - e1d - (xq1 - xl) * Iq) / Tq20')
 
-        self.Iq.e_str += '+ xq2 * Iq + gq1 * e1d - (1 - gq1) * e2q'
+        self.Iq.e_str += '+ xq2*Iq + (gq1*e1d - (1-gq1) * e2q)'
 
         self.Id.e_str += '+ xd2*Id - psi2d'
 
