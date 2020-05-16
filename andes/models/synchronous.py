@@ -491,8 +491,7 @@ class GENROUModel(object):
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
                          v_str='e1d0',
-                         e_str='(-e1d + (xq - xq1) * (Iq - gq2 * e2q - (1 - gq1) * Iq - gq2 * e1d) + '
-                               'Se * gqd * psi2q) / Tq10')
+                         e_str='-(e1d - (xq-xq1) * (Iq - gq2*e2q - (1-gq1)*Iq - gq2*e1d) - Se*gqd*psi2q) / Tq10')
 
         self.e2d = State(info='d-axis sub-transient voltage',
                          tex_name=r"e''_d",
