@@ -877,6 +877,14 @@ Second Order
     :members: define
     :noindex:
 
+Saturation
+----------
+
+.. autoclass:: andes.model.exciter.ExcSaturation
+    :members: define
+    :noindex:
+
+
 Others
 ------
 

@@ -13,6 +13,7 @@ class ExcBaseData(ModelData):
     """
     Common parameters for exciters.
     """
+
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen',
@@ -181,7 +182,7 @@ class EXDC2Data(ExcBaseData):
 
 
 class ExcSaturation(Block):
-    """
+    r"""
     Exponential exciter saturation block to calculate
     A and B from E1, SE1, E2 and SE2.
 
@@ -228,7 +229,8 @@ class ExcSaturation(Block):
         self.E12c = InitChecker(
             self._E1, not_equal=self._E2,
             info='E1 and E2 after correction',
-            )
+            error_out=True,
+        )
 
         # data correction for E1, E2, SE1
         self.E1 = ConstService(
@@ -252,6 +254,133 @@ class ExcSaturation(Block):
                               )
         self.B = ConstService(info='Exponential coef. in saturation',
                               tex_name='B^e',
+                              )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zE1': self.zE1,
+            'zE2': self.zE2,
+            'zSE1': self.zSE1,
+            'zSE2': self.zSE2,
+            'A': self.A,
+            'B': self.B,
+        }
+
+    def define(self):
+        r"""
+
+        Notes
+        -----
+        The implementation solves for coefficients `A` and `B`
+        that satisfies
+
+        .. math ::
+
+            E_1  S_{E1} = A e^{E1\times B}
+
+            E_2  S_{E2} = A e^{E2\times B}
+
+        The solutions are given by
+
+        .. math ::
+            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
+
+            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
+
+        """
+        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+
+        self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
+
+        self.A.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
+                       f'{self.name}_E1*{self.name}_SE1*' \
+                       f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
+                       f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
+
+        self.B.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
+                       f'({self.name}_E1 - {self.name}_E2)'
+
+
+class ExcQuadSaturation(Block):
+    """
+    Quadratic exciter saturation block to calculate
+    A and B from E1, SE1, E2 and SE2.
+
+    Input parameters will be corrected and the user will be warned.
+    To disable saturation, set either E1 or E2 to 0.
+
+    E1 != E2, and sqrt(E2) != sqrt(E1 * SE1 / SE2)
+
+    Parameters
+    ----------
+    E1 : BaseParam
+        First point of excitation field voltage
+    SE1: BaseParam
+        Coefficient corresponding to E1
+    E2 : BaseParam
+        Second point of excitation field voltage
+    SE2: BaseParam
+        Coefficient corresponding to E2
+
+    """
+
+    def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self._E1 = E1
+        self._E2 = E2
+        self._SE1 = SE1
+        self._SE2 = SE2
+
+        self.zE1 = FlagNotNone(self._E1, to_flag=0.,
+                               info='Flag non-zeros in E1',
+                               tex_name='z^{E1}',
+                               )
+        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
+                               info='Flag non-zeros in E2',
+                               tex_name='z^{E2}',
+                               )
+        self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
+                                info='Flag non-zeros in SE1',
+                                tex_name='z^{SE1}',
+                                )
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
+
+        # disallow E1 = E2 != 0 since the curve fitting will fail
+        self.E12c = InitChecker(
+            self._E1, not_equal=self._E2,
+            info='E1 and (E2 after correction)',
+            error_out=True,
+        )
+
+        # data correction for E1, E2, SE1
+        self.E1 = ConstService(
+            tex_name='E^{1c}',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
+        )
+        self.SE1 = ConstService(
+            tex_name='SE^{1c}',
+            info='Corrected SE1 data',
+        )
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.A = ConstService(info='Saturation gain',
+                              tex_name='A^p',
+                              )
+        self.B = ConstService(info='Exponential coef. in saturation',
+                              tex_name='B^p',
                               )
         self.vars = {
             'E1': self.E1,
@@ -362,6 +491,7 @@ class EXDC2(EXDC2Data, EXDC2Model):
     """
     EXDC2 model.
     """
+
     def __init__(self, system, config):
         EXDC2Data.__init__(self)
         EXDC2Model.__init__(self, system, config)
@@ -369,6 +499,7 @@ class EXDC2(EXDC2Data, EXDC2Model):
 
 class SEXSData(ExcBaseData):
     """Data class for Simplified Excitation System model (SEXS)"""
+
     def __init__(self):
         ExcBaseData.__init__(self)
         self.TATB = NumParam(default=0.4,
@@ -443,6 +574,7 @@ class SEXSModel(ExcBase):
 
 class SEXS(SEXSData, SEXSModel):
     """Simplified Excitation System"""
+
     def __init__(self, system, config):
         SEXSData.__init__(self)
         SEXSModel.__init__(self, system, config)
@@ -450,6 +582,7 @@ class SEXS(SEXSData, SEXSModel):
 
 class EXST1Data(ExcBaseData):
     """Parameters for EXST1."""
+
     def __init__(self):
         ExcBaseData.__init__(self)
 
@@ -850,6 +983,7 @@ class ESST3A(ESST3AData, ESST3AModel):
     """
     Static exciter type 3A model
     """
+
     def __init__(self, system, config):
         ESST3AData.__init__(self)
         ESST3AModel.__init__(self, system, config)
@@ -1038,6 +1172,7 @@ class ESDC2A(ESDC2AData, ESDC2AModel):
     """
     ESDC2A model.
     """
+
     def __init__(self, system, config):
         ESDC2AData.__init__(self)
         ESDC2AModel.__init__(self, system, config)

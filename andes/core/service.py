@@ -775,7 +775,7 @@ class InitChecker(OperationService):
     adjustable as in our implementation of ``GENBase._vfc``.
     """
     def __init__(self, u, lower=None, upper=None, equal=None, not_equal=None,
-                 enable=True, **kwargs):
+                 enable=True, error_out=False, **kwargs):
         super().__init__(**kwargs)
         self.u = u
         self.lower = dummify(lower) if lower is not None else None
@@ -783,6 +783,7 @@ class InitChecker(OperationService):
         self.equal = dummify(equal) if equal is not None else None
         self.not_equal = dummify(not_equal) if not_equal is not None else None
         self.enable = enable
+        self.error_out = error_out
 
     def check(self):
         """
@@ -829,7 +830,10 @@ class InitChecker(OperationService):
             data = list(map(list, zip(*err_dict.values())))
 
             tab = Tab(title=title, data=data, header=list(err_dict.keys()))
-            logger.warning(tab.draw())
+            if self.error_out:
+                logger.error(tab.draw())
+            else:
+                logger.warning(tab.draw())
 
         self.v[:] = np.logical_not(self.v)
 
