@@ -477,14 +477,15 @@ class GENROUModel(object):
                           v_str='abs(psi20_dq)',
                           e_str='sqrt(psi2d **2 + psi2q ** 2) - psi2')
 
-        self.Slt = LessThan(u=self.psi2, bound=self.SA, equal=False, enable=True)
+        # `LT` is a reserved keyword for SymPy
+        self.SL = LessThan(u=self.psi2, bound=self.SA, equal=False, enable=True)
 
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='Slt_z0 * (psi2 - SA) ** 2 * SB / psi2 - Se')
+                        e_str='SL_z0 * (psi2 - SA) ** 2 * SB / psi2 - Se')
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
-        self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psi2d - XadIfd'
+        self.XadIfd.e_str = 'e1q + (xd-xd1) * (gd1*Id - gd2*e2d + gd2*e1q) + Se*psi2d - XadIfd'
 
         # `XadI1q` can also be given in `(xq-xq1)*gq2*(e1d-e2q+(xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd`
         self.XaqI1q =\
@@ -492,7 +493,7 @@ class GENROUModel(object):
                   info='q-axis reaction',
                   unit='p.u (kV)',
                   v_str='0',
-                  e_str='((xq-xq1)*gq2) * (e1d - e2q - (xq2-xl)/(1-gq1)*Iq) + e1d + Se*psi2q*gqd - XaqI1q'
+                  e_str='e1d + (xq-xq1) * (gq2*e1d - gq2*e2q - gq1*Iq) + Se*psi2q*gqd - XaqI1q'
                   )
 
         self.e1q = State(info='q-axis transient voltage',
