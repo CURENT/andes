@@ -61,7 +61,7 @@ class GENBaseData(ModelData):
                            )
         self.xd1 = NumParam(default=0.302,
                             info='d-axis transient reactance',
-                            tex_name=r"x_d ^\prime", z=True)
+                            tex_name=r"x''_d", z=True)
 
         self.kp = NumParam(default=0,
                            info="active power feedback gain",
@@ -344,21 +344,21 @@ class GENROUData(GENBaseData):
                            z=True,
                            )
         self.xd2 = NumParam(default=0.204, info='d-axis sub-transient reactance',
-                            tex_name=r"x_d ^ \prime ^\prime", z=True)
+                            tex_name=r"x''_d", z=True)
 
         self.xq1 = NumParam(default=0.5, info='q-axis transient reactance',
-                            tex_name=r"x_q ^\prime", z=True)
+                            tex_name=r"x'_q", z=True)
         self.xq2 = NumParam(default=0.3, info='q-axis sub-transient reactance',
-                            tex_name=r"x_q ^\prime ^\prime", z=True)
+                            tex_name=r"x''_q", z=True)
 
         self.Td10 = NumParam(default=8.0, info='d-axis transient time constant',
-                             tex_name=r"T_{d0} ^\prime")
+                             tex_name=r"T'_{d0}")
         self.Td20 = NumParam(default=0.04, info='d-axis sub-transient time constant',
-                             tex_name=r"T_{d0} ^\prime ^\prime")
+                             tex_name=r"T''_{d0}")
         self.Tq10 = NumParam(default=0.8, info='q-axis transient time constant',
-                             tex_name=r"T_{q0} ^\prime")
+                             tex_name=r"T'_{q0}")
         self.Tq20 = NumParam(default=0.02, info='q-axis sub-transient time constant',
-                             tex_name=r"T_{q0} ^\prime ^\prime")
+                             tex_name=r"T''_{q0}")
 
 
 class GENROUModel(object):
