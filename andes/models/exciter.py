@@ -182,7 +182,8 @@ class EXDC2Data(ExcBaseData):
 
 class ExcSaturation(Block):
     """
-    Exciter saturation block to calculate Ae and Be from E1, SE1, E2 and SE2.
+    Exponential exciter saturation block to calculate
+    A and B from E1, SE1, E2 and SE2.
 
     Input parameters will be corrected and the user will be warned.
     To disable saturation, set either E1 or E2 to 0.
@@ -246,12 +247,12 @@ class ExcSaturation(Block):
             tex_name='SE^{2c}',
             info='Corrected SE2 data',
         )
-        self.Ae = ConstService(info='Saturation gain',
-                               tex_name='A^e',
-                               )
-        self.Be = ConstService(info='Exponential coef. in saturation',
-                               tex_name='B^e',
-                               )
+        self.A = ConstService(info='Saturation gain',
+                              tex_name='A^e',
+                              )
+        self.B = ConstService(info='Exponential coef. in saturation',
+                              tex_name='B^e',
+                              )
         self.vars = {
             'E1': self.E1,
             'E2': self.E2,
@@ -261,8 +262,8 @@ class ExcSaturation(Block):
             'zE2': self.zE2,
             'zSE1': self.zSE1,
             'zSE2': self.zSE2,
-            'Ae': self.Ae,
-            'Be': self.Be,
+            'A': self.A,
+            'B': self.B,
         }
 
     def define(self):
@@ -272,13 +273,13 @@ class ExcSaturation(Block):
         self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
         self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
 
-        self.Ae.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
-                        f'{self.name}_E1*{self.name}_SE1*' \
-                        f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
-                        f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
+        self.A.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
+                       f'{self.name}_E1*{self.name}_SE1*' \
+                       f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
+                       f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
 
-        self.Be.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
-                        f'({self.name}_E1 - {self.name}_E2)'
+        self.B.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
+                       f'({self.name}_E1 - {self.name}_E2)'
 
 
 class EXDC2Model(ExcBase):
@@ -292,7 +293,7 @@ class EXDC2Model(ExcBase):
         # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='SAT_Ae * exp(SAT_Be * vf0)',
+                                v_str='SAT_A * exp(SAT_B * vf0)',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -317,7 +318,7 @@ class EXDC2Model(ExcBase):
                         tex_name='S_e',
                         unit='p.u.',
                         v_str='Se0',
-                        e_str='SAT_Ae * exp(SAT_Be * vout) - Se'
+                        e_str='SAT_A * exp(SAT_B * vout) - Se'
                         )
         self.vp = State(info='Voltage after saturation feedback, before speed term',
                         tex_name='V_p',
@@ -956,7 +957,7 @@ class ESDC2AModel(ExcBase):
                                  info='Field voltage saturation',
                                  )
 
-        self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_Ae * exp(SAT_Be * vf0))',
+        self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_A * exp(SAT_B * vf0))',
                                  tex_name='V_{FE0}',
                                  )
         self.vref0 = ConstService(info='Initial reference voltage input',
@@ -1014,7 +1015,7 @@ class ESDC2AModel(ExcBase):
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='vout * (KE + SAT_Ae * exp(SAT_Be * vout)) - VFE'
+                         e_str='vout * (KE + SAT_A * exp(SAT_B * vout)) - VFE'
                          )
 
         self.INT = Integrator(u='LA_y - VFE',

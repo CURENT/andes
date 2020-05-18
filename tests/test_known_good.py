@@ -34,6 +34,7 @@ def compare_results(case, pkl_name, tf=10):
     ss = andes.run(case_path)
 
     ss.TDS.config.tf = tf
+    ss.TDS.config.tstep = 1/30
     ss.TDS.run()
 
     test_dir = os.path.dirname(__file__)
@@ -46,5 +47,6 @@ def compare_results(case, pkl_name, tf=10):
                          ss.dae.n + ss.GENROU.vf.a))
 
     np.testing.assert_almost_equal(ss.dae.xy[indices],
-                                   results, err_msg=f"{case} test error")
+                                   results,
+                                   err_msg=f"{case} test error")
     return ss
