@@ -13,6 +13,7 @@
 *   Remove `params_ext` from `params` in Model definition
 *   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
 *   Add a non-linear gain block like in PowerWorld IEEEG1_GE
+*   Allow loading default config for `selftest`
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices
