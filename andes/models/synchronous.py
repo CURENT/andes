@@ -407,7 +407,7 @@ class GENROUModel(object):
         self._Is = ConstService(tex_name='I_s', v_str='_It + _V / _Zs', info='equivalent current source')
 
         self.psi20 = ConstService(tex_name=r"\psi''_0", v_str='_Is * _Zs',
-                                  info='subtransient flux linkage in stator reference')
+                                  info='sub-transient flux linkage in stator reference')
         self.psi20_arg = ConstService(tex_name=r"\theta_{\psi''0}", v_str='arg(psi20)')
         self.psi20_abs = ConstService(tex_name=r"|\psi''_0|", v_str='abs(psi20)')
         self._It_arg = ConstService(tex_name=r"\theta_{It0}", v_str='arg(_It)')
@@ -486,12 +486,12 @@ class GENROUModel(object):
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
         self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psi2d - XadIfd'
 
-        self.XaqIlq =\
-            Algeb(tex_name='X_{aq}I_{lq}',
-                  info='q-axis leakage current',
+        self.XaqI1q =\
+            Algeb(tex_name='X_{aq}I_{1q}',
+                  info='q-axis reaction',
                   unit='p.u (kV)',
                   v_str='0',
-                  e_str='(xq-xq1)*gq2*(e1d - e2q + (xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd - XaqIlq'
+                  e_str='(xq-xq1)*gq2*(e1d - e2q + (xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd - XaqI1q'
                   )
 
         self.e1q = State(info='q-axis transient voltage',
@@ -501,7 +501,7 @@ class GENROUModel(object):
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
                          v_str='e1d0',
-                         e_str='-XaqIlq / Tq10')
+                         e_str='-XaqI1q / Tq10')
         self.e2d = State(info='d-axis sub-transient voltage',
                          tex_name=r"e''_d",
                          v_str='e2d0',

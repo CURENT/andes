@@ -4,12 +4,12 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v0.9.4
+v0.9.4 (2020-05-17)
 -------------------
 
-- Added exciter models EXST1, ESST3A, SEXS and turbine governor model
-  IEEEG1 (fully support dual machines).
-- Added blocks HVGate and LVGate with workaround for sympy.maximum/
+- Added exciter models EXST1, ESST3A, ESDC2A, SEXS, turbine governor model
+  IEEEG1 (dual-machine support), and stabilizer model ST2CUT.
+- Added blocks HVGate and LVGate with a work-around for sympy.maximum/
   minimum.
 - Added services `PostInitService` (for storing initialized values), and
   `VarService` (variable services that get updated) after limiters and before
@@ -18,7 +18,7 @@ v0.9.4
   typical values. Warnings will be issued when out of bound or equality/
   inequality conditions are not met.
 - Allow internal variables to be associated with a discrete component which
-  will be updated before initialization (through BaseVar.discrete).
+  will be updated before initialization (through `BaseVar.discrete`).
 - Allow turbine governors to specify an optional `Tn` (turbine rating). If
   not provided, turbine rating will fall back to `Sn` (generator rating).
 - Renamed `OptionalSelect` to `DataSelect`; Added `NumSelect`, the array-based
