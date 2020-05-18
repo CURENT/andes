@@ -265,6 +265,9 @@ class System(object):
     def store_existing(self):
         """
         Store existing models in `System.existing`.
+
+        TODO: Models with `TimerParam` will need to be stored anyway.
+        This will allow adding switches on the fly.
         """
         self.exist.pflow = self.find_models('pflow')
         self.exist.tds = self.find_models('tds')

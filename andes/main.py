@@ -236,6 +236,23 @@ def print_license():
 def load(case, codegen=False, setup=True, **kwargs):
     """
     Load a case and set up without running. Return a system
+
+    Parameters
+    ----------
+    case: str
+        Path to the test case
+    codegen : bool, optional
+        Call full `System.prepare` on the returned system.
+        Set to True if one need to inspect pretty-print
+        equations and run simulations.
+    setup : bool, optional
+        Call `System.setup` after loading
+
+    Warnings
+    -------
+    If one need to add devices beside these from the case
+    file, do ``setup=False`` and manually invoke ``setup()``
+    after adding all devices.
     """
     system = System(case=case, options=kwargs)
     if codegen:

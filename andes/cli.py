@@ -46,7 +46,7 @@ def create_parser():
     run.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
     run.add_argument('--dime', help='Specify DiME streaming server address and port', type=str)
     run.add_argument('--tf', help='End time of time-domain simulation', type=float)
-    run.add_argument('--convert', help='Convert to format.', type=str, default='', nargs='?')
+    run.add_argument('-c', '--convert', help='Convert to format.', type=str, default='', nargs='?')
     run.add_argument('--convert-all', help='Convert to format with all templates.', type=str, default='',
                      nargs='?')
     run.add_argument('--add-book', help='Add a template workbook for the specified model.', type=str)
