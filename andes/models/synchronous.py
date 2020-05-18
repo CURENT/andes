@@ -61,7 +61,7 @@ class GENBaseData(ModelData):
                            )
         self.xd1 = NumParam(default=0.302,
                             info='d-axis transient reactance',
-                            tex_name=r"x^ \prime_d", z=True)
+                            tex_name=r"x_d ^\prime", z=True)
 
         self.kp = NumParam(default=0,
                            info="active power feedback gain",
@@ -344,21 +344,21 @@ class GENROUData(GENBaseData):
                            z=True,
                            )
         self.xd2 = NumParam(default=0.204, info='d-axis sub-transient reactance',
-                            tex_name=r"x^ \prime ^\prime_d", z=True)
+                            tex_name=r"x_d ^ \prime ^\prime", z=True)
 
         self.xq1 = NumParam(default=0.5, info='q-axis transient reactance',
-                            tex_name=r"x^ \prime_q", z=True)
+                            tex_name=r"x_q ^\prime", z=True)
         self.xq2 = NumParam(default=0.3, info='q-axis sub-transient reactance',
-                            tex_name=r"x^ \prime ^\prime_q", z=True)
+                            tex_name=r"x_q ^\prime ^\prime", z=True)
 
         self.Td10 = NumParam(default=8.0, info='d-axis transient time constant',
-                             tex_name=r"T^ \prime_{d0}")
+                             tex_name=r"T_{d0} ^\prime")
         self.Td20 = NumParam(default=0.04, info='d-axis sub-transient time constant',
-                             tex_name=r"T^ \prime ^\prime_{d0}")
+                             tex_name=r"T_{d0} ^\prime ^\prime")
         self.Tq10 = NumParam(default=0.8, info='q-axis transient time constant',
-                             tex_name=r"T^ \prime_{q0}")
+                             tex_name=r"T_{q0} ^\prime")
         self.Tq20 = NumParam(default=0.02, info='q-axis sub-transient time constant',
-                             tex_name=r"T^ \prime^ \prime_{q0}")
+                             tex_name=r"T_{q0} ^\prime ^\prime")
 
 
 class GENROUModel(object):
