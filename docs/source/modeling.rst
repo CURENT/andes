@@ -879,8 +879,7 @@ Second Order
 
 Saturation
 ----------
-
-.. autoclass:: andes.model.exciter.ExcSaturation
+.. autoclass:: andes.models.exciter.ExcSaturation
     :members: define
     :noindex:
 
