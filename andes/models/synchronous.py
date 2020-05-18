@@ -88,7 +88,7 @@ class GENBase(Model):
         self.flags.update({'tds': True,
                            'nr_iter': False,
                            })
-        self.config.add(vf_lower=1.5,
+        self.config.add(vf_lower=1.0,
                         vf_upper=5.0,
                         )
 
