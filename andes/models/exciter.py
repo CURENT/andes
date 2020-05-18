@@ -181,13 +181,17 @@ class EXDC2Data(ExcBaseData):
                             )
 
 
-class ExcSaturation(Block):
+class ExcExpSat(Block):
     r"""
     Exponential exciter saturation block to calculate
     A and B from E1, SE1, E2 and SE2.
 
     Input parameters will be corrected and the user will be warned.
-    To disable saturation, set either E1 or E2 to 0.
+    To disable the saturation, set either E1 or E2 to 0.
+
+    Setting `E1 = E2` or `E1 * SE1` = 0 is prohibited,
+    except for `E1 = E2 = 0`.
+    `E1 = E2` is checked but NOT automatically corrected.
 
     Parameters
     ----------
@@ -278,16 +282,21 @@ class ExcSaturation(Block):
 
         .. math ::
 
-            E_1  S_{E1} = A e^{E1\times B}
+            E_1  S_{E1} = A e^{E_1 B}
 
-            E_2  S_{E2} = A e^{E2\times B}
+            E_2  S_{E2} = A e^{E_2 B}
 
         The solutions are given by
 
         .. math ::
-            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
+            A = E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
 
-            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
+            B = - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
+
+        The implemented automatic parameter corrections are:
+
+        - Zeros in `E1` and/or `E2` will be used to set `A` to zero
+          in order to disable saturation.
 
         """
         self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
@@ -415,9 +424,9 @@ class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        self.SAT = ExcSaturation(self.E1, self.SE1, self.E2, self.SE2,
-                                 info='Field voltage saturation',
-                                 )
+        self.SAT = ExcExpSat(self.E1, self.SE1, self.E2, self.SE2,
+                             info='Field voltage saturation',
+                             )
 
         # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
@@ -1087,9 +1096,9 @@ class ESDC2AModel(ExcBase):
                       info='Transducer delay',
                       )
 
-        self.SAT = ExcSaturation(self.E1, self.SE1, self.E2, self.SE2,
-                                 info='Field voltage saturation',
-                                 )
+        self.SAT = ExcExpSat(self.E1, self.SE1, self.E2, self.SE2,
+                             info='Field voltage saturation',
+                             )
 
         self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_A * exp(SAT_B * vf0))',
                                  tex_name='V_{FE0}',
