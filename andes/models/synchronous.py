@@ -61,7 +61,7 @@ class GENBaseData(ModelData):
                            )
         self.xd1 = NumParam(default=0.302,
                             info='d-axis transient reactance',
-                            tex_name=r"x''_d", z=True)
+                            tex_name=r"x'_d", z=True)
 
         self.kp = NumParam(default=0,
                            info="active power feedback gain",
@@ -486,12 +486,13 @@ class GENROUModel(object):
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
         self.XadIfd.e_str = 'e1q + (xd-xd1) * (Id - gd2*e2d - (1-gd1)*Id + gd2*e1q) + Se*psi2d - XadIfd'
 
+        # `XadI1q` can also be given in `(xq-xq1)*gq2*(e1d-e2q+(xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd`
         self.XaqI1q =\
             Algeb(tex_name='X_{aq}I_{1q}',
                   info='q-axis reaction',
                   unit='p.u (kV)',
                   v_str='0',
-                  e_str='(xq-xq1)*gq2*(e1d - e2q + (xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd - XaqI1q'
+                  e_str='((xq-xq1)*gq2) * (e1d - e2q - (xq2-xl)/(1-gq1)*Iq) + e1d + Se*psi2q*gqd - XaqI1q'
                   )
 
         self.e1q = State(info='q-axis transient voltage',
