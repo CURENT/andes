@@ -183,6 +183,7 @@ class GENBase(Model):
                                src='subidx',
                                indexer=self.gen,
                                export=False,
+                               info='Generator idx in plant; only used by PSS/E data'
                                )
 
         # declaring `Vn_bus` as ExtParam will fail for PSS/E parser
@@ -473,7 +474,7 @@ class GENROUModel(object):
                            v_str='psi2d0',
                            e_str='gd1*e1q + gd2*(xd1-xl)*e2d - psi2d')
 
-        self.psi2 = Algeb(tex_name=r"\psi''", info='air gap flux magnitude',
+        self.psi2 = Algeb(tex_name=r"\psi_a", info='air gap flux magnitude',
                           v_str='abs(psi20_dq)',
                           e_str='sqrt(psi2d **2 + psi2q ** 2) - psi2')
 
