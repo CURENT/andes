@@ -4,7 +4,7 @@ from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
 from andes.core.service import InitChecker, Replace  # NOQA
-from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
+from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter, LessThan
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
 from _collections import OrderedDict  # NOQA
@@ -320,35 +320,16 @@ class ExcQuadSat(Block):
     def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self._E1 = E1
-        self._E2 = E2
+        self._E1 = dummify(E1)
+        self._E2 = dummify(E2)
         self._SE1 = SE1
         self._SE2 = SE2
 
-        self.zE1 = FlagNotNone(self._E1, to_flag=0.,
-                               info='Flag non-zeros in E1',
-                               tex_name='z^{E1}',
-                               )
-        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
-                               info='Flag non-zeros in E2',
-                               tex_name='z^{E2}',
-                               )
-        self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
-                                info='Flag non-zeros in SE1',
-                                tex_name='z^{SE1}',
-                                )
         self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
                                 info='Flag non-zeros in SE2',
                                 tex_name='z^{SE2}')
 
-        # disallow E1 = E2 != 0 since the curve fitting will fail
-        self.E12c = InitChecker(
-            self._E1, not_equal=self._E2,
-            info='E1 and E2 after correction',
-            error_out=True,
-        )
-
-        # data correction for E1, E2, SE1
+        # data correction for E1, E2, SE1 (TODO)
         self.E1 = ConstService(
             tex_name='E^{1c}',
             info='Corrected E1 data',
@@ -365,21 +346,22 @@ class ExcQuadSat(Block):
             tex_name='SE^{2c}',
             info='Corrected SE2 data',
         )
-        self.A = ConstService(info='Saturation gain',
-                              tex_name='A^e',
+        self.a = ConstService(info='Intermediate Sat coeff',
+                              tex_name='a',
                               )
-        self.B = ConstService(info='Exponential coef. in saturation',
-                              tex_name='B^e',
+        self.A = ConstService(info='Saturation start',
+                              tex_name='A^q',
+                              )
+        self.B = ConstService(info='Saturation gain',
+                              tex_name='B^q',
                               )
         self.vars = {
             'E1': self.E1,
             'E2': self.E2,
             'SE1': self.SE1,
             'SE2': self.SE2,
-            'zE1': self.zE1,
-            'zE2': self.zE2,
-            'zSE1': self.zSE1,
             'zSE2': self.zSE2,
+            'a': self.a,
             'A': self.A,
             'B': self.B,
         }
@@ -388,30 +370,27 @@ class ExcQuadSat(Block):
         r"""
         Notes
         -----
-        The implementation solves for coefficients `A` and `B`
-        that satisfies
-        .. math ::
-            E_1  S_{E1} = A e^{E1\times B}
-            E_2  S_{E2} = A e^{E2\times B}
-        The solutions are given by
-        .. math ::
-            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
-            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
+        TODO.
         """
-        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
-        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+        # self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        # self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+        #
+        # self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        # self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
 
-        self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
-        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
+        self.E1.v_str = f'{self._E1.name}'
+        self.E2.v_str = f'{self._E2.name}'
+        self.SE1.v_str = f'{self._SE1.name}'
+        self.SE2.v_str = f'{self._SE2.name} + 2 * (1 - {self.name}_zSE2)'
 
-        self.A.v_str = f'{self.name}_zE1 * ' \
-                       f'sqrt({self.name}_E1 * {self.name}_E2)*' \
-                       f'(sqrt({self.name}_E1) - sqrt({self.name}_E2 * {self.name}_SE1/{self.name}_SE2)) / ' \
-                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.name}_SE2))'
+        self.a.v_str = f'(({self.name}_SE2>0)+({self.name}_SE2<0)) * ' \
+                       f'sqrt({self.name}_SE1 * {self.name}_E1 /({self.name}_SE2 * {self.name}_E2))'
 
-        self.B.v_str = f'{self.name}_zE1 * {self.name}_SE2 * ' \
-                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.name}_SE2)) ** 2 /' \
-                       f'({self.name}_E1 - {self.name}_E2) ** 2'
+        self.A.v_str = f'{self.name}_E2 - ({self.name}_E1 - {self.name}_E2) / ({self.name}_a - 1)'
+
+        self.B.v_str = f'(({self.name}_a>0)+({self.name}_a<0)) *' \
+                       f'{self.name}_SE2 * {self.name}_E2 * ({self.name}_a - 1)**2 / ' \
+                       f'({self.name}_E1 - {self.name}_E2)** 2'
 
 
 class EXDC2Model(ExcBase):
@@ -1090,11 +1069,14 @@ class ESDC2AModel(ExcBase):
                       info='Transducer delay',
                       )
 
-        self.SAT = ExcExpSat(self.E1, self.SE1, self.E2, self.SE2,
-                             info='Field voltage saturation',
-                             )
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
 
-        self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_A * exp(SAT_B * vf0))',
+        self.Se0 = ConstService(v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
+                                tex_name='S_{e0}',
+                                )
+        self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
                                  tex_name='V_{FE0}',
                                  )
         self.vref0 = ConstService(info='Initial reference voltage input',
@@ -1148,11 +1130,17 @@ class ESDC2AModel(ExcBase):
                                 info='Anti-windup lag',
                                 )  # LA_y == VR
 
+        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
+        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
+                        v_str='Se0',
+                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se')
+
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='vout * (KE + SAT_A * exp(SAT_B * vout)) - VFE'
+                         e_str='vout * (KE + Se) - VFE'
                          )
 
         self.INT = Integrator(u='LA_y - VFE',

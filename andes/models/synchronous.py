@@ -3,6 +3,7 @@ Synchronous generator classes
 """
 import logging
 from andes.core.model import Model, ModelData
+from andes.models.exciter import ExcQuadSat
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
@@ -389,12 +390,15 @@ class GENROUModel(object):
                                  )
         # Saturation services
         # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sat = 0, A = 1, B = 0
-        self.Sat = ConstService(v_str='sqrt((S10 * 1) / (_S12 * 1.2))',
-                                tex_name=r"S_{at}")
-        self.SA = ConstService(v_str='1.2 + 0.2 / (Sat - 1)',
-                               tex_name='S_A')
-        self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0))*1.2*_S12 * ((Sat - 1) / 0.2) ** 2',
-                               tex_name='S_B')
+        self.SAT = ExcQuadSat(1.0, self.S10, 1.2, self.S12, tex_name='S_{AT}')
+
+        # TODO: to be removed (replaced by `self.SAT`)
+        # self.Sat = ConstService(v_str='((_S12>0) + (_S12<0)) * sqrt((S10 * 1) / (_S12 * 1.2))',
+        #                         tex_name=r"S_{at}")
+        # self.SA = ConstService(v_str='1.2 + 0.2 / (Sat - 1)',
+        #                        tex_name='S_A')
+        # self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0))*1.2*_S12 * ((Sat - 1) / 0.2) ** 2',
+        #                        tex_name='S_B')
 
         # internal voltage and rotor angle calculation
 
@@ -416,7 +420,7 @@ class GENROUModel(object):
                                           v_str='psi20_arg - _It_arg')
 
         self.Se0 = ConstService(tex_name=r"S_{e0}",
-                                v_str='(psi20_abs >= SA) * (psi20_abs - SA) ** 2 * SB / psi20_abs')
+                                v_str='(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
 
         self._a = ConstService(tex_name=r"a", v_str='psi20_abs * (1 + Se0*gqd)')
         self._b = ConstService(tex_name=r"b", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
@@ -479,11 +483,11 @@ class GENROUModel(object):
                           e_str='sqrt(psi2d **2 + psi2q ** 2) - psi2')
 
         # `LT` is a reserved keyword for SymPy
-        self.SL = LessThan(u=self.psi2, bound=self.SA, equal=False, enable=True)
+        self.SL = LessThan(u=self.psi2, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (psi2 - SA) ** 2 * SB / psi2 - Se')
+                        e_str='SL_z0 * (psi2 - SAT_A) ** 2 * SAT_B / psi2 - Se')
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
         self.XadIfd.e_str = 'e1q + (xd-xd1) * (gd1*Id - gd2*e2d + gd2*e1q) + Se*psi2d - XadIfd'
