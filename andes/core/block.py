@@ -393,7 +393,7 @@ class Integrator(Block):
         else:
             u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {u_eqn}'
+        self.y.e_str = f'{self.K.name} * ({u_eqn})'
 
 
 class IntegratorAntiWindup(Block):
@@ -444,7 +444,7 @@ class IntegratorAntiWindup(Block):
         else:
             u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {u_eqn}'
+        self.y.e_str = f'{self.K.name} * ({u_eqn})'
 
 
 class Washout(Block):
@@ -1039,8 +1039,8 @@ class GainLimiter(Block):
         else:
             u_eqn = self.u.name
 
-        self.x.v_str = f'{self.K.name} * {u_eqn}'
-        self.x.e_str = f'{self.K.name} * {u_eqn} - {self.name}_x'
+        self.x.v_str = f'{self.K.name} * ({u_eqn})'
+        self.x.e_str = f'{self.K.name} * ({u_eqn}) - {self.name}_x'
 
         self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
         self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
