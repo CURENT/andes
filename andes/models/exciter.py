@@ -3,12 +3,12 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
-from andes.core.service import InitChecker, Replace
+from andes.core.service import InitChecker, Replace  # NOQA
 from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
-from _collections import OrderedDict
-import numpy as np
+from _collections import OrderedDict  # NOQA
+import numpy as np  # NOQA
 
 
 class ExcBaseData(ModelData):
@@ -201,6 +201,7 @@ class ExcExpSat(Block):
     SE2: BaseParam
         Coefficient corresponding to E2
     """
+
     def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
@@ -298,14 +299,11 @@ class ExcExpSat(Block):
 
 
 class ExcQuadSat(Block):
-    """
-    Quadratic exciter saturation block to calculate
+    r"""
+    Exponential exciter saturation block to calculate
     A and B from E1, SE1, E2 and SE2.
-
     Input parameters will be corrected and the user will be warned.
     To disable saturation, set either E1 or E2 to 0.
-
-    E1 != E2, and sqrt(E2) != sqrt(E1 * SE1 / SE2)
 
     Parameters
     ----------
@@ -317,124 +315,102 @@ class ExcQuadSat(Block):
         Second point of excitation field voltage
     SE2: BaseParam
         Coefficient corresponding to E2
-
     """
 
     def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        # self.u = u
         self._E1 = E1
         self._E2 = E2
         self._SE1 = SE1
-        self.SE2 = SE2   # no correction for SE2
-
-        self.E1sE2 = ConstService(tex_name='(E_1-E_2)', info='E1 minus E2')
-
-        self.zE1sE2 = ConstService(
-            info='0 if E1=E2',
-            tex_name='z^{E_1=E_2}',
-        )
+        self._SE2 = SE2
 
         self.zE1 = FlagNotNone(self._E1, to_flag=0.,
                                info='Flag non-zeros in E1',
-                               tex_name='z^{E_1=0}',
+                               tex_name='z^{E1}',
+                               )
+        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
+                               info='Flag non-zeros in E2',
+                               tex_name='z^{E2}',
                                )
         self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
                                 info='Flag non-zeros in SE1',
-                                tex_name='z^{SE_1=0}',
+                                tex_name='z^{SE1}',
                                 )
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
 
-        # warn use of `E1 = E2` which will disable saturation
+        # disallow E1 = E2 != 0 since the curve fitting will fail
         self.E12c = InitChecker(
             self._E1, not_equal=self._E2,
-            info='E1 and E2',
+            info='E1 and E2 after correction',
             error_out=True,
         )
 
-        # data correction for E2, E1 SE1 in sequence
-        self.E2 = Replace(self._E2, lambda x: np.equal(x, self._E1.v), 0, tex_name='E^{2c}')
-
+        # data correction for E1, E2, SE1
         self.E1 = ConstService(
             tex_name='E^{1c}',
-            info='Corrected E1 (if E1=0)',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
         )
         self.SE1 = ConstService(
             tex_name='SE^{1c}',
-            info='Corrected SE1 (if SE1=0)',
+            info='Corrected SE1 data',
         )
-
-        self.A = ConstService(
-            info='Saturation gain',
-            tex_name='A^e',
-            )
-        self.B = ConstService(
-            info='Exponential coef. in saturation',
-            tex_name='B^e',
-            )
-
-        # self.y = Algeb(info='Saturation output',
-        #                tex_name='y',
-        #                )
-
-        # use `OrderedDict` to ensure `E1sE2` is calculated before `zE1sE21
-        self.vars = OrderedDict([('E2', self.E2),
-                                 ('E1', self.E1),
-                                 ('SE1', self.SE1),
-                                 ('E1sE2', self.E1sE2),
-                                 ('zE1', self.zE1),
-                                 ('zSE1', self.zSE1),
-                                 ('zE1sE2', self.zE1sE2),
-                                 ('A', self.A),
-                                 ('B', self.B),
-                                 # ('y', self.y)
-                                 ])
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.A = ConstService(info='Saturation gain',
+                              tex_name='A^e',
+                              )
+        self.B = ConstService(info='Exponential coef. in saturation',
+                              tex_name='B^e',
+                              )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zE1': self.zE1,
+            'zE2': self.zE2,
+            'zSE1': self.zSE1,
+            'zSE2': self.zSE2,
+            'A': self.A,
+            'B': self.B,
+        }
 
     def define(self):
         r"""
-
         Notes
         -----
         The implementation solves for coefficients `A` and `B`
         that satisfies
-
         .. math ::
-
-            E_1  S_{E1} = A e^{E_1 B}
-
-            E_2  S_{E2} = A e^{E_2 B}
-
+            E_1  S_{E1} = A e^{E1\times B}
+            E_2  S_{E2} = A e^{E2\times B}
         The solutions are given by
-
         .. math ::
-            A = E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
-
-            B = - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
-
-        The implemented automatic parameter corrections are:
-
-        - Zeros in `E1`, `SE` will be used to set `A` to zero
-          in order to disable saturation,
-        - `E1 = E2` will disable the saturation.
-
+            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
+            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
         """
-        # self.E2.v_str = f'{self._E2.name} + (1 - {self.name}_zE1sE2)'
-
-        self.E1.v_str = f'{self._E1.name} + ({self.name}_E2 + 1) * (1 - {self.name}_zE1)'
+        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
 
         self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
 
-        self.E1sE2.v_str = f'{self._E1.name} - {self._E2.name}'
-
-        self.zE1sE2.v_str = f'({self.name}_E1sE2 > 0) + ({self.name}_E1sE2 < 0)'
-
-        self.A.v_str = f'{self.name}_zE1sE2 * ' \
+        self.A.v_str = f'{self.name}_zE1 * ' \
                        f'sqrt({self.name}_E1 * {self.name}_E2)*' \
-                       f'(sqrt({self.name}_E1) - sqrt({self.name}_E2 * {self.name}_SE1/{self.SE2.name})) / ' \
-                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.SE2.name}))'
+                       f'(sqrt({self.name}_E1) - sqrt({self.name}_E2 * {self.name}_SE1/{self.name}_SE2)) / ' \
+                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.name}_SE2))'
 
-        self.B.v_str = f'{self.SE2.name} * ' \
-                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.SE2.name})) ** 2 /' \
+        self.B.v_str = f'{self.name}_zE1 * {self.name}_SE2 * ' \
+                       f'(sqrt({self.name}_E2) - sqrt({self.name}_E1 * {self.name}_SE1/{self.name}_SE2)) ** 2 /' \
                        f'({self.name}_E1 - {self.name}_E2) ** 2'
 
 
@@ -1114,11 +1090,11 @@ class ESDC2AModel(ExcBase):
                       info='Transducer delay',
                       )
 
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
+        self.SAT = ExcExpSat(self.E1, self.SE1, self.E2, self.SE2,
+                             info='Field voltage saturation',
+                             )
 
-        self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_B * (SAT_A - vf0) ** 2 / vf0)',
+        self.vfe0 = ConstService(v_str='vf0 * (KE + SAT_A * exp(SAT_B * vf0))',
                                  tex_name='V_{FE0}',
                                  )
         self.vref0 = ConstService(info='Initial reference voltage input',
@@ -1176,7 +1152,7 @@ class ESDC2AModel(ExcBase):
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='vout * (KE + SAT_B *(SAT_A - vout) ** 2 / vout) - VFE'
+                         e_str='vout * (KE + SAT_A * exp(SAT_B * vout)) - VFE'
                          )
 
         self.INT = Integrator(u='LA_y - VFE',
