@@ -88,7 +88,7 @@ class Discrete(object):
 
     def list2array(self, n):
         for flag in self.export_flags:
-            self.__dict__[flag] = self.__dict__[flag] * np.ones(n)
+            self.__dict__[flag] = self.__dict__[flag] * np.ones(n, dtype=float)
 
     def warn_init_limit(self):
         """

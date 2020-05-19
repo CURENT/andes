@@ -4,7 +4,8 @@ from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
 from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
 from andes.core.service import InitChecker, Replace  # NOQA
-from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter, LessThan
+from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
+from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
 from _collections import OrderedDict  # NOQA
@@ -1062,7 +1063,7 @@ class ESDC2AModel(ExcBase):
         self._zVRM = FlagNotNone(self.VRMAX, to_flag=0,
                                  tex_name='z_{VRMAX}',
                                  )
-        self.VRMAXc = ConstService(v_str='VRMAX + 999*_zVRM',
+        self.VRMAXc = ConstService(v_str='VRMAX + 99*_zVRM',
                                    info='Set VRMAX=999 when zero',
                                    )
         self.LG = Lag(u=self.v, T=self.TR, K=1,
@@ -1073,9 +1074,11 @@ class ESDC2AModel(ExcBase):
                               info='Field voltage saturation',
                               )
 
-        self.Se0 = ConstService(v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
-                                tex_name='S_{e0}',
-                                )
+        self.Se0 = ConstService(
+            tex_name='S_{e0}',
+            v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
+            )
+
         self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
                                  tex_name='V_{FE0}',
                                  )
@@ -1110,10 +1113,10 @@ class ESDC2AModel(ExcBase):
                          e_str='0 - UEL'
                          )
 
-        self.HG = HVGate(u1=self.UEL,
-                         u2=self.LL_y,
-                         info='HVGate for under excitation',
-                         )
+        # self.HG = HVGate(u1=self.UEL,
+        #                  u2=self.LL_y,
+        #                  info='HVGate for under excitation',
+        #                  )
 
         self.VRU = VarService(v_str='VRMAXc * v',
                               tex_name='V_T V_{RMAX}',
@@ -1122,7 +1125,7 @@ class ESDC2AModel(ExcBase):
                               tex_name='V_T V_{RMIN}',
                               )
 
-        self.LA = LagAntiWindup(u=self.HG_y,
+        self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRU,
@@ -1130,11 +1133,14 @@ class ESDC2AModel(ExcBase):
                                 info='Anti-windup lag',
                                 )  # LA_y == VR
 
-        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        # `LessThan` is causing memory issue (SL_z0 * vout) related to CVXOPT and NumPy conversion
+        # self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
-                        v_str='Se0',
-                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se')
+                        v_str='0',
+                        # e_str='(vout - SAT_A) ** 2 * SAT_B / vout - Se',
+                        e_str='0 - Se',
+                        )
 
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
