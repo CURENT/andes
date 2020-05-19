@@ -1,9 +1,10 @@
-from typing import Optional, Iterable, Dict, Union, List, Tuple
+from typing import Optional, Iterable, Union, List, Tuple
 
 from andes.core.var import Algeb, State
-from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
+from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter
 from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
+from collections import OrderedDict
 import numpy as np
 
 
@@ -90,7 +91,7 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
+        self.vars = OrderedDict()
         self.triplets = JacTriplet()
         self.flags = ModelFlags()  # f_num, g_num and j_num can be set
 
@@ -253,6 +254,7 @@ class PIController(Block):
         The integral gain parameter instance
 
     """
+
     def __init__(self, u, ref, kp, ki, name=None, info=None):
         super(PIController, self).__init__(name=name, info=info)
 
@@ -331,11 +333,12 @@ class Gain(Block):
 
     Exports an algebraic output `y`.
     """
+
     def __init__(self, u, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.K = dummify(K)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K,))
 
         self.y = Algeb(info='Gain output', tex_name='y')
         self.vars = {'y': self.y}
@@ -502,6 +505,7 @@ class WashoutOrLag(Washout):
         If True, ``sT`` will become 1, and the washout will become a low-pass filter.
         If False, functions as a regular Washout.
     """
+
     def __init__(self, u, T, K, name=None, zero_out=False, tex_name=None, info=None):
         super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
         self.zero_out = zero_out
@@ -562,6 +566,7 @@ class Lag(Block):
         Input variable
 
     """
+
     def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
@@ -617,6 +622,7 @@ class LagAntiWindup(Block):
         Input variable
 
     """
+
     def __init__(self, u, T, K, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -735,6 +741,7 @@ class LeadLag(Block):
     T2 : BaseParam
         Time constant 2
     """
+
     def __init__(self, u, T1, T2, K=1, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = dummify(T1)
@@ -839,6 +846,7 @@ class LeadLagLimit(Block):
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindup `lim`.
 
     """
+
     def __init__(self, u, T1, T2, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -898,6 +906,7 @@ class HVGate(Block):
               └─────────+
 
     """
+
     def __init__(self, u1, u2, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
@@ -946,6 +955,7 @@ class LVGate(Block):
               └─────────+
 
     """
+
     def __init__(self, u1, u2, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
@@ -1064,6 +1074,7 @@ class Piecewise(Block):
     funs : list, tuple
         A list of strings for the piecewise functions. Need to be provided in the overloaded `define` function.
     """
+
     def __init__(self, u, points: Union[List, Tuple], funs: Union[List, Tuple],
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -1084,7 +1095,7 @@ class Piecewise(Block):
         i = 0
         for i in range(len(self.points)):
             args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
-        args.append(f'({self.funs[i+1]}, True)')
+        args.append(f'({self.funs[i + 1]}, True)')
 
         args_comma = ', '.join(args)
         pw_fun = f'Piecewise({args_comma})'

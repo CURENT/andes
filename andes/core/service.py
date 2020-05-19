@@ -6,6 +6,7 @@ from andes.shared import np, ndarray
 import logging
 from collections import OrderedDict
 from andes.utils.tab import Tab
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,6 +27,7 @@ class BaseService(object):
     owner : Model
         The hosting/owner model instance
     """
+
     def __init__(self, name: str = None, tex_name: str = None, info: str = None, vtype: Type = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
@@ -91,6 +93,7 @@ class ConstService(BaseService):
     v : array-like or a scalar
         ConstService value
     """
+
     def __init__(self,
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
@@ -196,6 +199,7 @@ class ExtService(BaseService):
                                      tex_name='P_0')
 
     """
+
     def __init__(self,
                  model: str,
                  src: str,
@@ -302,6 +306,7 @@ class BackRef(BaseService):
     andes.core.service.NumReduce : A more complete example using BackRef to build the COI model
 
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.export = False
@@ -339,7 +344,7 @@ class DataSelect(BaseService):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  ):
-        super().__init__(name=name, tex_name=tex_name, info=info,)
+        super().__init__(name=name, tex_name=tex_name, info=info, )
         self.optional = optional
         self.fallback = fallback
         self._v = None
@@ -391,7 +396,7 @@ class DeviceFinder(BaseService):
 
     def find_or_add(self, system):
         mdl = system.models[self.model]
-        found_idx = mdl.find_idx((self.idx_name, ), (self.link.v, ),
+        found_idx = mdl.find_idx((self.idx_name,), (self.link.v,),
                                  allow_none=True, default=None)
 
         action = False
@@ -431,13 +436,14 @@ class OperationService(BaseService):
 
     IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
     """
+
     def __init__(self,
                  name=None,
                  tex_name=None,
                  info=None,
                  ):
         self._v = None
-        super().__init__(name=name, tex_name=tex_name, info=info,)
+        super().__init__(name=name, tex_name=tex_name, info=info, )
         self.v_str = None
 
     @property
@@ -506,6 +512,7 @@ class NumReduce(OperationService):
     Thus, `self.Vn_mean.v` will become ``[318.33, 220]``.
 
     """
+
     def __init__(self,
                  u,
                  ref: BackRef,
@@ -599,6 +606,7 @@ class NumRepeat(OperationService):
     preserved in the sub-equation, the derivatives can be calculated correctly.
 
     """
+
     def __init__(self,
                  u,
                  ref,
@@ -635,6 +643,7 @@ class IdxRepeat(OperationService):
     This class has the same functionality as :py:class:`andes.core.service.NumRepeat`
     but only operates on IdxParam, DataParam or NumParam.
     """
+
     def __init__(self,
                  u,
                  ref,
@@ -687,6 +696,7 @@ class RefFlatten(OperationService):
                           indexer=self.SynGenIdx, export=False,
                           )
     """
+
     def __init__(self, ref, **kwargs):
         super().__init__(**kwargs)
         self.ref = ref
@@ -709,6 +719,7 @@ class NumSelect(OperationService):
         self.Sn = DataSelect(Tn, Sg)
 
     """
+
     def __init__(self,
                  optional,
                  fallback,
@@ -774,6 +785,7 @@ class InitChecker(OperationService):
     One can also pass float values from Config to make it
     adjustable as in our implementation of ``GENBase._vfc``.
     """
+
     def __init__(self, u, lower=None, upper=None, equal=None, not_equal=None,
                  enable=True, error_out=False, **kwargs):
         super().__init__(**kwargs)
@@ -824,8 +836,8 @@ class InitChecker(OperationService):
             title = f'{self.owner.class_name} {self.info} {text}.'
 
             err_dict = OrderedDict([('idx', idx),
-                                   ('values', self.u.v[pos]),
-                                   (f'{text2}', lim_v[pos]),
+                                    ('values', self.u.v[pos]),
+                                    (f'{text2}', lim_v[pos]),
                                     ])
             data = list(map(list, zip(*err_dict.values())))
 
@@ -841,8 +853,14 @@ class InitChecker(OperationService):
 class FlagNotNone(BaseService):
     """
     Class for flagging non-None indices as 1 and None indices as 0 in a numpy array.
+
+    Warnings
+    --------
+    FlagNotNone can only be applied to BaseParam with `cache=True`.
+    Applying to Service will fail until cache is False (at a performance cost).
     """
-    def __init__(self, indexer, to_flag=None, name=None, tex_name=None, info=None, cache=True):
+
+    def __init__(self: BaseParam, indexer, to_flag=None, name=None, tex_name=None, info=None, cache=True):
         BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
         self.cache = cache
         self.to_flag = to_flag
@@ -851,10 +869,14 @@ class FlagNotNone(BaseService):
 
     @property
     def v(self):
-        if self._v is None or not self.cache:
-            self._v = np.array([0 if i == self.to_flag else 1
-                                for i in self.indexer.v])
+        new = False
+        if self._v is None:
+            self._v = np.zeros_like(self.indexer.v, dtype=float)
+            new = True
 
+        if not self.cache or new:
+            self._v[:] = np.array([0 if i == self.to_flag else 1
+                                   for i in self.indexer.v])
         return self._v
 
 
@@ -862,20 +884,26 @@ class Replace(BaseService):
     """
     Replace parameters with new values if the function returns True
     """
+
     def __init__(self, old_val, flt, new_val, name=None, tex_name=None, info=None, cache=True):
         BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
         self.cache = cache
-        self.filter = flt   # function
+        self.filter = flt  # function
         self.old_val = old_val
         self.new_val = dummify(new_val)
         self._v = None
 
     @property
     def v(self):
+        new = False
         if self._v is None or not self.cache:
+            self._v = np.zeros_like(self.old_val.v, dtype=float)
+            new = True
+
+        if not self.cache or new:
             new_v = self.new_val.v * np.ones_like(self.old_val.v)
             flt = self.filter(self.old_val.v)
-            self._v = new_v * flt + self.old_val.v * (1 - flt)
+            self._v[:] = new_v * flt + self.old_val.v * (1 - flt)
 
         return self._v
 
@@ -886,6 +914,7 @@ class ParamCalc(BaseService):
 
     Useful to create parameters calculated instantly from existing ones.
     """
+
     def __init__(self, param1, param2, func, name=None, tex_name=None, info=None,
                  cache=True):
         BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
@@ -897,9 +926,14 @@ class ParamCalc(BaseService):
 
     @property
     def v(self):
-        if self._v is None or not self.cache:
-            self._v = self.func(self.param1.v,
-                                self.param2.v)
+        new = False
+        if self._v is None:
+            new = True
+            self._v = np.zeros_like(self.param1.v, dtype=float)
+
+        if not self.cache or new:
+            self._v[:] = self.func(self.param1.v,
+                                   self.param2.v)
 
         return self._v
 
@@ -920,6 +954,7 @@ class RandomService(BaseService):
     The value will be randomized every time it is accessed. Do not use it if the value needs to be stable for
     each simulation step.
     """
+
     def __init__(self, func=np.random.rand, **kwargs):
         super(RandomService, self).__init__(**kwargs)
         self.func = func
