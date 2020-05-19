@@ -1190,7 +1190,7 @@ class Model(object):
         kwargs = self.get_inputs()
         for name in jac_set:
             for idx, fun in enumerate(self.calls.vjac[name]):
-                self.triplets.vjac[name][idx] = fun(**kwargs)
+                self.triplets.vjac[name][idx][:] = fun(**kwargs)
 
     def get_times(self):
         """

@@ -1063,7 +1063,7 @@ class ESDC2AModel(ExcBase):
         self._zVRM = FlagNotNone(self.VRMAX, to_flag=0,
                                  tex_name='z_{VRMAX}',
                                  )
-        self.VRMAXc = ConstService(v_str='VRMAX + 99*_zVRM',
+        self.VRMAXc = ConstService(v_str='VRMAX + 999*_zVRM',
                                    info='Set VRMAX=999 when zero',
                                    )
         self.LG = Lag(u=self.v, T=self.TR, K=1,
@@ -1113,10 +1113,10 @@ class ESDC2AModel(ExcBase):
                          e_str='0 - UEL'
                          )
 
-        # self.HG = HVGate(u1=self.UEL,
-        #                  u2=self.LL_y,
-        #                  info='HVGate for under excitation',
-        #                  )
+        self.HG = HVGate(u1=self.UEL,
+                         u2=self.LL_y,
+                         info='HVGate for under excitation',
+                         )
 
         self.VRU = VarService(v_str='VRMAXc * v',
                               tex_name='V_T V_{RMAX}',
@@ -1125,6 +1125,7 @@ class ESDC2AModel(ExcBase):
                               tex_name='V_T V_{RMIN}',
                               )
 
+        # TODO: WARNING: HVGate is temporarily skipped
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
                                 K=self.KA,
@@ -1133,13 +1134,12 @@ class ESDC2AModel(ExcBase):
                                 info='Anti-windup lag',
                                 )  # LA_y == VR
 
-        # `LessThan` is causing memory issue (SL_z0 * vout) related to CVXOPT and NumPy conversion
-        # self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        # `LessThan` may be causing memory issue in (SL_z0 * vout) - uncertain yet
+        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
-                        v_str='0',
-                        # e_str='(vout - SAT_A) ** 2 * SAT_B / vout - Se',
-                        e_str='0 - Se',
+                        v_str='Se0',
+                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
                         )
 
         self.VFE = Algeb(info='Combined saturation feedback',
