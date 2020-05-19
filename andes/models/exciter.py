@@ -187,11 +187,8 @@ class ExcExpSat(Block):
     r"""
     Exponential exciter saturation block to calculate
     A and B from E1, SE1, E2 and SE2.
-
     Input parameters will be corrected and the user will be warned.
-    To disable the saturation, set either E1 or E2 to 0.
-
-    Setting `E1 = E2` or `E1 * SE1 = 0` will disable the saturation.
+    To disable saturation, set either E1 or E2 to 0.
 
     Parameters
     ----------
@@ -203,15 +200,6 @@ class ExcExpSat(Block):
         Second point of excitation field voltage
     SE2: BaseParam
         Coefficient corresponding to E2
-
-    Notes
-    -----
-    Parameter corrections are done in this sequence:
-
-    - if `E2 = E1`, set `E2' = 0` and `A = 0`
-    - if `E1 = 0`, set `E1' = E2 + 1` and `A = 0`
-    - if `SE1` = 0, set `SE1' = 1` and `A = 0`
-
     """
     def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
@@ -219,113 +207,93 @@ class ExcExpSat(Block):
         self._E1 = E1
         self._E2 = E2
         self._SE1 = SE1
-        self.SE2 = SE2   # no correction for SE2
-
-        self.E1sE2 = ConstService(tex_name='(E_1-E_2)', info='E1 minus E2')
-
-        self.zE1sE2 = ConstService(
-            info='0 if E1=E2',
-            tex_name='z^{E_1=E_2}',
-        )
+        self._SE2 = SE2
 
         self.zE1 = FlagNotNone(self._E1, to_flag=0.,
                                info='Flag non-zeros in E1',
-                               tex_name='z^{E_1=0}',
+                               tex_name='z^{E1}',
+                               )
+        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
+                               info='Flag non-zeros in E2',
+                               tex_name='z^{E2}',
                                )
         self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
                                 info='Flag non-zeros in SE1',
-                                tex_name='z^{SE_1=0}',
+                                tex_name='z^{SE1}',
                                 )
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
 
-        # warn use of `E1 = E2` which will disable saturation
+        # disallow E1 = E2 != 0 since the curve fitting will fail
         self.E12c = InitChecker(
             self._E1, not_equal=self._E2,
-            info='E1 and E2',
+            info='E1 and E2 after correction',
             error_out=True,
         )
 
-        # data correction for E2, E1 SE1 in sequence
-        self.E2 = Replace(self._E2, lambda x: np.equal(x, self._E1.v), 0)
-
+        # data correction for E1, E2, SE1
         self.E1 = ConstService(
             tex_name='E^{1c}',
-            info='Corrected E1 (if E1=0)',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
         )
         self.SE1 = ConstService(
             tex_name='SE^{1c}',
-            info='Corrected SE1 (if SE1=0)',
+            info='Corrected SE1 data',
         )
-
-        self.A = ConstService(
-            info='Saturation gain',
-            tex_name='A^e',
-            )
-        self.B = ConstService(
-            info='Exponential coef. in saturation',
-            tex_name='B^e',
-            )
-
-        self.y = Algeb(info='Saturation output',
-                       tex_name='y',
-                       )
-
-        # use `OrderedDict` to ensure `E1sE2` is calculated before `zE1sE21
-        self.vars = OrderedDict([('E2', self.E2),
-                                 ('E1', self.E1),
-                                 ('SE1', self.SE1),
-                                 ('E1sE2', self.E1sE2),
-                                 ('zE1', self.zE1),
-                                 ('zSE1', self.zSE1),
-                                 ('zE1sE2', self.zE1sE2),
-                                 ('A', self.A),
-                                 ('B', self.B),
-                                 ('y', self.y)
-                                 ])
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.A = ConstService(info='Saturation gain',
+                              tex_name='A^e',
+                              )
+        self.B = ConstService(info='Exponential coef. in saturation',
+                              tex_name='B^e',
+                              )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zE1': self.zE1,
+            'zE2': self.zE2,
+            'zSE1': self.zSE1,
+            'zSE2': self.zSE2,
+            'A': self.A,
+            'B': self.B,
+        }
 
     def define(self):
         r"""
-
         Notes
         -----
         The implementation solves for coefficients `A` and `B`
         that satisfies
-
         .. math ::
-
-            E_1  S_{E1} = A e^{E_1 B}
-
-            E_2  S_{E2} = A e^{E_2 B}
-
+            E_1  S_{E1} = A e^{E1\times B}
+            E_2  S_{E2} = A e^{E2\times B}
         The solutions are given by
-
         .. math ::
-            A = E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
-
-            B = - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
-
-        The implemented automatic parameter corrections are:
-
-        - Zeros in `E1`, `SE` will be used to set `A` to zero
-          in order to disable saturation,
-        - `E1 = E2` will disable the saturation.
-
+            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
+            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
         """
-        # self.E2.v_str = f'{self._E2.name} + (1 - {self.name}_zE1sE2)'
-
-        self.E1.v_str = f'{self._E1.name} + ({self.name}_E2 + 1) * (1 - {self.name}_zE1)'
+        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
 
         self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
 
-        self.E1sE2.v_str = f'{self._E1.name} - {self._E2.name}'
-
-        self.zE1sE2.v_str = f'({self.name}_E1sE2 > 0) + ({self.name}_E1sE2 < 0)'
-
-        self.A.v_str = f'{self.name}_zE1 * {self.name}_zSE1 * {self.name}_zE1sE2 * ' \
+        self.A.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
                        f'{self.name}_E1*{self.name}_SE1*' \
-                       f'exp({self.name}_E1*log({self.name}_E2*{self.SE2.name}/' \
+                       f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
                        f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
 
-        self.B.v_str = f'-log({self.name}_E2*{self.SE2.name}/({self.name}_E1*{self.name}_SE1))/' \
+        self.B.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
                        f'({self.name}_E1 - {self.name}_E2)'
 
 
