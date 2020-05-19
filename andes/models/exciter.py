@@ -398,14 +398,14 @@ class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        self.SAT = ExcExpSat(self.E1, self.SE1, self.E2, self.SE2,
-                             info='Field voltage saturation',
-                             )
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
 
         # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='SAT_A * exp(SAT_B * vf0)',
+                                v_str='SAT_B * (SAT_A * vf0) ** 2',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -430,7 +430,7 @@ class EXDC2Model(ExcBase):
                         tex_name='S_e',
                         unit='p.u.',
                         v_str='Se0',
-                        e_str='SAT_A * exp(SAT_B * vout) - Se'
+                        e_str='SAT_B * (SAT_A - vout) ** 2 - Se'
                         )
         self.vp = State(info='Voltage after saturation feedback, before speed term',
                         tex_name='V_p',

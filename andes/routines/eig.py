@@ -31,7 +31,7 @@ class EIG(BaseRoutine):
         self.eigs = None
         self.mu = None
         self.part_fact = None
-        self.singular_idx = np.array([])
+        self.singular_idx = np.array([], dtype=int)
         self.x_name = []
 
     def calc_state_matrix(self):
@@ -151,7 +151,7 @@ class EIG(BaseRoutine):
 
         else:
             if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-                self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel()
+                self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
                 logger.info(f"System contains {len(self.singular_idx)} zero time constants. ")
                 logger.debug([system.dae.x_name[i] for i in self.singular_idx])
 
