@@ -569,7 +569,7 @@ class Lag(Block):
 
     def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
 
@@ -592,8 +592,8 @@ class Lag(Block):
             y^{(0)} &= K u
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
+        self.y.v_str = f'({self.u.name}) * ({self.K.name})'
+        self.y.e_str = f'(({self.K.name}) * ({self.u.name}) - {self.name}_y)'
 
 
 class LagAntiWindup(Block):
@@ -819,8 +819,9 @@ class LeadLag2ndOrd(Block):
 
     Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
 
+    # TODO: instead of implementing `zero_out` using `LessThan` and an additional
+    term, consider correcting all parameters to 1 if all are 0.
 
-    # TODO: let it become a pass through if all parameters are zero.
     """
 
     def __init__(self, u, T1, T2, T3, T4, zero_out=False, name=None, tex_name=None, info=None):
