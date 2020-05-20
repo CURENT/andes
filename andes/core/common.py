@@ -70,7 +70,10 @@ class DummyValue(object):
     Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
     """
     def __init__(self, value):
-        self.name = value
+        if isinstance(value, str):
+            self.name = f'({value})'
+        else:
+            self.name = value
         self.tex_name = value
         self.v = value
 

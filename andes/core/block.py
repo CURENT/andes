@@ -336,7 +336,7 @@ class Gain(Block):
 
     def __init__(self, u, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.enforce_tex_name((self.K,))
 
@@ -370,7 +370,7 @@ class Integrator(Block):
 
     def __init__(self, u, T, K, y0, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.T = dummify(T)
         self.y0 = dummify(y0)
@@ -388,12 +388,8 @@ class Integrator(Block):
             y^{(0)} = 0
 
         """
-        if isinstance(self.u, str):
-            u_eqn = self.u
-        else:
-            u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * ({u_eqn})'
+        self.y.e_str = f'{self.K.name} * ({self.u.name})'
 
 
 class IntegratorAntiWindup(Block):
@@ -414,7 +410,7 @@ class IntegratorAntiWindup(Block):
 
     def __init__(self, u, T, K, y0, lower, upper, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
         self.y0 = dummify(y0)
@@ -439,12 +435,8 @@ class IntegratorAntiWindup(Block):
             y^{(0)} = 0
 
         """
-        if isinstance(self.u, str):
-            u_eqn = self.u
-        else:
-            u_eqn = self.u.name
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * ({u_eqn})'
+        self.y.e_str = f'{self.K.name} * ({self.u.name})'
 
 
 class Washout(Block):
@@ -462,7 +454,7 @@ class Washout(Block):
 
     def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
@@ -592,8 +584,8 @@ class Lag(Block):
             y^{(0)} &= K u
 
         """
-        self.y.v_str = f'({self.u.name}) * ({self.K.name})'
-        self.y.e_str = f'(({self.K.name}) * ({self.u.name}) - {self.name}_y)'
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
 
 
 class LagAntiWindup(Block):
@@ -626,7 +618,7 @@ class LagAntiWindup(Block):
     def __init__(self, u, T, K, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
 
@@ -686,7 +678,7 @@ class Lag2ndOrd(Block):
     def __init__(self, u, K, T1, T2, name=None, tex_name=None, info=None):
         super(Lag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
 
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
@@ -750,11 +742,11 @@ class LeadLag(Block):
 
     def __init__(self, u, T1, T2, K=1, zero_out=False, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = dummify(u)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.K = dummify(K)
         self.zero_out = zero_out
-        self.u = u
 
         self.enforce_tex_name((self.T1, self.T2))
 
@@ -826,7 +818,7 @@ class LeadLag2ndOrd(Block):
 
     def __init__(self, u, T1, T2, T3, T4, zero_out=False, name=None, tex_name=None, info=None):
         super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.T3 = dummify(T3)
@@ -908,9 +900,9 @@ class LeadLagLimit(Block):
     def __init__(self, u, T1, T2, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.T1 = T1
-        self.T2 = T2
-        self.u = u
+        self.u = dummify(u)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
         self.lower = lower
         self.upper = upper
         self.enforce_tex_name((self.T1, self.T2))
@@ -1068,7 +1060,7 @@ class GainLimiter(Block):
     def __init__(self, u, K, upper, lower, no_upper=False, no_lower=False,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.upper = upper
         self.lower = lower
@@ -1092,13 +1084,8 @@ class GainLimiter(Block):
         """
         TODO: write docstring
         """
-        if isinstance(self.u, str):
-            u_eqn = self.u
-        else:
-            u_eqn = self.u.name
-
-        self.x.v_str = f'{self.K.name} * ({u_eqn})'
-        self.x.e_str = f'{self.K.name} * ({u_eqn}) - {self.name}_x'
+        self.x.v_str = f'{self.K.name} * ({self.u.name})'
+        self.x.e_str = f'{self.K.name} * ({self.u.name}) - {self.name}_x'
 
         self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
         self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
