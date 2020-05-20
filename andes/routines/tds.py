@@ -254,9 +254,11 @@ class TDS(BaseRoutine):
         self._fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
 
-        for model in system.exist.pflow_tds.values():
-            for item in model.discrete.values():
-                item.warn_init_limit()
+        # warn if variables are initialized at limits
+        if system.config.warn_limits:
+            for model in system.exist.pflow_tds.values():
+                for item in model.discrete.values():
+                    item.warn_init_limit()
 
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')

@@ -1506,8 +1506,9 @@ class Model(object):
         """
         Post init checking. Warns if values of `InitChecker` is not True.
         """
-        for name, item in self.services_icheck.items():
-            item.check()
+        if self.system.config.warn_abnormal:
+            for name, item in self.services_icheck.items():
+                item.check()
 
 
 class SymProcessor(object):

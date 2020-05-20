@@ -38,7 +38,10 @@ class TestKnownResults(unittest.TestCase):
 
 
 def compare_results(case, pkl_name, addfile=None, tf=10):
-    ss = andes.run(case, addfile=addfile)
+    ss = andes.load(case, addfile=addfile)
+    ss.config.warn_limits = 0
+    ss.config.warn_abnormal = 0
+    ss.PFlow.run()
 
     ss.TDS.config.tf = tf
     ss.TDS.config.tstep = 1/30

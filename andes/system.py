@@ -101,6 +101,8 @@ class System(object):
                                      ('mva', 100),
                                      ('store_z', 0),
                                      ('ipadd', 1),
+                                     ('warn_limits', 1),
+                                     ('warn_abnormal', 1),
                                      )))
 
         self.config.add_extra("_help",
@@ -108,12 +110,16 @@ class System(object):
                               mva='system base MVA',
                               store_z='store limiter status in TDS output',
                               ipadd='Use spmatrix.ipadd if available',
+                              warn_limits='warn variables initialized at limits',
+                              warn_abnormal='warn initialization out of normal values',
                               )
         self.config.add_extra("_alt",
                               freq="float",
                               mva="float",
                               store_z=(0, 1),
                               ipadd=(0, 1),
+                              warn_limits=(0, 1),
+                              warn_abnormal=(0, 1),
                               )
         self.config.check()
         self.exist = ExistingModels()
