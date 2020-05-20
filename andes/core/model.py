@@ -1089,7 +1089,12 @@ class Model(object):
             # However, if any limit is hit, initialization is likely to fail.
 
             if instance.discrete is not None:
-                instance.discrete.check_var()
+                if not isinstance(instance.discrete, (list, tuple, set)):
+                    dlist = (instance.discrete, )
+                else:
+                    dlist = instance.discrete
+                for d in dlist:
+                    d.check_var()
 
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]

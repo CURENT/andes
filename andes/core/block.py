@@ -527,7 +527,7 @@ class WashoutOrLag(Washout):
 
         .. math ::
             T \dot{x'} &= (u - x') \\
-            T y = z_0 K (u - x') + z_1 T x
+            T y = z_0 K (u - x') + z_1 T x \\
             x'^{(0)} &= u \\
             y^{(0)} &= 0
 
@@ -734,19 +734,26 @@ class LeadLag(Block):
 
     Exports two variables: internal state `x` and output algebraic variable `y`.
 
+    Notes
+    -----
+    To allow zeroing out lead-lag as a pure gain, set ``zero_out`` to `True`.
+
     Parameters
     ----------
     T1 : BaseParam
         Time constant 1
     T2 : BaseParam
         Time constant 2
+    zero_out : bool
+        True to allow zeroing out lead-lag as a pass through (when T1=T2=0)
     """
 
-    def __init__(self, u, T1, T2, K=1, name=None, tex_name=None, info=None):
+    def __init__(self, u, T1, T2, K=1, zero_out=False, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.K = dummify(K)
+        self.zero_out = zero_out
         self.u = u
 
         self.enforce_tex_name((self.T1, self.T2))
@@ -754,6 +761,15 @@ class LeadLag(Block):
         self.x = State(info='State in lead-lag', tex_name="x'", t_const=self.T2)
         self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'x': self.x, 'y': self.y}
+
+        if self.zero_out is True:
+            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.x.discrete = (self.LT1, self.LT2)
+            self.vars['LT1'] = self.LT1
+            self.vars['LT2'] = self.LT2
 
     def define(self):
         r"""
@@ -766,8 +782,15 @@ class LeadLag(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2  y &= K T_1  (u - x') + K T_2  x' \\
-            x'^{(0)} &= y^{(0)} = u
+            T_2  y &= K T_1  (u - x') + K T_2  x' + E_2 \, , \text{where} \\
+            E_2 = &
+            \left\{\begin{matrix}
+            (y - K x') &\text{ if } T_1 = T_2 = 0 \& \text{zero_out}=True \\
+            0& \text{ otherwise }
+            \end{matrix}\right. \\
+            x'^{(0)} & = u\\
+            y^{(0)} & = Ku\\
+
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -777,6 +800,11 @@ class LeadLag(Block):
         self.y.e_str = f'{self.K.name} * {self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
                        f'{self.K.name} * {self.name}_x * {self.T2.name} - ' \
                        f'{self.name}_y * {self.T2.name}'
+
+        # when T1=T2=0, use equation `0 = y - Kx`
+        if self.zero_out is True:
+            self.y.e_str += f'+ {self.name}_LT1_z1 * {self.name}_LT2_z1 * ' \
+                            f'({self.name}_y - {self.K.name} * {self.name}_x)'
 
 
 class LeadLag2ndOrd(Block):
@@ -790,15 +818,19 @@ class LeadLag2ndOrd(Block):
              └──────────────────┘
 
     Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
+
+
+    # TODO: let it become a pass through if all parameters are zero.
     """
 
-    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info=None):
+    def __init__(self, u, T1, T2, T3, T4, zero_out=False, name=None, tex_name=None, info=None):
         super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.T3 = dummify(T3)
         self.T4 = dummify(T4)
+        self.zero_out = zero_out
         self.enforce_tex_name((self.T1, self.T2, self.T3, self.T4))
 
         self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x'", t_const=self.T2)
@@ -806,6 +838,21 @@ class LeadLag2ndOrd(Block):
         self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+        if self.zero_out is True:
+            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT3 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT4 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.x2.discrete = (self.LT1, self.LT2, self.LT3, self.LT4)
+            self.vars['LT1'] = self.LT1
+            self.vars['LT2'] = self.LT2
+            self.vars['LT3'] = self.LT3
+            self.vars['LT4'] = self.LT4
 
     def define(self):
         r"""
@@ -816,7 +863,12 @@ class LeadLag2ndOrd(Block):
         .. math ::
             T_2 \dot{x}_1 &= u - x_2 - T_1 x_1 \\
             \dot{x}_2 &= x_1 \\
-            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) \\
+            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) + E_2 \, , \text{ where} \\
+            E_2 = &
+            \left\{\begin{matrix}
+            (y - x_2) &\text{ if } T_1 = T_2 = T_3 = T_4 = 0 \& \text{zero_out}=True \\
+            0& \text{ otherwise }
+            \end{matrix}\right. \\
             x_1^{(0)} &= 0 \\
             x_2^{(0)} &= y^{(0)} = u
 
@@ -831,6 +883,11 @@ class LeadLag2ndOrd(Block):
         self.x1.v_str = 0
         self.x2.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
+
+        # when T1=T2=0, use equation `0 = y - Kx`
+        if self.zero_out is True:
+            self.y.e_str += f'+ {self.name}_LT1_z1*{self.name}_LT2_z1*{self.name}_LT3_z1*{self.name}_LT4_z1 * ' \
+                            f'({self.name}_y - {self.name}_x2)'
 
 
 class LeadLagLimit(Block):

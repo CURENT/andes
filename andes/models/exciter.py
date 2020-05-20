@@ -275,11 +275,14 @@ class ExcExpSat(Block):
         Notes
         -----
         The implementation solves for coefficients `A` and `B`
-        that satisfies
+        which satisfy
+
         .. math ::
             E_1  S_{E1} = A e^{E1\times B}
             E_2  S_{E2} = A e^{E2\times B}
+
         The solutions are given by
+
         .. math ::
             E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
             - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
@@ -1084,7 +1087,7 @@ class ESDC2AModel(ExcBase):
         self.Se0 = ConstService(
             tex_name='S_{e0}',
             v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
-            )
+        )
 
         self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
                                  tex_name='V_{FE0}',

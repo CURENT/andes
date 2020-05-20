@@ -153,11 +153,11 @@ class IEEESTModel(PSSBase):
 
         self.F1 = Lag2ndOrd(u=self.sig, K=1, T1=self.A1, T2=self.A2)
 
-        self.F2 = LeadLag2ndOrd(u=self.F1_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6)
+        self.F2 = LeadLag2ndOrd(u=self.F1_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6, zero_out=True)
 
-        self.LL1 = LeadLag(u=self.F2_y, T1=self.T1, T2=self.T2)
+        self.LL1 = LeadLag(u=self.F2_y, T1=self.T1, T2=self.T2, zero_out=True)
 
-        self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4)
+        self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4, zero_out=True)
 
         self.Vks = Gain(u=self.LL2_y, K=self.KS)
 
