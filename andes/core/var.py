@@ -98,11 +98,11 @@ class BaseVar(object):
         Reset the internal numpy arrays and flags.
         """
         self.n = 0
-        self.a = np.array([], dtype=int)
-        self.v = np.array([], dtype=np.float)
-        self.e = np.array([], dtype=np.float)
-        self.av = np.array([], dtype=int)
-        self.ae = np.array([], dtype=int)
+        self.a[:] = 0
+        self.v[:] = 0
+        self.e[:] = 0
+        self.av[:] = 0
+        self.ae[:] = 0
 
         self._contiguous = False
         self.e_inplace = False
