@@ -405,7 +405,8 @@ class EXDC2Model(ExcBase):
         # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='SAT_B * (SAT_A * vf0) ** 2',
+                                v_str='(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                # v_str='vf0',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -426,12 +427,18 @@ class EXDC2Model(ExcBase):
                           e_str='vref0 - vref'
                           )
 
-        self.Se = Algeb(info='Saturation output',
-                        tex_name='S_e',
-                        unit='p.u.',
+        self.SL = LessThan(u=self.vout,
+                           bound=self.SAT_A,
+                           equal=False,
+                           enable=True,
+                           cache=False,
+                           )
+
+        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SAT_B * (SAT_A - vout) ** 2 - Se'
+                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
                         )
+
         self.vp = State(info='Voltage after saturation feedback, before speed term',
                         tex_name='V_p',
                         unit='p.u.',
