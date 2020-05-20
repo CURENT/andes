@@ -104,7 +104,7 @@ class PSSBase(Model):
                              )
 
         # from BusFreq
-        self.f = ExtState(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
+        self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
                           info='Bus frequency')
 
         # from Exciter
@@ -286,7 +286,7 @@ class ST2CUTModel(PSSBase):
                            )
 
         # from BusFreq 2
-        self.f2 = ExtState(model='FreqMeasurement', src='f', indexer=self.busfreq2, export=False,
+        self.f2 = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq2, export=False,
                            info='Bus frequency 2')
 
         # Config
@@ -353,16 +353,19 @@ class ST2CUTModel(PSSBase):
         self.LL1 = LeadLag(u=self.WO_y,
                            T1=self.T5,
                            T2=self.T6,
+                           zero_out=True,
                            )
 
         self.LL2 = LeadLag(u=self.LL1_y,
                            T1=self.T7,
                            T2=self.T8,
+                           zero_out=True,
                            )
 
         self.LL3 = LeadLag(u=self.LL2_y,
                            T1=self.T9,
                            T2=self.T10,
+                           zero_out=True,
                            )
 
         self.VSS = GainLimiter(u=self.LL3_y,
