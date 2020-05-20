@@ -131,7 +131,7 @@ class FileMan(object):
             if isabs:
                 return fullname
             else:
-                return os.path.join(self.case_path, path, name)
+                return os.path.join(self.input_path, path, name)
 
 
 def add_suffix(fullname, suffix):

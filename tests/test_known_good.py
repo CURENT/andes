@@ -10,28 +10,35 @@ from andes.utils import get_case
 
 class TestKnownResults(unittest.TestCase):
 
-    sets = (('kundur/kundur_aw.xlsx', 'kundur_aw_10s.pkl'),
-            ('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl'),
-            ('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl'),
-            ('kundur/kundur_ieeest.xlsx', 'kundur_ieeest_10s.pkl')
+    sets = (('kundur/kundur_aw.xlsx', 'kundur_aw_10s.pkl', 10),
+            ('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl', 10),
+            ('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl', 10),
+            ('kundur/kundur_ieeest.xlsx', 'kundur_ieeest_10s.pkl', 10),
+            (('ieee14/ieee14.raw', 'ieee14/st2cut/ieee14.dyr'), 'ieee14_st2cut_2s.pkl', 2)
             )
 
-    def tnc(self, case_path, pkl_path):
+    def tnc(self, case_path, pkl_path, tf):
         """
         Test and compare
         """
-        ss = compare_results(case_path, pkl_path)
+        addfile = None
+        if isinstance(case_path, (tuple, list)):
+            addfile = get_case(case_path[1])
+            case_path = get_case(case_path[0])
+        else:
+            case_path = get_case(case_path)
+
+        ss = compare_results(case_path, pkl_path, tf=tf, addfile=addfile)
         andes.main.misc(clean=True)
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
     def test_known(self):
-        for (case, pkl) in self.sets:
-            self.tnc(case, pkl)
+        for case, pkl, tf in self.sets:
+            self.tnc(case, pkl, tf)
 
 
-def compare_results(case, pkl_name, tf=10):
-    case_path = get_case(case)
-    ss = andes.run(case_path)
+def compare_results(case, pkl_name, addfile=None, tf=10):
+    ss = andes.run(case, addfile=addfile)
 
     ss.TDS.config.tf = tf
     ss.TDS.config.tstep = 1/30
