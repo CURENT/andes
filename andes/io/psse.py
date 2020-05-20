@@ -281,20 +281,20 @@ def read(system, file):
 
 def read_add(system, file):
     """
-    Read addition PSS/E dyr file.
+    Read an addition PSS/E dyr file.
 
     Parameters
     ----------
-    system
-    file
+    system : System
+        System instance to which data will be loaded
+    file : str
+        Path to the additional `dyr` file
 
     Returns
     -------
-
+    bool
+        data parsing status
     """
-
-    warn_experimental("PSS/E dyr support")
-
     with open(file, 'r') as f:
         input_list = [line.strip() for line in f]
 

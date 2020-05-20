@@ -131,6 +131,9 @@ class System(object):
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
 
+        # internal flags
+        self.is_setup = False              # if system has been setup
+
     def _clear_adder_setter(self):
         """
         Clear adders and setters storage
@@ -246,6 +249,10 @@ class System(object):
 
         This function is to be called after adding all device data.
         """
+        if self.is_setup:
+            logger.warning('System has been setup. Calling setup twice is not allowed.')
+            return
+
         self.collect_ref()
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
@@ -261,6 +268,8 @@ class System(object):
         self.set_dae_names(self.exist.pflow)
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
+
+        self.is_setup = True
 
     def store_existing(self):
         """
@@ -299,6 +308,8 @@ class System(object):
         if model not in self.models:
             logger.warning(f"<{model}> is not an existing model.")
             return
+        if self.is_setup:
+            raise NotImplementedError("Adding devices are not allowed after setup.")
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 
