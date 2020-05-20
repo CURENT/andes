@@ -279,10 +279,14 @@ class DAE(object):
         name : name
             jac name
         """
-        self.__dict__[name] = spmatrix(self.triplets.vjac[name],
-                                       self.triplets.ijac[name],
-                                       self.triplets.jjac[name],
-                                       self.get_size(name), 'd')
+        try:
+            self.__dict__[name] = spmatrix(self.triplets.vjac[name],
+                                           self.triplets.ijac[name],
+                                           self.triplets.jjac[name],
+                                           self.get_size(name), 'd')
+        except TypeError as e:
+            logger.error("Your new model might have accessed an Algeb using ExtState, or vice versa.")
+            raise e
 
     def _compare_pattern(self, name):
         """

@@ -4,8 +4,8 @@ Measurement device classes
 
 from andes.core.param import IdxParam, NumParam
 from andes.core.model import Model, ModelData
-from andes.core.var import ExtAlgeb, Algeb, State
-from andes.core.block import Washout
+from andes.core.var import ExtAlgeb, Algeb, State  # NOQA
+from andes.core.block import Washout, Lag
 from andes.core.service import ConstService, ExtService
 import logging
 logger = logging.getLogger(__name__)
@@ -25,11 +25,11 @@ class BusFreq(ModelData, Model):
 
         # Parameters
         self.bus = IdxParam(info="bus idx", mandatory=True)
-        self.Tf = NumParam(default=0.1, info="angle washout time constant", unit="sec",
+        self.Tf = NumParam(default=0.02, info="input digital filter time const", unit="sec",
                            tex_name='T_f')
-        self.Tw = NumParam(default=1.0, info="lag time constant for frequency", unit="sec",
+        self.Tw = NumParam(default=0.02, info="washout time const", unit="sec",
                            tex_name='T_w')
-        self.fn = NumParam(default=60.0, info="nominal frequency",
+        self.fn = NumParam(default=60.0, info="nominal frequency", unit='Hz',
                            tex_name='f_n')
 
         # Variables
@@ -50,23 +50,21 @@ class BusFreq(ModelData, Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           )
-        self.ad = Algeb(info='angle deviation',
-                        unit='rad',
-                        tex_name=r'\theta_d',
-                        v_str='0',
-                        e_str='(a - a0) - ad',
-                        )
-        self.WO = Washout(u=self.ad,
+        self.L = Lag(u='(a-a0)',
+                     T=self.Tf,
+                     K=1,
+                     info='digital filter',
+                     )
+        self.WO = Washout(u=self.L_y,
                           K=self.iwn,
-                          T=self.Tf,
+                          T=self.Tw,
                           info='angle washout',
                           )
-        self.f = State(info='post-delay output frequency',
+        self.f = Algeb(info='frequency output',
                        unit='p.u. (Hz)',
                        tex_name='f',
                        v_str='1',
                        e_str='1 + WO_y - f',
-                       t_const=self.Tw
                        )
 
 

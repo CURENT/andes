@@ -89,7 +89,7 @@ def dummify(param):
     DummyValue(param) if param is a scalar; param itself, otherwise.
 
     """
-    if isinstance(param, (int, float)):
+    if isinstance(param, (int, float, str)):
         return DummyValue(param)
     else:
         return param
