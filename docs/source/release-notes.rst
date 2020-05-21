@@ -4,11 +4,12 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v0.9.4 (2020-05-17)
+v0.9.4 (2020-05-20)
 -------------------
 
-- Added exciter models EXST1, ESST3A, ESDC2A, SEXS, turbine governor model
-  IEEEG1 (dual-machine support), and stabilizer model ST2CUT.
+- Added exciter models EXST1, ESST3A, ESDC2A, SEXS, and IEEEX1,
+  turbine governor model IEEEG1 (dual-machine support), and stabilizer
+  model ST2CUT.
 - Added blocks HVGate and LVGate with a work-around for sympy.maximum/
   minimum.
 - Added services `PostInitService` (for storing initialized values), and
@@ -24,6 +25,7 @@ v0.9.4 (2020-05-17)
 - Renamed `OptionalSelect` to `DataSelect`; Added `NumSelect`, the array-based
   version of `DataSelect`.
 - Allow to regenerate code for updated models through ``andes prepare -qi``.
+- Various patches to allow zeroing out time constants in transfer functions.
 
 v0.9.3 (2020-05-05)
 -------------------
