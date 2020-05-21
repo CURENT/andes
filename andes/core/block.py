@@ -777,7 +777,7 @@ class LeadLag(Block):
             T_2  y &= K T_1  (u - x') + K T_2  x' + E_2 \, , \text{where} \\
             E_2 = &
             \left\{\begin{matrix}
-            (y - K x') &\text{ if } T_1 = T_2 = 0 \& \text{zero_out}=True \\
+            (y - K x') &\text{ if } T_1 = T_2 = 0 \& \text{zero\_out}=True \\
             0& \text{ otherwise }
             \end{matrix}\right. \\
             x'^{(0)} & = u\\
@@ -859,7 +859,7 @@ class LeadLag2ndOrd(Block):
             T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) + E_2 \, , \text{ where} \\
             E_2 = &
             \left\{\begin{matrix}
-            (y - x_2) &\text{ if } T_1 = T_2 = T_3 = T_4 = 0 \& \text{zero_out}=True \\
+            (y - x_2) &\text{ if } T_1 = T_2 = T_3 = T_4 = 0 \& \text{zero\_out}=True \\
             0& \text{ otherwise }
             \end{matrix}\right. \\
             x_1^{(0)} &= 0 \\
