@@ -103,6 +103,8 @@ def create_parser():
                                   nargs='?', type=str, default='')
     misc.add_argument('--license', action='store_true', help='Display software license', dest='show_license')
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
+    misc.add_argument('-r', '--recursive', help='Recursively clean outputs (combined useage with --clean)',
+                      action='store_true')
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
