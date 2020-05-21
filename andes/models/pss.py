@@ -180,11 +180,14 @@ class IEEEST(IEEESTData, IEEESTModel):
     Input signals (MODE):
 
     1 (s0) - Rotor speed deviation (p.u.),
-    2 (s1) - Bus frequency deviation (p.u.),
+    2 (s1) - Bus frequency deviation (*) (p.u.),
     3 (s2) - Generator P electrical in Gen MVABase (p.u.),
     4 (s3) - Generator accelerating power (p.u.),
     5 (s4) - Bus voltage (p.u.),
     6 (s5) - Derivative of p.u. bus voltage.
+
+    (*) Due to the frequency measurement implementation difference,
+    mode 2 is likely to yield different results across software.
 
     Blocks are named `F1`, `F2`, `LL1`, `LL2` and `WO` in sequence.
     Two limiters are named `VLIM` and `OLIM` in sequence.
@@ -390,12 +393,14 @@ class ST2CUT(ST2CUTData, ST2CUTModel):
 
     0 - Disable input signal
     1 (s1) - Rotor speed deviation (p.u.),
-    2 (s2) - Bus frequency deviation (p.u.),
+    2 (s2) - Bus frequency deviation (*) (p.u.),
     3 (s3) - Generator P electrical in Gen MVABase (p.u.),
     4 (s4) - Generator accelerating power (p.u.),
     5 (s5) - Bus voltage (p.u.),
     6 (s6) - Derivative of p.u. bus voltage.
 
+    (*) Due to the frequency measurement implementation difference,
+    mode 2 is likely to yield different results across software.
 
     Blocks are named `LL1`, `LL2`, `LL3`, `LL4` in sequence.
     Two limiters are named `VSS_lim` and `OLIM` in sequence.

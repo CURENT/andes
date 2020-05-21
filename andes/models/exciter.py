@@ -1178,6 +1178,9 @@ class ESDC2AModel(ExcBase):
 class ESDC2A(ESDC2AData, ESDC2AModel):
     """
     ESDC2A model.
+
+    This model is implemented as described in the PSS/E manual.
+    Due to saturation, the results may be different from TSAT.
     """
 
     def __init__(self, system, config):
