@@ -74,6 +74,7 @@ class PVModel(Model):
         self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=1e-6)
 
         # TODO: implement switching starting from the second iteration
+        # NOTE: TODO: PV to PQ conversion might not be fully working
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
                                   enable=self.config.pv2pq,
                                   n_select=self.config.npv2pq)

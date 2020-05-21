@@ -191,7 +191,6 @@ class SuiteSparseSolver(object):
             return np.ravel(self.b)
         except ValueError:
             logger.debug('Unexpected symbolic factorization.')
-
             self.F = self._symbolic(self.A)
             self.N = self._numeric(self.A, self.F)
             self._solve(self.A, self.F, self.N, self.b)
@@ -199,6 +198,10 @@ class SuiteSparseSolver(object):
             return np.ravel(self.b)
         except ArithmeticError:
             logger.error('Jacobian matrix is singular.')
+            diag = self.A[0:self.A.size[0] ** 2:self.A.size[0]+1]
+            idx = (np.argwhere(np.array(matrix(diag)).ravel() == 0.0)).ravel()
+            logger.error('The xy indices of associated variables:')
+            logger.error(idx)
 
             return np.ravel(matrix(np.nan, self.b.size, 'd'))
 

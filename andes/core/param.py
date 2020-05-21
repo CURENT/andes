@@ -347,12 +347,12 @@ class NumParam(BaseParam):
 
         # check for non-zero
         if value == 0.0 and self.get_property('non_zero'):
-            logger.debug(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
+            logger.warning(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         # check for positive
         if value is not None and value <= 0.0 and self.get_property('positive'):
-            logger.debug(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
+            logger.warning(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
             value = self.default
 
         super(NumParam, self).add(value)
@@ -505,6 +505,7 @@ class ExtParam(NumParam):
                  model: str,
                  src: str,
                  indexer=None,
+                 dtype=float,
                  allow_none=False,
                  default=0.0,
                  **kwargs):
@@ -512,6 +513,7 @@ class ExtParam(NumParam):
         self.model = model
         self.src = src
         self.indexer = indexer
+        self.dtype = dtype
         self.parent_model = None   # parent model instance
         self.allow_none = allow_none
         self.default = default
@@ -583,3 +585,11 @@ class ExtParam(NumParam):
                 self.pu_coeff = parent_instance.pu_coeff[uid]
             except KeyError:
                 pass
+
+    def to_array(self):
+        """
+        Convert to array when d_type is not str
+        """
+        if self.dtype == str:
+            return
+        NumParam.to_array(self)

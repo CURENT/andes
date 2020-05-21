@@ -212,7 +212,8 @@ def read(system, file):
             phi = data[2][2]
 
             if tap == 1 and phi == 0:
-                transf = False
+                # set `transf` to True for all entries from `raw['transf']`
+                transf = True
             else:
                 transf = True
             param = {'bus1': data[0][0], 'bus2': data[0][1], 'u': data[0][11],
@@ -281,20 +282,20 @@ def read(system, file):
 
 def read_add(system, file):
     """
-    Read addition PSS/E dyr file.
+    Read an addition PSS/E dyr file.
 
     Parameters
     ----------
-    system
-    file
+    system : System
+        System instance to which data will be loaded
+    file : str
+        Path to the additional `dyr` file
 
     Returns
     -------
-
+    bool
+        data parsing status
     """
-
-    warn_experimental("PSS/E dyr support")
-
     with open(file, 'r') as f:
         input_list = [line.strip() for line in f]
 
@@ -334,14 +335,20 @@ def read_add(system, file):
             if 'inputs' in dyr_yaml[psse_model]:
                 dyr_dict[psse_model].columns = dyr_yaml[psse_model]['inputs']
 
-    logger.debug(f'dyr contains models {", ".join(dyr_dict.keys())}')
-
     # collect not supported models
     not_supported = []
     for model in dyr_dict:
         if model not in sorted_models:
             not_supported.append(model)
-    logger.debug(f'Not supported: {", ".join(not_supported)}')
+
+    # print out debug messages
+    if len(dyr_dict):
+        logger.debug(f'dyr contains models {", ".join(dyr_dict.keys())}')
+
+    if len(not_supported):
+        logger.debug(f'Not supported: {", ".join(not_supported)}')
+    else:
+        logger.debug('All dyr models are supported.')
 
     # load data into models
     for psse_model in sorted_models:
@@ -360,7 +367,9 @@ def read_add(system, file):
 
         if 'find' in dyr_yaml[psse_model]:
             for name, source in dyr_yaml[psse_model]['find'].items():
+
                 for model, conditions in source.items():
+                    allow_none = conditions.pop('allow_none', 0)
                     cond_names = conditions.keys()
                     cond_values = []
 
@@ -371,7 +380,8 @@ def read_add(system, file):
                             cond_values.append(dyr_dict[psse_model][col])
 
                     try:
-                        find[name] = system.__dict__[model].find_idx(cond_names, cond_values)
+                        find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
+                                                                     allow_none=allow_none)
                     except IndexError as e:
                         logger.error("Data file may contain references to unsupported devices.")
                         logger.error(e)

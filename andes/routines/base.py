@@ -18,9 +18,15 @@ class BaseRoutine(object):
             self.config.load(config)
 
         self.config.add(OrderedDict((('sparselib', 'klu'),
+                                     ('linsolve', 0),
                                      )))
-        self.config.add_extra("_help", sparselib="linear sparse solver name")
-        self.config.add_extra("_alt", sparselib=("klu", "umfpack", "spsolve", "cupy"))
+        self.config.add_extra("_help",
+                              sparselib="linear sparse solver name",
+                              linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
+                              )
+        self.config.add_extra("_alt", sparselib=("klu", "umfpack", "spsolve", "cupy"),
+                              linsolve=(0, 1),
+                              )
 
         self.solver = Solver(sparselib=self.config.sparselib)
 
@@ -28,7 +34,7 @@ class BaseRoutine(object):
     def class_name(self):
         return self.__class__.__name__
 
-    def doc(self, max_width=80, export='plain'):
+    def doc(self, max_width=78, export='plain'):
         return self.config.doc(max_width, export)
 
     def init(self):

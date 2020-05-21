@@ -2,15 +2,21 @@ from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService, VarService, PostInitService
-from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate, Piecewise, GainLimiter
+from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
+from andes.core.service import InitChecker, Replace  # NOQA
+from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
+from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
+from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
+from _collections import OrderedDict  # NOQA
+import numpy as np  # NOQA
 
 
 class ExcBaseData(ModelData):
     """
     Common parameters for exciters.
     """
+
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen',
@@ -53,6 +59,7 @@ class ExcBase(Model):
                             tex_name='bus',
                             info='Bus idx of the generators',
                             export=False,
+                            dtype=str,
                             )
         self.omega = ExtState(src='omega',
                               model='SynGen',
@@ -94,7 +101,8 @@ class ExcBase(Model):
                           )
 
         # Note:
-        # Subclasses need to define `self.vref0` in the appropriate place
+        # Subclasses need to define `self.vref0` in the appropriate place.
+        # Subclasses also need to define `self.vref`.
 
 
 class EXDC2Data(ExcBaseData):
@@ -174,24 +182,234 @@ class EXDC2Data(ExcBaseData):
                             default=0.0,
                             unit='p.u.',
                             )
-        self.Ae = NumParam(info='Gain in saturation',
-                           tex_name='A_e',
-                           default=0.0,
-                           unit='p.u.',
-                           )
-        self.Be = NumParam(info='Exponential coefficient in saturation',
-                           tex_name='B_e',
-                           default=0.0,
-                           unit='p.u.',
-                           )
+
+
+class ExcExpSat(Block):
+    r"""
+    Exponential exciter saturation block to calculate
+    A and B from E1, SE1, E2 and SE2.
+    Input parameters will be corrected and the user will be warned.
+    To disable saturation, set either E1 or E2 to 0.
+
+    Parameters
+    ----------
+    E1 : BaseParam
+        First point of excitation field voltage
+    SE1: BaseParam
+        Coefficient corresponding to E1
+    E2 : BaseParam
+        Second point of excitation field voltage
+    SE2: BaseParam
+        Coefficient corresponding to E2
+    """
+
+    def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self._E1 = E1
+        self._E2 = E2
+        self._SE1 = SE1
+        self._SE2 = SE2
+
+        self.zE1 = FlagNotNone(self._E1, to_flag=0.,
+                               info='Flag non-zeros in E1',
+                               tex_name='z^{E1}',
+                               )
+        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
+                               info='Flag non-zeros in E2',
+                               tex_name='z^{E2}',
+                               )
+        self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
+                                info='Flag non-zeros in SE1',
+                                tex_name='z^{SE1}',
+                                )
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
+
+        # disallow E1 = E2 != 0 since the curve fitting will fail
+        self.E12c = InitChecker(
+            self._E1, not_equal=self._E2,
+            info='E1 and E2 after correction',
+            error_out=True,
+        )
+
+        # data correction for E1, E2, SE1
+        self.E1 = ConstService(
+            tex_name='E^{1c}',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
+        )
+        self.SE1 = ConstService(
+            tex_name='SE^{1c}',
+            info='Corrected SE1 data',
+        )
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.A = ConstService(info='Saturation gain',
+                              tex_name='A^e',
+                              )
+        self.B = ConstService(info='Exponential coef. in saturation',
+                              tex_name='B^e',
+                              )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zE1': self.zE1,
+            'zE2': self.zE2,
+            'zSE1': self.zSE1,
+            'zSE2': self.zSE2,
+            'A': self.A,
+            'B': self.B,
+        }
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        The implementation solves for coefficients `A` and `B`
+        which satisfy
+
+        .. math ::
+            E_1  S_{E1} = A e^{E1\times B}
+            E_2  S_{E2} = A e^{E2\times B}
+
+        The solutions are given by
+
+        .. math ::
+            E_{1} S_{E1} e^{ \frac{E_1 \log{ \left( \frac{E_2 S_{E2}} {E_1 S_{E1}} \right)} } {E_1 - E_2}}
+            - \frac{\log{\left(\frac{E_2 S_{E2}}{E_1 S_{E1}} \right)}}{E_1 - E_2}
+        """
+        self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+
+        self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
+
+        self.A.v_str = f'{self.name}_zE1*{self.name}_zE2 * ' \
+                       f'{self.name}_E1*{self.name}_SE1*' \
+                       f'exp({self.name}_E1*log({self.name}_E2*{self.name}_SE2/' \
+                       f'({self.name}_E1*{self.name}_SE1))/({self.name}_E1-{self.name}_E2))'
+
+        self.B.v_str = f'-log({self.name}_E2*{self.name}_SE2/({self.name}_E1*{self.name}_SE1))/' \
+                       f'({self.name}_E1 - {self.name}_E2)'
+
+
+class ExcQuadSat(Block):
+    r"""
+    Exponential exciter saturation block to calculate
+    A and B from E1, SE1, E2 and SE2.
+    Input parameters will be corrected and the user will be warned.
+    To disable saturation, set either E1 or E2 to 0.
+
+    Parameters
+    ----------
+    E1 : BaseParam
+        First point of excitation field voltage
+    SE1: BaseParam
+        Coefficient corresponding to E1
+    E2 : BaseParam
+        Second point of excitation field voltage
+    SE2: BaseParam
+        Coefficient corresponding to E2
+    """
+
+    def __init__(self, E1, SE1, E2, SE2, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self._E1 = dummify(E1)
+        self._E2 = dummify(E2)
+        self._SE1 = SE1
+        self._SE2 = SE2
+
+        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
+                                info='Flag non-zeros in SE2',
+                                tex_name='z^{SE2}')
+
+        # data correction for E1, E2, SE1 (TODO)
+        self.E1 = ConstService(
+            tex_name='E^{1c}',
+            info='Corrected E1 data',
+        )
+        self.E2 = ConstService(
+            tex_name='E^{2c}',
+            info='Corrected E2 data',
+        )
+        self.SE1 = ConstService(
+            tex_name='SE^{1c}',
+            info='Corrected SE1 data',
+        )
+        self.SE2 = ConstService(
+            tex_name='SE^{2c}',
+            info='Corrected SE2 data',
+        )
+        self.a = ConstService(info='Intermediate Sat coeff',
+                              tex_name='a',
+                              )
+        self.A = ConstService(info='Saturation start',
+                              tex_name='A^q',
+                              )
+        self.B = ConstService(info='Saturation gain',
+                              tex_name='B^q',
+                              )
+        self.vars = {
+            'E1': self.E1,
+            'E2': self.E2,
+            'SE1': self.SE1,
+            'SE2': self.SE2,
+            'zSE2': self.zSE2,
+            'a': self.a,
+            'A': self.A,
+            'B': self.B,
+        }
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        TODO.
+        """
+        # self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
+        # self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
+        #
+        # self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
+        # self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
+
+        self.E1.v_str = f'{self._E1.name}'
+        self.E2.v_str = f'{self._E2.name}'
+        self.SE1.v_str = f'{self._SE1.name}'
+        self.SE2.v_str = f'{self._SE2.name} + 2 * (1 - {self.name}_zSE2)'
+
+        self.a.v_str = f'(({self.name}_SE2>0)+({self.name}_SE2<0)) * ' \
+                       f'sqrt({self.name}_SE1 * {self.name}_E1 /({self.name}_SE2 * {self.name}_E2))'
+
+        self.A.v_str = f'{self.name}_E2 - ({self.name}_E1 - {self.name}_E2) / ({self.name}_a - 1)'
+
+        self.B.v_str = f'(({self.name}_a>0)+({self.name}_a<0)) *' \
+                       f'{self.name}_SE2 * {self.name}_E2 * ({self.name}_a - 1)**2 / ' \
+                       f'({self.name}_E1 - {self.name}_E2)** 2'
 
 
 class EXDC2Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
+
+        # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='Ae * exp(Be * vf0)',
+                                v_str='(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                # v_str='vf0',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -212,12 +430,18 @@ class EXDC2Model(ExcBase):
                           e_str='vref0 - vref'
                           )
 
-        self.Se = Algeb(info='Saturation output',
-                        tex_name='S_e',
-                        unit='p.u.',
+        self.SL = LessThan(u=self.vout,
+                           bound=self.SAT_A,
+                           equal=False,
+                           enable=True,
+                           cache=False,
+                           )
+
+        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='Ae * exp(Be * vout) - Se'
+                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
                         )
+
         self.vp = State(info='Voltage after saturation feedback, before speed term',
                         tex_name='V_p',
                         unit='p.u.',
@@ -240,6 +464,7 @@ class EXDC2Model(ExcBase):
                           T1=self.TC,
                           T2=self.TB,
                           info='Lead-lag for internal delays',
+                          zero_out=True,
                           )
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
@@ -251,6 +476,7 @@ class EXDC2Model(ExcBase):
         self.W = Washout(u=self.vp,
                          T=self.TF1,
                          K=self.KF1,
+                         info='Signal conditioner'
                          )
         self.vout.e_str = 'omega * vp - vout'
 
@@ -259,6 +485,7 @@ class EXDC2(EXDC2Data, EXDC2Model):
     """
     EXDC2 model.
     """
+
     def __init__(self, system, config):
         EXDC2Data.__init__(self)
         EXDC2Model.__init__(self, system, config)
@@ -266,6 +493,7 @@ class EXDC2(EXDC2Data, EXDC2Model):
 
 class SEXSData(ExcBaseData):
     """Data class for Simplified Excitation System model (SEXS)"""
+
     def __init__(self):
         ExcBaseData.__init__(self)
         self.TATB = NumParam(default=0.4,
@@ -326,7 +554,7 @@ class SEXSModel(ExcBase):
         self.vi.e_str = '(vref - v) - vi'
         self.vi.v_str = 'vref0 - v'
 
-        self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB)
+        self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB, zero_out=True)
 
         self.LAW = LagAntiWindup(u=self.LL_y,
                                  T=self.TE,
@@ -340,6 +568,7 @@ class SEXSModel(ExcBase):
 
 class SEXS(SEXSData, SEXSModel):
     """Simplified Excitation System"""
+
     def __init__(self, system, config):
         SEXSData.__init__(self)
         SEXSModel.__init__(self, system, config)
@@ -347,6 +576,7 @@ class SEXS(SEXSData, SEXSModel):
 
 class EXST1Data(ExcBaseData):
     """Parameters for EXST1."""
+
     def __init__(self):
         ExcBaseData.__init__(self)
 
@@ -441,7 +671,7 @@ class EXST1Model(ExcBase):
                         e_str='HLI_zi*vi + HLI_zu*VIMAX + HLI_zl*VIMIN - vl',
                         )
 
-        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator')
+        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator', zero_out=True)
 
         self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
 
@@ -716,6 +946,7 @@ class ESST3AModel(ExcBase):
 
         self.LL = LeadLag(u=self.HG_y, T1=self.TC, T2=self.TB,
                           info='Regulator',
+                          zero_out=True,
                           )  # LL_y == VA
 
         self.LAW1 = LagAntiWindup(u=self.LL_y,
@@ -747,6 +978,240 @@ class ESST3A(ESST3AData, ESST3AModel):
     """
     Static exciter type 3A model
     """
+
     def __init__(self, system, config):
         ESST3AData.__init__(self)
         ESST3AModel.__init__(self, system, config)
+
+
+class ESDC2AData(ExcBaseData):
+    def __init__(self):
+        ExcBaseData.__init__(self)
+        self.TR = NumParam(info='Sensing time constant',
+                           tex_name='T_R',
+                           default=0.01,
+                           unit='p.u.',
+                           )
+        self.KA = NumParam(default=80,
+                           info='Regulator gain',
+                           tex_name='K_A',
+                           )
+        self.TA = NumParam(info='Lag time constant in regulator',
+                           tex_name='T_A',
+                           default=0.04,
+                           unit='p.u.',
+                           )
+        self.TB = NumParam(info='Lag time constant in lead-lag',
+                           tex_name='T_B',
+                           default=1,
+                           unit='p.u.',
+                           )
+        self.TC = NumParam(info='Lead time constant in lead-lag',
+                           tex_name='T_C',
+                           default=1,
+                           unit='p.u.',
+                           )
+        self.VRMAX = NumParam(info='Max. exc. limit (0-unlimited)',
+                              tex_name='V_{RMAX}',
+                              default=7.3,
+                              unit='p.u.')
+        self.VRMIN = NumParam(info='Min. excitation limit',
+                              tex_name='V_{RMIN}',
+                              default=-7.3,
+                              unit='p.u.')
+        self.KE = NumParam(info='Saturation feedback gain',
+                           tex_name='K_E',
+                           default=1,
+                           unit='p.u.',
+                           )
+        self.TE = NumParam(info='Integrator time constant',
+                           tex_name='T_E',
+                           default=0.8,
+                           unit='p.u.',
+                           )
+        self.KF = NumParam(default=0.1,
+                           info='Feedback gain',
+                           tex_name='K_F',
+                           )
+        self.TF1 = NumParam(info='Feedback washout time constant',
+                            tex_name='T_{F1}',
+                            default=1,
+                            unit='p.u.',
+                            positive=True
+                            )
+        self.Switch = NumParam(info='Switch that PSS/E did not implement',
+                               tex_name='S_w',
+                               default=0,
+                               unit='bool',
+                               )
+
+        self.E1 = NumParam(info='First saturation point',
+                           tex_name='E_1',
+                           default=0.,
+                           unit='p.u.',
+                           )
+        self.SE1 = NumParam(info='Value at first saturation point',
+                            tex_name='S_{E1}',
+                            default=0.,
+                            unit='p.u.',
+                            )
+        self.E2 = NumParam(info='Second saturation point',
+                           tex_name='E_2',
+                           default=0.,
+                           unit='p.u.',
+                           )
+        self.SE2 = NumParam(info='Value at second saturation point',
+                            tex_name='S_{E2}',
+                            default=0.,
+                            unit='p.u.',
+                            )
+
+
+class ESDC2AModel(ExcBase):
+    def __init__(self, system, config):
+        ExcBase.__init__(self, system, config)
+
+        # Set VRMAX to 999 when VRMAX = 0
+        self._zVRM = FlagNotNone(self.VRMAX, to_flag=0,
+                                 tex_name='z_{VRMAX}',
+                                 )
+        self.VRMAXc = ConstService(v_str='VRMAX + 999*_zVRM',
+                                   info='Set VRMAX=999 when zero',
+                                   )
+        self.LG = Lag(u=self.v, T=self.TR, K=1,
+                      info='Transducer delay',
+                      )
+
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
+
+        self.Se0 = ConstService(
+            tex_name='S_{e0}',
+            v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
+        )
+
+        self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
+                                 tex_name='V_{FE0}',
+                                 )
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vfe0 / KA',
+                                  )
+
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        v_str='vref0 - v',
+                        e_str='(vref - v - WF_y) - vi',
+                        )
+
+        self.LL = LeadLag(u=self.vi,
+                          T1=self.TC,
+                          T2=self.TB,
+                          info='Lead-lag compensator',
+                          zero_out=True,
+                          )
+
+        self.UEL = Algeb(info='Interface var for under exc. limiter',
+                         tex_name='U_{EL}',
+                         v_str='0',
+                         e_str='0 - UEL'
+                         )
+
+        self.HG = HVGate(u1=self.UEL,
+                         u2=self.LL_y,
+                         info='HVGate for under excitation',
+                         )
+
+        self.VRU = VarService(v_str='VRMAXc * v',
+                              tex_name='V_T V_{RMAX}',
+                              )
+        self.VRL = VarService(v_str='VRMIN * v',
+                              tex_name='V_T V_{RMIN}',
+                              )
+
+        # TODO: WARNING: HVGate is temporarily skipped
+        self.LA = LagAntiWindup(u=self.LL_y,
+                                T=self.TA,
+                                K=self.KA,
+                                upper=self.VRU,
+                                lower=self.VRL,
+                                info='Anti-windup lag',
+                                )  # LA_y == VR
+
+        # `LessThan` may be causing memory issue in (SL_z0 * vout) - uncertain yet
+        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
+        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
+                        v_str='Se0',
+                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
+                        )
+
+        self.VFE = Algeb(info='Combined saturation feedback',
+                         tex_name='V_{FE}',
+                         unit='p.u.',
+                         v_str='vfe0',
+                         e_str='vout * (KE + Se) - VFE'
+                         )
+
+        self.INT = Integrator(u='LA_y - VFE',
+                              T=self.TE,
+                              K=1,
+                              y0=self.vf0,
+                              info='Integrator',
+                              )
+
+        self.WF = Washout(u=self.vout,
+                          T=self.TF1,
+                          K=self.KF,
+                          info='Feedback to input'
+                          )
+
+        self.vout.e_str = 'INT_y - vout'
+
+
+class ESDC2A(ESDC2AData, ESDC2AModel):
+    """
+    ESDC2A model.
+
+    This model is implemented as described in the PSS/E manual.
+    Due to saturation, the results may be different from TSAT.
+    """
+
+    def __init__(self, system, config):
+        ESDC2AData.__init__(self)
+        ESDC2AModel.__init__(self, system, config)
+
+
+class IEEEX1Model(EXDC2Model):
+
+    def __init__(self, system, config):
+        EXDC2Model.__init__(self, system, config)
+        self.VRTMAX = VarService('VRMAX * v',
+                                 tex_name='V_{RMAX}V_T')
+        self.VRTMIN = VarService('VRMIN * v',
+                                 tex_name='V_{RMIN}V_T')
+
+        self.LA.upper = self.VRTMAX
+        self.LA.lower = self.VRTMIN
+
+
+class IEEEX1(EXDC2Data, IEEEX1Model):
+    """
+    IEEEX1 Type 1 exciter (DC)
+
+    Derived from EXDC2 by varying the limiter bounds.
+    """
+    def __init__(self, system, config):
+        EXDC2Data.__init__(self)
+        IEEEX1Model.__init__(self, system, config)
+
+        self.vout.e_str = 'vp - vout'

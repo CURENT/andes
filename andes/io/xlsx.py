@@ -16,7 +16,7 @@ def testlines(fid):
     return True
 
 
-def write(system, outfile, skip_empty=True, overwrite=None, add_book=None):
+def write(system, outfile, skip_empty=True, overwrite=None, add_book=None, **kwargs):
     """
     Write loaded ANDES system data into an xlsx file
 

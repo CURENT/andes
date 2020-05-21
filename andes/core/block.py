@@ -1,9 +1,10 @@
-from typing import Optional, Iterable, Dict, Union, List, Tuple
+from typing import Optional, Iterable, Union, List, Tuple
 
 from andes.core.var import Algeb, State
-from andes.core.discrete import Discrete, AntiWindup, LessThan, Selector, HardLimiter
+from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter
 from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
+from collections import OrderedDict
 import numpy as np
 
 
@@ -90,7 +91,7 @@ class Block(object):
         self.tex_name = tex_name if tex_name else name
         self.info = info
         self.owner = None
-        self.vars: Dict[str, Union[Algeb, State, Discrete]] = dict()
+        self.vars = OrderedDict()
         self.triplets = JacTriplet()
         self.flags = ModelFlags()  # f_num, g_num and j_num can be set
 
@@ -253,6 +254,7 @@ class PIController(Block):
         The integral gain parameter instance
 
     """
+
     def __init__(self, u, ref, kp, ki, name=None, info=None):
         super(PIController, self).__init__(name=name, info=info)
 
@@ -331,11 +333,12 @@ class Gain(Block):
 
     Exports an algebraic output `y`.
     """
+
     def __init__(self, u, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K,))
 
         self.y = Algeb(info='Gain output', tex_name='y')
         self.vars = {'y': self.y}
@@ -357,22 +360,23 @@ class Integrator(Block):
     r"""
     Integrator block. ::
 
-             ┌─────┐
-        u -> │ K/s │ -> y
-             └─────┘
+             ┌──────┐
+        u -> │ K/sT │ -> y
+             └──────┘
 
     Exports a differential variable `y`.
     The initial output is specified by `y0` and default to zero.
     """
 
-    def __init__(self, u, K, y0, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
+        self.T = dummify(T)
         self.y0 = dummify(y0)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K, self.T))
 
-        self.y = State(info='Integrator output', tex_name='y')
+        self.y = State(info='Integrator output', tex_name='y', t_const=self.T)
         self.vars = {'y': self.y}
 
     def define(self):
@@ -385,35 +389,36 @@ class Integrator(Block):
 
         """
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * ({self.u.name})'
 
 
 class IntegratorAntiWindup(Block):
     r"""
     Integrator block with anti-windup limiter. ::
 
-                  upper
-                 /¯¯¯¯¯
-             ┌─────┐
-        u -> │ K/s │ -> y
-             └─────┘
-          _____/
-          lower
+                   upper
+                  /¯¯¯¯¯
+             ┌──────┐
+        u -> │ K/sT │ -> y
+             └──────┘
+           _____/
+           lower
 
     Exports a differential variable `y` and an AntiWindup `lim`.
     The initial output must be specified through `y0`.
     """
 
-    def __init__(self, u, K, y0, lower, upper, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, lower, upper, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
+        self.T = dummify(T)
         self.K = dummify(K)
         self.y0 = dummify(y0)
         self.lower = dummify(lower)
         self.upper = dummify(upper)
-        self.enforce_tex_name((self.K, ))
+        self.enforce_tex_name((self.K, self.T))
 
-        self.y = State(info='AW Integrator output', tex_name='y')
+        self.y = State(info='AW Integrator output', tex_name='y', t_const=self.T)
 
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
                               info='Limiter in integrator',
@@ -431,7 +436,7 @@ class IntegratorAntiWindup(Block):
 
         """
         self.y.v_str = f'{self.y0.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name}'
+        self.y.e_str = f'{self.K.name} * ({self.u.name})'
 
 
 class Washout(Block):
@@ -449,7 +454,7 @@ class Washout(Block):
 
     def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
         self.enforce_tex_name((self.K, self.T))
@@ -492,7 +497,8 @@ class WashoutOrLag(Washout):
         If True, ``sT`` will become 1, and the washout will become a low-pass filter.
         If False, functions as a regular Washout.
     """
-    def __init__(self, u, T, K, name, zero_out=False, tex_name=None, info=None):
+
+    def __init__(self, u, T, K, name=None, zero_out=True, tex_name=None, info=None):
         super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
         self.zero_out = zero_out
         self.LT = LessThan(K,
@@ -513,7 +519,7 @@ class WashoutOrLag(Washout):
 
         .. math ::
             T \dot{x'} &= (u - x') \\
-            T y = z_0 K (u - x') + z_1 T x
+            T y = z_0 K (u - x') + z_1 T x \\
             x'^{(0)} &= u \\
             y^{(0)} &= 0
 
@@ -552,9 +558,10 @@ class Lag(Block):
         Input variable
 
     """
+
     def __init__(self, u, T, K, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
 
@@ -607,10 +614,11 @@ class LagAntiWindup(Block):
         Input variable
 
     """
+
     def __init__(self, u, T, K, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
 
@@ -621,7 +629,8 @@ class LagAntiWindup(Block):
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
-        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim')
+        self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
+                              info='Limiter in Lag')
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
@@ -669,7 +678,7 @@ class Lag2ndOrd(Block):
     def __init__(self, u, K, T1, T2, name=None, tex_name=None, info=None):
         super(Lag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
 
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
@@ -717,25 +726,42 @@ class LeadLag(Block):
 
     Exports two variables: internal state `x` and output algebraic variable `y`.
 
+    Notes
+    -----
+    To allow zeroing out lead-lag as a pure gain, set ``zero_out`` to `True`.
+
     Parameters
     ----------
     T1 : BaseParam
         Time constant 1
     T2 : BaseParam
         Time constant 2
+    zero_out : bool
+        True to allow zeroing out lead-lag as a pass through (when T1=T2=0)
     """
-    def __init__(self, u, T1, T2, K=1, name=None, tex_name=None, info=None):
+
+    def __init__(self, u, T1, T2, K=1, zero_out=True, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = dummify(u)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.K = dummify(K)
-        self.u = u
+        self.zero_out = zero_out
 
         self.enforce_tex_name((self.T1, self.T2))
 
         self.x = State(info='State in lead-lag', tex_name="x'", t_const=self.T2)
         self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-6)
         self.vars = {'x': self.x, 'y': self.y}
+
+        if self.zero_out is True:
+            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.x.discrete = (self.LT1, self.LT2)
+            self.vars['LT1'] = self.LT1
+            self.vars['LT2'] = self.LT2
 
     def define(self):
         r"""
@@ -748,8 +774,15 @@ class LeadLag(Block):
         .. math ::
 
             T_2 \dot{x'} &= (u - x') \\
-            T_2  y &= K T_1  (u - x') + K T_2  x' \\
-            x'^{(0)} &= y^{(0)} = u
+            T_2  y &= K T_1  (u - x') + K T_2  x' + E_2 \, , \text{where} \\
+            E_2 = &
+            \left\{\begin{matrix}
+            (y - K x') &\text{ if } T_1 = T_2 = 0 \& \text{zero\_out}=True \\
+            0& \text{ otherwise }
+            \end{matrix}\right. \\
+            x'^{(0)} & = u\\
+            y^{(0)} & = Ku\\
+
 
         """
         self.x.v_str = f'{self.u.name}'
@@ -759,6 +792,11 @@ class LeadLag(Block):
         self.y.e_str = f'{self.K.name} * {self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
                        f'{self.K.name} * {self.name}_x * {self.T2.name} - ' \
                        f'{self.name}_y * {self.T2.name}'
+
+        # when T1=T2=0, use equation `0 = y - Kx`
+        if self.zero_out is True:
+            self.y.e_str += f'+ {self.name}_LT1_z1 * {self.name}_LT2_z1 * ' \
+                            f'({self.name}_y - {self.K.name} * {self.name}_x)'
 
 
 class LeadLag2ndOrd(Block):
@@ -772,15 +810,20 @@ class LeadLag2ndOrd(Block):
              └──────────────────┘
 
     Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
+
+    # TODO: instead of implementing `zero_out` using `LessThan` and an additional
+    term, consider correcting all parameters to 1 if all are 0.
+
     """
 
-    def __init__(self, u, T1, T2, T3, T4, name=None, tex_name=None, info=None):
+    def __init__(self, u, T1, T2, T3, T4, zero_out=False, name=None, tex_name=None, info=None):
         super(LeadLag2ndOrd, self).__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.T1 = dummify(T1)
         self.T2 = dummify(T2)
         self.T3 = dummify(T3)
         self.T4 = dummify(T4)
+        self.zero_out = zero_out
         self.enforce_tex_name((self.T1, self.T2, self.T3, self.T4))
 
         self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x'", t_const=self.T2)
@@ -788,6 +831,21 @@ class LeadLag2ndOrd(Block):
         self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+        if self.zero_out is True:
+            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT3 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.LT4 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                                cache=True, z0=1, z1=0)
+            self.x2.discrete = (self.LT1, self.LT2, self.LT3, self.LT4)
+            self.vars['LT1'] = self.LT1
+            self.vars['LT2'] = self.LT2
+            self.vars['LT3'] = self.LT3
+            self.vars['LT4'] = self.LT4
 
     def define(self):
         r"""
@@ -798,7 +856,12 @@ class LeadLag2ndOrd(Block):
         .. math ::
             T_2 \dot{x}_1 &= u - x_2 - T_1 x_1 \\
             \dot{x}_2 &= x_1 \\
-            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) \\
+            T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) + E_2 \, , \text{ where} \\
+            E_2 = &
+            \left\{\begin{matrix}
+            (y - x_2) &\text{ if } T_1 = T_2 = T_3 = T_4 = 0 \& \text{zero\_out}=True \\
+            0& \text{ otherwise }
+            \end{matrix}\right. \\
             x_1^{(0)} &= 0 \\
             x_2^{(0)} &= y^{(0)} = u
 
@@ -814,6 +877,11 @@ class LeadLag2ndOrd(Block):
         self.x2.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
 
+        # when T1=T2=0, use equation `0 = y - Kx`
+        if self.zero_out is True:
+            self.y.e_str += f'+ {self.name}_LT1_z1*{self.name}_LT2_z1*{self.name}_LT3_z1*{self.name}_LT4_z1 * ' \
+                            f'({self.name}_y - {self.name}_x2)'
+
 
 class LeadLagLimit(Block):
     r"""
@@ -828,12 +896,13 @@ class LeadLagLimit(Block):
     Exports four variables: state `x`, output before hard limiter `ynl`, output `y`, and AntiWindup `lim`.
 
     """
+
     def __init__(self, u, T1, T2, lower, upper,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.T1 = T1
-        self.T2 = T2
-        self.u = u
+        self.u = dummify(u)
+        self.T1 = dummify(T1)
+        self.T2 = dummify(T2)
         self.lower = lower
         self.upper = upper
         self.enforce_tex_name((self.T1, self.T2))
@@ -887,6 +956,7 @@ class HVGate(Block):
               └─────────+
 
     """
+
     def __init__(self, u1, u2, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
@@ -935,6 +1005,7 @@ class LVGate(Block):
               └─────────+
 
     """
+
     def __init__(self, u1, u2, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
@@ -989,7 +1060,7 @@ class GainLimiter(Block):
     def __init__(self, u, K, upper, lower, no_upper=False, no_lower=False,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.K = dummify(K)
         self.upper = upper
         self.lower = lower
@@ -1004,7 +1075,8 @@ class GainLimiter(Block):
         self.y = Algeb(info='Gain output after limiter', tex_name='y')
 
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
-                               no_upper=no_upper, no_lower=no_lower)
+                               no_upper=no_upper, no_lower=no_lower,
+                               tex_name='lim')
 
         self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
 
@@ -1012,13 +1084,8 @@ class GainLimiter(Block):
         """
         TODO: write docstring
         """
-        if isinstance(self.u, str):
-            u_eqn = self.u
-        else:
-            u_eqn = self.u.name
-
-        self.x.v_str = f'{self.K.name} * {u_eqn}'
-        self.x.e_str = f'{self.K.name} * {u_eqn} - {self.name}_x'
+        self.x.v_str = f'{self.K.name} * ({self.u.name})'
+        self.x.e_str = f'{self.K.name} * ({self.u.name}) - {self.name}_x'
 
         self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
         self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
@@ -1052,6 +1119,7 @@ class Piecewise(Block):
     funs : list, tuple
         A list of strings for the piecewise functions. Need to be provided in the overloaded `define` function.
     """
+
     def __init__(self, u, points: Union[List, Tuple], funs: Union[List, Tuple],
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -1072,7 +1140,7 @@ class Piecewise(Block):
         i = 0
         for i in range(len(self.points)):
             args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
-        args.append(f'({self.funs[i+1]}, True)')
+        args.append(f'({self.funs[i + 1]}, True)')
 
         args_comma = ', '.join(args)
         pw_fun = f'Piecewise({args_comma})'

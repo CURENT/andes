@@ -11,6 +11,20 @@ logger = logging.getLogger(__name__)
 all_formats = {}
 
 
+def report_info(system):
+    info = list()
+    info.append('ANDES' + ' ' + version + '\n')
+    info.append('Copyright (C) 2015-2020 Hantao Cui\n\n')
+    info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
+    info.append('Case file: ' + system.files.case + '\n')
+    info.append('Report time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
+    if system.PFlow.converged is True:
+        info.append(f'Power flow converged in {system.PFlow.niter + 1} iterations.\n')
+        info.append('Flat-start: ' +
+                    ('Yes' if system.Bus.config.flat_start else 'No') + '\n')
+    return info
+
+
 class Report(object):
     """
     Report class to store system static analysis reports
@@ -23,19 +37,7 @@ class Report(object):
 
     @property
     def info(self):
-        system = self.system
-        info = list()
-        info.append('ANDES' + ' ' + version + '\n')
-        info.append('Copyright (C) 2015-2020 Hantao Cui\n\n')
-        info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
-        info.append('Case file: ' + system.files.case + '\n')
-        info.append('Report time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
-        if system.PFlow.converged is True:
-            info.append(f'Power flow converged in {system.PFlow.niter} iterations.\n')
-            info.append('Flat-start: ' +
-                        ('Yes' if system.Bus.config.flat_start else 'No') + '\n')
-
-        return info
+        return report_info(self.system)
 
     def update(self):
         """
@@ -123,30 +125,35 @@ class Report(object):
 
             # ----------------------------------------
             # Bus data
+            angle_unit = 'deg.' if system.PFlow.config.degree else 'rad.'
+            angles = np.rad2deg(system.Bus.a.v) \
+                if system.PFlow.config.degree == 1 else system.Bus.a.v
+
             text.append(['BUS DATA:\n'])
-            header.append(['Vm(pu)', 'Va(rad)'])
-            row_name.append(system.Bus.name.v)
-            data.append([system.Bus.v.v, system.Bus.a.v])
+            header.append(['Bus Name', 'Vm(pu)', f'Va({angle_unit})'])
+            row_name.append(system.Bus.idx.v)
+            data.append([system.Bus.name.v, system.Bus.v.v, angles])
             # ----------------------------------------
 
             # ----------------------------------------
             # Node data
             if hasattr(system, 'Node') and system.Node.n:
                 text.append(['NODE DATA:\n'])
-                header.append(['V(pu)'])
-                row_name.append(system.Node.name.v)
-                data.append([system.Node.v.v])
+                header.append(['Node Name', 'V(pu)'])
+                row_name.append(system.Node.idx.v)
+                data.append([system.Node.name.v, system.Node.v.v])
             # ----------------------------------------
 
             # ----------------------------------------
             # Line data
             text.append(['LINE DATA:\n'])
             header.append([
-                'From Bus (idx)', 'To Bus (idx)', 'P From (pu)', 'Q From (pu)',
-                'P To (pu)', 'Q To(pu)'
+                'Line Name', 'Fr. Bus (idx)', 'To Bus (idx)', 'P From (pu)', 'Q From (pu)',
+                'P To (pu)', 'Q To (pu)'
             ])
-            row_name.append(system.Line.name.v)
-            data.append([system.Line.bus1.v,
+            row_name.append(system.Line.idx.v)
+            data.append([system.Line.name.v,
+                         system.Line.bus1.v,
                          system.Line.bus2.v,
                          system.Line.a1.e,
                          system.Line.v1.e,

@@ -27,7 +27,7 @@ A tree view of the test directory is as follows. ::
     │   ├── kundur_full.raw
     │   ├── kundur_full.xlsx
     │   ├── kundur_gentrip.xlsx
-    │   └── kundur_pss.xlsx
+    │   └── kundur_ieeest.xlsx
     ├── matpower/
     │   ├── case118.m
     │   ├── case14.m

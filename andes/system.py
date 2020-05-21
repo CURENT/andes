@@ -101,6 +101,8 @@ class System(object):
                                      ('mva', 100),
                                      ('store_z', 0),
                                      ('ipadd', 1),
+                                     ('warn_limits', 1),
+                                     ('warn_abnormal', 1),
                                      )))
 
         self.config.add_extra("_help",
@@ -108,12 +110,16 @@ class System(object):
                               mva='system base MVA',
                               store_z='store limiter status in TDS output',
                               ipadd='Use spmatrix.ipadd if available',
+                              warn_limits='warn variables initialized at limits',
+                              warn_abnormal='warn initialization out of normal values',
                               )
         self.config.add_extra("_alt",
                               freq="float",
                               mva="float",
                               store_z=(0, 1),
                               ipadd=(0, 1),
+                              warn_limits=(0, 1),
+                              warn_abnormal=(0, 1),
                               )
         self.config.check()
         self.exist = ExistingModels()
@@ -130,6 +136,9 @@ class System(object):
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
+
+        # internal flags
+        self.is_setup = False              # if system has been setup
 
     def _clear_adder_setter(self):
         """
@@ -246,6 +255,10 @@ class System(object):
 
         This function is to be called after adding all device data.
         """
+        if self.is_setup:
+            logger.warning('System has been setup. Calling setup twice is not allowed.')
+            return
+
         self.collect_ref()
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
@@ -262,9 +275,14 @@ class System(object):
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
 
+        self.is_setup = True
+
     def store_existing(self):
         """
         Store existing models in `System.existing`.
+
+        TODO: Models with `TimerParam` will need to be stored anyway.
+        This will allow adding switches on the fly.
         """
         self.exist.pflow = self.find_models('pflow')
         self.exist.tds = self.find_models('tds')
@@ -296,6 +314,8 @@ class System(object):
         if model not in self.models:
             logger.warning(f"<{model}> is not an existing model.")
             return
+        if self.is_setup:
+            raise NotImplementedError("Adding devices are not allowed after setup.")
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 
@@ -594,7 +614,7 @@ class System(object):
                 for p in mdl.find_param(prop).values():
                     p.set_pu_coeff(coeff)
 
-    def l_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_var(self, models: OrderedDict):
         """
         Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
@@ -602,7 +622,7 @@ class System(object):
         """
         self.call_models('l_update_var', models, self.dae.t)
 
-    def l_update_eq(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def l_update_eq(self, models:  OrderedDict):
         """
         First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
@@ -612,7 +632,7 @@ class System(object):
         self.call_models('l_check_eq', models)
         self.call_models('l_set_eq', models)
 
-    def s_update_var(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def s_update_var(self, models: OrderedDict):
         """
         Update variable services by calling ``s_update_var`` of models.
 
@@ -621,7 +641,7 @@ class System(object):
         """
         self.call_models('s_update_var', models)
 
-    def s_update_post(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def s_update_post(self, models: OrderedDict):
         """
         Update variable services by calling ``s_update_post`` of models.
 

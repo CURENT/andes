@@ -70,7 +70,10 @@ class DummyValue(object):
     Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
     """
     def __init__(self, value):
-        self.name = value
+        if isinstance(value, str):
+            self.name = f'({value})'
+        else:
+            self.name = value
         self.tex_name = value
         self.v = value
 
@@ -89,7 +92,7 @@ def dummify(param):
     DummyValue(param) if param is a scalar; param itself, otherwise.
 
     """
-    if isinstance(param, (int, float)):
+    if isinstance(param, (int, float, str)):
         return DummyValue(param)
     else:
         return param
@@ -238,7 +241,7 @@ class Config(object):
     def __repr__(self):
         return pprint.pformat(self.as_dict())
 
-    def doc(self, max_width=80, export='plain', target=False, symbol=True):
+    def doc(self, max_width=78, export='plain', target=False, symbol=True):
         out = ''
         if len(self.as_dict()) == 0:
             return out

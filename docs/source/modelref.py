@@ -3,53 +3,56 @@ This file is used to generate reStructuredText tables for Group and Model refere
 """
 import os
 import andes
-ss = andes.prepare()
 
-# write the top-level index file
+if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
 
-out = ''
-out += '.. _modelref:\n\n'
-out += '****************\n'
-out += 'Model References\n'
-out += '****************\n'
-out += '\n'
+    ss = andes.prepare()
 
-out += ss.supported_models(export='rest')
+    # write the top-level index file
 
-out += '\n'
-out += '.. toctree ::\n'
-out += '    :maxdepth: 2\n'
-out += '\n'
+    out = ''
+    out += '.. _modelref:\n\n'
+    out += '****************\n'
+    out += 'Model References\n'
+    out += '****************\n'
+    out += '\n'
 
-file_tpl = '    groupdoc/{}\n'
+    out += ss.supported_models(export='rest')
 
-for group in ss.groups.values():
-    out += file_tpl.format(group.class_name)
+    out += '\n'
+    out += '.. toctree ::\n'
+    out += '    :maxdepth: 2\n'
+    out += '\n'
 
-with open('modelref.rst', 'w') as f:
-    f.write(out)
+    file_tpl = '    groupdoc/{}\n'
 
-# write individual files
+    for group in ss.groups.values():
+        out += file_tpl.format(group.class_name)
 
-os.makedirs('groupdoc', exist_ok=True)
+    with open('modelref.rst', 'w') as f:
+        f.write(out)
 
-for group in ss.groups.values():
-    with open(f'groupdoc/{group.class_name}.rst', 'w') as f:
-        f.write(group.doc_all(export='rest'))
+    # write individual files
 
-# Config Reference Section
+    os.makedirs('groupdoc', exist_ok=True)
 
-out = ''
-out += '.. _configref:\n\n'
-out += '*****************\n'
-out += 'Config References\n'
-out += '*****************\n'
-out += '\n'
+    for group in ss.groups.values():
+        with open(f'groupdoc/{group.class_name}.rst', 'w') as f:
+            f.write(group.doc_all(export='rest'))
 
-out += ss.config.doc(export='rest', target=True, symbol=False)
+    # Config Reference Section
 
-for r in ss.routines.values():
-    out += r.config.doc(export='rest', target=True, symbol=False)
+    out = ''
+    out += '.. _configref:\n\n'
+    out += '*****************\n'
+    out += 'Config References\n'
+    out += '*****************\n'
+    out += '\n'
 
-with open('configref.rst', 'w') as f:
-    f.write(out)
+    out += ss.config.doc(export='rest', target=True, symbol=False)
+
+    for r in ss.routines.values():
+        out += r.config.doc(export='rest', target=True, symbol=False)
+
+    with open('configref.rst', 'w') as f:
+        f.write(out)

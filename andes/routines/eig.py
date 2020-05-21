@@ -31,6 +31,8 @@ class EIG(BaseRoutine):
         self.eigs = None
         self.mu = None
         self.part_fact = None
+        self.singular_idx = np.array([], dtype=int)
+        self.x_name = []
 
     def calc_state_matrix(self):
         r"""
@@ -61,9 +63,17 @@ class EIG(BaseRoutine):
         gyx = matrix(system.dae.gx)
         self.solver.linsolve(system.dae.gy, gyx)
 
-        iTf = spdiag((1 / system.dae.Tf).tolist())
+        Tfnz = system.dae.Tf + np.ones_like(system.dae.Tf) * np.equal(system.dae.Tf, 0.0)
+        iTf = spdiag((1 / Tfnz).tolist())
         self.As = matrix(iTf * (system.dae.fx - system.dae.fy * gyx))
         return self.As
+
+    def remove_singular_rc(self):
+        """
+        Remove rows and cols associated with zero time constant.
+        """
+        self.As = np.delete(self.As, self.singular_idx, axis=0)
+        self.As = np.delete(self.As, self.singular_idx, axis=1)
 
     def calc_eigvals(self):
         """
@@ -93,7 +103,7 @@ class EIG(BaseRoutine):
         idx = range(n)
 
         mu_complex = np.array([0] * n, dtype=complex)
-        W = matrix(spmatrix(1.0, idx, idx, (n, n), N.typecode))
+        W = matrix(spmatrix(1.0, idx, idx, As.shape, N.typecode))
         gesv(N, W)
 
         partfact = mul(abs(W.T), abs(N))
@@ -105,7 +115,7 @@ class EIG(BaseRoutine):
         for item in idx:
             mu_real = float(mu[item].real)
             mu_imag = float(mu[item].imag)
-            mu_complex[item] = complex(round(mu_real, 4), round(mu_imag, 4))
+            mu_complex[item] = complex(round(mu_real, 5), round(mu_imag, 5))
             partfact[item, :] /= WN[item]
 
         # participation factor
@@ -127,6 +137,7 @@ class EIG(BaseRoutine):
     def run(self, **kwargs):
         succeed = False
         system = self.system
+        self.singular_idx = np.array([])
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Eig analysis will not continue.')
@@ -138,15 +149,20 @@ class EIG(BaseRoutine):
         if system.dae.n == 0:
             logger.error('No dynamic model. Eig analysis will not continue.')
 
-        elif sum(system.dae.Tf != 0) != len(system.dae.Tf):
-            logger.error("System contains zero time constant(s). "
-                         "Eigenvalue analysis cannot continue.")
-
         else:
+            if sum(system.dae.Tf != 0) != len(system.dae.Tf):
+                self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
+                logger.info(f"System contains {len(self.singular_idx)} zero time constants. ")
+                logger.debug([system.dae.x_name[i] for i in self.singular_idx])
+
+            self.x_name = np.array(system.dae.x_name)
+            self.x_name = np.delete(self.x_name, self.singular_idx)
+
             self.summary()
             t1, s = elapsed()
 
             self.calc_state_matrix()
+            self.remove_singular_rc()
             self.calc_part_factor()
 
             if not self.system.files.no_output:
@@ -243,7 +259,7 @@ class EIG(BaseRoutine):
         logger.info(f'State matrix saved to "{system.files.mat}".')
         return True
 
-    def report(self):
+    def report(self, x_name=None):
         """
         Save eigenvalue analysis reports
 
@@ -251,9 +267,13 @@ class EIG(BaseRoutine):
         -------
         None
         """
+        from andes.variables.report import report_info
+
         system = self.system
         mu = self.mu
         part_fact = self.part_fact
+        if x_name is None:
+            x_name = self.x_name
 
         text = []
         header = []
@@ -296,7 +316,7 @@ class EIG(BaseRoutine):
         for prow in range(neig):
             temp_row = part_fact[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
-            var_assoc.append(system.dae.x_name[name_idx])
+            var_assoc.append(x_name[name_idx])
 
         pf = []
         for prow in range(neig):
@@ -305,7 +325,13 @@ class EIG(BaseRoutine):
                 temp_row.append(round(part_fact[prow, pcol], 5))
             pf.append(temp_row)
 
+        # opening info section
+        text.append(report_info(self.system))
+        header.append(None)
+        rowname.append(None)
+        data.append(None)
         text.append('')
+
         header.append([''])
         rowname.append(['EIGENVALUE ANALYSIS REPORT'])
         data.append('')
@@ -317,14 +343,20 @@ class EIG(BaseRoutine):
 
         text.append('EIGENVALUE DATA\n')
         header.append([
-            'Most Associated', 'Real', 'Imag', 'Damped Freq.', 'Frequency',
-            'Damping [%]'
-        ])
+            'Most Associated',
+            'Real',
+            'Imag.',
+            'Damped Freq.',
+            'Frequency',
+            'Damping [%]'])
         rowname.append(numeral)
         data.append(
             [var_assoc,
              list(mu_real),
-             list(mu_imag), ufreq, freq, damping])
+             list(mu_imag),
+             ufreq,
+             freq,
+             damping])
 
         n_cols = 7  # columns per block
         n_block = int(ceil(neig / n_cols))
@@ -336,7 +368,7 @@ class EIG(BaseRoutine):
                 text.append('PARTICIPATION FACTORS [{}/{}]\n'.format(
                     idx + 1, n_block))
                 header.append(numeral[start:end])
-                rowname.append(system.dae.x_name)
+                rowname.append(x_name)
                 data.append(pf[start:end])
 
         dump_data(text, header, rowname, data, system.files.eig)

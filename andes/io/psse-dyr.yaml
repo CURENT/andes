@@ -36,7 +36,7 @@ GENCLS:
         D: D
         M: "GENCLS.H; lambda x: 2 * x"
         ra: ra
-        xq: xs
+        xd1: xs
 
 GENROU:
     destination: GENROU
@@ -101,6 +101,7 @@ GENROU:
         S10: S10
         S12: S12
 
+# Exciter models
 EXDC2:
     inputs:
         - BUS
@@ -144,6 +145,51 @@ EXDC2:
         SE1: SE1
         E2: E2
         SE2: SE2
+
+IEEEX1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - TB
+        - TC
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF1
+        - TF1
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: IEEEX1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KA: KA
+        TA: TA
+        TB: TB
+        TC: TC
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        TE: TE
+        KF1: KF1
+        TF1: TF1
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+
 SEXS:
     inputs:
         - BUS
@@ -168,6 +214,7 @@ SEXS:
         TE: TE
         EMIN: EMIN
         EMAX: EMAX
+
 EXST1:
     inputs:
         - BUS
@@ -204,6 +251,106 @@ EXST1:
         KC: KC
         KF: KF
         TF: TF
+
+ESDC2A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - TB
+        - TC
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF
+        - TF1
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: ESDC2A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KA: KA
+        TA: TA
+        TB: TB
+        TC: TC
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        TE: TE
+        KF: KF
+        TF1: TF1
+        Switch: Switch
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+
+ESST3A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - KM
+        - TC
+        - TB
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KG
+        - KP
+        - KI
+        - VBMAX
+        - KC
+        - XL
+        - VGMAX
+        - THETAP
+        - TM
+        - VMMAX
+        - VMMIN
+    destination: ESST3A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        VIMAX: VIMAX
+        VIMIN: VIMIN
+        KM: KM
+        TC: TC
+        TB: TB
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KG: KG
+        KP: KP
+        KI: KI
+        VBMAX: VBMAX
+        KC: KC
+        XL: XL
+        VGMAX: VGMAX
+        THETAP: THETAP
+        TM: TM
+        VMMAX: VMMAX
+        VMMIN: VMMIN
 
 TGOV1:
     inputs:
@@ -264,10 +411,11 @@ IEEEG1:
             SynGen:
                 bus: BUS
                 subidx: ID
-#        syn2:
-#            SynGen:
-#                bus: BUS2
-#                subidx: ID2
+        syn2:
+            SynGen:
+                bus: BUS2
+                subidx: ID2
+                allow_none: 1
     outputs:
         syn: syn
         K: K
@@ -326,7 +474,7 @@ IEEEST:
     outputs:
         avr: avr
         MODE: MODE
-        busr: BUSR
+        busr: "IEEEST.BUSR; lambda x: [None if (i == 0) else i for i in x]"
         A1: A1
         A2: A2
         A3: A3
@@ -340,6 +488,62 @@ IEEEST:
         T5: T5
         T6: T6
         KS: KS
+        LSMAX: LSMAX
+        LSMIN: LSMIN
+        VCU: VCU
+        VCL: VCL
+
+ST2CUT:
+    inputs:
+        - BUS
+        - ID
+        - MODE
+        - BUSR
+        - MODE2
+        - BUSR2
+        - K1
+        - K2
+        - T1
+        - T2
+        - T3
+        - T4
+        - T5
+        - T6
+        - T7
+        - T8
+        - T9
+        - T10
+        - LSMAX
+        - LSMIN
+        - VCU
+        - VCL
+    destination: ST2CUT
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+        avr:
+            Exciter:
+                syn: syn
+    outputs:
+        avr: avr
+        MODE: MODE
+        busr: "ST2CUT.BUSR; lambda x: [None if (i == 0) else i for i in x]"
+        MODE2: MODE2
+        busr2: "ST2CUT.BUSR2; lambda x: [None if (i == 0) else i for i in x]"
+        K1: K1
+        K2: K2
+        T1: T1
+        T2: T2
+        T3: T3
+        T4: T4
+        T5: T5
+        T6: T6
+        T7: T7
+        T8: T8
+        T9: T9
+        T10: T10
         LSMAX: LSMAX
         LSMIN: LSMIN
         VCU: VCU

@@ -4,7 +4,7 @@ Base class for building ANDES models.
 import os
 import logging
 from collections import OrderedDict, defaultdict
-from typing import Iterable
+from typing import Iterable, Sized
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -13,7 +13,7 @@ from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
-from andes.core.service import NumSelect, FlagNotNone, ParamCalc, InitChecker
+from andes.core.service import NumSelect, FlagNotNone, ParamCalc, InitChecker, Replace
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -303,7 +303,7 @@ class ModelData(object):
 
         return out
 
-    def find_idx(self, keys, values, allow_missing=False):
+    def find_idx(self, keys, values, allow_none=False, default=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -311,11 +311,13 @@ class ModelData(object):
         ----------
         keys : str, array-like, Sized
             A string or an array-like of strings containing the names of parameters for the search criteria
-        values : array, array of arrays
+        values : array, array of arrays, Sized
             Values for the corresponding key to search for. If keys is a str, values should be an array of
             elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_missing : bool, Sized
+        allow_none : bool, Sized
             Allow key, value to be not found. Used by groups.
+        default : bool
+            Default idx to return if not found (missing)
 
         Returns
         -------
@@ -326,13 +328,17 @@ class ModelData(object):
             keys = (keys,)
             if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
                 raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
+
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 values = (values,)
-        elif isinstance(keys, Iterable):
+
+        elif isinstance(keys, Sized):
             if not isinstance(values, Iterable):
                 raise ValueError(f"value must be an iterable, got {values}")
+
             elif len(values) > 0 and not isinstance(values[0], Iterable):
                 raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
+
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
@@ -346,10 +352,10 @@ class ModelData(object):
                     v_idx = self.idx.v[pos]
                     break
             if v_idx is None:
-                if allow_missing is False:
+                if allow_none is False:
                     raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
                 else:
-                    v_idx = False
+                    v_idx = default
 
             idxes.append(v_idx)
 
@@ -626,7 +632,7 @@ class Model(object):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
                                 FlagNotNone, RandomService,
-                                ParamCalc)):
+                                ParamCalc, Replace)):
             self.services_ops[key] = value
         elif isinstance(value, InitChecker):
             self.services_icheck[key] = value
@@ -1083,7 +1089,12 @@ class Model(object):
             # However, if any limit is hit, initialization is likely to fail.
 
             if instance.discrete is not None:
-                instance.discrete.check_var()
+                if not isinstance(instance.discrete, (list, tuple, set)):
+                    dlist = (instance.discrete, )
+                else:
+                    dlist = instance.discrete
+                for d in dlist:
+                    d.check_var()
 
             kwargs = self.get_inputs(refresh=True)
             init_fun = self.calls.init_lambdify[name]
@@ -1184,6 +1195,7 @@ class Model(object):
         kwargs = self.get_inputs()
         for name in jac_set:
             for idx, fun in enumerate(self.calls.vjac[name]):
+                # TODO: in-place assignment will fail for COI.
                 self.triplets.vjac[name][idx] = fun(**kwargs)
 
     def get_times(self):
@@ -1443,7 +1455,7 @@ class Model(object):
         """
         pass
 
-    def doc(self, max_width=80, export='plain'):
+    def doc(self, max_width=78, export='plain'):
         """
         Retrieve model documentation as a string.
         """
@@ -1494,8 +1506,9 @@ class Model(object):
         """
         Post init checking. Warns if values of `InitChecker` is not True.
         """
-        for name, item in self.services_icheck.items():
-            item.check()
+        if self.system.config.warn_abnormal:
+            for name, item in self.services_icheck.items():
+                item.check()
 
 
 class SymProcessor(object):
@@ -1872,7 +1885,7 @@ class Documenter(object):
         self.discrete = parent.discrete
         self.blocks = parent.blocks
 
-    def _param_doc(self, max_width=80, export='plain'):
+    def _param_doc(self, max_width=78, export='plain'):
         """
         Export formatted model parameter documentation as a string.
 
@@ -1940,7 +1953,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _var_doc(self, max_width=80, export='plain'):
+    def _var_doc(self, max_width=78, export='plain'):
         # variable documentation
         if len(self.cache.all_vars) == 0:
             return ''
@@ -1989,7 +2002,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _eq_doc(self, max_width=80, export='plain', e_code=None):
+    def _eq_doc(self, max_width=78, export='plain', e_code=None):
         # equation documentation
         # TODO: this function needs a bit refactoring
         out = ''
@@ -2058,7 +2071,7 @@ class Documenter(object):
 
         return out
 
-    def _service_doc(self, max_width=80, export='plain'):
+    def _service_doc(self, max_width=78, export='plain'):
         if len(self.services) == 0:
             return ''
 
@@ -2068,11 +2081,12 @@ class Documenter(object):
         for p in self.services.values():
             names.append(p.name)
             class_names.append(p.class_name)
+            symbols.append(p.tex_name if p.tex_name is not None else '')
             eqs.append(p.v_str if p.v_str else '')
 
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
-            symbols = math_wrap([item.tex_name for item in self.services.values()], export=export)
+            symbols = math_wrap(symbols, export=export)
             eqs_rest = math_wrap(call_store.s_latex, export=export)
 
         plain_dict = OrderedDict([('Name', names),
@@ -2090,7 +2104,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _discrete_doc(self, max_width=80, export='plain'):
+    def _discrete_doc(self, max_width=78, export='plain'):
         if len(self.discrete) == 0:
             return ''
 
@@ -2119,7 +2133,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def _block_doc(self, max_width=80, export='plain'):
+    def _block_doc(self, max_width=78, export='plain'):
         """
         Documentation for blocks.
         """
@@ -2152,7 +2166,7 @@ class Documenter(object):
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
-    def get(self, max_width=80, export='plain'):
+    def get(self, max_width=78, export='plain'):
         """
         Return the model documentation in table-formatted string.
 

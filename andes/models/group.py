@@ -147,20 +147,30 @@ class GroupBase(object):
             instance = model.__dict__[src]
             instance.__dict__[attr][uid] = value[i]
 
-    def find_idx(self, keys, values):
+    def find_idx(self, keys, values, allow_none=False, default=None):
+        """
+        Find indices of devices that satisfy the given `key=value` condition.
+
+        This method iterates over all models in this group.
+        """
         indices_found = []
+        # `indices_found` contains found indices returned from all models of this group
         for model in self.models.values():
-            indices_found.append(model.find_idx(keys, values, allow_missing=True))
+            indices_found.append(model.find_idx(keys, values, allow_none=True, default=default))
 
         out = []
         for idx, idx_found in enumerate(zip(*indices_found)):
-            if idx_found.count(False) == len(idx_found):
-                missing_values = [item[idx] for item in values]
-                raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
+            if not allow_none:
+                if idx_found.count(None) == len(idx_found):
+                    missing_values = [item[idx] for item in values]
+                    raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
+
+            real_idx = None
             for item in idx_found:
-                if item is not False:
-                    out.append(item)
+                if item is not None:
+                    real_idx = item
                     break
+            out.append(real_idx)
         return out
 
     def _check_src(self, src: str):

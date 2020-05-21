@@ -3,6 +3,7 @@ from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
 from andes.core.service import NumReduce, NumRepeat, BackRef
 from andes.shared import np
+from andes.utils.tab import Tab
 
 
 class AreaData(ModelData):
@@ -32,3 +33,20 @@ class Area(AreaData, Model):
                           info='Bus voltage magnitude')
 
         # self.time = Algeb(e_str='time - dae_t', v_setter=True)
+
+    def bus_table(self):
+        """
+        Return a formatted table with area idx and bus idx correspondence
+
+        Returns
+        -------
+        str
+            Formatted table
+
+        """
+        if self.n:
+            header = ['Area ID', 'Bus ID']
+            rows = [(i, j) for i, j in zip(self.idx.v, self.Bus.v)]
+            return Tab(header=header, data=rows).draw()
+        else:
+            return ''

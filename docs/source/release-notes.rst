@@ -4,12 +4,12 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v0.9.4
+v0.9.4 (2020-05-17)
 -------------------
 
-- Added exciter models EXST1, ESST3A, SEXS and turbine governor model
-  IEEEG1 (fully support dual machines).
-- Added blocks HVGate and LVGate with workaround for sympy.maximum/
+- Added exciter models EXST1, ESST3A, ESDC2A, SEXS, turbine governor model
+  IEEEG1 (dual-machine support), and stabilizer model ST2CUT.
+- Added blocks HVGate and LVGate with a work-around for sympy.maximum/
   minimum.
 - Added services `PostInitService` (for storing initialized values), and
   `VarService` (variable services that get updated) after limiters and before
@@ -18,7 +18,7 @@ v0.9.4
   typical values. Warnings will be issued when out of bound or equality/
   inequality conditions are not met.
 - Allow internal variables to be associated with a discrete component which
-  will be updated before initialization (through BaseVar.discrete).
+  will be updated before initialization (through `BaseVar.discrete`).
 - Allow turbine governors to specify an optional `Tn` (turbine rating). If
   not provided, turbine rating will fall back to `Sn` (generator rating).
 - Renamed `OptionalSelect` to `DataSelect`; Added `NumSelect`, the array-based
@@ -44,7 +44,7 @@ This version accelerates computations by about 35%.
 - Models with flag ``collate=False``, which is the new default,
   will slice DAE arrays for all internal vars to reduce copying back and forth.
 - The change above greatly reduced computation time.
-  For ``kundur_pss.xlsx``, simulation time is down from 2.50 sec to 1.64 sec.
+  For ``kundur_ieeest.xlsx``, simulation time is down from 2.50 sec to 1.64 sec.
 - The side-effects include a change in variable ordering in output lst file.
   It also eliminated the feasibility of evaluating model equations in
   parallel, which has not been implemented and does not seem promising in Python.
@@ -67,7 +67,7 @@ calls to empty user-defined numerical calls.
   if user-defined numerical calls exist.
 - In `Model.f_update`, `Model.g_update` and `Model.j_update`, check the above flags
   to avoid unnecessary calls to empty numeric functions.
-- For the `kundur_pss.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
+- For the `kundur_ieeest.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
 
 v0.8.7 (2020-04-28)
 -------------------

@@ -473,6 +473,7 @@ class IEEEG1Model(TGBase):
         # check if K1-K8 sums up to 1
         self._sumK18 = ConstService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
                                     info='summation of K1-K8',
+                                    tex_name=r"\sum_{i=1}^8 K_i"
                                     )
         self._K18c1 = InitChecker(u=self._sumK18,
                                   info='summation of K1-K8 and 1.0',
@@ -571,6 +572,7 @@ class IEEEG1Model(TGBase):
                          )
 
         self.IAW = IntegratorAntiWindup(u=self.vsl,
+                                        T=1,
                                         K=1,
                                         y0=self.tm012,
                                         lower=self.PMIN,
@@ -610,19 +612,23 @@ class IEEEG1Model(TGBase):
 
 class IEEEG1(IEEEG1Data, IEEEG1Model):
     """
-    IEEE Type 1 Speed-Governing Model
+    IEEE Type 1 Speed-Governing Model.
 
-    The speed deviation of generator 1 is measured.
-    If turbine rating `Tn` is not specified, the sum
-    of `Sn` of of connected generators will be used
+    If only one generator is connected, its `idx` must
+    be given to `syn`, and `syn2` must be left blank.
+    Each generator must provide data in its `Sn` base.
 
-    If only one SynGen is connected, its `idx` must
-    be connect through `syn`, and `syn2` must be left blank.
+    `syn` is connected to the high-pressure output (PHP)
+    and the optional `syn2` is connected to the low-
+    pressure output (PLP).
 
-    Each SynGen must provide data in its `Sn` base.
-    If the second generator is not present,
+    The speed deviation of generator 1 (syn) is measured.
+    If the turbine rating `Tn` is not specified, the sum
+    of `Sn` of all connected generators will be used.
+
+    Normally, K1 + K2 + ... + K8 = 1.0.
+    If the second generator is not connected,
     K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
-    In all cases, K1 + K2 + ... + K8 = 1.0.
     """
 
     def __init__(self, system, config):

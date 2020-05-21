@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
 from andes.utils.misc import elapsed, is_notebook
+from andes.utils.tab import Tab
 from andes.shared import tqdm, np
 from andes.shared import matrix, sparse, spdiag
 
@@ -70,6 +71,7 @@ class TDS(BaseRoutine):
         self.pbar = None
         self.callpert = None
         self.plotter = None
+        self.plt = None
         self.initialized = False
 
     def init(self):
@@ -84,6 +86,9 @@ class TDS(BaseRoutine):
         """
         t0, _ = elapsed()
         system = self.system
+
+        if self.initialized:
+            return system.dae.xy
 
         self._reset()
         self._load_pert()
@@ -106,7 +111,7 @@ class TDS(BaseRoutine):
         if self.initialized is True:
             logger.info(f"Initialization was successful in {s1}.")
         else:
-            logger.info(f"Initialization failed in {s1}.")
+            logger.error(f"Initialization failed in {s1}.")
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')
@@ -239,6 +244,7 @@ class TDS(BaseRoutine):
         """
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
+        self.plt = self.plotter
 
     def test_init(self):
         """
@@ -248,22 +254,30 @@ class TDS(BaseRoutine):
         self._fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
 
+        # warn if variables are initialized at limits
+        if system.config.warn_limits:
+            for model in system.exist.pflow_tds.values():
+                for item in model.discrete.values():
+                    item.warn_init_limit()
+
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')
             return True
         else:
-            logger.error('Suspect initialization issue! Simulation may crash!')
+
             fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
             fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-            logger.error("Check variables:")
-            logger.error(f"{fail_names}")
 
-            logger.error('Eqn. Mismatches:')
-            logger.error(system.dae.fg[fail_idx])
-            logger.error('')
+            title = 'Suspect initialization issue! Simulation may crash!'
+            err_data = {'Name': fail_names,
+                        'Var. Value': system.dae.xy[fail_idx],
+                        'Eqn. Mismatch': system.dae.fg[fail_idx],
+                        }
+            tab = Tab(title=title,
+                      header=err_data.keys(),
+                      data=list(map(list, zip(*err_data.values()))))
 
-            logger.error('Variable Values:')
-            logger.error(system.dae.xy[fail_idx])
+            logger.error(tab.draw())
 
             if system.options.get('verbose') == 1:
                 breakpoint()
@@ -332,7 +346,10 @@ class TDS(BaseRoutine):
 
             self.qg[dae.n:] = dae.g
 
-            inc = self.solver.solve(self.Ac, -matrix(self.qg))
+            if not self.config.linsolve:
+                inc = self.solver.solve(self.Ac, -matrix(self.qg))
+            else:
+                inc = self.solver.linsolve(self.Ac, -matrix(self.qg))
 
             # check for np.nan first
             if np.isnan(inc).any():
@@ -603,12 +620,13 @@ class TDS(BaseRoutine):
         self.converged = False
         self.busted = False
         self.niter = 0
-        self._switch_idx = -1  # index into `System.switch_times`
+        self._switch_idx = -1       # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
         self.system.dae.t = np.array(0.0)
         self.pbar = None
         self.plotter = None
+        self.plt = None             # short name for `plotter`
 
         self.initialized = False
 

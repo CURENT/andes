@@ -233,22 +233,43 @@ def print_license():
     return True
 
 
-def load(case, **kwargs):
+def load(case, codegen=False, setup=True, **kwargs):
     """
     Load a case and set up without running. Return a system
+
+    Parameters
+    ----------
+    case: str
+        Path to the test case
+    codegen : bool, optional
+        Call full `System.prepare` on the returned system.
+        Set to True if one need to inspect pretty-print
+        equations and run simulations.
+    setup : bool, optional
+        Call `System.setup` after loading
+
+    Warnings
+    -------
+    If one need to add devices beside these from the case
+    file, do ``setup=False`` and manually invoke ``setup()``
+    after adding all devices.
     """
     system = System(case=case, options=kwargs)
-    system.undill()
+    if codegen:
+        system.prepare()
+    else:
+        system.undill()
 
     if not andes.io.parse(system):
         return
 
-    system.setup()
+    if setup:
+        system.setup()
     return system
 
 
-def run_case(case, routine='pflow', profile=False, convert='', convert_all='', add_book=None,
-             remove_pycapsule=False, **kwargs):
+def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
+             add_book=None, codegen=False, remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -257,22 +278,24 @@ def run_case(case, routine='pflow', profile=False, convert='', convert_all='', a
     if profile is True:
         pr.enable()
 
-    system = load(case, **kwargs)
+    system = load(case, codegen=codegen, **kwargs)
     if system is None:
         return
 
+    skip_empty = True
+    overwrite = None
+    # convert to xlsx and process `add-book` option
+    if add_book is not None:
+        convert = 'xlsx'
+        overwrite = True
+    if convert_all != '':
+        convert = 'xlsx'
+        skip_empty = False
+
     # convert to the requested format
     if convert != '':
-        andes.io.dump(system, convert, overwrite=None)
-        return system
-    # convert to xlsx with all model templates
-    elif convert_all != '':
-        andes.io.xlsx.write(system, system.files.dump, skip_empty=False, overwrite=None)
-        return system
-    # add template workbook
-    elif add_book is not None:
-        andes.io.xlsx.write(system, system.files.dump, skip_empty=True,
-                            overwrite=True, add_book=add_book)
+        andes.io.dump(system, convert, overwrite=overwrite, skip_empty=skip_empty,
+                      add_book=add_book)
         return system
 
     if routine is not None:
@@ -284,7 +307,7 @@ def run_case(case, routine='pflow', profile=False, convert='', convert_all='', a
 
         system.PFlow.run(**kwargs)
         for r in routine:
-            system.__dict__[routine_cli[r]].run(**kwargs)
+            system.__dict__[routine_cli[r.lower()]].run(**kwargs)
 
     # Disable profiler and output results
     if profile:
@@ -418,7 +441,7 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
 
 
 def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
-        cli=False, **kwargs):
+        cli=False, codegen=False, shell=False, **kwargs):
     """
     Entry point to run ANDES routines.
 
@@ -436,15 +459,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Number of cpu cores to use in parallel
     pool: bool, optional
         Use Pool for multiprocessing to return a list of created Systems.
-    cli : bool, optional
-        If is running from command-line. If True, returns exit code instead of System
     kwargs
         Other supported keyword arguments
+    cli : bool, optional
+        If is running from command-line. If True, returns exit code instead of System
 
-    Other Parameters
-    ----------------
     return_code : bool, optional
         Return exit code instead of system instances
+    codegen : bool, optional
+        Run full code generation for System before loading case.
+        Only used for single test case.
 
     Returns
     -------
@@ -452,6 +476,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance
 
     """
+
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
@@ -464,7 +489,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     t0, _ = elapsed()
     if len(cases) == 1:
-        system = run_case(cases[0], **kwargs)
+        system = run_case(cases[0], codegen=codegen, **kwargs)
     elif len(cases) > 1:
 
         # suppress logging output during multiprocessing
@@ -508,6 +533,14 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
             print(f'-> Multiprocessing finished in {s0}.')
         else:
             print(f'-> Multiprocessing exit with an error in {s0}.')
+
+    # IPython interactive shell
+    if shell is True:
+        try:
+            from IPython import embed
+            embed()
+        except ImportError:
+            logger.warning("IPython import error. Installed?")
 
     if cli is True:
         return ex_code
