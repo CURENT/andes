@@ -145,6 +145,51 @@ EXDC2:
         SE1: SE1
         E2: E2
         SE2: SE2
+
+IEEEX1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - TB
+        - TC
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF1
+        - TF1
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: IEEEX1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KA: KA
+        TA: TA
+        TB: TB
+        TC: TC
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        TE: TE
+        KF1: KF1
+        TF1: TF1
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+
 SEXS:
     inputs:
         - BUS
