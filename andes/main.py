@@ -282,23 +282,20 @@ def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
     if system is None:
         return
 
+    skip_empty = True
+    overwrite = None
     # convert to xlsx and process `add-book` option
     if add_book is not None:
         convert = 'xlsx'
         overwrite = True
-        skip_empty = True
-    else:
-        overwrite = None
+    if convert_all != '':
+        convert = 'xlsx'
         skip_empty = False
 
     # convert to the requested format
     if convert != '':
         andes.io.dump(system, convert, overwrite=overwrite, skip_empty=skip_empty,
                       add_book=add_book)
-        return system
-    # convert to xlsx with all model templates
-    elif convert_all != '':
-        andes.io.xlsx.write(system, system.files.dump, skip_empty=False, overwrite=None)
         return system
 
     if routine is not None:
