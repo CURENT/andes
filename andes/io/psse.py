@@ -212,7 +212,8 @@ def read(system, file):
             phi = data[2][2]
 
             if tap == 1 and phi == 0:
-                transf = False
+                # set `transf` to True for all entries from `raw['transf']`
+                transf = True
             else:
                 transf = True
             param = {'bus1': data[0][0], 'bus2': data[0][1], 'u': data[0][11],
