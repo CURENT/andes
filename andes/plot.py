@@ -274,10 +274,10 @@ class TDSData(object):
                 if isinstance(yidx, (Algeb, ExtAlgeb)):
                     offs += self.dae.n
 
-                if a is None:
-                    yidx = yidx.a + offs
-                else:
-                    yidx = np.take(yidx.a, a) + offs
+                yidx = yidx.a + offs
+
+        if a is not None:
+            yidx = np.take(yidx, a)
 
         x_value = self.get_values(xidx)
         y_value = self.get_values(yidx)
@@ -484,9 +484,13 @@ class TDSData(object):
         if grid:
             ax.grid(b=True, linestyle='--')
 
+        if yheader is None:
+            legend = False
+        elif len(yheader) < 15 and legend is not True:
+            legend = False
+
         if legend:
-            if yheader is not None and len(yheader) < 15:
-                ax.legend()
+            ax.legend()
 
         plt.draw()
 
