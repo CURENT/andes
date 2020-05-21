@@ -267,6 +267,9 @@ class TDSData(object):
         """
         if self._mode == 'memory':
             if isinstance(yidx, BaseVar):
+                if yidx.n == 0:
+                    logger.error(f"Variable <{yidx.name}> contains no values.")
+                    return
                 offs = 1
                 if isinstance(yidx, (Algeb, ExtAlgeb)):
                     offs += self.dae.n

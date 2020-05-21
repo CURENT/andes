@@ -439,7 +439,7 @@ class EXDC2Model(ExcBase):
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
+                        e_str='SL_z0 * (vp - SAT_A) ** 2 * SAT_B / vp - Se',
                         )
 
         self.vp = State(info='Voltage after saturation feedback, before speed term',
