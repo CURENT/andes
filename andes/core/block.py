@@ -498,7 +498,7 @@ class WashoutOrLag(Washout):
         If False, functions as a regular Washout.
     """
 
-    def __init__(self, u, T, K, name=None, zero_out=False, tex_name=None, info=None):
+    def __init__(self, u, T, K, name=None, zero_out=True, tex_name=None, info=None):
         super().__init__(u, T, K, name=name, tex_name=tex_name, info=info)
         self.zero_out = zero_out
         self.LT = LessThan(K,
@@ -740,7 +740,7 @@ class LeadLag(Block):
         True to allow zeroing out lead-lag as a pass through (when T1=T2=0)
     """
 
-    def __init__(self, u, T1, T2, K=1, zero_out=False, name=None, tex_name=None, info=None):
+    def __init__(self, u, T1, T2, K=1, zero_out=True, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T1 = dummify(T1)

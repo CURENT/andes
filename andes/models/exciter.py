@@ -464,6 +464,7 @@ class EXDC2Model(ExcBase):
                           T1=self.TC,
                           T2=self.TB,
                           info='Lead-lag for internal delays',
+                          zero_out=True,
                           )
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
@@ -553,7 +554,7 @@ class SEXSModel(ExcBase):
         self.vi.e_str = '(vref - v) - vi'
         self.vi.v_str = 'vref0 - v'
 
-        self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB)
+        self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB, zero_out=True)
 
         self.LAW = LagAntiWindup(u=self.LL_y,
                                  T=self.TE,
@@ -670,7 +671,7 @@ class EXST1Model(ExcBase):
                         e_str='HLI_zi*vi + HLI_zu*VIMAX + HLI_zl*VIMIN - vl',
                         )
 
-        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator')
+        self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator', zero_out=True)
 
         self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
 
@@ -945,6 +946,7 @@ class ESST3AModel(ExcBase):
 
         self.LL = LeadLag(u=self.HG_y, T1=self.TC, T2=self.TB,
                           info='Regulator',
+                          zero_out=True,
                           )  # LL_y == VA
 
         self.LAW1 = LagAntiWindup(u=self.LL_y,
@@ -1115,6 +1117,7 @@ class ESDC2AModel(ExcBase):
                           T1=self.TC,
                           T2=self.TB,
                           info='Lead-lag compensator',
+                          zero_out=True,
                           )
 
         self.UEL = Algeb(info='Interface var for under exc. limiter',
