@@ -136,7 +136,7 @@ def parse(system):
     return True
 
 
-def dump(system, output_format, full_path=None, overwrite=False):
+def dump(system, output_format, full_path=None, overwrite=False, **kwargs):
     """
     Dump the System data into the requested output format.
 
@@ -171,7 +171,7 @@ def dump(system, output_format, full_path=None, overwrite=False):
     writer = importlib.import_module('.' + output_format, __name__)
 
     t, _ = elapsed()
-    ret = writer.write(system, system.files.dump, overwrite=overwrite)
+    ret = writer.write(system, system.files.dump, overwrite=overwrite, **kwargs)
     _, s = elapsed(t)
     if ret:
         logger.info(f'Format conversion completed in {s}.')

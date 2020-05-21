@@ -14,7 +14,7 @@ def testlines(fid):
     return True
 
 
-def write(system, outfile, skip_empty=True, overwrite=None):
+def write(system, outfile, skip_empty=True, overwrite=None, **kwargs):
     """
     Write loaded ANDES system data into a JSON file
 

@@ -346,7 +346,10 @@ class TDS(BaseRoutine):
 
             self.qg[dae.n:] = dae.g
 
-            inc = self.solver.solve(self.Ac, -matrix(self.qg))
+            if not self.config.linsolve:
+                inc = self.solver.solve(self.Ac, -matrix(self.qg))
+            else:
+                inc = self.solver.linsolve(self.Ac, -matrix(self.qg))
 
             # check for np.nan first
             if np.isnan(inc).any():
