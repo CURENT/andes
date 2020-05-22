@@ -123,6 +123,23 @@ cxvoptklu
 In addition to UMFPACK, ``cvxoptklu`` interfaces ``cvxopt`` to KLU, which is
 roughly 20% faster than UMFPACK for circuit simulation based on our testing.
 
+.. warning::
+
+    There is likely a bug in the KLU interface which, for some cases,
+    may segfault after applying a disturbance. The cause of the issue
+    is currently unknown.
+
+    If you encounter a segfault while running
+    time-domain simulation and was using the KLU solver, please switch
+    back to UMFPACK by setting `sparselib = umfpack` or enable
+    `linsolve` through `linsolve = 1` for KLU, which re-factorizes
+    the Jacobian matrix for each linear system solving step.
+    Another solution is to use fixed time step size and
+    reduce the step size from 1/30 s to 1/60s, but this is case specific.
+
+    This issue will not affect users who does not have `cvxoptklu`
+    installed.
+
 To install ``cvxoptklu``, on Debian GNU/Linux, one can do
 
 .. code:: bash

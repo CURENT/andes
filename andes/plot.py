@@ -241,7 +241,7 @@ class TDSData(object):
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None,
-             legend=True, grid=False, greyscale=False,
+             legend=None, grid=False, greyscale=False,
              latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              use_bqplot=False, **kwargs):
         """
@@ -354,7 +354,7 @@ class TDSData(object):
         plt.show()
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
-                  left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
+                  left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, **kwargs):
         """
@@ -486,8 +486,8 @@ class TDSData(object):
 
         if yheader is None:
             legend = False
-        elif len(yheader) < 15 and legend is not True:
-            legend = False
+        elif len(yheader) <= 8 and legend is True:
+            legend = True
 
         if legend:
             ax.legend()
