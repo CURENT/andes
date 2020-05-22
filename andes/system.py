@@ -33,7 +33,7 @@ class ExistingModels(object):
     """
     def __init__(self):
         self.pflow = OrderedDict()
-        self.tds = OrderedDict()
+        self.tds = OrderedDict()   # if a model needs to be initialized before TDS, set `flags.tds = True`
         self.pflow_tds = OrderedDict()
 
 
@@ -86,6 +86,7 @@ class System(object):
         self.groups = OrderedDict()        # group names and instances
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
+        self.n_switches = 0                # number of elements in `self.switch_times`
         self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
         # get and load default config file
@@ -1150,11 +1151,13 @@ class System(object):
             out.extend(instance.get_times())
 
         out = np.ravel(np.array(out))
+        out = np.append(out, out + 1e-4)
         out = np.unique(out)
         out = out[np.where(out >= 0)]
         out = np.sort(out)
 
         self.switch_times = out
+        self.n_switches = len(self.switch_times)
         return self.switch_times
 
     def switch_action(self, models):

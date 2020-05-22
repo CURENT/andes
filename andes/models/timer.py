@@ -35,8 +35,8 @@ class Toggler(TogglerData, Model):
                 u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
                 instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
                 action = True
-                tqdm.write(f'<Toggle {self.idx.v[i]}>: '
-                           f'Status of {self.model.v[i]}.{self.dev.v[i]} changed to {1-u0} at t={self.t.v[i]}sec.')
+                tqdm.write(f'<Toggler {self.idx.v[i]}>: '
+                           f'{self.model.v[i]}.{self.dev.v[i]} status changed to {1-u0} at t={self.t.v[i]} sec.')
         return action
 
 

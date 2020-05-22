@@ -486,8 +486,9 @@ class TDSData(object):
 
         if yheader is None:
             legend = False
-        elif len(yheader) <= 8 and legend is True:
-            legend = True
+        elif legend is None:
+            if len(yheader) <= 8:
+                legend = True
 
         if legend:
             ax.legend()
