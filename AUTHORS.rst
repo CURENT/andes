@@ -2,13 +2,12 @@
 Credits
 =======
 
-Maintainer
-----------
-
-* Hantao Cui <cuihantao@gmail.com>, CURENT ERC, UT Knoxville
+Main Developers
+---------------
+* Hantao Cui
 
 Contributors
 ------------
-Christopher Lackner: for contributing the EAGC model.
-Qiwei Zhang: for contributing a solar PV model.
-Yichen Zhang for feedback on documentation.
+* Christopher Lackner
+* Qiwei Zhang
+* Yichen Zhang

@@ -304,6 +304,7 @@ class System(object):
         self.call_models('a_reset', models=self.models)
         self.e_clear(models=self.models)
         self._p_restore()
+        self.is_setup = False
         self.setup()
 
     def add(self, model, param_dict=None, **kwargs):
