@@ -81,6 +81,7 @@ def create_parser():
     plot.add_argument('--font-size', type=float, help='Text font size', default=12)
     plot.add_argument('--line-width', type=float, help='Plot line width', default=1.5)
     plot.add_argument('-g', '--grid', action='store_true', help='grid on')
+    plot.add_argument('-t', '--title', help='title text')
     plot.add_argument('--greyscale', action='store_true', help='greyscale on')
     plot.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
     plot.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
