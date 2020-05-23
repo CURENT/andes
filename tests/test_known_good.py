@@ -14,7 +14,7 @@ class TestKnownResults(unittest.TestCase):
             ('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl', 10),
             ('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl', 10),
             ('kundur/kundur_ieeest.xlsx', 'kundur_ieeest_10s.pkl', 10),
-            (('ieee14/ieee14.raw', 'ieee14/st2cut/ieee14.dyr'), 'ieee14_st2cut_2s.pkl', 2)
+            (('ieee14/ieee14.raw', 'ieee14/ieee14.dyr'), 'ieee14_2s.pkl', 2)
             )
 
     def tnc(self, case_path, pkl_path, tf):
@@ -58,5 +58,6 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
 
     np.testing.assert_almost_equal(ss.dae.xy[indices],
                                    results,
-                                   err_msg=f"{case} test error")
+                                   err_msg=f"{case} test error",
+                                   decimal=4)
     return ss

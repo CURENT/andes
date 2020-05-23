@@ -65,7 +65,7 @@ class TDS(BaseRoutine):
         self.busted = False
         self.err_msg = ''
         self.niter = 0
-        self._switch_idx = -1  # index into `System.switch_times`
+        self._switch_idx = 0  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
         self.pbar = None
@@ -181,10 +181,9 @@ class TDS(BaseRoutine):
             self.pbar.update(perc)
 
         t0, _ = elapsed()
-        while (system.dae.t < self.config.tf) and (not self.busted):
-            if self.calc_h() == 0:
-                break
 
+        self.calc_h()
+        while (system.dae.t < self.config.tf) and (not self.busted):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
 
@@ -194,6 +193,17 @@ class TDS(BaseRoutine):
                                   dae.xy,
                                   self.system.get_z(models=system.exist.pflow_tds),
                                   )
+                # check if the next step is critical time
+                if self.is_switch_time():
+                    self._last_switch_t = system.switch_times[self._switch_idx]
+                    system.switch_action(system.exist.pflow_tds)
+                    self._switch_idx += 1
+                    system.vars_to_models()
+
+                if self.calc_h() == 0:
+                    logger.error('Time step to zero...')
+                    break
+
                 dae.t += self.h
 
                 # show progress in percentage
@@ -201,12 +211,6 @@ class TDS(BaseRoutine):
                 if perc >= self.next_pc:
                     self.pbar.update(1)
                     self.next_pc += 1
-
-            # check if the next step is critical time
-            if self.is_switch_time():
-                self._last_switch_t = system.switch_times[self._switch_idx]
-                system.switch_action(system.exist.pflow_tds)
-                system.vars_to_models()
 
         self.pbar.close()
         delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
@@ -532,9 +536,9 @@ class TDS(BaseRoutine):
 
         self.h = self.deltat
         # do not skip event switch_times
-        if self._has_more_switch():
-            if (system.dae.t + self.h) > system.switch_times[self._switch_idx + 1]:
-                self.h = system.switch_times[self._switch_idx + 1] - system.dae.t
+        if self._switch_idx < system.n_switches:
+            if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
+                self.h = system.switch_times[self._switch_idx] - system.dae.t
         return self.h
 
     def _calc_h_first(self):
@@ -577,16 +581,6 @@ class TDS(BaseRoutine):
         self.h = self.deltat
         return self.h
 
-    def _has_more_switch(self):
-        """
-        Check if there are more switching events in the ``System.switch_times`` list.
-        """
-        ret = False
-        if len(self.system.switch_times) > 0:
-            if self._switch_idx + 1 < len(self.system.switch_times):
-                ret = True
-        return ret
-
     def is_switch_time(self):
         """
         Return if the current time is a switching time for time domain simulation.
@@ -599,11 +593,9 @@ class TDS(BaseRoutine):
             ``True`` if is a switching time; ``False`` otherwise.
         """
         ret = False
-        if self._has_more_switch():
-            next_idx = self._switch_idx + 1
-            if abs(self.system.dae.t - self.system.switch_times[next_idx]) < 1e-8:
+        if self._switch_idx < self.system.n_switches:
+            if abs(self.system.dae.t - self.system.switch_times[self._switch_idx]) < 1e-8:
                 ret = True
-                self._switch_idx += 1
         return ret
 
     def _reset(self):
@@ -620,7 +612,7 @@ class TDS(BaseRoutine):
         self.converged = False
         self.busted = False
         self.niter = 0
-        self._switch_idx = -1       # index into `System.switch_times`
+        self._switch_idx = 0       # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
         self.mis = 1
         self.system.dae.t = np.array(0.0)

@@ -81,6 +81,7 @@ def create_parser():
     plot.add_argument('--font-size', type=float, help='Text font size', default=12)
     plot.add_argument('--line-width', type=float, help='Plot line width', default=1.5)
     plot.add_argument('-g', '--grid', action='store_true', help='grid on')
+    plot.add_argument('-t', '--title', help='title text')
     plot.add_argument('--greyscale', action='store_true', help='greyscale on')
     plot.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
     plot.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
@@ -103,6 +104,8 @@ def create_parser():
                                   nargs='?', type=str, default='')
     misc.add_argument('--license', action='store_true', help='Display software license', dest='show_license')
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
+    misc.add_argument('-r', '--recursive', help='Recursively clean outputs (combined useage with --clean)',
+                      action='store_true')
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
     prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')

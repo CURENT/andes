@@ -241,9 +241,9 @@ class TDSData(object):
     def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None, ytimes=None,
              xlabel=None, ylabel=None,
-             legend=True, grid=False, greyscale=False,
+             legend=None, grid=False, greyscale=False,
              latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
-             use_bqplot=False, **kwargs):
+             title=None, use_bqplot=False, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -267,14 +267,17 @@ class TDSData(object):
         """
         if self._mode == 'memory':
             if isinstance(yidx, BaseVar):
+                if yidx.n == 0:
+                    logger.error(f"Variable <{yidx.name}> contains no values.")
+                    return
                 offs = 1
                 if isinstance(yidx, (Algeb, ExtAlgeb)):
                     offs += self.dae.n
 
-                if a is None:
-                    yidx = yidx.a + offs
-                else:
-                    yidx = np.take(yidx.a, a) + offs
+                yidx = yidx.a + offs
+
+        if a is not None:
+            yidx = np.take(yidx, a)
 
         x_value = self.get_values(xidx)
         y_value = self.get_values(yidx)
@@ -304,7 +307,7 @@ class TDSData(object):
                                     left=left, right=right, ymin=ymin, ymax=ymax,
                                     xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                     latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                    savefig=savefig, save_format=save_format, show=show,
+                                    savefig=savefig, save_format=save_format, show=show, title=title,
                                     **kwargs)
 
         else:
@@ -312,7 +315,7 @@ class TDSData(object):
                                   left=left, right=right, ymin=ymin, ymax=ymax,
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                   latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                  savefig=savefig, save_format=save_format, show=show,
+                                  savefig=savefig, save_format=save_format, show=show, title=title,
                                   **kwargs)
 
     def data_to_df(self):
@@ -351,9 +354,9 @@ class TDSData(object):
         plt.show()
 
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
-                  left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None, ax=None,
+                  left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
-                  save_format=None, show=True, **kwargs):
+                  save_format=None, show=True, title=None, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -481,9 +484,17 @@ class TDSData(object):
         if grid:
             ax.grid(b=True, linestyle='--')
 
+        if yheader is None:
+            legend = False
+        elif legend is None:
+            if len(yheader) <= 8:
+                legend = True
+
         if legend:
-            if yheader is not None and len(yheader) < 15:
-                ax.legend()
+            ax.legend()
+
+        if title:
+            ax.set_title(title)
 
         plt.draw()
 

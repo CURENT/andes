@@ -389,22 +389,14 @@ class GENROUModel(object):
                                  tex_name='S_{1.2}'
                                  )
         # Saturation services
-        # when S10 = 0, S12 = 1, Saturation is disabled. Thus, Sat = 0, A = 1, B = 0
+        # Note:
+        # To disable saturation, set S10 = 0, S12 = 1 so that SAT_B = 0.
         self.SAT = ExcQuadSat(1.0, self.S10, 1.2, self.S12, tex_name='S_{AT}')
-
-        # TODO: to be removed (replaced by `self.SAT`)
-        # self.Sat = ConstService(v_str='((_S12>0) + (_S12<0)) * sqrt((S10 * 1) / (_S12 * 1.2))',
-        #                         tex_name=r"S_{at}")
-        # self.SA = ConstService(v_str='1.2 + 0.2 / (Sat - 1)',
-        #                        tex_name='S_A')
-        # self.SB = ConstService(v_str='((Sat < 0) + (Sat > 0))*1.2*_S12 * ((Sat - 1) / 0.2) ** 2',
-        #                        tex_name='S_B')
-
-        # internal voltage and rotor angle calculation
 
         # Initialization reference: OpenIPSL at
         #   https://github.com/OpenIPSL/OpenIPSL/blob/master/OpenIPSL/Electrical/Machines/PSSE/GENROU.mo
 
+        # internal voltage and rotor angle calculation
         self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex bus voltage')
         self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S', info='complex terminal power')
         self._Zs = ConstService(v_str='ra + 1j * xd2', tex_name='Z_s', info='equivalent impedance')

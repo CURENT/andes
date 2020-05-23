@@ -2,12 +2,12 @@
 Credits
 =======
 
-Maintainer
-----------
-
-* Hantao Cui <cuihantao@gmail.com>, CURENT ERC, UT Knoxville
+Main Developers
+---------------
+* Hantao Cui
 
 Contributors
 ------------
-
-None yet. Why not be the first? See: CONTRIBUTING.rst
+* Christopher Lackner
+* Qiwei Zhang
+* Yichen Zhang

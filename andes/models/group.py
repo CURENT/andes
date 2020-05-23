@@ -5,6 +5,7 @@ from andes.shared import np
 logger = logging.getLogger(__name__)
 
 
+# TODO: offload metadata to YAML file and create classes on the fly.
 class GroupBase(object):
     """
     Base class for groups
@@ -329,7 +330,8 @@ class SynGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
-        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf', 'XadIfd', 'vd', 'vq', 'Id', 'Iq'))
+        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf', 'XadIfd', 'vd', 'vq', 'Id', 'Iq',
+                                 'a', 'v'))
 
 
 class TurbineGov(GroupBase):

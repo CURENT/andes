@@ -103,11 +103,11 @@ class TestNPCCRAW(unittest.TestCase):
     """
 
     def test_npcc_raw(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'))
+        self.ss = andes.run(get_case('npcc/npcc.raw'))
         andes.main.misc(clean=True)
 
     def test_npcc_raw_tds(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'),
+        self.ss = andes.run(get_case('npcc/npcc.raw'),
                             verbose=50,
                             routine='tds',
                             no_output=True,
@@ -120,14 +120,14 @@ class TestNPCCRAW(unittest.TestCase):
         self.ss.dae.print_array('g', tol=1e-4)
 
     def test_npcc_raw_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'), convert=True)
+        self.ss = andes.run(get_case('npcc/npcc.raw'), convert=True)
         os.remove(self.ss.files.dump)
         self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
     def test_npcc_raw2json_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc48.raw'),
+        self.ss = andes.run(get_case('npcc/npcc.raw'),
                             convert='json')
-        self.ss2 = andes.run('npcc48.json')
+        self.ss2 = andes.run('npcc.json')
         os.remove(self.ss.files.dump)
         andes.main.misc(clean=True)
         self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")

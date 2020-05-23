@@ -137,7 +137,7 @@ class EIG(BaseRoutine):
     def run(self, **kwargs):
         succeed = False
         system = self.system
-        self.singular_idx = np.array([])
+        self.singular_idx = np.array([], dtype=int)
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Eig analysis will not continue.')
