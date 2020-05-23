@@ -9,5 +9,6 @@ Maintainer
 
 Contributors
 ------------
-
-None yet. Why not be the first? See: CONTRIBUTING.rst
+Christopher Lackner: for contributing the EAGC model.
+Qiwei Zhang: for contributing a solar PV model.
+Yichen Zhang for feedback on documentation.
