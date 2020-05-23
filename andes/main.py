@@ -213,9 +213,9 @@ def remove_output(recursive=False):
                 found = True
                 try:
                     os.remove(os.path.join(d, file))
-                    logger.info(f'<{d}/{file}> removed.')
+                    logger.info(f'"{d}/{file}" removed.')
                 except IOError:
-                    logger.error(f'Error removing file <{d}/{file}>.')
+                    logger.error(f'Error removing file "{d}/{file}".')
     if not found:
         logger.info('No output file found in the working directory.')
 
