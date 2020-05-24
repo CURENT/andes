@@ -13,24 +13,42 @@ Python Software for Symbolic Power System Modeling and Numerical Analysis.
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cuihantao/andes/master)
 
 # Why ANDES
+This software could be of interest to you if you are working on
+DAE modeling, simulation, and control for power systems.
+It has features that may be useful if you are applying
+deep (reinforcement) learning to such systems. 
 
-ANDES is by far easier to use for modeling power system devices than other 
-simulation tools such as 
+ANDES is by far easier to model complex differential-algebraic
+equation (DAE) based models for power system dynamic simulation
+than other tools such as 
 [PSAT](http://faraday1.ucd.ie/psat.html),
 [Dome](http://faraday1.ucd.ie/dome.html) and
 [PST](https://www.ecse.rpi.edu/~chowj/),
 while maintaining high numerical efficiency.
 
-ANDES produces accurate simulation results.
-For the Kundur's two-area system with GENROU, TGOV1 and EXDC2, ANDES produces almost identical 
-(<1% discrepancy) results to that from DSATools TSAT™.   
+ANDES comes with a rich set of commercial-grade dynamic models
+with all details implemented, including limiters, saturation,
+and zeroing out time constants. 
 
-| Generator Speed | Excitation Voltage |
-| --------------- | ------------------ |
-| ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-kundur/omega.png) | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-kundur/efd.png) |
+ANDES produces credible simulation results. The following table
+shows that 
+
+1. For the Northeast Power Coordinating Council (NPCC) 140-bus system
+(with GENROU, GENCLS, TGOV1 and IEEEX1),
+ANDES results match perfect with that from TSAT.
+
+2. For the Western Electricity Coordinating Council (WECC) 179-bus
+system (with GENROU, IEEEG1, EXST1, ESST3A, ESDC2A, IEEEST and 
+ST2CUT), ANDES results match closely to those from TSAT and PSS/E.
+Note that TSAT and PSS/E results are not identical, either.
+
+|                                         NPCC Case Study                                                   |                                               WECC Case Study                                           |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-npcc/omega.png)   | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-wecc/omega.png) |
 
 ANDES provides a descriptive modeling framework in a scripting environment.
 Modeling DAE-based devices is as simple as describing the mathematical equations.
+Numerical code will be automatically generated for fast simulation.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
@@ -38,24 +56,27 @@ Modeling DAE-based devices is as simple as describing the mathematical equations
 
 In ANDES, what you simulate is what you document. 
 ANDES automatically generates model documentation, and the docs always stay up to date.
-The screenshot below is the generated documentation for the implemented TGOV1 model.
+The screenshot below is the generated documentation for the implemented IEEEG1 model.
 
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/misc/doc-screenshot.png)
+![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/misc/ieeeg1-screenshot.png)
 
 In addition, ANDES features
 
--   Power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
--   Support PSS/E raw and dyr inputs among other formats.
--   Symbolic DAE modeling and automated code generation for numerical simulation.
--   Numerical DAE modeling for cases when symbolic implementations are difficult.
--   Modeling library with common transfer functions and discontinuous blocks.
--   Automatic sequential and iterative initialization (experimental) for dynamic models.
--   Full equation documentation of supported DAE models.
++ a rich library of transfer functions and discontinuous components (including limiters, deadbands, and
+  saturation functions) available for prototyping models, which can be effortlessly instantiated as multiple
+  devices for system analysis
++ routines including Newton method for power flow calculation, implicit trapezoidal method for time-domain
+  simulation, and full eigenvalue analysis
++ developed with performance in mind. While written in Python, ANDES comes with a performance package and can
+  finish a 20-second transient simulation of a 2000-bus system in a few seconds on a typical desktop computer
++ out-of-the-box PSS/E raw and dyr data support for available models. Once a model is developed, inputs from a
+  dyr file can be immediately supported
 
 ANDES is currently under active development.
 Use the following resources to get involved.
 
 + Check out examples in the [examples folder][examples]
++ Read the model verification results in the [examples/verification folder][verification]
 + Try in Jupyter Notebook on [Binder][Binder]
 + Learn more about ANDES by reading the [documentation][readthedocs]
 + Report bugs or issues by submitting a [GitHub issue][GitHub issues]
@@ -170,7 +191,7 @@ Each command contains a group of subcommands, which can be looked up by appendin
 For example, use `andes run -h` to look up the subcommands in `run`. 
 
 `andes` has an option for the program verbosity level, controlled by `-v` or `--verbose`.
-Accpeted levels are the same as in the `logging` module:
+Accepted levels are the same as in the `logging` module:
 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR, 50 - CRITICAL.
 To show debugging outputs, use `-v 10`.
 
@@ -207,7 +228,7 @@ tds, eig`.
 
 To run time-domain simulation for `kundur_full.xlsx` in the current directory, do
 
-``` bash
+```bash
 andes run kundur_full.xlsx -r tds
 ```
 Two output files, ``kundur_full_out.lst`` and ``kundur_full_out.npy`` will be created for variable names
@@ -215,7 +236,7 @@ and values, respectively.
 
 Likewise, to run eigenvalue analysis for `kundur_full.xlsx`, use
 
-``` bash
+```bash
 andes run kundur_full.xlsx -r eig
 ```
 
@@ -232,6 +253,14 @@ andes run kundur_full.raw --addfile kundur_full.dyr -r tds
 
 where `--addfile` takes the dyr file. 
 Please note that the support for dyr file is limited to the models available in ANDES.  
+
+Alternatively, one can convert the  PSS/E data to an ANDES xlsx file with
+
+```bash
+andes run kundur_full.raw --addfile kundur_full.dyr --convert
+```
+
+Edits such as adding models can be made to the xlsx file before simulation.
 
 ## Step 3: Plot Results
 ``andes plot`` is the command-line tool for plotting.
@@ -613,4 +642,5 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 [arxiv paper]:           https://arxiv.org/abs/2002.09455
 [tutorial]:              https://andes.readthedocs.io/en/latest/tutorial.html#interactive-usage
 [examples]:              https://github.com/cuihantao/andes/tree/master/examples
+[verification]:          https://github.com/cuihantao/andes/tree/master/examples/verification
 [Binder]:                https://mybinder.org/v2/gh/cuihantao/andes/master

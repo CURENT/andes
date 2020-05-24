@@ -145,6 +145,7 @@ class EIG(BaseRoutine):
         else:
             if system.TDS.initialized is False:
                 system.TDS.init()
+                system.TDS._itm_step()
 
         if system.dae.n == 0:
             logger.error('No dynamic model. Eig analysis will not continue.')
