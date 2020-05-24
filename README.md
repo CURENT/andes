@@ -35,11 +35,11 @@ shows that
 
 1. For the Northeast Power Coordinating Council (NPCC) 140-bus system
 (with GENROU, GENCLS, TGOV1 and IEEEX1),
-ANDES results match perfect with that from TSAT.
+ANDES results match perfectly with that from TSAT.
 
 2. For the Western Electricity Coordinating Council (WECC) 179-bus
 system (with GENROU, IEEEG1, EXST1, ESST3A, ESDC2A, IEEEST and 
-ST2CUT), ANDES results match closely to those from TSAT and PSS/E.
+ST2CUT), ANDES results match closely with those from TSAT and PSS/E.
 Note that TSAT and PSS/E results are not identical, either.
 
 |                                         NPCC Case Study                                                   |                                               WECC Case Study                                           |
