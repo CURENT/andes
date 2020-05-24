@@ -104,6 +104,7 @@ class TDS(BaseRoutine):
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
         self.qg = np.zeros(system.dae.n + system.dae.m)
+        self.calc_h()
 
         self.initialized = self.test_init()
         _, s1 = elapsed(t0)
@@ -182,7 +183,6 @@ class TDS(BaseRoutine):
 
         t0, _ = elapsed()
 
-        self.calc_h()
         while (system.dae.t < self.config.tf) and (not self.busted):
             if self.callpert is not None:
                 self.callpert(dae.t, system)

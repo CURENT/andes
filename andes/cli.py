@@ -47,9 +47,9 @@ def create_parser():
     run.add_argument('--dime', help='Specify DiME streaming server address and port', type=str)
     run.add_argument('--tf', help='End time of time-domain simulation', type=float)
     run.add_argument('-c', '--convert', help='Convert to format.', type=str, default='', nargs='?')
+    run.add_argument('-b', '--add-book', help='Add a template workbook for the specified model.', type=str)
     run.add_argument('--convert-all', help='Convert to format with all templates.', type=str, default='',
                      nargs='?')
-    run.add_argument('--add-book', help='Add a template workbook for the specified model.', type=str)
     run.add_argument('--state-matrix', help='Export state matrix to a .mat file. Need to run with `-r eig`',
                      action='store_true')
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
