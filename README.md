@@ -608,6 +608,7 @@ We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 ![US Department of Energy](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
 ![CURENT ERC](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
 ![Lawrence Livermore National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
+![Idaho National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/inl.jpg)
 
 # Contributors
 

@@ -28,12 +28,19 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
    ANDES supports power flow calculation, time domain simulation and eigenvalue analysis for transmission
    networks.
 
-- Symbolic DAE modeling and automated code generation for numerical simulation.
-- Numerical DAE modeling for cases when symbolic implementations are difficult.
-- Rapid modeling library with transfer functions and discrete components.
-- Automatic sequential and iterative initialization (experimental) for dynamic models.
-- Newton-Raphson power flow, trapezoidal method-based time domain simulation, and full eigenvalue analysis.
-- Full equation documentation of supported DAE models.
+- a unique hybrid symbolic-numeric approach to modeling with automatic numerical code generation for simulation
+- a rich library of transfer functions and discontinuous components (including limiters, deadbands, and
+  saturation) available for prototyping models, which can be effortlessly instantiated as multiple devices for
+  system analysis
+- comes with the Newton method for power flow calculation, the implicit trapezoidal method for time-domain
+  simulation, and full eigenvalue analysis
+- strictly verified models with commercial software. ANDES obtains identical time-domain simulation results for
+  IEEE 14-bus and NPCC system with GENROU and multiple controller models. See the verification link for details.
+- developed with performance in mind. While written in Python, ANDES comes with a performance package and can
+  finish a 20-second transient simulation of a 2000-bus system in a few seconds on a typical desktop computer
+- out-of-the-box PSS/E raw and dyr file support for available models. Once a model is developed, inputs from a
+  dyr file can be immediately supported
+- an always up-to-date equation documentation of implemented models
 
 ANDES is currently under active development.
 Use the following resources, in addition to the tutorial, to get involved.
@@ -57,7 +64,7 @@ the National Science Foundation and the Department of Energy under NSF Award
 Number EEC-1041877 and the `CURENT <https://curent.utk.edu>`_ Industry Partnership Program.
 **ANDES is made open source as part of the CURENT Large Scale Testbed project.**
 
-ANDES is developed and actively maintained by `Hantao Cui <https://cuihantao.github.io>`_.
+ANDES is developed and actively maintained by `Hantao Cui <https://cui.eecps.com>`_.
 See the GitHub repository for a full list of contributors.
 
 .. toctree::
