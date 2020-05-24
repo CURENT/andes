@@ -18,7 +18,7 @@ DAE modeling, simulation, and control for power systems.
 It has features that may be useful if you are applying
 deep (reinforcement) learning to such systems. 
 
-ANDES is by far easier to model complex differential-algebraic
+ANDES is by far easier to use for developing differential-algebraic
 equation (DAE) based models for power system dynamic simulation
 than other tools such as 
 [PSAT](http://faraday1.ucd.ie/psat.html),
