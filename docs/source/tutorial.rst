@@ -339,9 +339,9 @@ must be the model name quoted by single quotation marks, and the other
 parameters are fields defined in ``inputs`` in order.
 
 .. note::
-When working with PSS/E data, the recommended practice is to edit model
-dynamic parameters directly in the dyr file
-so that the data can be easily used by other tools.
+    When working with PSS/E data, the recommended practice is to edit model
+    dynamic parameters directly in the dyr file
+    so that the data can be easily used by other tools.
 
 andes plot
 --------------
