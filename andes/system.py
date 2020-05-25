@@ -192,7 +192,6 @@ class System(object):
         self._check_group_common()
 
         loaded_calls = self._load_pkl()
-
         if loaded_calls is None:
             incremental = False
             logger.debug('calls.pkl does not exist. Incremental codegen disabled.')
@@ -918,10 +917,16 @@ class System(object):
 
         if os.path.isfile(pkl_path):
             with open(pkl_path, 'rb') as f:
-                loaded_calls = dill.load(f)
-                return loaded_calls
-        else:
-            return None
+
+                try:
+                    loaded_calls = dill.load(f)
+                    return loaded_calls
+                except IOError:
+                    pass
+                except AttributeError:
+                    pass
+
+        return None
 
     def undill(self):
         """
