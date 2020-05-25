@@ -1,8 +1,8 @@
 ## Version 1.0.0
 
 ## Milestones
+- [x] Limiter check and warning after initialization
 *   Renewable generator models (REGC_A, REEC_A, REPC_A)
-*   Limiter check and warning after initialization
 *   Robust iterative initialization for variables
 *   Allow selection of output variables
 

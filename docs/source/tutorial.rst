@@ -44,7 +44,7 @@ It prints out a preamble with version and environment information and help comma
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
-of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
+of sub-commands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the sub-commands
 in ``run``. The most commonly used commands will be explained in the following.
 
 ``andes`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
@@ -319,8 +319,8 @@ previous subsection).
 
 The alternative is to edit the dyr file and
 append lines customized for ANDES models. This is for advanced users after
-referring to ``andes/io/psse-dyr.yaml``, at the end of which, one can find
-the format of ``Toggler`` ::
+referring to ``andes/io/psse-dyr.yaml``, at the end of which one can find
+the format of ``Toggler``: ::
 
     # === Custom Models ===
     Toggler:
@@ -329,14 +329,15 @@ the format of ``Toggler`` ::
             - dev
             - t
 
-To define two Togglers in the dyr file, one can add, for example, ::
+To define two Togglers in the dyr file, one can append lines to the end
+of the file using, for example, ::
 
     Line   'Toggler'  Line_2  1 /
     Line   'Toggler'  Line_2  1.1 /
 
 which is separated by spaces and ended with a slash. The second parameter
-must be the model name quoted by single quotation marks, and the other
-parameters are fields defined in ``inputs`` in order.
+is fixed to the model name quoted by a pair of single quotation marks,
+and the others correspond to the fields defined in the above``inputs``.
 
 .. note::
     When working with PSS/E data, the recommended practice is to edit model

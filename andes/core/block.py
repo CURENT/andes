@@ -949,11 +949,11 @@ class HVGate(Block):
     """
     High Value Gate. Outputs the maximum of two inputs. ::
 
-              ┌─────────+
-        u1 -> │ HV Gate  \
-              │           > ->  y
-        u2 -> │  (MAX)   /
-              └─────────+
+              ┌─────────┐
+        u1 -> │ HV Gate │
+              │         │ ->  y
+        u2 -> │  (MAX)  │
+              └─────────┘
 
     """
 
@@ -998,11 +998,11 @@ class LVGate(Block):
     """
     Low Value Gate. Outputs the minimum of the two inputs. ::
 
-              ┌─────────+
-        u1 -> │ LV Gate  \
-              │           > ->  y
-        u2 -> │  (MIN)   /
-              └─────────+
+              ┌─────────┐
+        u1 -> │ LV Gate |
+              │         | ->  y
+        u2 -> │  (MIN)  |
+              └─────────┘
 
     """
 
