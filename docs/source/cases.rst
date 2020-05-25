@@ -7,9 +7,11 @@ Test Cases
 Directory
 =========
 
-ANDES comes with a several test cases in the ``andes/cases/`` folder.
-Currently, the Kundur's 2-area system (``kundur/kundur_full.xlsx``) and the WECC 179-bus system
-(``wecc/wecc179.xlsx``) has been verified against DSATools TSAT.
+ANDES comes with several test cases in the ``andes/cases/`` folder.
+Currently, the Kundur's 2-area system, IEEE 14-bus system,
+NPCC 140-bus system, and the WECC 179-bus system has been verified
+against DSATools TSAT.
+
 The test case library will continue to build as more models get implemented.
 
 A tree view of the test directory is as follows. ::
@@ -17,30 +19,47 @@ A tree view of the test directory is as follows. ::
     cases/
     ├── 5bus/
     │   └── pjm5bus.xlsx
+    ├── GBnetwork/
+    │   ├── GBnetwork.m
+    │   ├── GBnetwork.xlsx
+    │   └── README.md
     ├── ieee14/
-    │   └── case14.xlsx
+    │   ├── ieee14.dyr
+    │   └── ieee14.raw
     ├── kundur/
+    │   ├── kundur_aw.xlsx
     │   ├── kundur_coi.xlsx
+    │   ├── kundur_coi_empty.xlsx
+    │   ├── kundur_esdc2a.xlsx
+    │   ├── kundur_esst3a.xlsx
     │   ├── kundur_exdc2_zero_tb.xlsx
+    │   ├── kundur_exst1.xlsx
     │   ├── kundur_freq.xlsx
     │   ├── kundur_full.dyr
     │   ├── kundur_full.raw
     │   ├── kundur_full.xlsx
     │   ├── kundur_gentrip.xlsx
-    │   └── kundur_ieeest.xlsx
+    │   ├── kundur_ieeeg1.xlsx
+    │   ├── kundur_ieeest.xlsx
+    │   ├── kundur_sexs.xlsx
+    │   └── kundur_st2cut.xlsx
     ├── matpower/
     │   ├── case118.m
     │   ├── case14.m
     │   ├── case300.m
     │   └── case5.m
+    ├── nordic44/
+    │   ├── N44_BC.dyr
+    │   ├── N44_BC.raw
+    │   └── README.md
     ├── npcc/
-    │   ├── npcc48.dyr
-    │   ├── npcc48.raw
-    │   └── npcc48.xlsx
+    │   ├── npcc.raw
+    │   └── npcc_full.dyr
     ├── wecc/
-    │   ├── wecc179.dyr
-    │   ├── wecc179.raw
-    │   └── wecc179.xlsx
+    │   ├── wecc.raw
+    │   ├── wecc.xlsx
+    │   ├── wecc_full.dyr
+    │   ├── wecc_gencls.dyr
     └── wscc9/
         ├── wscc9.raw
         └── wscc9.xlsx

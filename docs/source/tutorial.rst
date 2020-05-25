@@ -44,7 +44,7 @@ It prints out a preamble with version and environment information and help comma
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
-of subcommands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the subcommands
+of sub-commands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the sub-commands
 in ``run``. The most commonly used commands will be explained in the following.
 
 ``andes`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
@@ -209,11 +209,11 @@ The output looks like::
 
 This execution first solves the power flow as a starting point.
 Next, the numerical integration simulates 20 seconds, during which a predefined
-breaker opensat 2 seconds.
+breaker opens at 2 seconds.
 
 TDS produces two output files by default: a NumPy data file ``ieee14_syn_out.npy``
 and a variable name list file ``ieee14_syn_out.lst``.
-The list file contains three columns: variable indices, variabla name in plain text, and variable
+The list file contains three columns: variable indices, variable name in plain text, and variable
 name in the :math:`\LaTeX` format.
 The variable indices are needed to plot the needed variable.
 
@@ -257,7 +257,8 @@ Format converter
 ANDES recognizes a few input formats and can convert input systems into the ``xlsx`` format.
 This function is useful when one wants to use models that are unique in ANDES.
 
-The command for converting is ``--convert``, following the output format (only ``xlsx`` is currently supported).
+The command for converting is ``--convert`` (or ``-c``),
+following the output format (only ``xlsx`` is currently supported).
 For example, to convert ``case5.m`` into the ``xlsx`` format, run
 
 .. code:: bash
@@ -280,12 +281,68 @@ Note that ``--convert`` will only create sheets for existing models.
 
 In case one wants to create template sheets to add models later, ``--convert-all`` can be used instead.
 
-If one wants to add workbooks to an existing xlsx file, use option ``--add-book ADD_BOOK``, where ``ADD_BOOK``
-can be a single model name or comma-separated model names (without any space).
+If one wants to add workbooks to an existing xlsx file,
+one can combine option ``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``),
+where ``ADD_BOOK`` can be a single model name or comma-separated
+model names (without any space). For example,
+
+.. code:: bash
+
+    andes run wecc.raw -c -b Toggler
+
+will convert file ``wecc.raw`` into an ANDES xlsx file and append
+a template workbook for `Toggler` at the end.
 
 .. Warning::
     With ``--add-book``, the xlsx file will be overwritten.
     Any **empty or non-existent models** will be REMOVED.
+
+PSS/E inputs
+............
+To work with PSS/E input files (.raw and .dyr), one need to provide the
+raw file as ``casefile`` and pass the dyr file to ``--addfile``. For example,
+in ``andes/andes/cases/wecc``, one can run the power flow using
+
+.. code:: bash
+
+    andes run wecc.raw
+
+and run a no-disturbance time-domain simulation using
+
+.. code:: bash
+
+    andes run wecc.raw --addfile wecc_full.dyr -r tds
+
+To create add a disturbance, there are two options. The recommended option
+is to convert the PSS/E data into an ANDES xlsx file, edit and run (see the
+previous subsection).
+
+The alternative is to edit the dyr file and
+append lines customized for ANDES models. This is for advanced users after
+referring to ``andes/io/psse-dyr.yaml``, at the end of which one can find
+the format of ``Toggler``: ::
+
+    # === Custom Models ===
+    Toggler:
+        inputs:
+            - model
+            - dev
+            - t
+
+To define two Togglers in the dyr file, one can append lines to the end
+of the file using, for example, ::
+
+    Line   'Toggler'  Line_2  1 /
+    Line   'Toggler'  Line_2  1.1 /
+
+which is separated by spaces and ended with a slash. The second parameter
+is fixed to the model name quoted by a pair of single quotation marks,
+and the others correspond to the fields defined in the above``inputs``.
+
+.. note::
+    When working with PSS/E data, the recommended practice is to edit model
+    dynamic parameters directly in the dyr file
+    so that the data can be easily used by other tools.
 
 andes plot
 --------------
@@ -663,9 +720,8 @@ Input Formats
 ANDES currently supports the following input formats:
 
 - ANDES Excel (.xlsx)
+- PSS/E RAW (.raw) and DYR (.dyr)
 - MATPOWER (.m)
-- PSS/E RAW (.raw)
-- PSS/E DYR (.dyr), work in progress
 
 
 ANDES xlsx Format

@@ -560,3 +560,18 @@ Toggler:
         model: model
         dev: dev
         t: t
+
+Fault:
+    inputs:
+        - bus
+        - tf
+        - tc
+        - xf
+        - rf
+    destination: Fault
+    outputs:
+        bus: bus
+        tf: tf
+        tc: tc
+        xf: xf
+        rf: rf
