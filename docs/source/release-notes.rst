@@ -4,12 +4,15 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v1.0.0 (2020-05-23)
+v1.0.0 (2020-05-25)
+-------------------
+This release is going to be tagged as v0.9.5 and later tagged as v1.0.0.
 
 - Added verification results using IEEE 14-bus, NPCC, and WECC systems
   under folder `examples`.
 - Patches GENROU and EXDC2 models.
-- Added test cases for WECC, NPCC IEEE 14-bus.
+- Updated test cases for WECC, NPCC IEEE 14-bus.
+- Documentation improvements.
 - Various tweaks.
 
 v0.9.4 (2020-05-20)
