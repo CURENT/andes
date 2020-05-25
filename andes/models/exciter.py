@@ -1152,14 +1152,14 @@ class ESDC2AModel(ExcBase):
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (vout - SAT_A) ** 2 * SAT_B / vout - Se',
+                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B / INT_y - Se',
                         )
 
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='vout * (KE + Se) - VFE'
+                         e_str='INT_y * (KE + Se) - VFE'
                          )
 
         self.INT = Integrator(u='LA_y - VFE',
@@ -1169,7 +1169,7 @@ class ESDC2AModel(ExcBase):
                               info='Integrator',
                               )
 
-        self.WF = Washout(u=self.vout,
+        self.WF = Washout(u=self.INT_y,
                           T=self.TF1,
                           K=self.KF,
                           info='Feedback to input'
@@ -1182,8 +1182,10 @@ class ESDC2A(ESDC2AData, ESDC2AModel):
     """
     ESDC2A model.
 
-    This model is implemented as described in the PSS/E manual.
-    Due to saturation, the results may be different from TSAT.
+    This model is implemented as described in the PSS/E manual,
+    except that the HVGate is not in use.
+    Due to the HVGate and saturation function, the results
+    are close to but different from TSAT.
     """
 
     def __init__(self, system, config):
