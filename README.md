@@ -610,22 +610,14 @@ We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 ![Lawrence Livermore National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
 ![Idaho National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/inl.jpg)
 
-# Contributors
+# Sponsors and Contributors
 
 This work was supported in part by the Engineering Research Center
 Program of the National Science Foundation and the Department of Energy
 under NSF Award Number EEC-1041877 and the CURENT Industry Partnership
 Program.
 
-This project was originally inspired by the book 
-[Power System Modelling and Scripting](https://www.springer.com/gp/book/9783642136689)
-by Prof. Federico Milano.
-
-The following contributors are sincerely acknowledged:
-
-- Christopher Lackner: for contributing the EAGC model.
-- Qiwei Zhang: for contributing a solar PV model.
-- [Yichen Zhang](https://sites.google.com/view/yichenzhangee/home) for feedback on documentation.
+See [GitHub contributors][GitHub contributors] for the contributor list.
 
 # License
 
