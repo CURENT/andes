@@ -1075,7 +1075,7 @@ class ESDC2AModel(ExcBase):
         self._zVRM = FlagNotNone(self.VRMAX, to_flag=0,
                                  tex_name='z_{VRMAX}',
                                  )
-        self.VRMAXc = ConstService(v_str='VRMAX + 999*_zVRM',
+        self.VRMAXc = ConstService(v_str='VRMAX + 999*(1-_zVRM)',
                                    info='Set VRMAX=999 when zero',
                                    )
         self.LG = Lag(u=self.v, T=self.TR, K=1,
