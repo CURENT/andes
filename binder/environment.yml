@@ -62,5 +62,5 @@ dependencies:
   - yaml=0.2.2
   - zlib=1.2.11
   - pip:
-    - andes==0.9.3
+    - andes
 prefix: /Users/hcui7/miniconda3/envs/andes_binder
