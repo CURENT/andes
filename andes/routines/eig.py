@@ -308,8 +308,8 @@ class EIG(BaseRoutine):
                 ufreq[idx] = 0
                 damping[idx] = 0
             else:
-                freq[idx] = abs(item) / 2 / pi
-                ufreq[idx] = abs(item.imag / 2 / pi)
+                ufreq[idx] = abs(item) / 2 / pi
+                freq[idx] = abs(item.imag / 2 / pi)
                 damping[idx] = -div(item.real, abs(item)) * 100
 
         # obtain most associated variables
@@ -355,8 +355,8 @@ class EIG(BaseRoutine):
             [var_assoc,
              list(mu_real),
              list(mu_imag),
-             ufreq,
              freq,
+             ufreq,
              damping])
 
         n_cols = 7  # columns per block
