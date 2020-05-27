@@ -292,8 +292,8 @@ initializer generation, and pretty print generation.
     :noindex:
 
 Next, function ``generate_equation`` converts each DAE equation set to one numerical function calls and store
-it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are ``f_lambdify``
-and ``g_lambdify``. Differently, service variables will be generated one by one and store in an ``OrderedDict``
+it in ``Model.calls``. The attributes for differential equation set and algebraic equation set are ``f``
+and ``g``. Differently, service variables will be generated one by one and store in an ``OrderedDict``
 in ``Model.calls.s_lambdify``.
 
 

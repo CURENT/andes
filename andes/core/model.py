@@ -373,15 +373,11 @@ class ModelCall(object):
 
         self.f = None
         self.g = None
-
-        self.g_lambdify = OrderedDict()
-        self.f_lambdify = OrderedDict()
-        self.f_args = OrderedDict()
-        self.g_args = OrderedDict()
+        self.f_args = None
+        self.g_args = None
 
         self.s_lambdify = OrderedDict()
         self.init_lambdify = OrderedDict()
-        self.args = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -598,7 +594,7 @@ class Model(object):
 
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags in an OrderedDict
-        self._input_args = defaultdict(list)
+        self.f_args, self.g_args = None, None   # argument value lists
 
     def _register_attribute(self, key, value):
         """
@@ -799,8 +795,6 @@ class Model(object):
         """
         if len(self._input) == 0 or refresh:
             self.refresh_inputs()
-
-        if len(self._input_args) == 0 or refresh:
             self.refresh_inputs_arg()
 
         return self._input
@@ -851,11 +845,8 @@ class Model(object):
         """
         Refresh inputs for each function with individual argument list.
         """
-        for eq in self.calls.args:
-            self._input_args[eq] = [self._input[arg] for arg in self.calls.args[eq]]
-
-        self._args_f = [self._input[arg] for arg in self.calls.args_f]
-        self._args_g = [self._input[arg] for arg in self.calls.args_g]
+        self.f_args = [self._input[arg] for arg in self.calls.f_args]
+        self.g_args = [self._input[arg] for arg in self.calls.g_args]
 
     def l_update_var(self, dae_t):
         """
@@ -1148,20 +1139,12 @@ class Model(object):
         Non-inplace equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
-        f_ret = self.calls.f(*self._args_f)
+        f_ret = self.calls.f(*self.f_args)
         for i, var in enumerate(self.cache.states_and_ext.values()):
             if var.e_inplace:
                 var.e += f_ret[i]
             else:
                 var.e[:] = f_ret[i]
-
-        # for name, func in self.calls.f_args.items():
-        #     args = self._input_args[name]
-        #     var = self.__dict__[name]
-        #     if var.e_inplace:
-        #         var.e += func(*args)
-        #     else:
-        #         var.e[:] = func(*args)
 
         kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
@@ -1177,20 +1160,12 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-        g_ret = self.calls.g(*self._args_g)
+        g_ret = self.calls.g(*self.g_args)
         for i, var in enumerate(self.cache.algebs_and_ext.values()):
             if var.e_inplace:
                 var.e += g_ret[i]
             else:
                 var.e[:] = g_ret[i]
-
-        # for name, func in self.calls.g_args.items():
-        #     args = self._input_args[name]
-        #     var = self.__dict__[name]
-        #     if var.e_inplace:
-        #         var.e += func(*args)
-        #     else:
-        #         var.e[:] = func(*args)
 
         kwargs = self.get_inputs()
         # numerical calls defined in the model
@@ -1717,29 +1692,21 @@ class SymProcessor(object):
         logger.debug(f'- Generating equations for {self.class_name}')
         from sympy import Matrix, sympify, lambdify, SympifyError
 
-        self.calls.f_args = OrderedDict()
-        self.calls.g_args = OrderedDict()
-        self.calls.args = OrderedDict()
-
         self.f_list, self.g_list = list(), list()
 
         self.calls.f = None
         self.calls.g = None
-        self.calls.args_f = list()
-        self.calls.args_g = list()
+        self.calls.f_args = list()
+        self.calls.g_args = list()
 
         inputs_list = list(self.inputs_dict)
         iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
         dest_list = [self.f_list, self.g_list]
 
         dest_fg = ['f', 'g']
-        dest_args = [self.calls.args_f, self.calls.args_g]
+        dest_args = [self.calls.f_args, self.calls.g_args]
 
-        args_list = [self.calls.args, self.calls.args]
-        args_call = [self.calls.f_args, self.calls.g_args]
-
-        for it, dest, arg, acall, fg, dargs in zip(iter_list, dest_list, args_list,
-                                                   args_call, dest_fg, dest_args):
+        for it, dest, fg, dargs in zip(iter_list, dest_list, dest_fg, dest_args):
             eq_args = list()
             for name, instance in it.items():
                 if instance.e_str is None:
@@ -1759,11 +1726,6 @@ class SymProcessor(object):
                             dargs.append(str(s))
 
                     dest.append(expr)
-
-                    # used argument
-                    arg[name] = [str(s) for s in free_syms]
-                    # only arguments used for each individual equation
-                    acall[name] = lambdify(free_syms, expr, 'numpy')
 
             self.calls.__dict__[fg] = lambdify(eq_args, tuple(dest), 'numpy')
 
