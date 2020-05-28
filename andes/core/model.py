@@ -913,18 +913,11 @@ class Model(object):
             for name, instance in self.services.items():
                 func = self.calls.s_lambdify[name]
                 if callable(func):
+                    # TODO: an issue that prevents the removal of `refresh`
                     kwargs = self.get_inputs(refresh=True)
-                    # DO NOT use in-place operation since the return can be complex number
-
-                    # TODO: enforce type for service
-                    # func may not return an existing array which belong to another variable.
-
-                    instance.v = np.array(func(**kwargs))
+                    instance.v[:] = func(**kwargs)
                 else:
-                    instance.v = np.array(func)
-
-                if instance.v.size == 1:
-                    instance.v = instance.v * np.ones(self.n)
+                    instance.v[:] = np.array(func)
 
         # NOTE:
         # Some numerical calls depend on other service values.
