@@ -62,5 +62,5 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
     np.testing.assert_almost_equal(ss.dae.xy[indices],
                                    results,
                                    err_msg=f"{case} test error",
-                                   decimal=4)
+                                   decimal=3)
     return ss
