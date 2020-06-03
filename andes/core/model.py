@@ -763,12 +763,25 @@ class Model(object):
 
     def alter(self, src, idx, value):
         """
-        Alter input parameter value.
+        Alter input parameter or service values.
 
-        This function converts the new parameter to per unit.
+        If operates on a parameter, this function will convert
+        the new value to per unit.
+
+        Parameters
+        ----------
+        src : str
+            The parameter name to alter
+        idx : str, float, int
+            The device to alter
+        value : float
+            The desired value
         """
-        self.set(src, idx, 'vin', value)
-        self.__dict__[src].v[:] = self.__dict__[src].vin * self.__dict__[src].pu_coeff
+        if hasattr(self.__dict__[src], 'vin'):
+            self.set(src, idx, 'vin', value)
+            self.__dict__[src].v[:] = self.__dict__[src].vin * self.__dict__[src].pu_coeff
+        else:
+            self.set(src, idx, 'v', value)
 
     def get_inputs(self, refresh=False):
         """
@@ -835,7 +848,7 @@ class Model(object):
             self._input[instance.name] = instance.v
 
         # append config variables
-        for key, val in self.config.as_dict().items():
+        for key, val in self.config.as_dict(refresh=True).items():
             self._input[key] = np.array(val)
 
         # update`dae_t`

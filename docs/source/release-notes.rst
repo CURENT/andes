@@ -4,6 +4,28 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+Since v1.0.0
+------------
+
+v1.0.3 (2020-06-02)
+```````````````````
+- Patches `PQ` model equations where the "or" logic "|" is ignored in
+  equation strings. To adjust PQ load in time domain simulation, refer
+  to the note in `pq.py`.
+- Allow `Model.alter` to update service values.
+
+v1.0.2 (2020-06-01)
+```````````````````
+- Patches the conda-forge script to use SymPy < 1.6. After SymPy version
+  1.5.1, comparison operations cannot be sympified. Pip installations are
+  not affected.
+
+v1.0.1 (2020-05-27)
+```````````````````
+- Generate one lambda function for each of f and g, instead of generating
+  one for each single f/g equation. Requires to run `andes prepare` after
+  updating.
+
 v1.0.0 (2020-05-25)
 -------------------
 This release is going to be tagged as v0.9.5 and later tagged as v1.0.0.
