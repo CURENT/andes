@@ -361,7 +361,7 @@ class PSS(GroupBase):
 
 
 class Experimental(GroupBase):
-    """Experimantal group"""
+    """Experimental group"""
     pass
 
 

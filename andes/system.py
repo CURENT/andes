@@ -263,7 +263,9 @@ class System(object):
         self._list2array()     # `list2array` must come before `link_ext_param`
         self.link_ext_param()
         self.find_devices()    # find or add required devices
-        # no device addition or removal after this point
+
+        # == no device addition or removal after this point ==
+
         self.calc_pu_coeff()
 
         # store models with routine flags
