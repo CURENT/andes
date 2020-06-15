@@ -391,8 +391,17 @@ class DAE(object):
 
     def write_lst(self, lst_path):
         """
-        Dump the variable name lst file
-        :return: succeed flag
+        Dump the variable name lst file.
+
+        Parameters
+        ----------
+        lst_path
+            Path to the lst file.
+
+        Returns
+        -------
+        bool
+            succeed flag
         """
 
         out = ''
@@ -416,16 +425,16 @@ class DAE(object):
             f.write(out)
         return True
 
-    def write_npy(self, npy_path):
+    def write_npy(self, file_path):
         """
-        Write TDS data into NumPy output files.
-
-        TODO: Compress when the matrix is larger than 25 MB.
+        Write TDS data into NumPy uncompressed format.
         """
         txyz_data = self.ts.txyz
+        np.save(file_path, txyz_data)
 
-        # if txyz_data.size > 3125000:  # 25 megabytes of flaot64
-        #     np.savez_compressed(npy_path, txyz_data)
-        # else:
-
-        np.save(npy_path, txyz_data)
+    def write_npz(self, file_path):
+        """
+        Write TDS data into NumPy compressed format.
+        """
+        txyz_data = self.ts.txyz
+        np.savez_compressed(file_path, data=txyz_data)

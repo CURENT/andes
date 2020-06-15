@@ -10,7 +10,8 @@ class FileMan(object):
     def __init__(self, case=None, **kwargs):
         """
         Initialize the output file names.
-        For inputs, all absolute paths will be respected; and all relative paths are relative to `input_path`.
+        For inputs, all absolute paths will be respected.
+        All relative paths are relative to `input_path`.
 
         case: must be full path to case
 
@@ -42,6 +43,7 @@ class FileMan(object):
         self.lst = None
         self.eig = None
         self.npy = None
+        self.npz = None
         self.mat = None
         self.prof = None
         self.prof_raw = None
@@ -90,6 +92,7 @@ class FileMan(object):
             self.lst = None
             self.eig = None
             self.npy = None
+            self.npz = None
             self.mat = None
             self.prof = None
             self.prof_raw = None
@@ -104,6 +107,7 @@ class FileMan(object):
 
             self.lst = os.path.join(self.output_path, output + '.lst')
             self.npy = os.path.join(self.output_path, output + '.npy')
+            self.npz = os.path.join(self.output_path, output + '.npz')
             self.output = os.path.join(self.output_path, output + '.txt')
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
@@ -115,7 +119,7 @@ class FileMan(object):
     def get_fullpath(self, fullname=None):
         """
         Return the original full path if full path is specified, otherwise
-        search in the case file path
+        search in the case file path.
         """
         # if is an empty path
         if not fullname:
@@ -135,6 +139,9 @@ class FileMan(object):
 
 
 def add_suffix(fullname, suffix):
-    """ Add suffix to a full file name"""
+    """
+    Add suffix to a full file name.
+    """
+
     name, ext = os.path.splitext(fullname)
     return name + '_' + suffix + ext

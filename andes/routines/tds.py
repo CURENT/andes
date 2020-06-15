@@ -463,9 +463,14 @@ class TDS(BaseRoutine):
             logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
                          f'{self.system.dae.fg[v]:<20g}')
 
-    def save_output(self):
+    def save_output(self, npz=True):
         """
-        Save the simulation data into two files: a lst file and a npy file.
+        Save the simulation data into two files: a lst file and a npz file.
+
+        Parameters
+        ----------
+        npz : bool
+            True to save in npz format; False to save in npy format.
 
         Returns
         -------
@@ -476,8 +481,14 @@ class TDS(BaseRoutine):
             return False
         else:
             t0, _ = elapsed()
+
             self.system.dae.write_lst(self.system.files.lst)
-            self.system.dae.write_npy(self.system.files.npy)
+
+            if npz is True:
+                self.system.dae.write_npz(self.system.files.npz)
+            else:
+                self.system.dae.write_npy(self.system.files.npy)
+
             _, s1 = elapsed(t0)
             logger.info(f'TDS outputs saved in {s1}.')
             return True

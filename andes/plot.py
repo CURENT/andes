@@ -53,6 +53,11 @@ class TDSData(object):
     def _process_names(self):
         self.file_name, self.file_ext = os.path.splitext(self.full_name)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
+
+        npz_path = os.path.join(self._path, self.file_name + '.npz')
+        if os.path.isfile(npz_path):
+            self._npy_file = npz_path
+
         self._lst_file = os.path.join(self._path, self.file_name + '.lst')
         self._csv_file = os.path.join(self._path, self.file_name + '.csv')
 
@@ -141,7 +146,8 @@ class TDSData(object):
 
     def load_npy_or_csv(self, delimiter=','):
         """
-        Load the npy or csv file into internal data structures `self._xy`.
+        Load the npy, zpy or (the legacy) csv file into the
+        internal data structure `self._xy`.
 
         Parameters
         ----------
@@ -154,6 +160,10 @@ class TDSData(object):
         """
         try:
             data = np.load(self._npy_file)
+
+            if self._npy_file.endswith('npz'):
+                data = data['data']
+
         except FileNotFoundError:
             data = np.loadtxt(self._csv_file, delimiter=delimiter, skiprows=1)
 
