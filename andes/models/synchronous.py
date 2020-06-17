@@ -9,6 +9,7 @@ from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
 from andes.core.service import InitChecker, FlagNotNone
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -284,21 +285,24 @@ class GENCLSModel(object):
                              )
         self._V = ConstService(v_str='v * exp(1j * a)',
                                tex_name='V_c',
+                               vtype=np.complex,
                                )
         self._S = ConstService(v_str='p0 - 1j * q0',
                                tex_name='S',
+                               vtype=np.complex,
                                )
         self._I = ConstService(v_str='_S / conj(_V)',
                                tex_name='I_c',
+                               vtype=np.complex,
                                )
-        self._E = ConstService(tex_name='E')
-        self._deltac = ConstService(tex_name=r'\delta_c')
+        self._E = ConstService(tex_name='E', vtype=np.complex)
+        self._deltac = ConstService(tex_name=r'\delta_c', vtype=np.complex)
         self.delta0 = ConstService(tex_name=r'\delta_0')
 
         self.vdq = ConstService(v_str='u * (_V * exp(1j * 0.5 * pi - _deltac))',
-                                tex_name='V_{dq}')
+                                tex_name='V_{dq}', vtype=np.complex)
         self.Idq = ConstService(v_str='u * (_I * exp(1j * 0.5 * pi - _deltac))',
-                                tex_name='I_{dq}')
+                                tex_name='I_{dq}', vtype=np.complex)
 
         self.Id0 = ConstService(v_str='re(Idq)',
                                 tex_name=r'I_{d0}')
@@ -397,14 +401,20 @@ class GENROUModel(object):
         #   https://github.com/OpenIPSL/OpenIPSL/blob/master/OpenIPSL/Electrical/Machines/PSSE/GENROU.mo
 
         # internal voltage and rotor angle calculation
-        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex bus voltage')
-        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S', info='complex terminal power')
-        self._Zs = ConstService(v_str='ra + 1j * xd2', tex_name='Z_s', info='equivalent impedance')
-        self._It = ConstService(v_str='_S / conj(_V)', tex_name='I_t', info='complex terminal current')
-        self._Is = ConstService(tex_name='I_s', v_str='_It + _V / _Zs', info='equivalent current source')
+        self._V = ConstService(v_str='v * exp(1j * a)', tex_name='V_c', info='complex bus voltage',
+                               vtype=np.complex)
+        self._S = ConstService(v_str='p0 - 1j * q0', tex_name='S', info='complex terminal power',
+                               vtype=np.complex)
+        self._Zs = ConstService(v_str='ra + 1j * xd2', tex_name='Z_s', info='equivalent impedance',
+                                vtype=np.complex)
+        self._It = ConstService(v_str='_S / conj(_V)', tex_name='I_t', info='complex terminal current',
+                                vtype=np.complex)
+        self._Is = ConstService(tex_name='I_s', v_str='_It + _V / _Zs', info='equivalent current source',
+                                vtype=np.complex)
 
         self.psi20 = ConstService(tex_name=r"\psi''_0", v_str='_Is * _Zs',
-                                  info='sub-transient flux linkage in stator reference')
+                                  info='sub-transient flux linkage in stator reference',
+                                  vtype=np.complex)
         self.psi20_arg = ConstService(tex_name=r"\theta_{\psi''0}", v_str='arg(psi20)')
         self.psi20_abs = ConstService(tex_name=r"|\psi''_0|", v_str='abs(psi20)')
         self._It_arg = ConstService(tex_name=r"\theta_{It0}", v_str='arg(_It)')
@@ -421,11 +431,14 @@ class GENROUModel(object):
                                    v_str='atan(_b * cos(_psi20_It_arg) / (_b * sin(_psi20_It_arg) - _a)) + '
                                          'psi20_arg')
         self._Tdq = ConstService(tex_name=r"T_{dq}",
-                                 v_str='cos(delta0) - 1j * sin(delta0)')
+                                 v_str='cos(delta0) - 1j * sin(delta0)',
+                                 vtype=np.complex)
         self.psi20_dq = ConstService(tex_name=r"\psi''_{0,dq}",
-                                     v_str='psi20 * _Tdq')
+                                     v_str='psi20 * _Tdq',
+                                     vtype=np.complex)
         self.It_dq = ConstService(tex_name=r"I_{t,dq}",
-                                  v_str='conj(_It * _Tdq)')
+                                  v_str='conj(_It * _Tdq)',
+                                  vtype=np.complex)
 
         self.psi2d0 = ConstService(tex_name=r"\psi_{ad0}",
                                    v_str='re(psi20_dq)')

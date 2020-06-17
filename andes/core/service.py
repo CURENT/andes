@@ -32,7 +32,7 @@ class BaseService(object):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.vtype = vtype  # type for `v`. NOT IN USE.
+        self.vtype = vtype if vtype is not None else np.float  # type for `v`. NOT IN USE.
         self.owner = None
 
     def get_names(self):
@@ -97,15 +97,16 @@ class ConstService(BaseService):
     def __init__(self,
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
+                 vtype: Optional[type] = None,
                  name: Optional[str] = None, tex_name=None, info=None):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+        super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
         self.v: Union[float, int, ndarray] = np.array([0.])
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(n)
+        self.v = np.zeros(n, dtype=self.vtype)
 
 
 class VarService(ConstService):
@@ -209,9 +210,10 @@ class ExtService(BaseService):
                  default=0,
                  name: str = None,
                  tex_name: str = None,
+                 vtype=None,
                  info=None,
                  ):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+        super().__init__(name=name, tex_name=tex_name, info=info, vtype=vtype)
         self.model = model
         self.src = src
         self.indexer = indexer
@@ -222,7 +224,7 @@ class ExtService(BaseService):
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(n)
+        self.v = np.zeros(n, dtype=self.vtype)
 
     def link_external(self, ext_model):
         """
