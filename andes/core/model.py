@@ -906,21 +906,18 @@ class Model(object):
 
         This function is only evaluated at initialization.
         Service values are updated sequentially.
-        The ``v`` attribute of services will be assigned at a new memory.
+        The ``v`` attribute of services will be assigned at a new memory address.
         """
 
         if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
             for name, instance in self.services.items():
                 func = self.calls.s_lambdify[name]
                 if callable(func):
-                    # TODO: an issue that prevents the removal of `refresh`
                     kwargs = self.get_inputs(refresh=True)
+                    # NOTE: use new assignment due to possible size change
                     instance.v = func(**kwargs)
                 else:
                     instance.v = np.array(func)
-
-            self.get_inputs(refresh=True)
-
         # NOTE:
         # Some numerical calls depend on other service values.
         # They are evaluated after lambdified calls
@@ -935,6 +932,8 @@ class Model(object):
         if self.flags.s_num is True:
             kwargs = self.get_inputs(refresh=True)
             self.s_numeric(**kwargs)
+
+        self.get_inputs(refresh=True)
 
     def s_update_var(self):
         """
