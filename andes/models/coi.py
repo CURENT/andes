@@ -5,7 +5,7 @@ import numpy as np
 
 from andes.core.param import ExtParam
 from andes.core.service import NumRepeat, IdxRepeat, BackRef
-from andes.core.service import NumReduce, RefFlatten, ExtService
+from andes.core.service import NumReduce, RefFlatten, ExtService, ConstService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
 
@@ -59,12 +59,6 @@ class COIModel(Model):
                              tex_name=r'\delta_{gen,0}',
                              info='Linearly stored initial delta',
                              )
-        self.d0avg = NumReduce(u=self.d0,
-                               tex_name=r'\delta_{gen,0,avg}',
-                               fun=np.average,
-                               ref=self.SynGen,
-                               info='Average initial delta',
-                               )
 
         self.Mt = NumReduce(u=self.M,
                             tex_name='M_t',
@@ -73,10 +67,26 @@ class COIModel(Model):
                             info='Summation of M by COI index',
                             )
 
-        self.Mtr = NumRepeat(u=self.Mt,
-                             tex_name='M_{tr}',
+        self.Mr = NumRepeat(u=self.Mt,
+                            tex_name='M_{tr}',
+                            ref=self.SynGen,
+                            info='Repeated summation of M',
+                            )
+
+        self.Mw = ConstService(tex_name='M_w',
+                               info='Inertia weights',
+                               v_str='M/Mr')
+
+        self.d0w = ConstService(tex_name=r'\delta_{gen,0,w}',
+                                v_str='d0 * Mw',
+                                info='Linearly stored weighted delta')
+
+        self.d0a = NumReduce(u=self.d0w,
+                             tex_name=r'\delta_{gen,0,avg}',
+                             fun=np.sum,
                              ref=self.SynGen,
-                             info='Repeated summation of M',
+                             info='Average initial delta',
+                             cache=False,
                              )
 
         self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
@@ -94,7 +104,7 @@ class COIModel(Model):
                            )
         self.delta = Algeb(tex_name=r'\delta_{coi}',
                            info='COI rotor angle',
-                           v_str='d0avg',
+                           v_str='d0a',
                            v_setter=True,
                            e_str='-delta',
                            diag_eps=1e-6,
@@ -105,13 +115,13 @@ class COIModel(Model):
         # Otherwise, values will be incorrectly summed for `omega` and `delta`.
         self.omega_sub = ExtAlgeb(model='COI',
                                   src='omega',
-                                  e_str='M * wgen / Mtr',
+                                  e_str='Mw * wgen',
                                   indexer=self.pidx,
                                   info='COI frequency contribution of each generator'
                                   )
         self.delta_sub = ExtAlgeb(model='COI',
                                   src='delta',
-                                  e_str='M * agen / Mtr',
+                                  e_str='Mw * agen',
                                   indexer=self.pidx,
                                   info='COI angle contribution of each generator'
                                   )

@@ -915,9 +915,11 @@ class Model(object):
                 if callable(func):
                     # TODO: an issue that prevents the removal of `refresh`
                     kwargs = self.get_inputs(refresh=True)
-                    instance.v[:] = func(**kwargs)
+                    instance.v = func(**kwargs)
                 else:
-                    instance.v[:] = np.array(func)
+                    instance.v = np.array(func)
+
+            self.get_inputs(refresh=True)
 
         # NOTE:
         # Some numerical calls depend on other service values.

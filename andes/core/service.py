@@ -522,11 +522,13 @@ class NumReduce(OperationService):
                  name=None,
                  tex_name=None,
                  info=None,
+                 cache=True,
                  ):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.ref = ref
         self.fun = fun
+        self.cache = cache
 
     @property
     def v(self):
@@ -537,15 +539,17 @@ class NumReduce(OperationService):
         -------
         The array ``self._v`` storing the reduced values
         """
+        if self._v is not None and self.cache is True:
+            return self._v
+
         if self._v is None:
             self._v = np.zeros(len(self.ref.v))
-            idx = 0
-            for i, v in enumerate(self.ref.v):
-                self._v[i] = self.fun(self.u.v[idx:idx + len(v)])
-                idx += len(v)
-            return self._v
-        else:
-            return self._v
+
+        idx = 0
+        for i, v in enumerate(self.ref.v):
+            self._v[i] = self.fun(self.u.v[idx:idx + len(v)])
+            idx += len(v)
+        return self._v
 
 
 class NumRepeat(OperationService):
