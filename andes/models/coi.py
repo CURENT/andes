@@ -60,6 +60,13 @@ class COIModel(Model):
                              info='Linearly stored initial delta',
                              )
 
+        self.a0 = ExtService(model='SynGen',
+                             src='omega',
+                             indexer=self.SynGenIdx,
+                             tex_name=r'\omega_{gen,0}',
+                             info='Linearly stored initial omega',
+                             )
+
         self.Mt = NumReduce(u=self.M,
                             tex_name='M_t',
                             fun=np.sum,
@@ -81,6 +88,10 @@ class COIModel(Model):
                                 v_str='d0 * Mw',
                                 info='Linearly stored weighted delta')
 
+        self.a0w = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                v_str='a0 * Mw',
+                                info='Linearly stored weighted omega')
+
         self.d0a = NumReduce(u=self.d0w,
                              tex_name=r'\delta_{gen,0,avg}',
                              fun=np.sum,
@@ -89,15 +100,27 @@ class COIModel(Model):
                              cache=False,
                              )
 
+        self.a0a = NumReduce(u=self.a0w,
+                             tex_name=r'\omega_{gen,0,avg}',
+                             fun=np.sum,
+                             ref=self.SynGen,
+                             info='Average initial omega',
+                             cache=False,
+                             )
+
         self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
 
-        # Note: even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
+        # Note:
+        # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
         # When no SynGen is referencing any COI, j_update will not be called,
         # and Jacobian will become singular. `diag_ep1e-6` needs to be used.
 
+        # Note:
+        # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
+        # fail to initialize.
         self.omega = Algeb(tex_name=r'\omega_{coi}',
                            info='COI speed',
-                           v_str='1',
+                           v_str='a0a',
                            v_setter=True,
                            e_str='-omega',
                            diag_eps=1e-6,

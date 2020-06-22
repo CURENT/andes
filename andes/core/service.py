@@ -171,82 +171,6 @@ class PostInitService(ConstService):
     pass
 
 
-class ExtService(BaseService):
-    """
-    Service constants whose value is from an external model or group.
-
-    Parameters
-    ----------
-    src : str
-        Variable or parameter name in the source model or group
-    model : str
-        A model name or a group name
-    indexer : IdxParam or BaseParam
-        An "Indexer" instance whose ``v`` field contains the ``idx`` of devices in the model or group.
-
-    Examples
-    --------
-    A synchronous generator needs to retrieve the ``p`` and ``q`` values from static generators
-    for initialization. ``ExtService`` is used for this purpose.
-
-    In a synchronous generator, one can define the following to retrieve ``StaticGen.p`` as ``p0``::
-
-        class GENCLSModel(Model):
-            def __init__(...):
-                ...
-                self.p0 = ExtService(src='p',
-                                     model='StaticGen',
-                                     indexer=self.gen,
-                                     tex_name='P_0')
-
-    """
-
-    def __init__(self,
-                 model: str,
-                 src: str,
-                 indexer: BaseParam,
-                 attr='v',
-                 allow_none=False,
-                 default=0,
-                 name: str = None,
-                 tex_name: str = None,
-                 vtype=None,
-                 info=None,
-                 ):
-        super().__init__(name=name, tex_name=tex_name, info=info, vtype=vtype)
-        self.model = model
-        self.src = src
-        self.indexer = indexer
-        self.attr = attr
-        self.allow_none = allow_none
-        self.default = default
-        self.v = np.array([0.])
-
-    def assign_memory(self, n):
-        """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(n, dtype=self.vtype)
-
-    def link_external(self, ext_model):
-        """
-        Method to be called by ``System`` for getting values from the external model or group.
-
-        Parameters
-        ----------
-        ext_model
-            An instance of a model or group provided by System
-        """
-        # set initial v values to zero
-        self.v = np.zeros(self.n)
-        if self.n == 0:
-            return
-
-        # the same `get` api for Group and Model
-        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr,
-                               allow_none=self.allow_none,
-                               default=self.default,
-                               )
-
-
 class BackRef(BaseService):
     """
     A special type of reference collector.
@@ -313,6 +237,82 @@ class BackRef(BaseService):
         super().__init__(**kwargs)
         self.export = False
         self.v = list()
+
+
+class ExtService(BaseService):
+    """
+    Service constants whose value is from an external model or group.
+
+    Parameters
+    ----------
+    src : str
+        Variable or parameter name in the source model or group
+    model : str
+        A model name or a group name
+    indexer : IdxParam or BaseParam
+        An "Indexer" instance whose ``v`` field contains the ``idx`` of devices in the model or group.
+
+    Examples
+    --------
+    A synchronous generator needs to retrieve the ``p`` and ``q`` values from static generators
+    for initialization. ``ExtService`` is used for this purpose.
+
+    In a synchronous generator, one can define the following to retrieve ``StaticGen.p`` as ``p0``::
+
+        class GENCLSModel(Model):
+            def __init__(...):
+                ...
+                self.p0 = ExtService(src='p',
+                                     model='StaticGen',
+                                     indexer=self.gen,
+                                     tex_name='P_0')
+
+    """
+
+    def __init__(self,
+                 model: str,
+                 src: str,
+                 indexer: Union[BaseParam, BaseService],
+                 attr: str = 'v',
+                 allow_none: bool = False,
+                 default=0,
+                 name: str = None,
+                 tex_name: str = None,
+                 vtype=None,
+                 info: str = None,
+                 ):
+        super().__init__(name=name, tex_name=tex_name, info=info, vtype=vtype)
+        self.model = model
+        self.src = src
+        self.indexer = indexer
+        self.attr = attr
+        self.allow_none = allow_none
+        self.default = default
+        self.v = np.array([0.])
+
+    def assign_memory(self, n):
+        """Assign memory for ``self.v`` and set the array to zero."""
+        self.v = np.zeros(n, dtype=self.vtype)
+
+    def link_external(self, ext_model):
+        """
+        Method to be called by ``System`` for getting values from the external model or group.
+
+        Parameters
+        ----------
+        ext_model
+            An instance of a model or group provided by System
+        """
+        # set initial v values to zero
+        self.v = np.zeros(self.n)
+        if self.n == 0:
+            return
+
+        # the same `get` api for Group and Model
+        self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr=self.attr,
+                               allow_none=self.allow_none,
+                               default=self.default,
+                               )
 
 
 class DataSelect(BaseService):
