@@ -441,8 +441,11 @@ def _parse_transf_v33(raw, system, max_bus):
             # """
 
             Sn = system.config.mva
-            Vn1 = system.Bus.get(src='Vn', idx=data[0][0], attr='v')
-            Vn2 = system.Bus.get(src='Vn', idx=data[0][1], attr='v')
+            bus_Vn1 = system.Bus.get(src='Vn', idx=data[0][0], attr='v')
+            bus_Vn2 = system.Bus.get(src='Vn', idx=data[0][1], attr='v')
+
+            Vn1 = data[2][1]
+            Vn2 = data[3][1]
             transf = True
             tap = data[2][0]  # pu or in kV
             phi = data[2][2]
@@ -451,14 +454,14 @@ def _parse_transf_v33(raw, system, max_bus):
             if data[0][4] == 1:
                 tap = tap
             elif data[0][4] == 2:
-                tap = (data[2][0] / data[2][1]) / (data[3][0] / data[3][1])
+                tap = (data[2][0] / bus_Vn1) / (data[3][0] / bus_Vn2)
             else:
-                raise NotImplementedError('Winding code 3 not implemented')
+                tap = tap * (Vn1 / bus_Vn1) / (Vn2 / bus_Vn2)
 
             # CZ - Z code, 1-system base, 2-winding base, 3-load loss and |z|
             if data[0][5] == 1:
                 Sn = system.config.mva
-            elif data[0][4] == 2:
+            elif data[0][5] == 2:
                 Sn = data[1][2]
             else:
                 raise NotImplementedError('Impedance code 3 not implemented')
