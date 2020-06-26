@@ -437,19 +437,48 @@ def _parse_transf_v33(raw, system, max_bus):
             # R1-2,X1-2,SBASE1-2
             # WINDV1,NOMV1,ANG1,RATA1,RATB1,RATC1,COD1,CONT1,RMA1,RMI1,VMA1,VMI1,NTP1,TAB1,CR1,CX1
             # WINDV2,NOMV2
+            #
             # """
 
-            tap = data[2][0]
+            Sn = system.config.mva
+            Vn1 = system.Bus.get(src='Vn', idx=data[0][0], attr='v')
+            Vn2 = system.Bus.get(src='Vn', idx=data[0][1], attr='v')
+            transf = True
+            tap = data[2][0]  # pu or in kV
             phi = data[2][2]
 
-            # set `transf` to True for all entries from `raw['transf']`
-            transf = True
+            # CW - Winding I/O code, 1-turn ratio on pu bus base kV, 2: winding V, 3: turn ratio pu on norn wind V
+            if data[0][4] == 1:
+                tap = tap
+            elif data[0][4] == 2:
+                tap = (data[2][0] / data[2][1]) / (data[3][0] / data[3][1])
+            else:
+                raise NotImplementedError('Winding code 3 not implemented')
 
-            param = {'bus1': data[0][0], 'bus2': data[0][1], 'u': data[0][11],
-                     'b': data[0][8], 'r': data[1][0], 'x': data[1][1],
-                     'trans': transf, 'tap': tap, 'phi': phi,
-                     'Vn1': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
-                     'Vn2': system.Bus.get(src='Vn', idx=data[0][1], attr='v'),
+            # CZ - Z code, 1-system base, 2-winding base, 3-load loss and |z|
+            if data[0][5] == 1:
+                Sn = system.config.mva
+            elif data[0][4] == 2:
+                Sn = data[1][2]
+            else:
+                raise NotImplementedError('Impedance code 3 not implemented')
+
+            # CM - Y code, 1-system base, 2-No load loss and exc. loss
+            if data[0][6] == 2:
+                raise NotImplementedError('Admittance code 2 not implemented')
+
+            param = {'bus1': data[0][0],
+                     'bus2': data[0][1],
+                     'u': data[0][11],
+                     'b': data[0][8],
+                     'r': data[1][0],
+                     'x': data[1][1],
+                     'trans': transf,
+                     'tap': tap,
+                     'phi': phi,
+                     'Sn': Sn,
+                     'Vn1': Vn1,
+                     'Vn2': Vn2,
                      }
 
             out['Line'].append(param)
