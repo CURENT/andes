@@ -444,8 +444,8 @@ def _parse_transf_v33(raw, system, max_bus):
             bus_Vn1 = system.Bus.get(src='Vn', idx=data[0][0], attr='v')
             bus_Vn2 = system.Bus.get(src='Vn', idx=data[0][1], attr='v')
 
-            Vn1 = data[2][1]
-            Vn2 = data[3][1]
+            Vn1 = data[2][1] if data[2][1] != 0.0 else bus_Vn1
+            Vn2 = data[3][1] if data[3][1] != 0.0 else bus_Vn2
             transf = True
             tap = data[2][0]  # pu or in kV
             phi = data[2][2]

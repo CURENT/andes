@@ -6,6 +6,15 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 Since v1.0.0
 ------------
+v1.0.4 (2020-06-26)
+```````````````````
+- Implemented compressed NumPy format (npz) for time-domain
+  simulation output data file.
+- Implemented optional attribute `vtype` for specifying data type
+  for Service.
+- Patched COI speed initialization.
+- Patched PSS/E parser for two-winding transformer winding and
+  impedance modes.
 
 v1.0.3 (2020-06-02)
 ```````````````````
