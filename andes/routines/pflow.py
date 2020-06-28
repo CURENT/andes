@@ -196,22 +196,22 @@ class PFlow(BaseRoutine):
 
         """
         system = self.system
-        system.dae.x = xy[:system.dae.n]
-        system.dae.y = xy[system.dae.n:]
+        system.dae.x[:] = xy[:system.dae.n]
+        system.dae.y[:] = xy[system.dae.n:]
         system.vars_to_models()
 
         system.dae.clear_fg()
-        system.l_update_var()
-        system.f_update()
-        system.g_update()
-        system.l_update_eq()
+        system.l_update_var(self.models)
+        system.f_update(self.models)
+        system.g_update(self.models)
+        system.l_update_eq(self.models)
         system.fg_to_dae()
 
         return system.dae.fg
 
     def newton_krylov(self, verbose=False):
         """
-        Full Newton-Krylov method
+        Full Newton-Krylov method from SciPy.
 
         Warnings
         --------
@@ -220,10 +220,12 @@ class PFlow(BaseRoutine):
         Parameters
         ----------
         verbose
+            True if verbose.
 
         Returns
         -------
-
+        np.array
+            Solutions `dae.xy`.
         """
         system = self.system
         system.init(system.exist.pflow)
