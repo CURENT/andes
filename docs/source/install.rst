@@ -15,7 +15,9 @@ We recommend the Miniconda distribution that includes the conda package manager 
 Downloaded and install the latest Miniconda (x64, with Python 3)
 from https://conda.io/miniconda.html.
 
-Step 1: Open the Anaconda Prompt and create an environment for ANDES (recommended)
+Step 1: Open terminal (for Linux or maxOS) or `Anaconda Prompt` (for Windows, not the `cmd`
+program).
+Create a conda environment for ANDES (recommended)
 
 .. code:: bash
 
@@ -38,7 +40,9 @@ Step 2: Add the ``conda-forge`` channel and set it as default
 
 Existing Python Environment (Advanced)
 --------------------------------------
-This is for advanced user only. Please skip it if you have set up a Conda envirnonment.
+This is for advanced user only and is not recommended on Microsoft Windows.
+Please skip it if you have set up a Conda environment.
+
 Instead of using Conda, if you prefer an existing Python environment,
 you can install ANDES with `pip`:
 
@@ -99,6 +103,17 @@ Step 3: Install ANDES in the development mode using
       python3 -m pip install -e .
 
 Pip will take care of the rest.
+
+Troubleshooting
+===============
+
+- ImportError: DLL load failed: The specified module could not be found.
+
+This usually happens when andes is not installed in a Conda environment
+but instead in a system-wide Python whose library path was not correctly
+set in environment variables.
+
+The easiest fix is to install andes in a Conda environment.
 
 Performance Packages (Advanced)
 ===============================
