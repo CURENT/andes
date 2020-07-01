@@ -194,11 +194,7 @@ class TDS(BaseRoutine):
                                   self.system.get_z(models=system.exist.pflow_tds),
                                   )
                 # check if the next step is critical time
-                if self.is_switch_time():
-                    self._last_switch_t = system.switch_times[self._switch_idx]
-                    system.switch_action(system.exist.pflow_tds)
-                    self._switch_idx += 1
-                    system.vars_to_models()
+                self.do_switch()
 
                 if self.calc_h() == 0:
                     logger.error('Time step to zero...')
@@ -351,9 +347,9 @@ class TDS(BaseRoutine):
             self.qg[dae.n:] = dae.g
 
             if not self.config.linsolve:
-                inc = self.solver.solve(self.Ac, -matrix(self.qg))
+                inc = self.solver.solve(self.Ac, matrix(self.qg))
             else:
-                inc = self.solver.linsolve(self.Ac, -matrix(self.qg))
+                inc = self.solver.linsolve(self.Ac, matrix(self.qg))
 
             # check for np.nan first
             if np.isnan(inc).any():
@@ -366,8 +362,8 @@ class TDS(BaseRoutine):
             inc[np.where(np.abs(inc) < self.tol_zero)] = 0
 
             # set new values
-            dae.x += inc[:dae.n].ravel()
-            dae.y += inc[dae.n: dae.n + dae.m].ravel()
+            dae.x -= inc[:dae.n].ravel()
+            dae.y -= inc[dae.n: dae.n + dae.m].ravel()
 
             system.vars_to_models()
 
@@ -607,6 +603,21 @@ class TDS(BaseRoutine):
         if self._switch_idx < self.system.n_switches:
             if abs(self.system.dae.t - self.system.switch_times[self._switch_idx]) < 1e-8:
                 ret = True
+        return ret
+
+    def do_switch(self):
+        """Perform switch if is switch time"""
+        ret = False
+
+        system = self.system
+        if self.is_switch_time():
+            self._last_switch_t = system.switch_times[self._switch_idx]
+            system.switch_action(system.exist.pflow_tds)
+            self._switch_idx += 1
+            system.vars_to_models()
+
+            ret = True
+
         return ret
 
     def _reset(self):

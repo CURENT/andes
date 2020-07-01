@@ -51,7 +51,7 @@ def _write_system(system, writer, skip_empty, orient='records'):
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
             continue
-        out[name] = instance.cache.df_in.to_dict(orient='records')
+        out[name] = instance.cache.df_in.to_dict(orient=orient)
 
     writer.write(json.dumps(out, indent=2))
 

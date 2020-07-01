@@ -918,6 +918,10 @@ class Model(object):
                     instance.v = func(**kwargs)
                 else:
                     instance.v = np.array(func)
+
+                # convert to an array if the return of lambda function is a scalar
+                if isinstance(instance.v, (int, float)):
+                    instance.v = np.ones(self.n) * instance.v
         # NOTE:
         # Some numerical calls depend on other service values.
         # They are evaluated after lambdified calls

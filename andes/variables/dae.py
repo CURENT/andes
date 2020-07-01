@@ -214,13 +214,17 @@ class DAE(object):
         """
         Reset array sizes to zero and clear all arrays.
         """
-        self.t = 0
+        self.set_t(0.0)
         self.m = 0
         self.n = 0
         self.o = 0
         self.resize_arrays()
         self.clear_ijv()
         self.clear_ts()
+
+    def set_t(self, t):
+        """Helper function for setting time in-place"""
+        self.t.itemset(t)
 
     def get_size(self, name):
         """
