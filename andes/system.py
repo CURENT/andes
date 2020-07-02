@@ -1159,6 +1159,7 @@ class System(object):
             out.extend(instance.get_times())
 
         out = np.ravel(np.array(out))
+        out = np.append(out, out - 1e-4)
         out = np.append(out, out + 1e-4)
         out = np.unique(out)
         out = out[np.where(out >= 0)]

@@ -662,3 +662,13 @@ class TDS(BaseRoutine):
             self.callpert = getattr(module, 'pert')
             logger.info(f'Perturbation file <{system.files.pert}> loaded.')
             return True
+
+    def _fg_wrapper(self, xy):
+        system = self.system
+        system.dae.x[:] = xy[:system.dae.n]
+        system.dae.y[:] = xy[system.dae.n:]
+        system.vars_to_models()
+
+        self._fg_update(system.exist.pflow_tds)
+
+        return system.dae.fg
