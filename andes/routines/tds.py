@@ -544,7 +544,7 @@ class TDS(BaseRoutine):
 
         if self.h < self.deltatmin:
             self.h = 0
-            self.err_msg = f"Time step reduced to zero. Convergence not likely."
+            self.err_msg = "Time step reduced to zero. Convergence not likely."
             self.busted = True
 
         return self.h
