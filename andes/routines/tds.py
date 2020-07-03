@@ -195,11 +195,7 @@ class TDS(BaseRoutine):
                                   )
                 # check if the next step is critical time
                 self.do_switch()
-
-                if self.calc_h() == 0:
-                    logger.error('Time step to zero...')
-                    break
-
+                self.calc_h()
                 dae.t += self.h
 
                 # show progress in percentage
@@ -207,6 +203,9 @@ class TDS(BaseRoutine):
                 if perc >= self.next_pc:
                     self.pbar.update(1)
                     self.next_pc += 1
+            else:
+                if self.calc_h() == 0:
+                    break
 
         self.pbar.close()
         delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
@@ -532,10 +531,6 @@ class TDS(BaseRoutine):
                     self.deltat = min(config.tstep, self.deltat)
             else:
                 self.deltat *= 0.9
-                if self.deltat < self.deltatmin:
-                    self.deltat = 0
-                    self.err_msg = "Time step reduced to zero. Convergence not likely."
-                    self.busted = True
 
         # last step size
         if system.dae.t + self.deltat > config.tf:
@@ -546,6 +541,12 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
+
+        if self.h < self.deltatmin:
+            self.h = 0
+            self.err_msg = f"Time step reduced to zero. Convergence not likely."
+            self.busted = True
+
         return self.h
 
     def _calc_h_first(self):
