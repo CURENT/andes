@@ -531,21 +531,21 @@ class TDS(BaseRoutine):
                     self.deltat = min(config.tstep, self.deltat)
             else:
                 self.deltat *= 0.9
+                if self.deltat < self.deltatmin:
+                    self.deltat = 0
+                    self.err_msg = "Time step reduced to zero. Convergence not likely."
+                    self.busted = True
 
         # last step size
         if system.dae.t + self.deltat > config.tf:
             self.deltat = config.tf - system.dae.t
 
         self.h = self.deltat
+
         # do not skip event switch_times
         if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
-
-        if self.h < self.deltatmin:
-            self.h = 0
-            self.err_msg = "Time step reduced to zero. Convergence not likely."
-            self.busted = True
 
         return self.h
 

@@ -280,8 +280,6 @@ class NumParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
-                 Sn: str = 'Sn',
-                 Vn: str = 'Vn',
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -314,8 +312,6 @@ class NumParam(BaseParam):
                              dc_current=dc_current,
                              dc_voltage=dc_voltage)
 
-        self.Sn = Sn
-        self.Vn = Vn
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
         self.vrange = vrange

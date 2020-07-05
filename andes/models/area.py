@@ -1,4 +1,4 @@
-from andes.core.param import ExtParam
+from andes.core.param import ExtParam, NumParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
 from andes.core.service import NumReduce, NumRepeat, BackRef
@@ -50,3 +50,22 @@ class Area(AreaData, Model):
             return Tab(header=header, data=rows).draw()
         else:
             return ''
+
+
+class ACEData(ModelData):
+    """
+    Area Control Error data
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.bias = NumParam(default=1.0, info='Bias parameter', )
+
+
+class ACE(ACEData, Model):
+    """
+    Area Control Error
+    """
+
+    def __init__(self, system, config):
+        pass
