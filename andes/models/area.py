@@ -1,9 +1,10 @@
-from andes.core.param import ExtParam, NumParam
+from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
-from andes.core.service import NumReduce, NumRepeat, BackRef
+from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
 from andes.shared import np
 from andes.utils.tab import Tab
+from collections import OrderedDict
 
 
 class AreaData(ModelData):
@@ -58,14 +59,44 @@ class ACEData(ModelData):
     """
 
     def __init__(self):
-        super().__init__()
-        self.bias = NumParam(default=1.0, info='Bias parameter', )
+        ModelData.__init__(self)
+        self.bus = IdxParam(model='Bus', info="bus idx for freq. measurement", mandatory=True)
+        self.bias = NumParam(default=1.0, info='bias parameter', tex_name=r'\beta',
+                             unit='MW/0.1Hz', power=True)
+        self.tcycle = NumParam(default=4.0, info='Update cycle', tex_name='t_{cycle}')
+        # TODO: do not skip time in the update cycle.
+
+        self.busf = IdxParam(info='Optional BusFreq idx', model='BusFreq',
+                             default=None)
 
 
 class ACE(ACEData, Model):
     """
-    Area Control Error
+    Area Control Error model.
+
+    Note: area idx is automatically retrieved from `bus`.
     """
 
     def __init__(self, system, config):
-        pass
+        ACEData.__init__(self)
+        Model.__init__(self, system, config)
+
+        self.flags.tds = True
+
+        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
+        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+
+        self.area = ExtParam(model='Bus', src='area', indexer=self.bus, export=False)
+
+        self.busf.model = self.config.freq_model
+        self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus')
+
+        self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq,
+                          export=False, info='Bus frequency',
+                          )
+
+        self.ace = Algeb(info='area control error', unit='MW (p.u.)',
+                         tex_name='ace',
+                         e_str='10 * bias * (f - 1) - ace',
+                         )
