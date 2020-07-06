@@ -38,12 +38,13 @@ def write(system, outfile, skip_empty=True, overwrite=None, **kwargs):
         return False
 
     with open(outfile, 'w') as writer:
-        _write_system(system, writer, skip_empty)
-    logger.info(f'JSON file written to "{outfile}"')
+        writer.write(_dump_system(system, writer, skip_empty))
+        logger.info(f'JSON file written to "{outfile}"')
+
     return True
 
 
-def _write_system(system, writer, skip_empty, orient='records'):
+def _dump_system(system, writer, skip_empty, orient='records'):
     """
     Write system to JSON output.
     """
@@ -53,9 +54,7 @@ def _write_system(system, writer, skip_empty, orient='records'):
             continue
         out[name] = instance.cache.df_in.to_dict(orient=orient)
 
-    writer.write(json.dumps(out, indent=2))
-
-    return writer
+    return json.dumps(out, indent=2)
 
 
 def read(system, infile):

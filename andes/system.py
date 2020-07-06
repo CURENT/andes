@@ -104,6 +104,10 @@ class System(object):
                                      ('ipadd', 1),
                                      ('warn_limits', 1),
                                      ('warn_abnormal', 1),
+                                     ('dime_enabled', 0),
+                                     ('dime_name', 'andes'),
+                                     ('dime_protocol', 'ipc'),
+                                     ('dime_address', '/tmp/dime2')
                                      )))
 
         self.config.add_extra("_help",
@@ -1328,3 +1332,23 @@ class System(object):
                   )
 
         return tab.draw()
+
+    def as_dict(self, vin=False, skip_empty=True):
+        """
+        Return system data as a dict where the keys are model names
+        and values are dicts. Each dict has parameter names as keys
+        and corresponding data in an array as values.
+
+        Returns
+        -------
+        OrderedDict
+
+        """
+        out = OrderedDict()
+
+        for name, instance in self.models.items():
+            if skip_empty and instance.n == 0:
+                continue
+            out[name] = instance.as_dict(vin=vin)
+
+        return out
