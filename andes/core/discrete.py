@@ -1,5 +1,7 @@
 import logging
 from typing import Optional, Union, Tuple, List
+
+from andes.core.common import dummify  # NOQA
 from andes.shared import np
 from andes.utils.tab import Tab
 from andes.utils.func import interp_n2
@@ -620,7 +622,10 @@ class Delay(Discrete):
     """
     Delay class to memorize past variable values.
 
-    TODO: Add documentation.
+    Delay allows to impose a predefined "delay" (in either steps or seconds)
+    for an input variable. The amount of delay is a scalar and has to be fixed
+    at model definition for now.
+
     """
 
     def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
@@ -739,3 +744,22 @@ class Derivative(Delay):
         else:
             self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
             self.v[np.where(self.v < 1e-8)] = 0
+
+
+class Sampling(Discrete):
+    """
+    Sample from input based on a given interval.
+    """
+    def __init__(self, u, period=1.0, offset=0.0, name=None, tex_name=None, info=None):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self.period = dummify(period)
+        self.offset = dummify(offset)
+
+        self.export_flags = ['v']
+        self.export_flags_tex = ['v']
+
+    def check_var(self, dae_t, *args, **kwargs):
+        rem = np.mod((dae_t - self.offset.v), self.period.v)
+        do_sample = np.is_close(rem, 0.0)  # NOQA
+        # TODO: continue from here

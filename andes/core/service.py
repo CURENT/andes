@@ -862,8 +862,8 @@ class FlagNotNone(BaseService):
 
     Warnings
     --------
-    FlagNotNone can only be applied to BaseParam with `cache=True`.
-    Applying to Service will fail until cache is False (at a performance cost).
+    `FlagNotNone` can only be applied to `BaseParam` with `cache=True`.
+    Applying to `Service` will fail unless `cache` is False (at a performance cost).
     """
 
     def __init__(self: BaseParam, indexer, to_flag=None, name=None, tex_name=None, info=None, cache=True):
