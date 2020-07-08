@@ -54,6 +54,7 @@ def create_parser():
                      action='store_true')
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
     run.add_argument('--shell', action='store_true', help='Start in IPython shell')
+    run.add_argument('--no-preamble', action='store_true', help='Hide preamble')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '
@@ -151,7 +152,11 @@ def main():
 
     module = importlib.import_module('andes.main')
 
-    if args.command not in ('plot', 'doc'):
+    if args.command in ('plot', 'doc'):
+        pass
+    elif args.command == 'run' and args.no_preamble is True:
+        pass
+    else:
         preamble()
 
     if args.command is None:
