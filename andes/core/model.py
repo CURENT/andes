@@ -872,33 +872,23 @@ class Model(object):
         None
         """
         for instance in self.discrete.values():
-            instance.check_var(dae_t)
+            if instance.has_check_var:
+                instance.check_var(dae_t)
 
     def l_check_eq(self):
         """
         Call the ``check_eq`` method of discrete components to update equation-dependent flags.
 
         This function should be called after equation updates.
+        AntiWindup limiters use it to append pegged states to the ``x_set`` list.
 
         Returns
         -------
         None
         """
         for instance in self.discrete.values():
-            instance.check_eq()
-
-    def l_set_eq(self):
-        """
-        Call the ``set_eq`` method of discrete components.
-
-        This function is only used by AntiWindup to append the pegged states to the ``x_set`` list.
-
-        Returns
-        -------
-        None
-        """
-        for instance in self.discrete.values():
-            instance.set_eq()
+            if instance.has_check_eq:
+                instance.check_eq()
 
     def s_update(self):
         """

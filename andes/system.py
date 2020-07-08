@@ -631,13 +631,12 @@ class System(object):
 
     def l_update_eq(self, models:  OrderedDict):
         """
-        First, update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
-        Second, force set equations after evaluating equations by calling ``l_set_eq`` of models.
+        Update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
+        Force set equations after evaluating equations.
 
         This function is must be called after differential equation updates.
         """
         self.call_models('l_check_eq', models)
-        self.call_models('l_set_eq', models)
 
     def s_update_var(self, models: OrderedDict):
         """
@@ -663,8 +662,7 @@ class System(object):
         Additionally, the function resets the differential equations associated with variables pegged by
         anti-windup limiters.
         """
-        self._e_to_dae('f')
-        self._e_to_dae('g')
+        self._e_to_dae(('f', 'g'))
 
         # update variable values set by anti-windup limiters
         for item in self.antiwindups:
@@ -824,19 +822,23 @@ class System(object):
             if var.n > 0:
                 np.put(self.dae.__dict__[v_code], var.a, var.v)
 
-    def _e_to_dae(self, eq_name: str):
+    def _e_to_dae(self, eq_name: Union[str, Tuple] = ('f', 'g')):
         """
         Helper function for collecting equation values into `System.dae.f` and `System.dae.g`.
 
         Parameters
         ----------
-        eq_name : 'x' or 'y'
+        eq_name : 'x' or 'y' or tuple
             Equation type name
         """
-        for var in self._adders[eq_name]:
-            np.add.at(self.dae.__dict__[eq_name], var.a, var.e)
-        for var in self._setters[eq_name]:
-            np.put(self.dae.__dict__[eq_name], var.a, var.e)
+        if isinstance(eq_name, str):
+            eq_name = [eq_name]
+
+        for name in eq_name:
+            for var in self._adders[name]:
+                np.add.at(self.dae.__dict__[name], var.a, var.e)
+            for var in self._setters[name]:
+                np.put(self.dae.__dict__[name], var.a, var.e)
 
     def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """

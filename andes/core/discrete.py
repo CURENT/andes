@@ -25,7 +25,10 @@ class Discrete(object):
         self.export_flags_tex = []
         self.x_set = list()
         self.y_set = list()  # NOT being used
-        self.warn_flags = []  # flags in `warn_flags` not initialized to zero will be warned
+        self.warn_flags = []  # flags in `warn_flags` that are not initialized to zero will be warned
+
+        self.has_check_var = False
+        self.has_check_eq = False
 
     def check_var(self, *args, **kwargs):
         """
@@ -39,15 +42,7 @@ class Discrete(object):
         """
         This function is called in ``l_check_eq`` after updating equations.
 
-        It should update internal flags only.
-        """
-        pass
-
-    def set_eq(self):
-        """
-        This function is used exclusively by AntiWindup for appending equations and values to ``x_set``.
-
-        It is called after ``check_eq``.
+        It updates internal flags, set differential equations, and record pegged variables.
         """
         pass
 
@@ -145,6 +140,8 @@ class LessThan(Discrete):
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
+        self.has_check_var = True
+
     def check_var(self, *args, **kwargs):
         """
         If enabled, set flags based on inputs. Use cached values if enabled.
@@ -214,6 +211,8 @@ class Limiter(Discrete):
 
         self.export_flags = ['zi']
         self.export_flags_tex = ['z_i']
+
+        self.has_check_var = True
 
         if not self.no_lower:
             self.export_flags.append('zl')
@@ -305,6 +304,9 @@ class AntiWindup(Limiter):
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
+        self.has_check_var = False
+        self.has_check_eq = True
+
     def check_var(self, *args, **kwargs):
         """
         This function is empty. Defers `check_var` to `check_eq`.
@@ -314,15 +316,6 @@ class AntiWindup(Limiter):
     def check_eq(self):
         """
         Check the variables and equations and set the limiter flags.
-        """
-        self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
-                                    np.greater_equal(self.state.e, 0))
-        self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
-                                    np.less_equal(self.state.e, 0))
-        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
-
-    def set_eq(self):
-        """
         Reset differential equation values based on limiter flags.
 
         Notes
@@ -330,6 +323,11 @@ class AntiWindup(Limiter):
         The current implementation reallocates memory for `self.x_set` in each call.
         Consider improving for speed. (TODO)
         """
+        self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
+                                    np.greater_equal(self.state.e, 0))
+        self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
+                                    np.less_equal(self.state.e, 0))
+        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
         # must flush the `x_set` list at the beginning
         self.x_set = list()
@@ -346,6 +344,18 @@ class AntiWindup(Limiter):
         # Equation values set in `self.state.e` is collected by `System._e_to_dae`, while
         # variable values are collected by the separate loop in `System.fg_to_dae`.
         # Also, equation values are processed in `TDS` for resetting the `q`.
+
+
+class RateLimiter(Discrete):
+    """
+    Rate limiter for a differential variable.
+    """
+    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.has_check_eq = True
+
+    def check_eq(self):
+        pass
 
 
 class Selector(Discrete):
@@ -407,6 +417,8 @@ class Selector(Discrete):
 
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
+
+        self.has_check_var = True
 
     def check_var(self, *args, **kwargs):
         """
@@ -477,6 +489,8 @@ class Switcher(Discrete):
 
         self.export_flags = [f's{i}' for i in range(len(options))]
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
+
+        self.has_check_var = True
 
     def check_var(self, *args, **kwargs):
         """
@@ -581,6 +595,8 @@ class DeadBand(Limiter):
         self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
         self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
 
+        self.has_check_var = True
+
     def check_var(self, *args, **kwargs):
         """
         Notes
@@ -644,6 +660,8 @@ class Delay(Discrete):
         self.v = np.array([0])
         self._v_mem = np.zeros((0, 1))
         self.rewind = False
+
+        self.has_check_var = True
 
     def list2array(self, n):
         """
