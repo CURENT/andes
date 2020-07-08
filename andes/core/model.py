@@ -1041,17 +1041,11 @@ class Model(object):
                 instance.j_numeric()
                 self.triplets.merge(instance.triplets)
 
-        var_names_list = list(self.cache.all_vars.keys())
-        eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
-                    'g': var_names_list[len(self.cache.states_and_ext):]}
+        # for all combinations of Jacobian names (fx, fxc, gx, gxc, etc.)
+        for j_name in jac_full_names:
+            for idx, val in enumerate(self.calls.vjac[j_name]):
 
-        # prepare all combinations of Jacobian names (fx, fxc, gx, gxc, etc.)
-
-        for j_full_name in jac_full_names:
-            for row, col, val in self.calls.zip_ijv(j_full_name):
-                row_name = eq_names[j_full_name[0]][row]  # where jname[0] is the equation name (f, g, r, t)
-                col_name = var_names_list[col]
-
+                row_name, col_name = self._jac_eq_var_name(j_name, idx)
                 row_idx = self.__dict__[row_name].a
                 col_idx = self.__dict__[col_name].a
 
@@ -1060,11 +1054,37 @@ class Model(object):
                     logger.error(f'col {col_name}, col_idx: {col_idx}')
                     raise ValueError(f'{self.class_name}: non-matching row_idx and col_idx')
 
-                if j_full_name[-1] == 'c':
-                    value = val * np.ones(self.n)
+                # Note:
+                # n_elem: number of elements in the equation or variable
+                # It does not necessarily equal to the number of devices of the model
+                # For example, `COI.omega_sub.n` depends on the number of generators linked to the COI
+                # and is likely different from `COI.n`
+
+                n_elem = self.__dict__[row_name].n
+
+                if j_name[-1] == 'c':
+                    value = val * np.ones(n_elem)
                 else:
-                    value = np.zeros(self.n)
-                self.triplets.append_ijv(j_full_name, row_idx, col_idx, value)
+                    value = np.zeros(n_elem)
+
+                self.triplets.append_ijv(j_name, row_idx, col_idx, value)
+
+    def _jac_eq_var_name(self, j_name, idx):
+        """
+        Get the equation and variable name for a Jacobian type based on the absolute index.
+        """
+        var_names_list = list(self.cache.all_vars.keys())
+
+        eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
+                    'g': var_names_list[len(self.cache.states_and_ext):]}
+
+        row = self.calls.ijac[j_name][idx]
+        col = self.calls.jjac[j_name][idx]
+
+        row_name = eq_names[j_name[0]][row]  # where jname[0] is the equation name (f, g, r, t)
+        col_name = var_names_list[col]
+
+        return row_name, col_name
 
     def init(self):
         """
@@ -1191,8 +1211,13 @@ class Model(object):
         kwargs = self.get_inputs()
         for name in jac_set:
             for idx, fun in enumerate(self.calls.vjac[name]):
-                # TODO: in-place assignment will fail for COI.
-                self.triplets.vjac[name][idx] = fun(**kwargs)
+                try:
+                    self.triplets.vjac[name][idx][:] = fun(**kwargs)
+                except ValueError as e:
+                    row_name, col_name = self._jac_eq_var_name(name, idx)
+                    logger.error(f'{name} shape error: j_idx={idx}, d{row_name} / d{col_name}')
+
+                    raise e
 
     def get_times(self):
         """

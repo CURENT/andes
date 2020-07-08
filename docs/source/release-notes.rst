@@ -7,6 +7,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 Since v1.0.0
 ------------
 
+v1.0.7
+```````````````````
+- Use in-place assignment when updating Jacobian values in Triplets.
+
+
 v1.0.6 (2020-07-08)
 ```````````````````
 - Patched step size adjustment algorithm.
