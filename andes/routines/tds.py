@@ -342,6 +342,7 @@ class TDS(BaseRoutine):
             for item in system.antiwindups:
                 for key, val in item.x_set:
                     np.put(self.qg, key, 0)
+            # TODO: reset the q elements for rate limiters
 
             self.qg[dae.n:] = dae.g
 

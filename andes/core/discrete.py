@@ -352,10 +352,19 @@ class RateLimiter(Discrete):
     """
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+
+        self.enable = enable
         self.has_check_eq = True
 
     def check_eq(self):
-        pass
+        if not self.enable:
+            return
+
+        self.u.v[np.where(self.u.v < self.lower.v)] = self.lower.v
+        self.u.v[np.where(self.u.v > self.upper.v)] = self.upper.v
 
 
 class Selector(Discrete):
