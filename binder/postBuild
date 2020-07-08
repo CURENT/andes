@@ -7,3 +7,5 @@ cd /tmp/cvxopt
 pip install --global-option=build_ext --global-option="-I/srv/conda/envs/notebook/include" .
 
 rm -rf /tmp/cvxopt
+
+andes prepare
