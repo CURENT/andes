@@ -8,4 +8,4 @@ pip install --global-option=build_ext --global-option="-I/srv/conda/envs/noteboo
 
 rm -rf /tmp/cvxopt
 
-python -c "import andes; andes.System().prepare()"
+# python -c "import andes; andes.System().prepare()"
