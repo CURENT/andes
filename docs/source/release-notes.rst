@@ -7,6 +7,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 Since v1.0.0
 ------------
 
+v1.0.6 (2020-07-08)
+```````````````````
+- Patched step size adjustment algorithm.
+- Added Area Control Error (ACE) model.
+
 v1.0.5 (2020-07-02)
 ```````````````````
 - Minor bug fixes for service initialization.
