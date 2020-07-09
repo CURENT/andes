@@ -667,7 +667,7 @@ class System(object):
         # update variable values set by anti-windup limiters
         for item in self.antiwindups:
             if len(item.x_set) > 0:
-                for key, val in item.x_set:
+                for key, val, _ in item.x_set:
                     np.put(self.dae.x, key, val)
 
     def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):

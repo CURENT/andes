@@ -336,7 +336,8 @@ class AntiWindup(Limiter):
             idx = np.where(self.zi == 0)
             self.state.e[:] = self.state.e * self.zi
             self.state.v[:] = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
-            self.x_set.append((self.state.a[idx], self.state.v[idx]))
+            self.x_set.append((self.state.a[idx], self.state.v[idx], 0))  # (address, var. values, eqn. values)
+
             # logger.debug(f'AntiWindup for states {self.state.a[idx]}')
 
         # Very important note:

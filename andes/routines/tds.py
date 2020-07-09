@@ -328,8 +328,8 @@ class TDS(BaseRoutine):
                 system.j_update(models=system.exist.pflow_tds)
                 self.solver.factorize = True
 
-            # TODO: set the `Tf` corresponding to the pegged anti-windup limiters to zero.
-            # Although this should not affect anything since corr. mismatches in `self.qg` are reset to zero
+            # `Tf` should remain constant throughout the simulation, even if the corresponding diff. var.
+            # is pegged by the anti-windup limiters.
 
             # solve implicit trapezoidal method (ITM) integration
             self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
@@ -340,9 +340,8 @@ class TDS(BaseRoutine):
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
-                for key, val in item.x_set:
-                    np.put(self.qg, key, 0)
-            # TODO: reset the q elements for rate limiters
+                for key, _, eqval in item.x_set:
+                    np.put(self.qg, key, eqval)
 
             self.qg[dae.n:] = dae.g
 
