@@ -350,22 +350,31 @@ class AntiWindup(Limiter):
 class RateLimiter(Discrete):
     """
     Rate limiter for a differential variable.
+
+    RateLimiter does not export any variable. It directly modifies the differential equation value.
     """
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None):
+    def __init__(self, u, lower, upper, enable=True, no_lower=False, no_upper=False,
+                 name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
 
+        self.no_lower = no_lower
+        self.no_upper = no_upper
         self.enable = enable
+
         self.has_check_eq = True
 
     def check_eq(self):
         if not self.enable:
             return
 
-        self.u.v[np.where(self.u.v < self.lower.v)] = self.lower.v
-        self.u.v[np.where(self.u.v > self.upper.v)] = self.upper.v
+        if not self.no_lower:
+            self.u.v[np.where(self.u.v < self.lower.v)] = self.lower.v
+
+        if not self.no_upper:
+            self.u.v[np.where(self.u.v > self.upper.v)] = self.upper.v
 
 
 class Selector(Discrete):
