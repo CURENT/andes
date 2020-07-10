@@ -32,7 +32,7 @@ class BaseService(object):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
-        self.vtype = vtype if vtype is not None else np.float  # type for `v`. NOT IN USE.
+        self.vtype = vtype if vtype is not None else np.float  # type for `v`
         self.owner = None
 
     def get_names(self):

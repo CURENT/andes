@@ -110,6 +110,8 @@ class PMU(PMUData, Model):
         PMUData.__init__(self)
         Model.__init__(self, system, config)
 
+        self.flags.tds = True
+
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
