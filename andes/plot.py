@@ -455,7 +455,8 @@ class TDSData(object):
 
         if not line_styles:
             line_styles = ['-', '--', '-.', ':']
-        line_styles = line_styles * int(len(ydata) / len(line_styles) + 1)
+
+        line_styles = line_styles * int(n_lines / len(line_styles) + 1)
 
         hold = True
         if not (fig and ax):
