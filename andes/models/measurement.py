@@ -111,6 +111,7 @@ class PMU(PMUData, Model):
         Model.__init__(self, system, config)
 
         self.flags.tds = True
+        self.group = 'PhasorMeasurement'
 
         self.a = ExtAlgeb(model='Bus',
                           src='a',

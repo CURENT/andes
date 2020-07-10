@@ -82,6 +82,7 @@ class ACE(ACEData, Model):
         Model.__init__(self, system, config)
 
         self.flags.tds = True
+        self.group = 'Calculation'
 
         self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
         self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
