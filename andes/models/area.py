@@ -1,6 +1,6 @@
 from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
-from andes.core.var import ExtAlgeb, Algeb  # NOQA
+from andes.core.var import ExtAlgeb, Algeb
 from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
 from andes.core.discrete import Sampling
 from andes.shared import np
@@ -18,8 +18,8 @@ class Area(AreaData, Model):
         AreaData.__init__(self)
         Model.__init__(self, system, config)
         self.group = 'Collection'
-        self.flags.update({'pflow': True,
-                           'tds': True})
+        self.flags.pflow = True
+        self.flags.tds = True
 
         self.Bus = BackRef()
         self.ACTopology = BackRef()
