@@ -474,17 +474,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         Other supported keyword arguments
     cli : bool, optional
         If is running from command-line. If True, returns exit code instead of System
-
-    return_code : bool, optional
-        Return exit code instead of system instances
     codegen : bool, optional
         Run full code generation for System before loading case.
         Only used for single test case.
+    shell : bool, optional
+        If True, enter IPython shell after routine.
 
     Returns
     -------
-    System
-        An instance
+    System or exit_code
+        An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
 
