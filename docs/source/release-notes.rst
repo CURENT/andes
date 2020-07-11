@@ -10,7 +10,7 @@ Since v1.0.0
 v1.0.7
 ```````````````````
 - Use in-place assignment when updating Jacobian values in Triplets.
-
+- New models: PMU.
 
 v1.0.6 (2020-07-08)
 ```````````````````

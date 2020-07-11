@@ -385,3 +385,10 @@ class FreqMeasurement(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('f', ))
+
+
+class PhasorMeasurement(GroupBase):
+    """Phasor measurements"""
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('am', 'vm'))

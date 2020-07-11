@@ -172,14 +172,18 @@ class EXDC2Data(ExcBaseData):
                             default=0.0,
                             unit='p.u.',
                             )
+        # the defaults for `E2` and `SE2` has been changed to 1
+        # so that when E1=SE1=0, E2=SE2=1, saturation is disabled.
+        # This will be patched later to allow all to be 0
+
         self.E2 = NumParam(info='Second saturation point',
                            tex_name='E_2',
-                           default=0.0,
+                           default=1.0,
                            unit='p.u.',
                            )
         self.SE2 = NumParam(info='Value at second saturation point',
                             tex_name='S_{E2}',
-                            default=0.0,
+                            default=1.0,
                             unit='p.u.',
                             )
 
