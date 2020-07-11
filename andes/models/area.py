@@ -2,6 +2,7 @@ from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb  # NOQA
 from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
+from andes.core.discrete import Sampling
 from andes.shared import np
 from andes.utils.tab import Tab
 from collections import OrderedDict
@@ -63,8 +64,6 @@ class ACEData(ModelData):
         self.bus = IdxParam(model='Bus', info="bus idx for freq. measurement", mandatory=True)
         self.bias = NumParam(default=1.0, info='bias parameter', tex_name=r'\beta',
                              unit='MW/0.1Hz', power=True)
-        self.tcycle = NumParam(default=4.0, info='Update cycle', tex_name='t_{cycle}')
-        # TODO: do not skip time in the update cycle.
 
         self.busf = IdxParam(info='Optional BusFreq idx', model='BusFreq',
                              default=None)
@@ -84,8 +83,14 @@ class ACE(ACEData, Model):
         self.flags.tds = True
         self.group = 'Calculation'
 
-        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
-        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        self.config.add(OrderedDict([('freq_model', 'BusFreq'),
+                                     ('interval', 4.0),
+                                     ('offset', 0.0),
+                                     ]))
+        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model',
+                                        'interval': 'sampling time interval',
+                                        'offset': 'sampling time offset'})
+
         self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
 
         self.area = ExtParam(model='Bus', src='area', indexer=self.bus, export=False)
@@ -97,7 +102,14 @@ class ACE(ACEData, Model):
                           export=False, info='Bus frequency',
                           )
 
+        self.fs = Sampling(self.f,
+                           interval=self.config.interval,
+                           offset=self.config.offset,
+                           tex_name='f_s',
+                           info='Sampled freq.',
+                           )
+
         self.ace = Algeb(info='area control error', unit='MW (p.u.)',
                          tex_name='ace',
-                         e_str='10 * bias * (f - 1) - ace',
+                         e_str='10 * bias * (fs_v - 1) - ace',
                          )

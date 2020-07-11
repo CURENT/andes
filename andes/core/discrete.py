@@ -674,13 +674,12 @@ class Delay(Discrete):
         self.delay = delay
         self.export_flags = ['v']
         self.export_flags_tex = ['v']
+        self.has_check_var = True
 
         self.t = np.array([0])
         self.v = np.array([0])
         self._v_mem = np.zeros((0, 1))
         self.rewind = False
-
-        self.has_check_var = True
 
     def list2array(self, n):
         """
@@ -785,18 +784,72 @@ class Derivative(Delay):
 
 class Sampling(Discrete):
     """
-    Sample from input based on a given interval.
+    Sample an input variable repeatedly at a given time interval.
     """
-    def __init__(self, u, period=1.0, offset=0.0, name=None, tex_name=None, info=None):
+    def __init__(self, u, interval=1.0, offset=0.0, name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self.period = dummify(period)
-        self.offset = dummify(offset)
+        self.u = u
+        self.interval = interval
+        self.offset = offset
 
         self.export_flags = ['v']
         self.export_flags_tex = ['v']
+        self.has_check_var = True
+
+        self.v = np.array([0])
+        self._last_t = np.array([0])
+        self._last_v = np.array([0])
+        self.indices = np.array([0])
+
+        self.rewind = False
+
+    def list2array(self, n):
+        super().list2array(n)
+        self._last_v = np.zeros(n)
 
     def check_var(self, dae_t, *args, **kwargs):
-        rem = np.mod((dae_t - self.offset.v), self.period.v)
-        do_sample = np.is_close(rem, 0.0)  # NOQA
-        # TODO: continue from here
+        """
+        Check and update the output.
+
+        Notes
+        -----
+        Present output stored in `v`. Output of the last step is stored in `_last_v`.
+        Time for the last output is stored in `_last_t`.
+
+        Initially, store `v` and `_last_v`.
+
+        If time progresses and `dae_t` is a multiple of `period`, update `_last_v` and then `v`.
+        Record `_last_t`.
+
+        If time does not progress, update `v`.
+
+        If time rewinds, restore `_last_v` to `v`.
+
+        """
+        self.rewind = False
+
+        if dae_t == 0:
+            # initial step
+            self._last_v[:] = self.u.v[:]
+            self.v[:] = self.u.v[:]
+
+        elif dae_t > self._last_t:
+            do_sample = (dae_t - self.offset - self._last_t) > self.interval
+
+            if do_sample:
+                self._last_v[:] = self.v
+                self.v[:] = self.u.v
+                self._last_t[0] = dae_t
+
+        elif dae_t == self._last_t:
+            if len(self.indices) > 0:
+                self.v[:] = self.u.v
+
+        else:
+            # if dae_t < self._last_t
+            self.rewind = True
+
+            if self._last_t[0] > dae_t:
+                self.v[:] = self._last_v
+                self._last_t[0] = dae_t
