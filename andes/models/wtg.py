@@ -1,5 +1,7 @@
 from andes.core.model import Model, ModelData
-from andes.core.param import NumParam
+from andes.core.param import NumParam, IdxParam
+from andes.core.block import LagAntiWindup
+from andes.core.var import ExtAlgeb
 
 
 class REGCAU1Data(ModelData):
@@ -9,6 +11,13 @@ class REGCAU1Data(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
+        self.bus = IdxParam(model='Bus',
+                            info="interface bus id",
+                            mandatory=True,
+                            )
+        self.gen = IdxParam(info="static generator index",
+                            mandatory=True,
+                            )
         self.Tg = NumParam(default=0.1, tex_name='T_g',
                            info='converter time const.', unit='s',
                            )
@@ -65,5 +74,24 @@ class REGCAU1Model(Model):
     """
     REGCAU1 implementation.
     """
-    pass
-    # TODO: pick up from here.
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+
+        # TODO: compute `Iqcmd` and `Ipcmd` from power flow
+
+        self.v = ExtAlgeb(model='Bus',
+                          src='v',
+                          indexer=self.bus,
+                          tex_name=r'V',
+                          info='Bus voltage magnitude',
+                          )
+        # reactive power management
+
+        self.S1 = LagAntiWindup(self.Ipcmd, T=self.Tg, K=-1,
+                                lower=self.Iqmin, upper=self.Iqmax,
+                                tex_name='S_1',
+                                info='Iqcmd delay',
+                                )  # output `S1_y` == `Iq`
+
+
+
