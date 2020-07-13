@@ -1,7 +1,8 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import LagAntiWindup
-from andes.core.var import ExtAlgeb
+from andes.core.block import LagAntiWindup, Piecewise, Lag, Gain
+from andes.core.var import ExtAlgeb, Algeb
+from andes.core.service import ConstService, FlagValue
 
 
 class REGCAU1Data(ModelData):
@@ -85,13 +86,55 @@ class REGCAU1Model(Model):
                           tex_name=r'V',
                           info='Bus voltage magnitude',
                           )
+
         # reactive power management
 
-        self.S1 = LagAntiWindup(self.Ipcmd, T=self.Tg, K=-1,
+        self.S1 = LagAntiWindup(self.Iqcmd, T=self.Tg, K=-1,
                                 lower=self.Iqmin, upper=self.Iqmax,
                                 tex_name='S_1',
                                 info='Iqcmd delay',
                                 )  # output `S1_y` == `Iq`
 
+        # piece-wise gain for low voltage reactive current mgnt.
+        self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
+                                 tex_name='k_{LVG}',
+                                 )
+        # TODO: later, ensure Lvpnt1 > Lvpnt0
 
+        self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
+                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
+                             info='Low voltage current gain',
+                             )
 
+        self.Lvplsw = FlagValue(u=self.Lvpl1, value=0, flag=0, tex_name='z_{Lvplsw}',
+                                info='LVPL enable switch',
+                                )
+        # piece-wise gain for LVPL
+        self.kLVPL = ConstService(v_str='Lvplsw * Lvpl1 / (Brkpt - Zerox)',
+                                  tex_name='k_{LVPL}',
+                                  )
+        # TODO: later, ensure Brkpt > Zerox
+
+        self.S2 = Lag(u=self.v, T=self.Tfltr, K=1.0,
+                      info='Voltage filter with no anti-windup',
+                      )
+        self.LVPL = Piecewise(u=self.S2_y,
+                              points=('Zerox', 'Brkpt'),
+                              funs=('0 + 9999*(1-Lvplsw)',
+                                    '(S2_y - Zerox) * kLVPL + 9999 * (1-Lvplsw)',
+                                    '9999'),
+                              info='Low voltage Ipcmd upper limit',
+                              )
+
+        # TODO: FIXME: consider rate limit `Rrpwr`
+        self.S0 = LagAntiWindup(u=self.Ipcmd, T=self.Tg, K=1,
+                                lower=-999, upper=self.LVPL_y,
+                                )  # `S0_y` is the output `Ip` in the block diagram
+
+        self.Ipout = Algeb(e_str='S0_y * LVG_y -Ipout',
+                           v_str='Ipcmd * LVG_y',
+                           info='Output Ip current',
+                           )
+
+        # high voltage part
+        self.HVG = Gain(u='v - Volim', K=self.Khv, info='High voltage gain block')

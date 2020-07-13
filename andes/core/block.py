@@ -622,8 +622,8 @@ class LagAntiWindup(Block):
         self.T = dummify(T)
         self.K = dummify(K)
 
-        self.lower = lower
-        self.upper = upper
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
 
         self.enforce_tex_name((self.T, self.K))
 
@@ -1104,9 +1104,9 @@ class Piecewise(Block):
     """
     Piecewise block. Outputs an algebraic variable `y`.
 
-    This block takes a list of N points, [x0, x1, ...x_{n-1}] to define N+1 ranges,
+    This block takes a list of `N` points, `[x0, x1, ...x_{n-1}]` to define N+1 ranges,
     namely (-inf, x0), (x0, x1), ..., (x_{n-1}, +inf).
-    and a list of N+1 functions [fun0, ..., fun_n].
+    and a list of `N+1` function strings `[fun0, ..., fun_n]`.
 
     Inputs that fall within each range applies the corresponding function.
     The first range (-inf, x0) applies `fun_0`, and

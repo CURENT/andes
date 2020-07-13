@@ -9,6 +9,7 @@
 ## To-do list
 - [x] Improve the speed of `DAETimeSeries.unpack`.
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
+*   Vectorize the `enable` option for most discrete blocks. 
 *   allow to remind developer of missing equations (such as `vout` of Exciters).
 *   Remove `params_ext` from `params` in Model definition
 *   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.

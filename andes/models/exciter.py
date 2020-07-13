@@ -2,7 +2,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
-from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagNotNone
+from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagValue
 from andes.core.service import InitChecker, Replace  # NOQA
 from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
@@ -215,21 +215,21 @@ class ExcExpSat(Block):
         self._SE1 = SE1
         self._SE2 = SE2
 
-        self.zE1 = FlagNotNone(self._E1, to_flag=0.,
-                               info='Flag non-zeros in E1',
-                               tex_name='z^{E1}',
-                               )
-        self.zE2 = FlagNotNone(self._E2, to_flag=0.,
-                               info='Flag non-zeros in E2',
-                               tex_name='z^{E2}',
-                               )
-        self.zSE1 = FlagNotNone(self._SE1, to_flag=0.,
-                                info='Flag non-zeros in SE1',
-                                tex_name='z^{SE1}',
-                                )
-        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
-                                info='Flag non-zeros in SE2',
-                                tex_name='z^{SE2}')
+        self.zE1 = FlagValue(self._E1, value=0.,
+                             info='Flag non-zeros in E1',
+                             tex_name='z^{E1}',
+                             )
+        self.zE2 = FlagValue(self._E2, value=0.,
+                             info='Flag non-zeros in E2',
+                             tex_name='z^{E2}',
+                             )
+        self.zSE1 = FlagValue(self._SE1, value=0.,
+                              info='Flag non-zeros in SE1',
+                              tex_name='z^{SE1}',
+                              )
+        self.zSE2 = FlagValue(self._SE2, value=0.,
+                              info='Flag non-zeros in SE2',
+                              tex_name='z^{SE2}')
 
         # disallow E1 = E2 != 0 since the curve fitting will fail
         self.E12c = InitChecker(
@@ -333,9 +333,9 @@ class ExcQuadSat(Block):
         self._SE1 = SE1
         self._SE2 = SE2
 
-        self.zSE2 = FlagNotNone(self._SE2, to_flag=0.,
-                                info='Flag non-zeros in SE2',
-                                tex_name='z^{SE2}')
+        self.zSE2 = FlagValue(self._SE2, value=0.,
+                              info='Flag non-zeros in SE2',
+                              tex_name='z^{SE2}')
 
         # data correction for E1, E2, SE1 (TODO)
         self.E1 = ConstService(
@@ -1077,9 +1077,9 @@ class ESDC2AModel(ExcBase):
         ExcBase.__init__(self, system, config)
 
         # Set VRMAX to 999 when VRMAX = 0
-        self._zVRM = FlagNotNone(self.VRMAX, to_flag=0,
-                                 tex_name='z_{VRMAX}',
-                                 )
+        self._zVRM = FlagValue(self.VRMAX, value=0,
+                               tex_name='z_{VRMAX}',
+                               )
         self.VRMAXc = ConstService(v_str='VRMAX + 999*(1-_zVRM)',
                                    info='Set VRMAX=999 when zero',
                                    )

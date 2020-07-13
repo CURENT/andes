@@ -1,7 +1,7 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
-from andes.core.service import ConstService, ExtService, NumSelect, FlagNotNone, ParamCalc, InitChecker
+from andes.core.service import ConstService, ExtService, NumSelect, FlagValue, ParamCalc, InitChecker
 from andes.core.service import PostInitService
 from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
@@ -512,10 +512,11 @@ class IEEEG1Model(TGBase):
                             info='Turbine or Gen rating',
                             )
 
-        self.zsyn2 = FlagNotNone(self.syn2,
-                                 tex_name='z_{syn2}',
-                                 info='Exist flags for syn2',
-                                 )
+        self.zsyn2 = FlagValue(self.syn2,
+                               value=None,
+                               tex_name='z_{syn2}',
+                               info='Exist flags for syn2',
+                               )
 
         self.tm02 = ExtService(src='tm',
                                model='SynGen',

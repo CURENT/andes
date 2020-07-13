@@ -14,10 +14,10 @@ class TestFlagNotNone(unittest.TestCase):
         self.array.v = np.array(self.list.v)
 
     def test_flag_not_none(self):
-        self.fn = andes.core.service.FlagNotNone(self.list)
+        self.fn = andes.core.service.FlagValue(self.list, value=None)
         np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 0, 1, 1]))
 
-        self.fn = andes.core.service.FlagNotNone(self.array)
+        self.fn = andes.core.service.FlagValue(self.array, value=None)
         np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 0, 1, 1]))
 
 

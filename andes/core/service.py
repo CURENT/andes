@@ -856,9 +856,21 @@ class InitChecker(OperationService):
         self.v[:] = np.logical_not(self.v)
 
 
-class FlagNotNone(BaseService):
+class FlagValue(BaseService):
     """
-    Class for flagging non-None indices as 1 and None indices as 0 in a numpy array.
+    Class for flagging values that equal to the given value.
+
+    By default, values that equal to `value` will be flagged as `0`.
+    Non-matching values will be flagged as `1`.
+
+    Parameters
+    ----------
+    u
+        Input parameter
+    value
+        Value to flag. Can be None, string, or a number.
+    flag : 0 by default, only 0 or 1 is accepted.
+        The flag for the matched ones
 
     Warnings
     --------
@@ -866,23 +878,30 @@ class FlagNotNone(BaseService):
     Applying to `Service` will fail unless `cache` is False (at a performance cost).
     """
 
-    def __init__(self: BaseParam, indexer, to_flag=None, name=None, tex_name=None, info=None, cache=True):
+    def __init__(self, u, value, flag=0, name=None, tex_name=None, info=None, cache=True):
         BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        if flag != 0.0 and flag != 1.0:
+            raise ValueError(f"flag must be 0 or 1. The given flag = {flag}.")
+
+        self.u = u
+        self.value = value
+        self.flag = flag
+        self.flag_neg = 1 - flag
         self.cache = cache
-        self.to_flag = to_flag
-        self.indexer = indexer
+
         self._v = None
 
     @property
     def v(self):
         new = False
         if self._v is None:
-            self._v = np.zeros_like(self.indexer.v, dtype=float)
+            self._v = np.zeros_like(self.u.v, dtype=float)
             new = True
 
         if not self.cache or new:
-            self._v[:] = np.array([0 if i == self.to_flag else 1
-                                   for i in self.indexer.v])
+            # need to do it element-wise since `self.u.v` can be a list
+            self._v[:] = np.array([self.flag if i == self.value else self.flag_neg
+                                   for i in self.u.v])
         return self._v
 
 

@@ -8,7 +8,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.service import InitChecker, FlagNotNone
+from andes.core.service import InitChecker, FlagValue
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -387,7 +387,7 @@ class GENROUModel(object):
                                 tex_name=r"\gamma_{qd}")
 
         # correct S12 to 1.0 if is zero
-        self._fS12 = FlagNotNone(self.S12, to_flag=0)
+        self._fS12 = FlagValue(self.S12, value=0)
         self._S12 = ConstService(v_str='S12 + (1-_fS12)',
                                  info='Corrected S12',
                                  tex_name='S_{1.2}'
