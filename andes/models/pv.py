@@ -73,8 +73,13 @@ class PVModel(Model):
         self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=1e-6)
         self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=1e-6)
 
+        # NOTE:
+        # PV to PQ conversion uses a simple logic which converts a number of `npv2pq` PVs
+        # with the largest violation to PQ, starting from the first iteration.
+        # Manual tweaking of `npv2pq` may be needed for cases to converge.
+
         # TODO: implement switching starting from the second iteration
-        # NOTE: TODO: PV to PQ conversion might not be fully working
+
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
                                   enable=self.config.pv2pq,
                                   n_select=self.config.npv2pq)
