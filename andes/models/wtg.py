@@ -59,3 +59,11 @@ class REGCAU1Data(ModelData):
                               info='Acceleration factor',
                               vrange=(0, 1.0),
                               )
+
+
+class REGCAU1Model(Model):
+    """
+    REGCAU1 implementation.
+    """
+    pass
+    # TODO: pick up from here.
