@@ -1,7 +1,7 @@
 from typing import Optional, Iterable, Union, List, Tuple
 
 from andes.core.var import Algeb, State
-from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter
+from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter, AntiWindupRate
 from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
 from collections import OrderedDict
@@ -631,6 +631,76 @@ class LagAntiWindup(Block):
                        t_const=self.T)
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
                               info='Limiter in Lag')
+
+        self.vars = {'y': self.y, 'lim': self.lim}
+
+    def define(self):
+        r"""
+
+        Notes
+        -----
+        Equations and initial values are
+
+        .. math ::
+
+            T \dot{y} &= (Ku - y) \\
+            y^{(0)} &= K u
+
+        """
+        self.y.v_str = f'{self.u.name} * {self.K.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+
+
+class LagAntiWindupRate(Block):
+    r"""
+    Lag (low pass filter) transfer function block with a rate limiter and an anti-windup limiter. ::
+
+                     upper && rate_upper
+                   /¯¯¯¯¯¯
+             ┌────────┐
+             │    K   │
+        u -> │ ────── │ -> y
+             │ 1 + sT │
+             └────────┘
+           ______/
+           lower & rate_lower
+
+    Exports one state variable `y` as the output and one AntiWindupRate instance `lim`.
+
+    Parameters
+    ----------
+    K
+        Gain
+    T
+        Time constant
+    u
+        Input variable
+
+    """
+
+    def __init__(self, u, T, K,
+                 lower, upper, rate_lower, rate_upper,
+                 no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
+                 rate_lower_cond=None, rate_upper_cond=None,
+                 name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.u = dummify(u)
+        self.T = dummify(T)
+        self.K = dummify(K)
+
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+
+        self.enforce_tex_name((self.T, self.K))
+
+        self.y = State(info='State in lag TF', tex_name="y",
+                       t_const=self.T)
+        self.lim = AntiWindupRate(u=self.y, lower=self.lower, upper=self.upper,
+                                  rate_lower=rate_lower, rate_upper=rate_upper,
+                                  no_lower=no_lower, no_upper=no_upper,
+                                  rate_no_lower=rate_no_lower, rate_no_upper=rate_no_upper,
+                                  rate_lower_cond=rate_lower_cond, rate_upper_cond=rate_upper_cond,
+                                  tex_name='lim', info='Limiter in Lag')
 
         self.vars = {'y': self.y, 'lim': self.lim}
 

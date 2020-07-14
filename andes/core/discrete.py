@@ -199,8 +199,8 @@ class Limiter(Discrete):
                  no_upper=False, no_lower=False):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
-        self.lower = lower
-        self.upper = upper
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
         self.enable = enable
         self.no_upper = no_upper
         self.no_lower = no_lower
@@ -209,10 +209,10 @@ class Limiter(Discrete):
         self.zl = np.array([0])
         self.zi = np.array([1])
 
+        self.has_check_var = True
+
         self.export_flags = ['zi']
         self.export_flags_tex = ['z_i']
-
-        self.has_check_var = True
 
         if not self.no_lower:
             self.export_flags.append('zl')
@@ -300,8 +300,11 @@ class AntiWindup(Limiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None, state=None):
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name, info=info)
+    def __init__(self, u, lower, upper, enable=True,
+                 no_lower=False, no_upper=False, name=None, tex_name=None, info=None, state=None):
+        super().__init__(u, lower, upper, enable=enable,
+                         no_lower=no_lower, no_upper=no_upper,
+                         name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
         self.has_check_var = False
@@ -323,10 +326,14 @@ class AntiWindup(Limiter):
         The current implementation reallocates memory for `self.x_set` in each call.
         Consider improving for speed. (TODO)
         """
-        self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
-                                    np.greater_equal(self.state.e, 0))
-        self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
-                                    np.less_equal(self.state.e, 0))
+        if not self.no_upper:
+            self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
+                                        np.greater_equal(self.state.e, 0))
+
+        if not self.no_lower:
+            self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
+                                        np.less_equal(self.state.e, 0))
+
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
         # must flush the `x_set` list at the beginning
@@ -352,29 +359,96 @@ class RateLimiter(Discrete):
     Rate limiter for a differential variable.
 
     RateLimiter does not export any variable. It directly modifies the differential equation value.
+
+    Notes
+    -----
+    RateLimiter inherits from Discrete to avoid internal naming conflicts with `Limiter`.
+
+    Warnings
+    --------
+    RateLimiter cannot be applied to a state variable that already undergoes an AntiWindup limiter.
+    Use `AntiWindupRate` for a rate-limited anti-windup limiter.
     """
-    def __init__(self, u, lower, upper, enable=True, no_lower=False, no_upper=False,
+    def __init__(self, u, lower, upper, enable=True,
+                 no_lower=False, no_upper=False, lower_cond=None, upper_cond=None,
                  name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
-        self.lower = dummify(lower)
-        self.upper = dummify(upper)
+        self.rate_lower = dummify(lower)
+        self.rate_upper = dummify(upper)
 
-        self.no_lower = no_lower
-        self.no_upper = no_upper
+        # `lower_cond` and `upper_cond` are arrays of 0/1 indicating whether
+        # the corresponding rate limit should be *enabled*.
+        # 0 - disabled, 1 - enabled.
+        # If is `None`, all rate limiters will be enabled.
+
+        self.rate_lower_cond = dummify(lower_cond)
+        self.rate_upper_cond = dummify(upper_cond)
+
+        self.rate_no_lower = no_lower
+        self.rate_no_upper = no_upper
         self.enable = enable
 
+        self.zur = np.array([0])
+        self.zlr = np.array([0])
+
         self.has_check_eq = True
+
+        # Note: save ops by not calculating `zir`
+        # self.zir = np.array([1])
+        # self.export_flags = ['zir']
+        # self.export_flags_tex = ['z_{ir}']
+
+        if not self.rate_no_lower:
+            self.export_flags.append('zlr')
+            self.export_flags_tex.append('z_{lr}')
+            self.warn_flags.append(('zlr', 'lower'))
+        if not self.rate_no_upper:
+            self.export_flags.append('zur')
+            self.export_flags_tex.append('z_{ur}')
+            self.warn_flags.append(('zur', 'upper'))
 
     def check_eq(self):
         if not self.enable:
             return
 
-        if not self.no_lower:
-            self.u.v[np.where(self.u.v < self.lower.v)] = self.lower.v
+        if not self.rate_no_lower:
+            self.zlr[:] = np.less(self.u.e, self.rate_lower.v)  # 1 if at the lower rate limit
 
-        if not self.no_upper:
-            self.u.v[np.where(self.u.v > self.upper.v)] = self.upper.v
+            if self.rate_lower_cond is not None:
+                self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
+
+            # for where `zlr == 1`, set the equation value to the lower limit
+            self.u.e[np.where(self.zlr)] = self.rate_lower.v
+
+        if not self.rate_no_upper:
+            self.zur[:] = np.greater(self.u.e, self.rate_upper.v)
+
+            if self.rate_upper_cond is not None:
+                self.zur[:] = self.zur * self.rate_upper_cond.v
+
+            self.u.e[np.where(self.zur)] = self.rate_upper.v
+
+
+class AntiWindupRate(AntiWindup, RateLimiter):
+    """
+    Anti-windup limiter with rate limits
+    """
+    def __init__(self, u, lower, upper, rate_lower, rate_upper,
+                 no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
+                 rate_lower_cond=None, rate_upper_cond=None,
+                 enable=True, name=None, tex_name=None, info=None):
+        RateLimiter.__init__(self, u, lower=rate_lower, upper=rate_upper, enable=enable,
+                             no_lower=rate_no_lower, no_upper=rate_no_upper,
+                             lower_cond=rate_lower_cond, upper_cond=rate_upper_cond,
+                             name=name, tex_name=tex_name, info=info)
+
+        AntiWindup.__init__(self, u, lower=lower, upper=upper, enable=enable,
+                            no_lower=no_lower, no_upper=no_upper)
+
+    def check_eq(self):
+        RateLimiter.check_eq(self)
+        AntiWindup.check_eq(self)
 
 
 class Selector(Discrete):

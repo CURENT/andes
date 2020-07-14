@@ -1,6 +1,6 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import LagAntiWindup, Piecewise, Lag, Gain
+from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate
 from andes.core.var import ExtAlgeb, Algeb
 from andes.core.service import ConstService, FlagValue
 
@@ -34,6 +34,7 @@ class REGCAU1Data(ModelData):
                               info='LVPL characteristic voltage 1',
                               unit='p.u',
                               )
+        # TODO: ensure Brkpt > Zerox
         self.Volim = NumParam(default=999, tex_name='V_{olim}',
                               info='Voltage lim for high volt. reactive current mgnt.',
                               unit='p.u.',
@@ -46,6 +47,7 @@ class REGCAU1Data(ModelData):
                                info='Low volt. point for low volt. active current mgnt.',
                                unit='p.u.',
                                )
+        # TODO: ensure Lvpnt1 > Lvpnt0
         self.Iolim = NumParam(default=999.0, tex_name='I_{olim}',
                               info='current limit for high volt. reactive current mgnt.',
                               unit='p.u.',
@@ -89,17 +91,22 @@ class REGCAU1Model(Model):
 
         # reactive power management
 
-        self.S1 = LagAntiWindup(self.Iqcmd, T=self.Tg, K=-1,
-                                lower=self.Iqmin, upper=self.Iqmax,
-                                tex_name='S_1',
-                                info='Iqcmd delay',
-                                )  # output `S1_y` == `Iq`
+        # TODO: create conditions for rate limiting.
+        #   In a fault recovery, activate upper limit when Qg0 > 0
+        #                        activate lower limit when Qg0 < 0
+
+        self.S1 = LagAntiWindupRate(self.Iqcmd, T=self.Tg, K=-1,
+                                    lower=self.Iqmin, upper=self.Iqmax,
+                                    rate_lower=self.Iqrmin, rate_upper=self.Iqrmax,
+                                    # rate_lower_cond, rate_upper_cond,
+                                    tex_name='S_1',
+                                    info='Iqcmd delay',
+                                    )  # output `S1_y` == `Iq`
 
         # piece-wise gain for low voltage reactive current mgnt.
         self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
                                  tex_name='k_{LVG}',
                                  )
-        # TODO: later, ensure Lvpnt1 > Lvpnt0
 
         self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
                              funs=('0', '(v - Lvpnt0) * kLVG', '1'),
@@ -113,7 +120,6 @@ class REGCAU1Model(Model):
         self.kLVPL = ConstService(v_str='Lvplsw * Lvpl1 / (Brkpt - Zerox)',
                                   tex_name='k_{LVPL}',
                                   )
-        # TODO: later, ensure Brkpt > Zerox
 
         self.S2 = Lag(u=self.v, T=self.Tfltr, K=1.0,
                       info='Voltage filter with no anti-windup',
@@ -126,10 +132,11 @@ class REGCAU1Model(Model):
                               info='Low voltage Ipcmd upper limit',
                               )
 
-        # TODO: FIXME: consider rate limit `Rrpwr`
-        self.S0 = LagAntiWindup(u=self.Ipcmd, T=self.Tg, K=1,
-                                lower=-999, upper=self.LVPL_y,
-                                )  # `S0_y` is the output `Ip` in the block diagram
+        self.S0 = LagAntiWindupRate(u=self.Ipcmd, T=self.Tg, K=1,
+                                    upper=self.LVPL_y, rate_upper=self.Rrpwr,
+                                    lower=-999, rate_lower=-999,
+                                    no_lower=True, rate_no_lower=True,
+                                    )  # `S0_y` is the output `Ip` in the block diagram
 
         self.Ipout = Algeb(e_str='S0_y * LVG_y -Ipout',
                            v_str='Ipcmd * LVG_y',
@@ -137,4 +144,8 @@ class REGCAU1Model(Model):
                            )
 
         # high voltage part
-        self.HVG = Gain(u='v - Volim', K=self.Khv, info='High voltage gain block')
+        self.HVG = GainLimiter(u='v - Volim', K=self.Khv, info='High voltage gain block',
+                               lower=0, upper=999, no_upper=True)
+
+        self.Iqout = GainLimiter(u='Iq - HVG_y', K=1, lower=self.Iolim, upper=9999,
+                                 no_upper=True, info='Iq output block')  # `Iqout_y` is the final Iq output
