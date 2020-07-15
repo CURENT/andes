@@ -34,6 +34,9 @@ class Block(object):
         Block LaTeX name
     info : str, optional
         Block description.
+    namespace : str, local or parent
+        Namespace of the exported elements. If 'local', the block name will be prepended by the parent.
+        If 'parent', the original element name will be used when exporting.
 
     Warnings
     --------
@@ -86,10 +89,17 @@ class Block(object):
 
     """
 
-    def __init__(self, name: Optional[str] = None, tex_name: Optional[str] = None, info: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None, tex_name: Optional[str] = None, info: Optional[str] = None,
+                 namespace: str = 'local'):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
+
+        if namespace not in ('local', 'parent'):
+            raise ValueError(f'Argument namespace must be `local` or `parent`, got {namespace}')
+
+        self.namespace = namespace
+
         self.owner = None
         self.vars = OrderedDict()
         self.triplets = JacTriplet()
@@ -99,19 +109,26 @@ class Block(object):
         # handle sub-blocks by prepending self.name
         if isinstance(value, Block):
             if self.name is None:
-                raise ValueError(f"Must specify `name` for {self.class_name} any instance.")
+                raise ValueError(f"Must specify `name` for {self.class_name} instance.")
             if not value.owner:
                 value.__dict__['owner'] = self
 
-            if not value.name:
-                value.__dict__['name'] = self.name + '_' + key
+            if value.namespace == 'local':
+                prepend = self.name + '_'
+                tex_prepend = self.name + r'\ '
             else:
-                value.__dict__['name'] = self.name + '_' + value.name
+                prepend = ''
+                tex_prepend = ''
+
+            if not value.name:
+                value.__dict__['name'] = prepend + key
+            else:
+                value.__dict__['name'] = prepend + value.name
 
             if not value.tex_name:
-                value.__dict__['tex_name'] = self.name + r'\ ' + key
+                value.__dict__['tex_name'] = tex_prepend + key
             else:
-                value.__dict__['tex_name'] = self.name + r'\ ' + value.tex_name
+                value.__dict__['tex_name'] = tex_prepend + value.tex_name
 
         self.__dict__[key] = value
 
