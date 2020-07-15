@@ -39,15 +39,15 @@ class REGCAU1Data(ModelData):
                               info='LVPL gain',
                               unit='p.u',
                               )
-        self.Volim = NumParam(default=999, tex_name='V_{olim}',
+        self.Volim = NumParam(default=1.2, tex_name='V_{olim}',
                               info='Voltage lim for high volt. reactive current mgnt.',
                               unit='p.u.',
                               )
-        self.Lvpnt1 = NumParam(default=0.8, tex_name='L_{vpnt1}',
+        self.Lvpnt1 = NumParam(default=1.0, tex_name='L_{vpnt1}',
                                info='High volt. point for low volt. active current mgnt.',
                                unit='p.u.',
                                )
-        self.Lvpnt0 = NumParam(default=0.2, tex_name='L_{vpnt0}',
+        self.Lvpnt0 = NumParam(default=0.4, tex_name='L_{vpnt0}',
                                info='Low volt. point for low volt. active current mgnt.',
                                unit='p.u.',
                                )
@@ -60,7 +60,7 @@ class REGCAU1Data(ModelData):
                               info='Voltage filter T const for low volt. active current mgnt.',
                               unit='s',
                               )
-        self.Khv = NumParam(default=1, tex_name='K_{hv}',
+        self.Khv = NumParam(default=0.7, tex_name='K_{hv}',
                             info='Overvolt. compensation gain in high volt. reactive current mgnt.',
                             )
         self.Iqrmax = NumParam(default=999, tex_name='I_{qrmax}',
@@ -97,6 +97,7 @@ class REGCAU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage angle',
+                          e_str='Ipout * v',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -104,6 +105,7 @@ class REGCAU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
+                          e_str='Iqout_y * v',
                           )
 
         self.p0 = ExtService(model='StaticGen',
@@ -128,9 +130,9 @@ class REGCAU1Model(Model):
                            )
 
         # --- INITIALIZATION ---
-        self.Ipcmd0 = ConstService('p / v', info='initial Ipcmd')
+        self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
 
-        self.Iqcmd0 = ConstService('q / v', info='initial Iqcmd')
+        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
 
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
@@ -198,7 +200,7 @@ class REGCAU1Model(Model):
         self.HVG = GainLimiter(u='v - Volim', K=self.Khv, info='High voltage gain block',
                                lower=0, upper=999, no_upper=True)
 
-        self.Iqout = GainLimiter(u='Iq - HVG_y', K=1, lower=self.Iolim, upper=9999,
+        self.Iqout = GainLimiter(u='S1_y- HVG_y', K=1, lower=self.Iolim, upper=9999,
                                  no_upper=True, info='Iq output block')  # `Iqout_y` is the final Iq output
 
     def v_numeric(self, **kwargs):
