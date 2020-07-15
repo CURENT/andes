@@ -1149,8 +1149,8 @@ class GainLimiter(Block):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.K = dummify(K)
-        self.upper = upper
-        self.lower = lower
+        self.upper = dummify(upper)
+        self.lower = dummify(lower)
 
         if (no_upper and no_lower) is True:
             raise ValueError("no_upper or no_lower cannot both be True")

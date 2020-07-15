@@ -1,8 +1,8 @@
 from andes.core.model import Model, ModelData
-from andes.core.param import NumParam, IdxParam
+from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate
 from andes.core.var import ExtAlgeb, Algeb
-from andes.core.service import ConstService, FlagValue
+from andes.core.service import ConstService, FlagValue, ExtService
 
 
 class REGCAU1Data(ModelData):
@@ -35,6 +35,10 @@ class REGCAU1Data(ModelData):
                               unit='p.u',
                               )
         # TODO: ensure Brkpt > Zerox
+        self.Lvpl1 = NumParam(default=1.0, tex_name='L_{vpl1}',
+                              info='LVPL gain',
+                              unit='p.u',
+                              )
         self.Volim = NumParam(default=999, tex_name='V_{olim}',
                               info='Voltage lim for high volt. reactive current mgnt.',
                               unit='p.u.',
@@ -71,6 +75,14 @@ class REGCAU1Data(ModelData):
                               info='Acceleration factor',
                               vrange=(0, 1.0),
                               )
+        self.Iqmax = NumParam(default=999, tex_name='I_{qmax}',
+                              info='Upper limit for reactive current',
+                              unit='p.u.',
+                              )
+        self.Iqmin = NumParam(default=-999, tex_name='I_{qmin}',
+                              info='Lower limit for reactive current',
+                              unit='p.u.',
+                              )
 
 
 class REGCAU1Model(Model):
@@ -80,7 +92,12 @@ class REGCAU1Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
-        # TODO: compute `Iqcmd` and `Ipcmd` from power flow
+        self.a = ExtAlgeb(model='Bus',
+                          src='a',
+                          indexer=self.bus,
+                          tex_name=r'\theta',
+                          info='Bus voltage angle',
+                          )
 
         self.v = ExtAlgeb(model='Bus',
                           src='v',
@@ -89,13 +106,47 @@ class REGCAU1Model(Model):
                           info='Bus voltage magnitude',
                           )
 
+        self.p0 = ExtService(model='StaticGen',
+                             src='p',
+                             indexer=self.gen,
+                             tex_name='P_0',
+                             )
+        self.q0 = ExtService(model='StaticGen',
+                             src='q',
+                             indexer=self.gen,
+                             tex_name='Q_0',
+                             )
+        self.ra = ExtParam(model='StaticGen',
+                           src='ra',
+                           indexer=self.gen,
+                           tex_name='r_a',
+                           )
+        self.xs = ExtParam(model='StaticGen',
+                           src='xs',
+                           indexer=self.gen,
+                           tex_name='x_s',
+                           )
+
+        # --- INITIALIZATION ---
+        self.Ipcmd0 = ConstService('p / v', info='initial Ipcmd')
+
+        self.Iqcmd0 = ConstService('q / v', info='initial Iqcmd')
+
+        self.Ipcmd = Algeb(tex_name='I_{pcmd}',
+                           info='current component for active power',
+                           e_str='Ipcmd0 - Ipcmd', v_str='Ipcmd0')
+
+        self.Iqcmd = Algeb(tex_name='I_{qcmd}',
+                           info='current component for reactive power',
+                           e_str='Iqcmd0 - Iqcmd', v_str='Iqcmd0')
+
         # reactive power management
 
         # TODO: create conditions for rate limiting.
         #   In a fault recovery, activate upper limit when Qg0 > 0
         #                        activate lower limit when Qg0 < 0
 
-        self.S1 = LagAntiWindupRate(self.Iqcmd, T=self.Tg, K=-1,
+        self.S1 = LagAntiWindupRate(u=self.Iqcmd, T=self.Tg, K=-1,
                                     lower=self.Iqmin, upper=self.Iqmax,
                                     rate_lower=self.Iqrmin, rate_upper=self.Iqrmax,
                                     # rate_lower_cond, rate_upper_cond,
@@ -149,3 +200,15 @@ class REGCAU1Model(Model):
 
         self.Iqout = GainLimiter(u='Iq - HVG_y', K=1, lower=self.Iolim, upper=9999,
                                  no_upper=True, info='Iq output block')  # `Iqout_y` is the final Iq output
+
+    def v_numeric(self, **kwargs):
+        """
+        Disable the corresponding `StaticGen`s.
+        """
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+
+
+class REGCAU1(REGCAU1Data, REGCAU1Model):
+    def __init__(self, system, config):
+        REGCAU1Data.__init__(self)
+        REGCAU1Model.__init__(self, system, config)

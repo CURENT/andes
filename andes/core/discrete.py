@@ -197,7 +197,7 @@ class Limiter(Discrete):
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
                  no_upper=False, no_lower=False):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
