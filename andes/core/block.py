@@ -2,6 +2,7 @@ from typing import Optional, Iterable, Union, List, Tuple
 
 from andes.core.var import Algeb, State
 from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter, AntiWindupRate
+from andes.core.discrete import DeadBand
 from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
 from collections import OrderedDict
@@ -1234,3 +1235,56 @@ class Piecewise(Block):
 
         self.y.v_str = pw_fun
         self.y.e_str = f'{pw_fun} - {self.name}_y'
+
+
+class DeadBand1(Block):
+    """
+    Deadband type 1.
+
+    Parameters
+    ----------
+    center
+        Default value when within the deadband. If the input is an error signal,
+        center should be set to zero.
+
+    Notes
+    -----
+
+    Block diagram ::
+
+              |   /
+        ______|__/___
+           /  |
+          /   |
+
+    """
+    def __init__(self, u, center, lower, upper, enable=True,
+                 name=None, tex_name=None, info=None, namespace=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info, namespace=namespace)
+
+        self.u = dummify(u)
+        self.center = dummify(center)
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+        self.enable = enable
+
+        self.db = DeadBand(u=u, center=center, lower=lower, upper=upper,
+                             enable=enable)
+        self.y = Algeb(info='Deadband type 1 output', tex_name='y', discrete=self.db)
+        self.vars = {'db', self.db, 'y', self.y}
+
+    def define(self):
+        """
+        Notes
+        -----
+        Implemented equation:
+
+        .. math ::
+            0 = center + z_u * (u - upper) + z_l * (u - lower) - y
+
+        """
+        self.y.v_str = f'{self.center.name} + ' \
+                       f'{self.db.name}_zu * ({self.u.name} - {self.upper.name}) +' \
+                       f'{self.db.name}_zl * ({self.u.name} - {self.lower.name})'
+
+        self.y.e_str = self.y.v_str + f' - {self.name}_y'

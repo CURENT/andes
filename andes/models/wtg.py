@@ -228,7 +228,7 @@ class REECA1Model(Model):
     REEC_A model implementation.
 
     TODO:
-      1. Dead band type 1
+      1. Dead band type 1, implement and test
       2. PI controller with state freeze
       3. Lag with state freeze
       3.1 Lag with anti-windup limiter with state freeze

@@ -625,9 +625,9 @@ class Switcher(Discrete):
         self.check_var()
 
 
-class DeadBandT1(Limiter):
+class DeadBand(Limiter):
     r"""
-    Deadband Type 1.
+    The basic deadband type.
 
     Parameters
     ----------
@@ -664,8 +664,8 @@ class DeadBandT1(Limiter):
     Assume the pre-deadband input variable is `var_in` and the post-deadband variable is `var_out`. First, define a
     deadband instance `db` in the model using ::
 
-        self.db = DeadBandT1(u=self.var_in, center=self.dbc,
-                             lower=self.dbl, upper=self.dbu)
+        self.db = DeadBand(u=self.var_in, center=self.dbc,
+                           lower=self.dbl, upper=self.dbu)
 
     To implement a no-memory deadband whose output returns to center when the input is within the band,
     the equation for `var` can be written as ::
@@ -697,9 +697,9 @@ class DeadBandT1(Limiter):
         Limiter.check_var(self, *args, **kwargs)
 
 
-class DeadBandRT(DeadBandT1):
+class DeadBandRT(DeadBand):
     r"""
-    Dead band with the direction of return.
+    Deadband with flags for directions of return.
 
     Parameters
     ----------
@@ -716,9 +716,9 @@ class DeadBandRT(DeadBandT1):
 
     Notes
     -----
-
     Input changes within a deadband will incur no output changes. This component computes and exports five flags.
-    The additional two flags on top of `DeadBandT1` indicate the direction of return:
+    The additional two flags on top of `DeadBand` indicate the direction of return:
+
      - zur: True if the input is/has been within the deadband and was returned from the upper threshold
      - zlr: True if the input is/has been within the deadband and was returned from the lower threshold
 
@@ -742,7 +742,7 @@ class DeadBandRT(DeadBandT1):
         """
 
         """
-        DeadBandT1.__init__(self, u, center=center, lower=lower, upper=upper, enable=enable)
+        DeadBand.__init__(self, u, center=center, lower=lower, upper=upper, enable=enable)
 
         # default state if not enabled
         self.zur = np.array([0.])
@@ -779,7 +779,7 @@ class DeadBandRT(DeadBandT1):
          - hold when (previous zi == zi)
          - clear otherwise
         """
-        DeadBandT1.check_var(self, *args, **kwargs)
+        DeadBand.check_var(self, *args, **kwargs)
 
         if not self.enable:
             return

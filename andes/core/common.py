@@ -84,7 +84,7 @@ def dummify(param):
 
     Parameters
     ----------
-    param : float, int, BaseParam
+    param : float, int, str, BaseParam
         parameter object or scalar value
 
     Returns
