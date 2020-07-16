@@ -338,10 +338,10 @@ class PIFreeze(PIController):
             y &= (1-freeze) * (x_i + k_p * (u - ref)) + freeze * y
         """
         PIController.define(self)
-        self.xi.v_str = f'{self.x0.name}*{self.freeze.name}'
-        self.xi.e_str = f'{self.freeze.name}*{self.ki.name} * ({self.u.name} - {self.ref.name})'
+        # state freeze does not affect initial values
 
-        self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.xi.e_str = f'(1 - {self.freeze.name}) * {self.ki.name} * ({self.u.name} - {self.ref.name})'
+
         self.y.e_str = f'(1 - {self.freeze.name}) * ({self.kp.name}*({self.u.name}-{self.ref.name}) +' \
                        f' {self.name}_xi) + ' \
                        f'{self.freeze.name} * {self.name}_y - {self.name}_y'
@@ -666,6 +666,29 @@ class Lag(Block):
         """
         self.y.v_str = f'{self.u.name} * {self.K.name}'
         self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
+
+
+class LagFreeze(Lag):
+    """
+    Lag with a state freeze input.
+    """
+    def __init__(self, u, T, K, freeze, name=None, tex_name=None, info=None):
+        Lag.__init__(self, u, T, K, name=name, tex_name=tex_name, info=info)
+        self.freeze = dummify(freeze)
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Equations and initial values are
+
+        .. math ::
+
+            T \dot{y} &= (1 - freeze) * (Ku - y) \\
+            y^{(0)} &= K u
+
+        """
+        self.y.e_str = f'(1 - {self.freeze.name})* ({self.K.name} * {self.u.name} - {self.name}_y)'
 
 
 class LagAntiWindup(Block):
