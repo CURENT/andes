@@ -275,13 +275,14 @@ class PIController(Block):
 
     """
 
-    def __init__(self, u, kp, ki, ref=0.0, name=None, tex_name=None, info=None):
+    def __init__(self, u, kp, ki, ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
         self.u = u
         self.kp = dummify(kp)
         self.ki = dummify(ki)
         self.ref = dummify(ref)
+        self.x0 = dummify(x0)
 
         self.xi = State(info="Integrator output")
         self.y = Algeb(info="PI output")
@@ -303,15 +304,58 @@ class PIController(Block):
             y &= x_i + k_p * (u - ref)
         """
 
+        self.xi.v_str = f'{self.x0.name}'
         self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
-        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi'
+
+        self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                       f'{self.name}_xi - {self.name}_y'
+
+
+class PIFreeze(PIController):
+    """
+    PI controller with state freeze.
+
+    Freezes state when the corresponding `freeze == 1`.
+    """
+    def __init__(self, u, kp, ki, freeze, ref=0.0, x0=0.0, name=None,
+                 tex_name=None, info=None):
+        PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info)
+        self.y.diag_eps = 1e-6
+        self.freeze = freeze
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        One state variable ``xi`` and one algebraic variable ``y`` are added.
+
+        Equations implemented are
+
+        .. math ::
+            \dot{x_i} &= k_i * (u - ref) \\
+            y &= (1-freeze) * (x_i + k_p * (u - ref)) + freeze * y
+        """
+        PIController.define(self)
+        self.xi.v_str = f'{self.x0.name}*{self.freeze.name}'
+        self.xi.e_str = f'{self.freeze.name}*{self.ki.name} * ({self.u.name} - {self.ref.name})'
+
+        self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.y.e_str = f'(1 - {self.freeze.name}) * ({self.kp.name}*({self.u.name}-{self.ref.name}) +' \
+                       f' {self.name}_xi) + ' \
+                       f'{self.freeze.name} * {self.name}_y - {self.name}_y'
 
 
 class PIControllerNumeric(Block):
-    """A PI Controller implemented with numerical function calls"""
+    """
+    A PI Controller implemented with numerical function calls.
 
-    def __init__(self, u, ref, kp, ki, name=None, info=None):
-        super().__init__(name=name, info=info)
+    `ref` must not be a variable.
+    """
+
+    def __init__(self, u, kp, ki, ref=0.0, name=None, tex_name=None, info=None):
+        super().__init__(name=name, tex_name=tex_name, info=info)
 
         self.u = u
         self.ref = dummify(ref)
@@ -325,7 +369,7 @@ class PIControllerNumeric(Block):
         self.flags.update({'f_num': True, 'g_num': True, 'j_num': True})
 
     def g_numeric(self, **kwargs):
-        self.y.e = self.kp.v * (self.u.v - self.ref.v) + self.xi.v
+        self.y.e = self.kp.v * (self.u.v - self.ref.v) + self.xi.v - self.y.v
 
     def f_numeric(self, **kwargs):
         self.xi.e = self.ki.v * (self.u.v - self.ref.v)
@@ -334,10 +378,28 @@ class PIControllerNumeric(Block):
         self.j_reset()
         self.triplets.append_ijv('fyc', self.xi.id, self.u.id, self.ki.v)
         self.triplets.append_ijv('gyc', self.y.id, self.u.id, self.kp.v)
-        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, -1)
+        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, 1)
+        self.triplets.append_ijv('gyc', self.y.id, self.y.id, -1)
 
     def define(self):
         """Skip the symbolic definition"""
+        pass
+
+
+class AlgebFreeze(Block):
+    """
+    Algebraic variable freezer implemented with `VarConst`.
+
+    For `freeze` elements equal to zero, the corresponding variables will
+    remain at the pre-freeze values until `freeze` turns one.
+    """
+    def __init__(self, u, freeze, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.freeze = dummify(freeze)
+        # TODO.
+
+    def define(self):
         pass
 
 
