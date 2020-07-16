@@ -609,7 +609,94 @@ class Switcher(Discrete):
         self.check_var()
 
 
-class DeadBand(Limiter):
+class DeadBandT1(Limiter):
+    r"""
+    Deadband Type 1.
+
+    Parameters
+    ----------
+    u : NumParam
+        The pre-deadband input variable
+    center : NumParam
+        Neutral value of the output
+    lower : NumParam
+        Lower bound
+    upper : NumParam
+        Upper bound
+    enable : bool
+        Enabled if True; Disabled and works as a pass-through if False.
+
+    Notes
+    -----
+
+    Input changes within a deadband will incur no output changes. This component computes and exports three flags.
+
+    Three flags computed from the current input:
+     - zl: True if the input is below the lower threshold
+     - zi: True if the input is within the deadband
+     - zu: True if is above the lower threshold
+
+    Initial condition:
+
+    All three flags are initialized to zero. All flags are updated during `check_var` when enabled. If the
+    deadband component is not enabled, all of them will remain zero.
+
+    Examples
+    --------
+
+    Exported deadband flags need to be used in the algebraic equation corresponding to the post-deadband variable.
+    Assume the pre-deadband input variable is `var_in` and the post-deadband variable is `var_out`. First, define a
+    deadband instance `db` in the model using ::
+
+        self.db = DeadBandT1(u=self.var_in, center=self.dbc,
+                             lower=self.dbl, upper=self.dbu)
+
+    To implement a no-memory deadband whose output returns to center when the input is within the band,
+    the equation for `var` can be written as ::
+
+        var_out.e_str = 'var_in * (1 - db_zi) + \
+                         (dbc * db_zi) - var_out'
+
+    """
+    def __init__(self, u, center, lower, upper, enable=True, zi=0, zl=0, zu=0):
+        super().__init__(u, lower, upper, enable=enable)
+        self.center = dummify(center)
+
+        # default state if not enabled
+        self.zi = np.array([zi])
+        self.zl = np.array([zl])
+        self.zu = np.array([zu])
+
+        self.export_flags.extend(['zl', 'zi', 'zu'])
+        self.export_flags_tex.extend(['z_l', 'z_i', 'z_u'])
+
+        self.has_check_var = True
+
+    def check_var(self, *args, **kwargs):
+        """
+        Notes
+        -----
+
+        Updates three flags: zi, zu, zl based on the following rules:
+
+        zu:
+          1 if u > upper; 0 otherwise.
+
+        zl:
+          1 if u < lower; 0 otherwise.
+
+        zi:
+          not(zu or zl);
+        """
+        if not self.enable:
+            return
+
+        self.zu[:] = np.greater(self.u.v, self.upper.v)
+        self.zl[:] = np.less(self.u.v, self.lower.v)
+        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
+
+
+class DeadBandRT(DeadBandT1):
     r"""
     Dead band with the direction of return.
 
@@ -622,7 +709,7 @@ class DeadBand(Limiter):
     lower : NumParam
         Lower bound
     upper : NumParam
-        Upper bpund
+        Upper bound
     enable : bool
         Enabled if True; Disabled and works as a pass-through if False.
 
@@ -630,13 +717,7 @@ class DeadBand(Limiter):
     -----
 
     Input changes within a deadband will incur no output changes. This component computes and exports five flags.
-
-    Three flags computed from the current input:
-     - zl: True if the input is below the lower threshold
-     - zi: True if the input is within the deadband
-     - zu: True if is above the lower threshold
-
-    Two flags indicating the direction of return:
+    The additional two flags on top of `DeadBandT1` indicate the direction of return:
      - zur: True if the input is/has been within the deadband and was returned from the upper threshold
      - zlr: True if the input is/has been within the deadband and was returned from the lower threshold
 
@@ -647,21 +728,6 @@ class DeadBand(Limiter):
 
     Examples
     --------
-
-    Exported deadband flags need to be used in the algebraic equation corresponding to the post-deadband variable.
-    Assume the pre-deadband input variable is `var_in` and the post-deadband variable is `var_out`. First, define a
-    deadband instance `db` in the model using ::
-
-        self.db = DeadBand(u=self.var_in,
-                           center=self.dbc,
-                           lower=self.dbl,
-                           upper=self.dbu)
-
-    To implement a no-memory deadband whose output returns to center when the input is within the band,
-    the equation for `var` can be written as ::
-
-        var_out.e_str = 'var_in * (1 - db_zi) + \
-                         (dbc * db_zi) - var_out'
 
     To implement a deadband whose output is pegged at the nearest deadband bounds, the equation for `var` can be
     provided as ::
@@ -675,18 +741,14 @@ class DeadBand(Limiter):
         """
 
         """
-        super().__init__(u, lower, upper, enable=enable)
-        self.center = center
+        DeadBandT1.__init__(self, u, center=center, lower=lower, upper=upper, enable=enable)
 
         # default state if not enabled
-        self.zi = np.array([0.])
-        self.zl = np.array([0.])
-        self.zu = np.array([0.])
         self.zur = np.array([0.])
         self.zlr = np.array([0.])
 
-        self.export_flags = ['zl', 'zi', 'zu', 'zur', 'zlr']
-        self.export_flags_tex = ['z_l', 'z_i', 'z_u', 'z_ur', 'z_lr']
+        self.export_flags.extend(['zur', 'zlr'])
+        self.export_flags_tex.extend(['z_ur', 'z_lr'])
 
         self.has_check_var = True
 
@@ -716,15 +778,14 @@ class DeadBand(Limiter):
          - hold when (previous zi == zi)
          - clear otherwise
         """
+        DeadBandT1.check_var(self, *args, **kwargs)
+
         if not self.enable:
             return
-        zu = np.greater(self.u.v, self.upper.v)
-        zl = np.less(self.u.v, self.lower.v)
-        zi = np.logical_not(np.logical_or(zu, zl))
 
         # square return dead band
-        self.zur[:] = np.equal(self.zu + zi, 2) + self.zur * np.equal(zi, self.zi)
-        self.zlr[:] = np.equal(self.zl + zi, 2) + self.zlr * np.equal(zi, self.zi)
+        self.zur[:] = np.equal(self.zu + self.zi, 2) + self.zur * np.equal(self.zi, self.zi)
+        self.zlr[:] = np.equal(self.zl + self.zi, 2) + self.zlr * np.equal(self.zi, self.zi)
 
 
 class Delay(Discrete):

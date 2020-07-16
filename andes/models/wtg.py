@@ -214,3 +214,27 @@ class REGCAU1(REGCAU1Data, REGCAU1Model):
     def __init__(self, system, config):
         REGCAU1Data.__init__(self)
         REGCAU1Model.__init__(self, system, config)
+
+
+class REECA1Data(ModelData):
+    """
+    Renewable energy electrical control model REEC_A data.
+    """
+    pass
+
+
+class REECA1Model(Model):
+    """
+    REEC_A model implementation.
+
+    TODO:
+      1. Dead band type 1
+      2. PI controller with state freeze
+      3. Lag with state freeze
+      3.1 Lag with anti-windup limiter with state freeze
+      4. Nonlinear blocks `VDL1` and `VDL2`
+      5. Value and time-based state transition
+      6. Rate limit on algebraic variable
+
+    """
+    pass

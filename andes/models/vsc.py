@@ -5,7 +5,7 @@ from andes.models.dcbase import ACDC2Term
 from andes.core.param import NumParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb  # NOQA
 from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.discrete import HardLimiter, DeadBand, Switcher  # NOQA
+from andes.core.discrete import HardLimiter, Switcher  # NOQA
 
 
 class VSCShunt(ACDC2Term):

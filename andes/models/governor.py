@@ -3,7 +3,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, State, ExtState, ExtAlgeb
 from andes.core.service import ConstService, ExtService, NumSelect, FlagValue, ParamCalc, InitChecker
 from andes.core.service import PostInitService
-from andes.core.discrete import HardLimiter, DeadBand, AntiWindup
+from andes.core.discrete import HardLimiter, DeadBandRT, AntiWindup
 from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
 import numpy as np
 
@@ -188,12 +188,12 @@ class TG2(TG2Data, TGBase):
                          v_str='0',
                          e_str='u*(wref-omega) - w_d',
                          )
-        self.w_db = DeadBand(u=self.w_d,
-                             center=self.dbc,
-                             lower=self.dbl,
-                             upper=self.dbu,
-                             enable=self.config.deadband,
-                             )
+        self.w_db = DeadBandRT(u=self.w_d,
+                               center=self.dbc,
+                               lower=self.dbl,
+                               upper=self.dbu,
+                               enable=self.config.deadband,
+                               )
         self.w_dm = Algeb(info='Measured speed deviation after dead band',
                           tex_name=r'\omega_{dm}',
                           v_str='0',
