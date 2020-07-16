@@ -258,14 +258,16 @@ class Block(object):
 
 class PIController(Block):
     """
-    Proportional Integral Controller with the reference from an external variable
+    Proportional Integral Controller.
+
+    The controller takes an error signal as the input.
+    It takes an optional `ref` signal, which will be subtracted from the input.
+
 
     Parameters
     ----------
     u : BaseVar
         The input variable instance
-    ref : Union[BaseVar, BaseParam]
-        The reference instance
     kp : BaseParam
         The proportional gain parameter instance
     ki : [type]
@@ -273,16 +275,16 @@ class PIController(Block):
 
     """
 
-    def __init__(self, u, ref, kp, ki, name=None, info=None):
-        super(PIController, self).__init__(name=name, info=info)
+    def __init__(self, u, kp, ki, ref=0.0, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
         self.u = u
-        self.ref = ref
-        self.kp = kp
-        self.ki = ki
+        self.kp = dummify(kp)
+        self.ki = dummify(ki)
+        self.ref = dummify(ref)
 
-        self.xi = State(info="Integration value of PI controller")
-        self.y = Algeb(info="Output value")
+        self.xi = State(info="Integrator output")
+        self.y = Algeb(info="PI output")
 
         self.vars = {'xi': self.xi, 'y': self.y}
 
@@ -297,12 +299,12 @@ class PIController(Block):
         Equations implemented are
 
         .. math ::
-            \dot{x_i} &= k_i * (ref - var) \\
-            y &= x_i + k_i * (ref - var)
+            \dot{x_i} &= k_i * (u - ref) \\
+            y &= x_i + k_p * (u - ref)
         """
 
-        self.xi.e_str = f'ki * ({self.ref.name} - {self.u.name})'
-        self.y.e_str = f'kp * ({self.ref.name} - {self.u.name}) + {self.name}_xi'
+        self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
+        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi'
 
 
 class PIControllerNumeric(Block):
@@ -312,29 +314,27 @@ class PIControllerNumeric(Block):
         super().__init__(name=name, info=info)
 
         self.u = u
-        self.ref = ref
-        self.kp = kp
-        self.ki = ki
+        self.ref = dummify(ref)
+        self.kp = dummify(kp)
+        self.ki = dummify(ki)
 
-        self.xi = State(info="Integration value of PI controller")
-        self.y = Algeb(info="Output value")
+        self.xi = State(info="Integrator value")
+        self.y = Algeb(info="PI output")
 
         self.vars = {'xi': self.xi, 'y': self.y}
         self.flags.update({'f_num': True, 'g_num': True, 'j_num': True})
 
     def g_numeric(self, **kwargs):
-        self.y.e = self.kp.v * (self.ref.v - self.u.v) + self.xi.v
+        self.y.e = self.kp.v * (self.u.v - self.ref.v) + self.xi.v
 
     def f_numeric(self, **kwargs):
-        self.xi.e = self.ki.v * (self.ref.v - self.u.v)
+        self.xi.e = self.ki.v * (self.u.v - self.ref.v)
 
     def j_numeric(self):
         self.j_reset()
-
-        # TODO: test the following code
-        self.triplets.append_ijv('fyc', self.xi.id, self.u.id, -self.ki.v)
-        self.triplets.append_ijv('gyc', self.y.id, self.u.id, -self.kp.v)
-        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, 1)
+        self.triplets.append_ijv('fyc', self.xi.id, self.u.id, self.ki.v)
+        self.triplets.append_ijv('gyc', self.y.id, self.u.id, self.kp.v)
+        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, -1)
 
     def define(self):
         """Skip the symbolic definition"""
