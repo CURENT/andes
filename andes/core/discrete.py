@@ -183,6 +183,14 @@ class Limiter(Discrete):
         True to only use the upper limit
     no_upper : bool
         True to only use the lower limit
+    equal: bool
+        True to include equal signs in comparison (>= or <=).
+    zu : 0 or 1
+        Default value for `zu` if not enabled
+    zl : 0 or 1
+        Default value for `zl` if not enabled
+    zi : 0 or 1
+        Default value for `zi` if not enabled
 
     Attributes
     ----------
@@ -196,7 +204,7 @@ class Limiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
-                 no_upper=False, no_lower=False):
+                 no_upper=False, no_lower=False, equal=True, zu=0.0, zl=0.0, zi=1.0):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = dummify(lower)
@@ -204,10 +212,11 @@ class Limiter(Discrete):
         self.enable = enable
         self.no_upper = no_upper
         self.no_lower = no_lower
+        self.equal = equal
 
-        self.zu = np.array([0])
-        self.zl = np.array([0])
-        self.zi = np.array([1])
+        self.zu = np.array([zu])
+        self.zl = np.array([zl])
+        self.zi = np.array([zi])
 
         self.has_check_var = True
 
@@ -231,9 +240,16 @@ class Limiter(Discrete):
             return
 
         if not self.no_upper:
-            self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+            if self.equal:
+                self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+            else:
+                self.zu[:] = np.greater(self.u.v, self.upper.v)
+
         if not self.no_lower:
-            self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+            if self.equal:
+                self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+            else:
+                self.zl[:] = np.less(self.u.v, self.lower.v)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
@@ -658,19 +674,9 @@ class DeadBandT1(Limiter):
                          (dbc * db_zi) - var_out'
 
     """
-    def __init__(self, u, center, lower, upper, enable=True, zi=0, zl=0, zu=0):
-        super().__init__(u, lower, upper, enable=enable)
-        self.center = dummify(center)
-
-        # default state if not enabled
-        self.zi = np.array([zi])
-        self.zl = np.array([zl])
-        self.zu = np.array([zu])
-
-        self.export_flags.extend(['zl', 'zi', 'zu'])
-        self.export_flags_tex.extend(['z_l', 'z_i', 'z_u'])
-
-        self.has_check_var = True
+    def __init__(self, u, center, lower, upper, enable=True, equal=False, zu=0.0, zl=0.0, zi=0.0):
+        Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu)
+        self.center = dummify(center)  # CURRENTLY NOT IN USE
 
     def check_var(self, *args, **kwargs):
         """
@@ -688,12 +694,7 @@ class DeadBandT1(Limiter):
         zi:
           not(zu or zl);
         """
-        if not self.enable:
-            return
-
-        self.zu[:] = np.greater(self.u.v, self.upper.v)
-        self.zl[:] = np.less(self.u.v, self.lower.v)
-        self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
+        Limiter.check_var(self, *args, **kwargs)
 
 
 class DeadBandRT(DeadBandT1):
