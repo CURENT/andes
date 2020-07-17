@@ -1440,7 +1440,7 @@ class DeadBand1(Block):
 
     """
     def __init__(self, u, center, lower, upper, enable=True,
-                 name=None, tex_name=None, info=None, namespace=None):
+                 name=None, tex_name=None, info=None, namespace='local'):
         Block.__init__(self, name=name, tex_name=tex_name, info=info, namespace=namespace)
 
         self.u = dummify(u)
@@ -1450,9 +1450,9 @@ class DeadBand1(Block):
         self.enable = enable
 
         self.db = DeadBand(u=u, center=center, lower=lower, upper=upper,
-                             enable=enable)
+                           enable=enable)
         self.y = Algeb(info='Deadband type 1 output', tex_name='y', discrete=self.db)
-        self.vars = {'db', self.db, 'y', self.y}
+        self.vars = {'db': self.db, 'y': self.y}
 
     def define(self):
         """
@@ -1465,7 +1465,7 @@ class DeadBand1(Block):
 
         """
         self.y.v_str = f'{self.center.name} + ' \
-                       f'{self.db.name}_zu * ({self.u.name} - {self.upper.name}) +' \
-                       f'{self.db.name}_zl * ({self.u.name} - {self.lower.name})'
+                       f'{self.name}_db_zu * ({self.u.name} - {self.upper.name}) +' \
+                       f'{self.name}_db_zl * ({self.u.name} - {self.lower.name})'
 
         self.y.e_str = self.y.v_str + f' - {self.name}_y'

@@ -104,9 +104,12 @@ class TDS(BaseRoutine):
         self.eye = spdiag([1] * system.dae.n)
         self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
         self.qg = np.zeros(system.dae.n + system.dae.m)
-        self.calc_h()
 
         self.initialized = self.test_init()
+
+        # if `dae.n == 1`, `calc_h_first` depends on new `dae.gy`
+        self.calc_h()
+
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
