@@ -312,6 +312,61 @@ class PIController(Block):
                        f'{self.name}_xi - {self.name}_y'
 
 
+class PITrackAW(Block):
+    """
+    PI with tracking anti-windup limiter
+    """
+    def __init__(self, u, kp, ki, ks, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.kp = dummify(kp)
+        self.ki = dummify(ki)
+        self.ks = dummify(ks)
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+        self.ref = dummify(ref)
+        self.x0 = dummify(x0)
+
+        self.xi = State(info="Integrator output")
+        self.ys = Algeb(info="PI summation before limit")
+        self.lim = HardLimiter(u=self.ys, lower=self.lower, upper=self.upper,
+                               no_lower=no_lower, no_upper=no_upper, tex_name='lim')
+        self.y = Algeb(info="PI output", discrete=self.lim)
+        self.vars = {'xi': self.xi, 'ys': self.ys, 'lim': self.lim, 'y': self.y}
+
+    def define(self):
+        self.xi.v_str = f'{self.x0.name}'
+        self.ys.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.y.v_str = f'{self.name}_ys * {self.lim.name}_zi + ' \
+                       f'{self.lower.name} * {self.lim.name}_zl + ' \
+                       f'{self.upper.name} * {self.lim.name}_zu'
+
+        self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name} -' \
+                        f' {self.ks.name} * ({self.name}_ys - {self.name}_y))'
+
+        self.ys.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                        f'{self.name}_xi - {self.name}_ys'
+
+        self.y.e_str = self.y.v_str + f' - {self.name}_y'
+
+
+class PITrackAWFreeze(PITrackAW):
+    """
+    PI controller with tracking anti-windup limiter and state freeze.
+    """
+    def __init__(self, u, kp, ki, ks, lower, upper, freeze, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
+                           ref=ref, x0=x0, name=name, tex_name=tex_name, info=info)
+        self.freeze = dummify(freeze)
+
+    def define(self):
+        PITrackAW.define(self)
+        # TODO: pick up from here.
+
+
 class PIFreeze(PIController):
     """
     PI controller with state freeze.
