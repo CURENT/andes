@@ -361,10 +361,25 @@ class PITrackAWFreeze(PITrackAW):
         PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
                            ref=ref, x0=x0, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
+        self.ys.diag_eps = 1e-6
+        self.y.diag_eps = 1e-6
 
     def define(self):
         PITrackAW.define(self)
-        # TODO: pick up from here.
+
+        self.xi.e_str = f'{1 - self.freeze.name} * {self.ki.name} * ' \
+                        f'({self.u.name} - {self.ref.name} - ' \
+                        f'{self.ks.name} * ({self.name}_ys - {self.name}_y))'
+
+        self.ys.e_str = f'(1-{self.freeze.name}) * ' \
+                        f'({self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi) +' \
+                        f'{self.freeze.name} * {self.name}_ys - ' \
+                        f'{self.name}_ys'
+
+        self.y.e_str = f'(1 - {self.freeze.name}) * ' \
+                       f'({self.name}_ys * {self.lim.name}_zi +' \
+                       f' {self.lower.name} * {self.lim.name}_zl +' \
+                       f' {self.upper.name} * {self.lim.name}_zu) - {self.name}_y'
 
 
 class PIFreeze(PIController):
@@ -395,10 +410,11 @@ class PIFreeze(PIController):
         PIController.define(self)
         # state freeze does not affect initial values
 
-        self.xi.e_str = f'(1 - {self.freeze.name}) * {self.ki.name} * ({self.u.name} - {self.ref.name})'
+        self.xi.e_str = f'(1 - {self.freeze.name}) * {self.ki.name} * ' \
+                        f'({self.u.name} - {self.ref.name})'
 
-        self.y.e_str = f'(1 - {self.freeze.name}) * ({self.kp.name}*({self.u.name}-{self.ref.name}) +' \
-                       f' {self.name}_xi) + ' \
+        self.y.e_str = f'(1 - {self.freeze.name}) * ' \
+                       f'({self.kp.name}*({self.u.name}-{self.ref.name}) + {self.name}_xi) + ' \
                        f'{self.freeze.name} * {self.name}_y - {self.name}_y'
 
 
