@@ -674,8 +674,10 @@ class DeadBand(Limiter):
                          (dbc * db_zi) - var_out'
 
     """
-    def __init__(self, u, center, lower, upper, enable=True, equal=False, zu=0.0, zl=0.0, zi=0.0):
-        Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu)
+    def __init__(self, u, center, lower, upper, enable=True, equal=True, zu=0.0, zl=0.0, zi=0.0,
+                 name=None, tex_name=None, info=None):
+        Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
+                         name=name, tex_name=tex_name, info=info)
         self.center = dummify(center)  # CURRENTLY NOT IN USE
 
     def check_var(self, *args, **kwargs):

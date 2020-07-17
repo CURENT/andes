@@ -5,7 +5,7 @@ from andes.core.model import ModelData, Model
 from andes.core.var import Algeb, State
 from andes.core.param import NumParam
 from andes.core.discrete import HardLimiter, AntiWindup  # NOQA
-from andes.core.block import DeadBand1
+from andes.core.block import DeadBand1, PIController
 
 
 class PI2Data(ModelData):
@@ -53,7 +53,21 @@ class TestDB1(ModelData, Model):
         self.group = 'Experimental'
         self.flags.tds = True
 
-        self.uin = State(v_str=0,
-                         e_str='Piecewise((0, dae_t<=0), (1, dae_t<=2), (-1, dae_t<6), (1, True))',
+        self.uin = Algeb(v_str=0,
+                         e_str='sin(dae_t) - uin',
                          )
-        self.DB = DeadBand1(self.uin, center=0, lower=-1, upper=1)
+        self.DB = DeadBand1(self.uin, center=0, lower=-0.5, upper=0.5)
+
+
+class TestPI(ModelData, Model):
+    def __init__(self, system, config):
+        ModelData.__init__(self)
+        Model.__init__(self, system, config)
+        self.group = 'Experimental'
+        self.flags.tds = True
+
+        self.uin = Algeb(v_str=0,
+                         e_str='sin(dae_t) - uin',
+                         )
+
+        self.PI = PIController(u=self.uin, kp=1, ki=0.1)

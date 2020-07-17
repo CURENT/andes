@@ -129,7 +129,7 @@ class Block(object):
             if not value.tex_name:
                 value.__dict__['tex_name'] = tex_prepend + key
             else:
-                value.__dict__['tex_name'] = tex_prepend + value.tex_name
+                value.__dict__['tex_name'] = f'{tex_prepend}{{{value.tex_name}}}'
 
         self.__dict__[key] = value
 
@@ -284,8 +284,8 @@ class PIController(Block):
         self.ref = dummify(ref)
         self.x0 = dummify(x0)
 
-        self.xi = State(info="Integrator output")
-        self.y = Algeb(info="PI output")
+        self.xi = State(info="Integrator output", tex_name='xi')
+        self.y = Algeb(info="PI output", tex_name='y')
 
         self.vars = {'xi': self.xi, 'y': self.y}
 
@@ -329,11 +329,11 @@ class PITrackAW(Block):
         self.ref = dummify(ref)
         self.x0 = dummify(x0)
 
-        self.xi = State(info="Integrator output")
-        self.ys = Algeb(info="PI summation before limit")
+        self.xi = State(info="Integrator output", tex_name='xi')
+        self.ys = Algeb(info="PI summation before limit", tex_name='ys')
         self.lim = HardLimiter(u=self.ys, lower=self.lower, upper=self.upper,
                                no_lower=no_lower, no_upper=no_upper, tex_name='lim')
-        self.y = Algeb(info="PI output", discrete=self.lim)
+        self.y = Algeb(info="PI output", discrete=self.lim, tex_name='y')
         self.vars = {'xi': self.xi, 'ys': self.ys, 'lim': self.lim, 'y': self.y}
 
     def define(self):
@@ -1450,7 +1450,7 @@ class DeadBand1(Block):
         self.enable = enable
 
         self.db = DeadBand(u=u, center=center, lower=lower, upper=upper,
-                           enable=enable)
+                           enable=enable, tex_name='db')
         self.y = Algeb(info='Deadband type 1 output', tex_name='y', discrete=self.db)
         self.vars = {'db': self.db, 'y': self.y}
 

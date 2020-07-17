@@ -640,14 +640,14 @@ class Model(object):
             # pull in sub-variables from control blocks
             if value.namespace == 'local':
                 prepend = value.name + '_'
-                tex_append = '_' + value.tex_name
+                tex_append = value.tex_name
             else:
                 prepend = ''
                 tex_append = ''
 
             for var_name, var_instance in value.export().items():
                 var_instance.name = f'{prepend}{var_name}'
-                var_instance.tex_name = f'{var_instance.tex_name}{tex_append}'
+                var_instance.tex_name = f'{var_instance.tex_name}_{{{tex_append}}}'
                 self.__setattr__(var_instance.name, var_instance)
 
     def _check_attribute(self, key, value):
