@@ -825,6 +825,31 @@ class LagAntiWindup(Block):
         self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
 
 
+class LagAWFreeze(LagAntiWindup):
+    """
+    Lag with anti-windup limiter and state freeze.
+    """
+    def __init__(self, u, T, K, lower, upper, freeze,
+                 name=None, tex_name=None, info=None):
+        LagAntiWindup.__init__(self, u, T, K, lower, upper,
+                               name=name, tex_name=tex_name, info=info)
+        self.freeze = dummify(freeze)
+
+    def define(self):
+        r"""
+        Notes
+        -----
+        Equations and initial values are
+
+        .. math ::
+
+            T \dot{y} &= (1 - freeze) (Ku - y) \\
+            y^{(0)} &= K u
+
+        """
+        self.y.e_str = f'(1 - {self.freeze.name}) * ({self.K.name} * {self.u.name} - {self.name}_y)'
+
+
 class LagAntiWindupRate(Block):
     r"""
     Lag (low pass filter) transfer function block with a rate limiter and an anti-windup limiter. ::
