@@ -372,16 +372,14 @@ class PITrackAWFreeze(PITrackAW):
                         f'({self.u.name} - {self.ref.name} -' \
                         f' {self.ks.name} * ({self.name}_ys - {self.name}_y))'
 
+        # TODO: BUG BELOW: this expression does not freeze `ys` until Jac is updated.
         self.ys.e_str = f'(1-{self.freeze.name}) * ' \
-                        f'({self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi) +' \
-                        f'{self.freeze.name} * {self.name}_ys - ' \
-                        f'{self.name}_ys'
+                        f'({self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi - {self.name}_ys)'
 
         self.y.e_str = f'(1 - {self.freeze.name}) * ' \
                        f'({self.name}_ys * {self.name}_lim_zi +' \
                        f' {self.lower.name} * {self.name}_lim_zl +' \
-                       f' {self.upper.name} * {self.name}_lim_zu) +' \
-                       f'{self.freeze.name} * {self.name}_y - {self.name}_y'
+                       f' {self.upper.name} * {self.name}_lim_zu - {self.name}_y)'
 
 
 class PIFreeze(PIController):
@@ -389,13 +387,17 @@ class PIFreeze(PIController):
     PI controller with state freeze.
 
     Freezes state when the corresponding `freeze == 1`.
+
+    Notes
+    -----
+    Tested in `experimental.TestPITrackAW.PIFreeze`.
     """
     def __init__(self, u, kp, ki, freeze, ref=0.0, x0=0.0, name=None,
                  tex_name=None, info=None):
         PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
                               name=name, tex_name=tex_name, info=info)
         self.y.diag_eps = 1e-6
-        self.freeze = freeze
+        self.freeze = dummify(freeze)
 
     def define(self):
         r"""
@@ -415,9 +417,11 @@ class PIFreeze(PIController):
         self.xi.e_str = f'(1 - {self.freeze.name}) * {self.ki.name} * ' \
                         f'({self.u.name} - {self.ref.name})'
 
+        # TODO: Freeze and unfreeze should invoke a Jacobian update
+        #   In general, any equation switching should invoke a Jacobian update
+
         self.y.e_str = f'(1 - {self.freeze.name}) * ' \
-                       f'({self.kp.name}*({self.u.name}-{self.ref.name}) + {self.name}_xi) + ' \
-                       f'{self.freeze.name} * {self.name}_y - {self.name}_y'
+                       f'({self.kp.name}*({self.u.name}-{self.ref.name}) + {self.name}_xi - {self.name}_y)'
 
 
 class PIControllerNumeric(Block):

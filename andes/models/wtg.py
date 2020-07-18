@@ -233,6 +233,7 @@ class REECA1Model(Model):
     TODO:
       2. PI controller with state freeze (implemented)
       2.1 PI controller with anti-windup limiter and state freeze (implemented)
+      2.2 v_drop signal generator that creates a switching event (adds time to `t_switch`).
       3. Lag with state freeze (implemented)
       3.1 Lag with anti-windup limiter with state freeze (implemented)
       4. Nonlinear blocks `VDL1` and `VDL2`
