@@ -5,7 +5,7 @@ from andes.core.model import ModelData, Model
 from andes.core.var import Algeb, State
 from andes.core.param import NumParam
 from andes.core.discrete import HardLimiter, AntiWindup  # NOQA
-from andes.core.block import DeadBand1, PIController
+from andes.core.block import DeadBand1, PIController, PITrackAW, PITrackAWFreeze
 
 
 class PI2Data(ModelData):
@@ -71,3 +71,28 @@ class TestPI(ModelData, Model):
                          )
 
         self.PI = PIController(u=self.uin, kp=1, ki=0.1)
+
+
+class TestPITrackAW(ModelData, Model):
+    def __init__(self, system, config):
+        ModelData.__init__(self)
+        Model.__init__(self, system, config)
+        self.group = 'Experimental'
+        self.flags.tds = True
+
+        self.uin = Algeb(v_str=0,
+                         e_str='sin(dae_t) - uin',
+                         )
+        self.fz = Algeb(v_str=0,
+                        e_str='Piecewise((0, dae_t <= 2), (1, dae_t <=6), (0, True)) - fz',
+                        )
+
+        # self.PI = PIController(u=self.uin, kp=1, ki=0.1)
+
+        self.PIAW = PITrackAW(u=self.uin, kp=0, ki=0.5, ks=2,
+                              lower=-0.5, upper=0.5, x0=0.0,
+                              )
+        self.PIFreeze = PITrackAWFreeze(u=self.uin, kp=0, ki=0.5, ks=2,
+                                        lower=-0.5, upper=0.5, x0=0,
+                                        freeze=self.fz,
+                                        )

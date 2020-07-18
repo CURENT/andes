@@ -339,9 +339,9 @@ class PITrackAW(Block):
     def define(self):
         self.xi.v_str = f'{self.x0.name}'
         self.ys.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
-        self.y.v_str = f'{self.name}_ys * {self.lim.name}_zi + ' \
-                       f'{self.lower.name} * {self.lim.name}_zl + ' \
-                       f'{self.upper.name} * {self.lim.name}_zu'
+        self.y.v_str = f'{self.name}_ys * {self.name}_lim_zi + ' \
+                       f'{self.lower.name} * {self.name}_lim_zl + ' \
+                       f'{self.upper.name} * {self.name}_lim_zu'
 
         self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name} -' \
                         f' {self.ks.name} * ({self.name}_ys - {self.name}_y))'
@@ -367,9 +367,10 @@ class PITrackAWFreeze(PITrackAW):
     def define(self):
         PITrackAW.define(self)
 
-        self.xi.e_str = f'{1 - self.freeze.name} * {self.ki.name} * ' \
-                        f'({self.u.name} - {self.ref.name} - ' \
-                        f'{self.ks.name} * ({self.name}_ys - {self.name}_y))'
+        # TODO: BUG BELOW: one cannot directly multiply `1-freeze` to the equation.
+        self.xi.e_str = f' {self.ki.name} * ' \
+                        f'({self.u.name} - {self.ref.name} -' \
+                        f' {self.ks.name} * ({self.name}_ys - {self.name}_y))'
 
         self.ys.e_str = f'(1-{self.freeze.name}) * ' \
                         f'({self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi) +' \
@@ -377,9 +378,10 @@ class PITrackAWFreeze(PITrackAW):
                         f'{self.name}_ys'
 
         self.y.e_str = f'(1 - {self.freeze.name}) * ' \
-                       f'({self.name}_ys * {self.lim.name}_zi +' \
-                       f' {self.lower.name} * {self.lim.name}_zl +' \
-                       f' {self.upper.name} * {self.lim.name}_zu) - {self.name}_y'
+                       f'({self.name}_ys * {self.name}_lim_zi +' \
+                       f' {self.lower.name} * {self.name}_lim_zl +' \
+                       f' {self.upper.name} * {self.name}_lim_zu) +' \
+                       f'{self.freeze.name} * {self.name}_y - {self.name}_y'
 
 
 class PIFreeze(PIController):
