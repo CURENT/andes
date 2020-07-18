@@ -24,6 +24,7 @@ class TDS(BaseRoutine):
                                      ('tf', 20.0),
                                      ('fixt', 1),
                                      ('shrinkt', 1),
+                                     ('honest', 0),
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
                                      )))
@@ -33,6 +34,7 @@ class TDS(BaseRoutine):
                               tf="simulation ending time",
                               fixt="use fixed step size (1) or variable (0)",
                               shrinkt='shrink step size for fixed method if not converged',
+                              honest='honest Newton method that updates Jac at each step',
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
                               )
@@ -42,6 +44,7 @@ class TDS(BaseRoutine):
                               tf=">t0",
                               fixt=(0, 1),
                               shrinkt=(0, 1),
+                              honest=(0, 1),
                               tstep='float',
                               max_iter='>=10',
                               )
@@ -327,7 +330,8 @@ class TDS(BaseRoutine):
             self._fg_update(models=system.exist.pflow_tds)
 
             # lazy Jacobian update
-            if dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
+
+            if self.config.honest == 1 or dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=system.exist.pflow_tds)
                 self.solver.factorize = True
 
