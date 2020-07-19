@@ -7,7 +7,16 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 Since v1.0.0
 ------------
 
-v1.0.7
+v1.0.8
+```````````````````
+
+Default behavior changes include:
+
+- ``andes prepare`` now takes three mutually exclusive arguments,
+  `full`, `quick` and `incremental`. The command-line now defaults
+  to the quick mode. ``andes.prepare()`` still uses the full mode.
+
+v1.0.7 (2020-07-18)
 ```````````````````
 - Use in-place assignment when updating Jacobian values in Triplets.
 - Patched a major but simple bug where the Jacobian refactorization
