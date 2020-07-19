@@ -375,6 +375,10 @@ class TDS(BaseRoutine):
 
             # calculate correction
             mis = np.max(np.abs(inc))
+            # TODO: BUG FIX:
+            #   using variable increment as the correction is incorrect
+            #   Should check equation residuals instead
+
             if self.niter == 0:
                 self.mis = mis
 

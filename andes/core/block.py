@@ -455,8 +455,8 @@ class PIControllerNumeric(Block):
         self.j_reset()
         self.triplets.append_ijv('fyc', self.xi.id, self.u.id, self.ki.v)
         self.triplets.append_ijv('gyc', self.y.id, self.u.id, self.kp.v)
-        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, 1)
-        self.triplets.append_ijv('gyc', self.y.id, self.y.id, -1)
+        self.triplets.append_ijv('gxc', self.y.id, self.xi.id, 1.0)
+        self.triplets.append_ijv('gyc', self.y.id, self.y.id, -1.0)
 
     def define(self):
         """Skip the symbolic definition"""

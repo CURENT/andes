@@ -25,6 +25,7 @@ class PI2Model(Model):
         self.flags.update({'tds': True})
         self.uin = State(v_str=0,
                          e_str='Piecewise((0, dae_t<= 0), (1, dae_t <= 2), (-1, dae_t <6), (1, True))',
+                         tex_name='u_{in}',
                          )
         self.x = State(e_str='uin * Ki * HL_zi',
                        v_str=0.05,
@@ -89,24 +90,26 @@ class TestPI(ModelData, Model):
 
         self.uin = Algeb(v_str=0,
                          e_str='sin(dae_t) - uin',
+                         tex_name='u_{in}',
                          )
 
-        # `fz` works fine.
-        self.fz = Algeb(v_str=0,
-                        e_str='Piecewise((0, dae_t <= 2), (0, dae_t <=6), (0, True)) - fz',
+        self.zf = Algeb(v_str=0,
+                        e_str='Piecewise((0, dae_t <= 2), (1, dae_t <=6), (0, True)) - zf',
+                        tex_name='z_f',
                         )
 
         # `PI` works fine.
-        self.PI = PIController(u=self.uin, kp=1, ki=0.1)
+        # self.PI = PIController(u=self.uin, kp=1, ki=0.1)
 
+        #  ----- The following works fine together
         # `PITrackAW` works fine (with Jacobian update on) with out freeze.
         self.PIAW = PITrackAW(u=self.uin, kp=0.5, ki=0.5, ks=2,
                               lower=-0.5, upper=0.5, x0=0.0,
                               )
 
-        # TODO: If `freeze=self.fz`, pointer error will occur
-        self.PIFreeze = PIFreeze(u=self.uin, kp=0.5, ki=0.5, x0=0,
-                                 freeze=0.0)
+        self.PIF = PIFreeze(u=self.uin, kp=0.5, ki=0.5, x0=0,
+                            freeze=self.zf)
+        # -----
 
     def get_times(self):
-        return (2.0,)
+        return (2.0, 6.0)
