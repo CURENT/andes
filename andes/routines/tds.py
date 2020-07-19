@@ -148,6 +148,10 @@ class TDS(BaseRoutine):
         out_str = '\n'.join(out)
         logger.info(out_str)
 
+        if self.config.honest == 1:
+            logger.warning("The honest Newton method is used and will slow down the simulation.")
+            logger.warning("For significant speed up, set `honest=0` in TDS.config.")
+
     def run(self, no_pbar=False, no_summary=False, **kwargs):
         """
         Run the implicit numerical integration for TDS.

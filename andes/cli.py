@@ -88,6 +88,11 @@ def create_parser():
     plot.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
     plot.add_argument('--ytimes', type=str, help='scale the y-axis values by YTIMES')
     plot.add_argument('-c', '--tocsv', help='convert npy output to csv', action='store_true')
+    plot.add_argument('--hline1', help='dashed horizontal line 1', type=float)
+    plot.add_argument('--hline2', help='dashed horizontal line 2', type=float)
+    plot.add_argument('--vline1', help='dashed vertical line 1', type=float)
+    plot.add_argument('--vline2', help='dashed vertical line 2', type=float)
+
 
     doc = sub_parsers.add_parser('doc')  # NOQA
     doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')

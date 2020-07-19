@@ -253,7 +253,8 @@ class TDSData(object):
              xlabel=None, ylabel=None,
              legend=None, grid=False, greyscale=False,
              latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
-             title=None, use_bqplot=False, **kwargs):
+             title=None, use_bqplot=False,
+             hline1=None, hline2=None, vline1=None, vline2=None, **kwargs):
         """
         Entery function for plot scripting. This function retrieves the x and y values based
         on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
@@ -326,6 +327,7 @@ class TDSData(object):
                                   xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
                                   latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
                                   savefig=savefig, save_format=save_format, show=show, title=title,
+                                  hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                                   **kwargs)
 
     def data_to_df(self):
@@ -366,7 +368,8 @@ class TDSData(object):
     def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
-                  save_format=None, show=True, title=None, **kwargs):
+                  save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
+                  vline2=None, **kwargs):
         """
         Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
         you provide variable indices instead of values, use `plot()`.
@@ -427,6 +430,16 @@ class TDSData(object):
             Text font size (labels and legends)
         show : bool
             True to show the image
+        title : str
+            Title string to be shown at the top
+        hline1: float, optional
+            Dashed horizontal line 1
+        hline2: float, optional
+            Dashed horizontal line 2
+        vline1: float, optional
+            Dashed horizontal line 1
+        vline2: float, optional
+            Dashed vertical line 2
         kwargs
             Optional kwargs
 
@@ -506,6 +519,15 @@ class TDSData(object):
 
         if title:
             ax.set_title(title)
+
+        if hline1:
+            ax.axhline(y=hline1, linewidth=1, ls=':', color='grey')
+        if hline2:
+            ax.axhline(y=hline2, linewidth=1, ls=':', color='grey')
+        if vline1:
+            ax.axvline(x=vline1, linewidth=1, ls=':', color='grey')
+        if vline2:
+            ax.axvline(x=vline2, linewidth=1, ls=':', color='grey')
 
         plt.draw()
 

@@ -100,10 +100,15 @@ class Discrete(object):
             if not len(pos):
                 continue
             err_msg = f'{self.owner.class_name}.{self.name} {self.__dict__[limit].name} at limits'
+            if isinstance(self.__dict__[limit].v, np.ndarray):
+                lim_value = self.__dict__[limit].v[pos]
+            else:
+                lim_value = self.__dict__[limit].v
+
             err_data = {'idx': [self.owner.idx.v[i] for i in pos],
                         'Flag': [f] * len(pos),
                         'Input Value': self.u.v[pos],
-                        'Limit': self.__dict__[limit].v[pos]
+                        'Limit': lim_value * np.ones_like(pos),
                         }
 
             tab = Tab(title=err_msg,
