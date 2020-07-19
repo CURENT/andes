@@ -15,6 +15,7 @@ from andes.models import non_jit
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
+from andes.utils.misc import elapsed
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
 from andes.core import Config, BaseParam, Model, AntiWindup
 
@@ -192,17 +193,25 @@ class System(object):
         """
         import math
 
+        # info
+        if quick is True:
+            text_mode = 'quick mode'
+        elif incremental is True:
+            text_mode = 'rapid incremental mode'
+        else:
+            text_mode = 'full mode'
+
+        logger.info(f'Numerical code generation ({text_mode}) started...')
+
+        t0, _ = elapsed()
+
         # consistency check for group parameters and variables
         self._check_group_common()
 
         loaded_calls = self._load_pkl()
-        if loaded_calls is None:
+        if loaded_calls is None and incremental:
             incremental = False
             logger.debug('calls.pkl does not exist. Incremental codegen disabled.')
-
-        if quick is False and incremental is True:
-            incremental = False
-            logger.debug('Incremental codegen is only allowed in quick mode.')
 
         total = len(self.models)
         width = math.ceil(math.log(total, 10))
@@ -222,6 +231,9 @@ class System(object):
 
         self._store_calls()
         self.dill()
+
+        _, s = elapsed(t0)
+        logger.info(f'Successfully generated numerical code in {s}.')
 
     def _prepare_mp(self, quick=False):
         """
@@ -681,7 +693,7 @@ class System(object):
         try:
             self.call_models('f_update', models)
         except TypeError as e:
-            logger.error("f_update failed. Did you forget to run `andes prepare -q` after updating?")
+            logger.error("f_update failed. Did you forget to run `andes prepare -i` after updating?")
             raise e
 
     def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
@@ -695,7 +707,7 @@ class System(object):
         try:
             self.call_models('g_update', models)
         except TypeError as e:
-            logger.error("g_update failed. Did you forget to run `andes prepare -q` after updating?")
+            logger.error("g_update failed. Did you forget to run `andes prepare -i` after updating?")
             raise e
 
     def j_update(self, models: OrderedDict):

@@ -198,7 +198,7 @@ def remove_output(recursive=False):
     if recursive:
         dirs = [x[0] for x in os.walk(cwd)]
     else:
-        dirs = (cwd, )
+        dirs = (cwd,)
 
     for d in dirs:
         for file in os.listdir(d):
@@ -584,20 +584,32 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
 
 
-def prepare(quick=False, incremental=False, cli=False, **kwargs):
+def prepare(quick=False, incremental=False, cli=False, full=False, **kwargs):
     """
     Run code generation.
 
+    Warnings
+    --------
+    The default behavior has changed since v1.0.8: when `cli` is `True` and
+    `full` is not `True`, quick code generation will be used.
+
     Returns
     -------
-    System object
+    System object if `cli` is `False`; exit_code 0 otherwise.
     """
-    t0, _ = elapsed()
-    logger.info('Numeric code generation started...')
+
+    # use `quick` for cli if `full` is not enforced,
+    # because the LaTeX code gen is usually discarded in CLI.
+
+    if cli is True:
+        if not full:
+            quick = True
+
+    if full is True:
+        quick = False
+
     system = System()
     system.prepare(quick=quick, incremental=incremental)
-    _, s = elapsed(t0)
-    logger.info(f'Successfully generated numerical code in {s}.')
 
     if cli is True:
         return 0

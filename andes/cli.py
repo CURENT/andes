@@ -114,9 +114,13 @@ def create_parser():
                       action='store_true')
 
     prep = sub_parsers.add_parser('prepare')  # NOQA
-    prep.add_argument('-q', '--quick', action='store_true', help='quick processing by skipping pretty prints')
-    prep.add_argument('-i', '--incremental', action='store_true', help='Only incrementally generate for updated '
-                                                                       'models')
+    prep_mode = prep.add_mutually_exclusive_group()
+    prep_mode.add_argument('-q', '--quick', action='store_true',
+                           help='quick codegen by skipping pretty prints')
+    prep_mode.add_argument('-f', '--full', action='store_true', help='full codegen')
+    prep_mode.add_argument('-i', '--incremental', action='store_true',
+                           help='rapid incrementally generate for updated models')
+
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
 
