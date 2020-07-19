@@ -742,6 +742,8 @@ class System(object):
                                      f'j_size={j_size}')
                         raise e
 
+        logger.debug(f"Jacobian updated at t={self.dae.t}")
+
     def store_sparse_pattern(self, models: OrderedDict):
         """
         Collect and store the sparsity pattern of Jacobian matrices.

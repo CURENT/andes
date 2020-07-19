@@ -3,6 +3,7 @@ from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb
 from andes.core.service import ConstService
 from andes.shared import np, tqdm
+from collections import OrderedDict
 import logging
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,15 @@ class Fault(ModelData, Model):
         Model.__init__(self, system, config)
         self.flags.update({'tds': True})
         self.group = 'TimedEvent'
+
+        self.config.add(OrderedDict((('restore_v', 1),
+                                     )))
+        self.config.add_extra('_alt',
+                              restore_v=(0, 1),
+                              )
+        self.config.add_extra('_help',
+                              restore_v='restore voltages after fault clearance')
+
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
                                vtype=np.complex,
@@ -113,7 +123,7 @@ class Fault(ModelData, Model):
                 self.uf.v[i] = 1
                 self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
                 tqdm.write(f'<Fault {self.idx.v[i]}>: '
-                           f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]}sec.')
+                           f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
                 action = True
         return action
 
@@ -125,8 +135,13 @@ class Fault(ModelData, Model):
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
-                self.system.dae.y[self.system.Bus.n:] = self._vstore
+
+                if self.config.restore_v:
+                    self.system.dae.y[self.system.Bus.n:] = self._vstore
+                    logger.debug(f"Voltage restored after fault clearance at t={self.system.dae.t:.6f}")
+
                 tqdm.write(f'<Fault {self.idx.v[i]}>: '
-                           f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]}sec.')
+                           f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]} sec.')
+
                 action = True
         return action

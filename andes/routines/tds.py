@@ -65,6 +65,7 @@ class TDS(BaseRoutine):
 
         # internal status
         self.converged = False
+        self.last_converged = False
         self.busted = False
         self.err_msg = ''
         self.niter = 0
@@ -215,6 +216,8 @@ class TDS(BaseRoutine):
                     self.next_pc += 1
             else:
                 if self.calc_h() == 0:
+                    self.err_msg = "Time step reduced to zero. Convergence is not likely."
+                    self.busted = True
                     break
 
         self.pbar.close()
@@ -335,7 +338,11 @@ class TDS(BaseRoutine):
 
             # lazy Jacobian update
 
-            if self.config.honest == 1 or dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
+            if self.config.honest == 1 or \
+                    dae.t == 0 or \
+                    self.last_converged is False or \
+                    self.niter > 3 or \
+                    (dae.t - self._last_switch_t < 0.1):
                 system.j_update(models=system.exist.pflow_tds)
                 # set flag in `solver.worker.factorize`, not `solver.factorize`.
                 self.solver.worker.factorize = True
@@ -364,7 +371,7 @@ class TDS(BaseRoutine):
 
             # check for np.nan first
             if np.isnan(inc).any():
-                self.err_msg = 'NaN found in solution. Convergence not likely'
+                self.err_msg = 'NaN found in solution. Convergence is not likely'
                 self.niter = self.config.max_iter + 1
                 self.busted = True
                 break
@@ -395,8 +402,8 @@ class TDS(BaseRoutine):
                 break
             # non-convergence cases
             if self.niter > self.config.max_iter:
-                logger.debug(f'Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
-                             f'h={self.h:.6f}, mis={mis:.4g} ')
+                tqdm.write(f'* Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
+                           f'h={self.h:.6f}, mis={mis:.4g} ')
 
                 # debug helpers
                 g_max = np.argmax(abs(dae.g))
@@ -415,6 +422,8 @@ class TDS(BaseRoutine):
             dae.y = np.array(self.y0)
             dae.f = np.array(self.f0)
             system.vars_to_models()
+
+        self.last_converged = self.converged
 
         return self.converged
 
@@ -649,6 +658,7 @@ class TDS(BaseRoutine):
         self.qg = np.array([])
 
         self.converged = False
+        self.last_converged = False
         self.busted = False
         self.niter = 0
         self._switch_idx = 0       # index into `System.switch_times`
