@@ -333,7 +333,8 @@ class TDS(BaseRoutine):
 
             if self.config.honest == 1 or dae.t == 0 or self.niter > 3 or (dae.t - self._last_switch_t < 0.2):
                 system.j_update(models=system.exist.pflow_tds)
-                self.solver.factorize = True
+                # set flag in `solver.worker.factorize`, not `solver.factorize`.
+                self.solver.worker.factorize = True
 
             # `Tf` should remain constant throughout the simulation, even if the corresponding diff. var.
             # is pegged by the anti-windup limiters.
@@ -371,14 +372,14 @@ class TDS(BaseRoutine):
             dae.x -= inc[:dae.n].ravel()
             dae.y -= inc[dae.n: dae.n + dae.m].ravel()
 
+            # store `inc` to self for debugging
+            self.inc = inc
+
             system.vars_to_models()
 
             # calculate correction
             mis = np.max(np.abs(inc))
-            # TODO: BUG FIX:
-            #   using variable increment as the correction is incorrect
-            #   Should check equation residuals instead
-
+            # store initial maximum mismatch
             if self.niter == 0:
                 self.mis = mis
 
