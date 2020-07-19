@@ -10,7 +10,18 @@ Since v1.0.0
 v1.0.7
 ```````````````````
 - Use in-place assignment when updating Jacobian values in Triplets.
-- New models: PMU.
+- Patched a major but simple bug where the Jacobian refactorization
+  flag is set to the wrong place.
+- New models: PMU, REGCAU1 (tests pending).
+- New blocks: DeadBand1, PIFreeze, PITrackAW, PITrackAWFreeze (tests
+  pending), and LagFreeze (tests pending).
+- `andes plot` supports dashed horizontal and vertical lines through
+  `hline1`, `hline2`, `vline1` and `vline2`.
+- Discrete: renamed `DeadBand` to `DeadBandRT` (deadband with
+  return).
+- Service: renamed `FlagNotNone` to `FlagValue` with an option
+  to flip the flags.
+- Other tweaks.
 
 v1.0.6 (2020-07-08)
 ```````````````````
