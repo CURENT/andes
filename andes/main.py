@@ -11,6 +11,7 @@ import pstats
 from time import sleep
 from subprocess import call
 from typing import Optional, Union
+import numpy as np  # NOQA
 
 import andes
 from andes.system import System

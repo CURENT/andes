@@ -341,7 +341,7 @@ class TDS(BaseRoutine):
             if self.config.honest == 1 or \
                     dae.t == 0 or \
                     self.last_converged is False or \
-                    self.niter > 3 or \
+                    self.niter > 4 or \
                     (dae.t - self._last_switch_t < 0.1):
                 system.j_update(models=system.exist.pflow_tds)
                 # set flag in `solver.worker.factorize`, not `solver.factorize`.
@@ -418,9 +418,9 @@ class TDS(BaseRoutine):
                 break
 
         if not self.converged:
-            dae.x = np.array(self.x0)
-            dae.y = np.array(self.y0)
-            dae.f = np.array(self.f0)
+            dae.x[:] = np.array(self.x0)
+            dae.y[:] = np.array(self.y0)
+            dae.f[:] = np.array(self.f0)
             system.vars_to_models()
 
         self.last_converged = self.converged

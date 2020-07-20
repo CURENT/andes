@@ -76,12 +76,15 @@ class Fault(ModelData, Model):
         self.group = 'TimedEvent'
 
         self.config.add(OrderedDict((('restore', 1),
+                                     ('scale', 1.0)
                                      )))
         self.config.add_extra('_alt',
                               restore=(0, 1),
                               )
         self.config.add_extra('_help',
-                              restore='restore algebraic variables to pre-fault values')
+                              restore='restore algebraic variables to pre-fault values',
+                              scale='scaling factor of restored algebraic values',
+                              )
 
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
@@ -139,7 +142,7 @@ class Fault(ModelData, Model):
                 self.uf.v[i] = 0
 
                 if self.config.restore:
-                    self.system.dae.y[self.system.Bus.n:] = self._vstore
+                    self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
                     logger.debug(f"Voltage restored after fault clearance at t={self.system.dae.t:.6f}")
 
                 tqdm.write(f'<Fault {self.idx.v[i]}>: '
