@@ -137,14 +137,14 @@ class TDS(BaseRoutine):
         out.append('')
         out.append('-> Time Domain Simulation Summary:')
         out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
-        out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf}sec.')
+        out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} sec.')
         if self.config.fixt == 1:
-            msg = f'Fixed step size: h={1000 * self.config.tstep:.4g}msec.'
+            msg = f'Fixed step size: h={1000 * self.config.tstep:.4g} msec.'
             if self.config.shrinkt == 1:
                 msg += ', shrink if not converged'
             out.append(msg)
         else:
-            out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g}msec.')
+            out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g} msec.')
 
         out_str = '\n'.join(out)
         logger.info(out_str)

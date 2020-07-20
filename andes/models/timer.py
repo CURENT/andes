@@ -75,13 +75,13 @@ class Fault(ModelData, Model):
         self.flags.update({'tds': True})
         self.group = 'TimedEvent'
 
-        self.config.add(OrderedDict((('restore_v', 1),
+        self.config.add(OrderedDict((('restore', 1),
                                      )))
         self.config.add_extra('_alt',
-                              restore_v=(0, 1),
+                              restore=(0, 1),
                               )
         self.config.add_extra('_help',
-                              restore_v='restore voltages after fault clearance')
+                              restore='restore algebraic variables to pre-fault values')
 
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
@@ -122,8 +122,10 @@ class Fault(ModelData, Model):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 1
                 self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
+
                 tqdm.write(f'<Fault {self.idx.v[i]}>: '
                            f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
+
                 action = True
         return action
 
@@ -136,7 +138,7 @@ class Fault(ModelData, Model):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
 
-                if self.config.restore_v:
+                if self.config.restore:
                     self.system.dae.y[self.system.Bus.n:] = self._vstore
                     logger.debug(f"Voltage restored after fault clearance at t={self.system.dae.t:.6f}")
 
