@@ -229,10 +229,10 @@ class REECA1Model(Model):
 
     Completed:
       1. Dead band type 1, implement and test (implemented and tested (TestDB1))
+      2. PI controller with state freeze (implemented and tested)
+      2.1 PI controller with anti-windup limiter and state freeze (implemented and tested)
 
     TODO:
-      2. PI controller with state freeze (implemented)
-      2.1 PI controller with anti-windup limiter and state freeze (implemented)
       2.2 v_drop signal generator that creates a switching event (adds time to `t_switch`).
       3. Lag with state freeze (implemented)
       3.1 Lag with anti-windup limiter with state freeze (implemented)

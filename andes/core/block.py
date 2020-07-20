@@ -367,12 +367,10 @@ class PITrackAWFreeze(PITrackAW):
     def define(self):
         PITrackAW.define(self)
 
-        # TODO: BUG BELOW: one cannot directly multiply `1-freeze` to the equation.
-        self.xi.e_str = f' {self.ki.name} * ' \
+        self.xi.e_str = f'(1-{self.freeze.name}) * {self.ki.name} * ' \
                         f'({self.u.name} - {self.ref.name} -' \
                         f' {self.ks.name} * ({self.name}_ys - {self.name}_y))'
 
-        # TODO: BUG BELOW: this expression does not freeze `ys` until Jac is updated.
         self.ys.e_str = f'(1-{self.freeze.name}) * ' \
                         f'({self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.name}_xi - {self.name}_ys)'
 
