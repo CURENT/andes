@@ -248,71 +248,6 @@ class TDS(BaseRoutine):
 
         return succeed
 
-    def rewind(self, t):
-        """
-        TODO: rewind to a past time.
-        """
-        pass
-
-    def load_plotter(self):
-        """
-        Manually load a plotter into ``TDS.plotter``.
-        """
-        from andes.plot import TDSData  # NOQA
-        self.plotter = TDSData(mode='memory', dae=self.system.dae)
-        self.plt = self.plotter
-
-    def test_init(self):
-        """
-        Update f and g to see if initialization is successful.
-        """
-        system = self.system
-        self._fg_update(system.exist.pflow_tds)
-        system.j_update(models=system.exist.pflow_tds)
-
-        # warn if variables are initialized at limits
-        if system.config.warn_limits:
-            for model in system.exist.pflow_tds.values():
-                for item in model.discrete.values():
-                    item.warn_init_limit()
-
-        if np.max(np.abs(system.dae.fg)) < self.config.tol:
-            logger.debug('Initialization tests passed.')
-            return True
-        else:
-
-            fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
-            fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
-
-            title = 'Suspect initialization issue! Simulation may crash!'
-            err_data = {'Name': fail_names,
-                        'Var. Value': system.dae.xy[fail_idx],
-                        'Eqn. Mismatch': system.dae.fg[fail_idx],
-                        }
-            tab = Tab(title=title,
-                      header=err_data.keys(),
-                      data=list(map(list, zip(*err_data.values()))))
-
-            logger.error(tab.draw())
-
-            if system.options.get('verbose') == 1:
-                breakpoint()
-            system.exit_code += 1
-            return False
-
-    def _fg_update(self, models):
-        """
-        Update `f` and `g` equations.
-        """
-        system = self.system
-        system.dae.clear_fg()
-        system.l_update_var(models=models)
-        system.s_update_var(models=models)  # update VarService
-        system.f_update(models=models)
-        system.g_update(models=models)
-        system.l_update_eq(models=models)
-        system.fg_to_dae()
-
     def _itm_step(self):
         """
         Integrate with Implicit Trapezoidal Method (ITM) to the current time.
@@ -431,92 +366,6 @@ class TDS(BaseRoutine):
 
         return self.converged
 
-    def _debug_g(self, y_idx):
-        """
-        Print out the associated variables with the given algebraic equation index.
-
-        Parameters
-        ----------
-        y_idx
-            Index of the equation into the `g` array. Diff. eqns. are not counted in.
-        """
-        y_idx = y_idx.tolist()
-        logger.debug(f'Max. algebraic mismatch associated with {self.system.dae.y_name[y_idx]} [y_idx={y_idx}]')
-        assoc_vars = self.system.dae.gy[y_idx, :]
-        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
-
-        logger.debug('')
-        logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
-        for v in vars_idx:
-            v = v.tolist()
-            logger.debug(f'{v:<10} {self.system.dae.y_name[v]:<20} {assoc_vars[v]:<20g}')
-
-        pass
-
-    def _debug_ac(self, xy_idx):
-        """
-        Debug Ac matrix by printing out equations and derivatives associated with the max. mismatch variable.
-
-        Parameters
-        ----------
-        xy_idx
-            Index of the maximum mismatch into the `xy` array.
-        """
-
-        xy_idx = xy_idx.tolist()
-        assoc_eqns = self.Ac[:, xy_idx]
-        assoc_vars = self.Ac[xy_idx, :]
-
-        eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
-        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
-
-        logger.debug(f'Max. correction is for variable {self.system.dae.xy_name[xy_idx]} [{xy_idx}]')
-        logger.debug(f'Associated equation value is {self.system.dae.fg[xy_idx]:<20g}')
-        logger.debug('')
-
-        logger.debug(f'{"xy_index":<10} {"Equation":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
-        for eq in eqns_idx:
-            eq = eq.tolist()
-            logger.debug(f'{eq:<10} {self.system.dae.xy_name[eq]:<20} {assoc_eqns[eq]:<20g} '
-                         f'{self.system.dae.fg[eq]:<20g}')
-
-        logger.debug('')
-        logger.debug(f'{"xy_index":<10} {"Variable":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
-        for v in vars_idx:
-            v = v.tolist()
-            logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
-                         f'{self.system.dae.fg[v]:<20g}')
-
-    def save_output(self, npz=True):
-        """
-        Save the simulation data into two files: a lst file and a npz file.
-
-        Parameters
-        ----------
-        npz : bool
-            True to save in npz format; False to save in npy format.
-
-        Returns
-        -------
-        bool
-            True if files are written. False otherwise.
-        """
-        if self.system.files.no_output:
-            return False
-        else:
-            t0, _ = elapsed()
-
-            self.system.dae.write_lst(self.system.files.lst)
-
-            if npz is True:
-                self.system.dae.write_npz(self.system.files.npz)
-            else:
-                self.system.dae.write_npy(self.system.files.npy)
-
-            _, s1 = elapsed(t0)
-            logger.info(f'TDS outputs saved in {s1}.')
-            return True
-
     def calc_h(self):
         """
         Calculate the time step size during the TDS.
@@ -618,6 +467,82 @@ class TDS(BaseRoutine):
         self.h = self.deltat
         return self.h
 
+    def load_plotter(self):
+        """
+        Manually load a plotter into ``TDS.plotter``.
+        """
+        from andes.plot import TDSData  # NOQA
+        self.plotter = TDSData(mode='memory', dae=self.system.dae)
+        self.plt = self.plotter
+
+    def test_init(self):
+        """
+        Update f and g to see if initialization is successful.
+        """
+        system = self.system
+        self._fg_update(system.exist.pflow_tds)
+        system.j_update(models=system.exist.pflow_tds)
+
+        # warn if variables are initialized at limits
+        if system.config.warn_limits:
+            for model in system.exist.pflow_tds.values():
+                for item in model.discrete.values():
+                    item.warn_init_limit()
+
+        if np.max(np.abs(system.dae.fg)) < self.config.tol:
+            logger.debug('Initialization tests passed.')
+            return True
+        else:
+
+            fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
+            fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
+
+            title = 'Suspect initialization issue! Simulation may crash!'
+            err_data = {'Name': fail_names,
+                        'Var. Value': system.dae.xy[fail_idx],
+                        'Eqn. Mismatch': system.dae.fg[fail_idx],
+                        }
+            tab = Tab(title=title,
+                      header=err_data.keys(),
+                      data=list(map(list, zip(*err_data.values()))))
+
+            logger.error(tab.draw())
+
+            if system.options.get('verbose') == 1:
+                breakpoint()
+            system.exit_code += 1
+            return False
+
+    def save_output(self, npz=True):
+        """
+        Save the simulation data into two files: a lst file and a npz file.
+
+        Parameters
+        ----------
+        npz : bool
+            True to save in npz format; False to save in npy format.
+
+        Returns
+        -------
+        bool
+            True if files are written. False otherwise.
+        """
+        if self.system.files.no_output:
+            return False
+        else:
+            t0, _ = elapsed()
+
+            self.system.dae.write_lst(self.system.files.lst)
+
+            if npz is True:
+                self.system.dae.write_npz(self.system.files.npz)
+            else:
+                self.system.dae.write_npy(self.system.files.npy)
+
+            _, s1 = elapsed(t0)
+            logger.info(f'TDS outputs saved in {s1}.')
+            return True
+
     def do_switch(self):
         """
         Checks if is an event time and perform switch if true.
@@ -658,8 +583,122 @@ class TDS(BaseRoutine):
 
         return ret
 
+    def _fg_update(self, models):
+        """
+        Update `f` and `g` equations.
+        """
+        system = self.system
+        system.dae.clear_fg()
+        system.l_update_var(models=models)
+        system.s_update_var(models=models)  # update VarService
+        system.f_update(models=models)
+        system.g_update(models=models)
+        system.l_update_eq(models=models)
+        system.fg_to_dae()
+
+    def _fg_wrapper(self, xy):
+        """
+        Wrapper function for equations. Callable by general-purpose DAE solvers.
+
+        Parameters
+        ----------
+        xy : np.ndarray
+            Input values for evaluating equations.
+
+        Returns
+        -------
+        np.ndarray
+            RHS of diff. and algeb. equations.
+
+        """
+        system = self.system
+        system.dae.x[:] = xy[:system.dae.n]
+        system.dae.y[:] = xy[system.dae.n:]
+        system.vars_to_models()
+
+        self._fg_update(system.exist.pflow_tds)
+
+        return system.dae.fg
+
+    def _load_pert(self):
+        """
+        Load perturbation files to ``self.callpert``.
+        """
+        system = self.system
+        if system.files.pert:
+            if not os.path.isfile(system.files.pert):
+                logger.warning(f'Pert file not found at "{system.files.pert}".')
+                return False
+
+            sys.path.append(system.files.case_path)
+            _, full_name = os.path.split(system.files.pert)
+            name, ext = os.path.splitext(full_name)
+
+            module = importlib.import_module(name)
+            self.callpert = getattr(module, 'pert')
+            logger.info(f'Perturbation file "{system.files.pert}" loaded.')
+            return True
+
+    def _debug_g(self, y_idx):
+        """
+        Print out the associated variables with the given algebraic equation index.
+
+        Parameters
+        ----------
+        y_idx
+            Index of the equation into the `g` array. Diff. eqns. are not counted in.
+        """
+        y_idx = y_idx.tolist()
+        logger.debug(f'Max. algebraic mismatch associated with {self.system.dae.y_name[y_idx]} [y_idx={y_idx}]')
+        assoc_vars = self.system.dae.gy[y_idx, :]
+        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
+
+        logger.debug('')
+        logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
+        for v in vars_idx:
+            v = v.tolist()
+            logger.debug(f'{v:<10} {self.system.dae.y_name[v]:<20} {assoc_vars[v]:<20g}')
+
+        pass
+
+    def _debug_ac(self, xy_idx):
+        """
+        Debug Ac matrix by printing out equations and derivatives associated with the max. mismatch variable.
+
+        Parameters
+        ----------
+        xy_idx
+            Index of the maximum mismatch into the `xy` array.
+        """
+
+        xy_idx = xy_idx.tolist()
+        assoc_eqns = self.Ac[:, xy_idx]
+        assoc_vars = self.Ac[xy_idx, :]
+
+        eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
+        vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
+
+        logger.debug(f'Max. correction is for variable {self.system.dae.xy_name[xy_idx]} [{xy_idx}]')
+        logger.debug(f'Associated equation value is {self.system.dae.fg[xy_idx]:<20g}')
+        logger.debug('')
+
+        logger.debug(f'{"xy_index":<10} {"Equation":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        for eq in eqns_idx:
+            eq = eq.tolist()
+            logger.debug(f'{eq:<10} {self.system.dae.xy_name[eq]:<20} {assoc_eqns[eq]:<20g} '
+                         f'{self.system.dae.fg[eq]:<20g}')
+
+        logger.debug('')
+        logger.debug(f'{"xy_index":<10} {"Variable":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        for v in vars_idx:
+            v = v.tolist()
+            logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
+                         f'{self.system.dae.fg[v]:<20g}')
+
     def _reset(self):
-        # reset states
+        """
+        Reset internal states to pre-init condition.
+        """
         self.deltat = 0
         self.deltatmin = 0
         self.deltatmax = 0
@@ -673,8 +712,9 @@ class TDS(BaseRoutine):
         self.last_converged = False
         self.busted = False
         self.niter = 0
-        self._switch_idx = 0       # index into `System.switch_times`
-        self._last_switch_t = -999  # the last critical time
+        self._switch_idx = 0        # index into `System.switch_times`
+        self._last_switch_t = -999  # the last event time
+        self.custom_event = False
         self.mis = 1
         self.system.dae.t = np.array(0.0)
         self.pbar = None
@@ -683,31 +723,8 @@ class TDS(BaseRoutine):
 
         self.initialized = False
 
-    def _load_pert(self):
+    def rewind(self, t):
         """
-        Load perturbation files to ``self.callpert``.
+        TODO: rewind to a past time.
         """
-        system = self.system
-        if system.files.pert:
-            if not os.path.isfile(system.files.pert):
-                logger.warning(f'Pert file not found at <{system.files.pert}>.')
-                return False
-
-            sys.path.append(system.files.case_path)
-            _, full_name = os.path.split(system.files.pert)
-            name, ext = os.path.splitext(full_name)
-
-            module = importlib.import_module(name)
-            self.callpert = getattr(module, 'pert')
-            logger.info(f'Perturbation file <{system.files.pert}> loaded.')
-            return True
-
-    def _fg_wrapper(self, xy):
-        system = self.system
-        system.dae.x[:] = xy[:system.dae.n]
-        system.dae.y[:] = xy[system.dae.n:]
-        system.vars_to_models()
-
-        self._fg_update(system.exist.pflow_tds)
-
-        return system.dae.fg
+        raise NotImplementedError("TDS.rewind() not implemented")
