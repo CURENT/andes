@@ -1244,7 +1244,7 @@ class Model(object):
             for instance in self.timer_params.values():
                 out.append(instance.v)
 
-        return out
+        return np.array(out).ravel()
 
     def switch_action(self, dae_t):
         """

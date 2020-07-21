@@ -614,35 +614,28 @@ class TDS(BaseRoutine):
         self.h = self.deltat
         return self.h
 
-    def is_switch_time(self):
+    def do_switch(self):
         """
-        Return if the current time is a switching time for time domain simulation.
+        Checks if is an event time and perform switch if true.
 
         Time is approximated with a tolerance of 1e-8.
-
-        Returns
-        -------
-        bool
-            ``True`` if is a switching time; ``False`` otherwise.
         """
-        ret = False
-        if self._switch_idx < self.system.n_switches:
-            if abs(self.system.dae.t - self.system.switch_times[self._switch_idx]) < 1e-8:
-                ret = True
-        return ret
-
-    def do_switch(self):
-        """Perform switch if is switch time"""
         ret = False
 
         system = self.system
-        if self.is_switch_time():
-            self._last_switch_t = system.switch_times[self._switch_idx]
-            system.switch_action(system.exist.pflow_tds)
-            self._switch_idx += 1
-            system.vars_to_models()
+        if self._switch_idx < system.n_switches:  # not all events have exhausted
 
-            ret = True
+            # exactly at the event time (controlled by the stepping algorithm
+            if system.dae.t == system.switch_times[self._switch_idx]:
+
+                self._last_switch_t = system.switch_times[self._switch_idx]
+
+                # only call `switch_action` on the models that defined the time
+                system.switch_action(system.switch_dict[system.dae.t.tolist()])
+                self._switch_idx += 1
+                system.vars_to_models()
+
+                ret = True
 
         return ret
 

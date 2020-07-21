@@ -87,6 +87,7 @@ class System(object):
         self.groups = OrderedDict()        # group names and instances
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
+        self.switch_dict = OrderedDict()   # time: OrderedDict of associated models
         self.n_switches = 0                # number of elements in `self.switch_times`
         self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
@@ -1165,27 +1166,58 @@ class System(object):
                 self.routines[attr_name] = self.__dict__[attr_name]
                 self.routines[attr_name].config.check()
 
-    def store_switch_times(self, models):
+    def store_switch_times(self, models, eps=1e-4):
         """
-        Store event switching time in a sorted Numpy array at ``System.switch_times``.
+        Store event switching time in a sorted Numpy array in ``System.switch_times``
+        and an OrderedDict ``System.switch_dict``.
+
+        ``System.switch_dict`` has keys as event times and values as the OrderedDict
+        of model names and instances associated with the event.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            model name : model instance
+        eps : float
+            The small time step size to use immediately before
+            and after the event
 
         Returns
         -------
         array-like
             self.switch_times
         """
-        out = []
+        out = np.array([], dtype=np.float)
+        names = []
         for instance in models.values():
-            out.extend(instance.get_times())
+            times = instance.get_times()
+            out = np.append(out, times)
+            out = np.append(out, times - eps)
+            out = np.append(out, times + eps)
+            names.extend([instance.class_name] * (3 * len(times)))
 
-        out = np.ravel(np.array(out))
-        out = np.append(out, out - 1e-4)
-        out = np.append(out, out + 1e-4)
-        out = np.unique(out)
-        out = out[np.where(out >= 0)]
-        out = np.sort(out)
+        # select t>0
+        ltzero_idx = np.where(out >= 0)[0]
+        out = out[ltzero_idx]
+        names = [names[i] for i in ltzero_idx]
 
-        self.switch_times = out
+        # sort
+        sort_idx = np.argsort(out).astype(int)
+        out = out[sort_idx]
+        names = [names[i] for i in sort_idx]
+
+        # make into an OrderedDict with unique keys and model names combined
+        self.switch_times = list()
+        self.switch_dict = OrderedDict()
+
+        for i, j in zip(out, names):
+            if i not in self.switch_times:
+                self.switch_times.append(i)
+                self.switch_dict[i] = {j: self.models[j]}
+            else:
+                self.switch_dict[i].update({j: self.models[j]})
+
+        # self.switch_times = out
         self.n_switches = len(self.switch_times)
         return self.switch_times
 

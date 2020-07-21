@@ -37,7 +37,7 @@ class Toggler(TogglerData, Model):
                 instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
                 action = True
                 tqdm.write(f'<Toggler {self.idx.v[i]}>: '
-                           f'{self.model.v[i]}.{self.dev.v[i]} status changed to {1-u0} at t={self.t.v[i]} sec.')
+                           f'{self.model.v[i]}.{self.dev.v[i]} status changed to {1-u0:g} at t={self.t.v[i]} sec.')
         return action
 
 

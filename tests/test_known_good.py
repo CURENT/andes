@@ -48,6 +48,7 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
     ss.TDS.config.tol = 1e-6
     ss.TDS.config.fixt = 1
     ss.TDS.config.shrinkt = 0
+    ss.TDS.config.honest = 0
     ss.TDS.run()
 
     test_dir = os.path.dirname(__file__)
