@@ -1190,7 +1190,7 @@ class System(object):
         out = np.array([], dtype=np.float)
         names = []
         for instance in models.values():
-            times = instance.get_times()
+            times = np.array(instance.get_times()).ravel()
             out = np.append(out, times)
             out = np.append(out, times - eps)
             out = np.append(out, times + eps)

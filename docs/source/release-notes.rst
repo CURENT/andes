@@ -9,6 +9,10 @@ Since v1.0.0
 
 v1.0.8
 ```````````````````
+New features:
+
+- Added service `EventFlag` which automatically calls events
+  if its input changes.
 
 Default behavior changes include:
 

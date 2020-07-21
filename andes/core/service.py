@@ -144,6 +144,28 @@ class VarService(ConstService):
     pass
 
 
+class EventFlag(VarService):
+    """
+    Service to flag events.
+
+    `EventFlag.v` stores the values of the input variable from the previous iteration/step.
+    """
+    def __init__(self,
+                 u,
+                 vtype: Optional[type] = None,
+                 name: Optional[str] = None, tex_name=None, info=None):
+        VarService.__init__(self, v_numeric=self.check,
+                            vtype=vtype, name=name, tex_name=tex_name, info=info)
+        self.u = dummify(u)
+
+    def check(self, **kwargs):
+        if not np.all(self.v == self.u.v):
+            self.owner.system.TDS.custom_event = True
+            logger.debug(f"Event flag set at t={self.owner.system.dae.t:.6f} sec.")
+
+        return self.u.v
+
+
 class PostInitService(ConstService):
     """
     Constant service that gets stored once after init.

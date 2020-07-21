@@ -277,11 +277,13 @@ class TDS(BaseRoutine):
 
             # lazy Jacobian update
 
-            if self.config.honest == 1 or \
-                    dae.t == 0 or \
-                    self.last_converged is False or \
+            if dae.t == 0 or \
+                    self.config.honest or \
+                    self.custom_event or \
+                    not self.last_converged or \
                     self.niter > 4 or \
                     (dae.t - self._last_switch_t < 0.1):
+
                 system.j_update(models=system.exist.pflow_tds)
                 # set flag in `solver.worker.factorize`, not `solver.factorize`.
                 self.solver.worker.factorize = True
@@ -351,7 +353,8 @@ class TDS(BaseRoutine):
                 self._debug_ac(inc_max)
 
                 break
-            if mis > 1000 and (mis > 1e8 * self.mis):
+
+            if mis > 1e6 and (mis > 1e6 * self.mis):
                 self.err_msg = 'Error increased too quickly. Convergence not likely.'
                 self.busted = True
                 break

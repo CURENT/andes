@@ -81,15 +81,12 @@ class TestPI(ModelData, Model):
 
         self.PI = PIController(u=self.uin, kp=1, ki=0.1)
 
+        self.PIF = PIFreeze(u=self.uin, kp=0.5, ki=0.5, x0=0,
+                            freeze=self.zf)
+
         self.PIAW = PITrackAW(u=self.uin, kp=0.5, ki=0.5, ks=2,
                               lower=-0.5, upper=0.5, x0=0.0,
                               )
 
-        self.PIF = PIFreeze(u=self.uin, kp=0.5, ki=0.5, x0=0,
-                            freeze=self.zf)
-
         self.PIAWF = PITrackAWFreeze(u=self.uin, kp=0.5, ki=0.5, ks=2, x0=0,
                                      freeze=self.zf, lower=-0.5, upper=0.5)
-
-    def get_times(self):
-        return (2.0, 6.0)

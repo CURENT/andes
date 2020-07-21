@@ -928,7 +928,7 @@ class Model(object):
             func = instance.v_numeric
             if func is not None and callable(func):
                 kwargs = self.get_inputs(refresh=True)
-                instance.v = func(**kwargs)
+                instance.v = func(**kwargs).copy()
 
         if self.flags.s_num is True:
             kwargs = self.get_inputs(refresh=True)
@@ -1246,7 +1246,7 @@ class Model(object):
             for instance in self.timer_params.values():
                 out.append(instance.v)
 
-        return np.array(out).ravel()
+        return out
 
     def switch_action(self, dae_t):
         """

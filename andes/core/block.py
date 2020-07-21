@@ -3,6 +3,7 @@ from typing import Optional, Iterable, Union, List, Tuple
 from andes.core.var import Algeb, State
 from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter, AntiWindupRate
 from andes.core.discrete import DeadBand
+from andes.core.service import EventFlag
 from andes.core.common import JacTriplet
 from andes.core.common import ModelFlags, dummify
 from collections import OrderedDict
@@ -361,6 +362,10 @@ class PITrackAWFreeze(PITrackAW):
         PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
                            ref=ref, x0=x0, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
+
+        self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
+        self.vars['flag'] = self.flag
+
         self.ys.diag_eps = 1e-6
         self.y.diag_eps = 1e-6
 
@@ -394,8 +399,12 @@ class PIFreeze(PIController):
                  tex_name=None, info=None):
         PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
                               name=name, tex_name=tex_name, info=info)
-        self.y.diag_eps = 1e-6
         self.freeze = dummify(freeze)
+
+        self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
+        self.vars['flag'] = self.flag
+
+        self.y.diag_eps = 1e-6
 
     def define(self):
         r"""
@@ -751,6 +760,11 @@ class LagFreeze(Lag):
         Lag.__init__(self, u, T, K, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
 
+        self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
+        self.vars['flag'] = self.flag
+
+        self.y.diag_eps = 1e-6
+
     def define(self):
         r"""
         Notes
@@ -838,6 +852,11 @@ class LagAWFreeze(LagAntiWindup):
         LagAntiWindup.__init__(self, u, T, K, lower, upper,
                                name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
+
+        self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
+        self.vars['flag'] = self.flag
+
+        self.y.diag_eps = 1e-6
 
     def define(self):
         r"""
