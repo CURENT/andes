@@ -6,6 +6,7 @@ from andes.core.var import Algeb, State
 from andes.core.param import NumParam
 from andes.core.discrete import HardLimiter, AntiWindup  # NOQA
 from andes.core.block import DeadBand1, PIController, PITrackAW, PIFreeze, PITrackAWFreeze  # NOQA
+from andes.core.block import LagAWFreeze, LagFreeze
 
 
 class PI2Data(ModelData):
@@ -44,9 +45,10 @@ class PI2(PI2Data, PI2Model):
         PI2Model.__init__(self, system, config)
 
 
-class TestDB1(ModelData, Model):
+class TestFrame(ModelData, Model):
     """
-    Test model for `DeadBand1`.
+    An empty model for testing modeling elements.
+    Needs to be inherited by specific test models.
     """
     def __init__(self, system, config):
         ModelData.__init__(self)
@@ -54,6 +56,14 @@ class TestDB1(ModelData, Model):
         self.group = 'Experimental'
 
         self.flags.tds = True
+
+
+class TestDB1(TestFrame):
+    """
+    Test model for `DeadBand1`.
+    """
+    def __init__(self, system, config):
+        TestFrame.__init__(self, system, config)
 
         self.uin = Algeb(v_str='-10',
                          e_str='(dae_t - 10) - uin',
@@ -62,12 +72,9 @@ class TestDB1(ModelData, Model):
         self.DB = DeadBand1(self.uin, center=0, lower=-5, upper=5)
 
 
-class TestPI(ModelData, Model):
+class TestPI(TestFrame):
     def __init__(self, system, config):
-        ModelData.__init__(self)
-        Model.__init__(self, system, config)
-        self.group = 'Experimental'
-        self.flags.tds = True
+        TestFrame.__init__(self, system, config)
 
         self.uin = Algeb(v_str=0,
                          e_str='sin(dae_t) - uin',
@@ -90,3 +97,26 @@ class TestPI(ModelData, Model):
 
         self.PIAWF = PITrackAWFreeze(u=self.uin, kp=0.5, ki=0.5, ks=2, x0=0,
                                      freeze=self.zf, lower=-0.5, upper=0.5)
+
+
+class TestLagAWFreeze(TestFrame):
+    def __init__(self, system, config):
+        TestFrame.__init__(self, system, config)
+
+        self.uin = Algeb(v_str=0,
+                         e_str='sin(dae_t) - uin',
+                         tex_name='u_{in}',
+                         )
+
+        self.zf = Algeb(v_str=0,
+                        e_str='Piecewise((0, dae_t <= 2), (1, dae_t <=6), (0, True)) - zf',
+                        tex_name='z_f',
+                        )
+
+        self.LGF = LagFreeze(u=self.uin, T=1.0, K=1.0,
+                             freeze=self.zf,
+                             )
+
+        self.LGAWF = LagAWFreeze(u=self.uin, T=1.0, K=1.0, lower=-0.5, upper=0.5,
+                                 freeze=self.zf,
+                                 )

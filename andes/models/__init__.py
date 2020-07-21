@@ -19,5 +19,5 @@ non_jit = OrderedDict([
     ('vsc', ['VSCShunt']),
     ('wtg', ['REGCAU1']),
     ('timer', ['Toggler', 'Fault']),
-    ('experimental', ['PI2', 'TestDB1', 'TestPI']),
+    ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])

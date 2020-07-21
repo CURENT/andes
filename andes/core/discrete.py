@@ -153,6 +153,7 @@ class LessThan(Discrete):
         """
         if not self.enable:
             return
+
         if self.cache and self._eval:
             return
 
