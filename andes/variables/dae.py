@@ -330,6 +330,10 @@ class DAE(object):
     def _extend_or_slice(self, array, new_size, fill_func=np.zeros):
         """
         Helper function for ``self.resize_arrays`` to grow or shrink arrays.
+
+        TODO: BUG FIX
+          The extended array will have new addresses so that in-place v and
+          e will not gain memory access to the new one.
         """
         if new_size > len(array):
             array = np.append(array, fill_func(new_size - len(array)))

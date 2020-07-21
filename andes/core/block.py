@@ -415,8 +415,8 @@ class PIFreeze(PIController):
         self.xi.e_str = f'(1 - {self.freeze.name}) * {self.ki.name} * ' \
                         f'({self.u.name} - {self.ref.name})'
 
-        # TODO: Freeze and unfreeze should invoke a Jacobian update
-        #   In general, any equation switching should invoke a Jacobian update
+        # Freeze and unfreeze should invoke a Jacobian update
+        # In general, any equation switching should invoke a Jacobian update
 
         self.y.e_str = f'(1 - {self.freeze.name}) * ' \
                        f'({self.kp.name}*({self.u.name}-{self.ref.name}) + {self.name}_xi - {self.name}_y)'

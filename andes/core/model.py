@@ -934,6 +934,7 @@ class Model(object):
             kwargs = self.get_inputs(refresh=True)
             self.s_numeric(**kwargs)
 
+        # Block-level `s_numeric` not supported.
         self.get_inputs(refresh=True)
 
     def s_update_var(self):
@@ -955,6 +956,7 @@ class Model(object):
 
         if self.flags.sv_num is True:
             self.s_numeric_var(**kwargs)
+        # Block-level `s_numeric_var` not supported.
 
     def s_update_post(self):
         """
