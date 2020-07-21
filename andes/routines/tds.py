@@ -27,6 +27,7 @@ class TDS(BaseRoutine):
                                      ('honest', 0),
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
+                                     ('refresh_event', 0),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -37,6 +38,7 @@ class TDS(BaseRoutine):
                               honest='honest Newton method that updates Jac at each step',
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
+                              refresh_event='refresh events at each step',
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -47,6 +49,7 @@ class TDS(BaseRoutine):
                               honest=(0, 1),
                               tstep='float',
                               max_iter='>=10',
+                              refresh_event=(0, 1),
                               )
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -71,6 +74,7 @@ class TDS(BaseRoutine):
         self.niter = 0
         self._switch_idx = 0  # index into `System.switch_times`
         self._last_switch_t = -999  # the last critical time
+        self.custom_event = False
         self.mis = 1
         self.pbar = None
         self.callpert = None
@@ -623,19 +627,34 @@ class TDS(BaseRoutine):
         ret = False
 
         system = self.system
+
+        # refresh switch times if enabled
+        if self.config.refresh_event:
+            system.store_switch_times(system.exist.pflow_tds)
+
         if self._switch_idx < system.n_switches:  # not all events have exhausted
 
             # exactly at the event time (controlled by the stepping algorithm
             if system.dae.t == system.switch_times[self._switch_idx]:
 
-                self._last_switch_t = system.switch_times[self._switch_idx]
+                # `_last_switch_t` is used by the Jacobian updater
+                self._last_switch_t = system.dae.t.tolist()
 
                 # only call `switch_action` on the models that defined the time
                 system.switch_action(system.switch_dict[system.dae.t.tolist()])
+
+                # progressing `_switch_idx` avoids calling the same event if time gets stuck
                 self._switch_idx += 1
                 system.vars_to_models()
 
                 ret = True
+
+        if self.custom_event is True:
+            system.switch_action(system.exist.pflow_tds)
+            self._last_switch_t = system.dae.t.tolist()
+            system.vars_to_models()
+            self.custom_event = False
+            ret = True
 
         return ret
 

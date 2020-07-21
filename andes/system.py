@@ -1196,26 +1196,24 @@ class System(object):
             out = np.append(out, times + eps)
             names.extend([instance.class_name] * (3 * len(times)))
 
-        # select t>0
-        ltzero_idx = np.where(out >= 0)[0]
-        out = out[ltzero_idx]
-        names = [names[i] for i in ltzero_idx]
-
         # sort
         sort_idx = np.argsort(out).astype(int)
         out = out[sort_idx]
         names = [names[i] for i in sort_idx]
 
-        # make into an OrderedDict with unique keys and model names combined
-        self.switch_times = list()
-        self.switch_dict = OrderedDict()
+        # select t > current time
+        ltzero_idx = np.where(out >= self.dae.t)[0]
+        out = out[ltzero_idx]
+        names = [names[i] for i in ltzero_idx]
 
+        # make into an OrderedDict with unique keys and model names combined
         for i, j in zip(out, names):
-            if i not in self.switch_times:
-                self.switch_times.append(i)
+            if i not in self.switch_dict:
                 self.switch_dict[i] = {j: self.models[j]}
             else:
                 self.switch_dict[i].update({j: self.models[j]})
+
+        self.switch_times = np.array(list(self.switch_dict.keys()))
 
         # self.switch_times = out
         self.n_switches = len(self.switch_times)
