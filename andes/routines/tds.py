@@ -389,7 +389,8 @@ class TDS(BaseRoutine):
         system = self.system
         config = self.config
 
-        if system.dae.t == 0:
+        # t=0, first iteration (not previously failed)
+        if system.dae.t == 0 and self.niter == 0:
             return self._calc_h_first()
 
         if config.fixt and not config.shrinkt:
