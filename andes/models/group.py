@@ -65,7 +65,7 @@ class GroupBase(object):
         single = False
         if not isinstance(idx, (list, tuple, np.ndarray)):
             single = True
-            idx = (idx, )
+            idx = (idx,)
         elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
             idx = list_flatten(idx)
 
@@ -254,6 +254,7 @@ class GroupBase(object):
             if export == 'rest':
                 def add_reference(name_list):
                     return [f'{item}_' for item in name_list]
+
                 model_name_list = add_reference(model_name_list)
 
             out += ',\n'.join(model_name_list) + '\n'
@@ -299,6 +300,7 @@ class StaticGen(GroupBase):
     """
     Static generator group for power flow calculation
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
@@ -327,6 +329,7 @@ class SynGen(GroupBase):
     """
     Synchronous generator group.
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
@@ -334,10 +337,30 @@ class SynGen(GroupBase):
                                  'a', 'v'))
 
 
+class RenGen(GroupBase):
+    """
+    Renewable generator (converter) group.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params.extend(('bus', 'gen'))
+        self.common_vars.extend(('Ipcmd', 'Iqcmd'))
+
+
+class RenElectrical(GroupBase):
+    """
+    Renewable electrical control
+    """
+    def __init__(self):
+        super().__init__()
+
+
 class TurbineGov(GroupBase):
     """
     Turbine governor group for synchronous generator.
     """
+
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('pout',))
@@ -347,17 +370,19 @@ class Exciter(GroupBase):
     """
     Exciter group for synchronous generators.
     """
+
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('syn', ))
-        self.common_vars.extend(('vout', 'vi', ))
+        self.common_params.extend(('syn',))
+        self.common_vars.extend(('vout', 'vi',))
 
 
 class PSS(GroupBase):
     """Power system stabilizer group."""
+
     def __init__(self):
         super().__init__()
-        self.common_vars.extend(('vsout', ))
+        self.common_vars.extend(('vsout',))
 
 
 class Experimental(GroupBase):
@@ -382,13 +407,15 @@ class TimedEvent(GroupBase):
 
 class FreqMeasurement(GroupBase):
     """Frequency measurements."""
+
     def __init__(self):
         super().__init__()
-        self.common_vars.extend(('f', ))
+        self.common_vars.extend(('f',))
 
 
 class PhasorMeasurement(GroupBase):
     """Phasor measurements"""
+
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('am', 'vm'))
