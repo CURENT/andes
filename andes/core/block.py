@@ -1364,11 +1364,12 @@ class GainLimiter(Block):
         self.no_upper = no_upper
 
         self.x = Algeb(info='Gain output before limiter', tex_name='x')
-        self.y = Algeb(info='Gain output after limiter', tex_name='y')
 
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
                                no_upper=no_upper, no_lower=no_lower,
                                tex_name='lim')
+
+        self.y = Algeb(info='Gain output after limiter', tex_name='y', discrete=self.lim)
 
         self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
 
