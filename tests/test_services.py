@@ -37,9 +37,17 @@ class TestFlagCondition(unittest.TestCase):
         self.fn = andes.core.service.FlagLessThan(self.list)
         np.testing.assert_almost_equal(self.fn.v, np.array([0, 0, 1, 1, 0]))
 
-    def test_flag_less_than_equal(self):
+    def test_flag_less_equal(self):
         self.fn = andes.core.service.FlagLessThan(self.list, equal=True)
         np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 1, 1, 0]))
+
+    def test_flag_greater_than(self):
+        self.fn = andes.core.service.FlagGreaterThan(self.list)
+        np.testing.assert_almost_equal(self.fn.v, np.array([0, 0, 0, 0, 1]))
+
+    def test_flag_greater_equal(self):
+        self.fn = andes.core.service.FlagGreaterThan(self.list, equal=True)
+        np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 0, 0, 1]))
 
 
 class TestParamCalc(unittest.TestCase):

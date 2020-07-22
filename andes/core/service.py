@@ -1004,6 +1004,30 @@ class FlagLessThan(FlagCondition):
                                )
 
 
+class FlagGreaterThan(FlagCondition):
+    """
+    Service for flagging parameters > or >= the given value element-wise.
+
+    Parameters that satisfy the comparison (u > or >= value) will flagged
+    as `flag` (1 by default).
+    """
+    def __init__(self, u, value=0.0, flag=1, equal=False,
+                 name=None, tex_name=None, info=None, cache=True):
+
+        self.value = dummify(value)
+        self.equal = equal
+
+        if self.equal is True:
+            self.func = lambda x: np.greater_equal(x, self.value.v)
+        else:
+            self.func = lambda x: np.greater(x, self.value.v)
+
+        FlagCondition.__init__(self, u, func=self.func,
+                               flag=flag, name=name,
+                               tex_name=tex_name, info=info, cache=cache,
+                               )
+
+
 class Replace(BaseService):
     """
     Replace parameters with new values if the function returns True
