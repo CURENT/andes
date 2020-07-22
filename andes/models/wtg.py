@@ -2,7 +2,7 @@ from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate
 from andes.core.var import ExtAlgeb, Algeb
-from andes.core.service import ConstService, FlagValue, ExtService
+from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
 
 
 class REGCAU1Data(ModelData):
@@ -52,8 +52,8 @@ class REGCAU1Data(ModelData):
                                unit='p.u.',
                                )
         # TODO: ensure Lvpnt1 > Lvpnt0
-        self.Iolim = NumParam(default=999.0, tex_name='I_{olim}',
-                              info='current limit for high volt. reactive current mgnt.',
+        self.Iolim = NumParam(default=0.0, tex_name='I_{olim}',
+                              info='lower current limit for high volt. reactive current mgnt.',
                               unit='p.u.',
                               )
         self.Tfltr = NumParam(default=0.1, tex_name='T_{fltr}',
@@ -91,13 +91,15 @@ class REGCAU1Model(Model):
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
+        self.flags.tds = True
+        self.group = 'RenGen'
 
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage angle',
-                          e_str='Ipout * v',
+                          e_str='-Ipout * v',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -105,7 +107,7 @@ class REGCAU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='Iqout_y * v',
+                          e_str='-Iqout_y * v',
                           )
 
         self.p0 = ExtService(model='StaticGen',
@@ -223,8 +225,8 @@ class REECA1Data(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.syn = IdxParam(model='SynGen',
-                            info='Synchronous generator idx',
+        self.reg = IdxParam(model='RenGen',
+                            info='Renewable generator idx',
                             mandatory=True,
                             )
 
@@ -365,3 +367,41 @@ class REECA1(REECA1Data, REECA1Model):
     def __init__(self, system, config):
         REECA1Data.__init__(self)
         REECA1Model.__init__(self, system, config)
+
+        self.flags.tds = True
+        self.group = 'RenElectrical'
+
+        self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
+                            info='Retrieved bus idx', dtype=str, default=None,
+                            )
+
+        self.gen = ExtParam(model='RenGen', src='gen', indexer=self.reg, export=False,
+                            info='Retrieved StaticGen idx', dtype=str, default=None,
+                            )
+
+        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+
+        self.a = ExtAlgeb(model='Bus',
+                          src='a',
+                          indexer=self.bus,
+                          tex_name=r'\theta',
+                          info='Bus voltage angle',
+                          )
+
+        self.v = ExtAlgeb(model='Bus',
+                          src='v',
+                          indexer=self.bus,
+                          tex_name=r'V',
+                          info='Bus voltage magnitude',
+                          )
+
+        self.p0 = ExtService(model='StaticGen',
+                             src='p',
+                             indexer=self.gen,
+                             tex_name='P_0',
+                             )
+        self.q0 = ExtService(model='StaticGen',
+                             src='q',
+                             indexer=self.gen,
+                             tex_name='Q_0',
+                             )
