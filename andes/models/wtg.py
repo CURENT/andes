@@ -218,9 +218,124 @@ class REGCAU1(REGCAU1Data, REGCAU1Model):
 
 class REECA1Data(ModelData):
     """
-    Renewable energy electrical control model REEC_A data.
+    Renewable energy electrical control model REECA1 (reec_a) data.
     """
-    pass
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.syn = IdxParam(model='SynGen',
+                            info='Synchronous generator idx',
+                            mandatory=True,
+                            )
+
+        self.busr = IdxParam(info='Optional remote bus for voltage control',
+                             model='Bus',
+                             default=None,
+                             )
+        self.PFFLAG = NumParam(info='Power factor control flag; 1-PF control, 0-Q control',
+                               mandatory=True,
+                               vrange=(0, 1),
+                               )
+        self.VFLAG = NumParam(info='Voltage control flag; 1-Q control, 0-V control',
+                              mandatory=True,
+                              )
+        self.QFLAG = NumParam(info='Q control flag; 1-V or Q control, 0-const. PF or Q',
+                              mandatory=True,
+                              )
+        self.PQFLAG = NumParam(info='P/Q priority flag for I limit; 0-Q priority, 1-P priority',
+                               mandatory=True,
+                               )
+
+        self.Vdip = NumParam(default=0.8,
+                             )
+        self.Vup = NumParam(default=1.2,
+                            )
+        self.Trv = NumParam(default=0.02,
+                            )
+        self.dbd1 = NumParam(default=-0.1,
+                             )
+        self.dbd2 = NumParam(default=0.1,
+                             )
+        self.Kqv = NumParam(default=1.0, vrange=(0, 10),
+                            )
+        self.Iqh1 = NumParam(default=999.0,
+                             )
+        self.Iql1 = NumParam(default=-999.0,
+                             )
+        self.Vref0 = NumParam(default=1.0,
+                              )
+        self.Iqfrz = NumParam(default=1.0,
+                              )  # check
+        self.Thld = NumParam(default=0.0,
+                             )
+        self.Thld2 = NumParam(default=0.0,
+                              )
+        self.Tp = NumParam(default=0.02,
+                           )
+        self.QMax = NumParam(default=999.0,
+                             )
+        self.QMin = NumParam(default=-999.0,
+                             )
+        self.VMAX = NumParam(default=999.0,
+                             )
+        self.VMIN = NumParam(default=-999.0,
+                             )
+        self.Kqp = NumParam(default=1.0,
+                            )
+        self.Kqi = NumParam(default=0.1,
+                            )
+        self.Kvp = NumParam(default=1.0,
+                            )
+        self.Kvi = NumParam(default=0.1,
+                            )
+        self.Vbias = NumParam(default=0.0,
+                              )
+        self.Tiq = NumParam(default=0.02,
+                            )
+        self.dPmax = NumParam(default=999.0,
+                              )
+        self.dPmin = NumParam(default=-999.0,
+                              )
+        self.PMAX = NumParam(default=999.0,
+                             )
+        self.PMIN = NumParam(default=-999.0,
+                             )
+        self.Imax = NumParam(default=999.0,
+                             )
+        self.Tpord = NumParam(default=0.02,
+                              )
+        self.Vq1 = NumParam(default=0.2,
+                            )
+        self.Iq1 = NumParam(default=0.2,
+                            )
+        self.Vq2 = NumParam(default=0.4,
+                            )
+        self.Iq2 = NumParam(default=0.4,
+                            )
+        self.Vq3 = NumParam(default=0.8,
+                            )
+        self.Iq3 = NumParam(default=0.8,
+                            )
+        self.Vq4 = NumParam(default=1.0,
+                            )
+        self.Iq4 = NumParam(default=1.0,
+                            )
+        self.Vp1 = NumParam(default=0.2,
+                            )
+        self.Ip1 = NumParam(default=0.2,
+                            )
+        self.Vp2 = NumParam(default=0.4,
+                            )
+        self.Ip2 = NumParam(default=0.4,
+                            )
+        self.Vp3 = NumParam(default=0.8,
+                            )
+        self.Ip3 = NumParam(default=0.8,
+                            )
+        self.Vp4 = NumParam(default=1.0,
+                            )
+        self.Ip4 = NumParam(default=1.0,
+                            )
 
 
 class REECA1Model(Model):
@@ -231,13 +346,22 @@ class REECA1Model(Model):
       1. Dead band type 1, implement and test (implemented and tested (TestDB1))
       2. PI controller with state freeze (implemented and tested)
       2.1 PI controller with anti-windup limiter and state freeze (implemented and tested)
+      2.2 v_drop signal generator that creates a switching event (adds time to `t_switch`).
       3. Lag with state freeze (implemented and tested)
       3.1 Lag with anti-windup limiter with state freeze (implemented and tested)
 
     TODO:
-      2.2 v_drop signal generator that creates a switching event (adds time to `t_switch`).
       4. Nonlinear blocks `VDL1` and `VDL2`
       5. Value and time-based state transition
 
     """
     pass
+
+
+class REECA1(REECA1Data, REECA1Model):
+    """
+    Renewable energy electrical control
+    """
+    def __init__(self, system, config):
+        REECA1Data.__init__(self)
+        REECA1Model.__init__(self, system, config)

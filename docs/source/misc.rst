@@ -70,6 +70,11 @@ Since this equation is linear, only one iteration is needed to let
 For nonlinear algebraic variables, this approach will likely give wrong
 results, since the residual is pegged at zero.
 
+To correctly freeze an algebraic variable, the freezing signal needs to
+be passed to an ``EventFlag``, which will set an ``custom_event`` flag
+if any input changes.
+``EventFlag`` is a ``VarService`` that will be evaluated at each
+iteration after discrete components and before equations.
 
 Per Unit System
 ==============================
