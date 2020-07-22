@@ -321,7 +321,7 @@ class PITrackAW(Block):
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self.u = u
+        self.u = dummify(u)
         self.kp = dummify(kp)
         self.ki = dummify(ki)
         self.ks = dummify(ks)
@@ -777,6 +777,7 @@ class LagFreeze(Lag):
             y^{(0)} &= K u
 
         """
+        Lag.define(self)
         self.y.e_str = f'(1 - {self.freeze.name})* ({self.K.name} * {self.u.name} - {self.name}_y)'
 
 
