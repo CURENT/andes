@@ -195,10 +195,10 @@ class System(object):
         import math
 
         # info
-        if quick is True:
-            text_mode = 'quick mode'
-        elif incremental is True:
+        if incremental is True:
             text_mode = 'rapid incremental mode'
+        elif quick is True:
+            text_mode = 'quick mode'
         else:
             text_mode = 'full mode'
 

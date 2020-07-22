@@ -1,7 +1,7 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
-from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate
-from andes.core.block import PITrackAWFreeze, LagFreeze
+from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
+from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
@@ -381,10 +381,12 @@ class REECA1Model(Model):
 
         self.config.add(OrderedDict((('kqs', 2),
                                      ('kvs', 2),
+                                     ('Tpfilt', 0.02),
                                      )))
         self.config.add_extra('_help',
                               kqs='Q PI controller tracking gain',
                               kvs='Voltage PI controller tracking gain',
+                              Tpfilt='Time const. for Pref filter',
                               )
 
         # --- Flag switchers ---
@@ -485,6 +487,13 @@ class REECA1Model(Model):
                           unit='p.u.',
                           )
 
+        self.Pref = Algeb(tex_name='P_{ref}',
+                          info='external P ref',
+                          v_str='p0',
+                          e_str='p0 - Pref',
+                          unit='p.u.',
+                          )
+
         self.Qref = Algeb(tex_name='Q_{ref}',
                           info='external Q ref',
                           v_str='q0',
@@ -540,7 +549,99 @@ class REECA1Model(Model):
         self.Qsel = Algeb(info='Selection output of QFLAG',
                           v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
                           e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
+                          tex_name='Q_{sel}',
                           )
+
+        # --- Upper portion - Iqinj calculation ---
+
+        self.Verr = Algeb(info='Voltage error (Vref0)',
+                          v_str='Vref0 - s0_y',
+                          e_str='Vref0 - s0_y - Verr',
+                          tex_name='V_{err}',
+                          )
+        self.dbV = DeadBand1(u=self.Verr, lower=self.dbd1, upper=self.dbd2,
+                             center=0.0,
+                             enable='DB_{V}',
+                             info='Deadband for voltage error (ref0)'
+                             )
+        # TODO: Gain after dbB
+        # TODO: state transition
+
+        # --- Lower portion - active power ---
+        self.wg = Algeb(tex_name=r'\omega_g',
+                        info='Drive train generator speed',
+                        v_str='1.0',
+                        e_str='1.0 - wg',
+                        )
+        self.pfilt = LagRate(u=self.Pref, T=self.config.Tpfilt, K=1,
+                             rate_lower=self.dPmin, rate_upper=self.dPmax,
+                             info='Active power filter with rate limits',
+                             tex_name='P_{filt}',
+                             )
+        self.Psel = Algeb(tex_name='P_{sel}',
+                          info='Output selection of PFLAG',
+                          v_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y',
+                          e_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y - Psel',
+                          )
+        self.s5 = LagAWFreeze(u=self.Psel, T=self.Tpord, K=1,
+                              lower=self.PMIN, upper=self.PMAX,
+                              freeze=self.Volt_dip,
+                              tex_name='s5',
+                              )
+        self.Ipulim = Algeb(info='Unlimited Ipcmd',
+                            tex_name='I_{pulim}',
+                            v_str='s5_y / vp',
+                            e_str='s5_y / vp - Ipulim',
+                            )
+
+        # --- Current limit logic ---
+
+        self.kVq12 = ConstService(v_str='(Iq2 - Iq1) / (Vq2 - Vq1)',
+                                  tex_name='k_{Vq12}',
+                                  )
+        self.kVq23 = ConstService(v_str='(Iq3 - Iq2) / (Vq3 - Vq2)',
+                                  tex_name='k_{Vq23}',
+                                  )
+        self.kVq34 = ConstService(v_str='(Iq4 - Iq3) / (Vq4 - Vq3)',
+                                  tex_name='k_{Vq34}',
+                                  )
+
+        self.VDL1 = Piecewise(u=self.s0_y,
+                              points=('Vq1', 'Vq2', 'Vq3', 'Vq4'),
+                              funs=('Iq1',
+                                    f'({self.s0_y.name} - Vq1) * kVq12 + Iq1',
+                                    f'({self.s0_y.name} - Vq2) * kVq23 + Iq2',
+                                    f'({self.s0_y.name} - Vq3) * kVq34 + Iq3',
+                                    'Iq4'),
+                              tex_name='V_{DL1}',
+                              info='Piecewise linear characteristics of Vq-Iq',
+                              )
+
+        self.kVp12 = ConstService(v_str='(Ip2 - Ip1) / (Vp2 - Vp1)',
+                                  tex_name='k_{Vp12}',
+                                  )
+        self.kVp23 = ConstService(v_str='(Ip3 - Ip2) / (Vp3 - Vp2)',
+                                  tex_name='k_{Vp23}',
+                                  )
+        self.kVp34 = ConstService(v_str='(Ip4 - Ip3) / (Vp4 - Vp3)',
+                                  tex_name='k_{Vp34}',
+                                  )
+
+        self.VDL2 = Piecewise(u=self.s0_y,
+                              points=('Vp1', 'Vp2', 'Vp3', 'Vp4'),
+                              funs=('Ip1',
+                                    f'({self.s0_y.name} - Vp1) * kVp12 + Ip1',
+                                    f'({self.s0_y.name} - Vp2) * kVp23 + Ip2',
+                                    f'({self.s0_y.name} - Vp3) * kVp34 + Ip3',
+                                    'Ip4'),
+                              tex_name='V_{DL2}',
+                              info='Piecewise linear characteristics of Vp-Ip',
+                              )
+
+        # self.Ipout = Algeb(info='Ipcmd limited output',
+        #                    # v_str='',
+        #                    # e_str='',
+        #                    )
 
 
 class REECA1(REECA1Data, REECA1Model):
