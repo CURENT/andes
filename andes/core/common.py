@@ -198,6 +198,17 @@ class Config(object):
         self._add(**kwargs)
 
     def add_extra(self, dest, dct=None, **kwargs):
+        """
+        Add extra contents for config.
+
+        Parameters
+        ----------
+        dest : str
+            Destination string in `_alt`, `_help` or `_tex`.
+        dct : OrderedDict, dict
+            key: value pairs
+        """
+
         if dct is not None:
             kwargs.update(dct)
         for key, value in kwargs.items():

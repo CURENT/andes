@@ -1,8 +1,13 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate
+from andes.core.block import PITrackAWFreeze, LagFreeze
 from andes.core.var import ExtAlgeb, Algeb
+
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
+from andes.core.service import VarService
+from andes.core.discrete import Switcher, Limiter
+from collections import OrderedDict
 
 
 class REGCAU1Data(ModelData):
@@ -99,7 +104,7 @@ class REGCAU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage angle',
-                          e_str='-Ipout * v',
+                          e_str='-Pe',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -107,7 +112,7 @@ class REGCAU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-Iqout_y * v',
+                          e_str='-Qe',
                           )
 
         self.p0 = ExtService(model='StaticGen',
@@ -205,6 +210,11 @@ class REGCAU1Model(Model):
         self.Iqout = GainLimiter(u='S1_y- HVG_y', K=1, lower=self.Iolim, upper=9999,
                                  no_upper=True, info='Iq output block')  # `Iqout_y` is the final Iq output
 
+        self.Pe = Algeb(tex_name='P_e', info='Active power output',
+                        v_str='p0', e_str='Ipout * v - Pe')
+        self.Qe = Algeb(tex_name='Q_e', info='Reactive power output',
+                        v_str='q0', e_str='Iqout_y * v - Qe')
+
     def v_numeric(self, **kwargs):
         """
         Disable the corresponding `StaticGen`s.
@@ -244,6 +254,9 @@ class REECA1Data(ModelData):
         self.QFLAG = NumParam(info='Q control flag; 1-V or Q control, 0-const. PF or Q',
                               mandatory=True,
                               )
+        self.PFLAG = NumParam(info='P speed-dependency flag; 1-has speed dep., 0-no dep.',
+                              mandatory=True,
+                              )
         self.PQFLAG = NumParam(info='P/Q priority flag for I limit; 0-Q priority, 1-P priority',
                                mandatory=True,
                                )
@@ -253,6 +266,7 @@ class REECA1Data(ModelData):
         self.Vup = NumParam(default=1.2,
                             )
         self.Trv = NumParam(default=0.02,
+                            tex_name='T_{rv}'
                             )
         self.dbd1 = NumParam(default=-0.1,
                              )
@@ -269,10 +283,13 @@ class REECA1Data(ModelData):
         self.Iqfrz = NumParam(default=1.0,
                               )  # check
         self.Thld = NumParam(default=0.0,
+                             tex_name='T_{hld}',
                              )
         self.Thld2 = NumParam(default=0.0,
+                              tex_name='T_{hld2}',
                               )
         self.Tp = NumParam(default=0.02,
+                           tex_name='T_p'
                            )
         self.QMax = NumParam(default=999.0,
                              )
@@ -290,9 +307,10 @@ class REECA1Data(ModelData):
                             )
         self.Kvi = NumParam(default=0.1,
                             )
-        self.Vbias = NumParam(default=0.0,
+        self.Vref1 = NumParam(default=1.0,
                               )
         self.Tiq = NumParam(default=0.02,
+                            tex_name='T_{iq}'
                             )
         self.dPmax = NumParam(default=999.0,
                               )
@@ -305,6 +323,7 @@ class REECA1Data(ModelData):
         self.Imax = NumParam(default=999.0,
                              )
         self.Tpord = NumParam(default=0.02,
+                              tex_name='T_{pord}'
                               )
         self.Vq1 = NumParam(default=0.2,
                             )
@@ -357,30 +376,40 @@ class REECA1Model(Model):
       5. Value and time-based state transition
 
     """
-    pass
-
-
-class REECA1(REECA1Data, REECA1Model):
-    """
-    Renewable energy electrical control
-    """
     def __init__(self, system, config):
-        REECA1Data.__init__(self)
-        REECA1Model.__init__(self, system, config)
+        Model.__init__(self, system, config)
 
-        self.flags.tds = True
-        self.group = 'RenElectrical'
+        self.config.add(OrderedDict((('kqs', 2),
+                                     ('kvs', 2),
+                                     )))
+        self.config.add_extra('_help',
+                              kqs='Q PI controller tracking gain',
+                              kvs='Voltage PI controller tracking gain',
+                              )
 
+        # --- Flag switchers ---
+        self.SWPF = Switcher(u=self.PFFLAG, options=(0, 1), tex_name='SW_{PF}', cache=True)
+
+        self.SWV = Switcher(u=self.VFLAG, options=(0, 1), tex_name='SW_{V}', cache=True)
+
+        self.SWQ = Switcher(u=self.QFLAG, options=(0, 1), tex_name='SW_{V}', cache=True)
+
+        self.SWP = Switcher(u=self.PFLAG, options=(0, 1), tex_name='SW_{P}', cache=True)
+
+        self.SWPQ = Switcher(u=self.PQFLAG, options=(0, 1), tex_name='SW_{PQ}', cache=True)
+
+        # --- External parameters ---
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
                             info='Retrieved bus idx', dtype=str, default=None,
                             )
+
+        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
         self.gen = ExtParam(model='RenGen', src='gen', indexer=self.reg, export=False,
                             info='Retrieved StaticGen idx', dtype=str, default=None,
                             )
 
-        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
-
+        # --- External variables ---
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
@@ -393,7 +422,13 @@ class REECA1(REECA1Data, REECA1Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          )
+                          )  # check whether to use `bus` or `buss`
+
+        self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg, export=False,
+                           info='Retrieved Pe of RenGen')
+
+        self.Qe = ExtAlgeb(model='RenGen', src='Qe', indexer=self.reg, export=False,
+                           info='Retrieved Qe of RenGen')
 
         self.p0 = ExtService(model='StaticGen',
                              src='p',
@@ -405,3 +440,116 @@ class REECA1(REECA1Data, REECA1Model):
                              indexer=self.gen,
                              tex_name='Q_0',
                              )
+
+        # --- Initial power factor ---
+        self.pfaref0 = ConstService(v_str='atan(q0/p0)', tex_name=r'\Phi_{ref0}',
+                                    info='Initial power factor angle',
+                                    )
+
+        # --- Discrete components ---
+        self.Vcmp = Limiter(u=self.v, lower=self.Vdip, upper=self.Vup, tex_name='V_{cmp}',
+                            info='Voltage dip comparator', equal=False,
+                            )
+        self.Volt_dip = VarService(v_str='1 - Vcmp_zi',
+                                   info='Voltage dip flag; 1-dip, 0-normal',
+                                   tex_name='z_{Vdip}',
+                                   )
+
+        # --- Equations begin ---
+        self.s0 = Lag(u=self.v, T=self.Trv, K=1,
+                      info='Voltage filter',
+                      )
+        self.VLower = Limiter(u=self.v, lower=0.01, upper=999, no_upper=True,
+                              info='Limiter for lower voltage cap',
+                              )
+        self.vp = Algeb(tex_name='V_p',
+                        info='Sensed lower-capped voltage',
+                        v_str='v * VLower_zi + 0.01 * VLower_zl',
+                        e_str='v * VLower_zi + 0.01 * VLower_zl - vp',
+                        )
+
+        self.pfaref = Algeb(tex_name=r'\Phi_{ref}',
+                            info='power factor angle ref',
+                            unit='rad',
+                            v_str='pfaref0',
+                            e_str='pfaref0 - pfaref',
+                            )
+
+        self.S1 = Lag(u='Pe', T=self.Tp, K=1, tex_name='S_1', info='Pe filter',
+                      )
+
+        self.Qcpf = Algeb(tex_name='Q_{cpf}',
+                          info='Q calculated from P and power factor',
+                          v_str='q0',
+                          e_str='S1_y * tan(pfaref) - Qcpf',
+                          unit='p.u.',
+                          )
+
+        self.Qref = Algeb(tex_name='Q_{ref}',
+                          info='external Q ref',
+                          v_str='q0',
+                          e_str='q0 - Qref',
+                          unit='p.u.',
+                          )
+
+        self.PFsel = Algeb(v_str='SWPF_s0*Qref + SWPF_s1*Qcpf',
+                           e_str='SWPF_s0*Qref + SWPF_s1*Qcpf - PFsel',
+                           info='Output of PFFLAG selector',
+                           )
+
+        self.PFlim = Limiter(u=self.PFsel, lower=self.QMin, upper=self.QMax)
+
+        self.Qerr = Algeb(tex_name='Q_{err}',
+                          info='Reactive power error',
+                          v_str='(PFsel*PFlim_zi + QMin*PFlim_zl + QMax*PFlim_zu) - Qe',
+                          e_str='(PFsel*PFlim_zi + QMin*PFlim_zl + QMax*PFlim_zu) - Qe - Qerr',
+                          )
+
+        self.PIQ = PITrackAWFreeze(u=self.Qerr,
+                                   kp=self.Kqp, ki=self.Kqi, ks=self.config.kqs,
+                                   lower=self.VMIN, upper=self.VMAX,
+                                   freeze=self.Volt_dip,
+                                   )
+
+        # If `VFLAG=0`, set the input as `Vref1` (see the NREL report)
+        self.Vsel = GainLimiter(u='SWV_s0 * Vref1 + SWV_s1 * PIQ_y', K=1,
+                                lower=self.VMIN, upper=self.VMAX,
+                                info='Selection output of VFLAG',
+                                )
+
+        # --- Placeholders for `Iqmin` and `Iqmax` ---
+
+        self.Iqmin = ConstService(v_str='-999')
+
+        self.Iqmax = ConstService(v_str='999')
+
+        # --- Placeholders end ---
+
+        self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+                                   kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
+                                   lower=self.Iqmin, upper=self.Iqmax,
+                                   freeze=self.Volt_dip,
+                                   )
+
+        self.s4 = LagFreeze(u='PFsel / vp', T=self.Tiq, K=1,
+                            freeze=self.Volt_dip,
+                            tex_name='s_4',
+                            info='Filter for calculated voltage with freeze',
+                            )
+
+        self.Qsel = Algeb(info='Selection output of QFLAG',
+                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
+                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
+                          )
+
+
+class REECA1(REECA1Data, REECA1Model):
+    """
+    Renewable energy electrical control
+    """
+    def __init__(self, system, config):
+        REECA1Data.__init__(self)
+        REECA1Model.__init__(self, system, config)
+
+        self.flags.tds = True
+        self.group = 'RenElectrical'
