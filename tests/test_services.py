@@ -5,7 +5,7 @@ import numpy as np
 from andes.core.common import DummyValue
 
 
-class TestFlagNotNone(unittest.TestCase):
+class TestFlagValue(unittest.TestCase):
     def setUp(self) -> None:
         self.list = DummyValue(0)
         self.list.v = [0, 0, None, 2, 5.]
@@ -19,6 +19,27 @@ class TestFlagNotNone(unittest.TestCase):
 
         self.fn = andes.core.service.FlagValue(self.array, value=None)
         np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 0, 1, 1]))
+
+
+class TestFlagCondition(unittest.TestCase):
+    def setUp(self) -> None:
+        self.list = DummyValue(0)
+        self.list.v = [0, 0, -1, -2, 5.]
+
+        self.array = DummyValue(0)
+        self.array.v = np.array(self.list.v)
+
+    def test_flag_cond(self):
+        self.fn = andes.core.service.FlagCondition(self.list, func=lambda x: np.less(x, 0))
+        np.testing.assert_almost_equal(self.fn.v, np.array([0, 0, 1, 1, 0]))
+
+    def test_flag_less_than(self):
+        self.fn = andes.core.service.FlagLessThan(self.list)
+        np.testing.assert_almost_equal(self.fn.v, np.array([0, 0, 1, 1, 0]))
+
+    def test_flag_less_than_equal(self):
+        self.fn = andes.core.service.FlagLessThan(self.list, equal=True)
+        np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 1, 1, 0]))
 
 
 class TestParamCalc(unittest.TestCase):

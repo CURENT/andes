@@ -927,6 +927,83 @@ class FlagValue(BaseService):
         return self._v
 
 
+class FlagCondition(BaseService):
+    """
+    Class for flagging values based on a condition function.
+
+    By default, values whose condition function output equal
+    that equal to True/1 will be flagged as `1`.
+    `0` otherwise.
+
+    Parameters
+    ----------
+    u
+        Input parameter
+    func
+        A condition function that returns True or False.
+    flag : 1 by default, only 0 or 1 is accepted.
+        The flag for the inputs whose condition output
+        is True.
+
+    Warnings
+    --------
+    `FlagNotNone` can only be applied to `BaseParam` with `cache=True`.
+    Applying to `Service` will fail unless `cache` is False (at a performance cost).
+    """
+
+    def __init__(self, u, func, flag=1, name=None, tex_name=None, info=None, cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        if flag != 0.0 and flag != 1.0:
+            raise ValueError(f"flag must be 0 or 1. The given flag = {flag}.")
+
+        self.u = u
+        self.func = func
+        self.flag = flag
+        self.flag_neg = 1 - flag
+        self.cache = cache
+
+        self._v = None
+        self._eval = False  # has been evaluated previously
+
+    @property
+    def v(self):
+        if not self._eval:
+            self._v = np.zeros_like(self.u.v, dtype=float)
+
+        if not self.cache or (not self._eval):
+            cond_out = self.func(self.u.v)
+
+            self._v[:] = np.array([self.flag if i == 1 else self.flag_neg
+                                   for i in cond_out])
+
+        self._eval = True
+        return self._v
+
+
+class FlagLessThan(FlagCondition):
+    """
+    Service for flagging parameters < or <= the given value element-wise.
+
+    Parameters that satisfy the comparison (u < or <= value) will flagged
+    as `flag` (1 by default).
+    """
+    def __init__(self, u, value=0.0, flag=1, equal=False,
+                 name=None, tex_name=None, info=None, cache=True):
+
+        self.value = dummify(value)
+        self.equal = equal
+
+        if self.equal is True:
+            self.func = lambda x: np.less_equal(x, self.value.v)
+        else:
+            self.func = lambda x: np.less(x, self.value.v)
+
+        FlagCondition.__init__(self, u, func=self.func,
+                               flag=flag, name=name,
+                               tex_name=tex_name, info=info, cache=cache,
+                               )
+
+
 class Replace(BaseService):
     """
     Replace parameters with new values if the function returns True
