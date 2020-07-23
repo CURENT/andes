@@ -689,7 +689,7 @@ class REECA1Model(Model):
         # `Ipmax` not considering mode or `Thld2`
         Ipmax1 = '(zVDL2*(VDL2c*VDL2_y + (1-VDL2c)*Imaxr) + 1e8*(1-zVDL2))'
 
-        Ipmax2sq = f'(Imax**2 - {Iqmax1}**2)'
+        Ipmax2sq = f'(Imax**2 - Iqout**2)'
 
         Ipmax2 = f'Piecewise((0, {Ipmax2sq} <= 0.0), (sqrt({Ipmax2sq}), True))'
 
@@ -699,7 +699,7 @@ class REECA1Model(Model):
                            e_str=f'{Ipmax} - Ipmax',
                            )
 
-        Iqmax2sq = f'(Imax**2 - Ipmax**2)'
+        Iqmax2sq = f'(Imax**2 - Ipout**2)'
 
         Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
 
