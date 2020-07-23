@@ -185,6 +185,9 @@ class ExtendedEvent(VarService):
 
     enable : bool or v-provider
         If disabled, the output will be `v_disabled`
+
+    extend_only : bool
+        Only output during the extended period, not the event period.
     """
 
     def __init__(self,
@@ -193,6 +196,7 @@ class ExtendedEvent(VarService):
                  trig: str = 'rise',
                  enable=True,
                  v_disabled=0,
+                 extend_only=False,
                  vtype: Optional[type] = None,
                  name: Optional[str] = None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check,
@@ -202,6 +206,7 @@ class ExtendedEvent(VarService):
         self.t_ext = dummify(t_ext)
         self.enable = dummify(enable)
         self.v_disabled = v_disabled
+        self.extend_only = extend_only
 
         self.t_final = None
         self.trig = trig
@@ -226,10 +231,11 @@ class ExtendedEvent(VarService):
 
         if dae_t == 0.0:
             self.u_last[:] = self.u.v
+            self.v_event[:] = self.u.v
 
         # when any input signal changes
         if not np.all(self.u.v == self.u_last):
-            diff = self.u.v - self.v
+            diff = self.u.v - self.u_last
 
             # detect the actual ending of an event
             if self.trig == 'rise':
@@ -241,16 +247,20 @@ class ExtendedEvent(VarService):
 
             if len(starting):
                 self.z[starting] = 1
-                self.v_event[starting] = self.u.v[starting]
+
+                if not self.extend_only:
+                    self.v_event[starting] = self.u.v[starting]
 
             if len(ending):
+                if self.extend_only:
+                    self.v_event[ending] = self.u_last[ending]
 
                 final_times = dae_t + self.t_ext.v[ending]
                 self.t_final[ending] = final_times
 
                 self.n_ext += len(ending)
 
-                # TODO: insert end time to a model-level list
+                # TODO: insert extended event end times to a model-level list
                 logger.debug(f"Extended Event ending time set at t={final_times} sec.")
 
         # final time of the extended event
