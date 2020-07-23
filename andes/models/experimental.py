@@ -7,6 +7,7 @@ from andes.core.param import NumParam
 from andes.core.discrete import HardLimiter, AntiWindup  # NOQA
 from andes.core.block import DeadBand1, PIController, PITrackAW, PIFreeze, PITrackAWFreeze  # NOQA
 from andes.core.block import LagAWFreeze, LagFreeze
+from andes.core.service import ExtendedEvent
 
 
 class PI2Data(ModelData):
@@ -76,13 +77,16 @@ class TestPI(TestFrame):
     def __init__(self, system, config):
         TestFrame.__init__(self, system, config)
 
+        self.Text = NumParam(default=1.0, info='Extended event time', unit='s')
+
         self.uin = Algeb(v_str=0,
                          e_str='sin(dae_t) - uin',
                          tex_name='u_{in}',
                          )
 
         self.zf = Algeb(v_str=0,
-                        e_str='Piecewise((0, dae_t <= 2), (1, dae_t <=6), (0, True)) - zf',
+                        e_str='Piecewise((0, dae_t <= 2), (1, dae_t <=6), (0, dae_t<=12), (1, dae_t<=15), '
+                              '(0, True)) - zf',
                         tex_name='z_f',
                         )
 
@@ -97,6 +101,10 @@ class TestPI(TestFrame):
 
         self.PIAWF = PITrackAWFreeze(u=self.uin, kp=0.5, ki=0.5, ks=2, x0=0,
                                      freeze=self.zf, lower=-0.5, upper=0.5)
+
+        self.ExtEvent = ExtendedEvent(u=self.zf, t_ext=self.Text, trig='rise')
+
+        self.ze = Algeb(v_str='ExtEvent', e_str='ExtEvent - ze')
 
 
 class TestLagAWFreeze(TestFrame):

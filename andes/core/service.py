@@ -150,6 +150,7 @@ class EventFlag(VarService):
 
     `EventFlag.v` stores the values of the input variable from the previous iteration/step.
     """
+
     def __init__(self,
                  u,
                  vtype: Optional[type] = None,
@@ -164,6 +165,95 @@ class EventFlag(VarService):
             logger.debug(f"Event flag set at t={self.owner.system.dae.t:.6f} sec.")
 
         return self.u.v
+
+
+class ExtendedEvent(VarService):
+    """
+    Service to flag events that extends for period of time after event disappears.
+
+    `EventFlag.v` stores the flags whether the extended time has completed.
+    Outputs will become 1 once then event starts until the extended time ends.
+
+    Warnings
+    --------
+    The performance of this class needs to be optimized.
+
+    Parameters
+    ----------
+    trig : str, rise, fall
+        Triggering edge for the inception of an event. `rise` by default.
+    """
+
+    def __init__(self,
+                 u,
+                 t_ext: Union[int, float, BaseParam, BaseService] = 0.0,
+                 trig: str = 'rise',
+                 vtype: Optional[type] = None,
+                 name: Optional[str] = None, tex_name=None, info=None):
+        VarService.__init__(self, v_numeric=self.check,
+                            vtype=vtype, name=name, tex_name=tex_name, info=info)
+
+        self.u = dummify(u)
+        self.t_ext = dummify(t_ext)
+        self.t_final = None
+        self.trig = trig
+
+        self.v_final = None
+        self.v_event = None
+        self.z = None  # if is in an extended event (from event start to extension end)
+        self.n_ext = 0  # number of extended events
+
+    def assign_memory(self, n):
+        VarService.assign_memory(self, n)
+        self.t_final = np.zeros_like(self.v)
+        self.v_final = np.zeros_like(self.v)
+        self.v_event = np.zeros_like(self.v)
+        self.u_last = np.zeros_like(self.v)
+        self.z = np.zeros_like(self.v)
+
+        if isinstance(self.t_ext.v, (int, float)):
+            self.t_ext.v = np.ones_like(self.u.v) * self.t_ext.v
+
+    def check(self, **kwargs):
+        dae_t = self.owner.system.dae.t
+
+        if dae_t == 0.0:
+            self.u_last[:] = self.u.v
+
+        # when any input signal changes
+        if not np.all(self.u.v == self.u_last):
+            diff = self.u.v - self.v
+
+            # detect the actual ending of an event
+            if self.trig == 'rise':
+                starting = np.where(diff == 1)[0]
+                ending = np.where(diff == -1)[0]
+            else:
+                starting = np.where(diff == -1)[0]
+                ending = np.where(diff == 1)[0]
+
+            if len(starting):
+                self.z[starting] = 1
+                self.v_event[starting] = self.u.v[starting]
+
+            if len(ending):
+
+                final_times = dae_t + self.t_ext.v[ending]
+                self.t_final[ending] = final_times
+
+                self.n_ext += len(ending)
+
+                # TODO: insert end time to a model-level list
+                logger.debug(f"Extended Event ending time set at t={final_times} sec.")
+
+        # final time of the extended event
+        if self.n_ext and np.any(self.t_final <= dae_t):
+            self.z[np.where(self.t_final <= dae_t)] = 0
+            self.n_ext = np.count_nonzero(self.z)
+
+        self.u_last[:] = self.u.v
+
+        return self.u.v * (1 - self.z) + self.v_event * self.z
 
 
 class PostInitService(ConstService):
@@ -987,6 +1077,7 @@ class FlagLessThan(FlagCondition):
     Parameters that satisfy the comparison (u < or <= value) will flagged
     as `flag` (1 by default).
     """
+
     def __init__(self, u, value=0.0, flag=1, equal=False,
                  name=None, tex_name=None, info=None, cache=True):
 
@@ -1011,6 +1102,7 @@ class FlagGreaterThan(FlagCondition):
     Parameters that satisfy the comparison (u > or >= value) will flagged
     as `flag` (1 by default).
     """
+
     def __init__(self, u, value=0.0, flag=1, equal=False,
                  name=None, tex_name=None, info=None, cache=True):
 
