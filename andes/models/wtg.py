@@ -5,7 +5,7 @@ from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
-from andes.core.service import VarService, ExtendedEvent, Replace
+from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
 
@@ -709,7 +709,7 @@ class REECA1Model(Model):
                            e_str=f'{Iqmax} - Iqmax',
                            )
 
-        self.Iqmin = VarService(v_str='-Iqmax')
+        self.Iqmin = ApplyFunc(self.Iqmax, lambda x: -x, cache=False)
 
         self.Ipmin = ConstService(v_str='0.0')
 
