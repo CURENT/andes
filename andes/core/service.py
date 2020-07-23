@@ -182,12 +182,17 @@ class ExtendedEvent(VarService):
     ----------
     trig : str, rise, fall
         Triggering edge for the inception of an event. `rise` by default.
+
+    enable : bool or v-provider
+        If disabled, the output will be `v_disabled`
     """
 
     def __init__(self,
                  u,
                  t_ext: Union[int, float, BaseParam, BaseService] = 0.0,
                  trig: str = 'rise',
+                 enable=True,
+                 v_disabled=0,
                  vtype: Optional[type] = None,
                  name: Optional[str] = None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check,
@@ -195,18 +200,20 @@ class ExtendedEvent(VarService):
 
         self.u = dummify(u)
         self.t_ext = dummify(t_ext)
+        self.enable = dummify(enable)
+        self.v_disabled = v_disabled
+
         self.t_final = None
         self.trig = trig
 
-        self.v_final = None
         self.v_event = None
+        self.u_last = None
         self.z = None  # if is in an extended event (from event start to extension end)
         self.n_ext = 0  # number of extended events
 
     def assign_memory(self, n):
         VarService.assign_memory(self, n)
         self.t_final = np.zeros_like(self.v)
-        self.v_final = np.zeros_like(self.v)
         self.v_event = np.zeros_like(self.v)
         self.u_last = np.zeros_like(self.v)
         self.z = np.zeros_like(self.v)
@@ -253,7 +260,8 @@ class ExtendedEvent(VarService):
 
         self.u_last[:] = self.u.v
 
-        return self.u.v * (1 - self.z) + self.v_event * self.z
+        return self.enable.v * (self.u.v * (1 - self.z) + self.v_event * self.z) + \
+            (1-self.enable.v) * self.v_disabled
 
 
 class PostInitService(ConstService):
@@ -1017,6 +1025,44 @@ class FlagValue(BaseService):
         return self._v
 
 
+class ApplyFunc(BaseService):
+    """
+    Class for applying a numerical function on a parameter..
+
+
+    Warnings
+    --------
+    This class is not ready.
+
+    Parameters
+    ----------
+    u
+        Input parameter
+    func
+        A condition function that returns True or False.
+
+    """
+
+    def __init__(self, u, func, name=None, tex_name=None, info=None, cache=True):
+        BaseService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.func = func
+        self.cache = cache
+        self._v = None
+        self._eval = False  # has been evaluated previously
+
+    @property
+    def v(self):
+        if not self._eval:
+            self._v = np.zeros_like(self.u.v, dtype=float)
+
+        if not self.cache or (not self._eval):
+            self._v[:] = self.func(self.u.v)
+
+        self._eval = True
+        return self._v
+
+
 class FlagCondition(BaseService):
     """
     Class for flagging values based on a condition function.
@@ -1037,7 +1083,9 @@ class FlagCondition(BaseService):
 
     Warnings
     --------
-    `FlagNotNone` can only be applied to `BaseParam` with `cache=True`.
+    This class is not ready.
+
+    `FlagCondition` can only be applied to `BaseParam` with `cache=True`.
     Applying to `Service` will fail unless `cache` is False (at a performance cost).
     """
 

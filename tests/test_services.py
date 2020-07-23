@@ -49,6 +49,10 @@ class TestFlagCondition(unittest.TestCase):
         self.fn = andes.core.service.FlagGreaterThan(self.list, equal=True)
         np.testing.assert_almost_equal(self.fn.v, np.array([1, 1, 0, 0, 1]))
 
+    def test_apply_func(self):
+        self.fn = andes.core.service.ApplyFunc(self.list, np.abs)
+        np.testing.assert_almost_equal(self.fn.v, np.array([0, 0, 1, 2, 5]))
+
 
 class TestParamCalc(unittest.TestCase):
     def setUp(self) -> None:
