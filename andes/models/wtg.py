@@ -693,7 +693,7 @@ class REECA1Model(Model):
 
         Ipmax2 = f'Piecewise((0, {Ipmax2sq} <= 0.0), (sqrt({Ipmax2sq}), True))'
 
-        Ipmax = f'((1-fThld2) * (SWQ_s0*{Ipmax2} + SWQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
+        Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
 
         self.Ipmax = Algeb(v_str=f'{Ipmax}',
                            e_str=f'{Ipmax} - Ipmax',
@@ -703,15 +703,17 @@ class REECA1Model(Model):
 
         Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
 
-        Iqmax = f'(SWQ_s0*{Iqmax1} + SWQ_s1*{Iqmax2})'
+        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax2})'
 
         self.Iqmax = Algeb(v_str=f'{Iqmax}',
                            e_str=f'{Iqmax} - Iqmax',
+                           tex_name='I_{qmax}',
                            )
 
-        self.Iqmin = ApplyFunc(self.Iqmax, lambda x: -x, cache=False)
+        self.Iqmin = ApplyFunc(self.Iqmax, lambda x: -x, cache=False,
+                               tex_name='I_{qmin}')
 
-        self.Ipmin = ConstService(v_str='0.0')
+        self.Ipmin = ConstService(v_str='0.0', tex_name='I_{pmin}')
 
         self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
