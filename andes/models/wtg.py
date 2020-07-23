@@ -141,7 +141,7 @@ class REGCAU1Model(Model):
         # --- INITIALIZATION ---
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
 
-        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
+        self.Iqcmd0 = ConstService('q0 / v', info='initial Iqcmd')
 
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
@@ -149,7 +149,7 @@ class REGCAU1Model(Model):
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
-                           e_str='Iqcmd0 - Iqcmd', v_str='Iqcmd0')
+                           e_str='-Iqcmd0 - Iqcmd', v_str='-Iqcmd0')
 
         # reactive power management
 
@@ -448,6 +448,11 @@ class REECA1Model(Model):
                              tex_name='Q_0',
                              )
 
+        # Initial current commands
+        self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
+
+        self.Iqcmd0 = ConstService('q0 / v', info='initial Iqcmd')
+
         # --- Initial power factor ---
         self.pfaref0 = ConstService(v_str='atan(q0/p0)', tex_name=r'\Phi_{ref0}',
                                     info='Initial power factor angle',
@@ -691,21 +696,34 @@ class REECA1Model(Model):
 
         Ipmax2sq = f'(Imax**2 - Iqout**2)'
 
+        Ipmax2sq0 = f'(Imax**2 - Iqcmd0**2)'
+
         Ipmax2 = f'Piecewise((0, {Ipmax2sq} <= 0.0), (sqrt({Ipmax2sq}), True))'
+
+        Ipmax20 = f'Piecewise((0, {Ipmax2sq0} <= 0.0), (sqrt({Ipmax2sq0}), True))'
 
         Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
 
-        self.Ipmax = Algeb(v_str=f'{Ipmax}',
+        Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
+
+        # TODO: fix the initialization of `Ipmax`
+        self.Ipmax = Algeb(v_str=f'{Ipmax0}',
                            e_str=f'{Ipmax} - Ipmax',
                            )
 
         Iqmax2sq = f'(Imax**2 - Ipout**2)'
 
+        Iqmax2sq0 = f'(Imax**2 - Ipcmd0**2)'
+
         Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
+
+        Iqmax20 = f'Piecewise((0, {Iqmax2sq0} <= 0.0), (sqrt({Iqmax2sq0}), True))'
 
         Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax2})'
 
-        self.Iqmax = Algeb(v_str=f'{Iqmax}',
+        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax20})'
+
+        self.Iqmax = Algeb(v_str=f'{Iqmax0}',
                            e_str=f'{Iqmax} - Iqmax',
                            tex_name='I_{qmax}',
                            )
@@ -721,10 +739,20 @@ class REECA1Model(Model):
                                    freeze=self.Volt_dip,
                                    )
 
-        # self.Ipout = Algeb(info='Ipcmd limited output',
-        #                    # v_str='',
-        #                    # e_str='',
-        #                    )
+        self.IpHL = GainLimiter(u='s5_y / vp', K=1, lower=self.Ipmin, upper=self.Ipmax,
+                                )
+
+        self.IqHL = GainLimiter(u='Qsel + Iqinj', K=1, lower=self.Iqmin, upper=self.Iqmax)
+
+        self.Ipout = Algeb(info='Ipcmd limited output',
+                           v_str='IpHL_y',
+                           e_str='IpHL_y - Ipout',
+                           )
+
+        self.Iqout = Algeb(info='Iqcmd limited output',
+                           v_str='IqHL_y',
+                           e_str='IqHL_y - Iqout',
+                           )
 
 
 class REECA1(REECA1Data, REECA1Model):
