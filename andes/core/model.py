@@ -13,7 +13,7 @@ from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam,
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
-from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace
+from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
 
 from andes.utils.paths import get_pkl_path
 from andes.utils.func import list_flatten
@@ -631,7 +631,7 @@ class Model(object):
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
                                 FlagValue, RandomService,
-                                ParamCalc, Replace)):
+                                ParamCalc, Replace, ApplyFunc)):
             self.services_ops[key] = value
         elif isinstance(value, InitChecker):
             self.services_icheck[key] = value
@@ -1110,6 +1110,7 @@ class Model(object):
         """
         # update service values
         self.s_update()
+        self.s_update_var()
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:
@@ -1134,6 +1135,8 @@ class Model(object):
                 try:
                     instance.v[:] = init_fun(**kwargs)
                 except ValueError as e:
+                    raise e
+                except TypeError as e:
                     raise e
             else:
                 instance.v[:] = init_fun

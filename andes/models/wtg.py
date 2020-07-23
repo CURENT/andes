@@ -5,9 +5,11 @@ from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
-from andes.core.service import VarService, ExtendedEvent
+from andes.core.service import VarService, ExtendedEvent, Replace
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
+
+import numpy as np  # NOQA
 
 
 class REGCAU1Data(ModelData):
@@ -327,35 +329,35 @@ class REECA1Data(ModelData):
                               )
         self.Vq1 = NumParam(default=0.2,
                             )
-        self.Iq1 = NumParam(default=0.2,
+        self.Iq1 = NumParam(default=2.0,
                             )
         self.Vq2 = NumParam(default=0.4,
                             )
-        self.Iq2 = NumParam(default=0.4,
+        self.Iq2 = NumParam(default=4.0,
                             )
         self.Vq3 = NumParam(default=0.8,
                             )
-        self.Iq3 = NumParam(default=0.8,
+        self.Iq3 = NumParam(default=8.0,
                             )
         self.Vq4 = NumParam(default=1.0,
                             )
-        self.Iq4 = NumParam(default=1.0,
+        self.Iq4 = NumParam(default=10,
                             )
         self.Vp1 = NumParam(default=0.2,
                             )
-        self.Ip1 = NumParam(default=0.2,
+        self.Ip1 = NumParam(default=2.0,
                             )
         self.Vp2 = NumParam(default=0.4,
                             )
-        self.Ip2 = NumParam(default=0.4,
+        self.Ip2 = NumParam(default=4.0,
                             )
         self.Vp3 = NumParam(default=0.8,
                             )
-        self.Ip3 = NumParam(default=0.8,
+        self.Ip3 = NumParam(default=8.0,
                             )
         self.Vp4 = NumParam(default=1.0,
                             )
-        self.Ip4 = NumParam(default=1.0,
+        self.Ip4 = NumParam(default=12.0,
                             )
 
 
@@ -388,6 +390,9 @@ class REECA1Model(Model):
                               kvs='Voltage PI controller tracking gain',
                               Tpfilt='Time const. for Pref filter',
                               )
+
+        # --- Sanitize inputs ---
+        self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8)
 
         # --- Flag switchers ---
         self.SWPF = Switcher(u=self.PFFLAG, options=(0, 1), tex_name='SW_{PF}', cache=True)
@@ -528,18 +533,6 @@ class REECA1Model(Model):
 
         # --- Placeholders for `Iqmin` and `Iqmax` ---
 
-        self.Iqmin = ConstService(v_str='-999')
-
-        self.Iqmax = ConstService(v_str='999')
-
-        # --- Placeholders end ---
-
-        self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
-                                   kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
-                                   lower=self.Iqmin, upper=self.Iqmax,
-                                   freeze=self.Volt_dip,
-                                   )
-
         self.s4 = LagFreeze(u='PFsel / vp', T=self.Tiq, K=1,
                             freeze=self.Volt_dip,
                             tex_name='s_4',
@@ -580,9 +573,6 @@ class REECA1Model(Model):
         Iqinj = f'{Iqv} * Volt_dip + ' \
                 f'(1 - Volt_dip) * fThld * ({Iqv} * nThld + Iqfrz * pThld)'
 
-        self.fThld_out = Algeb(v_str='fThld',
-                               e_str='fThld - fThld_out',
-                               )
         # state transition, output of Iqinj
         self.Iqinj = Algeb(v_str=Iqinj,
                            e_str=Iqinj + ' - Iqinj',
@@ -630,6 +620,12 @@ class REECA1Model(Model):
                                   tex_name='k_{Vq34}',
                                   )
 
+        self.zVDL1 = ConstService(v_str='(Vq1 <= Vq2) & (Vq2 <= Vq3) & (Vq3 <= Vq4) & '
+                                        '(Iq1 <= Iq2) & (Iq2 <= Iq3) & (Iq3 <= Iq4)',
+                                  tex_name='z_{VDL1}',
+                                  info='True if VDL1 is in service',
+                                  )
+
         self.VDL1 = Piecewise(u=self.s0_y,
                               points=('Vq1', 'Vq2', 'Vq3', 'Vq4'),
                               funs=('Iq1',
@@ -651,6 +647,12 @@ class REECA1Model(Model):
                                   tex_name='k_{Vp34}',
                                   )
 
+        self.zVDL2 = ConstService(v_str='(Vp1 <= Vp2) & (Vp2 <= Vp3) & (Vp3 <= Vp4) & '
+                                        '(Ip1 <= Ip2) & (Ip2 <= Ip3) & (Ip3 <= Ip4)',
+                                  tex_name='z_{VDL2}',
+                                  info='True if VDL2 is in service',
+                                  )
+
         self.VDL2 = Piecewise(u=self.s0_y,
                               points=('Vp1', 'Vp2', 'Vp3', 'Vp4'),
                               funs=('Ip1',
@@ -661,6 +663,61 @@ class REECA1Model(Model):
                               tex_name='V_{DL2}',
                               info='Piecewise linear characteristics of Vp-Ip',
                               )
+
+        self.fThld2 = ExtendedEvent(self.Volt_dip,
+                                    t_ext=self.Thld2,
+                                    extend_only=True,
+                                    )
+
+        # --- For debugging, TODO: remove after testing ---
+        # self.fThld_out = Algeb(v_str='fThld',
+        #                        e_str='fThld - fThld_out',
+        #                        )
+        #
+        # self.fThld2_out = Algeb(v_str='fThld2',
+        #                         e_str='fThld2 - fThld2_out',
+        #                         )
+        # --- Debugging ends
+
+        self.VDL1c = VarService(v_str='VDL1_y < Imaxr')
+
+        self.VDL2c = VarService(v_str='VDL2_y < Imaxr')
+
+        # `Iqmax` not considering mode or `Thld2`
+        Iqmax1 = '(zVDL1*(VDL1c*VDL1_y + (1-VDL1c)*Imaxr) + 1e8*(1-zVDL1))'
+
+        # `Ipmax` not considering mode or `Thld2`
+        Ipmax1 = '(zVDL2*(VDL2c*VDL2_y + (1-VDL2c)*Imaxr) + 1e8*(1-zVDL2))'
+
+        Ipmax2sq = f'(Imax**2 - {Iqmax1}**2)'
+
+        Ipmax2 = f'Piecewise((0, {Ipmax2sq} <= 0.0), (sqrt({Ipmax2sq}), True))'
+
+        Ipmax = f'((1-fThld2) * (SWQ_s0*{Ipmax2} + SWQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
+
+        self.Ipmax = Algeb(v_str=f'{Ipmax}',
+                           e_str=f'{Ipmax} - Ipmax',
+                           )
+
+        Iqmax2sq = f'(Imax**2 - Ipmax**2)'
+
+        Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
+
+        Iqmax = f'(SWQ_s0*{Iqmax1} + SWQ_s1*{Iqmax2})'
+
+        self.Iqmax = Algeb(v_str=f'{Iqmax}',
+                           e_str=f'{Iqmax} - Iqmax',
+                           )
+
+        self.Iqmin = VarService(v_str='-Iqmax')
+
+        self.Ipmin = ConstService(v_str='0.0')
+
+        self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+                                   kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
+                                   lower=self.Iqmin, upper=self.Iqmax,
+                                   freeze=self.Volt_dip,
+                                   )
 
         # self.Ipout = Algeb(info='Ipcmd limited output',
         #                    # v_str='',
