@@ -5,7 +5,7 @@ from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
-from andes.core.service import VarService
+from andes.core.service import VarService, ExtendedEvent
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
 
@@ -280,8 +280,8 @@ class REECA1Data(ModelData):
                              )
         self.Vref0 = NumParam(default=1.0,
                               )
-        self.Iqfrz = NumParam(default=1.0,
-                              )  # check
+        self.Iqfrz = NumParam(default=0.0,
+                              )
         self.Thld = NumParam(default=0.0,
                              tex_name='T_{hld}',
                              )
@@ -564,8 +564,32 @@ class REECA1Model(Model):
                              enable='DB_{V}',
                              info='Deadband for voltage error (ref0)'
                              )
-        # TODO: Gain after dbB
-        # TODO: state transition
+
+        self.pThld = ConstService(v_str='Thld > 0', tex_name='p_{Thld}')
+
+        self.nThld = ConstService(v_str='Thld < 0', tex_name='n_{Thld}')
+
+        self.Thld_abs = ConstService(v_str='abs(Thld)', tex_name='|Thld|')
+
+        self.fThld = ExtendedEvent(self.Volt_dip,
+                                   t_ext=self.Thld_abs,
+                                   )
+
+        # Gain after dbB
+        Iqv = "(dbV_y * Kqv)"
+        Iqinj = f'{Iqv} * Volt_dip + ' \
+                f'(1 - Volt_dip) * fThld * ({Iqv} * nThld + Iqfrz * pThld)'
+
+        self.fThld_out = Algeb(v_str='fThld',
+                               e_str='fThld - fThld_out',
+                               )
+        # state transition, output of Iqinj
+        self.Iqinj = Algeb(v_str=Iqinj,
+                           e_str=Iqinj + ' - Iqinj',
+                           tex_name='I_{qinj}',
+                           )
+
+        # TODO: calculate Iqcmd
 
         # --- Lower portion - active power ---
         self.wg = Algeb(tex_name=r'\omega_g',
