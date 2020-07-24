@@ -312,6 +312,7 @@ class REECA1Data(ModelData):
         self.Kvi = NumParam(default=0.1,
                             )
         self.Vref1 = NumParam(default=1.0,
+                              non_zero=True,
                               )
         self.Tiq = NumParam(default=0.02,
                             tex_name='T_{iq}'
@@ -366,19 +367,6 @@ class REECA1Data(ModelData):
 class REECA1Model(Model):
     """
     REEC_A model implementation.
-
-    Completed:
-      1. Dead band type 1, implement and test (implemented and tested (TestDB1))
-      2. PI controller with state freeze (implemented and tested)
-      2.1 PI controller with anti-windup limiter and state freeze (implemented and tested)
-      2.2 v_drop signal generator that creates a switching event (adds time to `t_switch`).
-      3. Lag with state freeze (implemented and tested)
-      3.1 Lag with anti-windup limiter with state freeze (implemented and tested)
-
-    TODO:
-      4. Nonlinear blocks `VDL1` and `VDL2`
-      5. Value and time-based state transition
-
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -444,7 +432,7 @@ class REECA1Model(Model):
                               e_str='-Ipcmd0 + IpHL_y',
                               )
 
-        self.Iqcmd = ExtAlgeb(model='RenGen', src='Qe', indexer=self.reg, export=False,
+        self.Iqcmd = ExtAlgeb(model='RenGen', src='Iqcmd', indexer=self.reg, export=False,
                               info='Retrieved Iqcmd of RenGen',
                               e_str='-Iqcmd0 - IqHL_y',
                               )
