@@ -235,6 +235,8 @@ class REGCA1(REGCA1Data, REGCA1Model):
 class REECA1Data(ModelData):
     """
     Renewable energy electrical control model REECA1 (reec_a) data.
+
+    TODO: Flag the parameters in the machine base.
     """
     def __init__(self):
         ModelData.__init__(self)
@@ -250,117 +252,212 @@ class REECA1Data(ModelData):
                              )
         self.PFFLAG = NumParam(info='Power factor control flag; 1-PF control, 0-Q control',
                                mandatory=True,
-                               vrange=(0, 1),
+                               unit='bool',
                                )
         self.VFLAG = NumParam(info='Voltage control flag; 1-Q control, 0-V control',
                               mandatory=True,
+                              unit='bool',
                               )
         self.QFLAG = NumParam(info='Q control flag; 1-V or Q control, 0-const. PF or Q',
                               mandatory=True,
+                              unit='bool',
                               )
         self.PFLAG = NumParam(info='P speed-dependency flag; 1-has speed dep., 0-no dep.',
                               mandatory=True,
+                              unit='bool',
                               )
         self.PQFLAG = NumParam(info='P/Q priority flag for I limit; 0-Q priority, 1-P priority',
                                mandatory=True,
+                               unit='bool',
                                )
 
         self.Vdip = NumParam(default=0.8,
+                             tex_name='V_{dip}',
+                             info='Low V threshold to activate Iqinj logic',
+                             unit='p.u.',
                              )
         self.Vup = NumParam(default=1.2,
+                            tex_name='V_{up}',
+                            info='V threshold above which to activate Iqinj logic',
+                            unit='p.u.',
                             )
         self.Trv = NumParam(default=0.02,
-                            tex_name='T_{rv}'
+                            tex_name='T_{rv}',
+                            info='Voltage filter time constant',
                             )
         self.dbd1 = NumParam(default=-0.1,
+                             tex_name='d_{bd1}',
+                             info='Lower bound of the voltage deadband (<=0)',
                              )
         self.dbd2 = NumParam(default=0.1,
+                             tex_name='d_{bd2}',
+                             info='Upper bound of the voltage deadband (>=0)',
                              )
-        self.Kqv = NumParam(default=1.0, vrange=(0, 10),
+        self.Kqv = NumParam(default=1.0,
+                            vrange=(0, 10),
+                            tex_name='K_{qv}',
+                            info='Gain to compute Iqinj from V error',
                             )
         self.Iqh1 = NumParam(default=999.0,
+                             tex_name='I_{qh1}',
+                             info='Upper limit on Iqinj',
                              )
         self.Iql1 = NumParam(default=-999.0,
+                             tex_name='I_{ql1}',
+                             info='Lower limit on Iqinj',
                              )
         self.Vref0 = NumParam(default=1.0,
+                              tex_name='V_{ref0}',
+                              info='User defined Vref (if 0, use initial bus V)',
                               )
         self.Iqfrz = NumParam(default=0.0,
+                              tex_name='I_{qfrz}',
+                              info='Value at which Iqinj is held for Thld (if >0) seconds following a Vdip',
                               )
         self.Thld = NumParam(default=0.0,
                              tex_name='T_{hld}',
+                             unit='s',
+                             info='Time for which Iqinj is held. If >0, hold at Iqinj; if <0, hold at State 1 '
+                                  'for |Thld|.',
                              )
         self.Thld2 = NumParam(default=0.0,
                               tex_name='T_{hld2}',
+                              unit='s',
+                              info='Time for which IPMAX is held after voltage dip ends',
                               )
         self.Tp = NumParam(default=0.02,
-                           tex_name='T_p'
+                           tex_name='T_p',
+                           unit='s',
+                           info='Filter time constant for Pe',
                            )
         self.QMax = NumParam(default=999.0,
+                             tex_name='Q_{max}',
+                             info='Upper limit for reactive power regulator',
                              )
         self.QMin = NumParam(default=-999.0,
+                             tex_name='Q_{min}',
+                             info='Lower limit for reactive power regulator',
                              )
         self.VMAX = NumParam(default=999.0,
+                             tex_name='V_{max}',
+                             info='Upper limit for voltage control',
                              )
         self.VMIN = NumParam(default=-999.0,
+                             tex_name='V_{min}',
+                             info='Lower limit for voltage control',
                              )
         self.Kqp = NumParam(default=1.0,
+                            tex_name='K_{qp}',
+                            info='Proportional gain for reactive power error',
                             )
         self.Kqi = NumParam(default=0.1,
+                            tex_name='K_{qi}',
+                            info='Integral gain for reactive power error',
                             )
         self.Kvp = NumParam(default=1.0,
+                            tex_name='K_{vp}',
+                            info='Proportional gain for voltage error',
                             )
         self.Kvi = NumParam(default=0.1,
+                            tex_name='K_{vi}',
+                            info='Integral gain for voltage error',
                             )
         self.Vref1 = NumParam(default=1.0,
                               non_zero=True,
+                              tex_name='V_{ref1}',
+                              info='Voltage ref. if VFLAG=0',
                               )
         self.Tiq = NumParam(default=0.02,
-                            tex_name='T_{iq}'
+                            tex_name='T_{iq}',
+                            info='Filter time constant for Iq',
                             )
         self.dPmax = NumParam(default=999.0,
+                              tex_name='d_{Pmax}',
+                              info='Power reference max. ramp rate (>0)',
                               )
         self.dPmin = NumParam(default=-999.0,
+                              tex_name='d_{Pin}',
+                              info='Power reference min. ramp rate (<0)',
                               )
         self.PMAX = NumParam(default=999.0,
+                             tex_name='P_{max}',
+                             info='Max. active power limit > 0',
                              )
-        self.PMIN = NumParam(default=-999.0,
+        self.PMIN = NumParam(default=0.0,
+                             tex_name='P_{min}',
+                             info='Min. active power limit',
                              )
         self.Imax = NumParam(default=999.0,
+                             tex_name='I_{max}',
+                             info='Max. apparent current limit',
                              )
         self.Tpord = NumParam(default=0.02,
-                              tex_name='T_{pord}'
+                              tex_name='T_{pord}',
+                              info='Filter time constant for power setpoint',
                               )
         self.Vq1 = NumParam(default=0.2,
+                            tex_name='V_{q1}',
+                            info='Reactive power V-I pair (point 1), voltage',
                             )
         self.Iq1 = NumParam(default=2.0,
+                            tex_name='I_{q1}',
+                            info='Reactive power V-I pair (point 1), current',
                             )
         self.Vq2 = NumParam(default=0.4,
+                            tex_name='V_{q2}',
+                            info='Reactive power V-I pair (point 2), voltage',
                             )
         self.Iq2 = NumParam(default=4.0,
+                            tex_name='I_{q2}',
+                            info='Reactive power V-I pair (point 2), current',
                             )
         self.Vq3 = NumParam(default=0.8,
+                            tex_name='V_{q3}',
+                            info='Reactive power V-I pair (point 3), voltage',
                             )
         self.Iq3 = NumParam(default=8.0,
+                            tex_name='I_{q3}',
+                            info='Reactive power V-I pair (point 3), current',
                             )
         self.Vq4 = NumParam(default=1.0,
+                            tex_name='V_{q4}',
+                            info='Reactive power V-I pair (point 4), voltage',
                             )
         self.Iq4 = NumParam(default=10,
+                            tex_name='I_{q4}',
+                            info='Reactive power V-I pair (point 4), current',
                             )
         self.Vp1 = NumParam(default=0.2,
+                            tex_name='V_{p1}',
+                            info='Active power V-I pair (point 1), voltage',
                             )
         self.Ip1 = NumParam(default=2.0,
+                            tex_name='I_{p1}',
+                            info='Active power V-I pair (point 1), current',
                             )
         self.Vp2 = NumParam(default=0.4,
+                            tex_name='V_{p2}',
+                            info='Active power V-I pair (point 2), voltage',
                             )
         self.Ip2 = NumParam(default=4.0,
+                            tex_name='I_{p2}',
+                            info='Active power V-I pair (point 2), current',
                             )
         self.Vp3 = NumParam(default=0.8,
+                            tex_name='V_{p3}',
+                            info='Active power V-I pair (point 3), voltage',
                             )
         self.Ip3 = NumParam(default=8.0,
+                            tex_name='I_{p3}',
+                            info='Active power V-I pair (point 3), current',
                             )
         self.Vp4 = NumParam(default=1.0,
+                            tex_name='V_{p4}',
+                            info='Active power V-I pair (point 4), voltage',
                             )
         self.Ip4 = NumParam(default=12.0,
+                            tex_name='I_{p4}',
+                            info='Active power V-I pair (point 4), current',
                             )
 
 
@@ -582,6 +679,7 @@ class REECA1Model(Model):
         self.Iqinj = Algeb(v_str=Iqinj,
                            e_str=Iqinj + ' - Iqinj',
                            tex_name='I_{qinj}',
+                           info='Additional Iq signal during under- or over-voltage',
                            )
 
         # TODO: calculate Iqcmd
@@ -722,6 +820,7 @@ class REECA1Model(Model):
                            e_str=f'{Ipmax} + (fThld2 * Ipmaxh) - Ipmax',
                            tex_name='I_{pmax}',
                            diag_eps=1e-6,
+                           info='Upper limit on Ipcmd',
                            )
 
         self.Ipmaxh = VarHold(self.Ipmax, hold=self.fThld2)
@@ -741,13 +840,17 @@ class REECA1Model(Model):
         self.Iqmax = Algeb(v_str=f'{Iqmax0}',
                            e_str=f'{Iqmax} - Iqmax',
                            tex_name='I_{qmax}',
+                           info='Upper limit on Iqcmd',
                            )
 
         self.Iqmin = ApplyFunc(self.Iqmax, lambda x: -x, cache=False,
                                tex_name='I_{qmin}',
+                               info='Lower limit on Iqcmd',
                                )
 
-        self.Ipmin = ConstService(v_str='0.0', tex_name='I_{pmin}')
+        self.Ipmin = ConstService(v_str='0.0', tex_name='I_{pmin}',
+                                  info='Lower limit on Ipcmd',
+                                  )
 
         self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
@@ -777,7 +880,7 @@ class REECA1Model(Model):
 
 class REECA1(REECA1Data, REECA1Model):
     """
-    Renewable energy electrical control
+    Renewable energy electrical control.
     """
     def __init__(self, system, config):
         REECA1Data.__init__(self)
