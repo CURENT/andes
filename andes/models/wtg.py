@@ -5,7 +5,7 @@ from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
-from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc
+from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
 
@@ -709,17 +709,22 @@ class REECA1Model(Model):
         # self.Ipmax2sq = Algeb(v_str=Ipmax2sq0, e_str=f'{Ipmax2sq} - Ipmax2sq')
         #
         # self.Ipmax2 = Algeb(v_str=Ipmax20, e_str=f'{Ipmax2} - Ipmax2')
+        #
+        # self.Ipmaxhv = Algeb(v_str='Ipmax', e_str=f'Ipmaxh - Ipmaxhv', tex_name='I_{pmaxhv}')
 
         # --- Debugging ends ---
 
         Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
 
-        Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
+        Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'
 
         self.Ipmax = Algeb(v_str=f'{Ipmax0}',
-                           e_str=f'{Ipmax} - Ipmax',
+                           e_str=f'{Ipmax} + (fThld2 * Ipmaxh) - Ipmax',
                            tex_name='I_{pmax}',
+                           diag_eps=1e-6,
                            )
+
+        self.Ipmaxh = VarHold(self.Ipmax, hold=self.fThld2)
 
         Iqmax2sq = f'(Imax**2 - IpHL_y**2)'
 

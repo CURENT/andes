@@ -167,6 +167,31 @@ class EventFlag(VarService):
         return self.u.v
 
 
+class VarHold(VarService):
+    """
+    Service for holding the input when the hold state is on.
+    """
+    def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
+        VarService.__init__(self, v_numeric=self.check, vtype=vtype,
+                            name=name, tex_name=tex_name, info=info,
+                            )
+        self.u = dummify(u)
+        self.hold = dummify(hold)
+        self._init = False
+
+    def check(self, **kwargs):
+        if not np.all(self.hold.v == 0.0):
+            hold_idx = np.where(self.hold.v == 1)
+
+            ret = self.u.v.copy()
+            ret[hold_idx] = self.v[hold_idx]
+
+            return ret
+
+        else:
+            return self.u.v
+
+
 class ExtendedEvent(VarService):
     """
     Service to flag events that extends for period of time after event disappears.
