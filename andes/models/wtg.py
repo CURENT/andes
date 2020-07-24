@@ -12,7 +12,7 @@ from collections import OrderedDict
 import numpy as np  # NOQA
 
 
-class REGCAU1Data(ModelData):
+class REGCA1Data(ModelData):
     """
     REGC_A model data.
     """
@@ -92,9 +92,9 @@ class REGCAU1Data(ModelData):
                               )
 
 
-class REGCAU1Model(Model):
+class REGCA1Model(Model):
     """
-    REGCAU1 implementation.
+    REGCA1 implementation.
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -141,7 +141,7 @@ class REGCAU1Model(Model):
         # --- INITIALIZATION ---
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
 
-        self.Iqcmd0 = ConstService('q0 / v', info='initial Iqcmd')
+        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
 
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
@@ -149,7 +149,7 @@ class REGCAU1Model(Model):
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
-                           e_str='-Iqcmd0 - Iqcmd', v_str='-Iqcmd0')
+                           e_str='Iqcmd0 - Iqcmd', v_str='Iqcmd0')
 
         # reactive power management
 
@@ -224,10 +224,10 @@ class REGCAU1Model(Model):
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
-class REGCAU1(REGCAU1Data, REGCAU1Model):
+class REGCA1(REGCA1Data, REGCA1Model):
     def __init__(self, system, config):
-        REGCAU1Data.__init__(self)
-        REGCAU1Model.__init__(self, system, config)
+        REGCA1Data.__init__(self)
+        REGCA1Model.__init__(self, system, config)
 
 
 class REECA1Data(ModelData):
@@ -437,6 +437,16 @@ class REECA1Model(Model):
         self.Qe = ExtAlgeb(model='RenGen', src='Qe', indexer=self.reg, export=False,
                            info='Retrieved Qe of RenGen')
 
+        self.Ipcmd = ExtAlgeb(model='RenGen', src='Ipcmd', indexer=self.reg, export=False,
+                              info='Retrieved Ipcmd of RenGen',
+                              e_str='-Ipcmd0 + IpHL_y',
+                              )
+
+        self.Iqcmd = ExtAlgeb(model='RenGen', src='Qe', indexer=self.reg, export=False,
+                              info='Retrieved Iqcmd of RenGen',
+                              e_str='-Iqcmd0 - IqHL_y',
+                              )
+
         self.p0 = ExtService(model='StaticGen',
                              src='p',
                              indexer=self.gen,
@@ -451,7 +461,7 @@ class REECA1Model(Model):
         # Initial current commands
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
 
-        self.Iqcmd0 = ConstService('q0 / v', info='initial Iqcmd')
+        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
 
         # --- Initial power factor ---
         self.pfaref0 = ConstService(v_str='atan(q0/p0)', tex_name=r'\Phi_{ref0}',

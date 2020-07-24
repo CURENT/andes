@@ -17,7 +17,7 @@ non_jit = OrderedDict([
     ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
-    ('wtg', ['REGCAU1', 'REECA1']),
+    ('wtg', ['REGCA1', 'REECA1']),
     ('timer', ['Toggler', 'Fault']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])

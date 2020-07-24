@@ -102,7 +102,7 @@ class TestPI(TestFrame):
         self.PIAWF = PITrackAWFreeze(u=self.uin, kp=0.5, ki=0.5, ks=2, x0=0,
                                      freeze=self.zf, lower=-0.5, upper=0.5)
 
-        self.ExtEvent = ExtendedEvent(u=self.zf, t_ext=self.Text, trig='rise')
+        self.ExtEvent = ExtendedEvent(u=self.zf, t_ext=self.Text, trig='rise', extend_only=True)
 
         self.ze = Algeb(v_str='ExtEvent', e_str='ExtEvent - ze')
 

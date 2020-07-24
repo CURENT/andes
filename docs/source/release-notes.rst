@@ -13,12 +13,16 @@ New features:
 
 - Added service `EventFlag` which automatically calls events
   if its input changes.
+- Added service `ExtendedEvent` which flags an extended event
+  for a given time.
+- Added model `REECA1` with all details.
 
 Default behavior changes include:
 
 - ``andes prepare`` now takes three mutually exclusive arguments,
   `full`, `quick` and `incremental`. The command-line now defaults
   to the quick mode. ``andes.prepare()`` still uses the full mode.
+- Renamed model `REGCAU1` to `REGCA1`.
 
 v1.0.7 (2020-07-18)
 ```````````````````
