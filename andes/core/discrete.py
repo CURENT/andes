@@ -16,7 +16,7 @@ class Discrete(object):
     Discrete classes export flag arrays (usually boolean) .
     """
 
-    def __init__(self, name=None, tex_name=None, info=None):
+    def __init__(self, name=None, tex_name=None, info=None, no_warn=False):
         self.name = name
         self.tex_name = tex_name
         self.info = info
@@ -26,6 +26,7 @@ class Discrete(object):
         self.x_set = list()
         self.y_set = list()  # NOT being used
         self.warn_flags = []  # flags in `warn_flags` that are not initialized to zero will be warned
+        self.no_warn = no_warn
 
         self.has_check_var = False
         self.has_check_eq = False
@@ -91,6 +92,9 @@ class Discrete(object):
         """
         Warn if initialized at limits.
         """
+        if self.no_warn:
+            return
+
         for f, limit in self.warn_flags:
             if f not in self.export_flags:
                 logger.error(f'warn_flags contain unknown flag {f}')
