@@ -192,8 +192,18 @@ class Config(object):
 
         Existing configs will NOT be overwritten.
         """
+        def warn_upper(s):
+            if any(x.isupper() for x in s):
+                logger.warning(f"Config fields must be in lower case, found {s}")
+
         if dct is not None:
+            for s in dct.keys():
+                warn_upper(s)
+
             self._add(**dct)
+
+        for s in kwargs.keys():
+            warn_upper(s)
 
         self._add(**kwargs)
 

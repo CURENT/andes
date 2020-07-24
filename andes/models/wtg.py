@@ -383,12 +383,12 @@ class REECA1Model(Model):
 
         self.config.add(OrderedDict((('kqs', 2),
                                      ('kvs', 2),
-                                     ('Tpfilt', 0.02),
+                                     ('tpfilt', 0.02),
                                      )))
         self.config.add_extra('_help',
                               kqs='Q PI controller tracking gain',
                               kvs='Voltage PI controller tracking gain',
-                              Tpfilt='Time const. for Pref filter',
+                              tpfilt='Time const. for Pref filter',
                               )
 
         # --- Sanitize inputs ---
@@ -602,7 +602,7 @@ class REECA1Model(Model):
                         v_str='1.0',
                         e_str='1.0 - wg',
                         )
-        self.pfilt = LagRate(u=self.Pref, T=self.config.Tpfilt, K=1,
+        self.pfilt = LagRate(u=self.Pref, T=self.config.tpfilt, K=1,
                              rate_lower=self.dPmin, rate_upper=self.dPmax,
                              info='Active power filter with rate limits',
                              tex_name='P_{filt}',
