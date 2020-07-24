@@ -694,7 +694,7 @@ class REECA1Model(Model):
         # `Ipmax` not considering mode or `Thld2`
         Ipmax1 = '(zVDL2*(VDL2c*VDL2_y + (1-VDL2c)*Imaxr) + 1e8*(1-zVDL2))'
 
-        Ipmax2sq = f'(Imax**2 - Iqout**2)'
+        Ipmax2sq = f'(Imax**2 - IqHL_y**2)'
 
         Ipmax2sq0 = f'(Imax**2 - Iqcmd0**2)'
 
@@ -702,18 +702,28 @@ class REECA1Model(Model):
 
         Ipmax20 = f'Piecewise((0, {Ipmax2sq0} <= 0.0), (sqrt({Ipmax2sq0}), True))'
 
+        # --- For debugging `Ipmax` ---
+
+        # self.Ipmax1 = Algeb(v_str=Ipmax1, e_str=f'{Ipmax1} - Ipmax1')
+        #
+        # self.Ipmax2sq = Algeb(v_str=Ipmax2sq0, e_str=f'{Ipmax2sq} - Ipmax2sq')
+        #
+        # self.Ipmax2 = Algeb(v_str=Ipmax20, e_str=f'{Ipmax2} - Ipmax2')
+
+        # --- Debugging ends ---
+
         Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
 
         Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
 
-        # TODO: fix the initialization of `Ipmax`
         self.Ipmax = Algeb(v_str=f'{Ipmax0}',
                            e_str=f'{Ipmax} - Ipmax',
+                           tex_name='I_{pmax}',
                            )
 
-        Iqmax2sq = f'(Imax**2 - Ipout**2)'
+        Iqmax2sq = f'(Imax**2 - IpHL_y**2)'
 
-        Iqmax2sq0 = f'(Imax**2 - Ipcmd0**2)'
+        Iqmax2sq0 = f'(Imax**2 - Ipcmd0**2)'   # initialization equation by using `Ipcmd0`
 
         Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
 
@@ -729,7 +739,8 @@ class REECA1Model(Model):
                            )
 
         self.Iqmin = ApplyFunc(self.Iqmax, lambda x: -x, cache=False,
-                               tex_name='I_{qmin}')
+                               tex_name='I_{qmin}',
+                               )
 
         self.Ipmin = ConstService(v_str='0.0', tex_name='I_{pmin}')
 
@@ -744,15 +755,19 @@ class REECA1Model(Model):
 
         self.IqHL = GainLimiter(u='Qsel + Iqinj', K=1, lower=self.Iqmin, upper=self.Iqmax)
 
-        self.Ipout = Algeb(info='Ipcmd limited output',
-                           v_str='IpHL_y',
-                           e_str='IpHL_y - Ipout',
-                           )
+        # --- Duplicate output - consider removing later ---
 
-        self.Iqout = Algeb(info='Iqcmd limited output',
-                           v_str='IqHL_y',
-                           e_str='IqHL_y - Iqout',
-                           )
+        # self.Ipout = Algeb(info='Ipcmd limited output',
+        #                    v_str='IpHL_y',
+        #                    e_str='IpHL_y - Ipout',
+        #                    )
+        #
+        # self.Iqout = Algeb(info='Iqcmd limited output',
+        #                    v_str='IqHL_y',
+        #                    e_str='IqHL_y - Iqout',
+        #                    )
+
+        # ---
 
 
 class REECA1(REECA1Data, REECA1Model):
