@@ -117,7 +117,7 @@ class Block(object):
 
             if value.namespace == 'local':
                 prepend = self.name + '_'
-                tex_prepend = self.name + r'\ '
+                tex_prepend = self.tex_name + r'\ '
             else:
                 prepend = ''
                 tex_prepend = ''
@@ -985,13 +985,16 @@ class LagAntiWindupRate(Block):
         self.enforce_tex_name((self.T, self.K))
 
         self.y = State(info='State in lag TF', tex_name="y",
-                       t_const=self.T)
+                       t_const=self.T,
+                       )
         self.lim = AntiWindupRate(u=self.y, lower=self.lower, upper=self.upper,
                                   rate_lower=rate_lower, rate_upper=rate_upper,
                                   no_lower=no_lower, no_upper=no_upper,
                                   rate_no_lower=rate_no_lower, rate_no_upper=rate_no_upper,
                                   rate_lower_cond=rate_lower_cond, rate_upper_cond=rate_upper_cond,
-                                  tex_name='lim', info='Limiter in Lag')
+                                  tex_name='lim',
+                                  info='Limiter in Lag',
+                                  )
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
