@@ -911,9 +911,10 @@ class Model(object):
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     # NOTE: use new assignment due to possible size change
-                    instance.v = func(**kwargs)
+                    #   Always make a copy
+                    instance.v = np.array(func(**kwargs))
                 else:
-                    instance.v = np.ravel(func)
+                    instance.v = np.ravel(np.array(func))
 
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):
@@ -1521,7 +1522,9 @@ class Model(object):
         for name in self.config.as_dict().keys():
             md5.update(str(name).encode())
 
-        for item in self.cache.all_vars.values():
+        for name, item in self.cache.all_vars.items():
+            md5.update(str(name).encode())
+
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
             if item.v_iter is not None:
@@ -1529,7 +1532,9 @@ class Model(object):
             if item.e_str is not None:
                 md5.update(str(item.e_str).encode())
 
-        for item in self.services.values():
+        for name, item in self.services.items():
+            md5.update(str(name).encode())
+
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
 
