@@ -946,14 +946,14 @@ class Model(object):
                 if callable(func):
                     instance.v[:] = func(**kwargs)
 
-            # Apply both the individual `v_numeric` and Model-level `s_numeric_var`
-            for instance in self.services_var.values():
+            # Apply individual `v_numeric`
                 func = instance.v_numeric
                 if func is not None and callable(func):
                     instance.v[:] = func(**kwargs)
 
         if self.flags.sv_num is True:
             self.s_numeric_var(**kwargs)
+
         # Block-level `s_numeric_var` not supported.
 
     def s_update_post(self):
