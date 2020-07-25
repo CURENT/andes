@@ -939,9 +939,8 @@ class Model(object):
         """
         Update VarService.
         """
-        kwargs = self.get_inputs()
-
         if len(self.services_var):
+            kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
                 func = self.calls.s_lambdify[name]
                 if callable(func):
@@ -953,6 +952,7 @@ class Model(object):
                     instance.v[:] = func(**kwargs)
 
         if self.flags.sv_num is True:
+            kwargs = self.get_inputs()
             self.s_numeric_var(**kwargs)
 
         # Block-level `s_numeric_var` not supported.
