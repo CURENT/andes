@@ -1077,12 +1077,12 @@ class REPCA1Data(ModelData):
                            info='Power controller lag time constant',
                            )
 
-        self.Ddn = NumParam(default=0.05,
+        self.Ddn = NumParam(default=10,
                             tex_name='D_{dn}',
                             info='Reciprocal of droop for over-freq. conditions',
                             )
 
-        self.Dup = NumParam(default=0.05,
+        self.Dup = NumParam(default=10,
                             tex_name='D_{up}',
                             info='Reciprocal of droop for under-freq. conditions',
                             )
