@@ -287,11 +287,11 @@ class REECA1Data(ModelData):
                             tex_name='T_{rv}',
                             info='Voltage filter time constant',
                             )
-        self.dbd1 = NumParam(default=-0.1,
+        self.dbd1 = NumParam(default=-0.02,
                              tex_name='d_{bd1}',
                              info='Lower bound of the voltage deadband (<=0)',
                              )
-        self.dbd2 = NumParam(default=0.1,
+        self.dbd2 = NumParam(default=0.02,
                              tex_name='d_{bd2}',
                              info='Upper bound of the voltage deadband (>=0)',
                              )
@@ -478,6 +478,11 @@ class REECA1Model(Model):
                               kqs='Q PI controller tracking gain',
                               kvs='Voltage PI controller tracking gain',
                               tpfilt='Time const. for Pref filter',
+                              )
+        self.config.add_extra('_tex',
+                              kqs='K_{qs}',
+                              kvs='K_{vs}',
+                              tpfilt='T_{pfilt}',
                               )
 
         # --- Sanitize inputs ---
@@ -1084,7 +1089,18 @@ class REPCA1Model(Model):
 
         self.config.add(OrderedDict((('kqs', 2),
                                      ('ksg', 2),
+                                     ('freeze', 1),
                                      )))
+
+        self.config.add_extra('_help',
+                              kqs='Tracking gain for reactive power PI controller',
+                              ksg='Tracking gain for active power PI controller',
+                              freeze='Voltage dip freeze flag; 1-enable, 0-disable',
+                              )
+        self.config.add_extra('_alt',
+                              kqs='K_{qs}',
+                              ksg='K_{sg}',
+                              freeze='f_{rz}')
 
         # --- from RenExciter ---
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, export=False,
@@ -1212,7 +1228,7 @@ class REPCA1Model(Model):
 
         self.s0 = Lag(VCsel, T=self.Tfltr, K=1, tex_name='s_0',
                       info='V filter',
-                      )
+                      )  # s0_y is the filter output of voltage deviation
 
         self.s1 = Lag(self.Qline, T=self.Tfltr, K=1, tex_name='s_1')
 
@@ -1226,12 +1242,32 @@ class REPCA1Model(Model):
 
         self.dbd = DeadBand1(u=self.Refsel, lower=self.dbd1, upper=self.dbd2, center=0.0)
 
+        # --- e Hardlimit and hold logic ---
         self.eHL = Limiter(u=self.dbd_y, lower=self.emin, upper=self.emax,
                            tex_name='e_{HL}',
                            info='Hardlimit on deadband output',
                            )
 
-        self.s2 = PITrackAW(u='dbd_y*eHL_zi + emax*eHL_zu + emin*eHL_zl',
+        self.zf = VarService(v_str='(v < Vfrz) * freeze',
+                             tex_name='z_f',
+                             info='PI Q input freeze signal',
+                             )
+
+        self.enf = Algeb(tex_name='e_{nf}',
+                         info='e Hardlimit output before freeze',
+                         v_str='dbd_y*eHL_zi + emax*eHL_zu + emin*eHL_zl',
+                         e_str='dbd_y*eHL_zi + emax*eHL_zu + emin*eHL_zl - enf',
+                         )
+
+        # --- hold of `enf` when v < vfrz
+
+        self.eHld = VarHold(u=self.enf, hold=self.zf, tex_name='e_{hld}',
+                            info='e Hardlimit output after conditional hold',
+                            )
+
+        self.eHldy = Algeb(v_str='eHld', e_str='eHld - eHldy')
+
+        self.s2 = PITrackAW(u='eHld',
                             kp=self.Kp, ki=self.Ki, ks=self.config.kqs,
                             lower=self.Qmin, upper=self.Qmax,
                             info='PI controller for eHL output',
