@@ -310,7 +310,7 @@ class StaticGen(GroupBase):
 class ACLine(GroupBase):
     def __init__(self):
         super(ACLine, self).__init__()
-        self.common_params.extend(('bus1', 'bus2'))
+        self.common_params.extend(('bus1', 'bus2', 'r', 'x'))
         self.common_vars.extend(('v1', 'v2', 'a1', 'a2'))
 
 

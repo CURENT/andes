@@ -914,7 +914,7 @@ class Model(object):
                     # NOTE: use new assignment due to possible size change
                     instance.v = func(**kwargs)
                 else:
-                    instance.v = np.array(func)
+                    instance.v = np.ravel(func)
 
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):

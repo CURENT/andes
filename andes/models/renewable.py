@@ -6,7 +6,7 @@ from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
-from andes.core.service import CurrentSign
+from andes.core.service import CurrentSign, NumSelect
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
 
@@ -948,14 +948,14 @@ class REPCA1Data(ModelData):
                              info='Voltage below which s2 is frozen',
                              )
 
-        self.Rc = NumParam(default=0,
+        self.Rc = NumParam(default=None,
                            tex_name='R_c',
-                           info='Line drop compensation resistance',
+                           info='Line drop compensation R',
                            )
 
-        self.Xc = NumParam(default=0.01,
+        self.Xc = NumParam(default=None,
                            tex_name='X_c',
-                           info='Line drop compensation reactance',
+                           info='Line drop compensation R',
                            )
 
         self.emax = NumParam(default=999,
@@ -1073,8 +1073,12 @@ class REPCA1Model(Model):
         self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 
         # from Bus
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name=r'V',
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
                           info='Bus (or busr, if given) terminal voltage',
+                          )
+
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
+                          info='Bus (or busr, if given) phase angle',
                           )
 
         self.v0 = ExtService(model='Bus', src='v', indexer=self.buss, tex_name="V_0",
@@ -1093,8 +1097,56 @@ class REPCA1Model(Model):
         self.bus2 = ExtParam(model='ACLine', src='bus2', indexer=self.line, export=False,
                              info='Retrieved Line.bus2 idx', dtype=str, default=None,
                              )
+        self.r = ExtParam(model='ACLine', src='r', indexer=self.line, export=False,
+                          info='Retrieved Line.r', dtype=str, default=None,
+                          )
+
+        self.x = ExtParam(model='ACLine', src='x', indexer=self.line, export=False,
+                          info='Retrieved Line.x', dtype=str, default=None,
+                          )
+
+        self.v1 = ExtAlgeb(model='ACLine', src='v1', indexer=self.line, tex_name='V_1',
+                           info='Voltage at Line.bus1',
+                           )
+
+        self.v2 = ExtAlgeb(model='ACLine', src='v2', indexer=self.line, tex_name='V_2',
+                           info='Voltage at Line.bus2',
+                           )
+
+        self.a1 = ExtAlgeb(model='ACLine', src='a1', indexer=self.line, tex_name=r'\theta_1',
+                           info='Angle at Line.bus1',
+                           )
+
+        self.a2 = ExtAlgeb(model='ACLine', src='a2', indexer=self.line, tex_name=r'\theta_2',
+                           info='Angle at Line.bus2',
+                           )
 
         self.Isign = CurrentSign(self.bus, self.bus1, self.bus2)
+
+        self.Iline = VarService(v_str='Isign * (v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)',
+                                vtype=np.complex,
+                                info='Complex current from bus1 to bus2',
+                                )
+
+        self.Pline = VarService(v_str='re(Isign * v1*exp(1j*a1) *'
+                                      ' conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))',
+                                vtype=np.float,
+                                info='Complex power from bus1 to bus2',
+                                )
+
+        self.Qline = VarService(v_str='im(Isign * v1*exp(1j*a1) *'
+                                      ' conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))',
+                                vtype=np.float,
+                                info='Complex power from bus1 to bus2',
+                                )
+
+        self.Rcs = NumSelect(self.Rc, self.r, info='Line R (Rc if provided, otherwise line.r)')
+
+        self.Xcs = NumSelect(self.Xc, self.x, info='Line X (Xc if provided, otherwise line.x)')
+
+        self.Vcomp = VarService(v_str='abs(v*exp(1j*a) - (Rcs + 1j * Xcs) * Iline)',
+                                info='Voltage after Rc/Xc compensation',
+                                )
 
 
 class REPCA1(REPCA1Data, REPCA1Model):
