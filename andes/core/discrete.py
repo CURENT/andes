@@ -467,10 +467,12 @@ class AntiWindupRate(AntiWindup, RateLimiter):
         RateLimiter.__init__(self, u, lower=rate_lower, upper=rate_upper, enable=enable,
                              no_lower=rate_no_lower, no_upper=rate_no_upper,
                              lower_cond=rate_lower_cond, upper_cond=rate_upper_cond,
-                             name=name, tex_name=tex_name, info=info)
+                             )
 
         AntiWindup.__init__(self, u, lower=lower, upper=upper, enable=enable,
-                            no_lower=no_lower, no_upper=no_upper)
+                            no_lower=no_lower, no_upper=no_upper,
+                            name=name, tex_name=tex_name, info=info,
+                            )
 
     def check_eq(self):
         RateLimiter.check_eq(self)

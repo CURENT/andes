@@ -141,9 +141,13 @@ class REGCA1Model(Model):
                            )
 
         # --- INITIALIZATION ---
-        self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd')
+        self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd',
+                                   tex_name='I_{pcmd0}',
+                                   )
 
-        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
+        self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd',
+                                   tex_name='I_{qcmd0}',
+                                   )
 
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
@@ -175,6 +179,7 @@ class REGCA1Model(Model):
         self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
                              funs=('0', '(v - Lvpnt0) * kLVG', '1'),
                              info='Low voltage current gain',
+                             tex_name='L_{VG}',
                              )
 
         self.Lvplsw = FlagValue(u=self.Lvpl1, value=0, flag=0, tex_name='z_{Lvplsw}',
@@ -187,6 +192,7 @@ class REGCA1Model(Model):
 
         self.S2 = Lag(u=self.v, T=self.Tfltr, K=1.0,
                       info='Voltage filter with no anti-windup',
+                      tex_name='S_2',
                       )
         self.LVPL = Piecewise(u=self.S2_y,
                               points=('Zerox', 'Brkpt'),
@@ -194,27 +200,33 @@ class REGCA1Model(Model):
                                     '(S2_y - Zerox) * kLVPL + 9999 * (1-Lvplsw)',
                                     '9999'),
                               info='Low voltage Ipcmd upper limit',
+                              tex_name='L_{VPL}',
                               )
 
         self.S0 = LagAntiWindupRate(u=self.Ipcmd, T=self.Tg, K=1,
                                     upper=self.LVPL_y, rate_upper=self.Rrpwr,
                                     lower=-999, rate_lower=-999,
                                     no_lower=True, rate_no_lower=True,
+                                    tex_name='S_0',
                                     )  # `S0_y` is the output `Ip` in the block diagram
 
         self.Ipout = Algeb(e_str='S0_y * LVG_y -Ipout',
                            v_str='Ipcmd * LVG_y',
                            info='Output Ip current',
+                           tex_name='I_{pout}',
                            )
 
         # high voltage part
         self.HVG = GainLimiter(u='v - Volim', K=self.Khv, info='High voltage gain block',
                                lower=0, upper=999, no_upper=True,
+                               tex_name='H_{VG}'
                                )
         self.HVG.lim.no_warn = True
 
         self.Iqout = GainLimiter(u='S1_y- HVG_y', K=1, lower=self.Iolim, upper=9999,
-                                 no_upper=True, info='Iq output block')  # `Iqout_y` is the final Iq output
+                                 no_upper=True, info='Iq output block',
+                                 tex_name='I^{qout}',
+                                 )  # `Iqout_y` is the final Iq output
 
         self.Pe = Algeb(tex_name='P_e', info='Active power output',
                         v_str='p0', e_str='Ipout * v - Pe')
@@ -320,7 +332,7 @@ class REECA1Data(ModelData):
                              tex_name='T_{hld}',
                              unit='s',
                              info='Time for which Iqinj is held. If >0, hold at Iqinj; if <0, hold at State 1 '
-                                  'for |Thld|.',
+                                  'for abs(Thld)',
                              )
         self.Thld2 = NumParam(default=0.0,
                               tex_name='T_{hld2}',
@@ -1176,44 +1188,55 @@ class REPCA1Model(Model):
 
         # -- begin services ---
 
-        self.Isign = CurrentSign(self.bus, self.bus1, self.bus2)
+        self.Isign = CurrentSign(self.bus, self.bus1, self.bus2, tex_name='I_{sign}')
 
         Iline = '(Isign * (v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x))'
 
         self.Iline = VarService(v_str=Iline, vtype=np.complex,
                                 info='Complex current from bus1 to bus2',
+                                tex_name='I_{line}',
                                 )
 
         self.Iline0 = ConstService(v_str='Iline', vtype=np.complex,
                                    info='Initial complex current from bus1 to bus2',
+                                   tex_name='I_{line0}',
                                    )
 
         Pline = 're(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
 
         self.Pline = VarService(v_str=Pline, vtype=np.float,
                                 info='Complex power from bus1 to bus2',
+                                tex_name='P_{line}',
                                 )
 
         self.Pline0 = ConstService(v_str='Pline', vtype=np.float,
                                    info='Initial vomplex power from bus1 to bus2',
+                                   tex_name='P_{line0}',
                                    )
 
         Qline = 'im(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
 
         self.Qline = VarService(v_str=Qline, vtype=np.float,
                                 info='Complex power from bus1 to bus2',
+                                tex_name='Q_{line}',
                                 )
 
         self.Qline0 = ConstService(v_str='Qline', vtype=np.float,
                                    info='Initial complex power from bus1 to bus2',
+                                   tex_name='Q_{line0}',
                                    )
 
-        self.Rcs = NumSelect(self.Rc, self.r, info='Line R (Rc if provided, otherwise line.r)')
+        self.Rcs = NumSelect(self.Rc, self.r, info='Line R (Rc if provided, otherwise line.r)',
+                             tex_name='R_{cs}',
+                             )
 
-        self.Xcs = NumSelect(self.Xc, self.x, info='Line X (Xc if provided, otherwise line.x)')
+        self.Xcs = NumSelect(self.Xc, self.x, info='Line X (Xc if provided, otherwise line.x)',
+                             tex_name='X_{cs}',
+                             )
 
         self.Vcomp = VarService(v_str='abs(v*exp(1j*a) - (Rcs + 1j * Xcs) * Iline)',
                                 info='Voltage after Rc/Xc compensation',
+                                tex_name='V_{comp}'
                                 )
 
         self.SWVC = Switcher(u=self.VCFlag, options=(0, 1), tex_name='SW_{VC}', cache=True)
@@ -1224,7 +1247,9 @@ class REPCA1Model(Model):
 
         VCsel = '(SWVC_s1 * Vcomp + SWVC_s0 * (Qline * Kc + v))'
 
-        self.Vref0 = ConstService(v_str='(SWVC_s1 * Vcomp + SWVC_s0 * (Qline0 * Kc + v))')
+        self.Vref0 = ConstService(v_str='(SWVC_s1 * Vcomp + SWVC_s0 * (Qline0 * Kc + v))',
+                                  tex_name='V_{ref0}',
+                                  )
 
         self.s0 = Lag(VCsel, T=self.Tfltr, K=1, tex_name='s_0',
                       info='V filter',
@@ -1240,7 +1265,9 @@ class REPCA1Model(Model):
 
         self.Refsel = Algeb(v_str=Refsel, e_str=f'{Refsel} - Refsel', tex_name='R_{efsel}')
 
-        self.dbd = DeadBand1(u=self.Refsel, lower=self.dbd1, upper=self.dbd2, center=0.0)
+        self.dbd = DeadBand1(u=self.Refsel, lower=self.dbd1, upper=self.dbd2, center=0.0,
+                             tex_name='d^{bd}',
+                             )
 
         # --- e Hardlimit and hold logic ---
         self.eHL = Limiter(u=self.dbd_y, lower=self.emin, upper=self.emax,
@@ -1264,8 +1291,6 @@ class REPCA1Model(Model):
         self.eHld = VarHold(u=self.enf, hold=self.zf, tex_name='e_{hld}',
                             info='e Hardlimit output after conditional hold',
                             )
-
-        self.eHldy = Algeb(v_str='eHld', e_str='eHld - eHldy')
 
         self.s2 = PITrackAW(u='eHld',
                             kp=self.Kp, ki=self.Ki, ks=self.config.kqs,
@@ -1296,7 +1321,7 @@ class REPCA1Model(Model):
 
         self.fdbd = DeadBand1(u=self.ferr, center=0.0, lower=self.fdbd1,
                               upper=self.fdbd2,
-                              tex_name='f_{dbd}',
+                              tex_name='f^{dbd}',
                               info='frequency error deadband',
                               )
 
