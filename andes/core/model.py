@@ -905,9 +905,8 @@ class Model(object):
         Service values are updated sequentially.
         The ``v`` attribute of services will be assigned at a new memory address.
         """
-
-        if (self.calls.s_lambdify is not None) and len(self.calls.s_lambdify):
-            for name, instance in self.services.items():
+        for name, instance in self.services.items():
+            if name in self.calls.s_lambdify:
                 func = self.calls.s_lambdify[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
@@ -919,12 +918,10 @@ class Model(object):
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):
                     instance.v = np.ones(self.n) * instance.v
-        # NOTE:
-        # Some numerical calls depend on other service values.
-        # They are evaluated after lambdified calls
 
-        # Apply both the individual `v_numeric` and Model-level `s_numeric`
-        for instance in self.services.values():
+            # --- Very Important ---
+            # the numerical call of a `ConstService` should only depend on previously
+            #   evaluated variables.
             func = instance.v_numeric
             if func is not None and callable(func):
                 kwargs = self.get_inputs(refresh=True)
@@ -942,6 +939,7 @@ class Model(object):
         Update VarService.
         """
         kwargs = self.get_inputs()
+
         if len(self.services_var):
             for name, instance in self.services_var.items():
                 func = self.calls.s_lambdify[name]
@@ -1108,9 +1106,7 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        # update service values
-        self.s_update()
-        self.s_update_var()
+        self.s_update()  # this includes ConstService and VarService
 
         for name, instance in self.vars_decl_order.items():
             if instance.v_str is None:

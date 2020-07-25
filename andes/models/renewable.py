@@ -918,6 +918,22 @@ class REPCA1Data(ModelData):
                              default=None,
                              )
 
+        # --- flags ---
+        self.VCFlag = NumParam(info='Droop flag; 0-with droop if power factor ctrl, 1-line drop comp.',
+                               mandatory=True,
+                               unit='bool',
+                               )
+
+        self.RefFlag = NumParam(info='Q/V select; 0-Q control, 1-V control',
+                                mandatory=True,
+                                unit='bool',
+                                )
+
+        self.Fflag = NumParam(info='Frequency control flag; 0-disable, 1-enable',
+                              mandatory=True,
+                              unit='bool',
+                              )
+
         self.Tfltr = NumParam(default=0.02,
                               tex_name='T_{fltr}',
                               info='V or Q filter time const.',
@@ -956,6 +972,11 @@ class REPCA1Data(ModelData):
         self.Xc = NumParam(default=None,
                            tex_name='X_c',
                            info='Line drop compensation R',
+                           )
+
+        self.Kc = NumParam(default=0.0,
+                           tex_name='K_c',
+                           info='Reactive power compensation gain',
                            )
 
         self.emax = NumParam(default=999,
@@ -1123,22 +1144,35 @@ class REPCA1Model(Model):
 
         self.Isign = CurrentSign(self.bus, self.bus1, self.bus2)
 
-        self.Iline = VarService(v_str='Isign * (v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)',
-                                vtype=np.complex,
+        Iline = '(Isign * (v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x))'
+
+        self.Iline = VarService(v_str=Iline, vtype=np.complex,
                                 info='Complex current from bus1 to bus2',
                                 )
 
-        self.Pline = VarService(v_str='re(Isign * v1*exp(1j*a1) *'
-                                      ' conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))',
-                                vtype=np.float,
+        self.Iline0 = ConstService(v_str='Iline', vtype=np.complex,
+                                   info='Initial complex current from bus1 to bus2',
+                                   )
+
+        Pline = 're(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
+
+        self.Pline = VarService(v_str=Pline, vtype=np.float,
                                 info='Complex power from bus1 to bus2',
                                 )
 
-        self.Qline = VarService(v_str='im(Isign * v1*exp(1j*a1) *'
-                                      ' conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))',
-                                vtype=np.float,
+        self.Pline0 = ConstService(v_str='Pline', vtype=np.float,
+                                   info='Initial vomplex power from bus1 to bus2',
+                                   )
+
+        Qline = 'im(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
+
+        self.Qline = VarService(v_str=Qline, vtype=np.float,
                                 info='Complex power from bus1 to bus2',
                                 )
+
+        self.Qline0 = ConstService(v_str='Qline', vtype=np.float,
+                                   info='Initial complex power from bus1 to bus2',
+                                   )
 
         self.Rcs = NumSelect(self.Rc, self.r, info='Line R (Rc if provided, otherwise line.r)')
 
@@ -1147,6 +1181,32 @@ class REPCA1Model(Model):
         self.Vcomp = VarService(v_str='abs(v*exp(1j*a) - (Rcs + 1j * Xcs) * Iline)',
                                 info='Voltage after Rc/Xc compensation',
                                 )
+
+        self.SWVC = Switcher(u=self.VCFlag, options=(0, 1), tex_name='SW_{VC}', cache=True)
+
+        self.SWRef = Switcher(u=self.RefFlag, options=(0, 1), tex_name='SW_{Ref}', cache=True)
+
+        self.SWF = Switcher(u=self.Fflag, options=(0, 1), tex_name='SW_{F}', cache=True)
+
+        VCsel = '(SWVC_s1 * Vcomp + SWVC_s0 * (Qline * Kc + v))'
+
+        self.Vref0 = ConstService(v_str='(SWVC_s1 * Vcomp + SWVC_s0 * (Qline0 * Kc + v))')
+
+        self.s0 = Lag(VCsel, T=self.Tfltr, K=1, tex_name='s_0',
+                      info='V filter',
+                      )
+
+        self.s1 = Lag(self.Qline, T=self.Tfltr, K=1, tex_name='s_1')
+
+        self.Vref = Algeb(v_str='Vref0', e_str='Vref0 - Vref', tex_name='Q_{ref}')
+
+        self.Qref = Algeb(v_str='Qline0', e_str='Qline0 - Qref', tex_name='Q_{ref}')
+
+        Refsel = '(SWRef_s0 * (Qref - s1_y) + SWRef_s1 * (Vref - s0_y))'
+
+        self.Refsel = Algeb(v_str=Refsel, e_str=f'{Refsel} - Refsel', tex_name='R_{efsel}')
+
+        self.dbd = DeadBand1(u=self.Refsel, lower=self.dbd1, upper=self.dbd2, center=0.0)
 
 
 class REPCA1(REPCA1Data, REPCA1Model):
