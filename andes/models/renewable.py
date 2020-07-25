@@ -1,13 +1,14 @@
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
-from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
+from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
+from andes.core.block import LeadLag
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
 from andes.core.service import CurrentSign, NumSelect
-from andes.core.discrete import Switcher, Limiter
+from andes.core.discrete import Switcher, Limiter, LessThan
 from collections import OrderedDict
 
 import numpy as np  # NOQA
@@ -1046,12 +1047,12 @@ class REPCA1Data(ModelData):
 
         self.Pmax = NumParam(default=999,
                              tex_name='P_{max}',
-                             info='Upper limit on power reference',
+                             info='Upper limit on power error (used by PI ctrl.)',
                              )
 
-        self.Pmin = NumParam(default=0.0,
+        self.Pmin = NumParam(default=-999,
                              tex_name='P_{min}',
-                             info='Lower limit on power reference',
+                             info='Lower limit on power error (used by PI ctrl.)',
                              )
 
         self.Tg = NumParam(default=0.02,
@@ -1081,10 +1082,25 @@ class REPCA1Model(Model):
         self.group = 'RenPlant'
         self.flags.tds = True
 
+        self.config.add(OrderedDict((('kqs', 2),
+                                     ('ksg', 2),
+                                     )))
+
+        # --- from RenExciter ---
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, export=False,
                             info='Retrieved RenGen idx', dtype=str, default=None,
                             )
+        self.Pext = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
+                             info='Pref from RenExciter renamed as Pext',
+                             tex_name='P_{ext}',
+                             )
 
+        self.Qext = ExtAlgeb(model='RenExciter', src='Qref', indexer=self.ree,
+                             info='Qref from RenExciter renamed as Qext',
+                             tex_name='Q_{ext}',
+                             )
+
+        # --- from RenGen ---
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
                             info='Retrieved bus idx', dtype=str, default=None,
                             )
@@ -1141,6 +1157,8 @@ class REPCA1Model(Model):
         self.a2 = ExtAlgeb(model='ACLine', src='a2', indexer=self.line, tex_name=r'\theta_2',
                            info='Angle at Line.bus2',
                            )
+
+        # -- begin services ---
 
         self.Isign = CurrentSign(self.bus, self.bus1, self.bus2)
 
@@ -1200,13 +1218,100 @@ class REPCA1Model(Model):
 
         self.Vref = Algeb(v_str='Vref0', e_str='Vref0 - Vref', tex_name='Q_{ref}')
 
-        self.Qref = Algeb(v_str='Qline0', e_str='Qline0 - Qref', tex_name='Q_{ref}')
+        self.Qlinef = Algeb(v_str='Qline0', e_str='Qline0 - Qlinef', tex_name='Q_{linef}')
 
-        Refsel = '(SWRef_s0 * (Qref - s1_y) + SWRef_s1 * (Vref - s0_y))'
+        Refsel = '(SWRef_s0 * (Qlinef - s1_y) + SWRef_s1 * (Vref - s0_y))'
 
         self.Refsel = Algeb(v_str=Refsel, e_str=f'{Refsel} - Refsel', tex_name='R_{efsel}')
 
         self.dbd = DeadBand1(u=self.Refsel, lower=self.dbd1, upper=self.dbd2, center=0.0)
+
+        self.eHL = Limiter(u=self.dbd_y, lower=self.emin, upper=self.emax,
+                           tex_name='e_{HL}',
+                           info='Hardlimit on deadband output',
+                           )
+
+        self.s2 = PITrackAW(u='dbd_y*eHL_zi + emax*eHL_zu + emin*eHL_zl',
+                            kp=self.Kp, ki=self.Ki, ks=self.config.kqs,
+                            lower=self.Qmin, upper=self.Qmax,
+                            info='PI controller for eHL output',
+                            tex_name='s_2',
+                            )
+
+        self.s3 = LeadLag(u=self.s2_y, T1=self.Tft, T2=self.Tfv, K=1,
+                          tex_name='s_3',
+                          )  # s3_y == Qext
+
+        # Active power part
+
+        self.s4 = Lag(self.Pline, T=self.Tp, K=1,
+                      tex_name='s_4',
+                      info='Pline filter',
+                      )
+
+        self.Freq_ref = ConstService(v_str='1.0',
+                                     tex_name='f_{ref}',
+                                     info='Initial Freq_ref')
+        self.ferr = Algeb(tex_name='f_{err}',
+                          info='Frequency deviation',
+                          v_str='(Freq_ref - f)',
+                          e_str='(Freq_ref - f) - ferr',
+                          )
+
+        self.fdbd = DeadBand1(u=self.ferr, center=0.0, lower=self.fdbd1,
+                              upper=self.fdbd2,
+                              tex_name='f_{dbd}',
+                              info='frequency error deadband',
+                              )
+
+        self.fdlt0 = LessThan(self.fdbd_y, 0.0,
+                              tex_name='f_{dlt0}',
+                              info='frequency deadband output less than zero',
+                              )
+
+        fdroop = '(fdbd_y * Ddn * fdlt0_z1 + fdbd_y * Dup * fdlt0_z0)'
+
+        self.Plant_pref = Algeb(tex_name='P_{ref}',
+                                info='Plant P ref',
+                                v_str='Pline0',
+                                e_str='Pline0 - Plant_pref',
+                                )
+
+        self.Plerr = Algeb(tex_name='P_{lerr}',
+                           info='Pline error',
+                           v_str='- s4_y + Plant_pref',
+                           e_str='- s4_y + Plant_pref - Plerr',
+                           )
+        self.Perr = Algeb(tex_name='P_{err}',
+                          info='Power error before fe limits',
+                          v_str=f'{fdroop} + Plerr',
+                          e_str=f'{fdroop} + Plerr - Perr',
+                          )
+
+        self.feHL = Limiter(self.Perr, lower=self.femin, upper=self.femax,
+                            tex_name='f_{eHL}',
+                            info='Limiter for power (frequency) error',
+                            )
+
+        feout = '(Perr * feHL_zi + femin * feHL_zl + femax * feHL_zu)'
+        self.s5 = PITrackAW(u=feout, kp=self.Kpg, ki=self.Kig, ks=self.config.ksg,
+                            lower=self.Pmin, upper=self.Pmax,
+                            tex_name='s_5',
+                            info='PI for fe limiter output',
+                            )
+
+        self.s6 = Lag(u=self.s5_y, T=self.Tg, K=1,
+                      tex_name='s_6',
+                      info='Output filter for Pext',
+                      )
+
+        Qext = '(s3_y)'
+
+        Pext = '(SWF_s1 * s6_y)'
+
+        self.Pext.e_str = Pext
+
+        self.Qext.e_str = Qext
 
 
 class REPCA1(REPCA1Data, REPCA1Model):

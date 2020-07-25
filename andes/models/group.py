@@ -358,6 +358,7 @@ class RenExciter(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('reg',))
+        self.common_vars.extend(('Pref', 'Qref'))
 
 
 class RenPlant(GroupBase):

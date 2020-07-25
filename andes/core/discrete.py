@@ -134,11 +134,11 @@ class LessThan(Discrete):
     -----
     The default z0 and z1, if not enabled, can be set through the constructor.
     """
-    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None, cache=False,
-                 z0=0, z1=1):
-        super().__init__(name=name, tex_name=tex_name)
+    def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None,
+                 info=None, cache=False, z0=0, z1=1):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
-        self.bound = bound
+        self.bound = dummify(bound)
         self.equal: bool = equal
         self.enable: bool = enable
         self.cache: bool = cache
