@@ -308,7 +308,10 @@ class StaticGen(GroupBase):
 
 
 class ACLine(GroupBase):
-    pass
+    def __init__(self):
+        super(ACLine, self).__init__()
+        self.common_params.extend(('bus1', 'bus2'))
+        self.common_vars.extend(('v1', 'v2', 'a1', 'a2'))
 
 
 class StaticLoad(GroupBase):
@@ -348,9 +351,18 @@ class RenGen(GroupBase):
         self.common_vars.extend(('Ipcmd', 'Iqcmd', 'Pe', 'Qe'))
 
 
-class RenElectrical(GroupBase):
+class RenExciter(GroupBase):
     """
-    Renewable electrical control
+    Renewable electrical control (exciter) group.
+    """
+    def __init__(self):
+        super().__init__()
+        self.common_params.extend(('reg',))
+
+
+class RenPlant(GroupBase):
+    """
+    Renewable plant control group.
     """
     def __init__(self):
         super().__init__()

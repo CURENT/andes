@@ -1203,6 +1203,47 @@ class FlagGreaterThan(FlagCondition):
                                )
 
 
+class CurrentSign(ConstService):
+    """
+    Service for computing the sign of the current flowing through a series device.
+
+    With a given line connecting `bus1` and `bus2`, one can compute the current
+    flow using ``(v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + jx)`` whose value is
+    the outflow on `bus1`.
+
+    `CurrentSign` can be used to compute the sign to be multiplied depending on
+    the observing bus.
+    For each value in `bus`, the sign will be ``+1`` if it appears in `bus1` or
+    ``-1`` otherwise.
+
+    ::
+
+        bus1          bus2
+         *------>>-----*
+        bus(+)        bus(-)
+
+    """
+    def __init__(self, bus, bus1, bus2,  name=None, tex_name=None, info=None):
+        ConstService.__init__(self, v_numeric=self.check, name=name, tex_name=tex_name, info=info)
+        self.bus = bus
+        self.bus1 = bus1
+        self.bus2 = bus2
+
+    def check(self, **kwargs):
+        out = np.zeros_like(self.v)
+
+        for idx, (bus, bus1, bus2) in enumerate(zip(self.bus.v, self.bus1.v, self.bus2.v)):
+            if bus == bus1:
+                out[idx] = 1
+            elif bus == bus2:
+                out[idx] = -1
+            else:
+                raise ValueError(f"bus {bus} is terminal of the line connecting {bus1} and {bus2}. "
+                                 f"Check the data of {self.bus.owner.class_name}.{self.bus.name}")
+
+        return out
+
+
 class Replace(BaseService):
     """
     Replace parameters with new values if the function returns True

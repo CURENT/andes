@@ -4,8 +4,9 @@ from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, Lag
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate
 from andes.core.var import ExtAlgeb, Algeb
 
-from andes.core.service import ConstService, FlagValue, ExtService, DataSelect
+from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
+from andes.core.service import CurrentSign
 from andes.core.discrete import Switcher, Limiter
 from collections import OrderedDict
 
@@ -887,4 +888,220 @@ class REECA1(REECA1Data, REECA1Model):
         REECA1Model.__init__(self, system, config)
 
         self.flags.tds = True
-        self.group = 'RenElectrical'
+        self.group = 'RenExciter'
+
+
+class REPCA1Data(ModelData):
+    """
+    Parameters for the Renewable Energy Plant Control model.
+    """
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.ree = IdxParam(info='RenExciter idx',
+                            model='RenExciter',
+                            mandatory=True,
+                            )
+
+        self.line = IdxParam(info='Idx of line that connect to measured bus',
+                             model='ACLine',
+                             mandatory=True,
+                             )
+
+        self.busr = IdxParam(info='Optional remote bus for voltage and freq. measurement',
+                             model='Bus',
+                             default=None,
+                             )
+
+        self.busf = IdxParam(info='BusFreq idx for mode 2',
+                             model='BusFreq',
+                             default=None,
+                             )
+
+        self.Tfltr = NumParam(default=0.02,
+                              tex_name='T_{fltr}',
+                              info='V or Q filter time const.',
+                              )
+
+        self.Kp = NumParam(default=1.0,
+                           tex_name='K_p',
+                           info='Q proportional gain',
+                           )
+
+        self.Ki = NumParam(default=0.1,
+                           tex_name='K_i',
+                           info='Q integral gain',
+                           )
+
+        self.Tft = NumParam(default=1.0,
+                            tex_name='T_{ft}',
+                            info='Lead time constant',
+                            )
+
+        self.Tfv = NumParam(default=1.0,
+                            tex_name='T_{fv}',
+                            info='Lag time constant',
+                            )
+
+        self.Vfrz = NumParam(default=0.8,
+                             tex_name='V_{frz}',
+                             info='Voltage below which s2 is frozen',
+                             )
+
+        self.Rc = NumParam(default=0,
+                           tex_name='R_c',
+                           info='Line drop compensation resistance',
+                           )
+
+        self.Xc = NumParam(default=0.01,
+                           tex_name='X_c',
+                           info='Line drop compensation reactance',
+                           )
+
+        self.emax = NumParam(default=999,
+                             tex_name='e_{max}',
+                             info='Upper limit on deadband output',
+                             )
+
+        self.emin = NumParam(default=-999,
+                             tex_name='e_{min}',
+                             info='Lower limit on deadband output',
+                             )
+
+        self.dbd1 = NumParam(default=-0.1,
+                             tex_name='d_{bd1}',
+                             info='Lower threshold for reactive power control deadband (<=0)',
+                             )
+
+        self.dbd2 = NumParam(default=0.1,
+                             tex_name='d_{bd2}',
+                             info='Upper threshold for reactive power control deadband (>=0)',
+                             )
+
+        self.Qmax = NumParam(default=999.0,
+                             tex_name='Q_{max}',
+                             info='Upper limit on output of V-Q control',
+                             )
+
+        self.Qmin = NumParam(default=-999.0,
+                             tex_name='Q_{min}',
+                             info='Lower limit on output of V-Q control',
+                             )
+
+        self.Kpg = NumParam(default=1.0,
+                            tex_name='K_{pg}',
+                            info='Proportional gain for power control',
+                            )
+
+        self.Kig = NumParam(default=0.1,
+                            tex_name='K_{ig}',
+                            info='Integral gain for power control',
+                            )
+
+        self.Tp = NumParam(default=0.02,
+                           tex_name='T_p',
+                           info='Time constant for P measurement',
+                           )
+
+        self.fdbd1 = NumParam(default=-0.01,
+                              tex_name='f_{dbd1}',
+                              info='Lower threshold for freq. error deadband',
+                              )
+
+        self.fdbd2 = NumParam(default=0.01,
+                              tex_name='f_{dbd2}',
+                              info='Upper threshold for freq. error deadband',
+                              )
+
+        self.femax = NumParam(default=0.05,
+                              tex_name='f_{emax}',
+                              info='Upper limit for freq. error',
+                              )
+
+        self.femin = NumParam(default=-0.05,
+                              tex_name='f_{emin}',
+                              info='Lower limit for freq. error',
+                              )
+
+        self.Pmax = NumParam(default=999,
+                             tex_name='P_{max}',
+                             info='Upper limit on power reference',
+                             )
+
+        self.Pmin = NumParam(default=0.0,
+                             tex_name='P_{min}',
+                             info='Lower limit on power reference',
+                             )
+
+        self.Tg = NumParam(default=0.02,
+                           tex_name='T_g',
+                           info='Power controller lag time constant',
+                           )
+
+        self.Ddn = NumParam(default=0.05,
+                            tex_name='D_{dn}',
+                            info='Reciprocal of droop for over-freq. conditions',
+                            )
+
+        self.Dup = NumParam(default=0.05,
+                            tex_name='D_{up}',
+                            info='Reciprocal of droop for under-freq. conditions',
+                            )
+
+
+class REPCA1Model(Model):
+    """
+    REPCA1 model implementation
+    """
+
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+
+        self.group = 'RenPlant'
+        self.flags.tds = True
+
+        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, export=False,
+                            info='Retrieved RenGen idx', dtype=str, default=None,
+                            )
+
+        self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
+                            info='Retrieved bus idx', dtype=str, default=None,
+                            )
+
+        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+
+        # from Bus
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name=r'V',
+                          info='Bus (or busr, if given) terminal voltage',
+                          )
+
+        self.v0 = ExtService(model='Bus', src='v', indexer=self.buss, tex_name="V_0",
+                             info='Initial bus voltage',
+                             )
+
+        # from BusFreq
+        self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
+                          info='Bus frequency', unit='p.u.')
+
+        # from Line
+        self.bus1 = ExtParam(model='ACLine', src='bus1', indexer=self.line, export=False,
+                             info='Retrieved Line.bus1 idx', dtype=str, default=None,
+                             )
+
+        self.bus2 = ExtParam(model='ACLine', src='bus2', indexer=self.line, export=False,
+                             info='Retrieved Line.bus2 idx', dtype=str, default=None,
+                             )
+
+        self.Isign = CurrentSign(self.bus, self.bus1, self.bus2)
+
+
+class REPCA1(REPCA1Data, REPCA1Model):
+    """
+    REPCA1 plat control model.
+    """
+
+    def __init__(self, system, config):
+        REPCA1Data.__init__(self)
+        REPCA1Model.__init__(self, system, config)
