@@ -9,19 +9,24 @@ Since v1.0.0
 
 v1.0.8
 ```````````````````
-New features:
+New features and models:
 
+- Added renewable energy models `REECA1` and `REPCA1`.
 - Added service `EventFlag` which automatically calls events
   if its input changes.
 - Added service `ExtendedEvent` which flags an extended event
   for a given time.
-- Added model `REECA1` with all details.
+- Added service `ApplyFunc` to apply a numeric function.
+  For the most cases where one would need `ApplyFunc`,
+  consider using `ConstService` first.
 
 Default behavior changes include:
 
 - ``andes prepare`` now takes three mutually exclusive arguments,
   `full`, `quick` and `incremental`. The command-line now defaults
   to the quick mode. ``andes.prepare()`` still uses the full mode.
+- ``Model.s_update`` now evaluates the generated and the
+  user-provided calls in sequence for each service in order.
 - Renamed model `REGCAU1` to `REGCA1`.
 
 v1.0.7 (2020-07-18)

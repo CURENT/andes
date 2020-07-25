@@ -1,25 +1,23 @@
-## Version 1.0.0
+## Version 1.1.0
 
 ## Milestones
 - [x] Limiter check and warning after initialization
-*   Renewable generator models (REGC_A, REEC_A, REPC_A)
+- [x] Renewable generator models (REGC_A, REEC_A, REPC_A)
 *   Robust iterative initialization for variables
 *   Allow selection of output variables
 
 ## To-do list
 - [x] Improve the speed of `DAETimeSeries.unpack`.
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
-*   Vectorize the `enable` option for most discrete blocks. 
-*   allow to remind developer of missing equations (such as `vout` of Exciters).
-*   Remove `params_ext` from `params` in Model definition
-*   Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
-*   Add a non-linear gain block like in PowerWorld IEEEG1_GE
+- [x] Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
 *   Allow loading default config for `selftest`
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
+*   Vectorize the `enable` option for most discrete blocks. 
+*   allow to remind developer of missing equations (such as `vout` of Exciters).
 
 ## Help Wanted
 *   Restore compatibility with dome format
