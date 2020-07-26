@@ -911,8 +911,8 @@ class Model(object):
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     # NOTE: use new assignment due to possible size change
-                    #   Always make a copy
-                    instance.v = np.array(func(**kwargs))
+                    #   Always make a copy and make the RHS a 1-d array
+                    instance.v = np.ravel(np.array(func(**kwargs)))
                 else:
                     instance.v = np.ravel(np.array(func))
 
