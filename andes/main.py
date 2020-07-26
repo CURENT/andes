@@ -549,6 +549,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     if shell is True:
         try:
             from IPython import embed
+            # load plotter before entering IPython
+            system.TDS.load_plotter()
             embed()
         except ImportError:
             logger.warning("IPython import error. Installed?")
