@@ -1222,7 +1222,11 @@ class System(object):
     def switch_action(self, models):
         """
         Invoke the actions associated with switch times.
+
+        Switch actions will be disabled if `flat=True` is passed to system.
         """
+        if self.options.get('flat') is True:
+            return
         for instance in models.values():
             instance.switch_action(self.dae.t)
 

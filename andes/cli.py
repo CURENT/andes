@@ -55,6 +55,7 @@ def create_parser():
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
     run.add_argument('--shell', action='store_true', help='Start in IPython shell')
     run.add_argument('--no-preamble', action='store_true', help='Hide preamble')
+    run.add_argument('--flat', action='store_true', help='Run no-disturbance (flat) simulation')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '
