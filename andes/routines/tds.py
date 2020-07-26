@@ -4,7 +4,7 @@ import importlib
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
-from andes.utils.misc import elapsed, is_notebook
+from andes.utils.misc import elapsed, is_notebook, is_interactive
 from andes.utils.tab import Tab
 from andes.shared import tqdm, np
 from andes.shared import matrix, sparse, spdiag
@@ -242,8 +242,8 @@ class TDS(BaseRoutine):
         logger.info(f'Simulation completed in {s1}.')
         system.TDS.save_output()
 
-        # load data into `TDS.plotter` in the notebook mode
-        if is_notebook():
+        # load data into `TDS.plotter` in a notebook or in an interactive mode
+        if is_notebook() or is_interactive():
             self.load_plotter()
 
         return succeed

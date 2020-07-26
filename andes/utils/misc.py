@@ -61,7 +61,7 @@ def is_notebook():
     try:
         shell = get_ipython().__class__.__name__
         if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
+            return True   # Jupyter notebook or qt-console
         elif shell == 'TerminalInteractiveShell':
             return False  # Terminal running IPython
         else:
@@ -71,5 +71,23 @@ def is_notebook():
 
 
 def is_interactive():
+    """
+    Check if is in an interactive shell (python or ipython).
+
+    Returns
+    -------
+    bool
+
+    """
+    ipython = False
+    try:
+        cls_name = get_ipython().__class__.__name__
+
+        if cls_name in ('InteractiveShellEmbed', 'TerminalInteractiveShell'):
+            ipython = True
+    except NameError:
+        pass
+
     import __main__ as main
-    return not hasattr(main, '__file__')
+
+    return not hasattr(main, '__file__') or ipython
