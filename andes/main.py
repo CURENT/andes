@@ -618,16 +618,38 @@ def prepare(quick=False, incremental=False, cli=False, full=False, **kwargs):
         return system
 
 
-def selftest(**kwargs):
+def selftest(quick=False, **kwargs):
     """
     Run unit tests.
     """
+
+    # map verbosity level from logging to unittest
+    vmap = {1: 3, 10: 3, 20: 2, 30: 1, 40: 1, 50: 1}
+    verbose = vmap[kwargs.get('verbose')]
+
+    # skip if quick
+    quick_skips = ('test_1_docs', 'test_codegen_inc')
+
     logger.handlers[0].setLevel(logging.WARNING)
     sys.stdout = open(os.devnull, 'w')  # suppress print statements
 
+    # discover test cases
     test_directory = tests_root()
     suite = unittest.TestLoader().discover(test_directory)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+
+    # remove codegen for quick mode
+    if quick is True:
+        for test_group in suite._tests:
+            for test_class in test_group._tests:
+                tests_keep = list()
+
+                for idx, t in enumerate(test_class._tests):
+                    if t._testMethodName not in quick_skips:
+                        tests_keep.append(t)
+
+                test_class._tests = tests_keep
+
+    unittest.TextTestRunner(verbosity=verbose).run(suite)
     sys.stdout = sys.__stdout__
 
 

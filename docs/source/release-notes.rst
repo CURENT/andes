@@ -19,6 +19,8 @@ New features and models:
 - Added service `ApplyFunc` to apply a numeric function.
   For the most cases where one would need `ApplyFunc`,
   consider using `ConstService` first.
+- Allow `selftest -q` for quick selftest by skipping codegen.
+- Improved time stepping logic and convergence tests.
 
 Default behavior changes include:
 

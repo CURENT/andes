@@ -123,6 +123,8 @@ def create_parser():
 
 
     selftest = sub_parsers.add_parser('selftest')  # NOQA
+    selftest.add_argument('-q', '--quick', action='store_true',
+                          help='quick selftest by skipping codegen')
 
     return parser
 
