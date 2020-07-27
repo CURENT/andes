@@ -1188,6 +1188,10 @@ class System(object):
             self.switch_times
         """
         out = np.array([], dtype=np.float)
+
+        if self.options.get('flat') is True:
+            return out
+
         names = []
         for instance in models.values():
             times = np.array(instance.get_times()).ravel()
@@ -1225,8 +1229,6 @@ class System(object):
 
         Switch actions will be disabled if `flat=True` is passed to system.
         """
-        if self.options.get('flat') is True:
-            return
         for instance in models.values():
             instance.switch_action(self.dae.t)
 
