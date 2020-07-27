@@ -213,7 +213,7 @@ def read_add(system, file):
         logger.debug(f'dyr contains models {", ".join(dyr_dict.keys())}')
 
     if len(not_supported):
-        logger.warning(f'Not supported: {", ".join(not_supported)}')
+        logger.warning(f'Models not yet supported: {", ".join(not_supported)}')
     else:
         logger.debug('All dyr models are supported.')
 
@@ -250,7 +250,7 @@ def read_add(system, file):
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
                                                                      allow_none=allow_none)
                     except IndexError as e:
-                        logger.error("Data file may contain references to unsupported devices.")
+                        logger.error("Data file likely contains references to unsupported models.")
                         logger.error(e)
                         return False
 
