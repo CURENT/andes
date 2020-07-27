@@ -495,8 +495,8 @@ def _parse_transf_v33(raw, system, max_bus):
             # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
 
             param = {'idx': max_bus + xf_3_count,
-                     'name': '_'.join(str(data[0][:3])),
-                     'Vn': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
+                     'name': '_'.join([str(i) for i in data[0][:3]]),
+                     'Vn': 1.0,
                      'v0': data[1][-2],
                      'a0': data[1][-1] * deg2rad
                      }
@@ -516,11 +516,13 @@ def _parse_transf_v33(raw, system, max_bus):
                 param = {'trans': True,
                          'bus1': data[0][i], 'bus2': max_bus + xf_3_count,
                          'u': data[0][11],
-                         'b': data[0][8], 'r': r[i], 'x': x[i],
+                         'b': data[0][8],
+                         'r': r[i],
+                         'x': x[i],
                          'tap': data[2+i][0],
                          'phi': data[2+i][2],
                          'Vn1': system.Bus.get(src='Vn', idx=data[0][i], attr='v'),
-                         'Vn2': system.Bus.get(src='Vn', idx=data[0][0], attr='v'),
+                         'Vn2': 1.0,
                          }
 
                 out['Line'].append(param)
