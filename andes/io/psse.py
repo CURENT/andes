@@ -448,7 +448,7 @@ def _parse_transf_v33(raw, system, max_bus):
             Vn2 = data[3][1] if data[3][1] != 0.0 else bus_Vn2
             transf = True
             tap = data[2][0]  # pu or in kV
-            phi = data[2][2]
+            phi = data[2][2] * deg2rad  # `ANG1` is entered in degree; convert to rad
 
             # CW - Winding I/O code, 1-turn ratio on pu bus base kV, 2: winding V, 3: turn ratio pu on norn wind V
             if data[0][4] == 1:
@@ -494,7 +494,13 @@ def _parse_transf_v33(raw, system, max_bus):
             # WINDV2, NOMV2, ANG2, RATA2, BATB2, RATC2, COD2, CONT2, RMA2, RMI2, VMA2, VMI2, NTP2, TAB2, CR2, CX2
             # WINDV3, NOMV3, ANG3, RATA3, BATB3, RATC3, COD3, CONT3, RMA3, RMI3, VMA3, VMI3, NTP3, TAB3, CR3, CX3
 
-            param = {'idx': max_bus + xf_3_count,
+            new_bus = data[0][2] + 1
+
+            if new_bus in system.Bus.idx.v:
+                new_bus = max_bus + xf_3_count
+                logger.warning(f'{new_bus} exists.')
+
+            param = {'idx': new_bus,
                      'name': '_'.join([str(i) for i in data[0][:3]]),
                      'Vn': 1.0,
                      'v0': data[1][-2],
@@ -514,13 +520,14 @@ def _parse_transf_v33(raw, system, max_bus):
 
             for i in range(0, 3):
                 param = {'trans': True,
-                         'bus1': data[0][i], 'bus2': max_bus + xf_3_count,
+                         'bus1': data[0][i],
+                         'bus2': new_bus,
                          'u': data[0][11],
                          'b': data[0][8],
                          'r': r[i],
                          'x': x[i],
                          'tap': data[2+i][0],
-                         'phi': data[2+i][2],
+                         'phi': data[2+i][2] * deg2rad,
                          'Vn1': system.Bus.get(src='Vn', idx=data[0][i], attr='v'),
                          'Vn2': 1.0,
                          }
