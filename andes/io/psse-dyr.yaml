@@ -12,6 +12,10 @@ GENCLS:
                 bus: BUS
                 subidx: ID
     get:
+        u:
+            StaticGen:
+                src: u
+                idx: gen
         Sn:
             StaticGen:
                 src: Sn
@@ -29,6 +33,7 @@ GENCLS:
                 src: xs
                 idx: gen
     outputs:
+        u: u
         bus: BUS
         gen: gen
         Sn: Sn
@@ -63,6 +68,10 @@ GENROU:
                 bus: BUS
                 subidx: ID
     get:
+        u:
+            StaticGen:
+                src: u
+                idx: gen
         Sn:
             StaticGen:
                 src: Sn
@@ -80,6 +89,7 @@ GENROU:
                 src: xs
                 idx: gen
     outputs:
+        u: u
         bus: BUS
         gen: gen
         Sn: Sn

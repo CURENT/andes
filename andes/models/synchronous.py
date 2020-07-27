@@ -142,12 +142,12 @@ class GENBase(Model):
 
         self.vd = Algeb(info='d-axis voltage',
                         v_str='vd0',
-                        e_str='v * sin(delta - a) - vd',
+                        e_str='u * v * sin(delta - a) - vd',
                         tex_name=r'V_d',
                         )
         self.vq = Algeb(info='q-axis voltage',
                         v_str='vq0',
-                        e_str='v * cos(delta - a) - vq',
+                        e_str='u * v * cos(delta - a) - vq',
                         tex_name=r'V_q',
                         )
 
@@ -158,8 +158,8 @@ class GENBase(Model):
                         )
         self.te = Algeb(info='electric torque',
                         tex_name=r'\tau_e',
-                        v_str='p0',
-                        e_str='psid * Iq - psiq * Id - te',
+                        v_str='u * p0',
+                        e_str='u * (psid * Iq - psiq * Id) - te',
                         )
         self.vf = Algeb(info='excitation voltage',
                         unit='pu',

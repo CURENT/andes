@@ -173,6 +173,10 @@ def read_add(system, file):
         else:
             multi_line.append(line.split('/')[0])
             single_line = ' '.join(multi_line)
+
+            if single_line.strip() == '':
+                continue
+
             single_list = single_line.split("'")
 
             psse_model = single_list[1].strip()
