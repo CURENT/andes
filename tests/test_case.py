@@ -75,7 +75,7 @@ class TestKundur2AreaPSSE(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        raw = get_case("kundur/kundur_full.raw")
+        raw = get_case("kundur/kundur.raw")
         dyr = get_case("kundur/kundur_full.dyr")
         self.ss_psse = andes.run(raw, addfile=dyr)
 

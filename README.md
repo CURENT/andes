@@ -245,10 +245,10 @@ The eigenvalue report will be written in a text file named ``kundur_full_eig.txt
 ### PSS/E raw and dyr support
 ANDES supports the PSS/E v32 raw and dyr files for power flow and dynamic studies.
 Example raw and dyr files can be found in `andes/cases/kundur`.
-To perform a time-domain simulation for `kundur_full.raw` and `kundur_full.dyr`, run
+To perform a time-domain simulation for `kundur.raw` and `kundur_full.dyr`, run
 
 ```bash
-andes run kundur_full.raw --addfile kundur_full.dyr -r tds
+andes run kundur.raw --addfile kundur_full.dyr -r tds
 ```
 
 where `--addfile` takes the dyr file. 
@@ -257,7 +257,7 @@ Please note that the support for dyr file is limited to the models available in 
 Alternatively, one can convert the  PSS/E data to an ANDES xlsx file with
 
 ```bash
-andes run kundur_full.raw --addfile kundur_full.dyr --convert
+andes run kundur.raw --addfile kundur_full.dyr --convert
 ```
 
 Edits such as adding models can be made to the xlsx file before simulation.

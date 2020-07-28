@@ -27,6 +27,7 @@ A tree view of the test directory is as follows. ::
     │   ├── ieee14.dyr
     │   └── ieee14.raw
     ├── kundur/
+    │   ├── kundur.raw
     │   ├── kundur_aw.xlsx
     │   ├── kundur_coi.xlsx
     │   ├── kundur_coi_empty.xlsx
@@ -36,7 +37,6 @@ A tree view of the test directory is as follows. ::
     │   ├── kundur_exst1.xlsx
     │   ├── kundur_freq.xlsx
     │   ├── kundur_full.dyr
-    │   ├── kundur_full.raw
     │   ├── kundur_full.xlsx
     │   ├── kundur_gentrip.xlsx
     │   ├── kundur_ieeeg1.xlsx
