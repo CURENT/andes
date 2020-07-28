@@ -42,7 +42,7 @@ class TDSData(object):
         self.nvars = 0  # total number of variables including `t`
 
         if self._mode == 'file':
-            self._process_names()
+            self.file_name, self.file_ext = os.path.splitext(self.full_name)
             self.load_lst()
             self.load_npy_or_csv()
         elif self._mode == 'memory':
@@ -50,8 +50,9 @@ class TDSData(object):
         else:
             raise NotImplementedError(f'Unknown mode {self._mode}.')
 
+        self._process_names()
+
     def _process_names(self):
-        self.file_name, self.file_ext = os.path.splitext(self.full_name)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
 
         npz_path = os.path.join(self._path, self.file_name + '.npz')
