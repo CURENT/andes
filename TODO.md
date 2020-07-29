@@ -10,8 +10,8 @@
 - [x] Improve the speed of `DAETimeSeries.unpack`.
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
 - [x] Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
+- [x] Power flow model variables erroneously point to the old `dae.y` array (fixed)
 *   Allow loading default config for `selftest`
-*   Power flow model variables erroneously point to the old `dae.y` array
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices

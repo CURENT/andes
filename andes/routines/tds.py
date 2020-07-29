@@ -61,7 +61,6 @@ class TDS(BaseRoutine):
         self.deltatmax = 0
         self.h = 0
         self.next_pc = 0
-        self.eye = None
         self.Teye = None
         self.qg = np.array([])
         self.tol_zero = self.config.tol / 100
@@ -100,17 +99,25 @@ class TDS(BaseRoutine):
 
         self._reset()
         self._load_pert()
-        system.set_address(models=system.exist.tds)
+
+        # Note:
+        #   calling `set_address` on `system.exist.pflow_tds` will point all variables
+        #   to the new array after extending `dae.y`
+        system.set_address(models=system.exist.pflow_tds)
+
         system.set_dae_names(models=system.exist.tds)
 
         system.dae.clear_ts()
         system.store_sparse_pattern(models=system.exist.pflow_tds)
         system.store_adder_setter(models=system.exist.pflow_tds)
         system.vars_to_models()
+
+        # Initialize `system.exist.tds` only to avoid Bus overwriting power flow solutions
         system.init(system.exist.tds)
         system.store_switch_times(system.exist.tds)
-        self.eye = spdiag([1] * system.dae.n)
-        self.Teye = spdiag(system.dae.Tf.tolist()) * self.eye
+
+        # Build mass matrix into `self.Teye`
+        self.Teye = spdiag(system.dae.Tf.tolist())
         self.qg = np.zeros(system.dae.n + system.dae.m)
 
         self.initialized = self.test_init()
@@ -708,7 +715,6 @@ class TDS(BaseRoutine):
         self.deltatmax = 0
         self.h = 0
         self.next_pc = 0.1
-        self.eye = None
         self.Teye = None
         self.qg = np.array([])
 
