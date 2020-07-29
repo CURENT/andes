@@ -21,6 +21,7 @@ New features and models:
   consider using `ConstService` first.
 - Allow `selftest -q` for quick selftest by skipping codegen.
 - Improved time stepping logic and convergence tests.
+- Updated examples.
 
 Default behavior changes include:
 
