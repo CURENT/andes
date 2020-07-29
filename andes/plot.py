@@ -42,17 +42,19 @@ class TDSData(object):
         self.nvars = 0  # total number of variables including `t`
 
         if self._mode == 'file':
-            self.file_name, self.file_ext = os.path.splitext(self.full_name)
+            self._process_names()
             self.load_lst()
             self.load_npy_or_csv()
         elif self._mode == 'memory':
             self.load_dae()
+            self._process_names()
         else:
             raise NotImplementedError(f'Unknown mode {self._mode}.')
 
         self._process_names()
 
     def _process_names(self):
+        self.file_name, self.file_ext = os.path.splitext(self.full_name)
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
 
         npz_path = os.path.join(self._path, self.file_name + '.npz')
@@ -73,7 +75,7 @@ class TDSData(object):
         self._fname = ['Time [s]'] + dae.x_tex_name + dae.y_tex_name + dae.z_tex_name
         self._data = dae.ts.txyz
 
-        self.file_name = dae.system.files.name
+        self.full_name = dae.system.files.lst
 
     def load_lst(self):
         """

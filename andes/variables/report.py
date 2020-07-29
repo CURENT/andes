@@ -176,7 +176,7 @@ class Report(object):
                 row_name.append(system.dae.x_name[:])
                 data.append([round(i, 6) for i in system.dae.x[:]])
 
-        dump_data(text, header, row_name, data, system.files.output)
+        dump_data(text, header, row_name, data, system.files.txt)
 
         _, s = elapsed(t)
-        logger.info(f'Report saved to "{system.files.output}" in {s}.')
+        logger.info(f'Report saved to "{system.files.txt}" in {s}.')

@@ -38,12 +38,13 @@ class FileMan(object):
         self.output_path = None
 
         self.no_output = True
-        self.output = None
+        self.txt = None
         self.dump = None
         self.lst = None
         self.eig = None
         self.npy = None
         self.npz = None
+        self.csv = None
         self.mat = None
         self.prof = None
         self.prof_raw = None
@@ -88,12 +89,13 @@ class FileMan(object):
 
         if no_output:
             self.no_output = True
-            self.output = None
+            self.txt = None
             self.lst = None
             self.eig = None
             self.npy = None
             self.npz = None
             self.mat = None
+            self.csv = None
             self.prof = None
             self.prof_raw = None
             self.dump = None
@@ -108,7 +110,8 @@ class FileMan(object):
             self.lst = os.path.join(self.output_path, output + '.lst')
             self.npy = os.path.join(self.output_path, output + '.npy')
             self.npz = os.path.join(self.output_path, output + '.npz')
-            self.output = os.path.join(self.output_path, output + '.txt')
+            self.csv = os.path.join(self.output_path, output + '.csv')
+            self.txt = os.path.join(self.output_path, output + '.txt')
 
             self.eig = os.path.join(self.output_path, eig + '.txt')
             self.prof = os.path.join(self.output_path, prof + '.txt')
