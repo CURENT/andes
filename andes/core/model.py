@@ -746,7 +746,7 @@ class Model(object):
         """
         Set the value of an attribute of a model property.
 
-        Performs ``self.<src>.<attr>[idx] = value``
+        Performs ``self.<src>.<attr>[idx] = value``.
 
         Parameters
         ----------
@@ -772,8 +772,9 @@ class Model(object):
         """
         Alter input parameter or service values.
 
-        If operates on a parameter, this function will convert
-        the new value to per unit.
+        If operates on a parameter, the input should be in the same
+        base as that in the input file. This function will convert
+        the new value to system-base per unit.
 
         Parameters
         ----------
@@ -918,6 +919,8 @@ class Model(object):
 
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):
+                    instance.v = np.ones(self.n) * instance.v
+                elif isinstance(instance.v, np.ndarray) and len(instance.v) == 1:
                     instance.v = np.ones(self.n) * instance.v
 
             # --- Very Important ---

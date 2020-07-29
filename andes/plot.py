@@ -75,7 +75,10 @@ class TDSData(object):
         self._fname = ['Time [s]'] + dae.x_tex_name + dae.y_tex_name + dae.z_tex_name
         self._data = dae.ts.txyz
 
-        self.full_name = dae.system.files.lst
+        if dae.system.files.lst is not None:
+            self.full_name = dae.system.files.lst
+        else:
+            self.full_name = dae.system.files.case
 
     def load_lst(self):
         """
