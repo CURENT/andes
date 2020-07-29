@@ -11,6 +11,7 @@
 - [x] Allow simulating to a time, pause, and continue to a new ending time.
 - [x] Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
 *   Allow loading default config for `selftest`
+*   Power flow model variables erroneously point to the old `dae.y` array
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices
@@ -25,6 +26,7 @@
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 *   Root loci plots
 *   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
+*   ``--path`` does not work for ``addfile``
 
 ## Version 0.9.0 (completed)
 
