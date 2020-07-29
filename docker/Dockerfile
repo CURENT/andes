@@ -11,8 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsuitesparse-dev \
     libopenblas-dev \
     gcc \
-&& rm -rf /var/lib/apt/lists/* \
-&& python3 -m pip install andes cvxoptklu --no-cache-dir \
-&& python3 -m pip install https://github.com/curent/cvxopt/zipball/master
+&& rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install andes cvxoptklu --no-cache-dir \
+&& python3 -m pip install https://github.com/curent/cvxopt/zipball/master --no-cache-dir
+
+RUN useradd -ms /bin/bash cui
+
+RUN python3 -m andes selftest && \
+mv /root/.andes /home/cui
+
+USER cui
+WORKDIR /andes
 
 ENTRYPOINT ["/usr/local/bin/andes"]
