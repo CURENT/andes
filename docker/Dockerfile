@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas-dev \
     gcc \
 && rm -rf /var/lib/apt/lists/* \
-&& python -m pip install andes cvxoptklu --no-cache-dir
+&& python -m pip install andes cvxoptklu --no-cache-dir \
 && python -m pip install git+https://github.com/curent/cvxopt.git
 
 ENTRYPOINT ["/usr/local/bin/andes"]
