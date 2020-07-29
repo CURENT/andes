@@ -13,6 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
 && rm -rf /var/lib/apt/lists/* \
 && python3 -m pip install andes cvxoptklu --no-cache-dir \
-&& python3 -m pip install git+https://github.com/curent/cvxopt.git
+&& python3 -m pip install https://github.com/curent/cvxopt/zipball/master
 
 ENTRYPOINT ["/usr/local/bin/andes"]
