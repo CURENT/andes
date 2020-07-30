@@ -424,8 +424,8 @@ class GENROUModel(object):
         self.Se0 = ConstService(tex_name=r"S_{e0}",
                                 v_str='(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
 
-        self._a = ConstService(tex_name=r"a", v_str='psi20_abs * (1 + Se0*gqd)')
-        self._b = ConstService(tex_name=r"b", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
+        self._a = ConstService(tex_name=r"a'", v_str='psi20_abs * (1 + Se0*gqd)')
+        self._b = ConstService(tex_name=r"b'", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2
 
         self.delta0 = ConstService(tex_name=r'\delta_0',
                                    v_str='atan(_b * cos(_psi20_It_arg) / (_b * sin(_psi20_It_arg) - _a)) + '
