@@ -859,8 +859,6 @@ First Order
     :members: define
     :noindex:
 
-Second Order
-````````````
 .. autoclass:: andes.core.block.LeadLag
     :members: define
     :noindex:
@@ -869,6 +867,8 @@ Second Order
     :members: define
     :noindex:
 
+Second Order
+````````````
 .. autoclass:: andes.core.block.Lag2ndOrd
     :members: define
     :noindex:
