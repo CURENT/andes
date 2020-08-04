@@ -77,7 +77,7 @@ class Node(NodeData, Model):
                        tex_name='V_{dc}',
                        info='voltage magnitude',
                        unit='p.u.',
-                       diag_eps=1e-6,
+                       diag_eps=1e-8,
                        )
 
         self.v.v_str = 'flat_start*1 + ' \
@@ -224,7 +224,7 @@ class Ground(ModelData, Model):
                          info='Ficticious current injection from ground',
                          e_str='u * (v - voltage)',
                          v_str='0',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v.e_str = '-Idc'
 
@@ -305,7 +305,7 @@ class C(DC2Term):
                          v_str='0',
                          e_str='u * (vC - (v1 - v2)) + '
                                '(1 - u) * Idc',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
@@ -379,7 +379,7 @@ class RCp(DC2Term):
                          e_str='u * (vC - (v1 - v2)) + '
                                '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
@@ -430,7 +430,7 @@ class RLCp(DC2Term):
                          e_str='u * (vC - (v1 - v2)) + '
                                '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
@@ -468,7 +468,7 @@ class RCs(DC2Term):
                          e_str='u * (vC - (v1 - v2) - Idc * R) + '
                                '(1 - u) * Idc',
                          v_str='-(v1 - v2) / R',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'
@@ -518,7 +518,7 @@ class RLCs(DC2Term):
                          unit='p.u.',
                          e_str='-IL - Idc',
                          v_str='0',
-                         diag_eps=1e-6,
+                         diag_eps=1e-8,
                          )
         self.v1.e_str = '-Idc'
         self.v2.e_str = '+Idc'

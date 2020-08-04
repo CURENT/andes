@@ -366,8 +366,8 @@ class PITrackAWFreeze(PITrackAW):
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
         self.vars['flag'] = self.flag
 
-        self.ys.diag_eps = 1e-6
-        self.y.diag_eps = 1e-6
+        self.ys.diag_eps = 1e-8
+        self.y.diag_eps = 1e-8
 
     def define(self):
         PITrackAW.define(self)
@@ -404,7 +404,7 @@ class PIFreeze(PIController):
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
         self.vars['flag'] = self.flag
 
-        self.y.diag_eps = 1e-6
+        self.y.diag_eps = 1e-8
 
     def define(self):
         r"""
@@ -624,7 +624,7 @@ class Washout(Block):
         self.enforce_tex_name((self.K, self.T))
 
         self.x = State(info='State in washout filter', tex_name="x'", t_const=self.T)
-        self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-6)
+        self.y = Algeb(info='Output of washout filter', tex_name=r'y', diag_eps=1e-8)
         self.vars.update({'x': self.x, 'y': self.y})
 
     def define(self):
@@ -763,7 +763,7 @@ class LagFreeze(Lag):
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
         self.vars['flag'] = self.flag
 
-        self.y.diag_eps = 1e-6
+        self.y.diag_eps = 1e-8
 
     def define(self):
         r"""
@@ -857,7 +857,7 @@ class LagAWFreeze(LagAntiWindup):
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
         self.vars['flag'] = self.flag
 
-        self.y.diag_eps = 1e-6
+        self.y.diag_eps = 1e-8
 
     def define(self):
         r"""
@@ -1115,7 +1115,7 @@ class LeadLag(Block):
         self.enforce_tex_name((self.T1, self.T2))
 
         self.x = State(info='State in lead-lag', tex_name="x'", t_const=self.T2)
-        self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-6)
+        self.y = Algeb(info='Output of lead-lag', tex_name=r'y', diag_eps=1e-8)
         self.vars = {'x': self.x, 'y': self.y}
 
         if self.zero_out is True:
@@ -1192,7 +1192,7 @@ class LeadLag2ndOrd(Block):
 
         self.x1 = State(info='State #1 in 2nd order lead-lag', tex_name="x'", t_const=self.T2)
         self.x2 = State(info='State #2 in 2nd order lead-lag', tex_name="x''")
-        self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-6)
+        self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=1e-8)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
 
@@ -1274,7 +1274,7 @@ class LeadLagLimit(Block):
         self.x = State(info='State in lead-lag TF', tex_name="x'", t_const=self.T2)
         self.ynl = Algeb(info='Output of lead-lag TF before limiter', tex_name=r'y_{nl}')
         self.y = Algeb(info='Output of lead-lag TF after limiter', tex_name=r'y',
-                       diag_eps=1e-6)
+                       diag_eps=1e-8)
         self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}

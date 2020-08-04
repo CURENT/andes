@@ -8,8 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 Since v1.0.0
 ------------
+v1.0.9
+```````````````````
+- Updated all `diag_eps` from 1e-6 to 1e-8.
 
-v1.0.8
+v1.0.8 (2020-07-29)
 ```````````````````
 New features and models:
 

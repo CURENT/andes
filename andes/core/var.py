@@ -73,7 +73,7 @@ class BaseVar(object):
         self.e_setter = e_setter  # True if this var sets the equation value
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
-        self.diag_eps = diag_eps        # small diagonal value (1e-6) to be added to `dae.gy`
+        self.diag_eps = diag_eps        # small diagonal value (1e-8) to be added to `dae.gy`
 
         # attributes assigned by `set_address`
         self.n = 0
