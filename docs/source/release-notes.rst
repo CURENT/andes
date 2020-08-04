@@ -1,3 +1,5 @@
+.. _ReleaseNotes:
+
 =============
 Release Notes
 =============

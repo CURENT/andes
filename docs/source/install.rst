@@ -77,13 +77,19 @@ In addition, changes to the source code will be reflected immediately without ha
 
 Step 1: Get ANDES source code
 
-Download the ANDES source code from
-https://github.com/cuihantao/andes and extract all files to the path of your choice.
-You can also ``git clone`` the source code (recommended).
+As a developer, you are strongly encouraged to clone the source code using ``git``
+from either your fork or the original repository:
 
 .. code:: bash
 
     git clone https://github.com/cuihantao/andes
+
+In this way, you can easily update to the latest source code using ``git``.
+
+Alternatively, you can download the ANDES source code from
+https://github.com/cuihantao/andes and extract all files to the path of your choice.
+Although this will work, we don't recommend this method, since it is cumbersome
+to update the source code and push back changes.
 
 Step 2: Install dependencies
 
@@ -102,7 +108,43 @@ Step 3: Install ANDES in the development mode using
 
       python3 -m pip install -e .
 
-Pip will take care of the rest.
+Note the dot at the end. Pip will take care of the rest.
+
+Update ANDES
+============
+
+Regular ANDES updates will be pushed to both ``conda-forge`` and Python package index.
+It is recommended to use the latest version for bug fixes and new features.
+We also recommended you to check the :ref:`ReleaseNotes` before updating to stay informed
+of changes that might break your downstream code.
+
+Depending you how you installed ANDES, you will use one of the following ways to upgrade.
+
+If you installed it from conda (most common for users), run
+
+.. code:: bash
+
+    conda install -c conda-forge --yes andes
+
+If you install it from PyPI (namely, through ``pip``), run
+
+.. code:: bash
+
+    python3 -m pip install --yes andes
+
+If you installed ANDES from source code, and the source was cloned using ``git``,
+you can use ``git pull`` to pull in changes from remote. However, if your source
+code was downloaded, you will have to download the new source code again and manually
+overwrite the existing one.
+
+In rare cases, after updating the source code, command-line ``andes`` will complain
+about missing dependency. If this ever happens, it means the new ANDES has introduced
+new dependencies. In such cases, reinstall andes in the development mode to fix.
+Change directory to the ANDES source code folder that contains ``setup.py`` and run
+
+.. code:: bash
+
+    python3 -m pip install -e .
 
 Troubleshooting
 ===============
@@ -137,23 +179,6 @@ cxvoptklu
 ``cvxoptklu`` is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
 In addition to UMFPACK, ``cvxoptklu`` interfaces ``cvxopt`` to KLU, which is
 roughly 20% faster than UMFPACK for circuit simulation based on our testing.
-
-.. warning::
-
-    There is likely a bug in the KLU interface which, for some cases,
-    may segfault after applying a disturbance. The cause of the issue
-    is currently unknown.
-
-    If you encounter a segfault while running
-    time-domain simulation and was using the KLU solver, please switch
-    back to UMFPACK by setting `sparselib = umfpack` or enable
-    `linsolve` through `linsolve = 1` for KLU, which re-factorizes
-    the Jacobian matrix for each linear system solving step.
-    Another solution is to use fixed time step size and
-    reduce the step size from 1/30 s to 1/60s, but this is case specific.
-
-    This issue will not affect users who does not have `cvxoptklu`
-    installed.
 
 To install ``cvxoptklu``, on Debian GNU/Linux, one can do
 
