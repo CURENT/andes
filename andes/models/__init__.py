@@ -2,7 +2,12 @@ from .jit import JIT  # NOQA
 from collections import OrderedDict  # NOQA
 
 
+# Notes:
+# - `timer`s are moved to the beginning for initialization.
+#   Connectivity statuses should be restored before initializing the rest.
+
 non_jit = OrderedDict([
+    ('timer', ['Toggler', 'Fault']),
     ('bus', ['Bus']),
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),
@@ -18,6 +23,5 @@ non_jit = OrderedDict([
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REECA1', 'REPCA1']),
-    ('timer', ['Toggler', 'Fault']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])

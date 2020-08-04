@@ -27,6 +27,22 @@ class Toggler(TogglerData, Model):
         self.group = 'TimedEvent'
 
         self.t.callback = self._u_switch
+        self._init = False   # very first initialization that stores `u`
+        self._u = ConstService('1')
+
+    def v_numeric(self, **kwargs):
+        """
+        Custom initialization function that stores and restores the connectivity status.
+        """
+        if not self._init:
+            for i in range(self.n):
+                instance = self.system.__dict__[self.model.v[i]]
+                self._u.v[i] = instance.get(src='u', attr='v', idx=self.dev.v[i])
+                self._init = True
+        else:
+            for i in range(self.n):
+                instance = self.system.__dict__[self.model.v[i]]
+                instance.set(src='u', attr='v', idx=self.dev.v[i], value=self._u.v[i])
 
     def _u_switch(self, is_time: np.ndarray):
         action = False

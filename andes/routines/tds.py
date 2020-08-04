@@ -97,14 +97,17 @@ class TDS(BaseRoutine):
         if self.initialized:
             return system.dae.xy
 
-        self._reset()
+        self.reset()
         self._load_pert()
+
+        # restore power flow solutions
+        system.dae.x[:len(system.PFlow.x_sol)] = system.PFlow.x_sol
+        system.dae.y[:len(system.PFlow.y_sol)] = system.PFlow.y_sol
 
         # Note:
         #   calling `set_address` on `system.exist.pflow_tds` will point all variables
         #   to the new array after extending `dae.y`
         system.set_address(models=system.exist.pflow_tds)
-
         system.set_dae_names(models=system.exist.tds)
 
         system.dae.clear_ts()
@@ -706,7 +709,7 @@ class TDS(BaseRoutine):
             logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
                          f'{self.system.dae.fg[v]:<20g}')
 
-    def _reset(self):
+    def reset(self):
         """
         Reset internal states to pre-init condition.
         """

@@ -49,6 +49,9 @@ class PFlow(BaseRoutine):
         self.mis = []
         self.models = OrderedDict()
 
+        self.x_sol = None
+        self.y_sol = None
+
     def init(self):
         self.models = self.system.find_models('pflow')
         self.converged = False
@@ -56,6 +59,9 @@ class PFlow(BaseRoutine):
         self.A = None
         self.niter = None
         self.mis = []
+
+        self.x_sol = None
+        self.y_sol = None
 
         self.system.init(self.models)
         logger.info('Power flow initialized.')
@@ -167,6 +173,11 @@ class PFlow(BaseRoutine):
 
         else:
             logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
+
+            # make a copy of power flow solutions
+            self.x_sol = system.dae.x.copy()
+            self.y_sol = system.dae.y.copy()
+
             if self.config.init_tds:
                 system.TDS.init()
             if self.config.report:
