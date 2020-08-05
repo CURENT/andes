@@ -19,7 +19,8 @@ RUN python3 -m pip install andes cvxoptklu --no-cache-dir \
 RUN useradd -ms /bin/bash cui
 
 RUN python3 -m andes selftest && \
-mv /root/.andes /home/cui
+mv /root/.andes /home/cui && \
+chown -R cui:cui /home/cui/.andes
 
 USER cui
 WORKDIR /andes
