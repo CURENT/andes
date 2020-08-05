@@ -574,13 +574,13 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:  # not all events have exhausted
 
             # exactly at the event time (controlled by the stepping algorithm
-            if system.dae.t == system.switch_times[self._switch_idx]:
+            if np.isclose(system.dae.t, system.switch_times[self._switch_idx]):
 
                 # `_last_switch_t` is used by the Jacobian updater
-                self._last_switch_t = system.dae.t.tolist()
+                self._last_switch_t = system.switch_times[self._switch_idx]
 
                 # only call `switch_action` on the models that defined the time
-                system.switch_action(system.switch_dict[system.dae.t.tolist()])
+                system.switch_action(system.switch_dict[self._last_switch_t])
 
                 # progressing `_switch_idx` avoids calling the same event if time gets stuck
                 self._switch_idx += 1
