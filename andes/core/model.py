@@ -24,6 +24,8 @@ from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
 
+np.seterr(invalid='raise', divide='raise')
+
 
 class Cache(object):
     """
@@ -1234,6 +1236,11 @@ class Model(object):
                     logger.error(f'{name} shape error: j_idx={idx}, d{row_name} / d{col_name}')
 
                     raise e
+                except FloatingPointError as e:
+                    row_name, col_name = self._jac_eq_var_name(name, idx)
+                    logger.error(f'{name} evaluation error: j_idx={idx}, d{row_name} / d{col_name}')
+
+                    raise e
 
     def get_times(self):
         """
@@ -1534,6 +1541,8 @@ class Model(object):
                 md5.update(str(item.v_iter).encode())
             if item.e_str is not None:
                 md5.update(str(item.e_str).encode())
+
+            # TODO: include `diag_eps` for checksum
 
         for name, item in self.services.items():
             md5.update(str(name).encode())
