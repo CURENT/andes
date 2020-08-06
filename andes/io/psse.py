@@ -143,21 +143,9 @@ def read(system, file):
     return ret
 
 
-def read_add(system, file):
+def _read_dyr_dict(file):
     """
-    Read an addition PSS/E dyr file.
-
-    Parameters
-    ----------
-    system : System
-        System instance to which data will be loaded
-    file : str
-        Path to the additional `dyr` file
-
-    Returns
-    -------
-    bool
-        data parsing status
+    Parse dyr file into a dict where keys are model names and values are dataframes.
     """
     with open(file, 'r') as f:
         input_list = [line.strip() for line in f]
@@ -189,6 +177,28 @@ def read_add(system, file):
     for psse_model, all_rows in input_concat_dict.items():
         dev_params_num = [([to_number(cell) for cell in row.split()]) for row in all_rows]
         dyr_dict[psse_model] = pd.DataFrame(dev_params_num)
+
+    return dyr_dict
+
+
+def read_add(system, file):
+    """
+    Read an addition PSS/E dyr file.
+
+    Parameters
+    ----------
+    system : System
+        System instance to which data will be loaded
+    file : str
+        Path to the additional `dyr` file
+
+    Returns
+    -------
+    bool
+        data parsing status
+    """
+    dyr_dict = _read_dyr_dict(file)
+    system.dyr_dict = dyr_dict
 
     # read yaml and set header for each pss/e model
     dirname = os.path.dirname(__file__)
