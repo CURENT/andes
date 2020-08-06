@@ -7,7 +7,7 @@ from andes.models.exciter import ExcQuadSat
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
-from andes.core.service import ConstService, ExtService  # NOQA
+from andes.core.service import ConstService, VarService, ExtService  # NOQA
 from andes.core.service import InitChecker, FlagValue
 import numpy as np
 
@@ -130,23 +130,23 @@ class GENBase(Model):
         # algebraic variables
         # Need to be provided by specific generator models
         self.Id = Algeb(info='d-axis current',
-                        v_str='Id0',
+                        v_str='u * Id0',
                         tex_name=r'I_d',
                         e_str=''
                         )  # to be completed by subclasses
         self.Iq = Algeb(info='q-axis current',
-                        v_str='Iq0',
+                        v_str='u * Iq0',
                         tex_name=r'I_q',
                         e_str=''
                         )  # to be completed
 
         self.vd = Algeb(info='d-axis voltage',
-                        v_str='vd0',
+                        v_str='u * vd0',
                         e_str='u * v * sin(delta - a) - vd',
                         tex_name=r'V_d',
                         )
         self.vq = Algeb(info='q-axis voltage',
-                        v_str='vq0',
+                        v_str='u * vq0',
                         e_str='u * v * cos(delta - a) - vq',
                         tex_name=r'V_q',
                         )
@@ -163,8 +163,8 @@ class GENBase(Model):
                         )
         self.vf = Algeb(info='excitation voltage',
                         unit='pu',
-                        v_str='vf0',
-                        e_str='vf0 - vf',
+                        v_str='u * vf0',
+                        e_str='u * vf0 - vf',
                         tex_name=r'v_f'
                         )
 
@@ -177,8 +177,8 @@ class GENBase(Model):
         self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
                             info='d-axis armature excitation current',
                             unit='p.u (kV)',
-                            v_str='vf0',
-                            e_str='vf0 - XadIfd'
+                            v_str='u * vf0',
+                            e_str='u * vf0 - XadIfd'
                             )  # e_str to be provided. Not available in GENCLS
 
         self.subidx = ExtParam(model='StaticGen',
@@ -223,12 +223,12 @@ class Flux0(object):
     def __init__(self):
         self.psid = Algeb(info='d-axis flux',
                           tex_name=r'\psi_d',
-                          v_str='psid0',
+                          v_str='u * psid0',
                           e_str='u * (ra*Iq + vq) - psid',
                           )
         self.psiq = Algeb(info='q-axis flux',
                           tex_name=r'\psi_q',
-                          v_str='psiq0',
+                          v_str='u * psiq0',
                           e_str='u * (ra*Id + vd) + psiq',
                           )
 
@@ -244,12 +244,12 @@ class Flux1(object):
     def __init__(self):
         self.psid = Algeb(info='d-axis flux',
                           tex_name=r'\psi_d',
-                          v_str='psid0',
+                          v_str='u * psid0',
                           e_str='u * (ra * Iq + vq) - omega * psid',
                           )
         self.psiq = Algeb(info='q-axis flux',
                           tex_name=r'\psi_q',
-                          v_str='psiq0',
+                          v_str='u * psiq0',
                           e_str='u * (ra * Id + vd) + omega * psiq',
                           )
 
@@ -265,12 +265,12 @@ class Flux2(object):
     def __init__(self):
         self.psid = State(info='d-axis flux',
                           tex_name=r'\psi_d',
-                          v_str='psid0',
+                          v_str='u * psid0',
                           e_str='u * 2 * pi * fn * (ra * Id + vd + omega * psiq)',
                           )
         self.psiq = State(info='q-axis flux',
                           tex_name=r'\psi_q',
-                          v_str='psiq0',
+                          v_str='u * psiq0',
                           e_str='u * 2 * pi * fn * (ra * Iq + vq - omega * psid)',
                           )
 
@@ -480,22 +480,26 @@ class GENROUModel(object):
                            )
 
         self.psi2d = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
-                           v_str='psi2d0',
+                           v_str='u * psi2d0',
                            e_str='gd1*e1q + gd2*(xd1-xl)*e2d - psi2d')
 
         self.psi2 = Algeb(tex_name=r"\psi_a", info='air gap flux magnitude',
-                          v_str='abs(psi20_dq)',
-                          e_str='sqrt(psi2d **2 + psi2q ** 2) - psi2')
+                          v_str='u * abs(psi20_dq)',
+                          e_str='psi2d **2 + psi2q ** 2 - psi2 ** 2',
+                          diag_eps=1e-8,
+                          )
 
         # `LT` is a reserved keyword for SymPy
         self.SL = LessThan(u=self.psi2, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
-                        v_str='Se0',
-                        e_str='SL_z0 * (psi2 - SAT_A) ** 2 * SAT_B / psi2 - Se')
+                        v_str='u * Se0',
+                        e_str='SL_z0 * (psi2 - SAT_A) ** 2 * SAT_B - psi2 * Se',
+                        diag_eps=1e-8,
+                        )
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10
-        self.XadIfd.e_str = 'e1q + (xd-xd1) * (gd1*Id - gd2*e2d + gd2*e1q) + Se*psi2d - XadIfd'
+        self.XadIfd.e_str = 'u * (e1q + (xd-xd1) * (gd1*Id - gd2*e2d + gd2*e1q) + Se*psi2d) - XadIfd'
 
         # `XadI1q` can also be given in `(xq-xq1)*gq2*(e1d-e2q+(xq1-xl)*Iq) + e1d - Iq*(xq-xq1) + Se*psi2q*gqd`
         self.XaqI1q =\
@@ -508,7 +512,7 @@ class GENROUModel(object):
 
         self.e1q = State(info='q-axis transient voltage',
                          tex_name=r"e'_q",
-                         v_str='e1q0',
+                         v_str='u * e1q0',
                          e_str='(-XadIfd + vf) / Td10')
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
@@ -516,7 +520,7 @@ class GENROUModel(object):
                          e_str='-XaqI1q / Tq10')
         self.e2d = State(info='d-axis sub-transient voltage',
                          tex_name=r"e''_d",
-                         v_str='e2d0',
+                         v_str='u * e2d0',
                          e_str='(-e2d + e1q - (xd1 - xl) * Id) / Td20')
 
         self.e2q = State(info='q-axis sub-transient voltage',
