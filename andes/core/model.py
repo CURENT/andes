@@ -1871,9 +1871,20 @@ class SymProcessor(object):
         for var in self.parent.algebs.values():
             if var.diag_eps == 0.0:
                 continue
+
+            elif var.diag_eps is True:
+                try:
+                    eps = self.system.config.diag_eps
+                except AttributeError:
+                    eps = 1e-8   # fall-back value
+
+            else:
+                eps = var.diag_eps
+
             e_idx = algebs_and_ext_list.index(var.name)
             v_idx = vars_syms_list.index(var.name)
-            self.calls.append_ijv('gyc', e_idx, v_idx, var.diag_eps)
+
+            self.calls.append_ijv('gyc', e_idx, v_idx, eps)
 
     def generate_pretty_print(self):
         """

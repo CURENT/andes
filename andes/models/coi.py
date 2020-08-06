@@ -113,7 +113,7 @@ class COIModel(Model):
         # Note:
         # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
         # When no SynGen is referencing any COI, j_update will not be called,
-        # and Jacobian will become singular. `diag_eps = 1e-8` needs to be used.
+        # and Jacobian will become singular. `diag_eps = True` needs to be used.
 
         # Note:
         # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
@@ -123,14 +123,14 @@ class COIModel(Model):
                            v_str='a0a',
                            v_setter=True,
                            e_str='-omega',
-                           diag_eps=1e-8,
+                           diag_eps=True,
                            )
         self.delta = Algeb(tex_name=r'\delta_{coi}',
                            info='COI rotor angle',
                            v_str='d0a',
                            v_setter=True,
                            e_str='-delta',
-                           diag_eps=1e-8,
+                           diag_eps=True,
                            )
 
         # Note:

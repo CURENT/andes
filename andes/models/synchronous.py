@@ -486,7 +486,7 @@ class GENROUModel(object):
         self.psi2 = Algeb(tex_name=r"\psi_a", info='air gap flux magnitude',
                           v_str='u * abs(psi20_dq)',
                           e_str='psi2d **2 + psi2q ** 2 - psi2 ** 2',
-                          diag_eps=1e-8,
+                          diag_eps=True,
                           )
 
         # `LT` is a reserved keyword for SymPy
@@ -495,7 +495,7 @@ class GENROUModel(object):
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='u * Se0',
                         e_str='SL_z0 * (psi2 - SAT_A) ** 2 * SAT_B - psi2 * Se',
-                        diag_eps=1e-8,
+                        diag_eps=True,
                         )
 
         # separated `XadIfd` from `e1q` using \dot(e1q) = (vf - XadIfd) / Td10

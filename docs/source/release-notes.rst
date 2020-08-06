@@ -10,7 +10,7 @@ Since v1.0.0
 ------------
 v1.0.9
 ```````````````````
-- Updated all `diag_eps` from 1e-6 to 1e-8.
+- Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
 
 v1.0.8 (2020-07-29)
 ```````````````````

@@ -70,8 +70,8 @@ class PVModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')
 
-        self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=1e-8)
-        self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=1e-8)
+        self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=True)
+        self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=True)
 
         # NOTE:
         # PV to PQ conversion uses a simple logic which converts a number of `npv2pq` PVs

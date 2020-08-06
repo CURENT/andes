@@ -838,7 +838,7 @@ class REECA1Model(Model):
         self.Ipmax = Algeb(v_str=f'{Ipmax0}',
                            e_str=f'{Ipmax} + (fThld2 * Ipmaxh) - Ipmax',
                            tex_name='I_{pmax}',
-                           diag_eps=1e-8,
+                           diag_eps=True,
                            info='Upper limit on Ipcmd',
                            )
 
