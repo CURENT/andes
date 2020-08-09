@@ -28,6 +28,7 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
                                      ('refresh_event', 0),
+                                     ('g_scale', 1),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -39,6 +40,7 @@ class TDS(BaseRoutine):
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
+                              g_scale='scale algebraic residuals with time step size',
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -50,6 +52,7 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
+                              g_scale=(0, 1),
                               )
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -302,8 +305,15 @@ class TDS(BaseRoutine):
             # is pegged by the anti-windup limiters.
 
             # solve implicit trapezoidal method (ITM) integration
-            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, dae.gx],
-                              [-self.h * 0.5 * dae.fy, dae.gy]], 'd')
+            if self.config.g_scale == 1:
+                gxs = self.h * dae.gx
+                gys = self.h * dae.gy
+            else:
+                gxs = dae.gx
+                gys = dae.gy
+
+            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, gxs],
+                              [-self.h * 0.5 * dae.fy, gys]], 'd')
 
             # equation `self.qg[:dae.n] = 0` is the implicit form of differential equations using ITM
             self.qg[:dae.n] = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
@@ -313,7 +323,11 @@ class TDS(BaseRoutine):
                 for key, _, eqval in item.x_set:
                     np.put(self.qg, key, eqval)
 
-            self.qg[dae.n:] = dae.g
+            # set the algebraic residuals
+            if self.config.g_scale == 1:
+                self.qg[dae.n:] = self.h * dae.g
+            else:
+                self.qg[dae.n:] = dae.g
 
             if not self.config.linsolve:
                 inc = self.solver.solve(self.Ac, matrix(self.qg))

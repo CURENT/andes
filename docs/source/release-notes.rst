@@ -11,6 +11,8 @@ Since v1.0.0
 v1.0.9
 ```````````````````
 - Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
+- Added option `TDS.config.g_scale` to allow for scaling the
+  algebraic mismatch with step size.
 
 v1.0.8 (2020-07-29)
 ```````````````````
