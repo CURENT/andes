@@ -513,20 +513,30 @@ class GENROUModel(object):
         self.e1q = State(info='q-axis transient voltage',
                          tex_name=r"e'_q",
                          v_str='u * e1q0',
-                         e_str='(-XadIfd + vf) / Td10')
+                         e_str='(-XadIfd + vf)',
+                         t_const=self.Td10,
+                         )
+
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
                          v_str='e1d0',
-                         e_str='-XaqI1q / Tq10')
+                         e_str='-XaqI1q',
+                         t_const=self.Tq10,
+                         )
+
         self.e2d = State(info='d-axis sub-transient voltage',
                          tex_name=r"e''_d",
                          v_str='u * e2d0',
-                         e_str='(-e2d + e1q - (xd1 - xl) * Id) / Td20')
+                         e_str='(-e2d + e1q - (xd1 - xl) * Id)',
+                         t_const=self.Td20,
+                         )
 
         self.e2q = State(info='q-axis sub-transient voltage',
                          tex_name=r"e''_q",
                          v_str='e2q0',
-                         e_str='(-e2q + e1d + (xq1 - xl) * Iq) / Tq20')
+                         e_str='(-e2q + e1d + (xq1 - xl) * Iq)',
+                         t_const=self.Tq20,
+                         )
 
         self.Iq.e_str += '+ xq2*Iq + psi2q'
 
