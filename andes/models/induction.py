@@ -161,12 +161,14 @@ class Ind5Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
+                          e_str='vd * Id + vq * Iq'
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
+                          e_str='vq * Id - vd * Iq'
                           )
 
         self.vd = Algeb(info='d-axis voltage',
@@ -179,30 +181,37 @@ class Ind5Model(Model):
                         tex_name=r'V_q',
                         )
 
-        self.slip = State()
+        self.slip = State(tex_name=r"\sigma",
+                          )
 
         self.e1d = State(info='real part of 1st cage voltage',
                          e_str='wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10',
+                         tex_name="e'_d",
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          e_str='-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10',
+                         tex_name="e'_q",
                          )
 
         self.e2d = State(info='real part of 2nd cage voltage',
                          e_str='-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10) - '
                                '(e1d - e2q - (xp - xpp) * Iq)/T20',
+                         tex_name="e''_d",
                          )
         self.e2q = State(info='imag part of 2nd cage voltage',
                          e_str='wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
                                '(e1q - e2d + (xp - xpp) * Id) / T20',
+                         tex_name="e''_q",
                          )
 
-        self.Id = Algeb()
+        self.Id = Algeb(tex_name='I_d',
+                        )
 
-        self.Iq = Algeb()
+        self.Iq = Algeb(tex_name='I_q',
+                        )
 
 
 class Ind5(IndBaseData, Ind5Model):
