@@ -238,7 +238,7 @@ class State(BaseVar):
                  v_iter: Optional[str] = None,
                  e_str: Optional[str] = None,
                  discrete: Optional[Discrete] = None,
-                 t_const: Optional[Union[BaseParam, DummyValue]] = None,
+                 t_const: Optional[Union[BaseParam, DummyValue, BaseService]] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,

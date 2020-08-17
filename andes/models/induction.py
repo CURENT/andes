@@ -49,70 +49,74 @@ class IndBaseData(ModelData):
                            tex_name='f',
                            )
 
-        self.rs = NumParam(default=0.0,
+        self.rs = NumParam(default=0.01,
                            info="rotor resistance",
                            z=True,
-                           tex_name='r_s'
+                           tex_name='r_s',
+                           non_zero=True,
                            )
 
-        self.xs = NumParam(default=0.01,
+        self.xs = NumParam(default=0.15,
                            info="rotor reactance",
                            z=True,
                            tex_name='x_s',
                            non_zero=True,
                            )
-        self.rr1 = NumParam(default=0.0,
+        self.rr1 = NumParam(default=0.05,
                             info="1st cage rotor resistance",
                             z=True,
+                            non_zero=True,
                             tex_name='r_{R1}',
                             )
-        self.xr1 = NumParam(default=0.01,
+        self.xr1 = NumParam(default=0.15,
                             info="1st cage rotor reactance",
                             z=True,
                             tex_name='x_{R1}',
                             non_zero=True,
                             )
-        self.rr2 = NumParam(default=0.0,
+        self.rr2 = NumParam(default=0.001,
                             info="2st cage rotor resistance",
                             z=True,
+                            non_zero=True,
                             tex_name='r_{R2}',
                             )
-        self.xr2 = NumParam(default=0.01,
+        self.xr2 = NumParam(default=0.04,
                             info="2st cage rotor reactance",
                             z=True,
                             tex_name='x_{R2}',
                             non_zero=True,
                             )
 
-        self.xm = NumParam(default=0.0,
+        self.xm = NumParam(default=5.0,
                            info="magnetization reactance",
                            z=True,
                            tex_name='x_m',
+                           non_zero=True,
                            )
 
-        self.Hm = NumParam(default=1.0,
+        self.Hm = NumParam(default=3.0,
                            info='Inertia constant',
                            power=True,
                            tex_name='H_m',
                            unit='kWs/KVA',
                            )
 
-        self.c1 = NumParam(default=0.0,
+        self.c1 = NumParam(default=0.1,
                            info='1st coeff. of Tm(w)',
                            tex_name='c_1',
                            )
 
-        self.c2 = NumParam(default=0.0,
+        self.c2 = NumParam(default=0.02,
                            info='2nd coeff. of Tm(w)',
                            tex_name='c_2',
                            )
 
-        self.c3 = NumParam(default=0.0,
+        self.c3 = NumParam(default=0.02,
                            info='2nd coeff. of Tm(w)',
                            tex_name='c_2',
                            )
 
-        self.ts = NumParam(default=2.0,
+        self.ts = NumParam(default=1.0,
                            info='startup time',
                            tex_name='t_s',
                            )
@@ -132,6 +136,7 @@ class Ind5Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
+        self.flags.pflow = True
         self.flags.tds = True
         self.group = 'Induction'
 
@@ -154,6 +159,17 @@ class Ind5Model(Model):
         self.T20 = ConstService(v_str='(xr2 + xr1*xm / (xr1 + xm) ) / (wb * rr2)',
                                 tex_name="T''_0",
                                 )
+
+        self.aa = ConstService(v_str='c1 + c2 + c3',
+                               tex_name=r'\alpha',
+                               )
+
+        self.bb = ConstService(v_str='-c2 - 2 * c3',
+                               tex_name=r'\beta',
+                               )
+        self.M = ConstService(v_str='2 * Hm',
+                              tex_name='M',
+                              )
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus',
@@ -182,6 +198,9 @@ class Ind5Model(Model):
                         )
 
         self.slip = State(tex_name=r"\sigma",
+                          e_str='(tm - te)',
+                          t_const=self.M,
+                          diag_eps=True,
                           )
 
         self.e1d = State(info='real part of 1st cage voltage',
@@ -199,23 +218,41 @@ class Ind5Model(Model):
                                '(wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10) - '
                                '(e1d - e2q - (xp - xpp) * Iq)/T20',
                          tex_name="e''_d",
+                         diag_eps=True,
                          )
         self.e2q = State(info='imag part of 2nd cage voltage',
                          e_str='wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
                                '(e1q - e2d + (xp - xpp) * Id) / T20',
                          tex_name="e''_q",
+                         diag_eps=True,
                          )
 
         self.Id = Algeb(tex_name='I_d',
+                        e_str='vd - e2d - rs * Id + xpp * Iq',
                         )
 
         self.Iq = Algeb(tex_name='I_q',
+                        e_str='vq - e2q - rs * Iq - xpp * Id',
+                        )
+
+        self.te = Algeb(tex_name=r'\tau_e',
+                        e_str='e2d * Id + e2q * Iq - te',
+                        v_str='e2d * Id + e2q * Iq',
+                        )
+
+        self.tm = Algeb(tex_name=r'\tau_m',
+                        e_str='aa + bb * slip + c2 * slip * slip - tm',
+                        v_str='aa + bb * slip + c2 * slip * slip',
                         )
 
 
 class Ind5(IndBaseData, Ind5Model):
+    """
+    Fifth-order induction machine model.
 
+    See "Power System Modelling and Scripting" by F. Milano.
+    """
     def __init__(self, system, config):
         IndBaseData.__init__(self)
         Ind5Model.__init__(self, system, config)

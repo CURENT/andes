@@ -1878,7 +1878,7 @@ class SymProcessor(object):
         # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
-        for var in self.parent.algebs.values():
+        for var in self.parent.cache.vars_int.values():
             if var.diag_eps == 0.0:
                 continue
 
@@ -1891,10 +1891,15 @@ class SymProcessor(object):
             else:
                 eps = var.diag_eps
 
-            e_idx = algebs_and_ext_list.index(var.name)
+            if var.e_code == 'g':
+                eq_list = algebs_and_ext_list
+            else:
+                eq_list = states_and_ext_list
+
+            e_idx = eq_list.index(var.name)
             v_idx = vars_syms_list.index(var.name)
 
-            self.calls.append_ijv('gyc', e_idx, v_idx, eps)
+            self.calls.append_ijv(f'{var.e_code}{var.v_code}c', e_idx, v_idx, eps)
 
     def generate_pretty_print(self):
         """
