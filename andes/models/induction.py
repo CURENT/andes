@@ -177,18 +177,18 @@ class Ind5Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='vd * Id + vq * Iq'
+                          e_str='u * (vd * Id + vq * Iq)'
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='vq * Id - vd * Iq'
+                          e_str='u * (vq * Id - vd * Iq)'
                           )
 
         self.vd = Algeb(info='d-axis voltage',
-                        e_str='u * v * sin(a) - vd',
+                        e_str='-u * v * sin(a) - vd',
                         tex_name=r'V_d',
                         )
 
@@ -198,52 +198,59 @@ class Ind5Model(Model):
                         )
 
         self.slip = State(tex_name=r"\sigma",
-                          e_str='(tm - te)',
+                          e_str='u * (tm - te)',
+                          # v_str='u',
                           t_const=self.M,
                           diag_eps=True,
                           )
 
         self.e1d = State(info='real part of 1st cage voltage',
-                         e_str='wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10',
+                         e_str='u * (wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10)',
+                         # v_str='u',
                          tex_name="e'_d",
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
-                         e_str='-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10',
+                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
+                         # v_str='u',
                          tex_name="e'_q",
                          )
 
         self.e2d = State(info='real part of 2nd cage voltage',
-                         e_str='-wb*slip*(e1q - e2q) + '
+                         e_str='u * '
+                               '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10) - '
-                               '(e1d - e2q - (xp - xpp) * Iq)/T20',
+                               '(e1d - e2q - (xp - xpp) * Iq)/T20)',
+                         # v_str='u',
                          tex_name="e''_d",
                          diag_eps=True,
                          )
         self.e2q = State(info='imag part of 2nd cage voltage',
-                         e_str='wb*slip*(e1d - e2d) + '
+                         e_str='u * '
+                               '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
-                               '(e1q - e2d + (xp - xpp) * Id) / T20',
+                               '(e1q - e2d + (xp - xpp) * Id) / T20)',
+                         # v_str='u',
                          tex_name="e''_q",
                          diag_eps=True,
                          )
 
         self.Id = Algeb(tex_name='I_d',
-                        e_str='vd - e2d - rs * Id + xpp * Iq',
+                        e_str='u * (vd - e2d - rs * Id + xpp * Iq)',
                         )
 
         self.Iq = Algeb(tex_name='I_q',
-                        e_str='vq - e2q - rs * Iq - xpp * Id',
+                        e_str='u * (vq - e2q - rs * Iq - xpp * Id)',
                         )
 
         self.te = Algeb(tex_name=r'\tau_e',
-                        e_str='e2d * Id + e2q * Iq - te',
-                        v_str='e2d * Id + e2q * Iq',
+                        e_str='u * (e2d * Id + e2q * Iq) - te',
+                        v_str='u * (e2d * Id + e2q * Iq)',
                         )
 
         self.tm = Algeb(tex_name=r'\tau_m',
-                        e_str='aa + bb * slip + c2 * slip * slip - tm',
-                        v_str='aa + bb * slip + c2 * slip * slip',
+                        e_str='u * (aa + bb * slip + c2 * slip * slip) - tm',
+                        v_str='u * (aa + bb * slip + c2 * slip * slip)',
                         )
 
 
