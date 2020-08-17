@@ -113,7 +113,7 @@ class IndBaseData(ModelData):
 
         self.c3 = NumParam(default=0.02,
                            info='2nd coeff. of Tm(w)',
-                           tex_name='c_2',
+                           tex_name='c_3',
                            )
 
         self.ts = NumParam(default=1.0,
@@ -199,20 +199,17 @@ class Ind5Model(Model):
 
         self.slip = State(tex_name=r"\sigma",
                           e_str='u * (tm - te)',
-                          # v_str='u',
                           t_const=self.M,
                           diag_eps=True,
                           )
 
         self.e1d = State(info='real part of 1st cage voltage',
                          e_str='u * (wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10)',
-                         # v_str='u',
                          tex_name="e'_d",
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
-                         # v_str='u',
                          tex_name="e'_q",
                          )
 
@@ -221,7 +218,6 @@ class Ind5Model(Model):
                                '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10) - '
                                '(e1d - e2q - (xp - xpp) * Iq)/T20)',
-                         # v_str='u',
                          tex_name="e''_d",
                          diag_eps=True,
                          )
@@ -230,7 +226,6 @@ class Ind5Model(Model):
                                '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
                                '(e1q - e2d + (xp - xpp) * Id) / T20)',
-                         # v_str='u',
                          tex_name="e''_q",
                          diag_eps=True,
                          )
