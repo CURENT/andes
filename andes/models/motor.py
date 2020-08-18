@@ -128,11 +128,9 @@ class MotorBaseData(ModelData):
                            )
 
 
-class Motor5Model(Model):
+class MotorBaseModel(Model):
+    """Base model for motors
     """
-    Fifth-order Induction motor equations.
-    """
-
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -144,21 +142,22 @@ class Motor5Model(Model):
         self.wb = ConstService(v_str='2 * pi * fn',
                                tex_name=r'\omega_b',
                                )
+
         self.x0 = ConstService(v_str='xs + xm',
                                tex_name='x_0',
                                )
+
         self.xp = ConstService(v_str='xs + xr1 * xm / (xr1 + xm)',
                                tex_name="x'",
                                )
+
         self.T10 = ConstService(v_str='(xr1 + xm) / (wb * rr1)',
                                 tex_name="T'_0",
                                 )
-        self.xpp = ConstService(v_str='xs + xr1*xr2*xm / (xr1*xr2 + xr1*xm + xr2*xm)',
-                                tex_name="x''",
-                                )
-        self.T20 = ConstService(v_str='(xr2 + xr1*xm / (xr1 + xm) ) / (wb * rr2)',
-                                tex_name="T''_0",
-                                )
+
+        self.M = ConstService(v_str='2 * Hm',
+                              tex_name='M',
+                              )
 
         self.aa = ConstService(v_str='c1 + c2 + c3',
                                tex_name=r'\alpha',
@@ -167,9 +166,6 @@ class Motor5Model(Model):
         self.bb = ConstService(v_str='-c2 - 2 * c3',
                                tex_name=r'\beta',
                                )
-        self.M = ConstService(v_str='2 * Hm',
-                              tex_name='M',
-                              )
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus',
@@ -204,15 +200,51 @@ class Motor5Model(Model):
                           diag_eps=True,
                           )
 
+        self.p = Algeb(tex_name='P',
+                       e_str='u * (vd * Id + vq * Iq) - p',
+                       v_str='u * (vd * Id + vq * Iq)',
+                       )
+
+        self.q = Algeb(tex_name='Q',
+                       e_str='u * (vq * Id - vd * Iq) - q',
+                       v_str='u * (vq * Id - vd * Iq)',
+                       )
+
+        self.Id = Algeb(tex_name='I_d',
+                        )
+
+        self.Iq = Algeb(tex_name='I_q',
+                        )
+
+        self.te = Algeb(tex_name=r'\tau_e',
+                        )
+
+        self.tm = Algeb(tex_name=r'\tau_m',
+                        )
+
         self.e1d = State(info='real part of 1st cage voltage',
-                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
                          tex_name="e'_d",
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
-                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
                          tex_name="e'_q",
                          )
+
+
+class Motor5Model(MotorBaseModel):
+    """
+    Fifth-order Induction motor equations.
+    """
+
+    def __init__(self, system, config):
+        MotorBaseModel.__init__(self, system, config)
+
+        self.xpp = ConstService(v_str='xs + xr1*xr2*xm / (xr1*xr2 + xr1*xm + xr2*xm)',
+                                tex_name="x''",
+                                )
+        self.T20 = ConstService(v_str='(xr2 + xr1*xm / (xr1 + xm) ) / (wb * rr2)',
+                                tex_name="T''_0",
+                                )
 
         self.e2d = State(info='real part of 2nd cage voltage',
                          e_str='u * '
@@ -231,33 +263,19 @@ class Motor5Model(Model):
                          diag_eps=True,
                          )
 
-        self.Id = Algeb(tex_name='I_d',
-                        e_str='u * (vd - e2d - rs * Id + xpp * Iq)',
-                        )
+        self.Id.e_str = 'u * (vd - e2d - rs * Id + xpp * Iq)'
 
-        self.Iq = Algeb(tex_name='I_q',
-                        e_str='u * (vq - e2q - rs * Iq - xpp * Id)',
-                        )
+        self.Iq.e_str = 'u * (vq - e2q - rs * Iq - xpp * Id)'
 
-        self.te = Algeb(tex_name=r'\tau_e',
-                        e_str='u * (e2d * Id + e2q * Iq) - te',
-                        v_str='u * (e2d * Id + e2q * Iq)',
-                        )
+        self.te.v_str = 'u * (e2d * Id + e2q * Iq)'
+        self.te.e_str = f'{self.te.v_str} - te'
 
-        self.tm = Algeb(tex_name=r'\tau_m',
-                        e_str='u * (aa + bb * slip + c2 * slip * slip) - tm',
-                        v_str='u * (aa + bb * slip + c2 * slip * slip)',
-                        )
+        self.tm.v_str = 'u * (aa + bb * slip + c2 * slip * slip)'
+        self.tm.e_str = f'{self.tm.v_str} - tm'
 
-        self.p = Algeb(tex_name='P',
-                       e_str='u * (vd * Id + vq * Iq) - p',
-                       v_str='u * (vd * Id + vq * Iq)',
-                       )
+        self.e1d.e_str = 'u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)'
 
-        self.q = Algeb(tex_name='Q',
-                       e_str='u * (vq * Id - vd * Iq) - q',
-                       v_str='u * (vq * Id - vd * Iq)',
-                       )
+        self.e1q.e_str = 'u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)'
 
 
 class Motor5(MotorBaseData, Motor5Model):
