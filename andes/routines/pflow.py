@@ -99,7 +99,10 @@ class PFlow(BaseRoutine):
         self.A = sparse([[system.dae.fx, system.dae.gx],
                          [system.dae.fy, system.dae.gy]])
 
-        self.inc = self.solver.solve(self.A, self.inc)
+        if not self.config.linsolve:
+            self.inc = self.solver.solve(self.A, self.inc)
+        else:
+            self.inc = self.solver.linsolve(self.A, self.inc)
 
         system.dae.x += np.ravel(np.array(self.inc[:system.dae.n]))
         system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
