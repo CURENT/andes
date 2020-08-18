@@ -434,8 +434,8 @@ class PhasorMeasurement(GroupBase):
         self.common_vars.extend(('am', 'vm'))
 
 
-class Induction(GroupBase):
-    """Induction machine group
+class Motor(GroupBase):
+    """Induction Motor group
     """
     def __init__(self):
         super().__init__()

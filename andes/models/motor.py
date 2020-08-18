@@ -25,7 +25,7 @@ import numpy as np  # NOQA
 logger = logging.getLogger(__name__)
 
 
-class IndBaseData(ModelData):
+class MotorBaseData(ModelData):
     """Base parameters for induction machines
     """
     def __init__(self):
@@ -112,7 +112,7 @@ class IndBaseData(ModelData):
                            )
 
         self.c3 = NumParam(default=0.02,
-                           info='2nd coeff. of Tm(w)',
+                           info='3rd coeff. of Tm(w)',
                            tex_name='c_3',
                            )
 
@@ -128,9 +128,9 @@ class IndBaseData(ModelData):
                            )
 
 
-class Ind5Model(Model):
+class Motor5Model(Model):
     """
-    Fifth-order Induction Machine equations.
+    Fifth-order Induction motor equations.
     """
 
     def __init__(self, system, config):
@@ -138,7 +138,7 @@ class Ind5Model(Model):
 
         self.flags.pflow = True
         self.flags.tds = True
-        self.group = 'Induction'
+        self.group = 'Motor'
 
         # services
         self.wb = ConstService(v_str='2 * pi * fn',
@@ -260,12 +260,12 @@ class Ind5Model(Model):
                        )
 
 
-class Ind5(IndBaseData, Ind5Model):
+class Motor5(MotorBaseData, Motor5Model):
     """
-    Fifth-order induction machine model.
+    Fifth-order induction motor model.
 
     See "Power System Modelling and Scripting" by F. Milano.
     """
     def __init__(self, system, config):
-        IndBaseData.__init__(self)
-        Ind5Model.__init__(self, system, config)
+        MotorBaseData.__init__(self)
+        Motor5Model.__init__(self, system, config)
