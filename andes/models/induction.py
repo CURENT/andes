@@ -177,14 +177,15 @@ class Ind5Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='u * (vd * Id + vq * Iq)'
+                          e_str='+p'
                           )
+
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='u * (vq * Id - vd * Iq)'
+                          e_str='+q'
                           )
 
         self.vd = Algeb(info='d-axis voltage',
@@ -204,7 +205,7 @@ class Ind5Model(Model):
                           )
 
         self.e1d = State(info='real part of 1st cage voltage',
-                         e_str='u * (wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10)',
+                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
                          tex_name="e'_d",
                          )
 
@@ -216,7 +217,7 @@ class Ind5Model(Model):
         self.e2d = State(info='real part of 2nd cage voltage',
                          e_str='u * '
                                '(-wb*slip*(e1q - e2q) + '
-                               '(wb*slip*e1q - (e1d + (x0 + xp) * Iq)/T10) - '
+                               '(wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10) - '
                                '(e1d - e2q - (xp - xpp) * Iq)/T20)',
                          tex_name="e''_d",
                          diag_eps=True,
@@ -247,6 +248,16 @@ class Ind5Model(Model):
                         e_str='u * (aa + bb * slip + c2 * slip * slip) - tm',
                         v_str='u * (aa + bb * slip + c2 * slip * slip)',
                         )
+
+        self.p = Algeb(tex_name='P',
+                       e_str='u * (vd * Id + vq * Iq) - p',
+                       v_str='u * (vd * Id + vq * Iq)',
+                       )
+
+        self.q = Algeb(tex_name='Q',
+                       e_str='u * (vq * Id - vd * Iq) - q',
+                       v_str='u * (vq * Id - vd * Iq)',
+                       )
 
 
 class Ind5(IndBaseData, Ind5Model):
