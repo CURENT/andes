@@ -495,7 +495,7 @@ class System(object):
             for var in mdl.cache.vars_int.values():
                 var.set_arrays(self.dae)
 
-    def init(self, models: OrderedDict):
+    def init(self, models: OrderedDict, routine: str):
         """
         Initialize the variables for each of the specified models.
 
@@ -517,7 +517,7 @@ class System(object):
                 instance.link_external(ext_model)
 
             # initialize variables second
-            mdl.init()
+            mdl.init(routine=routine)
 
             self.vars_to_dae(mdl)
             self.vars_to_models()

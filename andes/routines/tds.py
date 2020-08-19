@@ -118,8 +118,7 @@ class TDS(BaseRoutine):
         system.store_adder_setter(models=system.exist.pflow_tds)
         system.vars_to_models()
 
-        # Initialize `system.exist.tds` only to avoid Bus overwriting power flow solutions
-        system.init(system.exist.tds)
+        system.init(system.exist.tds, routine='tds')
         system.store_switch_times(system.exist.tds)
 
         # Build mass matrix into `self.Teye`
@@ -368,7 +367,7 @@ class TDS(BaseRoutine):
             # non-convergence cases
             if self.niter > self.config.max_iter:
                 tqdm.write(f'* Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
-                           f'h={self.h:.6f}, mis={mis:.4g} ')
+                           f'h={self.h:.6f}, max inc={mis:.4g} ')
 
                 # debug helpers
                 g_max = np.argmax(abs(dae.g))

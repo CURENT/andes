@@ -606,7 +606,7 @@ class Model(object):
 
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags in an OrderedDict
-        self.f_args, self.g_args = None, None   # argument value lists
+        self.f_args, self.g_args = [], []   # argument value lists
 
     def _register_attribute(self, key, value):
         """
@@ -1113,7 +1113,7 @@ class Model(object):
 
         return row_name, col_name
 
-    def init(self):
+    def init(self, routine):
         """
         Numerical initialization of a model.
 
@@ -1124,44 +1124,55 @@ class Model(object):
         """
         self.s_update()  # this includes ConstService and VarService
 
-        for name, instance in self.vars_decl_order.items():
-            if instance.v_str is None:
-                continue
+        # find out if variables need to be initialized for `routine`
+        flag_name = routine + '_init'
+        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
+            do_init = getattr(self.flags, routine)
+        else:
+            do_init = getattr(self.flags, flag_name)
 
-            # for variables associated with limiters, limiters need to be evaluated
-            # before variable initialization.
-            # However, if any limit is hit, initialization is likely to fail.
+        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
 
-            if instance.discrete is not None:
-                if not isinstance(instance.discrete, (list, tuple, set)):
-                    dlist = (instance.discrete, )
+        if do_init:
+
+            for name, instance in self.vars_decl_order.items():
+                if instance.v_str is None:
+                    continue
+
+                # for variables associated with limiters, limiters need to be evaluated
+                # before variable initialization.
+                # However, if any limit is hit, initialization is likely to fail.
+
+                if instance.discrete is not None:
+                    if not isinstance(instance.discrete, (list, tuple, set)):
+                        dlist = (instance.discrete, )
+                    else:
+                        dlist = instance.discrete
+                    for d in dlist:
+                        d.check_var()
+
+                kwargs = self.get_inputs(refresh=True)
+                init_fun = self.calls.init_lambdify[name]
+
+                if callable(init_fun):
+                    try:
+                        instance.v[:] = init_fun(**kwargs)
+                    except ValueError as e:
+                        raise e
+                    except TypeError as e:
+                        raise e
                 else:
-                    dlist = instance.discrete
-                for d in dlist:
-                    d.check_var()
+                    instance.v[:] = init_fun
 
+            # experimental: user Newton-Krylov solver for dynamic initialization
+            # ----------------------------------------
+            if self.flags.nr_iter:
+                self.init_iter()
+            # ----------------------------------------
+
+            # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
-            init_fun = self.calls.init_lambdify[name]
-
-            if callable(init_fun):
-                try:
-                    instance.v[:] = init_fun(**kwargs)
-                except ValueError as e:
-                    raise e
-                except TypeError as e:
-                    raise e
-            else:
-                instance.v[:] = init_fun
-
-        # experimental: user Newton-Krylov solver for dynamic initialization
-        # ----------------------------------------
-        if self.flags.nr_iter:
-            self.init_iter()
-        # ----------------------------------------
-
-        # call custom variable initializer after generated init
-        kwargs = self.get_inputs(refresh=True)
-        self.v_numeric(**kwargs)
+            self.v_numeric(**kwargs)
 
         # call post initialization checking
         self.post_init_check()
@@ -1566,6 +1577,8 @@ class Model(object):
         """
         Post init checking. Warns if values of `InitChecker` is not True.
         """
+        self.get_inputs(refresh=True)
+
         if self.system.config.warn_abnormal:
             for name, item in self.services_icheck.items():
                 item.check()

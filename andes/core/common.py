@@ -49,8 +49,8 @@ class ModelFlags(object):
         self.collate = collate
         self.pflow = pflow
         self.tds = tds
-        self.pflow_init = pflow_init if pflow_init is not None else pflow
-        self.tds_init = tds_init if tds_init is not None else tds
+        self.pflow_init = pflow_init
+        self.tds_init = tds_init
         self.series = series
         self.nr_iter = nr_iter
         self.f_num = f_num
@@ -64,6 +64,9 @@ class ModelFlags(object):
 
     def update(self, dct):
         self.__dict__.update(dct)
+
+    def __repr__(self):
+        return pprint.pformat(self.__dict__)
 
 
 class DummyValue(object):

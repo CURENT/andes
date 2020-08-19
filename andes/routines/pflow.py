@@ -63,7 +63,7 @@ class PFlow(BaseRoutine):
         self.x_sol = None
         self.y_sol = None
 
-        self.system.init(self.models)
+        self.system.init(self.models, routine='pflow')
         logger.info('Power flow initialized.')
         return self.system.dae.xy
 
