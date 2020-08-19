@@ -136,6 +136,7 @@ class MotorBaseModel(Model):
 
         self.flags.pflow = True
         self.flags.tds = True
+        self.flags.tds_init = False
         self.group = 'Motor'
 
         # services
@@ -198,6 +199,7 @@ class MotorBaseModel(Model):
                           e_str='u * (tm - te)',
                           t_const=self.M,
                           diag_eps=True,
+                          v_str='1.0',
                           )
 
         self.p = Algeb(tex_name='P',
@@ -227,10 +229,12 @@ class MotorBaseModel(Model):
 
         self.e1d = State(info='real part of 1st cage voltage',
                          tex_name="e'_d",
+                         v_str='0.0',
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          tex_name="e'_q",
+                         v_str='1.0',
                          )
 
 

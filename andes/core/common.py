@@ -21,6 +21,10 @@ class ModelFlags(object):
         True: called during power flow
     tds : bool
         True if called during tds; if is False, ``dae_t`` cannot be used
+    pflow_init : bool or None
+        True if initialize pflow; False otherwise; None default to `pflow`
+    tds_init : bool or None
+        True if initialize tds; False otherwise; None default to `tds`
     series : bool
         True if is series device
     nr_iter : bool
@@ -37,13 +41,16 @@ class ModelFlags(object):
         True if the model defines `s_numeric_var`
     """
 
-    def __init__(self, collate=False, pflow=False, tds=False, series=False,
+    def __init__(self, collate=False, pflow=False, tds=False,
+                 pflow_init=None, tds_init=None, series=False,
                  nr_iter=False, f_num=False, g_num=False, j_num=False,
                  s_num=False, sv_num=False):
 
         self.collate = collate
         self.pflow = pflow
         self.tds = tds
+        self.pflow_init = pflow_init if pflow_init is not None else pflow
+        self.tds_init = tds_init if tds_init is not None else tds
         self.series = series
         self.nr_iter = nr_iter
         self.f_num = f_num

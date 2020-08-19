@@ -695,7 +695,7 @@ class System(object):
                 for key, val, _ in item.x_set:
                     np.put(self.dae.x, key, val)
 
-    def f_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def f_update(self, models: OrderedDict):
         """
         Call the differential equation update method for models in sequence.
 
@@ -706,10 +706,10 @@ class System(object):
         try:
             self.call_models('f_update', models)
         except TypeError as e:
-            logger.error("f_update failed. Did you forget to run `andes prepare -i` after updating?")
+            logger.error("f_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
-    def g_update(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def g_update(self, models: OrderedDict):
         """
         Call the algebraic equation update method for models in sequence.
 
@@ -720,7 +720,7 @@ class System(object):
         try:
             self.call_models('g_update', models)
         except TypeError as e:
-            logger.error("g_update failed. Did you forget to run `andes prepare -i` after updating?")
+            logger.error("g_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
     def j_update(self, models: OrderedDict):
