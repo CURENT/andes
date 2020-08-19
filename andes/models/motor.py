@@ -230,11 +230,13 @@ class MotorBaseModel(Model):
         self.e1d = State(info='real part of 1st cage voltage',
                          tex_name="e'_d",
                          v_str='0.0',
+                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          tex_name="e'_q",
                          v_str='1.0',
+                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
                          )
 
 
@@ -258,14 +260,17 @@ class Motor5Model(MotorBaseModel):
                                '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10) - '
                                '(e1d - e2q - (xp - xpp) * Iq)/T20)',
+                         v_str='0.0',
                          tex_name="e''_d",
                          diag_eps=True,
                          )
+
         self.e2q = State(info='imag part of 2nd cage voltage',
                          e_str='u * '
                                '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
                                '(e1q - e2d + (xp - xpp) * Id) / T20)',
+                         v_str='1.0',
                          tex_name="e''_q",
                          diag_eps=True,
                          )
@@ -275,11 +280,8 @@ class Motor5Model(MotorBaseModel):
         self.Iq.e_str = 'u * (vq - e2q - rs * Iq - xpp * Id)'
 
         self.te.v_str = 'u * (e2d * Id + e2q * Iq)'
+
         self.te.e_str = f'{self.te.v_str} - te'
-
-        self.e1d.e_str = 'u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)'
-
-        self.e1q.e_str = 'u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)'
 
 
 class Motor3Model(MotorBaseModel):
@@ -289,10 +291,6 @@ class Motor3Model(MotorBaseModel):
     def __init__(self, system, config):
 
         MotorBaseModel.__init__(self, system, config)
-
-        self.e1d.e_str = 'u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)'
-
-        self.e1q.e_str = 'u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)'
 
         self.Id.e_str = 'u * (vd - e1d - rs * Id + xp * Iq)'
 
