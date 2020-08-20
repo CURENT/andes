@@ -28,6 +28,7 @@ from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
 from andes.core import Config, BaseParam, Model, AntiWindup
+from andes.io.streaming import Streaming
 
 from andes.shared import np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
@@ -145,6 +146,7 @@ class System(object):
 
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
+        self.streaming = Streaming(self)                   # Dime2 streaming
 
         # dynamic imports of groups, models and routines
         self.import_groups()

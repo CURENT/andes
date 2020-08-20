@@ -1,5 +1,6 @@
 import logging
 from time import sleep
+import numpy as np
 from numpy import ndarray, array
 
 logger = logging.getLogger(__name__)
@@ -84,14 +85,14 @@ class Streaming(object):
         }
 
         self.Idxvgs['Syn'] = {
-            'delta': 1 + array(self.system.GENCLS.delta.a + self.system.GENROU.delta.a),
-            'omega': 1 + array(self.system.GENCLS.omega.a + self.system.GENROU.omega.a),
-            'e1d': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.e1d.a),
-            'e1q': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.e1q.a),
-            'e2d': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.e2d.a),
-            'e2q': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.e2q.a),
-            'psid': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.psid.a),
-            'psiq': 1 + array([0] * self.system.GENCLS.n + self.system.GENROU.psiq.a),
+            'delta': 1 + np.append(self.system.GENCLS.delta.a, self.system.GENROU.delta.a),
+            'omega': 1 + np.append(self.system.GENCLS.omega.a, self.system.GENROU.omega.a),
+            'e1d': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.e1d.a),
+            'e1q': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.e1q.a),
+            'e2d': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.e2d.a),
+            'e2q': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.e2q.a),
+            'psid': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.psid.a),
+            'psiq': 1 + np.append([0] * self.system.GENCLS.n, self.system.GENROU.psiq.a),
             # NOT SUPPORTED
             # 'p': 1 + n + array([0] * self.system.GENCLS.n + self.system.GENROU.p.a),
             # 'q': 1 + n + array([0] * self.system.GENCLS.n + self.system.GENROU.q.a),
@@ -350,7 +351,7 @@ class Streaming(object):
         # send Varheader, SysParam and Idxvgs to modules on the fly
         if set(current_devices) != set(self.last_devices):
             new_devices = list(current_devices)
-            new_devices.remove('sim')
+            new_devices.remove(self.system.config.dime_name)
             for item in self.last_devices:
                 if item in new_devices:
                     new_devices.remove(item)
@@ -445,4 +446,4 @@ class Streaming(object):
             return
 
         self.system.streaming.dimec.broadcast_r(DONE=1)
-        self.system.streaming.dimec.exit()
+        self.system.streaming.dimec.close()

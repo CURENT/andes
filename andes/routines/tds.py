@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import importlib
 from collections import OrderedDict
 
@@ -127,6 +128,10 @@ class TDS(BaseRoutine):
 
         self.initialized = self.test_init()
 
+        # send out system data using DiME
+        self.streaming_init()
+        self.streaming_step()
+
         # if `dae.n == 1`, `calc_h_first` depends on new `dae.gy`
         self.calc_h()
 
@@ -220,6 +225,9 @@ class TDS(BaseRoutine):
                                   dae.xy,
                                   self.system.get_z(models=system.exist.pflow_tds),
                                   )
+
+                self.streaming_step()
+
                 # check if the next step is critical time
                 self.do_switch()
                 self.calc_h()
@@ -253,6 +261,9 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
         system.TDS.save_output()
+
+        # end data streaming
+        system.streaming.finalize()
 
         # load data into `TDS.plotter` in a notebook or in an interactive mode
         if is_notebook() or is_interactive():
@@ -754,3 +765,32 @@ class TDS(BaseRoutine):
         TODO: rewind to a past time.
         """
         raise NotImplementedError("TDS.rewind() not implemented")
+
+    def streaming_init(self):
+        """
+        Send out initialization variables and process init from modules.
+
+        Returns
+        -------
+        None
+        """
+        system = self.system
+        if system.config.dime_enabled:
+            system.streaming.send_init(recepient='all')
+            logger.info('Broadcast system data. Waiting to receive modules init info...')
+            time.sleep(0.5)
+            system.streaming.sync_and_handle()
+
+    def streaming_step(self):
+        """
+        Sync, handle and streaming for each integration step
+
+        Returns
+        -------
+        None
+        """
+        system = self.system
+        if system.config.dime_enabled:
+            system.streaming.sync_and_handle()
+            system.streaming.vars_to_modules()
+            system.streaming.vars_to_pmu()
