@@ -238,7 +238,7 @@ class System(object):
                           end='\r', flush=True)
                     continue
 
-            print(f"\r\x1b[K Code generation for {name} ({idx+1:>{width}}/{total:>{width}}).",
+            print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
             model.prepare(quick=quick)
 
@@ -381,12 +381,12 @@ class System(object):
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags.address is True:
-                logger.debug(f'{mdl.class_name} address exists')
+                logger.debug(f'{mdl.class_name} internal address exists')
                 continue
             if mdl.n == 0:
                 continue
 
-            logger.debug(f'Setting address for {mdl.class_name}')
+            logger.debug(f'Setting internal address for {mdl.class_name}')
             n = mdl.n
             m0 = self.dae.m
             n0 = self.dae.n

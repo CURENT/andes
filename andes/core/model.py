@@ -1530,7 +1530,7 @@ class Model(object):
         """
         Symbolic processing and code generation.
         """
-        logger.debug(f"Code generation for {self.class_name}")
+        logger.debug(f"Generating code for {self.class_name}")
         self.calls.md5 = self.get_md5()
 
         self.syms.generate_symbols()
@@ -1562,8 +1562,8 @@ class Model(object):
                 md5.update(str(item.v_iter).encode())
             if item.e_str is not None:
                 md5.update(str(item.e_str).encode())
-
-            # TODO: include `diag_eps` for checksum
+            if item.diag_eps is not None:
+                md5.update(str(item.diag_eps).encode())
 
         for name, item in self.services.items():
             md5.update(str(name).encode())

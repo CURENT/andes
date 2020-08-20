@@ -69,7 +69,6 @@ class DAETimeSeries(object):
             self.xy = np.zeros((n_steps, self.dae.m + self.dae.n))
             self.z = np.zeros((n_steps, self.dae.o))
 
-            # TODO: write test.
             for idx, xy in enumerate(self._xy.values()):
                 self.xy[idx, :] = xy
 
@@ -318,6 +317,12 @@ class DAE(object):
 
         If ``m > len(self.y)`` or ``n > len(self.x``, arrays will be extended.
         Otherwise, new empty arrays will be sliced, starting from 0 to the given size.
+
+        Warnings
+        --------
+        This function should not be called directly. Instead, it is called in
+        ``System.set_address`` which re-points variables used in power flow
+        to the new array for dynamic analyses.
         """
         self.x = self._extend_or_slice(self.x, self.n)
         self.y = self._extend_or_slice(self.y, self.m)
@@ -330,10 +335,6 @@ class DAE(object):
     def _extend_or_slice(self, array, new_size, fill_func=np.zeros):
         """
         Helper function for ``self.resize_arrays`` to grow or shrink arrays.
-
-        TODO: BUG FIX
-          The extended array will have new addresses so that in-place v and
-          e will not gain memory access to the new one.
         """
         if new_size > len(array):
             array = np.append(array, fill_func(new_size - len(array)))
