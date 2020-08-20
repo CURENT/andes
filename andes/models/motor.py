@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 class MotorBaseData(ModelData):
     """Base parameters for induction machines
     """
+
     def __init__(self):
         ModelData.__init__(self)
         self.bus = IdxParam(model='Bus',
@@ -131,6 +132,7 @@ class MotorBaseData(ModelData):
 class MotorBaseModel(Model):
     """Base model for motors
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -262,7 +264,7 @@ class Motor5Model(MotorBaseModel):
         self.e2d = State(info='real part of 2nd cage voltage',
                          e_str='u * '
                                '(-wb*slip*(e1q - e2q) + '
-                               '(wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10) - '
+                               '(wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10) + '
                                '(e1d - e2d - (x1 - x2) * Iq)/T20)',
                          v_str='0.05 * u',
                          tex_name="e''_d",
@@ -272,7 +274,7 @@ class Motor5Model(MotorBaseModel):
         self.e2q = State(info='imag part of 2nd cage voltage',
                          e_str='u * '
                                '(wb*slip*(e1d - e2d) + '
-                               '(-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10) - '
+                               '(-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10) + '
                                '(e1q - e2q + (x1 - x2) * Id) / T20)',
                          v_str='0.9 * u',
                          tex_name="e''_q",
@@ -297,7 +299,6 @@ class Motor3Model(MotorBaseModel):
     """
 
     def __init__(self, system, config):
-
         MotorBaseModel.__init__(self, system, config)
 
         self.Id.e_str = 'u * (vd - e1d - rs * Id + x1 * Iq)'
@@ -317,6 +318,7 @@ class Motor3(MotorBaseData, Motor3Model):
 
     See "Power System Modelling and Scripting" by F. Milano.
     """
+
     def __init__(self, system, config):
         MotorBaseData.__init__(self)
         Motor3Model.__init__(self, system, config)
@@ -328,6 +330,7 @@ class Motor5(MotorBaseData, Motor5Model):
 
     See "Power System Modelling and Scripting" by F. Milano.
     """
+
     def __init__(self, system, config):
         MotorBaseData.__init__(self)
         Motor5Model.__init__(self, system, config)
