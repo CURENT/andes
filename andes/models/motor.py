@@ -148,7 +148,7 @@ class MotorBaseModel(Model):
                                tex_name='x_0',
                                )
 
-        self.xp = ConstService(v_str='xs + xr1 * xm / (xr1 + xm)',
+        self.x1 = ConstService(v_str='xs + xr1 * xm / (xr1 + xm)',
                                tex_name="x'",
                                )
 
@@ -215,14 +215,14 @@ class MotorBaseModel(Model):
         self.e1d = State(info='real part of 1st cage voltage',
                          tex_name="e'_d",
                          v_str='0.05 * u',
-                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
+                         e_str='u * (wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10)',
                          diag_eps=True,
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          tex_name="e'_q",
                          v_str='0.9 * u',
-                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
+                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10)',
                          diag_eps=True,
                          )
 
@@ -252,9 +252,9 @@ class Motor5Model(MotorBaseModel):
     def __init__(self, system, config):
         MotorBaseModel.__init__(self, system, config)
 
-        self.xpp = ConstService(v_str='xs + xr1*xr2*xm / (xr1*xr2 + xr1*xm + xr2*xm)',
-                                tex_name="x''",
-                                )
+        self.x2 = ConstService(v_str='xs + xr1*xr2*xm / (xr1*xr2 + xr1*xm + xr2*xm)',
+                               tex_name="x''",
+                               )
         self.T20 = ConstService(v_str='(xr2 + xr1*xm / (xr1 + xm) ) / (wb * rr2)',
                                 tex_name="T''_0",
                                 )
@@ -262,8 +262,8 @@ class Motor5Model(MotorBaseModel):
         self.e2d = State(info='real part of 2nd cage voltage',
                          e_str='u * '
                                '(-wb*slip*(e1q - e2q) + '
-                               '(wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10) - '
-                               '(e1d - e2d - (xp - xpp) * Iq)/T20)',
+                               '(wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10) - '
+                               '(e1d - e2d - (x1 - x2) * Iq)/T20)',
                          v_str='0.05 * u',
                          tex_name="e''_d",
                          diag_eps=True,
@@ -272,18 +272,18 @@ class Motor5Model(MotorBaseModel):
         self.e2q = State(info='imag part of 2nd cage voltage',
                          e_str='u * '
                                '(wb*slip*(e1d - e2d) + '
-                               '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
-                               '(e1q - e2q + (xp - xpp) * Id) / T20)',
+                               '(-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10) - '
+                               '(e1q - e2q + (x1 - x2) * Id) / T20)',
                          v_str='0.9 * u',
                          tex_name="e''_q",
                          diag_eps=True,
                          )
 
-        self.Id.e_str = 'u * (vd - e2d - rs * Id + xpp * Iq)'
+        self.Id.e_str = 'u * (vd - e2d - rs * Id + x2 * Iq)'
 
         self.Id.v_str = '0.9 * u'
 
-        self.Iq.e_str = 'u * (vq - e2q - rs * Iq - xpp * Id)'
+        self.Iq.e_str = 'u * (vq - e2q - rs * Iq - x2 * Id)'
 
         self.Iq.v_str = '0.1 * u'
 
@@ -300,11 +300,11 @@ class Motor3Model(MotorBaseModel):
 
         MotorBaseModel.__init__(self, system, config)
 
-        self.Id.e_str = 'u * (vd - e1d - rs * Id + xp * Iq)'
+        self.Id.e_str = 'u * (vd - e1d - rs * Id + x1 * Iq)'
 
         self.Id.v_str = '1'
 
-        self.Iq.e_str = 'u * (vq - e1q - rs * Iq - xp * Id)'
+        self.Iq.e_str = 'u * (vq - e1q - rs * Iq - x1 * Id)'
 
         self.te.v_str = 'u * (e1d * Id + e1q * Iq)'
 
