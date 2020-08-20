@@ -263,7 +263,8 @@ class TDS(BaseRoutine):
         system.TDS.save_output()
 
         # end data streaming
-        system.streaming.finalize()
+        if system.config.dime_enabled:
+            system.streaming.finalize()
 
         # load data into `TDS.plotter` in a notebook or in an interactive mode
         if is_notebook() or is_interactive():
