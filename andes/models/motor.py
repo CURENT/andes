@@ -199,7 +199,7 @@ class MotorBaseModel(Model):
                           e_str='u * (tm - te)',
                           t_const=self.M,
                           diag_eps=True,
-                          v_str='1.0',
+                          v_str='1.0 * u',
                           )
 
         self.p = Algeb(tex_name='P',
@@ -214,20 +214,24 @@ class MotorBaseModel(Model):
 
         self.e1d = State(info='real part of 1st cage voltage',
                          tex_name="e'_d",
-                         v_str='0.0',
+                         v_str='0.05 * u',
                          e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
+                         diag_eps=True,
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          tex_name="e'_q",
-                         v_str='1.0',
+                         v_str='0.9 * u',
                          e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
+                         diag_eps=True,
                          )
 
         self.Id = Algeb(tex_name='I_d',
+                        diag_eps=True,
                         )
 
         self.Iq = Algeb(tex_name='I_q',
+                        diag_eps=True,
                         )
 
         self.te = Algeb(tex_name=r'\tau_e',
@@ -260,7 +264,7 @@ class Motor5Model(MotorBaseModel):
                                '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10) - '
                                '(e1d - e2d - (xp - xpp) * Iq)/T20)',
-                         v_str='0.0',
+                         v_str='0.05 * u',
                          tex_name="e''_d",
                          diag_eps=True,
                          )
@@ -270,18 +274,18 @@ class Motor5Model(MotorBaseModel):
                                '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
                                '(e1q - e2q + (xp - xpp) * Id) / T20)',
-                         v_str='1.0',
+                         v_str='0.9 * u',
                          tex_name="e''_q",
                          diag_eps=True,
                          )
 
         self.Id.e_str = 'u * (vd - e2d - rs * Id + xpp * Iq)'
 
-        self.Id.v_str = '1'
+        self.Id.v_str = '0.9 * u'
 
         self.Iq.e_str = 'u * (vq - e2q - rs * Iq - xpp * Id)'
 
-        self.Iq.v_str = '0.1'
+        self.Iq.v_str = '0.1 * u'
 
         self.te.v_str = 'u * (e2d * Id + e2q * Iq)'
 
