@@ -117,11 +117,6 @@ class MotorBaseData(ModelData):
                            tex_name='c_3',
                            )
 
-        self.ts = NumParam(default=1.0,
-                           info='startup time',
-                           tex_name='t_s',
-                           )
-
         self.zb = NumParam(default=1.0,
                            info='Allow working as brake',
                            tex_name='z_b',
@@ -314,9 +309,12 @@ class Motor3Model(MotorBaseModel):
 
 class Motor3(MotorBaseData, Motor3Model):
     """
-    Fifth-order induction motor model.
+    Third-order induction motor model.
 
     See "Power System Modelling and Scripting" by F. Milano.
+
+    To simulate motor startup, set the motor status ``u`` to ``0``
+    and use a ``Toggler`` to control the model.
     """
 
     def __init__(self, system, config):
@@ -329,6 +327,9 @@ class Motor5(MotorBaseData, Motor5Model):
     Fifth-order induction motor model.
 
     See "Power System Modelling and Scripting" by F. Milano.
+
+    To simulate motor startup, set the motor status ``u`` to ``0``
+    and use a ``Toggler`` to control the model.
     """
 
     def __init__(self, system, config):
