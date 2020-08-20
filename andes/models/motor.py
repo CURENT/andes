@@ -212,6 +212,18 @@ class MotorBaseModel(Model):
                        v_str='u * (vq * Id - vd * Iq)',
                        )
 
+        self.e1d = State(info='real part of 1st cage voltage',
+                         tex_name="e'_d",
+                         v_str='0.0',
+                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
+                         )
+
+        self.e1q = State(info='imaginary part of 1st cage voltage',
+                         tex_name="e'_q",
+                         v_str='1.0',
+                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
+                         )
+
         self.Id = Algeb(tex_name='I_d',
                         )
 
@@ -226,18 +238,6 @@ class MotorBaseModel(Model):
 
         self.tm.v_str = 'u * (aa + bb * slip + c2 * slip * slip)'
         self.tm.e_str = f'{self.tm.v_str} - tm'
-
-        self.e1d = State(info='real part of 1st cage voltage',
-                         tex_name="e'_d",
-                         v_str='0.0',
-                         e_str='u * (wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10)',
-                         )
-
-        self.e1q = State(info='imaginary part of 1st cage voltage',
-                         tex_name="e'_q",
-                         v_str='1.0',
-                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10)',
-                         )
 
 
 class Motor5Model(MotorBaseModel):
@@ -259,7 +259,7 @@ class Motor5Model(MotorBaseModel):
                          e_str='u * '
                                '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 - xp) * Iq)/T10) - '
-                               '(e1d - e2q - (xp - xpp) * Iq)/T20)',
+                               '(e1d - e2d - (xp - xpp) * Iq)/T20)',
                          v_str='0.0',
                          tex_name="e''_d",
                          diag_eps=True,
@@ -269,7 +269,7 @@ class Motor5Model(MotorBaseModel):
                          e_str='u * '
                                '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - xp) * Id)/T10) - '
-                               '(e1q - e2d + (xp - xpp) * Id) / T20)',
+                               '(e1q - e2q + (xp - xpp) * Id) / T20)',
                          v_str='1.0',
                          tex_name="e''_q",
                          diag_eps=True,
@@ -277,7 +277,11 @@ class Motor5Model(MotorBaseModel):
 
         self.Id.e_str = 'u * (vd - e2d - rs * Id + xpp * Iq)'
 
+        self.Id.v_str = '1'
+
         self.Iq.e_str = 'u * (vq - e2q - rs * Iq - xpp * Id)'
+
+        self.Iq.v_str = '0.1'
 
         self.te.v_str = 'u * (e2d * Id + e2q * Iq)'
 
@@ -293,6 +297,8 @@ class Motor3Model(MotorBaseModel):
         MotorBaseModel.__init__(self, system, config)
 
         self.Id.e_str = 'u * (vd - e1d - rs * Id + xp * Iq)'
+
+        self.Id.v_str = '1'
 
         self.Iq.e_str = 'u * (vq - e1q - rs * Iq - xp * Id)'
 
