@@ -13,6 +13,7 @@ v1.0.9
 - Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
 - Added option `TDS.config.g_scale` to allow for scaling the
   algebraic mismatch with step size.
+- Added induction motor models `Motor3` and `Motor5` (PSAT models).
 
 v1.0.8 (2020-07-29)
 ```````````````````
