@@ -14,6 +14,8 @@ v1.0.9
 - Added option `TDS.config.g_scale` to allow for scaling the
   algebraic mismatch with step size.
 - Added induction motor models `Motor3` and `Motor5` (PSAT models).
+- Allow a PFlow-TDS model to skip TDS initialization by setting
+  `ModelFlags.tds_init` to False.
 
 v1.0.8 (2020-07-29)
 ```````````````````
