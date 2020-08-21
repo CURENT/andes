@@ -10,7 +10,8 @@ from andes import utils      # NOQA
 from andes import variables  # NOQA
 
 from andes.main import config_logger, run, load, prepare  # NOQA
-from andes.system import System  # NOQA
+from andes.system import System        # NOQA
+from andes.utils.paths import get_case # NOQA
 
 
 __author__ = 'Hantao Cui'
