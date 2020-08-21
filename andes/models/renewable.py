@@ -1680,3 +1680,68 @@ class WTARA1(WTARA1Data, WTARA1Model):
     def __init__(self, system, config):
         WTARA1Data.__init__(self)
         WTARA1Model.__init__(self, system, config)
+
+
+class WTGPTA1Data(ModelData):
+    """
+    Pitch control model data.
+    """
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.Kiw = NumParam(default=0.1, info='Pitch-control integral gain',
+                            tex_name='K_{iw}',
+                            unit='p.u.',
+                            )
+
+        self.Kpw = NumParam(default=0.0, info='Pitch-control proportional gain',
+                            tex_name='K_{pw}',
+                            unit='p.u.',
+                            )
+
+        self.Kic = NumParam(default=0.1, info='Pitch-compensation integral gain',
+                            tex_name='K_{ic}',
+                            unit='p.u.',
+                            )
+
+        self.Kpc = NumParam(default=0.0, info='Pitch-compensation proportional gain',
+                            tex_name='K_{pc}',
+                            unit='p.u.',
+                            )
+
+        self.Kcc = NumParam(default=0.0, info='Gain for P diff',
+                            tex_name='K_{cc}',
+                            unit='p.u.',
+                            )
+
+        self.Tp = NumParam(default=0.3, info='Blade response time const.',
+                           tex_name=r'T_{\theta}',
+                           unit='s',
+                           )
+
+        self.thmax = NumParam(default=30.0, info='Max. pitch angle',
+                              tex_name=r'\theta_{max}',
+                              unit='deg.',
+                              vrange=(27, 30),
+                              )
+        self.thmin = NumParam(default=0.0, info='Min. pitch angle',
+                              tex_name=r'\theta_{min}',
+                              unit='deg.',
+                              )
+        self.dthmax = NumParam(default=5.0, info='Max. pitch angle rate',
+                               tex_name=r'\theta_{max}',
+                               unit='deg.',
+                               vrange=(5, 10),
+                               )
+        self.dthmin = NumParam(default=-5.0, info='Min. pitch angle rate',
+                               tex_name=r'\theta_{min}',
+                               unit='deg.',
+                               vrange=(-10, -5),
+                               )
+
+
+class WTGPTA1Model(Model):
+    """Pitch control model equations.
+    """
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
