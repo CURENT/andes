@@ -80,6 +80,9 @@ class BaseService(object):
         """
         return self.__class__.__name__
 
+    def __repr__(self):
+        return f'{self.class_name}: {self.owner.class_name}.{self.name}'
+
 
 class ConstService(BaseService):
     """

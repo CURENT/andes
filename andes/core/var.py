@@ -133,7 +133,7 @@ class BaseVar(object):
         if span:
             span = ' [' + span + ']'
 
-        return f'{self.__class__.__name__}, {self.owner.__class__.__name__}.{self.name}{span}'
+        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}{span}'
 
     def set_address(self, addr: ndarray, contiguous=False):
         """
