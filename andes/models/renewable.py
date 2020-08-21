@@ -1512,3 +1512,101 @@ class WTGTA(WTGTAData, WTGTAModel):
     def __init__(self, system, config):
         WTGTAData.__init__(self)
         WTGTAModel.__init__(self, system, config)
+
+
+class WTGSData(ModelData):
+    """
+    Wind turbine governor swing equation model data.
+    """
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.ree = IdxParam(mandatory=True,
+                            info='Renewable exciter idx',
+                            )
+
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
+
+        self.fn = NumParam(default=60.0, info="nominal frequency",
+                           unit='Hz',
+                           tex_name='f_n')
+
+        self.H = NumParam(default=3.0, tex_name='H_t',
+                          info='Total inertia', unit='MWs/MVA',
+                          power=True,
+                          non_zero=True,
+                          )
+
+        self.D = NumParam(default=1.0, tex_name='D_{shaft}',
+                          info='Damping coefficient',
+                          unit='p.u.',
+                          power=True,
+                          )
+
+
+class WTGSModel(Model):
+    """
+    WT governor swing equation
+    """
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+        self.flags.tds = True
+
+        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
+                            export=False,
+                            )
+
+        self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
+                            export=False,
+                            e_str='-1.0 + s1_y'
+                            )
+
+        self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg, export=False,
+                           info='Retrieved Pe of RenGen')
+
+        self.Pe0 = ExtService(model='RenGen', src='Pe', indexer=self.reg, tex_name='P_{e0}',
+                              )
+
+        self.H2 = ConstService(v_str='2 * H', tex_name='2H')
+
+        self.w00 = ConstService(v_str='1.0', tex_name=r'\omega_{00}')
+
+        self.Pm = Algeb(tex_name='P_m',
+                        info='Mechanical power',
+                        e_str='Pe0 - Pm',
+                        v_str='Pe0',
+                        )
+
+        self.w0 = Algeb(tex_name=r'\omega_0',
+                        unit='p.u.',
+                        v_str='w00',
+                        e_str='w00 - w0',
+                        info='speed set point',
+                        )
+
+        # `s1_y` is `w_m`
+        self.s1 = Integrator(u='Pm - Pe - D * (s1_y - w0)',
+                             T=self.H2,
+                             K=1.0,
+                             y0='w0',
+                             )
+
+
+class WTGS(WTGSData, WTGSModel):
+    """
+    WTGS wind turbine model with a single swing-equation.
+
+    This model is used to simulate the mechanical swing
+    of the combined machine and turbine mass. The speed output
+    is ``s1_y`` which will be fed to ``RenExciter.wg``.
+
+    ``PFLAG`` needs to be set to ``1`` in exciter to consider
+    speed for Pref.
+    """
+
+    def __init__(self, system, config):
+        WTGSData.__init__(self)
+        WTGSModel.__init__(self, system, config)
