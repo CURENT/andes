@@ -176,7 +176,9 @@ class GroupBase(object):
 
     def _check_src(self, src: str):
         if src not in self.common_vars + self.common_params:
-            raise AttributeError(f'Group <{self.class_name}> does not share property <{src}>.')
+            # raise AttributeError(f'Group <{self.class_name}> does not share property <{src}>.')
+            logger.debug(f'Group <{self.class_name}> does not share property <{src}>.')
+            pass
 
     def _check_idx(self, idx):
         if idx is None:
@@ -367,6 +369,25 @@ class RenPlant(GroupBase):
     """
     def __init__(self):
         super().__init__()
+
+
+class RenGovernor(GroupBase):
+    """
+    Renewable governor group.
+    """
+    def __init__(self):
+        super().__init__()
+        # self.common_params.extend(('Pe0',))
+        self.common_vars.extend(('Pm',))
+
+
+class RenAerodynamics(GroupBase):
+    """
+    Renewable aerodynamics group.
+    """
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('theta',))
 
 
 class TurbineGov(GroupBase):
