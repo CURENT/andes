@@ -3,7 +3,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
 from andes.core.block import LeadLag, Integrator
-from andes.core.var import ExtAlgeb, Algeb
+from andes.core.var import ExtAlgeb, Algeb, AliasState
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
@@ -18,6 +18,7 @@ class REGCA1Data(ModelData):
     """
     REGC_A model data.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -98,6 +99,7 @@ class REGCA1Model(Model):
     """
     REGCA1 implementation.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -252,6 +254,7 @@ class REECA1Data(ModelData):
 
     TODO: Flag the parameters in the machine base.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -479,6 +482,7 @@ class REECA1Model(Model):
     """
     REEC_A model implementation.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -719,11 +723,15 @@ class REECA1Model(Model):
                           v_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y',
                           e_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y - Psel',
                           )
+        # `s5_y` is `Pord`
         self.s5 = LagAWFreeze(u=self.Psel, T=self.Tpord, K=1,
                               lower=self.PMIN, upper=self.PMAX,
                               freeze=self.Volt_dip,
                               tex_name='s5',
                               )
+
+        self.Pord = AliasState(self.s5_y)
+
         self.Ipulim = Algeb(info='Unlimited Ipcmd',
                             tex_name='I_{pulim}',
                             v_str='s5_y / vp',
@@ -846,7 +854,7 @@ class REECA1Model(Model):
 
         Iqmax2sq = '(Imax**2 - IpHL_y**2)'
 
-        Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'   # initialization equation by using `Ipcmd0`
+        Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'  # initialization equation by using `Ipcmd0`
 
         Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
 
@@ -901,6 +909,7 @@ class REECA1(REECA1Data, REECA1Model):
     """
     Renewable energy electrical control.
     """
+
     def __init__(self, system, config):
         REECA1Data.__init__(self)
         REECA1Model.__init__(self, system, config)
@@ -913,6 +922,7 @@ class REPCA1Data(ModelData):
     """
     Parameters for the Renewable Energy Plant Control model.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -1389,6 +1399,7 @@ class WTGTAData(ModelData):
     """
     Data for WTGTA wind drive-train model.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -1434,6 +1445,7 @@ class WTGTAModel(Model):
     """
     WTGTA model equations
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -1519,6 +1531,7 @@ class WTGSData(ModelData):
     """
     Wind turbine governor swing equation model data.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -1552,6 +1565,7 @@ class WTGSModel(Model):
     """
     WT governor swing equation
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -1618,11 +1632,12 @@ class WTARA1Data(ModelData):
     """
     Wind turbine aerodynamics model data.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
         self.rego = IdxParam(mandatory=True,
-                             info='Renewable exciter idx',
+                             info='Renewable governor idx',
                              )
 
         self.Ka = NumParam(default=1.0, info='Aerodynamics gain',
@@ -1647,6 +1662,7 @@ class WTARA1Model(Model):
 
         self.flags.tds = True
         self.group = 'RenAerodynamics'
+
         self.theta0r = ConstService(v_str='rad(theta0)',
                                     tex_name=r'\theta_{0r}',
                                     info='Initial pitch angle in radian',
@@ -1686,8 +1702,13 @@ class WTGPTA1Data(ModelData):
     """
     Pitch control model data.
     """
+
     def __init__(self):
         ModelData.__init__(self)
+
+        self.rea = IdxParam(mandatory=True,
+                            info='Renewable aerodynamics model idx',
+                            )
 
         self.Kiw = NumParam(default=0.1, info='Pitch-control integral gain',
                             tex_name='K_{iw}',
@@ -1743,5 +1764,29 @@ class WTGPTA1Data(ModelData):
 class WTGPTA1Model(Model):
     """Pitch control model equations.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
+
+        self.flags.tds = True
+
+        self.rego = ExtParam(model='RenAerodynamics', src='rego', indexer=self.rea,
+                             export=False,
+                             )
+
+        self.ree = ExtParam(model='RenGovernor', src='ree', indexer=self.rego,
+                            export=False,
+                            )
+
+        self.Pord = ExtAlgeb(model='RenExciter', src='Pord', indexer=self.ree,
+                             )
+
+
+class WTGPTA1(WTGPTA1Data, WTGPTA1Model):
+    """
+    Wind turtine pitch control model.
+    """
+
+    def __init__(self, system, config):
+        WTGPTA1Data.__init__(self)
+        WTGPTA1Model.__init__(self, system, config)

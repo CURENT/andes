@@ -72,7 +72,7 @@ class BaseVar(object):
 
         self.tex_name = tex_name if tex_name else name
         self.owner = None  # instance of the owner Model
-        self.id = None     # variable internal index inside a model (assigned in run time) FIXME: not in use
+        self.id = None     # variable internal index inside a model (assigned in run time)
 
         self.v_str = v_str  # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
@@ -119,11 +119,15 @@ class BaseVar(object):
         self.v_inplace = False
 
     def __repr__(self):
-        span = []
-        if 1 <= self.n <= 20:
+        if self.n == 0:
+            span = []
+
+        elif 1 <= self.n <= 20:
             span = self.a.tolist()
             span = ', '.join([str(i) for i in span])
-        elif self.n > 20:
+
+        else:
+            span = []
             if not isinstance(self, ExtVar):
                 span.append(self.a[0])
                 span.append(self.a[-1])
@@ -452,3 +456,25 @@ class ExtAlgeb(ExtVar):
     """
     e_code = 'g'
     v_code = 'y'
+
+
+class AliasAlgeb(ExtAlgeb):
+    def __init__(self, var, **kwargs):
+        ExtAlgeb.__init__(self,
+                          model=var.owner.class_name,
+                          src=var.name,
+                          indexer=var.owner.idx,
+                          info=f'Alias of {var.name}',
+                          **kwargs,
+                          )
+
+
+class AliasState(ExtState):
+    def __init__(self, var, **kwargs):
+        ExtState.__init__(self,
+                          model=var.owner.class_name,
+                          src=var.name,
+                          indexer=var.owner.idx,
+                          info=f'Alias of {var.name}',
+                          **kwargs,
+                          )
