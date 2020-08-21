@@ -2,7 +2,7 @@ from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
-from andes.core.block import LeadLag
+from andes.core.block import LeadLag, Integrator
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
@@ -1383,3 +1383,132 @@ class REPCA1(REPCA1Data, REPCA1Model):
     def __init__(self, system, config):
         REPCA1Data.__init__(self)
         REPCA1Model.__init__(self, system, config)
+
+
+class WTGTAData(ModelData):
+    """
+    Data for WTGTA wind drive-train model.
+    """
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.ree = IdxParam(mandatory=True,
+                            info='Renewable exciter idx',
+                            )
+
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
+
+        self.fn = NumParam(default=60.0, info="nominal frequency",
+                           unit='Hz',
+                           tex_name='f_n')
+
+        self.Ht = NumParam(default=3.0, tex_name='H_t',
+                           info='Turbine inertia', unit='MWs/MVA',
+                           power=True,
+                           non_zero=True,
+                           )
+
+        self.Hg = NumParam(default=3.0, tex_name='H_g',
+                           info='Generator inertia', unit='MWs/MVA',
+                           power=True,
+                           non_zero=True,
+                           )
+
+        self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
+                               info='Damping coefficient',
+                               unit='p.u.',
+                               power=True,
+                               )
+
+        self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
+                               info='Spring constant',
+                               unit='p.u.',
+                               # TODO: check if `Kshaft` is in generator base
+                               )
+
+
+class WTGTAModel(Model):
+    """
+    WTGTA model equations
+    """
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+
+        self.flags.tds = True
+
+        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
+                            export=False,
+                            )
+
+        self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
+                            export=False,
+                            e_str='-1.0 + s2_y'
+                            )
+
+        self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg, export=False,
+                           info='Retrieved Pe of RenGen')
+
+        self.Pe0 = ExtService(model='RenGen', src='Pe', indexer=self.reg, tex_name='P_{e0}',
+                              )
+
+        self.Ht2 = ConstService(v_str='2 * Ht', tex_name='2H_t')
+
+        self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_t')
+
+        self.w00 = ConstService(v_str='1.0', tex_name=r'\omega_{00}')
+
+        self.w0 = Algeb(tex_name=r'\omega_0',
+                        unit='p.u.',
+                        v_str='w00',
+                        e_str='w00 - w0',
+                        info='speed set point',
+                        )
+
+        self.Pm = Algeb(tex_name='P_m',
+                        info='Mechanical power',
+                        e_str='Pe0 - Pm',
+                        v_str='Pe0',
+                        )
+
+        # `s1_y` is `wt`
+        self.s1 = Integrator(u='(Pm / s1_y) - pk - pd',
+                             T=self.Ht2,
+                             K=1.0,
+                             y0='w0',
+                             )
+
+        # `s2_y` is `wg`
+        self.s2 = Integrator(u='-(Pe / s2_y) + pk + pd',
+                             T=self.Hg2,
+                             K=1.0,
+                             y0='w0',
+                             )
+
+        self.s3 = Integrator(u='s1_y - s2_y',
+                             T=1.0,
+                             K=1.0,
+                             y0='Pe0 / Kshaft',
+                             )
+
+        self.pk = Algeb(tex_name='P_k', info='Output after Kshaft',
+                        v_str='Pe0',
+                        e_str='Kshaft * s3_y - pk',
+                        )
+
+        self.pd = Algeb(tex_name='P_d', info='Output after damping',
+                        v_str='0.0',
+                        e_str='Dshaft * (s1_y - s2_y) - pd',
+                        )
+
+
+class WTGTA(WTGTAData, WTGTAModel):
+    """
+    WTGTA wind turbine drive-train model.
+    """
+
+    def __init__(self, system, config):
+        WTGTAData.__init__(self)
+        WTGTAModel.__init__(self, system, config)

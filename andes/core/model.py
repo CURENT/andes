@@ -34,7 +34,7 @@ from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
 
-np.seterr(invalid='raise', divide='raise')
+np.seterr(divide='raise')
 
 
 class Cache(object):
