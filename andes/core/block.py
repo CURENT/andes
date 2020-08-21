@@ -480,23 +480,6 @@ class PIControllerNumeric(Block):
         pass
 
 
-class AlgebFreeze(Block):
-    """
-    Algebraic variable freezer implemented with `VarConst`.
-
-    For `freeze` elements equal to zero, the corresponding variables will
-    remain at the pre-freeze values until `freeze` turns one.
-    """
-    def __init__(self, u, freeze, name=None, tex_name=None, info=None):
-        Block.__init__(self, name=name, tex_name=tex_name, info=info)
-        self.u = u
-        self.freeze = dummify(freeze)
-        # TODO.
-
-    def define(self):
-        pass
-
-
 class Gain(Block):
     r"""
     Gain block. ::
