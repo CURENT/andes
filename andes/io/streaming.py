@@ -362,21 +362,26 @@ class Streaming(object):
             self.last_devices = current_devices
 
         while True:
-            var_name = self.dimec.sync()
-            if not var_name:
+            var_names = self.dimec.sync(1)
+
+            if not var_names:
                 break
+
             workspace = self.dimec.workspace
-            var_value = workspace[var_name]
 
-            if var_name in current_devices:
-                self.record_module_init(var_name, var_value)
+            for var_name in var_names:
 
-            elif var_name == 'Event':
-                self.handle_event(var_value)
+                var_value = workspace[var_name]
 
-            else:
-                logger.warning(
-                    'Synced variable {} not handled'.format(var_name))
+                if var_name in current_devices:
+                    self.record_module_init(var_name, var_value)
+
+                elif var_name == 'Event':
+                    self.handle_event(var_value)
+
+                else:
+                    logger.warning(
+                        'Synced variable {} not handled'.format(var_name))
 
     def vars_to_pmu(self):
         """
@@ -389,16 +394,17 @@ class Streaming(object):
         if not self.has_pmu:
             return
 
-        idx = self.system.PMU.vm + self.system.PMU.am + self.system.BusFreq.w
+        idx = np.append(self.system.PMU.vm, self.system.PMU.am, self.system.BusFreq.w)
 
-        t = self.system.varout.t[-1]
-        k = self.system.varout.k[-1]
+        t = self.system.dae.t.tolist()
+        k = 0  # field `k` is not no use
 
-        values = self.system.varout.vars[-1][idx]
+        values = self.system.dae.xy[idx]   # a 1-d array as opposed to a N-by-1 2-d matrix
+
         pmudata = {
             't': t,
             'k': k,
-            'vars': array(values).T,
+            'vars': values,
         }
         self.dimec.broadcast_r(pmudata=pmudata)
 
@@ -419,8 +425,9 @@ class Streaming(object):
             limitsample = self.ModuleInfo[mod].get('limitsample', 0)
 
             idx = self.ModuleInfo[mod]['vgsvaridx']
-            t = self.system.varout.t[-1]
-            k = self.system.varout.k[-1]
+            t = self.system.dae.t.tolist()
+            k = 0
+
             lastk = self.ModuleInfo[mod]['lastk']
             if limitsample:
                 every = 1 / self.system.tds.config.tstep / limitsample
@@ -429,13 +436,15 @@ class Streaming(object):
                 else:
                     self.ModuleInfo[mod]['lastk'] = k
 
-            values = self.system.varout.vars[-1][idx]
+            values = self.system.dae.xy[idx]
+
             Varvgs = {
                 't': t,
                 'k': k,
-                'vars': array(values).T,
-                'accurate': array(values).T,
+                'vars': values,
+                'accurate': values,
             }
+
             self.dimec.send_r(mod, Varvgs=Varvgs)
 
     def finalize(self):
