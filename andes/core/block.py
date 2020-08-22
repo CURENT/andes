@@ -289,7 +289,7 @@ class PIController(Block):
     def __init__(self, u, kp, ki, ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self.u = u
+        self.u = dummify(u)
         self.kp = dummify(kp)
         self.ki = dummify(ki)
         self.ref = dummify(ref)
@@ -321,6 +321,60 @@ class PIController(Block):
         self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
         self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
                        f'{self.name}_xi - {self.name}_y'
+
+
+class PIAWHardLimit(PIController):
+    """
+    PI controller with anti-windup limiter on the integrator and
+    hard limit on the output.
+
+    Limits ``lower`` and ``upper`` are on the final output,
+    and ``aw_lower`` ``aw_upper`` are on the integrator.
+
+    """
+    def __init__(self, u, kp, ki, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+
+        PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info,
+                              )
+
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+        self.aw_lower = dummify(aw_lower)
+        self.aw_upper = dummify(aw_upper)
+
+        self.aw = AntiWindup(u=self.xi, lower=self.aw_lower, upper=self.aw_upper,
+                             no_lower=no_lower, no_upper=no_upper, tex_name='aw'
+                             )
+
+        self.yul = Algeb("PI unlimited output", tex_name='y^{ul}',
+                         discrete=self.aw,
+                         )
+
+        self.hl = HardLimiter(u=self.yul, lower=self.lower, upper=self.upper,
+                              no_lower=no_lower, no_upper=no_upper, tex_name='hl',
+                              )
+
+        self.vars.update({'hl': self.hl, 'yul': self.yul, 'aw': self.aw})
+
+        self.y.discrete = self.hl
+
+    def define(self):
+
+        PIController.define(self)
+
+        self.yul.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+
+        self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                         f'{self.name}_xi - {self.name}_yul'
+
+        # overwrite existing `y` equations
+        self.y.v_str = f'{self.name}_yul * {self.name}_hl_zi + ' \
+                       f'{self.lower.name} * {self.name}_hl_zl + ' \
+                       f'{self.upper.name} * {self.name}_hl_zu'
+
+        self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
 class PITrackAW(Block):

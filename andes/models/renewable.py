@@ -2,7 +2,7 @@ from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
-from andes.core.block import LeadLag, Integrator
+from andes.core.block import LeadLag, Integrator, PIAWHardLimit
 from andes.core.var import ExtAlgeb, Algeb, AliasState
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
@@ -1610,6 +1610,8 @@ class WTGSModel(Model):
                              y0='w0',
                              )
 
+        self.wt = AliasState(self.s1_y)
+
 
 class WTGS(WTGSData, WTGSModel):
     """
@@ -1649,7 +1651,7 @@ class WTARA1Data(ModelData):
         self.theta0 = NumParam(default=0.0, info='Initial pitch angle',
                                tex_name=r'\theta_0',
                                unit='deg.',
-                               )
+                               )  # TODO: check how to treat `theta0` if pitch controller is provided
 
 
 class WTARA1Model(Model):
@@ -1778,8 +1780,56 @@ class WTGPTA1Model(Model):
                             export=False,
                             )
 
+        self.wt = ExtAlgeb(model='RenGovernor', src='wt', indexer=self.rego,
+                           export=False,
+                           )
+
+        self.theta0 = ExtService(model='RenAerodynamics', src='theta0', indexer=self.rea,
+                                 )
+
+        self.theta = ExtAlgeb(model='RenAerodynamics', src='theta', indexer=self.rea,
+                              export=False,
+                              e_str='-theta0 + LG_y'
+                              )
+
         self.Pord = ExtAlgeb(model='RenExciter', src='Pord', indexer=self.ree,
                              )
+
+        self.Pref = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
+                             )
+
+        self.PIc = PIAWHardLimit(u='Pord - Pref', kp=self.Kpc, ki=self.Kic,
+                                 aw_lower=self.thmin, aw_upper=self.thmax,
+                                 lower=self.thmin, upper=self.thmax,
+                                 tex_name='PI_c',
+                                 info='PI for active power diff compensation',
+                                 )
+
+        self.wref = Algeb(tex_name=r'\omega_{ref}',
+                          info='optional speed reference',
+                          e_str='wt - wref',
+                          v_str='wt',
+                          )
+
+        self.PIw = PIAWHardLimit(u='Kcc * (Pord - Pref) + wt - wref', kp=self.Kpw, ki=self.Kiw,
+                                 aw_lower=self.thmin, aw_upper=self.thmax,
+                                 lower=self.thmin, upper=self.thmax,
+                                 tex_name='PI_w',
+                                 info='PI for speed and active power deviation',
+                                 )
+
+        self.LG = LagAntiWindupRate(u='PIw_y + PIc_y', T=self.Tp, K=1.0,
+                                    lower=self.thmin, upper=self.thmax,
+                                    rate_lower=self.dthmin, rate_upper=self.dthmax,
+                                    tex_name='LG',
+                                    info='Output lag anti-windup rate limiter')
+
+        # remove warning when pitch angle==0
+        self.PIc_hl.warn_flags.pop(0)
+        self.PIc_aw.warn_flags.pop(0)
+        self.PIw_hl.warn_flags.pop(0)
+        self.PIw_aw.warn_flags.pop(0)
+        self.LG_lim.warn_flags.pop(0)
 
 
 class WTGPTA1(WTGPTA1Data, WTGPTA1Model):
