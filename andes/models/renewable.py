@@ -1610,7 +1610,10 @@ class WTGSModel(Model):
                              y0='w0',
                              )
 
+        # make two alias states, `wt` and `wg`, pointing to `s1_y`
         self.wt = AliasState(self.s1_y)
+
+        self.wg = AliasState(self.s1_y)
 
 
 class WTGS(WTGSData, WTGSModel):
@@ -1840,3 +1843,12 @@ class WTGPTA1(WTGPTA1Data, WTGPTA1Model):
     def __init__(self, system, config):
         WTGPTA1Data.__init__(self)
         WTGPTA1Model.__init__(self, system, config)
+
+
+class WTGTRQData(ModelData):
+    """
+    Wind turbine torque (Pref) model.
+    """
+
+    def __init__(self):
+        ModelData.__init__(self)
