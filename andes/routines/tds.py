@@ -138,9 +138,9 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
-            logger.info(f"Initialization was successful in {s1}.")
+            logger.info(f"Initialization for dynamics was successful in {s1}.")
         else:
-            logger.error(f"Initialization failed in {s1}.")
+            logger.error(f"Initialization for dynamics failed in {s1}.")
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')

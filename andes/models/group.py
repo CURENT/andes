@@ -373,7 +373,7 @@ class RenPlant(GroupBase):
 
 class RenGovernor(GroupBase):
     """
-    Renewable governor group.
+    Renewable turbine governor group.
     """
     def __init__(self):
         super().__init__()
@@ -388,6 +388,14 @@ class RenAerodynamics(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('theta',))
+
+
+class RenPitch(GroupBase):
+    """
+    Renewable generator pitch controller group.
+    """
+    def __init__(self):
+        super().__init__()
 
 
 class TurbineGov(GroupBase):
