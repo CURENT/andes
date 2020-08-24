@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 try:
     from dime import DimeClient
 except ImportError:
-    logger.error("Dime import failed.")
+    logger.debug("Dime import failed.")
 
 
 class Streaming(object):
