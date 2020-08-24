@@ -1440,6 +1440,11 @@ class WTGTAData(ModelData):
                                # TODO: check if `Kshaft` is in generator base
                                )
 
+        self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
+                           info='Default speed if not using a torque model',
+                           unit='p.u.',
+                           )
+
 
 class WTGTAModel(Model):
     """
@@ -1471,14 +1476,12 @@ class WTGTAModel(Model):
 
         self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_t')
 
-        self.w00 = ConstService(v_str='1.0', tex_name=r'\omega_{00}')
-
-        self.w0 = Algeb(tex_name=r'\omega_0',
-                        unit='p.u.',
-                        v_str='w00',
-                        e_str='w00 - w0',
-                        info='speed set point',
-                        )
+        self.wr0 = Algeb(tex_name=r'\omega_{r0}',
+                         unit='p.u.',
+                         v_str='w0',
+                         e_str='w0 - wr0',
+                         info='speed set point',
+                         )
 
         self.Pm = Algeb(tex_name='P_m',
                         info='Mechanical power',
@@ -1490,14 +1493,14 @@ class WTGTAModel(Model):
         self.s1 = Integrator(u='(Pm / s1_y) - pk - pd',
                              T=self.Ht2,
                              K=1.0,
-                             y0='w0',
+                             y0='wr0',
                              )
 
         # `s2_y` is `wg`
         self.s2 = Integrator(u='-(Pe / s2_y) + pk + pd',
                              T=self.Hg2,
                              K=1.0,
-                             y0='w0',
+                             y0='wr0',
                              )
 
         self.s3 = Integrator(u='s1_y - s2_y',
@@ -1560,6 +1563,11 @@ class WTGSData(ModelData):
                           power=True,
                           )
 
+        self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
+                           info='Default speed if not using a torque model',
+                           unit='p.u.',
+                           )
+
 
 class WTGSModel(Model):
     """
@@ -1588,26 +1596,24 @@ class WTGSModel(Model):
 
         self.H2 = ConstService(v_str='2 * H', tex_name='2H')
 
-        self.w00 = ConstService(v_str='1.0', tex_name=r'\omega_{00}')
-
         self.Pm = Algeb(tex_name='P_m',
                         info='Mechanical power',
                         e_str='Pe0 - Pm',
                         v_str='Pe0',
                         )
 
-        self.w0 = Algeb(tex_name=r'\omega_0',
-                        unit='p.u.',
-                        v_str='w00',
-                        e_str='w00 - w0',
-                        info='speed set point',
-                        )
+        self.wr0 = Algeb(tex_name=r'\omega_{r0}',
+                         unit='p.u.',
+                         v_str='w0',
+                         e_str='w0 - wr0',
+                         info='speed set point',
+                         )
 
         # `s1_y` is `w_m`
-        self.s1 = Integrator(u='Pm - Pe - D * (s1_y - w0)',
+        self.s1 = Integrator(u='Pm - Pe - D * (s1_y - wr0)',
                              T=self.H2,
                              K=1.0,
-                             y0='w0',
+                             y0='wr0',
                              )
 
         # make two alias states, `wt` and `wg`, pointing to `s1_y`
