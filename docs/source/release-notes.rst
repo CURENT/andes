@@ -16,6 +16,16 @@ v1.0.9
 - Added induction motor models `Motor3` and `Motor5` (PSAT models).
 - Allow a PFlow-TDS model to skip TDS initialization by setting
   `ModelFlags.tds_init` to False.
+- Added Motor models `Motor3` and `Motor5`.
+
+Added Generic Type 3 wind turbine component models:
+
+- Drive-train models `WTDTA1` (turbine and generator inertia)
+  and `WTGT` (custom single swing-equation model).
+- Aerodynamic model `WTARA1`.
+- Pitch controller model `WTPTA1`.
+- Torque (a.k.a. Pref) model `WTTQA1`.
+
 
 v1.0.8 (2020-07-29)
 ```````````````````

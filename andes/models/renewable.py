@@ -1395,9 +1395,9 @@ class REPCA1(REPCA1Data, REPCA1Model):
         REPCA1Model.__init__(self, system, config)
 
 
-class WTGTAData(ModelData):
+class WTDTA1Data(ModelData):
     """
-    Data for WTGTA wind drive-train model.
+    Data for WTDTA1 wind drive-train model.
     """
 
     def __init__(self):
@@ -1446,9 +1446,9 @@ class WTGTAData(ModelData):
                            )
 
 
-class WTGTAModel(Model):
+class WTDTA1Model(Model):
     """
-    WTGTA model equations
+    WTDTA1 model equations
     """
 
     def __init__(self, system, config):
@@ -1520,17 +1520,17 @@ class WTGTAModel(Model):
                         )
 
 
-class WTGTA(WTGTAData, WTGTAModel):
+class WTDTA1(WTDTA1Data, WTDTA1Model):
     """
-    WTGTA wind turbine drive-train model.
+    WTDTA wind turbine drive-train model.
     """
 
     def __init__(self, system, config):
-        WTGTAData.__init__(self)
-        WTGTAModel.__init__(self, system, config)
+        WTDTA1Data.__init__(self)
+        WTDTA1Model.__init__(self, system, config)
 
 
-class WTGSData(ModelData):
+class WTDSData(ModelData):
     """
     Wind turbine governor swing equation model data.
     """
@@ -1569,7 +1569,7 @@ class WTGSData(ModelData):
                            )
 
 
-class WTGSModel(Model):
+class WTDSModel(Model):
     """
     WT governor swing equation
     """
@@ -1622,9 +1622,9 @@ class WTGSModel(Model):
         self.wg = AliasState(self.s1_y)
 
 
-class WTGS(WTGSData, WTGSModel):
+class WTDS(WTDSData, WTDSModel):
     """
-    WTGS wind turbine model with a single swing-equation.
+    Custom wind turbine model with a single swing-equation.
 
     This model is used to simulate the mechanical swing
     of the combined machine and turbine mass. The speed output
@@ -1635,8 +1635,8 @@ class WTGS(WTGSData, WTGSModel):
     """
 
     def __init__(self, system, config):
-        WTGSData.__init__(self)
-        WTGSModel.__init__(self, system, config)
+        WTDSData.__init__(self)
+        WTDSModel.__init__(self, system, config)
 
 
 class WTARA1Data(ModelData):
@@ -1709,7 +1709,7 @@ class WTARA1(WTARA1Data, WTARA1Model):
         WTARA1Model.__init__(self, system, config)
 
 
-class WTGPTA1Data(ModelData):
+class WTPTA1Data(ModelData):
     """
     Pitch control model data.
     """
@@ -1772,7 +1772,7 @@ class WTGPTA1Data(ModelData):
                                )
 
 
-class WTGPTA1Model(Model):
+class WTPTA1Model(Model):
     """Pitch control model equations.
     """
 
@@ -1842,17 +1842,17 @@ class WTGPTA1Model(Model):
         self.LG_lim.warn_flags.pop(0)
 
 
-class WTGPTA1(WTGPTA1Data, WTGPTA1Model):
+class WTPTA1(WTPTA1Data, WTPTA1Model):
     """
-    Wind turtine pitch control model.
+    Wind turbine pitch control model.
     """
 
     def __init__(self, system, config):
-        WTGPTA1Data.__init__(self)
-        WTGPTA1Model.__init__(self, system, config)
+        WTPTA1Data.__init__(self)
+        WTPTA1Model.__init__(self, system, config)
 
 
-class WTGTRQA1Data(ModelData):
+class WTTQA1Data(ModelData):
     """
     Wind turbine torque (Pref) model.
     """
@@ -1936,8 +1936,9 @@ class WTGTRQA1Data(ModelData):
                             )
 
 
-class WTGTRQA1Model(Model):
-    """Wind turbine torque Pref model equations.
+class WTTQA1Model(Model):
+    """
+    Wind turbine torque Pref model equations.
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -2030,10 +2031,10 @@ class WTGTRQA1Model(Model):
                                 )
 
 
-class WTGTRQA1(WTGTRQA1Data, WTGTRQA1Model):
+class WTTQA1(WTTQA1Data, WTTQA1Model):
     """
     Wind turbine generator torque (Pref) model.
     """
     def __init__(self, config, system):
-        WTGTRQA1Data.__init__(self)
-        WTGTRQA1Model.__init__(self, system, config)
+        WTTQA1Data.__init__(self)
+        WTTQA1Model.__init__(self, system, config)
