@@ -123,8 +123,7 @@ class BaseVar(object):
             span = []
 
         elif 1 <= self.n <= 20:
-            span = self.a.tolist()
-            span = ', '.join([str(i) for i in span])
+            span = f'a={self.a}, v={self.v}, e={self.e}'
 
         else:
             span = []
@@ -133,11 +132,9 @@ class BaseVar(object):
                 span.append(self.a[-1])
                 span.append(self.a[1] - self.a[0])
                 span = ':'.join([str(i) for i in span])
+                span = 'a=[' + span + ']'
 
-        if span:
-            span = ' [' + span + ']'
-
-        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}{span}'
+        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}, {span}'
 
     def set_address(self, addr: ndarray, contiguous=False):
         """

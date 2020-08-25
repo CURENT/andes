@@ -298,7 +298,7 @@ class PIController(Block):
         self.xi = State(info="Integrator output", tex_name='xi')
         self.y = Algeb(info="PI output", tex_name='y')
 
-        self.vars = {'xi': self.xi, 'y': self.y}
+        self.vars = OrderedDict([('xi', self.xi), ('y', self.y)])
 
     def define(self):
         r"""
@@ -356,7 +356,10 @@ class PIAWHardLimit(PIController):
                               no_lower=no_lower, no_upper=no_upper, tex_name='hl',
                               )
 
-        self.vars.update({'hl': self.hl, 'yul': self.yul, 'aw': self.aw})
+        # the sequence affect the initialization order
+        self.vars = OrderedDict([('xi', self.xi), ('aw', self.aw),
+                                 ('yul', self.yul), ('hl', self.hl),
+                                 ('y', self.y)])
 
         self.y.discrete = self.hl
 
@@ -399,7 +402,10 @@ class PITrackAW(Block):
         self.lim = HardLimiter(u=self.ys, lower=self.lower, upper=self.upper,
                                no_lower=no_lower, no_upper=no_upper, tex_name='lim')
         self.y = Algeb(info="PI output", discrete=self.lim, tex_name='y')
-        self.vars = {'xi': self.xi, 'ys': self.ys, 'lim': self.lim, 'y': self.y}
+        self.vars = OrderedDict([('xi', self.xi),
+                                 ('ys', self.ys),
+                                 ('lim', self.lim),
+                                 ('y', self.y)])
 
     def define(self):
         self.xi.v_str = f'{self.x0.name}'

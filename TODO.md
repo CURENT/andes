@@ -19,6 +19,7 @@
 *   Define general hooks - when should the connectivity check happen
 *   Vectorize the `enable` option for most discrete blocks. 
 *   allow to remind developer of missing equations (such as `vout` of Exciters).
+*   Disallow linking ExtAlgeb to State and ExtState to Algeb (check in prepare).
 
 ## Help Wanted
 *   Restore compatibility with dome format

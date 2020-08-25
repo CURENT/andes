@@ -3,7 +3,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
 from andes.core.block import LeadLag, Integrator, PIAWHardLimit
-from andes.core.var import ExtAlgeb, Algeb, AliasState
+from andes.core.var import ExtAlgeb, ExtState, Algeb, AliasState
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
@@ -617,13 +617,6 @@ class REECA1Model(Model):
                           unit='p.u.',
                           )
 
-        self.Pref = Algeb(tex_name='P_{ref}',
-                          info='external P ref',
-                          v_str='p0',
-                          e_str='p0 - Pref',
-                          unit='p.u.',
-                          )
-
         self.Qref = Algeb(tex_name='Q_{ref}',
                           info='external Q ref',
                           v_str='q0',
@@ -713,16 +706,26 @@ class REECA1Model(Model):
                         v_str='1.0',
                         e_str='1.0 - wg',
                         )
+
+        self.Pref = Algeb(tex_name='P_{ref}',
+                          info='external P ref',
+                          v_str='p0 / wg',
+                          e_str='p0 / wg - Pref',
+                          unit='p.u.',
+                          )
+
         self.pfilt = LagRate(u=self.Pref, T=self.config.tpfilt, K=1,
                              rate_lower=self.dPmin, rate_upper=self.dPmax,
                              info='Active power filter with rate limits',
                              tex_name='P_{filt}',
                              )
+
         self.Psel = Algeb(tex_name='P_{sel}',
                           info='Output selection of PFLAG',
                           v_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y',
                           e_str='SWP_s1*wg*pfilt_y + SWP_s0*pfilt_y - Psel',
                           )
+
         # `s5_y` is `Pord`
         self.s5 = LagAWFreeze(u=self.Psel, T=self.Tpord, K=1,
                               lower=self.PMIN, upper=self.PMAX,
@@ -1610,7 +1613,7 @@ class WTDSModel(Model):
                          )
 
         # `s1_y` is `w_m`
-        self.s1 = Integrator(u='Pm - Pe - D * (s1_y - wr0)',
+        self.s1 = Integrator(u='(Pm - Pe) / wge - D * (s1_y - wr0)',
                              T=self.H2,
                              K=1.0,
                              y0='wr0',
@@ -1973,22 +1976,9 @@ class WTTQA1Model(Model):
                            tex_name='S_n', export=False,
                            )
 
-        self.wg = ExtAlgeb(model='RenGovernor', src='wg', indexer=self.rego,
-                           tex_name=r'\omega_g', export=False,
-                           )
-
         self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg,
                            tex_name='P_e', export=False,
                            )
-
-        self.Pref = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
-                             tex_name='P_{ref}', export=False,
-                             e_str='+ PI_y * wg',
-                             )
-
-        self.Pref0 = ExtService(model='RenExciter', src='p0', indexer=self.ree,
-                                tex_name='P_{ref0}',
-                                )
 
         self.s1 = Lag(u=self.Pe, T=self.Tp, K=1.0, tex_name='s_1',
                       info='Pe filter',
@@ -2004,7 +1994,31 @@ class WTTQA1Model(Model):
                              tex_name='f_{Pe}',
                              info='Piecewise Pe to wref mapping',
                              )
-        # TODO: need to properly initialize `wg`, `wt` and `wref`
+
+        # Overwrite `wg` and `wt` initial values in turbine governors
+        self.wg = ExtState(model='RenGovernor', src='wg', indexer=self.rego,
+                           tex_name=r'\omega_g', export=False,
+                           v_str='fPe_y',
+                           v_setter=True,
+                           )
+
+        self.wt = ExtState(model='RenGovernor', src='wt', indexer=self.rego,
+                           tex_name=r'\omega_t', export=False,
+                           v_str='fPe_y',
+                           v_setter=True,
+                           )
+
+        self.w0 = ExtParam(model='RenGovernor', src='w0', indexer=self.rego,
+                           tex_name=r'\omega_0', export=False,
+                           )
+
+        self.wr0 = ExtAlgeb(model='RenGovernor', src='wr0', indexer=self.rego,
+                            tex_name=r'\omega_{r0}', export=False,
+                            info='Retrieved initial w0 from RenGovernor',
+                            v_str='fPe_y',
+                            e_str='-w0 + fPe_y',
+                            v_setter=True,
+                            )
 
         self.s2 = Lag(u=self.fPe_y, T=self.Twref, K=1.0,
                       tex_name='s_2', info='speed filter',
@@ -2028,7 +2042,26 @@ class WTTQA1Model(Model):
                                 lower=self.Temin, upper=self.Temax,
                                 tex_name='PI',
                                 info='PI controller',
+                                x0='Pref0',
                                 )
+
+        # set a new `wg` value in REECA1
+        self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
+                            tex_name=r'\omega_{ge}', export=False,
+                            v_str='fPe_y',
+                            v_setter=True,
+                            )
+
+        self.Pref0 = ExtService(model='RenExciter', src='p0', indexer=self.ree,
+                                tex_name='P_{ref0}',
+                                )
+
+        self.Pref = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
+                             tex_name='P_{ref}', export=False,
+                             e_str='-Pref0 / wge + PI_y * wg',
+                             v_str='PI_y * wg',
+                             v_setter=True,
+                             )
 
 
 class WTTQA1(WTTQA1Data, WTTQA1Model):
