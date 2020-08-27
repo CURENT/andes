@@ -66,7 +66,7 @@ class Streaming(object):
         self.Idxvgs['Bus'] = {
             'theta': 1 + n + self.system.Bus.a.a,
             'V': 1 + n + self.system.Bus.v.a,
-            'w_Busfreq': 1 + self.system.BusFreq.f.a,
+            'w_Busfreq': 1 + n + self.system.BusFreq.f.a,
             # NO LONGER SUPPORTED
             # 'P': 1 + mn + array(range(self.system.Bus.n)),
             # 'Q': 1 + mn + self.system.Bus.n + array(range(self.system.Bus.n)),
