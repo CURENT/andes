@@ -1526,6 +1526,9 @@ class WTDTA1Model(Model):
 class WTDTA1(WTDTA1Data, WTDTA1Model):
     """
     WTDTA wind turbine drive-train model.
+
+    User-provided reference speed should be specified in parameter `w0`.
+    Internally, `w0` is set to the algebraic variable `wr0`.
     """
 
     def __init__(self, system, config):
@@ -1574,7 +1577,13 @@ class WTDSData(ModelData):
 
 class WTDSModel(Model):
     """
-    WT governor swing equation
+    Wind turbine one-mass generator model.
+
+    User-provided reference speed should be specified in parameter `w0`.
+    Internally, `w0` is set to the algebraic variable `wr0`.
+
+    See J.H. Chow, J.J. Sanchez-Gasca. "Power System Modeling, Computation, and Control".
+    John Wiley & Sons, 2020. pp. 518.
     """
 
     def __init__(self, system, config):
@@ -1942,6 +1951,8 @@ class WTTQA1Data(ModelData):
 class WTTQA1Model(Model):
     """
     Wind turbine torque Pref model equations.
+
+    PI state freeze following voltage dip has not been implemented.
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -2045,10 +2056,15 @@ class WTTQA1Model(Model):
                                 x0='Pref0 / fPe_y',
                                 )
 
-        # set a new `wg` value in REECA1
+        # Note:
+        #   Reset `wg` of REECA1 to 1.0 becase `wg` has already been multiplied
+        #   in the toeque model.
+        #   This effectively sets `PFLAG` to 0 if the torque model is connected.
+
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             tex_name=r'\omega_{ge}', export=False,
-                            v_str='fPe_y',
+                            v_str='1.0',
+                            e_str='-fPe_y + 1',
                             v_setter=True,
                             )
 
