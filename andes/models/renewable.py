@@ -2042,7 +2042,7 @@ class WTTQA1Model(Model):
                                 lower=self.Temin, upper=self.Temax,
                                 tex_name='PI',
                                 info='PI controller',
-                                x0='Pref0',
+                                x0='Pref0 / fPe_y',
                                 )
 
         # set a new `wg` value in REECA1
