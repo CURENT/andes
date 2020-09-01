@@ -1481,29 +1481,28 @@ class WTDTA1Model(Model):
                         )
 
         # `s1_y` is `wt`
-        self.s1 = Integrator(u='(Pm / s1_y) - pk - pd',
+        self.s1 = Integrator(u='(Pm / s1_y) - (Kshaft * s3_y ) - pd',
                              T=self.Ht2,
                              K=1.0,
                              y0='wr0',
                              )
 
+        self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
+
         # `s2_y` is `wg`
-        self.s2 = Integrator(u='-(Pe / s2_y) + pk + pd',
+        self.s2 = Integrator(u='-(Pe / s2_y) + (Kshaft * s3_y ) + pd',
                              T=self.Hg2,
                              K=1.0,
                              y0='wr0',
                              )
+
+        self.wg = AliasState(self.s2_y, tex_name=r'\omega_g')
 
         self.s3 = Integrator(u='s1_y - s2_y',
                              T=1.0,
                              K=1.0,
                              y0='Pe0 / Kshaft',
                              )
-
-        self.pk = Algeb(tex_name='P_k', info='Output after Kshaft',
-                        v_str='Pe0',
-                        e_str='Kshaft * s3_y - pk',
-                        )
 
         self.pd = Algeb(tex_name='P_d', info='Output after damping',
                         v_str='0.0',
@@ -1617,9 +1616,9 @@ class WTDSModel(Model):
                              )
 
         # make two alias states, `wt` and `wg`, pointing to `s1_y`
-        self.wt = AliasState(self.s1_y)
+        self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
 
-        self.wg = AliasState(self.s1_y)
+        self.wg = AliasState(self.s1_y, tex_name=r'\omega_g')
 
 
 class WTDS(WTDSData, WTDSModel):
