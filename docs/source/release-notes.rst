@@ -17,6 +17,7 @@ v1.0.9
 - Allow a PFlow-TDS model to skip TDS initialization by setting
   `ModelFlags.tds_init` to False.
 - Added Motor models `Motor3` and `Motor5`.
+- Imported `get_case` and `list_cases` to the root package level.
 
 Added Generic Type 3 wind turbine component models:
 

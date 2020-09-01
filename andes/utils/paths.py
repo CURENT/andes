@@ -93,7 +93,18 @@ def tests_root():
 
 
 def get_case(rpath):
-    """Return the path to the stock cases"""
+    """
+    Return the path to a stock case for a given path relative to ``andes/cases``.
+
+    To list all cases, use ``andes.list_cases()``.
+
+    Examples
+    --------
+    To get the path to the case `kundur_full.xlsx` under folder `kundur`, do ::
+
+        andes.get_case('kundur/kundur_full.xlsx')
+
+    """
     case_path = os.path.join(cases_root(), rpath)
     case_path = os.path.normpath(case_path)
 
@@ -104,7 +115,7 @@ def get_case(rpath):
 
 def list_cases(rpath='.', no_print=False):
     """
-    List stock cases under a given folder relative to ``cases``
+    List stock cases under a given folder relative to ``andes/cases``
     """
     case_path = os.path.join(cases_root(), rpath)
     case_path = os.path.normpath(case_path)
