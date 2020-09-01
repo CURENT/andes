@@ -78,6 +78,8 @@ See the GitHub repository for a full list of contributors.
    cases.rst
    modelref.rst
    configref.rst
+   faq.rst
+   troubleshooting.rst
    misc.rst
    release-notes.rst
    copyright.rst
