@@ -315,7 +315,7 @@ class TDS(BaseRoutine):
                 reason = 'custom event set'
             elif not self.last_converged:
                 reason = 'last step did not converge'
-            elif (self.niter + 1) % 7 == 0:
+            elif self.niter > 4 and (self.niter + 1) % 3 == 0:
                 reason = 'update every 6 iterations'
             elif dae.t - self._last_switch_t < 0.1:
                 reason = 'within 0.1s of event'
