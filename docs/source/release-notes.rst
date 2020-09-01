@@ -20,8 +20,8 @@ v1.0.9
 
 Added Generic Type 3 wind turbine component models:
 
-- Drive-train models `WTDTA1` (turbine and generator inertia)
-  and `WTGT` (custom single swing-equation model).
+- Drive-train models `WTDTA1` (dual-mass model) and `WTDS`
+  (single-mass model).
 - Aerodynamic model `WTARA1`.
 - Pitch controller model `WTPTA1`.
 - Torque (a.k.a. Pref) model `WTTQA1`.
