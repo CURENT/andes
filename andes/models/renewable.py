@@ -251,8 +251,6 @@ class REGCA1(REGCA1Data, REGCA1Model):
 class REECA1Data(ModelData):
     """
     Renewable energy electrical control model REECA1 (reec_a) data.
-
-    TODO: Flag the parameters in the machine base.
     """
 
     def __init__(self):
@@ -698,8 +696,6 @@ class REECA1Model(Model):
                            info='Additional Iq signal during under- or over-voltage',
                            )
 
-        # TODO: calculate Iqcmd
-
         # --- Lower portion - active power ---
         self.wg = Algeb(tex_name=r'\omega_g',
                         info='Drive train generator speed',
@@ -802,16 +798,6 @@ class REECA1Model(Model):
                                     extend_only=True,
                                     )
 
-        # --- For debugging, TODO: remove after testing ---
-        # self.fThld_out = Algeb(v_str='fThld',
-        #                        e_str='fThld - fThld_out',
-        #                        )
-        #
-        # self.fThld2_out = Algeb(v_str='fThld2',
-        #                         e_str='fThld2 - fThld2_out',
-        #                         )
-        # --- Debugging ends
-
         self.VDL1c = VarService(v_str='VDL1_y < Imaxr')
 
         self.VDL2c = VarService(v_str='VDL2_y < Imaxr')
@@ -842,7 +828,7 @@ class REECA1Model(Model):
 
         # --- Debugging ends ---
 
-        Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'  # TODO: +fThld2 * Ipmaxh
+        Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'
 
         Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'
 
@@ -888,9 +874,11 @@ class REECA1Model(Model):
                                    freeze=self.Volt_dip,
                                    )
 
+        # `IpHL_y` is `Ipcmd`
         self.IpHL = GainLimiter(u='s5_y / vp', K=1, lower=self.Ipmin, upper=self.Ipmax,
                                 )
 
+        # `IqHL_y` is `Iqcmd`
         self.IqHL = GainLimiter(u='Qsel + Iqinj', K=1, lower=self.Iqmin, upper=self.Iqmax)
 
         # --- Duplicate output - consider removing later ---
@@ -1433,14 +1421,14 @@ class WTDTA1Data(ModelData):
 
         self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
                                info='Damping coefficient',
-                               unit='p.u.',
+                               unit='p.u. (gen base)',
                                power=True,
                                )
 
         self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
                                info='Spring constant',
-                               unit='p.u.',
-                               # TODO: check if `Kshaft` is in generator base
+                               unit='p.u. (gen base)',
+                               power=True,
                                )
 
         self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
@@ -1672,7 +1660,8 @@ class WTARA1Data(ModelData):
         self.theta0 = NumParam(default=0.0, info='Initial pitch angle',
                                tex_name=r'\theta_0',
                                unit='deg.',
-                               )  # TODO: check how to treat `theta0` if pitch controller is provided
+                               )
+        # TODO: check how to treat `theta0` if pitch controller is provided
 
 
 class WTARA1Model(Model):
@@ -1951,8 +1940,6 @@ class WTTQA1Data(ModelData):
 class WTTQA1Model(Model):
     """
     Wind turbine torque Pref model equations.
-
-    PI state freeze following voltage dip has not been implemented.
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
@@ -2083,6 +2070,11 @@ class WTTQA1Model(Model):
 class WTTQA1(WTTQA1Data, WTTQA1Model):
     """
     Wind turbine generator torque (Pref) model.
+
+    PI state freeze following voltage dip has not been implemented.
+
+    Resets `wg` in `REECA1` model to 1.0 when torque model is connected.
+    This effectively ignores `PFLAG` of `REECA1`.
     """
     def __init__(self, config, system):
         WTTQA1Data.__init__(self)
