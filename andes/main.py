@@ -277,7 +277,7 @@ def load(case, codegen=False, setup=True, **kwargs):
     file, do ``setup=False`` and manually invoke ``setup()``
     after adding all devices.
     """
-    system = System(case=case, options=kwargs)
+    system = System(case=case, **kwargs)
     if codegen:
         system.prepare()
     else:

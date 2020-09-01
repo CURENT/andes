@@ -84,6 +84,7 @@ class System(object):
                  case: Optional[str] = None,
                  name: Optional[str] = None,
                  config_path: Optional[str] = None,
+                 default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
                  **kwargs
                  ):
@@ -104,8 +105,11 @@ class System(object):
 
         # get and load default config file
         self._config_path = get_config_path()
-        if config_path:
+        if config_path is not None:
             self._config_path = config_path
+        if default_config is True:
+            self._config_path = None
+
         self._config_object = self.load_config(self._config_path)
         self.config = Config(self.__class__.__name__)
         self.config.load(self._config_object)

@@ -128,6 +128,11 @@ class TDS(BaseRoutine):
 
         self.initialized = self.test_init()
 
+        # connect to dime server
+        if system.config.dime_enabled:
+            if system.streaming.dimec is None:
+                system.streaming.connect()
+
         # send out system data using DiME
         self.streaming_init()
         self.streaming_step()

@@ -27,20 +27,26 @@ class Streaming(object):
         self.Varheader = list()
         self.last_devices = list()
         self.has_pmu = False
+        self.dimec = None
 
-        config = system.config
+    def connect(self):
+        config = self.system.config
         if not config.dime_enabled:
-            return
+            return False
+
         try:
             self.dimec = DimeClient(config.dime_protocol,
                                     config.dime_address,
                                     )
             self.dimec.join(config.dime_name)
             logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful")
+            return True
 
         except FileNotFoundError:
-            logger.error(f'Dime sever not found at "{config.dime_address}" over {config.dime_protocol}')
+            logger.warning(f'Dime sever not found at "{config.dime_address}" over {config.dime_protocol}')
             self.system.config.dime_enabled = False
+
+        return False
 
     def _build_SysParam(self):
         self.SysParam = self.system.as_dict(vin=True, skip_empty=True)

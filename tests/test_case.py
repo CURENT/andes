@@ -6,7 +6,7 @@ from andes.utils.paths import get_case
 
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = andes.System()
+        self.ss = andes.System(default_config=True)
         self.ss.undill()
 
         # load from excel file
@@ -63,7 +63,7 @@ class TestKundur2AreaEIG(unittest.TestCase):
     """
     def test_xlsx_eig_run(self):
         self.xlsx = get_case("kundur/kundur_full.xlsx")
-        self.ss = andes.run(self.xlsx)
+        self.ss = andes.run(self.xlsx, default_config=True)
 
         self.ss.EIG.run()
         andes.main.misc(clean=True)
@@ -77,7 +77,7 @@ class TestKundur2AreaPSSE(unittest.TestCase):
     def setUp(self) -> None:
         raw = get_case("kundur/kundur.raw")
         dyr = get_case("kundur/kundur_full.dyr")
-        self.ss_psse = andes.run(raw, addfile=dyr)
+        self.ss_psse = andes.run(raw, addfile=dyr, default_config=True)
 
     def test_psse_tds_run(self):
         self.ss_psse.TDS.config.tf = 10
@@ -103,7 +103,10 @@ class TestNPCCRAW(unittest.TestCase):
     """
 
     def test_npcc_raw(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'))
+        self.ss = andes.run(get_case('npcc/npcc.raw'),
+                            default_config=True,
+                            )
+
         andes.main.misc(clean=True)
 
     def test_npcc_raw_tds(self):
@@ -113,21 +116,33 @@ class TestNPCCRAW(unittest.TestCase):
                             no_output=True,
                             profile=True,
                             tf=10,
+                            default_config=True,
                             )
+
         self.ss.dae.print_array('f')
         self.ss.dae.print_array('g')
         self.ss.dae.print_array('f', tol=1e-4)
         self.ss.dae.print_array('g', tol=1e-4)
 
     def test_npcc_raw_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'), convert=True)
+        self.ss = andes.run(get_case('npcc/npcc.raw'),
+                            convert=True,
+                            default_config=True,
+                            )
+
         os.remove(self.ss.files.dump)
         self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
 
     def test_npcc_raw2json_convert(self):
         self.ss = andes.run(get_case('npcc/npcc.raw'),
-                            convert='json')
-        self.ss2 = andes.run('npcc.json')
+                            convert='json',
+                            default_config=True,
+                            )
+
+        self.ss2 = andes.run('npcc.json',
+                             default_config=True,
+                             )
+
         os.remove(self.ss.files.dump)
         andes.main.misc(clean=True)
         self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
@@ -136,10 +151,25 @@ class TestNPCCRAW(unittest.TestCase):
 class TestCOI(unittest.TestCase):
     def test_kundur_COI(self):
         ss = get_case('kundur/kundur_coi.xlsx')
-        exit_code = andes.run(ss, routine='tds', no_output=True, tf=0.1, cli=True)
+        exit_code = andes.run(ss,
+                              routine='tds',
+                              no_output=True,
+                              tf=0.1,
+                              cli=True,
+                              default_config=True,
+                              )
+
         self.assertEqual(exit_code, 0, "Exit code is not 0.")
 
     def test_kundur_COI_empty(self):
         ss = get_case('kundur/kundur_coi_empty.xlsx')
-        exit_code = andes.run(ss, routine='tds', no_output=True, tf=0.1, cli=True)
+
+        exit_code = andes.run(ss,
+                              routine='tds',
+                              no_output=True,
+                              tf=0.1,
+                              cli=True,
+                              default_config=True,
+                              )
+
         self.assertEqual(exit_code, 0, "Exit code is not 0.")
