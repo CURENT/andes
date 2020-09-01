@@ -18,6 +18,7 @@ v1.0.9
   `ModelFlags.tds_init` to False.
 - Added Motor models `Motor3` and `Motor5`.
 - Imported `get_case` and `list_cases` to the root package level.
+- Added test cases (Kundur's system) with wind.
 
 Added Generic Type 3 wind turbine component models:
 
