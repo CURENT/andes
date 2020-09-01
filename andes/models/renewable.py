@@ -1465,7 +1465,7 @@ class WTDTA1Model(Model):
 
         self.Ht2 = ConstService(v_str='2 * Ht', tex_name='2H_t')
 
-        self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_t')
+        self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_g')
 
         self.wr0 = Algeb(tex_name=r'\omega_{r0}',
                          unit='p.u.',
@@ -1774,7 +1774,8 @@ class WTPTA1Data(ModelData):
 
 
 class WTPTA1Model(Model):
-    """Pitch control model equations.
+    """
+    Pitch control model equations.
     """
 
     def __init__(self, system, config):
@@ -1881,7 +1882,7 @@ class WTTQA1Data(ModelData):
                            )
 
         self.Twref = NumParam(default=30.0, info='Speed reference time const.',
-                              tex_name='T_p',
+                              tex_name='T_{wref}',
                               unit='s',
                               vrange=(30, 60),
                               )
@@ -1945,6 +1946,7 @@ class WTTQA1Model(Model):
         Model.__init__(self, system, config)
 
         self.flags.tds = True
+        self.group = 'RenTorque'
 
         self.kp1 = ConstService(v_str='(sp2 - sp1) / (p2 - p1)',
                                 tex_name='k_{p1}',

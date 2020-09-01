@@ -398,6 +398,14 @@ class RenPitch(GroupBase):
         super().__init__()
 
 
+class RenTorque(GroupBase):
+    """
+    Renewable torque (Pref) controller.
+    """
+    def __init__(self):
+        super().__init__()
+
+
 class TurbineGov(GroupBase):
     """
     Turbine governor group for synchronous generator.
