@@ -1498,10 +1498,11 @@ class WTDTA1Model(Model):
 
         self.wg = AliasState(self.s2_y, tex_name=r'\omega_g')
 
+        # TODO: `s3_y` needs to be properly reinitialized with the new `wr0`
         self.s3 = Integrator(u='s1_y - s2_y',
                              T=1.0,
                              K=1.0,
-                             y0='Pe0 / Kshaft',
+                             y0='Pe0 / wr0 / Kshaft',
                              )
 
         self.pd = Algeb(tex_name='P_d', info='Output after damping',
