@@ -373,7 +373,7 @@ def _find_cases(filename, path):
     logger.info(f'Working directory: "{os.getcwd()}"')
 
     if len(filename) == 0:
-        logger.info('info: no input file. Use \'andes run -h\' for help.')
+        logger.info('info: no input file. Use `andes run -h` for help.')
     if isinstance(filename, str):
         filename = [filename]
 
