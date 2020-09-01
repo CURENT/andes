@@ -3,7 +3,7 @@ from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
 from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PITrackAW
 from andes.core.block import LeadLag, Integrator, PIAWHardLimit
-from andes.core.var import ExtAlgeb, ExtState, Algeb, AliasState
+from andes.core.var import ExtAlgeb, ExtState, Algeb, AliasState, State
 
 from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
@@ -1621,6 +1621,13 @@ class WTDSModel(Model):
 
         self.wg = AliasState(self.s1_y, tex_name=r'\omega_g')
 
+        self.s3_y = State(info='Dummy state variable', tex_name='y_{s3}',
+                          )
+
+        self.Kshaft = ConstService(v_str='1.0', tex_name='K_{shaft}',
+                                   info='Dummy Kshaft',
+                                   )
+
 
 class WTDS(WTDSData, WTDSModel):
     """
@@ -2008,9 +2015,19 @@ class WTTQA1Model(Model):
                            v_setter=True,
                            )
 
+        self.s3_y = ExtState(model='RenGovernor', src='s3_y', indexer=self.rego,
+                             tex_name='y_{s3}', export=False,
+                             v_str='Pref0 / wg / Kshaft',
+                             v_setter=True,
+                             )
+
         self.w0 = ExtParam(model='RenGovernor', src='w0', indexer=self.rego,
                            tex_name=r'\omega_0', export=False,
                            )
+
+        self.Kshaft = ExtService(model='RenGovernor', src='Kshaft', indexer=self.rego,
+                                 tex_name='K_{shaft}',
+                                 )
 
         self.wr0 = ExtAlgeb(model='RenGovernor', src='wr0', indexer=self.rego,
                             tex_name=r'\omega_{r0}', export=False,
