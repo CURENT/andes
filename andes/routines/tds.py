@@ -306,14 +306,23 @@ class TDS(BaseRoutine):
 
             # lazy Jacobian update
 
-            if dae.t == 0 or \
-                    self.config.honest or \
-                    self.custom_event or \
-                    not self.last_converged or \
-                    self.niter > 4 or \
-                    (dae.t - self._last_switch_t < 0.1):
+            reason = ''
+            if dae.t == 0:
+                reason = 't=0'
+            elif self.config.honest:
+                reason = 'using honest method'
+            elif self.custom_event:
+                reason = 'custom event set'
+            elif not self.last_converged:
+                reason = 'last step did not converge'
+            elif (self.niter + 1) % 7 == 0:
+                reason = 'update every 6 iterations'
+            elif dae.t - self._last_switch_t < 0.1:
+                reason = 'within 0.1s of event'
 
-                system.j_update(models=system.exist.pflow_tds)
+            if reason:
+                system.j_update(models=system.exist.pflow_tds, info=reason)
+
                 # set flag in `solver.worker.factorize`, not `solver.factorize`.
                 self.solver.worker.factorize = True
 

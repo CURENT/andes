@@ -729,7 +729,7 @@ class System(object):
             logger.error("g_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
-    def j_update(self, models: OrderedDict):
+    def j_update(self, models: OrderedDict, info=None):
         """
         Call the Jacobian update method for models in sequence.
 
@@ -761,7 +761,7 @@ class System(object):
                                      f'j_size={j_size}')
                         raise e
 
-        logger.debug(f"Jacobian updated at t={self.dae.t}")
+        logger.debug(f"Jacobian updated at t={self.dae.t} due to {info}")
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
