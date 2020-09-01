@@ -1110,7 +1110,7 @@ class REPCA1Model(Model):
                               ksg='Tracking gain for active power PI controller',
                               freeze='Voltage dip freeze flag; 1-enable, 0-disable',
                               )
-        self.config.add_extra('_alt',
+        self.config.add_extra('_tex',
                               kqs='K_{qs}',
                               ksg='K_{sg}',
                               freeze='f_{rz}')
