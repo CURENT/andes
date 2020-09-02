@@ -9,10 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
-v1.1.1
-``````
+v1.1.1 (2020-09-02)
+```````````````````
 - Added back quasi-real-time speed control through `--qrt`
   and `--kqrt KQRT`.
+- Patched the time-domain routine for the final step.
 
 v1.1.0 (2020-09-01)
 ```````````````````
