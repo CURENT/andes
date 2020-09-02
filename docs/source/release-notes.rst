@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
+v1.1.1
+``````
+- Added back quasi-real-time speed control through `--qrt`
+  and `--kqrt KQRT`.
+
 v1.1.0 (2020-09-01)
 ```````````````````
 - Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
