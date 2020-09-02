@@ -64,7 +64,7 @@ class TDS(BaseRoutine):
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
-        if system.options.get('qrt') is not None:
+        if system.options.get('qrt') is True:
             self.config.qrt = system.options.get('qrt')
         if system.options.get('kqrt') is not None:
             self.config.kqrt = system.options.get('kqrt')
