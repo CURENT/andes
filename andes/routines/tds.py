@@ -260,7 +260,7 @@ class TDS(BaseRoutine):
                     self.next_pc += 1
 
                 # quasi-real-time check and wait (except for the last step)
-                if config.qrt:
+                if config.qrt and self.h > 0:
                     rt_end = self.qrt_start + self.h * config.kqrt
 
                     # if the ending time has passed
