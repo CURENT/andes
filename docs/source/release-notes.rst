@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
-v1.1.0
+v1.1.0 (2020-09-01)
 ```````````````````
 - Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
 - Added option `TDS.config.g_scale` to allow for scaling the
@@ -116,7 +116,7 @@ v1.0.1 (2020-05-27)
   updating.
 
 v1.0.0 (2020-05-25)
--------------------
+```````````````````
 This release is going to be tagged as v0.9.5 and later tagged as v1.0.0.
 
 - Added verification results using IEEE 14-bus, NPCC, and WECC systems
