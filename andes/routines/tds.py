@@ -235,7 +235,7 @@ class TDS(BaseRoutine):
 
         t0, _ = elapsed()
 
-        while (system.dae.t < self.config.tf) and (not self.busted):
+        while (system.dae.t - self.h < self.config.tf) and (not self.busted):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
 
