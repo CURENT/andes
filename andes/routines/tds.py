@@ -30,6 +30,8 @@ class TDS(BaseRoutine):
                                      ('max_iter', 15),
                                      ('refresh_event', 0),
                                      ('g_scale', 1),
+                                     ('qrt', 0),
+                                     ('kqrt', 1.0),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -42,6 +44,8 @@ class TDS(BaseRoutine):
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
                               g_scale='scale algebraic residuals with time step size',
+                              qrt='quasi-real-time stepping',
+                              kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -54,10 +58,16 @@ class TDS(BaseRoutine):
                               max_iter='>=10',
                               refresh_event=(0, 1),
                               g_scale=(0, 1),
+                              qrt='bool',
+                              kqrt="positive",
                               )
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
+        if system.options.get('qrt') is not None:
+            self.config.qrt = system.options.get('qrt')
+        if system.options.get('kqrt') is not None:
+            self.config.kqrt = system.options.get('kqrt')
 
         # to be computed
         self.deltat = 0
@@ -84,6 +94,8 @@ class TDS(BaseRoutine):
         self.plotter = None
         self.plt = None
         self.initialized = False
+        self.qrt_start = None
+        self.headroom = None
 
     def init(self):
         """
@@ -218,6 +230,9 @@ class TDS(BaseRoutine):
             self.next_pc = perc + 1
             self.pbar.update(perc)
 
+        self.qrt_start = time.time()
+        self.headroom = 0.0
+
         t0, _ = elapsed()
 
         while (system.dae.t < self.config.tf) and (not self.busted):
@@ -243,6 +258,22 @@ class TDS(BaseRoutine):
                 if perc >= self.next_pc:
                     self.pbar.update(1)
                     self.next_pc += 1
+
+                # quasi-real-time check and wait (except for the last step)
+                if config.qrt:
+                    rt_end = self.qrt_start + self.h * config.kqrt
+
+                    # if the ending time has passed
+                    if time.time() - rt_end > 0:
+                        logger.debug(f'Simulation over-run at t={dae.t:4.4g} s.')
+                    else:
+                        self.headroom += (rt_end - time.time())
+
+                        while time.time() - rt_end < 0:
+                            time.sleep(1e-4)
+
+                    self.qrt_start = time.time()
+
             else:
                 if self.calc_h() == 0:
                     self.err_msg = "Time step reduced to zero. Convergence is not likely."
@@ -265,6 +296,10 @@ class TDS(BaseRoutine):
 
         _, s1 = elapsed(t0)
         logger.info(f'Simulation completed in {s1}.')
+
+        if config.qrt:
+            logger.debug(f'QRT headroom time: {self.headroom} s.')
+
         system.TDS.save_output()
 
         # end data streaming
