@@ -146,17 +146,6 @@ Change directory to the ANDES source code folder that contains ``setup.py`` and 
 
     python3 -m pip install -e .
 
-Troubleshooting
-===============
-
-- ImportError: DLL load failed: The specified module could not be found.
-
-This usually happens when andes is not installed in a Conda environment
-but instead in a system-wide Python whose library path was not correctly
-set in environment variables.
-
-The easiest fix is to install andes in a Conda environment.
-
 Performance Packages (Advanced)
 ===============================
 The following two forks of ``cvxopt``, ``cvxoptklu``, ``cvxopt`` with ``spmatrix.ipadd``
