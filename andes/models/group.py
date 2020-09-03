@@ -400,7 +400,7 @@ class RenGovernor(GroupBase):
     """
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('ree', 'w0', 'Sn', 'pe0'))
+        self.common_params.extend(('ree', 'w0', 'Sn', 'Pe0'))
         self.common_vars.extend(('Pm', 'wr0', 'wt', 'wg', 's3_y'))
 
 
