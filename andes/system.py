@@ -761,7 +761,11 @@ class System(object):
                                      f'j_size={j_size}')
                         raise e
 
-        logger.debug(f"Jacobian updated at t={self.dae.t} due to {info}")
+        msg = f"Jacobian updated at t={self.dae.t}"
+        if info:
+            msg += f' due to {info}'
+
+        logger.debug(msg)
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
