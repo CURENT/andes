@@ -27,7 +27,7 @@ from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
 from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
-from andes.core import Config, BaseParam, Model, AntiWindup
+from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
 from andes.shared import np, spmatrix, jac_names
@@ -1073,7 +1073,7 @@ class System(object):
             for item in group.common_params:
                 for model in group.models.values():
                     # the below includes all of BaseParam (NumParam, DataParam and ExtParam)
-                    if item not in model.__dict__ or not isinstance(model.__dict__[item], BaseParam):
+                    if item not in model.__dict__:
                         raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
                                        f'in model <{model.class_name}>')
             for item in group.common_vars:
