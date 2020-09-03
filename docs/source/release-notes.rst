@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
+v1.1.2 (2020-09-03)
+```````````````````
+- Patched time-domain for continuing simulation.
+
 v1.1.1 (2020-09-02)
 ```````````````````
 - Added back quasi-real-time speed control through `--qrt`
