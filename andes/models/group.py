@@ -58,11 +58,20 @@ class GroupBase(object):
         """
         Find model name for the given idx.
 
-        If `allow_none` is True, will return None at the corr. position.
+        Parameters
+        ----------
+        allow_none : bool
+           If True, return `None` at the positions where idx is not found.
+
+        Returns
+        -------
+        If `idx` is a list, return a list of model instances.
+        If `idx` is a single element, return a model instance.
         """
 
         ret = []
         single = False
+
         if not isinstance(idx, (list, tuple, np.ndarray)):
             single = True
             idx = (idx,)
@@ -101,10 +110,16 @@ class GroupBase(object):
 
         Returns
         -------
-        The requested param or variable attribute
+        The requested param or variable attribute. If `idx` is a list, return a list of values.
+        If `idx` is a single element, return a single value.
         """
         self._check_src(src)
         self._check_idx(idx)
+
+        single = False
+        if not isinstance(idx, (list, np.ndarray)):
+            idx = [idx]
+            single = True
 
         n = len(idx)
         if n == 0:
@@ -112,6 +127,7 @@ class GroupBase(object):
 
         ret = [''] * n
         _type_set = False
+
         models = self.idx2model(idx, allow_none=allow_none)
 
         for i, idx in enumerate(idx):
@@ -132,16 +148,23 @@ class GroupBase(object):
 
             ret[i] = val
 
+        if single:
+            ret = ret[0]
+
         return ret
 
     def set(self, src: str, idx, attr, value):
         self._check_src(src)
         self._check_idx(idx)
 
+        if not isinstance(idx, (list, np.ndarray)):
+            idx = [idx]
+
         if isinstance(value, (float, str, int)):
             value = [value] * len(idx)
 
         models = self.idx2model(idx)
+
         for i, idx in enumerate(idx):
             model = models[i]
             uid = model.idx2uid(idx)
