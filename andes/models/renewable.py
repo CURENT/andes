@@ -2098,3 +2098,160 @@ class WTTQA1(WTTQA1Data, WTTQA1Model):
     def __init__(self, config, system):
         WTTQA1Data.__init__(self)
         WTTQA1Model.__init__(self, system, config)
+
+
+class PVD1Data(ModelData):
+    """
+    Data for distributed PV.
+    """
+    def __init__(self):
+        ModelData.__init__(self)
+
+        self.bus = IdxParam(model='Bus',
+                            info="interface bus id",
+                            mandatory=True,
+                            )
+
+        self.gen = IdxParam(info="static generator index",
+                            mandatory=True,
+                            )
+
+        self.igreg = IdxParam(model='Bus',
+                              info='Remote bus idx for droop response, None for local',
+                              )
+
+        self.qmx = NumParam(default=0.33, tex_name='q_{mx}',
+                            info='Max. reactive power command',
+                            power=True,
+                            )
+
+        self.qmn = NumParam(default=-0.33, tex_name='q_{mn}',
+                            info='Min. reactive power command',
+                            power=True,
+                            )
+
+        self.v0 = NumParam(default=0.0, tex_name='v_0',
+                           info='Lower limit of deadband for Vdroop response',
+                           unit='pu',
+                           )
+        self.v1 = NumParam(default=0.0, tex_name='v_1',
+                           info='Upper limit of deadband for Vdroop response',
+                           unit='pu',
+                           )
+
+        self.dqdv = NumParam(default=0.0, tex_name='dq/dv',
+                             info='Q-V droop characteristics',
+                             power=True,
+                             )
+
+        self.ialim = NumParam(default=1.3, tex_name='I_{alim}',
+                              info='Apparent power limit',
+                              current=True,
+                              )
+
+        self.vt0 = NumParam(default=0.88, tex_name='V_{t0}',
+                            info='Voltage tripping response curve point 0',
+                            )
+
+        self.vt1 = NumParam(default=0.90, tex_name='V_{t1}',
+                            info='Voltage tripping response curve point 1',
+                            )
+
+        self.vt2 = NumParam(default=1.1, tex_name='V_{t2}',
+                            info='Voltage tripping response curve point 2',
+                            )
+
+        self.vt3 = NumParam(default=1.2, tex_name='V_{t3}',
+                            info='Voltage tripping response curve point 3',
+                            )
+
+        self.vrflag = NumParam(default=0.0, tex_name='z_{VR}',
+                               info='Voltage tripping is latching (0) or partially self-resetting (0-1)',
+                               )
+
+        self.ft0 = NumParam(default=59.5, tex_name='f_{t0}',
+                            info='Frequency tripping response curve point 0',
+                            )
+
+        self.ft1 = NumParam(default=59.7, tex_name='f_{t1}',
+                            info='Frequency tripping response curve point 1',
+                            )
+
+        self.ft2 = NumParam(default=60.3, tex_name='f_{t2}',
+                            info='Frequency tripping response curve point 2',
+                            )
+
+        self.ft3 = NumParam(default=60.5, tex_name='f_{t3}',
+                            info='Frequency tripping response curve point 3',
+                            )
+
+        self.frflag = NumParam(default=0.0, tex_name='z_{FR}',
+                               info='Frequency tripping is latching (0) or partially self-resetting (0-1)',
+                               )
+
+        self.tip = NumParam(default=0.02, tex_name='T_{ip}',
+                            info='Inverter active current lag time constant',
+                            unit='s',
+                            )
+
+        self.tiq = NumParam(default=0.02, tex_name='T_{iq}',
+                            info='Inverter reactive current lag time constant',
+                            unit='s',
+                            )
+
+
+class PVD1Model(Model):
+    """
+    Model implementation of PVD1.
+    """
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+
+        self.flags.tds = True
+        self.group = 'DG'
+
+        self.buss = DataSelect(self.igreg, self.bus,
+                               info='selected bus (bus or igreg)',
+                               )
+
+        # initial voltages from selected bus
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
+                          info='bus (or igreg) terminal voltage',
+                          unit='p.u.',
+                          )
+
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
+                          info='bus (or igreg) phase angle',
+                          unit='rad.',
+                          )
+
+        # initial Sn and powers from static generator
+        self.Sn = ExtParam(model='StaticGen',
+                           src='Sn',
+                           indexer=self.gen,
+                           tex_name='S_n',
+                           export=False,
+                           )
+
+        self.p0 = ExtService(model='StaticGen',
+                             src='p',
+                             indexer=self.gen,
+                             tex_name='P_0',
+                             )
+        self.q0 = ExtService(model='StaticGen',
+                             src='q',
+                             indexer=self.gen,
+                             tex_name='Q_0',
+                             )
+
+
+class PVD1(PVD1Data, PVD1Model):
+    """
+    Distributed PV model. (TODO: work in progress)
+
+    Reference: ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
+    Available: https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+    """
+    def __init__(self, system, config):
+        PVD1Data.__init__(self)
+        PVD1Model.__init__(self, system, config)
