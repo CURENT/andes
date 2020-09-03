@@ -222,6 +222,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
+            self._calc_h_first()
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
 
@@ -453,7 +454,7 @@ class TDS(BaseRoutine):
 
         return self.converged
 
-    def calc_h(self):
+    def calc_h(self, resume=False):
         """
         Calculate the time step size during the TDS.
 
@@ -474,7 +475,7 @@ class TDS(BaseRoutine):
         config = self.config
 
         # t=0, first iteration (not previously failed)
-        if system.dae.t == 0 and self.niter == 0:
+        if (system.dae.t == 0 and self.niter == 0) or resume:
             return self._calc_h_first()
 
         if config.fixt and not config.shrinkt:
