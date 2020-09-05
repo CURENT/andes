@@ -603,7 +603,9 @@ To work with PSS/E inputs, refer to notebook `Example 2`_.
 
 Output path
 ...........
-A path for output files can be passed to ``andes.run`` through argument ``output_path``.
+By default, outputs will be saved to the folder where Python is run (or where the notebook is run).
+In case you need to organize outputs, a path prefix can be passed to ``andes.run()`` through
+``output_path``.
 For example,
 
 .. code:: python
