@@ -747,7 +747,9 @@ It is stored in ``ss.dae.ts``, which has the following fields:
 - ``y``: all algebraic variables (one column per variable).
 - ``z``: all discontinuous flags (if enabled, one column per flag).
 
-If you want the output in pandas DataFrame, you can call
+If you want the output in pandas DataFrame, call
+
+.. code:: python
 
     ss.dae.ts.unpack(df=True)
 
