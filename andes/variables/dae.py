@@ -27,12 +27,11 @@ class DAETimeSeries(object):
 
     @property
     def x(self):
-        return self.xy[:, 0:self.dae.n+1]
+        return self.xy[:, 0:self.dae.n]
 
     @property
     def y(self):
-        indices = [0] + list(range(self.dae.n + 1, self.dae.n + self.dae.m + 1))
-        return self.xy[:, indices]
+        return self.xy[:, self.dae.n:self.dae.n + self.dae.m]
 
     @property
     def txyz(self):
