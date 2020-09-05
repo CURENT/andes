@@ -904,9 +904,8 @@ For example, to check the docs of ``GENCLS``, do
 
 It is the same as calling ``andes doc GENCLS`` from the command line.
 
-Examples in Jupyter Notebook
-----------------------------
-Congratulations! You have finished the ANDES tutorial.
+Notebook Examples
+=================
 Check out more examples in Jupyter Notebook in the `examples` folder of the repository at
 `here <https://github.com/cuihantao/andes/tree/master/examples>`_.
 You can run the examples in a live Jupyter Notebook online using
