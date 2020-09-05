@@ -43,6 +43,11 @@ It prints out a preamble with version and environment information and help comma
                             Program logging level in 10-DEBUG, 20-INFO,
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
+.. note::
+
+    If the ``andes`` command is not found, check if (1) the installation was successful, and
+    (2) you have activated the environment where ANDES is installed.
+
 The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
 of sub-commands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the sub-commands
 in ``run``. The most commonly used commands will be explained in the following.
