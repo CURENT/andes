@@ -884,8 +884,8 @@ Data Consistency
 ................
 
 Input data needs to have consistent types for ``idx``. Both string and numerical types are allowed
-for ``idx``, but the original type and the referencing type must be the same. For example,
-suppose we have a bus and a connected PQ.
+for ``idx``, but the original type and the referencing type must be the same.
+Suppose we have a bus and a connected PQ.
 The Bus device may use ``1`` or ``'1'`` as its ``idx``, as long as the
 PQ device uses the same value for its ``bus`` parameter.
 
