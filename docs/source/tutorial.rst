@@ -757,7 +757,7 @@ If you want the output in pandas DataFrame, call
 Dataframes are stored in the following fields of ``ss.dae.ts``:
 
 - ``df``: dataframe for states and algebraic variables
-- ``df``: dataframe for discontinuous flags (if enabled)
+- ``df_z``: dataframe for discontinuous flags (if enabled)
 
 For both dataframes, time is the index column, and each column correspond to
 one variable.
