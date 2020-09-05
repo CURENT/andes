@@ -716,6 +716,7 @@ bus voltages, you can directly access the ``v`` field of that variable
 
 .. code:: python
 
+    >>> import numpy as np
     >>> voltages = np.array(ss.Bus.v.v)
 
 which stores a **copy** of the bus voltage values. Note that the first ``v``
