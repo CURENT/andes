@@ -863,6 +863,33 @@ Supported equation names include the following:
 
 For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.syms.g``.
 
+Finding Help
+------------
+
+General help
+............
+
+To find help on a Python class, method, or function, use the built-in ``help()`` function.
+For example, to check how the ``get`` method of ``GENROU`` should be called, do
+
+.. code:: python
+
+    help(ss.GENROU.get)
+
+In Jupyter notebook, this can be simplified into ``?ss.GENROU.get`` or ``ss.GENROU.get?``.
+
+Model docs
+..........
+
+Model docs can be shown by printing the return of ``doc()``.
+For example, to check the docs of ``GENCLS``, do
+
+.. code:: python
+
+    print(ss.GENCLS.doc())
+
+It is the same as calling ``andes doc GENCLS`` from the command line.
+
 Examples in Jupyter Notebook
 ----------------------------
 Congratulations! You have finished the ANDES tutorial.
