@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
+v1.1.3 (2020-09-05)
+```````````````````
+- Improved documentation.
+- Minor bug fixes.
+
 v1.1.2 (2020-09-03)
 ```````````````````
 - Patched time-domain for continuing simulation.
