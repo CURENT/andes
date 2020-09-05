@@ -696,6 +696,18 @@ For example, to plot all the generator speed, use
 
     >>> ss.TDS.plotter.plot(ss.GENROU.omega)
 
+.. note::
+
+    If you see the error
+
+        AttributeError: 'NoneType' object has no attribute 'plot'
+
+    You will need to manually load plotter with
+
+    .. code:: python
+
+        >>> ss.TDS.load_plotter()
+
 Optional indices is accepted to choose the specific elements to plot.
 It can be passed as a tuple to the ``a`` argument
 
