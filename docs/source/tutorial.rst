@@ -54,7 +54,8 @@ To show debugging outputs, use ``-v 10``.
 
 andes selftest
 --------------
-After installing ANDES, it is encouraged to use ``andes selftest`` to run tests and check the basic functionality.
+After installing ANDES, it is encouraged to use ``andes selftest`` from the command line
+to test functionality.
 It might take a minute to run the whole self-test suite.
 An example output looks like ::
 
