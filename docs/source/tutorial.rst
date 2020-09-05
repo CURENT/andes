@@ -420,6 +420,8 @@ optional arguments:
     -c, --tocsv                     convert npy output to csv
     ============================    ======================================================
 
+.. _andes_doc:
+
 andes doc
 ---------
 ``andes doc`` is a tool for quick lookup of model and routine documentation.
@@ -665,6 +667,89 @@ A few formatting arguments are supported:
 - ``grid = True`` to turn on grid display
 - ``greyscale = True`` to switch to greyscale
 - ``ylabel`` takes a string for the y-axis label
+
+Extracting Data
+---------------
+One can extract data from ANDES for custom plotting.
+Variable names can be extracted from the following list fields:
+
+Un-formatted names (non-LaTeX):
+
+- ``ss.dae.x_name``: state variable names
+- ``ss.dae.y_name``: algebraic variable names
+- ``ss.dae.xy_name``: state variable names followed by algebraic ones
+
+LaTeX-formatted names:
+
+- ``ss.dae.x_tex_name``: state variable names
+- ``ss.dae.y_tex_name``: algebraic variable names
+- ``ss.dae.xy_tex_name``: state variable names followed by algebraic ones
+
+These lists only contain the variable names used in the current analysis routine.
+If you only ran power flow, ``ss.dae.y_name`` will only contain the power flow
+algebraic variables, and ``ss.dae.x_name`` will likely be empty.
+After initializing time-domain simulation, these lists will be extended to include
+all variables used by TDS.
+
+In case you want to extract the discontinuous flags from TDS, you can
+set ``store_z`` to ``1`` in the config file under section ``[TDS]``.
+When enabled, discontinuous flag names will be populated at
+
+- ``ss.dae.z_name``: discontinuous flag names
+- ``ss.dae.z_tex_name``: LaTeX-formatted discontinuous flag names
+
+If not enabled, both will be an empty list.
+
+Power flow solutions
+....................
+The full power flow solutions are stored at ``ss.dae.xy`` after running
+power flow (and before initializing dynamic models).
+You can extract values from ``ss.dae.xy``, which corresponds to the names
+in ``ss.dae.xy_name`` or ``ss.dae.xy_tex_name``.
+
+If you want to extract variables from a particular model, for example,
+bus voltages, you can directly access the ``v`` field of that variable:
+
+    voltages = np.array(ss.Bus.v.v)
+
+which stores a **copy** of the bus voltage values. Note that the first ``v``
+is the voltage variable of ``Bus``, and the second ``v`` stands for *value*.
+It is important to make a copy by using ``np.array()`` to avoid accidental
+changes to the solutions.
+
+If you want to extract bus voltage phase angles, do
+
+    angle = np.array(ss.Bus.a.v)
+
+where ``a`` is the field name for voltage angle.
+
+To find out names of variables in a model, refer to andes_doc_.
+
+Time-domain data
+................
+
+Time-domain simulation data will be ready when simulation completes.
+It is stored in ``ss.dae.ts``, which has the following fields:
+
+- ``txyz``: a two-dimensional array. The first column is time stamps,
+  and the following are variables. Each row contains all variables
+  for that time step.
+- ``t``: all time stamps.
+- ``x``: all state variables (one column per variable).
+- ``y``: all algebraic variables (one column per variable).
+- ``z``: all discontinuous flags (if enabled, one column per flag).
+
+If you want the output in pandas DataFrame, you can call
+
+    ss.dae.ts.unpack(df=True)
+
+Dataframes are stored in the following fields of ``ss.dae.ts``:
+
+- ``df``: dataframe for states and algebraic variables
+- ``df``: dataframe for discontinuous flags (if enabled)
+
+For both dataframes, time is the index column, and each column correspond to
+one variable.
 
 Pretty Print of Equations
 ----------------------------------------
