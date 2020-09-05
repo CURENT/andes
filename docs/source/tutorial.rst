@@ -266,10 +266,10 @@ model names (without any space). For example,
 
 .. code:: bash
 
-    andes run wecc.raw -c -b Toggler
+    andes run kundur.raw -c -b Toggler
 
-will convert file ``wecc.raw`` into an ANDES xlsx file and append
-a template workbook for `Toggler` at the end.
+will convert file ``kundur.raw`` into an ANDES xlsx file (kundur.xlsx) and add
+a template workbook for `Toggler`.
 
 .. Warning::
     With ``--add-book``, the xlsx file will be overwritten.
@@ -596,6 +596,32 @@ Naming convention for the ``System`` attributes are as follows
 - Routine attributes share the same name as class names. For example, ``ss.PFlow`` and ``ss.TDS`` are the
   routine instances.
 - The numerical DAE instance is in lower case ``ss.dae``.
+
+To work with PSS/E inputs, refer to notebook `Example 2`_.
+
+.. _`Example 2`: https://github.com/cuihantao/andes/blob/master/examples/2.%20inspect_data.ipynb
+
+Output path
+...........
+A path for output files can be passed to ``andes.run`` through argument ``output_path``.
+For example,
+
+.. code:: python
+
+    >>> ss = andes.run('kundur_full.xlsx', output_path='outputs/')
+
+will put outputs into folder ``outputs`` relative to the current path.
+You can also supply an absolute path to ``output_path``.
+
+No output
+.........
+Outputs can be disabled by passing ``output_path=True`` to ``andes.run()``.
+This is useful when one wants to test code without looking at results.
+For example, do
+
+.. code:: python
+
+    >>> ss = andes.run('kundur_full.xlsx', no_output=True)
 
 Inspecting Parameter
 --------------------
