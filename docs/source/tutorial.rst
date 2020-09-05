@@ -849,7 +849,7 @@ equation or Jacobian name.
 
 .. Note ::
 
-    Pretty print only works for the particular System instance whose ``prepare()`` method is called.
+    Pretty print only works for the particular ``System`` instance whose ``prepare()`` method is called.
     In the above example, pretty print only works for ``ss`` after calling ``prepare()``.
 
 Supported equation names include the following:
