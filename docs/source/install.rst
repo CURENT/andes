@@ -5,6 +5,7 @@ Installation
 *************************
 
 ANDES can be installed in Python 3.6+.
+Please follow the installation guide carefully.
 
 Environment
 ===========
@@ -15,8 +16,11 @@ We recommend the Miniconda distribution that includes the conda package manager 
 Downloaded and install the latest Miniconda (x64, with Python 3)
 from https://conda.io/miniconda.html.
 
-Step 1: Open terminal (for Linux or maxOS) or `Anaconda Prompt` (for Windows, not the `cmd`
-program).
+Step 1: Open terminal (on Linux or maxOS) or `Anaconda Prompt` (on Windows, **not the cmd
+program!!**).
+Make sure you are in a conda environment - you should see ``(base)`` prepended to the
+command-line prompt, such as ``(base) C:\Users\user>``.
+
 Create a conda environment for ANDES (recommended)
 
 .. code:: bash
@@ -29,7 +33,8 @@ Activate the new environment with
 
      conda activate andes
 
-Environment activation needs to be executed every time a new Anaconda Prompt or shell is open.
+You will need to activate the ``andes`` environment every time in a new Anaconda Prompt or
+shell.
 
 Step 2: Add the ``conda-forge`` channel and set it as default
 
@@ -38,9 +43,11 @@ Step 2: Add the ``conda-forge`` channel and set it as default
      conda config --add channels conda-forge
      conda config --set channel_priority flexible
 
+If these steps complete without an error, continue to `Install Andes`_.
+
 Existing Python Environment (Advanced)
 --------------------------------------
-This is for advanced user only and is not recommended on Microsoft Windows.
+This is for advanced user only and is **not recommended on Microsoft Windows**.
 Please skip it if you have set up a Conda environment.
 
 Instead of using Conda, if you prefer an existing Python environment,
@@ -58,22 +65,32 @@ Install ANDES
 
 ANDES can be installed in the user mode and the development mode.
 
+- If you want to use ANDES without modifying the source code, install it in the `User Mode`_.
+- If you want to develop models or routine, install it in the `Development Mode`_.
+
 User Mode
 ---------
-If you want to use ANDES without modifying the source code, you can install it in the user mode.
-
 In the Anaconda environment, run
 
 .. code:: bash
 
     conda install andes
 
+You will be prompted to confirm the installation,
 
-Developer Mode (Recommended)
-----------------------------
-If you want to hack into the code and, for example, develop new models or routines, please install it in the
-development mode (recommended). The development mode has the same usage as the user mode.
-In addition, changes to the source code will be reflected immediately without having to re-install the package.
+This command installs ANDES into the active environment, which should be called ``andes`` if
+you followed all the above steps.
+
+.. note::
+    To use ``andes``, you will need to activate the ``andes`` environment every time in a new Anaconda Prompt or
+    shell.
+
+
+Development Mode
+----------------
+This is for users who want to hack into the code and, for example, develop new models or routines.
+The usage of ANDES is the same in development mode as in user mode.
+In addition, changes to source code will be reflected immediately without re-installation.
 
 Step 1: Get ANDES source code
 
@@ -88,8 +105,8 @@ In this way, you can easily update to the latest source code using ``git``.
 
 Alternatively, you can download the ANDES source code from
 https://github.com/cuihantao/andes and extract all files to the path of your choice.
-Although this will work, we don't recommend this method, since it is cumbersome
-to update the source code and push back changes.
+Although this will work, this is not recommended since tracking changes and pushing back code
+would be painful.
 
 Step 2: Install dependencies
 
@@ -110,8 +127,8 @@ Step 3: Install ANDES in the development mode using
 
 Note the dot at the end. Pip will take care of the rest.
 
-Update ANDES
-============
+Updating ANDES
+==============
 
 Regular ANDES updates will be pushed to both ``conda-forge`` and Python package index.
 It is recommended to use the latest version for bug fixes and new features.
