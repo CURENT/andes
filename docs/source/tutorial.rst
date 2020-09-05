@@ -22,16 +22,16 @@ ANDES is invoked from the command line using the command ``andes``.
 Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
 It prints out a preamble with version and environment information and help commands::
 
-        _           _         | Version 0.8.4
-       /_\  _ _  __| |___ ___ | Python 3.7.1 on Darwin, 04/07/2020 10:22:17 PM
+        _           _         | Version 1.1.2
+       /_\  _ _  __| |___ ___ | Python 3.7.6 on Linux, 09/05/2020 12:23:05 PM
       / _ \| ' \/ _` / -_|_-< |
      /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.
 
-    usage: andes [-h] [-v {10,20,30,40,50}]
-                 {run,plot,misc,prepare,doc,selftest} ...
+    usage: andes [-h] [-v {1,10,20,30,40,50}]
+                 {run,plot,doc,misc,prepare,selftest} ...
 
     positional arguments:
-      {run,plot,misc,prepare,doc,selftest}
+      {run,plot,doc,misc,prepare,selftest}
                             [run] run simulation routine; [plot] plot simulation
                             results; [doc] quick documentation; [prepare] run the
                             symbolic-to-numeric preparation; [misc] miscellaneous
@@ -39,7 +39,7 @@ It prints out a preamble with version and environment information and help comma
 
     optional arguments:
       -h, --help            show this help message and exit
-      -v {10,20,30,40,50}, --verbose {10,20,30,40,50}
+      -v {1,10,20,30,40,50}, --verbose {1,10,20,30,40,50}
                             Program logging level in 10-DEBUG, 20-INFO,
                             30-WARNING, 40-ERROR or 50-CRITICAL.
 
@@ -55,36 +55,14 @@ To show debugging outputs, use ``-v 10``.
 andes selftest
 --------------
 After installing ANDES, it is encouraged to use ``andes selftest`` to run tests and check the basic functionality.
-It might take a minute to run the whole self-test suite. Results are printed as the tests proceed. An example
-output looks like ::
-
-    ANDES 0.8.1 (Git commit id gc954fc1, Python 3.7.3 on Linux)
-    Session: hcui7, 03/22/2020 11:02:35 AM
-    This program comes with ABSOLUTELY NO WARRANTY.
+It might take a minute to run the whole self-test suite.
+An example output looks like ::
 
     test_docs (test_1st_system.TestCodegen) ... ok
     test_alter_param (test_case.Test5Bus) ... ok
-    test_as_df (test_case.Test5Bus) ... ok
-    test_cache_refresn (test_case.Test5Bus) ... ok
-    test_count (test_case.Test5Bus) ... ok
-    test_idx (test_case.Test5Bus) ... ok
-    test_init_order (test_case.Test5Bus) ... ok
-    test_names (test_case.Test5Bus) ... ok
-    test_pflow (test_case.Test5Bus) ... ok
-    test_pflow_reset (test_case.Test5Bus) ... ok
-    test_tds_init (test_case.Test5Bus) ... ok
-    test_eig_run (test_case.TestKundur2Area) ... ok
-    test_tds_run (test_case.TestKundur2Area) ... ok
-    test_npcc_raw (test_case.TestNPCCRAW) ... ok
-    test_npcc_raw_convert (test_case.TestNPCCRAW) ... ok
-    test_npcc_raw_tds (test_case.TestNPCCRAW) ... No dynamic component loaded.
-    ok
-    test_main_doc (test_cli.TestCLI) ... ok
-    test_misc (test_cli.TestCLI) ... ok
-    test_limiter (test_discrete.TestDiscrete) ... ok
-    test_sorted_limiter (test_discrete.TestDiscrete) ... ok
-    test_switcher (test_discrete.TestDiscrete) ... ok
-    test_tree (test_paths.TestPaths) ... ok
+    ...
+    ... (outputs are omitted)
+    ...
     test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
 
     ----------------------------------------------------------------------
@@ -184,10 +162,7 @@ To run the time domain simulation (TDS) for ``kundur_full.xlsx``, run
 
 The output looks like::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 10:35:37 PM
-
-    Parsing input file </Users/hcui7/repos/andes/tests/kundur_full.xlsx>
+    Parsing input file </Users/user/repos/andes/tests/kundur_full.xlsx>
     Input file kundur_full.xlsx parsed in 0.5425 second.
     -> Power flow calculation with Newton Raphson method:
     0: |F(x)| = 14.9283
@@ -196,7 +171,7 @@ The output looks like::
     3: |F(x)| = 0.00203827
     4: |F(x)| = 3.76414e-07
     Converged in 5 iterations in 0.0080 second.
-    Report saved to </Users/hcui7/repos/andes/tests/kundur_full_out.txt> in 0.0036 second.
+    Report saved to </Users/user/repos/andes/tests/kundur_full_out.txt> in 0.0036 second.
     -> Time Domain Simulation:
     Initialization tests passed.
     Initialization successful in 0.0152 second.
@@ -265,16 +240,13 @@ For example, to convert ``case5.m`` into the ``xlsx`` format, run
 
     andes run case5.m --convert xlsx
 
-The output will look like ::
+The output messages will look like ::
 
-    ANDES 0.6.8 (Git commit id 0ace2bc0, Python 3.7.6 on Darwin)
-    Session: hcui7, 02/09/2020 10:22:14 PM
-
-    Parsing input file </Users/hcui7/repos/andes/cases/matpower/case5.m>
+    Parsing input file </Users/user/repos/andes/cases/matpower/case5.m>
     CASE5  Power flow data for modified 5 bus, 5 gen case based on PJM 5-bus system
     Input file case5.m parsed in 0.0033 second.
-    xlsx file written to </Users/hcui7/repos/andes/cases/matpower/case5.xlsx>
-    Converted file /Users/hcui7/repos/andes/cases/matpower/case5.xlsx written in 0.5079 second.
+    xlsx file written to </Users/user/repos/andes/cases/matpower/case5.xlsx>
+    Converted file /Users/user/repos/andes/cases/matpower/case5.xlsx written in 0.5079 second.
     -> Single process finished in 0.8765 second.
 
 Note that ``--convert`` will only create sheets for existing models.
@@ -558,6 +530,8 @@ Import
 ------
 Like other Python libraries, ANDES can be imported into an interactive Python environment.
 
+.. code:: python
+
     >>> import andes
     >>> andes.config_logger()
 
@@ -566,9 +540,13 @@ Otherwise, information messages will be silenced, and only warnings and error wi
 
 To enable debug messages, use
 
+.. code:: python
+
     >>> andes.config_logger(stream_level=10)
 
 If you have not run ``andes prepare``, use the command once to generate code
+
+.. code:: python
 
     >>> andes.prepare()
 
@@ -579,12 +557,14 @@ Before running studies, a "System" object needs to be create to hold the system 
 The System object can be created by passing the path to the case file the entrypoint function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
 
+.. code:: python
+
     >>> ss = andes.run('kundur_full.xlsx')
 
 This function will parse the input file, run the power flow, and return the system as an object.
 Outputs will look like ::
 
-    Parsing input file </Users/hcui7/notebooks/kundur/kundur_full.xlsx>
+    Parsing input file </Users/user/notebooks/kundur/kundur_full.xlsx>
     Input file kundur_full.xlsx parsed in 0.4172 second.
     -> Power flow calculation with Newton Raphson method:
     0: |F(x)| = 14.9283
@@ -593,7 +573,7 @@ Outputs will look like ::
     3: |F(x)| = 0.00203827
     4: |F(x)| = 3.76414e-07
     Converged in 5 iterations in 0.0222 second.
-    Report saved to </Users/hcui7/notebooks/kundur_full_out.txt> in 0.0015 second.
+    Report saved to </Users/user/notebooks/kundur_full_out.txt> in 0.0015 second.
     -> Single process finished in 0.4677 second.
 
 In this example, ``ss`` is an instance of ``andes.System``.
@@ -611,7 +591,9 @@ Inspect Parameter
 Parameters for the loaded system can be easily inspected in Jupyter Notebook using Pandas.
 
 Input parameters for each model instance is in the ``cache.df_in`` attribute.
-For example, to view the input parameters for ``Bus``, use ::
+For example, to view the input parameters for ``Bus``, use
+
+.. code:: python
 
     >>> ss.Bus.cache.df_in
 
@@ -620,7 +602,9 @@ Parameter in the table is the same as the input file without per-unit conversion
 
 Parameters are converted to per unit values under system base.
 To view the per unit values, use the ``cache.df`` attribute.
-For example, to view the system-base per unit value of ``GENROU``, use ::
+For example, to view the system-base per unit value of ``GENROU``, use
+
+.. code:: python
 
     >>> ss.GENROU.cache.df
 
@@ -630,21 +614,38 @@ Running Studies
 Three routines are currently supported: PFlow, TDS and EIG.
 Each routine provides a ``run()`` method to execute.
 The System instance contains member attributes having the same names.
-For example, to run the time-domain simulation for ``ss``, use ::
+For example, to run the time-domain simulation for ``ss``, use
+
+.. code:: python
 
     >>> ss.TDS.run()
+
+Checking Exit Code
+------------------
+``andes.System`` contains field ``exit_code`` for checking if error
+occurred in run time.
+A normal completion without error should always have ``exit_code == 0``.
+One should read output messages carefully and check the exit code, which is
+particularly useful for batch simulations.
+
+Error may occur in any phase - data parsing, power flow, or simulation.
+To diagnose, split the simulation steps and check the outputs from each one.
 
 Plotting TDS Results
 --------------------
 TDS comes with a plotting utility for interactive usage.
 After running the simulation, a ``plotter`` attributed will be created for ``TDS``.
 To use the plotter, provide the attribute instance of the variable to plot.
-For example, to plot all the generator speed, use ::
+For example, to plot all the generator speed, use
+
+.. code:: python
 
     >>> ss.TDS.plotter.plot(ss.GENROU.omega)
 
 Optional indices is accepted to choose the specific elements to plot.
-It can be passed as a tuple to the ``a`` argument ::
+It can be passed as a tuple to the ``a`` argument
+
+.. code:: python
 
     >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ))
 
@@ -654,7 +655,9 @@ Scaling
 .......
 A lambda function can be passed to argument ``ycalc`` to scale the values.
 This is useful to convert a per-unit variable to nominal.
-For example, to plot generator speed in Hertz, use ::
+For example, to plot generator speed in Hertz, use
+
+.. code:: python
 
     >>> ss.TDS.plotter.plot(ss.GENROU.omega, a=(0, ),
                             ycalc=lambda x: 60*x,
@@ -671,19 +674,20 @@ A few formatting arguments are supported:
 Extracting Data
 ---------------
 One can extract data from ANDES for custom plotting.
-Variable names can be extracted from the following list fields:
+Variable names can be extracted from the following fields of
+``ss.dae``:
 
 Un-formatted names (non-LaTeX):
 
-- ``ss.dae.x_name``: state variable names
-- ``ss.dae.y_name``: algebraic variable names
-- ``ss.dae.xy_name``: state variable names followed by algebraic ones
+- ``x_name``: state variable names
+- ``y_name``: algebraic variable names
+- ``xy_name``: state variable names followed by algebraic ones
 
 LaTeX-formatted names:
 
-- ``ss.dae.x_tex_name``: state variable names
-- ``ss.dae.y_tex_name``: algebraic variable names
-- ``ss.dae.xy_tex_name``: state variable names followed by algebraic ones
+- ``x_tex_name``: state variable names
+- ``y_tex_name``: algebraic variable names
+- ``xy_tex_name``: state variable names followed by algebraic ones
 
 These lists only contain the variable names used in the current analysis routine.
 If you only ran power flow, ``ss.dae.y_name`` will only contain the power flow
@@ -698,7 +702,7 @@ When enabled, discontinuous flag names will be populated at
 - ``ss.dae.z_name``: discontinuous flag names
 - ``ss.dae.z_tex_name``: LaTeX-formatted discontinuous flag names
 
-If not enabled, both will be an empty list.
+If not enabled, both lists will be empty.
 
 Power flow solutions
 ....................
@@ -708,9 +712,11 @@ You can extract values from ``ss.dae.xy``, which corresponds to the names
 in ``ss.dae.xy_name`` or ``ss.dae.xy_tex_name``.
 
 If you want to extract variables from a particular model, for example,
-bus voltages, you can directly access the ``v`` field of that variable:
+bus voltages, you can directly access the ``v`` field of that variable
 
-    voltages = np.array(ss.Bus.v.v)
+.. code:: python
+
+    >>> voltages = np.array(ss.Bus.v.v)
 
 which stores a **copy** of the bus voltage values. Note that the first ``v``
 is the voltage variable of ``Bus``, and the second ``v`` stands for *value*.
@@ -719,7 +725,9 @@ changes to the solutions.
 
 If you want to extract bus voltage phase angles, do
 
-    angle = np.array(ss.Bus.a.v)
+.. code:: python
+
+    >>> angle = np.array(ss.Bus.a.v)
 
 where ``a`` is the field name for voltage angle.
 
@@ -755,19 +763,33 @@ Pretty Print of Equations
 ----------------------------------------
 Each ANDES models offers pretty print of :math:`\LaTeX`-formatted equations in the jupyter notebook environment.
 
-To use this feature, symbolic equations need to be generated in the current session using ::
+To use this feature, symbolic equations need to be generated in the current session using
+
+.. code:: python
 
     import andes
     ss = andes.System()
     ss.prepare()
 
-Or, more concisely, one can do ::
+Or, more concisely, one can do
+
+.. code:: python
 
     import andes
     ss = andes.prepare()
 
-This process may take several seconds to complete. Once done, equations can be viewed by accessing
-``ss.<ModelName>.syms.<PrintName>``, where ``<ModelName>`` is the model name and ``<PrintName>`` is the
+This process may take a few minutes to complete.
+To save time, you can selectively generate it only for interested models.
+For example, to generate for the classical generator model ``GENCLS``, do
+
+.. code:: python
+
+    import andes
+    ss = andes.System()
+    ss.GENROU.prepare()
+
+Once done, equations can be viewed by accessing ``ss.<ModelName>.syms.<PrintName>``,
+where ``<ModelName>`` is the model name, and ``<PrintName>`` is the
 equation or Jacobian name.
 
 .. Note ::
