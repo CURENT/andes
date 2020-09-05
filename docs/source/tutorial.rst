@@ -246,7 +246,7 @@ For example, to convert ``case5.m`` into the ``xlsx`` format, run
 
     andes run case5.m --convert xlsx
 
-The output messages will look like ::
+The output messages will look like
 
     Parsing input file </Users/user/repos/andes/cases/matpower/case5.m>
     CASE5  Power flow data for modified 5 bus, 5 gen case based on PJM 5-bus system
@@ -514,51 +514,56 @@ This section is a tutorial for using ANDES in an interactive environment.
 All interactive shells are supported, including Python shell, IPython, Jupyter Notebook and Jupyter Lab.
 The examples below uses Jupyter Notebook.
 
+.. note::
+
+    All following blocks starting with ``>>>`` are Python code.
+    They should be typed into a Python shell, IPython or Jupyter Notebook,
+    not a Anaconda Prompt or shell.
+
 Jupyter Notebook
 ----------------
-Jupyter notebook is used as an example. Jupyter notebook can be installed with
+Jupyter notebook is a convenient tool to run Python code and present results.
+Jupyter notebook can be installed with
 
 .. code:: bash
 
     conda install jupyter notebook
 
 After the installation, change directory to the folder that you wish to store notebooks,
-start the notebook with
+then start the notebook with
 
 .. code:: bash
 
     jupyter notebook
 
 A browser window should open automatically with the notebook browser loaded.
-To create a new notebook, use the "New" button at the top right corner.
+To create a new notebook, use the "New" button at the top-right corner.
 
 Import
 ------
-Like other Python libraries, ANDES can be imported into an interactive Python environment.
+Like other Python libraries, ANDES needs to be imported into an interactive Python environment.
 
 .. code:: python
 
     >>> import andes
-    >>> andes.config_logger()
+    >>> andes.main.config_logger()
 
-The ``config_logger`` is needed to print logging information in the current session.
-Otherwise, information messages will be silenced, and only warnings and error will be printed.
-
-To enable debug messages, use
+Verbosity
+---------
+If you are debugging ANDES, you can enable debug messages with
 
 .. code:: python
 
     >>> andes.config_logger(stream_level=10)
 
-If you have not run ``andes prepare``, use the command once to generate code
+The ``stream_level`` uses the same verbosity levels (see `Basic Usage`_) as for the command-line.
+If not explicitly enabled, the default level 20 (INFO) will apply.
 
-.. code:: python
+.. warning::
+    The verbosity level can only be set once. To set a different level, restart the Python kernel.
 
-    >>> andes.prepare()
-
-
-Create Test System
-------------------
+Making a System
+---------------
 Before running studies, a "System" object needs to be create to hold the system data.
 The System object can be created by passing the path to the case file the entrypoint function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
@@ -592,27 +597,42 @@ Naming convention for the ``System`` attributes are as follows
   routine instances.
 - The numerical DAE instance is in lower case ``ss.dae``.
 
-Inspect Parameter
+Inspecting Parameter
 --------------------
+
+DataFrame
+.........
 Parameters for the loaded system can be easily inspected in Jupyter Notebook using Pandas.
 
-Input parameters for each model instance is in the ``cache.df_in`` attribute.
+Input parameters for each model instance is returned by the ``as_df()`` function.
 For example, to view the input parameters for ``Bus``, use
 
 .. code:: python
 
-    >>> ss.Bus.cache.df_in
+    >>> ss.Bus.as_df()
 
 A table will be printed with the columns being each parameter and the rows being Bus instances.
 Parameter in the table is the same as the input file without per-unit conversion.
 
-Parameters are converted to per unit values under system base.
-To view the per unit values, use the ``cache.df`` attribute.
+Parameters have been converted to per unit values under system base.
+To view the per unit values, use the ``as_df_in()`` attribute.
 For example, to view the system-base per unit value of ``GENROU``, use
 
 .. code:: python
 
-    >>> ss.GENROU.cache.df
+    >>> ss.GENROU.as_df_in()
+
+Dict
+....
+In case you need the parameters in ``dict``, use ``as_dict()``.
+Values returned by ``as_dict()`` are system-base per unit values.
+To retrieve the input data, use ``as_dict(vin=True)``.
+
+For example, to retrieve the original input data of GENROU's, use
+
+.. code:: python
+
+    >>> ss.GENROU.as_dict(vin=True)
 
 Running Studies
 ---------------
