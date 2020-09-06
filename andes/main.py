@@ -547,9 +547,9 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     if len(cases) == 1:
         if ex_code == 0:
-            logger.info(f'-> Single process finished in {s0}.')
+            print(f'-> Single process finished in {s0}.')
         else:
-            logger.error(f'-> Single process exit with an error in {s0}.')
+            print(f'-> Single process exit with an error in {s0}.')
     elif len(cases) > 1:
         if ex_code == 0:
             print(f'-> Multiprocessing finished in {s0}.')
