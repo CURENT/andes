@@ -2116,6 +2116,17 @@ class PVD1Data(ModelData):
                             mandatory=True,
                             )
 
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
+
+        self.xc = NumParam(default=0.0, tex_name='x_c',
+                           info='coupling reactance',
+                           unit='p.u.',
+                           z=True,
+                           )
+
         self.igreg = IdxParam(model='Bus',
                               info='Remote bus idx for droop response, None for local',
                               )
@@ -2143,6 +2154,14 @@ class PVD1Data(ModelData):
                              info='Q-V droop characteristics',
                              power=True,
                              )
+
+        self.fdbd = NumParam(default=-0.01, tex_name='f_{dbd}',
+                             info='frequency deviation deadband',
+                             )
+
+        self.ddn = NumParam(default=0.0, tex_name='D_{dn}',
+                            info='Gain after f deadband',
+                            )
 
         self.ialim = NumParam(default=1.3, tex_name='I_{alim}',
                               info='Apparent power limit',
@@ -2225,14 +2244,6 @@ class PVD1Model(Model):
                           unit='rad.',
                           )
 
-        # initial Sn and powers from static generator
-        self.Sn = ExtParam(model='StaticGen',
-                           src='Sn',
-                           indexer=self.gen,
-                           tex_name='S_n',
-                           export=False,
-                           )
-
         self.p0 = ExtService(model='StaticGen',
                              src='p',
                              indexer=self.gen,
@@ -2248,6 +2259,8 @@ class PVD1Model(Model):
 class PVD1(PVD1Data, PVD1Model):
     """
     Distributed PV model. (TODO: work in progress)
+
+    Power rating specified in `Sn`.
 
     Reference: ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
     Available: https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
