@@ -39,6 +39,12 @@ class LineData(ModelData):
 
 
 class Line(LineData, Model):
+    """
+    AC transmission line model.
+
+    To reduce the number of variables, line injections are summed at bus equations
+    and are not stored. Current injections are not computed.
+    """
     def __init__(self, system=None, config=None):
         LineData.__init__(self)
         Model.__init__(self, system, config)
