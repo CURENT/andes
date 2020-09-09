@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
+v1.1.4
+``````````````````
+- Support `BackRef` for groups.
+
 v1.1.3 (2020-09-05)
 ```````````````````
 - Improved documentation.
