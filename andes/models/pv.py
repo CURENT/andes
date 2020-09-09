@@ -3,6 +3,7 @@ from collections import OrderedDict
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, DataParam
 from andes.core.var import Algeb, ExtAlgeb
+from andes.core.service import BackRef
 from andes.core.discrete import SortedLimiter
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,8 @@ class PVModel(Model):
                               pv2pq="z_{pv2pq}",
                               npv2pq="n_{pv2pq}"
                               )
+
+        self.SynGen = BackRef()
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')

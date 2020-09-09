@@ -22,6 +22,7 @@ class GENBaseData(ModelData):
                             mandatory=True,
                             )
         self.gen = IdxParam(info="static generator index",
+                            model='StaticGen',
                             mandatory=True,
                             )
         self.coi = IdxParam(model='COI',
