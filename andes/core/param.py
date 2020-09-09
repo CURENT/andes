@@ -13,7 +13,6 @@ from typing import Optional, Union, Callable, List, Tuple
 import math
 import logging
 
-from andes.models.group import GroupBase
 from andes.shared import np
 logger = logging.getLogger(__name__)
 
@@ -548,7 +547,7 @@ class ExtParam(NumParam):
         """
         self.parent_model = ext_model
 
-        if isinstance(ext_model, GroupBase):
+        if hasattr(ext_model, "_idx2model"):
             # copy properties from models in the group
 
             # TODO: the three `get` calls below is a bit inefficient - same loops for three times
