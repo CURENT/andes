@@ -1,11 +1,15 @@
 import logging
+import numpy as np
+from collections import OrderedDict
+from andes.core.param import IdxParam
+from andes.core.service import BackRef
+from typing import Iterable
+
 from andes.utils.func import list_flatten
-from andes.shared import np
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: offload metadata to YAML file and create classes on the fly.
 class GroupBase(object):
     """
     Base class for groups
@@ -15,8 +19,27 @@ class GroupBase(object):
         self.common_params = ['u', 'name']
         self.common_vars = []
 
-        self.models = {}  # model name, model instance
-        self._idx2model = {}  # element idx, model name
+        self.models = OrderedDict()  # model name, model instance
+        self._idx2model = OrderedDict()  # element idx, model name
+        self.uid = {}
+
+        self.services_ref = OrderedDict()  # BackRef
+        self.idx_params = OrderedDict()    # IdxParam
+
+    def __setattr__(self, key, value):
+        if hasattr(value, 'owner'):
+            if value.owner is None:
+                value.owner = self
+        if hasattr(value, 'name'):
+            if value.name is None:
+                value.name = key
+
+        if isinstance(value, IdxParam):
+            self.idx_params[key] = value
+        if isinstance(value, BackRef):
+            self.services_ref[key] = value
+
+        super().__setattr__(key, value)
 
     @property
     def class_name(self):
@@ -52,6 +75,7 @@ class GroupBase(object):
         if idx in self._idx2model:
             raise KeyError(f'Group <{self.class_name}> already contains <{repr(idx)}> from '
                            f'<{self._idx2model[idx].class_name}>')
+        self.uid[idx] = self.n
         self._idx2model[idx] = model
 
     def idx2model(self, idx, allow_none=False):
@@ -90,6 +114,33 @@ class GroupBase(object):
         if single:
             ret = ret[0]
         return ret
+
+    def idx2uid(self, idx):
+        """
+        Convert idx to the 0-indexed unique index.
+
+        Parameters
+        ----------
+        idx : array-like, numbers, or str
+            idx of devices
+
+        Returns
+        -------
+        list
+            A list containing the unique indices of the devices
+        """
+        if idx is None:
+            logger.debug("idx2uid returned None for idx None")
+            return None
+        if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
+            return self.uid[idx]
+        elif isinstance(idx, Iterable):
+            if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
+                idx = list_flatten(idx)
+            return [self.uid[i] if i is not None else None
+                    for i in idx]
+        else:
+            raise NotImplementedError(f'Unknown idx type {type(idx)}')
 
     def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
@@ -331,6 +382,8 @@ class StaticGen(GroupBase):
         self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
         self.common_vars.extend(('p', 'q', 'a', 'v'))
 
+        self.SynGen = BackRef()
+
 
 class ACLine(GroupBase):
     def __init__(self):
@@ -363,6 +416,9 @@ class SynGen(GroupBase):
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D'))
         self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf', 'XadIfd', 'vd', 'vq', 'Id', 'Iq',
                                  'a', 'v'))
+
+        self.TurbineGov = BackRef()
+        self.Exciter = BackRef()
 
 
 class RenGen(GroupBase):
@@ -458,6 +514,8 @@ class Exciter(GroupBase):
         super().__init__()
         self.common_params.extend(('syn',))
         self.common_vars.extend(('vout', 'vi',))
+
+        self.PSS = BackRef()
 
 
 class PSS(GroupBase):

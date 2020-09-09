@@ -22,6 +22,7 @@ from typing import List, Dict, Tuple, Union, Optional
 
 from andes import __version__
 from andes.models import non_jit
+from andes.models.group import GroupBase
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
@@ -1086,16 +1087,18 @@ class System(object):
         """
         Collect indices into `BackRef` for all models.
         """
-        for model in self.models.values():
+        models_and_groups = list(self.models.values()) + list(self.groups.values())
+
+        for model in models_and_groups:
             for ref in model.services_ref.values():
                 ref.v = [list() for _ in range(model.n)]
 
-        for model in self.models.values():
+        for model in models_and_groups:
             if model.n == 0:
                 continue
 
             for ref in model.idx_params.values():
-                if ref.model not in self.models:
+                if ref.model not in self.models and (ref.model not in self.groups):
                     continue
                 dest_model = self.__dict__[ref.model]
 
@@ -1107,13 +1110,20 @@ class System(object):
                         continue
 
                     for model_idx, dest_idx in zip(model.idx.v, ref.v):
-                        if dest_idx not in dest_model.idx.v:
-                            continue
-                        uid = dest_model.idx2uid(dest_idx)
-                        dest_model.services_ref[n].v[uid].append(model_idx)
+                        try:
+                            if dest_idx not in dest_model.idx.v:
+                                continue
+                            uid = dest_model.idx2uid(dest_idx)
+                            dest_model.services_ref[n].v[uid].append(model_idx)
+                        except AttributeError:
+                            if dest_idx not in dest_model._idx2model:
+                                continue
+                            uid = dest_model.idx2uid(dest_idx)
+                            dest_model.services_ref[n].v[uid].append(model_idx)
 
             # set model ``in_use`` flag
-            model.set_in_use()
+            if isinstance(model, Model):
+                model.set_in_use()
 
     def import_groups(self):
         """
@@ -1123,11 +1133,16 @@ class System(object):
         All groups will be stored to dictionary ``System.groups``.
         """
         module = importlib.import_module('andes.models.group')
+
         for m in inspect.getmembers(module, inspect.isclass):
-            name = m[0]
-            cls = m[1]
+
+            name, cls = m
             if name == 'GroupBase':
                 continue
+            elif not issubclass(cls, GroupBase):
+                # skip other imported classes such as `OrderedDict`
+                continue
+
             self.__dict__[name] = cls()
             self.groups[name] = self.__dict__[name]
 
