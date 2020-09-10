@@ -902,7 +902,7 @@ Examples
 
 TGOV1
 -----
-The TGOV1 turbine governor model is shown as a practical example using the library.
+The TGOV1_ turbine governor model is shown as a practical example using the library.
 
 .. image:: images/example-tgov1/tgov1.png
     :align: center
@@ -1009,7 +1009,7 @@ The complete code can be found in class ``TGOV1ModelAlt`` in
                     e_str='(LL_y+Dt*wd)-pout')
 
 
-Another implementation of ``TGOV1`` makes extensive use of the modeling blocks.
+Another implementation of TGOV1_ makes extensive use of the modeling blocks.
 The resulting code is more readable as follows.
 
 .. code:: python
@@ -1052,3 +1052,70 @@ The resulting code is more readable as follows.
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 The complete code can be found in class ``TGOV1Model`` in ``andes/models/governor.py``.
+
+IEEEST
+------
+In this example, we will explain step-by-step how IEEEST_ is programmed.
+The block diagram of IEEEST is given as follows.
+We recommend you to open up the source code in ``andes/models/pss.py`` and
+then continue reading.
+
+.. image:: images/diagrams/ieeest.png
+    :align: center
+
+First of all, modeling components are imported at the beginning.
+
+Next, ``PSSBaseData`` is defined to hold parameters shared by all PSSs.
+``PSSBaseData`` inherits from ``ModelData`` and calls the base constructor.
+There is only one field ``avr`` defined for the linked exciter idx.
+
+Then, ``IEEESTData`` defines the input parameters for IEEEST.
+Use ``IdxParam`` for fields that store idx-es of devices that IEEEST devices link to.
+Use ``NumParam`` for numerical parameters.
+
+Next, ``PSSBase`` is defined for the common (external) parameters, services and variables
+shared by all PSSs.
+The class and constructor signatures are
+
+.. code:: python
+
+    class PSSBase(Model):
+        def __init__(self, system, config):
+            super().__init__(system, config)
+
+``PSSBase`` inherits from ``Model`` and calls the base constructor.
+Note that the call to ``Model``'s constructor takes two positional arguments, ``system``
+and ``config`` for ``System`` and ``ModelConfig``.
+Next, the group is specified, and the model flags are set.
+
+.. code:: python
+
+        self.group = 'PSS'
+        self.flags.update({'tds': True})
+
+Next, ``Replace`` is used to replace input parameters that satisfy a lambda function
+with new values.
+
+.. code:: python
+        self.VCUr = Replace(self.VCU, lambda x: np.equal(x, 0.0), 999)
+        self.VCLr = Replace(self.VCL, lambda x: np.equal(x, 0.0), -999)
+
+The value replacement happens when ``VCUr`` and ``VCLr`` is first accessed.
+``Replace`` is executed in the model initialization phase (at the end of
+services update).
+
+Next, the indices of connected generators, buses, and bus frequency measurements
+are retrieved.
+Synchronous generator idx is retrieved with
+.. code:: python
+
+        self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
+                            info='Retrieved generator idx', dtype=str)
+
+Using the retrieved ``self.syn``, it retrieves the buses to which
+the generators are connected.
+
+.. code:: python
+        self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
+                            info='Retrieved bus idx', dtype=str, default=None,
+                            )

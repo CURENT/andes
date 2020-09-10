@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class PSSBaseData(ModelData):
     def __init__(self):
         super().__init__()
-        self.avr = IdxParam(info='Exciter idx', mandatory=True)
+        self.avr = IdxParam(info='Exciter idx', mandatory=True, model='Exciter')
 
 
 class IEEESTData(PSSBaseData):
@@ -55,7 +55,7 @@ class IEEESTData(PSSBaseData):
 
 class PSSBase(Model):
     """
-    PSS base model
+    PSS base model.
     """
 
     def __init__(self, system, config):
