@@ -68,3 +68,15 @@ class TestParamCalc(unittest.TestCase):
 
         self.pc = andes.core.service.ParamCalc(self.p1, self.p2, func=np.add)
         np.testing.assert_almost_equal(self.pc.v, np.array([3, 6.5, 6, 9]))
+
+
+class TestBackRef(unittest.TestCase):
+    def test_backref_ieee14(self):
+        ss = andes.load(andes.get_case("ieee14/ieee14_gentrip.xlsx"))
+
+        self.assertSequenceEqual(ss.Area.Bus.v[0], [1, 2, 3, 4, 5])
+        self.assertSequenceEqual(ss.Area.Bus.v[1], [6, 7, 8, 9, 10, 11, 12, 13, 14])
+
+        self.assertSequenceEqual(ss.StaticGen.SynGen.v[0], ['GENROU_2'])
+        self.assertSequenceEqual(ss.SynGen.TurbineGov.v[0], ['TGOV1_1'])
+
