@@ -1096,6 +1096,9 @@ class System(object):
         for model in models_and_groups:
             if model.n == 0:
                 continue
+            if not hasattr(model, "idx_params"):
+                # skip: group does not link to another group
+                continue
 
             for ref in model.idx_params.values():
                 if ref.model not in self.models and (ref.model not in self.groups):
