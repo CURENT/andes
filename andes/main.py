@@ -258,7 +258,11 @@ def print_license():
 
 def load(case, codegen=False, setup=True, **kwargs):
     """
-    Load a case and set up without running. Return a system
+    Load a case and set up a system without running routine.
+    Return a system.
+
+    Takes other kwargs recognizable by ``System``,
+    such as ``addfile``, ``input_path``, and ``no_putput``.
 
     Parameters
     ----------
@@ -273,9 +277,9 @@ def load(case, codegen=False, setup=True, **kwargs):
 
     Warnings
     -------
-    If one need to add devices beside these from the case
-    file, do ``setup=False`` and manually invoke ``setup()``
-    after adding all devices.
+    If one need to add devices in addition to these from the case
+    file, do ``setup=False`` and call ``System.add()`` to add devices.
+    When done, manually invoke ``setup()`` to set up the system.
     """
     system = System(case=case, **kwargs)
     if codegen:
