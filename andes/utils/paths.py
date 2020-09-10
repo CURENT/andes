@@ -109,7 +109,7 @@ def get_case(rpath):
     case_path = os.path.normpath(case_path)
 
     if not os.path.isfile(case_path):
-        raise FileNotFoundError(f'{rpath} does not exist.')
+        raise FileNotFoundError(f'"{rpath}" is not a valid relative path to a stock case.')
     return case_path
 
 
