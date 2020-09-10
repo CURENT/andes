@@ -79,4 +79,3 @@ class TestBackRef(unittest.TestCase):
 
         self.assertSequenceEqual(ss.StaticGen.SynGen.v[0], ['GENROU_2'])
         self.assertSequenceEqual(ss.SynGen.TurbineGov.v[0], ['TGOV1_1'])
-
