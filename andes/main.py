@@ -364,10 +364,13 @@ def _find_cases(filename, path):
 
     Parameters
     ----------
-    filename
+    filename : str
+        Test case file name
 
     Returns
     -------
+    list
+        A list of valid cases.
 
     """
     logger.info(f'Working directory: "{os.getcwd()}"')
@@ -561,7 +564,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         try:
             from IPython import embed
             # load plotter before entering IPython
-            system.TDS.load_plotter()
+            if system is None:
+                logger.warning("IPython: The System object has not been created.")
+                pass
+            elif isinstance(system, System):
+                logger.info("IPython: Access System object in variable `system`.")
+                system.TDS.load_plotter()
+            elif isinstance(system, list):
+                logger.warning("IPython: System objects stored in list `system`.\n"
+                               "Call `TDS.load_plotter()` on each for plotter.")
+
             embed()
         except ImportError:
             logger.warning("IPython import error. Installed?")
