@@ -16,4 +16,4 @@ class TestPaths(unittest.TestCase):
     def test_addfile_path(self):
         ieee14 = andes.get_case("ieee14/ieee14.raw")
         path, case = os.path.split(ieee14)
-        ss = andes.load('ieee14.raw', addfile='ieee14.dyr', input_path=path)
+        andes.load('ieee14.raw', addfile='ieee14.dyr', input_path=path)
