@@ -291,8 +291,9 @@ def load(case, codegen=False, setup=True, **kwargs):
     return system
 
 
-def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
-             add_book=None, codegen=False, remove_pycapsule=False, **kwargs):
+def run_case(case, *, routine='pflow', profile=False,
+             convert='', convert_all='', add_book=None,
+             codegen=False, remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -501,14 +502,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
-
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
+    # put `input_path` back to `kwargs`
+    kwargs['input_path'] = input_path
     cases = _find_cases(filename, input_path)
-    system = None
 
+    system = None
     ex_code = 0
+
     if len(filename) and not len(cases):
         ex_code = 1  # file specified but not found
 
