@@ -954,10 +954,13 @@ are the internal states, :math:`y_{LL}` is the lead-lag output, :math:`\omega` t
 :math:`\omega_d` the generator under-speed, :math:`P_d` the droop output, :math:`\tau_{m0}` the steady-state
 torque input, and :math:`P_{OUT}` the turbine output that will be summed at the generator.
 
-The code for the above model is demonstrated as follows. The complete code can be found in
-``andes/models/governor.py``. ::
+The code to describe the above model using equations is given below.
+The complete code can be found in class ``TGOV1ModelAlt`` in
+``andes/models/governor.py``.
 
-    def __init__(self):
+.. code:: python
+
+    def __init__(self, system, config):
       # 1. Declare parameters from case file inputs.
       self.R = NumParam(info='Turbine governor droop',
                         non_zero=True, ipower=True)
@@ -1005,3 +1008,47 @@ The code for the above model is demonstrated as follows. The complete code can b
                     v_str='tm0',
                     e_str='(LL_y+Dt*wd)-pout')
 
+
+Another implementation of ``TGOV1`` makes extensive use of the modeling blocks.
+The resulting code is more readable as follows.
+
+.. code:: python
+
+    def __init__(self, system, config):
+        TGBase.__init__(self, system, config)
+
+        self.gain = ConstService(v_str='u/R')
+
+        self.pref = Algeb(info='Reference power input',
+                          tex_name='P_{ref}',
+                          v_str='tm0 * R',
+                          e_str='tm0 * R - pref',
+                          )
+
+        self.wd = Algeb(info='Generator under speed',
+                        unit='p.u.',
+                        tex_name=r'\omega_{dev}',
+                        v_str='0',
+                        e_str='(wref - omega) - wd',
+                        )
+        self.pd = Algeb(info='Pref plus under speed times gain',
+                        unit='p.u.',
+                        tex_name="P_d",
+                        v_str='u * tm0',
+                        e_str='u*(wd + pref + paux) * gain - pd')
+
+        self.LAG = LagAntiWindup(u=self.pd,
+                                 K=1,
+                                 T=self.T1,
+                                 lower=self.VMIN,
+                                 upper=self.VMAX,
+                                 )
+
+        self.LL = LeadLag(u=self.LAG_y,
+                          T1=self.T2,
+                          T2=self.T3,
+                          )
+
+        self.pout.e_str = '(LL_y + Dt * wd) - pout'
+
+The complete code can be found in class ``TGOV1Model`` in ``andes/models/governor.py``.
