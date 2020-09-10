@@ -767,18 +767,19 @@ class Model(object):
         idx : str, int, float, array-like
             Indices of the devices
         attr : str, optional, default='v'
-            The attribute of the property to get.
+            The internal attribute of the property to get.
             ``v`` for values, ``a`` for address, and ``e`` for equation value.
         value : array-like
-            Values to be set
+            New values to be set
 
         Returns
         -------
-        None
-
+        bool
+            True when successful.
         """
         uid = self.idx2uid(idx)
         self.__dict__[src].__dict__[attr][uid] = value
+        return True
 
     def alter(self, src, idx, value):
         """

@@ -3,7 +3,7 @@ import numpy as np
 from collections import OrderedDict
 from andes.core.param import IdxParam
 from andes.core.service import BackRef
-from typing import Iterable
+from typing import Sized
 
 from andes.utils.func import list_flatten
 
@@ -47,14 +47,30 @@ class GroupBase(object):
 
     @property
     def n(self):
-        """Total number of devices"""
+        """
+        Total number of devices.
+        """
         return len(self._idx2model)
 
-    def add_model(self, name, instance):
+    def add_model(self, name: str, instance):
+        """
+        Add a Model instance to group.
+
+        Parameters
+        ----------
+        name : str
+            Model name
+        instance : Model
+            Model instance
+
+        Returns
+        -------
+        None
+        """
         if name not in self.models:
             self.models[name] = instance
         else:
-            raise KeyError(f"Duplicate model registration if {name}")
+            raise KeyError(f"{self.class_name}: Duplicate model registration of {name}")
 
     def add(self, idx, model):
         """
@@ -84,6 +100,8 @@ class GroupBase(object):
 
         Parameters
         ----------
+        idx : float, int, str, array-like
+            idx or idx-es of devices.
         allow_none : bool
            If True, return `None` at the positions where idx is not found.
 
@@ -134,7 +152,7 @@ class GroupBase(object):
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
             return self.uid[idx]
-        elif isinstance(idx, Iterable):
+        elif isinstance(idx, Sized):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
             return [self.uid[i] if i is not None else None
@@ -205,6 +223,30 @@ class GroupBase(object):
         return ret
 
     def set(self, src: str, idx, attr, value):
+        """
+        Set the value of an attribute of a group property.
+        Performs ``self.<src>.<attr>[idx] = value``.
+
+        The user needs to ensure that the property is shared by all models
+        in this group.
+
+        Parameters
+        ----------
+        src : str
+            Name of property.
+        idx : str, int, float, array-like
+            Indices of devices.
+        attr : str, optional, default='v'
+            The internal attribute of the property to get.
+            ``v`` for values, ``a`` for address, and ``e`` for equation value.
+        value : array-like
+            New values to be set
+
+        Returns
+        -------
+        bool
+            True when successful.
+        """
         self._check_src(src)
         self._check_idx(idx)
 
@@ -221,6 +263,8 @@ class GroupBase(object):
             uid = model.idx2uid(idx)
             instance = model.__dict__[src]
             instance.__dict__[attr][uid] = value[i]
+
+        return True
 
     def find_idx(self, keys, values, allow_none=False, default=None):
         """
@@ -260,16 +304,21 @@ class GroupBase(object):
 
     def get_next_idx(self, idx=None, model_name=None):
         """
-        Return the auto-generated next idx
+        Get a no-conflict idx for a new device.
+        Use the provided ``idx`` if no conflict.
+        Generate a new one otherwise.
 
         Parameters
         ----------
-        idx
-
-        model_name
+        idx : str or None
+            Proposed idx. If None, assign a new one.
+        model_name : str or None
+            Model name. If not, prepend the group name.
 
         Returns
         -------
+        str
+            New device name.
 
         """
         if model_name is None:
@@ -302,6 +351,9 @@ class GroupBase(object):
         return idx
 
     def doc(self, export='plain'):
+        """
+        Return the documentation of the group in a string.
+        """
         out = ''
         if export == 'rest':
             out += f'.. _{self.class_name}:\n\n'
@@ -338,6 +390,19 @@ class GroupBase(object):
         return out
 
     def doc_all(self, export='plain'):
+        """
+        Return documentation of the group and its models.
+
+        Parameters
+        ----------
+        export : 'plain' or 'rest'
+            Export format, plain-text or RestructuredText
+
+        Returns
+        -------
+        str
+
+        """
         out = self.doc(export=export)
         out += '\n'
         for instance in self.models.values():
@@ -347,6 +412,9 @@ class GroupBase(object):
 
 
 class Undefined(GroupBase):
+    """
+    The undefined group. Holds models with no ``group``.
+    """
     pass
 
 
