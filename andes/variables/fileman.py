@@ -1,6 +1,5 @@
 import logging
 import os
-
 logger = logging.getLogger(__name__)
 
 
@@ -27,36 +26,25 @@ class FileMan(object):
         self.add_format = None
 
         self.case = None
-        self.case_path = ''
         self.input_path = ''
         self.fullname = None
         self.name = None
         self.ext = None
         self.addfile = None
         self.pert = None
-
         self.output_path = None
-
         self.no_output = True
-        self.txt = None
-        self.dump = None
-        self.lst = None
-        self.eig = None
-        self.npy = None
-        self.npz = None
-        self.csv = None
-        self.mat = None
-        self.prof = None
-        self.prof_raw = None
 
+        self._out_fields = ['txt', 'dump', 'lst', 'eig', 'npy', 'npz', 'csv', 'mat', 'prof', 'prof_raw']
         self.set(case, **kwargs)
 
     def set(self, case=None, **kwargs):
-
+        """
+        Perform the input and output set up.
+        """
         input_format = kwargs.get('input_format')
         add_format = kwargs.get('add_format')
         input_path = kwargs.get('input_path')
-
         addfile = kwargs.get('addfile')
         no_output = kwargs.get('no_output')
         output_path = kwargs.get('output_path')
@@ -76,8 +64,7 @@ class FileMan(object):
         else:
             self.case = self.get_fullpath(case)
 
-        # update `self.case_path` if `case` contains a path
-        self.case_path, self.fullname = os.path.split(self.case)
+        _, self.fullname = os.path.split(self.case)
 
         # `self.name` is the name part without extension
         self.name, self.ext = os.path.splitext(self.fullname)
@@ -89,16 +76,8 @@ class FileMan(object):
 
         if no_output:
             self.no_output = True
-            self.txt = None
-            self.lst = None
-            self.eig = None
-            self.npy = None
-            self.npz = None
-            self.mat = None
-            self.csv = None
-            self.prof = None
-            self.prof_raw = None
-            self.dump = None
+            for item in self._out_fields:
+                self.__dict__[item] = None
         else:
             self.no_output = False
             if not output:
@@ -123,6 +102,12 @@ class FileMan(object):
         """
         Return the original full path if full path is specified, otherwise
         search in the case file path.
+
+        Parameters
+        ----------
+        fullname : str, optional
+            Full name of the file. If relative, prepend `input_path`.
+            Otherwise, leave it as is.
         """
         # if is an empty path
         if not fullname:
