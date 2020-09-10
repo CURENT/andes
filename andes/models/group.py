@@ -1,7 +1,6 @@
 import logging
 import numpy as np
 from collections import OrderedDict
-from andes.core.param import IdxParam
 from andes.core.service import BackRef
 from typing import Sized
 
