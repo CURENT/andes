@@ -31,13 +31,8 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names
+from andes.shared import np, spmatrix, jac_names, IP_ADD
 logger = logging.getLogger(__name__)
-
-if hasattr(spmatrix, 'ipadd'):
-    IP_ADD = True
-else:
-    IP_ADD = False
 
 
 class ExistingModels(object):
