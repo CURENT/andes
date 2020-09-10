@@ -1109,6 +1109,7 @@ services update).
 Next, the indices of connected generators, buses, and bus frequency measurements
 are retrieved.
 Synchronous generator idx is retrieved with
+
 .. code:: python
 
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
