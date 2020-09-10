@@ -3,7 +3,7 @@ from collections import OrderedDict
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
-from andes.shared import np, matrix, sparse, newton_krylov
+from andes.shared import np, matrix, sparse, newton_krylov, IP_ADD
 
 import logging
 logger = logging.getLogger(__name__)
@@ -118,11 +118,19 @@ class PFlow(BaseRoutine):
         """
         Output a summary for the PFlow routine.
         """
+        ipadd_status = 'CVXOPT normal (ipadd not available)'
+        if IP_ADD:
+            if self.system.config.ipadd:
+                ipadd_status = 'Fast in-place'
+            else:
+                ipadd_status = 'CVXOPT normal (ipadd disabled in config)'
+
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
-        out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
-        out.append(f'Method: {self.config.method} method')
+        out.append(f'{"Sparse solver":>16s}: {self.solver.sparselib.upper()}')
+        out.append(f'{"Solution method":>16s}: {self.config.method} method')
+        out.append(f'{"Sparse addition":>16s}: {ipadd_status}')
         out_str = '\n'.join(out)
         logger.info(out_str)
 

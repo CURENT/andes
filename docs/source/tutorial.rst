@@ -554,7 +554,7 @@ If you are debugging ANDES, you can enable debug messages with
 
 .. code:: python
 
-    >>> andes.config_logger(stream_level=10)
+    >>> andes.main.config_logger(stream_level=10)
 
 The ``stream_level`` uses the same verbosity levels (see `Basic Usage`_) as for the command-line.
 If not explicitly enabled, the default level 20 (INFO) will apply.

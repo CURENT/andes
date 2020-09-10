@@ -1,7 +1,6 @@
 import logging
 import numpy as np
 from collections import OrderedDict
-from andes.core.param import IdxParam
 from andes.core.service import BackRef
 from typing import Sized
 
@@ -19,12 +18,10 @@ class GroupBase(object):
         self.common_params = ['u', 'name']
         self.common_vars = []
 
-        self.models = OrderedDict()  # model name, model instance
-        self._idx2model = OrderedDict()  # element idx, model name
-        self.uid = {}
-
+        self.models = OrderedDict()        # model name: model instance
+        self._idx2model = OrderedDict()    # element idx: model instance
+        self.uid = {}                      # idx - group internal 0-indexed uid
         self.services_ref = OrderedDict()  # BackRef
-        self.idx_params = OrderedDict()    # IdxParam
 
     def __setattr__(self, key, value):
         if hasattr(value, 'owner'):
@@ -34,8 +31,6 @@ class GroupBase(object):
             if value.name is None:
                 value.name = key
 
-        if isinstance(value, IdxParam):
-            self.idx_params[key] = value
         if isinstance(value, BackRef):
             self.services_ref[key] = value
 

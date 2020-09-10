@@ -47,6 +47,10 @@ try:
 except ImportError:
     klu = None
 
+if hasattr(spmatrix, 'ipadd'):
+    IP_ADD = True
+else:
+    IP_ADD = False
 
 deg2rad = math.pi/180
 jac_names = ('fx', 'fy', 'gx', 'gy')

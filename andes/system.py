@@ -31,13 +31,8 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names
+from andes.shared import np, spmatrix, jac_names, IP_ADD
 logger = logging.getLogger(__name__)
-
-if hasattr(spmatrix, 'ipadd'):
-    IP_ADD = True
-else:
-    IP_ADD = False
 
 
 class ExistingModels(object):
@@ -1096,6 +1091,9 @@ class System(object):
         for model in models_and_groups:
             if model.n == 0:
                 continue
+            if not hasattr(model, "idx_params"):
+                # skip: group does not link to another group
+                continue
 
             for ref in model.idx_params.values():
                 if ref.model not in self.models and (ref.model not in self.groups):
@@ -1110,16 +1108,10 @@ class System(object):
                         continue
 
                     for model_idx, dest_idx in zip(model.idx.v, ref.v):
-                        try:
-                            if dest_idx not in dest_model.idx.v:
-                                continue
-                            uid = dest_model.idx2uid(dest_idx)
-                            dest_model.services_ref[n].v[uid].append(model_idx)
-                        except AttributeError:
-                            if dest_idx not in dest_model._idx2model:
-                                continue
-                            uid = dest_model.idx2uid(dest_idx)
-                            dest_model.services_ref[n].v[uid].append(model_idx)
+                        if dest_idx not in dest_model.uid:
+                            continue
+                        uid = dest_model.idx2uid(dest_idx)
+                        dest_model.services_ref[n].v[uid].append(model_idx)
 
             # set model ``in_use`` flag
             if isinstance(model, Model):

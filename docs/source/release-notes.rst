@@ -12,6 +12,9 @@ v1.1 Notes
 v1.1.4
 ``````````````````
 - Support `BackRef` for groups.
+- Added CLI ``--pool`` to use ``multiprocess.Pool`` for multiple cases.
+  When combined with ``--shell``, ``--pool`` returns ``System`` Objects
+  in the list ``system``.
 
 v1.1.3 (2020-09-05)
 ```````````````````

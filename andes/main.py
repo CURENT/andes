@@ -258,7 +258,11 @@ def print_license():
 
 def load(case, codegen=False, setup=True, **kwargs):
     """
-    Load a case and set up without running. Return a system
+    Load a case and set up a system without running routine.
+    Return a system.
+
+    Takes other kwargs recognizable by ``System``,
+    such as ``addfile``, ``input_path``, and ``no_putput``.
 
     Parameters
     ----------
@@ -273,9 +277,9 @@ def load(case, codegen=False, setup=True, **kwargs):
 
     Warnings
     -------
-    If one need to add devices beside these from the case
-    file, do ``setup=False`` and manually invoke ``setup()``
-    after adding all devices.
+    If one need to add devices in addition to these from the case
+    file, do ``setup=False`` and call ``System.add()`` to add devices.
+    When done, manually invoke ``setup()`` to set up the system.
     """
     system = System(case=case, **kwargs)
     if codegen:
@@ -291,8 +295,9 @@ def load(case, codegen=False, setup=True, **kwargs):
     return system
 
 
-def run_case(case, routine='pflow', profile=False, convert='', convert_all='',
-             add_book=None, codegen=False, remove_pycapsule=False, **kwargs):
+def run_case(case, *, routine='pflow', profile=False,
+             convert='', convert_all='', add_book=None,
+             codegen=False, remove_pycapsule=False, **kwargs):
     """
     Run a single simulation case.
     """
@@ -364,10 +369,13 @@ def _find_cases(filename, path):
 
     Parameters
     ----------
-    filename
+    filename : str
+        Test case file name
 
     Returns
     -------
+    list
+        A list of valid cases.
 
     """
     logger.info(f'Working directory: "{os.getcwd()}"')
@@ -498,14 +506,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
-
     if is_interactive():
         config_logger(file=False, stream_level=verbose)
 
+    # put `input_path` back to `kwargs`
+    kwargs['input_path'] = input_path
     cases = _find_cases(filename, input_path)
-    system = None
 
+    system = None
     ex_code = 0
+
     if len(filename) and not len(cases):
         ex_code = 1  # file specified but not found
 
@@ -561,7 +571,16 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         try:
             from IPython import embed
             # load plotter before entering IPython
-            system.TDS.load_plotter()
+            if system is None:
+                logger.warning("IPython: The System object has not been created.")
+                pass
+            elif isinstance(system, System):
+                logger.info("IPython: Access System object in variable `system`.")
+                system.TDS.load_plotter()
+            elif isinstance(system, list):
+                logger.warning("IPython: System objects stored in list `system`.\n"
+                               "Call `TDS.load_plotter()` on each for plotter.")
+
             embed()
         except ImportError:
             logger.warning("IPython import error. Installed?")
