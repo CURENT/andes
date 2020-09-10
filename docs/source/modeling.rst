@@ -1073,7 +1073,9 @@ Then, ``IEEESTData`` defines the input parameters for IEEEST.
 Use ``IdxParam`` for fields that store idx-es of devices that IEEEST devices link to.
 Use ``NumParam`` for numerical parameters.
 
-Next, ``PSSBase`` is defined for the common (external) parameters, services and variables
+PSSBase
+.......
+``PSSBase`` is defined for the common (external) parameters, services and variables
 shared by all PSSs.
 The class and constructor signatures are
 
@@ -1119,3 +1121,29 @@ the generators are connected.
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
                             info='Retrieved bus idx', dtype=str, default=None,
                             )
+
+PSS models support an optional remote bus specified through parameter ``busr``.
+When ``busr`` is ``None``, the generator-connected bus should be used.
+The following code uses ``DataSelect`` to select ``busr`` if available but falls
+back to ``bus`` otherwise.
+
+.. code:: python
+        self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
+
+Each PSS links to a bus frequency measurement device.
+If the input data does not specify one or the specified one does not exist,
+``DeviceFinder`` can find the correct measurement device for the bus
+where frequency measurements should be taken.
+
+.. code:: python
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+
+where ``busf`` is the optional frequency measurement device idx, ``buss`` is the bus idx
+for which measurement device needs to be found or created.
+
+Next, external parameters, variables and services are retrieved.
+Note that the PSS output ``vsout`` is pre-allocated but the equation string
+is left to specific models.
+
+IEEESTModel
+...........
