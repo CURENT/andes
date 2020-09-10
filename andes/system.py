@@ -1110,16 +1110,10 @@ class System(object):
                         continue
 
                     for model_idx, dest_idx in zip(model.idx.v, ref.v):
-                        try:
-                            if dest_idx not in dest_model.idx.v:
-                                continue
-                            uid = dest_model.idx2uid(dest_idx)
-                            dest_model.services_ref[n].v[uid].append(model_idx)
-                        except AttributeError:
-                            if dest_idx not in dest_model._idx2model:
-                                continue
-                            uid = dest_model.idx2uid(dest_idx)
-                            dest_model.services_ref[n].v[uid].append(model_idx)
+                        if dest_idx not in dest_model.uid:
+                            continue
+                        uid = dest_model.idx2uid(dest_idx)
+                        dest_model.services_ref[n].v[uid].append(model_idx)
 
             # set model ``in_use`` flag
             if isinstance(model, Model):
