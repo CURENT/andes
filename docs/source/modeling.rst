@@ -1365,8 +1365,8 @@ Assemble ``IEEESTData`` and ``IEEESTModel`` into ``IEEEST``:
 
 Locate ``andes/models/__init__.py``, in ``non_jit``,
 find the key ``pss`` and add ``IEEEST`` to its value list.
-Keys in this value are the file names under the folder ``models``,
-and values are class names to be imported.
+In ``non_jit``, keys are the ``.py`` file names under the folder ``models``,
+and values are class names to be imported from that file.
 If the file name does not exist as a key in ``non_jit``,
 add it after all prerequisite models.
 For example, PSS should be added after exciters (and generators,
