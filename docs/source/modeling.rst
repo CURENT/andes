@@ -1268,4 +1268,47 @@ For example, the input of ``F2`` is the output of ``F1``, given by ``F1_y``.
         self.vsout.e_str = 'OLIM_zi * Vss - vsout'
 
 In the end, the output equation is assigned to ``vsout.e_str``.
-It completes the programming of the IEEEST model.
+It completes the equations of the IEEEST model.
+
+Finalize
+````````
+Assemble ``IEEESTData`` and ``IEEESTModel`` into ``IEEEST``:
+
+.. code::python
+
+    class IEEEST(IEEESTData, IEEESTModel):
+        def __init__(self, system, config):
+            IEEESTData.__init__(self)
+            IEEESTModel.__init__(self, system, config)
+
+Locate ``andes/models/__init__.py``, in ``non_jit``,
+find the key ``pss`` and add ``IEEEST`` to its value list.
+Keys in this value are the file names under the folder ``models``,
+and values are class names to be imported.
+If the file name does not exist as a key in ``non_jit``,
+add it after all prerequisite models.
+For example, PSS should be added after exciters (and generators,
+of course).
+
+Finally, locate ``andes/models/group.py``, check if the class
+with ``PSS`` exist.
+It is the name of IEEEST's group name.
+If not, create one by inheriting from ``GroupBase``:
+
+.. code:: python
+
+    class PSS(GroupBase):
+        """Power system stabilizer group."""
+
+        def __init__(self):
+            super().__init__()
+            self.common_vars.extend(('vsout',))
+
+where we added ``vsout`` to the ``common_vars`` list.
+All models in the PSS group must have a variable named
+``vsout``, which is defined in ``PSSBase``.
+
+This completes the IEEEST model.
+In a model development process,
+use ``andes prepare`` to generate numerical code and
+start debugging.
