@@ -1082,7 +1082,7 @@ Use ``IdxParam`` for fields that store idx-es of devices that IEEEST devices lin
 Use ``NumParam`` for numerical parameters.
 
 PSSBase
-.......
+```````
 ``PSSBase`` is defined for the common (external) parameters, services and variables
 shared by all PSSs.
 The class and constructor signatures are
@@ -1107,6 +1107,7 @@ Next, ``Replace`` is used to replace input parameters that satisfy a lambda func
 with new values.
 
 .. code:: python
+
         self.VCUr = Replace(self.VCU, lambda x: np.equal(x, 0.0), 999)
         self.VCLr = Replace(self.VCL, lambda x: np.equal(x, 0.0), -999)
 
@@ -1127,6 +1128,7 @@ Using the retrieved ``self.syn``, it retrieves the buses to which
 the generators are connected.
 
 .. code:: python
+
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
                             info='Retrieved bus idx', dtype=str, default=None,
                             )
@@ -1137,6 +1139,7 @@ The following code uses ``DataSelect`` to select ``busr`` if available but falls
 back to ``bus`` otherwise.
 
 .. code:: python
+
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
 Each PSS links to a bus frequency measurement device.
@@ -1145,6 +1148,7 @@ If the input data does not specify one or the specified one does not exist,
 where frequency measurements should be taken.
 
 .. code:: python
+
         self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 
 where ``busf`` is the optional frequency measurement device idx, ``buss`` is the bus idx
@@ -1155,7 +1159,7 @@ Note that the PSS output ``vsout`` is pre-allocated but the equation string
 is left to specific models.
 
 IEEESTModel
-...........
+```````````
 ``IEEESTModel`` inherits from ``PSSBase`` and adds specific model components.
 After calling ``PSSBase``'s constructor, IEEESTModel adds config entries
 to allow specifying the model for frequency measurement, because
