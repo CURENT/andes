@@ -644,6 +644,12 @@ overwrite the voltage magnitude for Bus devices with the indices provided in `PV
 .. autoclass:: andes.core.var.ExtAlgeb
     :noindex:
 
+.. autoclass:: andes.core.var.AliasState
+    :noindex:
+
+.. autoclass:: andes.core.var.AliasAlgeb
+    :noindex:
+
 Services
 ========
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
@@ -656,7 +662,11 @@ base class of services is ``BaseService``, and the supported services are listed
 +==================+=================================================================+
 |  ConstService    | Internal service for constant values.                           |
 +------------------+-----------------------------------------------------------------+
+|  VarService      | Variable service updated at each iteration before equations.    |
++------------------+-----------------------------------------------------------------+
 |  ExtService      | External service for retrieving values from value providers.    |
++------------------+-----------------------------------------------------------------+
+|  PostInitService | Constant service evaluated after TDS initialization             |
 +------------------+-----------------------------------------------------------------+
 |  NumReduce       | The service type for reducing linear 2-D arrays into 1-D arrays |
 +------------------+-----------------------------------------------------------------+
@@ -664,6 +674,29 @@ base class of services is ``BaseService``, and the supported services are listed
 +------------------+-----------------------------------------------------------------+
 |  IdxRepeat       | The service type for repeating a 1-D list to linear 2-D list    |
 +------------------+-----------------------------------------------------------------+
+|  EventFlag       | Service type for flagging changes in inputs as an event         |
++------------------+-----------------------------------------------------------------+
+|  VarHold         | Hold input value when a hold signal is active                   |
++------------------+-----------------------------------------------------------------+
+|  ExtendedEvent   | Extend an event signal for a given period of time               |
++------------------+-----------------------------------------------------------------+
+|  DataSelect      | Select optional str data if provided or use the fallback        |
++------------------+-----------------------------------------------------------------+
+|  NumSelect       | Select optional numerical data if provided                      |
++------------------+-----------------------------------------------------------------+
+|  DeviceFinder    | Finds or creates devices linked to the given devices            |
++------------------+-----------------------------------------------------------------+
+|  BackRef         | Collects idx-es for the backward references                     |
++------------------+-----------------------------------------------------------------+
+|  RefFlatten      | Converts BackRef list of lists into a 1-D list                  |
++------------------+-----------------------------------------------------------------+
+|  InitChecker     | Checks initial values against typical values                    |
++------------------+-----------------------------------------------------------------+
+|  FlagValue       | Flags values that equals the given value                        |
++------------------+-----------------------------------------------------------------+
+|  Replace         | Replace values that returns True for the given lambda func      |
++------------------+-----------------------------------------------------------------+
+
 
 Internal Constants
 ---------------------------
@@ -683,6 +716,12 @@ where `u` is the online status parameter. The model can thus use `G` in subseque
 strings.
 
 .. autoclass:: andes.core.service.ConstService
+    :noindex:
+
+.. autoclass:: andes.core.service.VarService
+    :noindex:
+
+.. autoclass:: andes.core.service.PostInitService
     :noindex:
 
 External Constants
@@ -732,10 +771,52 @@ shape from a `BackRef`.
 .. autoclass:: andes.core.service.RefFlatten
     :noindex:
 
-Device Finder
+
+Value Manipulation
+------------------
+.. autoclass:: andes.core.service.Replace
+    :noindex:
+
+.. autoclass:: andes.core.service.FlagValue
+    :noindex:
+
+
+Idx and References
 -------------------------------------------
 .. autoclass:: andes.core.service.DeviceFinder
     :noindex:
+
+.. autoclass:: andes.core.service.BackRef
+    :noindex:
+
+.. autoclass:: andes.core.service.RefFlatten
+    :noindex:
+
+
+Events
+----------
+.. autoclass:: andes.core.service.EventFlag
+    :noindex:
+
+.. autoclass:: andes.core.service.ExtendedEvent
+    :noindex:
+
+
+Data Select
+-----------
+.. autoclass:: andes.core.service.DataSelect
+    :noindex:
+
+.. autoclass:: andes.core.service.NumSelect
+    :noindex:
+
+
+Miscellaneous
+-------------
+.. autoclass:: andes.core.service.InitChecker
+    :noindex:
+
+
 
 Discrete
 ========

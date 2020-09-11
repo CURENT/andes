@@ -456,6 +456,17 @@ class ExtAlgeb(ExtVar):
 
 
 class AliasAlgeb(ExtAlgeb):
+    """
+    Alias algebraic variable. Essentially ``ExtAlgeb`` that links to a a model's
+    own variable.
+
+    ``AliasAlgeb`` is useful when the final output of a model is from a block, but
+    the model must provide the final output in a pre-defined name.
+    Using ``AliasAlgeb``, A model can avoid adding an additional variable with a dummy equations.
+
+    Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final output.
+    When plotting from file, one need to look up the original variable name.
+    """
     def __init__(self, var, **kwargs):
         ExtAlgeb.__init__(self,
                           model=var.owner.class_name,
@@ -467,6 +478,11 @@ class AliasAlgeb(ExtAlgeb):
 
 
 class AliasState(ExtState):
+    """
+    Alias state variable.
+
+    Refer to the docs of ``AliasAlgeb``.
+    """
     def __init__(self, var, **kwargs):
         ExtState.__init__(self,
                           model=var.owner.class_name,
