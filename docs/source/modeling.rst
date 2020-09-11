@@ -1266,7 +1266,7 @@ the finite difference to approximate its derivative.
 
         self.dv = Derivative(self.v, tex_name='dV/dt', info='Finite difference of bus voltage')
 
-The we retrieve the coefficient to convert power from machine base to system base
+Then, we retrieve the coefficient to convert power from machine base to system base
 using ``ConstService``, given by Sb / Sn.
 This is needed for input mode 3, electric power in machine base.
 
@@ -1278,8 +1278,8 @@ This is needed for input mode 3, electric power in machine base.
 
 Note that the ``ExtService`` access the ``pu_coeff`` field of the ``M`` variables of
 synchronous generators.
-Since ``M`` is a power variable, ``M.pu_coeff`` stores the multiplication coefficient
-to convert power quantities from machine bases to the system base, which is Sb / Sn.
+Since ``M`` is a machine-base power quantity, ``M.pu_coeff`` stores the multiplication coefficient
+to convert each of them from machine bases to the system base, which is Sb / Sn.
 
 The input mode is parsed into boolean flags using ``Switcher``:
 
@@ -1292,7 +1292,7 @@ The input mode is parsed into boolean flags using ``Switcher``:
 where the input ``u`` is the MODE parameter, and ``options`` is a list of accepted
 values.
 ``Switcher`` boolean arrays ``s0``, ``s1``, ..., ``sN``, where ``N = len(options) - 1``.
-We added zero to options as a padding so that ``SW_s1`` corresponds to MODE 1.
+We added ``0`` to ``options`` for padding so that ``SW_s1`` corresponds to MODE 1.
 It improves the readability of the code as we will see next.
 
 The input signal ``sig`` is an algebraic variable given by
@@ -1311,12 +1311,13 @@ The input signal ``sig`` is an algebraic variable given by
 
 The ``v_str`` and ``e_str`` are separated from the constructor to improve readability.
 They construct piece-wise functions to select the correct initial values and equations
-for the selected mode.
+based on mode.
 For any variables in ``v_str``, they must be defined before ``sig`` so that
 they will be initialized ahead of ``sig``.
-Clearly, ``omega``, ``tm``, and ``v`` are defined in ``PSSBase`` and comes before ``sig``.
+Clearly, ``omega``, ``tm``, and ``v`` are defined in ``PSSBase`` and thus
+come before ``sig``.
 
-The following comes the most exciting part: modeling using transfer function blocks.
+The following comes the most effective part: modeling using transfer function blocks.
 We utilized several blocks to describe the model from the diagram.
 Note that the output of a block is always the block name followed by ``_y``.
 For example, the input of ``F2`` is the output of ``F1``, given by ``F1_y``.
@@ -1390,6 +1391,5 @@ All models in the PSS group must have a variable named
 ``vsout``, which is defined in ``PSSBase``.
 
 This completes the IEEEST model.
-In a model development process,
-use ``andes prepare`` to generate numerical code and
+When developing new models, use ``andes prepare`` to generate numerical code and
 start debugging.
