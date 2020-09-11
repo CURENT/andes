@@ -131,25 +131,25 @@ class IEEESTModel(PSSBase):
 
         self.busf.model = self.config.freq_model
 
-        self.dv = Derivative(self.v)
+        self.dv = Derivative(self.v, tex_name='dV/dt', info='Finite difference of bus voltage')
 
         self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
                                info='Machine base to sys base factor for power',
                                tex_name='(Sb/Sn)')
 
         self.SW = Switcher(u=self.MODE,
-                           options=[1, 2, 3, 4, 5, 6],
+                           options=[0, 1, 2, 3, 4, 5, 6],
                            )
 
         self.sig = Algeb(tex_name='S_{ig}',
                          info='Input signal',
                          )
 
-        self.sig.v_str = 'SW_s0*(omega-1) + SW_s1*0 + SW_s2*(tm0/SnSb) + ' \
-                         'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*0'
+        self.sig.v_str = 'SW_s1*(omega-1) + SW_s2*0 + SW_s3*(tm0/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*0'
 
-        self.sig.e_str = 'SW_s0*(omega-1) + SW_s1*(f-1) + SW_s2*(te/SnSb) + ' \
-                         'SW_s3*(tm-tm0) + SW_s4*v + SW_s5*dv_v - sig'
+        self.sig.e_str = 'SW_s1*(omega-1) + SW_s2*(f-1) + SW_s3*(te/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*dv_v - sig'
 
         self.F1 = Lag2ndOrd(u=self.sig, K=1, T1=self.A1, T2=self.A2)
 
@@ -179,12 +179,12 @@ class IEEEST(IEEESTData, IEEESTModel):
 
     Input signals (MODE):
 
-    1 (s0) - Rotor speed deviation (p.u.),
-    2 (s1) - Bus frequency deviation (*) (p.u.),
-    3 (s2) - Generator P electrical in Gen MVABase (p.u.),
-    4 (s3) - Generator accelerating power (p.u.),
-    5 (s4) - Bus voltage (p.u.),
-    6 (s5) - Derivative of p.u. bus voltage.
+    1 - Rotor speed deviation (p.u.),
+    2 - Bus frequency deviation (*) (p.u.),
+    3 - Generator P electrical in Gen MVABase (p.u.),
+    4 - Generator accelerating power (p.u.),
+    5 - Bus voltage (p.u.),
+    6 - Derivative of p.u. bus voltage.
 
     (*) Due to the frequency measurement implementation difference,
     mode 2 is likely to yield different results across software.
