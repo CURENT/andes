@@ -644,6 +644,12 @@ overwrite the voltage magnitude for Bus devices with the indices provided in `PV
 .. autoclass:: andes.core.var.ExtAlgeb
     :noindex:
 
+.. autoclass:: andes.core.var.AliasState
+    :noindex:
+
+.. autoclass:: andes.core.var.AliasAlgeb
+    :noindex:
+
 Services
 ========
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
