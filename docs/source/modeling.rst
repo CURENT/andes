@@ -909,10 +909,10 @@ We show two examples to demonstrate modeling from equations and modeling from
 control block diagrams.
 
 - The TGOV1 example shows code snippet for equation-based modeling
-and, as well as code for block-based modeling.
+  and, as well as code for block-based modeling.
 - The IEEEST example walks through the source code and explains the complete
-setup, including optional parameters, input selection, and manual per-unit
-conversion.
+  setup, including optional parameters, input selection, and manual per-unit
+  conversion.
 
 TGOV1
 -----
