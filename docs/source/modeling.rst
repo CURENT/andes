@@ -1087,7 +1087,7 @@ The class and constructor signatures are
 
 ``PSSBase`` inherits from ``Model`` and calls the base constructor.
 Note that the call to ``Model``'s constructor takes two positional arguments, ``system``
-and ``config`` for ``System`` and ``ModelConfig``.
+and ``config`` of types ``System`` and ``ModelConfig``.
 Next, the group is specified, and the model flags are set.
 
 .. code:: python
@@ -1148,3 +1148,112 @@ is left to specific models.
 
 IEEESTModel
 ...........
+``IEEESTModel`` inherits from ``PSSBase`` and adds specific model components.
+After calling ``PSSBase``'s constructor, IEEESTModel adds config entries
+to allow specifying the model for frequency measurement, because
+there may be multiple frequency measurement models in the future.
+
+.. code:: python
+
+        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
+        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+
+We set the chosen measurement model to ``busf`` so that ``DeviceFinder`` knows which
+model to use if it needs to create new devices.
+
+.. code:: python
+
+        self.busf.model = self.config.freq_model
+
+Next, because bus voltage is an algebraic variable, we use ``Derivative`` to calculate
+the finite difference to approximate its derivative.
+
+.. code:: python
+
+        self.dv = Derivative(self.v, tex_name='dV/dt', info='Finite difference of bus voltage')
+
+The we retrieve the coefficient to convert power from machine base to system base
+using ``ConstService``, given by Sb / Sn.
+This is needed for input mode 3, electric power in machine base.
+
+.. code:: python
+
+        self.SnSb = ExtService(model='SynGen', src='M', indexer=self.syn, attr='pu_coeff',
+                               info='Machine base to sys base factor for power',
+                               tex_name='(Sb/Sn)')
+
+Note that the ``ExtService`` access the ``pu_coeff`` field of the ``M`` variables of
+synchronous generators.
+Since ``M`` is a power variable, ``M.pu_coeff`` stores the multiplication coefficient
+to convert power quantities from machine bases to the system base, which is Sb / Sn.
+
+The input mode is parsed into boolean flags using ``Switcher``:
+
+.. code:: python
+
+        self.SW = Switcher(u=self.MODE,
+                           options=[0, 1, 2, 3, 4, 5, 6],
+                           )
+
+where the input ``u`` is the MODE parameter, and ``options`` is a list of accepted
+values.
+``Switcher`` boolean arrays ``s0``, ``s1``, ..., ``sN``, where ``N = len(options) - 1``.
+We added zero to options as a padding so that ``SW_s1`` corresponds to MODE 1.
+It improves the readability of the code as we will see next.
+
+The input signal ``sig`` is an algebraic variable given by
+
+.. code:: python
+
+        self.sig = Algeb(tex_name='S_{ig}',
+                         info='Input signal',
+                         )
+
+        self.sig.v_str = 'SW_s1*(omega-1) + SW_s2*0 + SW_s3*(tm0/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*0'
+
+        self.sig.e_str = 'SW_s1*(omega-1) + SW_s2*(f-1) + SW_s3*(te/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*dv_v - sig'
+
+The ``v_str`` and ``e_str`` are separated from the constructor to improve readability.
+They construct piece-wise functions to select the correct initial values and equations
+for the selected mode.
+For any variables in ``v_str``, they must be defined before ``sig`` so that
+they will be initialized ahead of ``sig``.
+Clearly, ``omega``, ``tm``, and ``v`` are defined in ``PSSBase`` and comes before ``sig``.
+
+The following comes the most exciting part: modeling using transfer function blocks.
+We utilized several blocks to describe the model from the diagram.
+Note that the output of a block is always the block name followed by ``_y``.
+For example, the input of ``F2`` is the output of ``F1``, given by ``F1_y``.
+
+.. code:: python
+
+        self.F1 = Lag2ndOrd(u=self.sig, K=1, T1=self.A1, T2=self.A2)
+
+        self.F2 = LeadLag2ndOrd(u=self.F1_y, T1=self.A3, T2=self.A4,
+                                T3=self.A5, T4=self.A6, zero_out=True)
+
+        self.LL1 = LeadLag(u=self.F2_y, T1=self.T1, T2=self.T2, zero_out=True)
+
+        self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4, zero_out=True)
+
+        self.Vks = Gain(u=self.LL2_y, K=self.KS)
+
+        self.WO = WashoutOrLag(u=self.Vks_y, T=self.T6, K=self.T5, name='WO',
+                               zero_out=True)  # WO_y == Vss
+
+        self.VLIM = Limiter(u=self.WO_y, lower=self.LSMIN, upper=self.LSMAX,
+                            info='Vss limiter')
+
+        self.Vss = Algeb(tex_name='V_{ss}', info='Voltage output before output limiter',
+                         e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')
+
+        self.OLIM = Limiter(u=self.v, lower=self.VCLr, upper=self.VCUr,
+                            info='output limiter')
+
+        self.vsout.e_str = 'OLIM_zi * Vss - vsout'
+
+In the end, the output equation is assigned to ``vsout.e_str``.
+It completes the programming of the IEEEST model.
