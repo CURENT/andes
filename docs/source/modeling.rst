@@ -1356,7 +1356,7 @@ Finalize
 ````````
 Assemble ``IEEESTData`` and ``IEEESTModel`` into ``IEEEST``:
 
-.. code::python
+.. code:: python
 
     class IEEEST(IEEESTData, IEEESTModel):
         def __init__(self, system, config):
