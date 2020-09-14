@@ -899,7 +899,19 @@ class REECA1Model(Model):
 class REECA1(REECA1Data, REECA1Model):
     """
     Renewable energy electrical control.
+
+    A message `RuntimeWarning: invalid value encountered in sqrt`
+    may show up following a bus-to-ground fault.
+    This warning can be safely ignored.
     """
+
+    #
+    # The RuntimeWarning is issued from ``numpy.select``
+    # from ``Piecewise``.
+    # ``select`` evaluates all possible outcomes, including the
+    # ``sqrt`` for negative values.
+    # However, these ``nan`` intermediate values are discarded.
+    #
 
     def __init__(self, system, config):
         REECA1Data.__init__(self)
