@@ -59,10 +59,10 @@ class FileMan(object):
         self.input_path = input_path if input_path is not None else ''
         self.output_path = output_path if output_path is not None else ''
 
-        if os.path.isabs(case):
-            self.case = case
-        else:
+        if os.path.isfile(self.get_fullpath(case)):
             self.case = self.get_fullpath(case)
+        else:
+            self.case = case
 
         _, self.fullname = os.path.split(self.case)
 
