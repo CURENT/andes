@@ -73,6 +73,9 @@ class Line(LineData, Model):
         self.ghk = ConstService(tex_name='g_{hk}')
         self.bhk = ConstService(tex_name='b_{hk}')
 
+        self.itap = ConstService(tex_name='1/t_{ap}')
+        self.itap2 = ConstService(tex_name='1/t_{ap}^2')
+
         self.gh.v_str = 'g1 + 0.5 * g'
         self.bh.v_str = 'b1 + 0.5 * b'
         self.gk.v_str = 'g2 + 0.5 * g'
@@ -85,18 +88,21 @@ class Line(LineData, Model):
         self.ghk.v_str = 're(yhk)'
         self.bhk.v_str = 'im(yhk)'
 
-        self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk) / tap ** 2  - \
-                              v1 * v2 * (ghk * cos(a1 - a2 - phi) + \
-                                         bhk * sin(a1 - a2 - phi)) / tap)'
+        self.itap.v_str = '1/tap'
+        self.itap2.v_str = '1/tap/tap'
 
-        self.v1.e_str = 'u * (-v1 ** 2 * (bh + bhk) / tap ** 2 - \
+        self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk) * itap2  - \
+                              v1 * v2 * (ghk * cos(a1 - a2 - phi) + \
+                                         bhk * sin(a1 - a2 - phi)) * itap)'
+
+        self.v1.e_str = 'u * (-v1 ** 2 * (bh + bhk) * itap2 - \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) - \
-                                         bhk * cos(a1 - a2 - phi)) / tap)'
+                                         bhk * cos(a1 - a2 - phi)) * itap)'
 
         self.a2.e_str = 'u * (v2 ** 2 * (gh + ghk) - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) - \
-                                         bhk * sin(a1 - a2 - phi)) / tap)'
+                                         bhk * sin(a1 - a2 - phi)) * itap)'
 
         self.v2.e_str = 'u * (-v2 ** 2 * (bh + bhk) + \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) + \
-                                         bhk * cos(a1 - a2 - phi)) / tap)'
+                                         bhk * cos(a1 - a2 - phi)) * itap)'
