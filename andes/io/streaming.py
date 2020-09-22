@@ -41,6 +41,9 @@ class Streaming(object):
             self.dimec.join(config.dime_name)
             logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful.")
             return True
+        except NameError:
+            logger.warning('Dime not installed. Set System config `dime_enabled` to `0` to suppress warning.')
+            self.system.config.dime_enabled = False
 
         except FileNotFoundError:
             logger.warning(f'Dime sever not found at "{config.dime_address}" over {config.dime_protocol}.')
