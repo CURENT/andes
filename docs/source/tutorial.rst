@@ -59,9 +59,9 @@ To show debugging outputs, use ``-v 10``.
 
 andes selftest
 --------------
-After installing ANDES, it is encouraged to use ``andes selftest`` from the command line
+After installation, it is encouraged to use ``andes selftest`` from the command line
 to test functionality.
-It might take a minute to run the whole self-test suite.
+It might take a minute to run the full self-test suite.
 An example output looks like ::
 
     test_docs (test_1st_system.TestCodegen) ... ok
@@ -76,11 +76,12 @@ An example output looks like ::
 
     OK
 
-Test cases can grow, and there could be more cases than above. Make sure that all tests have passed.
+There may be more cases than what is shown above. Make sure that all tests have passed.
 
 .. warning ::
     ANDES is getting updates frequently. After updating your copy, please run
-    ``andes selftest`` to confirm the functionality. The command also makes sure the generated code is up to date.
+    ``andes selftest`` to confirm the functionality.
+    The command also makes sure the generated code is up to date.
     See `andes prepare`_ for more details on automatic code generation.
 
 andes prepare
@@ -89,19 +90,19 @@ andes prepare
 
 The symbolically defined models in ANDES need to be generated into numerical code for simulation.
 The code generation can be manually called with ``andes prepare``.
-Generated code are stored in folder ``.andes/calls.pkl`` in your home directory.
+Generated code are stored in the folder ``.andes/calls.pkl`` in your home directory.
 In addition, ``andes selftest`` implicitly calls the code generation.
 If you are using ANDES as a package in the user mode, you won't need to call it again.
 
 For developers, ``andes prepare`` needs to be called immediately following any model equation
 modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
 
-Option ``-q`` or ``--quick`` can be used to speed up the code generation.
+Option ``-q`` or ``--quick`` (enabled by default) can be used to speed up the code generation.
 It skips the generation of :math:`\LaTeX`-formatted equations, which are only used in documentation and the interactive
 mode.
 
 Option ``-i`` or ``--incremental`` can be used to further speed up the code generation during model development.
-``andes prepare -qi`` only generates code for models with modified equations.
+``andes prepare -i`` only generates code for models with modified equations.
 
 andes run
 -------------

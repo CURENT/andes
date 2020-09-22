@@ -15,6 +15,7 @@ v1.1.4
 - Added CLI ``--pool`` to use ``multiprocess.Pool`` for multiple cases.
   When combined with ``--shell``, ``--pool`` returns ``System`` Objects
   in the list ``system``.
+- Fixed bugs and improved manual.
 
 v1.1.3 (2020-09-05)
 ```````````````````
