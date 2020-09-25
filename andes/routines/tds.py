@@ -69,11 +69,11 @@ class TDS(BaseRoutine):
             self.config.qrt = system.options.get('qrt')
         if system.options.get('kqrt') is not None:
             self.config.kqrt = system.options.get('kqrt')
-        
+
         # if data is from a CSV file instead of simulation
         self.from_csv = system.options.get('from_csv')
         self.data_csv = None
-        self.k_csv = 0    # row number 
+        self.k_csv = 0    # row number
 
         # to be computed
         self.deltat = 0
@@ -160,7 +160,7 @@ class TDS(BaseRoutine):
         if system.config.dime_enabled:
             if system.streaming.dimec is None:
                 system.streaming.connect()
-        
+
         # send out system data using DiME
         self.streaming_init()
         self.streaming_step()
@@ -267,7 +267,7 @@ class TDS(BaseRoutine):
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
-            
+
             step_status = False
             # call the stepping method of the integration method (or data replay)
             if self.data_csv is None:
@@ -489,7 +489,7 @@ class TDS(BaseRoutine):
         self.last_converged = self.converged
 
         return self.converged
-    
+
     def _csv_step(self):
         """
         Fetch data for the next step from ``data_csv``.
@@ -567,7 +567,7 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
-        
+
         if self.data_csv is not None:
             if self.k_csv + 1 < self.data_csv.shape[0]:
                 self.k_csv += 1
@@ -797,7 +797,7 @@ class TDS(BaseRoutine):
             self.callpert = getattr(module, 'pert')
             logger.info(f'Perturbation file "{system.files.pert}" loaded.')
             return True
-    
+
     def _load_csv(self, csv_file):
         """
         Load simulation data from CSV file and return a numpy array.
