@@ -62,6 +62,7 @@ def create_parser():
     run.add_argument('--flat', action='store_true', help='Run no-disturbance (flat) simulation')
     run.add_argument('--pool', action='store_true', help='Start multiprocess with Pool '
                                                          'and return a list of Systems')
+    run.add_argument('--from-csv', help='Use data from a CSV file instead of from simulation')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '

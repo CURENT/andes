@@ -3,6 +3,7 @@ import os
 import time
 import importlib
 from collections import OrderedDict
+import pandas as pd
 
 from andes.routines.base import BaseRoutine
 from andes.utils.misc import elapsed, is_notebook, is_interactive
@@ -68,6 +69,11 @@ class TDS(BaseRoutine):
             self.config.qrt = system.options.get('qrt')
         if system.options.get('kqrt') is not None:
             self.config.kqrt = system.options.get('kqrt')
+        
+        # if data is from a CSV file instead of simulation
+        self.from_csv = system.options.get('from_csv')
+        self.data_csv = None
+        self.k_csv = 0    # row number 
 
         # to be computed
         self.deltat = 0
@@ -132,19 +138,29 @@ class TDS(BaseRoutine):
         system.vars_to_models()
 
         system.init(system.exist.tds, routine='tds')
-        system.store_switch_times(system.exist.tds)
+
+        # only store switch times when not replaying CSV data
+        if self.data_csv is None:
+            system.store_switch_times(system.exist.tds)
 
         # Build mass matrix into `self.Teye`
         self.Teye = spdiag(system.dae.Tf.tolist())
         self.qg = np.zeros(system.dae.n + system.dae.m)
 
+        # test if residuals are close enough to zero
         self.initialized = self.test_init()
+
+        # discard initialized values and use that from CSV if provided
+        if self.data_csv is not None:
+            system.dae.x[:] = self.data_csv[0, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            system.vars_to_models()
 
         # connect to dime server
         if system.config.dime_enabled:
             if system.streaming.dimec is None:
                 system.streaming.connect()
-
+        
         # send out system data using DiME
         self.streaming_init()
         self.streaming_step()
@@ -165,24 +181,29 @@ class TDS(BaseRoutine):
 
     def summary(self):
         """
-        Print out a summary to logger.info.
+        Print out a summary of TDS options to logger.info.
 
         Returns
         -------
-
+        None
         """
         out = list()
         out.append('')
         out.append('-> Time Domain Simulation Summary:')
-        out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
-        out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} sec.')
-        if self.config.fixt == 1:
-            msg = f'Fixed step size: h={1000 * self.config.tstep:.4g} msec.'
-            if self.config.shrinkt == 1:
-                msg += ', shrink if not converged'
-            out.append(msg)
+
+        if self.data_csv is not None:
+            out.append(f'Loaded data from CSV file "{self.from_csv}".')
+            out.append('Replaying from CSV data.')
         else:
-            out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g} msec.')
+            out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
+            out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} sec.')
+            if self.config.fixt == 1:
+                msg = f'Fixed step size: h={1000 * self.config.tstep:.4g} msec.'
+                if self.config.shrinkt == 1:
+                    msg += ', shrink if not converged'
+                out.append(msg)
+            else:
+                out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g} msec.')
 
         out_str = '\n'.join(out)
         logger.info(out_str)
@@ -214,6 +235,10 @@ class TDS(BaseRoutine):
             system.exit_code += 1
             return succeed
 
+        # load from csv is provided
+        if self.from_csv is not None:
+            self.data_csv = self._load_csv(self.from_csv)
+
         if no_summary is False:
             self.summary()
 
@@ -239,8 +264,14 @@ class TDS(BaseRoutine):
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
             if self.callpert is not None:
                 self.callpert(dae.t, system)
+            
+            step_status = False
+            if self.data_csv is None:
+                step_status = self._itm_step()  # compute for the current step
+            else:
+                step_status = self._csv_step()
 
-            if self._itm_step():  # simulate the current step
+            if step_status:
                 # store values
                 dae.ts.store_txyz(dae.t.tolist(),
                                   dae.xy,
@@ -412,6 +443,7 @@ class TDS(BaseRoutine):
             # store `inc` to self for debugging
             self.inc = inc
 
+            # synchronize solutions to model internal storage
             system.vars_to_models()
 
             # calculate correction
@@ -453,10 +485,28 @@ class TDS(BaseRoutine):
         self.last_converged = self.converged
 
         return self.converged
+    
+    def _csv_step(self):
+        """
+        Fetch data for the next step from ``data_csv``.
+        """
+        system = self.system
+        if self.data_csv is not None:
+            system.dae.x[:] = self.data_csv[0, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            system.vars_to_models()
+
+        self.converged = True
+        return self.converged
 
     def calc_h(self, resume=False):
         """
         Calculate the time step size during the TDS.
+
+        Parameters
+        ----------
+        resume : bool
+            If True, calculate the initial step size.
 
         Notes
         -----
@@ -554,6 +604,10 @@ class TDS(BaseRoutine):
                 logger.warning('Fixed time step is smaller than the estimated minimum.')
 
         self.h = self.deltat
+
+        if self.data_csv is not None:
+            self.h = self.data_csv[1, 0] - self.data_csv[0, 0]
+
         return self.h
 
     def load_plotter(self):
@@ -727,6 +781,17 @@ class TDS(BaseRoutine):
             self.callpert = getattr(module, 'pert')
             logger.info(f'Perturbation file "{system.files.pert}" loaded.')
             return True
+    
+    def _load_csv(self, csv_file):
+        if csv_file is None:
+            return None
+
+        df = pd.read_csv(csv_file)
+
+        # TODO: make sure there is no `nan` in the numpy array
+
+        # make sure it contains more than two rows
+        return df.to_numpy()
 
     def _debug_g(self, y_idx):
         """
