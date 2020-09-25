@@ -194,6 +194,7 @@ class TDS(BaseRoutine):
         if self.data_csv is not None:
             out.append(f'Loaded data from CSV file "{self.from_csv}".')
             out.append('Replaying from CSV data.')
+            out.append(f'Replay time: {self.system.dae.t}-{self.config.tf} sec.')
         else:
             out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
             out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} sec.')
@@ -214,7 +215,9 @@ class TDS(BaseRoutine):
 
     def run(self, no_pbar=False, no_summary=False, **kwargs):
         """
-        Run the implicit numerical integration for TDS.
+        Run time-domain simulation using numerical integration.
+
+        The default method is the Implicit Trapezoidal Method (ITM).
 
         Parameters
         ----------
@@ -266,6 +269,7 @@ class TDS(BaseRoutine):
                 self.callpert(dae.t, system)
             
             step_status = False
+            # call the stepping method of the integration method (or data replay)
             if self.data_csv is None:
                 step_status = self._itm_step()  # compute for the current step
             else:
@@ -492,8 +496,8 @@ class TDS(BaseRoutine):
         """
         system = self.system
         if self.data_csv is not None:
-            system.dae.x[:] = self.data_csv[0, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
         self.converged = True
@@ -563,6 +567,13 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
+        
+        if self.data_csv is not None:
+            if self.k_csv + 1 < self.data_csv.shape[0]:
+                self.k_csv += 1
+                self.h = self.data_csv[self.k_csv, 0] - system.dae.t
+            else:
+                self.h = 0
 
         return self.h
 
@@ -605,8 +616,13 @@ class TDS(BaseRoutine):
 
         self.h = self.deltat
 
+        # if from CSV, determine `h` from data
         if self.data_csv is not None:
-            self.h = self.data_csv[1, 0] - self.data_csv[0, 0]
+            if self.data_csv.shape[0] > 1:
+                self.h = self.data_csv[1, 0] - self.data_csv[0, 0]
+            else:
+                logger.warning("CSV data does not contain more than one time step.")
+                self.h = 0
 
         return self.h
 
@@ -783,15 +799,29 @@ class TDS(BaseRoutine):
             return True
     
     def _load_csv(self, csv_file):
+        """
+        Load simulation data from CSV file and return a numpy array.
+        """
         if csv_file is None:
             return None
 
         df = pd.read_csv(csv_file)
 
-        # TODO: make sure there is no `nan` in the numpy array
+        if df.isnull().values.any():
+            raise ValueError("CSV file contains missing values. Please check data consistency.")
 
-        # make sure it contains more than two rows
-        return df.to_numpy()
+        data = df.to_numpy()
+
+        if data.ndim != 2:
+            raise ValueError("Data from CSV is not 2-dimentional (time versus variable)")
+        if data.shape[0] < 2:
+            logger.warning("CSV data does not contain more than one time step.")
+
+        # set start and end times from data
+        self.config.t0 = data[0, 0]
+        self.config.tf = data[-1, 0]
+
+        return data
 
     def _debug_g(self, y_idx):
         """
