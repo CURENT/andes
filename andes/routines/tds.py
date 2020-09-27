@@ -83,16 +83,16 @@ class TDS(BaseRoutine):
         self.next_pc = 0
         self.Teye = None
         self.qg = np.array([])
-        self.tol_zero = self.config.tol / 100
+        self.tol_zero = self.config.tol / 1000
 
         # internal status
         self.converged = False
-        self.last_converged = False
-        self.busted = False
+        self.last_converged = False   # True if the previous step converged
+        self.busted = False           # True if in a non-recoverable error state
         self.err_msg = ''
         self.niter = 0
-        self._switch_idx = 0  # index into `System.switch_times`
-        self._last_switch_t = -999  # the last critical time
+        self._switch_idx = 0          # index into `System.switch_times`
+        self._last_switch_t = -999    # the last critical time
         self.custom_event = False
         self.mis = 1
         self.pbar = None
@@ -101,7 +101,7 @@ class TDS(BaseRoutine):
         self.plt = None
         self.initialized = False
         self.qrt_start = None
-        self.headroom = None
+        self.headroom = 0.0
 
     def init(self):
         """
@@ -128,7 +128,7 @@ class TDS(BaseRoutine):
 
         # Note:
         #   calling `set_address` on `system.exist.pflow_tds` will point all variables
-        #   to the new array after extending `dae.y`
+        #   to the new array after extending `dae.y`.
         system.set_address(models=system.exist.pflow_tds)
         system.set_dae_names(models=system.exist.tds)
 
@@ -156,7 +156,7 @@ class TDS(BaseRoutine):
             system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
-        # connect to dime server
+        # connect to data streaming server
         if system.config.dime_enabled:
             if system.streaming.dimec is None:
                 system.streaming.connect()
@@ -317,13 +317,12 @@ class TDS(BaseRoutine):
                     break
 
         self.pbar.close()
-        delattr(self, 'pbar')  # removed `pbar` so that System object can be dilled
+        delattr(self, 'pbar')  # removed `pbar` so that System object can be serialized
 
         if self.busted:
             logger.error(self.err_msg)
             logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
             system.exit_code += 1
-
         elif system.dae.t == self.config.tf:
             succeed = True   # success flag
             system.exit_code += 0
@@ -419,12 +418,13 @@ class TDS(BaseRoutine):
                 for key, _, eqval in item.x_set:
                     np.put(self.qg, key, eqval)
 
-            # set the algebraic residuals
+            # set or scale the algebraic residuals
             if self.config.g_scale == 1:
                 self.qg[dae.n:] = self.h * dae.g
             else:
                 self.qg[dae.n:] = dae.g
 
+            # calculate variable corrections
             if not self.config.linsolve:
                 inc = self.solver.solve(self.Ac, matrix(self.qg))
             else:
@@ -444,13 +444,12 @@ class TDS(BaseRoutine):
             dae.x -= inc[:dae.n].ravel()
             dae.y -= inc[dae.n: dae.n + dae.m].ravel()
 
-            # store `inc` to self for debugging
-            self.inc = inc
-
             # synchronize solutions to model internal storage
             system.vars_to_models()
 
-            # calculate correction
+            # store `inc` to self for debugging
+            self.inc = inc
+
             mis = np.max(np.abs(inc))
             # store initial maximum mismatch
             if self.niter == 0:
@@ -464,15 +463,14 @@ class TDS(BaseRoutine):
                 break
             # non-convergence cases
             if self.niter > self.config.max_iter:
-                tqdm.write(f'* Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}, '
-                           f'h={self.h:.6f}, max inc={mis:.4g} ')
+                tqdm.write(f'* Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}s, '
+                           f'h={self.h:.6f}s, max inc={mis:.4g} ')
 
                 # debug helpers
                 g_max = np.argmax(abs(dae.g))
                 inc_max = np.argmax(abs(inc))
                 self._debug_g(g_max)
                 self._debug_ac(inc_max)
-
                 break
 
             if mis > 1e6 and (mis > 1e6 * self.mis):
@@ -709,16 +707,16 @@ class TDS(BaseRoutine):
         Time is approximated with a tolerance of 1e-8.
         """
         ret = False
-
         system = self.system
 
         # refresh switch times if enabled
         if self.config.refresh_event:
             system.store_switch_times(system.exist.pflow_tds)
 
-        if self._switch_idx < system.n_switches:  # not all events have exhausted
+        # if not all events have been processed
+        if self._switch_idx < system.n_switches:
 
-            # exactly at the event time (controlled by the stepping algorithm
+            # if the current time is close enough to the next event time
             if np.isclose(system.dae.t, system.switch_times[self._switch_idx]):
 
                 # `_last_switch_t` is used by the Jacobian updater
@@ -727,12 +725,13 @@ class TDS(BaseRoutine):
                 # only call `switch_action` on the models that defined the time
                 system.switch_action(system.switch_dict[self._last_switch_t])
 
-                # progressing `_switch_idx` avoids calling the same event if time gets stuck
+                # progress `_switch_idx` to avoid calling the same event if time gets stuck
                 self._switch_idx += 1
                 system.vars_to_models()
 
                 ret = True
 
+        # if a `custom_event` flag is set (without a specific callback)
         if self.custom_event is True:
             system.switch_action(system.exist.pflow_tds)
             self._last_switch_t = system.dae.t.tolist()
@@ -929,7 +928,7 @@ class TDS(BaseRoutine):
 
     def streaming_step(self):
         """
-        Sync, handle and streaming for each integration step
+        Sync, handle and streaming for each integration step.
 
         Returns
         -------
