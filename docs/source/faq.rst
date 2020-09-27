@@ -4,6 +4,24 @@
 Frequently Asked Questions
 **************************
 
+General
+=======
+
+Q: What is the Hybrid Symbolic-Numeric Framework in ANDES?
+
+A: It is a modeling and simulation framework that uses symbolic computation for descriptive
+modeling and code generation for fast numerical simulation.
+The goal of the framework is to reduce the programming efforts associated with implementing
+complex models and automate the research workflow of modeling, simulation, and documentation.
+
+The framework reduces the modeling efforts from two aspects:
+(1) allowing modeling by typing in equations, and (2) allowing modeling using modularized
+control blocks and discontinuous components.
+One only needs to describe the model using equations and blocks without having to write the
+numerical code to implement the computation.
+The framework automatically generate symbolic expressions, computes partial derivatives,
+and generates vectorized numerical code.
+
 Modeling
 ========
 
