@@ -813,12 +813,12 @@ class REECA1Model(Model):
         Ipmax2sq = '(Imax**2 - IqHL_y**2)'
 
         # `Ipmax20`-squared (non-negative)
-        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((0, {Ipmax2sq0} <= 0.0), ({Ipmax2sq0}, True))',
-                                        tex_name='I_{pmax20,nn}^2',
-                                        )
+        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((1e-2, {Ipmax2sq0} < 0.01), ({Ipmax2sq0}, True))',
+                                      tex_name='I_{pmax20,nn}^2',
+                                      )
 
-        self.Ipmax2sq = Algeb(v_str=Ipmax2sq0,
-                              e_str=f'Piecewise((1e-2, {Ipmax2sq} <= 0.0), ({Ipmax2sq}, True))- Ipmax2sq',
+        self.Ipmax2sq = Algeb(v_str='Ipmax2sq0',
+                              e_str=f'Piecewise((1e-2, {Ipmax2sq} <= 0.01), ({Ipmax2sq}, True))- Ipmax2sq',
                               tex_name='I_{pmax2}^2',
                               )
 
@@ -846,13 +846,13 @@ class REECA1Model(Model):
 
         Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'  # initialization equation by using `Ipcmd0`
 
-        Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
+        Iqmax2 = f'Piecewise((0.01, {Iqmax2sq} < 0.01), ({Iqmax2sq}, True))'
 
-        Iqmax20 = f'Piecewise((0, {Iqmax2sq0} <= 0.0), (sqrt({Iqmax2sq0}), True))'
+        Iqmax20 = f'Piecewise((0.01, {Iqmax2sq0} < 0.01), ({Iqmax2sq0}, True))'
 
-        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax2})'
+        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax2}))'
 
-        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax20})'
+        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax20}))'
 
         self.Iqmax = Algeb(v_str=f'{Iqmax0}',
                            e_str=f'{Iqmax} - Iqmax',
