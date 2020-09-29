@@ -1611,8 +1611,10 @@ class Model(object):
         if self.flags.jited is True:
             return
 
-        self.calls.f = numba.jit(self.calls.f)
-        self.calls.g = numba.jit(self.calls.g)
+        use_parallel = self.system.config.numba_parallel
+
+        self.calls.f = numba.jit(self.calls.f, parallel=use_parallel)
+        self.calls.g = numba.jit(self.calls.g, parallel=use_parallel)
         self.flags.jited = True
 
 
