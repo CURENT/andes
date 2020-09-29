@@ -1600,7 +1600,7 @@ class Model(object):
         This feature is experimental and does not guarantee a speed up.
         In fact, the program will likely end up slower due to compilation.
         """
-        if self.system.config.numba is False:
+        if self.system.config.numba != 1:
             return
 
         try:
