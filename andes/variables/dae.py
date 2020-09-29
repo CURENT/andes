@@ -165,6 +165,8 @@ class DAE(object):
 
         self.triplets = JacTriplet()
 
+        self.tpl = dict()  # sparsity templates with constants
+
     def clear_ts(self):
         self.ts = DAETimeSeries(self)
 
@@ -201,12 +203,27 @@ class DAE(object):
         """
         self.triplets.clear_ijv()
 
-    def restore_sparse(self):
+    def restore_sparse(self, names=None):
         """
-        Restore all sparse arrays to shape with non-zero constants
+        Restore all sparse matrices to the sparsity pattern
+        filled with zeros (for variable Jacobian elements)
+        and non-zero constants.
+
+        Parameters
+        ----------
+        names : None or list
+            List of Jacobian names to restore sparsity pattern
         """
-        for jname in jac_names:
-            self.build_pattern(jname)
+        if names is None:
+            names = jac_names
+        elif isinstance(names, str):
+            names = [names]
+
+        for name in names:
+            self.__dict__[name] = spmatrix(self.tpl[name].V,
+                                           self.tpl[name].I,
+                                           self.tpl[name].J,
+                                           self.tpl[name].size, 'd')
 
     def reset(self):
         """
@@ -281,15 +298,16 @@ class DAE(object):
         name : name
             jac name
         """
-        # TODO: benchmark which is faster: building a new one or setting in-place
         try:
-            self.__dict__[name] = spmatrix(self.triplets.vjac[name],
-                                           self.triplets.ijac[name],
-                                           self.triplets.jjac[name],
-                                           self.get_size(name), 'd')
+            self.tpl[name] = spmatrix(self.triplets.vjac[name],
+                                      self.triplets.ijac[name],
+                                      self.triplets.jjac[name],
+                                      self.get_size(name), 'd')
         except TypeError as e:
             logger.error("Your new model might have accessed an Algeb using ExtState, or vice versa.")
             raise e
+
+        self.restore_sparse(name)
 
     def _compare_pattern(self, name):
         """
