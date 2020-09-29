@@ -281,6 +281,7 @@ class DAE(object):
         name : name
             jac name
         """
+        # TODO: benchmark which is faster: building a new one or setting in-place
         try:
             self.__dict__[name] = spmatrix(self.triplets.vjac[name],
                                            self.triplets.ijac[name],
