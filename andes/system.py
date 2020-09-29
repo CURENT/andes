@@ -115,6 +115,7 @@ class System(object):
                                      ('mva', 100),
                                      ('store_z', 0),
                                      ('ipadd', 1),
+                                     ('numba', 0),
                                      ('diag_eps', 1e-8),
                                      ('warn_limits', 1),
                                      ('warn_abnormal', 1),
@@ -127,9 +128,10 @@ class System(object):
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
                               mva='system base MVA',
-                              diag_eps='small value for Jacobian diagonals',
                               store_z='store limiter status in TDS output',
-                              ipadd='Use spmatrix.ipadd if available',
+                              ipadd='use spmatrix.ipadd if available',
+                              numba='use numba for JIT compilation',
+                              diag_eps='small value for Jacobian diagonals',
                               warn_limits='warn variables initialized at limits',
                               warn_abnormal='warn initialization out of normal values',
                               )
@@ -138,6 +140,7 @@ class System(object):
                               mva="float",
                               store_z=(0, 1),
                               ipadd=(0, 1),
+                              numba=(0, 1),
                               warn_limits=(0, 1),
                               warn_abnormal=(0, 1),
                               )

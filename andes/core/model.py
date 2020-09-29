@@ -1125,6 +1125,7 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
+        self.numba_jitify()
         self.s_update()  # this includes ConstService and VarService
 
         # find out if variables need to be initialized for `routine`
@@ -1585,6 +1586,34 @@ class Model(object):
         if self.system.config.warn_abnormal:
             for name, item in self.services_icheck.items():
                 item.check()
+
+    def numba_jitify(self):
+        """
+        Optionally convert `self.calls.f` and `self.calls.g` to
+        JIT compiled functions.
+
+        This function can be turned on by setting
+        ``System.config.numba`` to ``1``.
+
+        Warning
+        -------
+        This feature is experimental and does not guarantee a speed up.
+        In fact, the program will likely end up slower due to compilation.
+        """
+        if self.system.config.numba is False:
+            return
+
+        try:
+            import numba
+        except ImportError:
+            return
+
+        if self.flags.jited is True:
+            return
+
+        self.calls.f = numba.jit(self.calls.f)
+        self.calls.g = numba.jit(self.calls.g)
+        self.flags.jited = True
 
 
 class SymProcessor(object):

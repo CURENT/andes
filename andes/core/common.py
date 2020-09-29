@@ -39,6 +39,8 @@ class ModelFlags(object):
         True if the model defines `s_numeric`
     sv_num : bool
         True if the model defines `s_numeric_var`
+    jited : bool
+        True if numba JIT code is generated
     """
 
     def __init__(self, collate=False, pflow=False, tds=False,
@@ -61,6 +63,7 @@ class ModelFlags(object):
         self.sys_base = False
         self.address = False
         self.initialized = False
+        self.jited = False
 
     def update(self, dct):
         self.__dict__.update(dct)
