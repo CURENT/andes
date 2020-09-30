@@ -34,7 +34,6 @@ class TimeCodeGen:
 
 class TimePFlow:
     def setup(self):
-        ss = andes.main.System()
         cases = 'kundur/kundur_full.xlsx'
         path, _ = os.path.split(__file__)
         path = os.path.join(path, '../../andes/cases/')
