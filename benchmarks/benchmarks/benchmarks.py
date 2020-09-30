@@ -6,8 +6,35 @@ import andes
 import andes.io.xlsx
 
 
+def prep():
+    ss = andes.System()
+    try:
+        try:
+            try:
+                ss.prepare(incremental=True)
+                return
+            except TypeError:
+                pass
+            ss.prepare(incremental=True, quick=True)
+            return
+        except TypeError:
+            pass
+        ss.prepare(quick=True)
+        return
+    except TypeError:
+        pass
+
+    ss.prepare()
+
+
+class TimeCodeGen:
+    def time_codegen(self):
+        prep()
+
+
 class TimePFlow:
     def setup(self):
+        ss = andes.main.System()
         cases = 'kundur/kundur_full.xlsx'
         path, _ = os.path.split(__file__)
         path = os.path.join(path, '../../andes/cases/')
