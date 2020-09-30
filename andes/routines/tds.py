@@ -252,7 +252,7 @@ class TDS(BaseRoutine):
             resume = True
             self._calc_h_first()
 
-        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
+        self.pbar = tqdm(total=100, ncols=70, unit='%', disable=no_pbar)
 
         if resume:
             perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)
