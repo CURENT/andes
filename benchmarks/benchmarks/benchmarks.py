@@ -3,10 +3,28 @@
 
 import os
 import andes
-import andes.io.xlsx
+import andes.io
+
+def base_path():
+    path, _ = os.path.split(__file__)
+    return os.path.join(path, '../../andes/cases/')
+
+
+def load_system(case_path):
+    """
+    Load a test case and return an ``andes.system.System`` object
+    """
+    ss = andes.system.System(case_path)
+    ss.undill()
+    andes.io.parse(ss)
+    ss.setup()
+    ss.files.no_output = True
+    ss.TDS.config.tol = 1e-6
+    return ss
 
 
 def prep():
+    """Generate numerical code"""
     ss = andes.System()
     try:
         try:
@@ -28,38 +46,46 @@ def prep():
 
 
 class TimeCodeGen:
-    def time_codegen(self):
+    def setup(self):
         prep()
+
+    def time_codegen(self):
+        pass
 
 
 class TimePFlow:
     def setup(self):
-        cases = 'kundur/kundur_full.xlsx'
-        path, _ = os.path.split(__file__)
-        path = os.path.join(path, '../../andes/cases/')
+        case = "kundur/kundur_full.xlsx"
+        self.ss = load_system(os.path.join(base_path(), case))
 
-        self.ss = andes.main.System()
-        self.ss.undill()
-        andes.io.xlsx.read(self.ss, os.path.join(path, cases))
-        self.ss.setup()
-        self.ss.files.no_output = True
+    def time_kundur_power_flow(self):
+        self.ss.PFlow.run()
 
-    def time_power_flow(self):
+
+class TimePFlowMPC:
+    def setup(self):
+        case = "../../../matpower/data/case9241pegase.m"
+        self.ss = load_system(os.path.join(base_path(), case))
+
+    def time_9241_power_flow(self):
         self.ss.PFlow.run()
 
 
 class TimeTDS:
     def setup(self):
-        cases = 'kundur/kundur_full.xlsx'
-        path, _ = os.path.split(__file__)
-        path = os.path.join(path, '../../andes/cases/')
-
-        self.ss = andes.main.System()
-        self.ss.undill()
-        andes.io.xlsx.read(self.ss, os.path.join(path, cases))
-        self.ss.setup()
-        self.ss.files.no_output = True
+        case = "kundur/kundur_full.xlsx"
+        self.ss = load_system(os.path.join(base_path(), case))
         self.ss.PFlow.run()
 
-    def time_time_domain(self):
+    def time_kundur_time_domain(self):
+        self.ss.TDS.run()
+
+
+class TimeTDSAW:
+    def setup(self):
+        case = "kundur/kundur_aw.xlsx"
+        self.ss = load_system(os.path.join(base_path(), case))
+        self.ss.PFlow.run()
+
+    def time_kundur_time_domain_aw(self):
         self.ss.TDS.run()
