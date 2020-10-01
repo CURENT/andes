@@ -30,13 +30,29 @@ class Streaming(object):
         self.dimec = None
 
     def connect(self):
+        """
+        Connect to DiME 2 server.
+
+        If ``dime_address`` and ``dime_protocol`` are both specified
+        from command-line, streaming will be enabled.
+        Otherwise, settings from the Config file will be used.
+        """
         config = self.system.config
+        options = self.system.options
+
+        # enable only when both arguments are supplied
+        if options.get("dime_protocol") is not None and \
+            options.get("dime_address") is not None:
+
+            config.dime_enabled = True
+            config.dime_protocol = options.get("dime_protocol")
+            config.dime_address = options.get("dime_address")
+
         if not config.dime_enabled:
             return False
 
         try:
-            self.dimec = DimeClient(config.dime_protocol,
-                                    config.dime_address,
+            self.dimec = DimeClient(config.dime_protocol, config.dime_address,
                                     )
             self.dimec.join(config.dime_name)
             logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful.")

@@ -99,5 +99,5 @@ andes/cases/*/*.txt
 *.prof
 
 # ASV benchmark envs
-benchmarks/.asv/env
+benchmarks/.asv
 benchmarks/andes
