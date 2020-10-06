@@ -41,8 +41,7 @@ class Streaming(object):
         options = self.system.options
 
         # enable only when both arguments are supplied
-        if options.get("dime_protocol") is not None and \
-            options.get("dime_address") is not None:
+        if options.get("dime_protocol") is not None and options.get("dime_address") is not None:
 
             config.dime_enabled = True
             config.dime_protocol = options.get("dime_protocol")
