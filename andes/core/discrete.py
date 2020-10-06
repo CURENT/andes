@@ -34,12 +34,12 @@ class Discrete(object):
         self.export_flags = []
         self.export_flags_tex = []
         self.x_set = list()
-        self.y_set = list()  # NOT being used
-        self.warn_flags = []  # flags in `warn_flags` that are not initialized to zero will be warned
+        self.y_set = list()   # NOT being used
+        self.warn_flags = []  # warn if flags in `warn_flags` not initialized to zero
         self.no_warn = no_warn
 
-        self.has_check_var = False
-        self.has_check_eq = False
+        self.has_check_var = False  # if subclass implements `check_var()`
+        self.has_check_eq = False   # if subclass implements `check_eq()`
 
     def check_var(self, *args, **kwargs):
         """
