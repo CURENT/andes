@@ -131,7 +131,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
         system = System()
         conf_path = system.save_config()
 
-    logger.info('Editing config file {}'.format(conf_path))
+    logger.info('Editing config file "{}"'.format(conf_path))
 
     editor = ''
     if edit_config is not None:
