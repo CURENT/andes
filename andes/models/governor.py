@@ -331,6 +331,7 @@ class TGOV1DBModel(TGOV1Model):
                             info='deadband for under speed',
                             )
         self.pd.e_str = 'u * (DB_y + pref + paux) * gain - pd'
+        self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
 
 
 class TGOV1ModelAlt(TGBase):
