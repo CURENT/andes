@@ -6,12 +6,9 @@ from andes.utils.paths import get_case
 
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = andes.System(default_config=True)
-        self.ss.undill()
-
-        # load from excel file
-        andes.io.xlsx.read(self.ss, get_case('5bus/pjm5bus.xlsx'))
-        self.ss.setup()
+        self.ss = andes.main.load(get_case('5bus/pjm5bus.xlsx'),
+                                  default_config=True,
+                                  )
 
     def test_names(self):
         self.assertTrue('Bus' in self.ss.models)

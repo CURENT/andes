@@ -659,13 +659,16 @@ def selftest(quick=False, **kwargs):
 
     # map verbosity level from logging to unittest
     vmap = {1: 3, 10: 3, 20: 2, 30: 1, 40: 1, 50: 1}
-    verbose = vmap[kwargs.get('verbose')]
+    verbose = vmap[kwargs.get('verbose', 20)]
 
     # skip if quick
     quick_skips = ('test_1_docs', 'test_codegen_inc')
 
-    logger.handlers[0].setLevel(logging.WARNING)
-    sys.stdout = open(os.devnull, 'w')  # suppress print statements
+    try:
+        logger.handlers[0].setLevel(logging.WARNING)
+        sys.stdout = open(os.devnull, 'w')  # suppress print statements
+    except IndexError:  # logger not set up
+        pass
 
     # discover test cases
     test_directory = tests_root()

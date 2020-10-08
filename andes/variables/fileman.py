@@ -51,6 +51,11 @@ class FileMan(object):
         output = kwargs.get('output')  # base file name for the output
         pert = kwargs.get('pert')
         dump = kwargs.get('dump')
+
+        # set output fields anyway
+        for item in self._out_fields:
+            self.__dict__[item] = None
+
         if case is None:
             return
 
