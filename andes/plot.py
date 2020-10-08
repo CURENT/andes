@@ -7,7 +7,7 @@ import os
 import re
 from distutils.spawn import find_executable
 
-from andes.core.var import BaseVar, Algeb, ExtAlgeb
+from andes.core.var import BaseVar, Algeb, ExtAlgeb, AliasAlgeb
 from andes.utils.paths import get_dot_andes_path
 from andes.shared import np, mpl, plt
 
@@ -353,7 +353,7 @@ class TDSData(object):
                     logger.error(f"Variable <{yidx.name}> contains no values.")
                     return
                 offs = 1
-                if isinstance(yidx, (Algeb, ExtAlgeb)):
+                if isinstance(yidx, (Algeb, ExtAlgeb, AliasAlgeb)):
                     offs += self.dae.n
 
                 yidx = yidx.a + offs
