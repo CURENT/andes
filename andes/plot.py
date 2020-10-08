@@ -798,7 +798,7 @@ def scale_func(k):
     Lambda function
 
     """
-    return lambda y_values_input: k * _values_input
+    return lambda y_values_input: k * y_values_input
 
 
 def label_latexify(label):
