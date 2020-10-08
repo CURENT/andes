@@ -254,33 +254,95 @@ class TDSData(object):
 
         logger.info(f'CSV data saved to "{path}".')
 
-    def plot(self, yidx, xidx=(0,), a=None, ycalc=None,
-             left=None, right=None, ymin=None, ymax=None, ytimes=None,
+    def plot(self, yidx, xidx=(0,), *, a=None, ytimes=None, ycalc=None,
+             left=None, right=None, ymin=None, ymax=None,
              xlabel=None, ylabel=None,
-             legend=None, grid=False, greyscale=False,
-             latex=True, dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
+             legend=None, grid=False, greyscale=False, latex=True,
+             dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              title=None, use_bqplot=False,
-             hline1=None, hline2=None, vline1=None, vline2=None, **kwargs):
+             hline1=None, hline2=None, vline1=None, vline2=None,
+             fig=None, ax=None, backend=None,
+             **kwargs):
         """
-        Entery function for plot scripting. This function retrieves the x and y values based
-        on the `xidx` and `yidx` inputs and then calls `plot_data()` to do the actual plotting.
+        Entry function for plotting.
 
-        Note that `ytimes` and `ycalc` are applied sequentially if apply.
-
-        Refer to `plot_data()` for the definition of arguments.
+        This function retrieves the x and y values based on the `xidx` and
+        `yidx` inputs, applies scaling functions `ytimes` and `ycalc` sequentially,
+        and delegates the plotting to the backend.
 
         Parameters
         ----------
-        xidx : list or int
-            The index for the x-axis variable
-
         yidx : list or int
             The indices for the y-axis variables
+        xidx : tuple or int, optional
+            The index for the x-axis variable
+        a : tuple or list, optional
+            The 0-indexed sub-indices into `yidx` to plot.
+        ytimes : float, optional
+            A scaling factor to apply to all y values.
+        left : float
+            The starting value of the x axis
+        right : float
+            The ending value of the x axis
+        ymin : float
+            The minimum value of the y axis
+        ymax : float
+            The maximum value of the y axis
+        ylabel : str
+            Text label for the y axis
+        title : str
+            Title string to be shown at the top
+        fig
+            Existing figure object to draw the axis on.
+        ax
+            Existing axis object to draw the lines on.
+
+        Other Parameters
+        ----------------
+        ycalc: callable, optional
+            A callable to apply to all y values after scaling with `ytimes`.
+        xlabel : str
+            Text label for the x axis
+        legend : bool
+            True to show legend and False otherwise
+        grid : bool
+            True to show grid and False otherwise
+        latex : bool
+            True to enable latex and False to disable
+        greyscale : bool
+            True to use greyscale, False otherwise
+        savefig : bool
+            True to save to png figure file
+        save_format : str
+            File extension string (pdf, png or jpg) for the savefig format
+        dpi : int
+            Dots per inch for screen print or save.
+            `savefig` uses a minimum of 200 dpi
+        line_width : float
+            Plot line width
+        font_size : float
+            Text font size (labels and legends)
+        show : bool
+            True to show the image
+        backend : str or None
+            `bqplot` to use the bqplot backend in notebook.
+            None for matplotlib.
+        hline1: float, optional
+            Dashed horizontal line 1
+        hline2: float, optional
+            Dashed horizontal line 2
+        vline1: float, optional
+            Dashed horizontal line 1
+        vline2: float, optional
+            Dashed vertical line 2
 
         Returns
         -------
         (fig, ax)
-            Figure and axis handles
+            Figure and axis handles for matplotlib backend.
+        fig
+            Figure object for bqplot backend.
+
         """
         if self._mode == 'memory':
             if isinstance(yidx, BaseVar):
@@ -304,54 +366,55 @@ class TDSData(object):
         x_header = self.get_header(xidx, formatted=latex)
         y_header = self.get_header(yidx, formatted=latex)
 
-        ytimes = float(ytimes) if ytimes is not None else ytimes
-        if ytimes and (ytimes != 1):
-            y_scale_func = scale_func(ytimes)
-        else:
-            y_scale_func = None
+        # process `ytimes`
+        if ytimes is not None:
+            ytimes = float(ytimes)
+            if ytimes != 1.0:
+                y_value = scale_func(ytimes)(y_value)
 
-        # apply `ytimes` first
-        if y_scale_func:
-            y_value = y_scale_func(y_value)
-
-        # `ycalc` is a callback function for manipulating data
+        # call `ycalc` on `y_value`
         if ycalc is not None:
             y_value = ycalc(y_value)
 
-        if use_bqplot is True or (use_bqplot is None and is_notebook()):
+        plot_call = self.get_call(backend)
 
-            return self.bqplot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
-                                    left=left, right=right, ymin=ymin, ymax=ymax,
-                                    xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                    latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                    savefig=savefig, save_format=save_format, show=show, title=title,
-                                    **kwargs)
+        return plot_call(xdata=x_value, ydata=y_value,
+                         left=left, right=right, ymin=ymin, ymax=ymax,
+                         xheader=x_header, yheader=y_header, xlabel=xlabel, ylabel=ylabel,
+                         legend=legend, grid=grid, greyscale=greyscale, latex=latex,
+                         dpi=dpi, line_width=line_width, font_size=font_size,
+                         savefig=savefig, save_format=save_format, show=show, title=title,
+                         hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
+                         fig=fig, ax=ax,
+                         **kwargs)
 
-        else:
-            return self.plot_data(xdata=x_value, ydata=y_value, xheader=x_header, yheader=y_header,
-                                  left=left, right=right, ymin=ymin, ymax=ymax,
-                                  xlabel=xlabel, ylabel=ylabel, legend=legend, grid=grid, greyscale=greyscale,
-                                  latex=latex, dpi=dpi, line_width=line_width, font_size=font_size,
-                                  savefig=savefig, save_format=save_format, show=show, title=title,
-                                  hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
-                                  **kwargs)
+    def get_call(self, backend=None):
+        """
+        Get the internal `plot_data` function for the specified backend.
+        """
+        if backend == 'bqplot':
+            return self.bqplot_data
+
+        return self.plot_data
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
         pass
 
     def guess_event_time(self):
-        """Guess the event starting time from the input data by checking
+        """
+        Guess the event starting time from the input data by checking
         when the values start to change
         """
         pass
 
-    def bqplot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None,
+    def bqplot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
                     latex=True, dpi=150, line_width=1.0, greyscale=False, savefig=None, save_format=None,
-                    show=True, **kwargs):
+                    show=True, title=None,
+                    **kwargs):
         """
-        Plot with ``bqplot``. Experimental and imcomplete.
+        Plot with ``bqplot``. Experimental and incomplete.
         """
 
         from bqplot import pyplot as plt
@@ -361,93 +424,43 @@ class TDSData(object):
         if ydata.ndim == 1:
             ydata = ydata.reshape((-1, 1))
 
-        plt.figure(dpi=dpi)
+        if fig is None:
+            fig = plt.figure(dpi=dpi)
         plt.plot(xdata, ydata.transpose(),
                  linewidth=line_width,
+                 figure=fig,
                  )
 
         if yheader:
             plt.label(yheader)
-
+        if title:
+            plt.title(title)
         plt.show()
 
-    def plot_data(self, xdata, ydata, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
+        return fig
+
+    def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
                   vline2=None, **kwargs):
         """
-        Plot lines for the supplied data and options. This functions takes `xdata` and `ydata` values. If
-        you provide variable indices instead of values, use `plot()`.
+        Plot lines for the supplied data and options.
+
+        This functions takes `xdata` and `ydata` values.
+        If you provide variable indices instead of values, use `plot()`.
 
         Parameters
         ----------
         xdata : array-like
             An array-like object containing the values for the x-axis variable
-
         ydata : array
             An array containing the values of each variables for the y-axis variable. The row
             of `ydata` must match the row of `xdata`. Each column correspondings to a variable.
-
         xheader : list
             A list containing the variable names for the x-axis variable
-
         yheader : list
             A list containing the variable names for the y-axis variable
-
-        xlabel : str
-            Text label for the x axis
-
-        ylabel : str
-            Text label for the y axis
-
-        left : float
-            The starting value of the x axis
-
-        right : float
-            The ending value of the x axis
-
-        ymin : float
-            The minimum value of the y axis
-        ymax : float
-            The maximum value of the y axis
-
-        legend : bool
-            True to show legend and False otherwise
-        grid : bool
-            True to show grid and False otherwise
-        fig
-            Matplotlib fig object to draw the axis on
-        ax
-            Matplotlib axis object to draw the lines on
-        latex : bool
-            True to enable latex and False to disable
-        greyscale : bool
-            True to use greyscale, False otherwise
-        savefig : bool
-            True to save to png figure file
-        save_format : str
-            File extension string (pdf, png or jpg) for the savefig format
-        dpi : int
-            Dots per inch for screen print or save. savefig uses a minimum of 200 dpi
-        line_width : float
-            Plot line width
-        font_size : float
-            Text font size (labels and legends)
-        show : bool
-            True to show the image
-        title : str
-            Title string to be shown at the top
-        hline1: float, optional
-            Dashed horizontal line 1
-        hline2: float, optional
-            Dashed horizontal line 2
-        vline1: float, optional
-            Dashed horizontal line 1
-        vline2: float, optional
-            Dashed vertical line 2
-        kwargs
-            Optional kwargs
 
         Returns
         -------
@@ -684,7 +697,7 @@ def tdsplot(filename, y, x=(0,),
             exclude=None,
             **kwargs):
     """
-    TDS plot main function based on the new TDSData class
+    TDS plot main function based on the new TDSData class.
 
     Parameters
     ----------

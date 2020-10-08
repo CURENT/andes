@@ -592,7 +592,9 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
 
 def plot(**kwargs):
-    """Wrapper for the plot tool."""
+    """
+    Wrapper for the plot tool.
+    """
     from andes.plot import tdsplot
     tdsplot(**kwargs)
 
