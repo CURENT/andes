@@ -81,15 +81,23 @@ target/
 *.swp
 *.swo
 
-#pycharm
+# pycharm
 .idea/*
 
-#vscode
+# vscode
 .vscode/*
 
-#Ipython Notebook
+# Ipython Notebook
 .ipynb_checkpoints
 
-#Andes dat and lst files
+# Andes dat and lst files
+andes/cases/*/*.txt
 *.dat
 *.lst
+*.npy
+*.npz
+*.prof
+
+# ASV benchmark envs
+benchmarks/.asv
+benchmarks/andes

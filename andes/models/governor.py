@@ -4,11 +4,14 @@ from andes.core.var import Algeb, State, ExtState, ExtAlgeb
 from andes.core.service import ConstService, ExtService, NumSelect, FlagValue, ParamCalc, InitChecker
 from andes.core.service import PostInitService
 from andes.core.discrete import HardLimiter, DeadBandRT, AntiWindup
-from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag
+from andes.core.block import LeadLag, LagAntiWindup, IntegratorAntiWindup, Lag, DeadBand1
 import numpy as np
 
 
 class TGBaseData(ModelData):
+    """
+    Base data for turbine governors.
+    """
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen',
@@ -35,8 +38,10 @@ class TGBase(Model):
     Parameters
     ----------
     add_sn : bool
-        True to add `NumSelect` Sn; False to add later in custom models.
+        True to add ``NumSelect`` Sn; False to add later in custom models.
         This is useful when the governor connects to two generators.
+    add_tm0 : bool
+        True to add ``ExtService`` ``tm0``.
 
     """
     def __init__(self, system, config, add_sn=True, add_tm0=True):
@@ -67,7 +72,7 @@ class TGBase(Model):
                            export=False,
                            )
 
-        # Note: changing `tm0` is not allowed in any time!!
+        # Note: changing the values of `tm0` is not allowed at any time!!
         if add_tm0 is True:
             self.tm0 = ExtService(src='tm',
                                   model='SynGen',
@@ -264,6 +269,21 @@ class TGOV1Data(TGBaseData):
                            )
 
 
+class TGOV1DBData(TGOV1Data):
+    def __init__(self):
+        TGOV1Data.__init__(self)
+        self.dbL = NumParam(info='Lower bound of deadband',
+                            tex_name='db_L',
+                            default=0.0,
+                            unit='p.u.',
+                            )
+        self.dbU = NumParam(info='Upper bound of deadband',
+                            tex_name='db_U',
+                            default=0.0,
+                            unit='p.u.',
+                            )
+
+
 class TGOV1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
@@ -303,7 +323,22 @@ class TGOV1Model(TGBase):
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 
+class TGOV1DBModel(TGOV1Model):
+    def __init__(self, system, config):
+        TGOV1Model.__init__(self, system, config)
+        self.DB = DeadBand1(u=self.wd, center=0.0, lower=self.dbL,
+                            upper=self.dbU, tex_name='DB',
+                            info='deadband for under speed',
+                            )
+        self.pd.e_str = 'u * (DB_y + pref + paux) * gain - pd'
+        self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
+
+
 class TGOV1ModelAlt(TGBase):
+    """
+    An alternative implementation of TGOV1 from equations
+    (without using Blocks).
+    """
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
@@ -352,22 +387,22 @@ class TGOV1ModelAlt(TGBase):
 
 class TGOV1(TGOV1Data, TGOV1Model):
     """
-    TGOV1 model.
+    TGOV1 turbine governor model.
+
+    Implements the PSS/E TGOV1 model without deadband.
     """
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1Model.__init__(self, system, config)
 
-# Developing a model (use TG2 as an example)
-# 0) Find the group class or write a new group class in group.py
-# 1) Determine and write the class `TG2Data` derived from ModelData
-# 2) Write an empty class for the Model by inheriting `TG2Data` and `Model`
-# 3) Implement the `__init__` function
-#    a) Call parent class `__init__` methods.
-#    b) Set `self.flags` for `pflow` and `tds` if applicable.
-#    c) Define external service, algeb and states
-#    d) Define base class variables and equations
-# 4) Implement the TG2 class variables `pout` and add a limiter
+
+class TGOV1DB(TGOV1DBData, TGOV1DBModel):
+    """
+    TGOV1 turbine governor model with speed input deadband.
+    """
+    def __init__(self, system, config):
+        TGOV1DBData.__init__(self)
+        TGOV1DBModel.__init__(self, system, config)
 
 
 class IEEEG1Data(TGBaseData):

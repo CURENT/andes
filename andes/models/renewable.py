@@ -808,29 +808,30 @@ class REECA1Model(Model):
         # `Ipmax` not considering mode or `Thld2`
         Ipmax1 = '(zVDL2*(VDL2c*VDL2_y + (1-VDL2c)*Imaxr) + 1e8*(1-zVDL2))'
 
-        Ipmax2sq = '(Imax**2 - IqHL_y**2)'
-
         Ipmax2sq0 = '(Imax**2 - Iqcmd0**2)'
 
-        Ipmax2 = f'Piecewise((0, {Ipmax2sq} <= 0.0), (sqrt({Ipmax2sq}), True))'
+        Ipmax2sq = '(Imax**2 - IqHL_y**2)'
 
-        Ipmax20 = f'Piecewise((0, {Ipmax2sq0} <= 0.0), (sqrt({Ipmax2sq0}), True))'
+        # `Ipmax20`-squared (non-negative)
+        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((1e-2, {Ipmax2sq0} < 0.01), ({Ipmax2sq0}, True))',
+                                      tex_name='I_{pmax20,nn}^2',
+                                      )
+
+        self.Ipmax2sq = Algeb(v_str='Ipmax2sq0',
+                              e_str=f'Piecewise((1e-2, {Ipmax2sq} <= 0.01), ({Ipmax2sq}, True))- Ipmax2sq',
+                              tex_name='I_{pmax2}^2',
+                              )
 
         # --- For debugging `Ipmax` ---
-
-        # self.Ipmax1 = Algeb(v_str=Ipmax1, e_str=f'{Ipmax1} - Ipmax1')
         #
+        # self.Ipmax1 = Algeb(v_str=Ipmax1, e_str=f'{Ipmax1} - Ipmax1')
         # self.Ipmax2sq = Algeb(v_str=Ipmax2sq0, e_str=f'{Ipmax2sq} - Ipmax2sq')
         #
-        # self.Ipmax2 = Algeb(v_str=Ipmax20, e_str=f'{Ipmax2} - Ipmax2')
-        #
-        # self.Ipmaxhv = Algeb(v_str='Ipmax', e_str=f'Ipmaxh - Ipmaxhv', tex_name='I_{pmaxhv}')
-
         # --- Debugging ends ---
 
-        Ipmax = f'((1-fThld2) * (SWPQ_s0*{Ipmax2} + SWPQ_s1*{Ipmax1}))'
+        Ipmax = f'((1-fThld2) * (SWPQ_s0*sqrt(Ipmax2sq) + SWPQ_s1*{Ipmax1}))'
 
-        Ipmax0 = f'((1-fThld2) * (SWPQ_s0*{Ipmax20} + SWPQ_s1*{Ipmax1}))'
+        Ipmax0 = f'((1-fThld2) * (SWPQ_s0*sqrt(Ipmax2sq0) + SWPQ_s1*{Ipmax1}))'
 
         self.Ipmax = Algeb(v_str=f'{Ipmax0}',
                            e_str=f'{Ipmax} + (fThld2 * Ipmaxh) - Ipmax',
@@ -845,13 +846,13 @@ class REECA1Model(Model):
 
         Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'  # initialization equation by using `Ipcmd0`
 
-        Iqmax2 = f'Piecewise((0, {Iqmax2sq} <= 0.0), (sqrt({Iqmax2sq}), True))'
+        Iqmax2 = f'Piecewise((0.01, {Iqmax2sq} < 0.01), ({Iqmax2sq}, True))'
 
-        Iqmax20 = f'Piecewise((0, {Iqmax2sq0} <= 0.0), (sqrt({Iqmax2sq0}), True))'
+        Iqmax20 = f'Piecewise((0.01, {Iqmax2sq0} < 0.01), ({Iqmax2sq0}, True))'
 
-        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax2})'
+        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax2}))'
 
-        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*{Iqmax20})'
+        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax20}))'
 
         self.Iqmax = Algeb(v_str=f'{Iqmax0}',
                            e_str=f'{Iqmax} - Iqmax',

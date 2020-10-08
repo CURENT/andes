@@ -131,7 +131,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
         system = System()
         conf_path = system.save_config()
 
-    logger.info('Editing config file {}'.format(conf_path))
+    logger.info('Editing config file "{}"'.format(conf_path))
 
     editor = ''
     if edit_config is not None:
@@ -592,7 +592,9 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
 
 def plot(**kwargs):
-    """Wrapper for the plot tool."""
+    """
+    Wrapper for the plot tool.
+    """
     from andes.plot import tdsplot
     tdsplot(**kwargs)
 
@@ -657,13 +659,16 @@ def selftest(quick=False, **kwargs):
 
     # map verbosity level from logging to unittest
     vmap = {1: 3, 10: 3, 20: 2, 30: 1, 40: 1, 50: 1}
-    verbose = vmap[kwargs.get('verbose')]
+    verbose = vmap[kwargs.get('verbose', 20)]
 
     # skip if quick
     quick_skips = ('test_1_docs', 'test_codegen_inc')
 
-    logger.handlers[0].setLevel(logging.WARNING)
-    sys.stdout = open(os.devnull, 'w')  # suppress print statements
+    try:
+        logger.handlers[0].setLevel(logging.WARNING)
+        sys.stdout = open(os.devnull, 'w')  # suppress print statements
+    except IndexError:  # logger not set up
+        pass
 
     # discover test cases
     test_directory = tests_root()
