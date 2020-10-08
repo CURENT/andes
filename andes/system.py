@@ -452,9 +452,8 @@ class System(object):
         """
         def append_model_name(model_name, idx):
             out = ''
-            if isinstance(idx, str):
-                if model_name in idx:
-                    out = idx
+            if isinstance(idx, str) and (model_name in idx):
+                out = idx
             else:
                 out = f'{model_name} {idx}'
 
