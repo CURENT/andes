@@ -13,7 +13,7 @@ def base_path():
 
 def load_system(case_path):
     """
-    Load a test case and return an ``andes.system.System`` object
+    Load a test case and return an ``andes.system.System`` object.
     """
     ss = andes.system.System(case_path)
     ss.undill()
@@ -25,7 +25,9 @@ def load_system(case_path):
 
 
 def prep():
-    """Generate numerical code"""
+    """
+    Generate numerical code.
+    """
     ss = andes.System()
     try:
         try:
@@ -51,6 +53,9 @@ class TimeCodeGen:
         prep()
 
     def time_codegen(self):
+        """
+        Empty function to invoke its setup.
+        """
         pass
 
 
