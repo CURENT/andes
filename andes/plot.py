@@ -377,7 +377,7 @@ class TDSData(object):
             if ytimes != 1.0:
                 yvalue = scale_func(ytimes)(yvalue)
 
-        # call `ycalc` on `y_value`
+        # call `ycalc` on `yvalue`
         if ycalc is not None:
             yvalue = ycalc(yvalue)
 
@@ -798,7 +798,7 @@ def scale_func(k):
     Lambda function
 
     """
-    return lambda y_values_input: k * y_values_input
+    return lambda y_values_input: k * _values_input
 
 
 def label_latexify(label):
