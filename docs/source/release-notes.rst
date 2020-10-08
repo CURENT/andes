@@ -9,8 +9,15 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.1 Notes
 ----------
 
-v1.1.4
-``````````````````
+v1.1.5 (2020-10-08)
+```````````````````
+- Allow plotting to existing axes with the same plot API.
+- Added TGOV1DB model (TGOV1 with an input dead-band).
+- Added an experimental numba support.
+- ``andes selftest -q`` now skips code generation.
+
+v1.1.4 (2020-09-22)
+```````````````````
 - Support `BackRef` for groups.
 - Added CLI ``--pool`` to use ``multiprocess.Pool`` for multiple cases.
   When combined with ``--shell``, ``--pool`` returns ``System`` Objects
