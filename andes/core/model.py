@@ -25,7 +25,7 @@ from andes.core.service import BaseService, ConstService, BackRef, VarService, P
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
 
-from andes.utils.paths import get_pkl_path
+from andes.utils.paths import get_dot_andes_path
 from andes.utils.func import list_flatten
 from andes.utils.tab import make_doc_table, math_wrap
 
@@ -1541,6 +1541,8 @@ class Model(object):
         self.syms.generate_equations()
         self.syms.generate_jacobians()
         self.syms.generate_init()
+        if self.system.config.save_codegen:
+            self.syms.generate_py_files()
         if quick is False:
             self.syms.generate_pretty_print()
 
@@ -1983,8 +1985,35 @@ class SymProcessor(object):
         """
         Create output source code file for generated code. NOT WORKING NOW.
         """
-        models_dir = os.path.join(get_pkl_path(), 'models')
+        models_dir = os.path.join(get_dot_andes_path(), 'models')
         os.makedirs(models_dir, exist_ok=True)
+        file_path = os.path.join(models_dir, f'{self.class_name}.py')
+
+        with open(file_path, 'w') as f:
+            f.write(self._rename_func(self.calls.f, 'f_update'))
+            f.write(self._rename_func(self.calls.g, 'g_update'))
+
+    def _rename_func(self, func, func_name):
+        """
+        Rename the function name and return source code.
+
+        This function does not check for name conflicts.
+        Install `yapf` for optional code reformatting.
+        """
+        import inspect
+        try:
+            from yapf.yapflib.yapf_api import FormatCode
+        except ImportError:
+            FormatCode = None
+
+        src = inspect.getsource(func)
+        src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
+
+        if FormatCode is not None:
+            src = FormatCode(src, style_config='pep8')[0]  # drop the encoding `None`
+        src += '\n'
+
+        return src
 
 
 class Documenter(object):
