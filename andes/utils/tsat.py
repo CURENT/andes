@@ -1,5 +1,5 @@
-import pandas as pd
 import andes
+from andes.shared import pd
 
 andes.config_logger(stream_level=30)
 

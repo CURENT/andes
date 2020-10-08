@@ -94,6 +94,12 @@ class LazyImport(object):
         else:
             return f"lazy pyforest.LazyImport for '{self.__import_statement__}'"
 
+    def __getstate__(self):
+        return vars(self)
+
+    def __setstate__(self, state):
+        vars(self).update(state)
+
 
 def _import_statements(symbol_dict, was_imported=True):
     statements = []

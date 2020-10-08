@@ -3,12 +3,11 @@ import os
 import time
 import importlib
 from collections import OrderedDict
-import pandas as pd
 
 from andes.routines.base import BaseRoutine
 from andes.utils.misc import elapsed, is_notebook, is_interactive
 from andes.utils.tab import Tab
-from andes.shared import tqdm, np
+from andes.shared import tqdm, np, pd
 from andes.shared import matrix, sparse, spdiag
 
 import logging
