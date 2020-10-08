@@ -208,7 +208,7 @@ class TDSData(object):
 
         """
 
-        if isinstance(idx, int):
+        if isinstance(idx, (int, np.int64)):
             idx = [idx]
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
@@ -258,7 +258,7 @@ class TDSData(object):
              xlabel=None, ylabel=None,
              legend=None, grid=False, greyscale=False, latex=True,
              dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
-             title=None, use_bqplot=False,
+             title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
              **kwargs):
@@ -384,7 +384,7 @@ class TDSData(object):
                          dpi=dpi, line_width=line_width, font_size=font_size,
                          savefig=savefig, save_format=save_format, show=show, title=title,
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
-                         fig=fig, ax=ax,
+                         fig=fig, ax=ax, linestyles=linestyles,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -438,7 +438,7 @@ class TDSData(object):
 
         return fig
 
-    def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, line_styles=None,
+    def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, linestyles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
@@ -484,10 +484,10 @@ class TDSData(object):
         if not right:
             right = xdata[-1] + 1e-6
 
-        if not line_styles:
-            line_styles = ['-', '--', '-.', ':']
+        if not linestyles:
+            linestyles = ['-', '--', '-.', ':']
 
-        line_styles = line_styles * int(n_lines / len(line_styles) + 1)
+        linestyles = linestyles * int(n_lines / len(linestyles) + 1)
 
         hold = True
         if not (fig and ax):
@@ -501,7 +501,7 @@ class TDSData(object):
         for i in range(n_lines):
             ax.plot(xdata,
                     ydata[:, i],
-                    ls=line_styles[i],
+                    ls=linestyles[i],
                     label=yheader[i] if yheader else None,
                     linewidth=line_width,
                     color='0.2' if greyscale else None,
