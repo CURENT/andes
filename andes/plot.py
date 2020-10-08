@@ -7,7 +7,6 @@ import os
 import re
 from distutils.spawn import find_executable
 
-from andes.utils.misc import is_notebook
 from andes.core.var import BaseVar, Algeb, ExtAlgeb
 from andes.utils.paths import get_dot_andes_path
 from andes.shared import np, mpl, plt
