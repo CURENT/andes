@@ -255,7 +255,7 @@ class TDSData(object):
 
     def plot(self, yidx, xidx=(0,), *, a=None, ytimes=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None,
-             xlabel=None, ylabel=None,
+             xlabel=None, ylabel=None, xheader=None, yheader=None,
              legend=None, grid=False, greyscale=False, latex=True,
              dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              title=None, linestyles=None, use_bqplot=False,
@@ -289,6 +289,8 @@ class TDSData(object):
             The maximum value of the y axis
         ylabel : str
             Text label for the y axis
+        yheader : list
+            A list containing the variable names for the y-axis variable
         title : str
             Title string to be shown at the top
         fig
@@ -302,6 +304,8 @@ class TDSData(object):
             A callable to apply to all y values after scaling with `ytimes`.
         xlabel : str
             Text label for the x axis
+        xheader : list
+            A list containing the variable names for the x-axis variable
         legend : bool
             True to show legend and False otherwise
         grid : bool
@@ -357,29 +361,31 @@ class TDSData(object):
         if a is not None:
             yidx = np.take(yidx, a)
 
-        x_value = self.get_values(xidx)
-        y_value = self.get_values(yidx)
+        xvalue = self.get_values(xidx)
+        yvalue = self.get_values(yidx)
 
         # header: names for variables
         # axis labels: the texts next to axes
-        x_header = self.get_header(xidx, formatted=latex)
-        y_header = self.get_header(yidx, formatted=latex)
+        if not xheader:
+            xheader = self.get_header(xidx, formatted=latex)
+        if not yheader:
+            yheader = self.get_header(yidx, formatted=latex)
 
         # process `ytimes`
         if ytimes is not None:
             ytimes = float(ytimes)
             if ytimes != 1.0:
-                y_value = scale_func(ytimes)(y_value)
+                yvalue = scale_func(ytimes)(yvalue)
 
         # call `ycalc` on `y_value`
         if ycalc is not None:
-            y_value = ycalc(y_value)
+            yvalue = ycalc(yvalue)
 
         plot_call = self.get_call(backend)
 
-        return plot_call(xdata=x_value, ydata=y_value,
+        return plot_call(xdata=xvalue, ydata=yvalue,
                          left=left, right=right, ymin=ymin, ymax=ymax,
-                         xheader=x_header, yheader=y_header, xlabel=xlabel, ylabel=ylabel,
+                         xheader=xheader, yheader=yheader, xlabel=xlabel, ylabel=ylabel,
                          legend=legend, grid=grid, greyscale=greyscale, latex=latex,
                          dpi=dpi, line_width=line_width, font_size=font_size,
                          savefig=savefig, save_format=save_format, show=show, title=title,
@@ -449,6 +455,8 @@ class TDSData(object):
         This functions takes `xdata` and `ydata` values.
         If you provide variable indices instead of values, use `plot()`.
 
+        See the argument lists of `plot()` for more.
+
         Parameters
         ----------
         xdata : array-like
@@ -456,10 +464,6 @@ class TDSData(object):
         ydata : array
             An array containing the values of each variables for the y-axis variable. The row
             of `ydata` must match the row of `xdata`. Each column correspondings to a variable.
-        xheader : list
-            A list containing the variable names for the x-axis variable
-        yheader : list
-            A list containing the variable names for the y-axis variable
 
         Returns
         -------
