@@ -1989,7 +1989,15 @@ class SymProcessor(object):
         os.makedirs(models_dir, exist_ok=True)
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
 
+        header = \
+"""from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
+from numpy import greater_equal, less_equal, greater, less  # NOQA
+
+
+"""
+
         with open(file_path, 'w') as f:
+            f.write(header)
             f.write(self._rename_func(self.calls.f, 'f_update'))
             f.write(self._rename_func(self.calls.g, 'g_update'))
 
