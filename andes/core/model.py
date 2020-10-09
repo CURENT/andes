@@ -29,7 +29,7 @@ from andes.utils.paths import get_dot_andes_path
 from andes.utils.func import list_flatten
 from andes.utils.tab import make_doc_table, math_wrap
 
-from andes.shared import np, pd, newton_krylov
+from andes.shared import np, pd, newton_krylov, pycode
 from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
@@ -1546,7 +1546,7 @@ class Model(object):
         self.syms.generate_equations()
         self.syms.generate_jacobians()
         self.syms.generate_init()
-        if self.system.config.save_codegen:
+        if self.system.config.save_pycode:
             self.syms.generate_py_files()
         if quick is False:
             self.syms.generate_pretty_print()
@@ -1619,12 +1619,13 @@ class Model(object):
             return
 
         use_parallel = True if (self.system.config.numba_parallel == 1) else False
+        use_cache = True if (pycode is not None) else False
 
-        self.calls.f = numba.jit(self.calls.f, parallel=use_parallel)
-        self.calls.g = numba.jit(self.calls.g, parallel=use_parallel)
+        self.calls.f = numba.jit(self.calls.f, parallel=use_parallel, cache=use_cache)
+        self.calls.g = numba.jit(self.calls.g, parallel=use_parallel, cache=use_cache)
 
         for jname in jac_names:
-            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=use_parallel)
+            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=use_parallel, cache=use_cache)
 
         self.flags.jited = True
 
@@ -2005,7 +2006,7 @@ class SymProcessor(object):
         """
         Create output source code file for generated code. NOT WORKING NOW.
         """
-        models_dir = os.path.join(get_dot_andes_path(), 'models')
+        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
         os.makedirs(models_dir, exist_ok=True)
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
 

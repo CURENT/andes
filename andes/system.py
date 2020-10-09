@@ -28,11 +28,11 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
-from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
+from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, get_dot_andes_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD
+from andes.shared import np, spmatrix, jac_names, IP_ADD, pycode
 logger = logging.getLogger(__name__)
 
 
@@ -125,8 +125,9 @@ class System(object):
                                      ('dime_address', '/tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('save_codegen', 0),
-                                     ('yapf_codegen', 1),
+                                     ('save_pycode', 0),
+                                     ('yapf_pycode', 1),
+                                     ('use_pycode', 0),
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -138,8 +139,9 @@ class System(object):
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
-                              save_codegen='save generated code to ~/.andes',
-                              yapf_codegen='format generated code with yapf',
+                              save_pycode='save generated code to ~/.andes',
+                              yapf_pycode='format generated code with yapf',
+                              use_pycode='use generated, saved Python code',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -150,8 +152,9 @@ class System(object):
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
-                              save_codegen=(0, 1),
-                              yapf_codegen=(0, 1),
+                              save_pycode=(0, 1),
+                              yapf_pycode=(0, 1),
+                              use_pycode=(0, 1),
                               )
         self.config.check()
         self.exist = ExistingModels()
@@ -182,7 +185,6 @@ class System(object):
         # TODO: clear all flags and empty data
         andes.io.parse(self)
         self.setup()
-
 
     def _clear_adder_setter(self):
         """
@@ -266,6 +268,17 @@ class System(object):
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
             model.prepare(quick=quick)
+
+        # write `__init__.py` that imports all to the `pycode` package
+        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
+        os.makedirs(models_dir, exist_ok=True)
+        init_path = os.path.join(models_dir, '__init__.py')
+
+        with open(init_path, 'w') as f:
+            # f.write(f"__all__ = {str(list(self.models.keys()))}")
+            for name in self.models.keys():
+                f.write(f"from . import {name}  # NOQA\n")
+            f.write('\n')
 
         self._store_calls()
         self.dill()
@@ -1028,6 +1041,18 @@ class System(object):
         for name, model_call in self.calls.items():
             if name in self.__dict__:
                 self.__dict__[name].calls = model_call
+
+        # try to replace equations and jacobian calls with saved code
+        if pycode is not None and self.config.use_pycode:
+            for model in self.models.values():
+                model.calls.f = pycode.__dict__[model.class_name].f_update
+                model.calls.g = pycode.__dict__[model.class_name].g_update
+
+                for jname in jac_names:
+                    model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
+            logger.info("Using generated Python code for equations and Jacobians.")
+        else:
+            logger.debug("Using undilled lambda functions.")
 
     def _get_models(self, models):
         """
