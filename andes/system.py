@@ -20,6 +20,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
+import andes.io
 from andes import __version__
 from andes.models import non_jit
 from andes.models.group import GroupBase
@@ -171,6 +172,17 @@ class System(object):
 
         # internal flags
         self.is_setup = False              # if system has been setup
+
+    def reload(self, case, **kwargs):
+        """
+        Reload a new case in the same System object.
+        """
+        self.options.update(kwargs)
+        self.files.set(case=case, **kwargs)
+        # TODO: clear all flags and empty data
+        andes.io.parse(self)
+        self.setup()
+
 
     def _clear_adder_setter(self):
         """
@@ -332,7 +344,7 @@ class System(object):
         self.exist.tds = self.find_models('tds')
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
-    def reset(self):
+    def reset(self, force=False):
         """
         Reset to the state after reading data and setup (before power flow).
 
@@ -340,7 +352,7 @@ class System(object):
         --------
         If TDS is initialized, reset will lead to unpredictable state.
         """
-        if self.TDS.initialized is True:
+        if self.TDS.initialized is True and not force:
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
