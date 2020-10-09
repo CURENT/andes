@@ -1130,7 +1130,6 @@ class Model(object):
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        self.numba_jitify()
         self.s_update()  # this includes ConstService and VarService
 
         # find out if variables need to be initialized for `routine`
@@ -1623,6 +1622,10 @@ class Model(object):
 
         self.calls.f = numba.jit(self.calls.f, parallel=use_parallel)
         self.calls.g = numba.jit(self.calls.g, parallel=use_parallel)
+
+        for jname in jac_names:
+            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=use_parallel)
+
         self.flags.jited = True
 
 

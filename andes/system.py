@@ -517,6 +517,9 @@ class System(object):
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
+        if self.config.numba:
+            self._jitify(models)
+
         for mdl in models.values():
             # link externals first
             for instance in mdl.services_ext.values():
@@ -538,6 +541,14 @@ class System(object):
 
         # store the inverse of time constants
         self._store_tf(models)
+
+    def _jitify(self, models: OrderedDict):
+        """
+        Just in time compilation of model equations and jacobians.
+        """
+        logger.info("numba compilation initiated.")
+        for mdl in models.values():
+            mdl.numba_jitify()
 
     def store_adder_setter(self, models):
         """
