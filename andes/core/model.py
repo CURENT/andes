@@ -2037,7 +2037,7 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         src = inspect.getsource(func)
         src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
 
-        if self.parent.system.config.yapf_codegen:
+        if self.parent.system.config.yapf_pycode:
             try:
                 from yapf.yapflib.yapf_api import FormatCode
                 src = FormatCode(src, style_config='pep8')[0]  # drop the encoding `None`
