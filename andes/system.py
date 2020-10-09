@@ -125,6 +125,7 @@ class System(object):
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('save_codegen', 0),
+                                     ('yapf_codegen', 1),
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -137,6 +138,7 @@ class System(object):
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
                               save_codegen='save generated code to ~/.andes',
+                              yapf_codegen='format generated code with yapf',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -148,6 +150,7 @@ class System(object):
                               numba=(0, 1),
                               numba_parallel=(0, 1),
                               save_codegen=(0, 1),
+                              yapf_codegen=(0, 1),
                               )
         self.config.check()
         self.exist = ExistingModels()
