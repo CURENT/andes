@@ -1,6 +1,6 @@
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
-from andes.shared import np, matrix, umfpack, klu
+from andes.shared import np, matrix, umfpack, klu, cupy
 
 import logging
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ class Solver(object):
 
         # check if `sparselib` library has been successfully imported
         if (sparselib not in globals()) or globals()[sparselib] is None:
+            logger.warning(f"Sparse solver {sparselib} not available. Using UMFPACK.")
             self.sparselib = 'umfpack'
 
         # solvers
@@ -345,16 +346,15 @@ class CuPySolver(SciPySolver):
     def solve(self, A, b):
 
         # delayed import for startup speed
-        import cupy as cp  # NOQA
         from cupyx.scipy.sparse import csc_matrix as csc_cu  # NOQA
-        from cupyx.scipy.sparse.linalg.solve import lsqr as cu_lsqr  # NOQA
+        from cupyx.scipy.sparse.linalg import lsqr as cu_lsqr  # NOQA
         A_csc = self.to_csc(A)
 
         cu_A = csc_cu(A_csc)
-        cu_b = cp.array(np.array(b).ravel())
+        cu_b = cupy.array(np.array(b).ravel())
         x = cu_lsqr(cu_A, cu_b)
 
-        return np.ravel(cp.asnumpy(x[0]))
+        return np.ravel(cupy.asnumpy(x[0]))
 
 
 class SpSolve(SciPySolver):

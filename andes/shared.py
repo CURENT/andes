@@ -56,6 +56,7 @@ for jname in jac_names:
 # --- lazy import packages ---
 
 pd = LazyImport('import pandas')
+cupy = LazyImport('import cupy')
 plt = LazyImport('from matplotlib import pyplot')
 mpl = LazyImport('import matplotlib')
 Pool = LazyImport('from pathos.multiprocessing import Pool')
