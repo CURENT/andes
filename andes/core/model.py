@@ -29,7 +29,7 @@ from andes.utils.paths import get_dot_andes_path
 from andes.utils.func import list_flatten
 from andes.utils.tab import make_doc_table, math_wrap
 
-from andes.shared import np, pd, newton_krylov, pycode
+from andes.shared import np, pd, newton_krylov
 from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
@@ -886,7 +886,7 @@ class Model(object):
         """
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
-        for jname in jac_names:
+        for jname in self.calls.j:
             self.j_args[jname] = [self._input[arg] for arg in self.calls.j_args[jname]]
 
     def l_update_var(self, dae_t):
@@ -1255,8 +1255,8 @@ class Model(object):
         -------
         None
         """
-        for jname in jac_names:
-            ret = self.calls.j[jname](*self.j_args[jname])
+        for jname, jfunc in self.calls.j.items():
+            ret = jfunc(*self.j_args[jname])
 
             for idx, fun in enumerate(self.calls.vjac[jname]):
                 try:
@@ -1594,7 +1594,7 @@ class Model(object):
             for name, item in self.services_icheck.items():
                 item.check()
 
-    def numba_jitify(self):
+    def numba_jitify(self, parallel=False, cache=False):
         """
         Optionally convert `self.calls.f` and `self.calls.g` to
         JIT compiled functions.
@@ -1618,14 +1618,11 @@ class Model(object):
         if self.flags.jited is True:
             return
 
-        use_parallel = True if (self.system.config.numba_parallel == 1) else False
-        use_cache = True if (pycode is not None) else False
+        self.calls.f = numba.jit(self.calls.f, parallel=parallel, cache=cache)
+        self.calls.g = numba.jit(self.calls.g, parallel=parallel, cache=cache)
 
-        self.calls.f = numba.jit(self.calls.f, parallel=use_parallel, cache=use_cache)
-        self.calls.g = numba.jit(self.calls.g, parallel=use_parallel, cache=use_cache)
-
-        for jname in jac_names:
-            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=use_parallel, cache=use_cache)
+        for jname in self.calls.j:
+            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=parallel, cache=cache)
 
         self.flags.jited = True
 
@@ -1940,7 +1937,7 @@ class SymProcessor(object):
                 j_args[jname].extend(free_syms)
                 j_elems[jname].append(e_symbolic)
 
-        for jname in jac_names:
+        for jname in j_elems:
             j_args[jname] = list(set(j_args[jname]))
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_elems[jname]), 'numpy')
@@ -2022,7 +2019,7 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
             f.write(self._rename_func(self.calls.f, 'f_update'))
             f.write(self._rename_func(self.calls.g, 'g_update'))
 
-            for jname in jac_names:
+            for jname in self.calls.j:
                 f.write(self._rename_func(self.calls.j[jname], f'{jname}_update'))
 
     def _rename_func(self, func, func_name):
@@ -2033,6 +2030,9 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         Install `yapf` for optional code reformatting (takes extra processing time).
         """
         import inspect
+
+        if func is None:
+            return f"# empty {func_name}\n"
 
         src = inspect.getsource(func)
         src = src.replace("def _lambdifygenerated(", f"def {func_name}(")

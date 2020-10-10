@@ -543,7 +543,12 @@ class System(object):
         - Copy variables to DAE and then back to the model.
         """
         if self.config.numba:
-            self._jitify(models)
+            use_parallel = True if (self.config.numba_parallel == 1) else False
+            use_cache = True if (pycode is not None) else False
+
+            logger.info(f"Numba compilation initiated, parallel={use_parallel}, cache={use_cache}.")
+            for mdl in models.values():
+                mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
 
         for mdl in models.values():
             # link externals first
@@ -566,14 +571,6 @@ class System(object):
 
         # store the inverse of time constants
         self._store_tf(models)
-
-    def _jitify(self, models: OrderedDict):
-        """
-        Just in time compilation of model equations and jacobians.
-        """
-        logger.info("numba compilation initiated.")
-        for mdl in models.values():
-            mdl.numba_jitify()
 
     def store_adder_setter(self, models):
         """
@@ -1048,7 +1045,7 @@ class System(object):
                 model.calls.f = pycode.__dict__[model.class_name].f_update
                 model.calls.g = pycode.__dict__[model.class_name].g_update
 
-                for jname in jac_names:
+                for jname in model.calls.j:
                     model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
             logger.info("Using generated Python code for equations and Jacobians.")
         else:
