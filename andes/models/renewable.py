@@ -813,21 +813,13 @@ class REECA1Model(Model):
         Ipmax2sq = '(Imax**2 - IqHL_y**2)'
 
         # `Ipmax20`-squared (non-negative)
-        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((1e-2, {Ipmax2sq0} < 0.01), ({Ipmax2sq0}, True))',
+        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((0.0, Le({Ipmax2sq0}, 0.0)), ({Ipmax2sq0}, True))',
                                       tex_name='I_{pmax20,nn}^2',
                                       )
 
-        self.Ipmax2sq = Algeb(v_str='Ipmax2sq0',
-                              e_str=f'Piecewise((1e-2, {Ipmax2sq} <= 0.01), ({Ipmax2sq}, True))- Ipmax2sq',
-                              tex_name='I_{pmax2}^2',
-                              )
-
-        # --- For debugging `Ipmax` ---
-        #
-        # self.Ipmax1 = Algeb(v_str=Ipmax1, e_str=f'{Ipmax1} - Ipmax1')
-        # self.Ipmax2sq = Algeb(v_str=Ipmax2sq0, e_str=f'{Ipmax2sq} - Ipmax2sq')
-        #
-        # --- Debugging ends ---
+        self.Ipmax2sq = VarService(v_str=f'Piecewise((0.0, Le({Ipmax2sq}, 0.0)), ({Ipmax2sq}, True))',
+                                   tex_name='I_{pmax2}^2',
+                                   )
 
         Ipmax = f'((1-fThld2) * (SWPQ_s0*sqrt(Ipmax2sq) + SWPQ_s1*{Ipmax1}))'
 
@@ -846,16 +838,15 @@ class REECA1Model(Model):
 
         Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'  # initialization equation by using `Ipcmd0`
 
-        Iqmax2 = f'Piecewise((0.01, {Iqmax2sq} < 0.01), ({Iqmax2sq}, True))'
+        self.Iqmax2sq0 = ConstService(v_str=f'Piecewise((0.0, Le({Iqmax2sq0}, 0.0)), ({Iqmax2sq0}, True))',
+                                      tex_name='I_{qmax,nn}^2',
+                                      )
 
-        Iqmax20 = f'Piecewise((0.01, {Iqmax2sq0} < 0.01), ({Iqmax2sq0}, True))'
+        self.Iqmax2sq = VarService(v_str=f'Piecewise((0.0, Le({Iqmax2sq}, 0.0)), ({Iqmax2sq}, True))',
+                                   tex_name='I_{qmax2}^2')
 
-        Iqmax = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax2}))'
-
-        Iqmax0 = f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt({Iqmax20}))'
-
-        self.Iqmax = Algeb(v_str=f'{Iqmax0}',
-                           e_str=f'{Iqmax} - Iqmax',
+        self.Iqmax = Algeb(v_str=f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt(Iqmax2sq0))',
+                           e_str=f'(SWPQ_s0*{Iqmax1} + SWPQ_s1*sqrt(Iqmax2sq)) - Iqmax',
                            tex_name='I_{qmax}',
                            info='Upper limit on Iqcmd',
                            )
