@@ -392,7 +392,7 @@ class ModelCall(object):
         self.g_args = list()
         self.j_args = dict()
 
-        self.s_lambdify = OrderedDict()
+        self.s = OrderedDict()
         self.init_lambdify = OrderedDict()
 
         self.ijac = defaultdict(list)
@@ -412,7 +412,7 @@ class ModelCall(object):
         if not isinstance(jj, int):
             raise ValueError("j index must be an integer")
         if not isinstance(vv, (int, float)) and (not callable(vv)):
-            raise ValueError("j index must be numerical or callable")
+            raise ValueError("v must be a number or a callable")
 
         self.ijac[j_full_name].append(ii)
         self.jjac[j_full_name].append(jj)
@@ -927,8 +927,8 @@ class Model(object):
         The ``v`` attribute of services will be assigned at a new memory address.
         """
         for name, instance in self.services.items():
-            if name in self.calls.s_lambdify:
-                func = self.calls.s_lambdify[name]
+            if name in self.calls.s:
+                func = self.calls.s[name]
                 if callable(func):
                     kwargs = self.get_inputs(refresh=True)
                     # NOTE: use new assignment due to possible size change
@@ -965,7 +965,7 @@ class Model(object):
         if len(self.services_var):
             kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
-                func = self.calls.s_lambdify[name]
+                func = self.calls.s[name]
                 if callable(func):
                     instance.v[:] = func(**kwargs)
 
@@ -988,7 +988,7 @@ class Model(object):
         kwargs = self.get_inputs()
         if len(self.services_post):
             for name, instance in self.services_post.items():
-                func = self.calls.s_lambdify[name]
+                func = self.calls.s[name]
                 if callable(func):
                     instance.v[:] = func(**kwargs)
             for instance in self.services_post.values():
@@ -1875,7 +1875,7 @@ class SymProcessor(object):
                 s_lambdify[name] = 0
 
         self.s_matrix = Matrix(list(s_syms.values()))
-        self.calls.s_lambdify = s_lambdify
+        self.calls.s = s_lambdify
 
     def generate_jacobians(self):
         """
