@@ -1935,7 +1935,7 @@ class SymProcessor(object):
 
         fg_sparse = [self.df_sparse, self.dg_sparse]
         j_args = defaultdict(list)   # argument list for each jacobian call
-        j_elems = defaultdict(list)  # jacobian functions (one for each type)
+        j_calls = defaultdict(list)  # jacobian functions (one for each type)
 
         for idx, eq_sparse in enumerate(fg_sparse):
             for item in eq_sparse.row_list():
@@ -1955,12 +1955,12 @@ class SymProcessor(object):
 
                 free_syms = self._check_expr_symbols(e_symbolic)
                 j_args[jname].extend(free_syms)
-                j_elems[jname].append(e_symbolic)
+                j_calls[jname].append(e_symbolic)
 
-        for jname in j_elems:
+        for jname in j_calls:
             j_args[jname] = list(set(j_args[jname]))
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
-            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_elems[jname]), 'numpy')
+            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), 'numpy')
 
         # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
