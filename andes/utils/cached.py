@@ -1,13 +1,13 @@
 _missing = object()
 
 
-class cached(object):
+class cached:
     """A decorator that converts a function into a lazy property.  The
     function wrapped is called the first time to retrieve the result
     and then that calculated result is used the next time you access
     the value::
 
-        class Foo(object):
+        class Foo:
 
             @cached_property
             def foo(self):

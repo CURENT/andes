@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 np.seterr(divide='raise')
 
 
-class Cache(object):
+class Cache:
     """
     Class for caching the return value of callback functions.
     """
@@ -111,7 +111,7 @@ class Cache(object):
                 return self._callbacks[name]
 
 
-class ModelData(object):
+class ModelData:
     r"""
     Class for holding parameter data for a model.
 
@@ -374,7 +374,7 @@ class ModelData(object):
         return idxes
 
 
-class ModelCall(object):
+class ModelCall:
     """
     Class for storing generated function calls and Jacobians.
     """
@@ -428,7 +428,7 @@ class ModelCall(object):
                    self.vjac[j_full_name])
 
 
-class Model(object):
+class Model:
     r"""
     Base class for power system DAE models.
 
@@ -1639,7 +1639,7 @@ class Model(object):
         self.flags.jited = True
 
 
-class SymProcessor(object):
+class SymProcessor:
     """
     A helper class for symbolic processing and code generation.
 
@@ -2068,7 +2068,7 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         return src
 
 
-class Documenter(object):
+class Documenter:
     """
     Helper class for documenting models.
 

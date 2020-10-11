@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DisplayablePath(object):
+class DisplayablePath:
     display_filename_prefix_middle = '├──'
     display_filename_prefix_last = '└──'
     display_parent_prefix_middle = '    '

@@ -11,7 +11,7 @@ except ImportError:
     logger.debug("Dime import failed.")
 
 
-class Streaming(object):
+class Streaming:
     """
     ANDES data streaming class to interface with CURENT LTB.
     """

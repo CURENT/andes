@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class JIT(object):
+class JIT:
     """
     Dummy Just-in-Time initialization class
     """

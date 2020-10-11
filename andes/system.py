@@ -36,7 +36,7 @@ from andes.shared import np, spmatrix, jac_names, IP_ADD, pycode
 logger = logging.getLogger(__name__)
 
 
-class ExistingModels(object):
+class ExistingModels:
     """
     Storage class for existing models
     """
@@ -46,7 +46,7 @@ class ExistingModels(object):
         self.pflow_tds = OrderedDict()
 
 
-class System(object):
+class System:
     """
     System contains models and routines for modeling and simulation.
 

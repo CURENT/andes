@@ -216,7 +216,7 @@ class GENBase(Model):
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
-class Flux0(object):
+class Flux0:
     """
     Flux model without electro-magnetic transients and ignore speed deviation
     """
@@ -237,7 +237,7 @@ class Flux0(object):
         self.Iq.e_str += '+ psiq'
 
 
-class Flux1(object):
+class Flux1:
     """
     Flux model without electro-magnetic transients but considers speed deviation.
     """
@@ -258,7 +258,7 @@ class Flux1(object):
         self.Iq.e_str += '+ psiq'
 
 
-class Flux2(object):
+class Flux2:
     """
     Flux model with electro-magnetic transients.
     """
@@ -279,7 +279,7 @@ class Flux2(object):
         self.Iq.e_str += '+ psiq'
 
 
-class GENCLSModel(object):
+class GENCLSModel:
     def __init__(self):
         # internal voltage and rotor angle calculation
         self.xq = ExtService(model='GENCLS', src='xd1', indexer=self.idx,
@@ -368,7 +368,7 @@ class GENROUData(GENBaseData):
                              tex_name=r"T''_{q0}")
 
 
-class GENROUModel(object):
+class GENROUModel:
     def __init__(self):
         # parameter checking for `xl`
         self._xlc = InitChecker(u=self.xl,

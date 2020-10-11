@@ -8,7 +8,7 @@ from andes.utils.tab import math_wrap, make_doc_table
 logger = logging.getLogger(__name__)
 
 
-class ModelFlags(object):
+class ModelFlags:
     """
     Model flags.
 
@@ -72,7 +72,7 @@ class ModelFlags(object):
         return pprint.pformat(self.__dict__)
 
 
-class DummyValue(object):
+class DummyValue:
     """
     Class for converting a scalar value to a dummy parameter with `name` and `tex_name` fields.
 
@@ -111,7 +111,7 @@ def dummify(param):
         return param
 
 
-class JacTriplet(object):
+class JacTriplet:
     """
     Storage class for Jacobian triplet lists.
     """
@@ -173,7 +173,7 @@ class JacTriplet(object):
                 self.vjac[jname + jtype] += triplet.vjac[jname + jtype]
 
 
-class Config(object):
+class Config:
     """
     A class for storing system, model and routine configurations.
     """

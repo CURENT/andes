@@ -34,7 +34,7 @@ SOFTWARE.
 # Read more about dunder methods here: https://dbader.org/blog/meaning-of-underscores-in-python
 
 
-class LazyImport(object):
+class LazyImport:
     def __init__(self, import_statement):
         self.__import_statement__ = import_statement
         # the next line does not work for general imports, e.g. "from pandas import *"
