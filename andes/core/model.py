@@ -55,9 +55,6 @@ class Cache:
 
         return self.__getattribute__(item)
 
-    def __setattr__(self, key, value):
-        super(Cache, self).__setattr__(key, value)
-
     def add_callback(self, name: str, callback):
         """
         Add a cache attribute and a callback function for updating the attribute.
