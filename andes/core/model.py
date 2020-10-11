@@ -1693,7 +1693,7 @@ class SymProcessor:
         self.cache = parent.cache
         self.config = parent.config
         self.class_name = parent.class_name
-        self.tex_names = parent.tex_names
+        self.tex_names = OrderedDict()
 
     def generate_init(self):
         """
@@ -1768,8 +1768,8 @@ class SymProcessor:
 
         # process tex_names defined in model
         # -----------------------------------------------------------
-        for key in self.tex_names.keys():
-            self.tex_names[key] = Symbol(self.tex_names[key])
+        for key in self.parent.tex_names.keys():
+            self.tex_names[key] = Symbol(self.parent.tex_names[key])
         for instance in self.parent.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
                 self.tex_names[name] = tex_name
@@ -1956,11 +1956,14 @@ class SymProcessor:
                 self.calls.append_ijv(jname, e_idx, v_idx, 0)
 
                 free_syms = self._check_expr_symbols(e_symbolic)
-                j_args[jname].extend(free_syms)
+                for fs in free_syms:
+                    if fs not in j_args[jname]:
+                        j_args[jname].append(fs)
+                # j_args[jname].extend(free_syms)
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
-            j_args[jname] = list(set(j_args[jname]))
+            # j_args[jname] = list(set(j_args[jname]))
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), 'numpy')
 
