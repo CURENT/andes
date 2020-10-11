@@ -16,6 +16,7 @@ import configparser
 import importlib
 import logging
 import os
+import sys
 import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
@@ -32,8 +33,15 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, 
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD, pycode
+from andes.shared import np, spmatrix, jac_names, IP_ADD
 logger = logging.getLogger(__name__)
+
+sys.path.append(get_dot_andes_path())
+
+try:
+    import pycode  # NOQA
+except ImportError:
+    pycode = None  # NOQA
 
 
 class ExistingModels:
@@ -269,16 +277,21 @@ class System:
                   end='\r', flush=True)
             model.prepare(quick=quick)
 
-        # write `__init__.py` that imports all to the `pycode` package
-        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-        os.makedirs(models_dir, exist_ok=True)
-        init_path = os.path.join(models_dir, '__init__.py')
+        if self.config.save_pycode:
+            # write `__init__.py` that imports all to the `pycode` package
+            models_dir = os.path.join(get_dot_andes_path(), 'pycode')
+            os.makedirs(models_dir, exist_ok=True)
+            init_path = os.path.join(models_dir, '__init__.py')
 
-        with open(init_path, 'w') as f:
-            # f.write(f"__all__ = {str(list(self.models.keys()))}")
-            for name in self.models.keys():
-                f.write(f"from . import {name}  # NOQA\n")
-            f.write('\n')
+            with open(init_path, 'w') as f:
+                f.write(f"__version__ = '{__version__}'\n\n")
+                for name in self.models.keys():
+                    f.write(f"from . import {name}  # NOQA\n")
+                f.write('\n')
+
+            # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
+            if pycode is not None:
+                importlib.reload(pycode)
 
         self._store_calls()
         self.dill()

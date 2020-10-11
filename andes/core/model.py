@@ -1857,8 +1857,7 @@ class SymProcessor:
                             eargs.append(str(s))
 
                     elist.append(expr)
-            if len(elist) == 0:
-                # DO NOT USE `all(elist) == 0` to skip equations - leads to unpredictable behavior.
+            if len(elist) == 0 or not any(elist):  # `any`, not `all`
                 self.calls.__dict__[ename] = None
             else:
                 self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist), 'numpy')
