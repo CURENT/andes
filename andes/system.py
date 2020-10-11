@@ -20,6 +20,7 @@ import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
+import andes.io
 from andes import __version__
 from andes.models import non_jit
 from andes.models.group import GroupBase
@@ -27,11 +28,11 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
-from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite
+from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, get_dot_andes_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD
+from andes.shared import np, spmatrix, jac_names, IP_ADD, pycode
 logger = logging.getLogger(__name__)
 
 
@@ -115,36 +116,45 @@ class System(object):
                                      ('mva', 100),
                                      ('store_z', 0),
                                      ('ipadd', 1),
-                                     ('numba', 0),
-                                     ('numba_parallel', 0),
                                      ('diag_eps', 1e-8),
                                      ('warn_limits', 1),
                                      ('warn_abnormal', 1),
                                      ('dime_enabled', 0),
                                      ('dime_name', 'andes'),
                                      ('dime_protocol', 'ipc'),
-                                     ('dime_address', '/tmp/dime2')
+                                     ('dime_address', '/tmp/dime2'),
+                                     ('numba', 0),
+                                     ('numba_parallel', 0),
+                                     ('save_pycode', 0),
+                                     ('yapf_pycode', 1),
+                                     ('use_pycode', 0),
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
                               mva='system base MVA',
                               store_z='store limiter status in TDS output',
                               ipadd='use spmatrix.ipadd if available',
-                              numba='use numba for JIT compilation',
-                              numba_parallel='enable parallel for numba.jit',
                               diag_eps='small value for Jacobian diagonals',
                               warn_limits='warn variables initialized at limits',
                               warn_abnormal='warn initialization out of normal values',
+                              numba='use numba for JIT compilation',
+                              numba_parallel='enable parallel for numba.jit',
+                              save_pycode='save generated code to ~/.andes',
+                              yapf_pycode='format generated code with yapf',
+                              use_pycode='use generated, saved Python code',
                               )
         self.config.add_extra("_alt",
                               freq="float",
                               mva="float",
                               store_z=(0, 1),
                               ipadd=(0, 1),
-                              numba=(0, 1),
-                              numba_parallel=(0, 1),
                               warn_limits=(0, 1),
                               warn_abnormal=(0, 1),
+                              numba=(0, 1),
+                              numba_parallel=(0, 1),
+                              save_pycode=(0, 1),
+                              yapf_pycode=(0, 1),
+                              use_pycode=(0, 1),
                               )
         self.config.check()
         self.exist = ExistingModels()
@@ -165,6 +175,16 @@ class System(object):
 
         # internal flags
         self.is_setup = False              # if system has been setup
+
+    def reload(self, case, **kwargs):
+        """
+        Reload a new case in the same System object.
+        """
+        self.options.update(kwargs)
+        self.files.set(case=case, **kwargs)
+        # TODO: clear all flags and empty data
+        andes.io.parse(self)
+        self.setup()
 
     def _clear_adder_setter(self):
         """
@@ -249,6 +269,17 @@ class System(object):
                   end='\r', flush=True)
             model.prepare(quick=quick)
 
+        # write `__init__.py` that imports all to the `pycode` package
+        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
+        os.makedirs(models_dir, exist_ok=True)
+        init_path = os.path.join(models_dir, '__init__.py')
+
+        with open(init_path, 'w') as f:
+            # f.write(f"__all__ = {str(list(self.models.keys()))}")
+            for name in self.models.keys():
+                f.write(f"from . import {name}  # NOQA\n")
+            f.write('\n')
+
         self._store_calls()
         self.dill()
 
@@ -326,7 +357,7 @@ class System(object):
         self.exist.tds = self.find_models('tds')
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
-    def reset(self):
+    def reset(self, force=False):
         """
         Reset to the state after reading data and setup (before power flow).
 
@@ -334,7 +365,7 @@ class System(object):
         --------
         If TDS is initialized, reset will lead to unpredictable state.
         """
-        if self.TDS.initialized is True:
+        if self.TDS.initialized is True and not force:
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
         self.dae.reset()
@@ -511,6 +542,14 @@ class System(object):
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
+        if self.config.numba:
+            use_parallel = True if (self.config.numba_parallel == 1) else False
+            use_cache = True if (pycode is not None) else False
+
+            logger.info(f"Numba compilation initiated, parallel={use_parallel}, cache={use_cache}.")
+            for mdl in models.values():
+                mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
+
         for mdl in models.values():
             # link externals first
             for instance in mdl.services_ext.values():
@@ -999,6 +1038,18 @@ class System(object):
         for name, model_call in self.calls.items():
             if name in self.__dict__:
                 self.__dict__[name].calls = model_call
+
+        # try to replace equations and jacobian calls with saved code
+        if pycode is not None and self.config.use_pycode:
+            for model in self.models.values():
+                model.calls.f = pycode.__dict__[model.class_name].f_update
+                model.calls.g = pycode.__dict__[model.class_name].g_update
+
+                for jname in model.calls.j:
+                    model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
+            logger.info("Using generated Python code for equations and Jacobians.")
+        else:
+            logger.debug("Using undilled lambda functions.")
 
     def _get_models(self, models):
         """

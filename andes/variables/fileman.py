@@ -42,6 +42,7 @@ class FileMan(object):
         """
         Perform the input and output set up.
         """
+        self.case = case
         input_format = kwargs.get('input_format')
         add_format = kwargs.get('add_format')
         input_path = kwargs.get('input_path')

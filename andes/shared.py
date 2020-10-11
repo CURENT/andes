@@ -11,6 +11,7 @@ Shared constants and delayed imports.
 
 from andes.utils.lazyimport import LazyImport
 
+import sys
 import math
 import coloredlogs      # NOQA
 import numpy as np      # NOQA
@@ -22,6 +23,7 @@ from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
 from numpy import ndarray                            # NOQA
 
 from andes.utils.texttable import Texttable          # NOQA
+from andes.utils.paths import get_dot_andes_path     # NOQA
 
 try:
     from cvxoptklu import klu
@@ -32,6 +34,15 @@ if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
 else:
     IP_ADD = False
+
+sys.path.append(get_dot_andes_path())
+
+try:
+    import pycode  # NOQA
+except ImportError:
+    pycode = None  # NOQA
+
+# --- constants ---
 
 deg2rad = math.pi/180
 jac_names = ('fx', 'fy', 'gx', 'gy')
@@ -45,6 +56,7 @@ for jname in jac_names:
 # --- lazy import packages ---
 
 pd = LazyImport('import pandas')
+cupy = LazyImport('import cupy')
 plt = LazyImport('from matplotlib import pyplot')
 mpl = LazyImport('import matplotlib')
 Pool = LazyImport('from pathos.multiprocessing import Pool')

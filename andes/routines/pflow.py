@@ -64,6 +64,13 @@ class PFlow(BaseRoutine):
         self.y_sol = None
 
         self.system.init(self.models, routine='pflow')
+
+        # force precompile if numba is on - improves timing accuracy
+        if self.system.config.numba:
+            self.system.f_update(self.models)
+            self.system.g_update(self.models)
+            self.system.j_update(models=self.models)
+
         logger.info('Power flow initialized.')
         return self.system.dae.xy
 
