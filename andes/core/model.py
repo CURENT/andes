@@ -386,13 +386,14 @@ class ModelCall(object):
         self.f = None
         self.g = None
         self.j = dict()
+        self.s = OrderedDict()
 
         # `f_args` and `g_args` are the arg names
         self.f_args = list()
         self.g_args = list()
         self.j_args = dict()
+        self.s_args = OrderedDict()
 
-        self.s = OrderedDict()
         self.init_lambdify = OrderedDict()
 
         self.ijac = defaultdict(list)
@@ -610,8 +611,10 @@ class Model(object):
 
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags in an OrderedDict
-        self.f_args, self.g_args = [], []   # argument value lists
+        self.f_args = []
+        self.g_args = []   # argument value lists
         self.j_args = dict()
+        self.s_args = OrderedDict()
 
     def _register_attribute(self, key, value):
         """
@@ -884,10 +887,17 @@ class Model(object):
         """
         Refresh inputs for each function with individual argument list.
         """
+        self.f_args = list()
+        self.g_args = list()
+        self.j_args = dict()
+        self.s_args = OrderedDict()
+
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
-        for jname in self.calls.j:
-            self.j_args[jname] = [self._input[arg] for arg in self.calls.j_args[jname]]
+        for name in self.calls.j:
+            self.j_args[name] = [self._input[arg] for arg in self.calls.j_args[name]]
+        for name in self.calls.s_args:
+            self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
 
     def l_update_var(self, dae_t):
         """
@@ -930,10 +940,10 @@ class Model(object):
             if name in self.calls.s:
                 func = self.calls.s[name]
                 if callable(func):
-                    kwargs = self.get_inputs(refresh=True)
+                    self.get_inputs(refresh=True)
                     # NOTE: use new assignment due to possible size change
                     #   Always make a copy and make the RHS a 1-d array
-                    instance.v = np.ravel(np.array(func(**kwargs)))
+                    instance.v = np.ravel(np.array(func(*self.s_args[name])))
                 else:
                     instance.v = np.ravel(np.array(func))
 
@@ -967,7 +977,7 @@ class Model(object):
             for name, instance in self.services_var.items():
                 func = self.calls.s[name]
                 if callable(func):
-                    instance.v[:] = func(**kwargs)
+                    instance.v[:] = func(*self.s_args[name])
 
             # Apply individual `v_numeric`
                 func = instance.v_numeric
@@ -982,7 +992,7 @@ class Model(object):
 
     def s_update_post(self):
         """
-        Update post-initialization services
+        Update post-initialization services.
         """
 
         kwargs = self.get_inputs()
@@ -990,7 +1000,8 @@ class Model(object):
             for name, instance in self.services_post.items():
                 func = self.calls.s[name]
                 if callable(func):
-                    instance.v[:] = func(**kwargs)
+                    instance.v[:] = func(*self.s_args[name])
+
             for instance in self.services_post.values():
                 func = instance.v_numeric
                 if func is not None and callable(func):
@@ -1820,7 +1831,6 @@ class SymProcessor(object):
         self.calls.f_args = list()
         self.calls.g_args = list()
 
-        inputs_list = list(self.inputs_dict)
         iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
         dest_list = [self.f_list, self.g_list]
 
@@ -1855,9 +1865,11 @@ class SymProcessor(object):
         self.g_matrix = Matrix(self.g_list)
 
         # convert service equations
-        # Service equations are converted sequentially because Services can be interdependent
+        # Service equations are converted sequentially due to possible dependency
+        s_args = OrderedDict()
         s_syms = OrderedDict()
-        s_lambdify = OrderedDict()
+        s_calls = OrderedDict()
+
         for name, instance in self.parent.services.items():
             if instance.v_str is not None:
                 try:
@@ -1867,15 +1879,16 @@ class SymProcessor(object):
                     raise e
                 self._check_expr_symbols(expr)
                 s_syms[name] = expr
-                s_lambdify[name] = lambdify(inputs_list,
-                                            s_syms[name],
-                                            'numpy')
+                s_args[name] = [str(i) for i in expr.free_symbols]
+                s_calls[name] = lambdify(s_args[name], s_syms[name], 'numpy')
             else:
                 s_syms[name] = 0
-                s_lambdify[name] = 0
+                s_args[name] = []
+                s_calls[name] = 0
 
         self.s_matrix = Matrix(list(s_syms.values()))
-        self.calls.s = s_lambdify
+        self.calls.s = s_calls
+        self.calls.s_args = s_args
 
     def generate_jacobians(self):
         """
