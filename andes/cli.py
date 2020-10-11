@@ -103,7 +103,6 @@ def create_parser():
     plot.add_argument('--vline1', help='dashed vertical line 1', type=float)
     plot.add_argument('--vline2', help='dashed vertical line 2', type=float)
 
-
     doc = sub_parsers.add_parser('doc')
     doc.add_argument('attribute', help='System attribute name to get documentation', nargs='?')
     doc.add_argument('--config', '-c', help='Config help')
