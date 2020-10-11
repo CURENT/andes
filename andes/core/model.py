@@ -1555,10 +1555,11 @@ class Model(object):
 
         self.syms.generate_symbols()
         self.syms.generate_equations()
+        self.syms.generate_services()
         self.syms.generate_jacobians()
         self.syms.generate_init()
         if self.system.config.save_pycode:
-            self.syms.generate_py_files()
+            self.syms.generate_pycode()
         if quick is False:
             self.syms.generate_pretty_print()
 
@@ -1864,6 +1865,12 @@ class SymProcessor(object):
         self.f_matrix = Matrix(self.f_list)
         self.g_matrix = Matrix(self.g_list)
 
+    def generate_services(self):
+        """
+        Generate calls for services, including ``ConstService``, ``VarService`` among others.
+        """
+        from sympy import Matrix, sympify, lambdify, SympifyError
+
         # convert service equations
         # Service equations are converted sequentially due to possible dependency
         s_args = OrderedDict()
@@ -2012,7 +2019,7 @@ class SymProcessor(object):
         self.df = self.df_sparse.subs(self.tex_names)
         self.dg = self.dg_sparse.subs(self.tex_names)
 
-    def generate_py_files(self):
+    def generate_pycode(self):
         """
         Create output source code file for generated code. NOT WORKING NOW.
         """
