@@ -1,4 +1,3 @@
-from .jit import JIT  # NOQA
 from collections import OrderedDict  # NOQA
 
 
@@ -6,7 +5,7 @@ from collections import OrderedDict  # NOQA
 # - `timer`s are moved to the beginning for initialization.
 #   Connectivity statuses should be restored before initializing the rest.
 
-non_jit = OrderedDict([
+file_classes = OrderedDict([
     ('timer', ['Toggler', 'Fault']),
     ('bus', ['Bus']),
     ('pq', ['PQ']),

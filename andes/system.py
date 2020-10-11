@@ -23,7 +23,7 @@ from typing import List, Dict, Tuple, Union, Optional
 
 import andes.io
 from andes import __version__
-from andes.models import non_jit
+from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
@@ -1223,7 +1223,7 @@ class System:
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
         # non-JIT models
-        for file, cls_list in non_jit.items():
+        for file, cls_list in file_classes.items():
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_module, model_name)
