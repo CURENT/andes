@@ -1614,8 +1614,8 @@ class Model(object):
         This function can be turned on by setting
         ``System.config.numba`` to ``1``.
 
-        Warning
-        -------
+        Warnings
+        --------
         This feature is experimental and does not guarantee a speed up.
         In fact, the program will likely end up slower due to compilation.
         """
