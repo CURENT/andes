@@ -1042,8 +1042,8 @@ class System:
         # try to replace equations and jacobian calls with saved code
         if pycode is not None and self.config.use_pycode:
             for model in self.models.values():
-                model.calls.f = pycode.__dict__[model.class_name].f_update
-                model.calls.g = pycode.__dict__[model.class_name].g_update
+                model.calls.f = pycode.__dict__[model.class_name].__dict__.get("f_update")
+                model.calls.g = pycode.__dict__[model.class_name].__dict__.get("g_update")
 
                 for jname in model.calls.j:
                     model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']

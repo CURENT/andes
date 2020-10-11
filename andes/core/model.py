@@ -681,7 +681,7 @@ class Model:
             if not value.tex_name:
                 value.tex_name = key
             if key in self.__dict__:
-                logger.warning(f"{self.class_name}: redefinition of member <{key}>")
+                logger.warning(f"{self.class_name}: redefinition of member <{key}>. Likely a modeling error.")
 
     def __setattr__(self, key, value):
         self._check_attribute(key, value)
@@ -1215,12 +1215,13 @@ class Model:
         Non-inplace equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
-        f_ret = self.calls.f(*self.f_args)
-        for i, var in enumerate(self.cache.states_and_ext.values()):
-            if var.e_inplace:
-                var.e += f_ret[i]
-            else:
-                var.e[:] = f_ret[i]
+        if callable(self.calls.f):
+            f_ret = self.calls.f(*self.f_args)
+            for i, var in enumerate(self.cache.states_and_ext.values()):
+                if var.e_inplace:
+                    var.e += f_ret[i]
+                else:
+                    var.e[:] = f_ret[i]
 
         kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
@@ -1236,12 +1237,13 @@ class Model:
         """
         Evaluate algebraic equations.
         """
-        g_ret = self.calls.g(*self.g_args)
-        for i, var in enumerate(self.cache.algebs_and_ext.values()):
-            if var.e_inplace:
-                var.e += g_ret[i]
-            else:
-                var.e[:] = g_ret[i]
+        if callable(self.calls.g):
+            g_ret = self.calls.g(*self.g_args)
+            for i, var in enumerate(self.cache.algebs_and_ext.values()):
+                if var.e_inplace:
+                    var.e += g_ret[i]
+                else:
+                    var.e[:] = g_ret[i]
 
         kwargs = self.get_inputs()
         # numerical calls defined in the model
@@ -1829,17 +1831,17 @@ class SymProcessor:
         self.calls.f_args = list()
         self.calls.g_args = list()
 
-        iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
-        dest_list = [self.f_list, self.g_list]
+        vars_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
+        expr_list = [self.f_list, self.g_list]
 
-        dest_eqn = ['f', 'g']
-        dest_args = [self.calls.f_args, self.calls.g_args]
+        eqn_names = ['f', 'g']
+        eqn_args = [self.calls.f_args, self.calls.g_args]
 
-        for it, dest, eqn, dargs in zip(iter_list, dest_list, dest_eqn, dest_args):
-            eq_args = list()
-            for name, instance in it.items():
+        for vlist, elist, ename, eargs in zip(vars_list, expr_list, eqn_names, eqn_args):
+            sym_args = list()
+            for name, instance in vlist.items():
                 if instance.e_str is None:
-                    dest.append(0)
+                    elist.append(0)
                 else:
                     try:
                         expr = sympify(instance.e_str, locals=self.inputs_dict)
@@ -1850,13 +1852,16 @@ class SymProcessor:
                     free_syms = self._check_expr_symbols(expr)
 
                     for s in free_syms:
-                        if s not in eq_args:
-                            eq_args.append(s)
-                            dargs.append(str(s))
+                        if s not in sym_args:
+                            sym_args.append(s)
+                            eargs.append(str(s))
 
-                    dest.append(expr)
-
-            self.calls.__dict__[eqn] = lambdify(eq_args, tuple(dest), 'numpy')
+                    elist.append(expr)
+            if len(elist) == 0:
+                # DO NOT USE `all(elist) == 0` to skip equations - leads to unpredictable behavior.
+                self.calls.__dict__[ename] = None
+            else:
+                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist), 'numpy')
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
