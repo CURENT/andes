@@ -391,7 +391,7 @@ class ModelCall:
         self.j_args = dict()
         self.s_args = OrderedDict()
 
-        self.init_lambdify = OrderedDict()
+        self.init = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -1168,7 +1168,7 @@ class Model:
                         d.check_var()
 
                 kwargs = self.get_inputs(refresh=True)
-                init_fun = self.calls.init_lambdify[name]
+                init_fun = self.calls.init[name]
 
                 if callable(init_fun):
                     try:
@@ -1732,7 +1732,7 @@ class SymProcessor:
         if len(self.init_std) > 0:
             self.init_dstd = self.init_std.jacobian(list(self.vars_dict.values()))
 
-        self.calls.init_lambdify = init_lambda_list
+        self.calls.init = init_lambda_list
         self.calls.init_latex = init_latex
         self.calls.init_std = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
                                        self.init_std,
