@@ -126,7 +126,7 @@ class System(object):
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('save_pycode', 0),
-                                     ('yapf_pycode', 1),
+                                     ('yapf_pycode', 0),
                                      ('use_pycode', 0),
                                      )))
         self.config.add_extra("_help",
