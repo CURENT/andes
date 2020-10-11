@@ -21,7 +21,6 @@ class Solver(object):
 
         # check if `sparselib` library has been successfully imported
         if (sparselib not in globals()) or globals()[sparselib] is None:
-            logger.warning(f"Sparse solver {sparselib} not available. Using UMFPACK.")
             self.sparselib = 'umfpack'
 
         # solvers
