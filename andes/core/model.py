@@ -1835,10 +1835,10 @@ class SymProcessor(object):
         iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
         dest_list = [self.f_list, self.g_list]
 
-        dest_fg = ['f', 'g']
+        dest_eqn = ['f', 'g']
         dest_args = [self.calls.f_args, self.calls.g_args]
 
-        for it, dest, fg, dargs in zip(iter_list, dest_list, dest_fg, dest_args):
+        for it, dest, eqn, dargs in zip(iter_list, dest_list, dest_eqn, dest_args):
             eq_args = list()
             for name, instance in it.items():
                 if instance.e_str is None:
@@ -1859,7 +1859,7 @@ class SymProcessor(object):
 
                     dest.append(expr)
 
-            self.calls.__dict__[fg] = lambdify(eq_args, tuple(dest), 'numpy')
+            self.calls.__dict__[eqn] = lambdify(eq_args, tuple(dest), 'numpy')
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
