@@ -1962,7 +1962,6 @@ class SymProcessor:
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
-            # j_args[jname] = list(set(j_args[jname]))
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), 'numpy')
 
