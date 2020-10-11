@@ -9,6 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.2 Notes
 ----------
 
+v1.2.1 (2020-10-11)
+```````````````````
+- Renamed `models.non_jit` to `models.file_classes`.
+- Removed `models/jit.py` as models have to be loaded and instantiated
+  anyway before undill.
+- Skip generating empty equation calls.
+
 v1.2.0 (2020-10-10)
 ```````````````````
 This version contains major refactor for speed improvement.
