@@ -12,12 +12,14 @@ v1.2 Notes
 v1.2.0 (2020-10-10)
 ```````````````````
 This version contains major refactor for speed improvement.
+
 - Refactored Jacobian calls generation so that for each model, one call
   is generated for each Jacobian type.
 - Refactored Service equation generation so that the exact arguments are
   passed.
 
 Also contains an experimental Python code dump function.
+
 - Controlled in ``System.config``, one can turn on ``save_pycode`` to dump
   equation and Jacobian calls to ``~/.andes/pycode``. Requires one call to
   ``andes prepare``.
