@@ -6,9 +6,28 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v1.1 Notes
+v1.2 Notes
 ----------
 
+v1.2.0 (2020-10-10)
+```````````````````
+This version contains major refactor for speed improvement.
+- Refactored Jacobian calls generation so that for each model, one call
+  is generated for each Jacobian type.
+- Refactored Service equation generation so that the exact arguments are
+  passed.
+
+Also contains an experimental Python code dump function.
+- Controlled in ``System.config``, one can turn on ``save_pycode`` to dump
+  equation and Jacobian calls to ``~/.andes/pycode``. Requires one call to
+  ``andes prepare``.
+- The Python code dump can be reformatted with ``yapf`` through the config
+  option ``yapf_pycode``. Requires separate installation.
+- The dumped Python code can be used for subsequent simulations through
+  the config option ``use_pycode``.
+
+v1.1 Notes
+----------
 v1.1.5 (2020-10-08)
 ```````````````````
 - Allow plotting to existing axes with the same plot API.
