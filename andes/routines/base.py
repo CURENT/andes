@@ -3,7 +3,7 @@ from andes.core import Config
 from collections import OrderedDict
 
 
-class BaseRoutine(object):
+class BaseRoutine:
     """
     Base routine class.
 

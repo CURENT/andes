@@ -14,7 +14,7 @@ from andes.shared import np, mpl, plt
 logger = logging.getLogger(__name__)
 
 
-class TDSData(object):
+class TDSData:
     """
     A data container for loading and plotting results from Andes time-domain simulation.
     """

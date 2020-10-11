@@ -11,7 +11,6 @@ Shared constants and delayed imports.
 
 from andes.utils.lazyimport import LazyImport
 
-import sys
 import math
 import coloredlogs      # NOQA
 import numpy as np      # NOQA
@@ -34,13 +33,6 @@ if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
 else:
     IP_ADD = False
-
-sys.path.append(get_dot_andes_path())
-
-try:
-    import pycode  # NOQA
-except ImportError:
-    pycode = None  # NOQA
 
 # --- constants ---
 

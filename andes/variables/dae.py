@@ -6,7 +6,7 @@ from andes.shared import pd, np, spmatrix, jac_names
 logger = logging.getLogger(__name__)
 
 
-class DAETimeSeries(object):
+class DAETimeSeries:
     """
     DAE time series data
     """
@@ -92,7 +92,7 @@ class DAETimeSeries(object):
             self._z[t] = z
 
 
-class DAE(object):
+class DAE:
     r"""
     Class for storing numerical values of the DAE system, including variables, equations and first order
     derivatives (Jacobian matrices).

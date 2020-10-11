@@ -25,7 +25,7 @@ def report_info(system):
     return info
 
 
-class Report(object):
+class Report:
     """
     Report class to store system static analysis reports
     """

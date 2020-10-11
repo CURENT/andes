@@ -16,13 +16,14 @@ import configparser
 import importlib
 import logging
 import os
+import sys
 import inspect
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
 import andes.io
 from andes import __version__
-from andes.models import non_jit
+from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.variables import FileMan, DAE
 from andes.routines import all_routines
@@ -32,11 +33,18 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, 
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD, pycode
+from andes.shared import np, spmatrix, jac_names, IP_ADD
 logger = logging.getLogger(__name__)
 
+sys.path.append(get_dot_andes_path())
 
-class ExistingModels(object):
+try:
+    import pycode  # NOQA
+except ImportError:
+    pycode = None  # NOQA
+
+
+class ExistingModels:
     """
     Storage class for existing models
     """
@@ -46,7 +54,7 @@ class ExistingModels(object):
         self.pflow_tds = OrderedDict()
 
 
-class System(object):
+class System:
     """
     System contains models and routines for modeling and simulation.
 
@@ -126,7 +134,7 @@ class System(object):
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('save_pycode', 0),
-                                     ('yapf_pycode', 1),
+                                     ('yapf_pycode', 0),
                                      ('use_pycode', 0),
                                      )))
         self.config.add_extra("_help",
@@ -269,16 +277,21 @@ class System(object):
                   end='\r', flush=True)
             model.prepare(quick=quick)
 
-        # write `__init__.py` that imports all to the `pycode` package
-        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-        os.makedirs(models_dir, exist_ok=True)
-        init_path = os.path.join(models_dir, '__init__.py')
+        if self.config.save_pycode:
+            # write `__init__.py` that imports all to the `pycode` package
+            models_dir = os.path.join(get_dot_andes_path(), 'pycode')
+            os.makedirs(models_dir, exist_ok=True)
+            init_path = os.path.join(models_dir, '__init__.py')
 
-        with open(init_path, 'w') as f:
-            # f.write(f"__all__ = {str(list(self.models.keys()))}")
-            for name in self.models.keys():
-                f.write(f"from . import {name}  # NOQA\n")
-            f.write('\n')
+            with open(init_path, 'w') as f:
+                f.write(f"__version__ = '{__version__}'\n\n")
+                for name in self.models.keys():
+                    f.write(f"from . import {name}  # NOQA\n")
+                f.write('\n')
+
+            # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
+            if pycode is not None:
+                importlib.reload(pycode)
 
         self._store_calls()
         self.dill()
@@ -1042,8 +1055,8 @@ class System(object):
         # try to replace equations and jacobian calls with saved code
         if pycode is not None and self.config.use_pycode:
             for model in self.models.values():
-                model.calls.f = pycode.__dict__[model.class_name].f_update
-                model.calls.g = pycode.__dict__[model.class_name].g_update
+                model.calls.f = pycode.__dict__[model.class_name].__dict__.get("f_update")
+                model.calls.g = pycode.__dict__[model.class_name].__dict__.get("g_update")
 
                 for jname in model.calls.j:
                     model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
@@ -1210,7 +1223,7 @@ class System(object):
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
         # non-JIT models
-        for file, cls_list in non_jit.items():
+        for file, cls_list in file_classes.items():
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_module, model_name)

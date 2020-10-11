@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 np.seterr(divide='raise')
 
 
-class Cache(object):
+class Cache:
     """
     Class for caching the return value of callback functions.
     """
@@ -54,9 +54,6 @@ class Cache(object):
                 self.__dict__[item] = self._call(item)
 
         return self.__getattribute__(item)
-
-    def __setattr__(self, key, value):
-        super(Cache, self).__setattr__(key, value)
 
     def add_callback(self, name: str, callback):
         """
@@ -111,7 +108,7 @@ class Cache(object):
                 return self._callbacks[name]
 
 
-class ModelData(object):
+class ModelData:
     r"""
     Class for holding parameter data for a model.
 
@@ -374,7 +371,7 @@ class ModelData(object):
         return idxes
 
 
-class ModelCall(object):
+class ModelCall:
     """
     Class for storing generated function calls and Jacobians.
     """
@@ -394,7 +391,7 @@ class ModelCall(object):
         self.j_args = dict()
         self.s_args = OrderedDict()
 
-        self.init_lambdify = OrderedDict()
+        self.init = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -428,7 +425,7 @@ class ModelCall(object):
                    self.vjac[j_full_name])
 
 
-class Model(object):
+class Model:
     r"""
     Base class for power system DAE models.
 
@@ -684,7 +681,7 @@ class Model(object):
             if not value.tex_name:
                 value.tex_name = key
             if key in self.__dict__:
-                logger.warning(f"{self.class_name}: redefinition of member <{key}>")
+                logger.warning(f"{self.class_name}: redefinition of member <{key}>. Likely a modeling error.")
 
     def __setattr__(self, key, value):
         self._check_attribute(key, value)
@@ -1171,7 +1168,7 @@ class Model(object):
                         d.check_var()
 
                 kwargs = self.get_inputs(refresh=True)
-                init_fun = self.calls.init_lambdify[name]
+                init_fun = self.calls.init[name]
 
                 if callable(init_fun):
                     try:
@@ -1218,12 +1215,13 @@ class Model(object):
         Non-inplace equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
-        f_ret = self.calls.f(*self.f_args)
-        for i, var in enumerate(self.cache.states_and_ext.values()):
-            if var.e_inplace:
-                var.e += f_ret[i]
-            else:
-                var.e[:] = f_ret[i]
+        if callable(self.calls.f):
+            f_ret = self.calls.f(*self.f_args)
+            for i, var in enumerate(self.cache.states_and_ext.values()):
+                if var.e_inplace:
+                    var.e += f_ret[i]
+                else:
+                    var.e[:] = f_ret[i]
 
         kwargs = self.get_inputs()
         # user-defined numerical calls defined in the model
@@ -1239,12 +1237,13 @@ class Model(object):
         """
         Evaluate algebraic equations.
         """
-        g_ret = self.calls.g(*self.g_args)
-        for i, var in enumerate(self.cache.algebs_and_ext.values()):
-            if var.e_inplace:
-                var.e += g_ret[i]
-            else:
-                var.e[:] = g_ret[i]
+        if callable(self.calls.g):
+            g_ret = self.calls.g(*self.g_args)
+            for i, var in enumerate(self.cache.algebs_and_ext.values()):
+                if var.e_inplace:
+                    var.e += g_ret[i]
+                else:
+                    var.e[:] = g_ret[i]
 
         kwargs = self.get_inputs()
         # numerical calls defined in the model
@@ -1639,7 +1638,7 @@ class Model(object):
         self.flags.jited = True
 
 
-class SymProcessor(object):
+class SymProcessor:
     """
     A helper class for symbolic processing and code generation.
 
@@ -1694,7 +1693,7 @@ class SymProcessor(object):
         self.cache = parent.cache
         self.config = parent.config
         self.class_name = parent.class_name
-        self.tex_names = parent.tex_names
+        self.tex_names = OrderedDict()
 
     def generate_init(self):
         """
@@ -1735,7 +1734,7 @@ class SymProcessor(object):
         if len(self.init_std) > 0:
             self.init_dstd = self.init_std.jacobian(list(self.vars_dict.values()))
 
-        self.calls.init_lambdify = init_lambda_list
+        self.calls.init = init_lambda_list
         self.calls.init_latex = init_latex
         self.calls.init_std = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
                                        self.init_std,
@@ -1769,8 +1768,8 @@ class SymProcessor(object):
 
         # process tex_names defined in model
         # -----------------------------------------------------------
-        for key in self.tex_names.keys():
-            self.tex_names[key] = Symbol(self.tex_names[key])
+        for key in self.parent.tex_names.keys():
+            self.tex_names[key] = Symbol(self.parent.tex_names[key])
         for instance in self.parent.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
                 self.tex_names[name] = tex_name
@@ -1832,17 +1831,17 @@ class SymProcessor(object):
         self.calls.f_args = list()
         self.calls.g_args = list()
 
-        iter_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
-        dest_list = [self.f_list, self.g_list]
+        vars_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
+        expr_list = [self.f_list, self.g_list]
 
-        dest_eqn = ['f', 'g']
-        dest_args = [self.calls.f_args, self.calls.g_args]
+        eqn_names = ['f', 'g']
+        eqn_args = [self.calls.f_args, self.calls.g_args]
 
-        for it, dest, eqn, dargs in zip(iter_list, dest_list, dest_eqn, dest_args):
-            eq_args = list()
-            for name, instance in it.items():
+        for vlist, elist, ename, eargs in zip(vars_list, expr_list, eqn_names, eqn_args):
+            sym_args = list()
+            for name, instance in vlist.items():
                 if instance.e_str is None:
-                    dest.append(0)
+                    elist.append(0)
                 else:
                     try:
                         expr = sympify(instance.e_str, locals=self.inputs_dict)
@@ -1853,13 +1852,15 @@ class SymProcessor(object):
                     free_syms = self._check_expr_symbols(expr)
 
                     for s in free_syms:
-                        if s not in eq_args:
-                            eq_args.append(s)
-                            dargs.append(str(s))
+                        if s not in sym_args:
+                            sym_args.append(s)
+                            eargs.append(str(s))
 
-                    dest.append(expr)
-
-            self.calls.__dict__[eqn] = lambdify(eq_args, tuple(dest), 'numpy')
+                    elist.append(expr)
+            if len(elist) == 0 or not any(elist):  # `any`, not `all`
+                self.calls.__dict__[ename] = None
+            else:
+                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist), 'numpy')
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -1954,11 +1955,13 @@ class SymProcessor(object):
                 self.calls.append_ijv(jname, e_idx, v_idx, 0)
 
                 free_syms = self._check_expr_symbols(e_symbolic)
-                j_args[jname].extend(free_syms)
+                for fs in free_syms:
+                    if fs not in j_args[jname]:
+                        j_args[jname].append(fs)
+                # j_args[jname].extend(free_syms)
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
-            j_args[jname] = list(set(j_args[jname]))
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), 'numpy')
 
@@ -2068,7 +2071,7 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         return src
 
 
-class Documenter(object):
+class Documenter:
     """
     Helper class for documenting models.
 

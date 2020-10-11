@@ -17,7 +17,7 @@ from andes.shared import np
 logger = logging.getLogger(__name__)
 
 
-class BaseParam(object):
+class BaseParam:
     """
     The base parameter class.
 

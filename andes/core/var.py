@@ -17,7 +17,7 @@ from andes.models.group import GroupBase
 from andes.shared import np, ndarray
 
 
-class BaseVar(object):
+class BaseVar:
     """
     Base variable class.
 

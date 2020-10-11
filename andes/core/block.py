@@ -20,7 +20,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-class Block(object):
+class Block:
     r"""
     Base class for control blocks.
 

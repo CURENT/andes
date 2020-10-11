@@ -618,10 +618,10 @@ def sort_psse_models(dyr_yaml):
     """
     Sort supported models so that model names are ordered by dependency.
     """
-    from andes.models import non_jit
+    from andes.models import file_classes
     from andes.utils.func import list_flatten
 
-    andes_models = list_flatten(list(non_jit.values()))
+    andes_models = list_flatten(list(file_classes.values()))
     number = dict()
 
     for psse_model in dyr_yaml:

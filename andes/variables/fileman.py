@@ -3,7 +3,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
-class FileMan(object):
+class FileMan:
     """Define a File Manager class for System"""
 
     def __init__(self, case=None, **kwargs):

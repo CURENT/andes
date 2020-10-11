@@ -36,14 +36,6 @@ andes.models.group module
    :undoc-members:
    :show-inheritance:
 
-andes.models.jit module
------------------------
-
-.. automodule:: andes.models.jit
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.models.line module
 ------------------------
 

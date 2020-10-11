@@ -9,7 +9,7 @@ from andes.utils.func import list_flatten
 logger = logging.getLogger(__name__)
 
 
-class GroupBase(object):
+class GroupBase:
     """
     Base class for groups
     """

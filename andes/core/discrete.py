@@ -19,7 +19,7 @@ from andes.utils.func import interp_n2
 logger = logging.getLogger(__name__)
 
 
-class Discrete(object):
+class Discrete:
     """
     Base discrete class.
 

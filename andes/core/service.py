@@ -20,7 +20,7 @@ from andes.utils.tab import Tab
 logger = logging.getLogger(__name__)
 
 
-class BaseService(object):
+class BaseService:
     """
     Base class for Service.
 

@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Solver(object):
+class Solver:
     """
     Sparse matrix solver class.
 
@@ -21,7 +21,6 @@ class Solver(object):
 
         # check if `sparselib` library has been successfully imported
         if (sparselib not in globals()) or globals()[sparselib] is None:
-            logger.warning(f"Sparse solver {sparselib} not available. Using UMFPACK.")
             self.sparselib = 'umfpack'
 
         # solvers
@@ -75,7 +74,7 @@ class Solver(object):
         self.worker.clear()
 
 
-class SuiteSparseSolver(object):
+class SuiteSparseSolver:
     """
     Base SuiteSparse solver interface.
 
@@ -280,7 +279,7 @@ class KLUSolver(SuiteSparseSolver):
         return np.ravel(b)
 
 
-class SciPySolver(object):
+class SciPySolver:
     """
     Base class for scipy family solvers.
     """
