@@ -1358,6 +1358,10 @@ class System:
             self.calls[name] = mdl.calls
 
     def _list2array(self):
+        """
+        Helper function to call models' ``list2array`` method, which
+        usually performs memory preallocation.
+        """
         self.call_models('list2array', self.models)
 
     def set_config(self, config=None):
