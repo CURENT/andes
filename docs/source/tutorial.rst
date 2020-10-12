@@ -94,14 +94,14 @@ Generated code are stored in the folder ``.andes/calls.pkl`` in your home direct
 In addition, ``andes selftest`` implicitly calls the code generation.
 If you are using ANDES as a package in the user mode, you won't need to call it again.
 
-For developers, ``andes prepare`` needs to be called immediately following any model equation
-modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
-
 Option ``-q`` or ``--quick`` (enabled by default) can be used to speed up the code generation.
 It skips the generation of :math:`\LaTeX`-formatted equations, which are only used in documentation and the interactive
 mode.
 
-Option ``-i`` or ``--incremental`` can be used to further speed up the code generation during model development.
+For developers, ``andes prepare`` needs to be called immediately following any model equation
+modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
+Option ``-i`` or ``--incremental``, instead of ``-q``, can be used to further speed up the code generation
+during model development.
 ``andes prepare -i`` only generates code for models with modified equations.
 
 andes run
@@ -247,7 +247,7 @@ For example, to convert ``case5.m`` into the ``xlsx`` format, run
 
     andes run case5.m --convert xlsx
 
-The output messages will look like
+The output messages will look like ::
 
     Parsing input file </Users/user/repos/andes/cases/matpower/case5.m>
     CASE5  Power flow data for modified 5 bus, 5 gen case based on PJM 5-bus system

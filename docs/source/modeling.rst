@@ -48,7 +48,7 @@ It takes several seconds up to a minute to finish the generation.
 .. warning::
     When models are modified (such as adding new models or changing equation strings), code generation needs
     to be executed again for consistency. It can be more conveniently triggered from command line with
-    ``andes prepare -qi``.
+    ``andes prepare -i``.
 
 .. autofunction:: andes.system.System.prepare
     :noindex:

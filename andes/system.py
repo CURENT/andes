@@ -989,9 +989,9 @@ class System:
 
     def dill(self):
         """
-        Serialize generated numerical functions in `System.calls` with package `dill`.
+        Serialize generated numerical functions in ``System.calls`` with package ``dill``.
 
-        The serialized file will be stored to ``~/andes/calls.pkl``, where `~` is the home directory path.
+        The serialized file will be stored to ``~/.andes/calls.pkl``, where `~` is the home directory path.
 
         Notes
         -----
@@ -1008,6 +1008,9 @@ class System:
 
     @staticmethod
     def _load_pkl():
+        """
+        Helper function to open and load dill-pickled functions.
+        """
         import dill
         dill.settings['recurse'] = True
         pkl_path = get_pkl_path()
@@ -1027,7 +1030,7 @@ class System:
 
     def undill(self):
         """
-        Deserialize the function calls from ``~/andes.calls.pkl`` with dill.
+        Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
 
         If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
         acceleration.
