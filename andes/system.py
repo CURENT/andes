@@ -18,6 +18,7 @@ import logging
 import os
 import sys
 import inspect
+import dill
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
@@ -308,7 +309,6 @@ class System:
         Function is not working. Serialization failed for `conj`.
         """
         from andes.shared import Pool
-        import dill
         dill.settings['recurse'] = True
 
         # consistency check for group parameters and variables
@@ -999,7 +999,6 @@ class System:
 
         """
         logger.debug("Dumping calls to calls.pkl with dill")
-        import dill
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
@@ -1011,7 +1010,6 @@ class System:
         """
         Helper function to open and load dill-pickled functions.
         """
-        import dill
         dill.settings['recurse'] = True
         pkl_path = get_pkl_path()
 
