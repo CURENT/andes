@@ -14,7 +14,7 @@ Base class for building ANDES models.
 import os
 import logging
 from collections import OrderedDict, defaultdict
-from typing import Iterable, Sized
+from typing import Iterable, Sized, Callable, Union
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -1621,21 +1621,26 @@ class Model:
         if self.system.config.numba != 1:
             return
 
+        if self.flags.jited is True:
+            return
+
+        self.calls.f = self._jitify_func_only(self.calls.f, parallel=parallel, cache=cache)
+        self.calls.g = self._jitify_func_only(self.calls.g, parallel=parallel, cache=cache)
+
+        for jname in self.calls.j:
+            self.calls.j[jname] = self._jitify_func_only(self.calls.j[jname],
+                                                         parallel=parallel, cache=cache)
+
+        self.flags.jited = True
+
+    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
         try:
             import numba
         except ImportError:
             return
 
-        if self.flags.jited is True:
-            return
-
-        self.calls.f = numba.jit(self.calls.f, parallel=parallel, cache=cache)
-        self.calls.g = numba.jit(self.calls.g, parallel=parallel, cache=cache)
-
-        for jname in self.calls.j:
-            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=parallel, cache=cache)
-
-        self.flags.jited = True
+        if func is not None:
+            return numba.jit(func, parallel=parallel, cache=cache)
 
 
 class SymProcessor:
