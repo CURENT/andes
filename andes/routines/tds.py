@@ -1,7 +1,12 @@
+"""
+ANDES module for time-domain simulation.
+"""
+
 import sys
 import os
 import time
 import importlib
+import logging
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
@@ -10,7 +15,6 @@ from andes.utils.tab import Tab
 from andes.shared import tqdm, np, pd
 from andes.shared import matrix, sparse, spdiag
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -102,6 +106,13 @@ class TDS(BaseRoutine):
         self.qrt_start = None
         self.headroom = 0.0
 
+        # internal storage for iterations
+        self.x0 = None
+        self.y0 = None
+        self.f0 = None
+        self.Ac = None
+        self.inc = None
+
     def init(self):
         """
         Initialize the status, storage and values for TDS.
@@ -170,9 +181,9 @@ class TDS(BaseRoutine):
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
-            logger.info(f"Initialization for dynamics was successful in {s1}.")
+            logger.info("Initialization for dynamics was successful in %s.", s1)
         else:
-            logger.error(f"Initialization for dynamics failed in {s1}.")
+            logger.error("Initialization for dynamics failed in %s.", s1)
 
         if system.dae.n == 0:
             tqdm.write('No dynamic component loaded.')
@@ -300,7 +311,7 @@ class TDS(BaseRoutine):
 
                     # if the ending time has passed
                     if time.time() - rt_end > 0:
-                        logger.debug(f'Simulation over-run at t={dae.t:4.4g} s.')
+                        logger.debug('Simulation over-run at t=%4.4g s.', dae.t)
                     else:
                         self.headroom += (rt_end - time.time())
 
@@ -320,7 +331,7 @@ class TDS(BaseRoutine):
 
         if self.busted:
             logger.error(self.err_msg)
-            logger.error(f"Simulation terminated at t={system.dae.t:.4f}.")
+            logger.error("Simulation terminated at t=%.4f s.", system.dae.t)
             system.exit_code += 1
         elif system.dae.t == self.config.tf:
             succeed = True   # success flag
@@ -329,10 +340,10 @@ class TDS(BaseRoutine):
             system.exit_code += 1
 
         _, s1 = elapsed(t0)
-        logger.info(f'Simulation completed in {s1}.')
+        logger.info('Simulation completed in %s.', s1)
 
         if config.qrt:
-            logger.debug(f'QRT headroom time: {self.headroom} s.')
+            logger.debug('QRT headroom time: %.4g s.', self.headroom)
 
         system.TDS.save_output()
 
@@ -648,26 +659,27 @@ class TDS(BaseRoutine):
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')
             return True
-        else:
 
-            fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
-            fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
+        # otherwise, show suspect initialization error
+        fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
+        fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
 
-            title = 'Suspect initialization issue! Simulation may crash!'
-            err_data = {'Name': fail_names,
-                        'Var. Value': system.dae.xy[fail_idx],
-                        'Eqn. Mismatch': system.dae.fg[fail_idx],
-                        }
-            tab = Tab(title=title,
-                      header=err_data.keys(),
-                      data=list(map(list, zip(*err_data.values()))))
+        title = 'Suspect initialization issue! Simulation may crash!'
+        err_data = {'Name': fail_names,
+                    'Var. Value': system.dae.xy[fail_idx],
+                    'Eqn. Mismatch': system.dae.fg[fail_idx],
+                    }
+        tab = Tab(title=title,
+                  header=err_data.keys(),
+                  data=list(map(list, zip(*err_data.values()))),
+                  )
 
-            logger.error(tab.draw())
+        logger.error(tab.draw())
 
-            if system.options.get('verbose') == 1:
-                breakpoint()
-            system.exit_code += 1
-            return False
+        if system.options.get('verbose') == 1:
+            breakpoint()
+        system.exit_code += 1
+        return False
 
     def save_output(self, npz=True):
         """
@@ -685,19 +697,18 @@ class TDS(BaseRoutine):
         """
         if self.system.files.no_output:
             return False
+
+        t0, _ = elapsed()
+
+        self.system.dae.write_lst(self.system.files.lst)
+        if npz is True:
+            self.system.dae.write_npz(self.system.files.npz)
         else:
-            t0, _ = elapsed()
+            self.system.dae.write_npy(self.system.files.npy)
 
-            self.system.dae.write_lst(self.system.files.lst)
-
-            if npz is True:
-                self.system.dae.write_npz(self.system.files.npz)
-            else:
-                self.system.dae.write_npy(self.system.files.npy)
-
-            _, s1 = elapsed(t0)
-            logger.info(f'TDS outputs saved in {s1}.')
-            return True
+        _, s1 = elapsed(t0)
+        logger.info('TDS outputs saved in %s.', s1)
+        return True
 
     def do_switch(self):
         """
@@ -782,19 +793,21 @@ class TDS(BaseRoutine):
         Load perturbation files to ``self.callpert``.
         """
         system = self.system
-        if system.files.pert:
-            if not os.path.isfile(system.files.pert):
-                logger.warning(f'Pert file not found at "{system.files.pert}".')
-                return False
+        if not system.files.pert:
+            return False
 
-            sys.path.append(system.files.case_path)
-            _, full_name = os.path.split(system.files.pert)
-            name, ext = os.path.splitext(full_name)
+        if not os.path.isfile(system.files.pert):
+            logger.warning('Pert file not found at "%s".', system.files.pert)
+            return False
 
-            module = importlib.import_module(name)
-            self.callpert = getattr(module, 'pert')
-            logger.info(f'Perturbation file "{system.files.pert}" loaded.')
-            return True
+        sys.path.append(system.files.case_path)
+        _, full_name = os.path.split(system.files.pert)
+        name, _ = os.path.splitext(full_name)
+
+        module = importlib.import_module(name)
+        self.callpert = getattr(module, 'pert')
+        logger.info('Perturbation file "%s" loaded.', system.files.pert)
+        return True
 
     def _load_csv(self, csv_file):
         """
@@ -811,7 +824,7 @@ class TDS(BaseRoutine):
         data = df.to_numpy()
 
         if data.ndim != 2:
-            raise ValueError("Data from CSV is not 2-dimentional (time versus variable)")
+            raise ValueError("Data from CSV is not 2-dimensional (time versus variable)")
         if data.shape[0] < 2:
             logger.warning("CSV data does not contain more than one time step.")
 
@@ -831,7 +844,8 @@ class TDS(BaseRoutine):
             Index of the equation into the `g` array. Diff. eqns. are not counted in.
         """
         y_idx = y_idx.tolist()
-        logger.debug(f'Max. algebraic mismatch associated with {self.system.dae.y_name[y_idx]} [y_idx={y_idx}]')
+        logger.debug('Max. algebraic mismatch associated with <%s> [y_idx=%d]',
+                     self.system.dae.y_name[y_idx], y_idx)
         assoc_vars = self.system.dae.gy[y_idx, :]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
@@ -839,9 +853,7 @@ class TDS(BaseRoutine):
         logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
         for v in vars_idx:
             v = v.tolist()
-            logger.debug(f'{v:<10} {self.system.dae.y_name[v]:<20} {assoc_vars[v]:<20g}')
-
-        pass
+            logger.debug('%10d %20s %20g', v, self.system.dae.y_name[v], assoc_vars[v])
 
     def _debug_ac(self, xy_idx):
         """
