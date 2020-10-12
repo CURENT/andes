@@ -1,13 +1,18 @@
-import logging
-import scipy.io
+"""
+Module for eigenvalue analysis.
+"""
 
+import logging
 from math import ceil, pi
+
+import scipy.io
 from cvxopt import mul, div, spdiag
 from cvxopt.lapack import gesv
 
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
+from andes.variables.report import report_info
 from andes.shared import np, matrix, spmatrix, plt, mpl
 from andes.plot import set_latex
 
@@ -142,10 +147,10 @@ class EIG(BaseRoutine):
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Eig analysis will not continue.')
             return succeed
-        else:
-            if system.TDS.initialized is False:
-                system.TDS.init()
-                system.TDS._itm_step()
+
+        if system.TDS.initialized is False:
+            system.TDS.init()
+            system.TDS._itm_step()
 
         if system.dae.n == 0:
             logger.error('No dynamic model. Eig analysis will not continue.')
@@ -153,7 +158,7 @@ class EIG(BaseRoutine):
         else:
             if sum(system.dae.Tf != 0) != len(system.dae.Tf):
                 self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
-                logger.info(f"System contains {len(self.singular_idx)} zero time constants. ")
+                logger.info("System contains %d zero time constants. ", len(self.singular_idx))
                 logger.debug([system.dae.x_name[i] for i in self.singular_idx])
 
             self.x_name = np.array(system.dae.x_name)
@@ -183,6 +188,9 @@ class EIG(BaseRoutine):
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
              line_width=0.5, dpi=150, show=True, latex=True):
+        """
+        Plot utility for eigenvalues in the S domain.
+        """
         mpl.rc('font', family='Times New Roman', size=12)
 
         if mu is None:
@@ -206,11 +214,10 @@ class EIG(BaseRoutine):
 
         if len(p_mu_real) > 0:
             logger.warning(
-                'System is not stable due to {} positive eigenvalues.'.format(
-                    len(p_mu_real)))
+                'System is not stable due to %d positive eigenvalues.', len(p_mu_real))
         else:
             logger.info(
-                'System is small-signal stable in the initial neighbourhood.')
+                'System is small-signal stable in the initial neighborhood.')
 
         set_latex(latex)
 
@@ -257,33 +264,25 @@ class EIG(BaseRoutine):
                'x_tex_name': np.array(system.dae.x_tex_name, dtype=np.object),
                }
         scipy.io.savemat(system.files.mat, mdict=out)
-        logger.info(f'State matrix saved to "{system.files.mat}".')
+        logger.info('State matrix saved to "%s"', system.files.mat)
         return True
 
-    def report(self, x_name=None):
+    def report(self, x_name=None, **kwargs):
         """
-        Save eigenvalue analysis reports
+        Save eigenvalue analysis reports.
 
         Returns
         -------
         None
         """
-        from andes.variables.report import report_info
-
-        system = self.system
-        mu = self.mu
-        part_fact = self.part_fact
         if x_name is None:
             x_name = self.x_name
 
-        text = []
-        header = []
-        rowname = []
-        data = []
+        text, header, rowname, data = list(), list(), list(), list()
 
-        neig = len(mu)
-        mu_real = mu.real()
-        mu_imag = mu.imag()
+        neig = len(self.mu)
+        mu_real = self.mu.real()
+        mu_imag = self.mu.imag()
         n_positive = sum(1 for x in mu_real if x > 0)
         n_zeros = sum(1 for x in mu_real if x == 0)
         n_negative = sum(1 for x in mu_real if x < 0)
@@ -302,7 +301,7 @@ class EIG(BaseRoutine):
         freq = [0] * neig
         ufreq = [0] * neig
         damping = [0] * neig
-        for idx, item in enumerate(mu):
+        for idx, item in enumerate(self.mu):
             if item.imag == 0:
                 freq[idx] = 0
                 ufreq[idx] = 0
@@ -315,7 +314,7 @@ class EIG(BaseRoutine):
         # obtain most associated variables
         var_assoc = []
         for prow in range(neig):
-            temp_row = part_fact[prow, :]
+            temp_row = self.part_fact[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
             var_assoc.append(x_name[name_idx])
 
@@ -323,7 +322,7 @@ class EIG(BaseRoutine):
         for prow in range(neig):
             temp_row = []
             for pcol in range(neig):
-                temp_row.append(round(part_fact[prow, pcol], 5))
+                temp_row.append(round(self.part_fact[prow, pcol], 5))
             pf.append(temp_row)
 
         # opening info section
@@ -372,5 +371,5 @@ class EIG(BaseRoutine):
                 rowname.append(x_name)
                 data.append(pf[start:end])
 
-        dump_data(text, header, rowname, data, system.files.eig)
-        logger.info(f'Report saved to "{system.files.eig}".')
+        dump_data(text, header, rowname, data, self.system.files.eig)
+        logger.info('Report saved to "%s".', self.system.files.eig)

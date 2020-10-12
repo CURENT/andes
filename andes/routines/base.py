@@ -43,8 +43,8 @@ class BaseRoutine:
     def run(self, **kwargs):
         raise NotImplementedError
 
-    def summary(self):
+    def summary(self, **kwargs):
         raise NotImplementedError
 
-    def report(self):
+    def report(self, **kwargs):
         raise NotImplementedError
