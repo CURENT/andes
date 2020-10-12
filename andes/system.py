@@ -1223,7 +1223,6 @@ class System:
 
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
-        # non-JIT models
         for file, cls_list in file_classes.items():
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + file)
@@ -1235,13 +1234,6 @@ class System:
                 # link to the group
                 group_name = self.__dict__[model_name].group
                 self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
-
-        # *** JIT import code ***
-        # import JIT models
-        # for file, pair in jits.items():
-        #     for cls, name in pair.items():
-        #         self.__dict__[name] = JIT(self, file, cls, name)
-        # ***********************
 
     def import_routines(self):
         """
