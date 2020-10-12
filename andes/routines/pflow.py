@@ -1,3 +1,8 @@
+"""
+Module for power flow calculation.
+"""
+
+import logging
 from collections import OrderedDict
 
 from andes.utils.misc import elapsed
@@ -5,7 +10,6 @@ from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
 from andes.shared import np, matrix, sparse, newton_krylov, IP_ADD
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -162,18 +166,18 @@ class PFlow(BaseRoutine):
         self.niter = 0
         while True:
             mis = self.nr_step()
-            logger.info(f'{self.niter}: |F(x)| = {mis:<10g}')
+            logger.info('%d: |F(x)| = %.10g', self.niter, mis)
 
             if mis < self.config.tol:
                 self.converged = True
                 break
-            elif self.niter > self.config.max_iter:
+            if self.niter > self.config.max_iter:
                 break
-            elif np.isnan(mis).any():
+            if np.isnan(mis).any():
                 logger.error('NaN found in solution. Convergence not likely')
                 self.niter = self.config.max_iter + 1
                 break
-            elif mis > 1e4 * self.mis[0]:
+            if mis > 1e4 * self.mis[0]:
                 logger.error('Mismatch increased too fast. Convergence not likely.')
                 break
             self.niter += 1
@@ -185,12 +189,12 @@ class PFlow(BaseRoutine):
                 max_idx = np.argmax(np.abs(system.dae.xy))
                 name = system.dae.xy_name[max_idx]
                 logger.error('Mismatch is not correctable possibly due to large load-generation imbalance.')
-                logger.error(f'Largest mismatch on equation associated with <{name}>')
+                logger.error('Largest mismatch on equation associated with <%s>', name)
             else:
-                logger.error(f'Power flow failed after {self.niter + 1} iterations for {system.files.case}.')
+                logger.error('Power flow failed after %d iterations for "%s".', self.niter + 1, system.files.case)
 
         else:
-            logger.info(f'Converged in {self.niter+1} iterations in {s1}.')
+            logger.info('Converged in %d iterations in %s.', self.niter + 1, s1)
 
             # make a copy of power flow solutions
             self.x_sol = system.dae.x.copy()
