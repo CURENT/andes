@@ -173,6 +173,9 @@ class EventFlag(VarService):
         self.u = dummify(u)
 
     def check(self, **kwargs):
+        """
+        Check status and set event flags.
+        """
         if not np.all(self.v == self.u.v):
             self.owner.system.TDS.custom_event = True
             logger.debug(f"Event flag set at t={self.owner.system.dae.t:.6f} sec.")
@@ -255,6 +258,9 @@ class ExtendedEvent(VarService):
         self.n_ext = 0  # number of extended events
 
     def assign_memory(self, n):
+        """
+        Assign memory for internal data.
+        """
         VarService.assign_memory(self, n)
         self.t_final = np.zeros_like(self.v)
         self.v_event = np.zeros_like(self.v)
@@ -265,6 +271,11 @@ class ExtendedEvent(VarService):
             self.t_ext.v = np.ones_like(self.u.v) * self.t_ext.v
 
     def check(self, **kwargs):
+        """
+        Check if an extended event is in place.
+
+        Supplied as a ``v_numeric`` to ``VarService``.
+        """
         dae_t = self.owner.system.dae.t
 
         if dae_t == 0.0:

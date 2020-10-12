@@ -153,7 +153,7 @@ def _read_dyr_dict(file):
     # concatenate multi-line device data
     input_concat_dict = defaultdict(list)
     multi_line = list()
-    for i, line in enumerate(input_list):
+    for line in input_list:
         if line == '':
             continue
         if '/' not in line:
