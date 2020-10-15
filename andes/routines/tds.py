@@ -872,8 +872,8 @@ class TDS(BaseRoutine):
         eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
-        logger.debug(f'Max. correction is for variable {self.system.dae.xy_name[xy_idx]} [{xy_idx}]')
-        logger.debug(f'Associated equation value is {self.system.dae.fg[xy_idx]:<20g}')
+        logger.debug('Max. correction is for variable %s [%d]', self.system.dae.xy_name[xy_idx], xy_idx)
+        logger.debug('Associated equation value is %20g', self.system.dae.fg[xy_idx])
         logger.debug('')
 
         logger.debug(f'{"xy_index":<10} {"Equation":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
