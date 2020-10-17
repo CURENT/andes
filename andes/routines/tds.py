@@ -178,6 +178,11 @@ class TDS(BaseRoutine):
         # if `dae.n == 1`, `calc_h_first` depends on new `dae.gy`
         self.calc_h()
 
+        # allocate for internal variables
+        self.x0 = np.zeros_like(system.dae.x)
+        self.y0 = np.zeros_like(system.dae.y)
+        self.f0 = np.zeros_like(system.dae.f)
+
         _, s1 = elapsed(t0)
 
         if self.initialized is True:
@@ -281,7 +286,7 @@ class TDS(BaseRoutine):
             step_status = False
             # call the stepping method of the integration method (or data replay)
             if self.data_csv is None:
-                step_status = self._itm_step()  # compute for the current step
+                step_status = self.itm_step()  # compute for the current step
             else:
                 step_status = self._csv_step()
 
@@ -357,7 +362,7 @@ class TDS(BaseRoutine):
 
         return succeed
 
-    def _itm_step(self):
+    def itm_step(self):
         """
         Integrate with Implicit Trapezoidal Method (ITM) to the current time.
 
@@ -377,12 +382,12 @@ class TDS(BaseRoutine):
         self.niter = 0
         self.converged = False
 
-        self.x0 = np.array(dae.x)
-        self.y0 = np.array(dae.y)
-        self.f0 = np.array(dae.f)
+        self.x0[:] = dae.x
+        self.y0[:] = dae.y
+        self.f0[:] = dae.f
 
         while True:
-            self._fg_update(models=system.exist.pflow_tds)
+            self.fg_update(models=system.exist.pflow_tds)
 
             # lazy Jacobian update
 
@@ -647,7 +652,7 @@ class TDS(BaseRoutine):
         Update f and g to see if initialization is successful.
         """
         system = self.system
-        self._fg_update(system.exist.pflow_tds)
+        self.fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
 
         # warn if variables are initialized at limits
@@ -751,7 +756,7 @@ class TDS(BaseRoutine):
 
         return ret
 
-    def _fg_update(self, models):
+    def fg_update(self, models):
         """
         Update `f` and `g` equations.
         """
@@ -784,7 +789,7 @@ class TDS(BaseRoutine):
         system.dae.y[:] = xy[system.dae.n:]
         system.vars_to_models()
 
-        self._fg_update(system.exist.pflow_tds)
+        self.fg_update(system.exist.pflow_tds)
 
         return system.dae.fg
 
