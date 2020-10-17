@@ -8,6 +8,9 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
+v1.2.2
+```````````````````
+- Renamed `TDS._itm_step` to `TDS.itm_step` as a public API.
 
 v1.2.1 (2020-10-11)
 ```````````````````
