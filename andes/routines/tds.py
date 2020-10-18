@@ -805,8 +805,10 @@ class TDS(BaseRoutine):
             logger.warning('Pert file not found at "%s".', system.files.pert)
             return False
 
-        sys.path.append(system.files.case_path)
-        _, full_name = os.path.split(system.files.pert)
+        pert_path, full_name = os.path.split(system.files.pert)
+        logger.debug('Pert file "%s" located at path %s', full_name, pert_path)
+
+        sys.path.append(pert_path)
         name, _ = os.path.splitext(full_name)
 
         module = importlib.import_module(name)
