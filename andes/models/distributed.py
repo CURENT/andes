@@ -253,6 +253,32 @@ class PVD1Model(Model):
                          tex_name='F_{vh}',
                          discrete=self.VL2,
                          )
+        # --- sensed voltage with lower limit of 0.01 ---
+
+        self.VLo = Limiter(u=self.v, lower=0.01, upper=999, no_upper=True,
+                           info='Voltage lower limit (0.01) flag',
+                           )
+        self.vp = Algeb(tex_name='V_p',
+                        info='Sensed positive voltage',
+                        v_str='v * VLo_zi + 0.01 * VLo_zl',
+                        e_str='v * VLo_zi + 0.01 * VLo_zl - vp',
+                        )
+
+        self.Pext = Algeb(tex_name='P_{ext}',
+                          info='External power signal',
+                          v_str='0',
+                          e_str='0 - Pext'
+                          )
+
+        self.Psum = Algeb(tex_name='P_{tot}',
+                          info='Sum of P signals',
+                          v_str='Pext + p0 + DB_y',
+                          e_str='Pext + p0 + DB_y - Psum',
+                          )  # `p0` is the initial `Pref`, and `DB_y` is `Pdrp` (f droop)
+
+        # TODO: retrieve line and calculate current It
+        # TODO: implement the voltage droop on reactive power
+
 
 class PVD1(PVD1Data, PVD1Model):
     """
