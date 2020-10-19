@@ -34,6 +34,11 @@ class PVD1Data(ModelData):
                            unit='MVA',
                            )
 
+        self.fn = NumParam(default=60.0, tex_name='f_n',
+                           info='nominal frequency',
+                           unit='Hz',
+                           )
+
         self.busf = IdxParam(info='Optional BusFreq idx',
                              model='BusFreq',
                              default=None,
@@ -180,19 +185,26 @@ class PVD1Model(Model):
                           info='Bus frequency', unit='p.u.',
                           )
 
+        self.fHz = Algeb(info='frequency in Hz',
+                         v_str='fn * f', e_str='fn * f - fHz',
+                         unit='Hz',
+                         )
+
         # --- frequency branch ---
-        self.FL1 = Limiter(u=self.f, lower=self.ft0, upper=self.ft1,
+        self.FL1 = Limiter(u=self.fHz, lower=self.ft0, upper=self.ft1,
                            info='Under frequency comparer',
                            )
-        self.FL2 = Limiter(u=self.f, lower=self.ft2, upper=self.ft3,
+        self.FL2 = Limiter(u=self.fHz, lower=self.ft2, upper=self.ft3,
                            info='Over frequency comparer',
                            )
+        self.FL1.no_warn = True
+        self.FL2.no_warn = True
 
         self.Kft01 = ConstService(v_str='1/(ft1 - ft0)', tex_name='K_{ft01}')
 
         self.Ffl = Algeb(info='Coeff. for under frequency',
-                         v_str='FL1_zi * Kft01 * (f - ft0) + FL1_zu',
-                         e_str='FL1_zi * Kft01 * (f - ft0) + FL1_zu - Ffl',
+                         v_str='FL1_zi * Kft01 * (fHz - ft0) + FL1_zu',
+                         e_str='FL1_zi * Kft01 * (fHz - ft0) + FL1_zu - Ffl',
                          tex_name='F_{fl}',
                          discrete=self.FL1,
                          )
@@ -200,11 +212,23 @@ class PVD1Model(Model):
         self.Kft23 = ConstService(v_str='-1/(ft2 - ft3)', tex_name='K_{ft23}')
 
         self.Ffh = Algeb(info='Coeff. for over frequency',
-                         v_str='FL2_zl + FL2_zi * (1 + Kft23 * (ft2 - f))',
-                         e_str='FL2_zl + FL2_zi * (1 + Kft23 * (ft2 - f)) - Ffh',
+                         v_str='FL2_zl + FL2_zi * (1 + Kft23 * (ft2 - fHz))',
+                         e_str='FL2_zl + FL2_zi * (1 + Kft23 * (ft2 - fHz)) - Ffh',
                          tex_name='F_{fh}',
                          discrete=self.FL2,
                          )
+        self.Fdev = Algeb(info='Frequency deviation',
+                          v_str='fn - fHz', e_str='fn - fHz - Fdev',
+                          unit='Hz', tex_name='f_{dev}',
+                          )
+
+        self.Dfdbd = ConstService(v_str='fdbd * ddn', info='Deadband lower limit after gain',
+                                  tex_name='D_{fdbd}',
+                                  )
+        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.Dfdbd, upper=0.0,
+                            info='frequency deviation deadband with gain',
+                            )  # outputs   `Pdrp`
+        self.DB.db.no_warn = True
 
 
 class PVD1(PVD1Data, PVD1Model):
