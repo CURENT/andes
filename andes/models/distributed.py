@@ -192,13 +192,11 @@ class PVD1Model(Model):
 
         # --- frequency branch ---
         self.FL1 = Limiter(u=self.fHz, lower=self.ft0, upper=self.ft1,
-                           info='Under frequency comparer',
+                           info='Under frequency comparer', no_warn=True,
                            )
         self.FL2 = Limiter(u=self.fHz, lower=self.ft2, upper=self.ft3,
-                           info='Over frequency comparer',
+                           info='Over frequency comparer', no_warn=True,
                            )
-        self.FL1.no_warn = True
-        self.FL2.no_warn = True
 
         self.Kft01 = ConstService(v_str='1/(ft1 - ft0)', tex_name='K_{ft01}')
 
@@ -209,7 +207,7 @@ class PVD1Model(Model):
                          discrete=self.FL1,
                          )
 
-        self.Kft23 = ConstService(v_str='-1/(ft2 - ft3)', tex_name='K_{ft23}')
+        self.Kft23 = ConstService(v_str='1/(ft3 - ft2)', tex_name='K_{ft23}')
 
         self.Ffh = Algeb(info='Coeff. for over frequency',
                          v_str='FL2_zl + FL2_zi * (1 + Kft23 * (ft2 - fHz))',
@@ -230,6 +228,31 @@ class PVD1Model(Model):
                             )  # outputs   `Pdrp`
         self.DB.db.no_warn = True
 
+        # --- Voltage flags ---
+        self.VL1 = Limiter(u=self.v, lower=self.vt0, upper=self.vt1,
+                           info='Under voltage comparer', no_warn=True,
+                           )
+        self.VL2 = Limiter(u=self.v, lower=self.vt2, upper=self.vt3,
+                           info='Over voltage comparer', no_warn=True,
+                           )
+
+        self.Kvt01 = ConstService(v_str='1/(vt1 - vt0)', tex_name='K_{vt01}')
+
+        self.Fvl = Algeb(info='Coeff. for under voltage',
+                         v_str='VL1_zi * Kvt01 * (v - vt0) + VL1_zu',
+                         e_str='VL1_zi * Kvt01 * (v - vt0) + VL1_zu - Fvl',
+                         tex_name='F_{vl}',
+                         discrete=self.VL1,
+                         )
+
+        self.Kvt23 = ConstService(v_str='1/(vt3 - vt2)', tex_name='K_{vt23}')
+
+        self.Fvh = Algeb(info='Coeff. for over voltage',
+                         v_str='VL2_zl + VL2_zi * (1 + Kvt23 * (vt2 - v))',
+                         e_str='VL2_zl + VL2_zi * (1 + Kvt23 * (vt2 - v)) - Fvh',
+                         tex_name='F_{vh}',
+                         discrete=self.VL2,
+                         )
 
 class PVD1(PVD1Data, PVD1Model):
     """
