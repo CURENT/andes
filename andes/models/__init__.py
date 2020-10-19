@@ -1,4 +1,4 @@
-from collections import OrderedDict  # NOQA
+from collections import OrderedDict
 
 
 # Notes:
@@ -22,6 +22,7 @@ file_classes = OrderedDict([
     ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
-    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'PVD1']),
+    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1']),
+    ('distributed', ['PVD1']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])
