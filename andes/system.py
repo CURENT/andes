@@ -813,11 +813,10 @@ class System:
                                      f'j_size={j_size}')
                         raise e
 
-        msg = f"Jacobian updated at t={self.dae.t}"
         if info:
-            msg += f' due to {info}'
-
-        logger.debug(msg)
+            logger.debug("Jacobian updated at t=%.6f due to %s.", self.dae.t, info)
+        else:
+            logger.debug("Jacobian updated at t=%.6f.", self.dae.t)
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
@@ -1056,11 +1055,13 @@ class System:
         # try to replace equations and jacobian calls with saved code
         if pycode is not None and self.config.use_pycode:
             for model in self.models.values():
-                model.calls.f = pycode.__dict__[model.class_name].__dict__.get("f_update")
-                model.calls.g = pycode.__dict__[model.class_name].__dict__.get("g_update")
+                pycode_model = pycode.__dict__[model.class_name]
+
+                model.calls.f = pycode_model.__dict__.get("f_update")
+                model.calls.g = pycode_model.__dict__.get("g_update")
 
                 for jname in model.calls.j:
-                    model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
+                    model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
             logger.info("Using generated Python code for equations and Jacobians.")
         else:
             logger.debug("Using undilled lambda functions.")
