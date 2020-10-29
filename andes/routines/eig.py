@@ -6,8 +6,7 @@ import logging
 from math import ceil, pi
 
 import scipy.io
-from cvxopt import mul, div, spdiag
-from cvxopt.lapack import gesv
+from andes.shared import mul, div, spdiag, gesv
 
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
