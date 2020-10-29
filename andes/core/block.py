@@ -1467,6 +1467,8 @@ class GainLimiter(Block):
              │     │ _____/
              └─────┘ lower
 
+    TODO: Add an extra gain block "R" for y.
+
     Parameters
     ----------
     u : str, BaseVar
@@ -1474,7 +1476,7 @@ class GainLimiter(Block):
 
     """
 
-    def __init__(self, u, K, upper, lower, no_upper=False, no_lower=False,
+    def __init__(self, u, K, lower, upper, no_lower=False, no_upper=False,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
@@ -1514,6 +1516,66 @@ class GainLimiter(Block):
         if not self.no_lower:
             self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name}'
             self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name}'
+
+        self.y.e_str += f' - {self.name}_y'
+
+
+class LimiterGain(Block):
+    """
+    Limiter followed by a gain.
+
+    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
+
+                   upper ┌─────┐
+                  /¯¯¯¯¯ │     │
+        u  ->    /   ->  │  K  │ -> y
+           _____/        │     │
+           lower         └─────┘
+
+    The intermediate variable before the gain is not saved.
+
+    Parameters
+    ----------
+    u : str, BaseVar
+        Input variable, or an equation string for constructing an anonymous variable
+
+    """
+
+    def __init__(self, u, K, lower, upper, no_lower=False, no_upper=False,
+                 name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.u = u
+        self.K = dummify(K)
+        self.upper = dummify(upper)
+        self.lower = dummify(lower)
+
+        if (no_upper and no_lower) is True:
+            raise ValueError("no_upper or no_lower cannot both be True")
+
+        self.no_lower = no_lower
+        self.no_upper = no_upper
+
+        self.lim = HardLimiter(u=self.u, lower=self.lower, upper=self.upper,
+                               no_upper=no_upper, no_lower=no_lower,
+                               tex_name='lim')
+
+        self.y = Algeb(info='Gain output after limiter', tex_name='y', discrete=self.lim)
+
+        self.vars = {'lim': self.lim, 'y': self.y}
+
+    def define(self):
+        """
+        TODO: write docstring
+        """
+        self.y.e_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
+        self.y.v_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
+
+        if not self.no_upper:
+            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name}'
+            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name}'
+        if not self.no_lower:
+            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name}'
+            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name}'
 
         self.y.e_str += f' - {self.name}_y'
 
