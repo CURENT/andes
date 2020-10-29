@@ -62,12 +62,14 @@ for jname in jac_names:
 
 pd = LazyImport('import pandas')
 cupy = LazyImport('import cupy')
-plt = LazyImport('from matplotlib import pyplot')
 mpl = LazyImport('import matplotlib')
-Pool = LazyImport('from pathos.multiprocessing import Pool')
-Process = LazyImport('from multiprocess import Process')
 unittest = LazyImport('import unittest')
 yaml = LazyImport('import yaml')
+
+plt = LazyImport('from matplotlib import pyplot')
+Pool = LazyImport('from pathos.multiprocessing import Pool')
+Process = LazyImport('from multiprocess import Process')
+
 newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
 fsolve = LazyImport('from scipy.optimize import fsolve')
 solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
