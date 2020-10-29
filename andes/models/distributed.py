@@ -65,18 +65,18 @@ class PVD1Data(ModelData):
                             power=True,
                             )
 
-        self.v0 = NumParam(default=0.0, tex_name='v_0',
+        self.v0 = NumParam(default=0.8, tex_name='v_0',
                            info='Lower limit of deadband for Vdroop response',
-                           unit='pu',
+                           unit='pu', non_zero=True,
                            )
-        self.v1 = NumParam(default=0.0, tex_name='v_1',
+        self.v1 = NumParam(default=1.1, tex_name='v_1',
                            info='Upper limit of deadband for Vdroop response',
-                           unit='pu',
+                           unit='pu', non_zero=True,
                            )
 
-        self.dqdv = NumParam(default=0.0, tex_name='dq/dv',
-                             info='Q-V droop characteristics',
-                             power=True,
+        self.dqdv = NumParam(default=-1.0, tex_name='dq/dv',
+                             info='Q-V droop characteristics (negative)',
+                             power=True, non_zero=True
                              )
 
         self.fdbd = NumParam(default=-0.01, tex_name='f_{dbd}',
@@ -258,6 +258,7 @@ class PVD1Model(Model):
         self.VLo = Limiter(u=self.v, lower=0.01, upper=999, no_upper=True,
                            info='Voltage lower limit (0.01) flag',
                            )
+
         self.vp = Algeb(tex_name='V_p',
                         info='Sensed positive voltage',
                         v_str='v * VLo_zi + 0.01 * VLo_zl',
@@ -276,13 +277,71 @@ class PVD1Model(Model):
                           e_str='Pext + p0 + DB_y - Psum',
                           )  # `p0` is the initial `Pref`, and `DB_y` is `Pdrp` (f droop)
 
+        # self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * Xc) * (Id + 1j * Iq))',
+        #                         info='Voltage before Xc compensation',
+        #                         tex_name='V_{comp}'
+        #                         )
+
+        self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * 1)',
+                                info='Voltage before Xc compensation',
+                                tex_name='V_{comp}'
+                                )
+
+        self.Vqu = ConstService(v_str='v1 - (q0 - qmn) / dqdv',
+                                info='Upper voltage bound => qmx',
+                                tex_name='V_{qu}',
+                                )
+
+        self.Vql = ConstService(v_str='v0 + (qmx - q0) / dqdv',
+                                info='Lower voltage bound => qmn',
+                                tex_name='V_{ql}',
+                                )
+
+        self.VQ1 = Limiter(u=self.Vcomp, lower=self.Vql, upper=self.v0,
+                           info='Under voltage comparer for Q droop',
+                           no_warn=True,
+                           )
+
+        self.VQ2 = Limiter(u=self.Vcomp, lower=self.v1, upper=self.Vqu,
+                           info='Over voltage comparer for Q droop',
+                           no_warn=True,
+                           )
+
+        Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
+               'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
+               'VQ2_zi * (q0 + dqdv * (v1 - Vcomp)) + ' \
+               'VQ1_zu * VQ2_zl * p0 + p0'
+
+        self.Qsum = Algeb(info='Total Q (droop + initial)',
+                          v_str=Qsum,
+                          e_str=f'{Qsum} - Qsum',
+                          tex_name='Q_{sum}',
+                          discrete=(self.VQ1, self.VQ2),
+                          )
+
+        self.Ipul = Algeb(info='Ipcmd before hard limit',
+                          v_str='Psum / vp',
+                          e_str='Psum / vp - Ipul',
+                          tex_name='I_{p,ul}',
+                          )
+
+        self.Iqul = Algeb(info='Iqcmd before hard limit',
+                          v_str='Qsum / vp',
+                          e_str='Qsum / vp - Iqul',
+                          tex_name='I_{q,ul}',
+                          )
+
+        self.Fcoef = VarService(v_str='Ffh * Ffh * Fvl * Fvh',
+                                tex_name='F_{coef}',
+                                )
+
         # TODO: retrieve line and calculate current It
         # TODO: implement the voltage droop on reactive power
 
 
 class PVD1(PVD1Data, PVD1Model):
     """
-    Distributed PV model. (TODO: work in progress)
+    WECC Distributed PV model. (TODO: work in progress)
 
     Power rating specified in `Sn`.
 
