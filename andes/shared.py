@@ -12,27 +12,40 @@ Shared constants and delayed imports.
 from andes.utils.lazyimport import LazyImport
 
 import math
-import coloredlogs      # NOQA
-import numpy as np      # NOQA
-from tqdm import tqdm   # NOQA
-
-import cvxopt           # NOQA
-from cvxopt import umfpack                           # NOQA
-from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-from numpy import ndarray                            # NOQA
-
-from andes.utils.texttable import Texttable          # NOQA
-from andes.utils.paths import get_dot_andes_path     # NOQA
+import coloredlogs         # NOQA
+import numpy as np         # NOQA
+from numpy import ndarray  # NOQA
+from tqdm import tqdm      # NOQA
 
 try:
-    from cvxoptklu import klu
+    import kvxopt       # NOQA
 except ImportError:
-    klu = None
+    kvxopt = None
 
+from cvxopt import spmatrix
 if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
 else:
     IP_ADD = False
+
+if IP_ADD or (kvxopt is None):
+    from cvxopt import umfpack                           # NOQA
+    from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from cvxopt import mul, div                          # NOQA
+    from cvxopt.lapack import gesv                       # NOQA
+    try:
+        from cvxoptklu import klu  # NOQA
+    except ImportError:
+        klu = None
+else:
+    from kvxopt import umfpack, klu                      # NOQA
+    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from kvxopt import mul, div                          # NOQA
+    from kvxopt.lapack import gesv                       # NOQA
+
+
+from andes.utils.texttable import Texttable          # NOQA
+from andes.utils.paths import get_dot_andes_path     # NOQA
 
 # --- constants ---
 
