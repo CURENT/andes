@@ -4,7 +4,7 @@ Distributed energy resource models.
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import Lag, GainLimiter, DeadBand1  # NOQA
+from andes.core.block import Lag, DeadBand1, LimiterGain  # NOQA
 from andes.core.var import ExtAlgeb, ExtState, Algeb, State  # NOQA
 
 from andes.core.service import ConstService, ExtService, FlagValue, DataSelect, DeviceFinder  # NOQA
@@ -49,6 +49,11 @@ class PVD1Data(ModelData):
                            unit='p.u.',
                            z=True,
                            )
+
+        self.pqflag = NumParam(info='P/Q priority for I limit; 0-Q priority, 1-P priority',
+                               mandatory=True,
+                               unit='bool',
+                               )
 
         # --- parameters found from ESIG.energy ---
         self.igreg = IdxParam(model='Bus',
@@ -215,6 +220,7 @@ class PVD1Model(Model):
                          tex_name='F_{fh}',
                          discrete=self.FL2,
                          )
+
         self.Fdev = Algeb(info='Frequency deviation',
                           v_str='fn - fHz', e_str='fn - fHz - Fdev',
                           unit='Hz', tex_name='f_{dev}',
@@ -310,7 +316,7 @@ class PVD1Model(Model):
         Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
                'VQ2_zi * (q0 + dqdv * (v1 - Vcomp)) + ' \
-               'VQ1_zu * VQ2_zl * p0 + p0'
+               'q0'
 
         self.Qsum = Algeb(info='Total Q (droop + initial)',
                           v_str=Qsum,
@@ -331,12 +337,46 @@ class PVD1Model(Model):
                           tex_name='I_{q,ul}',
                           )
 
-        self.Fcoef = VarService(v_str='Ffh * Ffh * Fvl * Fvh',
-                                tex_name='F_{coef}',
-                                )
+        # --- Ipmax, Iqmax and Iqmin ---
+        Ipmaxsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
+        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (q0 / v)**2, 0)), ((ialim**2 - (q0 / v) ** 2), True)))"
+        self.Ipmaxsq = VarService(v_str=Ipmaxsq)
+        self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0)
 
-        # TODO: retrieve line and calculate current It
-        # TODO: implement the voltage droop on reactive power
+        self.Ipmax = Algeb(v_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0)',
+                           e_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq) - Ipmax',
+                           tex_name='I_{pmax}',
+                           )
+
+        Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
+        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (p0 / v)**2, 0)), ((ialim**2 - (p0 / v) ** 2), True)))"
+        self.Iqmaxsq = VarService(v_str=Iqmaxsq)
+        self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0)
+
+        self.Iqmax = Algeb(v_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq0)',
+                           e_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq) - Iqmax',
+                           tex_name='I_{qmax}',
+                           )
+
+        self.Iqmin = VarService(v_str='-Iqmax')
+
+        # --- Ipcmd, Iqcmd ---
+
+        self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
+                                 lower=0.0, upper=self.Ipmax,
+                                 info='Ip with limiter and coeff.',
+                                 )
+
+        self.Iqcmd = LimiterGain(u=self.Iqul, K='Fvl * Fvh * Ffl * Ffh',
+                                 lower=self.Iqmin, upper=self.Iqmax,
+                                 info='Iq with limiter and coeff.',
+                                 )
+
+        self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0)
+
+        self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0)
+
+        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
 
 
 class PVD1(PVD1Data, PVD1Model):
