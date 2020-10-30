@@ -147,6 +147,16 @@ class PVD1Data(ModelData):
                             unit='s',
                             )
 
+        self.gammap = NumParam(default=1.0, tex_name=r'\gamma_p',
+                               info='Ratio of P from PVD1 w.r.t to that from PV generator',
+                               unit='(0, 1]',
+                               )
+
+        self.gammaq = NumParam(default=1.0, tex_name=r'\gamma_q',
+                               info='Ratio of Q from PVD1 w.r.t to that from PV generator',
+                               unit='(0, 1]',
+                               )
+
 
 class PVD1Model(Model):
     """
@@ -165,7 +175,12 @@ class PVD1Model(Model):
 
         self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 
-        # initial voltages from selected bus
+        # --- initial values from power flow ---
+        # v : bus voltage magnitude
+        # a : bus voltage angle
+        # p0s : active power from connected static PV generator
+        # q0s : reactive power from connected static PV generator
+
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
                           info='bus (or igreg) terminal voltage',
                           unit='p.u.',
@@ -178,16 +193,26 @@ class PVD1Model(Model):
                           e_str='-Ipout_y * v',
                           )
 
-        self.p0 = ExtService(model='StaticGen',
-                             src='p',
-                             indexer=self.gen,
-                             tex_name='P_0',
-                             )
-        self.q0 = ExtService(model='StaticGen',
-                             src='q',
-                             indexer=self.gen,
-                             tex_name='Q_0',
-                             )
+        self.p0s = ExtService(model='StaticGen',
+                              src='p',
+                              indexer=self.gen,
+                              tex_name='P_{0s}',
+                              info='Initial P from static gen',
+                              )
+        self.q0s = ExtService(model='StaticGen',
+                              src='q',
+                              indexer=self.gen,
+                              tex_name='Q_{0s}',
+                              info='Initial Q from static gen',
+                              )
+        # --- calculate the initial P and Q for this distributed device ---
+        self.p0 = ConstService(v_str='gammap * p0s', tex_name='P_0',
+                               info='Initial P for the PVD1 device',
+                               )
+        self.q0 = ConstService(v_str='gammaq * q0s', tex_name='Q_0',
+                               info='Initial Q for the PVD1 device',
+                               )
+
         # frequency measurement variable `f`
         self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
                           info='Bus frequency', unit='p.u.',
