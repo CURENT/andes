@@ -157,7 +157,7 @@ class PVD1Model(Model):
         self.flags.tds = True
         self.group = 'DG'
 
-        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW^{PQ}', cache=True)
+        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
 
         self.buss = DataSelect(self.igreg, self.bus,
                                info='selected bus (bus or igreg)',
