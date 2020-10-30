@@ -418,6 +418,7 @@ class PVD1(PVD1Data, PVD1Model):
     WECC Distributed PV model.
 
     Power rating specified in `Sn`.
+    Frequency and voltage recovery latching has not been implemented.
 
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
