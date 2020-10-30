@@ -157,7 +157,7 @@ class PVD1Model(Model):
         self.flags.tds = True
         self.group = 'DG'
 
-        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
+        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW^{PQ}', cache=True)
 
         self.buss = DataSelect(self.igreg, self.bus,
                                info='selected bus (bus or igreg)',
@@ -196,6 +196,7 @@ class PVD1Model(Model):
         self.fHz = Algeb(info='frequency in Hz',
                          v_str='fn * f', e_str='fn * f - fHz',
                          unit='Hz',
+                         tex_name='f_{Hz}',
                          )
 
         # --- frequency branch ---
@@ -338,8 +339,8 @@ class PVD1Model(Model):
         # --- Ipmax, Iqmax and Iqmin ---
         Ipmaxsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
         Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (q0 / v)**2, 0)), ((ialim**2 - (q0 / v) ** 2), True)))"
-        self.Ipmaxsq = VarService(v_str=Ipmaxsq)
-        self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0)
+        self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
+        self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
 
         self.Ipmax = Algeb(v_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0)',
                            e_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq) - Ipmax',
@@ -348,26 +349,28 @@ class PVD1Model(Model):
 
         Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
         Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (p0 / v)**2, 0)), ((ialim**2 - (p0 / v) ** 2), True)))"
-        self.Iqmaxsq = VarService(v_str=Iqmaxsq)
-        self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0)
+        self.Iqmaxsq = VarService(v_str=Iqmaxsq, tex_name='I_{qmax}^2')
+        self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0, tex_name='I_{qmax0}^2')
 
         self.Iqmax = Algeb(v_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq0)',
                            e_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq) - Iqmax',
                            tex_name='I_{qmax}',
                            )
 
-        self.Iqmin = VarService(v_str='-Iqmax')
+        self.Iqmin = VarService(v_str='-Iqmax', tex_name='I_{qmin}')
 
         # --- Ipcmd, Iqcmd ---
 
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
                                  lower=0.0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
+                                 tex_name='I^{pcmd}',
                                  )
 
         self.Iqcmd = LimiterGain(u=self.Iqul, K='Fvl * Fvh * Ffl * Ffh',
                                  lower=self.Iqmin, upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
+                                 tex_name='I^{qcmd}',
                                  )
 
         self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0,
