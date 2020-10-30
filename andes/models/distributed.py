@@ -149,12 +149,12 @@ class PVD1Data(ModelData):
 
         self.gammap = NumParam(default=1.0, tex_name=r'\gamma_p',
                                info='Ratio of P from PVD1 w.r.t to that from PV generator',
-                               unit='(0, 1]',
+                               vrange='(0, 1]',
                                )
 
         self.gammaq = NumParam(default=1.0, tex_name=r'\gamma_q',
                                info='Ratio of Q from PVD1 w.r.t to that from PV generator',
-                               unit='(0, 1]',
+                               vrange='(0, 1]',
                                )
 
 
