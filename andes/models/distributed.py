@@ -154,9 +154,10 @@ class PVD1Model(Model):
     """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
-
         self.flags.tds = True
         self.group = 'DG'
+
+        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
 
         self.buss = DataSelect(self.igreg, self.bus,
                                info='selected bus (bus or igreg)',
@@ -168,11 +169,13 @@ class PVD1Model(Model):
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
                           info='bus (or igreg) terminal voltage',
                           unit='p.u.',
+                          e_str='-Iqout_y * v',
                           )
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
                           info='bus (or igreg) phase angle',
                           unit='rad.',
+                          e_str='-Ipout_y * v',
                           )
 
         self.p0 = ExtService(model='StaticGen',
@@ -283,12 +286,7 @@ class PVD1Model(Model):
                           e_str='Pext + p0 + DB_y - Psum',
                           )  # `p0` is the initial `Pref`, and `DB_y` is `Pdrp` (f droop)
 
-        # self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * Xc) * (Id + 1j * Iq))',
-        #                         info='Voltage before Xc compensation',
-        #                         tex_name='V_{comp}'
-        #                         )
-
-        self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * 1)',
+        self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * (Ipout_y + 1j * Iqout_y))',
                                 info='Voltage before Xc compensation',
                                 tex_name='V_{comp}'
                                 )
@@ -376,7 +374,11 @@ class PVD1Model(Model):
 
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0)
 
-        self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
+    def v_numeric(self, **kwargs):
+        """
+        Disable the corresponding `StaticGen`s.
+        """
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class PVD1(PVD1Data, PVD1Model):
