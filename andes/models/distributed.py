@@ -184,13 +184,13 @@ class PVD1Model(Model):
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
                           info='bus (or igreg) terminal voltage',
                           unit='p.u.',
-                          e_str='-Iqout_y * v',
+                          e_str='-Iqout_y * v * u',
                           )
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
                           info='bus (or igreg) phase angle',
                           unit='rad.',
-                          e_str='-Ipout_y * v',
+                          e_str='-Ipout_y * v * u',
                           )
 
         self.p0s = ExtService(model='StaticGen',
