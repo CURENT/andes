@@ -370,9 +370,13 @@ class PVD1Model(Model):
                                  info='Iq with limiter and coeff.',
                                  )
 
-        self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0)
+        self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0,
+                         info='Output Ip filter',
+                         )
 
-        self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0)
+        self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
+                         info='Output Iq filter',
+                         )
 
     def v_numeric(self, **kwargs):
         """
@@ -383,11 +387,12 @@ class PVD1Model(Model):
 
 class PVD1(PVD1Data, PVD1Model):
     """
-    WECC Distributed PV model. (TODO: work in progress)
+    WECC Distributed PV model.
 
     Power rating specified in `Sn`.
 
-    Reference: ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
+    Reference:
+    [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
     Available: https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
     """
     def __init__(self, system, config):
