@@ -14,19 +14,19 @@ import numpy as np         # NOQA
 from numpy import ndarray  # NOQA
 from tqdm import tqdm      # NOQA
 
-# import `kvxopt` and test for `ipadd`
-# only use `kvxopt` when `ipadd` is available
 try:
+    import kvxopt
     from kvxopt import spmatrix as kspmatrix
-    if not hasattr(kspmatrix, 'ipadd'):
-        kvxopt = None
-        IP_ADD = False
-    else:
-        IP_ADD = True
 except ImportError:
     kvxopt = None
 
-if kvxopt is None:
+# only use `kvxopt` when `ipadd` is available
+if kvxopt and not hasattr(kspmatrix, 'ipadd'):
+    IP_ADD = False
+else:
+    IP_ADD = True
+
+if IP_ADD is False:
     from cvxopt import umfpack                           # NOQA
     from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
