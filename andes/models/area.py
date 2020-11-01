@@ -71,7 +71,10 @@ class ACEData(ModelData):
 
 class ACEc(ACEData, Model):
     """
-    Area Control Error model. Continuous frequency sampling.
+    Area Control Error model.
+
+    Continuous frequency sampling.
+    System base frequency from ``system.config.freq`` is used.
 
     Note: area idx is automatically retrieved from `bus`.
     """
@@ -100,16 +103,21 @@ class ACEc(ACEData, Model):
                           indexer=self.busfreq,
                           export=False,
                           info='Bus frequency',
+                          unit='p.u. (Hz)'
                           )
-        self.ace = Algeb(info='area control error', unit='MW (p.u.)',
+        self.ace = Algeb(info='area control error',
+                         unit='p.u. (MW)',
                          tex_name='ace',
-                         e_str='10 * bias * (f - 1) - ace',
+                         e_str='10 * bias * sys_f * (f - 1) - ace',
                          )
 
 
 class ACE(ACEc):
     """
-    Area Control Error model. Discrete frequency sampling.
+    Area Control Error model.
+
+    Discrete frequency sampling.
+    System base frequency from ``system.config.freq`` is used.
 
     Frequency sampling period (in seconds) can be specified in
     ``ACE.config.interval``. The sampling start time (in seconds)
@@ -134,4 +142,4 @@ class ACE(ACEc):
                            info='Sampled freq.',
                            )
 
-        self.ace.e_str = '10 * bias * (fs_v - 1) - ace'
+        self.ace.e_str = '10 * bias * sys_f * (fs_v - 1) - ace'
