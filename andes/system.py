@@ -18,6 +18,7 @@ import logging
 import os
 import sys
 import inspect
+import dill
 from collections import OrderedDict
 from typing import List, Dict, Tuple, Union, Optional
 
@@ -308,7 +309,6 @@ class System:
         Function is not working. Serialization failed for `conj`.
         """
         from andes.shared import Pool
-        import dill
         dill.settings['recurse'] = True
 
         # consistency check for group parameters and variables
@@ -813,11 +813,10 @@ class System:
                                      f'j_size={j_size}')
                         raise e
 
-        msg = f"Jacobian updated at t={self.dae.t}"
         if info:
-            msg += f' due to {info}'
-
-        logger.debug(msg)
+            logger.debug("Jacobian updated at t=%.6f due to %s.", self.dae.t, info)
+        else:
+            logger.debug("Jacobian updated at t=%.6f.", self.dae.t)
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
@@ -989,9 +988,9 @@ class System:
 
     def dill(self):
         """
-        Serialize generated numerical functions in `System.calls` with package `dill`.
+        Serialize generated numerical functions in ``System.calls`` with package ``dill``.
 
-        The serialized file will be stored to ``~/andes/calls.pkl``, where `~` is the home directory path.
+        The serialized file will be stored to ``~/.andes/calls.pkl``, where `~` is the home directory path.
 
         Notes
         -----
@@ -999,7 +998,6 @@ class System:
 
         """
         logger.debug("Dumping calls to calls.pkl with dill")
-        import dill
         dill.settings['recurse'] = True
 
         pkl_path = get_pkl_path()
@@ -1008,7 +1006,9 @@ class System:
 
     @staticmethod
     def _load_pkl():
-        import dill
+        """
+        Helper function to open and load dill-pickled functions.
+        """
         dill.settings['recurse'] = True
         pkl_path = get_pkl_path()
 
@@ -1027,7 +1027,7 @@ class System:
 
     def undill(self):
         """
-        Deserialize the function calls from ``~/andes.calls.pkl`` with dill.
+        Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
 
         If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
         acceleration.
@@ -1055,11 +1055,13 @@ class System:
         # try to replace equations and jacobian calls with saved code
         if pycode is not None and self.config.use_pycode:
             for model in self.models.values():
-                model.calls.f = pycode.__dict__[model.class_name].__dict__.get("f_update")
-                model.calls.g = pycode.__dict__[model.class_name].__dict__.get("g_update")
+                pycode_model = pycode.__dict__[model.class_name]
+
+                model.calls.f = pycode_model.__dict__.get("f_update")
+                model.calls.g = pycode_model.__dict__.get("g_update")
 
                 for jname in model.calls.j:
-                    model.calls.j[jname] = pycode.__dict__[model.class_name].__dict__[f'{jname}_update']
+                    model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
             logger.info("Using generated Python code for equations and Jacobians.")
         else:
             logger.debug("Using undilled lambda functions.")
@@ -1222,7 +1224,6 @@ class System:
 
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
-        # non-JIT models
         for file, cls_list in file_classes.items():
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + file)
@@ -1234,13 +1235,6 @@ class System:
                 # link to the group
                 group_name = self.__dict__[model_name].group
                 self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
-
-        # *** JIT import code ***
-        # import JIT models
-        # for file, pair in jits.items():
-        #     for cls, name in pair.items():
-        #         self.__dict__[name] = JIT(self, file, cls, name)
-        # ***********************
 
     def import_routines(self):
         """
@@ -1365,6 +1359,10 @@ class System:
             self.calls[name] = mdl.calls
 
     def _list2array(self):
+        """
+        Helper function to call models' ``list2array`` method, which
+        usually performs memory preallocation.
+        """
         self.call_models('list2array', self.models)
 
     def set_config(self, config=None):

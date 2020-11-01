@@ -73,7 +73,7 @@ def guess(system):
             if testlines(fid):
                 true_format = item
                 files.input_format = true_format
-                logger.debug(f'Input format guessed as {true_format}.')
+                logger.debug('Input format guessed as %s.', true_format)
                 break
 
     if not true_format:
@@ -85,7 +85,7 @@ def guess(system):
         for key, val in input_formats.items():
             if add_ext[1:] in val:
                 files.add_format = key
-                logger.debug(f'Addfile format guessed as {key}.')
+                logger.debug('Addfile format guessed as %s.', key)
                 break
 
     return true_format
@@ -106,32 +106,32 @@ def parse(system):
     # exit when no input format is given
     if not system.files.input_format:
         if not guess(system):
-            logger.error('Input format is not specified and cannot be inferred.')
+            logger.error('Input format unknown for file "%s".', system.files.case)
             return False
 
     # try parsing the base case file
-    logger.info(f'Parsing input file "{system.files.case}"')
+    logger.info('Parsing input file "%s"...', system.files.case)
     input_format = system.files.input_format
     parser = importlib.import_module('.' + input_format, __name__)
     if not parser.read(system, system.files.case):
-        logger.error(f'Error parsing case file {system.files.fullname} with {input_format} format parser.')
+        logger.error('Error parsing file "%s" with <%s> parser.', system.files.fullname, input_format)
         return False
 
     _, s = elapsed(t)
-    logger.info(f'Input file parsed in {s}.')
+    logger.info('Input file parsed in %s.', s)
 
     # Try parsing the addfile
     t, _ = elapsed()
 
     if system.files.addfile:
-        logger.info(f'Parsing additional file "{system.files.addfile}"')
+        logger.info('Parsing additional file "%s"...', system.files.addfile)
         add_format = system.files.add_format
         add_parser = importlib.import_module('.' + add_format, __name__)
         if not add_parser.read_add(system, system.files.addfile):
-            logger.error(f'Error parsing addfile {system.files.addfile} with {input_format} parser.')
+            logger.error('Error parsing addfile "%s" with %s parser.', system.files.addfile, input_format)
             return False
         _, s = elapsed(t)
-        logger.info(f'Addfile parsed in {s}.')
+        logger.info('Addfile parsed in %s.', s)
 
     return True
 
@@ -175,7 +175,7 @@ def dump(system, output_format, full_path=None, overwrite=False, **kwargs):
     ret = writer.write(system, system.files.dump, overwrite=overwrite, **kwargs)
     _, s = elapsed(t)
     if ret:
-        logger.info(f'Format conversion completed in {s}.')
+        logger.info('Format conversion completed in %s.', s)
         return True
     else:
         logger.error('Format conversion failed.')

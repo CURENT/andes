@@ -1,4 +1,4 @@
-from collections import OrderedDict  # NOQA
+from collections import OrderedDict
 
 
 # Notes:
@@ -12,7 +12,7 @@ file_classes = OrderedDict([
     ('pv', ['PV', 'Slack']),
     ('shunt', ['Shunt']),
     ('line', ['Line']),
-    ('area', ['Area', 'ACE']),
+    ('area', ['Area', 'ACE', 'ACEc']),
     ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'IEEEG1']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS']),
@@ -22,6 +22,7 @@ file_classes = OrderedDict([
     ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
-    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'PVD1']),
+    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1']),
+    ('distributed', ['PVD1']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])

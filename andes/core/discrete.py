@@ -203,8 +203,10 @@ class Limiter(Discrete):
         True to only use the upper limit
     no_upper : bool
         True to only use the lower limit
-    equal: bool
+    equal : bool
         True to include equal signs in comparison (>= or <=).
+    no_warn : bool
+        Disable initial limit warnings
     zu : 0 or 1
         Default value for `zu` if not enabled
     zl : 0 or 1
@@ -224,7 +226,8 @@ class Limiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
-                 no_upper=False, no_lower=False, equal=True, zu=0.0, zl=0.0, zi=1.0):
+                 no_upper=False, no_lower=False, equal=True, no_warn=False,
+                 zu=0.0, zl=0.0, zi=1.0):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = dummify(lower)
@@ -233,6 +236,7 @@ class Limiter(Discrete):
         self.no_upper = no_upper
         self.no_lower = no_lower
         self.equal = equal
+        self.no_warn = no_warn
 
         self.zu = np.array([zu])
         self.zl = np.array([zl])

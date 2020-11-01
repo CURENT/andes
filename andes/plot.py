@@ -416,7 +416,7 @@ class TDSData:
     def bqplot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
                     latex=True, dpi=150, line_width=1.0, greyscale=False, savefig=None, save_format=None,
-                    show=True, title=None,
+                    title=None,
                     **kwargs):
         """
         Plot with ``bqplot``. Experimental and incomplete.

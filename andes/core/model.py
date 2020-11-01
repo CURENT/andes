@@ -14,7 +14,7 @@ Base class for building ANDES models.
 import os
 import logging
 from collections import OrderedDict, defaultdict
-from typing import Iterable, Sized
+from typing import Iterable, Sized, Callable, Union
 
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
@@ -504,7 +504,8 @@ class Model:
 
     where the `e_str` attribute is the equation string attribute. `u` is the connectivity status.
     Any parameter, config, service or variables can be used in equation strings.
-    An addition variable `dae_t` for the current simulation time can be used if the model has flag `tds`.
+    The addition variable `dae_t` for the current simulation time can be used if the model has flag `tds`.
+    The additional variable `sys_f` is for system frequency (from ``system.config.freq``).
 
     The above example is overly simplified. Our `PQ` model wants a feature to switch itself to
     a constant impedance if the voltage is out of the range `(vmin, vmax)`.
@@ -572,7 +573,9 @@ class Model:
         self.services_ext = OrderedDict()  # external services (to be retrieved)
         self.services_ops = OrderedDict()  # operational services (for special usages)
 
-        self.tex_names = OrderedDict((('dae_t', 't_{dae}'),))
+        self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
+                                      ('sys_f', 'f_{sys}'),
+                                      ))
 
         # Model behavior flags
         self.flags = ModelFlags()
@@ -877,8 +880,9 @@ class Model:
         for key, val in self.config.as_dict(refresh=True).items():
             self._input[key] = np.array(val)
 
-        # update`dae_t`
+        # update`dae_t` and `sys_f`
         self._input['dae_t'] = self.system.dae.t
+        self._input['sys_f'] = self.system.config.freq
 
     def refresh_inputs_arg(self):
         """
@@ -1621,21 +1625,26 @@ class Model:
         if self.system.config.numba != 1:
             return
 
+        if self.flags.jited is True:
+            return
+
+        self.calls.f = self._jitify_func_only(self.calls.f, parallel=parallel, cache=cache)
+        self.calls.g = self._jitify_func_only(self.calls.g, parallel=parallel, cache=cache)
+
+        for jname in self.calls.j:
+            self.calls.j[jname] = self._jitify_func_only(self.calls.j[jname],
+                                                         parallel=parallel, cache=cache)
+
+        self.flags.jited = True
+
+    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
         try:
             import numba
         except ImportError:
             return
 
-        if self.flags.jited is True:
-            return
-
-        self.calls.f = numba.jit(self.calls.f, parallel=parallel, cache=cache)
-        self.calls.g = numba.jit(self.calls.g, parallel=parallel, cache=cache)
-
-        for jname in self.calls.j:
-            self.calls.j[jname] = numba.jit(self.calls.j[jname], parallel=parallel, cache=cache)
-
-        self.flags.jited = True
+        if func is not None:
+            return numba.jit(func, parallel=parallel, cache=cache)
 
 
 class SymProcessor:
@@ -1673,7 +1682,7 @@ class SymProcessor:
 
         self.parent = parent
         # symbols that are input to lambda functions
-        # including parameters, variables, services, configs and "dae_t"
+        # including parameters, variables, services, configs, and scalars (dae_t, sys_f)
         self.inputs_dict = OrderedDict()
         self.vars_dict = OrderedDict()
         self.iters_dict = OrderedDict()
@@ -1798,6 +1807,7 @@ class SymProcessor:
                 self.tex_names[Symbol(var)] = Symbol(self.parent.__dict__[var].tex_name)
 
         self.inputs_dict['dae_t'] = Symbol('dae_t')
+        self.inputs_dict['sys_f'] = Symbol('sys_f')
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)

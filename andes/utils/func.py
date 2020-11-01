@@ -10,8 +10,8 @@ def list_flatten(input_list):
     """
     if len(input_list) > 0 and isinstance(input_list[0], (list, np.ndarray)):
         return functools.reduce(operator.iconcat, input_list, [])
-    else:
-        return input_list
+
+    return input_list
 
 
 def interp_n2(t, x, y):
