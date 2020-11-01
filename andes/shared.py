@@ -14,20 +14,35 @@ import numpy as np         # NOQA
 from numpy import ndarray  # NOQA
 from tqdm import tqdm      # NOQA
 
+# Library preference:
+# KVXOPT + ipadd > CVXOPT + ipadd > KXVOPT > CVXOPT (+ KLU or not)
+
 try:
     import kvxopt
     from kvxopt import spmatrix as kspmatrix
+    KIP_ADD = False
+    if hasattr(kspmatrix, 'ipadd'):
+        KIP_ADD = True
 except ImportError:
     kvxopt = None
     kspmatrix = None
+    KIP_ADD = False
 
-# only use `kvxopt` when `ipadd` is available
-IP_ADD = False
-if kvxopt:
-    if hasattr(kspmatrix, 'ipadd'):
-        IP_ADD = True
 
-if IP_ADD is False:
+from cvxopt import spmatrix as cspmatrix
+if hasattr(cspmatrix, 'ipadd'):
+    CIP_ADD = True
+else:
+    CIP_ADD = False
+
+
+if KIP_ADD is True:
+    from kvxopt import umfpack, klu                      # NOQA
+    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from kvxopt import mul, div                          # NOQA
+    from kvxopt.lapack import gesv                       # NOQA
+    IP_ADD = KIP_ADD
+elif CIP_ADD is True:
     from cvxopt import umfpack                           # NOQA
     from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
@@ -36,16 +51,7 @@ if IP_ADD is False:
         from cvxoptklu import klu  # NOQA
     except ImportError:
         klu = None
-    if hasattr(spmatrix, 'ipadd'):
-        IP_ADD = True
-    else:
-        IP_ADD = False
-else:
-    from kvxopt import umfpack, klu                      # NOQA
-    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-    from kvxopt import mul, div                          # NOQA
-    from kvxopt.lapack import gesv                       # NOQA
-
+    IP_ADD = CIP_ADD
 
 from andes.utils.texttable import Texttable              # NOQA
 from andes.utils.paths import get_dot_andes_path         # NOQA
