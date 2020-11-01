@@ -19,18 +19,19 @@ from tqdm import tqdm      # NOQA
 
 try:
     import kvxopt       # NOQA
+    from kvxopt import spmatrix
 except ImportError:
     kvxopt = None
+    from cvxopt import spmatrix
 
-from cvxopt import spmatrix
 if hasattr(spmatrix, 'ipadd'):
     IP_ADD = True
 else:
     IP_ADD = False
 
-if IP_ADD or (kvxopt is None):
+if kvxopt is None:
     from cvxopt import umfpack                           # NOQA
-    from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from cvxopt import matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
     from cvxopt.lapack import gesv                       # NOQA
     try:
@@ -39,7 +40,7 @@ if IP_ADD or (kvxopt is None):
         klu = None
 else:
     from kvxopt import umfpack, klu                      # NOQA
-    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from kvxopt import matrix, sparse, spdiag  # NOQA
     from kvxopt import mul, div                          # NOQA
     from kvxopt.lapack import gesv                       # NOQA
 
