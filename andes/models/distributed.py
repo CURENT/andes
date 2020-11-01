@@ -4,13 +4,12 @@ Distributed energy resource models.
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import Lag, DeadBand1, LimiterGain  # NOQA
-from andes.core.var import ExtAlgeb, ExtState, Algeb, State  # NOQA
+from andes.core.block import Lag, DeadBand1, LimiterGain
+from andes.core.var import ExtAlgeb, Algeb
 
-from andes.core.service import ConstService, ExtService, FlagValue, DataSelect, DeviceFinder  # NOQA
-from andes.core.service import VarService, Replace  # NOQA
-from andes.core.service import NumSelect  # NOQA
-from andes.core.discrete import Switcher, Limiter  # NOQA
+from andes.core.service import ConstService, ExtService, VarService
+from andes.core.service import DataSelect, DeviceFinder
+from andes.core.discrete import Switcher, Limiter
 
 
 class PVD1Data(ModelData):
