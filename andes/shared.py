@@ -36,13 +36,7 @@ else:
     CIP_ADD = False
 
 
-if KIP_ADD is True:
-    from kvxopt import umfpack, klu                      # NOQA
-    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-    from kvxopt import mul, div                          # NOQA
-    from kvxopt.lapack import gesv                       # NOQA
-    IP_ADD = KIP_ADD
-elif CIP_ADD is True:
+if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
     from cvxopt import umfpack                           # NOQA
     from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
@@ -52,6 +46,12 @@ elif CIP_ADD is True:
     except ImportError:
         klu = None
     IP_ADD = CIP_ADD
+else:
+    from kvxopt import umfpack, klu                      # NOQA
+    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from kvxopt import mul, div                          # NOQA
+    from kvxopt.lapack import gesv                       # NOQA
+    IP_ADD = KIP_ADD
 
 from andes.utils.texttable import Texttable              # NOQA
 from andes.utils.paths import get_dot_andes_path         # NOQA
