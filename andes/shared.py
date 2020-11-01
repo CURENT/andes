@@ -19,6 +19,7 @@ from tqdm import tqdm      # NOQA
 
 try:
     import kvxopt
+    from kvxopt import umfpack   # test if shared libs can be found
     from kvxopt import spmatrix as kspmatrix
     KIP_ADD = False
     if hasattr(kspmatrix, 'ipadd'):
