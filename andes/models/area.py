@@ -65,13 +65,13 @@ class ACEData(ModelData):
         self.bias = NumParam(default=1.0, info='bias parameter', tex_name=r'\beta',
                              unit='MW/0.1Hz', power=True)
 
-        self.busf = IdxParam(info='Optional BusFreq idx', model='BusFreq',
+        self.busf = IdxParam(info='Optional BusFreq device idx', model='BusFreq',
                              default=None)
 
 
-class ACE(ACEData, Model):
+class ACEc(ACEData, Model):
     """
-    Area Control Error model.
+    Area Control Error model. Continuous frequency sampling.
 
     Note: area idx is automatically retrieved from `bus`.
     """
@@ -84,13 +84,10 @@ class ACE(ACEData, Model):
         self.group = 'Calculation'
 
         self.config.add(OrderedDict([('freq_model', 'BusFreq'),
-                                     ('interval', 4.0),
-                                     ('offset', 0.0),
                                      ]))
-        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model',
-                                        'interval': 'sampling time interval',
-                                        'offset': 'sampling time offset'})
-
+        self.config.add_extra('_help',
+                              {'freq_model': 'default freq. measurement model',
+                               })
         self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
 
         self.area = ExtParam(model='Bus', src='area', indexer=self.bus, export=False)
@@ -98,9 +95,37 @@ class ACE(ACEData, Model):
         self.busf.model = self.config.freq_model
         self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus')
 
-        self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq,
-                          export=False, info='Bus frequency',
+        self.f = ExtAlgeb(model='FreqMeasurement',
+                          src='f',
+                          indexer=self.busfreq,
+                          export=False,
+                          info='Bus frequency',
                           )
+        self.ace = Algeb(info='area control error', unit='MW (p.u.)',
+                         tex_name='ace',
+                         e_str='10 * bias * (f - 1) - ace',
+                         )
+
+
+class ACE(ACEc):
+    """
+    Area Control Error model. Discrete frequency sampling.
+
+    Frequency sampling period (in seconds) can be specified in
+    ``ACE.config.interval``. The sampling start time (in seconds)
+    can be specified in ``ACE.config.offset``.
+
+    Note: area idx is automatically retrieved from `bus`.
+    """
+
+    def __init__(self, system, config):
+        ACEc.__init__(self, system, config)
+
+        self.config.add(OrderedDict([('interval', 4.0),
+                                     ('offset', 0.0),
+                                     ]))
+        self.config.add_extra('_help', {'interval': 'sampling time interval',
+                                        'offset': 'sampling time offset'})
 
         self.fs = Sampling(self.f,
                            interval=self.config.interval,
@@ -109,7 +134,4 @@ class ACE(ACEData, Model):
                            info='Sampled freq.',
                            )
 
-        self.ace = Algeb(info='area control error', unit='MW (p.u.)',
-                         tex_name='ace',
-                         e_str='10 * bias * (fs_v - 1) - ace',
-                         )
+        self.ace.e_str = '10 * bias * (fs_v - 1) - ace'
