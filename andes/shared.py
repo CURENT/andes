@@ -19,12 +19,13 @@ try:
     from kvxopt import spmatrix as kspmatrix
 except ImportError:
     kvxopt = None
+    kspmatrix = None
 
 # only use `kvxopt` when `ipadd` is available
-if kvxopt and not hasattr(kspmatrix, 'ipadd'):
-    IP_ADD = False
-else:
-    IP_ADD = True
+IP_ADD = False
+if kvxopt:
+    if hasattr(kspmatrix, 'ipadd'):
+        IP_ADD = True
 
 if IP_ADD is False:
     from cvxopt import umfpack                           # NOQA
