@@ -26,6 +26,7 @@ class TestPaths(unittest.TestCase):
                   )
 
     def test_pert_file(self):
+        """Test path of pert file"""
         path, case = os.path.split(self.ieee14)
 
         # --- with pert file ---
