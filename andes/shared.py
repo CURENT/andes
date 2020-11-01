@@ -1,13 +1,10 @@
 """
 Shared constants and delayed imports.
 """
-
-#
 # Known issues of LazyImport ::
 #
 #     1) High overhead when called hundreds of thousands times.
 #     For example, NumPy must not be imported with LazyImport.
-#
 
 from andes.utils.lazyimport import LazyImport
 
@@ -17,36 +14,40 @@ import numpy as np         # NOQA
 from numpy import ndarray  # NOQA
 from tqdm import tqdm      # NOQA
 
+# import `kvxopt` and test for `ipadd`
+# only use `kvxopt` when `ipadd` is available
 try:
-    import kvxopt       # NOQA
-    from kvxopt import spmatrix
+    from kvxopt import spmatrix as kspmatrix
+    if not hasattr(kspmatrix, 'ipadd'):
+        kvxopt = None
+        IP_ADD = False
+    else:
+        IP_ADD = True
 except ImportError:
     kvxopt = None
-    from cvxopt import spmatrix
-
-if hasattr(spmatrix, 'ipadd'):
-    IP_ADD = True
-else:
-    IP_ADD = False
 
 if kvxopt is None:
     from cvxopt import umfpack                           # NOQA
-    from cvxopt import matrix, sparse, spdiag  # NOQA
+    from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
     from cvxopt.lapack import gesv                       # NOQA
     try:
         from cvxoptklu import klu  # NOQA
     except ImportError:
         klu = None
+    if hasattr(spmatrix, 'ipadd'):
+        IP_ADD = True
+    else:
+        IP_ADD = False
 else:
     from kvxopt import umfpack, klu                      # NOQA
-    from kvxopt import matrix, sparse, spdiag  # NOQA
+    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from kvxopt import mul, div                          # NOQA
     from kvxopt.lapack import gesv                       # NOQA
 
 
-from andes.utils.texttable import Texttable          # NOQA
-from andes.utils.paths import get_dot_andes_path     # NOQA
+from andes.utils.texttable import Texttable              # NOQA
+from andes.utils.paths import get_dot_andes_path         # NOQA
 
 # --- constants ---
 
