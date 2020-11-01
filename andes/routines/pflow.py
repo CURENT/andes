@@ -130,9 +130,15 @@ class PFlow(BaseRoutine):
         Output a summary for the PFlow routine.
         """
         ipadd_status = 'CVXOPT normal (ipadd not available)'
+
+        # extract package name, `cvxopt` or `kvxopt`
+        sp_module = sparse.__module__
+        if '.' in sp_module:
+            sp_module = sp_module.split('.')[0]
+
         if IP_ADD:
             if self.system.config.ipadd:
-                ipadd_status = 'Fast in-place'
+                ipadd_status = f'Fast in-place ({sp_module})'
             else:
                 ipadd_status = 'CVXOPT normal (ipadd disabled in config)'
 
