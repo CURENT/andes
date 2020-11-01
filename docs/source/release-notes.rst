@@ -8,9 +8,23 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.2
+v1.2.2 (2020-11-01)
 ```````````````````
+New Models:
+
+- ``PVD1`` model, WECC distributed PV model.
+  Supports multiple PVD1 devices on the same bus.
+- Added ``ACEc`` model, ACE calculation with continuous freq.
+
+Changes and fixes:
+
 - Renamed `TDS._itm_step` to `TDS.itm_step` as a public API.
+- Allow variable `sys_f` (system frequency) in equation strings.
+- Fixed ACE equation.
+  measurement.
+- Support ``kvxopt`` as a drop-in replacement for ``cvxopt``
+  to bring KLU to Windows (and other platforms).
+- Added ``kvxopt`` as a dependency for PyPI installation.
 
 v1.2.1 (2020-10-11)
 ```````````````````

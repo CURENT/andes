@@ -165,46 +165,37 @@ Change directory to the ANDES source code folder that contains ``setup.py`` and 
 
 Performance Packages (Advanced)
 ===============================
-The following two forks of ``cvxopt``, ``cvxoptklu``, ``cvxopt`` with ``spmatrix.ipadd``
+The following two forks of ``cvxopt``: ``kvxopt`` and ``cvxopt`` with ``spmatrix.ipadd``
 are optional but can significantly boost the performance of ANDES.
-**Installation requires a C compiler**, ``openblas`` and ``SuiteSparse`` libraries.
 
 .. note::
 
     Performance packages can be safely skipped and will not affect the
     functionality of ANDES.
 
-.. warning::
-
-    We have not tried to compile either package on Windows.
-    Refer to the CVXOPT installation instructions for Windows at
-    http://cvxopt.org/install/index.html#windows
-
-cxvoptklu
----------
-``cvxoptklu`` is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
-In addition to UMFPACK, ``cvxoptklu`` interfaces ``cvxopt`` to KLU, which is
+KVXOPT
+------
+``KVXOPT`` is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
+In addition to UMFPACK, ``KVXOPT`` interfaces ``cvxopt`` to KLU, which is
 roughly 20% faster than UMFPACK for circuit simulation based on our testing.
 
-To install ``cvxoptklu``, on Debian GNU/Linux, one can do
+To install ``KVXOPT`` run
 
 .. code:: bash
 
-      sudo apt install libopenblas-dev libsuitesparse-dev
-      pip install cvxoptklu
-
-On macOS, one can install with homebrew using
-
-.. code:: bash
-
-    brew install openblas suitesparse
-    pip install cvxoptklu
-
-To install from source code, use the repository at
-https://github.com/cuihantao/cvxoptklu.
+      python -m pip install kvxopt
 
 CVXOPT with ipadd
 -----------------
+
+**Installation requires a C compiler**, ``openblas`` and ``SuiteSparse`` libraries.
+
+.. warning::
+
+    We have not tried to compile CVXOPT on Windows.
+    Refer to the CVXOPT installation instructions for Windows at
+    http://cvxopt.org/install/index.html#windows
+
 To install our fork of ``cvxopt`` with ``spmatrix.ipadd``, one need to clone the
 repository and compile from source.
 
