@@ -1,6 +1,7 @@
 from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb
+from andes.core.service import ConstService
 from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
 from andes.core.discrete import Sampling
 from andes.shared import np
@@ -98,6 +99,9 @@ class ACEc(ACEData, Model):
         self.busf.model = self.config.freq_model
         self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus')
 
+        self.imva = ConstService(v_str='1/sys_mva', info='reciprocal of system mva',
+                                 tex_name='1/S_{b, sys}')
+
         self.f = ExtAlgeb(model='FreqMeasurement',
                           src='f',
                           indexer=self.busfreq,
@@ -108,7 +112,7 @@ class ACEc(ACEData, Model):
         self.ace = Algeb(info='area control error',
                          unit='p.u. (MW)',
                          tex_name='ace',
-                         e_str='10 * bias * sys_f * (f - 1) - ace',
+                         e_str='10 * (bias * imva) * sys_f * (f - 1) - ace',
                          )
 
 
