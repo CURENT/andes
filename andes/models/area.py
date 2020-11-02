@@ -146,4 +146,4 @@ class ACE(ACEc):
                            info='Sampled freq.',
                            )
 
-        self.ace.e_str = '10 * bias * sys_f * (fs_v - 1) - ace'
+        self.ace.e_str = '10 * (bias * imva) * sys_f * (fs_v - 1) - ace'
