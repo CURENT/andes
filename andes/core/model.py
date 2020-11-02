@@ -504,8 +504,11 @@ class Model:
 
     where the `e_str` attribute is the equation string attribute. `u` is the connectivity status.
     Any parameter, config, service or variables can be used in equation strings.
-    The addition variable `dae_t` for the current simulation time can be used if the model has flag `tds`.
-    The additional variable `sys_f` is for system frequency (from ``system.config.freq``).
+
+    Three additional scalars can be used in equations:
+    - ``dae_t`` for the current simulation time can be used if the model has flag `tds`.
+    - ``sys_f`` for system frequency (from ``system.config.freq``).
+    - ``sys_mva`` for system base mva (from ``system.config.mva``).
 
     The above example is overly simplified. Our `PQ` model wants a feature to switch itself to
     a constant impedance if the voltage is out of the range `(vmin, vmax)`.
@@ -575,6 +578,7 @@ class Model:
 
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
+                                      ('sys_mva', 'S_{b,sys}')
                                       ))
 
         # Model behavior flags
@@ -883,6 +887,7 @@ class Model:
         # update`dae_t` and `sys_f`
         self._input['dae_t'] = self.system.dae.t
         self._input['sys_f'] = self.system.config.freq
+        self._input['sys_mva'] = self.system.config.mva
 
     def refresh_inputs_arg(self):
         """
@@ -1682,7 +1687,7 @@ class SymProcessor:
 
         self.parent = parent
         # symbols that are input to lambda functions
-        # including parameters, variables, services, configs, and scalars (dae_t, sys_f)
+        # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
         self.inputs_dict = OrderedDict()
         self.vars_dict = OrderedDict()
         self.iters_dict = OrderedDict()
@@ -1808,6 +1813,7 @@ class SymProcessor:
 
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
+        self.inputs_dict['sys_mva'] = Symbol('sys_mva')
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)
