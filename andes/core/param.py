@@ -148,6 +148,18 @@ class BaseParam:
         """Return the count of elements in the value array."""
         return len(self.v)
 
+    def __repr__(self):
+        if self.n == 0:
+            span = []
+
+        elif 1 <= self.n <= 20:
+            span = f'v={self.v}'
+            if hasattr(self, 'vin'):
+                if self.vin is not None:
+                    span += f' vin={self.vin}'
+
+        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}, {span}'
+
 
 class DataParam(BaseParam):
     """

@@ -1651,6 +1651,9 @@ class Model:
         if func is not None:
             return numba.jit(func, parallel=parallel, cache=cache)
 
+    def __repr__(self):
+        return f'{self.class_name} ({self.n} devices) at {hex(id(self))}'
+
 
 class SymProcessor:
     """
