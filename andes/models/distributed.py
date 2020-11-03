@@ -416,7 +416,11 @@ class PVD1(PVD1Data, PVD1Model):
     """
     WECC Distributed PV model.
 
-    Power rating specified in `Sn`.
+    Device power rating is specified in `Sn`.
+    Output currents are named `Ipout_y` and `Iqout_y`.
+    Output power can be computed as ``Pe = Ipout_y * v`` and
+    ``Qe = Iqout_y * v``.
+
     Frequency and voltage recovery latching has not been implemented.
 
     Reference:
