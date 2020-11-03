@@ -85,9 +85,9 @@ class BaseService:
 
         if 1 <= self.n <= 20:
             if hasattr(self, 'v'):
-                val_str = str(self.v)
+                val_str = f', v={self.v}'
 
-        return f'{self.class_name}: {self.owner.class_name}.{self.name}, v={val_str}'
+        return f'{self.class_name}: {self.owner.class_name}.{self.name}{val_str}'
 
 
 class ConstService(BaseService):
