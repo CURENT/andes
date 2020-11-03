@@ -37,9 +37,11 @@ logger = logging.getLogger(__name__)
 np.seterr(divide='raise')
 
 
-class Cache:
+class ModelCache:
     """
     Class for caching the return value of callback functions.
+
+    Check ``ModelCache.__dict__.keys()`` for fields.
     """
 
     def __init__(self):
@@ -176,7 +178,7 @@ class ModelData:
         self.uid = {}
 
         if not hasattr(self, 'cache'):
-            self.cache = Cache()
+            self.cache = ModelCache()
         self.cache.add_callback('dict', self.as_dict)
         self.cache.add_callback('dict_in', lambda: self.as_dict(True))
         self.cache.add_callback('df', self.as_df)
@@ -553,7 +555,7 @@ class Model:
         if not hasattr(self, 'num_params'):
             self.num_params = OrderedDict()
         if not hasattr(self, 'cache'):
-            self.cache = Cache()
+            self.cache = ModelCache()
 
         # variables
         self.states = OrderedDict()  # internal states
