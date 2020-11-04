@@ -2,9 +2,8 @@ from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb
 from andes.core.service import ConstService
-from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
+from andes.core.service import BackRef, DeviceFinder
 from andes.core.discrete import Sampling
-from andes.shared import np
 from andes.utils.tab import Tab
 from collections import OrderedDict
 
