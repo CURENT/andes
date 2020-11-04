@@ -22,10 +22,11 @@ try:
     from kvxopt import umfpack   # test if shared libs can be found
     from kvxopt import spmatrix as kspmatrix
     KIP_ADD = True
-except ImportError:
+except ImportError as e:
     kvxopt = None
     kspmatrix = None
     KIP_ADD = False
+    print(e)
 
 if KIP_ADD is False:
     from cvxopt import spmatrix as cspmatrix
