@@ -11,3 +11,7 @@ pyyaml
 matplotlib
 coloredlogs
 pathos
+ipython
+numpydoc
+sphinx-copybutton
+sphinx_rtd_theme
