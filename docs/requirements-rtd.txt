@@ -1,0 +1,13 @@
+cvxopt>=1.2.5
+numpy
+scipy
+sympy==1.5.1
+xlrd
+pandas
+dill
+xlsxwriter
+tqdm
+pyyaml
+matplotlib
+coloredlogs
+pathos
