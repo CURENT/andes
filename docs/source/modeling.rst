@@ -201,7 +201,8 @@ Model Data
 
 Cache
 `````
-`ModelData` uses a lightweight class :py:class:`andes.core.model.Cache` for caching its data as a dictionary
+`ModelData` uses a lightweight class :py:class:`andes.core.model.ModelCache`
+for caching its data as a dictionary
 or a pandas DataFrame. Four attributes are defined in `ModelData.cache`:
 
 - `dict`: all data in a dictionary with the parameter names as keys and `v` values as arrays.
@@ -211,7 +212,7 @@ or a pandas DataFrame. Four attributes are defined in `ModelData.cache`:
 
 Other attributes can be added by registering with `cache.add_callback`.
 
-.. autofunction:: andes.core.model.Cache.add_callback
+.. autofunction:: andes.core.model.ModelCache.add_callback
     :noindex:
 
 Define Voltage Ratings

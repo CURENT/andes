@@ -8,6 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
+v1.2.3
+```````````````````
+- Support variable `sys_mva` (system base mva) in equation strings.
+- Default support for KVXOPT through ``pip`` installation.
+
 v1.2.2 (2020-11-01)
 ```````````````````
 New Models:

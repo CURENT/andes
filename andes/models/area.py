@@ -1,9 +1,9 @@
 from andes.core.param import ExtParam, NumParam, IdxParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb, Algeb
-from andes.core.service import NumReduce, NumRepeat, BackRef, DeviceFinder
+from andes.core.service import ConstService
+from andes.core.service import BackRef, DeviceFinder
 from andes.core.discrete import Sampling
-from andes.shared import np
 from andes.utils.tab import Tab
 from collections import OrderedDict
 
@@ -14,6 +14,12 @@ class AreaData(ModelData):
 
 
 class Area(AreaData, Model):
+    """
+    Area model.
+
+    Area collects back references from the Bus model and
+    the ACTopology group.
+    """
     def __init__(self, system, config):
         AreaData.__init__(self)
         Model.__init__(self, system, config)
@@ -23,18 +29,6 @@ class Area(AreaData, Model):
 
         self.Bus = BackRef()
         self.ACTopology = BackRef()
-
-        # --------------------Experiment Zone--------------------
-        self.Vn = ExtParam(model='Bus', src='Vn', indexer=self.ACTopology, export=False)
-        self.Vn_sum = NumReduce(u=self.Vn, fun=np.sum, ref=self.Bus)
-        self.Vn_sum_rep = NumRepeat(u=self.Vn_sum, ref=self.Bus)
-
-        self.a = ExtAlgeb(model='ACTopology', src='a', indexer=self.ACTopology,
-                          info='Bus voltage angle')
-        self.v = ExtAlgeb(model='ACTopology', src='v', indexer=self.ACTopology,
-                          info='Bus voltage magnitude')
-
-        # self.time = Algeb(e_str='time - dae_t', v_setter=True)
 
     def bus_table(self):
         """
@@ -98,6 +92,9 @@ class ACEc(ACEData, Model):
         self.busf.model = self.config.freq_model
         self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus')
 
+        self.imva = ConstService(v_str='1/sys_mva', info='reciprocal of system mva',
+                                 tex_name='1/S_{b, sys}')
+
         self.f = ExtAlgeb(model='FreqMeasurement',
                           src='f',
                           indexer=self.busfreq,
@@ -108,7 +105,7 @@ class ACEc(ACEData, Model):
         self.ace = Algeb(info='area control error',
                          unit='p.u. (MW)',
                          tex_name='ace',
-                         e_str='10 * bias * sys_f * (f - 1) - ace',
+                         e_str='10 * (bias * imva) * sys_f * (f - 1) - ace',
                          )
 
 
@@ -142,4 +139,4 @@ class ACE(ACEc):
                            info='Sampled freq.',
                            )
 
-        self.ace.e_str = '10 * bias * sys_f * (fs_v - 1) - ace'
+        self.ace.e_str = '10 * (bias * imva) * sys_f * (fs_v - 1) - ace'

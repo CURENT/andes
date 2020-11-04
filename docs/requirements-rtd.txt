@@ -1,5 +1,4 @@
 cvxopt>=1.2.5
-kvxopt>=1.2.5.4
 numpy
 scipy
 sympy==1.5.1
@@ -12,3 +11,7 @@ pyyaml
 matplotlib
 coloredlogs
 pathos
+ipython
+numpydoc
+sphinx-copybutton
+sphinx_rtd_theme
