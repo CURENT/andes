@@ -21,20 +21,18 @@ try:
     import kvxopt
     from kvxopt import umfpack   # test if shared libs can be found
     from kvxopt import spmatrix as kspmatrix
-    KIP_ADD = False
-    if hasattr(kspmatrix, 'ipadd'):
-        KIP_ADD = True
+    KIP_ADD = True
 except ImportError:
     kvxopt = None
     kspmatrix = None
     KIP_ADD = False
 
-
-from cvxopt import spmatrix as cspmatrix
-if hasattr(cspmatrix, 'ipadd'):
-    CIP_ADD = True
-else:
-    CIP_ADD = False
+if KIP_ADD is False:
+    from cvxopt import spmatrix as cspmatrix
+    if hasattr(cspmatrix, 'ipadd'):
+        CIP_ADD = True
+    else:
+        CIP_ADD = False
 
 
 if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
