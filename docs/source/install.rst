@@ -163,11 +163,8 @@ Change directory to the ANDES source code folder that contains ``setup.py`` and 
 
     python3 -m pip install -e .
 
-Performance Packages (Advanced)
-===============================
-The following two forks of ``cvxopt``: ``kvxopt`` and ``cvxopt`` with ``spmatrix.ipadd``
-are optional but can significantly boost the performance of ANDES.
-
+Performance Packages
+====================
 .. note::
 
     Performance packages can be safely skipped and will not affect the
@@ -175,39 +172,17 @@ are optional but can significantly boost the performance of ANDES.
 
 KVXOPT
 ------
-``KVXOPT`` is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
-In addition to UMFPACK, ``KVXOPT`` interfaces ``cvxopt`` to KLU, which is
-roughly 20% faster than UMFPACK for circuit simulation based on our testing.
+
+KVXOPT is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
+KVXOPT interfaces to KLU, which is
+roughly 20% faster than UMFPACK for circuit simulations based on our testing.
+
+KVXOPT contains inplace add and set functions for sparse matrix
+contributed by CURENT.
+These inplace functions significantly speed up large-scale system simulations.
 
 To install ``KVXOPT`` run
 
 .. code:: bash
 
       python -m pip install kvxopt
-
-CVXOPT with ipadd
------------------
-
-**Installation requires a C compiler**, ``openblas`` and ``SuiteSparse`` libraries.
-
-.. warning::
-
-    We have not tried to compile CVXOPT on Windows.
-    Refer to the CVXOPT installation instructions for Windows at
-    http://cvxopt.org/install/index.html#windows
-
-To install our fork of ``cvxopt`` with ``spmatrix.ipadd``, one need to clone the
-repository and compile from source.
-
-.. code:: bash
-
-    git clone https://github.com/curent/cvxopt
-    cd cvxopt
-    python setup.py build
-
-The compilation may display some warnings, but make sure there is no error.
-Then, install it with
-
-.. code:: bash
-
-    python setup.py install
