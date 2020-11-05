@@ -59,7 +59,7 @@ class EIG(BaseRoutine):
 
         Returns
         -------
-        cvxopt.matrix
+        kvxopt.matrix
             state matrix
         """
         system = self.system

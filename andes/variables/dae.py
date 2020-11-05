@@ -98,7 +98,7 @@ class DAE:
     derivatives (Jacobian matrices).
 
     Variable values and equation values are stored as :py:class:`numpy.ndarray`, while Jacobians are stored as
-    :py:class:`cvxopt.spmatrix`. The defined arrays and descriptions are as follows:
+    :py:class:`kvxopt.spmatrix`. The defined arrays and descriptions are as follows:
 
     +-----------+---------------------------------------------+
     | DAE Array |                 Description                 |
@@ -128,7 +128,7 @@ class DAE:
     |  o        | The number of limiter state flags           |
     +-----------+---------------------------------------------+
 
-    The derivatives of `f` and `g` with respect to `x` and `y` are stored in four :py:mod:`cvxopt.spmatrix`
+    The derivatives of `f` and `g` with respect to `x` and `y` are stored in four :py:mod:`kvxopt.spmatrix`
     sparse matrices:
     **fx**, **fy**, **gx**, and **gy**,
     where the first letter is the equation name, and the second letter is the variable name.

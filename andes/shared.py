@@ -15,7 +15,7 @@ from numpy import ndarray  # NOQA
 from tqdm import tqdm      # NOQA
 
 # Library preference:
-# KVXOPT + ipadd > CVXOPT + ipadd > KXVOPT > CVXOPT (+ KLU or not)
+# KVXOPT + ipadd > kvxopt + ipadd > KXVOPT > kvxopt (+ KLU or not)
 
 try:
     import kvxopt
@@ -28,7 +28,7 @@ except ImportError:
     KIP_ADD = False
 
 if KIP_ADD is False:
-    from cvxopt import spmatrix as cspmatrix
+    from kvxopt import spmatrix as cspmatrix
     if hasattr(cspmatrix, 'ipadd'):
         CIP_ADD = True
     else:
@@ -36,12 +36,12 @@ if KIP_ADD is False:
 
 
 if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
-    from cvxopt import umfpack                           # NOQA
-    from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-    from cvxopt import mul, div                          # NOQA
-    from cvxopt.lapack import gesv                       # NOQA
+    from kvxopt import umfpack                           # NOQA
+    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+    from kvxopt import mul, div                          # NOQA
+    from kvxopt.lapack import gesv                       # NOQA
     try:
-        from cvxoptklu import klu  # NOQA
+        from kvxoptklu import klu  # NOQA
     except ImportError:
         klu = None
     IP_ADD = CIP_ADD
