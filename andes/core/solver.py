@@ -37,9 +37,9 @@ class Solver:
 
         Parameters
         ----------
-        A : cvxopt.spmatrix
+        A : kvxopt.spmatrix
             Sparse N-by-N matrix
-        b : cvxopt.matrix or numpy.ndarray
+        b : kvxopt.matrix or numpy.ndarray
             Dense N-by-1 matrix
 
         Returns
@@ -55,9 +55,9 @@ class Solver:
 
         Parameters
         ----------
-        A : cvxopt.spmatrix
+        A : kvxopt.spmatrix
             Sparse N-by-N matrix
-        b : cvxopt.matrix or numpy.ndarray
+        b : kvxopt.matrix or numpy.ndarray
             Dense N-by-1 matrix
 
         Returns
@@ -149,7 +149,7 @@ class SuiteSparseSolver:
 
         Returns
         -------
-        The solution as a ``cvxopt.matrix``.
+        The solution as a ``kvxopt.matrix``.
         """
         pass
 
@@ -231,7 +231,7 @@ class UMFPACKSolver(SuiteSparseSolver):
     """
     UMFPACK solver.
 
-    Utilizes ``cvxopt.umfpack`` for factorization.
+    Utilizes ``kvxopt.umfpack`` for factorization.
     """
     def __init__(self):
         super().__init__()
@@ -257,7 +257,7 @@ class KLUSolver(SuiteSparseSolver):
     """
     KLU solver.
 
-    Requires package ``cvxoptklu``.
+    Requires package ``kvxoptklu``.
     """
     def __init__(self):
         super().__init__()
@@ -292,7 +292,7 @@ class SciPySolver:
 
         Parameters
         ----------
-        A : cvxopt.spmatrix
+        A : kvxopt.spmatrix
             Sparse N-by-N matrix
 
         Returns

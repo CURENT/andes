@@ -1071,7 +1071,7 @@ class Model:
         Notes
         -----
         If `self.n == 0`, skipping this function will avoid appending empty lists/arrays and
-        non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`.
+        non-empty values, which, as a combination, is not accepted by `kvxopt.spmatrix`.
         """
 
         self.triplets.clear_ijv()

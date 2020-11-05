@@ -1,4 +1,3 @@
-cvxopt>=1.2.5
 kvxopt>=1.2.5.4
 numpy
 scipy
