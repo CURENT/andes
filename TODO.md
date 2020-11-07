@@ -1,23 +1,17 @@
-## Version 1.1.0
-
 ## Milestones
-- [x] Limiter check and warning after initialization
-- [x] Renewable generator models (REGC_A, REEC_A, REPC_A)
+*   Implement switched shunt model
+*   Allow arrays as device parameter
+*   For-loop based non-vectorized function calls (for switched shunt)
 *   Robust iterative initialization for variables
 *   Allow selection of output variables
 
 ## To-do list
-- [x] Improve the speed of `DAETimeSeries.unpack`.
-- [x] Allow simulating to a time, pause, and continue to a new ending time.
-- [x] Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
-- [x] Power flow model variables erroneously point to the old `dae.y` array (fixed)
-*   Allow loading default config for `selftest`
 
 ## Later Versions
 *   Generalize two-terminal and multi-terminal devices
 *   Allow for semi-analytical derivation of equations
 *   Define general hooks - when should the connectivity check happen
-*   Vectorize the `enable` option for most discrete blocks. 
+*   Vectorize the `enable` option for most discrete blocks.
 *   allow to remind developer of missing equations (such as `vout` of Exciters).
 *   Disallow linking ExtAlgeb to State and ExtState to Algeb (check in prepare).
 
@@ -26,8 +20,19 @@
 *   Draw block diagram from symbolic models using BDP (or SchemDraw)
 *   Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 *   Root loci plots
-*   Find a workaround for IDA (by introducing the zi flags in `a` and `v` equations? Not so feasible.)
-*   ``--path`` does not work for ``addfile``
+
+## Version 1.1.0 (completed)
+
+## Milestones
+- [x] Limiter check and warning after initialization
+- [x] Renewable generator models (REGC_A, REEC_A, REPC_A)
+
+## To-do list
+- [x] Improve the speed of `DAETimeSeries.unpack`.
+- [x] Allow simulating to a time, pause, and continue to a new ending time.
+- [x] Store TDS data as NumPy compressed format `npz`; allow to reload both `npy` and `npz`.
+- [x] Power flow model variables erroneously point to the old `dae.y` array (fixed)
+- [x] Allow loading default config for `selftest` (andes.run(default_config=True))
 
 ## Version 0.9.0 (completed)
 
@@ -93,7 +98,7 @@
 - [x] Prototype Connectivity checking, previously implemented as `gyisland`. Need to be implemented under
  `System` (It turns out that `gy_island` and `gisland` does not need to be implemented. If there is a large
   mismatch, just let the power flow fail and let the user correct the data.)
-- [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model 
+- [x] Prototype a Bus voltage average for area (COI-type of one-to-multiple aggregation model
 (RefParam, SericeReduce and RepeaterService)
 - [x] Divide limiter to update_var and update_eq (such as anti-windup limiter which depends on equations)
 - [x] Allow time definition in models reserve keyword `dae_t` (see `Area`)
@@ -106,9 +111,9 @@
 - [x] Refactorize jacobian after critical time (works for implicit method)
 - [x] Use an iterator into `System.times` rather than deleting `times[0]`
 - [x] Implement a time-based switching model and export all switching time to `System.switch_times`
-- [x] Sequential initialization 
+- [x] Sequential initialization
 - [x] Limiter in PI controller
-- [x] Clean up the use of `vars_to_dae` and `vars_to_model` 
+- [x] Clean up the use of `vars_to_dae` and `vars_to_model`
 - [x] low pass filter in PI Controller - How the equations should be written
 - [x] Refactor `Config` to make load and save part of the config
 - [x] Per-unit conversion (get ExtParam Sn, Vn before per unit conversion - Yes)
