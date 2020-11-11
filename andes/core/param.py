@@ -66,7 +66,9 @@ class BaseParam:
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  mandatory: bool = False,
-                 export: bool = True):
+                 export: bool = True,
+                 iconvert: Optional[Callable] = None,
+                 ):
         self.name = name
         self.default = default
         self.tex_name = tex_name if (tex_name is not None) else name
@@ -77,6 +79,9 @@ class BaseParam:
 
         self.v = []
         self.property = dict(mandatory=mandatory)
+        self.iconvert = iconvert
+        self.vtype = float
+        self.eltype = list
 
     def add(self, value=None):
         """
@@ -203,9 +208,13 @@ class IdxParam(BaseParam):
                  mandatory: bool = False,
                  unique: bool = False,
                  export: bool = True,
-                 model: Optional[str] = None):
-        super().__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit, mandatory=mandatory,
-                         export=export)
+                 model: Optional[str] = None,
+                 iconvert: Optional[Callable] = None,
+                 ):
+        super().__init__(default=default, name=name, tex_name=tex_name,
+                         info=info, unit=unit, mandatory=mandatory,
+                         export=export, iconvert=iconvert,
+                         )
         self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
 
@@ -245,6 +254,8 @@ class NumParam(BaseParam):
         Unit of the parameter
     vrange : list, tuple, optional
         Typical value range
+    vtype : type, optional
+        Type of the ``v`` field. The default is ``float``.
 
     Other Parameters
     ----------------
@@ -253,41 +264,44 @@ class NumParam(BaseParam):
     Vn : str
         Name of the parameter for the device base voltage.
     non_zero : bool
-        True if this parameter must be non-zero
+        True if this parameter must be non-zero.
     positive: bool
-        True if this parameter must be positive
+        True if this parameter must be positive.
     mandatory : bool
-        True if this parameter must not be None
+        True if this parameter must not be None.
     power : bool
         True if this parameter is a power per-unit quantity
-        under the device base
+        under the device base.
+    iconvert : callable
+        Callable to convert input data from excel or others
+        to the internal ``v`` field.
     ipower : bool
         True if this parameter is an inverse-power per-unit
-        quantity under the device base
+        quantity under the device base.
     voltage : bool
         True if the parameter is a voltage pu quantity
-        under the device base
+        under the device base.
     current : bool
         True if the parameter is a current pu quantity
-        under the device base
+        under the device base.
     z : bool
         True if the parameter is an AC impedance pu quantity
-        under the device base
+        under the device base.
     y : bool
         True if the parameter is an AC admittance pu quantity
-        under the device base
+        under the device base.
     r : bool
         True if the parameter is a DC resistance pu quantity
-        under the device base
+        under the device base.
     g : bool
         True if the parameter is a DC conductance pu quantity
-        under the device base
+        under the device base.
     dc_current : bool
         True if the parameter is a DC current pu quantity under
-        device base
+        device base.
     dc_voltage : bool
         True if the parameter is a DC voltage pu quantity under
-        device base
+        device base.
 
     """
 
@@ -299,6 +313,7 @@ class NumParam(BaseParam):
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
                  vtype: Optional[Type] = float,
+                 iconvert: Optional[Callable] = None,
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -315,7 +330,8 @@ class NumParam(BaseParam):
                  export: bool = True,
                  ):
         super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info,
-                                       unit=unit, export=export)
+                                       unit=unit, export=export, iconvert=iconvert,
+                                       )
 
         self.property = dict(non_zero=non_zero,
                              positive=positive,
@@ -348,11 +364,12 @@ class NumParam(BaseParam):
 
         """
 
+        if isinstance(value, str) and hasattr(self, 'iconvert'):
+            value = self.iconvert(value)
+
         # check for math.nan, usually imported from pandas
         if isinstance(value, float) and math.isnan(value):
             value = None
-        elif isinstance(value, str):
-            value = float(value)
 
         # check for mandatory
         if value is None:
@@ -361,35 +378,40 @@ class NumParam(BaseParam):
             else:
                 value = self.default
 
-        # check for non-zero
-        if value == 0.0 and self.get_property('non_zero'):
-            logger.warning(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
-            value = self.default
+        if isinstance(value, float):
+            # check for non-zero
+            if value == 0.0 and self.get_property('non_zero'):
+                logger.warning(f'Non-zero parameter %s.%s corrected to {self.default}',
+                               self.owner.class_name, self.name)
+                value = self.default
 
-        # check for positive
-        if value is not None and value <= 0.0 and self.get_property('positive'):
-            logger.warning(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
-            value = self.default
+            # check for positive
+            if value <= 0.0 and self.get_property('positive'):
+                logger.warning(f'Positive parameter %s.%s corrected to {self.default}',
+                               self.owner.class_name, self.name)
+                value = self.default
 
         super(NumParam, self).add(value)
 
     def to_array(self):
         """
-        Convert ``v`` to np.ndarray after adding elements.
-        Store a copy if the input in `vin`.
-        Set ``pu_coeff`` to all ones.
+        Converts field ``v`` to the NumPy array type.
+        to enable array-based calculation.
 
-        The conversion enables array-based calculation.
+        Must be called after adding all elements.
+        Store a copy of original input values to field ``vin``.
+        Set ``pu_coeff`` to all ones.
 
         Warnings
         --------
-        After this call, `add` will not be allowed, because data will not be copied over to ``vin``.
+        After this call, `add` will not be allowed to avoid
+        unexpected issues.
         """
+
+        self.v = np.array(self.v, dtype=self.vtype)
 
         # data quality check
         # ----------------------------------------
-        self.v = np.array(self.v, dtype=self.vtype)
-
         # NOTE: temporarily disabled due to nested parameters
         # if np.sum(np.isnan(self.v)) > 0:
         #     raise ValueError(f'Param <{self.name} contains NaN.')

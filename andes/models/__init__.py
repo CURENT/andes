@@ -10,7 +10,7 @@ file_classes = OrderedDict([
     ('bus', ['Bus']),
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),
-    ('shunt', ['Shunt']),
+    ('shunt', ['Shunt', 'ShuntSw']),
     ('line', ['Line']),
     ('area', ['Area', 'ACE', 'ACEc']),
     ('synchronous', ['GENCLS', 'GENROU']),
