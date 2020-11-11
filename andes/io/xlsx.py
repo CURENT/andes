@@ -107,7 +107,6 @@ def read(system, infile):
         df_models = OrderedDict()
         for sheet in xl.sheet_names:
             df_models[sheet] = xl.parse(sheet_name=sheet, index_col=0,
-                                        verbose=True,
                                         )
 
     for name, df in df_models.items():
