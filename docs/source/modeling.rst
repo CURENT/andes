@@ -1204,7 +1204,7 @@ Synchronous generator idx is retrieved with
 .. code:: python
 
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
-                            info='Retrieved generator idx', dtype=str)
+                            info='Retrieved generator idx', vtype=str)
 
 Using the retrieved ``self.syn``, it retrieves the buses to which
 the generators are connected.
@@ -1212,7 +1212,7 @@ the generators are connected.
 .. code:: python
 
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
-                            info='Retrieved bus idx', dtype=str, default=None,
+                            info='Retrieved bus idx', vtype=str, default=None,
                             )
 
 PSS models support an optional remote bus specified through parameter ``busr``.

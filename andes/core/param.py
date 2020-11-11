@@ -8,7 +8,7 @@
 #  File name: param.py
 #  Last modified: 8/16/20, 7:27 PM
 
-from typing import Optional, Union, Callable, List, Tuple
+from typing import Optional, Union, Callable, List, Tuple, Type
 
 import math
 import logging
@@ -298,6 +298,7 @@ class NumParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
+                 vtype: Optional[Type] = float,
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -333,6 +334,7 @@ class NumParam(BaseParam):
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
         self.vrange = vrange
+        self.vtype = vtype
 
     def add(self, value=None):
         """
@@ -386,18 +388,20 @@ class NumParam(BaseParam):
 
         # data quality check
         # ----------------------------------------
-        self.v = np.array(self.v, dtype=float)
+        self.v = np.array(self.v, dtype=self.vtype)
 
         # NOTE: temporarily disabled due to nested parameters
         # if np.sum(np.isnan(self.v)) > 0:
         #     raise ValueError(f'Param <{self.name} contains NaN.')
 
-        self.v[self.v == np.inf] = 1e8
-        self.v[self.v == -np.inf] = -1e8
+        if self.v.dtype != np.object:
+            self.v[self.v == np.inf] = 1e8
+            self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
-        self.vin = np.array(self.v, dtype=float)
-        self.pu_coeff = np.ones_like(self.v)
+        self.vin = np.array(self.v, dtype=self.vtype)
+
+        self.pu_coeff = np.ones_like(self.v, dtype=float)
 
     def set_pu_coeff(self, coeff):
         """
@@ -519,7 +523,7 @@ class ExtParam(NumParam):
                  model: str,
                  src: str,
                  indexer=None,
-                 dtype=float,
+                 vtype=float,
                  allow_none=False,
                  default=0.0,
                  **kwargs):
@@ -527,7 +531,7 @@ class ExtParam(NumParam):
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.dtype = dtype
+        self.vtype = vtype
         self.parent_model = None   # parent model instance
         self.allow_none = allow_none
         self.default = default
@@ -609,6 +613,6 @@ class ExtParam(NumParam):
         """
         Convert to array when d_type is not str
         """
-        if self.dtype == str:
+        if self.vtype == str:
             return
         NumParam.to_array(self)

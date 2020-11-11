@@ -59,7 +59,7 @@ class ExcBase(Model):
                             tex_name='bus',
                             info='Bus idx of the generators',
                             export=False,
-                            dtype=str,
+                            vtype=str,
                             )
         self.omega = ExtState(src='omega',
                               model='SynGen',

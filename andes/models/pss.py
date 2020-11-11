@@ -68,10 +68,10 @@ class PSSBase(Model):
 
         # retrieve indices of connected generator, bus, and bus freq
         self.syn = ExtParam(model='Exciter', src='syn', indexer=self.avr, export=False,
-                            info='Retrieved generator idx', dtype=str)
+                            info='Retrieved generator idx', vtype=str)
 
         self.bus = ExtParam(model='SynGen', src='bus', indexer=self.syn, export=False,
-                            info='Retrieved bus idx', dtype=str, default=None,
+                            info='Retrieved bus idx', vtype=str, default=None,
                             )
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
