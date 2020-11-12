@@ -102,6 +102,9 @@ class ShuntSwModel(ShuntModel):
         self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
                             ext_sel=self.beff)
 
+        self.a.e_str = 'u * v**2 * geff'
+        self.v.e_str = '-u * v**2 * beff'
+
 
 class ShuntSw(ShuntData, ShuntModel):
     """
