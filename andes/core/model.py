@@ -24,7 +24,7 @@ from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
-from andes.core.service import SwSusceptance
+from andes.core.service import SwBlock
 
 from andes.utils.paths import get_dot_andes_path
 from andes.utils.func import list_flatten
@@ -658,7 +658,7 @@ class Model:
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
                                 FlagValue, RandomService,
-                                SwSusceptance,
+                                SwBlock,
                                 ParamCalc, Replace, ApplyFunc)):
             self.services_ops[key] = value
         elif isinstance(value, InitChecker):

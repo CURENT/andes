@@ -1365,16 +1365,17 @@ class RandomService(BaseService):
         return np.random.rand(self.n)
 
 
-class SwSusceptance(OperationService):
+class SwBlock(OperationService):
     """
-    Service type for switched shunt susceptance blocks.
+    Service type for switched shunt blocks.
     """
-    def __init__(self, init, ns, bs, name=None, tex_name=None, info=None):
+    def __init__(self, *, init, ns, blocks, ext_sel=None,
+                 name=None, tex_name=None, info=None):
         OperationService.__init__(self, name=name, tex_name=tex_name, info=info)
         self.init = init
         self.ns = ns
-        self.bs = bs
-        self.b_slots = list()
+        self.bs = blocks
+        self.ext_sel = ext_sel
 
     @property
     def v(self):
@@ -1397,39 +1398,47 @@ class SwSusceptance(OperationService):
 
                 self.bcs[idx] = np.cumsum(b_rep)
 
-                binit = self.init.v[idx]
-                if binit > self.bcs[idx][-1]:
-                    # out of maximum b
-                    logger.warning("Shunt pos=%s, initial b=%g is greater than maximum switchable b=%g",
-                                   idx, binit, self.bcs[idx])
-                    self.sel[idx] = self.nsel[idx] - 1
+                # use internal selector - for shunt's b attribute
+                if self.ext_sel is None:
+                    binit = self.init.v[idx]
+                    if binit > self.bcs[idx][-1]:
+                        # out of maximum b
+                        logger.warning("Shunt pos=%s, initial %s=%g is greater than max=%g",
+                                       idx, self.init.name, binit, self.bcs[idx])
+                        self.sel[idx] = self.nsel[idx] - 1
 
-                elif binit < 0:
-                    logger.warning("Shunt pos=%s, initial b=%g is less than zero",
-                                   idx, binit)
-                    self.sel[idx] = 0
+                    elif binit < 0:
+                        logger.warning("Shunt pos=%s, initial %s=%g is less than zero",
+                                       idx, self.init.name, binit)
+                        self.sel[idx] = 0
 
+                    else:
+                        for pos in range(self.nsel[idx] - 1):
+                            blo = self.bcs[idx][pos]
+                            bup = self.bcs[idx][pos + 1]
+                            if binit == blo:
+                                self.sel[idx] = pos
+                                break
+                            if binit == bup:
+                                self.sel[idx] = pos + 1
+                                break
+                            if blo < binit < bup:
+                                self.sel[idx] = pos + 1
+                                break
+                # use external selector - for the `g` attribute
                 else:
-                    for pos in range(self.nsel[idx] - 1):
-                        blo = self.bcs[idx][pos]
-                        bup = self.bcs[idx][pos + 1]
-                        if binit == blo:
-                            self.sel[idx] = pos
-                            break
-                        if binit == bup:
-                            self.sel[idx] = pos + 1
-                            break
-                        if blo < binit < bup:
-                            self.sel[idx] = pos + 1
-                            break
+                    self.sel = self.ext_sel.sel
 
                 self._v[idx] = self.bcs[idx][self.sel[idx]]
 
         else:
             return self._v
 
-    def adjust(amount):
+    def adjust(self, amount):
         """
         Adjust capacitor banks by an amount.
         """
-        pass
+        if self.ext_sel is not None:
+            return
+
+        # TODO: implement adjust

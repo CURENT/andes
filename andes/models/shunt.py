@@ -6,7 +6,7 @@ import numpy as np
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
 from andes.core.var import ExtAlgeb
-from andes.core.service import SwSusceptance
+from andes.core.service import SwBlock
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +98,9 @@ class ShuntSwModel(ShuntModel):
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 
-        # TODO: `SwitchedBlocks(init=self.b, nblocks=self.ns, vblocks=self.gs)`
-        self.beff = SwSusceptance(self.b, self.ns, self.bs)
+        self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
+        self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
+                            ext_sel=self.beff)
 
 
 class ShuntSw(ShuntData, ShuntModel):
