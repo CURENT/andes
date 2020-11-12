@@ -6,6 +6,8 @@ import numpy as np
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
 from andes.core.var import ExtAlgeb
+from andes.core.service import SwSusceptance
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,8 +20,8 @@ class ShuntData(ModelData):
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
-        self.g = NumParam(default=0, info="shunt conductance (real part)", y=True, tex_name=r'g')
-        self.b = NumParam(default=0, info="shunt susceptance (positive as capatance)", y=True, tex_name=r'b')
+        self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name=r'g')
+        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capatance)", y=True, tex_name=r'b')
         self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
 
 
@@ -55,15 +57,33 @@ class ShuntSwData(ShuntData):
     """
     def __init__(self):
         ShuntData.__init__(self)
-        self.bs = NumParam(info='list of switched susceptances',
-                           default=np.array([]),
+        self.gs = NumParam(info='list of switched conductances blocks',
+                           default=0.0,
                            unit='p.u.',
+                           vtype=np.object,
+                           iconvert=list_conv,
+                           y=True,
+                           )
+
+        self.bs = NumParam(info='list of switched susceptances blocks',
+                           default=0.0,
+                           unit='p.u.',
+                           vtype=np.object,
+                           iconvert=list_conv,
+                           y=True,
+                           )
+
+        self.ns = NumParam(info='number of elements in each switched blocks',
+                           default=[0],
                            vtype=np.object,
                            iconvert=list_conv,
                            )
 
 
 def list_conv(x):
+    """
+    Helper function to convert a list literal into a numpy array.
+    """
     if isinstance(x, str):
         x = ast.literal_eval(x)
     if isinstance(x, list):
@@ -77,6 +97,9 @@ class ShuntSwModel(ShuntModel):
     """
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
+
+        # TODO: `SwitchedBlocks(init=self.b, nblocks=self.ns, vblocks=self.gs)`
+        self.beff = SwSusceptance(self.b, self.ns, self.bs)
 
 
 class ShuntSw(ShuntData, ShuntModel):

@@ -1363,3 +1363,73 @@ class RandomService(BaseService):
             Randomly generated service variables
         """
         return np.random.rand(self.n)
+
+
+class SwSusceptance(OperationService):
+    """
+    Service type for switched shunt susceptance blocks.
+    """
+    def __init__(self, init, ns, bs, name=None, tex_name=None, info=None):
+        OperationService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.init = init
+        self.ns = ns
+        self.bs = bs
+        self.b_slots = list()
+
+    @property
+    def v(self):
+        # TODO: input data consistency check
+
+        # allocate memory
+        if self._v is None:
+            # initialize
+            n_dev = len(self.init.v)
+            self._v = np.zeros(n_dev)    # effective value
+            self.sel = np.zeros(n_dev, dtype=int)   # the index of capacity in use
+            self.bcs = [0] * n_dev
+            self.nsel = [int(sum(item)) for item in self.ns.v]
+
+            # repeat each in `bs` by `ns` times
+            for idx in range(n_dev):
+                b_rep = list([0])
+                for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
+                    b_rep += [bb] * nn
+
+                self.bcs[idx] = np.cumsum(b_rep)
+
+                binit = self.init.v[idx]
+                if binit > self.bcs[idx][-1]:
+                    # out of maximum b
+                    logger.warning("Shunt pos=%s, initial b=%g is greater than maximum switchable b=%g",
+                                   idx, binit, self.bcs[idx])
+                    self.sel[idx] = self.nsel[idx] - 1
+
+                elif binit < 0:
+                    logger.warning("Shunt pos=%s, initial b=%g is less than zero",
+                                   idx, binit)
+                    self.sel[idx] = 0
+
+                else:
+                    for pos in range(self.nsel[idx] - 1):
+                        blo = self.bcs[idx][pos]
+                        bup = self.bcs[idx][pos + 1]
+                        if binit == blo:
+                            self.sel[idx] = pos
+                            break
+                        if binit == bup:
+                            self.sel[idx] = pos + 1
+                            break
+                        if blo < binit < bup:
+                            self.sel[idx] = pos + 1
+                            break
+
+                self._v[idx] = self.bcs[idx][self.sel[idx]]
+
+        else:
+            return self._v
+
+    def adjust(amount):
+        """
+        Adjust capacitor banks by an amount.
+        """
+        pass
