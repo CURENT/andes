@@ -1449,14 +1449,9 @@ class SwBlock(OperationService):
         for idx in range(len(self._v)):
             self._v[idx] = self.bcs[idx][self.sel[idx]]
 
-    def find_sel(self, idx):
+    def find_sel(self):
         """
         Determine the initial shunt selection level.
-
-        Parameters
-        ----------
-        idx : int
-            Absolute index of switched shunt devices
         """
         for idx in range(len(self._v)):
             binit = self.init.v[idx]
