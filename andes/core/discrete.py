@@ -823,7 +823,7 @@ class Delay(Discrete):
 
     Delay allows to impose a predefined "delay" (in either steps or seconds)
     for an input variable. The amount of delay is a scalar and has to be fixed
-    at model definition for now.
+    at model definition in the current implementation.
 
     """
 
@@ -1017,3 +1017,54 @@ class Sampling(Discrete):
             if self._last_t[0] > dae_t:
                 self.v[:] = self._last_v
                 self._last_t[0] = dae_t
+
+
+class ShuntAdjust(Discrete):
+    """
+    Class for adjusting switchable shunts.
+
+    Parameters
+    ----------
+    bsw : SwBlock
+        SwBlock instance for susceptance
+    gsw : SwBlock
+        SwBlock instance for conductance
+    dt : NumParam
+        Delay time
+    """
+    def __init__(self, *, v, lower, upper, bsw, gsw, dt,
+                 name=None, tex_name=None, info=None, no_warn=False):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
+                          no_warn=no_warn)
+
+        self.v = v
+        self.lower = lower
+        self.upper = upper
+
+        self.bsw = bsw
+        self.gsw = gsw
+        self.dt = dt
+        self.has_check_var = True
+
+        self.t_last = None
+
+    def check_var(self, dae_t, *args, **kwargs):
+        if self.t_last is None:
+            self.t_last = np.zeros_like(self.v.v)
+
+        direction = np.zeros_like(self.v.v, dtype=int)
+        direction[np.logical_and(self.v.v < self.lower.v,
+                                 self.bsw.sel < self.bsw.maxsel)] = 1
+        direction[np.logical_and(self.v.v > self.upper.v,
+                                 self.bsw.sel > 0)] = -1
+
+        # TODO: consider delay `dt`
+
+        if np.any(direction):
+            logger.debug("Switched shunt adjusted by %s", direction)
+            logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
+
+            self.bsw.adjust(direction)
+            self.gsw.adjust(direction)
+
+            logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)

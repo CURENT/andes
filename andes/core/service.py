@@ -1388,7 +1388,7 @@ class SwBlock(OperationService):
             self._v = np.zeros(n_dev)    # effective value
             self.sel = np.zeros(n_dev, dtype=int)   # the index of capacity in use
             self.bcs = [0] * n_dev
-            self.nsel = [int(sum(item)) for item in self.ns.v]
+            self.maxsel = np.array([int(sum(item) - 1) for item in self.ns.v])
 
             # repeat each in `bs` by `ns` times
             for idx in range(n_dev):
@@ -1405,7 +1405,7 @@ class SwBlock(OperationService):
                         # out of maximum b
                         logger.warning("Shunt pos=%s, initial %s=%g is greater than max=%g",
                                        idx, self.init.name, binit, self.bcs[idx])
-                        self.sel[idx] = self.nsel[idx] - 1
+                        self.sel[idx] = self.maxsel[idx]
 
                     elif binit < 0:
                         logger.warning("Shunt pos=%s, initial %s=%g is less than zero",
@@ -1413,7 +1413,7 @@ class SwBlock(OperationService):
                         self.sel[idx] = 0
 
                     else:
-                        for pos in range(self.nsel[idx] - 1):
+                        for pos in range(self.maxsel[idx]):
                             blo = self.bcs[idx][pos]
                             bup = self.bcs[idx][pos + 1]
                             if binit == blo:
@@ -1438,7 +1438,7 @@ class SwBlock(OperationService):
         """
         Adjust capacitor banks by an amount.
         """
-        if self.ext_sel is not None:
-            return
+        if self.ext_sel is None:
+            self.sel[:] += amount
 
-        # TODO: implement adjust
+        self._v[:] = [self.bcs[idx][self.sel[idx]] for idx in range(len(self._v))]

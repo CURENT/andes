@@ -6,7 +6,8 @@ import numpy as np
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
 from andes.core.var import ExtAlgeb
-from andes.core.service import SwBlock
+from andes.core.service import SwBlock, ConstService
+from andes.core.discrete import ShuntAdjust
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,24 @@ class ShuntSwData(ShuntData):
                            iconvert=list_conv,
                            )
 
+        self.vref = NumParam(info='voltage reference',
+                             default=1.0,
+                             unit='p.u.',
+                             positive=True,
+                             )
+
+        self.dv = NumParam(info='voltage error deadband',
+                           default=0.05,
+                           unit='p.u.',
+                           positive=True,
+                           )
+
+        self.dt = NumParam(info='delay before shunt capacitor switching',
+                           default=0.1,
+                           unit='seconds',
+                           positive=True,
+                           )
+
 
 def list_conv(x):
     """
@@ -101,6 +120,13 @@ class ShuntSwModel(ShuntModel):
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
         self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
                             ext_sel=self.beff)
+
+        self.vlo = ConstService(v_str='vref - dv', tex_name='v_{lo}')
+        self.vup = ConstService(v_str='vref + dv', tex_name='v_{up}')
+
+        self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
+                               bsw=self.beff, gsw=self.geff, dt=self.dt,
+                               info='shunt adjuster')
 
         self.a.e_str = 'u * v**2 * geff'
         self.v.e_str = '-u * v**2 * beff'
