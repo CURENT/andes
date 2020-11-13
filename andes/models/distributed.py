@@ -299,10 +299,15 @@ class PVD1Model(Model):
                         e_str='v * VLo_zi + 0.01 * VLo_zl - vp',
                         )
 
+        self.Pext0 = ConstService(info='External additional signal added to Pext',
+                                  tex_name='P_{ext0}',
+                                  v_str='0',
+                                  )
+
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal',
-                          v_str='0',
-                          e_str='0 - Pext'
+                          v_str='Pext0',
+                          e_str='Pext0 - Pext'
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
