@@ -92,8 +92,8 @@ class ShuntSwData(ShuntData):
                            positive=True,
                            )
 
-        self.dt = NumParam(info='delay before shunt capacitor switching',
-                           default=0.1,
+        self.dt = NumParam(info='delay before two consecutive switching',
+                           default=0.2,
                            unit='seconds',
                            positive=True,
                            )
