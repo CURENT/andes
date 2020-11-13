@@ -192,6 +192,7 @@ class VarHold(VarService):
     """
     Service for holding the input when the hold state is on.
     """
+
     def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check, vtype=vtype,
                             name=name, tex_name=tex_name, info=info,
@@ -1252,6 +1253,7 @@ class CurrentSign(ConstService):
         bus(+)        bus(-)
 
     """
+
     def __init__(self, bus, bus1, bus2,  name=None, tex_name=None, info=None):
         ConstService.__init__(self, v_numeric=self.check, name=name, tex_name=tex_name, info=info)
         self.bus = bus
@@ -1369,6 +1371,7 @@ class SwBlock(OperationService):
     """
     Service type for switched shunt blocks.
     """
+
     def __init__(self, *, init, ns, blocks, ext_sel=None,
                  name=None, tex_name=None, info=None):
         OperationService.__init__(self, name=name, tex_name=tex_name, info=info)
@@ -1386,63 +1389,62 @@ class SwBlock(OperationService):
         # TODO: input data consistency check
 
         # allocate memory
-        if self._v is None:
-            # initialize
-            n_dev = len(self.init.v)
-            self._v = np.zeros(n_dev)    # effective value
-            self.sel = np.zeros(n_dev, dtype=int)   # the index of capacity in use
-            self.bcs = [0] * n_dev
-            self.maxsel = np.array([int(sum(item) - 1) for item in self.ns.v])
-
-            # repeat each in `bs` by `ns` times
-            for idx in range(n_dev):
-                b_rep = list([0])
-                for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
-                    b_rep += [bb] * nn
-
-                self.bcs[idx] = np.cumsum(b_rep)
-
-                # use internal selector - for shunt's b attribute
-                if self.ext_sel is None:
-                    binit = self.init.v[idx]
-                    if binit > self.bcs[idx][-1]:
-                        # out of maximum b
-                        logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
-                                       self.init.owner.class_name,
-                                       self.init.owner.idx.v[idx],
-                                       self.init.name, binit,
-                                       self.bcs[idx][-1])
-
-                        self.sel[idx] = self.maxsel[idx]
-
-                    elif binit < 0:
-                        logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
-                                       self.init.owner.class_name,
-                                       self.init.owner.idx.v[idx],
-                                       self.init.name, binit)
-                        self.sel[idx] = 0
-
-                    else:
-                        for pos in range(self.maxsel[idx]):
-                            blo = self.bcs[idx][pos]
-                            bup = self.bcs[idx][pos + 1]
-                            if binit == blo:
-                                self.sel[idx] = pos
-                                break
-                            if binit == bup:
-                                self.sel[idx] = pos + 1
-                                break
-                            if blo < binit < bup:
-                                self.sel[idx] = pos + 1
-                                break
-                # use external selector - for the `g` attribute
-                else:
-                    self.sel = self.ext_sel.sel
-
-                self._v[idx] = self.bcs[idx][self.sel[idx]]
-
-        else:
+        if self._v is not None:
             return self._v
+
+        # initialize
+        n_dev = len(self.init.v)
+        self._v = np.zeros(n_dev)               # effective value
+        self.sel = np.zeros(n_dev, dtype=int)   # the index of capacity in use
+        self.bcs = [0] * n_dev                  # cumulative sums of `bs`
+        self.maxsel = np.array([sum(item) for item in self.ns.v],
+                               dtype=int) - 1   # maximum index into bcs
+
+        # repeat each in `bs` by `ns` times
+        for idx in range(n_dev):
+            b_rep = list([0])
+            for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
+                b_rep += [bb] * nn
+            self.bcs[idx] = np.cumsum(b_rep)
+
+            # use external selector - for shunt's g attribute
+            if self.ext_sel is not None:
+                self.sel = self.ext_sel.sel
+
+            # use internal selector - for shunt's b attribute
+            else:
+                binit = self.init.v[idx]
+                if binit > self.bcs[idx][-1]:
+                    # out of maximum b
+                    logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
+                                   self.init.owner.class_name,
+                                   self.init.owner.idx.v[idx],
+                                   self.init.name, binit,
+                                   self.bcs[idx][-1])
+                    self.sel[idx] = self.maxsel[idx]
+
+                elif binit < 0:
+                    logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
+                                   self.init.owner.class_name,
+                                   self.init.owner.idx.v[idx],
+                                   self.init.name, binit)
+                    self.sel[idx] = 0
+
+                else:
+                    for pos in range(self.maxsel[idx]):
+                        blo = self.bcs[idx][pos]
+                        bup = self.bcs[idx][pos + 1]
+                        if binit == blo:
+                            self.sel[idx] = pos
+                            break
+                        if binit == bup:
+                            self.sel[idx] = pos + 1
+                            break
+                        if blo < binit < bup:
+                            self.sel[idx] = pos + 1
+                            break
+
+            self._v[idx] = self.bcs[idx][self.sel[idx]]
 
     def adjust(self, amount):
         """
@@ -1451,4 +1453,5 @@ class SwBlock(OperationService):
         if self.ext_sel is None:
             self.sel[:] += amount
 
-        self._v[:] = [self.bcs[idx][self.sel[idx]] for idx in range(len(self._v))]
+        for idx in range(len(self._v)):
+            self._v[idx] = self.bcs[idx][self.sel[idx]]
