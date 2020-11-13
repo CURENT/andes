@@ -1403,13 +1403,19 @@ class SwBlock(OperationService):
                     binit = self.init.v[idx]
                     if binit > self.bcs[idx][-1]:
                         # out of maximum b
-                        logger.warning("Shunt pos=%s, initial %s=%g is greater than max=%g",
-                                       idx, self.init.name, binit, self.bcs[idx])
+                        logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
+                                       self.init.owner.class_name,
+                                       self.init.owner.idx.v[idx],
+                                       self.init.name, binit,
+                                       self.bcs[idx][-1])
+
                         self.sel[idx] = self.maxsel[idx]
 
                     elif binit < 0:
-                        logger.warning("Shunt pos=%s, initial %s=%g is less than zero",
-                                       idx, self.init.name, binit)
+                        logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
+                                       self.init.owner.class_name,
+                                       self.init.owner.idx.v[idx],
+                                       self.init.name, binit)
                         self.sel[idx] = 0
 
                     else:
