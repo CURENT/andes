@@ -1409,7 +1409,7 @@ class SwBlock(OperationService):
 
         if self.ext_sel is None:
             # use internal selector - for shunt's b attribute
-            self.find_sel(idx)
+            self.find_sel()
         else:
             # use external selector - for shunt's g attribute
             self.sel = self.ext_sel.sel  # modify reference
