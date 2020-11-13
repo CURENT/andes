@@ -113,7 +113,7 @@ class SuiteSparseSolver:
         -------
         A C-object of the symbolic factorization.
         """
-        pass
+        return None
 
     def _numeric(self, A, F):
         """
@@ -130,7 +130,7 @@ class SuiteSparseSolver:
         -------
         The numeric factorization of ``A``.
         """
-        pass
+        return None
 
     def _solve(self, A, F, N, b):
         """
@@ -151,7 +151,7 @@ class SuiteSparseSolver:
         -------
         The solution as a ``kvxopt.matrix``.
         """
-        pass
+        return None
 
     def solve(self, A, b):
         """
