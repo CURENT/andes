@@ -265,6 +265,10 @@ class ModelData:
             else:
                 out[name] = instance.v
 
+            conv = instance.oconvert
+            if conv is not None:
+                out[name] = np.array([conv(item) for item in out[name]])
+
         return out
 
     def as_df(self):

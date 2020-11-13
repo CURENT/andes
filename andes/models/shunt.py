@@ -62,7 +62,8 @@ class ShuntSwData(ShuntData):
                            default=0.0,
                            unit='p.u.',
                            vtype=np.object,
-                           iconvert=list_conv,
+                           iconvert=list_iconv,
+                           oconvert=list_oconv,
                            y=True,
                            )
 
@@ -70,14 +71,16 @@ class ShuntSwData(ShuntData):
                            default=0.0,
                            unit='p.u.',
                            vtype=np.object,
-                           iconvert=list_conv,
+                           iconvert=list_iconv,
+                           oconvert=list_oconv,
                            y=True,
                            )
 
         self.ns = NumParam(info='a list literal of the element numbers in each switched block',
                            default=[0],
                            vtype=np.object,
-                           iconvert=list_conv,
+                           iconvert=list_iconv,
+                           oconvert=list_oconv,
                            )
 
         self.vref = NumParam(info='voltage reference',
@@ -99,7 +102,7 @@ class ShuntSwData(ShuntData):
                            )
 
 
-def list_conv(x):
+def list_iconv(x):
     """
     Helper function to convert a list literal into a numpy array.
     """
@@ -110,6 +113,13 @@ def list_conv(x):
     if isinstance(x, list):
         x = np.array(x)
     return x
+
+
+def list_oconv(x):
+    """
+    Convert list into a list literal.
+    """
+    return str(x)
 
 
 class ShuntSwModel(ShuntModel):

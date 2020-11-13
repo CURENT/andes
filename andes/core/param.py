@@ -68,6 +68,7 @@ class BaseParam:
                  mandatory: bool = False,
                  export: bool = True,
                  iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
                  ):
         self.name = name
         self.default = default
@@ -80,6 +81,7 @@ class BaseParam:
         self.v = []
         self.property = dict(mandatory=mandatory)
         self.iconvert = iconvert
+        self.oconvert = oconvert
         self.vtype = float
         self.eltype = list
 
@@ -210,10 +212,11 @@ class IdxParam(BaseParam):
                  export: bool = True,
                  model: Optional[str] = None,
                  iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
                  ):
         super().__init__(default=default, name=name, tex_name=tex_name,
                          info=info, unit=unit, mandatory=mandatory,
-                         export=export, iconvert=iconvert,
+                         export=export, iconvert=iconvert, oconvert=oconvert,
                          )
         self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
@@ -275,6 +278,9 @@ class NumParam(BaseParam):
     iconvert : callable
         Callable to convert input data from excel or others
         to the internal ``v`` field.
+    oconvert : callable
+        Callable to convert input data from internal type
+        to a serializable type.
     ipower : bool
         True if this parameter is an inverse-power per-unit
         quantity under the device base.
@@ -314,6 +320,7 @@ class NumParam(BaseParam):
                  vrange: Optional[Union[List, Tuple]] = None,
                  vtype: Optional[Type] = float,
                  iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -330,7 +337,7 @@ class NumParam(BaseParam):
                  export: bool = True,
                  ):
         super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info,
-                                       unit=unit, export=export, iconvert=iconvert,
+                                       unit=unit, export=export, iconvert=iconvert, oconvert=oconvert,
                                        )
 
         self.property = dict(non_zero=non_zero,
