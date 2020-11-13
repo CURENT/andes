@@ -1062,7 +1062,7 @@ class ShuntAdjust(Discrete):
         self.t_enable = None
         self.direction = None
 
-    def check_var(self, dae_t, niter=None, *args, **kwargs):
+    def check_var(self, dae_t, *args, niter=None, **kwargs):
         """
         Check voltage and perform shunt switching.
 
