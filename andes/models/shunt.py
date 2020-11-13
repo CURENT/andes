@@ -105,6 +105,8 @@ def list_conv(x):
     """
     if isinstance(x, str):
         x = ast.literal_eval(x)
+    if isinstance(x, (int, float)):
+        x = [x]
     if isinstance(x, list):
         x = np.array(x)
     return x
