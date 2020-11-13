@@ -381,14 +381,14 @@ class NumParam(BaseParam):
         if isinstance(value, float):
             # check for non-zero
             if value == 0.0 and self.get_property('non_zero'):
-                logger.warning(f'Non-zero parameter %s.%s corrected to {self.default}',
-                               self.owner.class_name, self.name)
+                logger.warning(f'Non-zero parameter %s.%s corrected to %s',
+                               self.owner.class_name, self.name, self.default)
                 value = self.default
 
             # check for positive
             if value <= 0.0 and self.get_property('positive'):
-                logger.warning(f'Positive parameter %s.%s corrected to {self.default}',
-                               self.owner.class_name, self.name)
+                logger.warning(f'Positive parameter %s.%s corrected to %s',
+                               self.owner.class_name, self.name, self.default)
                 value = self.default
 
         super(NumParam, self).add(value)

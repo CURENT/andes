@@ -1375,6 +1375,10 @@ class SwBlock(OperationService):
         self.init = init
         self.ns = ns
         self.bs = blocks
+
+        self.sel = None
+        self.bcs = None
+        self.maxsel = None
         self.ext_sel = ext_sel
 
     @property
