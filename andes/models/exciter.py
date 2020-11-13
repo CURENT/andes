@@ -8,7 +8,6 @@ from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
-from _collections import OrderedDict  # NOQA
 import numpy as np  # NOQA
 
 
