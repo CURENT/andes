@@ -1090,23 +1090,30 @@ class ShuntAdjust(Discrete):
         self.direction[np.logical_and(self.v.v > self.upper.v,
                                       self.bsw.sel > 0)] = -1
 
-        if np.any(self.direction):
-            # allow unlimited switching in power flow
-            if dae_t == 0.0:
-                self.t_enable[:] = 1.0
-            # consider delay for time-domain simulation
-            else:
-                self.t_enable[:] = (dae_t - self.t_last - self.dt.v) >= 0
-                logger.debug("At t=%g, niter=%d, Switched shunt enable flags=%s",
-                             dae_t, niter, self.t_enable)
-                self.direction[:] *= self.t_enable
+        if not np.any(self.direction):
+            return
 
-            logger.debug("Bus voltage=%s", self.v.v)
-            logger.debug("Switched shunt adjusted by %s", self.direction)
-            logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
+        # allow unlimited switching in power flow
+        if dae_t == 0.0:
+            self.t_enable[:] = 1.0
+        # consider delay for time-domain simulation
+        else:
+            self.t_enable[:] = (dae_t - self.t_last - self.dt.v) >= 0
+            self.direction[:] *= self.t_enable
 
-            self.bsw.adjust(self.direction)
-            self.gsw.adjust(self.direction)
-            self.t_last[self.direction != 0] = dae_t
+        if not np.any(self.direction):
+            return
 
-            logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)
+        logger.debug("--- Shunt Switching Summary Begin ---")
+        logger.debug("At t=%g, niter=%d, shunt adjusted by %s.",
+                     dae_t, niter, self.direction)
+        logger.debug("Switched shunt enable flags=%s", self.t_enable)
+        logger.debug("Bus voltage=%s", self.v.v)
+        logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
+
+        self.bsw.adjust(self.direction)
+        self.gsw.adjust(self.direction)
+        self.t_last[self.direction != 0] = dae_t
+
+        logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)
+        logger.debug("--- Shunt Switching Summary End ---")
