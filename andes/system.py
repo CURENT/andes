@@ -244,13 +244,13 @@ class System:
 
         # info
         if incremental is True:
-            text_mode = 'rapid incremental mode'
+            mode_text = 'rapid incremental mode'
         elif quick is True:
-            text_mode = 'quick mode'
+            mode_text = 'quick mode'
         else:
-            text_mode = 'full mode'
+            mode_text = 'full mode'
 
-        logger.info(f'Numerical code generation ({text_mode}) started...')
+        logger.info('Numerical code generation (%s) started...', mode_text)
 
         t0, _ = elapsed()
 
@@ -298,7 +298,7 @@ class System:
         self.dill()
 
         _, s = elapsed(t0)
-        logger.info(f'Successfully generated numerical code in {s}.')
+        logger.info('Successfully generated numerical code in {%s}.', s)
 
     def _prepare_mp(self, quick=False):
         """
@@ -432,12 +432,12 @@ class System:
         # set internal variable addresses
         for mdl in models.values():
             if mdl.flags.address is True:
-                logger.debug(f'{mdl.class_name} internal address exists')
+                logger.debug('%s internal address exists', mdl.class_name)
                 continue
             if mdl.n == 0:
                 continue
 
-            logger.debug(f'Setting internal address for {mdl.class_name}')
+            logger.debug('Setting internal address for %s', mdl.class_name)
             n = mdl.n
             m0 = self.dae.m
             n0 = self.dae.n
@@ -559,7 +559,8 @@ class System:
             use_parallel = True if (self.config.numba_parallel == 1) else False
             use_cache = True if (pycode is not None) else False
 
-            logger.info(f"Numba compilation initiated, parallel={use_parallel}, cache={use_cache}.")
+            logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
+                        use_parallel, use_cache)
             for mdl in models.values():
                 mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
 
@@ -1039,9 +1040,9 @@ class System:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug(f'Undilled calls from "{get_pkl_path()}" is current.')
+                logger.debug('Undilled calls from "%s" is up-to-date.', get_pkl_path())
             else:
-                logger.info(f'Undilled calls are for version {ver}, regenerating...')
+                logger.info('Undilled calls are for version %s, regenerating...', ver)
                 self.prepare(quick=True, incremental=True)
 
         else:
@@ -1418,7 +1419,7 @@ class System:
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.info(f'Loaded config from file "{conf_path}"')
+        logger.info('Loaded config from file "%s"', conf_path)
         return conf
 
     def save_config(self, file_path=None, overwrite=False):
@@ -1451,7 +1452,7 @@ class System:
         with open(file_path, 'w') as f:
             conf.write(f)
 
-        logger.info(f'Config written to "{file_path}"')
+        logger.info('Config written to "%s"', file_path)
         return file_path
 
     def supported_models(self, export='plain'):

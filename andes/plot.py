@@ -570,7 +570,7 @@ class TDSData:
                 count += 1
 
             fig.savefig(outfile, dpi=dpi)
-            logger.info(f'Figure saved to "{outfile}".')
+            logger.info('Figure saved to "%s".', outfile)
 
         if show:
             plt.show()
