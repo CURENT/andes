@@ -285,8 +285,7 @@ class Streaming:
 
         self.ModuleInfo[name].update(ivar)
 
-        logger.debug('Module <{}> request index {}'.format(
-            name, var_idx))
+        logger.debug('Module <%s> requests index %s', name, var_idx)
 
     @staticmethod
     def transpose_matlab_row(a):
@@ -338,8 +337,8 @@ class Streaming:
                 param = {'tf': time, 'tc': tf, 'bus': idx}
                 self.system.Fault.insert(**param)
                 logger.debug(
-                    'Event <Fault> added for bus {} at t = {} and tf = {}'.
-                    format(idx, time, tf))
+                    'Event <Fault> added for bus %s at t = %.6g and tf = %g',
+                    idx, time, tf)
             elif name.lower() == 'line':
                 bus = self.system.Line.get_field(
                     'bus1', ['Line_' + str(int(idx - 1))])[0]
@@ -353,8 +352,8 @@ class Streaming:
                 }
                 self.system.Breaker.insert(**param)
                 logger.debug(
-                    'Event <Breaker> added for line {} at t = {} and tf = {}'.
-                    format(idx, time, tf))
+                    'Event <Breaker> added for line %s at t = %.6g and tf = %g',
+                    idx, time, tf)
 
             self.system.call.build_vec()
             self.system.call._compile_int()

@@ -238,7 +238,7 @@ class Config:
             kwargs.update(dct)
         for key, value in kwargs.items():
             if key not in self.__dict__:
-                logger.warning(f"Config field name {key} for {dest} is invalid.")
+                logger.warning("Config field name %s for %s is invalid.", key, dest)
                 continue
             self.__dict__[dest][key] = value
 

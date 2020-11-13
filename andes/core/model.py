@@ -1286,12 +1286,14 @@ class Model:
                     self.triplets.vjac[jname][idx][:] = ret[idx]
                 except ValueError as e:
                     row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error(f'{jname} shape error: j_idx={idx}, d{row_name} / d{col_name}')
+                    logger.error('%s shape error: j_idx=%s, d%s / d%s',
+                                 jname, idx, row_name, col_name)
 
                     raise e
                 except FloatingPointError as e:
                     row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error(f'{jname} evaluation error: j_idx={idx}, d{row_name} / d{col_name}')
+                    logger.error('%s eval error: j_idx=%s, d%s / d%s',
+                                 jname, idx, row_name, col_name)
 
                     raise e
 
@@ -1515,25 +1517,25 @@ class Model:
         """
         Custom variable initialization function.
         """
-        pass
+        return
 
     def g_numeric(self, **kwargs):
         """
         Custom gcall functions. Modify equations directly.
         """
-        pass
+        return
 
     def f_numeric(self, **kwargs):
         """
         Custom fcall functions. Modify equations directly.
         """
-        pass
+        return
 
     def s_numeric(self, **kwargs):
         """
         Custom service value functions. Modify ``Service.v`` directly.
         """
-        pass
+        return
 
     def s_numeric_var(self, **kwargs):
         """
@@ -1541,7 +1543,7 @@ class Model:
 
         This custom numerical function is evaluated at each step/iteration before equation update.
         """
-        pass
+        return
 
     def j_numeric(self, **kwargs):
         """
@@ -1550,7 +1552,7 @@ class Model:
         This function should append indices to `_ifx`, `_jfx`, and append anonymous functions to `_vfx`.
         It is only called once by `store_sparse_pattern`.
         """
-        pass
+        return
 
     def doc(self, max_width=78, export='plain'):
         """
