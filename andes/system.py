@@ -704,13 +704,13 @@ class System:
                 for p in mdl.find_param(prop).values():
                     p.set_pu_coeff(coeff)
 
-    def l_update_var(self, models: OrderedDict):
+    def l_update_var(self, models: OrderedDict, niter=None):
         """
         Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
         This function is must be called before any equation evaluation.
         """
-        self.call_models('l_update_var', models, self.dae.t)
+        self.call_models('l_update_var', models, dae_t=self.dae.t, niter=niter)
 
     def l_update_eq(self, models:  OrderedDict):
         """

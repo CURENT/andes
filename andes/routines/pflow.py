@@ -90,7 +90,7 @@ class PFlow(BaseRoutine):
         system = self.system
         # evaluate discrete, differential, algebraic, and Jacobians
         system.dae.clear_fg()
-        system.l_update_var(self.models)
+        system.l_update_var(self.models, niter=self.niter)
         system.s_update_var(self.models)
         system.f_update(self.models)
         system.g_update(self.models)
@@ -240,7 +240,7 @@ class PFlow(BaseRoutine):
         system.vars_to_models()
 
         system.dae.clear_fg()
-        system.l_update_var(self.models)
+        system.l_update_var(self.models, niter=self.niter)
         system.f_update(self.models)
         system.g_update(self.models)
         system.l_update_eq(self.models)

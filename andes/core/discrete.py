@@ -1025,14 +1025,23 @@ class ShuntAdjust(Discrete):
 
     Parameters
     ----------
+    v : BaseVar
+        Voltage measurement
+    lower : BaseParam
+        Lower voltage bound
+    upper : BaseParam
+        Upper voltage bound
     bsw : SwBlock
         SwBlock instance for susceptance
     gsw : SwBlock
         SwBlock instance for conductance
     dt : NumParam
         Delay time
+    min_iter : NumParam
+        Minimum iteration number to enable shunt switching
     """
-    def __init__(self, *, v, lower, upper, bsw, gsw, dt,
+    def __init__(self, *, v, lower, upper, bsw, gsw, dt, enable=True,
+                 min_iter=2,
                  name=None, tex_name=None, info=None, no_warn=False):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
                           no_warn=no_warn)
@@ -1044,27 +1053,60 @@ class ShuntAdjust(Discrete):
         self.bsw = bsw
         self.gsw = gsw
         self.dt = dt
+        self.enable = enable
+        self.min_iter = min_iter
+
         self.has_check_var = True
 
         self.t_last = None
+        self.t_enable = None
+        self.direction = None
 
-    def check_var(self, dae_t, *args, **kwargs):
+    def check_var(self, dae_t, niter=None, *args, **kwargs):
+        """
+        Check voltage and perform shunt switching.
+
+        Parameters
+        ----------
+        niter : int or None
+            Current iteration step
+        """
+        if not self.enable:
+            return
+
         if self.t_last is None:
             self.t_last = np.zeros_like(self.v.v)
+            self.t_enable = np.ones_like(self.v.v, dtype=int)
+            self.direction = np.zeros_like(self.v.v, dtype=int)
 
-        direction = np.zeros_like(self.v.v, dtype=int)
-        direction[np.logical_and(self.v.v < self.lower.v,
-                                 self.bsw.sel < self.bsw.maxsel)] = 1
-        direction[np.logical_and(self.v.v > self.upper.v,
-                                 self.bsw.sel > 0)] = -1
+        if niter is not None:
+            # skip switching for the first `min_iter` steps
+            if niter < self.min_iter:
+                return
 
-        # TODO: consider delay `dt`
+        self.direction[:] = 0
+        self.direction[np.logical_and(self.v.v < self.lower.v,
+                                      self.bsw.sel < self.bsw.maxsel)] = 1
+        self.direction[np.logical_and(self.v.v > self.upper.v,
+                                      self.bsw.sel > 0)] = -1
 
-        if np.any(direction):
-            logger.debug("Switched shunt adjusted by %s", direction)
+        if np.any(self.direction):
+            # allow unlimited switching in power flow
+            if dae_t == 0.0:
+                self.t_enable[:] = 1.0
+            # consider delay for time-domain simulation
+            else:
+                self.t_enable[:] = (dae_t - self.t_last - self.dt.v) >= 0
+                logger.debug("At t=%g, niter=%d, Switched shunt enable flags=%s",
+                             dae_t, niter, self.t_enable)
+                self.direction[:] *= self.t_enable
+
+            logger.debug("Bus voltage=%s", self.v.v)
+            logger.debug("Switched shunt adjusted by %s", self.direction)
             logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
 
-            self.bsw.adjust(direction)
-            self.gsw.adjust(direction)
+            self.bsw.adjust(self.direction)
+            self.gsw.adjust(self.direction)
+            self.t_last[self.direction != 0] = dae_t
 
             logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)

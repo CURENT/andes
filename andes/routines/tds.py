@@ -762,7 +762,7 @@ class TDS(BaseRoutine):
         """
         system = self.system
         system.dae.clear_fg()
-        system.l_update_var(models=models)
+        system.l_update_var(models=models, niter=self.niter)
         system.s_update_var(models=models)  # update VarService
         system.f_update(models=models)
         system.g_update(models=models)
