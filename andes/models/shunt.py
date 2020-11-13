@@ -119,7 +119,7 @@ def list_oconv(x):
     """
     Convert list into a list literal.
     """
-    return repr(x)
+    return np.array2string(x, separator=', ')
 
 
 class ShuntSwModel(ShuntModel):
@@ -150,8 +150,8 @@ class ShuntSw(ShuntSwData, ShuntSwModel):
     """
     Switched Shunt Model.
 
-    Parameters `gs`, `bs` and `bs` must be entered in string literals
-    and should have the same length.
+    Parameters `gs`, `bs` and `bs` must be entered in string literals,
+    comma-separated. They need to have the same length.
 
     For example, in the excel file, one can put ::
 
