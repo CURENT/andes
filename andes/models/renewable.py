@@ -1047,14 +1047,16 @@ class REPCA1Data(ModelData):
                            info='Time constant for P measurement',
                            )
 
-        self.fdbd1 = NumParam(default=-0.01,
+        self.fdbd1 = NumParam(default=-0.0002833,
                               tex_name='f_{dbd1}',
                               info='Lower threshold for freq. error deadband',
+                              unit='p.u. (Hz)',
                               )
 
-        self.fdbd2 = NumParam(default=0.01,
+        self.fdbd2 = NumParam(default=0.0002833,
                               tex_name='f_{dbd2}',
                               info='Upper threshold for freq. error deadband',
+                              unit='p.u. (Hz)',
                               )
 
         self.femax = NumParam(default=0.05,
