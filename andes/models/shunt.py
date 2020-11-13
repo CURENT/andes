@@ -117,6 +117,8 @@ class ShuntSwModel(ShuntModel):
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 
+        # TODO: add a config entry for `sw_iter`
+
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
         self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
                             ext_sel=self.beff)

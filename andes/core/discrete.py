@@ -1079,10 +1079,9 @@ class ShuntAdjust(Discrete):
             self.t_enable = np.ones_like(self.v.v, dtype=int)
             self.direction = np.zeros_like(self.v.v, dtype=int)
 
-        if niter is not None:
+        if (niter is not None) and (niter < self.min_iter):
             # skip switching for the first `min_iter` steps
-            if niter < self.min_iter:
-                return
+            return
 
         self.direction[:] = 0
         self.direction[np.logical_and(self.v.v < self.lower.v,
