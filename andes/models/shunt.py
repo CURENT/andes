@@ -58,7 +58,7 @@ class ShuntSwData(ShuntData):
     """
     def __init__(self):
         ShuntData.__init__(self)
-        self.gs = NumParam(info='list of switched conductances blocks',
+        self.gs = NumParam(info='a list literal of switched conductances blocks',
                            default=0.0,
                            unit='p.u.',
                            vtype=np.object,
@@ -66,7 +66,7 @@ class ShuntSwData(ShuntData):
                            y=True,
                            )
 
-        self.bs = NumParam(info='list of switched susceptances blocks',
+        self.bs = NumParam(info='a list literal of switched susceptances blocks',
                            default=0.0,
                            unit='p.u.',
                            vtype=np.object,
@@ -74,7 +74,7 @@ class ShuntSwData(ShuntData):
                            y=True,
                            )
 
-        self.ns = NumParam(info='number of elements in each switched blocks',
+        self.ns = NumParam(info='a list literal of the element numbers in each switched block',
                            default=[0],
                            vtype=np.object,
                            iconvert=list_conv,
@@ -139,6 +139,15 @@ class ShuntSwModel(ShuntModel):
 class ShuntSw(ShuntSwData, ShuntSwModel):
     """
     Switched Shunt Model.
+
+    Parameters `gs`, `bs` and `bs` must be entered in string literals
+    and should have the same length.
+
+    For example, in the excel file, one can put ::
+
+        gs = [0, 0]
+        bs = [0.2, 0.2]
+        ns = [2, 4]
     """
     def __init__(self, system=None, config=None):
         ShuntSwData.__init__(self)
