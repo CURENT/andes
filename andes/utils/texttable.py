@@ -1,5 +1,5 @@
 # texttable - module for creating simple ASCII tables
-# Copyright (C) 2003-2019 Gerome Fournier <jef(at)foutaise.org>
+# Copyright (C) 2003-2020 Gerome Fournier <jef(at)foutaise.org>
 
 """module for creating simple ASCII tables
 
@@ -62,7 +62,7 @@ __all__ = ["Texttable", "ArraySizeError"]
 
 __author__ = 'Gerome Fournier <jef(at)foutaise.org>'
 __license__ = 'MIT'
-__version__ = '1.6.2'
+__version__ = '1.6.3'
 __credits__ = """\
 Jeff Kowalczyk:
     - textwrap improved import
@@ -99,11 +99,13 @@ import unicodedata
 # - fallback to textwrap otherwise
 try:
     import cjkwrap
+
     def textwrapper(txt, width):
         return cjkwrap.wrap(txt, width)
 except ImportError:
     try:
         import textwrap
+
         def textwrapper(txt, width):
             return textwrap.wrap(txt, width)
     except ImportError:
@@ -115,6 +117,7 @@ except ImportError:
 # - fallback to unicodedata information otherwise
 try:
     import wcwidth
+
     def uchar_width(c):
         """Return the rendering width of a unicode character
         """
@@ -238,7 +241,7 @@ class Texttable:
 
         if len(array) != 4:
             raise ArraySizeError("array should contain 4 characters")
-        array = [ x[:1] for x in [ str(s) for s in array ] ]
+        array = [x[:1] for x in [str(s) for s in array]]
         (self._char_horiz, self._char_vert,
             self._char_corner, self._char_header) = array
         return self
@@ -443,10 +446,11 @@ class Texttable:
     @classmethod
     def _fmt_int(cls, x, **kw):
         """Integer formatting class-method.
-
-        - x will be float-converted and then used.
         """
-        return str(int(round(cls._to_float(x))))
+        if type(x) == int:
+            return str(x)
+        else:
+            return str(int(round(cls._to_float(x))))
 
     @classmethod
     def _fmt_float(cls, x, **kw):
@@ -498,12 +502,12 @@ class Texttable:
             x - cell data to format
         """
         FMT = {
-            'a':self._fmt_auto,
-            'i':self._fmt_int,
-            'f':self._fmt_float,
-            'e':self._fmt_exp,
-            't':self._fmt_text,
-            }
+            'a': self._fmt_auto,
+            'i': self._fmt_int,
+            'f': self._fmt_float,
+            'e': self._fmt_exp,
+            't': self._fmt_text,
+        }
 
         n = self._precision
         dtype = self._dtype[i]
@@ -522,8 +526,8 @@ class Texttable:
         if not self._row_size:
             self._row_size = len(array)
         elif self._row_size != len(array):
-            raise ArraySizeError("array should contain %d elements" \
-                % self._row_size)
+            raise ArraySizeError("array should contain %d elements"
+                                 % self._row_size)
 
     def _has_vlines(self):
         """Return a boolean, if vlines are required or not
@@ -572,13 +576,13 @@ class Texttable:
             horiz = self._char_header
         # compute cell separator
         s = "%s%s%s" % (horiz, [horiz, self._char_corner][self._has_vlines()],
-            horiz)
+                        horiz)
         # build the line
         l = s.join([horiz * n for n in self._width])
         # add border if needed
         if self._has_border():
             l = "%s%s%s%s%s\n" % (self._char_corner, horiz, l, horiz,
-                self._char_corner)
+                                  self._char_corner)
         else:
             l += "\n"
         return l
@@ -614,9 +618,9 @@ class Texttable:
             return
         maxi = []
         if self._header:
-            maxi = [ self._len_cell(x) for x in self._header ]
+            maxi = [self._len_cell(x) for x in self._header]
         for row in self._rows:
-            for cell,i in zip(row, list(range(len(row)))):
+            for cell, i in zip(row, list(range(len(row)))):
                 try:
                     maxi[i] = max(maxi[i], self._len_cell(cell))
                 except (TypeError, IndexError):
@@ -624,7 +628,7 @@ class Texttable:
 
         ncols = len(maxi)
         content_width = sum(maxi)
-        deco_width = 3*(ncols-1) + [0,4][self._has_border()]
+        deco_width = 3*(ncols-1) + [0, 4][self._has_border()]
         if self._max_width and (content_width + deco_width) > self._max_width:
             """ content too wide to fit the expected max_width
             let's recompute maximum cell width for each cell
@@ -675,8 +679,8 @@ class Texttable:
                 if align == "r":
                     out += fill * space + cell_line
                 elif align == "c":
-                    out += (int(fill/2) * space + cell_line \
-                            + int(fill/2 + fill%2) * space)
+                    out += (int(fill/2) * space + cell_line
+                            + int(fill/2 + fill % 2) * space)
                 else:
                     out += cell_line + fill * space
                 if length < len(line):
@@ -731,7 +735,7 @@ if __name__ == '__main__':
                           'f',  # float (decimal)
                           'e',  # float (exponent)
                           'i',  # integer
-                          'a']) # automatic
+                          'a'])  # automatic
     table.set_cols_align(["l", "r", "r", "r", "l"])
     table.add_rows([["text",    "float", "exp", "int", "auto"],
                     ["abcd",    "67",    654,   89,    128.001],
