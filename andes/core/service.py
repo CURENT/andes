@@ -1386,7 +1386,7 @@ class SwBlock(OperationService):
 
     @property
     def v(self):
-        # TODO: input data consistency check
+        self.check_data()
 
         # allocate memory
         if self._v is not None:
@@ -1418,6 +1418,26 @@ class SwBlock(OperationService):
             self._v[idx] = self.bcs[idx][self.sel[idx]]
 
         return self._v
+
+    def check_data(self):
+        """
+        Check data consistency.
+        """
+        model = self.ns.owner.class_name
+        for idx in range(len(self.ns.v)):
+            device = self.ns.owner.idx.v[idx]
+            bs_name = self.bs.name
+            ns_name = self.ns.name
+
+            if isinstance(self.ns.v[idx], (int, float)):
+                raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s",
+                                 model, device, bs_name, self.ns.v[idx])
+            if isinstance(self.bs.v[idx], (int, float)):
+                raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s",
+                                 model, device, bs_name, self.bs.v[idx])
+            if len(self.ns.v[idx]) != len(self.bs.v[idx]):
+                raise ValueError("<%s>: idx=%s, `%s` and `%s` lengths do not match",
+                                 model, device, bs_name, ns_name)
 
     def adjust(self, amount):
         """
