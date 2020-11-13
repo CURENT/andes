@@ -1445,7 +1445,8 @@ class SwBlock(OperationService):
                             break
 
             self._v[idx] = self.bcs[idx][self.sel[idx]]
-            return self._v
+
+        return self._v
 
     def adjust(self, amount):
         """
