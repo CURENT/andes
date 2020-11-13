@@ -1103,10 +1103,9 @@ class ShuntAdjust(Discrete):
         if not np.any(self.direction):
             return
 
-        logger.debug("--- Shunt Switching Summary Begin ---")
-        logger.debug("At t=%g, niter=%d, shunt adjusted by %s.",
-                     dae_t, niter, self.direction)
-        logger.debug("Switched shunt enable flags=%s", self.t_enable)
+        logger.debug("--- Shunt Switch at t=%.6g, niter=%d ---", dae_t, niter)
+        logger.debug("Delay enable flags=%s, adjusted levels=%s.",
+                     self.t_enable, self.direction)
         logger.debug("Bus voltage=%s", self.v.v)
         logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
 
@@ -1115,4 +1114,3 @@ class ShuntAdjust(Discrete):
         self.t_last[self.direction != 0] = dae_t
 
         logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)
-        logger.debug("--- Shunt Switching Summary End ---")

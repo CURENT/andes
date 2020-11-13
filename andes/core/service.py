@@ -1400,50 +1400,21 @@ class SwBlock(OperationService):
         self.maxsel = np.array([sum(item) for item in self.ns.v],
                                dtype=int) - 1   # maximum index into bcs
 
-        # repeat each in `bs` by `ns` times
+        # repeat each value in `bs` by `ns` times
         for idx in range(n_dev):
             b_rep = list([0])
             for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
                 b_rep += [bb] * nn
             self.bcs[idx] = np.cumsum(b_rep)
 
-            # use external selector - for shunt's g attribute
-            if self.ext_sel is not None:
-                self.sel = self.ext_sel.sel
-
+        if self.ext_sel is None:
             # use internal selector - for shunt's b attribute
-            else:
-                binit = self.init.v[idx]
-                if binit > self.bcs[idx][-1]:
-                    # out of maximum b
-                    logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
-                                   self.init.owner.class_name,
-                                   self.init.owner.idx.v[idx],
-                                   self.init.name, binit,
-                                   self.bcs[idx][-1])
-                    self.sel[idx] = self.maxsel[idx]
+            self.find_sel(idx)
+        else:
+            # use external selector - for shunt's g attribute
+            self.sel = self.ext_sel.sel  # modify reference
 
-                elif binit < 0:
-                    logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
-                                   self.init.owner.class_name,
-                                   self.init.owner.idx.v[idx],
-                                   self.init.name, binit)
-                    self.sel[idx] = 0
-
-                else:
-                    for pos in range(self.maxsel[idx]):
-                        blo = self.bcs[idx][pos]
-                        bup = self.bcs[idx][pos + 1]
-                        if binit == blo:
-                            self.sel[idx] = pos
-                            break
-                        if binit == bup:
-                            self.sel[idx] = pos + 1
-                            break
-                        if blo < binit < bup:
-                            self.sel[idx] = pos + 1
-                            break
-
+        for idx in range(n_dev):
             self._v[idx] = self.bcs[idx][self.sel[idx]]
 
         return self._v
@@ -1457,3 +1428,44 @@ class SwBlock(OperationService):
 
         for idx in range(len(self._v)):
             self._v[idx] = self.bcs[idx][self.sel[idx]]
+
+    def find_sel(self, idx):
+        """
+        Determine the initial shunt selection level.
+
+        Parameters
+        ----------
+        idx : int
+            Absolute index of switched shunt devices
+        """
+        for idx in range(len(self._v)):
+            binit = self.init.v[idx]
+            if binit > self.bcs[idx][-1]:
+                # out of maximum b
+                logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
+                               self.init.owner.class_name,
+                               self.init.owner.idx.v[idx],
+                               self.init.name, binit,
+                               self.bcs[idx][-1])
+                self.sel[idx] = self.maxsel[idx]
+
+            elif binit < 0:
+                logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
+                               self.init.owner.class_name,
+                               self.init.owner.idx.v[idx],
+                               self.init.name, binit)
+                self.sel[idx] = 0
+
+            else:
+                for pos in range(self.maxsel[idx]):
+                    blo = self.bcs[idx][pos]
+                    bup = self.bcs[idx][pos + 1]
+                    if binit == blo:
+                        self.sel[idx] = pos
+                        break
+                    if binit == bup:
+                        self.sel[idx] = pos + 1
+                        break
+                    if blo < binit < bup:
+                        self.sel[idx] = pos + 1
+                        break
