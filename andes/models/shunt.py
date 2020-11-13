@@ -134,7 +134,7 @@ class ShuntSwModel(ShuntModel):
         self.v.e_str = '-u * v**2 * beff'
 
 
-class ShuntSw(ShuntData, ShuntModel):
+class ShuntSw(ShuntSwData, ShuntSwModel):
     """
     Switched Shunt Model.
     """
