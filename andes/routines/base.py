@@ -35,16 +35,31 @@ class BaseRoutine:
         return self.__class__.__name__
 
     def doc(self, max_width=78, export='plain'):
+        """
+        Routine documentation interface.
+        """
         return self.config.doc(max_width, export)
 
     def init(self):
+        """
+        Routine initialization interface.
+        """
         pass
 
     def run(self, **kwargs):
+        """
+        Routine main entry point.
+        """
         raise NotImplementedError
 
     def summary(self, **kwargs):
+        """
+        Summary interface
+        """
         raise NotImplementedError
 
     def report(self, **kwargs):
+        """
+        Report interface.
+        """
         raise NotImplementedError

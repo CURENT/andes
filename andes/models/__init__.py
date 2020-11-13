@@ -1,9 +1,16 @@
-from collections import OrderedDict
+"""
+The package for DAE models in ANDES.
+"""
 
+from collections import OrderedDict
 
 # Notes:
 # - `timer`s are moved to the beginning for initialization.
 #   Connectivity statuses should be restored before initializing the rest.
+
+
+# `file_classes` records the `.py` files under `andes/models` and the classes in each file.
+# Models will be initialized in the order given below.
 
 file_classes = OrderedDict([
     ('timer', ['Toggler', 'Fault']),
