@@ -8,7 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.3
+v1.2.4
+```````````````````
+- Added switched shunt class `ShuntSw`.
+
+v1.2.3 (2020-11-02)
 ```````````````````
 - Support variable `sys_mva` (system base mva) in equation strings.
 - Default support for KVXOPT through ``pip`` installation.

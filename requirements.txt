@@ -1,4 +1,4 @@
-kvxopt>=1.2.5.4
+cvxopt
 numpy
 scipy
 sympy==1.5.1
