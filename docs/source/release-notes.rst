@@ -11,6 +11,8 @@ v1.2 Notes
 v1.2.4
 ```````````````````
 - Added switched shunt class `ShuntSw`.
+- BaseParam takes `inconvert` and `oconvert` for converting parameter
+  elements from and to files.
 
 v1.2.3 (2020-11-02)
 ```````````````````
