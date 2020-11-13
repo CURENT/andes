@@ -1431,13 +1431,13 @@ class SwBlock(OperationService):
 
             if isinstance(self.ns.v[idx], (int, float)):
                 raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
-                                 model, device, bs_name, self.ns.v[idx])
+                                 (model, device, bs_name, self.ns.v[idx]))
             if isinstance(self.bs.v[idx], (int, float)):
                 raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
-                                 model, device, bs_name, self.bs.v[idx])
+                                 (model, device, bs_name, self.bs.v[idx]))
             if len(self.ns.v[idx]) != len(self.bs.v[idx]):
                 raise ValueError("<%s>: idx=%s, `%s` and `%s` lengths do not match" %
-                                 model, device, bs_name, ns_name)
+                                 (model, device, bs_name, ns_name))
 
     def adjust(self, amount):
         """
