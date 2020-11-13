@@ -444,8 +444,15 @@ class NumParam(BaseParam):
         coeff : np.ndarray
             An array with the pu conversion coefficients
         """
-        self.pu_coeff = coeff
-        self.v[:] = self.vin * self.pu_coeff
+        self.pu_coeff[:] = coeff
+        if self.vin.ndim == 1:
+            self.v[:] = self.vin * self.pu_coeff
+
+        elif self.vin.ndim == 2:
+            for idx in range(len(self.vin)):
+                self.v[idx] = self.vin[idx] * self.pu_coeff[idx]
+        else:
+            raise NotImplementedError("Parameters with ndim > 2 not understood.")
 
     def restore(self):
         """
