@@ -119,7 +119,7 @@ def list_oconv(x):
     """
     Convert list into a list literal.
     """
-    return str(x)
+    return repr(x)
 
 
 class ShuntSwModel(ShuntModel):
