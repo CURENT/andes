@@ -2197,9 +2197,11 @@ class Documenter:
         names, symbols, units = list(), list(), list()
         ivs, properties, info = list(), list(), list()
         units_rest, ivs_rest = list(), list()
+        ty = list()
 
         for p in self.cache.all_vars.values():
             names.append(p.name)
+            ty.append(p.class_name)
             ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')
             units.append(p.unit if p.unit else '')
@@ -2220,16 +2222,18 @@ class Documenter:
             ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
 
         plain_dict = OrderedDict([('Name', names),
-                                  ('Initial Value', ivs),
+                                  ('Type', ty),
                                   ('Description', info),
                                   ('Unit', units),
+                                  ('Initial Value', ivs),
                                   ('Properties', properties)])
 
         rest_dict = OrderedDict([('Name', names),
                                  ('Symbol', symbols),
-                                 ('Initial Value', ivs_rest),
+                                 ('Type', ty),
                                  ('Description', info),
                                  ('Unit', units_rest),
+                                 ('Initial Value', ivs_rest),
                                  ('Properties', properties)])
 
         return make_doc_table(title='Variables',

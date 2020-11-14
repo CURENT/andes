@@ -83,12 +83,14 @@ class PVD1Data(ModelData):
                              power=True, non_zero=True
                              )
 
-        self.fdbd = NumParam(default=-0.01, tex_name='f_{dbd}',
+        self.fdbd = NumParam(default=-0.017, tex_name='f_{dbd}',
                              info='frequency deviation deadband',
+                             unit='Hz',
                              )
 
         self.ddn = NumParam(default=0.0, tex_name='D_{dn}',
                             info='Gain after f deadband',
+                            unit='pu (MW)/Hz'
                             )
 
         self.ialim = NumParam(default=1.3, tex_name='I_{alim}',
