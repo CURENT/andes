@@ -1037,11 +1037,13 @@ class ShuntAdjust(Discrete):
         SwBlock instance for conductance
     dt : NumParam
         Delay time
-    min_iter : NumParam
+    min_iter : int
         Minimum iteration number to enable shunt switching
+    err_tol : float
+        Minimum iteration tolerance to enable switching
     """
     def __init__(self, *, v, lower, upper, bsw, gsw, dt, enable=True,
-                 min_iter=2,
+                 min_iter=2, err_tol=1e-2,
                  name=None, tex_name=None, info=None, no_warn=False):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
                           no_warn=no_warn)
@@ -1055,6 +1057,7 @@ class ShuntAdjust(Discrete):
         self.dt = dt
         self.enable = enable
         self.min_iter = min_iter
+        self.err_tol = err_tol
 
         self.has_check_var = True
 
@@ -1062,7 +1065,7 @@ class ShuntAdjust(Discrete):
         self.t_enable = None
         self.direction = None
 
-    def check_var(self, dae_t, *args, niter=None, **kwargs):
+    def check_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
         Check voltage and perform shunt switching.
 
@@ -1079,9 +1082,12 @@ class ShuntAdjust(Discrete):
             self.t_enable = np.ones_like(self.v.v, dtype=int)
             self.direction = np.zeros_like(self.v.v, dtype=int)
 
+        # skip switching for the first `min_iter` steps
+        print(self.err_tol)
+        print(err)
         if (niter is not None) and (niter < self.min_iter):
-            # skip switching for the first `min_iter` steps
-            return
+            if (err is not None) and (err > self.err_tol):
+                return
 
         self.direction[:] = 0
         self.direction[np.logical_and(self.v.v < self.lower.v,

@@ -97,7 +97,7 @@ class TDS(BaseRoutine):
         self._switch_idx = 0          # index into `System.switch_times`
         self._last_switch_t = -999    # the last critical time
         self.custom_event = False
-        self.mis = 1
+        self.mis = [1, 1]
         self.pbar = None
         self.callpert = None
         self.plotter = None
@@ -378,7 +378,7 @@ class TDS(BaseRoutine):
         system = self.system
         dae = self.system.dae
 
-        self.mis = 1
+        self.mis = [1, 1]
         self.niter = 0
         self.converged = False
 
@@ -468,7 +468,9 @@ class TDS(BaseRoutine):
             mis = np.max(np.abs(inc))
             # store initial maximum mismatch
             if self.niter == 0:
-                self.mis = mis
+                self.mis[0] = mis
+            else:
+                self.mis[-1] = mis
 
             self.niter += 1
 
@@ -488,7 +490,7 @@ class TDS(BaseRoutine):
                 self._debug_ac(inc_max)
                 break
 
-            if mis > 1e6 and (mis > 1e6 * self.mis):
+            if mis > 1e6 and (mis > 1e6 * self.mis[0]):
                 self.err_msg = 'Error increased too quickly. Convergence not likely.'
                 self.busted = True
                 break
@@ -762,7 +764,7 @@ class TDS(BaseRoutine):
         """
         system = self.system
         system.dae.clear_fg()
-        system.l_update_var(models=models, niter=self.niter)
+        system.l_update_var(models=models, niter=self.niter, err=self.mis[-1])
         system.s_update_var(models=models)  # update VarService
         system.f_update(models=models)
         system.g_update(models=models)
@@ -915,7 +917,7 @@ class TDS(BaseRoutine):
         self._switch_idx = 0        # index into `System.switch_times`
         self._last_switch_t = -999  # the last event time
         self.custom_event = False
-        self.mis = 1
+        self.mis = [1, 1]
         self.system.dae.t = np.array(0.0)
         self.pbar = None
         self.plotter = None

@@ -913,7 +913,7 @@ class Model:
         for name in self.calls.s_args:
             self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
 
-    def l_update_var(self, dae_t, niter=None):
+    def l_update_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
         Call the ``check_var`` method of discrete components to update the internal status flags.
 
@@ -925,7 +925,7 @@ class Model:
         """
         for instance in self.discrete.values():
             if instance.has_check_var:
-                instance.check_var(dae_t=dae_t, niter=niter)
+                instance.check_var(dae_t=dae_t, niter=niter, err=err)
 
     def l_check_eq(self):
         """

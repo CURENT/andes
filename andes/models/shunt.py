@@ -138,12 +138,15 @@ class ShuntSwModel(ShuntModel):
                                      )))
         self.config.add_extra("_help",
                               sw_iter="minimum iteration number to enable switching",
+                              err_tol="maximum iteration error to enable switching",
                               )
         self.config.add_extra("_alt",
                               sw_iter='int',
+                              err_tol=1e-2,
                               )
         self.config.add_extra("_tex",
                               sw_iter="sw_{flat}",
+                              err_tol=r"\epsilon_{tol}"
                               )
 
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
@@ -156,6 +159,7 @@ class ShuntSwModel(ShuntModel):
         self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
                                bsw=self.beff, gsw=self.geff, dt=self.dt,
                                min_iter=self.config.sw_iter,
+                               err_tol=self.config.err_tol,
                                info='shunt adjuster')
 
         self.a.e_str = 'u * v**2 * geff'
