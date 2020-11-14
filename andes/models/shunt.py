@@ -109,7 +109,10 @@ def list_iconv(x):
     if isinstance(x, str):
         x = ast.literal_eval(x)
     if isinstance(x, (int, float)):
-        x = [x]
+        if not np.isnan(x):
+            x = [x]
+        else:
+            return None
     if isinstance(x, list):
         x = np.array(x)
     return x
