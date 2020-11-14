@@ -1449,12 +1449,15 @@ class SwBlock(OperationService):
             bs_name = self.bs.name
             ns_name = self.ns.name
 
-            if isinstance(self.ns.v[idx], (float, int)) and self.ns.v[idx] == 0:
-                continue
-            elif isinstance(self.ns.v[idx], (list, np.ndarray)) and len(self.ns.v[idx]) == 0:
-                continue
+            if isinstance(self.ns.v[idx], (list, np.ndarray)):
+                if len(self.ns.v[idx]) == 0:
+                    continue
+                if len(self.ns.v[idx]) == 1 and self.ns.v[idx] == 0:
+                    continue
 
             if isinstance(self.ns.v[idx], (int, float)):
+                if self.ns.v[idx] == 0:
+                    continue
                 raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
                                  (model, device, bs_name, self.ns.v[idx]))
             if isinstance(self.bs.v[idx], (int, float)):
