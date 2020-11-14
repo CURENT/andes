@@ -1394,14 +1394,34 @@ class SwBlock(OperationService):
 
         # initialize
         n_dev = len(self.init.v)
-        self._v = np.zeros(n_dev)               # effective value
-        self.sel = np.zeros(n_dev, dtype=int)   # the index of capacity in use
-        self.bcs = [0] * n_dev                  # cumulative sums of `bs`
-        self.maxsel = np.array([sum(item) for item in self.ns.v],
-                               dtype=int) - 1   # maximum index into bcs
+        self._v = np.array(self.init.v)           # effective value
+        self.sel = np.zeros(n_dev, dtype=int)     # the index of capacity in use
+        self.bcs = [0] * n_dev                    # cumulative sums of `bs`
+        self.maxsel = np.zeros(n_dev, dtype=int)  # max index into `bs`
+
+        for idx in range(n_dev):
+            item = self.ns.v[idx]
+            if isinstance(item, (np.ndarray, list)):
+                if len(item) == 0:
+                    self.maxsel[idx] = -1
+                else:
+                    self.maxsel[idx] = sum(item) - 1
+            else:
+                if item == 0:
+                    self.maxsel[idx] = -1
+                else:
+                    logger.error("Unknown %s value %s", self.ns.name, item)
+
+        self.maxsel = np.array(self.maxsel)
 
         # repeat each value in `bs` by `ns` times
         for idx in range(n_dev):
+            # disabled - use default `b`
+            if self.maxsel[idx] == -1:
+                self.bcs[idx] = self.init.v[idx]
+                continue
+
+            # calculate cumulative sum
             b_rep = list([0])
             for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
                 b_rep += [bb] * nn
@@ -1429,6 +1449,11 @@ class SwBlock(OperationService):
             bs_name = self.bs.name
             ns_name = self.ns.name
 
+            if isinstance(self.ns.v[idx], (float, int)) and self.ns.v[idx] == 0:
+                continue
+            elif isinstance(self.ns.v[idx], (list, np.ndarray)) and len(self.ns.v[idx]) == 0:
+                continue
+
             if isinstance(self.ns.v[idx], (int, float)):
                 raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
                                  (model, device, bs_name, self.ns.v[idx]))
@@ -1454,6 +1479,10 @@ class SwBlock(OperationService):
         Determine the initial shunt selection level.
         """
         for idx in range(len(self._v)):
+            if self.maxsel[idx] == -1:
+                self.sel[idx] = -1
+                continue
+
             binit = self.init.v[idx]
             if binit > self.bcs[idx][-1]:
                 # out of maximum b
