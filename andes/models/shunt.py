@@ -174,9 +174,9 @@ class ShuntSw(ShuntSwData, ShuntSwModel):
         gs = [0, 0]
         bs = [0.2, 0.2]
         ns = [2, 4]
-    
+
     To use individual shunts as fixed shunts, set the corresponding
-    `ns = 0` or `ns = [0]`. 
+    `ns = 0` or `ns = [0]`.
     """
 
     def __init__(self, system=None, config=None):

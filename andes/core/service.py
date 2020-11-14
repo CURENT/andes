@@ -1458,7 +1458,7 @@ class SwBlock(OperationService):
             self.sel[:] += amount
 
         self.set_v()
-    
+
     def set_v(self):
         """
         Set values to `_v` based on `sel`.
