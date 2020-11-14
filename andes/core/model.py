@@ -1521,25 +1521,25 @@ class Model:
         """
         Custom variable initialization function.
         """
-        return
+        pass
 
     def g_numeric(self, **kwargs):
         """
         Custom gcall functions. Modify equations directly.
         """
-        return
+        pass
 
     def f_numeric(self, **kwargs):
         """
         Custom fcall functions. Modify equations directly.
         """
-        return
+        pass
 
     def s_numeric(self, **kwargs):
         """
         Custom service value functions. Modify ``Service.v`` directly.
         """
-        return
+        pass
 
     def s_numeric_var(self, **kwargs):
         """
@@ -1547,7 +1547,7 @@ class Model:
 
         This custom numerical function is evaluated at each step/iteration before equation update.
         """
-        return
+        pass
 
     def j_numeric(self, **kwargs):
         """
@@ -1556,7 +1556,7 @@ class Model:
         This function should append indices to `_ifx`, `_jfx`, and append anonymous functions to `_vfx`.
         It is only called once by `store_sparse_pattern`.
         """
-        return
+        pass
 
     def doc(self, max_width=78, export='plain'):
         """
