@@ -3,6 +3,8 @@ import ast
 
 import numpy as np
 
+from collections import OrderedDict
+
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
 from andes.core.var import ExtAlgeb
@@ -132,7 +134,17 @@ class ShuntSwModel(ShuntModel):
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 
-        # TODO: add a config entry for `sw_iter`
+        self.config.add(OrderedDict((('sw_iter', 2),
+                                     )))
+        self.config.add_extra("_help",
+                              sw_iter="minimum iteration number to enable switching",
+                              )
+        self.config.add_extra("_alt",
+                              sw_iter='int',
+                              )
+        self.config.add_extra("_tex",
+                              sw_iter="sw_{flat}",
+                              )
 
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
         self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
@@ -143,6 +155,7 @@ class ShuntSwModel(ShuntModel):
 
         self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
                                bsw=self.beff, gsw=self.geff, dt=self.dt,
+                               min_iter=self.config.sw_iter,
                                info='shunt adjuster')
 
         self.a.e_str = 'u * v**2 * geff'
@@ -161,7 +174,11 @@ class ShuntSw(ShuntSwData, ShuntSwModel):
         gs = [0, 0]
         bs = [0.2, 0.2]
         ns = [2, 4]
+    
+    To use individual shunts as fixed shunts, set the corresponding
+    `ns = 0` or `ns = [0]`. 
     """
+
     def __init__(self, system=None, config=None):
         ShuntSwData.__init__(self)
         ShuntSwModel.__init__(self, system, config)

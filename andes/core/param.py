@@ -371,7 +371,7 @@ class NumParam(BaseParam):
 
         """
 
-        if isinstance(value, str) and hasattr(self, 'iconvert'):
+        if hasattr(self, 'iconvert') and callable(self.iconvert):
             value = self.iconvert(value)
 
         # check for math.nan, usually imported from pandas

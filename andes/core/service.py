@@ -1401,24 +1401,13 @@ class SwBlock(OperationService):
 
         for idx in range(n_dev):
             item = self.ns.v[idx]
-            if isinstance(item, (np.ndarray, list)):
-                if len(item) == 0:
-                    self.maxsel[idx] = -1
-                else:
-                    self.maxsel[idx] = sum(item) - 1
-            else:
-                if item == 0:
-                    self.maxsel[idx] = -1
-                else:
-                    logger.error("Unknown %s value %s", self.ns.name, item)
-
-        self.maxsel = np.array(self.maxsel)
+            self.maxsel[idx] = sum(item)
 
         # repeat each value in `bs` by `ns` times
         for idx in range(n_dev):
             # disabled - use default `b`
-            if self.maxsel[idx] == -1:
-                self.bcs[idx] = self.init.v[idx]
+            if self.maxsel[idx] == 0:
+                self.bcs[idx] = np.array([self.init.v[idx]])
                 continue
 
             # calculate cumulative sum
@@ -1434,9 +1423,7 @@ class SwBlock(OperationService):
             # use external selector - for shunt's g attribute
             self.sel = self.ext_sel.sel  # modify reference
 
-        for idx in range(n_dev):
-            self._v[idx] = self.bcs[idx][self.sel[idx]]
-
+        self.set_v()
         return self._v
 
     def check_data(self):
@@ -1452,17 +1439,13 @@ class SwBlock(OperationService):
             if isinstance(self.ns.v[idx], (list, np.ndarray)):
                 if len(self.ns.v[idx]) == 0:
                     continue
-                if len(self.ns.v[idx]) == 1 and self.ns.v[idx] == 0:
+                if len(self.ns.v[idx]) == 1 and self.ns.v[idx][0] == 0:
                     continue
 
-            if isinstance(self.ns.v[idx], (int, float)):
-                if self.ns.v[idx] == 0:
-                    continue
-                raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
-                                 (model, device, bs_name, self.ns.v[idx]))
-            if isinstance(self.bs.v[idx], (int, float)):
+            if isinstance(self.bs.v[idx], (int, float, str)):
                 raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
                                  (model, device, bs_name, self.bs.v[idx]))
+
             if len(self.ns.v[idx]) != len(self.bs.v[idx]):
                 raise ValueError("<%s>: idx=%s, `%s` and `%s` lengths do not match" %
                                  (model, device, bs_name, ns_name))
@@ -1474,6 +1457,13 @@ class SwBlock(OperationService):
         if self.ext_sel is None:
             self.sel[:] += amount
 
+        self.set_v()
+    
+    def set_v(self):
+        """
+        Set values to `_v` based on `sel`.
+        """
+
         for idx in range(len(self._v)):
             self._v[idx] = self.bcs[idx][self.sel[idx]]
 
@@ -1482,10 +1472,6 @@ class SwBlock(OperationService):
         Determine the initial shunt selection level.
         """
         for idx in range(len(self._v)):
-            if self.maxsel[idx] == -1:
-                self.sel[idx] = -1
-                continue
-
             binit = self.init.v[idx]
             if binit > self.bcs[idx][-1]:
                 # out of maximum b
@@ -1494,6 +1480,9 @@ class SwBlock(OperationService):
                                self.init.owner.idx.v[idx],
                                self.init.name, binit,
                                self.bcs[idx][-1])
+                self.sel[idx] = self.maxsel[idx]
+
+            elif binit == self.bcs[idx][-1]:
                 self.sel[idx] = self.maxsel[idx]
 
             elif binit < 0:
