@@ -465,11 +465,9 @@ def _parse_transf_v33(raw, system, max_bus):
             phi = data[2][2] * deg2rad  # `ANG1` is entered in degree; convert to rad
 
             # CW - Winding I/O code, 1-turn ratio on pu bus base kV, 2: winding V, 3: turn ratio pu on norn wind V
-            if data[0][4] == 1:
-                pass
-            elif data[0][4] == 2:
+            if data[0][4] == 2:
                 tap = (data[2][0] / bus_Vn1) / (data[3][0] / bus_Vn2)
-            else:
+            elif data[0][4] == 3:
                 tap = tap * (Vn1 / bus_Vn1) / (Vn2 / bus_Vn2)
 
             # CZ - Z code, 1-system base, 2-winding base, 3-load loss and |z|
