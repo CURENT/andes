@@ -988,6 +988,12 @@ class InitChecker(OperationService):
         self.enable = enable
         self.error_out = error_out
 
+        self.checks = [(self.lower, np.less_equal, "out of typical lower limit", "limit"),
+                       (self.upper, np.greater_equal, "out of typical upper limit", "limit"),
+                       (self.equal, lambda a, b: np.logical_not(np.isclose(a, b)), 'should be equal', "expected"),
+                       (self.not_equal, np.equal, 'should not be equal', "not expected")
+                       ]
+
     def check(self):
         """
         Check the bounds and equality conditions.
@@ -995,19 +1001,10 @@ class InitChecker(OperationService):
         if not self.enable:
             return
 
-        def _not_all_close(a, b):
-            return np.logical_not(np.isclose(a, b))
-
         if self._v is None:
             self._v = np.zeros_like(self.u.v)
 
-        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
-                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
-                  (self.equal, _not_all_close, 'should be equal', "expected"),
-                  (self.not_equal, np.equal, 'should not be equal', "not expected")
-                  ]
-
-        for check in checks:
+        for check in self.checks:
             limit = check[0]
             func = check[1]
             text = check[2]
