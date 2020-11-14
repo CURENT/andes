@@ -257,7 +257,7 @@ class TDS(BaseRoutine):
         if self.from_csv is not None:
             self.data_csv = self._load_csv(self.from_csv)
 
-        if no_summary is False:
+        if no_summary is False and (system.dae.t == 0):
             self.summary()
 
         # only initializing at t=0 allows to continue when `run` is called again.
