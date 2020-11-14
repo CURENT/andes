@@ -13,14 +13,10 @@ Induction machine models
 #  Last modified: 8/16/20, 7:25 PM
 
 import logging
-from andes.core.model import Model, ModelData  # NOQA
-from andes.models.exciter import ExcQuadSat  # NOQA
-from andes.core.param import IdxParam, NumParam, ExtParam  # NOQA
-from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
-from andes.core.discrete import LessThan  # NOQA
-from andes.core.service import ConstService, VarService, ExtService  # NOQA
-from andes.core.service import InitChecker, FlagValue  # NOQA
-import numpy as np  # NOQA
+from andes.core.model import Model, ModelData
+from andes.core.param import IdxParam, NumParam
+from andes.core.var import Algeb, State, ExtAlgeb
+from andes.core.service import ConstService
 
 logger = logging.getLogger(__name__)
 

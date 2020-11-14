@@ -1,8 +1,13 @@
+"""
+Sparse solvers wrapper.
+"""
+
+import logging
+
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
 from andes.shared import np, matrix, umfpack, klu, cupy
 
-import logging
 logger = logging.getLogger(__name__)
 
 
