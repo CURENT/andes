@@ -1083,8 +1083,6 @@ class ShuntAdjust(Discrete):
             self.direction = np.zeros_like(self.v.v, dtype=int)
 
         # skip switching for the first `min_iter` steps
-        print(self.err_tol)
-        print(err)
         if (niter is not None) and (niter < self.min_iter):
             if (err is not None) and (err > self.err_tol):
                 return
