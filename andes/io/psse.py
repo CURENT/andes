@@ -466,7 +466,7 @@ def _parse_transf_v33(raw, system, max_bus):
 
             # CW - Winding I/O code, 1-turn ratio on pu bus base kV, 2: winding V, 3: turn ratio pu on norn wind V
             if data[0][4] == 1:
-                tap = tap
+                pass
             elif data[0][4] == 2:
                 tap = (data[2][0] / bus_Vn1) / (data[3][0] / bus_Vn2)
             else:
