@@ -22,7 +22,7 @@ import pstats
 from time import sleep
 from subprocess import call
 from typing import Optional, Union
-import numpy as np  # NOQA
+from functools import partial
 
 import andes
 from andes.system import System
@@ -70,8 +70,8 @@ def config_logger(stream=True,
     None
 
     """
-    logger = logging.getLogger('andes')
-    logger.setLevel(logging.DEBUG)
+    lg = logging.getLogger('andes')
+    lg.setLevel(logging.DEBUG)
 
     if log_path is None:
         log_path = get_log_dir()
@@ -82,12 +82,12 @@ def config_logger(stream=True,
         stream_level = 10
 
     sh_formatter = logging.Formatter(sh_formatter_str)
-    if not len(logger.handlers):
+    if len(lg.handlers) == 0:
         if stream is True:
             sh = logging.StreamHandler()
             sh.setFormatter(sh_formatter)
             sh.setLevel(stream_level)
-            logger.addHandler(sh)
+            lg.addHandler(sh)
 
         # file handler for level DEBUG and up
         if file is True and (log_file is not None):
@@ -96,12 +96,12 @@ def config_logger(stream=True,
             fh = logging.FileHandler(log_full_path)
             fh.setLevel(file_level)
             fh.setFormatter(fh_formatter)
-            logger.addHandler(fh)
+            lg.addHandler(fh)
 
-        globals()['logger'] = logger
+        globals()['logger'] = lg
 
     if not is_interactive():
-        coloredlogs.install(logger=logger, level=stream_level, fmt=sh_formatter_str)
+        coloredlogs.install(logger=lg, level=stream_level, fmt=sh_formatter_str)
 
 
 def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
@@ -131,7 +131,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
         system = System()
         conf_path = system.save_config()
 
-    logger.info('Editing config file "{}"'.format(conf_path))
+    logger.info('Editing config file "%s"', conf_path)
 
     editor = ''
     if edit_config is not None:
@@ -225,9 +225,10 @@ def remove_output(recursive=False):
                 found = True
                 try:
                     os.remove(os.path.join(d, file))
-                    logger.info(f'"{d}/{file}" removed.')
+                    logger.info('"%s" removed.', os.path.join(d, file))
                 except IOError:
-                    logger.error(f'Error removing file "{d}/{file}".')
+                    logger.error('Error removing file "%s".',
+                                 os.path.join(d, file))
     if not found:
         logger.info('No output file found in the working directory.')
 
@@ -235,6 +236,10 @@ def remove_output(recursive=False):
 
 
 def print_license():
+    """
+    Print out Andes license to stdout.
+    """
+
     print(f"""
     ANDES version {andes.__version__}
 
@@ -288,7 +293,7 @@ def load(case, codegen=False, setup=True, **kwargs):
         system.undill()
 
     if not andes.io.parse(system):
-        return
+        return None
 
     if setup:
         system.setup()
@@ -308,7 +313,7 @@ def run_case(case, *, routine='pflow', profile=False,
 
     system = load(case, codegen=codegen, **kwargs)
     if system is None:
-        return
+        return None
 
     skip_empty = True
     overwrite = None
@@ -354,8 +359,8 @@ def run_case(case, *, routine='pflow', profile=False,
                 ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
                 ps.print_stats(nlines)
                 ps.dump_stats(system.files.prof_raw)
-            logger.info(f'cProfile text data written to "{system.files.prof}".')
-            logger.info(f'cProfile raw data written to "{system.files.prof_raw}". View with tool `snakeviz`.')
+            logger.info('cProfile text data written to "%s".', system.files.prof)
+            logger.info('cProfile raw data written to "%s". View with tool `snakeviz`.', system.files.prof_raw)
 
     if remove_pycapsule is True:
         system.remove_pycapsule()
@@ -378,7 +383,7 @@ def _find_cases(filename, path):
         A list of valid cases.
 
     """
-    logger.info(f'Working directory: "{os.getcwd()}"')
+    logger.info('Working directory: "%s"', os.getcwd())
 
     if len(filename) == 0:
         logger.info('info: no input file. Use `andes run -h` for help.')
@@ -390,7 +395,7 @@ def _find_cases(filename, path):
         full_paths = os.path.join(path, file)
         found = glob.glob(full_paths)
         if len(found) == 0:
-            logger.error('error: file {} does not exist.'.format(full_paths))
+            logger.error('error: file "%s" does not exist.', full_paths)
         else:
             cases += found
 
@@ -400,9 +405,9 @@ def _find_cases(filename, path):
     for case in unique_cases:
         if os.path.isfile(case):
             valid_cases.append(case)
-    if len(valid_cases):
+    if len(valid_cases) > 0:
         valid_cases = sorted(valid_cases)
-        logger.debug('Found files: ' + pprint.pformat(valid_cases))
+        logger.debug('Found files: %s', pprint.pformat(valid_cases))
 
     return valid_cases
 
@@ -417,7 +422,7 @@ def set_logger_level(lg, type_to_set, level):
 def find_log_path(lg):
     """Find the file paths of the FileHandlers."""
     out = []
-    for ii, h in enumerate(lg.handlers):
+    for h in lg.handlers:
         if isinstance(h, logging.FileHandler):
             out.append(h.baseFilename)
     return out
@@ -462,7 +467,6 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     verbose : 10, 20, 30, 40, 50
         Verbosity level outside multiprocessing
     """
-    from functools import partial
     pool = Pool(ncpu)
     print("Cases are processed in the following order:")
     print('\n'.join([f'"{name}"' for name in cases]))
@@ -516,7 +520,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     system = None
     ex_code = 0
 
-    if len(filename) and not len(cases):
+    if len(filename) > 0 and len(cases) == 0:
         ex_code = 1  # file specified but not found
 
     t0, _ = elapsed()
@@ -525,7 +529,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     elif len(cases) > 1:
 
         # suppress logging output during multiprocessing
-        logger.info('-> Processing {} jobs on {} CPUs.'.format(len(cases), ncpu))
+        logger.info('-> Processing %s jobs on %s CPUs.', len(cases), ncpu)
         set_logger_level(logger, logging.StreamHandler, mp_verbose)
         set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
@@ -573,7 +577,6 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
             # load plotter before entering IPython
             if system is None:
                 logger.warning("IPython: The System object has not been created.")
-                pass
             elif isinstance(system, System):
                 logger.info("IPython: Access System object in variable `system`.")
                 system.TDS.load_plotter()
@@ -587,8 +590,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     if cli is True:
         return ex_code
-    else:
-        return system
+
+    return system
 
 
 def plot(**kwargs):
@@ -600,7 +603,7 @@ def plot(**kwargs):
 
 
 def misc(edit_config='', save_config='', show_license=False, clean=True, recursive=False,
-         overwrite=None, cli=False, **kwargs):
+         overwrite=None, **kwargs):
     """
     Misc functions.
     """
@@ -680,7 +683,7 @@ def selftest(quick=False, **kwargs):
             for test_class in test_group._tests:
                 tests_keep = list()
 
-                for idx, t in enumerate(test_class._tests):
+                for t in test_class._tests:
                     if t._testMethodName not in quick_skips:
                         tests_keep.append(t)
 
@@ -703,7 +706,7 @@ def doc(attribute=None, list_supported=False, init_seq=False, config=False, **kw
 
             logger.info(system.__dict__[attribute].doc())
         else:
-            logger.error(f'Model <{attribute}> does not exist.')
+            logger.error('Model <%s> does not exist.', attribute)
 
     elif list_supported is True:
         logger.info(system.supported_models())

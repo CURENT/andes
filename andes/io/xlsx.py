@@ -6,6 +6,8 @@ While I like the simplicity of the dome format, spreadsheet data is easier to re
 """
 import logging
 import warnings
+
+from collections import OrderedDict
 from andes.utils.paths import confirm_overwrite
 from andes.shared import pd
 
@@ -100,10 +102,18 @@ def read(system, infile):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-        df_models = pd.read_excel(infile, sheet_name=None, index_col=0)
+        xl = pd.ExcelFile(infile)
+
+        df_models = OrderedDict()
+        for sheet in xl.sheet_names:
+            df_models[sheet] = xl.parse(sheet_name=sheet, index_col=0,
+                                        )
 
     for name, df in df_models.items():
         for row in df.to_dict(orient='records'):
             system.add(name, row)
+
+    # --- for debugging ---
+    system.df_in = df_models
 
     return system

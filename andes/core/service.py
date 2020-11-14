@@ -192,6 +192,7 @@ class VarHold(VarService):
     """
     Service for holding the input when the hold state is on.
     """
+
     def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check, vtype=vtype,
                             name=name, tex_name=tex_name, info=info,
@@ -1252,6 +1253,7 @@ class CurrentSign(ConstService):
         bus(+)        bus(-)
 
     """
+
     def __init__(self, bus, bus1, bus2,  name=None, tex_name=None, info=None):
         ConstService.__init__(self, v_numeric=self.check, name=name, tex_name=tex_name, info=info)
         self.bus = bus
@@ -1363,3 +1365,143 @@ class RandomService(BaseService):
             Randomly generated service variables
         """
         return np.random.rand(self.n)
+
+
+class SwBlock(OperationService):
+    """
+    Service type for switched shunt blocks.
+    """
+
+    def __init__(self, *, init, ns, blocks, ext_sel=None,
+                 name=None, tex_name=None, info=None):
+        OperationService.__init__(self, name=name, tex_name=tex_name, info=info)
+        self.init = init
+        self.ns = ns
+        self.bs = blocks
+
+        self.sel = None
+        self.bcs = None
+        self.maxsel = None
+        self.ext_sel = ext_sel
+
+    @property
+    def v(self):
+        self.check_data()
+
+        # allocate memory
+        if self._v is not None:
+            return self._v
+
+        # initialize
+        n_dev = len(self.init.v)
+        self._v = np.array(self.init.v)           # effective value
+        self.sel = np.zeros(n_dev, dtype=int)     # the index of capacity in use
+        self.bcs = [0] * n_dev                    # cumulative sums of `bs`
+        self.maxsel = np.zeros(n_dev, dtype=int)  # max index into `bs`
+
+        for idx in range(n_dev):
+            item = self.ns.v[idx]
+            self.maxsel[idx] = sum(item)
+
+        # repeat each value in `bs` by `ns` times
+        for idx in range(n_dev):
+            # disabled - use default `b`
+            if self.maxsel[idx] == 0:
+                self.bcs[idx] = np.array([self.init.v[idx]])
+                continue
+
+            # calculate cumulative sum
+            b_rep = list([0])
+            for nn, bb in zip(self.ns.v[idx], self.bs.v[idx]):
+                b_rep += [bb] * nn
+            self.bcs[idx] = np.cumsum(b_rep)
+
+        if self.ext_sel is None:
+            # use internal selector - for shunt's b attribute
+            self.find_sel()
+        else:
+            # use external selector - for shunt's g attribute
+            self.sel = self.ext_sel.sel  # modify reference
+
+        self.set_v()
+        return self._v
+
+    def check_data(self):
+        """
+        Check data consistency.
+        """
+        model = self.ns.owner.class_name
+        for idx in range(len(self.ns.v)):
+            device = self.ns.owner.idx.v[idx]
+            bs_name = self.bs.name
+            ns_name = self.ns.name
+
+            if isinstance(self.ns.v[idx], (list, np.ndarray)):
+                if len(self.ns.v[idx]) == 0:
+                    continue
+                if len(self.ns.v[idx]) == 1 and self.ns.v[idx][0] == 0:
+                    continue
+
+            if isinstance(self.bs.v[idx], (int, float, str)):
+                raise ValueError("<%s>: idx=%s, `%s` parameter should be list literal, got %s" %
+                                 (model, device, bs_name, self.bs.v[idx]))
+
+            if len(self.ns.v[idx]) != len(self.bs.v[idx]):
+                raise ValueError("<%s>: idx=%s, `%s` and `%s` lengths do not match" %
+                                 (model, device, bs_name, ns_name))
+
+    def adjust(self, amount):
+        """
+        Adjust capacitor banks by an amount.
+        """
+        if self.ext_sel is None:
+            self.sel[:] += amount
+
+        self.set_v()
+
+    def set_v(self):
+        """
+        Set values to `_v` based on `sel`.
+        """
+
+        for idx in range(len(self._v)):
+            self._v[idx] = self.bcs[idx][self.sel[idx]]
+
+    def find_sel(self):
+        """
+        Determine the initial shunt selection level.
+        """
+        for idx in range(len(self._v)):
+            binit = self.init.v[idx]
+            if binit > self.bcs[idx][-1]:
+                # out of maximum b
+                logger.warning("<%s> idx=%s, initial %s=%g is greater than max=%g",
+                               self.init.owner.class_name,
+                               self.init.owner.idx.v[idx],
+                               self.init.name, binit,
+                               self.bcs[idx][-1])
+                self.sel[idx] = self.maxsel[idx]
+
+            elif binit == self.bcs[idx][-1]:
+                self.sel[idx] = self.maxsel[idx]
+
+            elif binit < 0:
+                logger.warning("<%s> idx=%s, initial %s=%g is less than zero",
+                               self.init.owner.class_name,
+                               self.init.owner.idx.v[idx],
+                               self.init.name, binit)
+                self.sel[idx] = 0
+
+            else:
+                for pos in range(self.maxsel[idx]):
+                    blo = self.bcs[idx][pos]
+                    bup = self.bcs[idx][pos + 1]
+                    if binit == blo:
+                        self.sel[idx] = pos
+                        break
+                    if binit == bup:
+                        self.sel[idx] = pos + 1
+                        break
+                    if blo < binit < bup:
+                        self.sel[idx] = pos + 1
+                        break

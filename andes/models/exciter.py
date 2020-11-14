@@ -8,7 +8,6 @@ from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
-from _collections import OrderedDict  # NOQA
 import numpy as np  # NOQA
 
 
@@ -59,7 +58,7 @@ class ExcBase(Model):
                             tex_name='bus',
                             info='Bus idx of the generators',
                             export=False,
-                            dtype=str,
+                            vtype=str,
                             )
         self.omega = ExtState(src='omega',
                               model='SynGen',

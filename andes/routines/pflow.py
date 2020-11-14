@@ -50,7 +50,7 @@ class PFlow(BaseRoutine):
         self.inc = None
         self.A = None
         self.niter = None
-        self.mis = []
+        self.mis = [1]
         self.models = OrderedDict()
 
         self.x_sol = None
@@ -62,7 +62,7 @@ class PFlow(BaseRoutine):
         self.inc = None
         self.A = None
         self.niter = None
-        self.mis = []
+        self.mis = [1]
 
         self.x_sol = None
         self.y_sol = None
@@ -90,7 +90,7 @@ class PFlow(BaseRoutine):
         system = self.system
         # evaluate discrete, differential, algebraic, and Jacobians
         system.dae.clear_fg()
-        system.l_update_var(self.models)
+        system.l_update_var(self.models, niter=self.niter, err=self.mis[-1])
         system.s_update_var(self.models)
         system.f_update(self.models)
         system.g_update(self.models)
@@ -119,7 +119,11 @@ class PFlow(BaseRoutine):
         system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
 
         mis = np.max(np.abs(system.dae.fg))
-        self.mis.append(mis)
+
+        if self.niter == 0:
+            self.mis[0] = mis
+        else:
+            self.mis.append(mis)
 
         system.vars_to_models()
 
@@ -129,9 +133,9 @@ class PFlow(BaseRoutine):
         """
         Output a summary for the PFlow routine.
         """
-        ipadd_status = 'CVXOPT normal (ipadd not available)'
+        ipadd_status = 'kvxopt normal (ipadd not available)'
 
-        # extract package name, `cvxopt` or `kvxopt`
+        # extract package name, `kvxopt` or `kvxopt`
         sp_module = sparse.__module__
         if '.' in sp_module:
             sp_module = sp_module.split('.')[0]
@@ -140,7 +144,7 @@ class PFlow(BaseRoutine):
             if self.system.config.ipadd:
                 ipadd_status = f'Fast in-place ({sp_module})'
             else:
-                ipadd_status = 'CVXOPT normal (ipadd disabled in config)'
+                ipadd_status = 'kvxopt normal (ipadd disabled in config)'
 
         out = list()
         out.append('')
@@ -240,7 +244,7 @@ class PFlow(BaseRoutine):
         system.vars_to_models()
 
         system.dae.clear_fg()
-        system.l_update_var(self.models)
+        system.l_update_var(self.models, niter=self.niter, err=self.mis[-1])
         system.f_update(self.models)
         system.g_update(self.models)
         system.l_update_eq(self.models)

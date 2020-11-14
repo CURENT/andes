@@ -24,6 +24,7 @@ from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
+from andes.core.service import SwBlock
 
 from andes.utils.paths import get_dot_andes_path
 from andes.utils.func import list_flatten
@@ -263,6 +264,10 @@ class ModelData:
                 out[name] = instance.vin
             else:
                 out[name] = instance.v
+
+            conv = instance.oconvert
+            if conv is not None:
+                out[name] = np.array([conv(item) for item in out[name]])
 
         return out
 
@@ -657,6 +662,7 @@ class Model:
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
                                 FlagValue, RandomService,
+                                SwBlock,
                                 ParamCalc, Replace, ApplyFunc)):
             self.services_ops[key] = value
         elif isinstance(value, InitChecker):
@@ -907,7 +913,7 @@ class Model:
         for name in self.calls.s_args:
             self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
 
-    def l_update_var(self, dae_t):
+    def l_update_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
         Call the ``check_var`` method of discrete components to update the internal status flags.
 
@@ -919,7 +925,7 @@ class Model:
         """
         for instance in self.discrete.values():
             if instance.has_check_var:
-                instance.check_var(dae_t)
+                instance.check_var(dae_t=dae_t, niter=niter, err=err)
 
     def l_check_eq(self):
         """
@@ -1071,7 +1077,7 @@ class Model:
         Notes
         -----
         If `self.n == 0`, skipping this function will avoid appending empty lists/arrays and
-        non-empty values, which, as a combination, is not accepted by `cvxopt.spmatrix`.
+        non-empty values, which, as a combination, is not accepted by `kvxopt.spmatrix`.
         """
 
         self.triplets.clear_ijv()
@@ -1284,12 +1290,14 @@ class Model:
                     self.triplets.vjac[jname][idx][:] = ret[idx]
                 except ValueError as e:
                     row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error(f'{jname} shape error: j_idx={idx}, d{row_name} / d{col_name}')
+                    logger.error('%s shape error: j_idx=%s, d%s / d%s',
+                                 jname, idx, row_name, col_name)
 
                     raise e
                 except FloatingPointError as e:
                     row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error(f'{jname} evaluation error: j_idx={idx}, d{row_name} / d{col_name}')
+                    logger.error('%s eval error: j_idx=%s, d%s / d%s',
+                                 jname, idx, row_name, col_name)
 
                     raise e
 

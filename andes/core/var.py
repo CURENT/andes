@@ -361,7 +361,9 @@ class ExtVar(BaseVar):
         pass
 
     def set_arrays(self, dae):
-        """Empty function."""
+        """
+        Empty function.
+        """
         pass
 
     def link_external(self, ext_model):

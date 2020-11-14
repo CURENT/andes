@@ -144,6 +144,7 @@ class LessThan(Discrete):
     -----
     The default z0 and z1, if not enabled, can be set through the constructor.
     """
+
     def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None,
                  info=None, cache=False, z0=0, z1=1):
         super().__init__(name=name, tex_name=tex_name, info=info)
@@ -409,6 +410,7 @@ class RateLimiter(Discrete):
     RateLimiter cannot be applied to a state variable that already undergoes an AntiWindup limiter.
     Use `AntiWindupRate` for a rate-limited anti-windup limiter.
     """
+
     def __init__(self, u, lower, upper, enable=True,
                  no_lower=False, no_upper=False, lower_cond=None, upper_cond=None,
                  name=None, tex_name=None, info=None):
@@ -474,6 +476,7 @@ class AntiWindupRate(AntiWindup, RateLimiter):
     """
     Anti-windup limiter with rate limits
     """
+
     def __init__(self, u, lower, upper, rate_lower, rate_upper,
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
@@ -537,6 +540,7 @@ class Selector(Discrete):
 
     andes.core.block.LVGate
     """
+
     def __init__(self, *args, fun, tex_name=None, info=None):
         super().__init__(tex_name=tex_name, info=info)
         # TODO: only allow two inputs
@@ -700,6 +704,7 @@ class DeadBand(Limiter):
                          (dbc * db_zi) - var_out'
 
     """
+
     def __init__(self, u, center, lower, upper, enable=True, equal=True, zu=0.0, zl=0.0, zi=0.0,
                  name=None, tex_name=None, info=None):
         Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
@@ -766,6 +771,7 @@ class DeadBandRT(DeadBand):
                          dbu * db_zur - var_out'
 
     """
+
     def __init__(self, u, center, lower, upper, enable=True):
         """
 
@@ -823,7 +829,7 @@ class Delay(Discrete):
 
     Delay allows to impose a predefined "delay" (in either steps or seconds)
     for an input variable. The amount of delay is a scalar and has to be fixed
-    at model definition for now.
+    at model definition in the current implementation.
 
     """
 
@@ -912,6 +918,7 @@ class Average(Delay):
     """
     Compute the average of a BaseVar over a period of time or a number of samples.
     """
+
     def check_var(self, dae_t, *args, **kwargs):
         Delay.check_var(self, dae_t, *args, **kwargs)
 
@@ -929,6 +936,7 @@ class Derivative(Delay):
     """
     Compute the derivative of an algebraic variable using numerical differentiation.
     """
+
     def __init__(self, u, name=None, tex_name=None, info=None):
         Delay.__init__(self, u=u, mode='step', delay=1,
                        name=name, tex_name=tex_name, info=info)
@@ -950,6 +958,7 @@ class Sampling(Discrete):
     """
     Sample an input variable repeatedly at a given time interval.
     """
+
     def __init__(self, u, interval=1.0, offset=0.0, name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
 
@@ -1017,3 +1026,105 @@ class Sampling(Discrete):
             if self._last_t[0] > dae_t:
                 self.v[:] = self._last_v
                 self._last_t[0] = dae_t
+
+
+class ShuntAdjust(Discrete):
+    """
+    Class for adjusting switchable shunts.
+
+    Parameters
+    ----------
+    v : BaseVar
+        Voltage measurement
+    lower : BaseParam
+        Lower voltage bound
+    upper : BaseParam
+        Upper voltage bound
+    bsw : SwBlock
+        SwBlock instance for susceptance
+    gsw : SwBlock
+        SwBlock instance for conductance
+    dt : NumParam
+        Delay time
+    min_iter : int
+        Minimum iteration number to enable shunt switching
+    err_tol : float
+        Minimum iteration tolerance to enable switching
+    """
+
+    def __init__(self, *, v, lower, upper, bsw, gsw, dt, enable=True,
+                 min_iter=2, err_tol=1e-2,
+                 name=None, tex_name=None, info=None, no_warn=False):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
+                          no_warn=no_warn)
+
+        self.v = v
+        self.lower = lower
+        self.upper = upper
+
+        self.bsw = bsw
+        self.gsw = gsw
+        self.dt = dt
+        self.enable = enable
+        self.min_iter = min_iter
+        self.err_tol = err_tol
+
+        self.has_check_var = True
+
+        self.t_last = None
+        self.t_enable = None
+        self.direction = None
+
+    def check_var(self, dae_t, *args, niter=None, err=None, **kwargs):
+        """
+        Check voltage and perform shunt switching.
+
+        Parameters
+        ----------
+        niter : int or None
+            Current iteration step
+        """
+        if not self.enable:
+            return
+
+        if self.t_last is None:
+            self.t_last = np.zeros_like(self.v.v)
+            self.t_enable = np.ones_like(self.v.v, dtype=int)
+            self.direction = np.zeros_like(self.v.v, dtype=int)
+
+        # skip switching for the first `min_iter` steps
+        if (niter is not None) and (niter < self.min_iter) and \
+                (err is not None) and (err > self.err_tol):
+            return
+
+        self.direction[:] = 0
+        self.direction[np.logical_and(self.v.v < self.lower.v,
+                                      self.bsw.sel < self.bsw.maxsel)] = 1
+        self.direction[np.logical_and(self.v.v > self.upper.v,
+                                      self.bsw.sel > 0)] = -1
+
+        if not np.any(self.direction):
+            return
+
+        # allow unlimited switching in power flow
+        if dae_t == 0.0:
+            self.t_enable[:] = 1.0
+        # consider delay for time-domain simulation
+        else:
+            self.t_enable[:] = (dae_t - self.t_last - self.dt.v) >= 0
+            self.direction[:] *= self.t_enable
+
+        if not np.any(self.direction):
+            return
+
+        logger.debug("--- Shunt Switch at t=%.6g, niter=%d ---", dae_t, niter)
+        logger.debug("Delay enable flags=%s, adjusted levels=%s.",
+                     self.t_enable, self.direction)
+        logger.debug("Bus voltage=%s", self.v.v)
+        logger.debug("Before: b=%s, g=%s", self.bsw.v, self.gsw.v)
+
+        self.bsw.adjust(self.direction)
+        self.gsw.adjust(self.direction)
+        self.t_last[self.direction != 0] = dae_t
+
+        logger.debug("After: b=%s, g=%s", self.bsw.v, self.gsw.v)

@@ -8,7 +8,7 @@
 #  File name: param.py
 #  Last modified: 8/16/20, 7:27 PM
 
-from typing import Optional, Union, Callable, List, Tuple
+from typing import Optional, Union, Callable, List, Tuple, Type
 
 import math
 import logging
@@ -66,7 +66,10 @@ class BaseParam:
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  mandatory: bool = False,
-                 export: bool = True):
+                 export: bool = True,
+                 iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
+                 ):
         self.name = name
         self.default = default
         self.tex_name = tex_name if (tex_name is not None) else name
@@ -77,6 +80,10 @@ class BaseParam:
 
         self.v = []
         self.property = dict(mandatory=mandatory)
+        self.iconvert = iconvert
+        self.oconvert = oconvert
+        self.vtype = float
+        self.eltype = list
 
     def add(self, value=None):
         """
@@ -203,9 +210,14 @@ class IdxParam(BaseParam):
                  mandatory: bool = False,
                  unique: bool = False,
                  export: bool = True,
-                 model: Optional[str] = None):
-        super().__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit, mandatory=mandatory,
-                         export=export)
+                 model: Optional[str] = None,
+                 iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
+                 ):
+        super().__init__(default=default, name=name, tex_name=tex_name,
+                         info=info, unit=unit, mandatory=mandatory,
+                         export=export, iconvert=iconvert, oconvert=oconvert,
+                         )
         self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
 
@@ -245,6 +257,8 @@ class NumParam(BaseParam):
         Unit of the parameter
     vrange : list, tuple, optional
         Typical value range
+    vtype : type, optional
+        Type of the ``v`` field. The default is ``float``.
 
     Other Parameters
     ----------------
@@ -253,41 +267,47 @@ class NumParam(BaseParam):
     Vn : str
         Name of the parameter for the device base voltage.
     non_zero : bool
-        True if this parameter must be non-zero
+        True if this parameter must be non-zero.
     positive: bool
-        True if this parameter must be positive
+        True if this parameter must be positive.
     mandatory : bool
-        True if this parameter must not be None
+        True if this parameter must not be None.
     power : bool
         True if this parameter is a power per-unit quantity
-        under the device base
+        under the device base.
+    iconvert : callable
+        Callable to convert input data from excel or others
+        to the internal ``v`` field.
+    oconvert : callable
+        Callable to convert input data from internal type
+        to a serializable type.
     ipower : bool
         True if this parameter is an inverse-power per-unit
-        quantity under the device base
+        quantity under the device base.
     voltage : bool
         True if the parameter is a voltage pu quantity
-        under the device base
+        under the device base.
     current : bool
         True if the parameter is a current pu quantity
-        under the device base
+        under the device base.
     z : bool
         True if the parameter is an AC impedance pu quantity
-        under the device base
+        under the device base.
     y : bool
         True if the parameter is an AC admittance pu quantity
-        under the device base
+        under the device base.
     r : bool
         True if the parameter is a DC resistance pu quantity
-        under the device base
+        under the device base.
     g : bool
         True if the parameter is a DC conductance pu quantity
-        under the device base
+        under the device base.
     dc_current : bool
         True if the parameter is a DC current pu quantity under
-        device base
+        device base.
     dc_voltage : bool
         True if the parameter is a DC voltage pu quantity under
-        device base
+        device base.
 
     """
 
@@ -298,6 +318,9 @@ class NumParam(BaseParam):
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  vrange: Optional[Union[List, Tuple]] = None,
+                 vtype: Optional[Type] = float,
+                 iconvert: Optional[Callable] = None,
+                 oconvert: Optional[Callable] = None,
                  non_zero: bool = False,
                  positive: bool = False,
                  mandatory: bool = False,
@@ -314,7 +337,8 @@ class NumParam(BaseParam):
                  export: bool = True,
                  ):
         super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info,
-                                       unit=unit, export=export)
+                                       unit=unit, export=export, iconvert=iconvert, oconvert=oconvert,
+                                       )
 
         self.property = dict(non_zero=non_zero,
                              positive=positive,
@@ -333,6 +357,7 @@ class NumParam(BaseParam):
         self.pu_coeff = np.ndarray([])
         self.vin = None  # values from input
         self.vrange = vrange
+        self.vtype = vtype
 
     def add(self, value=None):
         """
@@ -346,11 +371,12 @@ class NumParam(BaseParam):
 
         """
 
+        if hasattr(self, 'iconvert') and callable(self.iconvert):
+            value = self.iconvert(value)
+
         # check for math.nan, usually imported from pandas
         if isinstance(value, float) and math.isnan(value):
             value = None
-        elif isinstance(value, str):
-            value = float(value)
 
         # check for mandatory
         if value is None:
@@ -359,45 +385,52 @@ class NumParam(BaseParam):
             else:
                 value = self.default
 
-        # check for non-zero
-        if value == 0.0 and self.get_property('non_zero'):
-            logger.warning(f'Non-zero parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
-            value = self.default
+        if isinstance(value, float):
+            # check for non-zero
+            if value == 0.0 and self.get_property('non_zero'):
+                logger.warning('Non-zero parameter %s.%s corrected to %s',
+                               self.owner.class_name, self.name, self.default)
+                value = self.default
 
-        # check for positive
-        if value is not None and value <= 0.0 and self.get_property('positive'):
-            logger.warning(f'Positive parameter {self.owner.class_name}.{self.name} corrected to {self.default}')
-            value = self.default
+            # check for positive
+            if value <= 0.0 and self.get_property('positive'):
+                logger.warning('Positive parameter %s.%s corrected to %s',
+                               self.owner.class_name, self.name, self.default)
+                value = self.default
 
         super(NumParam, self).add(value)
 
     def to_array(self):
         """
-        Convert ``v`` to np.ndarray after adding elements.
-        Store a copy if the input in `vin`.
-        Set ``pu_coeff`` to all ones.
+        Converts field ``v`` to the NumPy array type.
+        to enable array-based calculation.
 
-        The conversion enables array-based calculation.
+        Must be called after adding all elements.
+        Store a copy of original input values to field ``vin``.
+        Set ``pu_coeff`` to all ones.
 
         Warnings
         --------
-        After this call, `add` will not be allowed, because data will not be copied over to ``vin``.
+        After this call, `add` will not be allowed to avoid
+        unexpected issues.
         """
+
+        self.v = np.array(self.v, dtype=self.vtype)
 
         # data quality check
         # ----------------------------------------
-        self.v = np.array(self.v, dtype=float)
-
         # NOTE: temporarily disabled due to nested parameters
         # if np.sum(np.isnan(self.v)) > 0:
         #     raise ValueError(f'Param <{self.name} contains NaN.')
 
-        self.v[self.v == np.inf] = 1e8
-        self.v[self.v == -np.inf] = -1e8
+        if self.v.dtype != np.object:
+            self.v[self.v == np.inf] = 1e8
+            self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
-        self.vin = np.array(self.v, dtype=float)
-        self.pu_coeff = np.ones_like(self.v)
+        self.vin = np.array(self.v, dtype=self.vtype)
+
+        self.pu_coeff = np.ones_like(self.v, dtype=float)
 
     def set_pu_coeff(self, coeff):
         """
@@ -411,7 +444,15 @@ class NumParam(BaseParam):
         coeff : np.ndarray
             An array with the pu conversion coefficients
         """
-        self.pu_coeff = coeff
+        if self.pu_coeff.ndim == 1:
+            self.pu_coeff[:] = coeff
+
+        elif self.pu_coeff.ndim == 2:
+            for ii in range(len(self.pu_coeff)):
+                self.pu_coeff[ii] = coeff[ii]
+        else:
+            raise NotImplementedError("Parameters with ndim > 2 not understood.")
+
         self.v[:] = self.vin * self.pu_coeff
 
     def restore(self):
@@ -519,7 +560,7 @@ class ExtParam(NumParam):
                  model: str,
                  src: str,
                  indexer=None,
-                 dtype=float,
+                 vtype=float,
                  allow_none=False,
                  default=0.0,
                  **kwargs):
@@ -527,7 +568,7 @@ class ExtParam(NumParam):
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.dtype = dtype
+        self.vtype = vtype
         self.parent_model = None   # parent model instance
         self.allow_none = allow_none
         self.default = default
@@ -609,6 +650,6 @@ class ExtParam(NumParam):
         """
         Convert to array when d_type is not str
         """
-        if self.dtype == str:
+        if self.vtype == str:
             return
         NumParam.to_array(self)

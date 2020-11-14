@@ -515,13 +515,13 @@ class REECA1Model(Model):
 
         # --- External parameters ---
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
-                            info='Retrieved bus idx', dtype=str, default=None,
+                            info='Retrieved bus idx', vtype=str, default=None,
                             )
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
         self.gen = ExtParam(model='RenGen', src='gen', indexer=self.reg, export=False,
-                            info='Retrieved StaticGen idx', dtype=str, default=None,
+                            info='Retrieved StaticGen idx', vtype=str, default=None,
                             )
 
         # --- External variables ---
@@ -1047,14 +1047,16 @@ class REPCA1Data(ModelData):
                            info='Time constant for P measurement',
                            )
 
-        self.fdbd1 = NumParam(default=-0.01,
+        self.fdbd1 = NumParam(default=-0.0002833,
                               tex_name='f_{dbd1}',
                               info='Lower threshold for freq. error deadband',
+                              unit='p.u. (Hz)',
                               )
 
-        self.fdbd2 = NumParam(default=0.01,
+        self.fdbd2 = NumParam(default=0.0002833,
                               tex_name='f_{dbd2}',
                               info='Upper threshold for freq. error deadband',
+                              unit='p.u. (Hz)',
                               )
 
         self.femax = NumParam(default=0.05,
@@ -1121,7 +1123,7 @@ class REPCA1Model(Model):
 
         # --- from RenExciter ---
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, export=False,
-                            info='Retrieved RenGen idx', dtype=str, default=None,
+                            info='Retrieved RenGen idx', vtype=str, default=None,
                             )
         self.Pext = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
                              info='Pref from RenExciter renamed as Pext',
@@ -1135,7 +1137,7 @@ class REPCA1Model(Model):
 
         # --- from RenGen ---
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
-                            info='Retrieved bus idx', dtype=str, default=None,
+                            info='Retrieved bus idx', vtype=str, default=None,
                             )
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
@@ -1161,18 +1163,18 @@ class REPCA1Model(Model):
 
         # from Line
         self.bus1 = ExtParam(model='ACLine', src='bus1', indexer=self.line, export=False,
-                             info='Retrieved Line.bus1 idx', dtype=str, default=None,
+                             info='Retrieved Line.bus1 idx', vtype=str, default=None,
                              )
 
         self.bus2 = ExtParam(model='ACLine', src='bus2', indexer=self.line, export=False,
-                             info='Retrieved Line.bus2 idx', dtype=str, default=None,
+                             info='Retrieved Line.bus2 idx', vtype=str, default=None,
                              )
         self.r = ExtParam(model='ACLine', src='r', indexer=self.line, export=False,
-                          info='Retrieved Line.r', dtype=str, default=None,
+                          info='Retrieved Line.r', vtype=str, default=None,
                           )
 
         self.x = ExtParam(model='ACLine', src='x', indexer=self.line, export=False,
-                          info='Retrieved Line.x', dtype=str, default=None,
+                          info='Retrieved Line.x', vtype=str, default=None,
                           )
 
         self.v1 = ExtAlgeb(model='ACLine', src='v1', indexer=self.line, tex_name='V_1',

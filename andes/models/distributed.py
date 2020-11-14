@@ -175,21 +175,21 @@ class PVD1Model(Model):
         self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
 
         # --- initial values from power flow ---
-        # v : bus voltage magnitude
         # a : bus voltage angle
+        # v : bus voltage magnitude
         # p0s : active power from connected static PV generator
         # q0s : reactive power from connected static PV generator
-
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
-                          info='bus (or igreg) terminal voltage',
-                          unit='p.u.',
-                          e_str='-Iqout_y * v * u',
-                          )
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
                           info='bus (or igreg) phase angle',
                           unit='rad.',
                           e_str='-Ipout_y * v * u',
+                          )
+
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
+                          info='bus (or igreg) terminal voltage',
+                          unit='p.u.',
+                          e_str='-Iqout_y * v * u',
                           )
 
         self.p0s = ExtService(model='StaticGen',
@@ -299,10 +299,15 @@ class PVD1Model(Model):
                         e_str='v * VLo_zi + 0.01 * VLo_zl - vp',
                         )
 
+        self.Pext0 = ConstService(info='External additional signal added to Pext',
+                                  tex_name='P_{ext0}',
+                                  v_str='0',
+                                  )
+
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal',
-                          v_str='0',
-                          e_str='0 - Pext'
+                          v_str='Pext0',
+                          e_str='Pext0 - Pext'
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',

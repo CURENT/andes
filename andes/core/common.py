@@ -1,7 +1,9 @@
 import pprint
-from collections import defaultdict, OrderedDict
-from typing import Iterable
 import logging
+
+from typing import Iterable
+from collections import defaultdict, OrderedDict
+
 from andes.shared import jac_full_names, jac_names, jac_types
 from andes.utils.tab import math_wrap, make_doc_table
 
@@ -207,7 +209,7 @@ class Config:
         """
         def warn_upper(s):
             if any(x.isupper() for x in s):
-                logger.warning(f"Config fields must be in lower case, found {s}")
+                logger.warning("Config fields must be in lower case, found %s", s)
 
         if dct is not None:
             for s in dct.keys():
@@ -236,7 +238,7 @@ class Config:
             kwargs.update(dct)
         for key, value in kwargs.items():
             if key not in self.__dict__:
-                logger.warning(f"Config field name {key} for {dest} is invalid.")
+                logger.warning("Config field name %s for %s is invalid.", key, dest)
                 continue
             self.__dict__[dest][key] = value
 

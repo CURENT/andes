@@ -424,7 +424,7 @@ class TDSData:
 
         from bqplot import pyplot as plt
         if not isinstance(ydata, np.ndarray):
-            TypeError("ydata must be numpy array. Retrieve with get_values().")
+            raise TypeError("ydata must be numpy array. Retrieve with `get_values()`.")
 
         if ydata.ndim == 1:
             ydata = ydata.reshape((-1, 1))
@@ -473,7 +473,7 @@ class TDSData:
         mpl.rc('font', family='Arial', size=font_size)
 
         if not isinstance(ydata, np.ndarray):
-            TypeError("ydata must be a numpy array. Retrieve with get_values().")
+            raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
 
         if ydata.ndim == 1:
             ydata = ydata.reshape((-1, 1))
@@ -570,7 +570,7 @@ class TDSData:
                 count += 1
 
             fig.savefig(outfile, dpi=dpi)
-            logger.info(f'Figure saved to "{outfile}".')
+            logger.info('Figure saved to "%s".', outfile)
 
         if show:
             plt.show()
