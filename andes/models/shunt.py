@@ -135,6 +135,7 @@ class ShuntSwModel(ShuntModel):
         ShuntModel.__init__(self, system, config)
 
         self.config.add(OrderedDict((('sw_iter', 2),
+                                     ('err_tol', 0.01),
                                      )))
         self.config.add_extra("_help",
                               sw_iter="minimum iteration number to enable switching",
@@ -142,7 +143,7 @@ class ShuntSwModel(ShuntModel):
                               )
         self.config.add_extra("_alt",
                               sw_iter='int',
-                              err_tol=1e-2,
+                              err_tol='float',
                               )
         self.config.add_extra("_tex",
                               sw_iter="sw_{flat}",
