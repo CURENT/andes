@@ -1,6 +1,8 @@
 import unittest
 import andes
 import os
+import numpy as np
+
 from andes.utils.paths import get_case
 
 
@@ -58,6 +60,7 @@ class TestKundur2AreaEIG(unittest.TestCase):
     """
     Test Kundur's 2-area system
     """
+
     def test_xlsx_eig_run(self):
         self.xlsx = get_case("kundur/kundur_full.xlsx")
         self.ss = andes.run(self.xlsx, default_config=True)
@@ -170,3 +173,26 @@ class TestCOI(unittest.TestCase):
                               )
 
         self.assertEqual(exit_code, 0, "Exit code is not 0.")
+
+
+class TestShuntSw(unittest.TestCase):
+    """Test class for switched shunt."""
+
+    def test_shuntsw(self):
+        """
+        Test `ShuntSw` class.
+        """
+
+        case = get_case('ieee14/ieee14_shuntsw.xlsx')
+        ss = andes.run(case,
+                       no_output=True,
+                       default_config=True,
+                       )
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+        np.testing.assert_almost_equal(ss.ShuntSw.beff.v, [0.1, 0.1])
+        np.testing.assert_almost_equal(ss.ShuntSw.beff.bcs[0],
+                                       [0., 0.025, 0.05, 0.075, 0.1, 0.125])
+        np.testing.assert_almost_equal(ss.ShuntSw.beff.bcs[1],
+                                       [0., 0.05, 0.1, 0.15, 0.2, 0.25])
