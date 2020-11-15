@@ -298,7 +298,7 @@ class System:
         self.dill()
 
         _, s = elapsed(t0)
-        logger.info('Successfully generated numerical code in {%s}.', s)
+        logger.info('Successfully generated numerical code in %s.', s)
 
     def _prepare_mp(self, quick=False):
         """
