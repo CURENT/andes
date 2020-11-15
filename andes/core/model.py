@@ -1875,7 +1875,12 @@ class SymProcessor:
                     try:
                         expr = sympify(instance.e_str, locals=self.inputs_dict)
                     except SympifyError as e:
-                        logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                        logger.error('Error parsing equation "%s "for %s.%s',
+                                     instance.e_str, instance.owner.class_name, name)
+                        raise e
+                    except TypeError as e:
+                        logger.error('Error parsing equation "%s "for %s.%s',
+                                     instance.e_str, instance.owner.class_name, name)
                         raise e
 
                     free_syms = self._check_expr_symbols(expr)

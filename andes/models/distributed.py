@@ -402,10 +402,7 @@ class PVD1Model(Model):
                            tex_name='I_{qmax}',
                            )
 
-        self.Iqmin = VarService(v_str='-Iqmax', tex_name='I_{qmin}')
-
-        # --- Ipcmd, Iqcmd ---
-
+        # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
                                  lower=0.0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
@@ -413,7 +410,8 @@ class PVD1Model(Model):
                                  )
 
         self.Iqcmd = LimiterGain(u=self.Iqul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=self.Iqmin, upper=self.Iqmax,
+                                 lower=self.Iqmax, sign_lower=-1,
+                                 upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
                                  tex_name='I^{qcmd}',
                                  )

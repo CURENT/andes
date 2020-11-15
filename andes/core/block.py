@@ -1542,6 +1542,7 @@ class LimiterGain(Block):
     """
 
     def __init__(self, u, K, lower, upper, no_lower=False, no_upper=False,
+                 sign_lower=1, sign_upper=1,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
@@ -1557,6 +1558,7 @@ class LimiterGain(Block):
 
         self.lim = HardLimiter(u=self.u, lower=self.lower, upper=self.upper,
                                no_upper=no_upper, no_lower=no_lower,
+                               sign_lower=sign_lower, sign_upper=sign_upper,
                                tex_name='lim')
 
         self.y = Algeb(info='Gain output after limiter', tex_name='y', discrete=self.lim)
@@ -1571,11 +1573,11 @@ class LimiterGain(Block):
         self.y.v_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
 
         if not self.no_upper:
-            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name}'
-            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name}'
+            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name} * {self.lim.sign_upper.name}'
+            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name} * {self.lim.sign_upper.name}'
         if not self.no_lower:
-            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name}'
-            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name}'
+            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name} * {self.lim.sign_lower.name}'
+            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name} * {self.lim.sign_lower.name}'
 
         self.y.e_str += f' - {self.name}_y'
 

@@ -204,6 +204,10 @@ class Limiter(Discrete):
         True to only use the upper limit
     no_upper : bool
         True to only use the lower limit
+    sign_lower: 1 or -1
+        Sign to be multiplied to the lower limit
+    sign_upper: bool
+        Sign to be multiplied to the upper limit
     equal : bool
         True to include equal signs in comparison (>= or <=).
     no_warn : bool
@@ -227,15 +231,24 @@ class Limiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
-                 no_upper=False, no_lower=False, equal=True, no_warn=False,
+                 no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
+                 equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
         self.enable = enable
-        self.no_upper = no_upper
         self.no_lower = no_lower
+        self.no_upper = no_upper
+
+        if sign_lower not in (1, -1):
+            raise ValueError("sign_lower must be 1 or -1, got %s" % sign_lower)
+        if sign_upper not in (1, -1):
+            raise ValueError("sign_upper must be 1 or -1, got %s" % sign_upper)
+
+        self.sign_lower = dummify(sign_lower)
+        self.sign_upper = dummify(sign_upper)
         self.equal = equal
         self.no_warn = no_warn
 
@@ -265,16 +278,18 @@ class Limiter(Discrete):
             return
 
         if not self.no_upper:
+            upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
             if self.equal:
-                self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+                self.zu[:] = np.greater_equal(self.u.v, upper_v)
             else:
-                self.zu[:] = np.greater(self.u.v, self.upper.v)
+                self.zu[:] = np.greater(self.u.v, upper_v)
 
         if not self.no_lower:
+            lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
             if self.equal:
-                self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+                self.zl[:] = np.less_equal(self.u.v, lower_v)
             else:
-                self.zl[:] = np.less(self.u.v, self.lower.v)
+                self.zl[:] = np.less(self.u.v, lower_v)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
@@ -342,9 +357,11 @@ class AntiWindup(Limiter):
     """
 
     def __init__(self, u, lower, upper, enable=True,
-                 no_lower=False, no_upper=False, name=None, tex_name=None, info=None, state=None):
+                 no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
+                 name=None, tex_name=None, info=None, state=None):
         super().__init__(u, lower, upper, enable=enable,
                          no_lower=no_lower, no_upper=no_upper,
+                         sign_lower=sign_lower, sign_upper=sign_upper,
                          name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
@@ -368,11 +385,13 @@ class AntiWindup(Limiter):
         Consider improving for speed. (TODO)
         """
         if not self.no_upper:
-            self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
+            upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+            self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
 
         if not self.no_lower:
-            self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
+            lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+            self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
@@ -383,7 +402,11 @@ class AntiWindup(Limiter):
         if not np.all(self.zi):
             idx = np.where(self.zi == 0)
             self.state.e[:] = self.state.e * self.zi
-            self.state.v[:] = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
+            self.state.v[:] = self.state.v * self.zi
+            if not self.no_upper:
+                self.state.v[:] += upper_v * self.zu
+            if not self.no_lower:
+                self.state.v[:] += lower_v * self.zl
             self.x_set.append((self.state.a[idx], self.state.v[idx], 0))  # (address, var. values, eqn. values)
 
             # logger.debug(f'AntiWindup for states {self.state.a[idx]}')
@@ -599,7 +622,7 @@ class Switcher(Discrete):
     One can construct ::
 
         self.IC = NumParam(info='input code 1-6')  # input code
-        self.SW = Switcher(u=self.IC, options=[1, 2, 3, 4, 5, 6])
+        self.SW = Switcher(u=self.IC, options=[0, 1, 2, 3, 4, 5, 6])
 
     If the IC values from the data file ends up being ::
 
@@ -607,13 +630,15 @@ class Switcher(Discrete):
 
     Then, the exported flag arrays will be ::
 
-        {'IC_s0': np.array([1, 0, 0, 0, 0]),
-         'IC_s1': np.array([0, 1, 1, 0, 0]),
-         'IC_s2': np.array([0, 0, 0, 0, 0]),
-         'IC_s3': np.array([0, 0, 0, 1, 0]),
-         'IC_s4': np.array([0, 0, 0, 0, 0]),
-         'IC_s5': np.array([0, 0, 0, 0, 1])
+        {'IC_s0': np.array([0, 0, 0, 0, 0]),
+         'IC_s1': np.array([1, 0, 0, 0, 0]),
+         'IC_s2': np.array([0, 1, 1, 0, 0]),
+         'IC_s3': np.array([0, 0, 0, 0, 0]),
+         'IC_s4': np.array([0, 0, 0, 1, 0]),
+         'IC_s5': np.array([0, 0, 0, 0, 0]),
+         'IC_s6': np.array([0, 0, 0, 0, 1])
         }
+    where `IC_s0` is used for padding so that following flags align with the options.
     """
 
     def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
@@ -1002,8 +1027,7 @@ class Sampling(Discrete):
         """
         self.rewind = False
 
-        if dae_t == 0:
-            # initial step
+        if dae_t == 0:  # initial step
             self._last_v[:] = self.u.v[:]
             self.v[:] = self.u.v[:]
 
