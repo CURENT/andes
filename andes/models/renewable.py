@@ -1955,6 +1955,7 @@ class WTTQA1Model(Model):
     """
     Wind turbine torque Pref model equations.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -2101,6 +2102,7 @@ class WTTQA1(WTTQA1Data, WTTQA1Model):
     Resets `wg` in `REECA1` model to 1.0 when torque model is connected.
     This effectively ignores `PFLAG` of `REECA1`.
     """
+
     def __init__(self, config, system):
         WTTQA1Data.__init__(self)
         WTTQA1Model.__init__(self, system, config)
