@@ -442,6 +442,13 @@ class PVD1(PVD1Data, PVD1Model):
     Output power can be computed as ``Pe = Ipout_y * v`` and
     ``Qe = Iqout_y * v``.
 
+    Frequency tripping response points `ft0`, `ft1`, `ft2`, and `ft3`
+    must be monotinically increasing.
+    Same rule applies to the voltage tripping response points
+    `vt0`, `vt1`, `vt2`, and `vt3`.
+    The program does not check these values, and the user
+    is responsible for the parameter validity.
+
     Frequency and voltage recovery latching is yet to be implemented.
 
     Reference:
