@@ -582,25 +582,32 @@ class DeviceFinder(BaseService):
         self.link = link
 
     def find_or_add(self, system):
-        mdl = system.models[self.model]
-        found_idx = mdl.find_idx((self.idx_name,), (self.link.v,),
-                                 allow_none=True, default=None)
+        """
+        Find or add devices.
 
-        action = False
-        for ii, idx in enumerate(found_idx):
+        Points `self.u.v` to the found or newly added devices.
+
+        Find devices one by one.
+        Devices previously added in this function can be used later without duplication.
+        """
+        mdl = system.models[self.model]
+        added = False
+
+        for ii, link_to in enumerate(self.link.v):
+            idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
+
             if idx is None:
-                action = True
-                new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
+                added = True
+                new_idx = system.add(self.model, {self.idx_name: link_to})
                 self.u.v[ii] = new_idx
 
                 logger.info(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
                             f"added {self.model} <{new_idx}> "
-                            f"on {self.idx_name} <{self.link.v[ii]}>")
+                            f"linked to {self.idx_name} <{link_to}>")
             else:
-                action = True
                 self.u.v[ii] = idx
 
-        if action:
+        if added:
             mdl.list2array()
             mdl.refresh_inputs()
 
