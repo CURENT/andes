@@ -16,6 +16,7 @@ class PVD1Data(ModelData):
     """
     Data for distributed PV.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -29,7 +30,7 @@ class PVD1Data(ModelData):
                             )
 
         self.Sn = NumParam(default=100.0, tex_name='S_n',
-                           info='Model MVA base',
+                           info='device MVA rating',
                            unit='MVA',
                            )
 
@@ -38,7 +39,7 @@ class PVD1Data(ModelData):
                            unit='Hz',
                            )
 
-        self.busf = IdxParam(info='Optional BusFreq idx',
+        self.busf = IdxParam(info='Optional BusFreq measurement device idx',
                              model='BusFreq',
                              default=None,
                              )
@@ -88,9 +89,11 @@ class PVD1Data(ModelData):
                              unit='Hz',
                              )
 
+        # added on 11/14/2020: convert to system base pu
         self.ddn = NumParam(default=0.0, tex_name='D_{dn}',
                             info='Gain after f deadband',
-                            unit='pu (MW)/Hz'
+                            unit='pu (MW)/Hz',
+                            power=True,
                             )
 
         self.ialim = NumParam(default=1.3, tex_name='I_{alim}',
@@ -100,18 +103,22 @@ class PVD1Data(ModelData):
 
         self.vt0 = NumParam(default=0.88, tex_name='V_{t0}',
                             info='Voltage tripping response curve point 0',
+                            unit='p.u.',
                             )
 
         self.vt1 = NumParam(default=0.90, tex_name='V_{t1}',
                             info='Voltage tripping response curve point 1',
+                            unit='p.u.',
                             )
 
         self.vt2 = NumParam(default=1.1, tex_name='V_{t2}',
                             info='Voltage tripping response curve point 2',
+                            unit='p.u.',
                             )
 
         self.vt3 = NumParam(default=1.2, tex_name='V_{t3}',
                             info='Voltage tripping response curve point 3',
+                            unit='p.u.',
                             )
 
         self.vrflag = NumParam(default=0.0, tex_name='z_{VR}',
@@ -120,18 +127,22 @@ class PVD1Data(ModelData):
 
         self.ft0 = NumParam(default=59.5, tex_name='f_{t0}',
                             info='Frequency tripping response curve point 0',
+                            unit='Hz',
                             )
 
         self.ft1 = NumParam(default=59.7, tex_name='f_{t1}',
                             info='Frequency tripping response curve point 1',
+                            unit='Hz',
                             )
 
         self.ft2 = NumParam(default=60.3, tex_name='f_{t2}',
                             info='Frequency tripping response curve point 2',
+                            unit='Hz',
                             )
 
         self.ft3 = NumParam(default=60.5, tex_name='f_{t3}',
                             info='Frequency tripping response curve point 3',
+                            unit='Hz',
                             )
 
         self.frflag = NumParam(default=0.0, tex_name='z_{FR}',
@@ -163,6 +174,7 @@ class PVD1Model(Model):
     """
     Model implementation of PVD1.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -290,7 +302,6 @@ class PVD1Model(Model):
                          discrete=self.VL2,
                          )
         # --- sensed voltage with lower limit of 0.01 ---
-
         self.VLo = Limiter(u=self.v, lower=0.01, upper=999, no_upper=True,
                            info='Voltage lower limit (0.01) flag',
                            )
@@ -307,16 +318,22 @@ class PVD1Model(Model):
                                   )
 
         self.Pext = Algeb(tex_name='P_{ext}',
-                          info='External power signal',
+                          info='External power signal (for AGC)',
                           v_str='Pext0',
                           e_str='Pext0 - Pext'
                           )
 
+        self.Pref = Algeb(tex_name='P_{ref}',
+                          info='Reference power signal (for scheduling setpoint)',
+                          v_str='p0',
+                          e_str='p0 - Pref'
+                          )
+
         self.Psum = Algeb(tex_name='P_{tot}',
                           info='Sum of P signals',
-                          v_str='Pext + p0 + DB_y',
-                          e_str='Pext + p0 + DB_y - Psum',
-                          )  # `p0` is the initial `Pref`, and `DB_y` is `Pdrp` (f droop)
+                          v_str='Pext + Pref + DB_y',
+                          e_str='Pext + Pref + DB_y - Psum',
+                          )  # `DB_y` is `Pdrp` (f droop)
 
         self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * (Ipout_y + 1j * Iqout_y))',
                                 info='Voltage before Xc compensation',
@@ -428,12 +445,13 @@ class PVD1(PVD1Data, PVD1Model):
     Output power can be computed as ``Pe = Ipout_y * v`` and
     ``Qe = Iqout_y * v``.
 
-    Frequency and voltage recovery latching has not been implemented.
+    Frequency and voltage recovery latching is yet to be implemented.
 
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
     Available: https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
     """
+
     def __init__(self, system, config):
         PVD1Data.__init__(self)
         PVD1Model.__init__(self, system, config)
