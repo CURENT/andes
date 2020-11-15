@@ -6,13 +6,14 @@
 #  (at your option) any later version.
 #
 #  File name: discrete.py
-#  Last modified: 8/16/20, 7:28 PM
+#  Last modified: 11/15/20, 3:29 PM
 
 import logging
+import numpy as np
+
 from typing import Optional, Union, Tuple, List
 
-from andes.core.common import dummify  # NOQA
-from andes.shared import np
+from andes.core.common import dummify
 from andes.utils.tab import Tab
 from andes.utils.func import interp_n2
 
