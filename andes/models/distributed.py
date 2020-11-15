@@ -268,10 +268,7 @@ class PVD1Model(Model):
                           unit='Hz', tex_name='f_{dev}',
                           )
 
-        self.Dfdbd = ConstService(v_str='fdbd * ddn', info='Deadband lower limit after gain',
-                                  tex_name='D_{fdbd}',
-                                  )
-        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.Dfdbd, upper=0.0,
+        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=0.0, gain=self.ddn,
                             info='frequency deviation deadband with gain',
                             )  # outputs   `Pdrp`
         self.DB.db.no_warn = True

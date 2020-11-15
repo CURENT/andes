@@ -1638,6 +1638,8 @@ class DeadBand1(Block):
     center
         Default value when within the deadband. If the input is an error signal,
         center should be set to zero.
+    gain
+        Gain multiplied to DeadBand discrete block's output.
 
     Notes
     -----
@@ -1645,12 +1647,12 @@ class DeadBand1(Block):
     Block diagram ::
 
               |   /
-        ______|__/___
+        ______|__/___   -> Gain -> DeadBand1_y
            /  |
           /   |
 
     """
-    def __init__(self, u, center, lower, upper, enable=True,
+    def __init__(self, u, center, lower, upper, gain=1.0, enable=True,
                  name=None, tex_name=None, info=None, namespace='local'):
         Block.__init__(self, name=name, tex_name=tex_name, info=info, namespace=namespace)
 
@@ -1658,6 +1660,7 @@ class DeadBand1(Block):
         self.center = dummify(center)
         self.lower = dummify(lower)
         self.upper = dummify(upper)
+        self.gain = dummify(gain)
         self.enable = enable
 
         self.db = DeadBand(u=u, center=center, lower=lower, upper=upper,
@@ -1675,8 +1678,8 @@ class DeadBand1(Block):
             0 = center + z_u * (u - upper) + z_l * (u - lower) - y
 
         """
-        self.y.v_str = f'{self.center.name} + ' \
+        self.y.v_str = f'{self.gain.name} * ({self.center.name} + ' \
                        f'{self.name}_db_zu * ({self.u.name} - {self.upper.name}) +' \
-                       f'{self.name}_db_zl * ({self.u.name} - {self.lower.name})'
+                       f'{self.name}_db_zl * ({self.u.name} - {self.lower.name}))'
 
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
