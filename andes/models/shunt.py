@@ -138,8 +138,8 @@ class ShuntSwModel(ShuntModel):
                                      ('err_tol', 0.01),
                                      )))
         self.config.add_extra("_help",
-                              sw_iter="minimum iteration number to enable switching",
-                              err_tol="maximum iteration error to enable switching",
+                              sw_iter="iteration number starting from which to enable switching",
+                              err_tol="iteration error below which to enable switching",
                               )
         self.config.add_extra("_alt",
                               sw_iter='int',
@@ -182,6 +182,9 @@ class ShuntSw(ShuntSwData, ShuntSwModel):
 
     To use individual shunts as fixed shunts, set the corresponding
     `ns = 0` or `ns = [0]`.
+
+    The effective shunt susceptances and conductances are stored in
+    services `beff` and `geff`.
     """
 
     def __init__(self, system=None, config=None):
