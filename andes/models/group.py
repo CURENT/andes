@@ -630,3 +630,10 @@ class Motor(GroupBase):
     """
     def __init__(self):
         super().__init__()
+
+
+class Information(GroupBase):
+    """
+    Group for information container models.
+    """
+    pass
