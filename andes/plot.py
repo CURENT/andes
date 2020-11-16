@@ -516,7 +516,7 @@ class TDSData:
 
         if xlabel is not None:
             ax.set_xlabel(xlabel)
-        else:
+        elif xheader is not None and len(xheader) > 0:
             ax.set_xlabel(xheader[0])
 
         if ylabel:
