@@ -66,7 +66,9 @@ class TestKundur2AreaEIG(unittest.TestCase):
         self.ss = andes.run(self.xlsx, default_config=True)
 
         self.ss.EIG.run()
-        andes.main.misc(clean=True)
+
+        os.remove(self.ss.files.txt)
+        os.remove(self.ss.files.eig)
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):
@@ -82,12 +84,16 @@ class TestKundur2AreaPSSE(unittest.TestCase):
     def test_psse_tds_run(self):
         self.ss_psse.TDS.config.tf = 10
         self.ss_psse.TDS.run()
-        andes.main.misc(clean=True)
+        os.remove(self.ss_psse.files.txt)
+        os.remove(self.ss_psse.files.lst)
+        os.remove(self.ss_psse.files.npz)
+
         self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
     def test_psse_eig_run(self):
         self.ss_psse.EIG.run()
-        andes.main.misc(clean=True)
+        os.remove(self.ss_psse.files.txt)
+        os.remove(self.ss_psse.files.eig)
 
         self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
@@ -107,7 +113,7 @@ class TestNPCCRAW(unittest.TestCase):
                             default_config=True,
                             )
 
-        andes.main.misc(clean=True)
+        os.remove(self.ss.files.txt)
 
     def test_npcc_raw_tds(self):
         self.ss = andes.run(get_case('npcc/npcc.raw'),

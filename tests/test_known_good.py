@@ -28,7 +28,7 @@ class TestKnownResults(unittest.TestCase):
             case_path = get_case(case_path)
 
         ss = compare_results(case_path, pkl_path, tf=tf, addfile=addfile)
-        andes.main.misc(clean=True)
+
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
     def test_known(self):
@@ -37,7 +37,7 @@ class TestKnownResults(unittest.TestCase):
 
 
 def compare_results(case, pkl_name, addfile=None, tf=10):
-    ss = andes.load(case, addfile=addfile, default_config=True)
+    ss = andes.load(case, addfile=addfile, default_config=True, no_output=True)
 
     ss.config.warn_limits = 0
     ss.config.warn_abnormal = 0
