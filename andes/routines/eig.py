@@ -3,17 +3,21 @@ Module for eigenvalue analysis.
 """
 
 import logging
-from math import ceil, pi
-
 import scipy.io
-from andes.shared import mul, div, spdiag, gesv
+import numpy as np
+
+from math import ceil, pi
 
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.variables.report import report_info
-from andes.shared import np, matrix, spmatrix, plt, mpl
+
 from andes.plot import set_latex
+
+from andes.shared import matrix, spmatrix, plt, mpl
+from andes.shared import mul, div, spdiag, gesv
+
 
 logger = logging.getLogger(__name__)
 __cli__ = 'eig'
@@ -218,7 +222,8 @@ class EIG(BaseRoutine):
             logger.info(
                 'System is small-signal stable in the initial neighborhood.')
 
-        set_latex(latex)
+        if latex:
+            set_latex()
 
         if fig is None or ax is None:
             fig, ax = plt.subplots(dpi=dpi)
@@ -262,6 +267,7 @@ class EIG(BaseRoutine):
                'x_name': np.array(system.dae.x_name, dtype=np.object),
                'x_tex_name': np.array(system.dae.x_tex_name, dtype=np.object),
                }
+
         scipy.io.savemat(system.files.mat, mdict=out)
         logger.info('State matrix saved to "%s"', system.files.mat)
         return True

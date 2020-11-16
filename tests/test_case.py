@@ -141,11 +141,34 @@ class TestNPCCRAW(unittest.TestCase):
 
         self.ss2 = andes.run('npcc.json',
                              default_config=True,
+                             no_output=True,
                              )
 
         os.remove(self.ss.files.dump)
-        andes.main.misc(clean=True)
         self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
+
+
+class TestPlot(unittest.TestCase):
+    def test_npcc_plot(self):
+        ss = andes.run(get_case('npcc/npcc.raw'),
+                       addfile=get_case('npcc/npcc_full.dyr'),
+                       routine='tds',
+                       tf=2.0,
+                       no_output=True,
+                       default_config=True,
+                       )
+
+        ss.TDS.load_plotter()
+
+        ss.TDS.plt.plot(ss.Bus.v, ylabel="Bus Voltages [pu]",
+                        title='Bus Voltage Plot',
+                        left=0.2, right=1.5,
+                        ymin=0.95, ymax=1.05, legend=True, grid=True, greyscale=True,
+                        hline1=1.01, hline2=1.02, vline1=0.5, vline2=0.8,
+                        dpi=80, line_width=1.2, font_size=11, show=False,
+                        )
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
 
 class TestCOI(unittest.TestCase):

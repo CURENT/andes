@@ -1,18 +1,24 @@
 """
 Shared constants and delayed imports.
+
+This module imports shared libraries either directly or with `LazyImport`.
+
+`LazyImport` shall only be used to imported
 """
 # Known issues of LazyImport ::
 #
 #     1) High overhead when called hundreds of thousands times.
 #     For example, NumPy must not be imported with LazyImport.
 
-from andes.utils.lazyimport import LazyImport
-
 import math
+import os
 import coloredlogs         # NOQA
 import numpy as np         # NOQA
 from numpy import ndarray  # NOQA
 from tqdm import tqdm      # NOQA
+
+from andes.utils.lazyimport import LazyImport
+from distutils.spawn import find_executable
 
 # Library preference:
 # KVXOPT + ipadd > CVXOPT + ipadd > KXVOPT > CVXOPT (+ KLU or not)
@@ -82,3 +88,35 @@ newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
 fsolve = LazyImport('from scipy.optimize import fsolve')
 solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
 odeint = LazyImport('from scipy.integrate import odeint')
+
+
+# --- Shared functions ---
+
+def set_latex():
+    """
+    Enables LaTeX for matplotlib based on the `with_latex` option and `dvipng` availability.
+
+    Returns
+    -------
+    bool
+        True for LaTeX on, False for off
+    """
+
+    if find_executable('dvipng'):
+        mpl.rc('text', usetex=True)
+
+        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
+        if not os.path.isfile(no_warn_file):
+            print('Using LaTeX for rendering. If an error occurs:')
+            print('a) If you are using `andes plot`, disable with option "-d",')
+            print('b) If you are using `plot()`, set "latex=False".')
+
+            try:
+                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
+                    pass
+            except OSError:
+                pass
+
+        return True
+
+    return False
