@@ -471,6 +471,20 @@ class TDSData:
         -------
         (fig, ax)
             The figure and axis handles
+
+        Examples
+        --------
+        To plot the results of arithmetic calculation of variables, retrieve the values,
+        do the calculation, and plot with `plot_data`.
+
+        >>> v = ss.dae.ts.y[:, ss.PVD1.v.a]
+        >>> Ipcmd = ss.dae.ts.y[:, ss.PVD1.Ipcmd_y.a]
+        >>> t = ss.dae.ts.t
+
+        >>> ss.TDS.plt.plot_data(t, v * Ipcmd,
+        >>>                      xlabel='Time [s]',
+        >>>                      ylabel='Ipcmd [pu]')
+
         """
         mpl.rc('font', family='serif', size=font_size)
 
