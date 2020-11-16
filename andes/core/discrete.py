@@ -690,6 +690,7 @@ class Switcher(Discrete):
          'IC_s5': np.array([0, 0, 0, 0, 0]),
          'IC_s6': np.array([0, 0, 0, 0, 1])
         }
+
     where `IC_s0` is used for padding so that following flags align with the options.
     """
 
