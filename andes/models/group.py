@@ -636,4 +636,6 @@ class Information(GroupBase):
     """
     Group for information container models.
     """
-    pass
+    def __init__(self):
+        GroupBase.__init__(self)
+        self.common_params = []
