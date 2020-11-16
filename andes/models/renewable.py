@@ -327,13 +327,12 @@ class REECA1Data(ModelData):
                               )
         self.Iqfrz = NumParam(default=0.0,
                               tex_name='I_{qfrz}',
-                              info='Value at which Iqinj is held for Thld (if >0) seconds following a Vdip',
+                              info='Hold Iqinj at the value for Thld (>0) seconds following a Vdip',
                               )
         self.Thld = NumParam(default=0.0,
                              tex_name='T_{hld}',
                              unit='s',
-                             info='Time for which Iqinj is held. If >0, hold at Iqinj; if <0, hold at State 1 '
-                                  'for abs(Thld)',
+                             info='Time for which Iqinj is held. Hold at Iqinj if>0; hold at State 1 if<0',
                              )
         self.Thld2 = NumParam(default=0.0,
                               tex_name='T_{hld2}',
