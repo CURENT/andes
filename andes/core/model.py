@@ -2259,7 +2259,7 @@ class Documenter:
             return ''
 
         names, symbols, ivs = list(), list(), list()
-        ty = list()
+        ivs_rest, ty = list(), list()
 
         for p in self.cache.all_vars.values():
             names.append(p.name)
@@ -2283,7 +2283,7 @@ class Documenter:
                                  ('Initial Value', ivs_rest),
                                  ])
 
-        return make_doc_table(title='Initialization Equations',
+        return make_doc_table(title='Variable Initialization Equations',
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
