@@ -1,7 +1,7 @@
 """
-Model for storing information, such as system summary.
+Module for information container models.
 
-Not used in DAE calculations.
+These models are not used in DAE calculations.
 """
 
 from andes.core.model import ModelData, Model
@@ -10,8 +10,10 @@ from andes.core.param import DataParam
 
 class Summary(ModelData, Model):
     """
-    Class for storing system summary
+    Class for storing system summary.
+    Can be used for random information or notes.
     """
+
     def __init__(self, system, config):
         ModelData.__init__(self, three_params=False)
 

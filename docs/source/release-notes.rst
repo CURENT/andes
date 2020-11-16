@@ -8,7 +8,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.4
+
+v1.2.5
+```````````````````
+- Added `Summary` model to allow arbitrary information for
+  a test case. Works in `xlsx` and `json` formats.
+
+v1.2.4 (2020-11-13)
 ```````````````````
 - Added switched shunt class `ShuntSw`.
 - BaseParam takes `inconvert` and `oconvert` for converting parameter

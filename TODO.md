@@ -9,6 +9,8 @@
   and then `ListParam`
 * Robust iterative initialization for variables
 * Allow selection of output variables
+* [x] An `Summary` model for storing system summary
+* Allow basic arithmetics in plot.
 
 ## To-do list
 
