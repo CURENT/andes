@@ -20,7 +20,7 @@ class TGBaseData(ModelData):
                             mandatory=True,
                             unique=True,
                             )
-        self.Tn = NumParam(info='Turbine power rating. Equal to Sn if not provided.',
+        self.Tn = NumParam(info='Turbine power rating. Equal to `Sn` if not provided.',
                            tex_name='T_n',
                            unit='MVA',
                            default=None,

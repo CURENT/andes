@@ -499,7 +499,8 @@ class REECA1Model(Model):
                               )
 
         # --- Sanitize inputs ---
-        self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8)
+        self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8,
+                             tex_name='I_{maxr}')
 
         # --- Flag switchers ---
         self.SWPF = Switcher(u=self.PFFLAG, options=(0, 1), tex_name='SW_{PF}', cache=True)
