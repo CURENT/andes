@@ -27,17 +27,27 @@ class Discrete:
     Discrete classes export flag arrays (usually boolean) .
     """
 
-    def __init__(self, name=None, tex_name=None, info=None, no_warn=False):
+    def __init__(self, name=None, tex_name=None, info=None, no_warn=False,
+                 min_iter=2, err_tol=1e-2,
+                 ):
         self.name = name
         self.tex_name = tex_name
         self.info = info
         self.owner = None
         self.export_flags = []
         self.export_flags_tex = []
+
         self.x_set = list()
         self.y_set = list()   # NOT being used
+
         self.warn_flags = []  # warn if flags in `warn_flags` not initialized to zero
         self.no_warn = no_warn
+
+        # default minimum iteration number and error tolerance to allow checking
+        # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
+        # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
+        self.min_iter = min_iter
+        self.err_tol = 1e-2
 
         self.has_check_var = False  # if subclass implements `check_var()`
         self.has_check_eq = False   # if subclass implements `check_eq()`
@@ -131,6 +141,29 @@ class Discrete:
                       data=list(map(list, zip(*err_data.values()))))
 
             logger.warning(tab.draw())
+
+    def check_iter_err(self, niter=None, err=None):
+        """
+        Check if the minimum iteration or maximum error is reached
+        so that this discrete block should be enabled.
+
+        Only when both `niter` and `err` are given,  (niter < min_iter)
+        , and (err > err_tol) it will return False.
+
+        This logic will start checking the discrete states if called
+        from an external solver that does not feed `niter` or `err`
+        at each step.
+
+        Returns
+        -------
+        bool
+            True if it should be enabled, False otherwise
+        """
+        if (niter is not None) and (niter < self.min_iter) and \
+                (err is not None) and (err > self.err_tol):
+            return False
+
+        return True
 
 
 class LessThan(Discrete):
@@ -232,10 +265,12 @@ class Limiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
+                 min_iter: int = 2, err_tol: float = 0.01,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
-        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
+                          min_iter=min_iter, err_tol=err_tol)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
@@ -302,14 +337,26 @@ class SortedLimiter(Limiter):
     """
 
     def __init__(self, u, lower, upper, enable=True,
-                 n_select: Optional[int] = None, name=None, tex_name=None):
+                 n_select: Optional[int] = None, name=None, tex_name=None,
+                 min_iter: int = 2, err_tol: float = 0.01,
+                 ):
 
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
+        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name,
+                         min_iter=min_iter, err_tol=err_tol,
+                         )
         self.n_select = int(n_select) if n_select else 0
 
-    def check_var(self, *args, **kwargs):
+    def check_var(self, *args, niter=None, err=None, **kwargs):
+        """
+        Check for the largest or smallest `n_select` elements.
+        """
+
         if not self.enable:
             return
+
+        if not self.check_iter_err(niter=niter, err=err):
+            return
+
         super().check_var()
 
         if self.n_select is not None and self.n_select > 0:
@@ -1117,9 +1164,7 @@ class ShuntAdjust(Discrete):
             self.t_enable = np.ones_like(self.v.v, dtype=int)
             self.direction = np.zeros_like(self.v.v, dtype=int)
 
-        # skip switching for the first `min_iter` steps
-        if (niter is not None) and (niter < self.min_iter) and \
-                (err is not None) and (err > self.err_tol):
+        if not self.check_iter_err(niter=niter, err=err):
             return
 
         self.direction[:] = 0

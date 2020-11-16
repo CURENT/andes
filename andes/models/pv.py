@@ -54,18 +54,28 @@ class PVModel(Model):
                            })
 
         self.config.add(OrderedDict((('pv2pq', 0),
-                                     ('npv2pq', 1))))
+                                     ('npv2pq', 1),
+                                     ('min_iter', 2),
+                                     ('err_tol', 0.01),
+                                     )))
         self.config.add_extra("_help",
                               pv2pq="convert PV to PQ in PFlow at Q limits",
                               npv2pq="max. # of pv2pq conversion in each iteration",
+                              min_iter="iteration number starting from which to enable switching",
+                              err_tol="iteration error below which to enable switching",
                               )
+
         self.config.add_extra("_alt",
                               pv2pq=(0, 1),
-                              npv2pq=">=0"
+                              npv2pq=">=0",
+                              min_iter='int',
+                              err_tol='float',
                               )
         self.config.add_extra("_tex",
                               pv2pq="z_{pv2pq}",
-                              npv2pq="n_{pv2pq}"
+                              npv2pq="n_{pv2pq}",
+                              min_iter="sw_{iter}",
+                              err_tol=r"\epsilon_{tol}"
                               )
 
         self.SynGen = BackRef()
@@ -76,16 +86,12 @@ class PVModel(Model):
         self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=True)
         self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=True)
 
-        # NOTE:
-        # PV to PQ conversion uses a simple logic which converts a number of `npv2pq` PVs
-        # with the largest violation to PQ, starting from the first iteration.
-        # Manual tweaking of `npv2pq` may be needed for cases to converge.
-
-        # TODO: implement switching starting from the second iteration
-
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
                                   enable=self.config.pv2pq,
-                                  n_select=self.config.npv2pq)
+                                  n_select=self.config.npv2pq,
+                                  min_iter=self.config.min_iter,
+                                  err_tol=self.config.err_tol
+                                  )
 
         # variable initialization equations
         self.v.v_str = 'v0'
@@ -107,12 +113,27 @@ class PVModel(Model):
 
 
 class PV(PVData, PVModel):
+    """
+    Static PV generator with reactive power limit checking.
+
+    The PV-to-PQ conversion ranks the reactive violations and
+    converts the first `npv2pq` PVs with largest violations.
+    Reactive power will be set to the maximum or the minimum.
+    The conversion starts from iteration `min_iter` or when
+    convergence error drops below `err_tol`.
+
+    """
+
     def __init__(self, system=None, config=None):
         PVData.__init__(self)
         PVModel.__init__(self, system, config)
 
 
 class Slack(SlackData, PVModel):
+    """
+    Slack generator.
+    """
+
     def __init__(self, system=None, config=None):
         SlackData.__init__(self)
         PVModel.__init__(self, system, config)
