@@ -1,7 +1,7 @@
 version: 2
 
 - formats:
-    - pdf
+  - pdf
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
