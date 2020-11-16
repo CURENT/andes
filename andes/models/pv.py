@@ -122,6 +122,8 @@ class PV(PVData, PVModel):
     The conversion starts from iteration `min_iter` or when
     convergence error drops below `err_tol`.
 
+    The PV-to-PQ conversion is not fully working.
+    Solutions may jump back and forth and fail.
     """
 
     def __init__(self, system=None, config=None):

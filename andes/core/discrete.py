@@ -338,12 +338,14 @@ class SortedLimiter(Limiter):
 
     def __init__(self, u, lower, upper, enable=True,
                  n_select: Optional[int] = None, name=None, tex_name=None,
-                 min_iter: int = 2, err_tol: float = 0.01,
+                 min_iter: int = 2, err_tol: float = 0.01, memorize=True,
                  ):
 
         super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name,
                          min_iter=min_iter, err_tol=err_tol,
                          )
+
+        self.memorize = memorize
         self.n_select = int(n_select) if n_select else 0
 
     def check_var(self, *args, niter=None, err=None, **kwargs):
@@ -359,6 +361,8 @@ class SortedLimiter(Limiter):
 
         super().check_var()
 
+        # TODO: fix the back-and-forth jumping issue
+        #   exclude the ones that have been flagged at out of range
         if self.n_select is not None and self.n_select > 0:
             asc = np.argsort(self.u.v - self.lower.v)   # ascending order
             desc = np.argsort(self.upper.v - self.u.v)
