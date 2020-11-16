@@ -223,7 +223,7 @@ class EIG(BaseRoutine):
                 'System is small-signal stable in the initial neighborhood.')
 
         if latex:
-            set_latex()
+            set_latex(latex)
 
         if fig is None or ax is None:
             fig, ax = plt.subplots(dpi=dpi)

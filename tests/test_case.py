@@ -149,9 +149,8 @@ class TestNPCCRAW(unittest.TestCase):
 
 
 class TestPlot(unittest.TestCase):
-    def test_npcc_plot(self):
-        ss = andes.run(get_case('npcc/npcc.raw'),
-                       addfile=get_case('npcc/npcc_full.dyr'),
+    def test_kundur_plot(self):
+        ss = andes.run(get_case('kundur/kundur_full.xlsx'),
                        routine='tds',
                        tf=2.0,
                        no_output=True,

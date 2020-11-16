@@ -472,7 +472,7 @@ class TDSData:
         (fig, ax)
             The figure and axis handles
         """
-        mpl.rc('font', family='Arial', size=font_size)
+        mpl.rc('font', family='serif', size=font_size)
 
         if not isinstance(ydata, np.ndarray):
             raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
