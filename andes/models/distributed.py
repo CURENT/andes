@@ -87,6 +87,7 @@ class PVD1Data(ModelData):
         self.fdbd = NumParam(default=-0.017, tex_name='f_{dbd}',
                              info='frequency deviation deadband',
                              unit='Hz',
+                             non_positive=True,
                              )
 
         # added on 11/14/2020: convert to system base pu
@@ -94,31 +95,42 @@ class PVD1Data(ModelData):
                             info='Gain after f deadband',
                             unit='pu (MW)/Hz',
                             power=True,
+                            non_negative=True,
                             )
 
         self.ialim = NumParam(default=1.3, tex_name='I_{alim}',
                               info='Apparent power limit',
                               current=True,
+                              non_negative=True,
+                              non_zero=True,
                               )
 
         self.vt0 = NumParam(default=0.88, tex_name='V_{t0}',
                             info='Voltage tripping response curve point 0',
                             unit='p.u.',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.vt1 = NumParam(default=0.90, tex_name='V_{t1}',
                             info='Voltage tripping response curve point 1',
                             unit='p.u.',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.vt2 = NumParam(default=1.1, tex_name='V_{t2}',
                             info='Voltage tripping response curve point 2',
                             unit='p.u.',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.vt3 = NumParam(default=1.2, tex_name='V_{t3}',
                             info='Voltage tripping response curve point 3',
                             unit='p.u.',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.vrflag = NumParam(default=0.0, tex_name='z_{VR}',
@@ -128,21 +140,29 @@ class PVD1Data(ModelData):
         self.ft0 = NumParam(default=59.5, tex_name='f_{t0}',
                             info='Frequency tripping response curve point 0',
                             unit='Hz',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.ft1 = NumParam(default=59.7, tex_name='f_{t1}',
                             info='Frequency tripping response curve point 1',
                             unit='Hz',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.ft2 = NumParam(default=60.3, tex_name='f_{t2}',
                             info='Frequency tripping response curve point 2',
                             unit='Hz',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.ft3 = NumParam(default=60.5, tex_name='f_{t3}',
                             info='Frequency tripping response curve point 3',
                             unit='Hz',
+                            non_negative=True,
+                            non_zero=True,
                             )
 
         self.frflag = NumParam(default=0.0, tex_name='z_{FR}',
@@ -152,11 +172,13 @@ class PVD1Data(ModelData):
         self.tip = NumParam(default=0.02, tex_name='T_{ip}',
                             info='Inverter active current lag time constant',
                             unit='s',
+                            non_negative=True,
                             )
 
         self.tiq = NumParam(default=0.02, tex_name='T_{iq}',
                             info='Inverter reactive current lag time constant',
                             unit='s',
+                            non_negative=True,
                             )
 
         self.gammap = NumParam(default=1.0, tex_name=r'\gamma_p',

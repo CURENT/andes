@@ -88,19 +88,21 @@ class ShuntSwData(ShuntData):
         self.vref = NumParam(info='voltage reference',
                              default=1.0,
                              unit='p.u.',
-                             positive=True,
+                             non_zero=True,
+                             non_negative=True,
                              )
 
         self.dv = NumParam(info='voltage error deadband',
                            default=0.05,
                            unit='p.u.',
-                           positive=True,
+                           non_zero=True,
+                           non_negative=True,
                            )
 
         self.dt = NumParam(info='delay before two consecutive switching',
                            default=0.2,
                            unit='seconds',
-                           positive=True,
+                           non_negative=True,
                            )
 
 

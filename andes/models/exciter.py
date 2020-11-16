@@ -632,7 +632,8 @@ class EXST1Data(ExcBaseData):
         self.TF = NumParam(default=1.0,
                            info='Feedback delay',
                            tex_name='T_F',
-                           positive=True,
+                           non_negative=True,
+                           non_zero=True,
                            )
 
 
@@ -1041,7 +1042,8 @@ class ESDC2AData(ExcBaseData):
                             tex_name='T_{F1}',
                             default=1,
                             unit='p.u.',
-                            positive=True
+                            non_negative=True,
+                            non_zero=True,
                             )
         self.Switch = NumParam(info='Switch that PSS/E did not implement',
                                tex_name='S_w',

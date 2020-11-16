@@ -1666,7 +1666,7 @@ class WTARA1Data(ModelData):
 
         self.Ka = NumParam(default=1.0, info='Aerodynamics gain',
                            tex_name='K_a',
-                           positive=True,
+                           non_negative=True,
                            unit='p.u./deg.'
                            )
 

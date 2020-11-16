@@ -235,8 +235,11 @@ class NumParam(BaseParam):
     """
     A computational numerical parameter.
 
-    Parameters defined using this class will have their `v` field converted to a NumPy array after adding.
-    The original input values will be copied to `vin`, and the system-base per-unit conversion coefficients
+    Parameters defined using this class will have their `v`
+    field converted to a NumPy array after adding.
+
+    The original input values will be copied to `vin`,
+    and the system-base per-unit conversion coefficients
     (through multiplication) will be stored in `pu_coeff`.
 
     Parameters
@@ -267,9 +270,12 @@ class NumParam(BaseParam):
     Vn : str
         Name of the parameter for the device base voltage.
     non_zero : bool
-        True if this parameter must be non-zero.
-    positive: bool
-        True if this parameter must be positive.
+        True if this parameter must be non-zero. `non_zero`
+        can be combined with `non_positive` or `non_negative`.
+    non_positive : bool
+        True if this parameter must be non-positive.
+    non_negative : bool
+        True if this parameter must be non-negative.
     mandatory : bool
         True if this parameter must not be None.
     power : bool
@@ -322,7 +328,8 @@ class NumParam(BaseParam):
                  iconvert: Optional[Callable] = None,
                  oconvert: Optional[Callable] = None,
                  non_zero: bool = False,
-                 positive: bool = False,
+                 non_positive: bool = False,
+                 non_negative: bool = False,
                  mandatory: bool = False,
                  power: bool = False,
                  ipower: bool = False,
@@ -341,7 +348,8 @@ class NumParam(BaseParam):
                                        )
 
         self.property = dict(non_zero=non_zero,
-                             positive=positive,
+                             non_positive=non_positive,
+                             non_negative=non_negative,
                              mandatory=mandatory,
                              power=power,
                              ipower=ipower,
@@ -392,9 +400,15 @@ class NumParam(BaseParam):
                                self.owner.class_name, self.name, self.default)
                 value = self.default
 
-            # check for positive
-            if value <= 0.0 and self.get_property('positive'):
-                logger.warning('Positive parameter %s.%s corrected to %s',
+            # check for non-positive
+            if value > 0.0 and self.get_property('non_positive'):
+                logger.warning('Non-Positive parameter %s.%s corrected to %s',
+                               self.owner.class_name, self.name, self.default)
+                value = self.default
+
+            # check for non-negative
+            if value < 0.0 and self.get_property('non_negative'):
+                logger.warning('Non-negative parameter %s.%s corrected to %s',
                                self.owner.class_name, self.name, self.default)
                 value = self.default
 
