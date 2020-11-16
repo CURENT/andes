@@ -137,9 +137,15 @@ class ModelData:
 
     Notes
     -----
-    Two default parameters, `u` (connection status of type :py:class:`andes.core.param.NumParam`),
-    and ``name`` (device name of type :py:class:`andes.core.param.DataParam`) are pre-defined in ``ModelData``,
-    and will be inherited by all models.
+    Three default parameters are pre-defined in ``ModelData``
+    and will be inherited by all models. They are
+
+    - ``idx``, unique device idx of type :py:class:`andes.core.param.DataParam`
+    - ``u``, connection status of type :py:class:`andes.core.param.NumParam`
+    - ``name``, (device name of type :py:class:`andes.core.param.DataParam`
+
+    In rare cases one does not want to define these three parameters,
+    one can pass `three_params=True` to the constructor of ``ModelData``.
 
     Examples
     --------
@@ -162,7 +168,8 @@ class ModelData:
                                info='reactive power load in system base',
                                tex_name=r'q_0', unit='p.u.')
 
-    In this example, all the three parameters are defined as :py:class:`andes.core.param.NumParam`.
+    In this example, all the three parameters are defined as
+    :py:class:`andes.core.param.NumParam`.
     In the full `PQData` class, other types of parameters also exist.
     For example, to store the idx of `owner`, `PQData` uses ::
 
@@ -170,7 +177,7 @@ class ModelData:
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, three_params=True, **kwargs):
         self.params = OrderedDict()
         self.num_params = OrderedDict()
         self.idx_params = OrderedDict()
@@ -185,9 +192,10 @@ class ModelData:
         self.cache.add_callback('df', self.as_df)
         self.cache.add_callback('df_in', self.as_df_in)
 
-        self.idx = DataParam(info='unique device idx')
-        self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-        self.name = DataParam(info='device name')
+        if three_params is True:
+            self.idx = DataParam(info='unique device idx')
+            self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
+            self.name = DataParam(info='device name')
 
     def __len__(self):
         return self.n

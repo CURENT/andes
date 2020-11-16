@@ -13,7 +13,7 @@ class Summary(ModelData, Model):
     Class for storing system summary
     """
     def __init__(self, system, config):
-        ModelData.__init__(self)
+        ModelData.__init__(self, three_params=False)
 
         self.field = DataParam(info='field name')
         self.comment = DataParam(info='information, comment, or anything')
