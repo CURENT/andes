@@ -54,14 +54,22 @@ class DAETimeSeries:
         ----------
         df : bool
             True to construct DataFrames `self.df` and `self.df_z` (time-consuming).
+
+        Returns
+        -------
+        True when done.
         """
         if df is True:
-            self.df = pd.DataFrame.from_dict(self._xy, orient='index', columns=self.dae.xy_name)
+            self.df = pd.DataFrame.from_dict(self._xy, orient='index',
+                                             columns=self.dae.xy_name)
             self.t = self.df.index.to_numpy()
             self.xy = self.df.to_numpy()
 
-            self.df_z = pd.DataFrame.from_dict(self._z, orient='index', columns=self.dae.z_name)
+            self.df_z = pd.DataFrame.from_dict(self._z, orient='index',
+                                               columns=self.dae.z_name)
             self.z = self.df_z.to_numpy()
+
+            return True
         else:
             n_steps = len(self._xy)
             self.t = np.array(list(self._xy.keys()))
@@ -73,6 +81,8 @@ class DAETimeSeries:
 
             for idx, z in enumerate(self._z.values()):
                 self.z[idx, :] = z
+
+            return True
 
     def store_txyz(self, t, xy, z=None):
         """

@@ -22,6 +22,7 @@ class TDS(BaseRoutine):
     """
     Time-domain simulation routine.
     """
+
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
@@ -166,14 +167,14 @@ class TDS(BaseRoutine):
             system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
-        # connect to data streaming server
         if system.config.dime_enabled:
+            # connect to data streaming server
             if system.streaming.dimec is None:
                 system.streaming.connect()
 
-        # send out system data using DiME
-        self.streaming_init()
-        self.streaming_step()
+            # send out system data using DiME
+            self.streaming_init()
+            self.streaming_step()
 
         # if `dae.n == 1`, `calc_h_first` depends on new `dae.gy`
         self.calc_h()
@@ -209,24 +210,23 @@ class TDS(BaseRoutine):
         if self.data_csv is not None:
             out.append(f'Loaded data from CSV file "{self.from_csv}".')
             out.append('Replaying from CSV data.')
-            out.append(f'Replay time: {self.system.dae.t}-{self.config.tf} sec.')
+            out.append(f'Replay time: {self.system.dae.t}-{self.config.tf} s.')
         else:
             out.append(f'Sparse Solver: {self.solver.sparselib.upper()}')
-            out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} sec.')
+            out.append(f'Simulation time: {self.system.dae.t}-{self.config.tf} s.')
             if self.config.fixt == 1:
-                msg = f'Fixed step size: h={1000 * self.config.tstep:.4g} msec.'
-                if self.config.shrinkt == 1:
-                    msg += ', shrink if not converged'
+                msg = f'Fixed step size: h={1000 * self.config.tstep:.4g} ms.'
+                msg += ' Shrink if not converged.' if self.config.shrinkt == 1 else ''
                 out.append(msg)
             else:
-                out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g} msec.')
+                out.append(f'Variable step size: h0={1000 * self.config.tstep:.4g} ms.')
 
         out_str = '\n'.join(out)
         logger.info(out_str)
 
         if self.config.honest == 1:
-            logger.warning("The honest Newton method is used and will slow down the simulation.")
-            logger.warning("For significant speed up, set `honest=0` in TDS.config.")
+            logger.warning("The honest Newton method is being used. It will slow down the simulation.")
+            logger.warning("For speed up, set `honest=0` in TDS.config.")
 
     def run(self, no_pbar=False, no_summary=False, **kwargs):
         """
@@ -350,7 +350,8 @@ class TDS(BaseRoutine):
         if config.qrt:
             logger.debug('QRT headroom time: %.4g s.', self.headroom)
 
-        system.TDS.save_output()
+        if not system.files.no_output:
+            self.save_output()
 
         # end data streaming
         if system.config.dime_enabled:
@@ -686,35 +687,42 @@ class TDS(BaseRoutine):
         if system.options.get('verbose') == 1:
             breakpoint()
         system.exit_code += 1
+
         return False
 
     def save_output(self, npz=True):
         """
-        Save the simulation data into two files: a lst file and a npz file.
+        Save the simulation data into two files: a `.lst` file
+        and a `.npz` file.
+
+        This function saves the output regardless of the
+        `files.no_output` flag.
 
         Parameters
         ----------
         npz : bool
             True to save in npz format; False to save in npy format.
-
         Returns
         -------
         bool
             True if files are written. False otherwise.
         """
-        if self.system.files.no_output:
-            return False
 
         t0, _ = elapsed()
 
         self.system.dae.write_lst(self.system.files.lst)
+
         if npz is True:
+            np_file = self.system.files.npz
             self.system.dae.write_npz(self.system.files.npz)
         else:
+            np_file = self.system.files.npy
             self.system.dae.write_npy(self.system.files.npy)
 
         _, s1 = elapsed(t0)
-        logger.info('TDS outputs saved in %s.', s1)
+
+        logger.info('Outputs to "%s" and "%s".', self.system.files.lst, np_file)
+        logger.info('Outputs written in %s.', s1)
         return True
 
     def do_switch(self):
