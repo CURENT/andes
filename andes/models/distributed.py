@@ -134,7 +134,7 @@ class PVD1Data(ModelData):
                             )
 
         self.vrflag = NumParam(default=0.0, tex_name='z_{VR}',
-                               info='Voltage tripping is latching (0) or partially self-resetting (0-1)',
+                               info='V-trip is latching (0) or self-resetting (0-1)',
                                )
 
         self.ft0 = NumParam(default=59.5, tex_name='f_{t0}',
@@ -166,7 +166,7 @@ class PVD1Data(ModelData):
                             )
 
         self.frflag = NumParam(default=0.0, tex_name='z_{FR}',
-                               info='Frequency tripping is latching (0) or partially self-resetting (0-1)',
+                               info='f-trip is latching (0) or self-resetting (0-1)',
                                )
 
         self.tip = NumParam(default=0.02, tex_name='T_{ip}',
@@ -182,12 +182,12 @@ class PVD1Data(ModelData):
                             )
 
         self.gammap = NumParam(default=1.0, tex_name=r'\gamma_p',
-                               info='Ratio of P from PVD1 w.r.t to that from PV generator',
+                               info='Ratio of PVD1.p0 w.r.t to that of static PV',
                                vrange='(0, 1]',
                                )
 
         self.gammaq = NumParam(default=1.0, tex_name=r'\gamma_q',
-                               info='Ratio of Q from PVD1 w.r.t to that from PV generator',
+                               info='Ratio of PVD1.q0 w.r.t to that of static PV',
                                vrange='(0, 1]',
                                )
 
@@ -473,7 +473,9 @@ class PVD1(PVD1Data, PVD1Model):
 
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
-    Available: https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+    Available:
+
+    https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
     """
 
     def __init__(self, system, config):
