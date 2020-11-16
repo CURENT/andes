@@ -2076,7 +2076,7 @@ class SymProcessor:
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
 
         header = \
-"""from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
+            """from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
 from numpy import greater_equal, less_equal, greater, less  # NOQA
 
 
@@ -2187,7 +2187,6 @@ class Documenter:
                                   ('Description', info),
                                   ('Default', defaults),
                                   ('Unit', units),
-                                  ('Type', class_names),
                                   ('Properties', properties)])
 
         rest_dict = OrderedDict([('Name', names),
@@ -2195,7 +2194,6 @@ class Documenter:
                                  ('Description', info),
                                  ('Default', defaults),
                                  ('Unit', units_rest),
-                                 ('Type', class_names),
                                  ('Properties', properties)])
 
         # convert to rows and export as table
@@ -2211,14 +2209,12 @@ class Documenter:
             return ''
 
         names, symbols, units = list(), list(), list()
-        ivs, properties, info = list(), list(), list()
-        units_rest, ivs_rest = list(), list()
-        ty = list()
+        properties, info = list(), list()
+        units_rest, ty = list(), list()
 
         for p in self.cache.all_vars.values():
             names.append(p.name)
             ty.append(p.class_name)
-            ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')
             units.append(p.unit if p.unit else '')
             units_rest.append(f'*{p.unit}*' if p.unit else '')
@@ -2235,13 +2231,11 @@ class Documenter:
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', ty),
                                   ('Description', info),
                                   ('Unit', units),
-                                  ('Initial Value', ivs),
                                   ('Properties', properties)])
 
         rest_dict = OrderedDict([('Name', names),
@@ -2249,18 +2243,56 @@ class Documenter:
                                  ('Type', ty),
                                  ('Description', info),
                                  ('Unit', units_rest),
-                                 ('Initial Value', ivs_rest),
                                  ('Properties', properties)])
 
-        return make_doc_table(title='Variables',
+        return make_doc_table(title='Variables (States + Algebraics)',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _init_doc(self, max_width=78, export='plain'):
+        """
+        Variable initialization docs.
+        """
+        if len(self.cache.all_vars) == 0:
+            return ''
+
+        names, symbols, ivs = list(), list(), list()
+        ty = list()
+
+        for p in self.cache.all_vars.values():
+            names.append(p.name)
+            ty.append(p.class_name)
+            ivs.append(p.v_str if p.v_str else '')
+
+        # replace with latex math expressions if export is ``rest``
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Type', ty),
+                                  ('Initial Value', ivs),
+                                  ])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Type', ty),
+                                 ('Initial Value', ivs_rest),
+                                 ])
+
+        return make_doc_table(title='Initialization Equations',
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
     def _eq_doc(self, max_width=78, export='plain', e_code=None):
-        # equation documentation
-        # TODO: this function needs a bit refactoring
+        """
+        Return equation documentation.
+        """
         out = ''
         if len(self.cache.all_vars) == 0:
             return out
@@ -2458,12 +2490,13 @@ class Documenter:
             out += '\n'  # this fixes the indentation for the next line
 
         # add tables
-        out += self._param_doc(max_width=max_width, export=export) + \
-            self._var_doc(max_width=max_width, export=export) + \
-            self._eq_doc(max_width=max_width, export=export) + \
-            self._service_doc(max_width=max_width, export=export) + \
-            self._discrete_doc(max_width=max_width, export=export) + \
-            self._block_doc(max_width=max_width, export=export) + \
-            self.config.doc(max_width=max_width, export=export)
+        out += self._param_doc(max_width=max_width, export=export)
+        out += self._var_doc(max_width=max_width, export=export)
+        out += self._init_doc(max_width=max_width, export=export)
+        out += self._eq_doc(max_width=max_width, export=export)
+        out += self._service_doc(max_width=max_width, export=export)
+        out += self._discrete_doc(max_width=max_width, export=export)
+        out += self._block_doc(max_width=max_width, export=export)
+        out += self.config.doc(max_width=max_width, export=export)
 
         return out
