@@ -291,11 +291,13 @@ class TDS(BaseRoutine):
                 step_status = self._csv_step()
 
             if step_status:
-                # store values
-                dae.ts.store_txyz(dae.t.tolist(),
-                                  dae.xy,
-                                  self.system.get_z(models=system.exist.pflow_tds),
-                                  )
+                dae.ts.store(dae.t.tolist(),
+                             x=dae.x,
+                             y=dae.y,
+                             z=system.get_z(models=system.exist.pflow_tds),
+                             f=dae.f,
+                             g=dae.g,
+                             )
 
                 self.streaming_step()
 

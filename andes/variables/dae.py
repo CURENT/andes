@@ -8,47 +8,79 @@ logger = logging.getLogger(__name__)
 
 class DAETimeSeries:
     """
-    DAE time series data
+    DAE time series data.
     """
+
     def __init__(self, dae=None):
         self.dae = dae
 
+        # accessible attributes
+        self._public = ['t', 'x', 'y', 'z', 'xy', 'txyz',
+                        'df_x', 'df_y', 'df_z']
+
         # internal dict storage
-        self._xy = OrderedDict()
-        self._z = OrderedDict()
+        self._xs = OrderedDict()
+        self._ys = OrderedDict()
+        self._zs = OrderedDict()
+        self._fs = OrderedDict()
+        self._gs = OrderedDict()
 
-        self.t = np.array([])
-        self.xy = np.array([]).reshape((-1, 1))
-        self.z = np.array([]).reshape((-1, 1))
-
-        # data frame members
-        self.df = None
-        self.df_z = None
-
-    @property
-    def x(self):
-        return self.xy[:, 0:self.dae.n]
-
-    @property
-    def y(self):
-        return self.xy[:, self.dae.n:self.dae.n + self.dae.m]
-
-    @property
-    def txyz(self):
+    def store(self, t, x, y, *, z=None, f=None, g=None):
         """
-        Return the values of [t, x, y, z] in an array.
-        """
-        if len(self._xy) != len(self.t):
-            self.unpack()
+        Store t, x, y, and z in internal storage, respectively.
 
-        if len(self._z):
-            return np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
-        else:
-            return np.hstack((self.t.reshape((-1, 1)), self.xy))
+        Parameters
+        ----------
+        t : float
+            simulation time
+        x, y : array-like
+            array data for states and algebraic variables
+        z : array-like or None
+            discrete flags data
+        """
+        self._xs[t] = x
+        self._ys[t] = y
+        if z is not None:
+            self._zs[t] = z
+        if f is not None:
+            self._fs[t] = f
+        if g is not None:
+            self._gs[t] = g
+
+    def unpack_np(self):
+        """
+        Unpack dict data into numpy arrays.
+        """
+        n_steps = len(self._ys)
+        if n_steps == 0:
+            logger.warning("TimeSeries does not contain any time stamp.")
+            return False
+
+        self.t = np.array(list(self._ys.keys()))
+
+        def _dict2array(src, dest):
+            nx = len(self.__dict__[src][0]) if len(self.__dict__[src]) else 0
+            self.__dict__[dest] = np.zeros((n_steps, nx))
+
+            if len(self.__dict__[src]) > 0:
+                for ii, val in enumerate(self.__dict__[src].values()):
+                    self.__dict__[dest][ii, :] = val
+
+        pairs = (('_xs', 'x'), ('_ys', 'y'), ('_zs', 'z'),
+                 ('_fs', 'f'), ('_gs', 'g'))
+
+        for a, b in pairs:
+            _dict2array(a, b)
+
+        self.xy = np.hstack((self.x, self.y))
+        self.txy = np.hstack((self.t.reshape((-1, 1)), self.xy))
+        self.txyz = np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
+
+        return True
 
     def unpack(self, df=False):
         """
-        Unpack stored data in `_xy` and `_z` into arrays `t`, `xy`, and `z`.
+        Unpack dict-stored data into arrays and/or dataframes.
 
         Parameters
         ----------
@@ -59,47 +91,40 @@ class DAETimeSeries:
         -------
         True when done.
         """
+
+        self.unpack_np()
         if df is True:
-            self.df = pd.DataFrame.from_dict(self._xy, orient='index',
-                                             columns=self.dae.xy_name)
-            self.t = self.df.index.to_numpy()
-            self.xy = self.df.to_numpy()
+            self.unpack_df()
 
-            self.df_z = pd.DataFrame.from_dict(self._z, orient='index',
-                                               columns=self.dae.z_name)
-            self.z = self.df_z.to_numpy()
+        return True
 
-            return True
-        else:
-            n_steps = len(self._xy)
-            self.t = np.array(list(self._xy.keys()))
-            self.xy = np.zeros((n_steps, self.dae.m + self.dae.n))
-            self.z = np.zeros((n_steps, self.dae.o))
-
-            for idx, xy in enumerate(self._xy.values()):
-                self.xy[idx, :] = xy
-
-            for idx, z in enumerate(self._z.values()):
-                self.z[idx, :] = z
-
-            return True
-
-    def store_txyz(self, t, xy, z=None):
+    def unpack_df(self):
         """
-        Store t, xy, and z in internal storage, respectively.
-
-        Parameters
-        ----------
-        t : float
-            simulation time
-        xy : array-like
-            array data for states and algebraic variables
-        z : array-like or None
-            discrete flags data
+        Construct pandas dataframes.
         """
-        self._xy[t] = xy
-        if z is not None:
-            self._z[t] = z
+
+        self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
+                                           columns=self.dae.x_name)
+        self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
+                                           columns=self.dae.y_name)
+        self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
+                                           columns=self.dae.z_name)
+
+        self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
+        self.df_xyz = pd.concat((self.df_xy, self.df_z), axis=1)
+
+        return True
+
+    @property
+    def df(self):
+        return self.df_xy
+
+    def __getattr__(self, attr):
+        if attr in super().__getattribute__('_public'):
+            df = True if attr.startswith("df") else False
+            self.unpack(df=df)
+
+        return super().__getattribute__(attr)
 
 
 class DAE:
@@ -154,6 +179,7 @@ class DAE:
     DAE does not keep track of the association of variable and address.
     Only a variable instance keeps track of its addresses.
     """
+
     def __init__(self, system):
         self.system = system
         self.t = np.array(0)
