@@ -38,14 +38,14 @@ class DAETimeSeries:
         z : array-like or None
             discrete flags data
         """
-        self._xs[t] = x
-        self._ys[t] = y
+        self._xs[t] = np.array(x)
+        self._ys[t] = np.array(y)
         if z is not None:
-            self._zs[t] = z
+            self._zs[t] = np.array(z)
         if f is not None:
-            self._fs[t] = f
+            self._fs[t] = np.array(f)
         if g is not None:
-            self._gs[t] = g
+            self._gs[t] = np.array(g)
 
     def unpack_np(self):
         """

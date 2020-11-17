@@ -37,6 +37,8 @@ class TDS(BaseRoutine):
                                      ('g_scale', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
+                                     ('store_f', 0.0),
+                                     ('store_g', 0.0),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -51,6 +53,8 @@ class TDS(BaseRoutine):
                               g_scale='scale algebraic residuals with time step size',
                               qrt='quasi-real-time stepping',
                               kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
+                              store_f='store RHS of diff. equations',
+                              store_g='store RHS of algebraic equations',
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -64,7 +68,9 @@ class TDS(BaseRoutine):
                               refresh_event=(0, 1),
                               g_scale=(0, 1),
                               qrt='bool',
-                              kqrt="positive",
+                              kqrt='positive',
+                              store_f=(0, 1),
+                              store_g=(0, 1),
                               )
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -291,12 +297,15 @@ class TDS(BaseRoutine):
                 step_status = self._csv_step()
 
             if step_status:
+                f_vals = dae.f if self.config.store_f else None
+                g_vals = dae.g if self.config.store_g else None
+
                 dae.ts.store(dae.t.tolist(),
                              x=dae.x,
                              y=dae.y,
                              z=system.get_z(models=system.exist.pflow_tds),
-                             f=dae.f,
-                             g=dae.g,
+                             f=f_vals,
+                             g=g_vals,
                              )
 
                 self.streaming_step()
