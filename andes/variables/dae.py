@@ -16,7 +16,7 @@ class DAETimeSeries:
 
         # accessible attributes
         self._public = ['t', 'x', 'y', 'z', 'xy', 'txyz',
-                        'df_x', 'df_y', 'df_z']
+                        'df_x', 'df_y', 'df_z', 'df_xy', 'df_xyz']
 
         # internal dict storage
         self._xs = OrderedDict()
