@@ -381,7 +381,7 @@ class PVD1Model(Model):
 
         Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
-               'VQ2_zi * (q0 + dqdv * (v1 - Vcomp)) + ' \
+               'VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
                'q0'
 
         self.Qsum = Algeb(info='Total Q (droop + initial)',
