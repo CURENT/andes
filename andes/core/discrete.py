@@ -342,8 +342,7 @@ class SortedLimiter(Limiter):
         for each of over-limit and under-limit cases.
         If `n_select` == 1, at most one over-limit
         and one under-limit inputs will be flagged.
-        If `n_select` is None or zero,
-        `SortedLimiter` will work like a regular Limiter.
+        If `n_select` is zero, heuristics will be used.
 
     abs_violation : bool
         True to use the absolute violation.
@@ -372,12 +371,29 @@ class SortedLimiter(Limiter):
         self.ql = np.array([ql])
         self.qu = np.array([qu])
 
+        # count of ones in `ql` and `qu`
+        self.nql = 0
+        self.nqu = 0
+
+        # smallest and largest `n_select`
+        self.min_sel = 2
+        self.max_sel = 50
+
         # store the lower and upper limit values with zeros converted to a small number
         self.lower_denom = None
         self.upper_demon = None
 
         self.export_flags.extend(['ql', 'qu'])
         self.export_flags_tex.extend(['q_l', 'q_u'])
+
+    def list2array(self, n):
+        """
+        Initialize maximum and minimum `n_select` based on input size.
+        """
+
+        super().list2array(n)
+        self.min_sel = max(2, int(n / 10))
+        self.max_sel = max(2, int(n / 2))
 
     def check_var(self, *args, niter=None, err=None, **kwargs):
         """
@@ -392,7 +408,8 @@ class SortedLimiter(Limiter):
 
         super().check_var()
 
-        if not self.abs_violation:
+        # first run - calculate the denominators if using relative violation
+        if self.abs_violation is False:
             if self.lower_denom is None:
                 self.lower_denom = np.array(self.lower.v)
                 self.lower_denom[self.lower_demom == 0] = 1e-6
@@ -400,46 +417,61 @@ class SortedLimiter(Limiter):
                 self.upper_denom = np.array(self.upper.v)
                 self.upper_denom[self.upper_denom == 0] = 1e-6
 
-        if self.n_select > 0:
-            if self.abs_violation:
-                lower_vio = self.u.v - self.lower.v
-                upper_vio = self.upper.v - self.u.v
-            else:
-                lower_vio = np.abs((self.u.v - self.lower.v) / self.lower_denom)
-                upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_demon)
+        # calculate violations - abs or relative
+        if self.abs_violation:
+            lower_vio = self.u.v - self.lower.v
+            upper_vio = self.upper.v - self.u.v
+        else:
+            lower_vio = np.abs((self.u.v - self.lower.v) / self.lower_denom)
+            upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_demon)
 
-            # sort in both ascending and descending orders
-            asc = np.argsort(lower_vio)
-            desc = np.argsort(upper_vio)
-            top_n = asc[:self.n_select]
-            bottom_n = desc[:self.n_select]
+        # count the number of inputs flagged
+        self.calc_select()
 
-            # `reset_out` is used to flag the
-            reset_out = np.zeros_like(self.u.v)
-            reset_out[top_n] = 1
-            reset_out[bottom_n] = 1
+        # sort in both ascending and descending orders
+        asc = np.argsort(lower_vio)
+        desc = np.argsort(upper_vio)
+        top_n = asc[:self.n_select]
+        bottom_n = desc[:self.n_select]
 
-            self.zl[:] = np.logical_or(np.logical_and(reset_out, self.zl),
-                                       self.ql)
-            self.zu[:] = np.logical_or(np.logical_and(reset_out, self.zu),
-                                       self.qu)
-            self.zi[:] = 1 - np.logical_or(self.zl, self.zu)
+        # `reset_out` is used to flag the
+        reset_out = np.zeros_like(self.u.v)
+        reset_out[top_n] = 1
+        reset_out[bottom_n] = 1
 
-            # for debugging: count the number of inputs flagged
-            ql0 = np.count_nonzero(self.ql)
-            qu0 = np.count_nonzero(self.qu)
+        # set new flags
+        self.zl[:] = np.logical_or(np.logical_and(reset_out, self.zl),
+                                   self.ql)
+        self.zu[:] = np.logical_or(np.logical_and(reset_out, self.zu),
+                                   self.qu)
+        self.zi[:] = 1 - np.logical_or(self.zl, self.zu)
+        self.ql[:] = self.zl
+        self.qu[:] = self.zu
 
-            self.ql[:] = self.zl
-            self.qu[:] = self.zu
+        # compute the number of updated flags
+        ql1 = np.count_nonzero(self.ql)
+        qu1 = np.count_nonzero(self.qu)
+        dqu = qu1 - self.nqu
+        dql = ql1 - self.nql
 
-            ql1 = np.count_nonzero(self.ql)
-            qu1 = np.count_nonzero(self.qu)
+        if dqu > 0 or dql > 0:
+            logger.debug("SortedLimiter: flagged %s upper and %s lower limit violations",
+                         dqu, dql)
+            self.nqu = qu1
+            self.nql = ql1
 
-            dqu = qu1 - qu0
-            dql = ql1 - ql0
-            if dqu > 0 or dql > 0:
-                logger.debug("SortedLimiter: flagged %s upper and %s lower limit violations",
-                             dqu, dql)
+    def calc_select(self):
+        """
+        Set `n_select` automatically.
+        """
+        ret = int((np.count_nonzero(self.zl) + np.count_nonzero(self.zu)) / 2) + 1
+
+        if ret > self.max_sel:
+            ret = self.max_sel
+        elif ret < self.min_sel:
+            ret = self.min_sel
+
+        self.n_select = ret
 
 
 class HardLimiter(Limiter):

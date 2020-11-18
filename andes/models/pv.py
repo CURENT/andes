@@ -54,14 +54,14 @@ class PVModel(Model):
                            })
 
         self.config.add(OrderedDict((('pv2pq', 0),
-                                     ('npv2pq', 1),
+                                     ('npv2pq', 0),
                                      ('min_iter', 2),
                                      ('err_tol', 0.01),
                                      ('abs_violation', 1),
                                      )))
         self.config.add_extra("_help",
                               pv2pq="convert PV to PQ in PFlow at Q limits",
-                              npv2pq="max. # of pv2pq conversion in each iteration",
+                              npv2pq="max. # of conversion each iteration, 0 - auto",
                               min_iter="iteration number starting from which to enable switching",
                               err_tol="iteration error below which to enable switching",
                               abs_violation='use absolute (1) or relative (0) limit violation',
