@@ -13,6 +13,8 @@ v1.2.5
 ```````````````````
 - Added `Summary` model to allow arbitrary information for
   a test case. Works in `xlsx` and `json` formats.
+- PV reactive power limit works. Automatically determines
+  the number of PVs to convert if `npv2pq=0`.
 
 v1.2.4 (2020-11-13)
 ```````````````````
