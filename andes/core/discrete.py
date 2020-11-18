@@ -382,7 +382,7 @@ class SortedLimiter(Limiter):
 
         # store the lower and upper limit values with zeros converted to a small number
         self.lower_denom = None
-        self.upper_demon = None
+        self.upper_denom = None
 
         self.export_flags.extend(['ql', 'qu'])
         self.export_flags_tex.extend(['q_l', 'q_u'])
@@ -411,10 +411,10 @@ class SortedLimiter(Limiter):
         super().check_var()
 
         # first run - calculate the denominators if using relative violation
-        if self.abs_violation is False:
+        if not self.abs_violation:
             if self.lower_denom is None:
                 self.lower_denom = np.array(self.lower.v)
-                self.lower_denom[self.lower_demom == 0] = 1e-6
+                self.lower_denom[self.lower_denom == 0] = 1e-6
             if self.upper_denom is None:
                 self.upper_denom = np.array(self.upper.v)
                 self.upper_denom[self.upper_denom == 0] = 1e-6
@@ -425,7 +425,7 @@ class SortedLimiter(Limiter):
             upper_vio = self.upper.v - self.u.v
         else:
             lower_vio = np.abs((self.u.v - self.lower.v) / self.lower_denom)
-            upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_demon)
+            upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_denom)
 
         # count the number of inputs flagged
         if self.auto:
