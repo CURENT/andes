@@ -365,7 +365,8 @@ class SortedLimiter(Limiter):
                          zu=zu, zl=zl, zi=zi,
                          )
 
-        self.n_select = int(n_select) if n_select > 0 else 0
+        self.n_select = int(n_select)
+        self.auto = True if self.n_select == 0 else False
         self.abs_violation = abs_violation
 
         self.ql = np.array([ql])
@@ -392,8 +393,9 @@ class SortedLimiter(Limiter):
         """
 
         super().list2array(n)
-        self.min_sel = max(2, int(n / 10))
-        self.max_sel = max(2, int(n / 2))
+        if self.auto:
+            self.min_sel = max(2, int(n / 10))
+            self.max_sel = max(2, int(n / 2))
 
     def check_var(self, *args, niter=None, err=None, **kwargs):
         """
@@ -426,7 +428,8 @@ class SortedLimiter(Limiter):
             upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_demon)
 
         # count the number of inputs flagged
-        self.calc_select()
+        if self.auto:
+            self.calc_select()
 
         # sort in both ascending and descending orders
         asc = np.argsort(lower_vio)
