@@ -361,6 +361,8 @@ class TDS(BaseRoutine):
         if config.qrt:
             logger.debug('QRT headroom time: %.4g s.', self.headroom)
 
+        # need to unpack data in case of resumed simulations.
+        system.dae.ts.unpack()
         if not system.files.no_output:
             self.save_output()
 
