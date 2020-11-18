@@ -52,9 +52,6 @@ class DAETimeSeries:
         Unpack dict data into numpy arrays.
         """
         n_steps = len(self._ys)
-        if n_steps == 0:
-            logger.warning("TimeSeries does not contain any time stamp.")
-            return False
 
         self.t = np.array(list(self._ys.keys()))
 
@@ -76,6 +73,9 @@ class DAETimeSeries:
         self.txy = np.hstack((self.t.reshape((-1, 1)), self.xy))
         self.txyz = np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
 
+        if n_steps == 0:
+            logger.warning("TimeSeries does not contain any time stamp.")
+            return False
         return True
 
     def unpack(self, df=False):

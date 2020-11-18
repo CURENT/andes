@@ -11,7 +11,7 @@
 import logging
 import numpy as np
 
-from typing import Optional, Union, Tuple, List
+from typing import Union, Tuple, List
 
 from andes.core.common import dummify
 from andes.utils.tab import Tab
@@ -332,25 +332,56 @@ class Limiter(Discrete):
 
 class SortedLimiter(Limiter):
     """
-    A comparer with the top value selection.
+    A limiter that sorts inputs based on the absolute or
+    relative amount of limit violations.
+
+    Parameters
+    ----------
+    n_select : int
+        the number of violations to be flagged,
+        for each of over-limit and under-limit cases.
+        If `n_select` == 1, at most one over-limit
+        and one under-limit inputs will be flagged.
+        If `n_select` is None or zero,
+        `SortedLimiter` will work like a regular Limiter.
+
+    abs_violation : bool
+        True to use the absolute violation.
+        False if the relative violation (|violation / limit|)
+        is used for sorting.
+        Since most variables are in per unit,
+        absolute violation is recommended.
 
     """
 
-    def __init__(self, u, lower, upper, enable=True,
-                 n_select: Optional[int] = None, name=None, tex_name=None,
-                 min_iter: int = 2, err_tol: float = 0.01, memorize=True,
+    def __init__(self, u, lower, upper, n_select: int = 5,
+                 name=None, tex_name=None, enable=True, abs_violation=True,
+                 min_iter: int = 2, err_tol: float = 0.01,
+                 zu=0.0, zl=0.0, zi=1.0, ql=0.0, qu=0.0,
                  ):
 
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name,
+        super().__init__(u, lower, upper,
+                         enable=enable, name=name, tex_name=tex_name,
                          min_iter=min_iter, err_tol=err_tol,
+                         zu=zu, zl=zl, zi=zi,
                          )
 
-        self.memorize = memorize
-        self.n_select = int(n_select) if n_select else 0
+        self.n_select = int(n_select) if n_select > 0 else 0
+        self.abs_violation = abs_violation
+
+        self.ql = np.array([ql])
+        self.qu = np.array([qu])
+
+        # store the lower and upper limit values with zeros converted to a small number
+        self.lower_denom = None
+        self.upper_demon = None
+
+        self.export_flags.extend(['ql', 'qu'])
+        self.export_flags_tex.extend(['q_l', 'q_u'])
 
     def check_var(self, *args, niter=None, err=None, **kwargs):
         """
-        Check for the largest or smallest `n_select` elements.
+        Check for the largest and smallest `n_select` elements.
         """
 
         if not self.enable:
@@ -361,23 +392,54 @@ class SortedLimiter(Limiter):
 
         super().check_var()
 
-        # TODO: fix the back-and-forth jumping issue
-        #   exclude the ones that have been flagged at out of range
-        if self.n_select is not None and self.n_select > 0:
-            asc = np.argsort(self.u.v - self.lower.v)   # ascending order
-            desc = np.argsort(self.upper.v - self.u.v)
+        if not self.abs_violation:
+            if self.lower_denom is None:
+                self.lower_denom = np.array(self.lower.v)
+                self.lower_denom[self.lower_demom == 0] = 1e-6
+            if self.upper_denom is None:
+                self.upper_denom = np.array(self.upper.v)
+                self.upper_denom[self.upper_denom == 0] = 1e-6
 
-            lowest_n = asc[:self.n_select]
-            highest_n = desc[:self.n_select]
+        if self.n_select > 0:
+            if self.abs_violation:
+                lower_vio = self.u.v - self.lower.v
+                upper_vio = self.upper.v - self.u.v
+            else:
+                lower_vio = np.abs((self.u.v - self.lower.v) / self.lower_denom)
+                upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_demon)
 
-            reset_in = np.ones(self.u.v.shape)
-            reset_in[lowest_n] = 0
-            reset_in[highest_n] = 0
-            reset_out = 1 - reset_in
+            # sort in both ascending and descending orders
+            asc = np.argsort(lower_vio)
+            desc = np.argsort(upper_vio)
+            top_n = asc[:self.n_select]
+            bottom_n = desc[:self.n_select]
 
-            self.zi[:] = np.logical_or(reset_in, self.zi)
-            self.zl[:] = np.logical_and(reset_out, self.zl)
-            self.zu[:] = np.logical_and(reset_out, self.zu)
+            # `reset_out` is used to flag the
+            reset_out = np.zeros_like(self.u.v)
+            reset_out[top_n] = 1
+            reset_out[bottom_n] = 1
+
+            self.zl[:] = np.logical_or(np.logical_and(reset_out, self.zl),
+                                       self.ql)
+            self.zu[:] = np.logical_or(np.logical_and(reset_out, self.zu),
+                                       self.qu)
+            self.zi[:] = 1 - np.logical_or(self.zl, self.zu)
+
+            # for debugging: count the number of inputs flagged
+            ql0 = np.count_nonzero(self.ql)
+            qu0 = np.count_nonzero(self.qu)
+
+            self.ql[:] = self.zl
+            self.qu[:] = self.zu
+
+            ql1 = np.count_nonzero(self.ql)
+            qu1 = np.count_nonzero(self.qu)
+
+            dqu = qu1 - qu0
+            dql = ql1 - ql0
+            if dqu > 0 or dql > 0:
+                logger.debug("SortedLimiter: flagged %s upper and %s lower limit violations",
+                             dqu, dql)
 
 
 class HardLimiter(Limiter):
