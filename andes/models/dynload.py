@@ -17,3 +17,6 @@ class PQRandData(ModelData):
         self.pq = IdxParam(mandatory=True,
                            info='idx of static PQ to replace',
                            )
+
+        # Timestamp-dependent stuff
+        # use `Le(dae_t, t_max) * Ge(dae_t, t_min) * (Load Scale Equation)`
