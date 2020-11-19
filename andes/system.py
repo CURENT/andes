@@ -1316,7 +1316,7 @@ class System:
         self.n_switches = len(self.switch_times)
         return self.switch_times
 
-    def switch_action(self, models):
+    def switch_action(self, models: OrderedDict):
         """
         Invoke the actions associated with switch times.
 
