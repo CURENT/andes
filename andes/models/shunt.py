@@ -24,7 +24,7 @@ class ShuntData(ModelData):
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
         self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name=r'g')
-        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capatance)", y=True, tex_name=r'b')
+        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capacitive)", y=True, tex_name=r'b')
         self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
 
 
