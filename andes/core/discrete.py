@@ -347,7 +347,7 @@ class SortedLimiter(Limiter):
     abs_violation : bool
         True to use the absolute violation.
         False if the relative violation
-        (|violation divided by limit|) is used for sorting.
+        abs(violation/limit) is used for sorting.
         Since most variables are in per unit,
         absolute violation is recommended.
 
