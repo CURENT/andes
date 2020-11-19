@@ -100,7 +100,7 @@ class ShuntSwData(ShuntData):
                            )
 
         self.dt = NumParam(info='delay before two consecutive switching',
-                           default=0.2,
+                           default=30.,
                            unit='seconds',
                            non_negative=True,
                            )
