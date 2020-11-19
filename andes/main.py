@@ -338,9 +338,12 @@ def run_case(case, *, routine='pflow', profile=False,
             routine = list(routine)
             routine.remove('pflow')
 
-        system.PFlow.run(**kwargs)
-        for r in routine:
-            system.__dict__[routine_cli[r.lower()]].run(**kwargs)
+        if system.is_setup:
+            system.PFlow.run(**kwargs)
+            for r in routine:
+                system.__dict__[routine_cli[r.lower()]].run(**kwargs)
+        else:
+            logger.error("System is not set up. Routines cannot continue.")
 
     # Disable profiler and output results
     if profile:

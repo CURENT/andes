@@ -49,6 +49,7 @@ class ExistingModels:
     """
     Storage class for existing models
     """
+
     def __init__(self):
         self.pflow = OrderedDict()
         self.tds = OrderedDict()   # if a model needs to be initialized before TDS, set `flags.tds = True`
@@ -86,6 +87,7 @@ class System:
     routines : OrderedDict
         routine name and instance pairs
     """
+
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
@@ -335,21 +337,23 @@ class System:
 
         This function is to be called after adding all device data.
         """
+        ret = True
+
         if self.is_setup:
             logger.warning('System has been setup. Calling setup twice is not allowed.')
-            return
+            ret = False
+            return ret
 
         self.collect_ref()
         self._list2array()     # `list2array` must come before `link_ext_param`
-        self.link_ext_param()
+        if not self.link_ext_param():
+            ret = False
+
         self.find_devices()    # find or add required devices
 
-        # == no device addition or removal after this point ==
-
-        self.calc_pu_coeff()
-
-        # store models with routine flags
-        self.store_existing()
+        # === no device addition or removal after this point ===
+        self.calc_pu_coeff()   # calculate parameters in system per units
+        self.store_existing()  # store models with routine flags
 
         # assign address at the end before adding devices and processing parameters
         self.set_address(self.exist.pflow)
@@ -357,7 +361,13 @@ class System:
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
 
-        self.is_setup = True
+        if ret is True:
+            self.is_setup = True  # set `is_setup` if no error occurred
+        else:
+            logger.error("System setup failed. Please resolve the reported issue(s).")
+            self.exit_code += 1
+
+        return ret
 
     def store_existing(self):
         """
@@ -470,7 +480,12 @@ class System:
                 except KeyError:
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
-                instance.link_external(ext_model)
+                try:
+                    instance.link_external(ext_model)
+                except (IndexError, KeyError) as e:
+                    logger.error('Error: <%s> cannot retrieve <%s> from <%s> using <%s>:\n  %s',
+                                 mdl.class_name, instance.name, instance.model,
+                                 instance.indexer.name, repr(e))
 
         # allocate memory for DAE arrays
         self.dae.resize_arrays()
@@ -573,7 +588,12 @@ class System:
                 except KeyError:
                     raise KeyError(f'<{ext_name}> is not a model or group name.')
 
-                instance.link_external(ext_model)
+                try:
+                    instance.link_external(ext_model)
+                except (IndexError, KeyError) as e:
+                    logger.error('Error: <%s> cannot retrieve <%s> from <%s> using <%s>:\n  %s',
+                                 mdl.class_name, instance.name, instance.model,
+                                 instance.indexer.name, repr(e))
 
             # initialize variables second
             mdl.init(routine=routine)
@@ -632,6 +652,7 @@ class System:
         else:
             models = self._get_models(model)
 
+        ret = True
         for model in models.values():
             # get external parameters with `link_external` and then calculate the pu coeff
             for instance in model.params_ext.values():
@@ -640,8 +661,12 @@ class System:
 
                 try:
                     instance.link_external(ext_model)
-                except IndexError:
-                    raise IndexError(f'Model {model.class_name}.{instance.name} link parameter error')
+                except (IndexError, KeyError) as e:
+                    logger.error('Error: <%s> cannot retrieve <%s> from <%s> using <%s>:\n  %s',
+                                 model.class_name, instance.name, instance.model,
+                                 instance.indexer.name, repr(e))
+                    ret = False
+        return ret
 
     def calc_pu_coeff(self):
         """
@@ -653,9 +678,6 @@ class System:
         Sb = self.config.mva
 
         for mdl in self.models.values():
-            # before this step, `link_ext_param` has been called in `setup`.
-            self.link_ext_param({mdl.class_name: mdl})
-
             # default Sn to Sb if not provided. Some controllers might not have Sn or Vn.
             if 'Sn' in mdl.__dict__:
                 Sn = mdl.Sn.v

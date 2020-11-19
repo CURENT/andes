@@ -122,7 +122,7 @@ class GroupBase:
                 else:
                     ret.append(self._idx2model[i])
             except KeyError:
-                raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
+                raise KeyError(f'Group <{self.class_name}> does not contain device with idx={i}')
 
         if single:
             ret = ret[0]

@@ -612,6 +612,7 @@ class DeviceFinder(BaseService):
         if added:
             mdl.list2array()
             mdl.refresh_inputs()
+            system.link_ext_param({mdl.name: mdl})
 
     @property
     def v(self):
