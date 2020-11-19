@@ -118,16 +118,22 @@ class PVModel(Model):
 
 class PV(PVData, PVModel):
     """
-    Static PV generator with reactive power limit checking.
+    Static PV generator with reactive power limit checking
+    and PV-to-PQ conversion.
 
-    The PV-to-PQ conversion ranks the reactive violations and
-    converts the first `npv2pq` PVs with largest violations.
-    Reactive power will be set to the maximum or the minimum.
-    The conversion starts from iteration `min_iter` or when
-    convergence error drops below `err_tol`.
+    `pv2pq = 1` turns on the conversion.
+    It starts  from iteration `min_iter` or when the convergence
+    error drops below `err_tol`.
 
-    The PV-to-PQ conversion is not fully working.
-    Solutions may jump back and forth and fail.
+    The PV-to-PQ conversion first ranks the reactive violations.
+    A maximum number of `npv2pq` PVs above the upper limit, and
+    a maximum of `npv2pq` PVs below the lower limit will be
+    converted to PQ, which sets the reactive power to `pmax` or
+    `pmin`.
+
+    If `pv2pq` is `1` (enabled) and `npv2pq` is `0`, heuristics
+    will be used to determine the number of PVs to be converted
+    for each iteration.
     """
 
     def __init__(self, system=None, config=None):
