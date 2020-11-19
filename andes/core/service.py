@@ -8,13 +8,15 @@
 #  File name: service.py
 #  Last modified: 8/16/20, 7:28 PM
 
+import logging
+import numpy as np
+
+from collections import OrderedDict
 from typing import Optional, Union, Callable, Type
+
 from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
 from andes.core.common import dummify
-from andes.shared import np, ndarray
-import logging
-from collections import OrderedDict
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
@@ -120,7 +122,7 @@ class ConstService(BaseService):
         super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, ndarray] = np.array([0.])
+        self.v: Union[float, int, np.ndarray] = np.array([0.])
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
