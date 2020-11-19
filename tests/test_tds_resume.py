@@ -13,3 +13,11 @@ class TestTDSResume(unittest.TestCase):
         ss.TDS.run()
 
         self.assertEqual(ss.exit_code, 0.0)
+
+        # check if time stamps are correctly stored
+        self.assertIn(0.1, ss.dae.ts._ys)
+        self.assertIn(0.5, ss.dae.ts._ys)
+
+        # check if values are correctly stored
+        self.assertTrue(len(ss.dae.ts._ys[0.1]) > 0)
+        self.assertTrue(len(ss.dae.ts._ys[0.5]) > 0)
