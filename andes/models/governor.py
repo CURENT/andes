@@ -294,14 +294,10 @@ class TGOV1Model(TGBase):
                                  tex_name='G',
                                  )
 
-        self.pext = ConstService(v_str='0',
-                                 tex_name='P_{ext}',
-                                 info='signal to adjusting Pref externally',
-                                 )
         self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
-                          v_str='tm0 * R + pext',
-                          e_str='tm0 * R + pext - pref',
+                          v_str='tm0 * R',
+                          e_str='tm0 * R - pref',
                           )
 
         self.wd = Algeb(info='Generator under speed',
@@ -327,6 +323,19 @@ class TGOV1Model(TGBase):
                           T2=self.T3,
                           )
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
+
+
+class TGOV1NModel(TGOV1Model):
+    """
+    New TGOV1 model with `pref` and `paux` summed after the gain.
+    """
+
+    def __init__(self, system, config):
+        TGOV1Model.__init__(self, system, config)
+        self.pref.v_str = 'tm0'
+        self.pref.v_str = 'tm0 - pref'
+
+        self.pd.e_str = 'wd * gain + pref + paux - pd'
 
 
 class TGOV1DBModel(TGOV1Model):
@@ -364,7 +373,7 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
-                        e_str='(wd + pref) * gain - pd')
+                        e_str='(wd + pref + paux) * gain - pd')
 
         self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
@@ -402,6 +411,20 @@ class TGOV1(TGOV1Data, TGOV1Model):
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1Model.__init__(self, system, config)
+
+
+class TGOV1N(TGOV1Data, TGOV1NModel):
+    """
+    New TGOV1 (TGOV1N) turbine governor model.
+
+    New TGOV1 model with `pref` and `paux` summed after the gain.
+    This model is useful for incorporating AGC and scheduling
+    signals without having to know the droop.
+    """
+
+    def __init__(self, system, config):
+        TGOV1Data.__init__(self)
+        TGOV1NModel.__init__(self, system, config)
 
 
 class TGOV1DB(TGOV1DBData, TGOV1DBModel):
