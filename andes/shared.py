@@ -112,8 +112,8 @@ def set_latex():
             print('b) If you are using `plot()`, set "latex=False".')
 
             try:
-                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
-                    pass
+                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w') as f:
+                    f.write('0')
             except OSError:
                 pass
 
