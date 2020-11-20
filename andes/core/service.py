@@ -26,7 +26,8 @@ class BaseService:
     """
     Base class for Service.
 
-    Service is a v-provider type for holding internal and temporary values. Subclasses need to implement ``v``
+    Service is a v-provider type for holding internal and temporary values.
+    Subclasses need to implement ``v``
     as a member attribute or using a property decorator.
 
     Parameters
@@ -157,10 +158,11 @@ class VarService(ConstService):
 
     One can use `VarService` to implement this equation ::
 
-        self.VE = VarService(tex_name='V_E',
-                             info='VE',
-                             v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
-                             )
+        self.VE = VarService(
+            tex_name='V_E',
+            info='VE',
+            v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
+            )
 
     Warnings
     --------
