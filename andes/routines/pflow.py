@@ -57,7 +57,9 @@ class PFlow(BaseRoutine):
         self.y_sol = None
 
     def init(self):
-        self.models = self.system.find_models('pflow')
+        system = self.system
+
+        self.models = system.find_models('pflow')
         self.converged = False
         self.inc = None
         self.A = None
@@ -71,12 +73,12 @@ class PFlow(BaseRoutine):
         logger.info('Power flow initialized.')
 
         # force precompile if numba is on - improves timing accuracy
-        if self.system.config.numba:
-            self.system.f_update(self.models)
-            self.system.g_update(self.models)
-            self.system.j_update(models=self.models)
+        if system.config.numba:
+            system.f_update(self.models)
+            system.g_update(self.models)
+            system.j_update(models=self.models)
 
-        return self.system.dae.xy
+        return system.dae.xy
 
     def nr_step(self):
         """

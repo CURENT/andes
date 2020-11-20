@@ -327,13 +327,12 @@ class REECA1Data(ModelData):
                               )
         self.Iqfrz = NumParam(default=0.0,
                               tex_name='I_{qfrz}',
-                              info='Value at which Iqinj is held for Thld (if >0) seconds following a Vdip',
+                              info='Hold Iqinj at the value for Thld (>0) seconds following a Vdip',
                               )
         self.Thld = NumParam(default=0.0,
                              tex_name='T_{hld}',
                              unit='s',
-                             info='Time for which Iqinj is held. If >0, hold at Iqinj; if <0, hold at State 1 '
-                                  'for abs(Thld)',
+                             info='Time for which Iqinj is held. Hold at Iqinj if>0; hold at State 1 if<0',
                              )
         self.Thld2 = NumParam(default=0.0,
                               tex_name='T_{hld2}',
@@ -500,7 +499,8 @@ class REECA1Model(Model):
                               )
 
         # --- Sanitize inputs ---
-        self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8)
+        self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8,
+                             tex_name='I_{maxr}')
 
         # --- Flag switchers ---
         self.SWPF = Switcher(u=self.PFFLAG, options=(0, 1), tex_name='SW_{PF}', cache=True)
@@ -1666,7 +1666,7 @@ class WTARA1Data(ModelData):
 
         self.Ka = NumParam(default=1.0, info='Aerodynamics gain',
                            tex_name='K_a',
-                           positive=True,
+                           non_negative=True,
                            unit='p.u./deg.'
                            )
 
@@ -1955,6 +1955,7 @@ class WTTQA1Model(Model):
     """
     Wind turbine torque Pref model equations.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
@@ -2101,6 +2102,7 @@ class WTTQA1(WTTQA1Data, WTTQA1Model):
     Resets `wg` in `REECA1` model to 1.0 when torque model is connected.
     This effectively ignores `PFLAG` of `REECA1`.
     """
+
     def __init__(self, config, system):
         WTTQA1Data.__init__(self)
         WTTQA1Model.__init__(self, system, config)

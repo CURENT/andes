@@ -137,9 +137,15 @@ class ModelData:
 
     Notes
     -----
-    Two default parameters, `u` (connection status of type :py:class:`andes.core.param.NumParam`),
-    and ``name`` (device name of type :py:class:`andes.core.param.DataParam`) are pre-defined in ``ModelData``,
-    and will be inherited by all models.
+    Three default parameters are pre-defined in ``ModelData``
+    and will be inherited by all models. They are
+
+    - ``idx``, unique device idx of type :py:class:`andes.core.param.DataParam`
+    - ``u``, connection status of type :py:class:`andes.core.param.NumParam`
+    - ``name``, (device name of type :py:class:`andes.core.param.DataParam`
+
+    In rare cases one does not want to define these three parameters,
+    one can pass `three_params=True` to the constructor of ``ModelData``.
 
     Examples
     --------
@@ -162,7 +168,8 @@ class ModelData:
                                info='reactive power load in system base',
                                tex_name=r'q_0', unit='p.u.')
 
-    In this example, all the three parameters are defined as :py:class:`andes.core.param.NumParam`.
+    In this example, all the three parameters are defined as
+    :py:class:`andes.core.param.NumParam`.
     In the full `PQData` class, other types of parameters also exist.
     For example, to store the idx of `owner`, `PQData` uses ::
 
@@ -170,7 +177,7 @@ class ModelData:
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, three_params=True, **kwargs):
         self.params = OrderedDict()
         self.num_params = OrderedDict()
         self.idx_params = OrderedDict()
@@ -185,9 +192,10 @@ class ModelData:
         self.cache.add_callback('df', self.as_df)
         self.cache.add_callback('df_in', self.as_df_in)
 
-        self.idx = DataParam(info='unique device idx')
-        self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-        self.name = DataParam(info='device name')
+        if three_params is True:
+            self.idx = DataParam(info='unique device idx')
+            self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
+            self.name = DataParam(info='device name')
 
     def __len__(self):
         return self.n
@@ -231,8 +239,11 @@ class ModelData:
         idx = kwargs['idx']
         self.uid[idx] = self.n
         self.n += 1
-        if kwargs.get("name") is None:
+        if "name" in self.params and kwargs.get("name") is None:
             kwargs["name"] = idx
+
+        if "idx" not in self.params:
+            kwargs.pop("idx")
 
         for name, instance in self.params.items():
             value = kwargs.pop(name, None)
@@ -1875,7 +1886,12 @@ class SymProcessor:
                     try:
                         expr = sympify(instance.e_str, locals=self.inputs_dict)
                     except SympifyError as e:
-                        logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                        logger.error('Error parsing equation "%s "for %s.%s',
+                                     instance.e_str, instance.owner.class_name, name)
+                        raise e
+                    except TypeError as e:
+                        logger.error('Error parsing equation "%s "for %s.%s',
+                                     instance.e_str, instance.owner.class_name, name)
                         raise e
 
                     free_syms = self._check_expr_symbols(expr)
@@ -2060,7 +2076,7 @@ class SymProcessor:
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
 
         header = \
-"""from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
+            """from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
 from numpy import greater_equal, less_equal, greater, less  # NOQA
 
 
@@ -2171,7 +2187,6 @@ class Documenter:
                                   ('Description', info),
                                   ('Default', defaults),
                                   ('Unit', units),
-                                  ('Type', class_names),
                                   ('Properties', properties)])
 
         rest_dict = OrderedDict([('Name', names),
@@ -2179,7 +2194,6 @@ class Documenter:
                                  ('Description', info),
                                  ('Default', defaults),
                                  ('Unit', units_rest),
-                                 ('Type', class_names),
                                  ('Properties', properties)])
 
         # convert to rows and export as table
@@ -2195,14 +2209,12 @@ class Documenter:
             return ''
 
         names, symbols, units = list(), list(), list()
-        ivs, properties, info = list(), list(), list()
-        units_rest, ivs_rest = list(), list()
-        ty = list()
+        properties, info = list(), list()
+        units_rest, ty = list(), list()
 
         for p in self.cache.all_vars.values():
             names.append(p.name)
             ty.append(p.class_name)
-            ivs.append(p.v_str if p.v_str else '')
             info.append(p.info if p.info else '')
             units.append(p.unit if p.unit else '')
             units_rest.append(f'*{p.unit}*' if p.unit else '')
@@ -2219,13 +2231,11 @@ class Documenter:
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', ty),
                                   ('Description', info),
                                   ('Unit', units),
-                                  ('Initial Value', ivs),
                                   ('Properties', properties)])
 
         rest_dict = OrderedDict([('Name', names),
@@ -2233,18 +2243,56 @@ class Documenter:
                                  ('Type', ty),
                                  ('Description', info),
                                  ('Unit', units_rest),
-                                 ('Initial Value', ivs_rest),
                                  ('Properties', properties)])
 
-        return make_doc_table(title='Variables',
+        return make_doc_table(title='Variables (States + Algebraics)',
+                              max_width=max_width,
+                              export=export,
+                              plain_dict=plain_dict,
+                              rest_dict=rest_dict)
+
+    def _init_doc(self, max_width=78, export='plain'):
+        """
+        Variable initialization docs.
+        """
+        if len(self.cache.all_vars) == 0:
+            return ''
+
+        names, symbols, ivs = list(), list(), list()
+        ivs_rest, ty = list(), list()
+
+        for p in self.cache.all_vars.values():
+            names.append(p.name)
+            ty.append(p.class_name)
+            ivs.append(p.v_str if p.v_str else '')
+
+        # replace with latex math expressions if export is ``rest``
+        if export == 'rest':
+            call_store = self.system.calls[self.class_name]
+            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
+
+        plain_dict = OrderedDict([('Name', names),
+                                  ('Type', ty),
+                                  ('Initial Value', ivs),
+                                  ])
+
+        rest_dict = OrderedDict([('Name', names),
+                                 ('Symbol', symbols),
+                                 ('Type', ty),
+                                 ('Initial Value', ivs_rest),
+                                 ])
+
+        return make_doc_table(title='Variable Initialization Equations',
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
                               rest_dict=rest_dict)
 
     def _eq_doc(self, max_width=78, export='plain', e_code=None):
-        # equation documentation
-        # TODO: this function needs a bit refactoring
+        """
+        Return equation documentation.
+        """
         out = ''
         if len(self.cache.all_vars) == 0:
             return out
@@ -2442,12 +2490,13 @@ class Documenter:
             out += '\n'  # this fixes the indentation for the next line
 
         # add tables
-        out += self._param_doc(max_width=max_width, export=export) + \
-            self._var_doc(max_width=max_width, export=export) + \
-            self._eq_doc(max_width=max_width, export=export) + \
-            self._service_doc(max_width=max_width, export=export) + \
-            self._discrete_doc(max_width=max_width, export=export) + \
-            self._block_doc(max_width=max_width, export=export) + \
-            self.config.doc(max_width=max_width, export=export)
+        out += self._param_doc(max_width=max_width, export=export)
+        out += self._var_doc(max_width=max_width, export=export)
+        out += self._init_doc(max_width=max_width, export=export)
+        out += self._eq_doc(max_width=max_width, export=export)
+        out += self._service_doc(max_width=max_width, export=export)
+        out += self._discrete_doc(max_width=max_width, export=export)
+        out += self._block_doc(max_width=max_width, export=export)
+        out += self.config.doc(max_width=max_width, export=export)
 
         return out

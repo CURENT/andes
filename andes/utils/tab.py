@@ -25,7 +25,6 @@ class Tab(Texttable):
         if export == 'plain':
             self.set_chars(['-', '|', '+', '-'])
             self.set_deco(Texttable.HEADER | Texttable.VLINES)  # Texttable.BORDER | Texttable.HLINE
-        self.set_precision(3)
 
         self._title = title
         self._descr = descr
@@ -37,16 +36,6 @@ class Tab(Texttable):
     def header(self, header_list):
         """Set the header with a list."""
         Texttable.header(self, header_list)
-
-    def _guess_header(self):
-        if self._header:
-            return
-        header = ''
-        if self._row_size == 3:
-            header = ['Option', 'Description', 'Value']
-        elif self._row_size == 4:
-            header = ['Parameter', 'Description', 'Value', 'Unit']
-        self.header(header)
 
     def set_title(self, val):
         """
@@ -66,7 +55,6 @@ class Tab(Texttable):
         """
         Draw the table and return it in a string.
         """
-        self._guess_header()
         self._add_left_space()
 
         # for Texttable, add a column of whitespace on the left for better visual effect
@@ -86,8 +74,10 @@ def make_doc_table(title, max_width, export, plain_dict, rest_dict):
     Helper function to format documentation data into tables.
     """
     data_dict = rest_dict if export == 'rest' else plain_dict
+
     table = Tab(title=title, max_width=max_width, export=export)
     table.header(list(data_dict.keys()))
+
     rows = list(map(list, zip(*list(data_dict.values()))))
     table.add_rows(rows, header=False)
 

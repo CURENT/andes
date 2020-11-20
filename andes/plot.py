@@ -2,14 +2,16 @@
 The Andes plotting tool.
 """
 
-import logging
 import os
 import re
-from distutils.spawn import find_executable
+import logging
+
+import numpy as np
+
+from andes.shared import mpl, plt
+from andes.shared import set_latex
 
 from andes.core.var import BaseVar, Algeb, ExtAlgeb, AliasAlgeb
-from andes.utils.paths import get_dot_andes_path
-from andes.shared import np, mpl, plt
 
 logger = logging.getLogger(__name__)
 
@@ -469,8 +471,22 @@ class TDSData:
         -------
         (fig, ax)
             The figure and axis handles
+
+        Examples
+        --------
+        To plot the results of arithmetic calculation of variables, retrieve the values,
+        do the calculation, and plot with `plot_data`.
+
+        >>> v = ss.dae.ts.y[:, ss.PVD1.v.a]
+        >>> Ipcmd = ss.dae.ts.y[:, ss.PVD1.Ipcmd_y.a]
+        >>> t = ss.dae.ts.t
+
+        >>> ss.TDS.plt.plot_data(t, v * Ipcmd,
+        >>>                      xlabel='Time [s]',
+        >>>                      ylabel='Ipcmd [pu]')
+
         """
-        mpl.rc('font', family='Arial', size=font_size)
+        mpl.rc('font', family='serif', size=font_size)
 
         if not isinstance(ydata, np.ndarray):
             raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
@@ -480,7 +496,8 @@ class TDSData:
 
         n_lines = ydata.shape[1]
 
-        set_latex(latex)
+        if latex:
+            set_latex()
 
         # set default x min based on simulation time
         if not left:
@@ -513,7 +530,7 @@ class TDSData:
 
         if xlabel is not None:
             ax.set_xlabel(xlabel)
-        else:
+        elif xheader is not None and len(xheader) > 0:
             ax.set_xlabel(xheader[0])
 
         if ylabel:
@@ -652,22 +669,6 @@ def parse_y(y, upper, lower=0):
 
         y_in_range = [item for item in y_to_int if lower <= item < upper]
         return list(y_in_range)
-
-
-def add_plot(x, y, xl, yl, fig, ax, LATEX=False, linestyle=None, **kwargs):
-    """Add plots to an existing plot"""
-    if LATEX:
-        # xl_data = xl[1]  # NOQA
-        yl_data = yl[1]
-    else:
-        # xl_data = xl[0]  # NOQA
-        yl_data = yl[0]
-
-    for idx, y_val in enumerate(y):
-        ax.plot(x, y_val, label=yl_data[idx], linestyle=linestyle)
-
-    ax.legend(loc='upper right')
-    ax.set_ylim(auto=True)
 
 
 def eig_plot(name, args):
@@ -816,43 +817,3 @@ def label_latexify(label):
         A string with $ surrounding
     """
     return '$' + label.replace(' ', r'\ ') + '$'
-
-
-def set_latex(enable=True):
-    """
-    Enables LaTeX for matplotlib based on the `with_latex` option and `dvipng` availability.
-
-    Parameters
-    ----------
-    enable : bool, optional
-        True for latex on and False for off
-
-    Returns
-    -------
-    bool
-        True for LaTeX on, False for off
-    """
-
-    has_dvipng = find_executable('dvipng')
-
-    if has_dvipng and enable:
-        mpl.rc('text', usetex=True)
-
-        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
-        if not os.path.isfile(no_warn_file):
-            logger.info('Info:')
-            logger.info('Using LaTeX for rendering. If an error occurs:')
-            logger.info('a) If you are using `andes plot`, disable with option "-d",')
-            logger.info('b) If you are using `plot()`, set "latex=False".')
-
-            try:
-                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w'):
-                    pass
-            except OSError:
-                pass
-
-        return True
-
-    else:
-        mpl.rc('text', usetex=False)
-        return False

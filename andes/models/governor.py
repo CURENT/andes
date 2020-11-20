@@ -12,6 +12,7 @@ class TGBaseData(ModelData):
     """
     Base data for turbine governors.
     """
+
     def __init__(self):
         super().__init__()
         self.syn = IdxParam(model='SynGen',
@@ -19,7 +20,7 @@ class TGBaseData(ModelData):
                             mandatory=True,
                             unique=True,
                             )
-        self.Tn = NumParam(info='Turbine power rating. Equal to Sn if not provided.',
+        self.Tn = NumParam(info='Turbine power rating. Equal to `Sn` if not provided.',
                            tex_name='T_n',
                            unit='MVA',
                            default=None,
@@ -44,6 +45,7 @@ class TGBase(Model):
         True to add ``ExtService`` ``tm0``.
 
     """
+
     def __init__(self, system, config, add_sn=True, add_tm0=True):
         Model.__init__(self, system, config)
         self.group = 'TurbineGov'
@@ -292,10 +294,14 @@ class TGOV1Model(TGBase):
                                  tex_name='G',
                                  )
 
+        self.pext = ConstService(v_str='0',
+                                 tex_name='P_{ext}',
+                                 info='signal to adjusting Pref externally',
+                                 )
         self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
-                          v_str='tm0 * R',
-                          e_str='tm0 * R - pref',
+                          v_str='tm0 * R + pext',
+                          e_str='tm0 * R + pext - pref',
                           )
 
         self.wd = Algeb(info='Generator under speed',
@@ -339,6 +345,7 @@ class TGOV1ModelAlt(TGBase):
     An alternative implementation of TGOV1 from equations
     (without using Blocks).
     """
+
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
@@ -391,6 +398,7 @@ class TGOV1(TGOV1Data, TGOV1Model):
 
     Implements the PSS/E TGOV1 model without deadband.
     """
+
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1Model.__init__(self, system, config)
@@ -400,6 +408,7 @@ class TGOV1DB(TGOV1DBData, TGOV1DBModel):
     """
     TGOV1 turbine governor model with speed input deadband.
     """
+
     def __init__(self, system, config):
         TGOV1DBData.__init__(self)
         TGOV1DBModel.__init__(self, system, config)

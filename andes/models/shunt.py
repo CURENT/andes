@@ -24,7 +24,7 @@ class ShuntData(ModelData):
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
         self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name=r'g')
-        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capatance)", y=True, tex_name=r'b')
+        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capacitive)", y=True, tex_name=r'b')
         self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
 
 
@@ -88,19 +88,21 @@ class ShuntSwData(ShuntData):
         self.vref = NumParam(info='voltage reference',
                              default=1.0,
                              unit='p.u.',
-                             positive=True,
+                             non_zero=True,
+                             non_negative=True,
                              )
 
         self.dv = NumParam(info='voltage error deadband',
                            default=0.05,
                            unit='p.u.',
-                           positive=True,
+                           non_zero=True,
+                           non_negative=True,
                            )
 
         self.dt = NumParam(info='delay before two consecutive switching',
-                           default=0.2,
+                           default=30.,
                            unit='seconds',
-                           positive=True,
+                           non_negative=True,
                            )
 
 
@@ -134,20 +136,20 @@ class ShuntSwModel(ShuntModel):
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 
-        self.config.add(OrderedDict((('sw_iter', 2),
+        self.config.add(OrderedDict((('min_iter', 2),
                                      ('err_tol', 0.01),
                                      )))
         self.config.add_extra("_help",
-                              sw_iter="minimum iteration number to enable switching",
-                              err_tol="maximum iteration error to enable switching",
+                              min_iter="iteration number starting from which to enable switching",
+                              err_tol="iteration error below which to enable switching",
                               )
         self.config.add_extra("_alt",
-                              sw_iter='int',
+                              min_iter='int',
                               err_tol='float',
                               )
         self.config.add_extra("_tex",
-                              sw_iter="sw_{flat}",
-                              err_tol=r"\epsilon_{tol}"
+                              min_iter="sw_{iter}",
+                              err_tol=r"\epsilon_{tol}",
                               )
 
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
@@ -159,7 +161,7 @@ class ShuntSwModel(ShuntModel):
 
         self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
                                bsw=self.beff, gsw=self.geff, dt=self.dt,
-                               min_iter=self.config.sw_iter,
+                               min_iter=self.config.min_iter,
                                err_tol=self.config.err_tol,
                                info='shunt adjuster')
 
@@ -182,6 +184,9 @@ class ShuntSw(ShuntSwData, ShuntSwModel):
 
     To use individual shunts as fixed shunts, set the corresponding
     `ns = 0` or `ns = [0]`.
+
+    The effective shunt susceptances and conductances are stored in
+    services `beff` and `geff`.
     """
 
     def __init__(self, system=None, config=None):

@@ -8,13 +8,15 @@
 #  File name: service.py
 #  Last modified: 8/16/20, 7:28 PM
 
+import logging
+import numpy as np
+
+from collections import OrderedDict
 from typing import Optional, Union, Callable, Type
+
 from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
 from andes.core.common import dummify
-from andes.shared import np, ndarray
-import logging
-from collections import OrderedDict
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
@@ -120,7 +122,7 @@ class ConstService(BaseService):
         super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, ndarray] = np.array([0.])
+        self.v: Union[float, int, np.ndarray] = np.array([0.])
 
     def assign_memory(self, n):
         """Assign memory for ``self.v`` and set the array to zero."""
@@ -582,27 +584,35 @@ class DeviceFinder(BaseService):
         self.link = link
 
     def find_or_add(self, system):
-        mdl = system.models[self.model]
-        found_idx = mdl.find_idx((self.idx_name,), (self.link.v,),
-                                 allow_none=True, default=None)
+        """
+        Find or add devices.
 
-        action = False
-        for ii, idx in enumerate(found_idx):
+        Points `self.u.v` to the found or newly added devices.
+
+        Find devices one by one.
+        Devices previously added in this function can be used later without duplication.
+        """
+        mdl = system.models[self.model]
+        added = False
+
+        for ii, link_to in enumerate(self.link.v):
+            idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
+
             if idx is None:
-                action = True
-                new_idx = system.add(self.model, {self.idx_name: self.link.v[ii]})
+                added = True
+                new_idx = system.add(self.model, {self.idx_name: link_to})
                 self.u.v[ii] = new_idx
 
                 logger.info(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
                             f"added {self.model} <{new_idx}> "
-                            f"on {self.idx_name} <{self.link.v[ii]}>")
+                            f"linked to {self.idx_name} <{link_to}>")
             else:
-                action = True
                 self.u.v[ii] = idx
 
-        if action:
+        if added:
             mdl.list2array()
             mdl.refresh_inputs()
+            system.link_ext_param({mdl.name: mdl})
 
     @property
     def v(self):
@@ -988,6 +998,12 @@ class InitChecker(OperationService):
         self.enable = enable
         self.error_out = error_out
 
+        self.checks = [(self.lower, np.less_equal, "out of typical lower limit", "limit"),
+                       (self.upper, np.greater_equal, "out of typical upper limit", "limit"),
+                       (self.equal, lambda a, b: np.logical_not(np.isclose(a, b)), 'should be equal', "expected"),
+                       (self.not_equal, np.equal, 'should not be equal', "not expected")
+                       ]
+
     def check(self):
         """
         Check the bounds and equality conditions.
@@ -995,19 +1011,10 @@ class InitChecker(OperationService):
         if not self.enable:
             return
 
-        def _not_all_close(a, b):
-            return np.logical_not(np.isclose(a, b))
-
         if self._v is None:
             self._v = np.zeros_like(self.u.v)
 
-        checks = [(self.lower, np.less_equal, "violation of the lower limit", "limit"),
-                  (self.upper, np.greater_equal, "violation of the upper limit", "limit"),
-                  (self.equal, _not_all_close, 'should be equal', "expected"),
-                  (self.not_equal, np.equal, 'should not be equal', "not expected")
-                  ]
-
-        for check in checks:
+        for check in self.checks:
             limit = check[0]
             func = check[1]
             text = check[2]

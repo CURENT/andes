@@ -6,13 +6,14 @@
 #  (at your option) any later version.
 #
 #  File name: discrete.py
-#  Last modified: 8/16/20, 7:28 PM
+#  Last modified: 11/15/20, 3:29 PM
 
 import logging
-from typing import Optional, Union, Tuple, List
+import numpy as np
 
-from andes.core.common import dummify  # NOQA
-from andes.shared import np
+from typing import Union, Tuple, List
+
+from andes.core.common import dummify
 from andes.utils.tab import Tab
 from andes.utils.func import interp_n2
 
@@ -26,17 +27,27 @@ class Discrete:
     Discrete classes export flag arrays (usually boolean) .
     """
 
-    def __init__(self, name=None, tex_name=None, info=None, no_warn=False):
+    def __init__(self, name=None, tex_name=None, info=None, no_warn=False,
+                 min_iter=2, err_tol=1e-2,
+                 ):
         self.name = name
         self.tex_name = tex_name
         self.info = info
         self.owner = None
         self.export_flags = []
         self.export_flags_tex = []
+
         self.x_set = list()
         self.y_set = list()   # NOT being used
+
         self.warn_flags = []  # warn if flags in `warn_flags` not initialized to zero
         self.no_warn = no_warn
+
+        # default minimum iteration number and error tolerance to allow checking
+        # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
+        # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
+        self.min_iter = min_iter
+        self.err_tol = 1e-2
 
         self.has_check_var = False  # if subclass implements `check_var()`
         self.has_check_eq = False   # if subclass implements `check_eq()`
@@ -131,6 +142,29 @@ class Discrete:
 
             logger.warning(tab.draw())
 
+    def check_iter_err(self, niter=None, err=None):
+        """
+        Check if the minimum iteration or maximum error is reached
+        so that this discrete block should be enabled.
+
+        Only when both `niter` and `err` are given,  (niter < min_iter)
+        , and (err > err_tol) it will return False.
+
+        This logic will start checking the discrete states if called
+        from an external solver that does not feed `niter` or `err`
+        at each step.
+
+        Returns
+        -------
+        bool
+            True if it should be enabled, False otherwise
+        """
+        if (niter is not None) and (niter < self.min_iter) and \
+                (err is not None) and (err > self.err_tol):
+            return False
+
+        return True
+
 
 class LessThan(Discrete):
     """
@@ -204,6 +238,10 @@ class Limiter(Discrete):
         True to only use the upper limit
     no_upper : bool
         True to only use the lower limit
+    sign_lower: 1 or -1
+        Sign to be multiplied to the lower limit
+    sign_upper: bool
+        Sign to be multiplied to the upper limit
     equal : bool
         True to include equal signs in comparison (>= or <=).
     no_warn : bool
@@ -227,15 +265,26 @@ class Limiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
-                 no_upper=False, no_lower=False, equal=True, no_warn=False,
+                 min_iter: int = 2, err_tol: float = 0.01,
+                 no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
+                 equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
-        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
+                          min_iter=min_iter, err_tol=err_tol)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
         self.enable = enable
-        self.no_upper = no_upper
         self.no_lower = no_lower
+        self.no_upper = no_upper
+
+        if sign_lower not in (1, -1):
+            raise ValueError("sign_lower must be 1 or -1, got %s" % sign_lower)
+        if sign_upper not in (1, -1):
+            raise ValueError("sign_upper must be 1 or -1, got %s" % sign_upper)
+
+        self.sign_lower = dummify(sign_lower)
+        self.sign_upper = dummify(sign_upper)
         self.equal = equal
         self.no_warn = no_warn
 
@@ -265,52 +314,167 @@ class Limiter(Discrete):
             return
 
         if not self.no_upper:
+            upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
             if self.equal:
-                self.zu[:] = np.greater_equal(self.u.v, self.upper.v)
+                self.zu[:] = np.greater_equal(self.u.v, upper_v)
             else:
-                self.zu[:] = np.greater(self.u.v, self.upper.v)
+                self.zu[:] = np.greater(self.u.v, upper_v)
 
         if not self.no_lower:
+            lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
             if self.equal:
-                self.zl[:] = np.less_equal(self.u.v, self.lower.v)
+                self.zl[:] = np.less_equal(self.u.v, lower_v)
             else:
-                self.zl[:] = np.less(self.u.v, self.lower.v)
+                self.zl[:] = np.less(self.u.v, lower_v)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
 
 class SortedLimiter(Limiter):
     """
-    A comparer with the top value selection.
+    A limiter that sorts inputs based on the absolute or
+    relative amount of limit violations.
+
+    Parameters
+    ----------
+    n_select : int
+        the number of violations to be flagged,
+        for each of over-limit and under-limit cases.
+        If `n_select` == 1, at most one over-limit
+        and one under-limit inputs will be flagged.
+        If `n_select` is zero, heuristics will be used.
+
+    abs_violation : bool
+        True to use the absolute violation.
+        False if the relative violation
+        abs(violation/limit) is used for sorting.
+        Since most variables are in per unit,
+        absolute violation is recommended.
 
     """
 
-    def __init__(self, u, lower, upper, enable=True,
-                 n_select: Optional[int] = None, name=None, tex_name=None):
+    def __init__(self, u, lower, upper, n_select: int = 5,
+                 name=None, tex_name=None, enable=True, abs_violation=True,
+                 min_iter: int = 2, err_tol: float = 0.01,
+                 zu=0.0, zl=0.0, zi=1.0, ql=0.0, qu=0.0,
+                 ):
 
-        super().__init__(u, lower, upper, enable=enable, name=name, tex_name=tex_name)
-        self.n_select = int(n_select) if n_select else 0
+        super().__init__(u, lower, upper,
+                         enable=enable, name=name, tex_name=tex_name,
+                         min_iter=min_iter, err_tol=err_tol,
+                         zu=zu, zl=zl, zi=zi,
+                         )
 
-    def check_var(self, *args, **kwargs):
+        self.n_select = int(n_select)
+        self.auto = True if self.n_select == 0 else False
+        self.abs_violation = abs_violation
+
+        self.ql = np.array([ql])
+        self.qu = np.array([qu])
+
+        # count of ones in `ql` and `qu`
+        self.nql = 0
+        self.nqu = 0
+
+        # smallest and largest `n_select`
+        self.min_sel = 2
+        self.max_sel = 50
+
+        # store the lower and upper limit values with zeros converted to a small number
+        self.lower_denom = None
+        self.upper_denom = None
+
+        self.export_flags.extend(['ql', 'qu'])
+        self.export_flags_tex.extend(['q_l', 'q_u'])
+
+    def list2array(self, n):
+        """
+        Initialize maximum and minimum `n_select` based on input size.
+        """
+
+        super().list2array(n)
+        if self.auto:
+            self.min_sel = max(2, int(n / 10))
+            self.max_sel = max(2, int(n / 2))
+
+    def check_var(self, *args, niter=None, err=None, **kwargs):
+        """
+        Check for the largest and smallest `n_select` elements.
+        """
+
         if not self.enable:
             return
+
+        if not self.check_iter_err(niter=niter, err=err):
+            return
+
         super().check_var()
 
-        if self.n_select is not None and self.n_select > 0:
-            asc = np.argsort(self.u.v - self.lower.v)   # ascending order
-            desc = np.argsort(self.upper.v - self.u.v)
+        # first run - calculate the denominators if using relative violation
+        if not self.abs_violation:
+            if self.lower_denom is None:
+                self.lower_denom = np.array(self.lower.v)
+                self.lower_denom[self.lower_denom == 0] = 1e-6
+            if self.upper_denom is None:
+                self.upper_denom = np.array(self.upper.v)
+                self.upper_denom[self.upper_denom == 0] = 1e-6
 
-            lowest_n = asc[:self.n_select]
-            highest_n = desc[:self.n_select]
+        # calculate violations - abs or relative
+        if self.abs_violation:
+            lower_vio = self.u.v - self.lower.v
+            upper_vio = self.upper.v - self.u.v
+        else:
+            lower_vio = np.abs((self.u.v - self.lower.v) / self.lower_denom)
+            upper_vio = np.abs((self.upper.v - self.u.v) / self.upper_denom)
 
-            reset_in = np.ones(self.u.v.shape)
-            reset_in[lowest_n] = 0
-            reset_in[highest_n] = 0
-            reset_out = 1 - reset_in
+        # count the number of inputs flagged
+        if self.auto:
+            self.calc_select()
 
-            self.zi[:] = np.logical_or(reset_in, self.zi)
-            self.zl[:] = np.logical_and(reset_out, self.zl)
-            self.zu[:] = np.logical_and(reset_out, self.zu)
+        # sort in both ascending and descending orders
+        asc = np.argsort(lower_vio)
+        desc = np.argsort(upper_vio)
+        top_n = asc[:self.n_select]
+        bottom_n = desc[:self.n_select]
+
+        # `reset_out` is used to flag the
+        reset_out = np.zeros_like(self.u.v)
+        reset_out[top_n] = 1
+        reset_out[bottom_n] = 1
+
+        # set new flags
+        self.zl[:] = np.logical_or(np.logical_and(reset_out, self.zl),
+                                   self.ql)
+        self.zu[:] = np.logical_or(np.logical_and(reset_out, self.zu),
+                                   self.qu)
+        self.zi[:] = 1 - np.logical_or(self.zl, self.zu)
+        self.ql[:] = self.zl
+        self.qu[:] = self.zu
+
+        # compute the number of updated flags
+        ql1 = np.count_nonzero(self.ql)
+        qu1 = np.count_nonzero(self.qu)
+        dqu = qu1 - self.nqu
+        dql = ql1 - self.nql
+
+        if dqu > 0 or dql > 0:
+            logger.debug("SortedLimiter: flagged %s upper and %s lower limit violations",
+                         dqu, dql)
+            self.nqu = qu1
+            self.nql = ql1
+
+    def calc_select(self):
+        """
+        Set `n_select` automatically.
+        """
+        ret = int((np.count_nonzero(self.zl) + np.count_nonzero(self.zu)) / 2) + 1
+
+        if ret > self.max_sel:
+            ret = self.max_sel
+        elif ret < self.min_sel:
+            ret = self.min_sel
+
+        self.n_select = ret
 
 
 class HardLimiter(Limiter):
@@ -342,9 +506,11 @@ class AntiWindup(Limiter):
     """
 
     def __init__(self, u, lower, upper, enable=True,
-                 no_lower=False, no_upper=False, name=None, tex_name=None, info=None, state=None):
+                 no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
+                 name=None, tex_name=None, info=None, state=None):
         super().__init__(u, lower, upper, enable=enable,
                          no_lower=no_lower, no_upper=no_upper,
+                         sign_lower=sign_lower, sign_upper=sign_upper,
                          name=name, tex_name=tex_name, info=info)
         self.state = state if state else u
 
@@ -368,11 +534,13 @@ class AntiWindup(Limiter):
         Consider improving for speed. (TODO)
         """
         if not self.no_upper:
-            self.zu[:] = np.logical_and(np.greater_equal(self.u.v, self.upper.v),
+            upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+            self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
 
         if not self.no_lower:
-            self.zl[:] = np.logical_and(np.less_equal(self.u.v, self.lower.v),
+            lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+            self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
@@ -383,7 +551,11 @@ class AntiWindup(Limiter):
         if not np.all(self.zi):
             idx = np.where(self.zi == 0)
             self.state.e[:] = self.state.e * self.zi
-            self.state.v[:] = self.state.v * self.zi + self.upper.v * self.zu + self.lower.v * self.zl
+            self.state.v[:] = self.state.v * self.zi
+            if not self.no_upper:
+                self.state.v[:] += upper_v * self.zu
+            if not self.no_lower:
+                self.state.v[:] += lower_v * self.zl
             self.x_set.append((self.state.a[idx], self.state.v[idx], 0))  # (address, var. values, eqn. values)
 
             # logger.debug(f'AntiWindup for states {self.state.a[idx]}')
@@ -599,7 +771,7 @@ class Switcher(Discrete):
     One can construct ::
 
         self.IC = NumParam(info='input code 1-6')  # input code
-        self.SW = Switcher(u=self.IC, options=[1, 2, 3, 4, 5, 6])
+        self.SW = Switcher(u=self.IC, options=[0, 1, 2, 3, 4, 5, 6])
 
     If the IC values from the data file ends up being ::
 
@@ -607,13 +779,16 @@ class Switcher(Discrete):
 
     Then, the exported flag arrays will be ::
 
-        {'IC_s0': np.array([1, 0, 0, 0, 0]),
-         'IC_s1': np.array([0, 1, 1, 0, 0]),
-         'IC_s2': np.array([0, 0, 0, 0, 0]),
-         'IC_s3': np.array([0, 0, 0, 1, 0]),
-         'IC_s4': np.array([0, 0, 0, 0, 0]),
-         'IC_s5': np.array([0, 0, 0, 0, 1])
+        {'IC_s0': np.array([0, 0, 0, 0, 0]),
+         'IC_s1': np.array([1, 0, 0, 0, 0]),
+         'IC_s2': np.array([0, 1, 1, 0, 0]),
+         'IC_s3': np.array([0, 0, 0, 0, 0]),
+         'IC_s4': np.array([0, 0, 0, 1, 0]),
+         'IC_s5': np.array([0, 0, 0, 0, 0]),
+         'IC_s6': np.array([0, 0, 0, 0, 1])
         }
+
+    where `IC_s0` is used for padding so that following flags align with the options.
     """
 
     def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
@@ -705,7 +880,7 @@ class DeadBand(Limiter):
 
     """
 
-    def __init__(self, u, center, lower, upper, enable=True, equal=True, zu=0.0, zl=0.0, zi=0.0,
+    def __init__(self, u, center, lower, upper, enable=True, equal=False, zu=0.0, zl=0.0, zi=0.0,
                  name=None, tex_name=None, info=None):
         Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
                          name=name, tex_name=tex_name, info=info)
@@ -1002,8 +1177,7 @@ class Sampling(Discrete):
         """
         self.rewind = False
 
-        if dae_t == 0:
-            # initial step
+        if dae_t == 0:  # initial step
             self._last_v[:] = self.u.v[:]
             self.v[:] = self.u.v[:]
 
@@ -1092,9 +1266,7 @@ class ShuntAdjust(Discrete):
             self.t_enable = np.ones_like(self.v.v, dtype=int)
             self.direction = np.zeros_like(self.v.v, dtype=int)
 
-        # skip switching for the first `min_iter` steps
-        if (niter is not None) and (niter < self.min_iter) and \
-                (err is not None) and (err > self.err_tol):
+        if not self.check_iter_err(niter=niter, err=err):
             return
 
         self.direction[:] = 0

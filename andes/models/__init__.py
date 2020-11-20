@@ -13,6 +13,7 @@ from collections import OrderedDict
 # Models will be initialized in the order given below.
 
 file_classes = OrderedDict([
+    ('info', ['Summary']),
     ('timer', ['Toggler', 'Fault']),
     ('bus', ['Bus']),
     ('pq', ['PQ']),

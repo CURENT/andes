@@ -122,7 +122,7 @@ class GroupBase:
                 else:
                     ret.append(self._idx2model[i])
             except KeyError:
-                raise KeyError(f'Group <{self.class_name}> does not contain idx <{i}>')
+                raise KeyError(f'Group <{self.class_name}> does not contain device with idx={i}')
 
         if single:
             ret = ret[0]
@@ -630,3 +630,12 @@ class Motor(GroupBase):
     """
     def __init__(self):
         super().__init__()
+
+
+class Information(GroupBase):
+    """
+    Group for information container models.
+    """
+    def __init__(self):
+        GroupBase.__init__(self)
+        self.common_params = []

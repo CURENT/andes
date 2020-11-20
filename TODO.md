@@ -4,11 +4,13 @@
 
 * [x] Implement switched shunt model (ShuntSw)
 * [x] Allow arrays as device parameter
+* [x] An `Summary` model for storing system summary
+* Allow use use and export of equation values.
+* Allow selection of output variables
 * Separate array-enabled parameters from NumParam into
   `BaseConvParam`, which implements `iconvert` and `oconvert`,
   and then `ListParam`
 * Robust iterative initialization for variables
-* Allow selection of output variables
 
 ## To-do list
 

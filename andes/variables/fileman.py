@@ -80,29 +80,30 @@ class FileMan:
         if dump is None:
             dump = self.name
 
+        # set the output file names anyway
+        if not output:
+            output = add_suffix(self.name, 'out')
+        prof = add_suffix(self.name, 'prof')
+        eig = add_suffix(self.name, 'eig')
+        mat = add_suffix(self.name, 'As')
+
+        self.lst = os.path.join(self.output_path, output + '.lst')
+        self.npy = os.path.join(self.output_path, output + '.npy')
+        self.npz = os.path.join(self.output_path, output + '.npz')
+        self.csv = os.path.join(self.output_path, output + '.csv')
+        self.txt = os.path.join(self.output_path, output + '.txt')
+
+        self.eig = os.path.join(self.output_path, eig + '.txt')
+        self.prof = os.path.join(self.output_path, prof + '.txt')
+        self.mat = os.path.join(self.output_path, mat + '.mat')
+        self.prof_raw = os.path.join(self.output_path, prof + '.prof')
+        self.dump = os.path.join(self.output_path, dump + '.xlsx')
+
+        # use `self.no_output` to control calls to saving functions
         if no_output:
             self.no_output = True
-            for item in self._out_fields:
-                self.__dict__[item] = None
         else:
             self.no_output = False
-            if not output:
-                output = add_suffix(self.name, 'out')
-            prof = add_suffix(self.name, 'prof')
-            eig = add_suffix(self.name, 'eig')
-            mat = add_suffix(self.name, 'As')
-
-            self.lst = os.path.join(self.output_path, output + '.lst')
-            self.npy = os.path.join(self.output_path, output + '.npy')
-            self.npz = os.path.join(self.output_path, output + '.npz')
-            self.csv = os.path.join(self.output_path, output + '.csv')
-            self.txt = os.path.join(self.output_path, output + '.txt')
-
-            self.eig = os.path.join(self.output_path, eig + '.txt')
-            self.prof = os.path.join(self.output_path, prof + '.txt')
-            self.mat = os.path.join(self.output_path, mat + '.mat')
-            self.prof_raw = os.path.join(self.output_path, prof + '.prof')
-            self.dump = os.path.join(self.output_path, dump + '.xlsx')
 
     def get_fullpath(self, fullname=None):
         """
