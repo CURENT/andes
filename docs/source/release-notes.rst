@@ -15,6 +15,10 @@ v1.2.5
   a test case. Works in `xlsx` and `json` formats.
 - PV reactive power limit works. Automatically determines
   the number of PVs to convert if `npv2pq=0`.
+- Limiter and AntiWindup limiter can use `sign_upper=-1` and
+  `sign_lower=-1` to negate the provided limits.
+- Improved error messages for inconsistent data.
+- `DAETimeSeries` functions refactored.
 
 v1.2.4 (2020-11-13)
 ```````````````````
