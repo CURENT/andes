@@ -58,6 +58,25 @@ class BaseService:
         """
         return [self.name]
 
+    def assign_memory(self, n):
+        """
+        Assign memory for ``self.v`` and set the array to zero.
+
+        Parameters
+        ----------
+        n : int
+            Number of elements of the value array.
+            Provided by caller (Model.list2array).
+        """
+        self.v = np.zeros(n, dtype=self.vtype)
+
+    @property
+    def class_name(self):
+        """
+        Return the class name
+        """
+        return self.__class__.__name__
+
     @property
     def n(self):
         """
@@ -74,13 +93,6 @@ class BaseService:
             return len(self.v)
         else:
             return 1
-
-    @property
-    def class_name(self):
-        """
-        Return the class name
-        """
-        return self.__class__.__name__
 
     def __repr__(self):
         val_str = ''
@@ -123,10 +135,6 @@ class ConstService(BaseService):
         self.v_str = v_str
         self.v_numeric = v_numeric
         self.v: Union[float, int, np.ndarray] = np.array([0.])
-
-    def assign_memory(self, n):
-        """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(n, dtype=self.vtype)
 
 
 class VarService(ConstService):
@@ -477,10 +485,6 @@ class ExtService(BaseService):
         self.default = default
         self.v = np.array([0.])
 
-    def assign_memory(self, n):
-        """Assign memory for ``self.v`` and set the array to zero."""
-        self.v = np.zeros(n, dtype=self.vtype)
-
     def link_external(self, ext_model):
         """
         Method to be called by ``System`` for getting values from the external model or group.
@@ -621,7 +625,9 @@ class DeviceFinder(BaseService):
 
 class OperationService(BaseService):
     """
-    Base class for a type of Service which performs specific operations
+    Base class for a type of Service which performs specific operations.
+    OperationService may not use the `assign_memory` from `BaseService`,
+    because it can have a different size.
 
     This class cannot be used by itself.
 
@@ -910,6 +916,8 @@ class RefFlatten(OperationService):
 class NumSelect(OperationService):
     """
     Class for selecting values for optional NumParam.
+
+    NumSelect works with internal and external parameters.
 
     Notes
     -----
