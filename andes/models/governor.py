@@ -333,9 +333,9 @@ class TGOV1NModel(TGOV1Model):
     def __init__(self, system, config):
         TGOV1Model.__init__(self, system, config)
         self.pref.v_str = 'tm0'
-        self.pref.v_str = 'tm0 - pref'
+        self.pref.e_str = 'tm0 - pref'
 
-        self.pd.e_str = 'wd * gain + pref + paux - pd'
+        self.pd.e_str = 'u*(wd * gain + pref + paux) - pd'
 
 
 class TGOV1DBModel(TGOV1Model):
