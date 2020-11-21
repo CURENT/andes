@@ -13,6 +13,7 @@ class TestKnownResults(unittest.TestCase):
             ('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl', 10),
             ('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl', 10),
             ('kundur/kundur_ieeest.xlsx', 'kundur_ieeest_10s.pkl', 10),
+            ('ieee14/ieee14_fault.xlsx', 'ieee14_fault_2s.pkl', 2),
             (('ieee14/ieee14.raw', 'ieee14/ieee14.dyr'), 'ieee14_2s.pkl', 2),
             )
 
@@ -37,13 +38,14 @@ class TestKnownResults(unittest.TestCase):
 
 
 def compare_results(case, pkl_name, addfile=None, tf=10):
-    ss = andes.load(case, addfile=addfile, default_config=True, no_output=True)
+    ss = andes.load(case, addfile=addfile, tf=tf,
+                    default_config=True, no_output=True,
+                    )
 
     ss.config.warn_limits = 0
     ss.config.warn_abnormal = 0
     ss.PFlow.run()
 
-    ss.TDS.config.tf = tf
     ss.TDS.config.tstep = 1/30
     ss.TDS.config.tol = 1e-6
     ss.TDS.config.fixt = 1
