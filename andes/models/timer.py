@@ -25,7 +25,7 @@ class Toggler(TogglerData, Model):
     """
     Time-based connectivity status toggler.
 
-    Toggler is used for toggle the connection status
+    Toggler is used to toggle the connection status
     of a device at a predefined time.
     Both the model name (or group name) and the device
     idx need to be provided.
@@ -198,7 +198,8 @@ class AlterData(ModelData):
         self.src = IdxParam(info='model source field (param or service)', mandatory=True)
         self.attr = IdxParam(info='attribute (e.g., v) of the source field', default='v')
 
-        self.method = NumParam(info='alteration method in +, -, *, /', mandatory=True, vtype=np.object)
+        self.method = NumParam(info='alteration method in `+`, `-`, `*`, `/`, `=`',
+                               mandatory=True, vtype=np.object)
         self.amount = NumParam(info='the amount to apply', mandatory=True,)
 
         self.rand = NumParam(info='use uniform ramdom sampling', default=0)
