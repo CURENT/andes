@@ -193,6 +193,7 @@ class System:
         # set up numpy random seed
         if isinstance(self.config.seed, int):
             np.random.seed(self.config.seed)
+            logger.debug("Random seed set to <%d>.", self.config.seed)
 
     def reload(self, case, **kwargs):
         """
