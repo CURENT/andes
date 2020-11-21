@@ -201,6 +201,10 @@ class AlterData(ModelData):
         self.method = NumParam(info='alteration method in +, -, *, /', mandatory=True, vtype=np.object)
         self.amount = NumParam(info='the amount to apply', mandatory=True,)
 
+        self.rand = NumParam(info='use uniform ramdom sampling', default=0)
+        self.lb = NumParam(info='lower bound of random sampling', default=0)
+        self.ub = NumParam(info='upper bound of random sampling', default=0)
+
 
 class AlterModel(Model):
     def __init__(self, system, config):
@@ -208,7 +212,7 @@ class AlterModel(Model):
         self.flags.tds = True
         self.group = 'TimedEvent'
 
-        self.SW = Switcher(u=self.method, options=('+', '-', '*', '/'),
+        self.SW = Switcher(u=self.method, options=('+', '-', '*', '/', '='),
                            info='Switcher for alteration method',
                            )
 
@@ -232,6 +236,9 @@ class AlterModel(Model):
             attr = self.attr.v[ii]
             amount = self.amount.v[ii]
 
+            if self.rand.v[ii] == 1:
+                amount = np.random.uniform(low=self.lb.v[ii], high=self.ub.v[ii])
+
             try:
                 v0 = model.get(src=src, idx=idx, attr=attr)
             except KeyError as e:
@@ -243,15 +250,29 @@ class AlterModel(Model):
                 self.u.v[ii] = 0
                 continue
 
-            vnew = (self.SW.s0[ii] * (v0 + amount)) + \
-                (self.SW.s1[ii] * (v0 - amount)) + \
-                (self.SW.s2[ii] * (v0 * amount)) + \
-                (self.SW.s3[ii] * (v0 / amount))
+            vnew = v0
+            if self.SW.s0[ii] == 1:
+                vnew = v0 + amount
+            elif self.SW.s1[ii] == 1:
+                vnew = v0 - amount
+            elif self.SW.s2[ii] == 1:
+                vnew = v0 * amount
+            elif self.SW.s3[ii] == 1:
+                vnew = v0 / amount
+            elif self.SW.s4[ii] == 1:
+                vnew = amount
+            else:
+                tqdm.write('Error: <%s %s>: undefined method "%s". <%s, %s> disabled.' % (
+                    self.class_name, self.idx.v[ii], self.method.v[ii],
+                    self.class_name, self.idx.v[ii]
+                ))
+                self.u.v[ii] = 0
+                continue
 
             model.set(src=src, idx=idx, attr=attr, value=vnew)
-            tqdm.write(f'<Alter {self.idx.v[ii]}>: '
-                       f'{self.model.v[ii]}.{idx}.{src} '
-                       f'changed to {vnew} at t={self.t.v[ii]} sec.')
+            tqdm.write('<Alter %s>: set %s.%s.%s.%s=%.6g at t=%.6g.' % (
+                self.idx.v[ii], self.model.v[ii], idx, src, attr, vnew, self.t.v[ii]
+            ))
             action = True
 
         return action
