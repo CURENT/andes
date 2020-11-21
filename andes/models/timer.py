@@ -16,9 +16,15 @@ logger = logging.getLogger(__name__)
 class TogglerData(ModelData):
     def __init__(self):
         super(TogglerData, self).__init__()
-        self.model = DataParam(info='model or group name of the device', mandatory=True)
-        self.dev = IdxParam(info='idx of the device to control', mandatory=True)
-        self.t = TimerParam(info='switch time for connection status', mandatory=True)
+        self.model = DataParam(info='model or group name of the device',
+                               mandatory=True,
+                               )
+        self.dev = IdxParam(info='idx of the device to control',
+                            mandatory=True,
+                            )
+        self.t = TimerParam(info='switch time for connection status',
+                            mandatory=True,
+                            )
 
 
 class Toggler(TogglerData, Model):
@@ -58,20 +64,25 @@ class Toggler(TogglerData, Model):
     def _u_switch(self, is_time: np.ndarray):
         action = False
         for i in range(self.n):
-            if is_time[i] and (self.u.v[i] == 1):
-                instance = self.system.__dict__[self.model.v[i]]
-                u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
-                instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
-                action = True
-                tqdm.write(f'<Toggler {self.idx.v[i]}>: '
-                           f'{self.model.v[i]}.{self.dev.v[i]} status '
-                           f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
+            if (is_time[i] == 0) or (self.u.v[i] == 0):
+                continue
+
+            instance = self.system.__dict__[self.model.v[i]]
+            u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
+            instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
+            action = True
+            tqdm.write(f'<Toggler {self.idx.v[i]}>: '
+                       f'{self.model.v[i]}.{self.dev.v[i]} status '
+                       f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
         return action
 
 
 class Fault(ModelData, Model):
     """
     Three-phase to ground fault.
+
+    Two times, `tf` and `tc`, can be defined for fault on
+    for fault clearance.
     """
 
     def __init__(self, system, config):
@@ -151,14 +162,15 @@ class Fault(ModelData, Model):
         """
         action = False
         for i in range(self.n):
-            if is_time[i] and (self.u.v[i] == 1):
-                self.uf.v[i] = 1
-                self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
+            if (is_time[i] == 0) or (self.u.v[i] == 0):
+                continue
 
-                tqdm.write(f'<Fault {self.idx.v[i]}>: '
-                           f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
+            self.uf.v[i] = 1
+            self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
+            tqdm.write(f'<Fault {self.idx.v[i]}>: '
+                       f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
 
-                action = True
+            action = True
         return action
 
     def clear_fault(self, is_time: np.ndarray):
@@ -226,9 +238,7 @@ class AlterModel(Model):
         action = False
 
         for ii in range(self.n):
-            if not is_time[ii]:
-                continue
-            if self.u.v[ii] == 0:
+            if (not is_time[ii]) or (self.u.v[ii] == 0):
                 continue
 
             model = self.system.__dict__[self.model.v[ii]]
@@ -247,7 +257,8 @@ class AlterModel(Model):
                     self.class_name, self.idx.v[ii],
                     idx, src, self.model.v[ii],
                 ))
-                tqdm.write("<%s %s> disabled due to %s.\n" % (self.class_name, self.idx.v[ii], repr(e)))
+                tqdm.write("<%s %s> disabled due to %s.\n" %
+                           (self.class_name, self.idx.v[ii], repr(e)))
                 self.u.v[ii] = 0
                 continue
 
