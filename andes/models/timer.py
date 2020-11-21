@@ -1,17 +1,22 @@
+import logging
+import numpy as np
+
+from collections import OrderedDict
+
+from andes.shared import tqdm
 from andes.core.param import TimerParam, IdxParam, DataParam, NumParam
 from andes.core.model import Model, ModelData
 from andes.core.var import ExtAlgeb
 from andes.core.service import ConstService
-from andes.shared import np, tqdm
-from collections import OrderedDict
-import logging
+from andes.core.discrete import Switcher
+
 logger = logging.getLogger(__name__)
 
 
 class TogglerData(ModelData):
     def __init__(self):
         super(TogglerData, self).__init__()
-        self.model = DataParam(info='Model or Group of the device to control', mandatory=True)
+        self.model = DataParam(info='model or group name of the device', mandatory=True)
         self.dev = IdxParam(info='idx of the device to control', mandatory=True)
         self.t = TimerParam(info='switch time for connection status', mandatory=True)
 
@@ -19,7 +24,13 @@ class TogglerData(ModelData):
 class Toggler(TogglerData, Model):
     """
     Time-based connectivity status toggler.
+
+    Toggler is used for toggle the connection status
+    of a device at a predefined time.
+    Both the model name (or group name) and the device
+    idx need to be provided.
     """
+
     def __init__(self, system, config):
         TogglerData.__init__(self)
         Model.__init__(self, system, config)
@@ -53,7 +64,8 @@ class Toggler(TogglerData, Model):
                 instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
                 action = True
                 tqdm.write(f'<Toggler {self.idx.v[i]}>: '
-                           f'{self.model.v[i]}.{self.dev.v[i]} status changed to {1-u0:g} at t={self.t.v[i]} sec.')
+                           f'{self.model.v[i]}.{self.dev.v[i]} status '
+                           f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
         return action
 
 
@@ -61,6 +73,7 @@ class Fault(ModelData, Model):
     """
     Three-phase to ground fault.
     """
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.bus = IdxParam(model='Bus',
@@ -166,3 +179,90 @@ class Fault(ModelData, Model):
 
                 action = True
         return action
+
+
+class AlterData(ModelData):
+    """
+    Data for Alter, which altera values of the given device at a certain time.
+
+    Alter can be used in various timed applications, such as applying load changing,
+    tap changing, step response, etc.
+    """
+
+    def __init__(self):
+        ModelData.__init__(self)
+        self.t = TimerParam(info='switch time for connection status', mandatory=True)
+
+        self.model = DataParam(info='model or group name of the device', mandatory=True)
+        self.dev = IdxParam(info='idx of the device to alter', mandatory=True)
+        self.src = IdxParam(info='model source field (param or service)', mandatory=True)
+        self.attr = IdxParam(info='attribute (e.g., v) of the source field', default='v')
+
+        self.method = NumParam(info='alteration method in +, -, *, /', mandatory=True, vtype=np.object)
+        self.amount = NumParam(info='the amount to apply', mandatory=True,)
+
+
+class AlterModel(Model):
+    def __init__(self, system, config):
+        Model.__init__(self, system, config)
+        self.flags.tds = True
+        self.group = 'TimedEvent'
+
+        self.SW = Switcher(u=self.method, options=('+', '-', '*', '/'),
+                           info='Switcher for alteration method',
+                           )
+
+        self.t.callback = self._alter_field
+
+    def _alter_field(self, is_time):
+        """
+        Actuation of the alteration.
+        """
+        action = False
+
+        for ii in range(self.n):
+            if not is_time[ii]:
+                continue
+            if self.u.v[ii] == 0:
+                continue
+
+            model = self.system.__dict__[self.model.v[ii]]
+            idx = self.dev.v[ii]
+            src = self.src.v[ii]
+            attr = self.attr.v[ii]
+            amount = self.amount.v[ii]
+
+            try:
+                v0 = model.get(src=src, idx=idx, attr=attr)
+            except KeyError as e:
+                tqdm.write("\nError: <%s %s> cannot find idx=%s or src=%s in model <%s>. " % (
+                    self.class_name, self.idx.v[ii],
+                    idx, src, self.model.v[ii],
+                ))
+                tqdm.write("<%s %s> disabled due to %s.\n" % (self.class_name, self.idx.v[ii], repr(e)))
+                self.u.v[ii] = 0
+                continue
+
+            vnew = (self.SW.s0[ii] * (v0 + amount)) + \
+                (self.SW.s1[ii] * (v0 - amount)) + \
+                (self.SW.s2[ii] * (v0 * amount)) + \
+                (self.SW.s3[ii] * (v0 / amount))
+
+            model.set(src=src, idx=idx, attr=attr, value=vnew)
+            tqdm.write(f'<Alter {self.idx.v[ii]}>: '
+                       f'{self.model.v[ii]}.{idx}.{src} '
+                       f'changed to {vnew} at t={self.t.v[ii]} sec.')
+            action = True
+
+        return action
+
+
+class Alter(AlterData, AlterModel):
+    """
+    Model for altering device internal data (service or param)
+    at a given time.
+    """
+
+    def __init__(self, system, config):
+        AlterData.__init__(self)
+        AlterModel.__init__(self, system, config)

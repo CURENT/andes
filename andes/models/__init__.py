@@ -14,7 +14,7 @@ from collections import OrderedDict
 
 file_classes = OrderedDict([
     ('info', ['Summary']),
-    ('timer', ['Toggler', 'Fault']),
+    ('timer', ['Toggler', 'Fault', 'Alter']),
     ('bus', ['Bus']),
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),

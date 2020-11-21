@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class GroupBase:
     """
-    Base class for groups
+    Base class for groups.
     """
 
     def __init__(self):
