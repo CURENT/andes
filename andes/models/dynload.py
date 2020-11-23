@@ -4,7 +4,7 @@ Module for dynamic loads.
 
 from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, NumParam, ExtParam
-from andes.core.service import ConstService, ExtService
+from andes.core.service import ConstService, ExtService, InitChecker
 from andes.core.var import ExtAlgeb
 
 
@@ -55,6 +55,20 @@ class ZIPModel(Model):
         Model.__init__(self, system, config)
         self.group = 'DynLoad'
         self.flags.tds = True
+
+        self.kps = ConstService(v_str='kpp + kpi + kpz',
+                                tex_name='K_{psum}',
+                                )
+        self.kqs = ConstService(v_str='kqp + kqi + kqz',
+                                tex_name='K_{qsum}',)
+        self.kpc = InitChecker(u=self.kps, equal=100.0,
+                               tex_name='K_{pc}',
+                               info='total `kp` and 100',
+                               )
+        self.kqc = InitChecker(u=self.kqs, equal=100.0,
+                               tex_name='K_{qc}',
+                               info='total `kq` and 100',
+                               )
 
         self.rpp = ConstService(v_str='u * kpp / 100',
                                 tex_name='r_{pp}',
