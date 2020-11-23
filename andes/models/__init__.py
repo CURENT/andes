@@ -21,6 +21,7 @@ file_classes = OrderedDict([
     ('shunt', ['Shunt', 'ShuntSw']),
     ('line', ['Line']),
     ('area', ['Area', 'ACE', 'ACEc']),
+    ('dynload', ['ZIP']),
     ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1N', 'TGOV1DB', 'IEEEG1']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS']),
