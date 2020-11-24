@@ -416,6 +416,10 @@ class ExtVar(BaseVar):
 
             if self.allow_none:
                 raise NotImplementedError(f"{self.name}: allow_none not implemented for Model")
+            if original_var.v_code != self.v_code:
+                raise TypeError("Linking %s of %s to %s of %s is not allowed" %
+                                (self.name, self.class_name,
+                                 original_var.name, original_var.class_name))
 
             if self.indexer is not None:
                 uid = ext_model.idx2uid(self.indexer.v)
