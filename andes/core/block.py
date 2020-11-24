@@ -582,7 +582,8 @@ class Integrator(Block):
              └──────┘
 
     Exports a differential variable `y`.
-    The initial output is specified by `y0` and default to zero.
+
+    The initial output needs to be specified through `y0`.
     """
 
     def __init__(self, u, T, K, y0, name=None, tex_name=None, info=None):
