@@ -53,6 +53,7 @@ class ZIPModel(Model):
     """
     Model for ZIP load.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'DynLoad'
@@ -170,6 +171,7 @@ class FLoadData(ModelData):
     """
     Data for frequency dependent load.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -232,7 +234,7 @@ class FLoadModel(Model):
 
         self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq,
                           tex_name='f',
-                           )
+                          )
 
         self.pv0 = ConstService(v_str='u * kp/100 * p0 / (v0) ** ap ')
         self.qv0 = ConstService(v_str='u * kq/100 * q0 / (v0) ** aq ')
