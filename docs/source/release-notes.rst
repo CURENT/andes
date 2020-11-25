@@ -12,6 +12,8 @@ v1.2.6
 ```````````````````
 - Added `TGOV1N` model which sums `pref` and `paux` after
   the 1/droop block.
+- Added `ZIP` and `FLoad` for dynamic analysis. Need to be initialized
+  after power flow.
 - Added `DAETimeSeries.get_data()` method.
 
 v1.2.5 (2020-11-19)
