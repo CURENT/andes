@@ -419,7 +419,9 @@ class Streaming:
         if not self.has_pmu:
             return
 
-        idx = np.append(self.system.PMU.vm, self.system.PMU.am, self.system.BusFreq.w)
+        idx = np.append(self.system.PMU.vm.a,
+                        self.system.PMU.am.a,
+                        self.system.dae.n + self.system.BusFreq.f.a)
 
         t = self.system.dae.t.tolist()
         k = 0  # field `k` is not no use
