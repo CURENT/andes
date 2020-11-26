@@ -99,8 +99,8 @@ class Streaming:
         }
         self.Idxvgs['Pmu'] = {
             # NOT YET SUPPORTED
-            # 'vm': 1 + array(self.system.PMU.vm),
-            # 'am': 1 + array(self.system.PMU.am),
+            'vm': 1 + self.system.PMU.vm.a,
+            'am': 1 + self.system.PMU.am.a,
         }
 
         # NOT YET SUPPORTED
