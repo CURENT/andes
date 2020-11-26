@@ -51,7 +51,9 @@ class Streaming:
             return False
 
         try:
-            self.dimec = DimeClient(config.dime_protocol, config.dime_address,
+            self.dimec = DimeClient(config.dime_protocol,
+                                    config.dime_address,
+                                    config.dime_port,
                                     )
             self.dimec.join(config.dime_name)
             logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful.")

@@ -135,6 +135,7 @@ class System:
                                      ('dime_name', 'andes'),
                                      ('dime_protocol', 'ipc'),
                                      ('dime_address', '/tmp/dime2'),
+                                     ('dime_port', 5000),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('save_pycode', 0),
