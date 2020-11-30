@@ -901,7 +901,10 @@ class LagAntiWindup(Block):
 class LagAWFreeze(LagAntiWindup):
     """
     Lag with anti-windup limiter and state freeze.
+
+    The output `y` is a state variable.
     """
+
     def __init__(self, u, T, K, lower, upper, freeze,
                  name=None, tex_name=None, info=None):
         LagAntiWindup.__init__(self, u, T, K, lower, upper,
