@@ -1812,7 +1812,7 @@ class WTPTA1Model(Model):
                               e_str='-theta0 + LG_y'
                               )
 
-        self.Pord = ExtAlgeb(model='RenExciter', src='Pord', indexer=self.ree,
+        self.Pord = ExtState(model='RenExciter', src='Pord', indexer=self.ree,
                              )
 
         self.Pref = ExtAlgeb(model='RenExciter', src='Pref', indexer=self.ree,
