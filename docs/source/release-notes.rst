@@ -15,6 +15,8 @@ v1.2.6
 - Added `ZIP` and `FLoad` for dynamic analysis. Need to be initialized
   after power flow.
 - Added `DAETimeSeries.get_data()` method.
+- Added IEEE 14-bus test cases with solar PV (ieee14_solar.xlsx) and
+  Generic Type 3 wind (ieee14_wt3.xlsx).
 
 v1.2.5 (2020-11-19)
 ```````````````````
