@@ -1286,7 +1286,7 @@ class CurrentSign(ConstService):
             elif bus == bus2:
                 out[idx] = -1
             else:
-                raise ValueError(f"bus {bus} is terminal of the line connecting {bus1} and {bus2}. "
+                raise ValueError(f"bus {bus} is not terminal of the line connecting {bus1} and {bus2}. "
                                  f"Check the data of {self.bus.owner.class_name}.{self.bus.name}")
 
         return out
