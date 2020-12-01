@@ -81,6 +81,9 @@ class TGBase(Model):
                                   indexer=self.syn,
                                   tex_name=r'\tau_{m0}',
                                   info='Initial mechanical input')
+            self.pref0 = ConstService(v_str='tm0', info='initial pref',
+                                      tex_name='P_{ref0}',
+                                      )
 
         self.omega = ExtState(src='omega',
                               model='SynGen',
@@ -222,7 +225,7 @@ class TG2(TG2Data, TGBase):
         self.pnl = Algeb(info='Power output before hard limiter',
                          tex_name='P_{nl}',
                          v_str='tm0',
-                         e_str='tm0 + ll_y - pnl',
+                         e_str='pref0 + ll_y - pnl',
                          )
         self.plim = HardLimiter(u=self.pnl,
                                 lower=self.pmin,
@@ -294,14 +297,10 @@ class TGOV1Model(TGBase):
                                  tex_name='G',
                                  )
 
-        self.pext = ConstService(v_str='0',
-                                 tex_name='P_{ext}',
-                                 info='signal to adjusting Pref externally',
-                                 )
         self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
-                          v_str='tm0 * R + pext',
-                          e_str='tm0 * R + pext - pref',
+                          v_str='tm0 * R',
+                          e_str='pref0 * R - pref',
                           )
 
         self.wd = Algeb(info='Generator under speed',
@@ -329,6 +328,19 @@ class TGOV1Model(TGBase):
         self.pout.e_str = '(LL_y + Dt * wd) - pout'
 
 
+class TGOV1NModel(TGOV1Model):
+    """
+    New TGOV1 model with `pref` and `paux` summed after the gain.
+    """
+
+    def __init__(self, system, config):
+        TGOV1Model.__init__(self, system, config)
+        self.pref.v_str = 'tm0'
+        self.pref.e_str = 'pref0 - pref'
+
+        self.pd.e_str = 'u*(wd * gain + pref + paux) - pd'
+
+
 class TGOV1DBModel(TGOV1Model):
     def __init__(self, system, config):
         TGOV1Model.__init__(self, system, config)
@@ -352,7 +364,7 @@ class TGOV1ModelAlt(TGBase):
         self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
                           v_str='tm0 * R',
-                          e_str='tm0 * R - pref',
+                          e_str='pref0 * R - pref',
                           )
         self.wd = Algeb(info='Generator under speed',
                         unit='p.u.',
@@ -364,7 +376,7 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
-                        e_str='(wd + pref) * gain - pd')
+                        e_str='(wd + pref + paux) * gain - pd')
 
         self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
@@ -402,6 +414,26 @@ class TGOV1(TGOV1Data, TGOV1Model):
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1Model.__init__(self, system, config)
+
+
+class TGOV1N(TGOV1Data, TGOV1NModel):
+    """
+    New TGOV1 (TGOV1N) turbine governor model.
+
+    New TGOV1 model with `pref` and `paux` summed after the gain.
+    This model is useful for incorporating AGC and scheduling
+    signals without having to know the droop.
+
+    Scheduling changes should write to the `v` fields of
+    `pref0` and `qref0` in place.
+    AGC signal should write to that of `paux0` in place.
+
+    Modifying `tm0` is not allowed.
+    """
+
+    def __init__(self, system, config):
+        TGOV1Data.__init__(self)
+        TGOV1NModel.__init__(self, system, config)
 
 
 class TGOV1DB(TGOV1DBData, TGOV1DBModel):
@@ -674,6 +706,9 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
     Normally, K1 + K2 + ... + K8 = 1.0.
     If the second generator is not connected,
     K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
+
+    IEEEG1 does not yet support the change of reference
+    (scheduling).
     """
 
     def __init__(self, system, config):

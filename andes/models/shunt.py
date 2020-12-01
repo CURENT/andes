@@ -21,11 +21,11 @@ class ShuntData(ModelData):
 
         self.bus = IdxParam(model='Bus', info="idx of connected bus", mandatory=True)
 
-        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
-        self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
-        self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name=r'g')
-        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capacitive)", y=True, tex_name=r'b')
-        self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
+        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name='S_n')
+        self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name='V_n')
+        self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name='g')
+        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capacitive)", y=True, tex_name='b')
+        self.fn = NumParam(default=60.0, info="rated frequency", tex_name='f_n')
 
 
 class ShuntModel(Model):
@@ -39,7 +39,7 @@ class ShuntModel(Model):
         self.flags.tds = True
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name=r'V')
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name='V')
 
         self.a.e_str = 'u * v**2 * g'
         self.v.e_str = '-u * v**2 * b'

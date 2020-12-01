@@ -182,12 +182,12 @@ class PVD1Data(ModelData):
                             )
 
         self.gammap = NumParam(default=1.0, tex_name=r'\gamma_p',
-                               info='Ratio of PVD1.p0 w.r.t to that of static PV',
+                               info='Ratio of PVD1.pref0 w.r.t to that of static PV',
                                vrange='(0, 1]',
                                )
 
         self.gammaq = NumParam(default=1.0, tex_name=r'\gamma_q',
-                               info='Ratio of PVD1.q0 w.r.t to that of static PV',
+                               info='Ratio of PVD1.qref0 w.r.t to that of static PV',
                                vrange='(0, 1]',
                                )
 
@@ -215,6 +215,8 @@ class PVD1Model(Model):
         # v : bus voltage magnitude
         # p0s : active power from connected static PV generator
         # q0s : reactive power from connected static PV generator
+        # pref0 : initial active power set point for the PVD1 device
+        # qref0 : initial reactive power set point for the PVD1 device
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
                           info='bus (or igreg) phase angle',
@@ -241,12 +243,12 @@ class PVD1Model(Model):
                               info='Initial Q from static gen',
                               )
         # --- calculate the initial P and Q for this distributed device ---
-        self.p0 = ConstService(v_str='gammap * p0s', tex_name='P_0',
-                               info='Initial P for the PVD1 device',
-                               )
-        self.q0 = ConstService(v_str='gammaq * q0s', tex_name='Q_0',
-                               info='Initial Q for the PVD1 device',
-                               )
+        self.pref0 = ConstService(v_str='gammap * p0s', tex_name='P_{ref0}',
+                                  info='Initial P for the PVD1 device',
+                                  )
+        self.qref0 = ConstService(v_str='gammaq * q0s', tex_name='Q_{ref0}',
+                                  info='Initial Q for the PVD1 device',
+                                  )
 
         # frequency measurement variable `f`
         self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
@@ -344,8 +346,8 @@ class PVD1Model(Model):
 
         self.Pref = Algeb(tex_name='P_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
-                          v_str='p0',
-                          e_str='p0 - Pref'
+                          v_str='pref0',
+                          e_str='pref0 - Pref'
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
@@ -359,12 +361,12 @@ class PVD1Model(Model):
                                 tex_name='V_{comp}'
                                 )
 
-        self.Vqu = ConstService(v_str='v1 - (q0 - qmn) / dqdv',
+        self.Vqu = ConstService(v_str='v1 - (qref0 - qmn) / dqdv',
                                 info='Upper voltage bound => qmx',
                                 tex_name='V_{qu}',
                                 )
 
-        self.Vql = ConstService(v_str='v0 + (qmx - q0) / dqdv',
+        self.Vql = ConstService(v_str='v0 + (qmx - qref0) / dqdv',
                                 info='Lower voltage bound => qmn',
                                 tex_name='V_{ql}',
                                 )
@@ -382,7 +384,7 @@ class PVD1Model(Model):
         Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
                'VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
-               'q0'
+               'qref0'
 
         self.Qsum = Algeb(info='Total Q (droop + initial)',
                           v_str=Qsum,
@@ -405,7 +407,7 @@ class PVD1Model(Model):
 
         # --- Ipmax, Iqmax and Iqmin ---
         Ipmaxsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
-        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (q0 / v)**2, 0)), ((ialim**2 - (q0 / v) ** 2), True)))"
+        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (qref0 / v)**2, 0)), ((ialim**2 - (qref0 / v) ** 2), True)))"
         self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
         self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
 
@@ -415,7 +417,7 @@ class PVD1Model(Model):
                            )
 
         Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
-        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (p0 / v)**2, 0)), ((ialim**2 - (p0 / v) ** 2), True)))"
+        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (pref0 / v)**2, 0)), ((ialim**2 - (pref0 / v) ** 2), True)))"
         self.Iqmaxsq = VarService(v_str=Iqmaxsq, tex_name='I_{qmax}^2')
         self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0, tex_name='I_{qmax0}^2')
 
@@ -470,6 +472,11 @@ class PVD1(PVD1Data, PVD1Model):
     is responsible for the parameter validity.
 
     Frequency and voltage recovery latching is yet to be implemented.
+
+    Modifications to the active and reactive power references,
+    typically by an external scheduling program, should
+    write to `pref0.v` and `qref0.v` in place.
+    AGC signals should write to `pext0.v` in place.
 
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],

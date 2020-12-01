@@ -51,7 +51,9 @@ class Streaming:
             return False
 
         try:
-            self.dimec = DimeClient(config.dime_protocol, config.dime_address,
+            self.dimec = DimeClient(config.dime_protocol,
+                                    config.dime_address,
+                                    config.dime_port,
                                     )
             self.dimec.join(config.dime_name)
             logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful.")
@@ -97,8 +99,8 @@ class Streaming:
         }
         self.Idxvgs['Pmu'] = {
             # NOT YET SUPPORTED
-            # 'vm': 1 + array(self.system.PMU.vm),
-            # 'am': 1 + array(self.system.PMU.am),
+            'vm': 1 + self.system.PMU.vm.a,
+            'am': 1 + self.system.PMU.am.a,
         }
 
         # NOT YET SUPPORTED
@@ -417,7 +419,10 @@ class Streaming:
         if not self.has_pmu:
             return
 
-        idx = np.append(self.system.PMU.vm, self.system.PMU.am, self.system.BusFreq.w)
+        idx = np.concatenate((self.system.PMU.vm.a,
+                              self.system.PMU.am.a,
+                              self.system.dae.n + self.system.BusFreq.f.a,
+                              ))
 
         t = self.system.dae.t.tolist()
         k = 0  # field `k` is not no use
@@ -469,6 +474,7 @@ class Streaming:
             }
 
             self.dimec.send_r(mod, Varvgs=Varvgs)
+            logger.debug("Send Varvgs to module <%s>", mod)
 
     def finalize(self):
         """

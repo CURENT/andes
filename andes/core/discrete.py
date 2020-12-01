@@ -791,8 +791,9 @@ class Switcher(Discrete):
     where `IC_s0` is used for padding so that following flags align with the options.
     """
 
-    def __init__(self, u, options: Union[list, Tuple], name: str = None, tex_name: str = None, cache=True):
-        super().__init__(name=name, tex_name=tex_name)
+    def __init__(self, u, options: Union[list, Tuple], info: str = None,
+                 name: str = None, tex_name: str = None, cache=True):
+        super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = u
         self.options: Union[List, Tuple] = options
         self.cache: bool = cache
@@ -817,8 +818,9 @@ class Switcher(Discrete):
             if v not in self.options and not np.isnan(v):
                 raise ValueError(f'option {v} is invalid for {self.owner.class_name}.{self.u.name}. '
                                  f'Options are {self.options}.')
-        for i in range(len(self.options)):
-            self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i])
+        if len(self.u.v) > 0:
+            for i in range(len(self.options)):
+                self.__dict__[f's{i}'][:] = np.equal(self.u.v, self.options[i])
 
         self._eval = True
 

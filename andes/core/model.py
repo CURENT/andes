@@ -1673,7 +1673,9 @@ class Model:
             return numba.jit(func, parallel=parallel, cache=cache)
 
     def __repr__(self):
-        return f'{self.class_name} ({self.n} devices) at {hex(id(self))}'
+        dev_text = 'device' if self.n == 1 else 'devices'
+
+        return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
 
 
 class SymProcessor:

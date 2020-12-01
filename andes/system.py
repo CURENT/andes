@@ -127,6 +127,7 @@ class System:
                                      ('mva', 100),
                                      ('store_z', 0),
                                      ('ipadd', 1),
+                                     ('seed', 'None'),
                                      ('diag_eps', 1e-8),
                                      ('warn_limits', 1),
                                      ('warn_abnormal', 1),
@@ -134,6 +135,7 @@ class System:
                                      ('dime_name', 'andes'),
                                      ('dime_protocol', 'ipc'),
                                      ('dime_address', '/tmp/dime2'),
+                                     ('dime_port', 5000),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('save_pycode', 0),
@@ -145,6 +147,7 @@ class System:
                               mva='system base MVA',
                               store_z='store limiter status in TDS output',
                               ipadd='use spmatrix.ipadd if available',
+                              seed='seed (or None) for random number generator',
                               diag_eps='small value for Jacobian diagonals',
                               warn_limits='warn variables initialized at limits',
                               warn_abnormal='warn initialization out of normal values',
@@ -159,6 +162,7 @@ class System:
                               mva="float",
                               store_z=(0, 1),
                               ipadd=(0, 1),
+                              seed='int or None',
                               warn_limits=(0, 1),
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
@@ -186,6 +190,11 @@ class System:
 
         # internal flags
         self.is_setup = False              # if system has been setup
+
+        # set up numpy random seed
+        if isinstance(self.config.seed, int):
+            np.random.seed(self.config.seed)
+            logger.debug("Random seed set to <%d>.", self.config.seed)
 
     def reload(self, case, **kwargs):
         """

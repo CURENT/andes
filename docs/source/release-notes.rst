@@ -8,8 +8,17 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
+v1.2.6
+```````````````````
+- Added `TGOV1N` model which sums `pref` and `paux` after
+  the 1/droop block.
+- Added `ZIP` and `FLoad` for dynamic analysis. Need to be initialized
+  after power flow.
+- Added `DAETimeSeries.get_data()` method.
+- Added IEEE 14-bus test cases with solar PV (ieee14_solar.xlsx) and
+  Generic Type 3 wind (ieee14_wt3.xlsx).
 
-v1.2.5
+v1.2.5 (2020-11-19)
 ```````````````````
 - Added `Summary` model to allow arbitrary information for
   a test case. Works in `xlsx` and `json` formats.

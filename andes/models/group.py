@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class GroupBase:
     """
-    Base class for groups
+    Base class for groups.
     """
 
     def __init__(self):
@@ -469,6 +469,13 @@ class StaticShunt(GroupBase):
     pass
 
 
+class DynLoad(GroupBase):
+    """
+    Dynamic load group.
+    """
+    pass
+
+
 class SynGen(GroupBase):
     """
     Synchronous generator group.
@@ -499,6 +506,7 @@ class RenExciter(GroupBase):
     """
     Renewable electrical control (exciter) group.
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('reg',))
@@ -509,6 +517,7 @@ class RenPlant(GroupBase):
     """
     Renewable plant control group.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -517,6 +526,7 @@ class RenGovernor(GroupBase):
     """
     Renewable turbine governor group.
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('ree', 'w0', 'Sn', 'Pe0'))
@@ -527,6 +537,7 @@ class RenAerodynamics(GroupBase):
     """
     Renewable aerodynamics group.
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('rego',))
@@ -537,6 +548,7 @@ class RenPitch(GroupBase):
     """
     Renewable generator pitch controller group.
     """
+
     def __init__(self):
         super().__init__()
         self.common_params.extend(('rea',))
@@ -546,6 +558,7 @@ class RenTorque(GroupBase):
     """
     Renewable torque (Pref) controller.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -554,6 +567,7 @@ class DG(GroupBase):
     """
     Distributed generation (small-scale).
     """
+
     def __init__(self):
         super().__init__()
 
@@ -628,6 +642,7 @@ class PhasorMeasurement(GroupBase):
 class Motor(GroupBase):
     """Induction Motor group
     """
+
     def __init__(self):
         super().__init__()
 
@@ -636,6 +651,7 @@ class Information(GroupBase):
     """
     Group for information container models.
     """
+
     def __init__(self):
         GroupBase.__init__(self)
         self.common_params = []

@@ -14,15 +14,16 @@ from collections import OrderedDict
 
 file_classes = OrderedDict([
     ('info', ['Summary']),
-    ('timer', ['Toggler', 'Fault']),
+    ('timer', ['Toggler', 'Fault', 'Alter']),
     ('bus', ['Bus']),
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),
     ('shunt', ['Shunt', 'ShuntSw']),
     ('line', ['Line']),
     ('area', ['Area', 'ACE', 'ACEc']),
+    ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU']),
-    ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'IEEEG1']),
+    ('governor', ['TG2', 'TGOV1', 'TGOV1N', 'TGOV1DB', 'IEEEG1']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS']),
     ('pss', ['IEEEST', 'ST2CUT']),
     ('motor', ['Motor3', 'Motor5']),
@@ -30,7 +31,7 @@ file_classes = OrderedDict([
     ('coi', ['COI', ]),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
-    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1']),
+    ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1']),
     ('distributed', ['PVD1']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
 ])

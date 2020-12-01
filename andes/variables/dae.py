@@ -1,7 +1,12 @@
 import logging
+import numpy as np
+
+from typing import List, Union
 from collections import OrderedDict
+
 from andes.core import JacTriplet
-from andes.shared import pd, np, spmatrix, jac_names
+from andes.core.var import BaseVar
+from andes.shared import pd, spmatrix, jac_names
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +119,40 @@ class DAETimeSeries:
         self.df_xyz = pd.concat((self.df_xy, self.df_z), axis=1)
 
         return True
+
+    def get_data(self, base_vars: Union[BaseVar, List[BaseVar]], a=None):
+        """
+        Get time-series data for a variable instance.
+
+        Values for different variables will be stacked horizontally.
+
+        Parameters
+        ----------
+        base_var : BaseVar or a sequence of BaseVar(s)
+            The variable types and internal addresses
+            are used for looking up the data.
+        a : an array-like of int or None
+            Sub-indices into the address of `base_var`.
+            Applied to each variable.
+
+        """
+        out = np.zeros((len(self.t), 0))
+        if isinstance(base_vars, BaseVar):
+            base_vars = (base_vars, )
+
+        for base_var in base_vars:
+            if base_var.n == 0:
+                logger.info("Variable <%s.%s> does not contain any element.",
+                            base_var.owner.class_name, base_var.name)
+                continue
+
+            indices = base_var.a
+            if a is not None:
+                indices = indices[a]
+
+            out = np.hstack((out, self.__dict__[base_var.v_code][:, indices]))
+
+        return out
 
     @property
     def df(self):
