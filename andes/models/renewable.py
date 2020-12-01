@@ -2150,6 +2150,11 @@ class WTARV1Model(Model):
                             indexer=self.rego,
                             )
 
+        self.theta = Algeb(tex_name=r'\theta',
+                           info='Pitch angle',
+                           unit='rad',
+                           )
+
 
 class WTARV1(WTARV1Data, WTARV1Model):
     """
