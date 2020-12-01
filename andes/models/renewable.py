@@ -895,9 +895,10 @@ class REECA1(REECA1Data, REECA1Model):
     There are two user-defined voltages: `Vref0` and `Vref1`.
 
     - The difference between the initial bus voltage and `Vref0`
-    should be within the voltage deadbands `dbd1` and `dbd2.
+      should be within the voltage deadbands `dbd1` and `dbd2`.
     - If `VFLAG=0`, the input to the second PI controller will
-    be `Vref1`.
+      be `Vref1`.
+
     """
 
     def __init__(self, system, config):
