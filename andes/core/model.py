@@ -1623,6 +1623,10 @@ class Model:
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
 
+        for name, item in self.discrete.items():
+            md5.update(str(name).encode())
+            md5.update(str(','.join(item.export_flags)).encode())
+
         return md5.hexdigest()
 
     def post_init_check(self):
