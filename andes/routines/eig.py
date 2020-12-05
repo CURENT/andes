@@ -15,7 +15,7 @@ from andes.variables.report import report_info
 
 from andes.plot import set_latex
 
-from andes.shared import matrix, spmatrix, plt, mpl
+from andes.shared import matrix, spmatrix, sparse, plt, mpl
 from andes.shared import mul, div, spdiag, gesv
 
 
@@ -42,20 +42,20 @@ class EIG(BaseRoutine):
         self.singular_idx = np.array([], dtype=int)
         self.x_name = []
 
-    def calc_state_matrix(self):
+    def calc_As(self, dense=True):
         r"""
         Return state matrix and store to ``self.As``.
 
         Notes
         -----
-        For systems with the form
+        For systems in the mass-matrix formulation,
 
         .. math ::
 
             T \dot{x} = f(x, y) \\
             0 = g(x, y)
 
-        The state matrix is calculated from
+        Assume `T` is non-singular, the state matrix is calculated from
 
         .. math ::
 
@@ -67,21 +67,72 @@ class EIG(BaseRoutine):
             state matrix
         """
         system = self.system
+        self.find_zero_states()
+        self.x_name = np.array(system.dae.x_name)
 
-        gyx = matrix(system.dae.gx)
-        self.solver.linsolve(system.dae.gy, gyx)
+        self.As = self._calc_state_matrix(system.dae.fx, system.dae.fy,
+                                          system.dae.gx, system.dae.gy, system.dae.Tf,
+                                          dense=dense)
 
-        Tfnz = system.dae.Tf + np.ones_like(system.dae.Tf) * np.equal(system.dae.Tf, 0.0)
-        iTf = spdiag((1 / Tfnz).tolist())
-        self.As = matrix(iTf * (system.dae.fx - system.dae.fy * gyx))
+        if len(self.singular_idx) > 0:
+            self.Asc = self.As
+            self.As = self._calc_state_matrix(*self.reorder_As())
         return self.As
 
-    def remove_singular_rc(self):
+    def _calc_state_matrix(self, fx, fy, gx, gy, Tf, dense=True):
         """
-        Remove rows and cols associated with zero time constant.
+        Kernel function for calculating state matrix.
         """
-        self.As = np.delete(self.As, self.singular_idx, axis=0)
-        self.As = np.delete(self.As, self.singular_idx, axis=1)
+        gyx = matrix(gx)
+        self.solver.linsolve(gy, gyx)
+
+        Tfnz = Tf + np.ones_like(Tf) * np.equal(Tf, 0.0)
+        iTf = spdiag((1 / Tfnz).tolist())
+
+        if dense:
+            return iTf * (fx - fy * gyx)
+        else:
+            return sparse(iTf * (fx - fy * gyx))
+
+    def reorder_As(self):
+        """
+        reorder As by moving rows and cols associated with zero time constants to the end.
+
+        Returns `fx`, `fy`, `gx`, `gy`, `Tf`.
+        """
+        system = self.system
+        rows = np.arange(system.dae.n, dtype=int)
+        cols = np.arange(system.dae.n, dtype=int)
+        vals = np.ones(system.dae.n, dtype=float)
+
+        swaps = []
+        bidx = self.non_zeros
+        for ii in range(system.dae.n - self.non_zeros):
+            if ii in self.singular_idx:
+                while (bidx in self.singular_idx):
+                    bidx += 1
+                cols[ii] = bidx
+                rows[bidx] = ii
+                swaps.append((ii, bidx))
+
+        # swap the variable names
+        for fr, bk in swaps:
+            bk_name = self.x_name[bk]
+            self.x_name[fr] = bk_name
+        self.x_name = self.x_name[:self.non_zeros]
+
+        # compute the permutation matrix for `As` containing non-states
+        perm = spmatrix(matrix(vals), matrix(rows), matrix(cols))
+        As_perm = perm * sparse(self.As) * perm
+        self.As_perm = As_perm
+
+        nfx = As_perm[:self.non_zeros, :self.non_zeros]
+        nfy = As_perm[:self.non_zeros, self.non_zeros:]
+        ngx = As_perm[self.non_zeros:, :self.non_zeros]
+        ngy = As_perm[self.non_zeros:, self.non_zeros:]
+        nTf = np.delete(system.dae.Tf, self.singular_idx)
+
+        return nfx, nfy, ngx, ngy, nTf
 
     def calc_eigvals(self):
         """
@@ -96,7 +147,7 @@ class EIG(BaseRoutine):
 
     def calc_part_factor(self, As=None):
         """
-        Compute participation factor of states in eigenvalues
+        Compute participation factor of states in eigenvalues.
 
         Returns
         -------
@@ -110,8 +161,8 @@ class EIG(BaseRoutine):
         n = len(mu)
         idx = range(n)
 
-        mu_complex = np.array([0] * n, dtype=complex)
-        W = matrix(spmatrix(1.0, idx, idx, As.shape, N.typecode))
+        mu_complex = np.zeros_like(mu, dtype=np.complex)
+        W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
         gesv(N, W)
 
         partfact = mul(abs(W.T), abs(N))
@@ -142,10 +193,27 @@ class EIG(BaseRoutine):
         out_str = '\n'.join(out)
         logger.info(out_str)
 
-    def run(self, **kwargs):
-        succeed = False
+    def find_zero_states(self):
+        """
+        Find the indices of non-states in x.
+        """
         system = self.system
         self.singular_idx = np.array([], dtype=int)
+
+        if sum(system.dae.Tf != 0) != len(system.dae.Tf):
+            self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
+            logger.info("System contains %d zero time constants. ", len(self.singular_idx))
+            logger.debug([system.dae.x_name[i] for i in self.singular_idx])
+
+        self.non_zeros = system.dae.n - len(self.singular_idx)
+
+    def run(self, **kwargs):
+        """
+        Run small-signal stability analysis.
+        """
+
+        succeed = False
+        system = self.system
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Eig analysis will not continue.')
@@ -159,20 +227,14 @@ class EIG(BaseRoutine):
             logger.error('No dynamic model. Eig analysis will not continue.')
 
         else:
-            if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-                self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
-                logger.info("System contains %d zero time constants. ", len(self.singular_idx))
-                logger.debug([system.dae.x_name[i] for i in self.singular_idx])
-
-            self.x_name = np.array(system.dae.x_name)
-            self.x_name = np.delete(self.x_name, self.singular_idx)
-
             self.summary()
             t1, s = elapsed()
 
-            self.calc_state_matrix()
-            self.remove_singular_rc()
+            self.calc_As()
             self.calc_part_factor()
+
+            _, s = elapsed(t1)
+            logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
             if not self.system.files.no_output:
                 self.report()
@@ -181,12 +243,11 @@ class EIG(BaseRoutine):
 
             if self.config.plot:
                 self.plot()
-            _, s = elapsed(t1)
-            logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
             succeed = True
 
-        system.exit_code = 0 if succeed else 1
+        if not succeed:
+            system.exit_code += 1
         return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
