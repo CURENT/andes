@@ -29,6 +29,11 @@ class REGCA1Data(ModelData):
         self.gen = IdxParam(info="static generator index",
                             mandatory=True,
                             )
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
+
         self.Tg = NumParam(default=0.1, tex_name='T_g',
                            info='converter time const.', unit='s',
                            )
@@ -62,9 +67,10 @@ class REGCA1Data(ModelData):
                                unit='p.u.',
                                )
         # TODO: ensure Lvpnt1 > Lvpnt0
-        self.Iolim = NumParam(default=0.0, tex_name='I_{olim}',
+        self.Iolim = NumParam(default=-1.5, tex_name='I_{olim}',
                               info='lower current limit for high volt. reactive current mgnt.',
-                              unit='p.u.',
+                              unit='p.u. (mach base)',
+                              current=True,
                               )
         self.Tfltr = NumParam(default=0.1, tex_name='T_{fltr}',
                               info='Voltage filter T const for low volt. active current mgnt.',
@@ -1400,11 +1406,6 @@ class WTDTA1Data(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Sn = NumParam(default=100.0, tex_name='S_n',
-                           info='Model MVA base',
-                           unit='MVA',
-                           )
-
         self.fn = NumParam(default=60.0, info="nominal frequency",
                            unit='Hz',
                            tex_name='f_n')
@@ -1453,6 +1454,9 @@ class WTDTA1Model(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,
                             )
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             export=False,
@@ -1538,11 +1542,6 @@ class WTDSData(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Sn = NumParam(default=100.0, tex_name='S_n',
-                           info='Model MVA base',
-                           unit='MVA',
-                           )
-
         self.fn = NumParam(default=60.0, info="nominal frequency",
                            unit='Hz',
                            tex_name='f_n')
@@ -1584,6 +1583,10 @@ class WTDSModel(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,
                             )
+
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             export=False,
