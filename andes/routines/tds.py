@@ -198,7 +198,7 @@ class TDS(BaseRoutine):
             logger.error("Initialization for dynamics failed in %s.", s1)
 
         if system.dae.n == 0:
-            tqdm.write('No dynamic component loaded.')
+            tqdm.write('No differential equation detected.')
         return system.dae.xy
 
     def summary(self):
