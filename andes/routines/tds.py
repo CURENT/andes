@@ -480,6 +480,7 @@ class TDS(BaseRoutine):
             self.inc = inc
 
             mis = np.max(np.abs(inc))
+            logger.debug("  * niter=%d, mis=%g", self.niter, mis)
             # store initial maximum mismatch
             if self.niter == 0:
                 self.mis[0] = mis
