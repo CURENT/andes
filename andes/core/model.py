@@ -2024,10 +2024,7 @@ class SymProcessor:
                 continue
 
             elif var.diag_eps is True:
-                try:
-                    eps = self.system.config.diag_eps
-                except AttributeError:
-                    eps = 1e-8   # fall-back value
+                eps = self.parent.system.config.diag_eps
 
             else:
                 eps = var.diag_eps
