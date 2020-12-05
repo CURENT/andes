@@ -34,8 +34,10 @@ class Discrete:
         self.tex_name = tex_name
         self.info = info
         self.owner = None
-        self.export_flags = []
-        self.export_flags_tex = []
+        if not hasattr(self, 'export_flags'):
+            self.export_flags = []
+        if not hasattr(self, 'export_flags_tex'):
+            self.export_flags_tex = []
 
         self.x_set = list()
         self.y_set = list()   # NOT being used
@@ -294,8 +296,8 @@ class Limiter(Discrete):
 
         self.has_check_var = True
 
-        self.export_flags = ['zi']
-        self.export_flags_tex = ['z_i']
+        self.export_flags.append('zi')
+        self.export_flags_tex.append('z_i')
 
         if not self.no_lower:
             self.export_flags.append('zl')
@@ -633,7 +635,7 @@ class RateLimiter(Discrete):
                 self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
 
             # for where `zlr == 1`, set the equation value to the lower limit
-            self.u.e[np.where(self.zlr)] = self.rate_lower.v
+            self.u.e[np.where(self.zlr)] = self.rate_lower.v[np.where(self.zlr)]
 
         if not self.rate_no_upper:
             self.zur[:] = np.greater(self.u.e, self.rate_upper.v)
@@ -641,7 +643,7 @@ class RateLimiter(Discrete):
             if self.rate_upper_cond is not None:
                 self.zur[:] = self.zur * self.rate_upper_cond.v
 
-            self.u.e[np.where(self.zur)] = self.rate_upper.v
+            self.u.e[np.where(self.zur)] = self.rate_upper.v[np.where(self.zur)]
 
 
 class AntiWindupRate(AntiWindup, RateLimiter):
