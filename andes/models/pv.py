@@ -50,8 +50,9 @@ class PVModel(Model):
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.group = 'StaticGen'
-        self.flags.update({'pflow': True,
-                           })
+        self.flags.pflow = True
+        self.flags.tds = True
+        self.flags.tds_init = False
 
         self.config.add(OrderedDict((('pv2pq', 0),
                                      ('npv2pq', 0),
