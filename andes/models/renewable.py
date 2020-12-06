@@ -37,7 +37,7 @@ class REGCA1Data(ModelData):
         self.Tg = NumParam(default=0.1, tex_name='T_g',
                            info='converter time const.', unit='s',
                            )
-        self.Rrpwr = NumParam(default=999, tex_name='R_{rpwr}',
+        self.Rrpwr = NumParam(default=10.0, tex_name='R_{rpwr}',
                               info='Low voltage power logic (LVPL) ramp limit',
                               unit='p.u.',
                               )
@@ -58,7 +58,7 @@ class REGCA1Data(ModelData):
                               info='Voltage lim for high volt. reactive current mgnt.',
                               unit='p.u.',
                               )
-        self.Lvpnt1 = NumParam(default=1.0, tex_name='L_{vpnt1}',
+        self.Lvpnt1 = NumParam(default=0.8, tex_name='L_{vpnt1}',
                                info='High volt. point for low volt. active current mgnt.',
                                unit='p.u.',
                                )
@@ -79,12 +79,12 @@ class REGCA1Data(ModelData):
         self.Khv = NumParam(default=0.7, tex_name='K_{hv}',
                             info='Overvolt. compensation gain in high volt. reactive current mgnt.',
                             )
-        self.Iqrmax = NumParam(default=999, tex_name='I_{qrmax}',
+        self.Iqrmax = NumParam(default=1, tex_name='I_{qrmax}',
                                info='Upper limit on the ROC for reactive current',
                                unit='p.u.',
                                current=True,
                                )
-        self.Iqrmin = NumParam(default=-999, tex_name='I_{qrmin}',
+        self.Iqrmin = NumParam(default=-1, tex_name='I_{qrmin}',
                                info='Lower limit on the ROC for reactive current',
                                unit='p.u.',
                                current=True,
@@ -92,14 +92,6 @@ class REGCA1Data(ModelData):
         self.Accel = NumParam(default=0.0, tex_name='A_{ccel}',
                               info='Acceleration factor',
                               vrange=(0, 1.0),
-                              )
-        self.Iqmax = NumParam(default=999, tex_name='I_{qmax}',
-                              info='Upper limit for reactive current',
-                              unit='p.u.',
-                              )
-        self.Iqmin = NumParam(default=-999, tex_name='I_{qmin}',
-                              info='Lower limit for reactive current',
-                              unit='p.u.',
                               )
 
 
@@ -151,6 +143,9 @@ class REGCA1Model(Model):
                            )
 
         # --- INITIALIZATION ---
+        self.q0gt0 = ConstService('Gt(q0, 0)', tex_name='z_{q0>0}')
+        self.q0lt0 = ConstService('Lt(q0, 0)', tex_name='z_{q0<0}')
+
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd',
                                    tex_name='I_{pcmd0}',
                                    )
@@ -169,14 +164,15 @@ class REGCA1Model(Model):
 
         # reactive power management
 
-        # TODO: create conditions for rate limiting.
-        #   In a fault recovery, activate upper limit when Qg0 > 0
-        #                        activate lower limit when Qg0 < 0
+        # rate limiting logic (for fault recovery, although it does not detect any recovery)
+        #   - activate upper limit when q0 > 0 (self.q0gt0)
+        #   - activate lower limit when q0 < 0 (self.q0lt0)
 
-        self.S1 = LagAntiWindupRate(u=self.Iqcmd, T=self.Tg, K=-1,
-                                    lower=self.Iqmin, upper=self.Iqmax,
+        self.S1 = LagAntiWindupRate(u=self.Iqcmd,
+                                    T=self.Tg, K=-1,
+                                    lower=-9999, upper=9999, no_lower=True, no_upper=True,
                                     rate_lower=self.Iqrmin, rate_upper=self.Iqrmax,
-                                    # rate_lower_cond, rate_upper_cond,
+                                    rate_lower_cond=self.q0lt0, rate_upper_cond=self.q0gt0,
                                     tex_name='S_1',
                                     info='Iqcmd delay',
                                     )  # output `S1_y` == `Iq`
@@ -215,7 +211,7 @@ class REGCA1Model(Model):
 
         self.S0 = LagAntiWindupRate(u=self.Ipcmd, T=self.Tg, K=1,
                                     upper=self.LVPL_y, rate_upper=self.Rrpwr,
-                                    lower=-999, rate_lower=-999,
+                                    lower=-9999, rate_lower=-9999,
                                     no_lower=True, rate_no_lower=True,
                                     tex_name='S_0',
                                     )  # `S0_y` is the output `Ip` in the block diagram
