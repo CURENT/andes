@@ -82,10 +82,12 @@ class REGCA1Data(ModelData):
         self.Iqrmax = NumParam(default=999, tex_name='I_{qrmax}',
                                info='Upper limit on the ROC for reactive current',
                                unit='p.u.',
+                               current=True,
                                )
         self.Iqrmin = NumParam(default=-999, tex_name='I_{qrmin}',
                                info='Lower limit on the ROC for reactive current',
                                unit='p.u.',
+                               current=True,
                                )
         self.Accel = NumParam(default=0.0, tex_name='A_{ccel}',
                               info='Acceleration factor',
@@ -410,6 +412,7 @@ class REECA1Data(ModelData):
         self.Imax = NumParam(default=999.0,
                              tex_name='I_{max}',
                              info='Max. apparent current limit',
+                             current=True,
                              )
         self.Tpord = NumParam(default=0.02,
                               tex_name='T_{pord}',
@@ -529,6 +532,10 @@ class REECA1Model(Model):
         self.gen = ExtParam(model='RenGen', src='gen', indexer=self.reg, export=False,
                             info='Retrieved StaticGen idx', vtype=str, default=None,
                             )
+
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         # --- External variables ---
         self.a = ExtAlgeb(model='Bus',
