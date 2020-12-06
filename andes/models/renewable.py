@@ -143,8 +143,12 @@ class REGCA1Model(Model):
                            )
 
         # --- INITIALIZATION ---
-        self.q0gt0 = ConstService('Gt(q0, 0)', tex_name='z_{q0>0}')
-        self.q0lt0 = ConstService('Lt(q0, 0)', tex_name='z_{q0<0}')
+        self.q0gt0 = ConstService('Gt(q0, 0)', tex_name='z_{q0>0}',
+                                  info='flags for q0 below zero',
+                                  )
+        self.q0lt0 = ConstService('Lt(q0, 0)', tex_name='z_{q0<0}',
+                                  info='flags for q0 below zero',
+                                  )
 
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd',
                                    tex_name='I_{pcmd0}',
@@ -734,6 +738,7 @@ class REECA1Model(Model):
 
         self.Pord = AliasState(self.s5_y)
 
+        # TODO: UNUSED, TO BE REMOVED, SEE `self.IpHL`.
         self.Ipulim = Algeb(info='Unlimited Ipcmd',
                             tex_name='I_{pulim}',
                             v_str='s5_y / vp',
