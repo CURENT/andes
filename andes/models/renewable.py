@@ -661,12 +661,6 @@ class REECA1Model(Model):
                             info='Filter for calculated voltage with freeze',
                             )
 
-        self.Qsel = Algeb(info='Selection output of QFLAG',
-                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
-                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
-                          tex_name='Q_{sel}',
-                          )
-
         # --- Upper portion - Iqinj calculation ---
 
         self.Verr = Algeb(info='Voltage error (Vref0)',
@@ -867,10 +861,17 @@ class REECA1Model(Model):
                                   )
 
         self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+                                   x0='-SWQ_s1 * Iqcmd0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
                                    lower=self.Iqmin, upper=self.Iqmax,
                                    freeze=self.Volt_dip,
                                    )
+
+        self.Qsel = Algeb(info='Selection output of QFLAG',
+                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
+                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
+                          tex_name='Q_{sel}',
+                          )
 
         # `IpHL_y` is `Ipcmd`
         self.IpHL = GainLimiter(u='s5_y / vp', K=1, lower=self.Ipmin, upper=self.Ipmax,
