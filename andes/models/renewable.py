@@ -746,13 +746,6 @@ class REECA1Model(Model):
 
         self.Pord = AliasState(self.s5_y)
 
-        # TODO: UNUSED, TO BE REMOVED, SEE `self.IpHL`.
-        self.Ipulim = Algeb(info='Unlimited Ipcmd',
-                            tex_name='I_{pulim}',
-                            v_str='s5_y / vp',
-                            e_str='s5_y / vp - Ipulim',
-                            )
-
         # --- Current limit logic ---
 
         self.kVq12 = ConstService(v_str='(Iq2 - Iq1) / (Vq2 - Vq1)',
