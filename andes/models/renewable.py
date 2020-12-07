@@ -181,14 +181,14 @@ class REGCA1Model(Model):
                                     info='Iqcmd delay',
                                     )  # output `S1_y` == `Iq`
 
-        # piece-wise gain for low voltage reactive current mgnt.
+        # piece-wise gain for low voltage active current mgnt.
         self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
                                  tex_name='k_{LVG}',
                                  )
 
         self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
                              funs=('0', '(v - Lvpnt0) * kLVG', '1'),
-                             info='Low voltage current gain',
+                             info='Ip gain during low voltage',
                              tex_name='L_{VG}',
                              )
 
@@ -425,6 +425,7 @@ class REECA1Data(ModelData):
         self.Iq1 = NumParam(default=2.0,
                             tex_name='I_{q1}',
                             info='Reactive power V-I pair (point 1), current',
+                            current=True,
                             )
         self.Vq2 = NumParam(default=0.4,
                             tex_name='V_{q2}',
@@ -433,6 +434,7 @@ class REECA1Data(ModelData):
         self.Iq2 = NumParam(default=4.0,
                             tex_name='I_{q2}',
                             info='Reactive power V-I pair (point 2), current',
+                            current=True,
                             )
         self.Vq3 = NumParam(default=0.8,
                             tex_name='V_{q3}',
@@ -441,6 +443,7 @@ class REECA1Data(ModelData):
         self.Iq3 = NumParam(default=8.0,
                             tex_name='I_{q3}',
                             info='Reactive power V-I pair (point 3), current',
+                            current=True,
                             )
         self.Vq4 = NumParam(default=1.0,
                             tex_name='V_{q4}',
@@ -449,6 +452,7 @@ class REECA1Data(ModelData):
         self.Iq4 = NumParam(default=10,
                             tex_name='I_{q4}',
                             info='Reactive power V-I pair (point 4), current',
+                            current=True,
                             )
         self.Vp1 = NumParam(default=0.2,
                             tex_name='V_{p1}',
@@ -457,6 +461,7 @@ class REECA1Data(ModelData):
         self.Ip1 = NumParam(default=2.0,
                             tex_name='I_{p1}',
                             info='Active power V-I pair (point 1), current',
+                            current=True,
                             )
         self.Vp2 = NumParam(default=0.4,
                             tex_name='V_{p2}',
@@ -465,6 +470,7 @@ class REECA1Data(ModelData):
         self.Ip2 = NumParam(default=4.0,
                             tex_name='I_{p2}',
                             info='Active power V-I pair (point 2), current',
+                            current=True,
                             )
         self.Vp3 = NumParam(default=0.8,
                             tex_name='V_{p3}',
@@ -473,6 +479,7 @@ class REECA1Data(ModelData):
         self.Ip3 = NumParam(default=8.0,
                             tex_name='I_{p3}',
                             info='Active power V-I pair (point 3), current',
+                            current=True,
                             )
         self.Vp4 = NumParam(default=1.0,
                             tex_name='V_{p4}',
@@ -481,6 +488,7 @@ class REECA1Data(ModelData):
         self.Ip4 = NumParam(default=12.0,
                             tex_name='I_{p4}',
                             info='Active power V-I pair (point 4), current',
+                            current=True,
                             )
 
 
@@ -806,9 +814,9 @@ class REECA1Model(Model):
                                     extend_only=True,
                                     )
 
-        self.VDL1c = VarService(v_str='VDL1_y < Imaxr')
+        self.VDL1c = VarService(v_str='Lt(VDL1_y, Imaxr)')
 
-        self.VDL2c = VarService(v_str='VDL2_y < Imaxr')
+        self.VDL2c = VarService(v_str='Lt(VDL2_y, Imaxr)')
 
         # `Iqmax` not considering mode or `Thld2`
         Iqmax1 = '(zVDL1*(VDL1c*VDL1_y + (1-VDL1c)*Imaxr) + 1e8*(1-zVDL1))'
