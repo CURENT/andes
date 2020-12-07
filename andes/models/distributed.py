@@ -1,6 +1,7 @@
 """
 Distributed energy resource models.
 """
+from collections import OrderedDict
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
@@ -67,6 +68,10 @@ class PVD1Data(ModelData):
 
         self.qmn = NumParam(default=-0.33, tex_name='q_{mn}',
                             info='Min. reactive power command',
+                            power=True,
+                            )
+        self.pmx = NumParam(default=999.0, info='maximum power limit',
+                            tex_name='p_{mx}',
                             power=True,
                             )
 
@@ -201,6 +206,19 @@ class PVD1Model(Model):
         Model.__init__(self, system, config)
         self.flags.tds = True
         self.group = 'DG'
+
+        self.config.add(OrderedDict((('plim', 0),
+                                     )))
+
+        self.config.add_extra('_help',
+                              plim='enable input power limit check bound by [0, pmx]',
+                              )
+        self.config.add_extra('_tex',
+                              plim='P_{lim}',
+                              )
+        self.config.add_extra('_alt',
+                              plim=(0, 1),
+                              )
 
         self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
 
@@ -356,6 +374,11 @@ class PVD1Model(Model):
                           e_str='Pext + Pref + DB_y - Psum',
                           )  # `DB_y` is `Pdrp` (f droop)
 
+        self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
+                           enable=self.config.plim,
+                           info='limiter for Psum in [0, pmx]',
+                           )
+
         self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * (Ipout_y + 1j * Iqout_y))',
                                 info='Voltage before Xc compensation',
                                 tex_name='V_{comp}'
@@ -394,8 +417,8 @@ class PVD1Model(Model):
                           )
 
         self.Ipul = Algeb(info='Ipcmd before hard limit',
-                          v_str='Psum / vp',
-                          e_str='Psum / vp - Ipul',
+                          v_str='(Psum * PHL_zi + pmx * PHL_zu) / vp',
+                          e_str='(Psum * PHL_zi + pmx * PHL_zu) / vp - Ipul',
                           tex_name='I_{p,ul}',
                           )
 
