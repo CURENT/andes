@@ -559,6 +559,11 @@ class Model:
     Finally, to let ANDES pick up the model, the model name needs to be added to `models/__init__.py`.
     Follow the examples in the `OrderedDict`, where the key is the file name, and the value is the class name.
 
+    Notes
+    -----
+    To modify parameters or services use ``set()``, which writes directly to the given attribute,
+    or ``alter()``, which converts parameters to system base like that for input data.
+
     """
 
     def __init__(self, system=None, config=None):
