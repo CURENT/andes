@@ -8,7 +8,14 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.6
+v1.2.7
+```````````````````
+- Fixed the conditions for Iq ramping in REGC;
+  removed `Iqmax` and `Iqmin`.
+- Added a new plot function `plotn` to allow multiple subplots in
+  one figure.
+
+v1.2.6 (2020-12-01)
 ```````````````````
 - Added `TGOV1N` model which sums `pref` and `paux` after
   the 1/droop block.
