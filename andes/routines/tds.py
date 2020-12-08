@@ -66,7 +66,7 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
-                              g_scale=(0, 1),
+                              g_scale='positive',
                               qrt='bool',
                               kqrt='positive',
                               store_f=(0, 1),
@@ -429,9 +429,9 @@ class TDS(BaseRoutine):
             # is pegged by the anti-windup limiters.
 
             # solve implicit trapezoidal method (ITM) integration
-            if self.config.g_scale == 1:
-                gxs = self.h * dae.gx
-                gys = self.h * dae.gy
+            if self.config.g_scale > 0:
+                gxs = self.config.g_scale * self.h * dae.gx
+                gys = self.config.g_scale * self.h * dae.gy
             else:
                 gxs = dae.gx
                 gys = dae.gy
@@ -448,8 +448,8 @@ class TDS(BaseRoutine):
                     np.put(self.qg, key, eqval)
 
             # set or scale the algebraic residuals
-            if self.config.g_scale == 1:
-                self.qg[dae.n:] = self.h * dae.g
+            if self.config.g_scale > 0:
+                self.qg[dae.n:] = self.config.g_scale * self.h * dae.g
             else:
                 self.qg[dae.n:] = dae.g
 

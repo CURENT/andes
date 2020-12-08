@@ -14,6 +14,9 @@ v1.2.7
   removed `Iqmax` and `Iqmin`.
 - Added a new plot function `plotn` to allow multiple subplots in
   one figure.
+- ``TDS.config.g_scale`` is now now used as a factor for scaling
+  algebraic equations for better convergence. Setting it to 1.0
+  functions the same as before.
 
 v1.2.6 (2020-12-01)
 ```````````````````
