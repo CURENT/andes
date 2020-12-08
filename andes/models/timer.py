@@ -282,8 +282,8 @@ class AlterModel(Model):
                 continue
 
             model.set(src=src, idx=idx, attr=attr, value=vnew)
-            tqdm.write('<Alter %s>: set %s.%s.%s.%s=%.6g at t=%.6g.' % (
-                self.idx.v[ii], self.model.v[ii], idx, src, attr, vnew, self.t.v[ii]
+            tqdm.write('<Alter %s>: set %s.%s.%s.%s=%.6g at t=%.6g. Previous value was %.6g.' % (
+                self.idx.v[ii], self.model.v[ii], idx, src, attr, vnew, self.t.v[ii], v0
             ))
             action = True
 
