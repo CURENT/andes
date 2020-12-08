@@ -615,7 +615,7 @@ class TDSData:
         ncols : int
             number of cols
         yidx
-            A list of `BaseVar`s or index lists.
+            A list of `BaseVar` or index lists.
         """
 
         nyidxes = len(yidxes)
