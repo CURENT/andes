@@ -416,13 +416,13 @@ class PVD1Model(Model):
                           discrete=(self.VQ1, self.VQ2),
                           )
 
-        self.Ipul = Algeb(info='Ipcmd before hard limit',
+        self.Ipul = Algeb(info='Ipcmd before Ip hard limit',
                           v_str='(Psum * PHL_zi + pmx * PHL_zu) / vp',
                           e_str='(Psum * PHL_zi + pmx * PHL_zu) / vp - Ipul',
                           tex_name='I_{p,ul}',
                           )
 
-        self.Iqul = Algeb(info='Iqcmd before hard limit',
+        self.Iqul = Algeb(info='Iqcmd before Iq hard limit',
                           v_str='Qsum / vp',
                           e_str='Qsum / vp - Iqul',
                           tex_name='I_{q,ul}',
