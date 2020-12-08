@@ -266,6 +266,9 @@ class Block:
             if field.tex_name is None:
                 raise NameError(f'tex_name for <{field.name}> cannot be None')
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}'
+
 
 class PIController(Block):
     """
@@ -1204,8 +1207,8 @@ class LeadLag(Block):
             x'^{(0)} & = u\\
             y^{(0)} & = Ku\\
 
-
         """
+
         self.x.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
 
