@@ -263,6 +263,7 @@ class TDSData:
              title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
+             set_xlim=True, set_ylim=True, autoscale=False, legend_bbox=None, legend_loc=None,
              **kwargs):
         """
         Entry function for plotting.
@@ -393,6 +394,8 @@ class TDSData:
                          savefig=savefig, save_format=save_format, show=show, title=title,
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
+                         set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
+                         legend_bbox=legend_bbox, legend_loc=legend_loc,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -450,7 +453,9 @@ class TDSData:
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
-                  vline2=None, **kwargs):
+                  vline2=None, set_xlim=True, set_ylim=True, autoscale=False,
+                  legend_bbox=None, legend_loc=None,
+                  **kwargs):
         """
         Plot lines for the supplied data and options.
 
@@ -510,11 +515,9 @@ class TDSData:
 
         linestyles = linestyles * int(n_lines / len(linestyles) + 1)
 
-        hold = True
-        if not (fig and ax):
+        if fig is None or ax is None:
             fig = plt.figure(dpi=dpi)
             ax = plt.gca()
-            hold = False
 
         if greyscale:
             plt.gray()
@@ -538,10 +541,11 @@ class TDSData:
 
         ax.ticklabel_format(useOffset=False)
 
-        if not hold:
+        if set_xlim is True:
             ax.set_xlim(left=left, right=right)
+        if set_ylim is True:
             ax.set_ylim(bottom=ymin, top=ymax)
-        else:
+        if autoscale is True:
             ax.autoscale(axis='y')
 
         if grid:
@@ -554,7 +558,7 @@ class TDSData:
                 legend = True
 
         if legend:
-            ax.legend()
+            ax.legend(bbox_to_anchor=legend_bbox, loc=legend_loc)
 
         if title:
             ax.set_title(title)
@@ -593,6 +597,78 @@ class TDSData:
             plt.show()
 
         return fig, ax
+
+    def plotn(self, nrows: int, ncols: int, yidxes, xidxes=None, *, dpi=150, titles=None,
+              a=None, figsize=None, xlabel=None, ylabel=None, sharex=None, sharey=None, show=True,
+              xlabel_offs=(0.5, 0.01), ylabel_offs=(0.05, 0.5), hspace=0.2, wspace=0.2,
+              **kwargs):
+        """
+        Plot multiple subfigures in one figure.
+
+        Parameters ``xidxes``, ``a``, ``xlabels`` and ``ylabels``, if provided,
+        must have the same length as ``yidxes``.
+
+        Parameters
+        ----------
+        nrows : int
+            number of rows
+        ncols : int
+            number of cols
+        yidx
+            A list of `BaseVar`s or index lists.
+        """
+
+        nyidxes = len(yidxes)
+        if nyidxes > nrows * ncols:
+            raise ValueError("yidxes with length %d does not fit nrows=%d and ncols=%d",
+                             nyidxes, nrows, ncols)
+
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+
+        xidx = (0,)
+        aidx = None
+        title = ''
+
+        # assume the first xlabel
+        xlabel = self.get_header(xidx)[0] if xlabel is None else xlabel
+
+        sharex = True if (sharex is None and ncols == 1) else False
+        sharey = True if (sharey is None and nrows == 1) else False
+
+        axes = fig.subplots(nrows, ncols, sharex=sharex, sharey=sharey, squeeze=False)
+
+        ii = 0
+        for jj in range(nrows):
+            for kk in range(ncols):
+                if ii > nyidxes:
+                    break
+
+                yidx = yidxes[ii]
+                ax = axes[jj, kk]
+                if xidxes is not None:
+                    xidx = xidxes[ii]
+
+                if a is not None:
+                    aidx = a[ii]
+
+                if titles is not None:
+                    title = titles[ii]
+
+                fig, ax = self.plot(yidx, xidx, a=aidx, fig=fig, ax=ax,
+                                    xlabel='', ylabel='', title=title,
+                                    show=False, **kwargs)
+                ii += 1
+        if xlabel:
+            fig.text(*xlabel_offs, xlabel, ha='center', va='center')
+        if ylabel:
+            fig.text(*ylabel_offs, ylabel, ha='center', va='center', rotation='vertical')
+
+        fig.subplots_adjust(hspace=hspace, wspace=wspace,)
+
+        if show:
+            plt.show()
+
+        return fig, axes
 
 
 def parse_y(y, upper, lower=0):
