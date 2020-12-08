@@ -58,7 +58,7 @@ def create_parser():
     run.add_argument('--state-matrix', help='Export state matrix to a .mat file. Need to run with `-r eig`',
                      action='store_true')
     run.add_argument('--profile', action='store_true', help='Enable Python cProfiler')
-    run.add_argument('--shell', action='store_true', help='Start in IPython shell')
+    run.add_argument('-s', '--shell', action='store_true', help='Start in IPython shell')
     run.add_argument('--no-preamble', action='store_true', help='Hide preamble')
     run.add_argument('--no-pbar', action='store_true', help='Hide progress bar for time-domain')
     run.add_argument('--flat', action='store_true', help='Run no-disturbance (flat) simulation')
