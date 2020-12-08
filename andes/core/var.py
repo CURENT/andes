@@ -14,7 +14,7 @@ from andes.core.common import DummyValue
 from andes.core.discrete import Discrete
 from andes.core.service import BaseService
 from andes.models.group import GroupBase
-from andes.shared import np, ndarray
+from andes.shared import np
 
 
 class BaseVar:
@@ -87,12 +87,12 @@ class BaseVar:
 
         # attributes assigned by `set_address`
         self.n = 0
-        self.a: ndarray = np.array([], dtype=int)       # address array
-        self.v: ndarray = np.array([], dtype=np.float)  # variable value array
-        self.e: ndarray = np.array([], dtype=np.float)  # equation value array
+        self.a: np.ndarray = np.array([], dtype=int)       # address array
+        self.v: np.ndarray = np.array([], dtype=np.float)  # variable value array
+        self.e: np.ndarray = np.array([], dtype=np.float)  # equation value array
 
-        self.av: ndarray = np.array([], dtype=int)      # FIXME: future var. address array
-        self.ae: ndarray = np.array([], dtype=int)      # FIXME: future equation address array
+        self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
+        self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
 
         # internal flags
         # NOTE:
@@ -136,13 +136,13 @@ class BaseVar:
 
         return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}, {span}'
 
-    def set_address(self, addr: ndarray, contiguous=False):
+    def set_address(self, addr: np.ndarray, contiguous=False):
         """
         Set the address of internal variables.
 
         Parameters
         ----------
-        addr : ndarray
+        addr : np.ndarray
             The assigned address for this variable
         contiguous : bool, optional
             If the addresses are contiguous
@@ -299,7 +299,7 @@ class ExtVar(BaseVar):
     def __init__(self,
                  model: str,
                  src: str,
-                 indexer: Optional[Union[List, ndarray, BaseParam, BaseService]] = None,
+                 indexer: Optional[Union[List, np.ndarray, BaseParam, BaseService]] = None,
                  allow_none: Optional[bool] = False,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,

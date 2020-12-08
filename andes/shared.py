@@ -14,8 +14,6 @@ import math
 import os
 import coloredlogs         # NOQA
 import numpy as np         # NOQA
-from numpy import ndarray  # NOQA
-from tqdm import tqdm      # NOQA
 
 from andes.utils.lazyimport import LazyImport
 from distutils.spawn import find_executable
@@ -78,6 +76,7 @@ for jname in jac_names:
         jac_full_names.append(jname + jtype)
 
 # --- lazy import packages ---
+tqdm = LazyImport('from tqdm import tqdm')
 
 pd = LazyImport('import pandas')
 cupy = LazyImport('import cupy')
