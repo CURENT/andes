@@ -969,6 +969,11 @@ class REPCA1Data(ModelData):
                               unit='bool',
                               )
 
+        self.PLflag = NumParam(info='Pline ctrl. flag; 0-disable, 1-enable',
+                               mandatory=True,
+                               unit='bool',
+                               )
+
         self.Tfltr = NumParam(default=0.02,
                               tex_name='T_{fltr}',
                               info='V or Q filter time const.',
@@ -1084,11 +1089,15 @@ class REPCA1Data(ModelData):
         self.Pmax = NumParam(default=999,
                              tex_name='P_{max}',
                              info='Upper limit on power error (used by PI ctrl.)',
+                             unit='p.u. (MW)',
+                             power=True,
                              )
 
         self.Pmin = NumParam(default=-999,
                              tex_name='P_{min}',
                              info='Lower limit on power error (used by PI ctrl.)',
+                             unit='p.u. (MW)',
+                             power=True,
                              )
 
         self.Tg = NumParam(default=0.02,
@@ -1264,6 +1273,8 @@ class REPCA1Model(Model):
 
         self.SWF = Switcher(u=self.Fflag, options=(0, 1), tex_name='SW_{F}', cache=True)
 
+        self.SWPL = Switcher(u=self.PLflag, options=(0, 1), tex_name='SW_{PL}', cache=True)
+
         VCsel = '(SWVC_s1 * Vcomp + SWVC_s0 * (Qline * Kc + v))'
 
         self.Vref0 = ConstService(v_str='(SWVC_s1 * Vcomp + SWVC_s0 * (Qline0 * Kc + v))',
@@ -1334,6 +1345,7 @@ class REPCA1Model(Model):
                                      info='Initial Freq_ref')
         self.ferr = Algeb(tex_name='f_{err}',
                           info='Frequency deviation',
+                          unit='p.u. (Hz)',
                           v_str='(Freq_ref - f)',
                           e_str='(Freq_ref - f) - ferr',
                           )
@@ -1362,10 +1374,11 @@ class REPCA1Model(Model):
                            v_str='- s4_y + Plant_pref',
                            e_str='- s4_y + Plant_pref - Plerr',
                            )
+
         self.Perr = Algeb(tex_name='P_{err}',
                           info='Power error before fe limits',
-                          v_str=f'{fdroop} + Plerr',
-                          e_str=f'{fdroop} + Plerr - Perr',
+                          v_str=f'{fdroop} + Plerr * SWPL_s1',
+                          e_str=f'{fdroop} + Plerr * SWPL_s1 - Perr',
                           )
 
         self.feHL = Limiter(self.Perr, lower=self.femin, upper=self.femax,
