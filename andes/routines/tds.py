@@ -66,7 +66,7 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
-                              g_scale=(0, 1),
+                              g_scale='positive',
                               qrt='bool',
                               kqrt='positive',
                               store_f=(0, 1),
@@ -198,7 +198,7 @@ class TDS(BaseRoutine):
             logger.error("Initialization for dynamics failed in %s.", s1)
 
         if system.dae.n == 0:
-            tqdm.write('No dynamic component loaded.')
+            tqdm.write('No differential equation detected.')
         return system.dae.xy
 
     def summary(self):
@@ -429,9 +429,9 @@ class TDS(BaseRoutine):
             # is pegged by the anti-windup limiters.
 
             # solve implicit trapezoidal method (ITM) integration
-            if self.config.g_scale == 1:
-                gxs = self.h * dae.gx
-                gys = self.h * dae.gy
+            if self.config.g_scale > 0:
+                gxs = self.config.g_scale * self.h * dae.gx
+                gys = self.config.g_scale * self.h * dae.gy
             else:
                 gxs = dae.gx
                 gys = dae.gy
@@ -448,8 +448,8 @@ class TDS(BaseRoutine):
                     np.put(self.qg, key, eqval)
 
             # set or scale the algebraic residuals
-            if self.config.g_scale == 1:
-                self.qg[dae.n:] = self.h * dae.g
+            if self.config.g_scale > 0:
+                self.qg[dae.n:] = self.config.g_scale * self.h * dae.g
             else:
                 self.qg[dae.n:] = dae.g
 
@@ -480,6 +480,7 @@ class TDS(BaseRoutine):
             self.inc = inc
 
             mis = np.max(np.abs(inc))
+
             # store initial maximum mismatch
             if self.niter == 0:
                 self.mis[0] = mis
@@ -781,15 +782,35 @@ class TDS(BaseRoutine):
 
     def fg_update(self, models):
         """
-        Update `f` and `g` equations.
+        Perform one round of evaluation for one iteration step.
+        The following operations are performed in order:
+
+        - discrete flags updating through ``l_update_var``
+        - variable service updating through ``s_update_var``
+        - evaluation of the right-hand-side of ``f``
+        - equation-dependent discrete flags updating through ``l_update_eq``
+        - evaluation of the right-hand-side of ``g``
+        - collection of residuals into dae through ``fg_to_dae``.
+
         """
+
         system = self.system
         system.dae.clear_fg()
-        system.l_update_var(models=models, niter=self.niter, err=self.mis[-1])
+
+        system.l_update_var(models=models,
+                            niter=self.niter,
+                            err=self.mis[-1],
+                            )
+
         system.s_update_var(models=models)  # update VarService
+
+        # evalute the RHS of `f` and check the limiters (anti-windup)
+        # 12/08/2020: Moded `l_update_eq` to before `g_update`
+        #   because some algebraic variables depend on pegged states.
         system.f_update(models=models)
-        system.g_update(models=models)
         system.l_update_eq(models=models)
+
+        system.g_update(models=models)
         system.fg_to_dae()
 
     def _fg_wrapper(self, xy):

@@ -8,7 +8,20 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.6
+v1.2.7
+```````````````````
+- Time-domain integration now evaluates anti-windup limiter before
+  algebraic residuals. It assures that algebraic residuals are
+  calculated with the new state values if pegged at limits.
+- Fixed the conditions for Iq ramping in REGC;
+  removed ``Iqmax`` and ``Iqmin``.
+- Added a new plot function ``plotn`` to allow multiple subplots in
+  one figure.
+- ``TDS.config.g_scale`` is now now used as a factor for scaling
+  algebraic equations for better convergence. Setting it to 1.0
+  functions the same as before.
+
+v1.2.6 (2020-12-01)
 ```````````````````
 - Added `TGOV1N` model which sums `pref` and `paux` after
   the 1/droop block.

@@ -559,6 +559,11 @@ class Model:
     Finally, to let ANDES pick up the model, the model name needs to be added to `models/__init__.py`.
     Follow the examples in the `OrderedDict`, where the key is the file name, and the value is the class name.
 
+    Notes
+    -----
+    To modify parameters or services use ``set()``, which writes directly to the given attribute,
+    or ``alter()``, which converts parameters to system base like that for input data.
+
     """
 
     def __init__(self, system=None, config=None):
@@ -1623,6 +1628,10 @@ class Model:
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
 
+        for name, item in self.discrete.items():
+            md5.update(str(name).encode())
+            md5.update(str(','.join(item.export_flags)).encode())
+
         return md5.hexdigest()
 
     def post_init_check(self):
@@ -2020,10 +2029,7 @@ class SymProcessor:
                 continue
 
             elif var.diag_eps is True:
-                try:
-                    eps = self.system.config.diag_eps
-                except AttributeError:
-                    eps = 1e-8   # fall-back value
+                eps = self.parent.system.config.diag_eps
 
             else:
                 eps = var.diag_eps

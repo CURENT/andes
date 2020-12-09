@@ -94,7 +94,10 @@ class ZIPModel(Model):
                                 tex_name='r_{qz}',
                                 )
 
-        self.bus = ExtParam(model='PQ', src='bus', indexer=self.pq)
+        self.bus = ExtParam(model='PQ', src='bus', indexer=self.pq,
+                            info='retrieved bux idx',
+                            export=False,
+                            )
 
         self.p0 = ExtService(model='PQ', src='Ppf', indexer=self.pq,
                              tex_name='P_0',

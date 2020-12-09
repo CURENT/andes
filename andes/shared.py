@@ -14,8 +14,6 @@ import math
 import os
 import coloredlogs         # NOQA
 import numpy as np         # NOQA
-from numpy import ndarray  # NOQA
-from tqdm import tqdm      # NOQA
 
 from andes.utils.lazyimport import LazyImport
 from distutils.spawn import find_executable
@@ -46,6 +44,7 @@ if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
     from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from cvxopt import mul, div                          # NOQA
     from cvxopt.lapack import gesv                       # NOQA
+    from cvxopt import printing                          # NOQA
     try:
         from cvxoptklu import klu  # NOQA
     except ImportError:
@@ -56,7 +55,11 @@ else:
     from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
     from kvxopt import mul, div                          # NOQA
     from kvxopt.lapack import gesv                       # NOQA
+    from kvxopt import printing                          # NOQA
     IP_ADD = KIP_ADD
+
+printing.options['dformat'] = '%.1f'
+printing.options['width'] = -1
 
 from andes.utils.texttable import Texttable              # NOQA
 from andes.utils.paths import get_dot_andes_path         # NOQA
@@ -73,6 +76,7 @@ for jname in jac_names:
         jac_full_names.append(jname + jtype)
 
 # --- lazy import packages ---
+tqdm = LazyImport('from tqdm import tqdm')
 
 pd = LazyImport('import pandas')
 cupy = LazyImport('import cupy')

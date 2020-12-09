@@ -29,10 +29,15 @@ class REGCA1Data(ModelData):
         self.gen = IdxParam(info="static generator index",
                             mandatory=True,
                             )
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
+
         self.Tg = NumParam(default=0.1, tex_name='T_g',
                            info='converter time const.', unit='s',
                            )
-        self.Rrpwr = NumParam(default=999, tex_name='R_{rpwr}',
+        self.Rrpwr = NumParam(default=10.0, tex_name='R_{rpwr}',
                               info='Low voltage power logic (LVPL) ramp limit',
                               unit='p.u.',
                               )
@@ -53,7 +58,7 @@ class REGCA1Data(ModelData):
                               info='Voltage lim for high volt. reactive current mgnt.',
                               unit='p.u.',
                               )
-        self.Lvpnt1 = NumParam(default=1.0, tex_name='L_{vpnt1}',
+        self.Lvpnt1 = NumParam(default=0.8, tex_name='L_{vpnt1}',
                                info='High volt. point for low volt. active current mgnt.',
                                unit='p.u.',
                                )
@@ -62,9 +67,10 @@ class REGCA1Data(ModelData):
                                unit='p.u.',
                                )
         # TODO: ensure Lvpnt1 > Lvpnt0
-        self.Iolim = NumParam(default=0.0, tex_name='I_{olim}',
+        self.Iolim = NumParam(default=-1.5, tex_name='I_{olim}',
                               info='lower current limit for high volt. reactive current mgnt.',
-                              unit='p.u.',
+                              unit='p.u. (mach base)',
+                              current=True,
                               )
         self.Tfltr = NumParam(default=0.1, tex_name='T_{fltr}',
                               info='Voltage filter T const for low volt. active current mgnt.',
@@ -73,25 +79,19 @@ class REGCA1Data(ModelData):
         self.Khv = NumParam(default=0.7, tex_name='K_{hv}',
                             info='Overvolt. compensation gain in high volt. reactive current mgnt.',
                             )
-        self.Iqrmax = NumParam(default=999, tex_name='I_{qrmax}',
+        self.Iqrmax = NumParam(default=1, tex_name='I_{qrmax}',
                                info='Upper limit on the ROC for reactive current',
                                unit='p.u.',
+                               current=True,
                                )
-        self.Iqrmin = NumParam(default=-999, tex_name='I_{qrmin}',
+        self.Iqrmin = NumParam(default=-1, tex_name='I_{qrmin}',
                                info='Lower limit on the ROC for reactive current',
                                unit='p.u.',
+                               current=True,
                                )
         self.Accel = NumParam(default=0.0, tex_name='A_{ccel}',
                               info='Acceleration factor',
                               vrange=(0, 1.0),
-                              )
-        self.Iqmax = NumParam(default=999, tex_name='I_{qmax}',
-                              info='Upper limit for reactive current',
-                              unit='p.u.',
-                              )
-        self.Iqmin = NumParam(default=-999, tex_name='I_{qmin}',
-                              info='Lower limit for reactive current',
-                              unit='p.u.',
                               )
 
 
@@ -143,6 +143,13 @@ class REGCA1Model(Model):
                            )
 
         # --- INITIALIZATION ---
+        self.q0gt0 = ConstService('Gt(q0, 0)', tex_name='z_{q0>0}',
+                                  info='flags for q0 below zero',
+                                  )
+        self.q0lt0 = ConstService('Lt(q0, 0)', tex_name='z_{q0<0}',
+                                  info='flags for q0 below zero',
+                                  )
+
         self.Ipcmd0 = ConstService('p0 / v', info='initial Ipcmd',
                                    tex_name='I_{pcmd0}',
                                    )
@@ -161,26 +168,27 @@ class REGCA1Model(Model):
 
         # reactive power management
 
-        # TODO: create conditions for rate limiting.
-        #   In a fault recovery, activate upper limit when Qg0 > 0
-        #                        activate lower limit when Qg0 < 0
+        # rate limiting logic (for fault recovery, although it does not detect any recovery)
+        #   - activate upper limit when q0 > 0 (self.q0gt0)
+        #   - activate lower limit when q0 < 0 (self.q0lt0)
 
-        self.S1 = LagAntiWindupRate(u=self.Iqcmd, T=self.Tg, K=-1,
-                                    lower=self.Iqmin, upper=self.Iqmax,
+        self.S1 = LagAntiWindupRate(u=self.Iqcmd,
+                                    T=self.Tg, K=-1,
+                                    lower=-9999, upper=9999, no_lower=True, no_upper=True,
                                     rate_lower=self.Iqrmin, rate_upper=self.Iqrmax,
-                                    # rate_lower_cond, rate_upper_cond,
+                                    rate_lower_cond=self.q0lt0, rate_upper_cond=self.q0gt0,
                                     tex_name='S_1',
                                     info='Iqcmd delay',
                                     )  # output `S1_y` == `Iq`
 
-        # piece-wise gain for low voltage reactive current mgnt.
+        # piece-wise gain for low voltage active current mgnt.
         self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
                                  tex_name='k_{LVG}',
                                  )
 
         self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
                              funs=('0', '(v - Lvpnt0) * kLVG', '1'),
-                             info='Low voltage current gain',
+                             info='Ip gain during low voltage',
                              tex_name='L_{VG}',
                              )
 
@@ -207,7 +215,7 @@ class REGCA1Model(Model):
 
         self.S0 = LagAntiWindupRate(u=self.Ipcmd, T=self.Tg, K=1,
                                     upper=self.LVPL_y, rate_upper=self.Rrpwr,
-                                    lower=-999, rate_lower=-999,
+                                    lower=-9999, rate_lower=-9999,
                                     no_lower=True, rate_no_lower=True,
                                     tex_name='S_0',
                                     )  # `S0_y` is the output `Ip` in the block diagram
@@ -404,6 +412,7 @@ class REECA1Data(ModelData):
         self.Imax = NumParam(default=999.0,
                              tex_name='I_{max}',
                              info='Max. apparent current limit',
+                             current=True,
                              )
         self.Tpord = NumParam(default=0.02,
                               tex_name='T_{pord}',
@@ -416,6 +425,7 @@ class REECA1Data(ModelData):
         self.Iq1 = NumParam(default=2.0,
                             tex_name='I_{q1}',
                             info='Reactive power V-I pair (point 1), current',
+                            current=True,
                             )
         self.Vq2 = NumParam(default=0.4,
                             tex_name='V_{q2}',
@@ -424,6 +434,7 @@ class REECA1Data(ModelData):
         self.Iq2 = NumParam(default=4.0,
                             tex_name='I_{q2}',
                             info='Reactive power V-I pair (point 2), current',
+                            current=True,
                             )
         self.Vq3 = NumParam(default=0.8,
                             tex_name='V_{q3}',
@@ -432,6 +443,7 @@ class REECA1Data(ModelData):
         self.Iq3 = NumParam(default=8.0,
                             tex_name='I_{q3}',
                             info='Reactive power V-I pair (point 3), current',
+                            current=True,
                             )
         self.Vq4 = NumParam(default=1.0,
                             tex_name='V_{q4}',
@@ -440,6 +452,7 @@ class REECA1Data(ModelData):
         self.Iq4 = NumParam(default=10,
                             tex_name='I_{q4}',
                             info='Reactive power V-I pair (point 4), current',
+                            current=True,
                             )
         self.Vp1 = NumParam(default=0.2,
                             tex_name='V_{p1}',
@@ -448,6 +461,7 @@ class REECA1Data(ModelData):
         self.Ip1 = NumParam(default=2.0,
                             tex_name='I_{p1}',
                             info='Active power V-I pair (point 1), current',
+                            current=True,
                             )
         self.Vp2 = NumParam(default=0.4,
                             tex_name='V_{p2}',
@@ -456,6 +470,7 @@ class REECA1Data(ModelData):
         self.Ip2 = NumParam(default=4.0,
                             tex_name='I_{p2}',
                             info='Active power V-I pair (point 2), current',
+                            current=True,
                             )
         self.Vp3 = NumParam(default=0.8,
                             tex_name='V_{p3}',
@@ -464,6 +479,7 @@ class REECA1Data(ModelData):
         self.Ip3 = NumParam(default=8.0,
                             tex_name='I_{p3}',
                             info='Active power V-I pair (point 3), current',
+                            current=True,
                             )
         self.Vp4 = NumParam(default=1.0,
                             tex_name='V_{p4}',
@@ -472,6 +488,7 @@ class REECA1Data(ModelData):
         self.Ip4 = NumParam(default=12.0,
                             tex_name='I_{p4}',
                             info='Active power V-I pair (point 4), current',
+                            current=True,
                             )
 
 
@@ -523,6 +540,10 @@ class REECA1Model(Model):
         self.gen = ExtParam(model='RenGen', src='gen', indexer=self.reg, export=False,
                             info='Retrieved StaticGen idx', vtype=str, default=None,
                             )
+
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         # --- External variables ---
         self.a = ExtAlgeb(model='Bus',
@@ -655,12 +676,6 @@ class REECA1Model(Model):
                             info='Filter for calculated voltage with freeze',
                             )
 
-        self.Qsel = Algeb(info='Selection output of QFLAG',
-                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
-                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
-                          tex_name='Q_{sel}',
-                          )
-
         # --- Upper portion - Iqinj calculation ---
 
         self.Verr = Algeb(info='Voltage error (Vref0)',
@@ -731,12 +746,6 @@ class REECA1Model(Model):
 
         self.Pord = AliasState(self.s5_y)
 
-        self.Ipulim = Algeb(info='Unlimited Ipcmd',
-                            tex_name='I_{pulim}',
-                            v_str='s5_y / vp',
-                            e_str='s5_y / vp - Ipulim',
-                            )
-
         # --- Current limit logic ---
 
         self.kVq12 = ConstService(v_str='(Iq2 - Iq1) / (Vq2 - Vq1)',
@@ -798,9 +807,9 @@ class REECA1Model(Model):
                                     extend_only=True,
                                     )
 
-        self.VDL1c = VarService(v_str='VDL1_y < Imaxr')
+        self.VDL1c = VarService(v_str='Lt(VDL1_y, Imaxr)')
 
-        self.VDL2c = VarService(v_str='VDL2_y < Imaxr')
+        self.VDL2c = VarService(v_str='Lt(VDL2_y, Imaxr)')
 
         # `Iqmax` not considering mode or `Thld2`
         Iqmax1 = '(zVDL1*(VDL1c*VDL1_y + (1-VDL1c)*Imaxr) + 1e8*(1-zVDL1))'
@@ -861,10 +870,17 @@ class REECA1Model(Model):
                                   )
 
         self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+                                   x0='-SWQ_s1 * Iqcmd0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
                                    lower=self.Iqmin, upper=self.Iqmax,
                                    freeze=self.Volt_dip,
                                    )
+
+        self.Qsel = Algeb(info='Selection output of QFLAG',
+                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
+                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
+                          tex_name='Q_{sel}',
+                          )
 
         # `IpHL_y` is `Ipcmd`
         self.IpHL = GainLimiter(u='s5_y / vp', K=1, lower=self.Ipmin, upper=self.Ipmax,
@@ -952,6 +968,11 @@ class REPCA1Data(ModelData):
                               mandatory=True,
                               unit='bool',
                               )
+
+        self.PLflag = NumParam(info='Pline ctrl. flag; 0-disable, 1-enable',
+                               mandatory=True,
+                               unit='bool',
+                               )
 
         self.Tfltr = NumParam(default=0.02,
                               tex_name='T_{fltr}',
@@ -1068,11 +1089,15 @@ class REPCA1Data(ModelData):
         self.Pmax = NumParam(default=999,
                              tex_name='P_{max}',
                              info='Upper limit on power error (used by PI ctrl.)',
+                             unit='p.u. (MW)',
+                             power=True,
                              )
 
         self.Pmin = NumParam(default=-999,
                              tex_name='P_{min}',
                              info='Lower limit on power error (used by PI ctrl.)',
+                             unit='p.u. (MW)',
+                             power=True,
                              )
 
         self.Tg = NumParam(default=0.02,
@@ -1248,6 +1273,8 @@ class REPCA1Model(Model):
 
         self.SWF = Switcher(u=self.Fflag, options=(0, 1), tex_name='SW_{F}', cache=True)
 
+        self.SWPL = Switcher(u=self.PLflag, options=(0, 1), tex_name='SW_{PL}', cache=True)
+
         VCsel = '(SWVC_s1 * Vcomp + SWVC_s0 * (Qline * Kc + v))'
 
         self.Vref0 = ConstService(v_str='(SWVC_s1 * Vcomp + SWVC_s0 * (Qline0 * Kc + v))',
@@ -1318,6 +1345,7 @@ class REPCA1Model(Model):
                                      info='Initial Freq_ref')
         self.ferr = Algeb(tex_name='f_{err}',
                           info='Frequency deviation',
+                          unit='p.u. (Hz)',
                           v_str='(Freq_ref - f)',
                           e_str='(Freq_ref - f) - ferr',
                           )
@@ -1346,10 +1374,11 @@ class REPCA1Model(Model):
                            v_str='- s4_y + Plant_pref',
                            e_str='- s4_y + Plant_pref - Plerr',
                            )
+
         self.Perr = Algeb(tex_name='P_{err}',
                           info='Power error before fe limits',
-                          v_str=f'{fdroop} + Plerr',
-                          e_str=f'{fdroop} + Plerr - Perr',
+                          v_str=f'{fdroop} + Plerr * SWPL_s1',
+                          e_str=f'{fdroop} + Plerr * SWPL_s1 - Perr',
                           )
 
         self.feHL = Limiter(self.Perr, lower=self.femin, upper=self.femax,
@@ -1400,11 +1429,6 @@ class WTDTA1Data(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Sn = NumParam(default=100.0, tex_name='S_n',
-                           info='Model MVA base',
-                           unit='MVA',
-                           )
-
         self.fn = NumParam(default=60.0, info="nominal frequency",
                            unit='Hz',
                            tex_name='f_n')
@@ -1453,6 +1477,9 @@ class WTDTA1Model(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,
                             )
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             export=False,
@@ -1538,11 +1565,6 @@ class WTDSData(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Sn = NumParam(default=100.0, tex_name='S_n',
-                           info='Model MVA base',
-                           unit='MVA',
-                           )
-
         self.fn = NumParam(default=60.0, info="nominal frequency",
                            unit='Hz',
                            tex_name='f_n')
@@ -1584,6 +1606,10 @@ class WTDSModel(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,
                             )
+
+        self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
+                           tex_name='S_n', export=False,
+                           )
 
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             export=False,

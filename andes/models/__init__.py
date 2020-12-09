@@ -33,5 +33,5 @@ file_classes = OrderedDict([
     ('vsc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REECA1', 'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1']),
     ('distributed', ['PVD1']),
-    ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze']),
+    ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),
 ])
