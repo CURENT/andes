@@ -5,12 +5,12 @@ from collections import OrderedDict
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import Lag, DeadBand1, LimiterGain
+from andes.core.block import Lag, DeadBand1, LimiterGain, Integrator
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, ExtService, VarService
 from andes.core.service import DataSelect, DeviceFinder
-from andes.core.discrete import Switcher, Limiter
+from andes.core.discrete import Switcher, Limiter, HardLimiter
 
 
 class PVD1Data(ModelData):
@@ -195,6 +195,20 @@ class PVD1Data(ModelData):
                                info='Ratio of PVD1.qref0 w.r.t to that of static PV',
                                vrange='(0, 1]',
                                )
+        self.Tf = NumParam(default=1.0, tex_name='T_f',
+                           info='Integrator constant for SOC model'
+                           )
+        self.SOC_min = NumParam(default=0.0, tex_name='SOC_{min}',
+                                info='Minimum required value for SOC in limiter',
+                                )
+
+        self.SOC_max = NumParam(default=1.0, tex_name='SOC_{max}',
+                                info='Maximum allowed value for SOC in limiter'
+                                )
+
+        self.SOC_init = NumParam(default=0.0, tex_name='SOC_{init}',
+                                 info='Initial state of charge'
+                                 )
 
 
 class PVD1Model(Model):
@@ -434,8 +448,8 @@ class PVD1Model(Model):
         self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
         self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
 
-        self.Ipmax = Algeb(v_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0)',
-                           e_str='SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq) - Ipmax',
+        self.Ipmax = Algeb(v_str='(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
+                           e_str='(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax',
                            tex_name='I_{pmax}',
                            )
 
@@ -470,6 +484,23 @@ class PVD1Model(Model):
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
+
+        # --- Add State-of-charge model after Ipout ---
+        self.Ipout = Algeb(info='Ipout stored as variable',
+                           v_str='(1-SOC_zl)*Ipcmd_y',
+                           e_str='(1-SOC_zl)*Ipcmd_y - Ipout',
+                           tex_name='I_{pout}'
+                           )
+        self.pgen = Algeb(info='Real power output',
+                          v_str='v * Ipout',
+                          e_str='v*Ipout - pgen',
+                          tex_name='P_{gen}'
+                          )
+        # --- Add integrator. Assume that state-of-charge is the initial condition ---
+        self.pIG = Integrator(u=self.pgen, T=self.Tf, K=1.0, y0=self.SOC_init)
+
+        # --- Add hard limiter for SOC ---
+        self.SOC = HardLimiter(u=self.pIG_y, lower=self.SOC_min, upper=self.SOC_max)
 
     def v_numeric(self, **kwargs):
         """
