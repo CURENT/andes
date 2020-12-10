@@ -1,3 +1,9 @@
+"""
+Converter-interfaced renewable energy models.
+"""
+
+import numpy as np  # NOQA
+
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.block import Piecewise, Lag, GainLimiter, LagAntiWindupRate, LagAWFreeze
@@ -5,18 +11,18 @@ from andes.core.block import PITrackAWFreeze, LagFreeze, DeadBand1, LagRate, PIT
 from andes.core.block import LeadLag, Integrator, PIAWHardLimit
 from andes.core.var import ExtAlgeb, ExtState, Algeb, AliasState, State
 
-from andes.core.service import ConstService, FlagValue, ExtService, DataSelect, DeviceFinder
+from andes.core.service import ConstService, ExtService, DataSelect, DeviceFinder
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
 from andes.core.service import CurrentSign, NumSelect
 from andes.core.discrete import Switcher, Limiter, LessThan
 from collections import OrderedDict
 
-import numpy as np  # NOQA
-
 
 class REGCA1Data(ModelData):
     """
     REGC_A model data.
+
+    12/09/2020: Made `Lvplsw` a parameter.
     """
 
     def __init__(self):
@@ -50,6 +56,11 @@ class REGCA1Data(ModelData):
                               unit='p.u',
                               )
         # TODO: ensure Brkpt > Zerox
+        self.Lvplsw = NumParam(default=1.0, tex_name='z_{Lvplsw}',
+                               info='Low volt. P logic: 1-enable, 0-disable',
+                               unit='bool',
+                               )
+
         self.Lvpl1 = NumParam(default=1.0, tex_name='L_{vpl1}',
                               info='LVPL gain',
                               unit='p.u',
@@ -192,9 +203,6 @@ class REGCA1Model(Model):
                              tex_name='L_{VG}',
                              )
 
-        self.Lvplsw = FlagValue(u=self.Lvpl1, value=0, flag=0, tex_name='z_{Lvplsw}',
-                                info='LVPL enable switch',
-                                )
         # piece-wise gain for LVPL
         self.kLVPL = ConstService(v_str='Lvplsw * Lvpl1 / (Brkpt - Zerox)',
                                   tex_name='k_{LVPL}',
