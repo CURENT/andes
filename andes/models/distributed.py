@@ -519,9 +519,12 @@ class ESD1Model(PVD1Model):
         # --- Add hard limiter for SOC ---
         self.SOC = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
 
-        # --- Add Ipmax ---
+        # --- Add Ipmax and Ipcmd ---
         self.Ipmax.v_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
         self.Ipmax.e_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+
+        self.Ipcmd.lim.sign_lower = -1
+        self.Ipcmd.lim.lower = self.Ipmax
 
 
 class PVD1(PVD1Data, PVD1Model):
