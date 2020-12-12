@@ -2,7 +2,7 @@ cvxopt>=1.2.5
 numpy
 scipy
 sympy==1.5.1
-xlrd
+xlrd==1.2
 pandas
 dill
 xlsxwriter
