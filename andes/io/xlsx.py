@@ -5,9 +5,7 @@ This module utilizes xlsxwriter and pandas.Frame.
 While I like the simplicity of the dome format, spreadsheet data is easier to read and edit.
 """
 import logging
-import warnings
 
-from collections import OrderedDict
 from andes.utils.paths import confirm_overwrite
 from andes.shared import pd
 
