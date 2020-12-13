@@ -14,7 +14,7 @@ from andes.utils.paths import confirm_overwrite
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infile):
     return True
 
 

@@ -1,9 +1,12 @@
 """
 Excel reader and writer for ANDES power system parameters
 
-This module utilizes xlsxwriter and pandas.Frame.
-While I like the simplicity of the dome format, spreadsheet data is easier to read and edit.
+This module utilizes openpyxl, xlsxwriter and pandas.Frame.
+
+While I like the simplicity of the dome format,
+spreadsheets are easier to view and edit.
 """
+
 import logging
 
 from andes.utils.paths import confirm_overwrite
@@ -12,7 +15,7 @@ from andes.shared import pd
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infile):
     return True
 
 
@@ -89,8 +92,8 @@ def read(system, infile):
     ----------
     system : System
         Empty System instance
-    infile : str
-        Path to the input file
+    infile : str or file-like
+        Path to the input file, or a file-like object
 
     Returns
     -------

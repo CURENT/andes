@@ -8,17 +8,24 @@ import logging
 import re
 import os
 
+import andes.io
+
 from andes.shared import deg2rad, pd, yaml
 from andes.utils.misc import to_number
 from collections import defaultdict
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infile):
     """
-    Check the raw file for frequency base
+    Check the raw file for frequency base.
     """
-    first = fid.readline()
+    lines_list = andes.io.read_file_like(infile)
+
+    if len(lines_list) == 0:
+        return False
+
+    first = lines_list[0]
     first = first.strip().split('/')
     first = first[0].split(',')
 
@@ -38,8 +45,9 @@ def testlines(fid):
 
 def get_block_lines(b, mdata):
     """
-    Return the number of lines based on data
+    Return the number of lines based on the block index in the RAW file.
     """
+
     line_counts = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
 
     if b == 5:  # for transformer
@@ -52,7 +60,9 @@ def get_block_lines(b, mdata):
 
 
 def read(system, file):
-    """read PSS/E RAW file v32 format"""
+    """
+    Read PSS/E RAW file v32/v33 formats.
+    """
 
     blocks = [
         'bus', 'load', 'fshunt', 'gen', 'branch', 'transf', 'area',
@@ -74,8 +84,7 @@ def read(system, file):
     dev_line = 0  # line counter for multi-line models
 
     # read file into `line_list`
-    with open(file, 'r') as f:
-        line_list = [line.rstrip('\n') for line in f]
+    line_list = andes.io.read_file_like(file)
 
     # parse file into `raw` with to_number conversions
     for num, line in enumerate(line_list):
@@ -147,8 +156,7 @@ def _read_dyr_dict(file):
     """
     Parse dyr file into a dict where keys are model names and values are dataframes.
     """
-    with open(file, 'r') as f:
-        input_list = [line.strip() for line in f]
+    input_list = andes.io.read_file_like(file)
 
     # concatenate multi-line device data
     input_concat_dict = defaultdict(list)
