@@ -8,7 +8,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.2 Notes
 ----------
-v1.2.7
+v1.2.8
+```````````````````
+- Depend on `openpyxl` for reading excel files since `xlrd` dropped
+  support for any format but `xlsx` since v2.0.0.
+
+v1.2.7 (2020-12-08)
 ```````````````````
 - Time-domain integration now evaluates anti-windup limiter before
   algebraic residuals. It assures that algebraic residuals are
