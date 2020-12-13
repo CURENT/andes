@@ -744,14 +744,26 @@ class Model:
             logger.debug("idx2uid returned None for idx None")
             return None
         if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
-            return self.uid[idx]
+            return self._one_idx2uid(idx)
         elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
                 idx = list_flatten(idx)
-            return [self.uid[i] if i is not None else None
+            return [self._one_idx2uid(i) if i is not None else None
                     for i in idx]
         else:
             raise NotImplementedError(f'Unknown idx type {type(idx)}')
+
+    def _one_idx2uid(self, idx):
+        """
+        Helper function for checking if an idx exist and
+        converting it to uid.
+        """
+
+        if idx not in self.uid:
+            raise KeyError("<%s>: device not exist with idx=%s.",
+                           self.class_name, idx)
+
+        return self.uid[idx]
 
     def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """

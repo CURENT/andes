@@ -104,6 +104,8 @@ def read(system, infile):
                               )
 
     for name, df in df_models.items():
+        # drop rows that all nan
+        df.dropna(axis=0, how='all', inplace=True)
         for row in df.to_dict(orient='records'):
             system.add(name, row)
 
