@@ -154,6 +154,17 @@ class TestNPCCRAW(unittest.TestCase):
         os.remove(self.ss.files.dump)
         self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
 
+    def test_read_json_from_memory(self):
+        fd = open(get_case('ieee14/ieee14_zip.json'))
+
+        ss = andes.main.System()
+        ss.undill()
+        andes.io.json.read(ss, fd)
+        ss.setup()
+        ss.PFlow.run()
+
+        fd.close()
+
 
 class TestPlot(unittest.TestCase):
     def test_kundur_plot(self):
