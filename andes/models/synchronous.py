@@ -339,6 +339,10 @@ class GENCLSModel:
 
 
 class GENCLS(GENBaseData, GENBase, GENCLSModel, Flux0):
+    """
+    Classical generator model.
+    """
+
     def __init__(self, system, config):
         GENBaseData.__init__(self)
         GENBase.__init__(self, system, config)
@@ -552,7 +556,7 @@ class GENROUModel:
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     """
-    Round rotor generator with quadratic saturation
+    Round rotor generator with quadratic saturation.
     """
     def __init__(self, system, config):
         GENROUData.__init__(self)
