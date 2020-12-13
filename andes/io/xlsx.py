@@ -99,15 +99,11 @@ def read(system, infile):
     System
         System instance after succeeded
     """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        xl = pd.ExcelFile(infile)
-
-        df_models = OrderedDict()
-        for sheet in xl.sheet_names:
-            df_models[sheet] = xl.parse(sheet_name=sheet, index_col=0,
-                                        )
+    df_models = pd.read_excel(infile,
+                              sheet_name=None,
+                              index_col=0,
+                              engine='openpyxl',
+                              )
 
     for name, df in df_models.items():
         for row in df.to_dict(orient='records'):
