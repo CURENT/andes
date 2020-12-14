@@ -189,6 +189,10 @@ class TestNPCCRAW(unittest.TestCase):
         ss = andes.main.System(default_config=True,
                                no_output=True,
                                )
+        # suppress out-of-normal info
+        ss.config.warn_limits = 0
+        ss.config.warn_abnormal = 0
+
         ss.undill()
         andes.io.psse.read(ss, fd_raw)
         andes.io.psse.read_add(ss, fd_dyr)
