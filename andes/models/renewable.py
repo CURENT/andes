@@ -1971,6 +1971,10 @@ class WTTQA1Data(ModelData):
         self.sp4 = NumParam(default=1.0, info='Speed power point 4',
                             unit='p.u.', tex_name='s_{p4}',
                             )
+        self.Tn = NumParam(default=np.nan, tex_name='T_n',
+                           info='Turbine rating. Use Sn from gov if none.',
+                           unit='MVA',
+                           )
 
 
 class WTTQA1Model(Model):
@@ -2008,9 +2012,14 @@ class WTTQA1Model(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,)
 
-        self.Sn = ExtParam(model='RenGovernor', src='Sn', indexer=self.rego,
-                           tex_name='S_n', export=False,
-                           )
+        self.Sngo = ExtParam(model='RenGovernor', src='Sn', indexer=self.rego,
+                             tex_name='S_{n,go}', export=False,
+                             )
+        self.Sn = NumSelect(self.Tn,
+                            fallback=self.Sngo,
+                            tex_name='S_n',
+                            info='Turbine or RenGovernor rating',
+                            )
 
         self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg,
                            tex_name='P_e', export=False,
