@@ -1437,10 +1437,6 @@ class WTDTA1Data(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.fn = NumParam(default=60.0, info="nominal frequency",
-                           unit='Hz',
-                           tex_name='f_n')
-
         self.Ht = NumParam(default=3.0, tex_name='H_t',
                            info='Turbine inertia', unit='MWs/MVA',
                            power=True,
@@ -1572,10 +1568,6 @@ class WTDSData(ModelData):
         self.ree = IdxParam(mandatory=True,
                             info='Renewable exciter idx',
                             )
-
-        self.fn = NumParam(default=60.0, info="nominal frequency",
-                           unit='Hz',
-                           tex_name='f_n')
 
         self.H = NumParam(default=3.0, tex_name='H_t',
                           info='Total inertia', unit='MWs/MVA',
