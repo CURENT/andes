@@ -780,7 +780,7 @@ REPCA1:
                 bus: BUS
         ree:
             RenExciter:
-                bus: BUS
+                reg: reg
         line:
             Line:
                 bus1: BUS1
@@ -820,6 +820,159 @@ REPCA1:
         - Tg: Tg
         - Ddn: Ddn
         - Dup: Dup
+
+WTDTA1:
+    destination: WTDTA1
+    inputs:
+        - BUS
+        - ID
+        - H
+        - DAMP
+        - Htfract
+        - Freq1
+        - Dshaft
+    find:
+        ree:
+            RenExciter:
+                bus: BUS
+    outputs:
+        - ree: ree
+        - Ht: "H, Htfract; lambda (x, y): x * y"
+        - Hg: "H, Htfract; lambda (x, y): x * (1-y)"
+        - Dshaft: Dshaft  # TODO: next line, provide sys_f
+        - Kshaft: "H, Htfract, Freq1, sys_f: lambda (H, Htfract, Freq1, sys_f): 2 * (H*Htfract) * (H*(1-Htfract)) * 2 * pi * freq1*freq1 / H / sys_f"
+
+WTARA1:
+    destination: WTARA1
+    inputs:
+        - BUS
+        - ID
+        - Ka
+        - theta0
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+        reg:
+            RenGen:
+                bus: BUS
+        ree:
+            RenExciter:
+                reg: reg
+        rego:
+            RenGovernor:
+                ree: ree
+    outputs:
+        rego: rego
+        Ka: Ka
+        theta0: theta0
+
+WTPTA1:
+    destination: WTPTA1
+    inputs:
+        - BUS
+        - ID
+        - Kiw
+        - Kpw
+        - Kic
+        - Kpc
+        - Kcc
+        - Tp
+        - TetaMax
+        - TetaMin
+        - RTetaMax
+        - RTetaMin
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+        reg:
+            RenGen:
+                bus: BUS
+        ree:
+            RenExciter:
+                reg: reg
+        rego:
+            RenGovernor:
+                ree: ree
+        rea:
+            RenAerodynamics:
+                rego: rego
+    outputs:
+        rea: rea
+        Kiw: Kiw
+        Kpw: Kpw
+        Kic: Kic
+        Kpc: Kpc
+        Kcc: Kcc
+        Tp: Tp
+        thmax: TetaMax
+        thmin: TetaMin
+        dthmax: RTetaMax
+        dthmin: RTetaMin
+
+WTTQA1:
+    destination: WTTQA1
+    inputs:
+        - BUS
+        - ID
+        - Tflag
+        - Kpp
+        - Kip
+        - Tp
+        - Twref
+        - Temax
+        - Temin
+        - p1
+        - spd1
+        - p2
+        - spd2
+        - p3
+        - spd3
+        - p4
+        - spd4
+        - TRATE
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+        reg:
+            RenGen:
+                bus: BUS
+        ree:
+            RenExciter:
+                reg: reg
+        rego:
+            RenGovernor:
+                ree: ree
+        rea:
+            RenAerodynamics:
+                rego: rego
+        rep:
+            RenPitch:
+                rea: rea
+    outputs:
+        - rep: rep
+        - Kip: Kip
+        - Tflag: Tflag
+        - Kpp: Kpp
+        - Kip: Kip
+        - Tp: Tp
+        - Twref: Twref
+        - Temax: Temax
+        - Temin: Temin
+        - p1: p1
+        - spd1: spd1
+        - p2: p2
+        - spd2: spd2
+        - p3: p3
+        - spd3: spd3
+        - p4: p4
+        - spd4: spd4
+        - TRATE: Tn
 
 # === Custom Models ===
 Toggler:
