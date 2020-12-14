@@ -760,8 +760,8 @@ class Model:
         """
 
         if idx not in self.uid:
-            raise KeyError("<%s>: device not exist with idx=%s.",
-                           self.class_name, idx)
+            raise KeyError("<%s>: device not exist with idx=%s." %
+                           (self.class_name, idx))
 
         return self.uid[idx]
 
