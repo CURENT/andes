@@ -3,6 +3,8 @@ Distributed energy resource models.
 """
 from collections import OrderedDict
 
+from andes.core.common import dummify
+
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
 from andes.core.block import Lag, DeadBand1, LimiterGain, Integrator
@@ -478,7 +480,7 @@ class PVD1Model(Model):
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
-class ESD1Data(PVD1Data): 
+class ESD1Data(PVD1Data):
     """
     Data for energy storage distributed model.
     """
@@ -489,16 +491,16 @@ class ESD1Data(PVD1Data):
                            info='Integrator constant for SOC model'
                            )
         self.SOCmin = NumParam(default=0.0, tex_name='SOC_{min}',
-                                info='Minimum required value for SOC in limiter',
-                                )
+                               info='Minimum required value for SOC in limiter',
+                               )
 
         self.SOCmax = NumParam(default=1.0, tex_name='SOC_{max}',
-                                info='Maximum allowed value for SOC in limiter'
-                                )
+                               info='Maximum allowed value for SOC in limiter'
+                               )
 
         self.SOCinit = NumParam(default=0.5, tex_name='SOC_{init}',
-                                 info='Initial state of charge'
-                                 )
+                                info='Initial state of charge'
+                                )
 
 
 class ESD1Model(PVD1Model):
@@ -523,7 +525,7 @@ class ESD1Model(PVD1Model):
         self.Ipmax.v_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
         self.Ipmax.e_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
 
-        self.Ipcmd.lim.sign_lower = -1
+        self.Ipcmd.lim.sign_lower = dummify(-1)
         self.Ipcmd.lim.lower = self.Ipmax
 
 
