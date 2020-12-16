@@ -55,7 +55,14 @@ class TDSData:
         self._process_names()
 
     def _process_names(self):
-        self.file_name, self.file_ext = os.path.splitext(self.full_name)
+        if self.full_name is None:
+            logger.info("Input file name not detected. Using `Untitled`.")
+            self.full_name = 'Untitled'
+            self.file_name = 'Untitled'
+            self.file_ext = ''
+        else:
+            self.file_name, self.file_ext = os.path.splitext(self.full_name)
+
         self._npy_file = os.path.join(self._path, self.file_name + '.npy')
 
         npz_path = os.path.join(self._path, self.file_name + '.npz')
