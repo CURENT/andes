@@ -154,6 +154,56 @@ class TestNPCCRAW(unittest.TestCase):
         os.remove(self.ss.files.dump)
         self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
 
+    def test_read_json_from_memory(self):
+        fd = open(get_case('ieee14/ieee14_zip.json'), 'r')
+
+        ss = andes.main.System(default_config=True,
+                               no_output=True,
+                               )
+        ss.undill()
+        andes.io.json.read(ss, fd)
+        ss.setup()
+        ss.PFlow.run()
+
+        fd.close()
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+    def test_read_mpc_from_memory(self):
+        fd = open(get_case('matpower/case14.m'), 'r')
+
+        ss = andes.main.System(default_config=True,
+                               no_output=True,
+                               )
+        ss.undill()
+        andes.io.matpower.read(ss, fd)
+        ss.setup()
+        ss.PFlow.run()
+
+        fd.close()
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+    def test_read_psse_from_memory(self):
+        fd_raw = open(get_case('npcc/npcc.raw'), 'r')
+        fd_dyr = open(get_case('npcc/npcc_full.dyr'), 'r')
+
+        ss = andes.main.System(default_config=True,
+                               no_output=True,
+                               )
+        # suppress out-of-normal info
+        ss.config.warn_limits = 0
+        ss.config.warn_abnormal = 0
+
+        ss.undill()
+        andes.io.psse.read(ss, fd_raw)
+        andes.io.psse.read_add(ss, fd_dyr)
+        ss.setup()
+        ss.PFlow.run()
+        ss.TDS.init()
+
+        fd_raw.close()
+        fd_dyr.close()
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
 
 class TestPlot(unittest.TestCase):
     def test_kundur_plot(self):

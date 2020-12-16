@@ -2,21 +2,25 @@
 JSON reader and writer for ANDES.
 
 """
+import io
 import json
 import logging
+
 from collections import OrderedDict
+from typing import Union
+
 from andes.utils.paths import confirm_overwrite
 
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infile):
     return True
 
 
 def write(system, outfile, skip_empty=True, overwrite=None, **kwargs):
     """
-    Write loaded ANDES system data into a JSON file
+    Write loaded ANDES system data into a JSON file.
 
     Parameters
     ----------
@@ -46,8 +50,10 @@ def write(system, outfile, skip_empty=True, overwrite=None, **kwargs):
 
 def _dump_system(system, writer, skip_empty, orient='records'):
     """
-    Write system to JSON output.
+    Dump parameters of each model into a json string and return
+    them all in an OrderedDict.
     """
+
     out = OrderedDict()
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
@@ -57,7 +63,7 @@ def _dump_system(system, writer, skip_empty, orient='records'):
     return json.dumps(out, indent=2)
 
 
-def read(system, infile):
+def read(system, infile: Union[str, io.IOBase]):
     """
     Read JSON file with ANDES model data into an empty system.
 
@@ -65,16 +71,24 @@ def read(system, infile):
     ----------
     system : System
         Empty System instance
-    infile : str
-        Path to the input file
+    infile : str or io.BaseIO
+        str: path to the input file; or io.BaseIO: a stream to
+        read from
 
     Returns
     -------
     System
         System instance after succeeded
     """
-    with open(infile, 'r') as f:
-        json_in = json.load(f)
+    if isinstance(infile, str):
+        f = open(infile, 'r')
+    else:
+        f = infile
+
+    json_in = json.load(f)
+
+    if f is not infile:
+        f.close()
 
     for name, dct in json_in.items():
         for row in dct:

@@ -14,23 +14,88 @@ class LineData(ModelData):
         self.bus1 = IdxParam(model='Bus', info="idx of from bus")
         self.bus2 = IdxParam(model='Bus', info="idx of to bus")
 
-        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
-        self.fn = NumParam(default=60.0, info="rated frequency", tex_name=r'f')
-        self.Vn1 = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_{n1}')
-        self.Vn2 = NumParam(default=110.0, info="rated voltage of bus2", non_zero=True, tex_name=r'V_{n2}')
+        self.Sn = NumParam(default=100.0,
+                           info="Power rating",
+                           non_zero=True,
+                           tex_name=r'S_n',
+                           unit='MW',
+                           )
+        self.fn = NumParam(default=60.0,
+                           info="rated frequency",
+                           tex_name='f',
+                           unit='Hz',
+                           )
+        self.Vn1 = NumParam(default=110.0,
+                            info="AC voltage rating",
+                            non_zero=True,
+                            tex_name=r'V_{n1}',
+                            unit='kV',
+                            )
+        self.Vn2 = NumParam(default=110.0,
+                            info="rated voltage of bus2",
+                            non_zero=True,
+                            tex_name=r'V_{n2}',
+                            unit='kV',
+                            )
 
-        self.r = NumParam(default=1e-8, info="line resistance", tex_name='r', z=True)
-        self.x = NumParam(default=1e-8, info="line reactance", tex_name='x', z=True)
-        self.b = NumParam(default=0.0, info="shared shunt susceptance", y=True)
-        self.g = NumParam(default=0.0, info="shared shunt conductance", y=True)
-        self.b1 = NumParam(default=0.0, info="from-side susceptance", tex_name='b_1')
-        self.g1 = NumParam(default=0.0, info="from-side conductance", tex_name='g_1')
-        self.b2 = NumParam(default=0.0, info="to-side susceptance", tex_name='b_2')
-        self.g2 = NumParam(default=0.0, info="to-side conductance", tex_name='g_2')
+        self.r = NumParam(default=1e-8,
+                          info="line resistance",
+                          tex_name='r',
+                          z=True,
+                          unit='p.u.',
+                          )
+        self.x = NumParam(default=1e-8,
+                          info="line reactance",
+                          tex_name='x',
+                          z=True,
+                          unit='p.u.',
+                          )
+        self.b = NumParam(default=0.0,
+                          info="shared shunt susceptance",
+                          y=True,
+                          unit='p.u.',
+                          )
+        self.g = NumParam(default=0.0,
+                          info="shared shunt conductance",
+                          y=True,
+                          unit='p.u.',
+                          )
+        self.b1 = NumParam(default=0.0,
+                           info="from-side susceptance",
+                           tex_name='b_1',
+                           unit='p.u.',
+                           )
+        self.g1 = NumParam(default=0.0,
+                           info="from-side conductance",
+                           tex_name='g_1',
+                           unit='p.u.',
+                           )
+        self.b2 = NumParam(default=0.0,
+                           info="to-side susceptance",
+                           tex_name='b_2',
+                           unit='p.u.',
+                           )
+        self.g2 = NumParam(default=0.0,
+                           info="to-side conductance",
+                           tex_name='g_2',
+                           unit='p.u.',
+                           )
 
-        self.trans = NumParam(default=0, info="transformer branch flag")
-        self.tap = NumParam(default=1.0, info="transformer branch tap ratio", tex_name='t_{ap}')
-        self.phi = NumParam(default=0.0, info="transformer branch phase shift in rad", tex_name=r'\phi')
+        self.trans = NumParam(default=0,
+                              info="transformer branch flag",
+                              unit='bool',
+                              )
+        self.tap = NumParam(default=1.0,
+                            info="transformer branch tap ratio",
+                            tex_name='t_{ap}',
+                            non_negative=True,
+                            unit='float',
+                            )
+        self.phi = NumParam(default=0.0,
+                            info="transformer branch phase shift in rad",
+                            tex_name=r'\phi',
+                            unit='radian',
+                            )
 
         self.owner = IdxParam(model='Owner', info="owner code")
 
@@ -45,6 +110,7 @@ class Line(LineData, Model):
     To reduce the number of variables, line injections are summed at bus equations
     and are not stored. Current injections are not computed.
     """
+
     def __init__(self, system=None, config=None):
         LineData.__init__(self)
         Model.__init__(self, system, config)

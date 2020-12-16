@@ -1,20 +1,21 @@
 """
 Excel reader and writer for ANDES power system parameters
 
-This module utilizes xlsxwriter and pandas.Frame.
-While I like the simplicity of the dome format, spreadsheet data is easier to read and edit.
-"""
-import logging
-import warnings
+This module utilizes openpyxl, xlsxwriter and pandas.Frame.
 
-from collections import OrderedDict
+While I like the simplicity of the dome format,
+spreadsheets are easier to view and edit.
+"""
+
+import logging
+
 from andes.utils.paths import confirm_overwrite
 from andes.shared import pd
 
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infile):
     return True
 
 
@@ -91,25 +92,23 @@ def read(system, infile):
     ----------
     system : System
         Empty System instance
-    infile : str
-        Path to the input file
+    infile : str or file-like
+        Path to the input file, or a file-like object
 
     Returns
     -------
     System
         System instance after succeeded
     """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        xl = pd.ExcelFile(infile)
-
-        df_models = OrderedDict()
-        for sheet in xl.sheet_names:
-            df_models[sheet] = xl.parse(sheet_name=sheet, index_col=0,
-                                        )
+    df_models = pd.read_excel(infile,
+                              sheet_name=None,
+                              index_col=0,
+                              engine='openpyxl',
+                              )
 
     for name, df in df_models.items():
+        # drop rows that all nan
+        df.dropna(axis=0, how='all', inplace=True)
         for row in df.to_dict(orient='records'):
             system.add(name, row)
 
