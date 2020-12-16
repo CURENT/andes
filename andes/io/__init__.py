@@ -1,9 +1,12 @@
 import importlib
+import io
 import logging
 import os
 
+from typing import Union
+
 from andes.utils.misc import elapsed
-from andes.io import xlsx, psse   # NOQA
+from andes.io import xlsx, psse, json, matpower   # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -66,15 +69,15 @@ def guess(system):
 
     # second, guess by lines
     true_format = ''
-    with open(files.case, 'r') as fid:
-        for item in maybe:
-            parser = importlib.import_module('.' + item, __name__)
-            testlines = getattr(parser, 'testlines')
-            if testlines(fid):
-                true_format = item
-                files.input_format = true_format
-                logger.debug('Input format guessed as %s.', true_format)
-                break
+
+    for item in maybe:
+        parser = importlib.import_module('.' + item, __name__)
+        testlines = getattr(parser, 'testlines')
+        if testlines(files.case):
+            true_format = item
+            files.input_format = true_format
+            logger.debug('Input format guessed as %s.', true_format)
+            break
 
     if not true_format:
         logger.error('Unable to determine case format.')
@@ -180,3 +183,17 @@ def dump(system, output_format, full_path=None, overwrite=False, **kwargs):
     else:
         logger.error('Format conversion failed.')
         return False
+
+
+def read_file_like(infile: Union[str, io.IOBase]):
+    if isinstance(infile, str):
+        f = open(infile, 'r')
+    else:
+        f = infile
+
+    lines_list = f.read().splitlines()
+
+    if f is not infile:
+        f.close()
+
+    return lines_list

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM debian:latest
 
 USER root
 WORKDIR /root
@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
 && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install andes cvxoptklu --no-cache-dir \
-&& python3 -m pip install https://github.com/curent/cvxopt/zipball/master --no-cache-dir
+RUN python3 -m pip install andes kvxopt --no-cache-dir
 
 RUN useradd -ms /bin/bash cui
 

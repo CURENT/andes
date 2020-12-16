@@ -427,6 +427,9 @@ class System:
             param_dict.update(kwargs)
 
         idx = param_dict.pop('idx', None)
+        if idx is np.nan:
+            idx = None
+
         idx = group.get_next_idx(idx=idx, model_name=model)
         self.__dict__[model].add(idx=idx, **param_dict)
         group.add(idx=idx, model=self.__dict__[model])

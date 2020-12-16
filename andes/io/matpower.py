@@ -3,17 +3,22 @@
 import logging
 import re
 
+import andes.io
+
 from andes.shared import deg2rad, np
 
 logger = logging.getLogger(__name__)
 
 
-def testlines(fid):
+def testlines(infil):
     return True  # hard coded
 
 
 def read(system, file):
-    """Read a MATPOWER data file into mpc and build andes device elements"""
+    """
+    Read a MATPOWER data file into mpc, and build andes device elements.
+    """
+
     func = re.compile(r'function\s')
     mva = re.compile(r'\s*mpc.baseMVA\s*=\s*')
     bus = re.compile(r'\s*mpc.bus\s*=\s*\[?')
@@ -39,9 +44,9 @@ def read(system, file):
         'bus_name': [],
     }
 
-    fid = open(file, 'r')
+    input_list = andes.io.read_file_like(file)
 
-    for line in fid:
+    for line in input_list:
         line = line.strip().rstrip(';')
         if not line:
             continue
@@ -102,8 +107,6 @@ def read(system, file):
                         logger.error(f'Error parsing {system.files.case}')
                         raise e
                     mpc[field].append(data)
-
-    fid.close()
 
     # convert mpc to np array
     mpc_array = dict()

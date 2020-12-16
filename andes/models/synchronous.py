@@ -85,6 +85,12 @@ class GENBaseData(ModelData):
 
 
 class GENBase(Model):
+    """
+    Base class for synchronous generators.
+
+    Defines shared network and dq-component variables.
+    """
+
     def __init__(self, system, config):
         super().__init__(system, config)
         self.group = 'SynGen'
@@ -159,7 +165,7 @@ class GENBase(Model):
                         )
         self.te = Algeb(info='electric torque',
                         tex_name=r'\tau_e',
-                        v_str='u * p0',
+                        v_str='u * tm0',
                         e_str='u * (psid * Iq - psiq * Id) - te',
                         )
         self.vf = Algeb(info='excitation voltage',
@@ -333,6 +339,10 @@ class GENCLSModel:
 
 
 class GENCLS(GENBaseData, GENBase, GENCLSModel, Flux0):
+    """
+    Classical generator model.
+    """
+
     def __init__(self, system, config):
         GENBaseData.__init__(self)
         GENBase.__init__(self, system, config)
@@ -546,7 +556,7 @@ class GENROUModel:
 
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     """
-    Round rotor generator with quadratic saturation
+    Round rotor generator with quadratic saturation.
     """
     def __init__(self, system, config):
         GENROUData.__init__(self)
