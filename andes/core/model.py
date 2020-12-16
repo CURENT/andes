@@ -207,7 +207,8 @@ class ModelData:
                 value.name = key
 
             if key in self.__dict__:
-                logger.warning(f"{self.__class__.__name__}: redefinition of instance member <{key}>")
+                logger.warning("%s: redefinition <%s>. This is likely a modeling error.",
+                               self.class_name, key)
 
             self.params[key] = value
 
