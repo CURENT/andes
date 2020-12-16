@@ -647,7 +647,7 @@ class TDSData:
         ii = 0
         for jj in range(nrows):
             for kk in range(ncols):
-                if ii > nyidxes:
+                if ii >= nyidxes:
                     break
 
                 yidx = yidxes[ii]
