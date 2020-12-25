@@ -11,7 +11,7 @@ import numpy as np
 from andes.shared import mpl, plt
 from andes.shared import set_latex
 
-from andes.core.var import BaseVar, Algeb, ExtAlgeb, AliasAlgeb
+from andes.core.var import BaseVar
 
 logger = logging.getLogger(__name__)
 
@@ -363,7 +363,7 @@ class TDSData:
                     logger.error(f"Variable <{yidx.name}> contains no values.")
                     return
                 offs = 1
-                if isinstance(yidx, (Algeb, ExtAlgeb, AliasAlgeb)):
+                if yidx.v_code == 'y':
                     offs += self.dae.n
 
                 yidx = yidx.a + offs
@@ -647,7 +647,7 @@ class TDSData:
         ii = 0
         for jj in range(nrows):
             for kk in range(ncols):
-                if ii > nyidxes:
+                if ii >= nyidxes:
                     break
 
                 yidx = yidxes[ii]
