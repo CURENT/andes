@@ -33,6 +33,8 @@ equations (DAEs) for numerical analysis. Main features of ANDES include
 - a rich library of transfer functions and discontinuous components (including limiters, dead-bands, and
   saturation) available for prototyping models, which can be readily instantiated as multiple devices for
   system analysis
+- industry-grade second-generation renewable models (solar PV, type 3 and type 4 wind),
+  distributed PV and energy storage model
 - comes with the Newton method for power flow calculation, the implicit trapezoidal method for time-domain
   simulation, and full eigenvalue calculation
 - strictly verified models with commercial software. ANDES obtains identical time-domain simulation results for
