@@ -63,15 +63,16 @@ The screenshot below is the generated documentation for the implemented IEEEG1 m
 
 In addition, ANDES features
 
-+ a rich library of transfer functions and discontinuous components (including limiters, deadbands, and
-  saturation functions) available for prototyping models, which can be effortlessly instantiated as multiple
-  devices for system analysis
-+ routines including Newton method for power flow calculation, implicit trapezoidal method for time-domain
-  simulation, and full eigenvalue analysis
-+ developed with performance in mind. While written in Python, ANDES comes with a performance package and can
-  finish a 20-second transient simulation of a 2000-bus system in a few seconds on a typical desktop computer
-+ out-of-the-box PSS/E raw and dyr data support for available models. Once a model is developed, inputs from a
-  dyr file can be immediately supported
+* a rich library of transfer functions and discontinuous components (including limiters, deadbands, and
+  saturation functions) available for model prototyping and system analysis.
+* industry-grade second-generation renewable models (solar PV, type 3 and type 4 wind),
+  distributed PV and energy storage model.
+* routines including Newton method for power flow calculation, implicit trapezoidal method for time-domain
+  simulation, and full eigenvalue analysis.
+* developed with performance in mind. While written in Python, ANDES can
+  finish a 20-second transient simulation of a 2000-bus system in a few seconds on a typical desktop computer.
+* out-of-the-box PSS/E raw and dyr data support for available models. Once a model is developed, inputs from a
+  dyr file can be immediately supported.
 
 ANDES is currently under active development.
 Use the following resources to get involved.
