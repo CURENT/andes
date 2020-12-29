@@ -2131,6 +2131,8 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
         src = inspect.getsource(func)
         src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
+        # remove `Indicator`
+        src = src.replace("Indicator", "")
 
         if self.parent.system.config.yapf_pycode:
             try:
