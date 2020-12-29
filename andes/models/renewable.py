@@ -154,10 +154,10 @@ class REGCA1Model(Model):
                            )
 
         # --- INITIALIZATION ---
-        self.q0gt0 = ConstService('Gt(q0, 0)', tex_name='z_{q0>0}',
+        self.q0gt0 = ConstService('Indicator(q0> 0)', tex_name='z_{q0>0}',
                                   info='flags for q0 below zero',
                                   )
-        self.q0lt0 = ConstService('Lt(q0, 0)', tex_name='z_{q0<0}',
+        self.q0lt0 = ConstService('Indicator(q0< 0)', tex_name='z_{q0<0}',
                                   info='flags for q0 below zero',
                                   )
 
@@ -697,9 +697,9 @@ class REECA1Model(Model):
                              info='Deadband for voltage error (ref0)'
                              )
 
-        self.pThld = ConstService(v_str='Thld > 0', tex_name='p_{Thld}')
+        self.pThld = ConstService(v_str='Indicator(Thld > 0)', tex_name='p_{Thld}')
 
-        self.nThld = ConstService(v_str='Thld < 0', tex_name='n_{Thld}')
+        self.nThld = ConstService(v_str='Indicator(Thld < 0)', tex_name='n_{Thld}')
 
         self.Thld_abs = ConstService(v_str='abs(Thld)', tex_name='|Thld|')
 
@@ -1313,7 +1313,7 @@ class REPCA1Model(Model):
                            info='Hardlimit on deadband output',
                            )
 
-        self.zf = VarService(v_str='(v < Vfrz) * freeze',
+        self.zf = VarService(v_str='Indicator(v < Vfrz) * freeze',
                              tex_name='z_f',
                              info='PI Q input freeze signal',
                              )

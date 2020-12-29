@@ -1737,11 +1737,14 @@ class SymProcessor:
         # symbols that are input to lambda functions
         # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
         self.inputs_dict = OrderedDict()
+        self.lambdify_func = [OrderedDict(), 'numpy']
+
         self.vars_dict = OrderedDict()
         self.iters_dict = OrderedDict()
         self.non_vars_dict = OrderedDict()  # inputs_dict - vars_dict
         self.non_iters_dict = OrderedDict()  # inputs_dict - iters_dict
         self.vars_list = list()
+
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
 
@@ -1779,7 +1782,7 @@ class SymProcessor:
                 if instance.v_str is not None:
                     sympified = sympify(instance.v_str, locals=self.inputs_dict)
                     self._check_expr_symbols(sympified)
-                    lambdified = lambdify(input_syms_list, sympified, 'numpy')
+                    lambdified = lambdify(input_syms_list, sympified, modules=self.lambdify_func)
                     init_lambda_list[name] = lambdified
                     init_latex[name] = latex(sympified.subs(self.tex_names))
                     init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.inputs_dict))
@@ -1800,7 +1803,7 @@ class SymProcessor:
         self.calls.init_latex = init_latex
         self.calls.init_std = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
                                        self.init_std,
-                                       'numpy')
+                                       modules=self.lambdify_func)
 
     def generate_symbols(self):
         """
@@ -1862,6 +1865,8 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
+
+        self.lambdify_func[0]['Indicator'] = lambda x: x
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)
@@ -1929,7 +1934,8 @@ class SymProcessor:
             if len(elist) == 0 or not any(elist):  # `any`, not `all`
                 self.calls.__dict__[ename] = None
             else:
-                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist), 'numpy')
+                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
+                                                      modules=self.lambdify_func)
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -1951,13 +1957,13 @@ class SymProcessor:
             if instance.v_str is not None:
                 try:
                     expr = sympify(instance.v_str, locals=self.inputs_dict)
-                except SympifyError as e:
+                except (SympifyError, TypeError) as e:
                     logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                     raise e
                 self._check_expr_symbols(expr)
                 s_syms[name] = expr
                 s_args[name] = [str(i) for i in expr.free_symbols]
-                s_calls[name] = lambdify(s_args[name], s_syms[name], 'numpy')
+                s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
             else:
                 s_syms[name] = 0
                 s_args[name] = []
@@ -2032,7 +2038,7 @@ class SymProcessor:
 
         for jname in j_calls:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
-            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), 'numpy')
+            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
         # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
