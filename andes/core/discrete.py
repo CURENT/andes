@@ -1227,13 +1227,15 @@ class ShuntAdjust(Discrete):
         SwBlock instance for conductance
     dt : NumParam
         Delay time
+    u : NumParam
+        Connection status
     min_iter : int
         Minimum iteration number to enable shunt switching
     err_tol : float
         Minimum iteration tolerance to enable switching
     """
 
-    def __init__(self, *, v, lower, upper, bsw, gsw, dt, enable=True,
+    def __init__(self, *, v, lower, upper, bsw, gsw, dt, u, enable=True,
                  min_iter=2, err_tol=1e-2,
                  name=None, tex_name=None, info=None, no_warn=False):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
@@ -1246,6 +1248,7 @@ class ShuntAdjust(Discrete):
         self.bsw = bsw
         self.gsw = gsw
         self.dt = dt
+        self.u = u
         self.enable = enable
         self.min_iter = min_iter
         self.err_tol = err_tol
@@ -1276,11 +1279,13 @@ class ShuntAdjust(Discrete):
         if not self.check_iter_err(niter=niter, err=err):
             return
 
+        # determine the shunt +/- direction
         self.direction[:] = 0
         self.direction[np.logical_and(self.v.v < self.lower.v,
                                       self.bsw.sel < self.bsw.maxsel)] = 1
         self.direction[np.logical_and(self.v.v > self.upper.v,
                                       self.bsw.sel > 0)] = -1
+        self.direction *= self.u.v.astype(int)  # consider online statuses
 
         if not np.any(self.direction):
             return
