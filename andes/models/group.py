@@ -498,7 +498,7 @@ class RenGen(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('bus', 'gen'))
+        self.common_params.extend(('bus', 'gen', 'Sn'))
         self.common_vars.extend(('Ipcmd', 'Iqcmd', 'Pe', 'Qe'))
 
 
