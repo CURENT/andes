@@ -2,14 +2,16 @@
 Synchronous generator classes
 """
 import logging
+import numpy as np
+
 from andes.core.model import Model, ModelData
-from andes.models.exciter import ExcQuadSat
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
 from andes.core.service import ConstService, VarService, ExtService  # NOQA
 from andes.core.service import InitChecker, FlagValue
-import numpy as np
+
+from andes.models.exciter import ExcQuadSat
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +435,7 @@ class GENROUModel:
                                           v_str='psi20_arg - _It_arg')
 
         self.Se0 = ConstService(tex_name=r"S_{e0}",
-                                v_str='(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
+                                v_str='Indicator(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
 
         self._a = ConstService(tex_name=r"a'", v_str='psi20_abs * (1 + Se0*gqd)')
         self._b = ConstService(tex_name=r"b'", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2

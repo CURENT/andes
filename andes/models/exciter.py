@@ -1,14 +1,18 @@
+import numpy as np
+
+from andes.core.common import dummify
+
 from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
-from andes.core.common import dummify
 from andes.core.var import Algeb, ExtState, ExtAlgeb, State
+
 from andes.core.service import ConstService, ExtService, VarService, PostInitService, FlagValue
-from andes.core.service import InitChecker, Replace  # NOQA
+from andes.core.service import InitChecker
+
 from andes.core.block import Block, LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import Piecewise, GainLimiter, LessThan  # NOQA
+from andes.core.block import Piecewise, GainLimiter, LessThan
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter
-import numpy as np  # NOQA
 
 
 class ExcBaseData(ModelData):
@@ -390,12 +394,12 @@ class ExcQuadSat(Block):
         self.SE1.v_str = f'{self._SE1.name}'
         self.SE2.v_str = f'{self._SE2.name} + 2 * (1 - {self.name}_zSE2)'
 
-        self.a.v_str = f'(({self.name}_SE2>0)+({self.name}_SE2<0)) * ' \
+        self.a.v_str = f'(Indicator({self.name}_SE2>0)+Indicator({self.name}_SE2<0)) * ' \
                        f'sqrt({self.name}_SE1 * {self.name}_E1 /({self.name}_SE2 * {self.name}_E2))'
 
         self.A.v_str = f'{self.name}_E2 - ({self.name}_E1 - {self.name}_E2) / ({self.name}_a - 1)'
 
-        self.B.v_str = f'(({self.name}_a>0)+({self.name}_a<0)) *' \
+        self.B.v_str = f'(Indicator({self.name}_a>0)+Indicator({self.name}_a<0)) *' \
                        f'{self.name}_SE2 * {self.name}_E2 * ({self.name}_a - 1)**2 / ' \
                        f'({self.name}_E1 - {self.name}_E2)** 2'
 
@@ -411,7 +415,7 @@ class EXDC2Model(ExcBase):
         # calculate `Se0` ahead of time in order to calculate `vr0`
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
                                 # v_str='vf0',
                                 )
         self.vr0 = ConstService(info='Initial vr',
@@ -1094,7 +1098,7 @@ class ESDC2AModel(ExcBase):
 
         self.Se0 = ConstService(
             tex_name='S_{e0}',
-            v_str='(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
+            v_str='Indicator(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
         )
 
         self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',

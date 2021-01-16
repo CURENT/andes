@@ -36,7 +36,9 @@ def plot_comparison(system, variable, tsat_data, ylabel, a=None,
                     tsat_header=None, a_tsat=None, scale=1,
                     psse_data=None, psse_header=None, a_psse=None,
                     show=True, left=None, right=None,
-                    legend=True, title=None):
+                    legend=True, title=None,
+                    line_width=1.0,
+                    ):
     """
     Plot and compare ANDES, TSAT and PSS/E results.
     """
@@ -50,11 +52,13 @@ def plot_comparison(system, variable, tsat_data, ylabel, a=None,
                    ycalc=lambda x: scale * x,
                    ylabel=ylabel,
                    show=False,
-                   line_styles=['-', '-.'],
+                   linestyles=['-', '-'],
                    left=left,
                    right=right,
                    legend=legend,
                    title=title,
+                   line_width=line_width,
+                   font_size=14,
                    )
 
     fig, ax = plot_data(tsat_data['Time'].to_numpy(),
@@ -63,12 +67,14 @@ def plot_comparison(system, variable, tsat_data, ylabel, a=None,
                         yheader=[tsat_header[i] for i in a_tsat] if tsat_header is not None else None,
                         fig=fig,
                         ax=ax,
-                        line_styles=['--', ':'],
+                        linestyles=[':', ':'],
                         left=left,
                         right=right,
                         legend=legend,
                         show=show,
                         title=title,
+                        line_width=line_width,
+                        font_size=14,
                         )
     if psse_data is not None:
         fig, ax = plot_data(
@@ -82,6 +88,7 @@ def plot_comparison(system, variable, tsat_data, ylabel, a=None,
             left=left,
             right=right,
             title=title,
+            line_width=line_width,
         )
     return fig, ax
 

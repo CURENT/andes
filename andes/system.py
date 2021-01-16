@@ -34,7 +34,9 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, 
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD
+from andes.shared import np, jac_names, IP_ADD
+from andes.shared import matrix, spmatrix, sparse
+
 logger = logging.getLogger(__name__)
 
 sys.path.append(get_dot_andes_path())
@@ -783,6 +785,9 @@ class System:
         """
         self._e_to_dae(('f', 'g'))
 
+        # reset mismatches for islanded buses
+        self.g_islands()
+
         # update variable values set by anti-windup limiters
         for item in self.antiwindups:
             if len(item.x_set) > 0:
@@ -817,6 +822,16 @@ class System:
             logger.error("g_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
+    def g_islands(self):
+        """
+        Reset algebraic mismatches for islanded buses.
+        """
+        if self.Bus.n_islanded_buses == 0:
+            return
+
+        self.dae.g[self.Bus.islanded_a] = 0.0
+        self.dae.g[self.Bus.islanded_v] = 0.0
+
     def j_update(self, models: OrderedDict, info=None):
         """
         Call the Jacobian update method for models in sequence.
@@ -849,10 +864,22 @@ class System:
                                      f'j_size={j_size}')
                         raise e
 
+        self.j_islands()
+
         if info:
             logger.debug("Jacobian updated at t=%.6f due to %s.", self.dae.t, info)
         else:
             logger.debug("Jacobian updated at t=%.6f.", self.dae.t)
+
+    def j_islands(self):
+        """
+        Set gy diagonals to eps for `a` and `v` variables of islanded buses.
+        """
+        if self.Bus.n_islanded_buses == 0:
+            return
+
+        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_a, self.Bus.islanded_a)
+        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_v, self.Bus.islanded_v)
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
@@ -872,6 +899,7 @@ class System:
         for jname in jac_names:
             ii, jj, vv = list(), list(), list()
 
+            # for `gy`, reserve memory for the main diagonal
             if jname == 'gy':
                 ii.extend(np.arange(self.dae.m))
                 jj.extend(np.arange(self.dae.m))
@@ -917,6 +945,109 @@ class System:
         for var in self._getters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
+
+    def connectivity(self, info=True):
+        """
+        Perform connectivity check for system.
+
+        Parameters
+        ----------
+        info : bool
+            True to log connectivity summary.
+        """
+
+        self.Bus.n_islanded_buses = 0
+        self.Bus.islanded_buses = list()
+        self.Bus.island_sets = list()
+
+        n = self.Bus.n
+
+        # collect from-bus and to-bus indices
+        fr, to, u = list(), list(), list()
+
+        # collect from Line
+        fr.extend(self.Line.a1.a.tolist())
+        to.extend(self.Line.a2.a.tolist())
+        u.extend(self.Line.u.v.tolist())
+        os = [0] * len(u)
+
+        # find islanded buses
+        diag = list(matrix(spmatrix(u, to, os, (n, 1), 'd') +
+                           spmatrix(u, fr, os, (n, 1), 'd')))
+
+        nib = self.Bus.n_islanded_buses = diag.count(0)
+        for idx in range(n):
+            if diag[idx] == 0:
+                self.Bus.islanded_buses.append(idx)
+
+        # store `a` and `v` indices for zeroing out residuals
+        self.Bus.islanded_a = np.array(self.Bus.islanded_buses)
+        self.Bus.islanded_v = self.Bus.n + self.Bus.islanded_a
+
+        # find islanded areas - Goderya's algorithm
+        temp = spmatrix(list(u) * 4,
+                        fr + to + fr + to,
+                        to + fr + fr + to,
+                        (n, n),
+                        'd')
+
+        cons = temp[0, :]
+        nelm = len(cons.J)
+        conn = spmatrix([], [], [], (1, n), 'd')
+        idx = islands = 0
+        enum = 0
+        done = 0
+
+        while not done:
+            while not done:
+                cons = cons * temp
+                cons = sparse(cons)  # remove zero values
+                new_nelm = len(cons.J)
+                if new_nelm == nelm:
+                    break
+                nelm = new_nelm
+            if len(cons.J) == n:  # all buses are interconnected
+                done = 1
+                break
+            self.Bus.island_sets.append(list(cons.J))
+            conn += cons
+            islands += 1
+            nconn = len(conn.J)
+            if nconn >= (n - nib):
+                self.Bus.island_sets = [i for i in self.Bus.island_sets if i != []]
+                break
+
+            for element in conn.J[idx:]:
+                if not diag[idx]:
+                    enum += 1  # skip islanded buses
+                if element <= enum:
+                    idx += 1
+                    enum += 1
+                else:
+                    break
+
+            cons = temp[enum, :]
+
+        if info is True:
+            self.summary()
+
+    def summary(self):
+        """
+        Print out system summary.
+        """
+
+        logger.info("-> System connectivity check results:")
+        if self.Bus.n_islanded_buses == 0:
+            logger.info("  No islanded bus detected.")
+        else:
+            logger.info("  %d islanded bus detected.", self.Bus.n_islanded_buses)
+            logger.debug("  Islanded buses: %s", self.Bus.islanded_buses)
+
+        if len(self.Bus.island_sets) == 0:
+            logger.info("  No islanded areas detected.")
+        else:
+            logger.info("  %d islanded areas detected.", len(self.Bus.island_sets))
+            logger.debug("  Buses in islanded areas: %s", self.Bus.island_sets)
 
     def _v_to_dae(self, v_code, model):
         """

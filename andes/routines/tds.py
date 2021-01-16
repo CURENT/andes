@@ -34,6 +34,7 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
                                      ('refresh_event', 0),
+                                     ('check_conn', 1),
                                      ('g_scale', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
@@ -50,6 +51,7 @@ class TDS(BaseRoutine):
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
+                              check_conn='re-check connectivity after event',
                               g_scale='scale algebraic residuals with time step size',
                               qrt='quasi-real-time stepping',
                               kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
@@ -66,12 +68,14 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
+                              check_conn=(0, 1),
                               g_scale='positive',
                               qrt='bool',
                               kqrt='positive',
                               store_f=(0, 1),
                               store_g=(0, 1),
                               )
+
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
@@ -777,6 +781,10 @@ class TDS(BaseRoutine):
             system.vars_to_models()
             self.custom_event = False
             ret = True
+
+        # check system connectivity after a switching
+        if ret is True and self.config.check_conn == 1:
+            system.connectivity(info=False)
 
         return ret
 
