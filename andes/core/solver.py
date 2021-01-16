@@ -197,8 +197,7 @@ class SuiteSparseSolver:
         except ValueError:
             logger.debug('Unexpected symbolic factorization.')
             self.F = self._symbolic(self.A)
-            self.N = self._numeric(self.A, self.F)
-            self._solve(self.A, self.F, self.N, self.b)
+            self.solve(self.A, self.b)
 
             return np.ravel(self.b)
         except ArithmeticError:
