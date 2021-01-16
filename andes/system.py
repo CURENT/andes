@@ -946,9 +946,14 @@ class System:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
-    def connectivity(self):
+    def connectivity(self, info=True):
         """
         Perform connectivity check for system.
+
+        Parameters
+        ----------
+        info : bool
+            True to log connectivity summary.
         """
 
         self.Bus.n_islanded_buses = 0
@@ -1023,7 +1028,15 @@ class System:
 
             cons = temp[enum, :]
 
-        logger.info("-> System connectivity:")
+        if info is True:
+            self.summary()
+
+    def summary(self):
+        """
+        Print out system summary.
+        """
+
+        logger.info("-> System connectivity check results:")
         if self.Bus.n_islanded_buses == 0:
             logger.info("  No islanded bus detected.")
         else:
