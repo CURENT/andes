@@ -167,6 +167,7 @@ class PFlow(BaseRoutine):
             convergence status
         """
         system = self.system
+        self.system.connectivity()
         self.summary()
         self.init()
         if system.dae.m == 0:
