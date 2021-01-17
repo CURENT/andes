@@ -219,6 +219,10 @@ class State(BaseVar):
         Left-hand time constant for the differential equation.
         Time constants will not be evaluated as part of the differential equation.
         They will be collected to array `dae.Tf` to multiply to the right-hand side `dae.f`.
+    check_init : bool
+        True to check if the equation right-hand-side is zero
+        initially. Disabling the checking can be used for integrators
+        when the initial input may not be zero.
 
     Attributes
     ----------
@@ -240,6 +244,7 @@ class State(BaseVar):
                  e_str: Optional[str] = None,
                  discrete: Optional[Discrete] = None,
                  t_const: Optional[Union[BaseParam, DummyValue, BaseService]] = None,
+                 check_init: Optional[bool] = True,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -261,6 +266,7 @@ class State(BaseVar):
                          diag_eps=diag_eps,
                          )
         self.t_const = t_const
+        self.check_init = check_init
 
 
 class ExtVar(BaseVar):

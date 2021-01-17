@@ -156,6 +156,7 @@ class TDS(BaseRoutine):
         system.dae.clear_ts()
         system.store_sparse_pattern(models=system.exist.pflow_tds)
         system.store_adder_setter(models=system.exist.pflow_tds)
+        system.store_no_check_init(models=system.exist.pflow_tds)
         system.vars_to_models()
 
         system.init(system.exist.tds, routine='tds')
@@ -675,6 +676,9 @@ class TDS(BaseRoutine):
         system = self.system
         self.fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
+
+        # reset diff. RHS where `check_init == False`
+        system.dae.f[system.no_check_init] = 0.0
 
         # warn if variables are initialized at limits
         if system.config.warn_limits:

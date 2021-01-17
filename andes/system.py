@@ -657,6 +657,19 @@ class System:
 
         return
 
+    def store_no_check_init(self, models):
+        """
+        Store differential variables with ``check_init == False``.
+        """
+        self.no_check_init = list()
+        for mdl in models.values():
+            if mdl.n == 0:
+                continue
+
+            for var in mdl.states.values():
+                if var.check_init is False:
+                    self.no_check_init.extend(var.a)
+
     def link_ext_param(self, model=None):
         """
         Retrieve values for ``ExtParam`` for the given models.

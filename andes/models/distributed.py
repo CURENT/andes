@@ -510,13 +510,11 @@ class ESD1Model(PVD1Model):
 
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
-        self.pgen = Algeb(info='Real power output',
-                          v_str='v * Ipout_y',
-                          e_str='v*Ipout_y - pgen',
-                          tex_name='P_{gen}'
-                          )
+
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u=self.pgen, T=self.Tf, K=1.0, y0=self.SOCinit)
+        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K=1.0, y0=self.SOCinit,
+                              check_init=False,
+                              )
 
         # --- Add hard limiter for SOC ---
         self.SOC = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)

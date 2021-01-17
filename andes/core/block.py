@@ -589,15 +589,18 @@ class Integrator(Block):
     The initial output needs to be specified through `y0`.
     """
 
-    def __init__(self, u, T, K, y0, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, check_init=True,
+                 name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.K = dummify(K)
         self.T = dummify(T)
         self.y0 = dummify(y0)
+        self.check_init = check_init
         self.enforce_tex_name((self.K, self.T))
 
-        self.y = State(info='Integrator output', tex_name='y', t_const=self.T)
+        self.y = State(info='Integrator output', tex_name='y', t_const=self.T,
+                       check_init=check_init)
         self.vars = {'y': self.y}
 
     def define(self):
