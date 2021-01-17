@@ -567,7 +567,7 @@ class ESD1(ESD1Data, ESD1Model):
     Distributed energy storage model.
 
     A state-of-charge limit is added to the PVD1 model.
-    This limit is applied to Ipmax and Ipmin (WIP)
+    This limit is applied to Ipmax and Ipmin.
 
     Reference:
     [1] Powerworld, Renewable Energy Electrical Control Model REEC_C
