@@ -143,6 +143,8 @@ class System:
                                      ('save_pycode', 0),
                                      ('yapf_pycode', 0),
                                      ('use_pycode', 0),
+                                     ('np_divide', 'warn'),
+                                     ('np_invalid', 'warn'),
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -158,6 +160,8 @@ class System:
                               save_pycode='save generated code to ~/.andes',
                               yapf_pycode='format generated code with yapf',
                               use_pycode='use generated, saved Python code',
+                              np_divide='treatment for division by zero',
+                              np_invalid='treatment for invalid floating-point ops.',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -172,8 +176,12 @@ class System:
                               save_pycode=(0, 1),
                               yapf_pycode=(0, 1),
                               use_pycode=(0, 1),
+                              np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                              np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
         self.config.check()
+        self._set_numpy()
+
         self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
@@ -193,10 +201,18 @@ class System:
         # internal flags
         self.is_setup = False              # if system has been setup
 
+    def _set_numpy(self):
+        """
+        Configure NumPy based on Config.
+        """
         # set up numpy random seed
         if isinstance(self.config.seed, int):
             np.random.seed(self.config.seed)
             logger.debug("Random seed set to <%d>.", self.config.seed)
+
+        np.seterr(divide=self.config.np_divide,
+                  invalid=self.config.np_invalid,
+                  )
 
     def reload(self, case, **kwargs):
         """
