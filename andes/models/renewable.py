@@ -2,7 +2,9 @@
 Converter-interfaced renewable energy models.
 """
 
-import numpy as np  # NOQA
+import numpy as np
+
+from collections import OrderedDict
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam, ExtParam
@@ -15,7 +17,6 @@ from andes.core.service import ConstService, ExtService, DataSelect, DeviceFinde
 from andes.core.service import VarService, ExtendedEvent, Replace, ApplyFunc, VarHold
 from andes.core.service import CurrentSign, NumSelect
 from andes.core.discrete import Switcher, Limiter, LessThan
-from collections import OrderedDict
 
 
 class REGCA1Data(ModelData):
@@ -104,6 +105,14 @@ class REGCA1Data(ModelData):
                               info='Acceleration factor',
                               vrange=(0, 1.0),
                               )
+        self.gammap = NumParam(default=1.0,
+                               info="P ratio of linked static gen",
+                               tex_name=r'\gamma_P'
+                               )
+        self.gammaq = NumParam(default=1.0,
+                               info="Q ratio of linked static gen",
+                               tex_name=r'\gamma_Q'
+                               )
 
 
 class REGCA1Model(Model):
@@ -132,25 +141,37 @@ class REGCA1Model(Model):
                           e_str='-Qe',
                           )
 
-        self.p0 = ExtService(model='StaticGen',
-                             src='p',
-                             indexer=self.gen,
-                             tex_name='P_0',
-                             )
-        self.q0 = ExtService(model='StaticGen',
-                             src='q',
-                             indexer=self.gen,
-                             tex_name='Q_0',
-                             )
+        self.p0s = ExtService(model='StaticGen',
+                              src='p',
+                              indexer=self.gen,
+                              tex_name='P_{0s}',
+                              info='initial P of the static gen',
+                              )
+        self.q0s = ExtService(model='StaticGen',
+                              src='q',
+                              indexer=self.gen,
+                              tex_name='Q_{0s}',
+                              info='initial Q of the static gen',
+                              )
+        self.p0 = ConstService(v_str='p0s * gammap',
+                               tex_name='P_0',
+                               info='initial P of this gen',
+                               )
+        self.q0 = ConstService(v_str='q0s * gammaq',
+                               tex_name='Q_0',
+                               info='initial Q of this gen',
+                               )
         self.ra = ExtParam(model='StaticGen',
                            src='ra',
                            indexer=self.gen,
                            tex_name='r_a',
+                           export=False,
                            )
         self.xs = ExtParam(model='StaticGen',
                            src='xs',
                            indexer=self.gen,
                            tex_name='x_s',
+                           export=False,
                            )
 
         # --- INITIALIZATION ---
@@ -584,14 +605,14 @@ class REECA1Model(Model):
                               e_str='-Iqcmd0 - IqHL_y',
                               )
 
-        self.p0 = ExtService(model='StaticGen',
-                             src='p',
-                             indexer=self.gen,
+        self.p0 = ExtService(model='RenGen',
+                             src='p0',
+                             indexer=self.reg,
                              tex_name='P_0',
                              )
-        self.q0 = ExtService(model='StaticGen',
-                             src='q',
-                             indexer=self.gen,
+        self.q0 = ExtService(model='RenGen',
+                             src='q0',
+                             indexer=self.reg,
                              tex_name='Q_0',
                              )
 

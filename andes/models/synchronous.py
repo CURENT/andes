@@ -85,11 +85,11 @@ class GENBaseData(ModelData):
                             tex_name='S_{1.2}',
                             )
         self.gammap = NumParam(default=1.0,
-                               info="P percentage of the static gen",
+                               info="P ratio of linked static gen",
                                tex_name=r'\gamma_P'
                                )
         self.gammaq = NumParam(default=1.0,
-                               info="Q percentage of the static gen",
+                               info="Q ratio of linked static gen",
                                tex_name=r'\gamma_Q'
                                )
 
