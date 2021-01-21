@@ -501,6 +501,11 @@ class ESD1Data(PVD1Data):
         self.SOCinit = NumParam(default=0.5, tex_name='SOC_{init}',
                                 info='Initial state of charge'
                                 )
+        
+        self.En = NumParam(default=100.0, tex_name='E_n',
+                           info='Rated energy capacity',
+                           unit="MWh"
+                            )
 
 
 class ESD1Model(PVD1Model):
@@ -518,12 +523,26 @@ class ESD1Model(PVD1Model):
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
         self.pIG = Integrator(u=self.pgen, T=self.Tf, K=1.0, y0=self.SOCinit)
 
+        # --- Modify SOC value with respect to energy capacity rating (En) ---
+        self.SOC = Algeb(info='State of Charge relative to energy capacity',
+                         v_str='360*(SOCinit-pIG_y)/En',
+                         e_str='360*(SOCinit-pIG_y)/En - SOC',
+                         tex_name='SOC'
+                         )
+
         # --- Add hard limiter for SOC ---
-        self.SOC = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
+        self.SOClim = HardLimiter(u=self.SOC, lower=self.SOCmin, upper=self.SOCmax)
+
+        # --- Adjust SOC depending on its relation to SOCmin and SOCmax ---
+        self.adjustedSOC = Algeb(info='SOC after limiter is applied',
+                                 v_str='SOC*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu',
+                                 e_str='SOC*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu - adjustedSOC',
+                                 tex_name='SOC_{adj}'
+                                 )
 
         # --- Add Ipmax and Ipcmd ---
-        self.Ipmax.v_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
-        self.Ipmax.e_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
+        self.Ipmax.e_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
 
         self.Ipcmd.lim.sign_lower = dummify(-1)
         self.Ipcmd.lim.lower = self.Ipmax
