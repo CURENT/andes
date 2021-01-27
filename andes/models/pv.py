@@ -33,7 +33,7 @@ class PVData(ModelData):
         self.v0 = NumParam(default=1.0, info="voltage set point", tex_name=r'v_0')
         self.vmax = NumParam(default=1.4, info="maximum voltage voltage", tex_name=r'v_{max}')
         self.vmin = NumParam(default=0.6, info="minimum allowed voltage", tex_name=r'v_{min}')
-        self.ra = NumParam(default=0.01, info='armature resistance', tex_name='r_a')
+        self.ra = NumParam(default=0.0, info='armature resistance', tex_name='r_a')
         self.xs = NumParam(default=0.3, info='armature reactance', tex_name='x_s')
 
 
