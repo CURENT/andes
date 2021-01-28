@@ -304,8 +304,35 @@ def run_case(case, *, routine='pflow', profile=False,
              convert='', convert_all='', add_book=None,
              codegen=False, remove_pycapsule=False, **kwargs):
     """
-    Run a single simulation case.
+    Run single simulation case for the given full path.
+    Use ``run`` instead of ``run_case`` whenever possible.
+
+    Arguments recognizable by ``load`` can be passed to ``run_case``.
+
+    Parameters
+    ----------
+    case : str
+        Full path to the test case
+    routine : str, ('pflow', 'tds', 'eig')
+        Computation routine to run
+    profile : bool, optional
+        True to enable profiler
+    convert : str, optional
+        Format name for case file conversion.
+    convert_all : str, optional
+        Format name for case file conversion, output
+        sheets for all available devices.
+    add_book : str, optional
+        Name of the device to be added to an excel case
+        as a new sheet.
+    codegen : bool, optional
+        True to run codegen
+    remove_pycapsule : bool, optional
+        True to remove pycapsule from C libraries.
+        Useful when dill serialization is needed.
+
     """
+
     pr = cProfile.Profile()
     # enable profiler if requested
     if profile is True:
