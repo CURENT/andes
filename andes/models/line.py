@@ -201,13 +201,15 @@ class JumperModel(Model):
                            info='voltage magnitude of the to bus')
 
         self.p = Algeb(info='active power (1 to 2)',
-                       e_str='a1 - a2',
-                       tex_name='P'
+                       e_str='u * (a1 - a2)',
+                       tex_name='P',
+                       diag_eps=True,
                        )
 
         self.q = Algeb(info='active power (1 to 2)',
-                       e_str='v1 - v2',
-                       tex_name='Q'
+                       e_str='u * (v1 - v2)',
+                       tex_name='Q',
+                       diag_eps=True,
                        )
 
         self.a1.e_str = 'p'
