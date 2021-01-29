@@ -269,11 +269,12 @@ class ModelData:
             if instance.export is False:
                 continue
 
-            # select origin input if `vin` is True
+            out[name] = instance.v
+
+            # use the original input if `vin` is True
             if vin is True and hasattr(instance, 'vin'):
-                out[name] = instance.vin
-            else:
-                out[name] = instance.v
+                if instance.vin is not None:
+                    out[name] = instance.vin
 
             conv = instance.oconvert
             if conv is not None:
