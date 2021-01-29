@@ -185,7 +185,6 @@ class JumperData(ModelData):
         self.bus2 = IdxParam(model='Bus', info="idx of to bus")
 
 
-
 class JumperModel(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
