@@ -455,6 +455,13 @@ class ACLine(GroupBase):
         self.common_vars.extend(('v1', 'v2', 'a1', 'a2'))
 
 
+class ACShort(GroupBase):
+    def __init__(self):
+        super(ACShort, self).__init__()
+        self.common_params.extend(('bus1', 'bus2'))
+        self.common_vars.extend(('v1', 'v2', 'a1', 'a2'))
+
+
 class StaticLoad(GroupBase):
     """
     Static load group.
