@@ -19,7 +19,7 @@ file_classes = OrderedDict([
     ('pq', ['PQ']),
     ('pv', ['PV', 'Slack']),
     ('shunt', ['Shunt', 'ShuntSw']),
-    ('line', ['Line']),
+    ('line', ['Line', 'Jumper']),
     ('area', ['Area', 'ACE', 'ACEc']),
     ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU']),
