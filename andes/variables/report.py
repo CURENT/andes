@@ -14,7 +14,7 @@ all_formats = {}
 def report_info(system):
     info = list()
     info.append('ANDES' + ' ' + version + '\n')
-    info.append('Copyright (C) 2015-2020 Hantao Cui\n\n')
+    info.append('Copyright (C) 2015-2021 Hantao Cui\n\n')
     info.append('ANDES comes with ABSOLUTELY NO WARRANTY\n')
     info.append('Case file: ' + system.files.case + '\n')
     info.append('Report time: ' + strftime("%m/%d/%Y %I:%M:%S %p") + '\n\n')
