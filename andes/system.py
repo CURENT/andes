@@ -1127,6 +1127,7 @@ class System:
     def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
         """
         Get all discrete status flags in a numpy array.
+        Values are written to ``dae.z`` in place.
 
         Returns
         -------
@@ -1135,13 +1136,18 @@ class System:
         if self.config.store_z != 1:
             return None
 
-        z_dict = list()
+        if len(self.dae.z) != self.dae.o:
+            self.dae.z = np.zeros(self.dae.o, dtype=float)
+
+        ii = 0
         for mdl in models.values():
             if mdl.n == 0 or len(mdl._input_z) == 0:
                 continue
-            z_dict.append(np.concatenate(list((mdl._input_z.values()))))
+            for zz in mdl._input_z.values():
+                self.dae.z[ii:ii + mdl.n] = zz
+                ii += mdl.n
 
-        return np.concatenate(z_dict)
+        return self.dae.z
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
