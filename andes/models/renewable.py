@@ -1261,24 +1261,24 @@ class REPCA1Model(Model):
 
         Pline = 're(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
 
-        self.Pline = VarService(v_str=Pline, vtype=np.float,
+        self.Pline = VarService(v_str=Pline, vtype=float,
                                 info='Complex power from bus1 to bus2',
                                 tex_name='P_{line}',
                                 )
 
-        self.Pline0 = ConstService(v_str='Pline', vtype=np.float,
+        self.Pline0 = ConstService(v_str='Pline', vtype=float,
                                    info='Initial vomplex power from bus1 to bus2',
                                    tex_name='P_{line0}',
                                    )
 
         Qline = 'im(Isign * v1*exp(1j*a1) * conj((v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x)))'
 
-        self.Qline = VarService(v_str=Qline, vtype=np.float,
+        self.Qline = VarService(v_str=Qline, vtype=float,
                                 info='Complex power from bus1 to bus2',
                                 tex_name='Q_{line}',
                                 )
 
-        self.Qline0 = ConstService(v_str='Qline', vtype=np.float,
+        self.Qline0 = ConstService(v_str='Qline', vtype=float,
                                    info='Initial complex power from bus1 to bus2',
                                    tex_name='Q_{line0}',
                                    )

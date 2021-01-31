@@ -1736,7 +1736,7 @@ class SymProcessor:
         # symbols that are input to lambda functions
         # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
         self.inputs_dict = OrderedDict()
-        self.lambdify_func = [OrderedDict(), 'numpy']
+        self.lambdify_func = [dict(), 'numpy']
 
         self.vars_dict = OrderedDict()
         self.iters_dict = OrderedDict()
@@ -1866,6 +1866,8 @@ class SymProcessor:
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
 
         self.lambdify_func[0]['Indicator'] = lambda x: x
+        self.lambdify_func[0]['imag'] = np.imag
+        self.lambdify_func[0]['real'] = np.real
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)

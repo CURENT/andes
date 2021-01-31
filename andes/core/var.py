@@ -88,8 +88,8 @@ class BaseVar:
         # attributes assigned by `set_address`
         self.n = 0
         self.a: np.ndarray = np.array([], dtype=int)       # address array
-        self.v: np.ndarray = np.array([], dtype=np.float)  # variable value array
-        self.e: np.ndarray = np.array([], dtype=np.float)  # equation value array
+        self.v: np.ndarray = np.array([], dtype=float)     # variable value array
+        self.e: np.ndarray = np.array([], dtype=float)     # equation value array
 
         self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
         self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array

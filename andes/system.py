@@ -1214,9 +1214,7 @@ class System:
                 try:
                     loaded_calls = dill.load(f)
                     return loaded_calls
-                except IOError:
-                    pass
-                except AttributeError:
+                except (IOError, EOFError, AttributeError):
                     pass
 
         return None
@@ -1474,7 +1472,7 @@ class System:
         array-like
             self.switch_times
         """
-        out = np.array([], dtype=np.float)
+        out = np.array([], dtype=float)
 
         if self.options.get('flat') is True:
             return out
