@@ -28,9 +28,10 @@ class DAETimeSeries:
         self._ys = OrderedDict()
         self._zs = OrderedDict()
         self._fs = OrderedDict()
-        self._gs = OrderedDict()
+        self._hs = OrderedDict()
+        self._is = OrderedDict()
 
-    def store(self, t, x, y, *, z=None, f=None, g=None):
+    def store(self, t, x, y, *, z=None, f=None, h=None, i=None,):
         """
         Store t, x, y, and z in internal storage, respectively.
 
@@ -49,8 +50,10 @@ class DAETimeSeries:
             self._zs[t] = np.array(z)
         if f is not None:
             self._fs[t] = np.array(f)
-        if g is not None:
-            self._gs[t] = np.array(g)
+        if h is not None:
+            self._hs[t] = np.array(h)
+        if i is not None:
+            self._is[t] = np.array(i)
 
     def unpack_np(self):
         """
@@ -69,7 +72,7 @@ class DAETimeSeries:
                     self.__dict__[dest][ii, :] = val
 
         pairs = (('_xs', 'x'), ('_ys', 'y'), ('_zs', 'z'),
-                 ('_fs', 'f'), ('_gs', 'g'))
+                 ('_fs', 'f'), ('_hs', 'h'), ('_is', 'i'))
 
         for a, b in pairs:
             _dict2array(a, b)
@@ -238,6 +241,8 @@ class DAE:
         self.gx, self.gy = None, None
         self.rx, self.tx = None, None
 
+        self.h_name, self.h_tex_name = [], []
+        self.i_name, self.i_tex_name = [], []
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []

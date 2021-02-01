@@ -543,13 +543,21 @@ class System:
         if len(self.dae.y_name) == 0:
             self.dae.x_name = [''] * self.dae.n
             self.dae.y_name = [''] * self.dae.m
+            self.dae.h_name = [''] * self.dae.p
+            self.dae.i_name = [''] * self.dae.q
             self.dae.x_tex_name = [''] * self.dae.n
             self.dae.y_tex_name = [''] * self.dae.m
+            self.dae.h_tex_name = [''] * self.dae.p
+            self.dae.i_tex_name = [''] * self.dae.q
         else:
             self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
             self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
+            self.dae.h_name.extend([''] * (self.dae.p - len(self.dae.h_name)))
+            self.dae.i_name.extend([''] * (self.dae.q - len(self.dae.i_name)))
             self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
+            self.dae.h_tex_name.extend([''] * (self.dae.p - len(self.dae.h_tex_name)))
+            self.dae.i_tex_name.extend([''] * (self.dae.q - len(self.dae.i_tex_name)))
 
     def set_dae_names(self, models):
         """

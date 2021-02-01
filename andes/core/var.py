@@ -369,12 +369,14 @@ class ExtVar(BaseVar):
 
     def set_arrays(self, dae):
         """
-        Empty function.
+        Stride of ``dae.i`` for the RHS of external variables.
         """
+
+        slice_idx = slice(self.r[0], self.r[-1] + 1)
         if isinstance(self, ExtState):
-            self.e = dae.h[self.r]
+            self.e = dae.h[slice_idx]
         elif isinstance(self, ExtAlgeb):
-            self.e = dae.i[self.r]
+            self.e = dae.i[slice_idx]
         else:
             raise NotImplementedError
 
@@ -448,7 +450,7 @@ class ExtVar(BaseVar):
             self.n = len(self.a)
 
         self.v = np.zeros(self.n)
-        self.e = np.zeros(self.n)
+        # self.e = np.zeros(self.n)
 
 
 class ExtState(ExtVar):
