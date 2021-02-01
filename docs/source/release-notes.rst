@@ -17,6 +17,7 @@ v1.3.0
 - Added `Jumper` for connecting two buses with zero impedance.
 - `REGCA1` and synchronous generators can take power ratio
   parameters `gammap` and `gammaq`.
+- New models: `IEESGO`.
 
 v1.2 Notes
 ----------
