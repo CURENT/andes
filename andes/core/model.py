@@ -636,8 +636,11 @@ class Model:
         self.cache.add_callback('e_adders', self._e_adders)
         self.cache.add_callback('e_setters', self._e_setters)
 
-        self._input = OrderedDict()  # cached dictionary of inputs
+        self._input = OrderedDict()    # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags in an OrderedDict
+        self._rhs_f = OrderedDict()    # RHS of external f
+        self._rhs_g = OrderedDict()    # RHS of external g
+
         self.f_args = []
         self.g_args = []   # argument value lists
         self.j_args = dict()

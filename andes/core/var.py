@@ -88,6 +88,7 @@ class BaseVar:
         # attributes assigned by `set_address`
         self.n = 0
         self.a: np.ndarray = np.array([], dtype=int)       # address array
+        self.r: np.ndarray = np.array([], dtype=int)       # equation RHS value array for external equations
         self.v: np.ndarray = np.array([], dtype=float)     # variable value array
         self.e: np.ndarray = np.array([], dtype=float)     # equation value array
 
@@ -362,15 +363,20 @@ class ExtVar(BaseVar):
 
     def set_address(self, addr, contiguous=False):
         """
-        Empty function.
+        Assigns address for equation RHS.
         """
-        pass
+        self.r = addr
 
     def set_arrays(self, dae):
         """
         Empty function.
         """
-        pass
+        if isinstance(self, ExtState):
+            self.e = dae.h[self.r]
+        elif isinstance(self, ExtAlgeb):
+            self.e = dae.i[self.r]
+        else:
+            raise NotImplementedError
 
     def link_external(self, ext_model):
         """

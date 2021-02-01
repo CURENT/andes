@@ -225,8 +225,12 @@ class DAE:
         self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.o = 0, 0, 0
+        self.p, self.q = 0, 0
+
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])
+        self.h, self.i = np.array([]), np.array([])
+
         # `self.Tf` is the time-constant array for differential equations
         self.Tf = np.array([])
 
@@ -423,6 +427,9 @@ class DAE:
 
         self.f = self._extend_or_slice(self.f, self.n)
         self.g = self._extend_or_slice(self.g, self.m)
+        self.h = self._extend_or_slice(self.h, self.p)
+        self.i = self._extend_or_slice(self.i, self.q)
+
         self.Tf = self._extend_or_slice(self.Tf, self.n, fill_func=np.ones)
 
     def _extend_or_slice(self, array, new_size, fill_func=np.zeros):
