@@ -20,7 +20,7 @@ import sys
 import inspect
 import dill
 from collections import OrderedDict
-from typing import List, Dict, Tuple, Union, Optional
+from typing import Dict, Tuple, Union, Optional
 
 import andes.io
 from andes import __version__
@@ -469,7 +469,6 @@ class System:
         """
         Set addresses for differential and algebraic variables.
         """
-        # set internal variable addresses
         for mdl in models.values():
             if mdl.flags.address is True:
                 logger.debug('%s internal address exists', mdl.class_name)
@@ -477,6 +476,7 @@ class System:
             if mdl.n == 0:
                 continue
 
+            # set internal variable addresses
             logger.debug('Setting internal address for %s', mdl.class_name)
             n = mdl.n
             m0 = self.dae.m
@@ -498,7 +498,6 @@ class System:
 
             self.dae.m = m_end
             self.dae.n = n_end
-            mdl.flags.address = True
 
         # set external variable addresses
         for mdl in models.values():
@@ -516,6 +515,23 @@ class System:
                     logger.error('Error: <%s> cannot retrieve <%s> from <%s> using <%s>:\n  %s',
                                  mdl.class_name, instance.name, instance.model,
                                  instance.indexer.name, repr(e))
+
+        # set external variable RHS addresses
+        for mdl in models.values():
+            if mdl.flags.address is True:
+                logger.debug('%s RHS address exists', mdl.class_name)
+                continue
+            if mdl.n == 0:
+                continue
+
+            for item in mdl.states_ext.values():
+                item.set_address(np.arange(self.dae.p, self.dae.p + item.n))
+                self.dae.p = self.dae.p + item.n
+            for item in mdl.algebs_ext.values():
+                item.set_address(np.arange(self.dae.q, self.dae.q + item.n))
+                self.dae.q = self.dae.q + item.n
+
+            mdl.flags.address = True
 
         # allocate memory for DAE arrays
         self.dae.resize_arrays()
@@ -588,6 +604,9 @@ class System:
                 continue
 
             for var in mdl.cache.vars_int.values():
+                var.set_arrays(self.dae)
+
+            for var in mdl.cache.vars_ext.values():
                 var.set_arrays(self.dae)
 
     def init(self, models: OrderedDict, routine: str):
@@ -1124,7 +1143,7 @@ class System:
             for var in self._setters[name]:
                 np.put(self.dae.__dict__[name], var.a, var.e)
 
-    def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def get_z(self, models: OrderedDict):
         """
         Get all discrete status flags in a numpy array.
         Values are written to ``dae.z`` in place.
@@ -1148,6 +1167,12 @@ class System:
                 ii += mdl.n
 
         return self.dae.z
+
+    def get_ext_fg(self, model: OrderedDict):
+        """
+        Get the right-hand side of the external equations.
+        """
+        pass
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
