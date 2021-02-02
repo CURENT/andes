@@ -272,9 +272,8 @@ class ModelData:
             out[name] = instance.v
 
             # use the original input if `vin` is True
-            if vin is True and hasattr(instance, 'vin'):
-                if instance.vin is not None:
-                    out[name] = instance.vin
+            if (vin is True) and hasattr(instance, 'vin') and (instance.vin is not None):
+                out[name] = instance.vin
 
             conv = instance.oconvert
             if conv is not None:

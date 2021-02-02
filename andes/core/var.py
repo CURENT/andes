@@ -450,7 +450,7 @@ class ExtVar(BaseVar):
             self.n = len(self.a)
 
         self.v = np.zeros(self.n)
-        # self.e = np.zeros(self.n)
+        # `self.e` is assigned in `set_arrays()`
 
 
 class ExtState(ExtVar):
