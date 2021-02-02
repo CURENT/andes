@@ -362,6 +362,47 @@ ESST3A:
         VMMAX: VMMAX
         VMMIN: VMMIN
 
+IEEET1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KE
+        - TE
+        - KF
+        - TF
+        - Switch
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: IEEET1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KE: KE
+        TE: TE
+        KF: KF
+        TF: TF
+        Switch: Switch
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+
 TGOV1:
     inputs:
         - BUS
