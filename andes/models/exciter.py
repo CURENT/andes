@@ -1311,10 +1311,23 @@ class IEEET1Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
+        # Set VRMAX to 999 when VRMAX = 0
+        self._zVRM = FlagValue(self.VRMAX, value=0,
+                               tex_name='z_{VRMAX}',
+                               )
+        self.VRMAXc = ConstService(v_str='VRMAX + 999*(1-_zVRM)',
+                                   info='Set VRMAX=999 when zero',
+                                   )
+        # Saturation
         self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
                               info='Field voltage saturation',
                               )
 
+        self.Se0 = ConstService(info='Initial saturation output',
+                                tex_name='S_{e0}',
+                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                # v_str='vf0',
+                                )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
                                 v_str='(KE + Se0) * vf0')
@@ -1325,11 +1338,6 @@ class IEEET1Model(ExcBase):
                                   tex_name='V_{ref0}',
                                   v_str='v + vb0',
                                   )
-        self.Se0 = ConstService(info='Initial saturation output',
-                                tex_name='S_{e0}',
-                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
-                                # v_str='vf0',
-                                )
         self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
                                  tex_name='V_{FE0}',
                                  )
@@ -1353,7 +1361,7 @@ class IEEET1Model(ExcBase):
         self.LA = LagAntiWindup(u='vi + WF_y',
                                 T=self.TA,
                                 K=self.KA,
-                                upper=self.VRMAX,
+                                upper=self.VRMAXc,
                                 lower=self.VRMIN,
                                 info='Anti-windup lag',
                                 )
@@ -1370,6 +1378,7 @@ class IEEET1Model(ExcBase):
                               y0=self.vf0,
                               info='Integrator',
                               )
+
         self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
