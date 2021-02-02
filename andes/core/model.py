@@ -1,7 +1,7 @@
 """
 Base class for building ANDES models.
 """
-#  [ANDES] (C)2015-2020 Hantao Cui
+#  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -34,8 +34,6 @@ from andes.shared import np, pd, newton_krylov
 from andes.shared import jac_names, jac_types, jac_full_names
 
 logger = logging.getLogger(__name__)
-
-np.seterr(divide='raise')
 
 
 class ModelCache:
@@ -271,11 +269,11 @@ class ModelData:
             if instance.export is False:
                 continue
 
-            # select origin input if `vin` is True
-            if vin is True and hasattr(instance, 'vin'):
+            out[name] = instance.v
+
+            # use the original input if `vin` is True
+            if (vin is True) and hasattr(instance, 'vin') and (instance.vin is not None):
                 out[name] = instance.vin
-            else:
-                out[name] = instance.v
 
             conv = instance.oconvert
             if conv is not None:
@@ -637,8 +635,11 @@ class Model:
         self.cache.add_callback('e_adders', self._e_adders)
         self.cache.add_callback('e_setters', self._e_setters)
 
-        self._input = OrderedDict()  # cached dictionary of inputs
+        self._input = OrderedDict()    # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags in an OrderedDict
+        self._rhs_f = OrderedDict()    # RHS of external f
+        self._rhs_g = OrderedDict()    # RHS of external g
+
         self.f_args = []
         self.g_args = []   # argument value lists
         self.j_args = dict()
@@ -1737,7 +1738,7 @@ class SymProcessor:
         # symbols that are input to lambda functions
         # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
         self.inputs_dict = OrderedDict()
-        self.lambdify_func = [OrderedDict(), 'numpy']
+        self.lambdify_func = [dict(), 'numpy']
 
         self.vars_dict = OrderedDict()
         self.iters_dict = OrderedDict()
@@ -1867,6 +1868,8 @@ class SymProcessor:
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
 
         self.lambdify_func[0]['Indicator'] = lambda x: x
+        self.lambdify_func[0]['imag'] = np.imag
+        self.lambdify_func[0]['real'] = np.real
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)

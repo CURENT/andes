@@ -15,7 +15,7 @@ class PVData(ModelData):
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
         self.subidx = DataParam(info='index for generators on the same bus', export=False)
-        self.bus = IdxParam(model='Bus', info="idx of the installed bus")
+        self.bus = IdxParam(model='Bus', info="idx of the installed bus", mandatory=True)
         self.busr = IdxParam(model='Bus', info="bus idx for remote voltage control")
         self.p0 = NumParam(default=0.0, info="active power set point in system base", tex_name=r'p_0', unit='p.u.')
         self.q0 = NumParam(default=0.0, info="reactive power set point in system base", tex_name=r'q_0',
@@ -33,7 +33,7 @@ class PVData(ModelData):
         self.v0 = NumParam(default=1.0, info="voltage set point", tex_name=r'v_0')
         self.vmax = NumParam(default=1.4, info="maximum voltage voltage", tex_name=r'v_{max}')
         self.vmin = NumParam(default=0.6, info="minimum allowed voltage", tex_name=r'v_{min}')
-        self.ra = NumParam(default=0.01, info='armature resistance', tex_name='r_a')
+        self.ra = NumParam(default=0.0, info='armature resistance', tex_name='r_a')
         self.xs = NumParam(default=0.3, info='armature reactance', tex_name='x_s')
 
 

@@ -1,10 +1,9 @@
 cvxopt>=1.2.5
-numpy
+numpy==1.19.5
 scipy
 sympy==1.5.1
 pandas
 matplotlib
-xlrd==1.2
 openpyxl
 xlsxwriter
 dill

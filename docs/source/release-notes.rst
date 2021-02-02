@@ -6,10 +6,24 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.3 Notes
+----------
+
+v1.3.0
+```````````````````
+- Allow `State` variable set `check_init=False` to skip
+  initialization test. One use case is for integrators
+  with non-zero inputs (such as state-of-charge integration).
+- Added `Jumper` for connecting two buses with zero impedance.
+- `REGCA1` and synchronous generators can take power ratio
+  parameters `gammap` and `gammaq`.
+- New models: `IEESGO` and `IEEET1`.
+
 v1.2 Notes
 ----------
-v1.2.8
+v1.2.9 (2021-01-16)
 ```````````````````
+- Added system connectivity check for islanded buses.
 - Depend on `openpyxl` for reading excel files since `xlrd` dropped
   support for any format but `xlsx` since v2.0.0.
 

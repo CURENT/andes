@@ -2,7 +2,7 @@
 System class for power system data and methods
 """
 
-#  [ANDES] (C)2015-2020 Hantao Cui
+#  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import sys
 import inspect
 import dill
 from collections import OrderedDict
-from typing import List, Dict, Tuple, Union, Optional
+from typing import Dict, Tuple, Union, Optional
 
 import andes.io
 from andes import __version__
@@ -143,6 +143,8 @@ class System:
                                      ('save_pycode', 0),
                                      ('yapf_pycode', 0),
                                      ('use_pycode', 0),
+                                     ('np_divide', 'warn'),
+                                     ('np_invalid', 'warn'),
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -158,6 +160,8 @@ class System:
                               save_pycode='save generated code to ~/.andes',
                               yapf_pycode='format generated code with yapf',
                               use_pycode='use generated, saved Python code',
+                              np_divide='treatment for division by zero',
+                              np_invalid='treatment for invalid floating-point ops.',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -172,8 +176,12 @@ class System:
                               save_pycode=(0, 1),
                               yapf_pycode=(0, 1),
                               use_pycode=(0, 1),
+                              np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                              np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
         self.config.check()
+        self._set_numpy()
+
         self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
@@ -189,14 +197,23 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
+        self.no_check_init = list()  # states for which initialization check is omitted
 
         # internal flags
-        self.is_setup = False              # if system has been setup
+        self.is_setup = False        # if system has been setup
 
+    def _set_numpy(self):
+        """
+        Configure NumPy based on Config.
+        """
         # set up numpy random seed
         if isinstance(self.config.seed, int):
             np.random.seed(self.config.seed)
             logger.debug("Random seed set to <%d>.", self.config.seed)
+
+        np.seterr(divide=self.config.np_divide,
+                  invalid=self.config.np_invalid,
+                  )
 
     def reload(self, case, **kwargs):
         """
@@ -453,7 +470,6 @@ class System:
         """
         Set addresses for differential and algebraic variables.
         """
-        # set internal variable addresses
         for mdl in models.values():
             if mdl.flags.address is True:
                 logger.debug('%s internal address exists', mdl.class_name)
@@ -461,6 +477,7 @@ class System:
             if mdl.n == 0:
                 continue
 
+            # set internal variable addresses
             logger.debug('Setting internal address for %s', mdl.class_name)
             n = mdl.n
             m0 = self.dae.m
@@ -482,7 +499,6 @@ class System:
 
             self.dae.m = m_end
             self.dae.n = n_end
-            mdl.flags.address = True
 
         # set external variable addresses
         for mdl in models.values():
@@ -501,6 +517,23 @@ class System:
                                  mdl.class_name, instance.name, instance.model,
                                  instance.indexer.name, repr(e))
 
+        # set external variable RHS addresses
+        for mdl in models.values():
+            if mdl.flags.address is True:
+                logger.debug('%s RHS address exists', mdl.class_name)
+                continue
+            if mdl.n == 0:
+                continue
+
+            for item in mdl.states_ext.values():
+                item.set_address(np.arange(self.dae.p, self.dae.p + item.n))
+                self.dae.p = self.dae.p + item.n
+            for item in mdl.algebs_ext.values():
+                item.set_address(np.arange(self.dae.q, self.dae.q + item.n))
+                self.dae.q = self.dae.q + item.n
+
+            mdl.flags.address = True
+
         # allocate memory for DAE arrays
         self.dae.resize_arrays()
 
@@ -511,13 +544,21 @@ class System:
         if len(self.dae.y_name) == 0:
             self.dae.x_name = [''] * self.dae.n
             self.dae.y_name = [''] * self.dae.m
+            self.dae.h_name = [''] * self.dae.p
+            self.dae.i_name = [''] * self.dae.q
             self.dae.x_tex_name = [''] * self.dae.n
             self.dae.y_tex_name = [''] * self.dae.m
+            self.dae.h_tex_name = [''] * self.dae.p
+            self.dae.i_tex_name = [''] * self.dae.q
         else:
             self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
             self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
+            self.dae.h_name.extend([''] * (self.dae.p - len(self.dae.h_name)))
+            self.dae.i_name.extend([''] * (self.dae.q - len(self.dae.i_name)))
             self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
+            self.dae.h_tex_name.extend([''] * (self.dae.p - len(self.dae.h_tex_name)))
+            self.dae.i_tex_name.extend([''] * (self.dae.q - len(self.dae.i_tex_name)))
 
     def set_dae_names(self, models):
         """
@@ -572,6 +613,9 @@ class System:
                 continue
 
             for var in mdl.cache.vars_int.values():
+                var.set_arrays(self.dae)
+
+            for var in mdl.cache.vars_ext.values():
                 var.set_arrays(self.dae)
 
     def init(self, models: OrderedDict, routine: str):
@@ -656,6 +700,19 @@ class System:
                     self.antiwindups.append(item)
 
         return
+
+    def store_no_check_init(self, models):
+        """
+        Store differential variables with ``check_init == False``.
+        """
+        self.no_check_init = list()
+        for mdl in models.values():
+            if mdl.n == 0:
+                continue
+
+            for var in mdl.states.values():
+                if var.check_init is False:
+                    self.no_check_init.extend(var.a)
 
     def link_ext_param(self, model=None):
         """
@@ -1095,9 +1152,10 @@ class System:
             for var in self._setters[name]:
                 np.put(self.dae.__dict__[name], var.a, var.e)
 
-    def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def get_z(self, models: OrderedDict):
         """
         Get all discrete status flags in a numpy array.
+        Values are written to ``dae.z`` in place.
 
         Returns
         -------
@@ -1106,13 +1164,24 @@ class System:
         if self.config.store_z != 1:
             return None
 
-        z_dict = list()
+        if len(self.dae.z) != self.dae.o:
+            self.dae.z = np.zeros(self.dae.o, dtype=float)
+
+        ii = 0
         for mdl in models.values():
             if mdl.n == 0 or len(mdl._input_z) == 0:
                 continue
-            z_dict.append(np.concatenate(list((mdl._input_z.values()))))
+            for zz in mdl._input_z.values():
+                self.dae.z[ii:ii + mdl.n] = zz
+                ii += mdl.n
 
-        return np.concatenate(z_dict)
+        return self.dae.z
+
+    def get_ext_fg(self, model: OrderedDict):
+        """
+        Get the right-hand side of the external equations.
+        """
+        pass
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
@@ -1185,9 +1254,7 @@ class System:
                 try:
                     loaded_calls = dill.load(f)
                     return loaded_calls
-                except IOError:
-                    pass
-                except AttributeError:
+                except (IOError, EOFError, AttributeError):
                     pass
 
         return None
@@ -1445,7 +1512,7 @@ class System:
         array-like
             self.switch_times
         """
-        out = np.array([], dtype=np.float)
+        out = np.array([], dtype=float)
 
         if self.options.get('flat') is True:
             return out

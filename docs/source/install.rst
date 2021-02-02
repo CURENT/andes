@@ -70,6 +70,12 @@ ANDES can be installed in the user mode and the development mode.
 
 User Mode
 ---------
+.. warning ::
+    Please skip this section and install ANDES in the `Development Mode`_
+    if you want to modify ANDES code or receive unreleased development
+    updates.
+
+The User Model installation will install the latest stable version.
 In the Anaconda environment, run
 
 .. code:: bash
@@ -149,7 +155,8 @@ If you install it from PyPI (namely, through ``pip``), run
 
     python3 -m pip install --yes andes
 
-If you installed ANDES from source code, and the source was cloned using ``git``,
+If you installed ANDES from source code (in the `Development Mode`_),
+and the source was cloned using ``git``,
 you can use ``git pull`` to pull in changes from remote. However, if your source
 code was downloaded, you will have to download the new source code again and manually
 overwrite the existing one.

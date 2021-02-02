@@ -41,14 +41,17 @@ def write(system, outfile, skip_empty=True, overwrite=None, **kwargs):
     if not confirm_overwrite(outfile, overwrite):
         return False
 
-    with open(outfile, 'w') as writer:
-        writer.write(_dump_system(system, writer, skip_empty))
-        logger.info('JSON file written to "%s"', outfile)
+    if hasattr(outfile, 'write'):
+        outfile.write(_dump_system(system, skip_empty))
+    else:
+        with open(outfile, 'w') as writer:
+            writer.write(_dump_system(system, skip_empty))
+            logger.info('JSON file written to "%s"', outfile)
 
     return True
 
 
-def _dump_system(system, writer, skip_empty, orient='records'):
+def _dump_system(system, skip_empty, orient='records'):
     """
     Dump parameters of each model into a json string and return
     them all in an OrderedDict.
