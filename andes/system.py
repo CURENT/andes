@@ -197,9 +197,10 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
+        self.no_check_init = list()  # states for which initialization check is omitted
 
         # internal flags
-        self.is_setup = False              # if system has been setup
+        self.is_setup = False        # if system has been setup
 
     def _set_numpy(self):
         """
