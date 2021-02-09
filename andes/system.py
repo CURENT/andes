@@ -935,8 +935,14 @@ class System:
         if self.Bus.n_islanded_buses == 0:
             return
 
-        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_a, self.Bus.islanded_a)
-        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_v, self.Bus.islanded_v)
+        if self.config.ipadd and IP_ADD:
+            self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_a, self.Bus.islanded_a)
+            self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_v, self.Bus.islanded_v)
+        else:
+            a_vals = -self.dae.gy[self.Bus.islanded_a, self.Bus.islanded_a] + self.config.diag_eps
+            v_vals = -self.dae.gy[self.Bus.islanded_v, self.Bus.islanded_v] + self.config.diag_eps
+            self.dae.gy[self.Bus.islanded_a, self.Bus.islanded_a] += a_vals
+            self.dae.gy[self.Bus.islanded_v, self.Bus.islanded_v] += v_vals
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
