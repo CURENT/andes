@@ -1098,8 +1098,10 @@ class System:
 
             cons = temp[enum, :]
 
+        # extend islanded buses, each in a list
         if len(self.Bus.islanded_buses) > 0:
-            self.Bus.islands.append(list(self.Bus.islanded_buses))
+            self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
+
         if len(self.Bus.island_sets) == 0:
             self.Bus.islands.append(list(range(n)))
         else:
