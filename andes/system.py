@@ -935,14 +935,18 @@ class System:
         if self.Bus.n_islanded_buses == 0:
             return
 
+        aidx = self.Bus.islanded_a
+        vidx = self.Bus.islanded_v
+
         if self.config.ipadd and IP_ADD:
-            self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_a, self.Bus.islanded_a)
-            self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_v, self.Bus.islanded_v)
+            self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
+            self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
         else:
-            a_vals = -self.dae.gy[self.Bus.islanded_a, self.Bus.islanded_a] + self.config.diag_eps
-            v_vals = -self.dae.gy[self.Bus.islanded_v, self.Bus.islanded_v] + self.config.diag_eps
-            self.dae.gy[self.Bus.islanded_a, self.Bus.islanded_a] += a_vals
-            self.dae.gy[self.Bus.islanded_v, self.Bus.islanded_v] += v_vals
+            avals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in aidx]
+            vvals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in vidx]
+
+            self.dae.gy += spmatrix(avals, aidx, aidx, self.dae.gy.size, 'd')
+            self.dae.gy += spmatrix(vvals, vidx, vidx, self.dae.gy.size, 'd')
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
