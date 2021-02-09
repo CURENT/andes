@@ -531,7 +531,7 @@ class TimerParam(NumParam):
     def is_time(self, dae_t):
         """
         Element-wise check if the DAE time is the same as the parameter value. The current implementation uses
-        `np.isclose`
+        `np.equal`.
 
         Parameters
         ----------
@@ -543,11 +543,13 @@ class TimerParam(NumParam):
         np.ndarray
             The array containing the truth value of if the DAE time is close to the parameter value.
 
-        See Also
-        --------
-        numpy.isclose : See NumPy.isclose for the warning on absolute tolerance
+        Notes
+        -----
+        The previous implementation with `np.isclose` with default `rtol=1e-5` mistakes
+        the immediate pre- and post-event time as in-event when simulation time is greater than 10.
         """
-        return np.isclose(dae_t, self.v)
+
+        return np.equal(dae_t, self.v)
 
 
 class ExtParam(NumParam):
