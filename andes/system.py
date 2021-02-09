@@ -1026,6 +1026,7 @@ class System:
         self.Bus.n_islanded_buses = 0
         self.Bus.islanded_buses = list()
         self.Bus.island_sets = list()
+        self.Bus.islands = list()
 
         n = self.Bus.n
 
@@ -1061,8 +1062,7 @@ class System:
         cons = temp[0, :]
         nelm = len(cons.J)
         conn = spmatrix([], [], [], (1, n), 'd')
-        idx = islands = 0
-        enum = 0
+        enum = idx = islands = 0
         done = 0
 
         while not done:
@@ -1073,15 +1073,18 @@ class System:
                 if new_nelm == nelm:
                     break
                 nelm = new_nelm
-            if len(cons.J) == n:  # all buses are interconnected
+
+            # all buses are interconnected
+            if len(cons.J) == n:
                 done = 1
                 break
+
             self.Bus.island_sets.append(list(cons.J))
             conn += cons
             islands += 1
             nconn = len(conn.J)
             if nconn >= (n - nib):
-                self.Bus.island_sets = [i for i in self.Bus.island_sets if i != []]
+                self.Bus.island_sets = [i for i in self.Bus.island_sets if len(i) > 0]
                 break
 
             for element in conn.J[idx:]:
@@ -1094,6 +1097,13 @@ class System:
                     break
 
             cons = temp[enum, :]
+
+        if len(self.Bus.islanded_buses) > 0:
+            self.Bus.islands.append(list(self.Bus.islanded_buses))
+        if len(self.Bus.island_sets) == 0:
+            self.Bus.islands.append(list(range(n)))
+        else:
+            self.Bus.islands.extend(self.Bus.island_sets)
 
         if info is True:
             self.summary()
