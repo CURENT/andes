@@ -279,7 +279,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
-            logger.debug("Resuming simulation from t=%.4f", system.dae.t)
+            logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
