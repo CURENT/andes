@@ -279,6 +279,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
+            logger.debug("Resuming simulation from t=%.4f", system.dae.t)
             self._calc_h_first()
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
@@ -769,7 +770,7 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
 
             # if the current time is close enough to the next event time
-            if np.isclose(system.dae.t, system.switch_times[self._switch_idx]):
+            if np.equal(system.dae.t, system.switch_times[self._switch_idx]):
 
                 # `_last_switch_t` is used by the Jacobian updater
                 self._last_switch_t = system.switch_times[self._switch_idx]
