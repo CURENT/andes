@@ -516,27 +516,28 @@ class ESD1Model(PVD1Model):
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
         self.pgen = Algeb(info='Real power output',
-                          v_str='v * Ipout_y',
+                          v_str='v*Ipout_y', #'v*Ipout_y'
                           e_str='v*Ipout_y - pgen',
                           tex_name='P_{gen}'
                           )
+
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u=self.pgen, T=self.Tf, K=1.0, y0=self.SOCinit)
+        self.pIG = Integrator(u=self.pgen, T=self.Tf, K='SOCinit-3600*pIG_y/En/sys_mva' , y0=0)
 
         # --- Modify SOC value with respect to energy capacity rating (En) ---
-        self.SOC = Algeb(info='State of Charge relative to energy capacity',
-                         v_str='360*(SOCinit-pIG_y)/En',
-                         e_str='360*(SOCinit-pIG_y)/En - SOC',
-                         tex_name='SOC'
-                         )
+        #self.SOC = Algeb(info='State of Charge relative to energy capacity',
+        #                 v_str='SOCinit-3600*pIG_y/En/sys_mva',
+        #                 e_str='SOCinit-3600*pIG_y/En/sys_mva - SOC',
+        #                 tex_name='SOC'
+        #                 )
 
         # --- Add hard limiter for SOC ---
-        self.SOClim = HardLimiter(u=self.SOC, lower=self.SOCmin, upper=self.SOCmax)
+        self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
 
         # --- Adjust SOC depending on its relation to SOCmin and SOCmax ---
         self.adjustedSOC = Algeb(info='SOC after limiter is applied',
-                                 v_str='SOC*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu',
-                                 e_str='SOC*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu - adjustedSOC',
+                                 v_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu',
+                                 e_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu - adjustedSOC',
                                  tex_name='SOC_{adj}'
                                  )
 
