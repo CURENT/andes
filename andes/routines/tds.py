@@ -516,9 +516,8 @@ class TDS(BaseRoutine):
                 self._debug_ac(inc_max)
                 break
 
-            if mis > 1e6 and (mis > 1e6 * self.mis[0]):
-                self.err_msg = 'Error increased too quickly. Convergence not likely.'
-                self.busted = True
+            if (mis > 1e6) and (mis > 1e6 * self.mis[0]):
+                self.err_msg = 'Error increased too quickly.'
                 break
 
         if not self.converged:
