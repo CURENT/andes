@@ -93,6 +93,7 @@ class System:
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
+                 config: Optional[Dict] = None,
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
@@ -121,7 +122,7 @@ class System:
             self._config_path = None
 
         self._config_object = self.load_config(self._config_path)
-        self.config = Config(self.__class__.__name__)
+        self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
 
         # custom configuration for system goes after this line
