@@ -146,6 +146,7 @@ class System:
                                      ('use_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
+                                     ('pickle_path', get_pkl_path())
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -163,6 +164,7 @@ class System:
                               use_pycode='use generated, saved Python code',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
+                              pickle_path='path models should be (un)dilled to/from',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -1259,20 +1261,17 @@ class System:
         logger.debug("Dumping calls to calls.pkl with dill")
         dill.settings['recurse'] = True
 
-        pkl_path = get_pkl_path()
-        with open(pkl_path, 'wb') as f:
+        with open(self.config.pickle_path, 'wb') as f:
             dill.dump(self.calls, f)
 
-    @staticmethod
-    def _load_pkl():
+    def _load_pkl(self):
         """
         Helper function to open and load dill-pickled functions.
         """
         dill.settings['recurse'] = True
-        pkl_path = get_pkl_path()
 
-        if os.path.isfile(pkl_path):
-            with open(pkl_path, 'rb') as f:
+        if os.path.isfile(self.config.pickle_path):
+            with open(self.config.pickle_path, 'rb') as f:
 
                 try:
                     loaded_calls = dill.load(f)
@@ -1296,7 +1295,7 @@ class System:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug('Undilled calls from "%s" is up-to-date.', get_pkl_path())
+                logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
             else:
                 logger.info('Undilled calls are for version %s, regenerating...', ver)
                 self.prepare(quick=True, incremental=True)
