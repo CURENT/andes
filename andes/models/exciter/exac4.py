@@ -3,6 +3,7 @@ from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 from andes.core.block import LeadLag, Lag
+from andes.core.service import ConstService
 from andes.core.discrete import HardLimiter
 
 
@@ -14,10 +15,10 @@ class EXAC4Data(ExcBaseData):
                            default=0.01,
                            unit='p.u.',
                            )
-        self.VIMAX = NumParam(default=0.8,
+        self.VIMAX = NumParam(default=5.0,
                               info='Max. input voltage',
                               tex_name='V_{IMAX}',
-                              vrange=(0, 1),
+                              vrange=(0, 5),
                               )
         self.VIMIN = NumParam(default=-0.1,
                               info='Min. input voltage',
@@ -64,6 +65,12 @@ class EXAC4Data(ExcBaseData):
 class EXAC4Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vf0 / KA',
+                                  )
+
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay',
                       )
@@ -71,6 +78,9 @@ class EXAC4Model(ExcBase):
                         tex_name='V_i',
                         unit='p.u.',
                         )
+        self.vi.v_str = 'vf0 / KA'
+        self.vi.e_str = '(vref0 - LG_y) - vi'
+
         self.HLI = HardLimiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
                                info='Hard limiter on input',
                                )
