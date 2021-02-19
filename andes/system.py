@@ -93,6 +93,7 @@ class System:
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
+                 config: Optional[Dict] = None,
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
@@ -121,7 +122,7 @@ class System:
             self._config_path = None
 
         self._config_object = self.load_config(self._config_path)
-        self.config = Config(self.__class__.__name__)
+        self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
 
         # custom configuration for system goes after this line
@@ -145,6 +146,7 @@ class System:
                                      ('use_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
+                                     ('pickle_path', get_pkl_path())
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -162,6 +164,7 @@ class System:
                               use_pycode='use generated, saved Python code',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
+                              pickle_path='path models should be (un)dilled to/from',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -935,8 +938,18 @@ class System:
         if self.Bus.n_islanded_buses == 0:
             return
 
-        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_a, self.Bus.islanded_a)
-        self.dae.gy.ipset(self.config.diag_eps, self.Bus.islanded_v, self.Bus.islanded_v)
+        aidx = self.Bus.islanded_a
+        vidx = self.Bus.islanded_v
+
+        if self.config.ipadd and IP_ADD:
+            self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
+            self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
+        else:
+            avals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in aidx]
+            vvals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in vidx]
+
+            self.dae.gy += spmatrix(avals, aidx, aidx, self.dae.gy.size, 'd')
+            self.dae.gy += spmatrix(vvals, vidx, vidx, self.dae.gy.size, 'd')
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
@@ -1016,6 +1029,7 @@ class System:
         self.Bus.n_islanded_buses = 0
         self.Bus.islanded_buses = list()
         self.Bus.island_sets = list()
+        self.Bus.islands = list()
 
         n = self.Bus.n
 
@@ -1051,8 +1065,7 @@ class System:
         cons = temp[0, :]
         nelm = len(cons.J)
         conn = spmatrix([], [], [], (1, n), 'd')
-        idx = islands = 0
-        enum = 0
+        enum = idx = islands = 0
         done = 0
 
         while not done:
@@ -1063,15 +1076,18 @@ class System:
                 if new_nelm == nelm:
                     break
                 nelm = new_nelm
-            if len(cons.J) == n:  # all buses are interconnected
+
+            # all buses are interconnected
+            if len(cons.J) == n:
                 done = 1
                 break
+
             self.Bus.island_sets.append(list(cons.J))
             conn += cons
             islands += 1
             nconn = len(conn.J)
             if nconn >= (n - nib):
-                self.Bus.island_sets = [i for i in self.Bus.island_sets if i != []]
+                self.Bus.island_sets = [i for i in self.Bus.island_sets if len(i) > 0]
                 break
 
             for element in conn.J[idx:]:
@@ -1084,6 +1100,15 @@ class System:
                     break
 
             cons = temp[enum, :]
+
+        # extend islanded buses, each in a list
+        if len(self.Bus.islanded_buses) > 0:
+            self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
+
+        if len(self.Bus.island_sets) == 0:
+            self.Bus.islands.append(list(range(n)))
+        else:
+            self.Bus.islands.extend(self.Bus.island_sets)
 
         if info is True:
             self.summary()
@@ -1236,20 +1261,17 @@ class System:
         logger.debug("Dumping calls to calls.pkl with dill")
         dill.settings['recurse'] = True
 
-        pkl_path = get_pkl_path()
-        with open(pkl_path, 'wb') as f:
+        with open(self.config.pickle_path, 'wb') as f:
             dill.dump(self.calls, f)
 
-    @staticmethod
-    def _load_pkl():
+    def _load_pkl(self):
         """
         Helper function to open and load dill-pickled functions.
         """
         dill.settings['recurse'] = True
-        pkl_path = get_pkl_path()
 
-        if os.path.isfile(pkl_path):
-            with open(pkl_path, 'rb') as f:
+        if os.path.isfile(self.config.pickle_path):
+            with open(self.config.pickle_path, 'rb') as f:
 
                 try:
                     loaded_calls = dill.load(f)
@@ -1273,7 +1295,7 @@ class System:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug('Undilled calls from "%s" is up-to-date.', get_pkl_path())
+                logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
             else:
                 logger.info('Undilled calls are for version %s, regenerating...', ver)
                 self.prepare(quick=True, incremental=True)

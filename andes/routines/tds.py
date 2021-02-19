@@ -279,6 +279,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
+            logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
@@ -515,9 +516,8 @@ class TDS(BaseRoutine):
                 self._debug_ac(inc_max)
                 break
 
-            if mis > 1e6 and (mis > 1e6 * self.mis[0]):
-                self.err_msg = 'Error increased too quickly. Convergence not likely.'
-                self.busted = True
+            if (mis > 1e6) and (mis > 1e6 * self.mis[0]):
+                self.err_msg = 'Error increased too quickly.'
                 break
 
         if not self.converged:
@@ -769,7 +769,7 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
 
             # if the current time is close enough to the next event time
-            if np.isclose(system.dae.t, system.switch_times[self._switch_idx]):
+            if np.equal(system.dae.t, system.switch_times[self._switch_idx]):
 
                 # `_last_switch_t` is used by the Jacobian updater
                 self._last_switch_t = system.switch_times[self._switch_idx]
