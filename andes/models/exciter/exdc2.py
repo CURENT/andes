@@ -102,7 +102,6 @@ class EXDC2Model(ExcBase):
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
                                 v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
-                                # v_str='vf0',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',

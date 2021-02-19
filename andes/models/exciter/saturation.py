@@ -196,11 +196,6 @@ class ExcQuadSat(Block):
         -----
         TODO.
         """
-        # self.E1.v_str = f'{self._E1.name} + (1 - {self.name}_zE1)'
-        # self.E2.v_str = f'{self._E2.name} + 2*(1 - {self.name}_zE2)'
-        #
-        # self.SE1.v_str = f'{self._SE1.name} + (1 - {self.name}_zSE1)'
-        # self.SE2.v_str = f'{self._SE2.name} + 2*(1 - {self.name}_zSE2)'
 
         self.E1.v_str = f'{self._E1.name}'
         self.E2.v_str = f'{self._E2.name}'

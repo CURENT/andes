@@ -643,20 +643,6 @@ class REECA1Model(Model):
         # `IqHL_y` is `Iqcmd`
         self.IqHL = GainLimiter(u='Qsel + Iqinj', K=1, lower=self.Iqmin, upper=self.Iqmax)
 
-        # --- Duplicate output - consider removing later ---
-
-        # self.Ipout = Algeb(info='Ipcmd limited output',
-        #                    v_str='IpHL_y',
-        #                    e_str='IpHL_y - Ipout',
-        #                    )
-        #
-        # self.Iqout = Algeb(info='Iqcmd limited output',
-        #                    v_str='IqHL_y',
-        #                    e_str='IqHL_y - Iqout',
-        #                    )
-
-        # ---
-
 
 class REECA1(REECA1Data, REECA1Model):
     """
