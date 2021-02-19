@@ -1029,6 +1029,8 @@ class System:
         self.Bus.n_islanded_buses = 0
         self.Bus.islanded_buses = list()
         self.Bus.island_sets = list()
+        self.Bus.nosw_island = list()
+        self.Bus.msw_island = list()
         self.Bus.islands = list()
 
         n = self.Bus.n
@@ -1101,6 +1103,21 @@ class System:
 
             cons = temp[enum, :]
 
+        # --- check if all areas have a slack generator ---
+        if len(self.Bus.island_sets) > 0:
+            for idx, island in enumerate(self.Bus.island_sets):
+                nosw = 1
+                slack_bus_uid = self.Bus.idx2uid(self.Slack.bus.v)
+                slack_u = self.Slack.u.v
+                for u, item in zip(slack_u, slack_bus_uid):
+                    if (u == 1) and (item in island):
+                        nosw -= 1
+                if nosw == 1:
+                    self.Bus.nosw_island.append(idx)
+                elif nosw < 0:
+                    self.Bus.msw_island.append(idx)
+
+        # --- Post processing ---
         # extend islanded buses, each in a list
         if len(self.Bus.islanded_buses) > 0:
             self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
@@ -1118,18 +1135,38 @@ class System:
         Print out system summary.
         """
 
+        island_sets = self.Bus.island_sets
+        nosw_island = self.Bus.nosw_island
+        msw_island = self.Bus.msw_island
+        n_islanded_buses = self.Bus.n_islanded_buses
+
         logger.info("-> System connectivity check results:")
-        if self.Bus.n_islanded_buses == 0:
+        if n_islanded_buses == 0:
             logger.info("  No islanded bus detected.")
         else:
-            logger.info("  %d islanded bus detected.", self.Bus.n_islanded_buses)
-            logger.debug("  Islanded buses: %s", self.Bus.islanded_buses)
+            logger.info("  %d islanded bus detected.", n_islanded_buses)
+            logger.debug("  Islanded Bus indices (0-based): %s", self.Bus.islanded_buses)
 
-        if len(self.Bus.island_sets) == 0:
+        if len(island_sets) == 0:
             logger.info("  No islanded areas detected.")
         else:
-            logger.info("  %d islanded areas detected.", len(self.Bus.island_sets))
-            logger.debug("  Buses in islanded areas: %s", self.Bus.island_sets)
+            logger.info("  %d islanded areas detected.", len(island_sets))
+            logger.debug("  Bus indices in islanded areas (0-based): %s", island_sets)
+
+        if len(nosw_island) > 0:
+            logger.warning('  Slack generator is not defined/enabled for %d island(s).',
+                           len(nosw_island))
+            logger.debug("  Bus indices in no-Slack areas (0-based): %s",
+                         [island_sets[item] for item in nosw_island])
+
+        if len(msw_island) > 0:
+            logger.warning('  Multiple slack generators are defined/enabled for %d island(s).',
+                           len(msw_island))
+            logger.debug("  Bus indices in multiple-Slack areas (0-based): %s",
+                         [island_sets[item] for item in msw_island])
+
+        if len(self.Bus.nosw_island) == 0 and len(self.Bus.msw_island) == 0:
+            logger.info('  Each island has a slack bus correctly defined and enabled.')
 
     def _v_to_dae(self, v_code, model):
         """
