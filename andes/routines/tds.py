@@ -34,11 +34,13 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
                                      ('refresh_event', 0),
+                                     ('check_conn', 1),
                                      ('g_scale', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
                                      ('store_f', 0.0),
-                                     ('store_g', 0.0),
+                                     ('store_h', 0.0),
+                                     ('store_i', 0.0),
                                      )))
         self.config.add_extra("_help",
                               tol="convergence tolerance",
@@ -50,11 +52,13 @@ class TDS(BaseRoutine):
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
+                              check_conn='re-check connectivity after event',
                               g_scale='scale algebraic residuals with time step size',
                               qrt='quasi-real-time stepping',
                               kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
                               store_f='store RHS of diff. equations',
-                              store_g='store RHS of algebraic equations',
+                              store_h='store RHS of external diff. equations',
+                              store_i='store RHS of external algeb. equations',
                               )
         self.config.add_extra("_alt",
                               tol="float",
@@ -66,12 +70,15 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
+                              check_conn=(0, 1),
                               g_scale='positive',
                               qrt='bool',
                               kqrt='positive',
                               store_f=(0, 1),
-                              store_g=(0, 1),
+                              store_h=(0, 1),
+                              store_i=(0, 1),
                               )
+
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
             self.config.tf = system.options.get('tf')
@@ -152,6 +159,7 @@ class TDS(BaseRoutine):
         system.dae.clear_ts()
         system.store_sparse_pattern(models=system.exist.pflow_tds)
         system.store_adder_setter(models=system.exist.pflow_tds)
+        system.store_no_check_init(models=system.exist.pflow_tds)
         system.vars_to_models()
 
         system.init(system.exist.tds, routine='tds')
@@ -271,6 +279,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
+            logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
@@ -298,14 +307,16 @@ class TDS(BaseRoutine):
 
             if step_status:
                 f_vals = dae.f if self.config.store_f else None
-                g_vals = dae.g if self.config.store_g else None
+                h_vals = dae.h if self.config.store_h else None
+                i_vals = dae.i if self.config.store_i else None
 
                 dae.ts.store(dae.t.tolist(),
                              x=dae.x,
                              y=dae.y,
                              z=system.get_z(models=system.exist.pflow_tds),
                              f=f_vals,
-                             g=g_vals,
+                             h=h_vals,
+                             i=i_vals,
                              )
 
                 self.streaming_step()
@@ -505,9 +516,8 @@ class TDS(BaseRoutine):
                 self._debug_ac(inc_max)
                 break
 
-            if mis > 1e6 and (mis > 1e6 * self.mis[0]):
-                self.err_msg = 'Error increased too quickly. Convergence not likely.'
-                self.busted = True
+            if (mis > 1e6) and (mis > 1e6 * self.mis[0]):
+                self.err_msg = 'Error increased too quickly.'
                 break
 
         if not self.converged:
@@ -672,6 +682,9 @@ class TDS(BaseRoutine):
         self.fg_update(system.exist.pflow_tds)
         system.j_update(models=system.exist.pflow_tds)
 
+        # reset diff. RHS where `check_init == False`
+        system.dae.f[system.no_check_init] = 0.0
+
         # warn if variables are initialized at limits
         if system.config.warn_limits:
             for model in system.exist.pflow_tds.values():
@@ -756,7 +769,7 @@ class TDS(BaseRoutine):
         if self._switch_idx < system.n_switches:
 
             # if the current time is close enough to the next event time
-            if np.isclose(system.dae.t, system.switch_times[self._switch_idx]):
+            if np.equal(system.dae.t, system.switch_times[self._switch_idx]):
 
                 # `_last_switch_t` is used by the Jacobian updater
                 self._last_switch_t = system.switch_times[self._switch_idx]
@@ -777,6 +790,10 @@ class TDS(BaseRoutine):
             system.vars_to_models()
             self.custom_event = False
             ret = True
+
+        # check system connectivity after a switching
+        if ret is True and self.config.check_conn == 1:
+            system.connectivity(info=False)
 
         return ret
 

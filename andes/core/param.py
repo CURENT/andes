@@ -1,10 +1,10 @@
-#  [ANDES] (C)2015-2020 Hantao Cui
+#  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#
+
 #  File name: param.py
 #  Last modified: 8/16/20, 7:27 PM
 
@@ -531,7 +531,7 @@ class TimerParam(NumParam):
     def is_time(self, dae_t):
         """
         Element-wise check if the DAE time is the same as the parameter value. The current implementation uses
-        `np.isclose`
+        `np.equal`.
 
         Parameters
         ----------
@@ -543,11 +543,13 @@ class TimerParam(NumParam):
         np.ndarray
             The array containing the truth value of if the DAE time is close to the parameter value.
 
-        See Also
-        --------
-        numpy.isclose : See NumPy.isclose for the warning on absolute tolerance
+        Notes
+        -----
+        The previous implementation with `np.isclose` with default `rtol=1e-5` mistakes
+        the immediate pre- and post-event time as in-event when simulation time is greater than 10.
         """
-        return np.isclose(dae_t, self.v)
+
+        return np.equal(dae_t, self.v)
 
 
 class ExtParam(NumParam):

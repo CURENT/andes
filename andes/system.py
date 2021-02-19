@@ -2,7 +2,7 @@
 System class for power system data and methods
 """
 
-#  [ANDES] (C)2015-2020 Hantao Cui
+#  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import sys
 import inspect
 import dill
 from collections import OrderedDict
-from typing import List, Dict, Tuple, Union, Optional
+from typing import Dict, Tuple, Union, Optional
 
 import andes.io
 from andes import __version__
@@ -34,7 +34,9 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, 
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, spmatrix, jac_names, IP_ADD
+from andes.shared import np, jac_names, IP_ADD
+from andes.shared import matrix, spmatrix, sparse
+
 logger = logging.getLogger(__name__)
 
 sys.path.append(get_dot_andes_path())
@@ -91,6 +93,7 @@ class System:
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
+                 config: Optional[Dict] = None,
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
@@ -119,7 +122,7 @@ class System:
             self._config_path = None
 
         self._config_object = self.load_config(self._config_path)
-        self.config = Config(self.__class__.__name__)
+        self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
 
         # custom configuration for system goes after this line
@@ -141,6 +144,9 @@ class System:
                                      ('save_pycode', 0),
                                      ('yapf_pycode', 0),
                                      ('use_pycode', 0),
+                                     ('np_divide', 'warn'),
+                                     ('np_invalid', 'warn'),
+                                     ('pickle_path', get_pkl_path())
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -156,6 +162,9 @@ class System:
                               save_pycode='save generated code to ~/.andes',
                               yapf_pycode='format generated code with yapf',
                               use_pycode='use generated, saved Python code',
+                              np_divide='treatment for division by zero',
+                              np_invalid='treatment for invalid floating-point ops.',
+                              pickle_path='path models should be (un)dilled to/from',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -170,8 +179,12 @@ class System:
                               save_pycode=(0, 1),
                               yapf_pycode=(0, 1),
                               use_pycode=(0, 1),
+                              np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                              np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
         self.config.check()
+        self._set_numpy()
+
         self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)    # file path manager
@@ -187,14 +200,23 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
+        self.no_check_init = list()  # states for which initialization check is omitted
 
         # internal flags
-        self.is_setup = False              # if system has been setup
+        self.is_setup = False        # if system has been setup
 
+    def _set_numpy(self):
+        """
+        Configure NumPy based on Config.
+        """
         # set up numpy random seed
         if isinstance(self.config.seed, int):
             np.random.seed(self.config.seed)
             logger.debug("Random seed set to <%d>.", self.config.seed)
+
+        np.seterr(divide=self.config.np_divide,
+                  invalid=self.config.np_invalid,
+                  )
 
     def reload(self, case, **kwargs):
         """
@@ -451,7 +473,6 @@ class System:
         """
         Set addresses for differential and algebraic variables.
         """
-        # set internal variable addresses
         for mdl in models.values():
             if mdl.flags.address is True:
                 logger.debug('%s internal address exists', mdl.class_name)
@@ -459,6 +480,7 @@ class System:
             if mdl.n == 0:
                 continue
 
+            # set internal variable addresses
             logger.debug('Setting internal address for %s', mdl.class_name)
             n = mdl.n
             m0 = self.dae.m
@@ -480,7 +502,6 @@ class System:
 
             self.dae.m = m_end
             self.dae.n = n_end
-            mdl.flags.address = True
 
         # set external variable addresses
         for mdl in models.values():
@@ -499,6 +520,23 @@ class System:
                                  mdl.class_name, instance.name, instance.model,
                                  instance.indexer.name, repr(e))
 
+        # set external variable RHS addresses
+        for mdl in models.values():
+            if mdl.flags.address is True:
+                logger.debug('%s RHS address exists', mdl.class_name)
+                continue
+            if mdl.n == 0:
+                continue
+
+            for item in mdl.states_ext.values():
+                item.set_address(np.arange(self.dae.p, self.dae.p + item.n))
+                self.dae.p = self.dae.p + item.n
+            for item in mdl.algebs_ext.values():
+                item.set_address(np.arange(self.dae.q, self.dae.q + item.n))
+                self.dae.q = self.dae.q + item.n
+
+            mdl.flags.address = True
+
         # allocate memory for DAE arrays
         self.dae.resize_arrays()
 
@@ -509,13 +547,21 @@ class System:
         if len(self.dae.y_name) == 0:
             self.dae.x_name = [''] * self.dae.n
             self.dae.y_name = [''] * self.dae.m
+            self.dae.h_name = [''] * self.dae.p
+            self.dae.i_name = [''] * self.dae.q
             self.dae.x_tex_name = [''] * self.dae.n
             self.dae.y_tex_name = [''] * self.dae.m
+            self.dae.h_tex_name = [''] * self.dae.p
+            self.dae.i_tex_name = [''] * self.dae.q
         else:
             self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
             self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
+            self.dae.h_name.extend([''] * (self.dae.p - len(self.dae.h_name)))
+            self.dae.i_name.extend([''] * (self.dae.q - len(self.dae.i_name)))
             self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
             self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
+            self.dae.h_tex_name.extend([''] * (self.dae.p - len(self.dae.h_tex_name)))
+            self.dae.i_tex_name.extend([''] * (self.dae.q - len(self.dae.i_tex_name)))
 
     def set_dae_names(self, models):
         """
@@ -570,6 +616,9 @@ class System:
                 continue
 
             for var in mdl.cache.vars_int.values():
+                var.set_arrays(self.dae)
+
+            for var in mdl.cache.vars_ext.values():
                 var.set_arrays(self.dae)
 
     def init(self, models: OrderedDict, routine: str):
@@ -654,6 +703,19 @@ class System:
                     self.antiwindups.append(item)
 
         return
+
+    def store_no_check_init(self, models):
+        """
+        Store differential variables with ``check_init == False``.
+        """
+        self.no_check_init = list()
+        for mdl in models.values():
+            if mdl.n == 0:
+                continue
+
+            for var in mdl.states.values():
+                if var.check_init is False:
+                    self.no_check_init.extend(var.a)
 
     def link_ext_param(self, model=None):
         """
@@ -783,6 +845,9 @@ class System:
         """
         self._e_to_dae(('f', 'g'))
 
+        # reset mismatches for islanded buses
+        self.g_islands()
+
         # update variable values set by anti-windup limiters
         for item in self.antiwindups:
             if len(item.x_set) > 0:
@@ -817,6 +882,16 @@ class System:
             logger.error("g_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
+    def g_islands(self):
+        """
+        Reset algebraic mismatches for islanded buses.
+        """
+        if self.Bus.n_islanded_buses == 0:
+            return
+
+        self.dae.g[self.Bus.islanded_a] = 0.0
+        self.dae.g[self.Bus.islanded_v] = 0.0
+
     def j_update(self, models: OrderedDict, info=None):
         """
         Call the Jacobian update method for models in sequence.
@@ -849,10 +924,32 @@ class System:
                                      f'j_size={j_size}')
                         raise e
 
+        self.j_islands()
+
         if info:
             logger.debug("Jacobian updated at t=%.6f due to %s.", self.dae.t, info)
         else:
             logger.debug("Jacobian updated at t=%.6f.", self.dae.t)
+
+    def j_islands(self):
+        """
+        Set gy diagonals to eps for `a` and `v` variables of islanded buses.
+        """
+        if self.Bus.n_islanded_buses == 0:
+            return
+
+        aidx = self.Bus.islanded_a
+        vidx = self.Bus.islanded_v
+
+        if self.config.ipadd and IP_ADD:
+            self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
+            self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
+        else:
+            avals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in aidx]
+            vvals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in vidx]
+
+            self.dae.gy += spmatrix(avals, aidx, aidx, self.dae.gy.size, 'd')
+            self.dae.gy += spmatrix(vvals, vidx, vidx, self.dae.gy.size, 'd')
 
     def store_sparse_pattern(self, models: OrderedDict):
         """
@@ -872,6 +969,7 @@ class System:
         for jname in jac_names:
             ii, jj, vv = list(), list(), list()
 
+            # for `gy`, reserve memory for the main diagonal
             if jname == 'gy':
                 ii.extend(np.arange(self.dae.m))
                 jj.extend(np.arange(self.dae.m))
@@ -917,6 +1015,121 @@ class System:
         for var in self._getters['x']:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
+
+    def connectivity(self, info=True):
+        """
+        Perform connectivity check for system.
+
+        Parameters
+        ----------
+        info : bool
+            True to log connectivity summary.
+        """
+
+        self.Bus.n_islanded_buses = 0
+        self.Bus.islanded_buses = list()
+        self.Bus.island_sets = list()
+        self.Bus.islands = list()
+
+        n = self.Bus.n
+
+        # collect from-bus and to-bus indices
+        fr, to, u = list(), list(), list()
+
+        # collect from Line
+        fr.extend(self.Line.a1.a.tolist())
+        to.extend(self.Line.a2.a.tolist())
+        u.extend(self.Line.u.v.tolist())
+        os = [0] * len(u)
+
+        # find islanded buses
+        diag = list(matrix(spmatrix(u, to, os, (n, 1), 'd') +
+                           spmatrix(u, fr, os, (n, 1), 'd')))
+
+        nib = self.Bus.n_islanded_buses = diag.count(0)
+        for idx in range(n):
+            if diag[idx] == 0:
+                self.Bus.islanded_buses.append(idx)
+
+        # store `a` and `v` indices for zeroing out residuals
+        self.Bus.islanded_a = np.array(self.Bus.islanded_buses)
+        self.Bus.islanded_v = self.Bus.n + self.Bus.islanded_a
+
+        # find islanded areas - Goderya's algorithm
+        temp = spmatrix(list(u) * 4,
+                        fr + to + fr + to,
+                        to + fr + fr + to,
+                        (n, n),
+                        'd')
+
+        cons = temp[0, :]
+        nelm = len(cons.J)
+        conn = spmatrix([], [], [], (1, n), 'd')
+        enum = idx = islands = 0
+        done = 0
+
+        while not done:
+            while not done:
+                cons = cons * temp
+                cons = sparse(cons)  # remove zero values
+                new_nelm = len(cons.J)
+                if new_nelm == nelm:
+                    break
+                nelm = new_nelm
+
+            # all buses are interconnected
+            if len(cons.J) == n:
+                done = 1
+                break
+
+            self.Bus.island_sets.append(list(cons.J))
+            conn += cons
+            islands += 1
+            nconn = len(conn.J)
+            if nconn >= (n - nib):
+                self.Bus.island_sets = [i for i in self.Bus.island_sets if len(i) > 0]
+                break
+
+            for element in conn.J[idx:]:
+                if not diag[idx]:
+                    enum += 1  # skip islanded buses
+                if element <= enum:
+                    idx += 1
+                    enum += 1
+                else:
+                    break
+
+            cons = temp[enum, :]
+
+        # extend islanded buses, each in a list
+        if len(self.Bus.islanded_buses) > 0:
+            self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
+
+        if len(self.Bus.island_sets) == 0:
+            self.Bus.islands.append(list(range(n)))
+        else:
+            self.Bus.islands.extend(self.Bus.island_sets)
+
+        if info is True:
+            self.summary()
+
+    def summary(self):
+        """
+        Print out system summary.
+        """
+
+        logger.info("-> System connectivity check results:")
+        if self.Bus.n_islanded_buses == 0:
+            logger.info("  No islanded bus detected.")
+        else:
+            logger.info("  %d islanded bus detected.", self.Bus.n_islanded_buses)
+            logger.debug("  Islanded buses: %s", self.Bus.islanded_buses)
+
+        if len(self.Bus.island_sets) == 0:
+            logger.info("  No islanded areas detected.")
+        else:
+            logger.info("  %d islanded areas detected.", len(self.Bus.island_sets))
+            logger.debug("  Buses in islanded areas: %s", self.Bus.island_sets)
 
     def _v_to_dae(self, v_code, model):
         """
@@ -964,9 +1177,10 @@ class System:
             for var in self._setters[name]:
                 np.put(self.dae.__dict__[name], var.a, var.e)
 
-    def get_z(self, models: Optional[Union[str, List, OrderedDict]] = None):
+    def get_z(self, models: OrderedDict):
         """
         Get all discrete status flags in a numpy array.
+        Values are written to ``dae.z`` in place.
 
         Returns
         -------
@@ -975,13 +1189,24 @@ class System:
         if self.config.store_z != 1:
             return None
 
-        z_dict = list()
+        if len(self.dae.z) != self.dae.o:
+            self.dae.z = np.zeros(self.dae.o, dtype=float)
+
+        ii = 0
         for mdl in models.values():
             if mdl.n == 0 or len(mdl._input_z) == 0:
                 continue
-            z_dict.append(np.concatenate(list((mdl._input_z.values()))))
+            for zz in mdl._input_z.values():
+                self.dae.z[ii:ii + mdl.n] = zz
+                ii += mdl.n
 
-        return np.concatenate(z_dict)
+        return self.dae.z
+
+    def get_ext_fg(self, model: OrderedDict):
+        """
+        Get the right-hand side of the external equations.
+        """
+        pass
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
@@ -1036,27 +1261,22 @@ class System:
         logger.debug("Dumping calls to calls.pkl with dill")
         dill.settings['recurse'] = True
 
-        pkl_path = get_pkl_path()
-        with open(pkl_path, 'wb') as f:
+        with open(self.config.pickle_path, 'wb') as f:
             dill.dump(self.calls, f)
 
-    @staticmethod
-    def _load_pkl():
+    def _load_pkl(self):
         """
         Helper function to open and load dill-pickled functions.
         """
         dill.settings['recurse'] = True
-        pkl_path = get_pkl_path()
 
-        if os.path.isfile(pkl_path):
-            with open(pkl_path, 'rb') as f:
+        if os.path.isfile(self.config.pickle_path):
+            with open(self.config.pickle_path, 'rb') as f:
 
                 try:
                     loaded_calls = dill.load(f)
                     return loaded_calls
-                except IOError:
-                    pass
-                except AttributeError:
+                except (IOError, EOFError, AttributeError):
                     pass
 
         return None
@@ -1075,7 +1295,7 @@ class System:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug('Undilled calls from "%s" is up-to-date.', get_pkl_path())
+                logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
             else:
                 logger.info('Undilled calls are for version %s, regenerating...', ver)
                 self.prepare(quick=True, incremental=True)
@@ -1314,7 +1534,7 @@ class System:
         array-like
             self.switch_times
         """
-        out = np.array([], dtype=np.float)
+        out = np.array([], dtype=float)
 
         if self.options.get('flat') is True:
             return out

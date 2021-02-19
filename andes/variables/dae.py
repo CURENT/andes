@@ -28,9 +28,10 @@ class DAETimeSeries:
         self._ys = OrderedDict()
         self._zs = OrderedDict()
         self._fs = OrderedDict()
-        self._gs = OrderedDict()
+        self._hs = OrderedDict()
+        self._is = OrderedDict()
 
-    def store(self, t, x, y, *, z=None, f=None, g=None):
+    def store(self, t, x, y, *, z=None, f=None, h=None, i=None,):
         """
         Store t, x, y, and z in internal storage, respectively.
 
@@ -49,8 +50,10 @@ class DAETimeSeries:
             self._zs[t] = np.array(z)
         if f is not None:
             self._fs[t] = np.array(f)
-        if g is not None:
-            self._gs[t] = np.array(g)
+        if h is not None:
+            self._hs[t] = np.array(h)
+        if i is not None:
+            self._is[t] = np.array(i)
 
     def unpack_np(self):
         """
@@ -69,7 +72,7 @@ class DAETimeSeries:
                     self.__dict__[dest][ii, :] = val
 
         pairs = (('_xs', 'x'), ('_ys', 'y'), ('_zs', 'z'),
-                 ('_fs', 'f'), ('_gs', 'g'))
+                 ('_fs', 'f'), ('_hs', 'h'), ('_is', 'i'))
 
         for a, b in pairs:
             _dict2array(a, b)
@@ -225,8 +228,12 @@ class DAE:
         self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.o = 0, 0, 0
+        self.p, self.q = 0, 0
+
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])
+        self.h, self.i = np.array([]), np.array([])
+
         # `self.Tf` is the time-constant array for differential equations
         self.Tf = np.array([])
 
@@ -234,6 +241,8 @@ class DAE:
         self.gx, self.gy = None, None
         self.rx, self.tx = None, None
 
+        self.h_name, self.h_tex_name = [], []
+        self.i_name, self.i_tex_name = [], []
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []
@@ -423,6 +432,9 @@ class DAE:
 
         self.f = self._extend_or_slice(self.f, self.n)
         self.g = self._extend_or_slice(self.g, self.m)
+        self.h = self._extend_or_slice(self.h, self.p)
+        self.i = self._extend_or_slice(self.i, self.q)
+
         self.Tf = self._extend_or_slice(self.Tf, self.n, fill_func=np.ones)
 
     def _extend_or_slice(self, array, new_size, fill_func=np.zeros):

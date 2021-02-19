@@ -1,8 +1,11 @@
 import logging
+import numpy as np
+
 from collections import OrderedDict
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, DataParam, NumParam
 from andes.core.var import Algeb
+
 logger = logging.getLogger(__name__)
 
 
@@ -74,6 +77,15 @@ class Bus(Model, BusData):
         BusData.__init__(self)
         Model.__init__(self, system=system, config=config)
 
+        # island information
+        self.n_islanded_buses = 0
+        self.islanded_buses = list()
+        self.island_sets = list()
+        self.islands = list()
+        self.islanded_a = np.array([])
+        self.islanded_v = np.array([])
+
+        # config
         self.config.add(OrderedDict((('flat_start', 0),
                                      )))
         self.config.add_extra("_help",

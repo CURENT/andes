@@ -2,14 +2,16 @@
 Synchronous generator classes
 """
 import logging
+import numpy as np
+
 from andes.core.model import Model, ModelData
-from andes.models.exciter import ExcQuadSat
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
-from andes.core.service import ConstService, VarService, ExtService  # NOQA
+from andes.core.service import ConstService, ExtService
 from andes.core.service import InitChecker, FlagValue
-import numpy as np
+
+from andes.models.exciter import ExcQuadSat
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +68,11 @@ class GENBaseData(ModelData):
                             info='d-axis transient reactance',
                             tex_name=r"x'_d", z=True)
 
-        self.kp = NumParam(default=0,
+        self.kp = NumParam(default=0.0,
                            info="active power feedback gain",
                            tex_name='k_p'
                            )
-        self.kw = NumParam(default=0,
+        self.kw = NumParam(default=0.0,
                            info="speed feedback gain",
                            tex_name='k_w'
                            )
@@ -82,6 +84,14 @@ class GENBaseData(ModelData):
                             info="second saturation factor",
                             tex_name='S_{1.2}',
                             )
+        self.gammap = NumParam(default=1.0,
+                               info="P ratio of linked static gen",
+                               tex_name=r'\gamma_P'
+                               )
+        self.gammaq = NumParam(default=1.0,
+                               info="Q ratio of linked static gen",
+                               tex_name=r'\gamma_Q'
+                               )
 
 
 class GENBase(Model):
@@ -206,16 +216,26 @@ class GENBase(Model):
                                 )
 
         # ----------service consts for initialization----------
-        self.p0 = ExtService(model='StaticGen',
-                             src='p',
-                             indexer=self.gen,
-                             tex_name='P_0',
-                             )
-        self.q0 = ExtService(model='StaticGen',
-                             src='q',
-                             indexer=self.gen,
-                             tex_name='Q_0',
-                             )
+        self.p0s = ExtService(model='StaticGen',
+                              src='p',
+                              indexer=self.gen,
+                              tex_name='P_{0s}',
+                              info='initial P of the static gen',
+                              )
+        self.q0s = ExtService(model='StaticGen',
+                              src='q',
+                              indexer=self.gen,
+                              tex_name='Q_{0s}',
+                              info='initial Q of the static gen',
+                              )
+        self.p0 = ConstService(v_str='p0s * gammap',
+                               tex_name='P_0',
+                               info='initial P of this gen',
+                               )
+        self.q0 = ConstService(v_str='q0s * gammaq',
+                               tex_name='Q_0',
+                               info='initial Q of this gen',
+                               )
 
     def v_numeric(self, **kwargs):
         # disable corresponding `StaticGen`
@@ -433,7 +453,7 @@ class GENROUModel:
                                           v_str='psi20_arg - _It_arg')
 
         self.Se0 = ConstService(tex_name=r"S_{e0}",
-                                v_str='(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
+                                v_str='Indicator(psi20_abs>=SAT_A) * (psi20_abs - SAT_A) ** 2 * SAT_B / psi20_abs')
 
         self._a = ConstService(tex_name=r"a'", v_str='psi20_abs * (1 + Se0*gqd)')
         self._b = ConstService(tex_name=r"b'", v_str='abs(_It) * (xq2 - xq)')  # xd2 == xq2

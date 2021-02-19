@@ -1,4 +1,4 @@
-#  [ANDES] (C)2015-2020 Hantao Cui
+#  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -88,8 +88,9 @@ class BaseVar:
         # attributes assigned by `set_address`
         self.n = 0
         self.a: np.ndarray = np.array([], dtype=int)       # address array
-        self.v: np.ndarray = np.array([], dtype=np.float)  # variable value array
-        self.e: np.ndarray = np.array([], dtype=np.float)  # equation value array
+        self.r: np.ndarray = np.array([], dtype=int)       # equation RHS value array for external equations
+        self.v: np.ndarray = np.array([], dtype=float)     # variable value array
+        self.e: np.ndarray = np.array([], dtype=float)     # equation value array
 
         self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
         self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
@@ -219,6 +220,10 @@ class State(BaseVar):
         Left-hand time constant for the differential equation.
         Time constants will not be evaluated as part of the differential equation.
         They will be collected to array `dae.Tf` to multiply to the right-hand side `dae.f`.
+    check_init : bool
+        True to check if the equation right-hand-side is zero
+        initially. Disabling the checking can be used for integrators
+        when the initial input may not be zero.
 
     Attributes
     ----------
@@ -240,6 +245,7 @@ class State(BaseVar):
                  e_str: Optional[str] = None,
                  discrete: Optional[Discrete] = None,
                  t_const: Optional[Union[BaseParam, DummyValue, BaseService]] = None,
+                 check_init: Optional[bool] = True,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
                  addressable: Optional[bool] = True,
@@ -261,6 +267,7 @@ class State(BaseVar):
                          diag_eps=diag_eps,
                          )
         self.t_const = t_const
+        self.check_init = check_init
 
 
 class ExtVar(BaseVar):
@@ -356,15 +363,22 @@ class ExtVar(BaseVar):
 
     def set_address(self, addr, contiguous=False):
         """
-        Empty function.
+        Assigns address for equation RHS.
         """
-        pass
+        self.r = addr
 
     def set_arrays(self, dae):
         """
-        Empty function.
+        Stride of ``dae.i`` for the RHS of external variables.
         """
-        pass
+
+        slice_idx = slice(self.r[0], self.r[-1] + 1)
+        if isinstance(self, ExtState):
+            self.e = dae.h[slice_idx]
+        elif isinstance(self, ExtAlgeb):
+            self.e = dae.i[slice_idx]
+        else:
+            raise NotImplementedError
 
     def link_external(self, ext_model):
         """
@@ -436,7 +450,7 @@ class ExtVar(BaseVar):
             self.n = len(self.a)
 
         self.v = np.zeros(self.n)
-        self.e = np.zeros(self.n)
+        # `self.e` is assigned in `set_arrays()`
 
 
 class ExtState(ExtVar):

@@ -155,10 +155,6 @@ def dump(system, output_format, full_path=None, overwrite=False, **kwargs):
     bool
         True if successful; False otherwise.
     """
-    if system.files.no_output:
-        logger.info('no_output is True. Case dump not processed.')
-        return False
-
     if (output_format is None) or (output_format is True):
         output_format = 'xlsx'
 

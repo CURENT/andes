@@ -517,7 +517,13 @@ class ESD1Model(PVD1Model):
         PVD1Model.__init__(self, system, config)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
+<<<<<<< HEAD
         self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva' , y0=self.SOCinit)
+=======
+        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K=1.0, y0=self.SOCinit,
+                              check_init=False,
+                              )
+>>>>>>> ebecbdcc419fdfb4af865fa10d781763f756bb5a
 
         # --- Add hard limiter for SOC ---
         self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
@@ -577,7 +583,7 @@ class ESD1(ESD1Data, ESD1Model):
     Distributed energy storage model.
 
     A state-of-charge limit is added to the PVD1 model.
-    This limit is applied to Ipmax and Ipmin (WIP)
+    This limit is applied to Ipmax and Ipmin.
 
     Reference:
     [1] Powerworld, Renewable Energy Electrical Control Model REEC_C

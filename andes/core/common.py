@@ -1,6 +1,8 @@
 import pprint
 import logging
 
+from sympy import Expr
+
 from typing import Iterable
 from collections import defaultdict, OrderedDict
 
@@ -341,3 +343,19 @@ class Config:
     @property
     def tex_names(self):
         return self._tex
+
+
+class Indicator(Expr):
+    """
+    Indicator class for printing SymPy Relational.
+
+    Relational expressions in SymPy need to be wrapped by `Indicator`.
+
+    Examples
+    --------
+    To compare ``dae_t`` with ``0``, one need to use
+    ``Indicator(dae_t < 0)```.
+    """
+
+    def _numpycode(self, printer):
+        return printer._print(self.args[0])
