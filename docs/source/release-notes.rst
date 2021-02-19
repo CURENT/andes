@@ -14,6 +14,8 @@ v1.3.0
 - Allow `State` variable set `check_init=False` to skip
   initialization test. One use case is for integrators
   with non-zero inputs (such as state-of-charge integration).
+- Solves power flow for systems with multiple areas, each with
+  one Slack generator.
 - Added `Jumper` for connecting two buses with zero impedance.
 - `REGCA1` and synchronous generators can take power ratio
   parameters `gammap` and `gammaq`.
