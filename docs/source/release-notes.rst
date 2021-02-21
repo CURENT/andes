@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.3 Notes
 ----------
 
-v1.3.0
+v1.3.0 (2021-02-20)
 ```````````````````
 - Allow `State` variable set `check_init=False` to skip
   initialization test. One use case is for integrators
