@@ -120,8 +120,18 @@ class PFlow(BaseRoutine):
         system.dae.x += np.ravel(np.array(self.inc[:system.dae.n]))
         system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
 
-        mis = np.max(np.abs(system.dae.fg))
+        # find out variables associated with maximum mismatches
+        fmax = 0
+        if system.dae.n > 0:
+            fmax_idx = np.argmax(np.abs(system.dae.f))
+            fmax = system.dae.f[fmax_idx]
+            logger.debug("Max. diff mismatch %.10g on %s", fmax, system.dae.x_name[fmax_idx])
 
+        gmax_idx = np.argmax(np.abs(system.dae.g))
+        gmax = system.dae.g[gmax_idx]
+        logger.debug("Max. algeb mismatch %.10g on %s", gmax, system.dae.y_name[gmax_idx])
+
+        mis = max(fmax, gmax)
         if self.niter == 0:
             self.mis[0] = mis
         else:
