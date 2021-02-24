@@ -57,6 +57,7 @@ class BaseVar:
                  unit: Optional[str] = None,
                  v_str: Optional[Union[str, float]] = None,
                  v_iter: Optional[str] = None,
+                 v0_iter: Optional[Union[str, float]] = None,
                  e_str: Optional[str] = None,
                  discrete: Optional[Discrete] = None,
                  v_setter: Optional[bool] = False,
@@ -76,6 +77,7 @@ class BaseVar:
 
         self.v_str = v_str  # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
+        self.v0_iter = v0_iter  # the initial value for iterative initialization
         self.e_str = e_str  # string for symbolic equation
 
         self.discrete = discrete
