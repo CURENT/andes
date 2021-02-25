@@ -45,8 +45,8 @@ def create_parser():
     run.add_argument('-o', '--output-path', help='Output path prefix', type=str, default='')
     run.add_argument('-n', '--no-output', help='Force no output of any kind', action='store_true')
     run.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
-    run.add_argument('--dime-address', help='DiME streaming server address and port', type=str)
-    run.add_argument('--dime-protocol', help='DiME streaming protocol', type=str)
+    run.add_argument('--dime-address', help='DiME streaming server protocol, address and port,'
+                                            'e.g., tcp://127.0.0.1:5000 or ipc:///tmp/dime2', type=str)
     run.add_argument('--tf', help='End time of time-domain simulation', type=float)
     run.add_argument('--qrt', help='Enable quasi-real-time stepping', action='store_true')
     run.add_argument('--kqrt', help='Scaling factor for quasi-real-time; e.g., kqrt=2 means the wall-clock time '
