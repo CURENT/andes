@@ -505,7 +505,7 @@ class ESD1Data(PVD1Data):
         self.En = NumParam(default=100.0, tex_name='E_n',
                            info='Rated energy capacity',
                            unit="MWh"
-                            )
+                           )
 
 
 class ESD1Model(PVD1Model):
@@ -517,9 +517,9 @@ class ESD1Model(PVD1Model):
         PVD1Model.__init__(self, system, config)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva' , y0=self.SOCinit,
+        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
                               check_init=False,
-                             )
+                              )
 
         # --- Add hard limiter for SOC ---
         self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
