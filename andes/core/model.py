@@ -1059,12 +1059,17 @@ class Model:
         for i, _ in enumerate(self.cache.iter_vars.values()):
             vars_input.append(x0[i * self.n: (i + 1) * self.n])
 
-        return np.ravel(self.calls.init_std(vars_input, params))
+        ret = np.ravel(self.calls.init_std(vars_input, params))
+        print(ret)
+        return ret
 
     def init_iter(self):
         """
         Solve the initialization equation using the Newton-Krylov method.
         """
+        for instance in self.cache.iter_vars.values():
+            instance.v[:] = instance.v0_iter
+
         inputs = self.get_inputs(refresh=True)
 
         iter_input = OrderedDict()
@@ -1080,8 +1085,11 @@ class Model:
         for i in range(len(iter_array)):
             if isinstance(iter_array[i], (float, int, np.int64, np.float64)):
                 iter_array[i] = np.ones(self.n) * iter_array[i]
+            else:
+                iter_array[i][:] = np.ones(self.n) * iter_array[i]
 
         iter_array = np.ravel(iter_array)
+        print(iter_array)
 
         def init_wrap(x0):
             return self._init_wrap(x0, non_iter_list)
