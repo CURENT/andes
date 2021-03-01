@@ -7,6 +7,10 @@ import os
 import numpy as np
 from collections import OrderedDict, defaultdict
 
+from sympy import Symbol, Matrix
+from sympy import sympify, lambdify, latex, SympifyError
+from sympy import SparseMatrix
+
 from andes.utils.paths import get_dot_andes_path
 
 logger = logging.getLogger(__name__)
@@ -52,8 +56,9 @@ class SymProcessor:
         self.lambdify_func = [dict(), 'numpy']
 
         self.vars_dict = OrderedDict()
+        self.vars_int_dict = OrderedDict()   # internal variables only
         self.iters_dict = OrderedDict()
-        self.non_vars_dict = OrderedDict()  # inputs_dict - vars_dict
+        self.non_vars_dict = OrderedDict()   # inputs_dict - vars_dict
         self.non_iters_dict = OrderedDict()  # inputs_dict - iters_dict
         self.vars_list = list()
 
@@ -77,8 +82,6 @@ class SymProcessor:
         Generate lambda functions for initial values.
         """
         logger.debug(f'- Generating initializers for {self.class_name}')
-        from sympy import sympify, lambdify, Matrix
-        from sympy.printing import latex
 
         init_lambda_list = OrderedDict()
         init_latex = OrderedDict()
@@ -137,7 +140,6 @@ class SymProcessor:
         """
 
         logger.debug(f'- Generating symbols for {self.class_name}')
-        from sympy import Symbol, Matrix
 
         # clear symbols storage
         self.f_list, self.g_list = list(), list()
@@ -159,6 +161,8 @@ class SymProcessor:
             tmp = Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
+            if var in self.cache.vars_int:
+                self.vars_int_dict[var] = tmp
             if self.parent.__dict__[var].v_iter is not None:
                 self.iters_dict[var] = tmp
 
@@ -205,7 +209,6 @@ class SymProcessor:
 
     def generate_equations(self):
         logger.debug(f'- Generating equations for {self.class_name}')
-        from sympy import Matrix, sympify, lambdify, SympifyError
 
         self.f_list, self.g_list = list(), list()
 
@@ -259,7 +262,6 @@ class SymProcessor:
         """
         Generate calls for services, including ``ConstService``, ``VarService`` among others.
         """
-        from sympy import Matrix, sympify, lambdify, SympifyError
 
         # convert service equations
         # Service equations are converted sequentially due to possible dependency
@@ -302,8 +304,6 @@ class SymProcessor:
 
         """
         logger.debug(f'- Generating Jacobians for {self.class_name}')
-
-        from sympy import SparseMatrix, lambdify, Matrix
 
         # clear storage
         self.df_syms, self.dg_syms = Matrix([]), Matrix([])
@@ -382,8 +382,6 @@ class SymProcessor:
         Generate pretty print variables and equations.
         """
         logger.debug(f"- Generating pretty prints for {self.class_name}")
-        from sympy import Matrix
-        from sympy.printing import latex
 
         # equation symbols for pretty printing
         self.f, self.g = Matrix([]), Matrix([])
@@ -457,3 +455,258 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
         src += '\n'
         return src
+
+    def generate_dependency(self):
+        """
+        Generate dependency list and initialization order.
+        """
+        self.v_str_syms = OrderedDict()
+        self.v_iter_syms = OrderedDict()
+        deps = dict()
+
+        # convert to symbols
+        for name, instance in self.cache.all_vars.items():
+            if instance.v_str is not None:
+                sympified = sympify(instance.v_str, locals=self.inputs_dict)
+                self._check_expr_symbols(sympified)
+                self.v_str_syms[name] = sympified
+
+            if instance.v_iter is not None:
+                sympified = sympify(instance.v_iter, locals=self.inputs_dict)
+                self._check_expr_symbols(sympified)
+                self.v_iter_syms[name] = sympified
+
+        # store deps for explicit and iterative initializers
+        for name, expr in self.v_str_syms.items():
+            _store_deps(name, expr, self.vars_int_dict, deps)
+
+        for name, expr in self.v_iter_syms.items():
+            _store_deps(name, expr, self.vars_int_dict, deps)
+
+        # resolve dependency
+        self.init_seq = resolve(deps)
+
+        self.calls.init_seq = self.init_seq
+
+    def check_v_iter(self):
+        """
+        Helper function to check if `v_iter` is defined for variables
+        with circular dependencies.
+        """
+
+        for item in self.init_seq:
+            if not isinstance(item, list):
+                continue
+
+            for vi in item:
+                if self.cache.all_vars[vi].v_iter is None:
+                    print("%s: v_iter not defined for %s" % (self.class_name, vi))
+
+    def generate_init_eqn(self):
+        """
+        Generate initialization equations.
+
+        The RHS of assignment equations ``v = v_str(x, y)`` or RHS of iterative
+        initialization equations in the form of ``0 = v_iter(x, y)`` will be
+        stored to ``self.init_list``.
+
+        A list of flags will be stored to ``self.init_flag`` with 0 for
+        assignments and 1 for iterative.
+        """
+
+        self.init_flag = list()  # 0-assignment; 1-iterative
+        self.init_list = list()
+
+        for item in self.init_seq:
+            if isinstance(item, str):
+                self.init_list.append(self.v_str_syms[item])
+                self.init_flag.append(0)
+            elif isinstance(item, list):
+                eqn_set = list()
+                eqn_set = Matrix([self.v_iter_syms[name] for name in item])
+
+                self.init_list.append(eqn_set)
+                self.init_flag.append(1)
+            else:
+                raise TypeError
+
+        self.calls.init_flag = self.init_flag
+        self.calls.init_list = self.init_list
+
+    def generate_init_jac(self):
+        """
+        Generate jacobian matrices for iterative initializations.
+        """
+        self.init_jac = list()
+        for flag, expr in zip(self.init_flag, self.init_list):
+            if flag == 0:
+                self.init_jac.append(0)
+                continue
+
+            jac = self.init_std.jacobian(list(self.vars_dict.values()))
+            self.init_jac.append(jac)
+
+    def lambdify_init(self):
+        """
+        Convert equations and Jacobians to lambda functions.
+        """
+
+        input_syms_list = list(self.inputs_dict)
+
+        self.init_rhs = list()
+        self.init_j = list()
+        for flag, expr, jac in zip(self.init_flag, self.init_list, self.init_jac):
+            if flag == 0:
+                lambdified = lambdify(input_syms_list, expr, modules=self.lambdify_func)
+                self.init_rhs.append(lambdified)
+                self.init_j.append(0)
+
+            else:
+                lambdified = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
+                                      expr, modules=self.lambdify_func)
+                self.init_rhs.append(lambdified)
+
+                jac_lambdified = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
+                                          jac, modules=self.lambdify_func)
+                self.init_j.append(jac_lambdified)
+
+        self.calls.init_rhs = self.init_rhs
+        self.calls.init_j = self.init_j
+
+    def init_new(self, routine):
+        """
+        Numerical initialization of a model.
+
+        Initialization sequence:
+        1. Sequential initialization based on the order of definition
+        2. Use Newton-Krylov method for iterative initialization
+        3. Custom init
+        """
+
+        # evaluate `ConstService` and `VarService`
+        self.s_update()
+
+        # find out if variables need to be initialized for `routine`
+        flag_name = routine + '_init'
+
+        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
+            do_init = getattr(self.flags, routine)
+        else:
+            do_init = getattr(self.flags, flag_name)
+
+        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
+
+        if do_init:
+            for idx, name in enumerate(self.calls.init_seq):
+                flag = self.calls.init_flag[idx]
+                eqn = self.calls.init_rhs[idx]
+                jac = self.calls.init_j[idx]  # NOQA
+
+                kwargs = self.get_inputs(refresh=True)
+
+                if flag == 0:
+                    instance = self.__dict__[name]
+                    _eval_discrete(self, instance)
+                    if callable(eqn):
+                        instance.v[:] = eqn(**kwargs)
+                    else:
+                        instance.v[:] = eqn
+
+                else:
+                    for nn in name:
+                        instance = self.__dict__[nn]
+                        _eval_discrete(self, instance)
+
+                    pass
+
+            # call custom variable initializer after generated init
+            kwargs = self.get_inputs(refresh=True)
+            self.v_numeric(**kwargs)
+
+        # call post initialization checking
+        self.post_init_check()
+
+        self.flags.initialized = True
+
+
+def _store_deps(name, sympified, vars_int_dict, deps):
+    """
+    Helper function to store dependencies to a dict.
+
+    Used by ``resolve``.
+    """
+
+    deps[name] = []
+    for fs in sympified.free_symbols:
+        if fs not in vars_int_dict.values():
+            continue
+        if fs not in deps[name]:
+            deps[name].append(str(fs))
+
+
+def resolve(graph):
+    """
+    Resolve dependency for a dict-based graph using recursion.
+    """
+
+    seq = list()      # sequence after resolving dependency
+    visited = list()  # book keeper of the visited nodes
+
+    cflat = list()    # flattened node in circles
+    circles = list()  # circles as lists
+
+    def sub_resolve(name, deps, path):
+        for item in deps:
+            if (item == name) or (item in visited):
+                continue
+
+            # undeclared leaf node
+            if (item not in graph):
+                if item not in seq:
+                    seq.append(item)
+                continue
+
+            # circular dependency
+            if item in path:
+                idx1 = path.index(item)
+                cflat.extend(path[idx1:])
+                circles.append(path[idx1:])
+                continue
+
+            path.append(item)
+            sub_resolve(item, graph[item], path)
+
+        # when all dependent nodes are visited
+        if name not in visited:
+            # if the current node is not in any circle
+            if name not in cflat:
+                seq.append(name)
+
+            else:
+                for cc in circles:
+                    if (name in cc) and (cc not in seq):
+                        seq.append(cc)
+
+            visited.append(name)
+        return
+
+    for name, deps in graph.items():
+        path = list()
+        sub_resolve(name, deps, path)
+
+    return seq
+
+
+def _eval_discrete(instance):
+
+    # for variables associated with limiters, limiters need to be evaluated
+    # before variable initialization.
+    # However, if any limit is hit, initialization is likely to fail.
+
+    if instance.discrete is not None:
+        if not isinstance(instance.discrete, (list, tuple, set)):
+            dlist = (instance.discrete, )
+        else:
+            dlist = instance.discrete
+        for d in dlist:
+            d.check_var()
