@@ -1060,7 +1060,6 @@ class Model:
             vars_input.append(x0[i * self.n: (i + 1) * self.n])
 
         ret = np.ravel(self.calls.init_std(vars_input, params))
-        print(ret)
         return ret
 
     def init_iter(self):
@@ -1089,7 +1088,6 @@ class Model:
                 iter_array[i][:] = np.ones(self.n) * iter_array[i]
 
         iter_array = np.ravel(iter_array)
-        print(iter_array)
 
         def init_wrap(x0):
             return self._init_wrap(x0, non_iter_list)
@@ -1193,7 +1191,8 @@ class Model:
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-        self.s_update()  # this includes ConstService and VarService
+        # evaluate `ConstService` and `VarService`
+        self.s_update()
 
         # find out if variables need to be initialized for `routine`
         flag_name = routine + '_init'
@@ -1749,6 +1748,7 @@ class SymProcessor:
         self.lambdify_func = [dict(), 'numpy']
 
         self.vars_dict = OrderedDict()
+        self.vars_int_dict = OrderedDict()
         self.iters_dict = OrderedDict()
         self.non_vars_dict = OrderedDict()  # inputs_dict - vars_dict
         self.non_iters_dict = OrderedDict()  # inputs_dict - iters_dict
@@ -1773,6 +1773,7 @@ class SymProcessor:
         """
         Generate lambda functions for initial values.
         """
+
         logger.debug(f'- Generating initializers for {self.class_name}')
         from sympy import sympify, lambdify, Matrix
         from sympy.printing import latex
@@ -1856,6 +1857,8 @@ class SymProcessor:
             tmp = Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
+            if var in self.cache.vars_int:
+                self.vars_int_dict[var] = tmp
             if self.parent.__dict__[var].v_iter is not None:
                 self.iters_dict[var] = tmp
 

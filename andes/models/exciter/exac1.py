@@ -4,7 +4,7 @@ from andes.models.exciter.saturation import ExcQuadSat
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 from andes.core.block import LeadLag, Lag, Piecewise, LagAntiWindup, Integrator, Washout
-from andes.core.service import ConstService
+from andes.core.service import ConstService, PostInitService
 from andes.core.discrete import LessThan
 
 
@@ -139,9 +139,10 @@ class EXAC1Model(ExcBase):
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='- vi',
-                        v_str='-LG_y + vref',
+                        e_str='-v + vref - WF_y - vi',
+                        v_str='-v + vref',
                         )
+
         self.LL = LeadLag(u=self.vi, T1=self.TC, T2=self.TB,
                           info='Regulator',
                           zero_out=True,
@@ -176,17 +177,17 @@ class EXAC1Model(ExcBase):
                          e_str='INT_y * (KE + Se) + XadIfd * KD - VFE'
                          )
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + VFE / KA',
-                                  )
-
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + VFE / KA',
                           e_str='vref0 - vref',
                           )
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.WF = Washout(u=self.VFE,
                           T=self.TF,
