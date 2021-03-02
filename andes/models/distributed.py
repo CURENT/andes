@@ -453,7 +453,8 @@ class PVD1Model(Model):
 
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=0.0, upper=self.Ipmax,
+                                 lower=self.Ipmin, sign_lower=-1,
+                                 upper=self.Ipmax, #test with lower = -Ipmax
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
@@ -488,24 +489,34 @@ class ESD1Data(PVD1Data):
     def __init__(self):
         PVD1Data.__init__(self)
         self.Tf = NumParam(default=1.0, tex_name='T_f',
-                           info='Integrator constant for SOC model'
+                           info='Integrator constant for SOC model',
                            )
         self.SOCmin = NumParam(default=0.0, tex_name='SOC_{min}',
                                info='Minimum required value for SOC in limiter',
                                )
 
         self.SOCmax = NumParam(default=1.0, tex_name='SOC_{max}',
-                               info='Maximum allowed value for SOC in limiter'
+                               info='Maximum allowed value for SOC in limiter',
                                )
 
         self.SOCinit = NumParam(default=0.5, tex_name='SOC_{init}',
-                                info='Initial state of charge'
+                                info='Initial state of charge',
                                 )
 
         self.En = NumParam(default=100.0, tex_name='E_n',
                            info='Rated energy capacity',
                            unit="MWh"
                            )
+
+        self.EtaC = NumParam(default=1.0, tex_name='Eta_C',
+                             info='Efficiency during charging',
+                             vrange=(0, 1),
+                             )
+
+        self.EtaD = NumParam(default=1.0, tex_name='Eta_D',
+                             info='Efficiency during discharging',
+                             vrange=(0, 1),
+                             )
 
 
 class ESD1Model(PVD1Model):
@@ -517,7 +528,7 @@ class ESD1Model(PVD1Model):
         PVD1Model.__init__(self, system, config)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
+        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,#efficiency will change u
                               check_init=False,
                               )
 
@@ -531,9 +542,14 @@ class ESD1Model(PVD1Model):
                                  tex_name='SOC_{adj}'
                                  )
 
-        # --- Add Ipmax and Ipcmd ---
-        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
+        # --- Add Ipmax, Ipmin, and Ipcmd ---
+        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))' #check if this can replace ipmax in ipmin eq
         self.Ipmax.e_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+
+        self.Ipmin = Algeb(info='Minimum value of Ip',
+                           v_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
+                           e_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin'
+                           )
 
         self.Ipcmd.lim.sign_lower = dummify(-1)
         self.Ipcmd.lim.lower = self.Ipmax
