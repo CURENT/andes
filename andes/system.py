@@ -655,7 +655,7 @@ class System:
                                  instance.indexer.name, repr(e))
 
             # initialize variables second
-            mdl.init(routine=routine)
+            mdl.init_new(routine=routine)
 
             self.vars_to_dae(mdl)
             self.vars_to_models()

@@ -1610,6 +1610,14 @@ class Model:
         self.syms.generate_services()
         self.syms.generate_jacobians()
         self.syms.generate_init()
+
+        # New init:
+        self.syms.generate_dependency()
+        self.syms.check_v_iter()
+        self.syms.generate_init_eqn()
+        self.syms.generate_init_jac()
+        self.syms.lambdify_init()
+
         if self.system.config.save_pycode:
             self.syms.generate_pycode()
         if quick is False:
@@ -1703,3 +1711,75 @@ class Model:
         dev_text = 'device' if self.n == 1 else 'devices'
 
         return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
+
+    def init_new(self, routine):
+        """
+        Numerical initialization of a model.
+
+        Initialization sequence:
+        1. Sequential initialization based on the order of definition
+        2. Use Newton-Krylov method for iterative initialization
+        3. Custom init
+        """
+
+        # evaluate `ConstService` and `VarService`
+        self.s_update()
+
+        # find out if variables need to be initialized for `routine`
+        flag_name = routine + '_init'
+
+        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
+            do_init = getattr(self.flags, routine)
+        else:
+            do_init = getattr(self.flags, flag_name)
+
+        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
+
+        if do_init:
+            for idx, name in enumerate(self.calls.init_seq):
+                flag = self.calls.init_flag[idx]
+                eqn = self.calls.init_rhs[idx]
+                jac = self.calls.init_j[idx]  # NOQA
+
+                kwargs = self.get_inputs(refresh=True)
+
+                if flag == 0:
+                    instance = self.__dict__[name]
+                    _eval_discrete(instance)
+                    if callable(eqn):
+                        instance.v[:] = eqn(**kwargs)
+                    else:
+                        instance.v[:] = eqn
+
+                else:
+                    for nn in name:
+                        instance = self.__dict__[nn]
+                        _eval_discrete(instance)
+                        if not callable(eqn):
+                            raise TypeError("Iterative RHS is not callable")
+                        # start iterative initialization
+                        # TODO: assign initial values first
+
+            # call custom variable initializer after generated init
+            kwargs = self.get_inputs(refresh=True)
+            self.v_numeric(**kwargs)
+
+        # call post initialization checking
+        self.post_init_check()
+
+        self.flags.initialized = True
+
+
+def _eval_discrete(instance):
+
+    # for variables associated with limiters, limiters need to be evaluated
+    # before variable initialization.
+    # However, if any limit is hit, initialization is likely to fail.
+
+    if instance.discrete is not None:
+        if not isinstance(instance.discrete, (list, tuple, set)):
+            dlist = (instance.discrete, )
+        else:
+            dlist = instance.discrete
+        for d in dlist:
+            d.check_var()

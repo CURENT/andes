@@ -470,6 +470,10 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
                 sympified = sympify(instance.v_str, locals=self.inputs_dict)
                 self._check_expr_symbols(sympified)
                 self.v_str_syms[name] = sympified
+            else:
+                # default initial values to zero
+                sympified = sympify('0.0', locals=self.inputs_dict)
+                self.v_str_syms[name] = sympified
 
             if instance.v_iter is not None:
                 sympified = sympify(instance.v_iter, locals=self.inputs_dict)
@@ -500,7 +504,7 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
             for vi in item:
                 if self.cache.all_vars[vi].v_iter is None:
-                    print("%s: v_iter not defined for %s" % (self.class_name, vi))
+                    raise ValueError("%s: v_iter not defined for %s" % (self.class_name, vi))
 
     def generate_init_eqn(self):
         """
@@ -512,39 +516,30 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
         A list of flags will be stored to ``self.init_flag`` with 0 for
         assignments and 1 for iterative.
+
+        For iteratively initialized variables that require assigned initial
+        values (to improve convergence), the initial value can be provided
+        through `self.v_str`.
         """
 
-        self.init_flag = list()  # 0-assignment; 1-iterative
-        self.init_list = list()
+        self.init_asn = OrderedDict()   # assignment-type initialization
+        self.init_itn = OrderedDict()   # iterative initialization
 
         for item in self.init_seq:
-            if isinstance(item, str):
-                self.init_list.append(self.v_str_syms[item])
-                self.init_flag.append(0)
+            if isinstance(item, str) and (self.parent.__dict__[item].v_iter is not None):
+                self.init_itn[item] = self.v_iter_syms[item]
             elif isinstance(item, list):
-                eqn_set = list()
+                name_concat = '_'.join(item)
                 eqn_set = Matrix([self.v_iter_syms[name] for name in item])
-
-                self.init_list.append(eqn_set)
-                self.init_flag.append(1)
-            else:
-                raise TypeError
-
-        self.calls.init_flag = self.init_flag
-        self.calls.init_list = self.init_list
+                self.init_itn[name_concat] = eqn_set
 
     def generate_init_jac(self):
         """
         Generate jacobian matrices for iterative initializations.
         """
-        self.init_jac = list()
-        for flag, expr in zip(self.init_flag, self.init_list):
-            if flag == 0:
-                self.init_jac.append(0)
-                continue
-
-            jac = self.init_std.jacobian(list(self.vars_dict.values()))
-            self.init_jac.append(jac)
+        self.init_jac = OrderedDict()
+        for name, expr in self.init_itn.items():
+            self.init_jac[name] = expr.jacobian(list(self.vars_dict.values()))
 
     def lambdify_init(self):
         """
@@ -552,81 +547,27 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         """
 
         input_syms_list = list(self.inputs_dict)
+        init_a = OrderedDict()
+        init_i = OrderedDict()
+        init_j = OrderedDict()
 
-        self.init_rhs = list()
-        self.init_j = list()
-        for flag, expr, jac in zip(self.init_flag, self.init_list, self.init_jac):
-            if flag == 0:
-                lambdified = lambdify(input_syms_list, expr, modules=self.lambdify_func)
-                self.init_rhs.append(lambdified)
-                self.init_j.append(0)
+        for name, expr in self.init_asn.items():
+            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
+            init_a[name] = func
 
-            else:
-                lambdified = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
-                                      expr, modules=self.lambdify_func)
-                self.init_rhs.append(lambdified)
+        for names, expr in self.init_itn.items():
+            name_concat = '_'.join(names)
+            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
+            init_i[name_concat] = func
 
-                jac_lambdified = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
-                                          jac, modules=self.lambdify_func)
-                self.init_j.append(jac_lambdified)
+        for names, expr in self.init_jac.items():
+            name_concat = '_'.join(names)
+            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
+            init_j[name_concat] = func
 
-        self.calls.init_rhs = self.init_rhs
-        self.calls.init_j = self.init_j
-
-    def init_new(self, routine):
-        """
-        Numerical initialization of a model.
-
-        Initialization sequence:
-        1. Sequential initialization based on the order of definition
-        2. Use Newton-Krylov method for iterative initialization
-        3. Custom init
-        """
-
-        # evaluate `ConstService` and `VarService`
-        self.s_update()
-
-        # find out if variables need to be initialized for `routine`
-        flag_name = routine + '_init'
-
-        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
-            do_init = getattr(self.flags, routine)
-        else:
-            do_init = getattr(self.flags, flag_name)
-
-        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
-
-        if do_init:
-            for idx, name in enumerate(self.calls.init_seq):
-                flag = self.calls.init_flag[idx]
-                eqn = self.calls.init_rhs[idx]
-                jac = self.calls.init_j[idx]  # NOQA
-
-                kwargs = self.get_inputs(refresh=True)
-
-                if flag == 0:
-                    instance = self.__dict__[name]
-                    _eval_discrete(self, instance)
-                    if callable(eqn):
-                        instance.v[:] = eqn(**kwargs)
-                    else:
-                        instance.v[:] = eqn
-
-                else:
-                    for nn in name:
-                        instance = self.__dict__[nn]
-                        _eval_discrete(self, instance)
-
-                    pass
-
-            # call custom variable initializer after generated init
-            kwargs = self.get_inputs(refresh=True)
-            self.v_numeric(**kwargs)
-
-        # call post initialization checking
-        self.post_init_check()
-
-        self.flags.initialized = True
+        self.calls.init_a = init_a
+        self.calls.init_i = init_i
+        self.calls.init_j = init_j
 
 
 def _store_deps(name, sympified, vars_int_dict, deps):
@@ -695,18 +636,3 @@ def resolve(graph):
         sub_resolve(name, deps, path)
 
     return seq
-
-
-def _eval_discrete(instance):
-
-    # for variables associated with limiters, limiters need to be evaluated
-    # before variable initialization.
-    # However, if any limit is hit, initialization is likely to fail.
-
-    if instance.discrete is not None:
-        if not isinstance(instance.discrete, (list, tuple, set)):
-            dlist = (instance.discrete, )
-        else:
-            dlist = instance.discrete
-        for d in dlist:
-            d.check_var()
