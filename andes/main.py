@@ -723,17 +723,13 @@ def selftest(quick=False, **kwargs):
     sys.stdout = sys.__stdout__
 
 
-def doc(attribute=None, list_supported=False, init_seq=False, config=False, **kwargs):
+def doc(attribute=None, list_supported=False, config=False, **kwargs):
     """
     Quick documentation from command-line.
     """
     system = System()
     if attribute is not None:
         if attribute in system.__dict__ and hasattr(system.__dict__[attribute], 'doc'):
-            if init_seq is True:
-                system.__dict__[attribute].get_init_order()
-                return
-
             logger.info(system.__dict__[attribute].doc())
         else:
             logger.error('Model <%s> does not exist.', attribute)

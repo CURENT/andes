@@ -12,6 +12,8 @@ Base class for building ANDES models.
 #  Last modified: 8/16/20, 7:27 PM
 
 import logging
+import scipy as sp
+
 from collections import OrderedDict, defaultdict
 from typing import Iterable, Sized, Callable, Union
 
@@ -1179,73 +1181,6 @@ class Model:
 
         return row_name, col_name
 
-    def init(self, routine):
-        """
-        Numerical initialization of a model.
-
-        Initialization sequence:
-        1. Sequential initialization based on the order of definition
-        2. Use Newton-Krylov method for iterative initialization
-        3. Custom init
-        """
-        # evaluate `ConstService` and `VarService`
-        self.s_update()
-
-        # find out if variables need to be initialized for `routine`
-        flag_name = routine + '_init'
-        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
-            do_init = getattr(self.flags, routine)
-        else:
-            do_init = getattr(self.flags, flag_name)
-
-        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
-
-        if do_init:
-
-            for name, instance in self.vars_decl_order.items():
-                if instance.v_str is None:
-                    continue
-
-                # for variables associated with limiters, limiters need to be evaluated
-                # before variable initialization.
-                # However, if any limit is hit, initialization is likely to fail.
-
-                if instance.discrete is not None:
-                    if not isinstance(instance.discrete, (list, tuple, set)):
-                        dlist = (instance.discrete, )
-                    else:
-                        dlist = instance.discrete
-                    for d in dlist:
-                        d.check_var()
-
-                kwargs = self.get_inputs(refresh=True)
-                init_fun = self.calls.init[name]
-
-                if callable(init_fun):
-                    try:
-                        instance.v[:] = init_fun(**kwargs)
-                    except ValueError as e:
-                        raise e
-                    except TypeError as e:
-                        raise e
-                else:
-                    instance.v[:] = init_fun
-
-            # experimental: user Newton-Krylov solver for dynamic initialization
-            # ----------------------------------------
-            if self.flags.nr_iter:
-                self.init_iter()
-            # ----------------------------------------
-
-            # call custom variable initializer after generated init
-            kwargs = self.get_inputs(refresh=True)
-            self.v_numeric(**kwargs)
-
-        # call post initialization checking
-        self.post_init_check()
-
-        self.flags.initialized = True
-
     def get_init_order(self):
         """
         Get variable initialization order and send to `logger.info`.
@@ -1611,13 +1546,6 @@ class Model:
         self.syms.generate_jacobians()
         self.syms.generate_init()
 
-        # New init:
-        self.syms.generate_dependency()
-        self.syms.check_v_iter()
-        self.syms.generate_init_eqn()
-        self.syms.generate_init_jac()
-        self.syms.lambdify_init()
-
         if self.system.config.save_pycode:
             self.syms.generate_pycode()
         if quick is False:
@@ -1736,29 +1664,34 @@ class Model:
         logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
 
         if do_init:
+            kwargs = self.get_inputs(refresh=True)
+
             for idx, name in enumerate(self.calls.init_seq):
-                flag = self.calls.init_flag[idx]
-                eqn = self.calls.init_rhs[idx]
-                jac = self.calls.init_j[idx]  # NOQA
-
-                kwargs = self.get_inputs(refresh=True)
-
-                if flag == 0:
+                # single variable
+                if isinstance(name, str):
                     instance = self.__dict__[name]
                     _eval_discrete(instance)
-                    if callable(eqn):
-                        instance.v[:] = eqn(**kwargs)
-                    else:
-                        instance.v[:] = eqn
+                    if instance.v_str is not None:
+                        instance.v[:] = self.calls.init_a[name](**kwargs)
 
+                    # single variable iterative solution
+                    if name in self.calls.init_i:
+                        rhs = self.calls.init_i[name]
+                        jac = self.calls.init_j[name]
+                        self.solve_iter(name, rhs, jac, kwargs)
+
+                # multiple variables, iterative
                 else:
-                    for nn in name:
-                        instance = self.__dict__[nn]
+                    for vv in name:
+                        instance = self.__dict__[vv]
                         _eval_discrete(instance)
-                        if not callable(eqn):
-                            raise TypeError("Iterative RHS is not callable")
-                        # start iterative initialization
-                        # TODO: assign initial values first
+                        if instance.v_str is not None:
+                            instance.v[:] = self.calls.init_a[vv](**kwargs)
+
+                    name_concat = '_'.join(name)
+                    rhs = self.calls.init_i[name_concat]
+                    jac = self.calls.init_j[name_concat]
+                    self.solve_iter(name, rhs, jac, kwargs)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1768,6 +1701,77 @@ class Model:
         self.post_init_check()
 
         self.flags.initialized = True
+
+    def solve_iter(self, name, rhs, jac, kwargs):
+        """
+        Solve iterative initialization.
+        """
+        if isinstance(name, str):
+            # TODO: test
+            for pos in range(self.n):
+                self.solve_iter_single([name], rhs, jac, kwargs, pos)
+        else:
+            for pos in range(self.n):  # TODO: consider different sizes
+                self.solve_iter_single(name, rhs, jac, kwargs, pos)
+
+    def get_single(self, pos):
+        """
+        Get parameters and variables of a single device as a dict.
+        """
+
+        kwargs = self.get_inputs()
+        kwsingle = OrderedDict()
+
+        for key, value in kwargs.items():
+            if key not in kwsingle:
+                kwsingle[key] = None
+
+            if isinstance(value, np.ndarray) and value.ndim > 0:
+                kwsingle[key] = value[pos]
+            else:
+                kwsingle[key] = value
+
+        return kwsingle
+
+    def solve_iter_single(self, name, rhs, jac, kwargs, pos):
+        """
+        Solve iterative initialization for one given device.
+        """
+
+        maxiter = self.system.TDS.config.max_iter
+        eps = self.system.TDS.config.tol
+        mis = 1
+        niter = 0
+        kwsingle = self.get_single(pos)
+        x0 = np.ravel([kwsingle[item] for item in name])
+        solved = False
+
+        while (niter < maxiter):
+            A = jac(**kwsingle)
+            b = np.ravel(rhs(**kwsingle))
+            inc = - _linsol(A, b)
+            x0 += inc
+            for idx, item in enumerate(name):
+                kwsingle[item] = x0[idx]
+
+            mis = np.max(np.abs(inc))
+            niter += 1
+
+            if mis <= eps:
+                solved = True
+                break
+
+        if solved:
+            for item in name:
+                kwargs[item][pos] = kwsingle[item]
+
+
+def _linsol(A, b):
+    """
+    Wrapper for SciPy dense linear solver.
+    """
+    fact = sp.linalg.lu_factor(A)
+    return sp.linalg.lu_solve(fact, b)
 
 
 def _eval_discrete(instance):

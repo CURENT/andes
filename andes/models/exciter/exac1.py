@@ -117,8 +117,8 @@ class EXAC1Model(ExcBase):
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
+                        v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
-                        v0_iter=2,
                         e_str='KC * XadIfd / INT_y - IN',
                         )
 
@@ -127,9 +127,8 @@ class EXAC1Model(ExcBase):
                              funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
                              info='Piecewise function FEX',
                              )
-        self.FEX.y.v_str = None
+        self.FEX.y.v_iter = '1'
         self.FEX.y.v_iter = self.FEX.y.e_str
-        self.FEX.y.v0_iter = 2
 
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
@@ -161,9 +160,8 @@ class EXAC1Model(ExcBase):
                               y0=0,
                               info='Integrator',
                               )
-        self.INT.y.v_str = None
+        self.INT.y.v_str = 0.1
         self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
-        self.INT.y.v0_iter = 0.1
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',

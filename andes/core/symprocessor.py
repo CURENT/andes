@@ -77,49 +77,6 @@ class SymProcessor:
         self.class_name = parent.class_name
         self.tex_names = OrderedDict()
 
-    def generate_init(self):
-        """
-        Generate lambda functions for initial values.
-        """
-        logger.debug(f'- Generating initializers for {self.class_name}')
-
-        init_lambda_list = OrderedDict()
-        init_latex = OrderedDict()
-        init_seq_list = []
-        init_g_list = []  # initialization equations in g(x, y) = 0 form
-
-        input_syms_list = list(self.inputs_dict)
-
-        for name, instance in self.cache.all_vars.items():
-            if instance.v_str is None and instance.v_iter is None:
-                init_latex[name] = ''
-            else:
-                if instance.v_str is not None:
-                    sympified = sympify(instance.v_str, locals=self.inputs_dict)
-                    self._check_expr_symbols(sympified)
-                    lambdified = lambdify(input_syms_list, sympified, modules=self.lambdify_func)
-                    init_lambda_list[name] = lambdified
-                    init_latex[name] = latex(sympified.subs(self.tex_names))
-                    init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.inputs_dict))
-
-                if instance.v_iter is not None:
-                    sympified = sympify(instance.v_iter, locals=self.inputs_dict)
-                    self._check_expr_symbols(sympified)
-                    init_g_list.append(sympified)
-                    init_latex[name] = latex(sympified.subs(self.tex_names))
-
-        self.init_seq = Matrix(init_seq_list)
-        self.init_std = Matrix(init_g_list)
-        self.init_dstd = Matrix([])
-        if len(self.init_std) > 0:
-            self.init_dstd = self.init_std.jacobian(list(self.vars_dict.values()))
-
-        self.calls.init = init_lambda_list
-        self.calls.init_latex = init_latex
-        self.calls.init_std = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
-                                       self.init_std,
-                                       modules=self.lambdify_func)
-
     def generate_symbols(self):
         """
         Generate symbols for symbolic equation generations.
@@ -406,6 +363,19 @@ class SymProcessor:
         self.df = self.df_sparse.subs(self.tex_names)
         self.dg = self.dg_sparse.subs(self.tex_names)
 
+        # store init latex strings
+        init_latex = OrderedDict()
+        for name, instance in self.cache.all_vars.items():
+            if instance.v_str is None and instance.v_iter is None:
+                init_latex[name] = ''
+            else:
+                if instance.v_str is not None:
+                    init_latex[name] = latex(self.v_str_syms[name].subs(self.tex_names))
+                if instance.v_iter is not None:
+                    init_latex[name] = latex(self.v_iter_syms[name].subs(self.tex_names))
+
+        self.calls.init_latex = init_latex
+
     def generate_pycode(self):
         """
         Create output source code file for generated code. NOT WORKING NOW.
@@ -417,6 +387,7 @@ class SymProcessor:
         header = \
             """from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
 from numpy import greater_equal, less_equal, greater, less  # NOQA
+from numpy import array  # NOQA
 
 
 """
@@ -482,14 +453,13 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
         # store deps for explicit and iterative initializers
         for name, expr in self.v_str_syms.items():
-            _store_deps(name, expr, self.vars_int_dict, deps)
+            _store_deps(name, expr, self.vars_dict, deps)
 
         for name, expr in self.v_iter_syms.items():
-            _store_deps(name, expr, self.vars_int_dict, deps)
+            _store_deps(name, expr, self.vars_dict, deps)
 
         # resolve dependency
-        self.init_seq = resolve(deps)
-
+        self.init_seq = resolve_deps(deps)
         self.calls.init_seq = self.init_seq
 
     def check_v_iter(self):
@@ -504,7 +474,17 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
 
             for vi in item:
                 if self.cache.all_vars[vi].v_iter is None:
-                    raise ValueError("%s: v_iter not defined for %s" % (self.class_name, vi))
+                    logger.error("%s: v_iter not defined for %s" % (self.class_name, vi))
+
+    def generate_init(self):
+        """
+        Generate initialization equations.
+        """
+
+        self.generate_dependency()
+        self.check_v_iter()
+        self.generate_init_eqn()
+        self.lambdify_init()
 
     def generate_init_eqn(self):
         """
@@ -522,24 +502,35 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
         through `self.v_str`.
         """
 
-        self.init_asn = OrderedDict()   # assignment-type initialization
-        self.init_itn = OrderedDict()   # iterative initialization
+        self.init_asn = OrderedDict()       # assignment-type initialization
+        self.init_itn = OrderedDict()       # iterative initialization
+        self.init_itn_vars = OrderedDict()  # variables corr. to iterative vars
+        self.init_jac = OrderedDict()
 
         for item in self.init_seq:
-            if isinstance(item, str) and (self.parent.__dict__[item].v_iter is not None):
-                self.init_itn[item] = self.v_iter_syms[item]
+            if isinstance(item, str):
+                instance = self.parent.__dict__[item]
+                if instance.v_str is not None:
+                    self.init_asn[item] = self.v_str_syms[item]
+                if instance.v_iter is not None:
+                    self.init_itn[item] = self.v_iter_syms[item]
+
             elif isinstance(item, list):
                 name_concat = '_'.join(item)
                 eqn_set = Matrix([self.v_iter_syms[name] for name in item])
                 self.init_itn[name_concat] = eqn_set
+                self.init_itn_vars[name_concat] = item
+                for vv in item:
+                    instance = self.parent.__dict__[vv]
+                    if instance.v_str is not None:
+                        self.init_asn[vv] = self.v_str_syms[vv]
 
-    def generate_init_jac(self):
-        """
-        Generate jacobian matrices for iterative initializations.
-        """
-        self.init_jac = OrderedDict()
         for name, expr in self.init_itn.items():
-            self.init_jac[name] = expr.jacobian(list(self.vars_dict.values()))
+            vars_iter = OrderedDict()
+            for item in self.init_itn_vars[name]:
+                vars_iter[item] = self.vars_dict[item]
+
+            self.init_jac[name] = expr.jacobian(list(vars_iter.values()))
 
     def lambdify_init(self):
         """
@@ -555,19 +546,18 @@ from numpy import greater_equal, less_equal, greater, less  # NOQA
             func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
             init_a[name] = func
 
-        for names, expr in self.init_itn.items():
-            name_concat = '_'.join(names)
+        for name, expr in self.init_itn.items():
             func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
-            init_i[name_concat] = func
+            init_i[name] = func
 
-        for names, expr in self.init_jac.items():
-            name_concat = '_'.join(names)
-            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
-            init_j[name_concat] = func
+            jexpr = self.init_jac[name]
+            func = lambdify(input_syms_list, jexpr, modules=self.lambdify_func)
+            init_j[name] = func
 
         self.calls.init_a = init_a
         self.calls.init_i = init_i
         self.calls.init_j = init_j
+        self.calls.init_itn_vars = self.init_itn_vars
 
 
 def _store_deps(name, sympified, vars_int_dict, deps):
@@ -585,7 +575,7 @@ def _store_deps(name, sympified, vars_int_dict, deps):
             deps[name].append(str(fs))
 
 
-def resolve(graph):
+def resolve_deps(graph):
     """
     Resolve dependency for a dict-based graph using recursion.
     """
@@ -610,8 +600,11 @@ def resolve(graph):
             # circular dependency
             if item in path:
                 idx1 = path.index(item)
-                cflat.extend(path[idx1:])
-                circles.append(path[idx1:])
+                idx2 = path.index(name)
+                mn = min(idx1, idx2)
+                mx = max(idx1, idx2)
+                cflat.extend(path[mn:mx+1])
+                circles.append(path[mn:mx+1])
                 continue
 
             path.append(item)
