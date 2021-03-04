@@ -134,7 +134,6 @@ class EXAC1Model(ExcBase):
                       info='Voltage transducer',
                       )
 
-        # TODO: fix equation
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
