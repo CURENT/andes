@@ -42,8 +42,6 @@ class SymProcessor:
         config flags. It has the same variables as what ``get_inputs()`` returns.
     vars_dict : OrderedDict
         variable-only symbols, which are useful when getting the Jacobian matrices.
-    non_vars_dict : OrderedDict
-        symbols in ``input_syms`` but not in ``var_syms``.
 
     """
 
@@ -57,9 +55,6 @@ class SymProcessor:
 
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
-        self.iters_dict = OrderedDict()
-        self.non_vars_dict = OrderedDict()   # inputs_dict - vars_dict
-        self.non_iters_dict = OrderedDict()  # inputs_dict - iters_dict
         self.vars_list = list()
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
@@ -91,9 +86,6 @@ class SymProcessor:
         vars_dict : OrderedDict
             name-symbol pair of all variables, in the order of (states_and_ext + algebs_and_ext)
 
-        non_vars_dict : OrderedDict
-            name-symbol pair of all non-variables, namely, (inputs_dict - vars_dict)
-
         """
 
         logger.debug(f'- Generating symbols for {self.class_name}')
@@ -120,8 +112,6 @@ class SymProcessor:
             self.inputs_dict[var] = tmp
             if var in self.cache.vars_int:
                 self.vars_int_dict[var] = tmp
-            if self.parent.__dict__[var].v_iter is not None:
-                self.iters_dict[var] = tmp
 
         # store tex names defined in `self.config`
         for key in self.config.as_dict():
@@ -144,14 +134,6 @@ class SymProcessor:
         self.lambdify_func[0]['real'] = np.real
         self.lambdify_func[0]['im'] = np.imag
         self.lambdify_func[0]['re'] = np.real
-
-        # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
-        self.non_vars_dict = OrderedDict(self.inputs_dict)
-        self.non_iters_dict = OrderedDict(self.inputs_dict)
-        for key in self.vars_dict:
-            self.non_vars_dict.pop(key)
-        for key in self.iters_dict:
-            self.non_iters_dict.pop(key)
 
         self.vars_list = list(self.vars_dict.values())  # useful for ``.jacobian()``
 
@@ -190,17 +172,12 @@ class SymProcessor:
                 else:
                     try:
                         expr = sympify(instance.e_str, locals=self.inputs_dict)
-                    except SympifyError as e:
-                        logger.error('Error parsing equation "%s "for %s.%s',
-                                     instance.e_str, instance.owner.class_name, name)
-                        raise e
-                    except TypeError as e:
+                    except (SympifyError, TypeError) as e:
                         logger.error('Error parsing equation "%s "for %s.%s',
                                      instance.e_str, instance.owner.class_name, name)
                         raise e
 
                     free_syms = self._check_expr_symbols(expr)
-
                     for s in free_syms:
                         if s not in sym_args:
                             sym_args.append(s)
@@ -219,11 +196,12 @@ class SymProcessor:
 
     def generate_services(self):
         """
-        Generate calls for services, including ``ConstService``, ``VarService`` among others.
+        Generate calls for services, including ``ConstService`` and
+        ``VarService`` among others.
+
+        Sequence is preserved due to possible dependency
         """
 
-        # convert service equations
-        # Service equations are converted sequentially due to possible dependency
         s_args = OrderedDict()
         s_syms = OrderedDict()
         s_calls = OrderedDict()
@@ -302,27 +280,25 @@ class SymProcessor:
                 # jac calls with all arguments and stored individually
                 self.calls.append_ijv(jname, e_idx, v_idx, 0)
 
+                # collect unique arguments for jac calls
                 free_syms = self._check_expr_symbols(e_symbolic)
                 for fs in free_syms:
                     if fs not in j_args[jname]:
                         j_args[jname].append(fs)
-                # j_args[jname].extend(free_syms)
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
-        # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
+        # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
         for var in self.parent.cache.vars_int.values():
             if var.diag_eps == 0.0:
                 continue
-
             elif var.diag_eps is True:
                 eps = self.parent.system.config.diag_eps
-
             else:
                 eps = var.diag_eps
 
@@ -380,8 +356,11 @@ class SymProcessor:
 
     def generate_pycode(self):
         """
-        Create output source code file for generated code. NOT WORKING NOW.
+        Create output source code file for generated code.
+
+        Generated code are stored at ``~/.andes/pycode``.
         """
+
         models_dir = os.path.join(get_dot_andes_path(), 'pycode')
         os.makedirs(models_dir, exist_ok=True)
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
