@@ -46,11 +46,6 @@ class Test5Bus(unittest.TestCase):
             self.ss.reset()
             self.ss.PFlow.run()
 
-    def test_tds_init(self):
-        self.ss.PFlow.run()
-        self.ss.TDS.config.tf = 10
-        self.ss.TDS.run()
-
     def test_alter_param(self):
         self.ss.PV.alter('v0', 2, 0.98)
         self.assertEqual(self.ss.PV.v0.v[1], 0.98)

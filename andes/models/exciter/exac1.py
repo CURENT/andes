@@ -116,7 +116,7 @@ class EXAC1Model(ExcBase):
                                 )
 
         self.IN = Algeb(tex_name='I_N',
-                        info='Input to FEX',
+                    info='Input to FEX',
                         v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
                         e_str='KC * XadIfd / INT_y - IN',
