@@ -224,8 +224,6 @@ class SymProcessor:
 
         # convert service equations
         # Service equations are converted sequentially due to possible dependency
-        import inspect
-
         s_args = OrderedDict()
         s_syms = OrderedDict()
         s_calls = OrderedDict()
