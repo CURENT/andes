@@ -207,20 +207,16 @@ class SymProcessor:
         s_calls = OrderedDict()
 
         for name, instance in self.parent.services.items():
-            if instance.v_str is not None:
-                try:
-                    expr = sympify(instance.v_str, locals=self.inputs_dict)
-                except (SympifyError, TypeError) as e:
-                    logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
-                    raise e
-                self._check_expr_symbols(expr)
-                s_syms[name] = expr
-                s_args[name] = [str(i) for i in expr.free_symbols]
-                s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
-            else:
-                s_syms[name] = 0
-                s_args[name] = []
-                s_calls[name] = 0
+            v_str = '0' if instance.v_str is None else instance.v_str
+            try:
+                expr = sympify(v_str, locals=self.inputs_dict)
+            except (SympifyError, TypeError) as e:
+                logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
+                raise e
+            self._check_expr_symbols(expr)
+            s_syms[name] = expr
+            s_args[name] = [str(i) for i in expr.free_symbols]
+            s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
         self.s_matrix = Matrix(list(s_syms.values()))
         self.calls.s = s_calls
@@ -378,8 +374,18 @@ from numpy import array  # NOQA
             f.write(self._rename_func(self.calls.f, 'f_update'))
             f.write(self._rename_func(self.calls.g, 'g_update'))
 
-            for jname in self.calls.j:
-                f.write(self._rename_func(self.calls.j[jname], f'{jname}_update'))
+            for name in self.calls.j:
+                f.write(self._rename_func(self.calls.j[name], f'{name}_update'))
+
+            # initialization: assignments
+            for name in self.calls.init_a:
+                f.write(self._rename_func(self.calls.init_a[name], f'{name}_inita'))
+            for name in self.calls.init_i:
+                f.write(self._rename_func(self.calls.init_i[name], f'{name}_initi'))
+
+            # services
+            for name in self.calls.s:
+                f.write(self._rename_func(self.calls.s[name], f'{name}_svc'))
 
     def _rename_func(self, func, func_name):
         """

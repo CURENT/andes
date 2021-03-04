@@ -406,8 +406,8 @@ class ModelCall:
         self.g_args = list()
         self.j_args = dict()
         self.s_args = OrderedDict()
-
-        self.init = OrderedDict()
+        self.ia_args = OrderedDict()   # assignment initialization
+        self.ii_args = OrderedDict()   # iterative initialization
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
