@@ -142,6 +142,8 @@ class SymProcessor:
         self.lambdify_func[0]['Indicator'] = lambda x: x
         self.lambdify_func[0]['imag'] = np.imag
         self.lambdify_func[0]['real'] = np.real
+        self.lambdify_func[0]['im'] = np.imag
+        self.lambdify_func[0]['re'] = np.real
 
         # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
         self.non_vars_dict = OrderedDict(self.inputs_dict)
@@ -222,6 +224,8 @@ class SymProcessor:
 
         # convert service equations
         # Service equations are converted sequentially due to possible dependency
+        import inspect
+
         s_args = OrderedDict()
         s_syms = OrderedDict()
         s_calls = OrderedDict()
