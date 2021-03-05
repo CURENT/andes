@@ -1621,7 +1621,7 @@ class Model:
 
         return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
 
-    def init_new(self, routine):
+    def init(self, routine):
         """
         Numerical initialization of a model.
 
@@ -1657,11 +1657,7 @@ class Model:
 
                     # single variable iterative solution
                     if name in self.calls.init_i:
-                        rhs = self.calls.init_i[name]
-                        jac = self.calls.init_j[name]
-                        ii_args = self.ii_args[name]
-                        ij_args = self.ij_args[name]
-                        self.solve_iter(name, rhs, jac, kwargs, ii_args, ij_args)
+                        self.solve_iter(name, kwargs)
 
                 # multiple variables, iterative
                 else:
@@ -1671,12 +1667,7 @@ class Model:
                         if instance.v_str is not None:
                             instance.v[:] = self.calls.init_a[vv](*self.ia_args[vv])
 
-                    name_concat = '_'.join(name)
-                    rhs = self.calls.init_i[name_concat]
-                    jac = self.calls.init_j[name_concat]
-                    ii_args = self.ii_args[name_concat]
-                    ij_args = self.ij_args[name_concat]
-                    self.solve_iter(name, rhs, jac, kwargs, ii_args, ij_args)
+                    self.solve_iter(name, kwargs)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1687,48 +1678,46 @@ class Model:
 
         self.flags.initialized = True
 
-    def solve_iter(self, name, rhs, jac, kwargs, ii_args, ij_args):
+    def solve_iter(self, name, kwargs):
         """
         Solve iterative initialization.
         """
-        if isinstance(name, str):
-            # TODO: test
-            for pos in range(self.n):
-                x0 = kwargs[name][pos]
-                self.solve_iter_single([name], rhs, jac, kwargs, pos, ii_args, ij_args, x0)
-        else:
-            for pos in range(self.n):  # TODO: consider different sizes
-                x0 = np.ravel([kwargs[item][pos] for item in name])
-                self.solve_iter_single(name, rhs, jac, kwargs, pos, ii_args, ij_args, x0)
+        for pos in range(self.n):
+            self.solve_iter_single(name, kwargs, pos)
 
-    def get_single_from_list(self, args, pos):
-        """
-        Get parameters and variables of a single device as a list.
-        """
-
-        return [item[pos] for item in args]
-
-    def solve_iter_single(self, name, rhs, jac, kwargs, pos, ii_args, ij_args, x0):
+    def solve_iter_single(self, name, inputs, pos):
         """
         Solve iterative initialization for one given device.
         """
 
+        if isinstance(name, str):
+            x0 = inputs[name][pos]
+            name_concat = name
+        else:
+            x0 = np.ravel([inputs[item][pos] for item in name])
+            name_concat = '_'.join(name)
+
+        rhs = self.calls.init_i[name_concat]
+        jac = self.calls.init_j[name_concat]
+        ii_args = self.ii_args[name_concat]
+        ij_args = self.ij_args[name_concat]
+
+        # iteration setup
         maxiter = self.system.TDS.config.max_iter
         eps = self.system.TDS.config.tol
-        mis = 1
         niter = 0
         solved = False
 
-        while (niter < maxiter):
-            i_args = self.get_single_from_list(ii_args, pos)
-            j_args = self.get_single_from_list(ij_args, pos)
+        while niter < maxiter:
+            i_args = [item[pos] for item in ii_args]  # all variables of one device at a time
+            j_args = [item[pos] for item in ij_args]
 
             b = np.ravel(rhs(*i_args))
             A = jac(*j_args)
             inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
             x0 += inc
             for idx, item in enumerate(name):
-                kwargs[item][pos] = x0[idx]
+                inputs[item][pos] = x0[idx]
 
             mis = np.max(np.abs(inc))
             niter += 1
@@ -1739,7 +1728,7 @@ class Model:
 
         if solved:
             for idx, item in enumerate(name):
-                kwargs[item][pos] = x0[idx]
+                inputs[item][pos] = x0[idx]
 
 
 def _eval_discrete(instance):
