@@ -30,7 +30,9 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
-from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, get_dot_andes_path
+from andes.utils.paths import confirm_overwrite
+from andes.utils.paths import get_config_path, get_dot_andes_path
+from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
@@ -42,7 +44,8 @@ logger = logging.getLogger(__name__)
 sys.path.append(get_dot_andes_path())
 
 try:
-    import pycode  # NOQA
+    import pycode             # NOQA
+    from andes import pycode  # NOQA
 except ImportError:
     pycode = None  # NOQA
 
@@ -288,6 +291,9 @@ class System:
         # consistency check for group parameters and variables
         self._check_group_common()
 
+        # get `pycode` folder path without automatic creation
+        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
+
         loaded_calls = self._load_pkl()
         if loaded_calls is None and incremental:
             incremental = False
@@ -307,13 +313,14 @@ class System:
 
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
-            model.prepare(quick=quick)
+
+            model.prepare(quick=quick, pycode_path=pycode_path)
 
         if self.config.save_pycode:
+            logger.info('Storing generated pycode to "%s"', pycode_path)
+
             # write `__init__.py` that imports all to the `pycode` package
-            models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-            os.makedirs(models_dir, exist_ok=True)
-            init_path = os.path.join(models_dir, '__init__.py')
+            init_path = os.path.join(pycode_path, '__init__.py')
 
             with open(init_path, 'w') as f:
                 f.write(f"__version__ = '{__version__}'\n\n")
@@ -1299,23 +1306,6 @@ class System:
         with open(self.config.pickle_path, 'wb') as f:
             dill.dump(self.calls, f)
 
-    def _load_pkl(self):
-        """
-        Helper function to open and load dill-pickled functions.
-        """
-        dill.settings['recurse'] = True
-
-        if os.path.isfile(self.config.pickle_path):
-            with open(self.config.pickle_path, 'rb') as f:
-
-                try:
-                    loaded_calls = dill.load(f)
-                    return loaded_calls
-                except (IOError, EOFError, AttributeError):
-                    pass
-
-        return None
-
     def undill(self):
         """
         Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
@@ -1325,61 +1315,95 @@ class System:
         """
 
         # try to replace equations and jacobian calls with saved code
-        if pycode is not None and self.config.use_pycode:
-            for model in self.models.values():
-                pycode_model = pycode.__dict__[model.class_name]
+        calls_loaded = False
+        if self.config.use_pycode:
+            try:
+                self._load_pycode()
+                calls_loaded = True
+            except ImportError:
+                logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
+                pass
 
-                # reload stored variables
-                for item in dilled_vars:
-                    model.calls.__dict__[item] = pycode_model.__dict__[item]
+        if calls_loaded is False:
+            self._load_pkl()
 
-                model.calls.f = pycode_model.__dict__.get("f_update")
-                model.calls.g = pycode_model.__dict__.get("g_update")
+    def _load_pkl(self):
+        """
+        Helper function for loading ModelCall from pickle file.
+        """
 
-                for instance in model.services.values():
-                    if instance.v_str is not None:
-                        sv_name = f'{instance.name}_svc'
-                        model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
+        dill.settings['recurse'] = True
+        loaded_calls = None
 
-                # load initialization; assignment
-                for instance in model.cache.all_vars.values():
-                    if instance.v_str is not None:
-                        ia_name = f'{instance.name}_ia'
-                        model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
+        # try to undill from file
+        if os.path.isfile(self.config.pickle_path):
+            with open(self.config.pickle_path, 'rb') as f:
+                try:
+                    loaded_calls = dill.load(f)
+                except (IOError, EOFError, AttributeError):
+                    pass
 
-                # load initialization: iterative
-                for item in model.calls.init_seq:
-                    if isinstance(item, list):
-                        name_concat = '_'.join(item)
-                        model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
-                        model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
-
-                # load Jacobian functions
-                for jname in model.calls.j_names:
-                    model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
-
-            logger.info("Using generated Python code for equations and Jacobians.")
-        else:
-            loaded_calls = self._load_pkl()
-
-            if loaded_calls is not None:
-                ver = loaded_calls.get('__version__')
-                if ver == __version__:
-                    self.calls = loaded_calls
-                    logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
-                else:
-                    logger.info('Undilled calls are for version %s, regenerating...', ver)
-                    self.prepare(quick=True, incremental=True)
-
+        if loaded_calls is not None:
+            ver = loaded_calls.get('__version__')
+            if ver == __version__:
+                self.calls = loaded_calls
+                logger.info('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
             else:
-                logger.info('Generating numerical calls at the first launch.')
-                self.prepare()
+                logger.info('Undilled calls are for version %s, regenerating...', ver)
+                self.prepare(quick=True, incremental=True)
 
-            for name, model_call in self.calls.items():
-                if name in self.__dict__:
-                    self.__dict__[name].calls = model_call
+        else:
+            logger.info('Generating numerical calls at the first launch.')
+            self.prepare()
 
-            logger.debug("Using undilled lambda functions.")
+        for name, model_call in self.calls.items():
+            if name in self.__dict__:
+                self.__dict__[name].calls = model_call
+
+        logger.debug("Using undilled lambda functions.")
+
+    def _load_pycode(self):
+        """
+        Helper function to load generated pycode
+        """
+        if pycode is None:
+            raise ImportError("Generated pycode not found.")
+
+        for model in self.models.values():
+            pycode_model = pycode.__dict__[model.class_name]
+
+            # reload stored variables
+            for item in dilled_vars:
+                model.calls.__dict__[item] = pycode_model.__dict__[item]
+
+            # equations
+            model.calls.f = pycode_model.__dict__.get("f_update")
+            model.calls.g = pycode_model.__dict__.get("g_update")
+
+            # services
+            for instance in model.services.values():
+                if instance.v_str is not None:
+                    sv_name = f'{instance.name}_svc'
+                    model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
+
+            # load initialization; assignment
+            for instance in model.cache.all_vars.values():
+                if instance.v_str is not None:
+                    ia_name = f'{instance.name}_ia'
+                    model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
+
+            # load initialization: iterative
+            for item in model.calls.init_seq:
+                if isinstance(item, list):
+                    name_concat = '_'.join(item)
+                    model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
+                    model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
+
+            # load Jacobian functions
+            for jname in model.calls.j_names:
+                model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
+
+        logger.info("Using generated Python code.")
 
     def _get_models(self, models):
         """

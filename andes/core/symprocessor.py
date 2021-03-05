@@ -12,7 +12,7 @@ from sympy import sympify, lambdify, latex, SympifyError
 from sympy import SparseMatrix
 
 from andes.shared import dilled_vars
-from andes.utils.paths import get_dot_andes_path
+from andes.utils.paths import get_pycode_path
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +353,7 @@ class SymProcessor:
 
         self.calls.init_latex = init_latex
 
-    def generate_pycode(self):
+    def generate_pycode(self, pycode_path):
         """
         Create output source code file for generated code.
 
@@ -361,11 +361,9 @@ class SymProcessor:
         """
 
         import pprint
+        pycode_path = get_pycode_path(pycode_path, mkdir=True)
 
-        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-        os.makedirs(models_dir, exist_ok=True)
-        file_path = os.path.join(models_dir, f'{self.class_name}.py')
-
+        file_path = os.path.join(pycode_path, f'{self.class_name}.py')
         header = \
             """from collections import OrderedDict  # NOQA
 

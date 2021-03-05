@@ -161,6 +161,20 @@ def get_config_path(file_name='andes.rc'):
     return conf_path
 
 
+def get_pycode_path(pycode_path=None, mkdir=False):
+    """
+    Get the path to the ``pycode`` folder.
+    """
+
+    if pycode_path is None:
+        pycode_path = os.path.join(get_dot_andes_path(), 'pycode')
+
+    if mkdir is True:
+        os.makedirs(pycode_path, exist_ok=True)
+
+    return pycode_path
+
+
 def get_pkl_path():
     """
     Get the path to the picked/dilled function calls.

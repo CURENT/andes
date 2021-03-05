@@ -676,7 +676,7 @@ def prepare(quick=False, incremental=False, cli=False, full=False, **kwargs):
     if full is True:
         quick = False
 
-    system = System()
+    system = System(options=kwargs)
     system.prepare(quick=quick, incremental=incremental)
 
     if cli is True:
