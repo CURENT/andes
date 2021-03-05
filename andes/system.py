@@ -1318,30 +1318,38 @@ class System:
         calls_loaded = False
         if self.config.use_pycode:
             try:
-                self._load_pycode()
+                self._call_from_pycode()
                 calls_loaded = True
             except ImportError:
                 logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
                 pass
 
         if calls_loaded is False:
-            self._load_pkl()
+            self._call_from_pkl()
 
     def _load_pkl(self):
+        """
+        Helper function to open and load dill-pickled functions.
+        """
+        dill.settings['recurse'] = True
+
+        if os.path.isfile(self.config.pickle_path):
+            with open(self.config.pickle_path, 'rb') as f:
+
+                try:
+                    loaded_calls = dill.load(f)
+                    return loaded_calls
+                except (IOError, EOFError, AttributeError):
+                    pass
+
+        return None
+
+    def _call_from_pkl(self):
         """
         Helper function for loading ModelCall from pickle file.
         """
 
-        dill.settings['recurse'] = True
-        loaded_calls = None
-
-        # try to undill from file
-        if os.path.isfile(self.config.pickle_path):
-            with open(self.config.pickle_path, 'rb') as f:
-                try:
-                    loaded_calls = dill.load(f)
-                except (IOError, EOFError, AttributeError):
-                    pass
+        loaded_calls = self._load_pkl()
 
         if loaded_calls is not None:
             ver = loaded_calls.get('__version__')
@@ -1362,7 +1370,7 @@ class System:
 
         logger.debug("Using undilled lambda functions.")
 
-    def _load_pycode(self):
+    def _call_from_pycode(self):
         """
         Helper function to load generated pycode
         """
