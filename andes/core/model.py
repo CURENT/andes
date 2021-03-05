@@ -890,7 +890,8 @@ class Model:
         """
         This is the helper function to refresh inputs.
 
-        The functions collects objects into OrderedDict and store to `self._input` and `self._input_z`.
+        The functions collects object references into ``OrderedDict``s
+        `self._input` and `self._input_z`.
 
         Returns
         -------
@@ -937,23 +938,25 @@ class Model:
         self.f_args = list()
         self.g_args = list()
         self.j_args = dict()
-        self.s_args = OrderedDict()
-        self.ii_args = OrderedDict()
-        self.ia_args = OrderedDict()
-        self.ij_args = OrderedDict()
+        self.s_args = dict()
+        self.ii_args = dict()
+        self.ia_args = dict()
+        self.ij_args = dict()
 
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
-        for name in self.calls.j:
-            self.j_args[name] = [self._input[arg] for arg in self.calls.j_args[name]]
-        for name in self.calls.s_args:
-            self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
-        for name in self.calls.ia_args:
-            self.ia_args[name] = [self._input[arg] for arg in self.calls.ia_args[name]]
-        for name in self.calls.ii_args:
-            self.ii_args[name] = [self._input[arg] for arg in self.calls.ii_args[name]]
-        for name in self.calls.ij_args:
-            self.ij_args[name] = [self._input[arg] for arg in self.calls.ij_args[name]]
+        mapping = {
+            'j_args': self.j_args,
+            's_args': self.s_args,
+            'ia_args': self.ia_args,
+            'ii_args': self.ii_args,
+            'ij_args': self.ij_args,
+        }
+
+        for key, val in mapping.items():
+            source = self.calls.__dict__[key]
+            for name in source:
+                val[name] = [self._input[arg] for arg in source[name]]
 
     def l_update_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
