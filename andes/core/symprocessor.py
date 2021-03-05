@@ -357,17 +357,26 @@ class SymProcessor:
         Generated code are stored at ``~/.andes/pycode``.
         """
 
+        import pprint
+
         models_dir = os.path.join(get_dot_andes_path(), 'pycode')
         os.makedirs(models_dir, exist_ok=True)
         file_path = os.path.join(models_dir, f'{self.class_name}.py')
 
         header = \
-            """from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
-from numpy import greater_equal, less_equal, greater, less  # NOQA
+            """from collections import OrderedDict  # NOQA
+
+from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
+from numpy import greater_equal, less_equal, greater, less   # NOQA
 from numpy import array  # NOQA
 
 
 """
+
+        var_names = ['f_args', 'g_args', 'j_args', 's_args',
+                     'ia_args', 'ii_args', 'ij_args',
+                     'ijac', 'jjac', 'vjac',
+                     'init_seq']
 
         with open(file_path, 'w') as f:
             f.write(header)
@@ -388,6 +397,10 @@ from numpy import array  # NOQA
             # services
             for name in self.calls.s:
                 f.write(self._rename_func(self.calls.s[name], f'{name}_svc'))
+
+            # variables
+            for name in var_names:
+                f.write(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
 
     def _rename_func(self, func, func_name):
         """

@@ -410,9 +410,9 @@ class ModelCall:
         self.ii_args = OrderedDict()   # iterative initialization
         self.ij_args = OrderedDict()
 
-        self.ijac = defaultdict(list)
-        self.jjac = defaultdict(list)
-        self.vjac = defaultdict(list)
+        self.ijac = OrderedDict()
+        self.jjac = OrderedDict()
+        self.vjac = OrderedDict()
 
     def clear_ijv(self):
         for jname in jac_names:
