@@ -29,7 +29,7 @@ from andes.core.service import SwBlock
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.shared import jac_names, jac_types, jac_full_names
-from andes.shared import np, pd, newton_krylov
+from andes.shared import np, pd
 from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)
@@ -408,6 +408,7 @@ class ModelCall:
         self.s_args = OrderedDict()
         self.ia_args = OrderedDict()   # assignment initialization
         self.ii_args = OrderedDict()   # iterative initialization
+        self.ij_args = OrderedDict()
 
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -643,6 +644,9 @@ class Model:
         self.g_args = []   # argument value lists
         self.j_args = dict()
         self.s_args = OrderedDict()
+        self.ia_args = OrderedDict()
+        self.ii_args = OrderedDict()
+        self.ij_args = OrderedDict()
 
     def _register_attribute(self, key, value):
         """
@@ -934,6 +938,9 @@ class Model:
         self.g_args = list()
         self.j_args = dict()
         self.s_args = OrderedDict()
+        self.ii_args = OrderedDict()
+        self.ia_args = OrderedDict()
+        self.ij_args = OrderedDict()
 
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
@@ -941,6 +948,12 @@ class Model:
             self.j_args[name] = [self._input[arg] for arg in self.calls.j_args[name]]
         for name in self.calls.s_args:
             self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
+        for name in self.calls.ia_args:
+            self.ia_args[name] = [self._input[arg] for arg in self.calls.ia_args[name]]
+        for name in self.calls.ii_args:
+            self.ii_args[name] = [self._input[arg] for arg in self.calls.ii_args[name]]
+        for name in self.calls.ij_args:
+            self.ij_args[name] = [self._input[arg] for arg in self.calls.ij_args[name]]
 
     def l_update_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
@@ -1060,41 +1073,6 @@ class Model:
 
         ret = np.ravel(self.calls.init_std(vars_input, params))
         return ret
-
-    def init_iter(self):
-        """
-        Solve the initialization equation using the Newton-Krylov method.
-        """
-        for instance in self.cache.iter_vars.values():
-            instance.v[:] = instance.v0_iter
-
-        inputs = self.get_inputs(refresh=True)
-
-        iter_input = OrderedDict()
-        non_iter_input = OrderedDict(inputs)  # include non-iter variables and other params/configs
-
-        for name, _ in self.cache.iter_vars.items():
-            iter_input[name] = inputs[name]
-            non_iter_input.pop(name)
-
-        iter_array = list(iter_input.values())
-        non_iter_list = list(non_iter_input.values())
-
-        for i in range(len(iter_array)):
-            if isinstance(iter_array[i], (float, int, np.int64, np.float64)):
-                iter_array[i] = np.ones(self.n) * iter_array[i]
-            else:
-                iter_array[i][:] = np.ones(self.n) * iter_array[i]
-
-        iter_array = np.ravel(iter_array)
-
-        def init_wrap(x0):
-            return self._init_wrap(x0, non_iter_list)
-
-        sol = newton_krylov(init_wrap, iter_array)
-
-        for i, var in enumerate(self.cache.iter_vars.values()):
-            var.v[:] = sol[i * self.n: (i + 1) * self.n]
 
     def store_sparse_pattern(self):
         """
@@ -1672,13 +1650,15 @@ class Model:
                     instance = self.__dict__[name]
                     _eval_discrete(instance)
                     if instance.v_str is not None:
-                        instance.v[:] = self.calls.init_a[name](**kwargs)
+                        instance.v[:] = self.calls.init_a[name](*self.ia_args[name])
 
                     # single variable iterative solution
                     if name in self.calls.init_i:
                         rhs = self.calls.init_i[name]
                         jac = self.calls.init_j[name]
-                        self.solve_iter(name, rhs, jac, kwargs)
+                        ii_args = self.ii_args[name]
+                        ij_args = self.ij_args[name]
+                        self.solve_iter(name, rhs, jac, kwargs, ii_args, ij_args)
 
                 # multiple variables, iterative
                 else:
@@ -1686,12 +1666,14 @@ class Model:
                         instance = self.__dict__[vv]
                         _eval_discrete(instance)
                         if instance.v_str is not None:
-                            instance.v[:] = self.calls.init_a[vv](**kwargs)
+                            instance.v[:] = self.calls.init_a[vv](*self.ia_args[vv])
 
                     name_concat = '_'.join(name)
                     rhs = self.calls.init_i[name_concat]
                     jac = self.calls.init_j[name_concat]
-                    self.solve_iter(name, rhs, jac, kwargs)
+                    ii_args = self.ii_args[name_concat]
+                    ij_args = self.ij_args[name_concat]
+                    self.solve_iter(name, rhs, jac, kwargs, ii_args, ij_args)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1702,38 +1684,28 @@ class Model:
 
         self.flags.initialized = True
 
-    def solve_iter(self, name, rhs, jac, kwargs):
+    def solve_iter(self, name, rhs, jac, kwargs, ii_args, ij_args):
         """
         Solve iterative initialization.
         """
         if isinstance(name, str):
             # TODO: test
             for pos in range(self.n):
-                self.solve_iter_single([name], rhs, jac, kwargs, pos)
+                x0 = kwargs[name][pos]
+                self.solve_iter_single([name], rhs, jac, kwargs, pos, ii_args, ij_args, x0)
         else:
             for pos in range(self.n):  # TODO: consider different sizes
-                self.solve_iter_single(name, rhs, jac, kwargs, pos)
+                x0 = np.ravel([kwargs[item][pos] for item in name])
+                self.solve_iter_single(name, rhs, jac, kwargs, pos, ii_args, ij_args, x0)
 
-    def get_single(self, pos):
+    def get_single_from_list(self, args, pos):
         """
-        Get parameters and variables of a single device as a dict.
+        Get parameters and variables of a single device as a list.
         """
 
-        kwargs = self.get_inputs()
-        kwsingle = OrderedDict()
+        return [item[pos] for item in args]
 
-        for key, value in kwargs.items():
-            if key not in kwsingle:
-                kwsingle[key] = None
-
-            if isinstance(value, np.ndarray) and value.ndim > 0:
-                kwsingle[key] = value[pos]
-            else:
-                kwsingle[key] = value
-
-        return kwsingle
-
-    def solve_iter_single(self, name, rhs, jac, kwargs, pos):
+    def solve_iter_single(self, name, rhs, jac, kwargs, pos, ii_args, ij_args, x0):
         """
         Solve iterative initialization for one given device.
         """
@@ -1742,17 +1714,18 @@ class Model:
         eps = self.system.TDS.config.tol
         mis = 1
         niter = 0
-        kwsingle = self.get_single(pos)
-        x0 = np.ravel([kwsingle[item] for item in name])
         solved = False
 
         while (niter < maxiter):
-            A = jac(**kwsingle)
-            b = np.ravel(rhs(**kwsingle))
-            inc = - _linsol(A, b)
+            i_args = self.get_single_from_list(ii_args, pos)
+            j_args = self.get_single_from_list(ij_args, pos)
+
+            b = np.ravel(rhs(*i_args))
+            A = jac(*j_args)
+            inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
             x0 += inc
             for idx, item in enumerate(name):
-                kwsingle[item] = x0[idx]
+                kwargs[item][pos] = x0[idx]
 
             mis = np.max(np.abs(inc))
             niter += 1
@@ -1762,16 +1735,8 @@ class Model:
                 break
 
         if solved:
-            for item in name:
-                kwargs[item][pos] = kwsingle[item]
-
-
-def _linsol(A, b):
-    """
-    Wrapper for SciPy dense linear solver.
-    """
-    fact = sp.linalg.lu_factor(A)
-    return sp.linalg.lu_solve(fact, b)
+            for idx, item in enumerate(name):
+                kwargs[item][pos] = x0[idx]
 
 
 def _eval_discrete(instance):

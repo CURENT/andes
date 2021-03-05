@@ -524,27 +524,34 @@ from numpy import array  # NOQA
         Convert equations and Jacobians to lambda functions.
         """
 
-        input_syms_list = list(self.inputs_dict)
         init_a = OrderedDict()
         init_i = OrderedDict()
         init_j = OrderedDict()
+        ia_args = OrderedDict()  # arguments for assignment init.
+        ii_args = OrderedDict()  # arguments for iterative init.
+        ij_args = OrderedDict()
 
         for name, expr in self.init_asn.items():
-            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
-            init_a[name] = func
+            self._check_expr_symbols(expr)
+            ia_args[name] = [str(i) for i in expr.free_symbols]
+            init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
 
         for name, expr in self.init_itn.items():
-            func = lambdify(input_syms_list, expr, modules=self.lambdify_func)
-            init_i[name] = func
+            self._check_expr_symbols(expr)
+            ii_args[name] = [str(i) for i in expr.free_symbols]
+            init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
 
             jexpr = self.init_jac[name]
-            func = lambdify(input_syms_list, jexpr, modules=self.lambdify_func)
-            init_j[name] = func
+            ij_args[name] = [str(i) for i in jexpr.free_symbols]
+            init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
 
         self.calls.init_a = init_a
         self.calls.init_i = init_i
         self.calls.init_j = init_j
         self.calls.init_itn_vars = self.init_itn_vars
+        self.calls.ia_args = ia_args
+        self.calls.ii_args = ii_args
+        self.calls.ij_args = ij_args
 
 
 def _store_deps(name, sympified, vars_int_dict, deps):
