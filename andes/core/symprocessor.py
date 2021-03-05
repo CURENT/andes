@@ -378,10 +378,12 @@ from numpy import array  # NOQA
                 f.write(self._rename_func(self.calls.j[name], f'{name}_update'))
 
             # initialization: assignments
-            for name in self.calls.init_a:
-                f.write(self._rename_func(self.calls.init_a[name], f'{name}_inita'))
-            for name in self.calls.init_i:
-                f.write(self._rename_func(self.calls.init_i[name], f'{name}_initi'))
+            for name in self.calls.ia:
+                f.write(self._rename_func(self.calls.ia[name], f'{name}_ia'))
+            for name in self.calls.ii:
+                f.write(self._rename_func(self.calls.ii[name], f'{name}_ii'))
+            for name in self.calls.ij:
+                f.write(self._rename_func(self.calls.ij[name], f'{name}_ij'))
 
             # services
             for name in self.calls.s:
@@ -545,10 +547,9 @@ from numpy import array  # NOQA
             ij_args[name] = [str(i) for i in jexpr.free_symbols]
             init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
 
-        self.calls.init_a = init_a
-        self.calls.init_i = init_i
-        self.calls.init_j = init_j
-        self.calls.init_itn_vars = self.init_itn_vars
+        self.calls.ia = init_a
+        self.calls.ii = init_i
+        self.calls.ij = init_j
         self.calls.ia_args = ia_args
         self.calls.ii_args = ii_args
         self.calls.ij_args = ij_args

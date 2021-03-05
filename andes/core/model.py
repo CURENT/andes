@@ -1653,10 +1653,10 @@ class Model:
                     instance = self.__dict__[name]
                     _eval_discrete(instance)
                     if instance.v_str is not None:
-                        instance.v[:] = self.calls.init_a[name](*self.ia_args[name])
+                        instance.v[:] = self.calls.ia[name](*self.ia_args[name])
 
                     # single variable iterative solution
-                    if name in self.calls.init_i:
+                    if name in self.calls.ii:
                         self.solve_iter(name, kwargs)
 
                 # multiple variables, iterative
@@ -1665,7 +1665,7 @@ class Model:
                         instance = self.__dict__[vv]
                         _eval_discrete(instance)
                         if instance.v_str is not None:
-                            instance.v[:] = self.calls.init_a[vv](*self.ia_args[vv])
+                            instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
 
                     self.solve_iter(name, kwargs)
 
@@ -1697,8 +1697,8 @@ class Model:
             x0 = np.ravel([inputs[item][pos] for item in name])
             name_concat = '_'.join(name)
 
-        rhs = self.calls.init_i[name_concat]
-        jac = self.calls.init_j[name_concat]
+        rhs = self.calls.ii[name_concat]
+        jac = self.calls.ij[name_concat]
         ii_args = self.ii_args[name_concat]
         ij_args = self.ij_args[name_concat]
 
