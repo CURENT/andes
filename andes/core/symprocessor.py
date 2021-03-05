@@ -11,6 +11,7 @@ from sympy import Symbol, Matrix
 from sympy import sympify, lambdify, latex, SympifyError
 from sympy import SparseMatrix
 
+from andes.shared import dilled_vars
 from andes.utils.paths import get_dot_andes_path
 
 logger = logging.getLogger(__name__)
@@ -287,6 +288,8 @@ class SymProcessor:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
+        self.calls.j_names = list(j_calls.keys())
+
         # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
@@ -368,15 +371,10 @@ class SymProcessor:
 
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
 from numpy import greater_equal, less_equal, greater, less   # NOQA
-from numpy import array  # NOQA
+from numpy import array, real, imag, conj, angle, arctan, radians  # NOQA
 
 
 """
-
-        var_names = ['f_args', 'g_args', 'j_args', 's_args',
-                     'ia_args', 'ii_args', 'ij_args',
-                     'ijac', 'jjac', 'vjac',
-                     'init_seq']
 
         with open(file_path, 'w') as f:
             f.write(header)
@@ -399,7 +397,7 @@ from numpy import array  # NOQA
                 f.write(self._rename_func(self.calls.s[name], f'{name}_svc'))
 
             # variables
-            for name in var_names:
+            for name in dilled_vars:
                 f.write(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
 
     def _rename_func(self, func, func_name):

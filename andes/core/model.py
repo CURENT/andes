@@ -14,7 +14,7 @@ Base class for building ANDES models.
 import logging
 import scipy as sp
 
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from typing import Iterable, Sized, Callable, Union
 
 from andes.core.block import Block
@@ -405,6 +405,9 @@ class ModelCall:
         self.f_args = list()
         self.g_args = list()
         self.j_args = dict()
+        self.ia = OrderedDict()
+        self.ii = OrderedDict()
+        self.ij = OrderedDict()
         self.s_args = OrderedDict()
         self.ia_args = OrderedDict()   # assignment initialization
         self.ii_args = OrderedDict()   # iterative initialization
@@ -1654,7 +1657,6 @@ class Model:
                     _eval_discrete(instance)
                     if instance.v_str is not None:
                         instance.v[:] = self.calls.ia[name](*self.ia_args[name])
-
                     # single variable iterative solution
                     if name in self.calls.ii:
                         self.solve_iter(name, kwargs)

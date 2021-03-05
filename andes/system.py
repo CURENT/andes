@@ -34,7 +34,7 @@ from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, 
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, jac_names, IP_ADD
+from andes.shared import np, jac_names, dilled_vars, IP_ADD
 from andes.shared import matrix, spmatrix, sparse
 
 logger = logging.getLogger(__name__)
@@ -1324,37 +1324,61 @@ class System:
         acceleration.
         """
 
-        loaded_calls = self._load_pkl()
-
-        if loaded_calls is not None:
-            ver = loaded_calls.get('__version__')
-            if ver == __version__:
-                self.calls = loaded_calls
-                logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
-            else:
-                logger.info('Undilled calls are for version %s, regenerating...', ver)
-                self.prepare(quick=True, incremental=True)
-
-        else:
-            logger.info('Generating numerical calls at the first launch.')
-            self.prepare()
-
-        for name, model_call in self.calls.items():
-            if name in self.__dict__:
-                self.__dict__[name].calls = model_call
-
         # try to replace equations and jacobian calls with saved code
         if pycode is not None and self.config.use_pycode:
             for model in self.models.values():
                 pycode_model = pycode.__dict__[model.class_name]
 
+                # reload stored variables
+                for item in dilled_vars:
+                    model.calls.__dict__[item] = pycode_model.__dict__[item]
+
                 model.calls.f = pycode_model.__dict__.get("f_update")
                 model.calls.g = pycode_model.__dict__.get("g_update")
 
-                for jname in model.calls.j:
+                for instance in model.services.values():
+                    if instance.v_str is not None:
+                        sv_name = f'{instance.name}_svc'
+                        model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
+
+                # load initialization; assignment
+                for instance in model.cache.all_vars.values():
+                    if instance.v_str is not None:
+                        ia_name = f'{instance.name}_ia'
+                        model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
+
+                # load initialization: iterative
+                for item in model.calls.init_seq:
+                    if isinstance(item, list):
+                        name_concat = '_'.join(item)
+                        model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
+                        model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
+
+                # load Jacobian functions
+                for jname in model.calls.j_names:
                     model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
+
             logger.info("Using generated Python code for equations and Jacobians.")
         else:
+            loaded_calls = self._load_pkl()
+
+            if loaded_calls is not None:
+                ver = loaded_calls.get('__version__')
+                if ver == __version__:
+                    self.calls = loaded_calls
+                    logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
+                else:
+                    logger.info('Undilled calls are for version %s, regenerating...', ver)
+                    self.prepare(quick=True, incremental=True)
+
+            else:
+                logger.info('Generating numerical calls at the first launch.')
+                self.prepare()
+
+            for name, model_call in self.calls.items():
+                if name in self.__dict__:
+                    self.__dict__[name].calls = model_call
+
             logger.debug("Using undilled lambda functions.")
 
     def _get_models(self, models):
