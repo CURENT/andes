@@ -893,7 +893,7 @@ class Model:
         """
         This is the helper function to refresh inputs.
 
-        The functions collects object references into ``OrderedDict``s
+        The functions collects object references into ``OrderedDict``
         `self._input` and `self._input_z`.
 
         Returns
