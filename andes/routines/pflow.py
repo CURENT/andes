@@ -131,7 +131,7 @@ class PFlow(BaseRoutine):
         gmax = system.dae.g[gmax_idx]
         logger.debug("Max. algeb mismatch %.10g on %s", gmax, system.dae.y_name[gmax_idx])
 
-        mis = max(fmax, gmax)
+        mis = max(abs(fmax), abs(gmax))
         if self.niter == 0:
             self.mis[0] = mis
         else:
