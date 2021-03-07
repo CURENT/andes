@@ -546,7 +546,7 @@ class System:
         self.dae.resize_arrays()
 
         # set `v` and `e` in variables
-        self._set_var_arrays(models=models)
+        self.set_var_arrays(models=models)
 
         # pre-allocate for names
         if len(self.dae.y_name) == 0:
@@ -606,7 +606,7 @@ class System:
                             self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
-    def _set_var_arrays(self, models):
+    def set_var_arrays(self, models, inplace=True, alloc=True):
         """
         Set arrays (`v` and `e`) in internal variables.
 
@@ -614,17 +614,21 @@ class System:
         ----------
         models : OrderedDict, list, Model, optional
             Models to execute.
-
+        inplace : bool
+            True to retrieve arrays that share memory with dae
+        alloc : bool
+            True to allocate for arrays internally
         """
+
         for mdl in models.values():
             if mdl.n == 0:
                 continue
 
             for var in mdl.cache.vars_int.values():
-                var.set_arrays(self.dae)
+                var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
             for var in mdl.cache.vars_ext.values():
-                var.set_arrays(self.dae)
+                var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -1175,9 +1179,11 @@ class System:
 
     def _v_to_dae(self, v_code, model):
         """
-        Helper function for collecting variable values into dae structures `x` and `y`.
+        Helper function for collecting variable values into ``dae``
+        structures `x` and `y`.
 
-        This function must be called with x and y both being zeros.
+        This function must be called with ``dae.x`` and ``dae.y``
+        both being zeros.
         Otherwise, adders will be summed again, causing an error.
 
         Parameters

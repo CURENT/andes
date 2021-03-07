@@ -69,6 +69,7 @@ class PFlow(BaseRoutine):
         self.x_sol = None
         self.y_sol = None
 
+        self.system.set_var_arrays(self.models, inplace=True, alloc=False)
         self.system.init(self.models, routine='pflow')
         logger.info('Power flow initialized.')
 
