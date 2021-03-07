@@ -374,6 +374,7 @@ class System:
         This function is to be called after adding all device data.
         """
         ret = True
+        t0, _ = elapsed()
 
         if self.is_setup:
             logger.warning('System has been setup. Calling setup twice is not allowed.')
@@ -402,6 +403,9 @@ class System:
         else:
             logger.error("System setup failed. Please resolve the reported issue(s).")
             self.exit_code += 1
+
+        _, s = elapsed(t0)
+        logger.info('System internal structure set up in %s.', s)
 
         return ret
 
