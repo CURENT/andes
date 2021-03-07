@@ -226,7 +226,8 @@ class ModelData:
 
         Warnings
         --------
-        This function is not intended to be used directly. Use the ``add`` method from System so that the index
+        This function is not intended to be used directly.
+        Use the ``add`` method from System so that the index
         can be registered correctly.
 
         Parameters
