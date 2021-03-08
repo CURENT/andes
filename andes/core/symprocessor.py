@@ -627,7 +627,6 @@ def resolve_deps(graph):
                         seq.append(cc)
 
             visited.append(name)
-        return
 
     for name, deps in graph.items():
         path = list()
