@@ -24,7 +24,7 @@ jobs:
         flake8 .
     - name: Test with pytest
       run: |
-        pytest
+        pytest -v -s
     - name: Build a distribution if tagged
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
