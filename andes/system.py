@@ -1379,7 +1379,7 @@ class System:
         try:
             import pycode  # NOQA
             from andes import pycode  # NOQA
-            globals['pycode'] = pycode
+            globals()['pycode'] = pycode
         except ImportError:
             pass
 
