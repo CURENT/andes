@@ -40,8 +40,8 @@ class VSCShunt(ACDC2Term):
         self.flags.update({'pflow': True})
         self.group = 'StaticACDC'
 
-        self.gsh = ConstService(tex_name='g_{sh}', v_str='re(1/(rsh + 1j * xsh))', vtype=np.complex)
-        self.bsh = ConstService(tex_name='b_{sh}', v_str='im(1/(rsh + 1j * xsh))', vtype=np.complex)
+        self.gsh = ConstService(tex_name='g_{sh}', v_str='re(1/(rsh + 1j * xsh))', vtype=complex)
+        self.bsh = ConstService(tex_name='b_{sh}', v_str='im(1/(rsh + 1j * xsh))', vtype=complex)
 
         self.mode = Switcher(u=self.control, options=(0, 1, 2, 3))
 

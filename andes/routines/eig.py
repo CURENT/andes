@@ -161,7 +161,7 @@ class EIG(BaseRoutine):
         n = len(mu)
         idx = range(n)
 
-        mu_complex = np.zeros_like(mu, dtype=np.complex)
+        mu_complex = np.zeros_like(mu, dtype=complex)
         W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
         gesv(N, W)
 
