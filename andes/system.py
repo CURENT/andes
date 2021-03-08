@@ -1376,12 +1376,16 @@ class System:
         """
         Helper function to load generated pycode
         """
+        pycode = None
         try:
             import pycode  # NOQA
-            from andes import pycode  # NOQA
-            globals()['pycode'] = pycode
         except ImportError:
-            pass
+            globals()['pycode'] = pycode
+
+        try:
+            from andes import pycode  # NOQA
+        except ImportError:
+            globals()['pycode'] = pycode
 
         if pycode is None:
             raise ImportError("Generated pycode not found.")
