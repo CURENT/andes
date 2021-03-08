@@ -211,7 +211,7 @@ class AlterData(ModelData):
         self.attr = IdxParam(info='attribute (e.g., v) of the source field', default='v')
 
         self.method = NumParam(info='alteration method in `+`, `-`, `*`, `/`, `=`',
-                               mandatory=True, vtype=np.object)
+                               mandatory=True, vtype=object)
         self.amount = NumParam(info='the amount to apply', mandatory=True,)
 
         self.rand = NumParam(info='use uniform ramdom sampling', default=0)

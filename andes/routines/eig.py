@@ -325,8 +325,8 @@ class EIG(BaseRoutine):
         """
         system = self.system
         out = {'As': self.As,
-               'x_name': np.array(system.dae.x_name, dtype=np.object),
-               'x_tex_name': np.array(system.dae.x_tex_name, dtype=np.object),
+               'x_name': np.array(system.dae.x_name, dtype=object),
+               'x_tex_name': np.array(system.dae.x_tex_name, dtype=object),
                }
 
         scipy.io.savemat(system.files.mat, mdict=out)

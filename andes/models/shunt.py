@@ -63,7 +63,7 @@ class ShuntSwData(ShuntData):
         self.gs = NumParam(info='a list literal of switched conductances blocks',
                            default=0.0,
                            unit='p.u.',
-                           vtype=np.object,
+                           vtype=object,
                            iconvert=list_iconv,
                            oconvert=list_oconv,
                            y=True,
@@ -72,7 +72,7 @@ class ShuntSwData(ShuntData):
         self.bs = NumParam(info='a list literal of switched susceptances blocks',
                            default=0.0,
                            unit='p.u.',
-                           vtype=np.object,
+                           vtype=object,
                            iconvert=list_iconv,
                            oconvert=list_oconv,
                            y=True,
@@ -80,7 +80,7 @@ class ShuntSwData(ShuntData):
 
         self.ns = NumParam(info='a list literal of the element numbers in each switched block',
                            default=[0],
-                           vtype=np.object,
+                           vtype=object,
                            iconvert=list_iconv,
                            oconvert=list_oconv,
                            )
