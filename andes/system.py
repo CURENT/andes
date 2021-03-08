@@ -1333,7 +1333,6 @@ class System:
             calls_loaded = True
         except ImportError:
             logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
-            pass
 
         if calls_loaded is False:
             self._call_from_pkl()
