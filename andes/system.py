@@ -1372,7 +1372,7 @@ class System:
 
         else:
             logger.info('Generating numerical calls at the first launch.')
-            self.prepare()
+            self.prepare(quick=True)
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
