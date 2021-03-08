@@ -46,6 +46,8 @@ sys.path.append(get_dot_andes_path())
 pycode = None
 
 try:
+    print(get_dot_andes_path())
+    print(os.listdir(get_dot_andes_path()))
     import pycode             # NOQA
     from andes import pycode  # NOQA
 except ImportError:
