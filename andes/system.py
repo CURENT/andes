@@ -40,11 +40,8 @@ from andes.shared import np, jac_names, dilled_vars, IP_ADD
 from andes.shared import matrix, spmatrix, sparse
 
 logger = logging.getLogger(__name__)
-
 sys.path.append(get_dot_andes_path())
-
 pycode = None
-
 
 
 class ExistingModels:
@@ -1380,8 +1377,8 @@ class System:
         Helper function to load generated pycode
         """
         try:
-            import pycode
-            from andes import pycode
+            import pycode  # NOQA
+            from andes import pycode  # NOQA
             globals['pycode'] = pycode
         except ImportError:
             pass
