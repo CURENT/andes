@@ -45,13 +45,6 @@ sys.path.append(get_dot_andes_path())
 
 pycode = None
 
-try:
-    print(get_dot_andes_path())
-    print(os.listdir(get_dot_andes_path()))
-    import pycode             # NOQA
-    from andes import pycode  # NOQA
-except ImportError:
-    pass
 
 
 class ExistingModels:
@@ -1386,6 +1379,13 @@ class System:
         """
         Helper function to load generated pycode
         """
+        try:
+            import pycode
+            from andes import pycode
+            globals['pycode'] = pycode
+        except ImportError:
+            pass
+
         if pycode is None:
             raise ImportError("Generated pycode not found.")
 
