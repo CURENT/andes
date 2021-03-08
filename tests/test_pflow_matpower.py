@@ -12,10 +12,8 @@ class TestMATPOWER(unittest.TestCase):
         self.cases = ('case5.m', 'case14.m', 'case300.m', 'case118.m')
 
     def test_pflow_mpc_pool(self):
-        # TODO: fails with NumPy 1.20.1
-        # case_path = [get_case(os.path.join('matpower', item)) for item in self.cases]
-        # andes.run(case_path, no_output=True, ncpu=2, pool=True, verbose=40, default_config=True)
-        pass
+        case_path = [get_case(os.path.join('matpower', item)) for item in self.cases]
+        andes.run(case_path, no_output=True, ncpu=2, pool=True, verbose=40, default_config=True)
 
     def test_pflow_mpc_process(self):
         case_path = [get_case(os.path.join('matpower', item)) for item in self.cases]
