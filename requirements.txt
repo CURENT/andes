@@ -1,7 +1,7 @@
-cvxopt>=1.2.5
-numpy<=1.19.5
+cvxopt
+numpy
 scipy
-sympy==1.5.1
+sympy
 pandas
 matplotlib
 openpyxl
