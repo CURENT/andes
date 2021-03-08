@@ -1614,7 +1614,7 @@ class Model:
         try:
             import numba
         except ImportError:
-            return
+            return func
 
         if func is not None:
             return numba.jit(func, parallel=parallel, cache=cache)
