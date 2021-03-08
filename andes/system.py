@@ -30,21 +30,26 @@ from andes.variables import FileMan, DAE
 from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
-from andes.utils.paths import get_config_path, get_pkl_path, confirm_overwrite, get_dot_andes_path
+from andes.utils.paths import confirm_overwrite
+from andes.utils.paths import get_config_path, get_dot_andes_path
+from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, jac_names, IP_ADD
+from andes.shared import np, jac_names, dilled_vars, IP_ADD
 from andes.shared import matrix, spmatrix, sparse
 
 logger = logging.getLogger(__name__)
 
 sys.path.append(get_dot_andes_path())
 
+pycode = None
+
 try:
-    import pycode  # NOQA
+    import pycode             # NOQA
+    from andes import pycode  # NOQA
 except ImportError:
-    pycode = None  # NOQA
+    pass
 
 
 class ExistingModels:
@@ -136,14 +141,10 @@ class System:
                                      ('warn_abnormal', 1),
                                      ('dime_enabled', 0),
                                      ('dime_name', 'andes'),
-                                     ('dime_protocol', 'ipc'),
-                                     ('dime_address', '/tmp/dime2'),
-                                     ('dime_port', 5000),
+                                     ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('save_pycode', 0),
                                      ('yapf_pycode', 0),
-                                     ('use_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
                                      ('pickle_path', get_pkl_path())
@@ -159,9 +160,7 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
-                              save_pycode='save generated code to ~/.andes',
                               yapf_pycode='format generated code with yapf',
-                              use_pycode='use generated, saved Python code',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
                               pickle_path='path models should be (un)dilled to/from',
@@ -176,9 +175,7 @@ class System:
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
-                              save_pycode=(0, 1),
                               yapf_pycode=(0, 1),
-                              use_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
@@ -290,6 +287,9 @@ class System:
         # consistency check for group parameters and variables
         self._check_group_common()
 
+        # get `pycode` folder path without automatic creation
+        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
+
         loaded_calls = self._load_pkl()
         if loaded_calls is None and incremental:
             incremental = False
@@ -309,23 +309,23 @@ class System:
 
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
-            model.prepare(quick=quick)
 
-        if self.config.save_pycode:
-            # write `__init__.py` that imports all to the `pycode` package
-            models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-            os.makedirs(models_dir, exist_ok=True)
-            init_path = os.path.join(models_dir, '__init__.py')
+            model.prepare(quick=quick, pycode_path=pycode_path)
 
-            with open(init_path, 'w') as f:
-                f.write(f"__version__ = '{__version__}'\n\n")
-                for name in self.models.keys():
-                    f.write(f"from . import {name}  # NOQA\n")
-                f.write('\n')
+        # -- store pycode --
+        logger.info('Storing generated pycode to "%s"', pycode_path)
 
-            # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-            if pycode is not None:
-                importlib.reload(pycode)
+        # write `__init__.py` that imports all to the `pycode` package
+        init_path = os.path.join(pycode_path, '__init__.py')
+        with open(init_path, 'w') as f:
+            f.write(f"__version__ = '{__version__}'\n\n")
+            for name in self.models.keys():
+                f.write(f"from . import {name}  # NOQA\n")
+            f.write('\n')
+
+        # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
+        if pycode is not None:
+            importlib.reload(pycode)
 
         self._store_calls()
         self.dill()
@@ -369,6 +369,7 @@ class System:
         This function is to be called after adding all device data.
         """
         ret = True
+        t0, _ = elapsed()
 
         if self.is_setup:
             logger.warning('System has been setup. Calling setup twice is not allowed.')
@@ -397,6 +398,9 @@ class System:
         else:
             logger.error("System setup failed. Please resolve the reported issue(s).")
             self.exit_code += 1
+
+        _, s = elapsed(t0)
+        logger.info('System internal structure set up in %s.', s)
 
         return ret
 
@@ -541,7 +545,7 @@ class System:
         self.dae.resize_arrays()
 
         # set `v` and `e` in variables
-        self._set_var_arrays(models=models)
+        self.set_var_arrays(models=models)
 
         # pre-allocate for names
         if len(self.dae.y_name) == 0:
@@ -601,7 +605,7 @@ class System:
                             self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
                             self.dae.o += 1
 
-    def _set_var_arrays(self, models):
+    def set_var_arrays(self, models, inplace=True, alloc=True):
         """
         Set arrays (`v` and `e`) in internal variables.
 
@@ -609,17 +613,21 @@ class System:
         ----------
         models : OrderedDict, list, Model, optional
             Models to execute.
-
+        inplace : bool
+            True to retrieve arrays that share memory with dae
+        alloc : bool
+            True to allocate for arrays internally
         """
+
         for mdl in models.values():
             if mdl.n == 0:
                 continue
 
             for var in mdl.cache.vars_int.values():
-                var.set_arrays(self.dae)
+                var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
             for var in mdl.cache.vars_ext.values():
-                var.set_arrays(self.dae)
+                var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -1170,9 +1178,11 @@ class System:
 
     def _v_to_dae(self, v_code, model):
         """
-        Helper function for collecting variable values into dae structures `x` and `y`.
+        Helper function for collecting variable values into ``dae``
+        structures `x` and `y`.
 
-        This function must be called with x and y both being zeros.
+        This function must be called with ``dae.x`` and ``dae.y``
+        both being zeros.
         Otherwise, adders will be summed again, causing an error.
 
         Parameters
@@ -1295,11 +1305,37 @@ class System:
         This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
 
         """
-        logger.debug("Dumping calls to calls.pkl with dill")
-        dill.settings['recurse'] = True
+        np_ver = np.__version__.split('.')
+        np_ver = tuple([int(i) for i in np_ver])
+        if np_ver < (1, 20):
+            logger.debug("Dumping calls to calls.pkl with dill")
+            dill.settings['recurse'] = True
 
-        with open(self.config.pickle_path, 'wb') as f:
-            dill.dump(self.calls, f)
+            with open(self.config.pickle_path, 'wb') as f:
+                dill.dump(self.calls, f)
+        else:
+            logger.warning("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
+            logger.warning("ANDES is still fully functional with generated Python code.")
+
+    def undill(self):
+        """
+        Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
+
+        If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
+        acceleration.
+        """
+
+        # try to replace equations and jacobian calls with saved code
+        calls_loaded = False
+
+        try:
+            self._call_from_pycode()
+            calls_loaded = True
+        except ImportError:
+            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
+
+        if calls_loaded is False:
+            self._call_from_pkl()
 
     def _load_pkl(self):
         """
@@ -1318,12 +1354,9 @@ class System:
 
         return None
 
-    def undill(self):
+    def _call_from_pkl(self):
         """
-        Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
-
-        If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
-        acceleration.
+        Helper function for loading ModelCall from pickle file.
         """
 
         loaded_calls = self._load_pkl()
@@ -1332,32 +1365,63 @@ class System:
             ver = loaded_calls.get('__version__')
             if ver == __version__:
                 self.calls = loaded_calls
-                logger.debug('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
+                logger.info('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
             else:
                 logger.info('Undilled calls are for version %s, regenerating...', ver)
                 self.prepare(quick=True, incremental=True)
 
         else:
             logger.info('Generating numerical calls at the first launch.')
-            self.prepare()
+            self.prepare(quick=True)
 
         for name, model_call in self.calls.items():
             if name in self.__dict__:
                 self.__dict__[name].calls = model_call
 
-        # try to replace equations and jacobian calls with saved code
-        if pycode is not None and self.config.use_pycode:
-            for model in self.models.values():
-                pycode_model = pycode.__dict__[model.class_name]
+        logger.debug("Using undilled lambda functions.")
 
-                model.calls.f = pycode_model.__dict__.get("f_update")
-                model.calls.g = pycode_model.__dict__.get("g_update")
+    def _call_from_pycode(self):
+        """
+        Helper function to load generated pycode
+        """
+        if pycode is None:
+            raise ImportError("Generated pycode not found.")
 
-                for jname in model.calls.j:
-                    model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
-            logger.info("Using generated Python code for equations and Jacobians.")
-        else:
-            logger.debug("Using undilled lambda functions.")
+        for model in self.models.values():
+            pycode_model = pycode.__dict__[model.class_name]
+
+            # reload stored variables
+            for item in dilled_vars:
+                model.calls.__dict__[item] = pycode_model.__dict__[item]
+
+            # equations
+            model.calls.f = pycode_model.__dict__.get("f_update")
+            model.calls.g = pycode_model.__dict__.get("g_update")
+
+            # services
+            for instance in model.services.values():
+                if instance.v_str is not None:
+                    sv_name = f'{instance.name}_svc'
+                    model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
+
+            # load initialization; assignment
+            for instance in model.cache.all_vars.values():
+                if instance.v_str is not None:
+                    ia_name = f'{instance.name}_ia'
+                    model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
+
+            # load initialization: iterative
+            for item in model.calls.init_seq:
+                if isinstance(item, list):
+                    name_concat = '_'.join(item)
+                    model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
+                    model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
+
+            # load Jacobian functions
+            for jname in model.calls.j_names:
+                model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
+
+        logger.info("Using generated Python code.")
 
     def _get_models(self, models):
         """

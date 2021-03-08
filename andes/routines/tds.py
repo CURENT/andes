@@ -181,11 +181,11 @@ class TDS(BaseRoutine):
             system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
-        if system.config.dime_enabled:
-            # connect to data streaming server
-            if system.streaming.dimec is None:
-                system.streaming.connect()
+        # connect to data streaming server
+        if system.streaming.dimec is None:
+            system.streaming.connect()
 
+        if system.config.dime_enabled:
             # send out system data using DiME
             self.streaming_init()
             self.streaming_step()

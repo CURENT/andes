@@ -1,5 +1,6 @@
 import logging
 import os
+import io
 logger = logging.getLogger(__name__)
 
 
@@ -67,10 +68,10 @@ class FileMan:
 
         if os.path.isfile(self.get_fullpath(case)):
             self.case = self.get_fullpath(case)
+            _, self.fullname = os.path.split(self.case)
         else:
             self.case = case
-
-        _, self.fullname = os.path.split(self.case)
+            self.fullname = ''
 
         # `self.name` is the name part without extension
         self.name, self.ext = os.path.splitext(self.fullname)
@@ -119,13 +120,15 @@ class FileMan:
         # if is an empty path
         if not fullname:
             return fullname
+        if isinstance(fullname, io.IOBase):
+            return ''
 
         isabs = os.path.isabs(fullname)
 
         path, name = os.path.split(fullname)
 
         if not name:  # path to a folder
-            return None
+            return ''
         else:  # path to a file
             if isabs:
                 return fullname

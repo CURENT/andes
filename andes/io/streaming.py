@@ -33,37 +33,33 @@ class Streaming:
         """
         Connect to DiME 2 server.
 
-        If ``dime_address`` and ``dime_protocol`` are both specified
-        from command-line, streaming will be enabled.
+        If ``dime_address`` is specified from the command-line,
+        streaming will be automatically enabled.
         Otherwise, settings from the Config file will be used.
         """
         config = self.system.config
         options = self.system.options
 
         # enable only when both arguments are supplied
-        if options.get("dime_protocol") is not None and options.get("dime_address") is not None:
+        if options.get("dime_address") is not None:
 
             config.dime_enabled = True
-            config.dime_protocol = options.get("dime_protocol")
             config.dime_address = options.get("dime_address")
 
         if not config.dime_enabled:
             return False
 
         try:
-            self.dimec = DimeClient(config.dime_protocol,
-                                    config.dime_address,
-                                    config.dime_port,
-                                    )
+            self.dimec = DimeClient(config.dime_address)
             self.dimec.join(config.dime_name)
-            logger.info(f"Dime connection to {config.dime_address} over {config.dime_protocol} was successful.")
+            logger.info('Dime connection to "%s" was successful.', config.dime_address)
             return True
         except NameError:
-            logger.warning('Dime not installed. Set System config `dime_enabled` to `0` to suppress warning.')
+            logger.error('Dime not installed. Set System config `dime_enabled` to `0` to suppress warning.')
             self.system.config.dime_enabled = False
 
         except FileNotFoundError:
-            logger.warning(f'Dime sever not found at "{config.dime_address}" over {config.dime_protocol}.')
+            logger.error('Dime sever not found at "%s".', config.dime_address)
             self.system.config.dime_enabled = False
 
         return False

@@ -101,3 +101,6 @@ andes/cases/*/*.txt
 # ASV benchmark envs
 benchmarks/.asv
 benchmarks/andes
+
+# generated pycode
+andes/pycode

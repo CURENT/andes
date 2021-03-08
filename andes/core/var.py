@@ -165,26 +165,45 @@ class BaseVar:
             if self.v_setter is False:
                 self.v_inplace = True
 
-    def set_arrays(self, dae):
+    def set_arrays(self, dae, inplace=True, alloc=True):
         """
         Set the equation and values arrays.
 
-        It slicing into DAE (when contiguous) or allocating new memory (when not contiguous).
 
         Parameters
         ----------
         dae : DAE
             Reference to System.dae
         """
+        if inplace is True:
+            self._set_arrays_inplace(dae)
+        if alloc is True:
+            self._set_arrays_alloc()
+
+    def _set_arrays_inplace(self, dae):
+        """
+        Set arrays that share memory with the dae arrays.
+
+        It slicing into DAE due to the contiguous indices.
+        """
+
         slice_idx = slice(self.a[0], self.a[-1] + 1)
         if self.v_inplace:
             self.v = dae.__dict__[self.v_code][slice_idx]
-        else:
-            self.v = np.zeros(self.n)
 
         if self.e_inplace:
             self.e = dae.__dict__[self.e_code][slice_idx]
-        else:
+
+    def _set_arrays_alloc(self):
+        """
+        Allocate for internal v and e arrays that cannot
+        share memory with dae arrays.
+        """
+
+        if not self.v_inplace:
+            self.v = np.zeros(self.n)
+
+        if not self.e_inplace:
             self.e = np.zeros(self.n)
 
     def get_names(self):
@@ -367,7 +386,7 @@ class ExtVar(BaseVar):
         """
         self.r = addr
 
-    def set_arrays(self, dae):
+    def set_arrays(self, dae, inplace=True, alloc=True):
         """
         Stride of ``dae.i`` for the RHS of external variables.
         """
