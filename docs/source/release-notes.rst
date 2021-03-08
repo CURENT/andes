@@ -8,8 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.2 (2021-03-08)
+```````````````````
+- Relaxed the version requirements for NumPy and SymPy.
 
-v1.3.1
+v1.3.1 (2021-03-07)
 ```````````````````
 - Writes all generated Python code to ``~/.andes/pycode`` by default.
 - Uses generated Python code by default instead of `calls.pkl`.
