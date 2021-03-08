@@ -1,5 +1,4 @@
 """Voltage-source converter models"""
-import numpy as np
 
 from andes.models.dcbase import ACDC2Term
 from andes.core.param import NumParam

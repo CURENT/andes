@@ -2,7 +2,6 @@
 Synchronous generator classes
 """
 import logging
-import numpy as np
 
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam, ExtParam

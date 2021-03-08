@@ -1,7 +1,5 @@
 from collections import OrderedDict
 
-import numpy as np
-
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtParam, ExtAlgeb, ExtService, ConstService, \
     Switcher, Lag, Algeb, Limiter, LeadLag, LessThan
 from andes.core.block import DeadBand1, PITrackAW

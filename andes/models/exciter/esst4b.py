@@ -1,5 +1,3 @@
-import numpy as np
-
 from collections import OrderedDict
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 

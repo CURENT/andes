@@ -1,5 +1,3 @@
-import numpy as np
-
 from andes.core.common import dummify
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
