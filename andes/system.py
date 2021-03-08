@@ -43,11 +43,13 @@ logger = logging.getLogger(__name__)
 
 sys.path.append(get_dot_andes_path())
 
+pycode = None
+
 try:
     import pycode             # NOQA
     from andes import pycode  # NOQA
 except ImportError:
-    pycode = None  # NOQA
+    pass
 
 
 class ExistingModels:
