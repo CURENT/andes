@@ -144,9 +144,7 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('save_pycode', 0),
                                      ('yapf_pycode', 0),
-                                     ('use_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
                                      ('pickle_path', get_pkl_path())
@@ -162,9 +160,7 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
-                              save_pycode='save generated code to ~/.andes',
                               yapf_pycode='format generated code with yapf',
-                              use_pycode='use generated, saved Python code',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
                               pickle_path='path models should be (un)dilled to/from',
@@ -179,9 +175,7 @@ class System:
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
-                              save_pycode=(0, 1),
                               yapf_pycode=(0, 1),
-                              use_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
@@ -318,21 +312,20 @@ class System:
 
             model.prepare(quick=quick, pycode_path=pycode_path)
 
-        if self.config.save_pycode:
-            logger.info('Storing generated pycode to "%s"', pycode_path)
+        # -- store pycode --
+        logger.info('Storing generated pycode to "%s"', pycode_path)
 
-            # write `__init__.py` that imports all to the `pycode` package
-            init_path = os.path.join(pycode_path, '__init__.py')
+        # write `__init__.py` that imports all to the `pycode` package
+        init_path = os.path.join(pycode_path, '__init__.py')
+        with open(init_path, 'w') as f:
+            f.write(f"__version__ = '{__version__}'\n\n")
+            for name in self.models.keys():
+                f.write(f"from . import {name}  # NOQA\n")
+            f.write('\n')
 
-            with open(init_path, 'w') as f:
-                f.write(f"__version__ = '{__version__}'\n\n")
-                for name in self.models.keys():
-                    f.write(f"from . import {name}  # NOQA\n")
-                f.write('\n')
-
-            # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-            if pycode is not None:
-                importlib.reload(pycode)
+        # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
+        if pycode is not None:
+            importlib.reload(pycode)
 
         self._store_calls()
         self.dill()
@@ -1312,11 +1305,17 @@ class System:
         This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
 
         """
-        logger.debug("Dumping calls to calls.pkl with dill")
-        dill.settings['recurse'] = True
+        np_ver = np.__version__.split('.')
+        np_ver = tuple([int(i) for i in np_ver])
+        if np_ver < (1, 20):
+            logger.debug("Dumping calls to calls.pkl with dill")
+            dill.settings['recurse'] = True
 
-        with open(self.config.pickle_path, 'wb') as f:
-            dill.dump(self.calls, f)
+            with open(self.config.pickle_path, 'wb') as f:
+                dill.dump(self.calls, f)
+        else:
+            logger.warning("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
+            logger.warning("ANDES is still fully functional with generated Python code.")
 
     def undill(self):
         """
@@ -1328,13 +1327,13 @@ class System:
 
         # try to replace equations and jacobian calls with saved code
         calls_loaded = False
-        if self.config.use_pycode:
-            try:
-                self._call_from_pycode()
-                calls_loaded = True
-            except ImportError:
-                logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
-                pass
+
+        try:
+            self._call_from_pycode()
+            calls_loaded = True
+        except ImportError:
+            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
+            pass
 
         if calls_loaded is False:
             self._call_from_pkl()

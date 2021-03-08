@@ -1531,8 +1531,7 @@ class Model:
         self.syms.generate_jacobians()
         self.syms.generate_init()
 
-        if self.system.config.save_pycode:
-            self.syms.generate_pycode(pycode_path=pycode_path)
+        self.syms.generate_pycode(pycode_path=pycode_path)
         if quick is False:
             self.syms.generate_pretty_print()
 
