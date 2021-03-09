@@ -11,27 +11,26 @@ Base class for building ANDES models.
 #  File name: model.py
 #  Last modified: 8/16/20, 7:27 PM
 
-import os
 import logging
-from collections import OrderedDict, defaultdict
+import scipy as sp
+
+from collections import OrderedDict
 from typing import Iterable, Sized, Callable, Union
 
+from andes.core.block import Block
 from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
-from andes.core.block import Block
+from andes.core.documenter import Documenter
 from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
-from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
 from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
 from andes.core.service import SwBlock
-
-from andes.utils.paths import get_dot_andes_path
-from andes.utils.func import list_flatten
-from andes.utils.tab import make_doc_table, math_wrap
-
-from andes.shared import np, pd, newton_krylov
+from andes.core.symprocessor import SymProcessor
+from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.shared import jac_names, jac_types, jac_full_names
+from andes.shared import np, pd
+from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +226,8 @@ class ModelData:
 
         Warnings
         --------
-        This function is not intended to be used directly. Use the ``add`` method from System so that the index
+        This function is not intended to be used directly.
+        Use the ``add`` method from System so that the index
         can be registered correctly.
 
         Parameters
@@ -248,7 +248,7 @@ class ModelData:
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:
-            logger.warning(f'{self.__class__.__name__}: Unused data {kwargs}')
+            logger.warning("%s: unused data %s", self.class_name, str(kwargs))
 
     def as_dict(self, vin=False):
         """
@@ -406,13 +406,17 @@ class ModelCall:
         self.f_args = list()
         self.g_args = list()
         self.j_args = dict()
+        self.ia = OrderedDict()
+        self.ii = OrderedDict()
+        self.ij = OrderedDict()
         self.s_args = OrderedDict()
+        self.ia_args = OrderedDict()   # assignment initialization
+        self.ii_args = OrderedDict()   # iterative initialization
+        self.ij_args = OrderedDict()
 
-        self.init = OrderedDict()
-
-        self.ijac = defaultdict(list)
-        self.jjac = defaultdict(list)
-        self.vjac = defaultdict(list)
+        self.ijac = OrderedDict()
+        self.jjac = OrderedDict()
+        self.vjac = OrderedDict()
 
     def clear_ijv(self):
         for jname in jac_names:
@@ -644,6 +648,9 @@ class Model:
         self.g_args = []   # argument value lists
         self.j_args = dict()
         self.s_args = OrderedDict()
+        self.ia_args = OrderedDict()
+        self.ii_args = OrderedDict()
+        self.ij_args = OrderedDict()
 
     def _register_attribute(self, key, value):
         """
@@ -887,7 +894,8 @@ class Model:
         """
         This is the helper function to refresh inputs.
 
-        The functions collects objects into OrderedDict and store to `self._input` and `self._input_z`.
+        The functions collects object references into ``OrderedDict``
+        `self._input` and `self._input_z`.
 
         Returns
         -------
@@ -934,14 +942,25 @@ class Model:
         self.f_args = list()
         self.g_args = list()
         self.j_args = dict()
-        self.s_args = OrderedDict()
+        self.s_args = dict()
+        self.ii_args = dict()
+        self.ia_args = dict()
+        self.ij_args = dict()
 
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
-        for name in self.calls.j:
-            self.j_args[name] = [self._input[arg] for arg in self.calls.j_args[name]]
-        for name in self.calls.s_args:
-            self.s_args[name] = [self._input[arg] for arg in self.calls.s_args[name]]
+        mapping = {
+            'j_args': self.j_args,
+            's_args': self.s_args,
+            'ia_args': self.ia_args,
+            'ii_args': self.ii_args,
+            'ij_args': self.ij_args,
+        }
+
+        for key, val in mapping.items():
+            source = self.calls.__dict__[key]
+            for name in source:
+                val[name] = [self._input[arg] for arg in source[name]]
 
     def l_update_var(self, dae_t, *args, niter=None, err=None, **kwargs):
         """
@@ -1060,44 +1079,7 @@ class Model:
             vars_input.append(x0[i * self.n: (i + 1) * self.n])
 
         ret = np.ravel(self.calls.init_std(vars_input, params))
-        print(ret)
         return ret
-
-    def init_iter(self):
-        """
-        Solve the initialization equation using the Newton-Krylov method.
-        """
-        for instance in self.cache.iter_vars.values():
-            instance.v[:] = instance.v0_iter
-
-        inputs = self.get_inputs(refresh=True)
-
-        iter_input = OrderedDict()
-        non_iter_input = OrderedDict(inputs)  # include non-iter variables and other params/configs
-
-        for name, _ in self.cache.iter_vars.items():
-            iter_input[name] = inputs[name]
-            non_iter_input.pop(name)
-
-        iter_array = list(iter_input.values())
-        non_iter_list = list(non_iter_input.values())
-
-        for i in range(len(iter_array)):
-            if isinstance(iter_array[i], (float, int, np.int64, np.float64)):
-                iter_array[i] = np.ones(self.n) * iter_array[i]
-            else:
-                iter_array[i][:] = np.ones(self.n) * iter_array[i]
-
-        iter_array = np.ravel(iter_array)
-        print(iter_array)
-
-        def init_wrap(x0):
-            return self._init_wrap(x0, non_iter_list)
-
-        sol = newton_krylov(init_wrap, iter_array)
-
-        for i, var in enumerate(self.cache.iter_vars.values()):
-            var.v[:] = sol[i * self.n: (i + 1) * self.n]
 
     def store_sparse_pattern(self):
         """
@@ -1183,72 +1165,6 @@ class Model:
             raise e
 
         return row_name, col_name
-
-    def init(self, routine):
-        """
-        Numerical initialization of a model.
-
-        Initialization sequence:
-        1. Sequential initialization based on the order of definition
-        2. Use Newton-Krylov method for iterative initialization
-        3. Custom init
-        """
-        self.s_update()  # this includes ConstService and VarService
-
-        # find out if variables need to be initialized for `routine`
-        flag_name = routine + '_init'
-        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
-            do_init = getattr(self.flags, routine)
-        else:
-            do_init = getattr(self.flags, flag_name)
-
-        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
-
-        if do_init:
-
-            for name, instance in self.vars_decl_order.items():
-                if instance.v_str is None:
-                    continue
-
-                # for variables associated with limiters, limiters need to be evaluated
-                # before variable initialization.
-                # However, if any limit is hit, initialization is likely to fail.
-
-                if instance.discrete is not None:
-                    if not isinstance(instance.discrete, (list, tuple, set)):
-                        dlist = (instance.discrete, )
-                    else:
-                        dlist = instance.discrete
-                    for d in dlist:
-                        d.check_var()
-
-                kwargs = self.get_inputs(refresh=True)
-                init_fun = self.calls.init[name]
-
-                if callable(init_fun):
-                    try:
-                        instance.v[:] = init_fun(**kwargs)
-                    except ValueError as e:
-                        raise e
-                    except TypeError as e:
-                        raise e
-                else:
-                    instance.v[:] = init_fun
-
-            # experimental: user Newton-Krylov solver for dynamic initialization
-            # ----------------------------------------
-            if self.flags.nr_iter:
-                self.init_iter()
-            # ----------------------------------------
-
-            # call custom variable initializer after generated init
-            kwargs = self.get_inputs(refresh=True)
-            self.v_numeric(**kwargs)
-
-        # call post initialization checking
-        self.post_init_check()
-
-        self.flags.initialized = True
 
     def get_init_order(self):
         """
@@ -1602,7 +1518,7 @@ class Model:
         """
         return self.docum.get(max_width=max_width, export=export)
 
-    def prepare(self, quick=False):
+    def prepare(self, quick=False, pycode_path=None):
         """
         Symbolic processing and code generation.
         """
@@ -1614,8 +1530,8 @@ class Model:
         self.syms.generate_services()
         self.syms.generate_jacobians()
         self.syms.generate_init()
-        if self.system.config.save_pycode:
-            self.syms.generate_pycode()
+
+        self.syms.generate_pycode(pycode_path=pycode_path)
         if quick is False:
             self.syms.generate_pretty_print()
 
@@ -1698,7 +1614,7 @@ class Model:
         try:
             import numba
         except ImportError:
-            return
+            return func
 
         if func is not None:
             return numba.jit(func, parallel=parallel, cache=cache)
@@ -1708,835 +1624,125 @@ class Model:
 
         return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
 
-
-class SymProcessor:
-    """
-    A helper class for symbolic processing and code generation.
-
-    Parameters
-    ----------
-    parent : Model
-        The `Model` instance to document
-
-    Attributes
-    ----------
-    xy : sympy.Matrix
-        variables pretty print in the order of State, ExtState, Algeb, ExtAlgeb
-    f : sympy.Matrix
-        differential equations pretty print
-    g : sympy.Matrix
-        algebraic equations pretty print
-    df : sympy.SparseMatrix
-        df /d (xy) pretty print
-    dg : sympy.SparseMatrix
-        dg /d (xy) pretty print
-    inputs_dict : OrderedDict
-        All possible symbols in equations, including variables, parameters, discrete flags, and
-        config flags. It has the same variables as what ``get_inputs()`` returns.
-    vars_dict : OrderedDict
-        variable-only symbols, which are useful when getting the Jacobian matrices.
-    non_vars_dict : OrderedDict
-        symbols in ``input_syms`` but not in ``var_syms``.
-
-    """
-
-    def __init__(self, parent):
-
-        self.parent = parent
-        # symbols that are input to lambda functions
-        # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
-        self.inputs_dict = OrderedDict()
-        self.lambdify_func = [dict(), 'numpy']
-
-        self.vars_dict = OrderedDict()
-        self.iters_dict = OrderedDict()
-        self.non_vars_dict = OrderedDict()  # inputs_dict - vars_dict
-        self.non_iters_dict = OrderedDict()  # inputs_dict - iters_dict
-        self.vars_list = list()
-
-        self.f_list, self.g_list = list(), list()  # symbolic equations in lists
-        self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
-
-        # pretty print of variables
-        self.xy = list()  # variables in the order of states, algebs
-        self.f, self.g, self.s = list(), list(), list()
-        self.df, self.dg = None, None
-
-        # get references to the parent attributes
-        self.calls = parent.calls
-        self.cache = parent.cache
-        self.config = parent.config
-        self.class_name = parent.class_name
-        self.tex_names = OrderedDict()
-
-    def generate_init(self):
+    def init(self, routine):
         """
-        Generate lambda functions for initial values.
-        """
-        logger.debug(f'- Generating initializers for {self.class_name}')
-        from sympy import sympify, lambdify, Matrix
-        from sympy.printing import latex
+        Numerical initialization of a model.
 
-        init_lambda_list = OrderedDict()
-        init_latex = OrderedDict()
-        init_seq_list = []
-        init_g_list = []  # initialization equations in g(x, y) = 0 form
-
-        input_syms_list = list(self.inputs_dict)
-
-        for name, instance in self.cache.all_vars.items():
-            if instance.v_str is None and instance.v_iter is None:
-                init_latex[name] = ''
-            else:
-                if instance.v_str is not None:
-                    sympified = sympify(instance.v_str, locals=self.inputs_dict)
-                    self._check_expr_symbols(sympified)
-                    lambdified = lambdify(input_syms_list, sympified, modules=self.lambdify_func)
-                    init_lambda_list[name] = lambdified
-                    init_latex[name] = latex(sympified.subs(self.tex_names))
-                    init_seq_list.append(sympify(f'{instance.v_str} - {name}', locals=self.inputs_dict))
-
-                if instance.v_iter is not None:
-                    sympified = sympify(instance.v_iter, locals=self.inputs_dict)
-                    self._check_expr_symbols(sympified)
-                    init_g_list.append(sympified)
-                    init_latex[name] = latex(sympified.subs(self.tex_names))
-
-        self.init_seq = Matrix(init_seq_list)
-        self.init_std = Matrix(init_g_list)
-        self.init_dstd = Matrix([])
-        if len(self.init_std) > 0:
-            self.init_dstd = self.init_std.jacobian(list(self.vars_dict.values()))
-
-        self.calls.init = init_lambda_list
-        self.calls.init_latex = init_latex
-        self.calls.init_std = lambdify((list(self.iters_dict), list(self.non_iters_dict)),
-                                       self.init_std,
-                                       modules=self.lambdify_func)
-
-    def generate_symbols(self):
-        """
-        Generate symbols for symbolic equation generations.
-
-        This function should run before other generate equations.
-
-        Attributes
-        ----------
-        inputs_dict : OrderedDict
-            name-symbol pair of all parameters, variables and configs
-
-        vars_dict : OrderedDict
-            name-symbol pair of all variables, in the order of (states_and_ext + algebs_and_ext)
-
-        non_vars_dict : OrderedDict
-            name-symbol pair of all non-variables, namely, (inputs_dict - vars_dict)
-
+        Initialization sequence:
+        1. Sequential initialization based on the order of definition
+        2. Use Newton-Krylov method for iterative initialization
+        3. Custom init
         """
 
-        logger.debug(f'- Generating symbols for {self.class_name}')
-        from sympy import Symbol, Matrix
+        # evaluate `ConstService` and `VarService`
+        self.s_update()
 
-        # clear symbols storage
-        self.f_list, self.g_list = list(), list()
-        self.f_matrix, self.g_matrix = Matrix([]), Matrix([])
+        # find out if variables need to be initialized for `routine`
+        flag_name = routine + '_init'
 
-        # process tex_names defined in model
-        # -----------------------------------------------------------
-        for key in self.parent.tex_names.keys():
-            self.tex_names[key] = Symbol(self.parent.tex_names[key])
-        for instance in self.parent.discrete.values():
-            for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
-                self.tex_names[name] = tex_name
-        # -----------------------------------------------------------
+        if not hasattr(self.flags, flag_name) or getattr(self.flags, flag_name) is None:
+            do_init = getattr(self.flags, routine)
+        else:
+            do_init = getattr(self.flags, flag_name)
 
-        for var in self.cache.all_params_names:
-            self.inputs_dict[var] = Symbol(var)
+        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
 
-        for var in self.cache.all_vars_names:
-            tmp = Symbol(var)
-            self.vars_dict[var] = tmp
-            self.inputs_dict[var] = tmp
-            if self.parent.__dict__[var].v_iter is not None:
-                self.iters_dict[var] = tmp
+        if do_init:
+            kwargs = self.get_inputs(refresh=True)
 
-        # store tex names defined in `self.config`
-        for key in self.config.as_dict():
-            tmp = Symbol(key)
-            self.inputs_dict[key] = tmp
-            if key in self.config.tex_names:
-                self.tex_names[tmp] = Symbol(self.config.tex_names[key])
+            for idx, name in enumerate(self.calls.init_seq):
+                # single variable
+                if isinstance(name, str):
+                    instance = self.__dict__[name]
+                    _eval_discrete(instance)
+                    if instance.v_str is not None:
+                        instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+                    # single variable iterative solution
+                    if name in self.calls.ii:
+                        self.solve_iter(name, kwargs)
 
-        # store tex names for pretty printing replacement later
-        for var in self.inputs_dict:
-            if var in self.parent.__dict__ and self.parent.__dict__[var].tex_name is not None:
-                self.tex_names[Symbol(var)] = Symbol(self.parent.__dict__[var].tex_name)
-
-        self.inputs_dict['dae_t'] = Symbol('dae_t')
-        self.inputs_dict['sys_f'] = Symbol('sys_f')
-        self.inputs_dict['sys_mva'] = Symbol('sys_mva')
-
-        self.lambdify_func[0]['Indicator'] = lambda x: x
-        self.lambdify_func[0]['imag'] = np.imag
-        self.lambdify_func[0]['real'] = np.real
-
-        # build ``non_vars_dict`` by removing ``vars_dict`` keys from a copy of ``inputs``
-        self.non_vars_dict = OrderedDict(self.inputs_dict)
-        self.non_iters_dict = OrderedDict(self.inputs_dict)
-        for key in self.vars_dict:
-            self.non_vars_dict.pop(key)
-        for key in self.iters_dict:
-            self.non_iters_dict.pop(key)
-
-        self.vars_list = list(self.vars_dict.values())  # useful for ``.jacobian()``
-
-    def _check_expr_symbols(self, expr):
-        """
-        Check if expression contains unknown symbols.
-        """
-        fs = expr.free_symbols
-        for item in fs:
-            if item not in self.inputs_dict.values():
-                raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
-
-        return fs
-
-    def generate_equations(self):
-        logger.debug(f'- Generating equations for {self.class_name}')
-        from sympy import Matrix, sympify, lambdify, SympifyError
-
-        self.f_list, self.g_list = list(), list()
-
-        self.calls.f = None
-        self.calls.g = None
-        self.calls.f_args = list()
-        self.calls.g_args = list()
-
-        vars_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
-        expr_list = [self.f_list, self.g_list]
-
-        eqn_names = ['f', 'g']
-        eqn_args = [self.calls.f_args, self.calls.g_args]
-
-        for vlist, elist, ename, eargs in zip(vars_list, expr_list, eqn_names, eqn_args):
-            sym_args = list()
-            for name, instance in vlist.items():
-                if instance.e_str is None:
-                    elist.append(0)
+                # multiple variables, iterative
                 else:
-                    try:
-                        expr = sympify(instance.e_str, locals=self.inputs_dict)
-                    except SympifyError as e:
-                        logger.error('Error parsing equation "%s "for %s.%s',
-                                     instance.e_str, instance.owner.class_name, name)
-                        raise e
-                    except TypeError as e:
-                        logger.error('Error parsing equation "%s "for %s.%s',
-                                     instance.e_str, instance.owner.class_name, name)
-                        raise e
+                    for vv in name:
+                        instance = self.__dict__[vv]
+                        _eval_discrete(instance)
+                        if instance.v_str is not None:
+                            instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
 
-                    free_syms = self._check_expr_symbols(expr)
+                    self.solve_iter(name, kwargs)
 
-                    for s in free_syms:
-                        if s not in sym_args:
-                            sym_args.append(s)
-                            eargs.append(str(s))
+            # call custom variable initializer after generated init
+            kwargs = self.get_inputs(refresh=True)
+            self.v_numeric(**kwargs)
 
-                    elist.append(expr)
-            if len(elist) == 0 or not any(elist):  # `any`, not `all`
-                self.calls.__dict__[ename] = None
-            else:
-                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
-                                                      modules=self.lambdify_func)
+        # call post initialization checking
+        self.post_init_check()
 
-        # convert to SymPy matrices
-        self.f_matrix = Matrix(self.f_list)
-        self.g_matrix = Matrix(self.g_list)
+        self.flags.initialized = True
 
-    def generate_services(self):
+    def solve_iter(self, name, kwargs):
         """
-        Generate calls for services, including ``ConstService``, ``VarService`` among others.
+        Solve iterative initialization.
         """
-        from sympy import Matrix, sympify, lambdify, SympifyError
+        for pos in range(self.n):
+            self.solve_iter_single(name, kwargs, pos)
 
-        # convert service equations
-        # Service equations are converted sequentially due to possible dependency
-        s_args = OrderedDict()
-        s_syms = OrderedDict()
-        s_calls = OrderedDict()
-
-        for name, instance in self.parent.services.items():
-            if instance.v_str is not None:
-                try:
-                    expr = sympify(instance.v_str, locals=self.inputs_dict)
-                except (SympifyError, TypeError) as e:
-                    logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
-                    raise e
-                self._check_expr_symbols(expr)
-                s_syms[name] = expr
-                s_args[name] = [str(i) for i in expr.free_symbols]
-                s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
-            else:
-                s_syms[name] = 0
-                s_args[name] = []
-                s_calls[name] = 0
-
-        self.s_matrix = Matrix(list(s_syms.values()))
-        self.calls.s = s_calls
-        self.calls.s_args = s_args
-
-    def generate_jacobians(self):
+    def solve_iter_single(self, name, inputs, pos):
         """
-        Generate Jacobians and store to corresponding triplets.
-
-        The internal indices of equations and variables are stored, alongside the lambda functions.
-
-        For example, dg/dy is a sparse matrix whose elements are ``(row, col, val)``, where ``row`` and ``col``
-        are the internal indices, and ``val`` is the numerical lambda function. They will be stored to
-
-            row -> self.calls._igy
-            col -> self.calls._jgy
-            val -> self.calls._vgy
-
+        Solve iterative initialization for one given device.
         """
-        logger.debug(f'- Generating Jacobians for {self.class_name}')
 
-        from sympy import SparseMatrix, lambdify, Matrix
-
-        # clear storage
-        self.df_syms, self.dg_syms = Matrix([]), Matrix([])
-        self.calls.clear_ijv()
-
-        # NOTE: SymPy does not allow getting the derivative of an empty array
-        if len(self.g_matrix) > 0:
-            self.dg_syms = self.g_matrix.jacobian(self.vars_list)
-
-        if len(self.f_matrix) > 0:
-            self.df_syms = self.f_matrix.jacobian(self.vars_list)
-
-        self.df_sparse = SparseMatrix(self.df_syms)
-        self.dg_sparse = SparseMatrix(self.dg_syms)
-
-        vars_syms_list = list(self.vars_dict)
-        algebs_and_ext_list = list(self.cache.algebs_and_ext)
-        states_and_ext_list = list(self.cache.states_and_ext)
-
-        fg_sparse = [self.df_sparse, self.dg_sparse]
-        j_args = defaultdict(list)   # argument list for each jacobian call
-        j_calls = defaultdict(list)  # jacobian functions (one for each type)
-
-        for idx, eq_sparse in enumerate(fg_sparse):
-            for item in eq_sparse.row_list():
-                e_idx, v_idx, e_symbolic = item
-                if idx == 0:
-                    eq_name = states_and_ext_list[e_idx]
-                else:
-                    eq_name = algebs_and_ext_list[e_idx]
-
-                var_name = vars_syms_list[v_idx]
-                eqn = self.cache.all_vars[eq_name]    # `BaseVar` that corr. to the equation
-                var = self.cache.all_vars[var_name]   # `BaseVar` that corr. to the variable
-                jname = f'{eqn.e_code}{var.v_code}'
-
-                # jac calls with all arguments and stored individually
-                self.calls.append_ijv(jname, e_idx, v_idx, 0)
-
-                free_syms = self._check_expr_symbols(e_symbolic)
-                for fs in free_syms:
-                    if fs not in j_args[jname]:
-                        j_args[jname].append(fs)
-                # j_args[jname].extend(free_syms)
-                j_calls[jname].append(e_symbolic)
-
-        for jname in j_calls:
-            self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
-            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
-
-        # The for loop below is intended to add an epsilon small value to the diagonal of `gy`.
-        # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
-
-        for var in self.parent.cache.vars_int.values():
-            if var.diag_eps == 0.0:
-                continue
-
-            elif var.diag_eps is True:
-                eps = self.parent.system.config.diag_eps
-
-            else:
-                eps = var.diag_eps
-
-            if var.e_code == 'g':
-                eq_list = algebs_and_ext_list
-            else:
-                eq_list = states_and_ext_list
-
-            e_idx = eq_list.index(var.name)
-            v_idx = vars_syms_list.index(var.name)
-
-            self.calls.append_ijv(f'{var.e_code}{var.v_code}c', e_idx, v_idx, eps)
-
-    def generate_pretty_print(self):
-        """
-        Generate pretty print variables and equations.
-        """
-        logger.debug(f"- Generating pretty prints for {self.class_name}")
-        from sympy import Matrix
-        from sympy.printing import latex
-
-        # equation symbols for pretty printing
-        self.f, self.g = Matrix([]), Matrix([])
-
-        self.xy = Matrix(list(self.vars_dict.values())).subs(self.tex_names)
-
-        # get pretty printing equations by substituting symbols
-        self.f = self.f_matrix.subs(self.tex_names)
-        self.g = self.g_matrix.subs(self.tex_names)
-        self.s = self.s_matrix.subs(self.tex_names)
-
-        # store latex strings
-        nx = len(self.f)
-        ny = len(self.g)
-        self.calls.x_latex = [latex(item) for item in self.xy[:nx]]
-        self.calls.y_latex = [latex(item) for item in self.xy[nx:nx + ny]]
-
-        self.calls.f_latex = [latex(item) for item in self.f]
-        self.calls.g_latex = [latex(item) for item in self.g]
-        self.calls.s_latex = [latex(item) for item in self.s]
-
-        self.df = self.df_sparse.subs(self.tex_names)
-        self.dg = self.dg_sparse.subs(self.tex_names)
-
-    def generate_pycode(self):
-        """
-        Create output source code file for generated code. NOT WORKING NOW.
-        """
-        models_dir = os.path.join(get_dot_andes_path(), 'pycode')
-        os.makedirs(models_dir, exist_ok=True)
-        file_path = os.path.join(models_dir, f'{self.class_name}.py')
-
-        header = \
-            """from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
-from numpy import greater_equal, less_equal, greater, less  # NOQA
-
-
-"""
-
-        with open(file_path, 'w') as f:
-            f.write(header)
-            f.write(self._rename_func(self.calls.f, 'f_update'))
-            f.write(self._rename_func(self.calls.g, 'g_update'))
-
-            for jname in self.calls.j:
-                f.write(self._rename_func(self.calls.j[jname], f'{jname}_update'))
-
-    def _rename_func(self, func, func_name):
-        """
-        Rename the function name and return source code.
-
-        This function does not check for name conflicts.
-        Install `yapf` for optional code reformatting (takes extra processing time).
-        """
-        import inspect
-
-        if func is None:
-            return f"# empty {func_name}\n"
-
-        src = inspect.getsource(func)
-        src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
-        # remove `Indicator`
-        src = src.replace("Indicator", "")
-
-        if self.parent.system.config.yapf_pycode:
-            try:
-                from yapf.yapflib.yapf_api import FormatCode
-                src = FormatCode(src, style_config='pep8')[0]  # drop the encoding `None`
-            except ImportError:
-                logger.warning("`yapf` not installed. Skipped code reformatting.")
-
-        src += '\n'
-        return src
-
-
-class Documenter:
-    """
-    Helper class for documenting models.
-
-    Parameters
-    ----------
-    parent : Model
-        The `Model` instance to document
-    """
-
-    def __init__(self, parent):
-        self.parent = parent
-        self.system = parent.system
-        self.class_name = parent.class_name
-        self.config = parent.config
-        self.cache = parent.cache
-        self.params = parent.params
-        self.services = parent.services
-        self.discrete = parent.discrete
-        self.blocks = parent.blocks
-
-    def _param_doc(self, max_width=78, export='plain'):
-        """
-        Export formatted model parameter documentation as a string.
-
-        Parameters
-        ----------
-        max_width : int, optional = 80
-            Maximum table width. If export format is ``rest`` it will be unlimited.
-
-        export : str, optional = 'plain'
-            Export format, 'plain' for plain text, 'rest' for restructuredText.
-
-        Returns
-        -------
-        str
-            Tabulated output in a string
-        """
-        if len(self.params) == 0:
-            return ''
-
-        # prepare temporary lists
-        names, units, class_names = list(), list(), list()
-        info, defaults, properties = list(), list(), list()
-        units_rest = list()
-
-        for p in self.params.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            info.append(p.info if p.info else '')
-            defaults.append(p.default if p.default is not None else '')
-            units.append(f'{p.unit}' if p.unit else '')
-            units_rest.append(f'*{p.unit}*' if p.unit else '')
-
-            plist = []
-            for key, val in p.property.items():
-                if val is True:
-                    plist.append(key)
-            properties.append(','.join(plist))
-
-        # symbols based on output format
-        if export == 'rest':
-            symbols = [item.tex_name for item in self.params.values()]
-            symbols = math_wrap(symbols, export=export)
+        if isinstance(name, str):
+            x0 = inputs[name][pos]
+            name_concat = name
         else:
-            symbols = [item.name for item in self.params.values()]
+            x0 = np.ravel([inputs[item][pos] for item in name])
+            name_concat = '_'.join(name)
 
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Description', info),
-                                  ('Default', defaults),
-                                  ('Unit', units),
-                                  ('Properties', properties)])
+        rhs = self.calls.ii[name_concat]
+        jac = self.calls.ij[name_concat]
+        ii_args = self.ii_args[name_concat]
+        ij_args = self.ij_args[name_concat]
 
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Description', info),
-                                 ('Default', defaults),
-                                 ('Unit', units_rest),
-                                 ('Properties', properties)])
+        # iteration setup
+        maxiter = self.system.TDS.config.max_iter
+        eps = self.system.TDS.config.tol
+        niter = 0
+        solved = False
 
-        # convert to rows and export as table
-        return make_doc_table(title='Parameters',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
+        while niter < maxiter:
+            i_args = [item[pos] for item in ii_args]  # all variables of one device at a time
+            j_args = [item[pos] for item in ij_args]
 
-    def _var_doc(self, max_width=78, export='plain'):
-        # variable documentation
-        if len(self.cache.all_vars) == 0:
-            return ''
+            b = np.ravel(rhs(*i_args))
+            A = jac(*j_args)
+            inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
+            x0 += inc
+            for idx, item in enumerate(name):
+                inputs[item][pos] = x0[idx]
 
-        names, symbols, units = list(), list(), list()
-        properties, info = list(), list()
-        units_rest, ty = list(), list()
+            mis = np.max(np.abs(inc))
+            niter += 1
 
-        for p in self.cache.all_vars.values():
-            names.append(p.name)
-            ty.append(p.class_name)
-            info.append(p.info if p.info else '')
-            units.append(p.unit if p.unit else '')
-            units_rest.append(f'*{p.unit}*' if p.unit else '')
+            if mis <= eps:
+                solved = True
+                break
 
-            # collect properties
-            all_properties = ['v_str', 'v_setter', 'e_setter', 'v_iter']
-            plist = []
-            for item in all_properties:
-                if (p.__dict__[item] is not None) and (p.__dict__[item] is not False):
-                    plist.append(item)
-            properties.append(','.join(plist))
+        if solved:
+            for idx, item in enumerate(name):
+                inputs[item][pos] = x0[idx]
 
-        # replace with latex math expressions if export is ``rest``
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
 
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Type', ty),
-                                  ('Description', info),
-                                  ('Unit', units),
-                                  ('Properties', properties)])
+def _eval_discrete(instance):
 
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Type', ty),
-                                 ('Description', info),
-                                 ('Unit', units_rest),
-                                 ('Properties', properties)])
+    # for variables associated with limiters, limiters need to be evaluated
+    # before variable initialization.
+    # However, if any limit is hit, initialization is likely to fail.
 
-        return make_doc_table(title='Variables (States + Algebraics)',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _init_doc(self, max_width=78, export='plain'):
-        """
-        Variable initialization docs.
-        """
-        if len(self.cache.all_vars) == 0:
-            return ''
-
-        names, symbols, ivs = list(), list(), list()
-        ivs_rest, ty = list(), list()
-
-        for p in self.cache.all_vars.values():
-            names.append(p.name)
-            ty.append(p.class_name)
-            ivs.append(p.v_str if p.v_str else '')
-
-        # replace with latex math expressions if export is ``rest``
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Type', ty),
-                                  ('Initial Value', ivs),
-                                  ])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Type', ty),
-                                 ('Initial Value', ivs_rest),
-                                 ])
-
-        return make_doc_table(title='Variable Initialization Equations',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _eq_doc(self, max_width=78, export='plain', e_code=None):
-        """
-        Return equation documentation.
-        """
-        out = ''
-        if len(self.cache.all_vars) == 0:
-            return out
-
-        if e_code is None:
-            e_code = ('f', 'g')
-        elif isinstance(e_code, str):
-            e_code = (e_code,)
-
-        e2full = {'f': 'Differential',
-                  'g': 'Algebraic'}
-        e2form = {'f': "T x' = f(x, y)",
-                  'g': "0 = g(x, y)"}
-
-        e2dict = {'f': self.cache.states_and_ext,
-                  'g': self.cache.algebs_and_ext}
-        for e_name in e_code:
-            if len(e2dict[e_name]) == 0:
-                continue
-
-            names, symbols = list(), list()
-            eqs, eqs_rest = list(), list()
-            lhs_names, lhs_tex_names = list(), list()
-            class_names = list()
-
-            for p in e2dict[e_name].values():
-                names.append(p.name)
-                class_names.append(p.class_name)
-                eqs.append(p.e_str if p.e_str else '')
-                if e_name == 'f':
-                    lhs_names.append(p.t_const.name if p.t_const else '')
-                    lhs_tex_names.append(p.t_const.tex_name if p.t_const else '')
-
-            plain_dict = OrderedDict([('Name', names),
-                                      ('Type', class_names),
-                                      (f'RHS of Equation "{e2form[e_name]}"', eqs),
-                                      ])
-
-            if export == 'rest':
-                call_store = self.system.calls[self.class_name]
-                e2var_sym = {'f': call_store.x_latex,
-                             'g': call_store.y_latex}
-                e2eq_sym = {'f': call_store.f_latex,
-                            'g': call_store.g_latex}
-
-                symbols = math_wrap(e2var_sym[e_name], export=export)
-                eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
-
-            rest_dict = OrderedDict([('Name', names),
-                                     ('Symbol', symbols),
-                                     ('Type', class_names),
-                                     (f'RHS of Equation "{e2form[e_name]}"', eqs_rest),
-                                     ])
-
-            if e_name == 'f':
-                plain_dict['T (LHS)'] = lhs_names
-                rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
-
-            out += make_doc_table(title=f'{e2full[e_name]} Equations',
-                                  max_width=max_width,
-                                  export=export,
-                                  plain_dict=plain_dict,
-                                  rest_dict=rest_dict)
-
-        return out
-
-    def _service_doc(self, max_width=78, export='plain'):
-        if len(self.services) == 0:
-            return ''
-
-        names, symbols = list(), list()
-        eqs, eqs_rest, class_names = list(), list(), list()
-
-        for p in self.services.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            symbols.append(p.tex_name if p.tex_name is not None else '')
-            eqs.append(p.v_str if p.v_str else '')
-
-        if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(symbols, export=export)
-            eqs_rest = math_wrap(call_store.s_latex, export=export)
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Equation', eqs),
-                                  ('Type', class_names)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Equation', eqs_rest),
-                                 ('Type', class_names)])
-
-        return make_doc_table(title='Services',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _discrete_doc(self, max_width=78, export='plain'):
-        if len(self.discrete) == 0:
-            return ''
-
-        names, symbols, info = list(), list(), list()
-        class_names = list()
-
-        for p in self.discrete.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            info.append(p.info if p.info else '')
-
-        if export == 'rest':
-            symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Type', class_names),
-                                  ('Info', info)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Type', class_names),
-                                 ('Info', info)])
-
-        return make_doc_table(title='Discrete',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def _block_doc(self, max_width=78, export='plain'):
-        """
-        Documentation for blocks.
-        """
-        if len(self.blocks) == 0:
-            return ''
-
-        names, symbols, info = list(), list(), list()
-        class_names = list()
-
-        for p in self.blocks.values():
-            names.append(p.name)
-            class_names.append(p.class_name)
-            info.append(p.info if p.info else '')
-
-        if export == 'rest':
-            symbols = math_wrap([item.tex_name for item in self.blocks.values()], export=export)
-
-        plain_dict = OrderedDict([('Name', names),
-                                  ('Type', class_names),
-                                  ('Info', info)])
-
-        rest_dict = OrderedDict([('Name', names),
-                                 ('Symbol', symbols),
-                                 ('Type', class_names),
-                                 ('Info', info)])
-
-        return make_doc_table(title='Blocks',
-                              max_width=max_width,
-                              export=export,
-                              plain_dict=plain_dict,
-                              rest_dict=rest_dict)
-
-    def get(self, max_width=78, export='plain'):
-        """
-        Return the model documentation in table-formatted string.
-
-        Parameters
-        ----------
-        max_width : int
-            Maximum table width. Automatically et to 0 if format is ``rest``.
-        export : str, ('plain', 'rest')
-            Export format. Use fancy table if is ``rest``.
-
-        Returns
-        -------
-        str
-            A string with the documentations.
-        """
-        out = ''
-        if export == 'rest':
-            max_width = 0
-            model_header = '-' * 80 + '\n'
-            out += f'.. _{self.class_name}:\n\n'
+    if instance.discrete is not None:
+        if not isinstance(instance.discrete, (list, tuple, set)):
+            dlist = (instance.discrete, )
         else:
-            model_header = ''
-
-        if export == 'rest':
-            out += model_header + f'{self.class_name}\n' + model_header
-            out += f'\nGroup {self.parent.group}_\n\n'
-        else:
-            out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
-
-        if self.__doc__ is not None:
-            if self.parent.__doc__ is not None:
-                out += self.parent.__doc__
-            out += '\n'  # this fixes the indentation for the next line
-
-        # add tables
-        out += self._param_doc(max_width=max_width, export=export)
-        out += self._var_doc(max_width=max_width, export=export)
-        out += self._init_doc(max_width=max_width, export=export)
-        out += self._eq_doc(max_width=max_width, export=export)
-        out += self._service_doc(max_width=max_width, export=export)
-        out += self._discrete_doc(max_width=max_width, export=export)
-        out += self._block_doc(max_width=max_width, export=export)
-        out += self.config.doc(max_width=max_width, export=export)
-
-        return out
+            dlist = instance.discrete
+        for d in dlist:
+            d.check_var()

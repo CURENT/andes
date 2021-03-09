@@ -1,7 +1,5 @@
 from collections import OrderedDict
 
-import numpy as np
-
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtParam, ExtAlgeb, ExtService, ConstService, \
     Switcher, Lag, Algeb, Limiter, LeadLag, LessThan
 from andes.core.block import DeadBand1, PITrackAW
@@ -303,12 +301,12 @@ class REPCA1Model(Model):
 
         Iline = '(Isign * (v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + 1j*x))'
 
-        self.Iline = VarService(v_str=Iline, vtype=np.complex,
+        self.Iline = VarService(v_str=Iline, vtype=complex,
                                 info='Complex current from bus1 to bus2',
                                 tex_name='I_{line}',
                                 )
 
-        self.Iline0 = ConstService(v_str='Iline', vtype=np.complex,
+        self.Iline0 = ConstService(v_str='Iline', vtype=complex,
                                    info='Initial complex current from bus1 to bus2',
                                    tex_name='I_{line0}',
                                    )

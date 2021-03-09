@@ -8,6 +8,22 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.2 (2021-03-08)
+```````````````````
+- Relaxed the version requirements for NumPy and SymPy.
+
+v1.3.1 (2021-03-07)
+```````````````````
+- Writes all generated Python code to ``~/.andes/pycode`` by default.
+- Uses generated Python code by default instead of `calls.pkl`.
+- Works with NumPy 1.20; works on Apple Silicon (use `miniforge`) to
+  install native Python and NumPy for Apple Silicon.
+- Generalized model initialization: automatically determines the
+  initialization sequence and solve equations iteratively when
+  necessary.
+- In `System.config`, `save_pycode` and `use_pycode` are now
+  deprecated.
+
 
 v1.3.0 (2021-02-20)
 ```````````````````

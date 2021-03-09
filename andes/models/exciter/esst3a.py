@@ -1,5 +1,3 @@
-import numpy as np
-
 from andes.core.common import dummify
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
@@ -138,7 +136,7 @@ class ESST3AModel(ExcBase):
         self.KPC = ConstService(v_str='KP * exp(1j * radians(THETAP))',
                                 tex_name='K_{PC}',
                                 info='KP polar THETAP',
-                                vtype=np.complex
+                                vtype=complex
                                 )
 
         # vd, vq, Id, Iq from SynGen

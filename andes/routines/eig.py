@@ -161,7 +161,7 @@ class EIG(BaseRoutine):
         n = len(mu)
         idx = range(n)
 
-        mu_complex = np.zeros_like(mu, dtype=np.complex)
+        mu_complex = np.zeros_like(mu, dtype=complex)
         W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
         gesv(N, W)
 
@@ -325,8 +325,8 @@ class EIG(BaseRoutine):
         """
         system = self.system
         out = {'As': self.As,
-               'x_name': np.array(system.dae.x_name, dtype=np.object),
-               'x_tex_name': np.array(system.dae.x_tex_name, dtype=np.object),
+               'x_name': np.array(system.dae.x_name, dtype=object),
+               'x_tex_name': np.array(system.dae.x_tex_name, dtype=object),
                }
 
         scipy.io.savemat(system.files.mat, mdict=out)

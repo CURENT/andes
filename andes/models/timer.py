@@ -128,11 +128,11 @@ class Fault(ModelData, Model):
 
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
-                               vtype=np.complex,
+                               vtype=complex,
                                )
         self.bf = ConstService(tex_name='b_{f}',
                                v_str='im(1/(rf + 1j * xf))',
-                               vtype=np.complex,
+                               vtype=complex,
                                )
 
         # uf: an internal flag of whether the fault is in action (1) or not (0)
@@ -211,7 +211,7 @@ class AlterData(ModelData):
         self.attr = IdxParam(info='attribute (e.g., v) of the source field', default='v')
 
         self.method = NumParam(info='alteration method in `+`, `-`, `*`, `/`, `=`',
-                               mandatory=True, vtype=np.object)
+                               mandatory=True, vtype=object)
         self.amount = NumParam(info='the amount to apply', mandatory=True,)
 
         self.rand = NumParam(info='use uniform ramdom sampling', default=0)

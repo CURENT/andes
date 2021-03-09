@@ -1,9 +1,9 @@
 import logging
+
 from andes.core.model import Model, ModelData  # NOQA
 from andes.core.param import IdxParam, DataParam, NumParam  # NOQA
 from andes.core.var import Algeb, State, ExtAlgeb  # NOQA
 from andes.core.service import ConstService  # NOQA
-import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -132,9 +132,9 @@ class Line(LineData, Model):
         self.gk = ConstService(tex_name='g_k')
         self.bk = ConstService(tex_name='b_k')
 
-        self.yh = ConstService(tex_name='y_h', vtype=np.complex)
-        self.yk = ConstService(tex_name='y_k', vtype=np.complex)
-        self.yhk = ConstService(tex_name='y_{hk}', vtype=np.complex)
+        self.yh = ConstService(tex_name='y_h', vtype=complex)
+        self.yk = ConstService(tex_name='y_k', vtype=complex)
+        self.yhk = ConstService(tex_name='y_{hk}', vtype=complex)
 
         self.ghk = ConstService(tex_name='g_{hk}')
         self.bhk = ConstService(tex_name='b_{hk}')

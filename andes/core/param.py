@@ -437,7 +437,7 @@ class NumParam(BaseParam):
         # if np.sum(np.isnan(self.v)) > 0:
         #     raise ValueError(f'Param <{self.name} contains NaN.')
 
-        if self.v.dtype != np.object:
+        if self.v.dtype != object:
             self.v[self.v == np.inf] = 1e8
             self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------

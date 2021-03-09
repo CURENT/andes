@@ -8,6 +8,3 @@ class TestCodegen(unittest.TestCase):
         out = ''
         for group in self.ss.groups.values():
             out += group.doc_all()
-
-    def test_codegen_inc(self):
-        self.ss = andes.main.prepare(quick=True, incremental=True)

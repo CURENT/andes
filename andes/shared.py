@@ -70,6 +70,11 @@ deg2rad = math.pi/180
 jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 
+dilled_vars = ['f_args', 'g_args', 'j_args', 's_args',
+               'ia_args', 'ii_args', 'ij_args',
+               'ijac', 'jjac', 'vjac', 'j_names',
+               'init_seq']
+
 jac_full_names = list()
 for jname in jac_names:
     for jtype in jac_types:

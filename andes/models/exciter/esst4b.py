@@ -1,5 +1,3 @@
-import numpy as np
-
 from collections import OrderedDict
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
@@ -135,7 +133,7 @@ class ESST4BModel(ExcBase):
         self.KPC = ConstService(v_str='KP * exp(1j * radians(THETAP))',
                                 tex_name='K_{PC}',
                                 info='KP polar THETAP',
-                                vtype=np.complex
+                                vtype=complex
                                 )
 
         # vd, vq, Id, Iq from SynGen

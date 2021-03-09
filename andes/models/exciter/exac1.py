@@ -4,7 +4,7 @@ from andes.models.exciter.saturation import ExcQuadSat
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 from andes.core.block import LeadLag, Lag, Piecewise, LagAntiWindup, Integrator, Washout
-from andes.core.service import ConstService
+from andes.core.service import ConstService, PostInitService
 from andes.core.discrete import LessThan
 
 
@@ -117,8 +117,8 @@ class EXAC1Model(ExcBase):
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
+                        v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
-                        v0_iter=2,
                         e_str='KC * XadIfd / INT_y - IN',
                         )
 
@@ -127,21 +127,20 @@ class EXAC1Model(ExcBase):
                              funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
                              info='Piecewise function FEX',
                              )
-        self.FEX.y.v_str = None
+        self.FEX.y.v_iter = '1'
         self.FEX.y.v_iter = self.FEX.y.e_str
-        self.FEX.y.v0_iter = 2
 
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
                       )
 
-        # TODO: fix equation
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='- vi',
-                        v_str='-LG_y + vref',
+                        e_str='-v + vref - WF_y - vi',
+                        v_str='-v + vref',
                         )
+
         self.LL = LeadLag(u=self.vi, T1=self.TC, T2=self.TB,
                           info='Regulator',
                           zero_out=True,
@@ -160,9 +159,8 @@ class EXAC1Model(ExcBase):
                               y0=0,
                               info='Integrator',
                               )
-        self.INT.y.v_str = None
+        self.INT.y.v_str = 0.1
         self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
-        self.INT.y.v0_iter = 0.1
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
@@ -176,17 +174,17 @@ class EXAC1Model(ExcBase):
                          e_str='INT_y * (KE + Se) + XadIfd * KD - VFE'
                          )
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + VFE / KA',
-                                  )
-
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + VFE / KA',
                           e_str='vref0 - vref',
                           )
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.WF = Washout(u=self.VFE,
                           T=self.TF,

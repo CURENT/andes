@@ -22,6 +22,7 @@ class PFlow(BaseRoutine):
         self.config.add(OrderedDict((('tol', 1e-6),
                                      ('max_iter', 25),
                                      ('method', 'NR'),
+                                     ('check_conn', 1),
                                      ('n_factorize', 4),
                                      ('report', 1),
                                      ('degree', 0),
@@ -31,6 +32,7 @@ class PFlow(BaseRoutine):
                               tol="convergence tolerance",
                               max_iter="max. number of iterations",
                               method="calculation method",
+                              check_conn='check connectivity before power flow',
                               n_factorize="first N iterations to factorize Jacobian in dishonest method",
                               report="write output report",
                               degree='use degree in report',
@@ -39,6 +41,7 @@ class PFlow(BaseRoutine):
         self.config.add_extra("_alt",
                               tol="float",
                               method=("NR", "dishonest"),
+                              check_conn=(0, 1),
                               max_iter=">=10",
                               n_factorize=">0",
                               report=(0, 1),
@@ -69,6 +72,7 @@ class PFlow(BaseRoutine):
         self.x_sol = None
         self.y_sol = None
 
+        self.system.set_var_arrays(self.models, inplace=True, alloc=False)
         self.system.init(self.models, routine='pflow')
         logger.info('Power flow initialized.')
 
@@ -131,7 +135,7 @@ class PFlow(BaseRoutine):
         gmax = system.dae.g[gmax_idx]
         logger.debug("Max. algeb mismatch %.10g on %s", gmax, system.dae.y_name[gmax_idx])
 
-        mis = max(fmax, gmax)
+        mis = max(abs(fmax), abs(gmax))
         if self.niter == 0:
             self.mis[0] = mis
         else:
@@ -177,9 +181,12 @@ class PFlow(BaseRoutine):
             convergence status
         """
         system = self.system
-        self.system.connectivity()
+        if self.config.check_conn == 1:
+            self.system.connectivity()
+
         self.summary()
         self.init()
+
         if system.dae.m == 0:
             logger.error("Loaded case contains no power flow element.")
             system.exit_code = 1
