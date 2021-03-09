@@ -12,7 +12,7 @@ from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, ExtService, VarService
 from andes.core.service import DataSelect, DeviceFinder
-from andes.core.discrete import Switcher, Limiter, HardLimiter
+from andes.core.discrete import Switcher, Limiter, HardLimiter, LessThan
 
 
 class PVD1Data(ModelData):
@@ -453,7 +453,7 @@ class PVD1Model(Model):
 
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=self.Ipmin, sign_lower=-1,
+                                 lower=self.Ipmax, sign_lower=-1,
                                  upper=self.Ipmax, #test with lower = -Ipmax
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
@@ -527,8 +527,12 @@ class ESD1Model(PVD1Model):
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
 
+        # --- Determine whether the energy storage is in charging or discharging mode ---
+        self.LT = LessThan(self.Ipout_y, 0.0)
+
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,#efficiency will change u
+        self.pIG = Integrator(u='LT_z1*(v * Ipout_y)*EtaC + LT_z0*(v * Ipout_y)/EtaD',
+                              T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
                               check_init=False,
                               )
 
@@ -543,16 +547,16 @@ class ESD1Model(PVD1Model):
                                  )
 
         # --- Add Ipmax, Ipmin, and Ipcmd ---
-        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))' #check if this can replace ipmax in ipmin eq
-        self.Ipmax.e_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+        self.Ipmax.v_str = '(1-SOClim_zu)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
+        self.Ipmax.e_str = '(1-SOClim_zu)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
 
         self.Ipmin = Algeb(info='Minimum value of Ip',
-                           v_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
-                           e_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin'
+                           v_str='-(1-SOClim_zl) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
+                           e_str='-(1-SOClim_zl) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin',
                            )
 
         self.Ipcmd.lim.sign_lower = dummify(-1)
-        self.Ipcmd.lim.lower = self.Ipmax
+        self.Ipcmd.lim.lower = self.Ipmax #Ask about this with ipmin
 
 
 class PVD1(PVD1Data, PVD1Model):
