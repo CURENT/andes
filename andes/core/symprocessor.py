@@ -369,6 +369,7 @@ class SymProcessor:
 
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select  # NOQA
 from numpy import greater_equal, less_equal, greater, less   # NOQA
+from numpy import logical_and, logical_or, logical_not  # NOQA
 from numpy import array, real, imag, conj, angle, arctan, radians  # NOQA
 from numpy import log  # NOQA
 

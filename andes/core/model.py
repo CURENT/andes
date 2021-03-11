@@ -1038,6 +1038,8 @@ class Model:
         if len(self.services_var):
             kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
+                if instance.v_str is None:
+                    continue
                 func = self.calls.s[name]
                 if callable(func):
                     instance.v[:] = func(*self.s_args[name])
@@ -1611,11 +1613,7 @@ class Model:
         self.flags.jited = True
 
     def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
-        try:
-            import numba
-        except ImportError:
-            return func
-
+        import numba
         if func is not None:
             return numba.jit(func, parallel=parallel, cache=cache)
 
