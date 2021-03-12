@@ -1139,6 +1139,25 @@ class System:
         if info is True:
             self.summary()
 
+    def to_ipysheet(self, model: str, vin: bool = False):
+        """
+        Return an ipysheet object for editing in Jupyter Notebook.
+        """
+
+        from ipysheet import from_dataframe
+
+        return from_dataframe(self.models[model].as_df(vin=vin))
+
+    def from_ipysheet(self, model: str, sheet, vin: bool = False):
+        """
+        Set an ipysheet object back to model.
+        """
+
+        from ipysheet import to_dataframe
+
+        df = to_dataframe(sheet)
+        self.models[model].update_from_df(df, vin=vin)
+
     def summary(self):
         """
         Print out system summary.
