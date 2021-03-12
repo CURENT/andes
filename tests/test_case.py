@@ -35,7 +35,7 @@ class Test5Bus(unittest.TestCase):
 
     def test_as_df(self):
         self.ss.Bus.as_df()
-        self.ss.Bus.as_df_in()
+        self.ss.Bus.as_df(vin=True)
 
     def test_init_order(self):
         self.ss.Bus.get_init_order()
