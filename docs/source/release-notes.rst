@@ -8,6 +8,9 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.4 (2021-03-13)
+- Fixed a bug for the generated renewable energy code.
+
 v1.3.2 (2021-03-08)
 ```````````````````
 - Relaxed the version requirements for NumPy and SymPy.

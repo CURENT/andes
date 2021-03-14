@@ -1632,7 +1632,7 @@ class Piecewise(Block):
         i = 0
         for i in range(len(self.points)):
             args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
-        args.append(f'({self.funs[i + 1]}, True)')
+        args.append(f'({self.funs[i + 1]}, {self.u.name} > {self.points[-1]})')
 
         args_comma = ', '.join(args)
         pw_fun = f'Piecewise({args_comma})'
