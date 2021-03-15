@@ -388,7 +388,7 @@ That is why for ``GENCLS`` below, we only list four input parameters. ::
 
 For the ``outputs`` section, the order can be arbitrary, but it is recommended
 to follow the input order as much as possible for maintainability.
-In particular, the right-hand-side of the outputs can be either an input variable name
+In particular, the right-hand-side of the outputs can be either an input parameter name
 or an anonymous expression that processes the input parameters.
 For the example of GENCLS, since ANDES internally uses the parameter of ``M = 2H``,
 the input ``H`` needs to be multiplied by 2.
@@ -396,7 +396,7 @@ It is done by the following ::
 
     M: "GENCLS.H; lambda x: 2 * x"
 
-where the left-hand-side is the output variable name (destination ANDES model parameter name),
+where the left-hand-side is the output parameter name (destination ANDES model parameter name),
 and the right-hand-side is arguments and the lambda function separated by semi-colon, all in a
 pair of double quotation marks.
 Multiple arguments are accepted and should be separated by comma.
