@@ -296,7 +296,13 @@ def read_add(system, file):
                     args, func = expr.split(';')
                     func = eval(func)
                     args = args.split(',')
-                    argv = [pairs.split('.') for pairs in args]
+                    # support local and external model parameters
+                    argv = list()
+                    for param in args:
+                        if '.' in param:
+                            argv.append(param.split('.'))
+                        else:
+                            argv.append((psse_model, param))
                     argv = [dyr_dict[model][param] for model, param in argv]
                     out_dict[output_keys[idx]] = func(*argv)
                 else:
