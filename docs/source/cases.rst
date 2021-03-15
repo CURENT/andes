@@ -302,9 +302,7 @@ which is in the standard YAML format.
 To add support for a new dynamic model, it is recommended to start with
 an existing model of similar functionality.
 
-Consider a ``GENCLS`` entry in a dyr file. The entry looks like
-
-.. ::
+Consider a ``GENCLS`` entry in a dyr file. The entry looks like ::
 
       1 'GENCLS' 1    13.0000  0.000000  /
 
