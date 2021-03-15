@@ -44,11 +44,19 @@ def edit_sheet(system, model: str):
 
 
 def on_update(b):
+    """
+    Callback for the Update button. Sets new parameters back to System.
+    """
+
     with b.output:
         b.system.from_ipysheet(b.model, b.sheet)
         print("%s: parameter update was successful." % b.model)
 
 
 def on_close(b):
+    """
+    Callback for the Close botton. Closes ipywidget objects.
+    """
+
     for item in b.objects:
         item.close()
