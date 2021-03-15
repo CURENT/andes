@@ -453,8 +453,7 @@ class PVD1Model(Model):
 
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=self.Ipmax, sign_lower=-1,
-                                 upper=self.Ipmax, #test with lower = -Ipmax
+                                 lower=0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
@@ -555,8 +554,7 @@ class ESD1Model(PVD1Model):
                            e_str='-(1-SOClim_zl) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin',
                            )
 
-        self.Ipcmd.lim.sign_lower = dummify(-1)
-        self.Ipcmd.lim.lower = self.Ipmax #Ask about this with ipmin
+        self.Ipcmd.lim.lower = self.Ipmin
 
 
 class PVD1(PVD1Data, PVD1Model):
