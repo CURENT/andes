@@ -915,7 +915,7 @@ WTDTA1:
         - ree: ree
         - Ht: "H, Htfract; lambda (x, y): x * y"
         - Hg: "H, Htfract; lambda (x, y): x * (1-y)"
-        - Dshaft: Dshaft  # TODO: next line, provide sys_f
+        - Dshaft: Dshaft
         - Kshaft: "H, Htfract, Freq1, sys_f: lambda (H, Htfract, Freq1, sys_f): 2 * (H*Htfract) * (H*(1-Htfract)) * 2 * pi * freq1*freq1 / H / sys_f"
 
 WTARA1:

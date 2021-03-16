@@ -186,8 +186,7 @@ class ModelData:
             self.cache = ModelCache()
         self.cache.add_callback('dict', self.as_dict)
         self.cache.add_callback('dict_in', lambda: self.as_dict(True))
-        self.cache.add_callback('df', self.as_df)
-        self.cache.add_callback('df_in', self.as_df_in)
+        self.cache.add_callback('df_in', lambda: self.as_df(vin=True))
 
         if three_params is True:
             self.idx = DataParam(info='unique device idx')
@@ -281,7 +280,7 @@ class ModelData:
 
         return out
 
-    def as_df(self):
+    def as_df(self, vin=False):
         """
         Export all parameters as a `pandas.DataFrame` object.
         This function utilizes `as_dict` for preparing data.
@@ -290,24 +289,39 @@ class ModelData:
         -------
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
+        vin : bool
+            If True, export all parameters from original input (``vin``).
         """
-        out = pd.DataFrame(self.as_dict()).set_index('uid')
+        if vin is False:
+            out = pd.DataFrame(self.as_dict()).set_index('uid')
+        else:
+            out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
 
         return out
 
-    def as_df_in(self):
+    def update_from_df(self, df, vin=False):
         """
-        Export all parameters from original input (``vin``) as a `pandas.DataFrame`.
-        This function utilizes `as_dict` for preparing data.
+        Update parameter values from a DataFrame.
 
-        Returns
-        -------
-        DataFrame
-            A :py:class:`pandas.DataFrame` containing all model data. An `uid` column is prepended.
+        Adding devices are not allowed.
         """
-        out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
+        if vin is False:
+            for name, instance in self.params.items():
+                if instance.export is False:
+                    continue
+                instance.set_all('v', df[name])
+        else:
+            for name, instance in self.params.items():
+                if instance.export is False:
+                    continue
+                try:
+                    instance.set_all('vin', df[name])
+                    instance.v[:] = instance.vin * instance.pu_coeff
+                except KeyError:
+                    # fall back to `v`
+                    instance.set_all('v', df[name])
 
-        return out
+        return True
 
     def find_param(self, prop):
         """
@@ -1038,6 +1052,8 @@ class Model:
         if len(self.services_var):
             kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
+                if instance.v_str is None:
+                    continue
                 func = self.calls.s[name]
                 if callable(func):
                     instance.v[:] = func(*self.s_args[name])
@@ -1611,11 +1627,7 @@ class Model:
         self.flags.jited = True
 
     def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
-        try:
-            import numba
-        except ImportError:
-            return func
-
+        import numba
         if func is not None:
             return numba.jit(func, parallel=parallel, cache=cache)
 

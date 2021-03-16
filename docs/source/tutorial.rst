@@ -644,12 +644,12 @@ A table will be printed with the columns being each parameter and the rows being
 Parameter in the table is the same as the input file without per-unit conversion.
 
 Parameters have been converted to per unit values under system base.
-To view the per unit values, use the ``as_df_in()`` attribute.
+To view the per unit values, use the ``as_df(vin=True)`` method.
 For example, to view the system-base per unit value of ``GENROU``, use
 
 .. code:: python
 
-    >>> ss.GENROU.as_df_in()
+    >>> ss.GENROU.as_df(vin=True)
 
 Dict
 ....
