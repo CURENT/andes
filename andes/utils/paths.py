@@ -92,11 +92,16 @@ def tests_root():
     return os.path.normpath(os.path.join(dir_name, '..', '..', 'tests'))
 
 
-def get_case(rpath):
+def get_case(rpath, check=True):
     """
     Return the path to a stock case for a given path relative to ``andes/cases``.
 
     To list all cases, use ``andes.list_cases()``.
+
+    Parameters
+    ----------
+    check : bool
+        True to check if file exists
 
     Examples
     --------
@@ -108,7 +113,7 @@ def get_case(rpath):
     case_path = os.path.join(cases_root(), rpath)
     case_path = os.path.normpath(case_path)
 
-    if not os.path.isfile(case_path):
+    if check is True and (not os.path.isfile(case_path)):
         raise FileNotFoundError(f'"{rpath}" is not a valid relative path to a stock case.')
     return case_path
 
