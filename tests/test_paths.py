@@ -34,12 +34,6 @@ class TestPaths(unittest.TestCase):
                        )
         self.assertNotEqual(ss, None)
 
-        ss = andes.run('ieee14/ieee14.raw',
-                       input_path='../andes/cases/',
-                       no_output=True, default_config=True,
-                       )
-        self.assertNotEqual(ss, None)
-
     def test_pert_file(self):
         """Test path of pert file"""
         path, case = os.path.split(self.ieee14)
