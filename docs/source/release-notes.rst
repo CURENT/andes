@@ -8,6 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.5 (2021-03-20)
+- Fixed a bug in connectivity check when bus 0 is islanded.
+- Updated notebook examples.
+- Updated tutorials.
+
 v1.3.4 (2021-03-13)
 - Fixed a bug for the generated renewable energy code.
 
