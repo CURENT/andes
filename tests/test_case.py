@@ -277,7 +277,7 @@ class TestIslands(unittest.TestCase):
 
     def test_islands(self):
         ss = andes.run(get_case('kundur/kundur_islands.xlsx'),
-                    no_output=True, default_config=True)
+                       no_output=True, default_config=True)
 
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
         self.assertEqual(len(ss.Bus.islands), 2)
