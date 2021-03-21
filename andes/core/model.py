@@ -185,6 +185,7 @@ class ModelData:
         if not hasattr(self, 'cache'):
             self.cache = ModelCache()
         self.cache.add_callback('dict', self.as_dict)
+        self.cache.add_callback('df', lambda: self.as_df())
         self.cache.add_callback('dict_in', lambda: self.as_dict(True))
         self.cache.add_callback('df_in', lambda: self.as_df(vin=True))
 
@@ -869,9 +870,11 @@ class Model:
         value : float
             The desired value
         """
-        if hasattr(self.__dict__[src], 'vin'):
+        instance = self.__dict__[src]
+
+        if hasattr(instance, 'vin') and (instance.vin is not None):
             self.set(src, idx, 'vin', value)
-            self.__dict__[src].v[:] = self.__dict__[src].vin * self.__dict__[src].pu_coeff
+            instance.v[:] = instance.vin * instance.pu_coeff
         else:
             self.set(src, idx, 'v', value)
 

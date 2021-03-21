@@ -451,7 +451,7 @@ If a model has an external variable that links to Bus.v (voltage), such as ::
                       indexer=self.bus,
                       e_str='v0 **2 * b')
 
-The addresses of the corresponding voltage variables will be retrieved into `self.a`,
+The addresses of the corresponding voltage variables will be retrieved into `self.v.a`,
 and the equation evaluation results will be stored in `self.v.e`
 
 Parameters

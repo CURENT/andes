@@ -1034,6 +1034,7 @@ class System:
         info : bool
             True to log connectivity summary.
         """
+        logger.debug("Entering connectivity check.")
 
         self.Bus.n_islanded_buses = 0
         self.Bus.islanded_buses = list()
@@ -1077,10 +1078,9 @@ class System:
         nelm = len(cons.J)
         conn = spmatrix([], [], [], (1, n), 'd')
         enum = idx = islands = 0
-        done = 0
 
-        while not done:
-            while not done:
+        while True:
+            while True:
                 cons = cons * temp
                 cons = sparse(cons)  # remove zero values
                 new_nelm = len(cons.J)
@@ -1088,9 +1088,11 @@ class System:
                     break
                 nelm = new_nelm
 
+            # started with an islanded bus
+            if len(conn.J) == 0:
+                enum += 1
             # all buses are interconnected
-            if len(cons.J) == n:
-                done = 1
+            elif len(cons.J) == n:
                 break
 
             self.Bus.island_sets.append(list(cons.J))

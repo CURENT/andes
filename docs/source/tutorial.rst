@@ -22,52 +22,53 @@ ANDES is invoked from the command line using the command ``andes``.
 Running ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``.
 It prints out a preamble with version and environment information and help commands::
 
-        _           _         | Version 1.1.2
-       /_\  _ _  __| |___ ___ | Python 3.7.6 on Linux, 09/05/2020 12:23:05 PM
+        _           _         | Version 1.3.4
+       /_\  _ _  __| |___ ___ | Python 3.8.6 on Linux, 03/17/2021 11:28:55 AM
       / _ \| ' \/ _` / -_|_-< |
      /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.
 
-    usage: andes [-h] [-v {1,10,20,30,40,50}]
-                 {run,plot,doc,misc,prepare,selftest} ...
+    usage: andes [-h] [-v {1,10,20,30,40}]
+            {run,plot,doc,misc,prepare,selftest} ...
 
     positional arguments:
-      {run,plot,doc,misc,prepare,selftest}
-                            [run] run simulation routine; [plot] plot simulation
-                            results; [doc] quick documentation; [prepare] run the
-                            symbolic-to-numeric preparation; [misc] miscellaneous
-                            functions.
+    {run,plot,doc,misc,prepare,selftest}
+                        [run] run simulation routine; [plot] plot results;
+                        [doc] quick documentation; [misc] misc. functions;
+                        [prepare] prepare the numerical code; [selftest] run
+                        self test.
 
     optional arguments:
-      -h, --help            show this help message and exit
-      -v {1,10,20,30,40,50}, --verbose {1,10,20,30,40,50}
-                            Program logging level in 10-DEBUG, 20-INFO,
-                            30-WARNING, 40-ERROR or 50-CRITICAL.
+    -h, --help            show this help message and exit
+    -v {1,10,20,30,40}, --verbose {1,10,20,30,40}
+                        Verbosity level in 10-DEBUG, 20-INFO, 30-WARNING, or
+                        40-ERROR.
 
 .. note::
 
     If the ``andes`` command is not found, check if (1) the installation was successful, and
     (2) you have activated the environment where ANDES is installed.
 
-The first level of commands are chosen from ``{run,plot,misc,prepare,selftest}``. Each command contains a group
-of sub-commands, which can be looked up with ``-h``. For example, use ``andes run -h`` to look up the sub-commands
-in ``run``. The most commonly used commands will be explained in the following.
+The first-level commands are chosen from ``{run,plot,doc,misc,prepare,selftest}``.
+Each command contains a group of sub-commands, which can be looked up with ``-h``.
+For example, use ``andes run -h`` to look up the sub-commands for ``run``.
+The most frequently used commands are explained in the following.
 
-``andes`` has an option for the program verbosity level, controlled by ``-v`` or ``--verbose``.
-Accepted levels are the same as in the ``logging`` module: 10 - DEBUG, 20 - INFO, 30 - WARNING, 40 - ERROR,
-50 - CRITICAL.
-To show debugging outputs, use ``-v 10``.
+``andes`` has an option for the program verbosity level, controlled by ``-v LEVEL`` or ``--verbose LEVEL``,
+where level is a number chosen from the following:
+1 (DEBUG with code location info), 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), or 50 (CRITICAL).
+For example, to show debugging outputs, use ``andes -v 10``, followed by the first-level commands.
+The default logging level is 20 (INFO).
 
 andes selftest
 --------------
-After installation, it is encouraged to use ``andes selftest`` from the command line
-to test functionality.
+After the installation, please run ``andes selftest`` from the command line to test ANDES functionality.
 It might take a minute to run the full self-test suite.
 An example output looks like ::
 
     test_docs (test_1st_system.TestCodegen) ... ok
     test_alter_param (test_case.Test5Bus) ... ok
     ...
-    ... (outputs are omitted)
+    ... (outputs are truncated)
     ...
     test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
 
@@ -76,10 +77,10 @@ An example output looks like ::
 
     OK
 
-There may be more cases than what is shown above. Make sure that all tests have passed.
+There may be more test than what is shown above. Make sure that all tests have passed.
 
 .. warning ::
-    ANDES is getting updates frequently. After updating your copy, please run
+    ANDES is getting updates frequently. After every update, please run
     ``andes selftest`` to confirm the functionality.
     The command also makes sure the generated code is up to date.
     See `andes prepare`_ for more details on automatic code generation.
@@ -90,71 +91,78 @@ andes prepare
 
 The symbolically defined models in ANDES need to be generated into numerical code for simulation.
 The code generation can be manually called with ``andes prepare``.
-Generated code are stored in the folder ``.andes/calls.pkl`` in your home directory.
+Generated code are serialized to ``~/.andes/calls.pkl`` and dumped as Python code to ``~/.andes/pycode``.
 In addition, ``andes selftest`` implicitly calls the code generation.
-If you are using ANDES as a package in the user mode, you won't need to call it again.
+If you are using ANDES as a package in the user mode (namely, you have not modified or updated ANDES code),
+you will not need to call it again.
+
+.. note ::
+    To developers:
+    As of version 1.3.0, ANDES stores all generated Python code explicitly
+    in ``.py`` files under the folder ``~/.andes/pycode``.
+    Priority is given to Python code when reloading for simulation.
 
 Option ``-q`` or ``--quick`` (enabled by default) can be used to speed up the code generation.
 It skips the generation of :math:`\LaTeX`-formatted equations, which are only used in documentation and the interactive
 mode.
 
-For developers, ``andes prepare`` needs to be called immediately following any model equation
-modification. Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
 Option ``-i`` or ``--incremental``, instead of ``-q``, can be used to further speed up the code generation
 during model development.
-``andes prepare -i`` only generates code for models with modified equations.
+``andes prepare -i`` only generates code for models that have been modified since the last code generation.
+
+.. note ::
+    To developers:
+    ``andes prepare -i`` needs to be called immediately following any model equation modification.
+    Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
 
 andes run
 -------------
 ``andes run`` is the entry point for power system analysis routines.
 ``andes run`` takes one positional argument, ``filename`` , along with other optional keyword arguments.
 ``filename`` is the test case path, either relative or absolute.
-Without other options, ANDES will run power flow calculation for the provided file.
+
+For example, the command ``andes run kundur_full.xlsx`` uses a relative path.
+If will work only if ``kundur_full.xlsx`` exists in the current directory of the command line.
+The commands ``andes run /Users/hcui7/kundur_full.xlsx`` (on macOS) or
+``andes run C:/Users/hcui7/kundur_full.xlsx`` (on Windows) use absolute paths to the case files
+and do not depend on the command-line current directory.
+
+.. note ::
+    When working with the command line, use ``cd`` to change directory to the folder
+    containing your test case.
+    Spaces in folder and file names need to be escaped properly.
 
 Routine
 .......
-Option ``-r`` or ``-routine`` is used for specifying the analysis routine, followed by the routine name.
-Available routine names include ``pflow, tds, eig``.
-`pflow` for power flow, `tds` for time domain simulation, and `eig` for eigenvalue analysis.
-`pflow` is default even if ``-r`` is not given.
+Option ``-r`` or ``-routine`` is used for specifying the analysis routine,
+followed by the routine name.
+Available routine names include ``pflow, tds, eig``:
+- ``pflow`` for power flow
+- ``tds`` for time domain simulation
+- ``eig`` for eigenvalue analysis
 
-For example, to run time-domain simulation for ``kundur_full.xlsx`` in the *current directory*, run
-
-.. code:: bash
-
-    andes run kundur_full.xlsx -r tds
-
-The file is located at ``andes/cases/kundur/kundur_full.xlsx`` relative to the source code root folder.
-Use ``cd`` to change directory to that folder on your machine.
-
-Two output files, ``kundur_full_out.lst`` and ``kundur_full_out.npy`` will be created for variable names
-and values, respectively.
-
-Likewise, to run eigenvalue analysis for ``kundur_full.xlsx``, use
-
-.. code:: bash
-
-    andes run kundur_full.xlsx -r eig
-
-The eigenvalue report will be written in a text file named ``kundur_full_eig.txt``.
+``pflow`` is the default if ``-r`` is not given.
 
 Power flow
 ..........
+Locate the ``kundur_full.xlsx`` file at ``andes/cases/kundur/kundur_full.xlsx`` under the source code folder
+or download it from https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx.
 
-To perform a power flow study for test case named ``kundur_full.xlsx`` in the current directory, run
+Change to the directory containing ``kundur_full.xlsx``.
+To run power flow, execute the following in the command line:
 
 .. code:: bash
 
     andes run kundur_full.xlsx
 
-The full path to the case file is also accepted, for example,
+The full path to the case file is also recognizable, for example,
 
 .. code:: bash
 
     andes run /home/user/andes/cases/kundur/kundur_full.xlsx
 
-Power flow reports will be saved to the current directory in which andes is called.
-The power flow report contains four sections: a) system statistics, b) ac bus
+The power flow report will be saved to the current directory where ANDES is run.
+The report contains four sections: a) system statistics, b) ac bus
 and dc node data, c) ac line data, and d) the initialized values of other
 algebraic variables and state variables.
 
@@ -193,9 +201,11 @@ This execution first solves the power flow as a starting point.
 Next, the numerical integration simulates 20 seconds, during which a predefined
 breaker opens at 2 seconds.
 
-TDS produces two output files by default: a NumPy data file ``ieee14_syn_out.npy``
-and a variable name list file ``ieee14_syn_out.lst``.
-The list file contains three columns: variable indices, variable name in plain text, and variable
+TDS produces two output files by default:
+a compressed NumPy data file ``kundur_full_out.npz``
+and a variable name list file ``kundur_full_out.lst``.
+The list file contains three columns:
+variable indices, variable name in plain text, and variable
 name in the :math:`\LaTeX` format.
 The variable indices are needed to plot the needed variable.
 
@@ -279,27 +289,33 @@ a template workbook for `Toggler`.
 PSS/E inputs
 ............
 To work with PSS/E input files (.raw and .dyr), one need to provide the
-raw file as ``casefile`` and pass the dyr file to ``--addfile``. For example,
-in ``andes/andes/cases/wecc``, one can run the power flow using
+raw file through ``casefile`` and pass the dyr file through ``--addfile``.
+For example, in ``andes/cases/kundur``, one can run the power flow using
 
 .. code:: bash
 
-    andes run wecc.raw
+    andes run kundur.raw
 
 and run a no-disturbance time-domain simulation using
 
 .. code:: bash
 
-    andes run wecc.raw --addfile wecc_full.dyr -r tds
+    andes run kundur.raw --addfile kundur_full.dyr -r tds
 
-To create add a disturbance, there are two options. The recommended option
-is to convert the PSS/E data into an ANDES xlsx file, edit and run (see the
-previous subsection).
+.. note::
+    If one wants to modify the parameters of models that are supported
+    by both PSS/E and ANDES, one can directly
+    edit those dynamic parameters in the ``.raw`` and ``.dyr`` files
+    to maintain interoperability with other tools.
 
-The alternative is to edit the dyr file and
-append lines customized for ANDES models. This is for advanced users after
-referring to ``andes/io/psse-dyr.yaml``, at the end of which one can find
-the format of ``Toggler``: ::
+To create add a disturbance, there are two options.
+The recommended option is to convert the PSS/E data into an ANDES xlsx file,
+edit it and run (see the previous subsection).
+
+An alternative is to edit the ``.dyr`` file with a planin-text editor (such as Notepad)
+and append lines customized for ANDES models.
+This is for advanced users after referring to ``andes/io/psse-dyr.yaml``,
+at the end of which one can find the format of ``Toggler``: ::
 
     # === Custom Models ===
     Toggler:
@@ -308,7 +324,7 @@ the format of ``Toggler``: ::
             - dev
             - t
 
-To define two Togglers in the dyr file, one can append lines to the end
+To define two Togglers in the ``.dyr`` file, one can append lines to the end
 of the file using, for example, ::
 
     Line   'Toggler'  Line_2  1 /
@@ -317,11 +333,7 @@ of the file using, for example, ::
 which is separated by spaces and ended with a slash. The second parameter
 is fixed to the model name quoted by a pair of single quotation marks,
 and the others correspond to the fields defined in the above``inputs``.
-
-.. note::
-    When working with PSS/E data, the recommended practice is to edit model
-    dynamic parameters directly in the dyr file
-    so that the data can be easily used by other tools.
+Each entry is properly terminated with a forward slash.
 
 andes plot
 --------------
@@ -485,12 +497,13 @@ andes misc
 Configuration
 .............
 ANDES uses a configuration file to set runtime configs for the system routines, and models.
-``--save-config`` saves all configs to a file. By default, it saves to ``~/.andes/andes.conf`` file, where ``~``
+``andes misc --save-config`` saves all configs to a file.
+By default, it saves to ``~/.andes/andes.conf`` file, where ``~``
 is the path to your home directory.
 
-With ``--edit-config``, you can edit ANDES configuration handy.
+With ``andes misc --edit-config``, you can edit ANDES configuration handy.
 The command will automatically save the configuration to the default location if not exist.
-The shorter version ``--edit`` can be used instead asn Python automatically matches it with ``--edit-config``.
+The shorter version ``--edit`` can be used instead as Python matches it with ``--edit-config``.
 
 You can pass an editor name to ``--edit``, such as ``--edit vim``.
 If the editor name is not provided, it will use the following defaults:
@@ -503,7 +516,7 @@ If not familiar with vim, you can use nano with ``--edit nano`` or TextEdit with
 
 Cleanup
 .......
-``-C, --clean``
+``andes misc -C, --clean``
 
 Option to remove any generated files. Removes files with any of the following
 suffix: ``_out.txt`` (power flow report), ``_out.npy`` (time domain data),
@@ -515,12 +528,6 @@ This section is a tutorial for using ANDES in an interactive environment.
 All interactive shells are supported, including Python shell, IPython, Jupyter Notebook and Jupyter Lab.
 The examples below uses Jupyter Notebook.
 
-.. note::
-
-    All following blocks starting with ``>>>`` are Python code.
-    They should be typed into a Python shell, IPython or Jupyter Notebook,
-    not a Anaconda Prompt or shell.
-
 Jupyter Notebook
 ----------------
 Jupyter notebook is a convenient tool to run Python code and present results.
@@ -530,7 +537,7 @@ Jupyter notebook can be installed with
 
     conda install jupyter notebook
 
-After the installation, change directory to the folder that you wish to store notebooks,
+After the installation, change directory to the folder where you wish to store notebooks,
 then start the notebook with
 
 .. code:: bash
@@ -538,7 +545,13 @@ then start the notebook with
     jupyter notebook
 
 A browser window should open automatically with the notebook browser loaded.
-To create a new notebook, use the "New" button at the top-right corner.
+To create a new notebook, use the "New" button near the upper-right corner.
+
+.. note::
+
+    Code lines following ``>>>`` are Python code.
+    Python code should be typed into a Python shell, IPython, or Jupyter Notebook,
+    not a Anaconda Prompt or command-line shell.
 
 Import
 ------
@@ -566,7 +579,7 @@ If not explicitly enabled, the default level 20 (INFO) will apply.
 Making a System
 ---------------
 Before running studies, a "System" object needs to be create to hold the system data.
-The System object can be created by passing the path to the case file the entrypoint function.
+The System object can be created by passing the path to the case file the entry-point function.
 For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
 
 .. code:: python
@@ -977,12 +990,12 @@ See `format converter`_ for more detail.
 Data Consistency
 ................
 
-Input data needs to have consistent types for ``idx``. Both string and numerical types are allowed
+Input data needs to have consistent types for ``idx``.
+Both string and numerical types are allowed
 for ``idx``, but the original type and the referencing type must be the same.
 Suppose we have a bus and a connected PQ.
 The Bus device may use ``1`` or ``'1'`` as its ``idx``, as long as the
 PQ device uses the same value for its ``bus`` parameter.
-
 
 The ANDES xlsx reader will try to convert data into numerical types when possible.
 This is especially relevant when the input ``idx`` is string literal of numbers,
@@ -1008,7 +1021,7 @@ https://www.cheatography.com//cuihantao/cheat-sheets/andes-for-power-system-simu
 Make Documentation
 ==================
 
-The documentation can be made locally into a variety of formats.
+The documentation you are viewing can be made locally in a variety of formats.
 To make HTML documentation, change directory to ``docs``, and do
 
 .. code:: bash
