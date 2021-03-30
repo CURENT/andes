@@ -1420,6 +1420,10 @@ class System:
         if pycode is None:
             raise ImportError("Generated pycode not found.")
 
+        for name in self.models:
+            if name not in pycode.__dict__:
+                raise ImportError("Generated pycode is incomplete.")
+
         for model in self.models.values():
             pycode_model = pycode.__dict__[model.class_name]
 
