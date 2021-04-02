@@ -621,15 +621,9 @@ class System:
             for var in mdl.cache.vars_ext.values():
                 var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
-    def init(self, models: OrderedDict, routine: str):
+    def _init_numba(self, models: OrderedDict):
         """
-        Initialize the variables for each of the specified models.
-
-        For each model, the initialization procedure is:
-
-        - Get values for all `ExtService`.
-        - Call the model `init()` method, which initializes internal variables.
-        - Copy variables to DAE and then back to the model.
+        Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
             use_parallel = True if (self.config.numba_parallel == 1) else False
@@ -640,6 +634,21 @@ class System:
             for mdl in models.values():
                 mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
 
+    def init(self, models: OrderedDict, routine: str):
+        """
+        Initialize the variables for each of the specified models.
+
+        For each model, the initialization procedure is:
+
+        - Get values for all `ExtService`.
+        - Call the model `init()` method, which initializes internal variables.
+        - Copy variables to DAE and then back to the model.
+        """
+        try:
+            self._init_numba(models)
+        except ImportError:
+            logger.warning("Numba not found. JIT compilation is skipped.")
+
         for mdl in models.values():
             # link externals first
             for instance in mdl.services_ext.values():
@@ -647,7 +656,7 @@ class System:
                 try:
                     ext_model = self.__dict__[ext_name]
                 except KeyError:
-                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+                    raise KeyError('<%s> is not a model or group name.' % ext_name)
 
                 try:
                     instance.link_external(ext_model)
@@ -1025,6 +1034,7 @@ class System:
         info : bool
             True to log connectivity summary.
         """
+        logger.debug("Entering connectivity check.")
 
         self.Bus.n_islanded_buses = 0
         self.Bus.islanded_buses = list()
@@ -1068,10 +1078,9 @@ class System:
         nelm = len(cons.J)
         conn = spmatrix([], [], [], (1, n), 'd')
         enum = idx = islands = 0
-        done = 0
 
-        while not done:
-            while not done:
+        while True:
+            while True:
                 cons = cons * temp
                 cons = sparse(cons)  # remove zero values
                 new_nelm = len(cons.J)
@@ -1079,9 +1088,11 @@ class System:
                     break
                 nelm = new_nelm
 
+            # started with an islanded bus
+            if len(conn.J) == 0:
+                enum += 1
             # all buses are interconnected
-            if len(cons.J) == n:
-                done = 1
+            elif len(cons.J) == n:
                 break
 
             self.Bus.island_sets.append(list(cons.J))
@@ -1129,6 +1140,25 @@ class System:
 
         if info is True:
             self.summary()
+
+    def to_ipysheet(self, model: str, vin: bool = False):
+        """
+        Return an ipysheet object for editing in Jupyter Notebook.
+        """
+
+        from ipysheet import from_dataframe
+
+        return from_dataframe(self.models[model].as_df(vin=vin))
+
+    def from_ipysheet(self, model: str, sheet, vin: bool = False):
+        """
+        Set an ipysheet object back to model.
+        """
+
+        from ipysheet import to_dataframe
+
+        df = to_dataframe(sheet)
+        self.models[model].update_from_df(df, vin=vin)
 
     def summary(self):
         """

@@ -92,8 +92,7 @@ If you use ANDES for research or consulting, please cite the following paper in 
 ANDES
 
 ```
-H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis,"
-in IEEE Transactions on Power Systems, doi: 10.1109/TPWRS.2020.3017019.
+H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis," in IEEE Transactions on Power Systems, vol. 36, no. 2, pp. 1373-1384, March 2021, doi: 10.1109/TPWRS.2020.3017019.
 ```
 
 # Who is Using ANDES?

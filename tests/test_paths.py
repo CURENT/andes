@@ -16,14 +16,23 @@ class TestPaths(unittest.TestCase):
 
     def test_addfile_path(self):
         path, case = os.path.split(self.ieee14)
-        andes.load('ieee14.raw', addfile='ieee14.dyr',
-                   input_path=path, default_config=True,
-                   )
+        ss = andes.load('ieee14.raw', addfile='ieee14.dyr',
+                        input_path=path, default_config=True,
+                        )
+        self.assertNotEqual(ss, None)
 
-        andes.run('ieee14.raw', addfile='ieee14.dyr',
-                  input_path=path,
-                  no_output=True, default_config=True,
-                  )
+        ss = andes.run('ieee14.raw', addfile='ieee14.dyr',
+                       input_path=path,
+                       no_output=True, default_config=True,
+                       )
+        self.assertNotEqual(ss, None)
+
+    def test_relative_path(self):
+        ss = andes.run('ieee14.raw',
+                       input_path=andes.get_case('ieee14/', check=False),
+                       no_output=True, default_config=True,
+                       )
+        self.assertNotEqual(ss, None)
 
     def test_pert_file(self):
         """Test path of pert file"""
