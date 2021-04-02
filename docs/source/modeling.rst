@@ -978,6 +978,12 @@ Value Selector
 .. autoclass:: andes.core.block.LVGate
     :noindex:
 
+Group
+========
+Group is a collection of similar functional models, with common variables and parameters.
+A group has common variables and parameters. It means when develop new modle under an 
+existing group, the common variables and parameters should be contained in the modle.
+The common variables and parameters are the interface when connect different group models.
 
 Examples
 ========
