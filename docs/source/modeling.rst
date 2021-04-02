@@ -981,10 +981,12 @@ Value Selector
 Group
 ========
 Group is a collection of similar functional models, with common variables and parameters.
-A group has common variables and parameters. It means when develop new modle under an 
-existing group, the common variables and parameters should be contained in the modle.
+
+It is compulsory to have the group common variables and parameters when develop new model. 
+
 The common variables and parameters are the interface when connect different group models.
 For example, the Group RenGen has variables Pe and Qe, which are active power output and reactive power output respectively. Then a model in Group RenExciter, could generate control signal based on the given Pe and Qe.
+
 In such way, the modularization is realized so that each model in the same group could carry out similar specificied function.
 
 Examples
