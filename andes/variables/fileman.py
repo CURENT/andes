@@ -66,11 +66,10 @@ class FileMan:
         self.input_path = input_path if input_path is not None else ''
         self.output_path = output_path if output_path is not None else ''
 
-        if os.path.isfile(self.get_fullpath(case)):
-            self.case = self.get_fullpath(case)
+        self.case = case
+        if os.path.isfile(case):
             _, self.fullname = os.path.split(self.case)
         else:
-            self.case = case
             self.fullname = ''
 
         # `self.name` is the name part without extension

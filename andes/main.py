@@ -261,7 +261,8 @@ def print_license():
     return True
 
 
-def load(case, codegen=False, setup=True, **kwargs):
+def load(case, codegen=False, setup=True,
+         use_input_path=True, **kwargs):
     """
     Load a case and set up a system without running routine.
     Return a system.
@@ -279,6 +280,9 @@ def load(case, codegen=False, setup=True, **kwargs):
         equations and run simulations.
     setup : bool, optional
         Call `System.setup` after loading
+    use_input_path : bool, optional
+        True to use the ``input_path`` argument to behave
+        the same as ``andes.main.run``.
 
     Warnings
     -------
@@ -286,7 +290,16 @@ def load(case, codegen=False, setup=True, **kwargs):
     file, do ``setup=False`` and call ``System.add()`` to add devices.
     When done, manually invoke ``setup()`` to set up the system.
     """
-    system = System(case=case, **kwargs)
+    if use_input_path:
+        input_path = kwargs.get('input_path', '')
+        case = _find_cases(case, input_path)
+        if len(case) > 1:
+            logger.error("`andes.load` does not support mulitple cases.")
+            return None
+        case = case[0]
+
+    system = System(case, **kwargs)
+
     if codegen:
         system.prepare()
     else:
@@ -306,6 +319,8 @@ def run_case(case, *, routine='pflow', profile=False,
     """
     Run single simulation case for the given full path.
     Use ``run`` instead of ``run_case`` whenever possible.
+
+    Argument ``input_path`` will not be prepended to ``case``.
 
     Arguments recognizable by ``load`` can be passed to ``run_case``.
 
@@ -338,7 +353,11 @@ def run_case(case, *, routine='pflow', profile=False,
     if profile is True:
         pr.enable()
 
-    system = load(case, codegen=codegen, **kwargs)
+    system = load(case,
+                  codegen=codegen,
+                  use_input_path=False,
+                  **kwargs)
+
     if system is None:
         return None
 
