@@ -2,7 +2,13 @@
 
 *****************
 Modeling Cookbook
-*****************
+*****************A group is a collection of similar functional models with common variables and parameters.
+
+It is compulsory to have the group common variables and parameters when developing a new model into the group. 
+		
+The common variables and parameters are the interface when connecting different group models.
+
+For example, the Group RenGen has variables Pe and Qe, which are active power output and reactive power output, respectively. Then a model in Group RenExciter, could generate the control signal based on the given Pe and Qe.
 
 This chapter contains advanced topics on modeling and simulation and how they are implemented in ANDES.
 It aims to provide an in-depth explanation of how the ANDES framework is set up for symbolic modeling and
@@ -980,14 +986,13 @@ Value Selector
 
 Group
 ========
-Group is a collection of similar functional models, with common variables and parameters.
+A group is a collection of similar functional models with common variables and parameters.
 
-It is compulsory to have the group common variables and parameters when develop new model. 
+It is compulsory to have the group common variables and parameters when developing a new model into the group. 
+		
+The common variables and parameters are the interface when connecting different group models.
 
-The common variables and parameters are the interface when connect different group models.
-For example, the Group RenGen has variables Pe and Qe, which are active power output and reactive power output respectively. Then a model in Group RenExciter, could generate control signal based on the given Pe and Qe.
-
-In such way, the modularization is realized so that each model in the same group could carry out similar specificied function.
+For example, the Group RenGen has variables Pe and Qe, which are active power output and reactive power output, respectively. Then a model in Group RenExciter, could generate the control signal based on the given Pe and Qe.
 
 Examples
 ========
