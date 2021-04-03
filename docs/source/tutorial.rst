@@ -134,7 +134,7 @@ and do not depend on the command-line current directory.
 
 Routine
 .......
-Routines are system analysis case, such as power flow solution, or time domain simulation.
+Routines are system analysis cases, such as power flow solution, or time-domain simulation.
 
 Option ``-r`` or ``-routine`` is used for specifying the analysis routine,
 followed by the routine name.
@@ -564,7 +564,7 @@ Like other Python libraries, ANDES needs to be imported into an interactive Pyth
     >>> import andes
     >>> andes.main.config_logger()
 
-If kernel error happen when import, you may need to add andes into the env.
+If kernel error happens when import andes, you may need to add andes into the env.
 
 .. code:: bash
 
