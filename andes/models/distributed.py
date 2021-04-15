@@ -3,8 +3,6 @@ Distributed energy resource models.
 """
 from collections import OrderedDict
 
-from andes.core.common import dummify
-
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
 from andes.core.block import Lag, DeadBand1, LimiterGain, Integrator
@@ -528,14 +526,14 @@ class ESD1Model(PVD1Model):
 
         # --- Recalculate Ipcmd and Ipout without SOC influence ---
         self.Ipcmdcalc = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=-2, upper=self.Ipmax,
-                                 info='Ip with limiter and coeff.',
-                                 tex_name='I^{pcmdcalc}',
-                                 )
+                                     lower=-2, upper=self.Ipmax,
+                                     info='Ip with limiter and coeff.',
+                                     tex_name='I^{pcmdcalc}',
+                                     )
 
         self.Ipoutcalc = Lag(u=self.Ipcmdcalc_y, T=self.tip, K=1.0,
-                         info='Output Ipcalc filter',
-                         )
+                             info='Output Ipcalc filter',
+                             )
 
         # --- Determine whether the energy storage is in charging or discharging mode ---
         self.LT = LessThan(self.Ipoutcalc_y, 0.0)
@@ -557,12 +555,12 @@ class ESD1Model(PVD1Model):
                                  )
 
         # --- Add Ipmax, Ipmin, and Ipcmd ---
-        self.Ipmax.v_str = '(1-SOClim_zu)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
-        self.Ipmax.e_str = '(1-SOClim_zu)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
+        self.Ipmax.e_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
 
         self.Ipmin = Algeb(info='Minimum value of Ip',
-                           v_str='-(1-SOClim_zl) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
-                           e_str='-(1-SOClim_zl) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin',
+                           v_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
+                           e_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin',
                            )
 
         self.Ipcmd.lim.lower = self.Ipmin
