@@ -35,7 +35,7 @@ class Test5Bus(unittest.TestCase):
 
     def test_as_df(self):
         self.ss.Bus.as_df()
-        self.ss.Bus.as_df_in()
+        self.ss.Bus.as_df(vin=True)
 
     def test_init_order(self):
         self.ss.Bus.get_init_order()
@@ -270,3 +270,14 @@ class TestShuntSw(unittest.TestCase):
                                        [0., 0.025, 0.05, 0.075, 0.1, 0.125])
         np.testing.assert_almost_equal(ss.ShuntSw.beff.bcs[1],
                                        [0., 0.05, 0.1, 0.15, 0.2, 0.25])
+
+
+class TestIslands(unittest.TestCase):
+    """Test power flow with two islands"""
+
+    def test_islands(self):
+        ss = andes.run(get_case('kundur/kundur_islands.xlsx'),
+                       no_output=True, default_config=True)
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+        self.assertEqual(len(ss.Bus.islands), 2)

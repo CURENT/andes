@@ -8,7 +8,7 @@
 #  File name: param.py
 #  Last modified: 8/16/20, 7:27 PM
 
-from typing import Optional, Union, Callable, List, Tuple, Type
+from typing import Optional, Union, Callable, List, Tuple, Type, Iterable
 
 import math
 import logging
@@ -98,6 +98,67 @@ class BaseParam:
         -----
         If the value is ``math.nan``, it will set to ``None``.
         """
+        value = self._sanitize(value)
+
+        if isinstance(self.v, list):
+            self.v.append(value)
+        else:
+            self.v = np.append(self.v, value)
+
+    def set(self, pos, attr, value):
+        """
+        Set attributes of the BaseParam class to new values at the given positions.
+
+        Parameters
+        ----------
+        pos : int, list of integers
+            Positions in arrays where the values should be set
+        attr : 'v', 'vin'
+            Name of the attribute to be set
+        value : str, float or list of above
+            New values
+        """
+        if not isinstance(pos, Iterable):
+            pos = [pos]
+
+        if isinstance(self.__dict__[attr], list):
+            for ii, p in enumerate(pos):
+                val = self._sanitize(value[ii])
+                self.__dict__[attr][p] = val
+        else:
+            new_vals = np.zeros_like(value)
+            for ii, p in enumerate(pos):
+                new_vals[ii] = self._sanitize(value[ii])
+            self.__dict__[attr][:] = new_vals
+
+    def set_all(self, attr, value):
+        """
+        Set attributes of the BaseParam class to new values for all positions.
+
+        Parameters
+        ----------
+        attr : 'v', 'vin'
+            Name of the attribute to be set
+        value : list of str, float or int
+            New values
+        """
+        if len(value) != self.n:
+            raise ValueError("Value length does not match parameter numbers")
+
+        if isinstance(self.__dict__[attr], list):
+            for ii, val in enumerate(value):
+                val = self._sanitize(val)
+                self.__dict__[attr][ii] = val
+        else:
+            new_vals = np.zeros_like(value)
+            for ii, val in enumerate(value):
+                new_vals[ii] = self._sanitize(val)
+            self.__dict__[attr][:] = new_vals
+
+    def _sanitize(self, value):
+        """
+        Helper function for sanitizing parameter value.
+        """
 
         if isinstance(value, float) and math.isnan(value):
             value = None
@@ -109,10 +170,7 @@ class BaseParam:
             else:
                 value = self.default
 
-        if isinstance(self.v, list):
-            self.v.append(value)
-        else:
-            self.v = np.append(self.v, value)
+        return value
 
     def get_property(self, property_name: str):
         """
