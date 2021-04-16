@@ -539,7 +539,7 @@ class ESD1Model(PVD1Model):
         self.LT = LessThan(self.Ipoutcalc_y, 0.0)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='-LT_z1*(v * Ipoutcalc_y)*EtaC - LT_z0*(v * Ipoutcalc_y)/EtaD',
+        self.pIG = Integrator(u='-LT_z1*(v * Ipoutcalc_y)*EtaC-LT_z0*(v * Ipoutcalc_y)/EtaD',
                               T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
                               check_init=False,
                               )
