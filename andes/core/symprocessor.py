@@ -320,7 +320,12 @@ class SymProcessor:
         # equation symbols for pretty printing
         self.f, self.g = Matrix([]), Matrix([])
 
-        self.xy = Matrix(list(self.vars_dict.values())).subs(self.tex_names)
+        try:
+            self.xy = Matrix(list(self.vars_dict.values())).subs(self.tex_names)
+        except TypeError as e:
+            logger.error("Error while substituting tex_name for variables.")
+            logger.error("Variable names might have conflicts with SymPy functions.")
+            raise e
 
         # get pretty printing equations by substituting symbols
         self.f = self.f_matrix.subs(self.tex_names)
