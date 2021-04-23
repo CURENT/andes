@@ -3,8 +3,6 @@ Distributed energy resource models.
 """
 from collections import OrderedDict
 
-from andes.core.common import dummify
-
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
 from andes.core.block import Lag, DeadBand1, LimiterGain, Integrator
@@ -12,7 +10,7 @@ from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, ExtService, VarService
 from andes.core.service import DataSelect, DeviceFinder
-from andes.core.discrete import Switcher, Limiter, HardLimiter
+from andes.core.discrete import Switcher, Limiter, HardLimiter, LessThan
 
 
 class PVD1Data(ModelData):
@@ -453,7 +451,7 @@ class PVD1Model(Model):
 
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                 lower=0.0, upper=self.Ipmax,
+                                 lower=0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
@@ -488,19 +486,34 @@ class ESD1Data(PVD1Data):
     def __init__(self):
         PVD1Data.__init__(self)
         self.Tf = NumParam(default=1.0, tex_name='T_f',
-                           info='Integrator constant for SOC model'
+                           info='Integrator constant for SOC model',
                            )
         self.SOCmin = NumParam(default=0.0, tex_name='SOC_{min}',
                                info='Minimum required value for SOC in limiter',
                                )
 
         self.SOCmax = NumParam(default=1.0, tex_name='SOC_{max}',
-                               info='Maximum allowed value for SOC in limiter'
+                               info='Maximum allowed value for SOC in limiter',
                                )
 
         self.SOCinit = NumParam(default=0.5, tex_name='SOC_{init}',
-                                info='Initial state of charge'
+                                info='Initial state of charge',
                                 )
+
+        self.En = NumParam(default=100.0, tex_name='E_n',
+                           info='Rated energy capacity',
+                           unit="MWh"
+                           )
+
+        self.EtaC = NumParam(default=1.0, tex_name='Eta_C',
+                             info='Efficiency during charging',
+                             vrange=(0, 1),
+                             )
+
+        self.EtaD = NumParam(default=1.0, tex_name='Eta_D',
+                             info='Efficiency during discharging',
+                             vrange=(0, 1),
+                             )
 
 
 class ESD1Model(PVD1Model):
@@ -511,20 +524,35 @@ class ESD1Model(PVD1Model):
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
 
+        # --- Determine whether the energy storage is in charging or discharging mode ---
+        self.LTN = LessThan(self.Ipout_y, 0.0)
+
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='v * Ipout_y', T=self.Tf, K=1.0, y0=self.SOCinit,
+        self.pIG = Integrator(u='-LTN_z1*(v * Ipout_y)*EtaC - LTN_z0*(v * Ipout_y)/EtaD',
+                              T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
                               check_init=False,
                               )
 
         # --- Add hard limiter for SOC ---
-        self.SOC = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
+        self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
 
-        # --- Add Ipmax and Ipcmd ---
-        self.Ipmax.v_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
-        self.Ipmax.e_str = '(1-SOC_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+        # --- Adjust SOC depending on its relation to SOCmin and SOCmax ---
+        self.adjustedSOC = Algeb(info='SOC after limiter is applied',
+                                 v_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu',
+                                 e_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu - adjustedSOC',
+                                 tex_name='SOC_{adj}'
+                                 )
 
-        self.Ipcmd.lim.sign_lower = dummify(-1)
-        self.Ipcmd.lim.lower = self.Ipmax
+        # --- Add Ipmax, Ipmin, and Ipcmd ---
+        self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
+        self.Ipmax.e_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax'
+
+        self.Ipmin = Algeb(info='Minimum value of Ip',
+                           v_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
+                           e_str='-(1-SOClim_zu) * (SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmin',
+                           )
+
+        self.Ipcmd.lim.lower = self.Ipmin
 
 
 class PVD1(PVD1Data, PVD1Model):
