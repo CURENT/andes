@@ -1178,9 +1178,9 @@ class System:
             logger.debug("  Islanded Bus indices (0-based): %s", self.Bus.islanded_buses)
 
         if len(island_sets) == 0:
-            logger.info("  No islanded areas detected.")
+            logger.info("  No island detected.")
         else:
-            logger.info("  %d islanded areas detected.", len(island_sets))
+            logger.info("  A total of %d island(s) detected.", len(island_sets))
             logger.debug("  Bus indices in islanded areas (0-based): %s", island_sets)
 
         if len(nosw_island) > 0:
