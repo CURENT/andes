@@ -524,22 +524,11 @@ class ESD1Model(PVD1Model):
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
 
-        # --- Recalculate Ipcmd and Ipout without SOC influence ---
-        self.Ipcmdcalc = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
-                                     lower=-2, upper=self.Ipmax,
-                                     info='Ip with limiter and coeff.',
-                                     tex_name='I^{pcmdcalc}',
-                                     )
-
-        self.Ipoutcalc = Lag(u=self.Ipcmdcalc_y, T=self.tip, K=1.0,
-                             info='Output Ipcalc filter',
-                             )
-
         # --- Determine whether the energy storage is in charging or discharging mode ---
-        self.LT = LessThan(self.Ipoutcalc_y, 0.0)
+        self.LTN = LessThan(self.Ipout_y, 0.0)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
-        self.pIG = Integrator(u='-LT_z1*(v * Ipoutcalc_y)*EtaC-(v * Ipoutcalc_y)/EtaD',
+        self.pIG = Integrator(u='-LTN_z1*(v * Ipout_y)*EtaC - LTN_z0*(v * Ipout_y)/EtaD',
                               T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
                               check_init=False,
                               )
