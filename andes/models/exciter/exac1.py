@@ -108,12 +108,6 @@ class EXAC1Model(ExcBase):
         self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
                               info='Field voltage saturation',
                               )
-        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
-
-        self.Se0 = ConstService(info='Initial saturation output',
-                                tex_name='S_{e0}',
-                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
-                                )
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
@@ -162,8 +156,10 @@ class EXAC1Model(ExcBase):
         self.INT.y.v_str = 0.1
         self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
 
+        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
-                        v_str='Se0',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2 / INT_y',
                         e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B / INT_y - Se',
                         )
 
