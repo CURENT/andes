@@ -112,6 +112,84 @@ GENROU:
         S12: S12
 
 # Exciter models
+EXAC1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - TB
+        - TC
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - TE
+        - KF
+        - TF
+        - KC
+        - KD
+        - KE
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: EXAC1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        TB: TB
+        TC: TC
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        TE: TE
+        KF: KF
+        TF: TF
+        KC: KC
+        KD: KD
+        KE: KE
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+EXAC4:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - TC
+        - TB
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - KC
+    destination: EXAC4
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        VIMAX: VIMAX
+        VIMIN: VIMIN
+        TC: TC
+        TB: TB
+        KA: KA
+        TA: TA
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        KC: KC
 EXDC2:
     inputs:
         - BUS
@@ -361,6 +439,53 @@ ESST3A:
         TM: TM
         VMMAX: VMMAX
         VMMIN: VMMIN
+
+ESST4B:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KPR
+        - KIR
+        - VRMAX
+        - VRMIN
+        - TA
+        - KPM
+        - KIM
+        - VMMAX
+        - VMMIN
+        - KG
+        - KP
+        - KI
+        - VBMAX
+        - KC
+        - XL
+        - THETAP
+    destination: ESST4B
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        KPR: KPR
+        KIR: KIR
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        TA: TA
+        KPM: KPM
+        KIM: KIM
+        VMMAX: VMMAX
+        VMMIN: VMMIN
+        KG: KG
+        KP: KP
+        KI: KI
+        VBMAX: VBMAX
+        KC: KC
+        XL: XL
+        THETAP: THETAP
 
 IEEET1:
     inputs:

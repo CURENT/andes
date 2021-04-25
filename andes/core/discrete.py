@@ -126,7 +126,7 @@ class Discrete:
             pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
             if not len(pos):
                 continue
-            err_msg = f'{self.owner.class_name}.{self.name} {self.__dict__[limit].name} at limits'
+            err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
             if isinstance(self.__dict__[limit].v, np.ndarray):
                 lim_value = self.__dict__[limit].v[pos]
             else:
