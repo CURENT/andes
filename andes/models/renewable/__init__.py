@@ -7,3 +7,4 @@ from andes.models.renewable.wtds import WTDS        # NOQA
 from andes.models.renewable.wtdta1 import WTDTA1    # NOQA
 from andes.models.renewable.wtpta1 import WTPTA1    # NOQA
 from andes.models.renewable.wttqa1 import WTTQA1    # NOQA
+from andes.models.renewable.wttqa1 import REGCVSG    # NOQA
