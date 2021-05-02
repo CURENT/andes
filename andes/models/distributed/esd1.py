@@ -59,19 +59,12 @@ class ESD1Model(PVD1Model):
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
         self.pIG = Integrator(u='-LTN_z1*(v * Ipout_y)*EtaC - LTN_z0*(v * Ipout_y)/EtaD',
-                              T=self.Tf, K='SOCinit - 3600 / En / sys_mva', y0=self.SOCinit,
+                              T=self.Tf, K='sys_mva / 3600 / En', y0=self.SOCinit,
                               check_init=False,
                               )
 
         # --- Add hard limiter for SOC ---
         self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
-
-        # --- Adjust SOC depending on its relation to SOCmin and SOCmax ---
-        self.adjustedSOC = Algeb(info='SOC after limiter is applied',
-                                 v_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu',
-                                 e_str='pIG_y*SOClim_zi + SOCmin*SOClim_zl + SOCmax*SOClim_zu - adjustedSOC',
-                                 tex_name='SOC_{adj}'
-                                 )
 
         # --- Add Ipmax, Ipmin, and Ipcmd ---
         self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'
