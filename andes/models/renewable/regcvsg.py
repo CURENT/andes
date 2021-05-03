@@ -50,20 +50,20 @@ class REGCVSGData(ModelData):
                           info='Emulated startup time constant (inertia)',
                           unit='s',
                           )
-        self.kD = NumParam(default=2, tex_name='k_D',
+        self.D = NumParam(default=2, tex_name='D',
                           info='Emulated damiping coefficient',
                           unit='p.u.',
                           )
 
-        self.kp_dv = NumParam(default=20, tex_name='kp_{dv}',
+        self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
                               info='d-axis v controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_dv = NumParam(default=0.001, tex_name='ki_{dv}',
+        self.ki_dv = NumParam(default=0.001, tex_name=r'ki_{dv}',
                               info='d-axis v controller integral gain',
                               unit='p.u.',
                               )
-        self.kp_qv = NumParam(default=20, tex_name='kp_{qv}',
+        self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
                               info='q-axis v controller proportional gain',
                               unit='p.u.',
                              )
@@ -151,33 +151,33 @@ class REGCVSGModel(Model):
         self.ixs = ConstService(v_str='1/xs',
                                 tex_name='1/xs',
                                 )
-        self.Id0 = ConstService(tex_name='I_{d0}',
+        self.Id0 = ConstService(tex_name=r'I_{d0}',
                                 v_str='u * Pref / v',
                                 )
-        self.Iq0 = ConstService(tex_name='I_{q0}',
+        self.Iq0 = ConstService(tex_name=r'I_{q0}',
                                 v_str='- u * Qref / v',
                                 )
 
-        self.vd0 = ConstService(tex_name='v_{d0}',
+        self.vd0 = ConstService(tex_name=r'v_{d0}',
                                 v_str='u * v',
                                 )
-        self.vq0 = ConstService(tex_name='v_{q0}',
+        self.vq0 = ConstService(tex_name=r'v_{q0}',
                                 v_str='0',
                                 )
 
-        self.udref0 = ConstService(tex_name='u_{dref0}',
+        self.udref0 = ConstService(tex_name=r'u_{dref0}',
                                    v_str='ra * Id0 - xs * Iq0 + vd0',
                                    )
-        self.uqref0 = ConstService(tex_name='u_{qref0}',
+        self.uqref0 = ConstService(tex_name=r'u_{qref0}',
                                    v_str='ra * Iq0 + xs * Id0 + vq0',
                                    )
 
-        self.Pref2 = Algeb(tex_name='P_{ref2}',
+        self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
                            e_str='u * Pref - dw * ikP - Pref2', 
                            v_str='u * Pref')
 
-        self.vref2 = Algeb(tex_name='v_{ref2}',
+        self.vref2 = Algeb(tex_name=r'v_{ref2}',
                            info='voltage reference after adjusted by reactive power',
                            e_str='(u * Qref - Qe) * kv + vref - vref2', 
                            v_str='u * vref')
@@ -186,7 +186,7 @@ class REGCVSGModel(Model):
                         unit='pu (Hz)',
                         v_str='0',
                         tex_name=r'\Delta\omega',
-                        e_str='Pref2 - Pe - kD * dw',
+                        e_str='Pref2 - Pe - D * dw',
                         t_const= self.M)
 
         self.omega = Algeb(info='virtual rotor speed',
@@ -253,12 +253,12 @@ class REGCVSGModel(Model):
                                  ki=self.ki_qi,
                                  )     
 
-        self.udref = Algeb(tex_name='u_{dref}',
+        self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
                            e_str='PIdi_y + vd - Iq * xs - udref', 
                            v_str='udref0',
                            ) 
-        self.uqref = Algeb(tex_name='u_{qref}',
+        self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='ud reference',
                            e_str='PIqi_y + vq + Id * xs - uqref', 
                            v_str='uqref0',
