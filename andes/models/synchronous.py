@@ -237,11 +237,11 @@ class GENBase(Model):
                                )
 
         self.Pe = Algeb(tex_name='P_e',
-                        info='active power injection from VSC',
+                        info='active power injection',
                         e_str='u * (vd * Id + vq * Iq) - Pe', 
                         v_str='u * (vd0 * Id0 + vq0 * Iq0)') 
         self.Qe = Algeb(tex_name='Q_e',
-                        info='reactive power injection from VSC',
+                        info='reactive power injection',
                         e_str='u * (vq * Id - vd * Iq) - Qe', 
                         v_str='u * (vq0 * Id0 - vd0 * Iq0)') 
 
