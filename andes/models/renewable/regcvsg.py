@@ -46,7 +46,7 @@ class REGCVSGData(ModelData):
                            unit='p.u.',
                            )
 
-        self.M = NumParam(default=3, tex_name='M',
+        self.M = NumParam(default=10, tex_name='M',
                           info='Emulated startup time constant (inertia)',
                           unit='s',
                           )
@@ -55,36 +55,36 @@ class REGCVSGData(ModelData):
                           unit='p.u.',
                           )
 
-        self.kp_dv = NumParam(default=0.6, tex_name='kp_{dv}',
+        self.kp_dv = NumParam(default=20, tex_name='kp_{dv}',
                               info='d-axis v controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_dv = NumParam(default=1, tex_name='ki_{dv}',
+        self.ki_dv = NumParam(default=0.001, tex_name='ki_{dv}',
                               info='d-axis v controller integral gain',
                               unit='p.u.',
                               )
-        self.kp_qv = NumParam(default=0.6, tex_name='kp_{qv}',
+        self.kp_qv = NumParam(default=20, tex_name='kp_{qv}',
                               info='q-axis v controller proportional gain',
                               unit='p.u.',
                              )
-        self.ki_qv = NumParam(default=1, tex_name='ki_{qv}',
+        self.ki_qv = NumParam(default=0.001, tex_name='ki_{qv}',
                               info='q-axis v controller integral gain',
                               unit='p.u.',
                              )
 
-        self.kp_di = NumParam(default=0.2, tex_name='kp_{di}',
+        self.kp_di = NumParam(default=500, tex_name='kp_{di}',
                               info='d-axis i controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_di = NumParam(default=1, tex_name='ki_{di}',
+        self.ki_di = NumParam(default=0.2, tex_name='ki_{di}',
                               info='d-axis i controller integral gain',
                               unit='p.u.',
                               )
-        self.kp_qi = NumParam(default=0.2, tex_name='kp_{qi}',
+        self.kp_qi = NumParam(default=500, tex_name='kp_{qi}',
                               info='q-axis i controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_qi = NumParam(default=1, tex_name='ki_{qi}',
+        self.ki_qi = NumParam(default=0.2, tex_name='ki_{qi}',
                               info='q-axis i controller integral gain',
                               unit='p.u.',
                               )
@@ -215,7 +215,7 @@ class REGCVSGModel(Model):
                                  ki=self.ki_dv,
                                  x0='Id0',
                                  )                        
-        self.PIqv = PIController(u='-vq',
+        self.PIqv = PIController(u='- vq',
                                  kp=self.kp_qv,
                                  ki=self.ki_qv,
                                  x0='Iq0',
