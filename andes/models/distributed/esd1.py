@@ -76,6 +76,7 @@ class ESD1Model(PVD1Model):
                            )
 
         self.Ipcmd.lim.lower = self.Ipmin
+        self.Ipcmd.y.deps = ['Ipmin']
 
 
 class ESD1(ESD1Data, ESD1Model):
