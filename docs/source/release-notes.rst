@@ -8,6 +8,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.7 (2021-05-03)
+```````````````````
+- Allow manually specifying variables needing initialization
+  preceding a variable. Specify a list of variable names through
+  `BaseVar.deps`.
+
 v1.3.6 (2021-04-23)
 ```````````````````
 - Patched ESD1 model. Converted `distributed.py` into a package.
