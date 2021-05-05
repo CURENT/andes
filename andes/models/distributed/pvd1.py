@@ -430,7 +430,7 @@ class PVD1Model(Model):
 
         # --- Ipmax, Iqmax and Iqmin ---
         Ipmaxsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
-        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u * qref0 / v)**2, 0)), ((ialim**2 - (u * qref0 / v) ** 2), True)))"
+        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u*qref0/v)**2, 0)), ((ialim**2 - (u*qref0/v) ** 2), True)))"
         self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
         self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
 
@@ -440,7 +440,7 @@ class PVD1Model(Model):
                            )
 
         Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
-        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u * pref0 / v)**2, 0)), ((ialim**2 - (u * pref0 / v) ** 2), True)))"
+        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u*pref0/v)**2, 0)), ((ialim**2 - (u*pref0/v) ** 2), True)))"
         self.Iqmaxsq = VarService(v_str=Iqmaxsq, tex_name='I_{qmax}^2')
         self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0, tex_name='I_{qmax0}^2')
 
