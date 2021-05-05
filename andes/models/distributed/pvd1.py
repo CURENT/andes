@@ -358,20 +358,20 @@ class PVD1Model(Model):
 
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal (for AGC)',
-                          v_str='Pext0',
-                          e_str='Pext0 - Pext'
+                          v_str='u * Pext0',
+                          e_str='u * Pext0 - Pext'
                           )
 
         self.Pref = Algeb(tex_name='P_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
-                          v_str='pref0',
-                          e_str='pref0 - Pref'
+                          v_str='u * pref0',
+                          e_str='u * pref0 - Pref'
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
                           info='Sum of P signals',
-                          v_str='Pext + Pref + DB_y',
-                          e_str='Pext + Pref + DB_y - Psum',
+                          v_str='u * (Pext + Pref + DB_y)',
+                          e_str='u * (Pext + Pref + DB_y) - Psum',
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
@@ -404,10 +404,10 @@ class PVD1Model(Model):
                            no_warn=True,
                            )
 
-        Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
-               'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
-               'VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
-               'qref0'
+        Qsum = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
+               'u * VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
+               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
+               'u * qref0'
 
         self.Qsum = Algeb(info='Total Q (droop + initial)',
                           v_str=Qsum,
