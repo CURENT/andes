@@ -98,178 +98,106 @@ class COI2Model(Model):
 
             Mw = ConstService(tex_name='M_w',
                               info='Inertia weights',
-                              v_str='M'+RefModelName+'/'+'Mr'+RefModelName
+                              v_str='M'+RefModelName+' / '+'Mr'+RefModelName,
                               )
             setattr(self, "Mw{}".format(RefModelName), Mw)
 
             d0w = ConstService(tex_name=r'\delta_{gen,0,w}',
                                 info='Linearly stored weighted delta',
-                                v_str='d0 * Mw',
+                                v_str='d0'+RefModelName+' * '+'Mw'+RefModelName,
                                 )
-            setattr(self, "Mw{}".format(RefModelName), Mw)
+            setattr(self, "d0w{}".format(RefModelName), d0w)
 
-        self.a0w = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                v_str='a0 * Mw',
-                                info='Linearly stored weighted omega')
-        ### Good luck
-        self.d0a = NumReduce(u=self.d0w,
+            a0w = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                info='Linearly stored weighted omega',
+                                v_str='a0'+RefModelName+' * '+'Mw'+RefModelName,
+                                )
+            setattr(self, "a0w{}".format(RefModelName), a0w)
+
+            d0a = NumReduce(u=getattr(self, 'd0w'+RefModelName),
                              tex_name=r'\delta_{gen,0,avg}',
                              fun=np.sum,
-                             ref=self.SynGen,
+                             ref=getattr(self, RefModelName),
                              info='Average initial delta',
                              cache=False,
                              )
+            setattr(self, "d0a{}".format(RefModelName), d0a)
 
-        self.a0a = NumReduce(u=self.a0w,
+            a0a = NumReduce(u=getattr(self, 'a0w'+RefModelName),
                              tex_name=r'\omega_{gen,0,avg}',
                              fun=np.sum,
-                             ref=self.SynGen,
+                             ref=getattr(self, RefModelName),
                              info='Average initial omega',
                              cache=False,
                              )
+            setattr(self, "a0a{}".format(RefModelName), a0a)
 
-        self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
+            pidx = IdxRepeat(u=getattr(self, 'Idx'+RefModelName), 
+                             ref=getattr(self, RefModelName),
+                             info='Repeated COI.idx')
+            setattr(self, "pidx{}".format(RefModelName), pidx)
 
-        # Note:
-        # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
-        # When no SynGen is referencing any COI, j_update will not be called,
-        # and Jacobian will become singular. `diag_eps = True` needs to be used.
+            # Note:
+            # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
+            # When no SynGen is referencing any COI, j_update will not be called,
+            # and Jacobian will become singular. `diag_eps = True` needs to be used.
 
-        # Note:
-        # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
-        # fail to initialize.
-        self.omega = Algeb(tex_name=r'\omega_{coi}',
+            # Note:
+            # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
+            # fail to initialize.
+            omega = Algeb(tex_name=r'\omega_{coi}',
                            info='COI speed',
-                           v_str='a0a',
+                           v_str='a0a'+RefModelName,
                            v_setter=True,
-                           e_str='-omega',
+                           e_str='-omega'+RefModelName,
                            diag_eps=True,
                            )
-        self.delta = Algeb(tex_name=r'\delta_{coi}',
+            setattr(self, "omega{}".format(RefModelName), omega)
+
+            delta = Algeb(tex_name=r'\delta_{coi}',
                            info='COI rotor angle',
-                           v_str='d0a',
+                           v_str='d0a'+RefModelName,
                            v_setter=True,
-                           e_str='-delta',
+                           e_str='-delta'+RefModelName,
                            diag_eps=True,
                            )
+            setattr(self, "delta{}".format(RefModelName), delta)
 
-        # Note:
-        # `omega_sub` or `delta_sub` must not provide `v_str`.
-        # Otherwise, values will be incorrectly summed for `omega` and `delta`.
-        self.omega_sub = ExtAlgeb(model='COI',
-                                  src='omega',
-                                  e_str='Mw * wgen',
-                                  indexer=self.pidx,
-                                  info='COI frequency contribution of each generator'
-                                  )
-        self.delta_sub = ExtAlgeb(model='COI',
-                                  src='delta',
-                                  e_str='Mw * agen',
-                                  indexer=self.pidx,
-                                  info='COI angle contribution of each generator'
-                                  )
-    ###
+            # Note:
+            # `omega_sub` or `delta_sub` must not provide `v_str`.
+            # Otherwise, values will be incorrectly summed for `omega` and `delta`.
+            # self.omega_sub = ExtAlgeb(model='COI',
+            #                         src='omega',
+            #                         e_str='Mw * wgen',
+            #                         indexer=self.pidx,
+            #                         info='COI frequency contribution of each generator'
+            #                         )
+            # setattr(self, "delta{}".format(RefModelName), delta)
 
-        self.REGCVSGVSG = BackRef(info='Back reference to VSG idx')
+            # self.delta_sub = ExtAlgeb(model='COI',
+            #                         src='delta',
+            #                         e_str='Mw * agen',
+            #                         indexer=self.pidx,
+            #                         info='COI angle contribution of each generator'
+            #                         )
+            # setattr(self, "delta{}".format(RefModelName), delta)
 
-        self.REGCVSGVSGIdx = RefFlatten(ref=self.REGCVSGVSG)
-
-        self.M2 = ExtParam(model='REGCVSGVSG', src='M',
-                          indexer=self.REGCVSGVSGIdx, export=False,
-                          info='Linearly stored REGCVSGVSG.M',
-                          )
-
-        self.wgen2 = ExtState(model='REGCVSGVSG',
-                             src='omega',
-                             indexer=self.REGCVSGVSGIdx,
-                             tex_name=r'\omega_{gen}',
-                             info='Linearly stored SynGen.omega',
-                             )
-        self.agen2 = ExtState(model='REGCVSGVSG',
-                             src='delta',
-                             indexer=self.REGCVSGVSGIdx,
-                             tex_name=r'\delta_{gen}',
-                             info='Linearly stored REGCVSGVSG.delta',
-                             )
-        self.d02 = ExtService(model='REGCVSGVSG',
-                             src='delta',
-                             indexer=self.REGCVSGVSGIdx,
-                             tex_name=r'\delta_{gen,0}',
-                             info='Linearly stored initial delta',
-                             )
-
-        self.a02 = ExtService(model='REGCVSGVSG',
-                             src='omega',
-                             indexer=self.REGCVSGVSGIdx,
-                             tex_name=r'\omega_{gen,0}',
-                             info='Linearly stored initial omega',
-                             )
-
-        self.Mt = NumReduce(u=self.M,
-                            tex_name='M_t',
-                            fun=np.sum,
-                            ref=self.SynGen,
-                            info='Summation of M by COI index',
-                            )
-
-        self.Mr = NumRepeat(u=self.Mt,
-                            tex_name='M_{tr}',
-                            ref=self.SynGen,
-                            info='Repeated summation of M',
-                            )
-
-        self.Mw = ConstService(tex_name='M_w',
-                               info='Inertia weights',
-                               v_str='M/Mr')
-
-        self.d0w = ConstService(tex_name=r'\delta_{gen,0,w}',
-                                v_str='d0 * Mw',
-                                info='Linearly stored weighted delta')
-
-        self.a0w = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                v_str='a0 * Mw',
-                                info='Linearly stored weighted omega')
-
-        self.d0a = NumReduce(u=self.d0w,
-                             tex_name=r'\delta_{gen,0,avg}',
-                             fun=np.sum,
-                             ref=self.SynGen,
-                             info='Average initial delta',
-                             cache=False,
-                             )
-
-        self.a0a = NumReduce(u=self.a0w,
-                             tex_name=r'\omega_{gen,0,avg}',
-                             fun=np.sum,
-                             ref=self.SynGen,
-                             info='Average initial omega',
-                             cache=False,
-                             )
-
-        self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
-
-        # Note:
-        # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
-        # When no SynGen is referencing any COI, j_update will not be called,
-        # and Jacobian will become singular. `diag_eps = True` needs to be used.
-
-        # Note:
-        # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
-        # fail to initialize.
-        self.omega = Algeb(tex_name=r'\omega_{coi}',
+            self.omega = Algeb(tex_name=r'\omega_{coi}',
                            info='COI speed',
-                           v_str='a0a',
+                           v_str='a0a'+RefModelName,
                            v_setter=True,
-                           e_str='-omega',
+                           e_str='-omega'+RefModelName,
                            diag_eps=True,
                            )
-        self.delta = Algeb(tex_name=r'\delta_{coi}',
+            setattr(self, "omega{}".format(RefModelName), omega)
+
+            self.delta = Algeb(tex_name=r'\delta_{coi}',
                            info='COI rotor angle',
-                           v_str='d0a',
+                           v_str='d0a'+RefModelName,
                            v_setter=True,
-                           e_str='-delta',
+                           e_str='-delta'+RefModelName,
                            diag_eps=True,
-                           )
+                           )            
 
     def set_in_use(self):
         """
