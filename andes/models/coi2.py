@@ -53,55 +53,65 @@ class COI2Model(Model):
                             src='omega',
                             indexer=getattr(self, 'Idx'+RefModelName),
                             tex_name=r'\omega_{gen}',
-                            info='Linearly stored SynGen.omega',
+                            info='Linearly stored RefModel.omega',
                             )
             setattr(self, "wgen{}".format(RefModelName), wgen)
 
-            agen = ExtState(model='SynGen',
+            agen = ExtState(model=RefModelName,
                             src='delta',
-                            indexer=self.SynGenIdx,
+                            indexer=getattr(self, 'Idx'+RefModelName),
                             tex_name=r'\delta_{gen}',
-                            info='Linearly stored SynGen.delta',
+                            info='Linearly stored RefModel.delta',
                             )
-        self.d0 = ExtService(model='SynGen',
+            setattr(self, "agen{}".format(RefModelName), agen)
+
+            d0 = ExtService(model=RefModelName,
                              src='delta',
-                             indexer=self.SynGenIdx,
+                             indexer=getattr(self, 'Idx'+RefModelName),
                              tex_name=r'\delta_{gen,0}',
                              info='Linearly stored initial delta',
                              )
+            setattr(self, "d0{}".format(RefModelName), d0)
 
-        self.a0 = ExtService(model='SynGen',
+            a0 = ExtService(model=RefModelName,
                              src='omega',
-                             indexer=self.SynGenIdx,
+                             indexer=getattr(self, 'Idx'+RefModelName),
                              tex_name=r'\omega_{gen,0}',
                              info='Linearly stored initial omega',
                              )
+            setattr(self, "a0{}".format(RefModelName), a0)
 
-        self.Mt = NumReduce(u=self.M,
+            Mt = NumReduce(u=getattr(self, 'M'+RefModelName),
                             tex_name='M_t',
                             fun=np.sum,
-                            ref=self.SynGen,
+                            ref=getattr(self, RefModelName),
                             info='Summation of M by COI index',
                             )
+            setattr(self, "Mt{}".format(RefModelName), Mt)
 
-        self.Mr = NumRepeat(u=self.Mt,
+            Mr = NumRepeat(u=getattr(self, 'Mt'+RefModelName),
                             tex_name='M_{tr}',
                             ref=self.SynGen,
                             info='Repeated summation of M',
                             )
+            setattr(self, "Mr{}".format(RefModelName), Mr)
 
-        self.Mw = ConstService(tex_name='M_w',
-                               info='Inertia weights',
-                               v_str='M/Mr')
+            Mw = ConstService(tex_name='M_w',
+                              info='Inertia weights',
+                              v_str='M'+RefModelName+'/'+'Mr'+RefModelName
+                              )
+            setattr(self, "Mw{}".format(RefModelName), Mw)
 
-        self.d0w = ConstService(tex_name=r'\delta_{gen,0,w}',
+            d0w = ConstService(tex_name=r'\delta_{gen,0,w}',
+                                info='Linearly stored weighted delta',
                                 v_str='d0 * Mw',
-                                info='Linearly stored weighted delta')
+                                )
+            setattr(self, "Mw{}".format(RefModelName), Mw)
 
         self.a0w = ConstService(tex_name=r'\omega_{gen,0,w}',
                                 v_str='a0 * Mw',
                                 info='Linearly stored weighted omega')
-
+        ### Good luck
         self.d0a = NumReduce(u=self.d0w,
                              tex_name=r'\delta_{gen,0,avg}',
                              fun=np.sum,
