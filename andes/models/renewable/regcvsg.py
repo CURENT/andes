@@ -23,6 +23,9 @@ class REGCVSGData(ModelData):
         self.gen = IdxParam(info="static generator index",
                             mandatory=True,
                             )
+        self.coi = IdxParam(model='COI',
+                            info="center of inertia index",
+                            )                            
         self.Sn = NumParam(default=100.0, tex_name='S_n',
                            info='Model MVA base',
                            unit='MVA',
