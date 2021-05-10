@@ -81,17 +81,24 @@ class COI2Model(Model):
                              )
             setattr(self, "a0{}".format(RefModelName), a0)
 
-            Mt = NumReduce(u=getattr(self, 'M'+RefModelName),
-                            tex_name='M_t',
-                            fun=np.sum,
-                            ref=getattr(self, RefModelName),
-                            info='Summation of M by COI index',
-                            )
-            setattr(self, "Mt{}".format(RefModelName), Mt)
 
-            Mr = NumRepeat(u=getattr(self, 'Mt'+RefModelName),
+
+        """
+        Past initial state
+        """
+        self.Mt = ConstService(tex_name='M_w',
+                               info='Summation of M by COI index for all RefModel',
+                               v_str='',
+                               )
+        for RefModelName in COIModelName:
+
+            self.Mt.v_str += '+ M'+RefModelName
+
+        for RefModelName in COIModelName:
+
+            Mr = NumRepeat(u=self.Mt,
                             tex_name='M_{tr}',
-                            ref=self.SynGen,
+                            ref=getattr(self, RefModelName),
                             info='Repeated summation of M',
                             )
             setattr(self, "Mr{}".format(RefModelName), Mr)
@@ -137,31 +144,35 @@ class COI2Model(Model):
                              info='Repeated COI.idx')
             setattr(self, "pidx{}".format(RefModelName), pidx)
 
-            # Note:
-            # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
-            # When no SynGen is referencing any COI, j_update will not be called,
-            # and Jacobian will become singular. `diag_eps = True` needs to be used.
+        # Note:
+        # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
+        # When no SynGen is referencing any COI, j_update will not be called,
+        # and Jacobian will become singular. `diag_eps = True` needs to be used.
 
-            # Note:
-            # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
-            # fail to initialize.
-            omega = Algeb(tex_name=r'\omega_{coi}',
-                           info='COI speed',
-                           v_str='a0a'+RefModelName,
-                           v_setter=True,
-                           e_str='-omega'+RefModelName,
-                           diag_eps=True,
-                           )
-            setattr(self, "omega{}".format(RefModelName), omega)
+        # Note:
+        # Do not assign `v_str=1` for `omega`. Otherwise, COIs with no connected generators will
+        # fail to initialize.
+        self.omega = Algeb(tex_name=r'\omega_{coi}',
+                        info='COI speed',
+                        v_str='',
+                        v_setter=True,
+                        e_str='',
+                        diag_eps=True,
+                        )
+        for RefModelName in COIModelName:                        
+            self.omega.v_str = ' + a0a'+RefModelName
+            self.omega.e_str = '- omega'+RefModelName           
 
-            delta = Algeb(tex_name=r'\delta_{coi}',
-                           info='COI rotor angle',
-                           v_str='d0a'+RefModelName,
-                           v_setter=True,
-                           e_str='-delta'+RefModelName,
-                           diag_eps=True,
-                           )
-            setattr(self, "delta{}".format(RefModelName), delta)
+        self.delta = Algeb(tex_name=r'\delta_{coi}',
+                        info='COI rotor angle',
+                        v_str='d0a'+RefModelName,
+                        v_setter=True,
+                        e_str='-delta'+RefModelName,
+                        diag_eps=True,
+                        )
+        for RefModelName in COIModelName:                        
+            self.delta.v_str = ' + d0a'+RefModelName
+            self.delta.e_str = '- delta'+RefModelName    
 
             # Note:
             # `omega_sub` or `delta_sub` must not provide `v_str`.
@@ -180,31 +191,16 @@ class COI2Model(Model):
             #                         indexer=self.pidx,
             #                         info='COI angle contribution of each generator'
             #                         )
-            # setattr(self, "delta{}".format(RefModelName), delta)
-
-            self.omega = Algeb(tex_name=r'\omega_{coi}',
-                           info='COI speed',
-                           v_str='a0a'+RefModelName,
-                           v_setter=True,
-                           e_str='-omega'+RefModelName,
-                           diag_eps=True,
-                           )
-            setattr(self, "omega{}".format(RefModelName), omega)
-
-            self.delta = Algeb(tex_name=r'\delta_{coi}',
-                           info='COI rotor angle',
-                           v_str='d0a'+RefModelName,
-                           v_setter=True,
-                           e_str='-delta'+RefModelName,
-                           diag_eps=True,
-                           )            
+            # setattr(self, "delta{}".format(RefModelName), delta)     
 
     def set_in_use(self):
         """
         Set the ``Model.in_use`` flag based on ``len(self.SynGenIdx.v)``.
         """
-        self.in_use = (len(self.SynGenIdx.v) > 0)
-
+        lentotal = 0
+        for RefModelName in COIModelName:
+            len_total += len(self.getattr(self, RefModelName+'.v'))
+        self.in_use = (len_total > 0)
 
 class COI2(COI2Data, COI2Model):
     """
