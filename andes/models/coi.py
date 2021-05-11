@@ -4,7 +4,7 @@ Classes for Center of Inertia calculation.
 import numpy as np
 
 from andes.core.param import ExtParam
-from andes.core.service import NumRepeat, IdxRepeat, BackRef
+from andes.core.service import NumRepeat, IdxRepeat, BackRef, IdxJoin
 from andes.core.service import NumReduce, RefFlatten, ExtService, ConstService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
@@ -195,8 +195,8 @@ class COI2Model(Model):
 
         self.REGCVSGIdx = RefFlatten(ref=self.REGCVSG)
 
-        # self.RefModel = IdxJoin(u2=self.SynGen,u1=self.REGCVSG)
-        # self.RefModelIdx = RefFlatten(ref=self.RefModel)
+        self.RefModel = IdxJoin(u2=self.SynGen,u1=self.REGCVSG)
+        self.RefModelIdx = RefFlatten(ref=self.RefModel)
 
         self.MSynGen = ExtParam(model='SynGen', src='M',
                           indexer=self.SynGenIdx, export=False,
@@ -272,6 +272,10 @@ class COI2Model(Model):
                                     info='Summation of M by COI index',
                                     )
 
+        self.Mt = ConstService(tex_name='M_t',
+                                info='Inertia weights',
+                                v_str='MtSynGen + MtREGCVSG')
+
         self.MrSynGen = NumRepeat(u=self.MtSynGen,
                                     tex_name='M_{tr}',
                                     ref=self.SynGen,
@@ -280,6 +284,12 @@ class COI2Model(Model):
         self.MrREGCVSG = NumRepeat(u=self.MtREGCVSG,
                                     tex_name='M_{tr}',
                                     ref=self.REGCVSG,
+                                    info='Repeated summation of Mt',
+                                    )
+
+        self.Mr = NumRepeat(u=self.Mt,
+                                    tex_name='M_{tr}',
+                                    ref=self.SynGen,
                                     info='Repeated summation of Mt',
                                     )
 
