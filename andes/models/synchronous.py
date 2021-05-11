@@ -29,6 +29,9 @@ class GENBaseData(ModelData):
         self.coi = IdxParam(model='COI',
                             info="center of inertia index",
                             )
+        self.coi2 = IdxParam(model='COI2',
+                            info="center of inertia index",
+                            )                            
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
                            tex_name='S_n',
