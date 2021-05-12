@@ -207,6 +207,15 @@ class COI2Model(Model):
                                     info='Linearly stored SynGen.M',
                                     )
 
+        self.uSynGen = ExtParam(model='SynGen', src='u',
+                                indexer=self.SynGenIdx, export=False,
+                                info='Linearly stored SynGen.M',
+                                )
+        self.uREGCVSG = ExtParam(model='REGCVSG', src='u',
+                                    indexer=self.REGCVSGIdx, export=False,
+                                    info='Linearly stored SynGen.M',
+                                    )
+
         self.M = ParamJoin(u1=self.MSynGen,u2=self.MREGCVSG,
                             ref1=self.SynGen,ref2=self.REGCVSG)
 
@@ -226,15 +235,15 @@ class COI2Model(Model):
                                 v_str='M / Mr')
 
         self.MwSynGen = NumSplit(um=self.M,
-                            ur=self.Mr,
-                            ref1=self.SynGen,ref2=self.REGCVSG,
-                            reft=self.RefModel,
-                            loc=1)
+                                    ur=self.Mr,
+                                    ref1=self.SynGen,ref2=self.REGCVSG,
+                                    reft=self.RefModel,
+                                    loc=1)
         self.MwREGCVSG = NumSplit(um=self.M,
-                            ur=self.Mr,
-                            ref1=self.SynGen,ref2=self.REGCVSG,
-                            reft=self.RefModel,
-                            loc=2)
+                                    ur=self.Mr,
+                                    ref1=self.SynGen,ref2=self.REGCVSG,
+                                    reft=self.RefModel,
+                                    loc=2)
 
         self.wSynGen = ExtState(model='SynGen',
                                    src='omega',
@@ -288,62 +297,18 @@ class COI2Model(Model):
                              info='Linearly stored initial omega',
                              )
 
-        self.MtSynGen = NumReduce(u=self.MSynGen,
-                                    tex_name='M_t',
-                                    fun=np.sum,
-                                    ref=self.SynGen,
-                                    info='Summation of M by COI index',
-                                    )
-        self.MtREGCVSG = NumReduce(u=self.MREGCVSG,
-                                    tex_name='M_t',
-                                    fun=np.sum,
-                                    ref=self.REGCVSG,
-                                    info='Summation of M by COI index',
-                                    )
-
-        self.MrSynGen = NumRepeat(u=self.MtSynGen,
-                                    tex_name='M_{tr}',
-                                    ref=self.SynGen,
-                                    info='Repeated summation of Mt',
-                                    )
-        self.MrREGCVSG = NumRepeat(u=self.MtREGCVSG,
-                                    tex_name='M_{tr}',
-                                    ref=self.REGCVSG,
-                                    info='Repeated summation of Mt',
-                                    )
-
-        self.MwSynGen = ConstService(tex_name='M_w',
-                                    info='Inertia weights',
-                                    v_str='MSynGen / MrSynGen')
-        self.MwREGCVSG = ConstService(tex_name='M_w',
-                                    info='Inertia weights',
-                                    v_str='MREGCVSG / MrREGCVSG')
-
-        self.MrSynGen2 = NumReduce(u=self.MwSynGen,
-                                    tex_name='M_t',
-                                    fun=np.mean,
-                                    ref=self.SynGen,
-                                    info='Summation of M by COI index',
-                                    )
-        self.MrREGCVSG2 = NumReduce(u=self.MwREGCVSG,
-                                    tex_name='M_t',
-                                    fun=np.mean,
-                                    ref=self.REGCVSG,
-                                    info='Summation of M by COI index',
-                                    )
-
         self.d0wSynGen = ConstService(tex_name=r'\delta_{gen,0,w}',
-                                        v_str='d0SynGen * MwSynGen',
+                                        v_str='uSynGen * d0SynGen * MwSynGen',
                                         info='Linearly stored weighted delta')
         self.d0wREGCVSG = ConstService(tex_name=r'\delta_{gen,0,w}',
-                                        v_str='d0REGCVSG * MwREGCVSG',
+                                        v_str='uREGCVSG * d0REGCVSG * MwREGCVSG',
                                         info='Linearly stored weighted delta')
 
         self.a0wSynGen = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                        v_str='a0SynGen * MwSynGen',
+                                        v_str='uSynGen * a0SynGen * MwSynGen',
                                         info='Linearly stored weighted omega')
         self.a0wREGCVSG = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                        v_str='a0REGCVSG * MwREGCVSG',
+                                        v_str='uREGCVSG * a0REGCVSG * MwREGCVSG',
                                         info='Linearly stored weighted omega')
 
         self.d0aSynGen = NumReduce(u=self.d0wSynGen,
