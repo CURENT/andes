@@ -4,7 +4,7 @@ Classes for Center of Inertia calculation.
 import numpy as np
 
 from andes.core.param import ExtParam
-from andes.core.service import NumRepeat, IdxRepeat, BackRef, IdxJoin
+from andes.core.service import NumRepeat, IdxRepeat, BackRef, IdxJoin, ParamJoin, NumSplit
 from andes.core.service import NumReduce, RefFlatten, ExtService, ConstService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
@@ -195,17 +195,46 @@ class COI2Model(Model):
 
         self.REGCVSGIdx = RefFlatten(ref=self.REGCVSG)
 
-        self.RefModel = IdxJoin(u2=self.SynGen,u1=self.REGCVSG)
+        self.RefModel = IdxJoin(u1=self.SynGen,u2=self.REGCVSG)
         self.RefModelIdx = RefFlatten(ref=self.RefModel)
 
         self.MSynGen = ExtParam(model='SynGen', src='M',
-                          indexer=self.SynGenIdx, export=False,
-                          info='Linearly stored SynGen.M',
-                          )
+                                indexer=self.SynGenIdx, export=False,
+                                info='Linearly stored SynGen.M',
+                                )
         self.MREGCVSG = ExtParam(model='REGCVSG', src='M',
-                          indexer=self.REGCVSGIdx, export=False,
-                          info='Linearly stored SynGen.M',
-                          )
+                                    indexer=self.REGCVSGIdx, export=False,
+                                    info='Linearly stored SynGen.M',
+                                    )
+
+        self.M = ParamJoin(u1=self.MSynGen,u2=self.MREGCVSG,
+                            ref1=self.SynGen,ref2=self.REGCVSG)
+
+        self.Mt = NumReduce(u=self.M,
+                            tex_name='M_t',
+                            fun=np.sum,
+                            ref=self.RefModel,
+                            info='Summation of M by COI index',
+                            )
+        self.Mr = NumRepeat(u=self.Mt,
+                            tex_name='M_{tr}',
+                            ref=self.RefModel,
+                            info='Repeated summation of Mt',
+                            )
+        self.Mw = ConstService(tex_name='M_w',
+                                info='Inertia weights',
+                                v_str='M / Mr')
+
+        self.MwSynGen = NumSplit(um=self.M,
+                            ur=self.Mr,
+                            ref1=self.SynGen,ref2=self.REGCVSG,
+                            reft=self.RefModel,
+                            loc=1)
+        self.MwREGCVSG = NumSplit(um=self.M,
+                            ur=self.Mr,
+                            ref1=self.SynGen,ref2=self.REGCVSG,
+                            reft=self.RefModel,
+                            loc=2)
 
         self.wSynGen = ExtState(model='SynGen',
                                    src='omega',
@@ -272,10 +301,6 @@ class COI2Model(Model):
                                     info='Summation of M by COI index',
                                     )
 
-        self.Mt = ConstService(tex_name='M_t',
-                                info='Inertia weights',
-                                v_str='MtSynGen + MtREGCVSG')
-
         self.MrSynGen = NumRepeat(u=self.MtSynGen,
                                     tex_name='M_{tr}',
                                     ref=self.SynGen,
@@ -286,16 +311,6 @@ class COI2Model(Model):
                                     ref=self.REGCVSG,
                                     info='Repeated summation of Mt',
                                     )
-
-        self.Mr = NumRepeat(u=self.Mt,
-                                    tex_name='M_{tr}',
-                                    ref=self.SynGen,
-                                    info='Repeated summation of Mt',
-                                    )
-
-        # self.Mr = ConstService(tex_name='M_t',
-        #                         info='Inertia weights',
-        #                         v_str='MrSynGen + MrREGCVSG')
 
         self.MwSynGen = ConstService(tex_name='M_w',
                                     info='Inertia weights',

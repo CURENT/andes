@@ -892,7 +892,7 @@ class IdxJoin(OperationService):
         """
         if self._v is not None and self.cache is True:
             return self._v
-        if len(self.u1.v) > len(self.u2.v):
+        if len(self.u1.v) >= len(self.u2.v):
             self._v = self.u1.v.copy()
             for i, v in enumerate(self.u1.v):
                 if i < len(self.u2.v):
@@ -905,50 +905,107 @@ class IdxJoin(OperationService):
 
             return self._v
 
-# class ParamJoin(OperationService):
-#     """
-#     A helper Service.
-#     """
+class ParamJoin(OperationService):
+    """
+    A helper Service.
+    """
 
-#     def __init__(self,u1,u2,ref1,ref2,cache=True,**kwargs):
-#         super().__init__(**kwargs)
-#         self.u1 = u1
-#         self.u2 = u2
-#         self.ref1 = ref1
-#         self.ref2 = ref2
-#         self.cache = cache
+    def __init__(self,u1,u2,ref1,ref2,cache=True,**kwargs):
+        super().__init__(**kwargs)
+        self.u1 = u1
+        self.u2 = u2
+        self.ref1 = ref1
+        self.ref2 = ref2
+        self.cache = cache
 
-#     @property
-#     def v(self):
-#         """
-#         The list ``self._v`` storing the reduced values
-#         """
-#         if self._v is not None and self.cache is True:
-#             return self._v
+    @property
+    def v(self):
+        """
+        The list ``self._v`` storing the reduced values
+        """
+        if self._v is not None and self.cache is True:
+            return self._v
         
-#         self._v = np.array([])
+        self._v = np.array([])
         
-#         idx1 = 0
-#         idx2 = 0
-#         if len(self.u1.v) > len(self.u2.v):
-#             for i, v in enumerate(self.ref1.v):
-#                 if i < len(self.u2.v):
-#                     end1 = len(v)
-#                     end2 = len(self.ref2.v[i])
-#                     self._v = np.append(self._v, self.u1.v[idx:len(v)], self.u2.v[idx:])
-#                     self._v[i] = v + self.u2.v[i]
-#                     idx += len(v)
-#                 else:
+        idx1 = 0
+        idx2 = 0
+        if len(self.ref1.v) >= len(self.ref2.v):
+            for i, v in enumerate(self.ref1.v):
+                if i < len(self.u2.v):
+                    end1 = len(v)
+                    end2 = len(self.ref2.v[i])
+                    self._v = np.append(self._v, self.u1.v[idx1:end1])
+                    self._v = np.append(self._v, self.u2.v[idx2:end2])
+                    idx1 += len(v)
+                    idx2 += len(self.ref2.v[i])
+                    end1 += len(v)
+                    end2 += len(self.ref2.v[i])
+                else:
+                    self._v = np.append(self._v, self.u1.v[idx1:end1])
+                    idx1 += len(v)
+                    end1 += len(v)
+        else:
+            for i, v in enumerate(self.ref2.v):
+                if i < len(self.u1.v):
+                    end1 = len(v)
+                    end2 = len(self.ref1.v[i])
+                    self._v = np.append(self._v, self.u2.v[idx1:end1])
+                    self._v = np.append(self._v, self.u1.v[idx2:end2])
+                    idx1 += len(v)
+                    idx2 += len(self.ref1.v[i])
+                    end1 += len(v)
+                    end2 += len(self.ref1.v[i])
+                else:
+                    self._v = np.append(self._v, self.u2.v[idx1:end1])
+                    idx1 += len(v)
+                    end1 += len(v)
 
+        return self._v
 
-#         else:
-#             self._v = self.u2.v
-#             for i, v in enumerate(self.u2.v):
-#                 if i < len(self.u1.v):
-#                     self._v[i] = v + self.u1.v[i]
+class NumSplit(OperationService):
+    """
+    A helper Service.
+    """
 
-#             return self._v
+    def __init__(self,um,ur,ref1,ref2,reft,loc=1,cache=True,**kwargs):
+        super().__init__(**kwargs)
+        self.um = um 
+        self.ur = ur
+        self.ref1 = ref1 # RefModel 1
+        self.ref2 = ref2 # RefModel 2
+        self.reft = reft # IdxJoin
+        self.loc = loc
+        self.cache = cache
 
+    @property
+    def v(self):
+        """
+        The list ``self._v`` storing the reduced values
+        """
+        if self._v is not None and self.cache is True:
+            return self._v
+
+        self.ref = []
+        if self.loc == 1:
+            for i, v in enumerate(list_flatten(self.ref1.v)): 
+                self.ref.append(str(v))
+        else:
+            for i, v in enumerate(list_flatten(self.ref2.v)): 
+                self.ref.append(str(v))
+        
+        self.outlist = []
+        for i, v in enumerate(list_flatten(self.reft.v)): 
+            self.outlist.append(str(v))
+
+        self.uv = np.zeros(len(self.um.v))
+        for i, (um, ur) in enumerate(zip(self.um.v, self.ur.v)):
+            self.uv[i] = um / ur
+
+        self.id = [i for i in range(len(self.outlist)) if self.outlist[i] in self.ref]
+        self._v = self.uv[self.id]
+        return self._v
+        
 class RefFlatten(OperationService):
     """
     A service type for flattening :py:class:`andes.core.service.BackRef` into a 1-D list.
