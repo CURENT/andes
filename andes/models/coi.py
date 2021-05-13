@@ -4,7 +4,7 @@ Classes for Center of Inertia calculation.
 import numpy as np
 
 from andes.core.param import ExtParam
-from andes.core.service import NumRepeat, IdxRepeat, BackRef, IdxJoin, ParamJoin, NumSplit
+from andes.core.service import NumRepeat, IdxRepeat, BackRef, IdxJoin, ParamJoin, NumSplit, NumSplit1
 from andes.core.service import NumReduce, RefFlatten, ExtService, ConstService
 from andes.core.var import ExtState, Algeb, ExtAlgeb
 from andes.core.model import ModelData, Model
@@ -230,18 +230,17 @@ class COI2Model(Model):
                             ref=self.RefModel,
                             info='Repeated summation of Mt',
                             )
-        self.Mw = ConstService(tex_name='M_w',
-                                info='Inertia weights',
-                                v_str='M / Mr')
 
         self.MwSynGen = NumSplit(um=self.M,
                                     ur=self.Mr,
-                                    ref1=self.SynGen,ref2=self.REGCVSG,
+                                    ref1=self.SynGen,
+                                    ref2=self.REGCVSG,
                                     reft=self.RefModel,
                                     loc=1)
         self.MwREGCVSG = NumSplit(um=self.M,
                                     ur=self.Mr,
-                                    ref1=self.SynGen,ref2=self.REGCVSG,
+                                    ref1=self.SynGen,
+                                    ref2=self.REGCVSG,
                                     reft=self.RefModel,
                                     loc=2)
 
@@ -258,19 +257,32 @@ class COI2Model(Model):
                                     info='Linearly stored REGCVSG.omega',
                                     )
 
-        self.aSynGen = ExtState(model='SynGen',
+        self.dSynGen = ExtState(model='SynGen',
                                     src='delta',
                                     indexer=self.SynGenIdx,
                                     tex_name=r'\delta_{gen}',
                                     info='Linearly stored SynGen.delta',
                                     )
-        self.aREGCVSG = ExtState(model='REGCVSG',
+        self.dREGCVSG = ExtState(model='REGCVSG',
                                     src='delta',
                                     indexer=self.REGCVSGIdx,
                                     tex_name=r'\delta_{gen}',
                                     info='Linearly stored REGCVSG.delta',
                                     )
 
+        self.w0SynGen = ExtService(model='SynGen',
+                                    src='omega',
+                                    indexer=self.SynGenIdx,
+                                    tex_name=r'\omega_{gen,0}',
+                                    info='Linearly stored initial omega',
+                                    )
+        self.w0REGCVSG = ExtService(model='REGCVSG',
+                                    src='omega',
+                                    indexer=self.REGCVSGIdx,
+                                    tex_name=r'\omega_{gen,0}',
+                                    info='Linearly stored initial omega',
+                                    )
+        
         self.d0SynGen = ExtService(model='SynGen',
                                     src='delta',
                                     indexer=self.SynGenIdx,
@@ -284,31 +296,18 @@ class COI2Model(Model):
                                     info='Linearly stored initial delta',
                                     )
 
-        self.a0SynGen = ExtService(model='SynGen',
-                             src='omega',
-                             indexer=self.SynGenIdx,
-                             tex_name=r'\omega_{gen,0}',
-                             info='Linearly stored initial omega',
-                             )
-        self.a0REGCVSG = ExtService(model='REGCVSG',
-                             src='omega',
-                             indexer=self.REGCVSGIdx,
-                             tex_name=r'\omega_{gen,0}',
-                             info='Linearly stored initial omega',
-                             )
-
-        self.d0wSynGen = ConstService(tex_name=r'\delta_{gen,0,w}',
-                                        v_str='uSynGen * d0SynGen * MwSynGen',
-                                        info='Linearly stored weighted delta')
-        self.d0wREGCVSG = ConstService(tex_name=r'\delta_{gen,0,w}',
-                                        v_str='uREGCVSG * d0REGCVSG * MwREGCVSG',
-                                        info='Linearly stored weighted delta')
-
-        self.a0wSynGen = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                        v_str='uSynGen * a0SynGen * MwSynGen',
+        self.w0wSynGen = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                        v_str='uSynGen * w0SynGen * MwSynGen',
                                         info='Linearly stored weighted omega')
-        self.a0wREGCVSG = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                        v_str='uREGCVSG * a0REGCVSG * MwREGCVSG',
+        self.w0wREGCVSG = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                        v_str='uREGCVSG * w0REGCVSG * MwREGCVSG',
+                                        info='Linearly stored weighted omega')
+
+        self.d0wSynGen = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                        v_str='uSynGen * d0SynGen * MwSynGen',
+                                        info='Linearly stored weighted omega')
+        self.d0wREGCVSG = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                        v_str='uREGCVSG * d0REGCVSG * MwREGCVSG',
                                         info='Linearly stored weighted omega')
 
         self.d0aSynGen = NumReduce(u=self.d0wSynGen,
@@ -326,29 +325,30 @@ class COI2Model(Model):
                                     cache=False,
                                     )
 
-        self.a0aSynGen = NumReduce(u=self.a0wSynGen,
+        self.w0aSynGen = NumReduce(u=self.w0wSynGen,
                                     tex_name=r'\omega_{gen,0,avg}',
                                     fun=np.sum,
                                     ref=self.SynGen,
                                     info='Average initial omega',
                                     cache=False,
                                     )
-        self.a0aREGCVSG = NumReduce(u=self.a0wREGCVSG,
+        self.w0aREGCVSG = NumReduce(u=self.w0wREGCVSG,
                                     tex_name=r'\omega_{gen,0,avg}',
                                     fun=np.sum,
                                     ref=self.REGCVSG,
                                     info='Average initial omega',
                                     cache=False,
                                     )
-
+        
+        self.w0a = ConstService(tex_name=r'\omega_{gen,0,w}',
+                                v_str='w0aSynGen + w0aREGCVSG',
+                                info='Linearly stored weighted omega')
         self.d0a = ConstService(tex_name=r'\omega_{gen,0,w}',
                                 v_str='d0aSynGen + d0aREGCVSG',
-                                info='Linearly stored weighted omega')
-        self.a0a = ConstService(tex_name=r'\omega_{gen,0,w}',
-                                v_str='a0aSynGen + a0aREGCVSG',
-                                info='Linearly stored weighted omega')
+                                info='Linearly stored weighted delta')
 
-        # self.pidx = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
+        self.pidxSynGen = IdxRepeat(u=self.idx, ref=self.SynGen, info='Repeated COI.idx')
+        self.pidxREGCVSG = IdxRepeat(u=self.idx, ref=self.REGCVSG, info='Repeated COI.idx')
 
         # Note:
         # Even if d(omega) /d (omega) = 1, it is still stored as a lambda function.
@@ -360,7 +360,7 @@ class COI2Model(Model):
         # fail to initialize.
         self.omega = Algeb(tex_name=r'\omega_{coi}',
                            info='COI speed',
-                           v_str='a0a',
+                           v_str='w0a',
                            v_setter=True,
                            e_str='-omega',
                            diag_eps=True,
@@ -375,19 +375,31 @@ class COI2Model(Model):
 
         # Note:
         # `omega_sub` or `delta_sub` must not provide `v_str`.
-        # # Otherwise, values will be incorrectly summed for `omega` and `delta`.
-        # self.omega_sub = ExtAlgeb(model='COI',
-        #                           src='omega',
-        #                           e_str='Mw * wgen',
-        #                           indexer=self.pidx,
-        #                           info='COI frequency contribution of each generator'
-        #                           )
-        # self.delta_sub = ExtAlgeb(model='COI',
-        #                           src='delta',
-        #                           e_str='Mw * agen',
-        #                           indexer=self.pidx,
-        #                           info='COI angle contribution of each generator'
-        #                           )
+        # Otherwise, values will be incorrectly summed for `omega` and `delta`.
+        self.omega_sub_SynGen = ExtAlgeb(model='COI2',
+                                            src='omega',
+                                            e_str='uSynGen * MwSynGen * wSynGen',
+                                            indexer=self.pidxSynGen,
+                                            info='COI2 frequency contribution of each SynGen',
+                                            )
+        self.omega_sub_REGCVSG = ExtAlgeb(model='COI2',
+                                            src='omega',
+                                            e_str='uREGCVSG * MwREGCVSG * wREGCVSG',
+                                            indexer=self.pidxREGCVSG,
+                                            info='COI2 frequency contribution of each REGCVSG',
+                                            )
+        self.delta_sub_SynGen = ExtAlgeb(model='COI2',
+                                        src='delta',
+                                        e_str='uSynGen * MwSynGen * dSynGen',
+                                        indexer=self.pidxSynGen,
+                                        info='COI2 angle contribution of each SynGen',
+                                        )
+        self.delta_sub_REGCVSG = ExtAlgeb(model='COI2',
+                                        src='delta',
+                                        e_str='uREGCVSG * MwREGCVSG * dREGCVSG',
+                                        indexer=self.pidxREGCVSG,
+                                        info='COI2 angle contribution of each REGCVSG',
+                                        )        
 
     def set_in_use(self):
         """

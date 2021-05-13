@@ -1005,7 +1005,49 @@ class NumSplit(OperationService):
         self.id = [i for i in range(len(self.outlist)) if self.outlist[i] in self.ref]
         self._v = self.uv[self.id]
         return self._v
+
+class NumSplit1(OperationService):
+    """
+    A helper Service.
+    """
+
+    def __init__(self,u,ref1,ref2,reft,loc=1,cache=True,**kwargs):
+        super().__init__(**kwargs)
+        self.u = u
+        self.ref1 = ref1 # RefModel 1
+        self.ref2 = ref2 # RefModel 2
+        self.reft = reft # IdxJoin
+        self.loc = loc
+        self.cache = cache
+
+    @property
+    def v(self):
+        """
+        The list ``self._v`` storing the reduced values
+        """
+        if self._v is not None and self.cache is True:
+            return self._v
+
+        self.ref = []
+        if self.loc == 1:
+            for i, v in enumerate(list_flatten(self.ref1.v)): 
+                self.ref.append(str(v))
+        else:
+            for i, v in enumerate(list_flatten(self.ref2.v)): 
+                self.ref.append(str(v))
         
+        self.outlist = []
+        for i, v in enumerate(list_flatten(self.reft.v)): 
+            self.outlist.append(str(v))
+
+        self.uv = np.zeros(len(self.u.v))
+        for i, u in enumerate(self.u.v):
+            self.uv[i] = u
+
+        self.id = [i for i in range(len(self.outlist)) if self.outlist[i] in self.ref]
+        self._v = self.uv[self.id]
+        return self._v
+
 class RefFlatten(OperationService):
     """
     A service type for flattening :py:class:`andes.core.service.BackRef` into a 1-D list.
