@@ -44,7 +44,7 @@ class REGCVSGData(ModelData):
                            )
 
         self.kP = NumParam(default=0.05, tex_name='k_P',
-                           info='Active power droop on frequency',
+                           info='Active power droop on frequency (equivalent Droop)',
                            unit='p.u.',
                            )
         self.kv = NumParam(default=0, tex_name='k_v',
@@ -150,10 +150,7 @@ class REGCVSGModel(Model):
                            export=False,
                            )                            
 
-        # --- INITIALIZATION ---  
-        self.ikP = ConstService(v_str='1/kP',
-                                tex_name='1/kP',
-                                )                                                                                      
+        # --- INITIALIZATION ---                                                                             
         self.ixs = ConstService(v_str='1/xs',
                                 tex_name='1/xs',
                                 )
@@ -180,7 +177,7 @@ class REGCVSGModel(Model):
 
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
-                           e_str='u * Pref - dw * ikP - Pref2', 
+                           e_str='u * Pref - dw * kP - Pref2', 
                            v_str='u * Pref')
 
         self.vref2 = Algeb(tex_name=r'v_{ref2}',
