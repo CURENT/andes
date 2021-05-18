@@ -1,6 +1,6 @@
-from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb, ExtService, ConstService, ExtParam, Algeb, State
-from andes.core import Lag
-from andes.core.block import PIController, Gain
+from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb
+from andes.core import Lag, ExtService, ConstService, ExtParam, Algeb, State
+from andes.core.block import PIController
 from andes.core.var import AliasState, AliasAlgeb
 # from andes.core.block import LagAntiWindupRate, GainLimiter, PIController
 
@@ -8,6 +8,7 @@ from andes.core.var import AliasState, AliasAlgeb
 REGC_VSG module.
 voltage-controlled VSC with virtual synchronous generator control.
 """
+
 
 class REGCVSGData(ModelData):
     """
@@ -23,12 +24,9 @@ class REGCVSGData(ModelData):
         self.gen = IdxParam(info="static generator index",
                             mandatory=True,
                             )
-        self.coi = IdxParam(model='COI',
-                            info="center of inertia index",
-                            )
         self.coi2 = IdxParam(model='COI2',
-                            info="center of inertia index",
-                            )                                                                 
+                             info="center of inertia 2 index",
+                             )
         self.Sn = NumParam(default=100.0, tex_name='S_n',
                            info='Model MVA base',
                            unit='MVA',
@@ -72,28 +70,29 @@ class REGCVSGData(ModelData):
         self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
                               info='q-axis v controller proportional gain',
                               unit='p.u.',
-                             )
-        self.ki_qv = NumParam(default=0.001, tex_name='ki_{qv}',
+                              )
+        self.ki_qv = NumParam(default=0.001, tex_name=r'ki_{qv}',
                               info='q-axis v controller integral gain',
                               unit='p.u.',
-                             )
+                              )
 
-        self.kp_di = NumParam(default=500, tex_name='kp_{di}',
+        self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
                               info='d-axis i controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_di = NumParam(default=0.2, tex_name='ki_{di}',
+        self.ki_di = NumParam(default=0.2, tex_name=r'ki_{di}',
                               info='d-axis i controller integral gain',
                               unit='p.u.',
                               )
-        self.kp_qi = NumParam(default=500, tex_name='kp_{qi}',
+        self.kp_qi = NumParam(default=500, tex_name=r'kp_{qi}',
                               info='q-axis i controller proportional gain',
                               unit='p.u.',
                               )
-        self.ki_qi = NumParam(default=0.2, tex_name='ki_{qi}',
+        self.ki_qi = NumParam(default=0.2, tex_name=r'ki_{qi}',
                               info='q-axis i controller integral gain',
                               unit='p.u.',
                               )
+
 
 class REGCVSGModel(Model):
     """
@@ -122,21 +121,21 @@ class REGCVSGModel(Model):
         self.Pref = ExtService(model='StaticGen',
                                src='p',
                                indexer=self.gen,
-                               tex_name='P_{ref}',
+                               tex_name=r'P_{ref}',
                                info='initial P of the static gen',
                                )
         self.Qref = ExtService(model='StaticGen',
                                src='q',
                                indexer=self.gen,
-                               tex_name='Q_{ref}',
+                               tex_name=r'Q_{ref}',
                                info='initial Q of the static gen',
                                )
         self.vref = ExtService(model='StaticGen',
                                src='v',
                                indexer=self.gen,
-                               tex_name='V_{ref}',
+                               tex_name=r'V_{ref}',
                                info='initial v of the static gen',
-                               )                                  
+                               )
         self.ra = ExtParam(model='StaticGen',
                            src='ra',
                            indexer=self.gen,
@@ -148,11 +147,11 @@ class REGCVSGModel(Model):
                            indexer=self.gen,
                            tex_name='x_s',
                            export=False,
-                           )                            
+                           )
 
-        # --- INITIALIZATION ---                                                                             
+        # --- INITIALIZATION ---
         self.ixs = ConstService(v_str='1/xs',
-                                tex_name='1/xs',
+                                tex_name=r'1/xs',
                                 )
         self.Id0 = ConstService(tex_name=r'I_{d0}',
                                 v_str='u * Pref / v',
@@ -177,20 +176,20 @@ class REGCVSGModel(Model):
 
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
-                           e_str='u * Pref - dw * kP - Pref2', 
+                           e_str='u * Pref - dw * kP - Pref2',
                            v_str='u * Pref')
 
         self.vref2 = Algeb(tex_name=r'v_{ref2}',
                            info='voltage reference after adjusted by reactive power',
-                           e_str='(u * Qref - Qe) * kv + vref - vref2', 
+                           e_str='(u * Qref - Qe) * kv + vref - vref2',
                            v_str='u * vref')
-                                                                       
+
         self.dw = State(info='delta virtual rotor speed',
                         unit='pu (Hz)',
                         v_str='0',
                         tex_name=r'\Delta\omega',
                         e_str='Pref2 - Pe - D * dw',
-                        t_const= self.M)
+                        t_const=self.M)
 
         self.omega = Algeb(info='virtual rotor speed',
                            unit='pu (Hz)',
@@ -206,18 +205,18 @@ class REGCVSGModel(Model):
 
         self.vd = Algeb(tex_name='V_d',
                         info='d-axis voltage',
-                        e_str='u * v * cos(delta - a) - vd', 
+                        e_str='u * v * cos(delta - a) - vd',
                         v_str='vd0')
         self.vq = Algeb(tex_name='V_q',
                         info='q-axis voltage',
-                        e_str='- u * v * sin(delta - a) - vq', 
+                        e_str='- u * v * sin(delta - a) - vq',
                         v_str='vq0')
-      
-        self.PIdv = PIController(u='vref2 - vd', 
+
+        self.PIdv = PIController(u='vref2 - vd',
                                  kp=self.kp_dv,
                                  ki=self.ki_dv,
                                  x0='Id0',
-                                 )                        
+                                 )
         self.PIqv = PIController(u='- vq',
                                  kp=self.kp_qv,
                                  ki=self.ki_qv,
@@ -229,17 +228,17 @@ class REGCVSGModel(Model):
 
         self.Pe = Algeb(tex_name='P_e',
                         info='active power injection from VSC',
-                        e_str='vd * Id + vq * Iq - Pe', 
-                        v_str='Pref') 
+                        e_str='vd * Id + vq * Iq - Pe',
+                        v_str='Pref')
         self.Qe = Algeb(tex_name='Q_e',
                         info='reactive power injection from VSC',
-                        e_str='- vd * Iq + vq * Id - Qe', 
-                        v_str='Qref') 
+                        e_str='- vd * Iq + vq * Id - Qe',
+                        v_str='Qref')
 
         # udLag_y, uqLag_y are ud, uq
         self.Id = Algeb(tex_name='I_d',
                         info='d-axis current',
-                        e_str='- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq', 
+                        e_str='- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq',
                         v_str='Id0')
         self.Iq = Algeb(tex_name='I_q',
                         info='q-axis current',
@@ -254,26 +253,26 @@ class REGCVSGModel(Model):
         self.PIqi = PIController(u='PIqv_y - Iq',
                                  kp=self.kp_qi,
                                  ki=self.ki_qi,
-                                 )     
+                                 )
 
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
-                           e_str='PIdi_y + vd - Iq * xs - udref', 
+                           e_str='PIdi_y + vd - Iq * xs - udref',
                            v_str='udref0',
-                           ) 
+                           )
         self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='ud reference',
-                           e_str='PIqi_y + vq + Id * xs - uqref', 
+                           e_str='PIqi_y + vq + Id * xs - uqref',
                            v_str='uqref0',
-                           ) 
+                           )
 
         self.udLag = Lag(u='udref',
-                         T = self.Tc,
-                         K = 1,
-                         ) 
+                         T=self.Tc,
+                         K=1,
+                         )
         self.uqLag = Lag(u='uqref',
-                         T = self.Tc,
-                         K = 1,
+                         T=self.Tc,
+                         K=1,
                          )
 
         self.ud = AliasState(self.udLag_y)
@@ -284,6 +283,7 @@ class REGCVSGModel(Model):
         Disable the corresponding `StaticGen`s.
         """
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+
 
 class REGCVSG(REGCVSGData, REGCVSGModel):
     """

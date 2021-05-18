@@ -22,8 +22,8 @@ from andes.core.common import ModelFlags, JacTriplet, Config
 from andes.core.discrete import Discrete
 from andes.core.documenter import Documenter
 from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
-from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService, IdxJoin, ParamJoin
-from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder, NumSplit, NumSplit1
+from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
+from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
 from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
 from andes.core.service import SwBlock
 from andes.core.symprocessor import SymProcessor
@@ -702,7 +702,7 @@ class Model:
             self.services_ext[key] = value
         elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
                                 FlagValue, RandomService,
-                                SwBlock, IdxJoin, ParamJoin, NumSplit, NumSplit1,
+                                SwBlock,
                                 ParamCalc, Replace, ApplyFunc)):
             self.services_ops[key] = value
         elif isinstance(value, InitChecker):
