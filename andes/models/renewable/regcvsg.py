@@ -1,5 +1,5 @@
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb
-from andes.core import Lag, ExtService, ConstService, ExtParam, Algeb, State
+from andes.core import Lag, ExtService, ConstService, Algeb, State
 from andes.core.block import PIController
 from andes.core.var import AliasState, AliasAlgeb
 # from andes.core.block import LagAntiWindupRate, GainLimiter, PIController
@@ -44,54 +44,76 @@ class REGCVSGData(ModelData):
         self.kP = NumParam(default=0.05, tex_name='k_P',
                            info='Active power droop on frequency (equivalent Droop)',
                            unit='p.u.',
+                           ipower=True,
                            )
         self.kv = NumParam(default=0, tex_name='k_v',
                            info='reactive power droop on voltage',
                            unit='p.u.',
+                           power=True,
                            )
 
         self.M = NumParam(default=10, tex_name='M',
                           info='Emulated startup time constant (inertia)',
                           unit='s',
+                          power=True,
                           )
         self.D = NumParam(default=2, tex_name='D',
                           info='Emulated damiping coefficient',
                           unit='p.u.',
+                          power=True,
                           )
 
         self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
                               info='d-axis v controller proportional gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.ki_dv = NumParam(default=0.001, tex_name=r'ki_{dv}',
                               info='d-axis v controller integral gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
                               info='q-axis v controller proportional gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.ki_qv = NumParam(default=0.001, tex_name=r'ki_{qv}',
                               info='q-axis v controller integral gain',
                               unit='p.u.',
+                              power=True,
                               )
 
         self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
                               info='d-axis i controller proportional gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.ki_di = NumParam(default=0.2, tex_name=r'ki_{di}',
                               info='d-axis i controller integral gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.kp_qi = NumParam(default=500, tex_name=r'kp_{qi}',
                               info='q-axis i controller proportional gain',
                               unit='p.u.',
+                              power=True,
                               )
         self.ki_qi = NumParam(default=0.2, tex_name=r'ki_{qi}',
                               info='q-axis i controller integral gain',
                               unit='p.u.',
+                              power=True,
                               )
+        self.ra = NumParam(default=0.0,
+                           info="resistance",
+                           z=True,
+                           tex_name='r_a'
+                           )
+        self.xs = NumParam(default=0.3,
+                           info="reactance",
+                           z=True,
+                           tex_name='x_s'
+                           )
 
 
 class REGCVSGModel(Model):
@@ -136,18 +158,6 @@ class REGCVSGModel(Model):
                                tex_name=r'V_{ref}',
                                info='initial v of the static gen',
                                )
-        self.ra = ExtParam(model='StaticGen',
-                           src='ra',
-                           indexer=self.gen,
-                           tex_name='r_a',
-                           export=False,
-                           )
-        self.xs = ExtParam(model='StaticGen',
-                           src='xs',
-                           indexer=self.gen,
-                           tex_name='x_s',
-                           export=False,
-                           )
 
         # --- INITIALIZATION ---
         self.ixs = ConstService(v_str='1/xs',
