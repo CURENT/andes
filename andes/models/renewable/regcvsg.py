@@ -1,19 +1,19 @@
+"""
+REGC_VSG module.
+Voltage-controlled VSC with virtual synchronous generator control.
+"""
+
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb
 from andes.core import Lag, ExtService, ConstService, Algeb, State
 from andes.core.block import PIController
 from andes.core.var import AliasState, AliasAlgeb
-# from andes.core.block import LagAntiWindupRate, GainLimiter, PIController
-
-"""
-REGC_VSG module.
-voltage-controlled VSC with virtual synchronous generator control.
-"""
 
 
 class REGCVSGData(ModelData):
     """
     REGC_VSG model data.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -58,7 +58,7 @@ class REGCVSGData(ModelData):
                           power=True,
                           )
         self.D = NumParam(default=2, tex_name='D',
-                          info='Emulated damiping coefficient',
+                          info='Emulated damping coefficient',
                           unit='p.u.',
                           power=True,
                           )
@@ -115,11 +115,21 @@ class REGCVSGData(ModelData):
                            tex_name='x_s'
                            )
 
+        self.gammap = NumParam(default=1.0,
+                               info="P ratio of linked static gen",
+                               tex_name=r'\gamma_P'
+                               )
+        self.gammaq = NumParam(default=1.0,
+                               info="Q ratio of linked static gen",
+                               tex_name=r'\gamma_Q'
+                               )
+
 
 class REGCVSGModel(Model):
     """
     REGC_VSG implementation.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -140,18 +150,27 @@ class REGCVSGModel(Model):
                           e_str='-u * Qe',
                           )
 
-        self.Pref = ExtService(model='StaticGen',
-                               src='p',
-                               indexer=self.gen,
-                               tex_name=r'P_{ref}',
-                               info='initial P of the static gen',
-                               )
-        self.Qref = ExtService(model='StaticGen',
-                               src='q',
-                               indexer=self.gen,
-                               tex_name=r'Q_{ref}',
-                               info='initial Q of the static gen',
-                               )
+        self.p0s = ExtService(model='StaticGen',
+                              src='p',
+                              indexer=self.gen,
+                              tex_name=r'P_{0s}',
+                              info='total P of the static gen',
+                              )
+        self.q0s = ExtService(model='StaticGen',
+                              src='q',
+                              indexer=self.gen,
+                              tex_name=r'Q_{0s}',
+                              info='total Q of the static gen',
+                              )
+        self.Pref = ConstService(v_str='gammap * p0s',
+                                 tex_name='P_{ref}',
+                                 info='Initial P for the REGCVSG device',
+                                 )
+        self.Qref = ConstService(v_str='gammaq * q0s',
+                                 tex_name='Q_{ref}',
+                                 info='Initial Q for the REGCVSG device',
+                                 )
+
         self.vref = ExtService(model='StaticGen',
                                src='v',
                                indexer=self.gen,
@@ -301,10 +320,11 @@ class REGCVSGModel(Model):
 class REGCVSG(REGCVSGData, REGCVSGModel):
     """
     Voltage-controlled VSC with VSG control.
-    Double-loop PI control.
-    Swing equation based VSG control.
-    The measure time-delay of voltage is ignored.
+
+    Includes double-loop PI control and swing equation based VSG control.
+    Voltage measurement delays are ignored.
     """
+
     def __init__(self, system, config):
         REGCVSGData.__init__(self)
         REGCVSGModel.__init__(self, system, config)

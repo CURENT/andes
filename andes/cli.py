@@ -97,7 +97,7 @@ def create_parser():
     plot.add_argument('-d', '--no-latex', action='store_false', dest='latex', help='disable LaTex formatting')
     plot.add_argument('-n', '--no-show', action='store_false', dest='show', help='do not show the plot window')
     plot.add_argument('--ytimes', type=str, help='scale the y-axis values by YTIMES')
-    plot.add_argument('-c', '--tocsv', help='convert npy output to csv', action='store_true')
+    plot.add_argument('-c', '--to-csv', help='convert npy output to csv', action='store_true')
     plot.add_argument('--hline1', help='dashed horizontal line 1', type=float)
     plot.add_argument('--hline2', help='dashed horizontal line 2', type=float)
     plot.add_argument('--vline1', help='dashed vertical line 1', type=float)

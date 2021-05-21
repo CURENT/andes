@@ -778,7 +778,7 @@ def eig_plot(name, args):
 
 
 def tdsplot(filename, y, x=(0,),
-            tocsv=False,
+            to_csv=False,
             find=None,
             xargs=None,
             exclude=None,
@@ -794,7 +794,7 @@ def tdsplot(filename, y, x=(0,),
         The index for the x-axis variable. x=0 by default for time
     y : list or int
         The indices for the y-axis variable
-    tocsv : bool
+    to_csv : bool
         True if need to export to a csv file
     find : str, optional
         if not none, specify the variable name to find
@@ -811,7 +811,7 @@ def tdsplot(filename, y, x=(0,),
     # single data file
     if len(filename) == 1:
         tds_data = TDSData(filename[0])
-        if tocsv is True:
+        if to_csv is True:
             tds_data.export_csv()
             return
         if find is not None:

@@ -358,20 +358,20 @@ class PVD1Model(Model):
 
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal (for AGC)',
-                          v_str='Pext0',
-                          e_str='Pext0 - Pext'
+                          v_str='u * Pext0',
+                          e_str='u * Pext0 - Pext'
                           )
 
         self.Pref = Algeb(tex_name='P_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
-                          v_str='pref0',
-                          e_str='pref0 - Pref'
+                          v_str='u * pref0',
+                          e_str='u * pref0 - Pref'
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
                           info='Sum of P signals',
-                          v_str='Pext + Pref + DB_y',
-                          e_str='Pext + Pref + DB_y - Psum',
+                          v_str='u * (Pext + Pref + DB_y)',
+                          e_str='u * (Pext + Pref + DB_y) - Psum',
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
@@ -404,10 +404,10 @@ class PVD1Model(Model):
                            no_warn=True,
                            )
 
-        Qsum = 'VQ1_zl * qmx + VQ2_zu * qmn + ' \
-               'VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
-               'VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
-               'qref0'
+        Qsum = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
+               'u * VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
+               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
+               'u * qref0'
 
         self.Qsum = Algeb(info='Total Q (droop + initial)',
                           v_str=Qsum,
@@ -430,7 +430,7 @@ class PVD1Model(Model):
 
         # --- Ipmax, Iqmax and Iqmin ---
         Ipmaxsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
-        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (qref0 / v)**2, 0)), ((ialim**2 - (qref0 / v) ** 2), True)))"
+        Ipmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u*qref0/v)**2, 0)), ((ialim**2 - (u*qref0/v) ** 2), True)))"
         self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
         self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
 
@@ -440,7 +440,7 @@ class PVD1Model(Model):
                            )
 
         Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
-        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (pref0 / v)**2, 0)), ((ialim**2 - (pref0 / v) ** 2), True)))"
+        Iqmaxsq0 = "(Piecewise((0, Le(ialim**2 - (u*pref0/v)**2, 0)), ((ialim**2 - (u*pref0/v) ** 2), True)))"
         self.Iqmaxsq = VarService(v_str=Iqmaxsq, tex_name='I_{qmax}^2')
         self.Iqmaxsq0 = ConstService(v_str=Iqmaxsq0, tex_name='I_{qmax0}^2')
 

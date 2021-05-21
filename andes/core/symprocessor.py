@@ -464,6 +464,11 @@ from numpy import log  # NOQA
         for name, expr in self.v_iter_syms.items():
             _store_deps(name, expr, self.vars_dict, deps)
 
+        # store deps for manually added dependent variables
+        for name, instance in self.cache.vars_int.items():
+            if instance.deps is not None:
+                deps[name].extend(instance.deps)
+
         # resolve dependency
         self.init_seq = resolve_deps(deps)
         self.calls.init_seq = self.init_seq

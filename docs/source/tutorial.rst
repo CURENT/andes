@@ -408,7 +408,7 @@ optional arguments:
     -d, --no-latex                  disable LaTeX formatting
     -n, --no-show                   do not show the plot window
     --ytimes YTIMES                 scale the y-axis values by YTIMES
-    -c, --tocsv                     convert npy output to csv
+    -c, --to-csv                    convert npy output to csv
     ============================    ======================================================
 
 .. _andes_doc:
