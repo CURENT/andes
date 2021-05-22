@@ -35,6 +35,7 @@ class GENBaseData(ModelData):
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
                            tex_name='S_n',
+                           unit='MVA',
                            )
         self.Vn = NumParam(default=110.0,
                            info="AC voltage rating",
