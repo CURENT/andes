@@ -180,6 +180,14 @@ System manages all configs, including saving to a config file and loading back.
     ``andes`` from command line.
     Directly modifying ``Model.config`` may not take effect or have side effect as for the current implementation.
 
+Group
+======
+A group is a collection of similar functional models with common variables and parameters. A group has common 
+variables and parameters. When developing a new module under an existing group, the common variables and parameters 
+should be contained in the module. 
+The common variables and parameters are the interface when connecting different group models. For example, the Group 
+RenGen has variables Pe and Qe, which are active power output and reactive power output, respectively. Then a module 
+in Group RenExciter, could generate a control signal based on the given Pe and Qe.
 
 Models
 ======
