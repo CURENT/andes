@@ -67,7 +67,7 @@ class IEESGOModel(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.F1 = Lag(u='omega - wref',
+        self.F1 = Lag(u='ue * (omega - wref)',
                       T=self.T1,
                       K=self.K1,
                       )
@@ -78,7 +78,7 @@ class IEESGOModel(TGBase):
                           K=1.0,
                           )
 
-        self.HL = GainLimiter(u='paux + pref0 - F2_y',
+        self.HL = GainLimiter(u='ue * (paux + pref0 - F2_y)',
                               K=1.0,
                               lower=self.PMIN,
                               upper=self.PMAX,
@@ -92,7 +92,7 @@ class IEESGOModel(TGBase):
         self.F5 = Lag(u=self.F4_y, T=self.T6, K=self.K3,
                       )
 
-        self.pout.e_str = '(1 - K2) * F3_y + (1-K3) * F4_y + F5_y - pout'
+        self.pout.e_str = 'ue * ((1-K2)*F3_y + (1-K3)*F4_y + F5_y) - pout'
 
 
 class IEESGO(IEESGOData, IEESGOModel):

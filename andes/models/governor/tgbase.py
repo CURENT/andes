@@ -53,6 +53,19 @@ class TGBase(Model):
                            unit='MVA',
                            export=False,
                            )
+        self.ug = ExtParam(src='u',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name='u_g',
+                           info='Generator connection status',
+                           unit='bool',
+                           export=False,
+                           )
+        self.ue = ConstService(v_str='u * ug',
+                               info="effective connection status considering generator's",
+                               tex_name='u_{e}',
+                               )
+
         if add_sn is True:
             self.Sn = NumSelect(self.Tn,
                                 fallback=self.Sg,
@@ -98,7 +111,7 @@ class TGBase(Model):
                            model='SynGen',
                            indexer=self.syn,
                            tex_name=r'\tau_m',
-                           e_str='u * (pout - tm0)',
+                           e_str='ue * (pout - tm0)',
                            info='Mechanical power interface to SynGen',
                            )
         # `paux` must be zero upon initialization
@@ -109,7 +122,7 @@ class TGBase(Model):
                           )
         self.pout = Algeb(info='Turbine final output power',
                           tex_name='P_{out}',
-                          v_str='u*tm0',
+                          v_str='ue * tm0',
                           )
         self.wref = Algeb(info='Speed reference variable',
                           tex_name=r'\omega_{ref}',

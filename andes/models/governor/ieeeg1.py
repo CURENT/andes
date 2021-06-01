@@ -172,7 +172,7 @@ class IEEEG1Model(TGBase):
                             indexer=self.syn2,
                             allow_none=True,
                             tex_name=r'\tau_{m2}',
-                            e_str='zsyn2 * u * (PLP - tm02)',
+                            e_str='zsyn2 * ue * (PLP - tm02)',
                             info='Mechanical power to syn2',
                             )
 
@@ -180,7 +180,7 @@ class IEEEG1Model(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='(wref - omega) - wd',
+                        e_str='ue * (wref - omega) - wd',
                         )
 
         self.LL = LeadLag(u=self.wd,
@@ -194,7 +194,7 @@ class IEEEG1Model(TGBase):
         self.vs = Algeb(info='Valve speed',
                         tex_name='V_s',
                         v_str='0',
-                        e_str='(LL_y + tm012 + paux - IAW_y) / T3 - vs',
+                        e_str='ue * (LL_y + tm012 + paux - IAW_y) / T3 - vs',
                         )
 
         self.HL = HardLimiter(u=self.vs,
@@ -235,17 +235,17 @@ class IEEEG1Model(TGBase):
 
         self.PHP = Algeb(info='HP output',
                          tex_name='P_{HP}',
-                         v_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y',
-                         e_str='K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y - PHP',
+                         v_str='ue * (K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y)',
+                         e_str='ue * (K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y) - PHP',
                          )
 
         self.PLP = Algeb(info='LP output',
                          tex_name='P_{LP}',
-                         v_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y',
-                         e_str='K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y - PLP',
+                         v_str='ue * (K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y)',
+                         e_str='ue * (K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y) - PLP',
                          )
 
-        self.pout.e_str = 'PHP - pout'
+        self.pout.e_str = 'ue * PHP - pout'
 
 
 class IEEEG1(IEEEG1Data, IEEEG1Model):
