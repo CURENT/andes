@@ -1,4 +1,4 @@
-from andes.core.block import Lag
+from andes.core.block import Lag  # NOQA
 
 from andes.models.renewable.regcvsg import REGCVSGData, REGCVSGModelBase
 
