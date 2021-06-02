@@ -114,12 +114,14 @@ class ESDC2AModel(ExcBase):
                               info='Field voltage saturation',
                               )
 
+        # NOTE: Se0 below is not divided by `vf0` or `INT_y`
+        # `Se0` is the variable `Vx` in Powerworld's diagram
         self.Se0 = ConstService(
             tex_name='S_{e0}',
-            v_str='Indicator(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2 / vf0',
+            v_str='Indicator(vf0>SAT_A) * SAT_B*(SAT_A-vf0) ** 2',
         )
 
-        self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
+        self.vfe0 = ConstService(v_str='vf0*KE + Se0',
                                  tex_name='V_{FE0}',
                                  )
         self.vref0 = ConstService(info='Initial reference voltage input',
@@ -182,16 +184,16 @@ class ESDC2AModel(ExcBase):
                            cache=False,
                            )
 
-        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B / INT_y - Se',
+                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
                         )
 
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='INT_y * (KE + Se) - VFE'
+                         e_str='(INT_y*KE + Se) - VFE'
                          )
 
         self.INT = Integrator(u='ue * (LA_y - VFE)',
