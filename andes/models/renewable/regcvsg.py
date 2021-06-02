@@ -125,11 +125,10 @@ class REGCVSGData(ModelData):
                                )
 
 
-class REGCVSGModel(Model):
+class REGCVSGModelBase(Model):
     """
-    REGC_VSG implementation.
+    Common variables and services for VSG models.
     """
-
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -241,20 +240,6 @@ class REGCVSGModel(Model):
                         e_str='- u * v * sin(delta - a) - vq',
                         v_str='vq0')
 
-        self.PIdv = PIController(u='vref2 - vd',
-                                 kp=self.kp_dv,
-                                 ki=self.ki_dv,
-                                 x0='Id0',
-                                 )
-        self.PIqv = PIController(u='- vq',
-                                 kp=self.kp_qv,
-                                 ki=self.ki_qv,
-                                 x0='Iq0',
-                                 )
-
-        self.Idref = AliasAlgeb(self.PIdv_y)
-        self.Iqref = AliasAlgeb(self.PIqv_y)
-
         self.Pe = Algeb(tex_name='P_e',
                         info='active power injection from VSC',
                         e_str='vd * Id + vq * Iq - Pe',
@@ -273,6 +258,47 @@ class REGCVSGModel(Model):
                         info='q-axis current',
                         e_str='- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id',
                         v_str='Iq0')
+
+        self.udLag = Lag(u='udref',
+                         T=self.Tc,
+                         K=1,
+                         )
+        self.uqLag = Lag(u='uqref',
+                         T=self.Tc,
+                         K=1,
+                         )
+
+        self.ud = AliasState(self.udLag_y)
+        self.uq = AliasState(self.uqLag_y)
+
+    def v_numeric(self, **kwargs):
+        """
+        Disable the corresponding `StaticGen`s.
+        """
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+
+
+class REGCVSGModel(REGCVSGModelBase):
+    """
+    REGC_VSG using two PI controllers each for inner and outer loops.
+    """
+
+    def __init__(self, system, config):
+        REGCVSGModelBase.__init__(self, system, config)
+
+        self.PIdv = PIController(u='vref2 - vd',
+                                 kp=self.kp_dv,
+                                 ki=self.ki_dv,
+                                 x0='Id0',
+                                 )
+        self.PIqv = PIController(u='- vq',
+                                 kp=self.kp_qv,
+                                 ki=self.ki_qv,
+                                 x0='Iq0',
+                                 )
+
+        self.Idref = AliasAlgeb(self.PIdv_y)
+        self.Iqref = AliasAlgeb(self.PIqv_y)
 
         # PIdv_y, PIqv_y are Idref, Iqref
         self.PIdi = PIController(u='PIdv_y - Id',
@@ -294,24 +320,6 @@ class REGCVSGModel(Model):
                            e_str='PIqi_y + vq + Id * xs - uqref',
                            v_str='uqref0',
                            )
-
-        self.udLag = Lag(u='udref',
-                         T=self.Tc,
-                         K=1,
-                         )
-        self.uqLag = Lag(u='uqref',
-                         T=self.Tc,
-                         K=1,
-                         )
-
-        self.ud = AliasState(self.udLag_y)
-        self.uq = AliasState(self.uqLag_y)
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class REGCVSG(REGCVSGData, REGCVSGModel):
