@@ -96,7 +96,8 @@ class WTDSModel(Model):
 
         self.wg = AliasState(self.s1_y, tex_name=r'\omega_g')
 
-        self.s3_y = State(info='Dummy state variable', tex_name='y_{s3}',
+        self.s3_y = State(info='Unused state variable',
+                          tex_name='y_{s3}',
                           )
 
         self.Kshaft = ConstService(v_str='1.0', tex_name='K_{shaft}',

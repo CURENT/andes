@@ -175,8 +175,12 @@ class ESDC2AModel(ExcBase):
                                 info='Anti-windup lag',
                                 )  # LA_y == VR
 
-        # `LessThan` may be causing memory issue in (SL_z0 * vout) - uncertain yet
-        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        self.SL = LessThan(u=self.vout,
+                           bound=self.SAT_A,
+                           equal=False,
+                           enable=True,
+                           cache=False,
+                           )
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
@@ -190,7 +194,7 @@ class ESDC2AModel(ExcBase):
                          e_str='INT_y * (KE + Se) - VFE'
                          )
 
-        self.INT = Integrator(u='LA_y - VFE',
+        self.INT = Integrator(u='ue * (LA_y - VFE)',
                               T=self.TE,
                               K=1,
                               y0=self.vf0,

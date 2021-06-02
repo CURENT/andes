@@ -171,10 +171,15 @@ class ESST3AModel(ExcBase):
                       info='Voltage transducer',
                       )
 
+        self.UEL0 = ConstService(v_str='-9999',
+                                 tex_name='U_{EL0}',
+                                 info='initial UEL input'
+                                 )
+
         self.UEL = Algeb(info='Interface var for under exc. limiter',
                          tex_name='U_{EL}',
-                         v_str='0',
-                         e_str='0 - UEL'
+                         v_str='UEL0',
+                         e_str='UEL0 - UEL'
                          )
 
         self.VE = VarService(tex_name='V_E',

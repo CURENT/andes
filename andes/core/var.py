@@ -64,6 +64,7 @@ class BaseVar:
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
+                 deps: Optional[List] = None,
                  ):
 
         self.name = name
@@ -84,6 +85,7 @@ class BaseVar:
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
+        self.deps = deps          # a list of variable names this BaseVar depends on for initialization
 
         # attributes assigned by `set_address`
         self.n = 0
@@ -270,6 +272,7 @@ class State(BaseVar):
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
+                 deps: Optional[List] = None,
                  ):
         BaseVar.__init__(self, name=name,
                          tex_name=tex_name,
@@ -284,6 +287,7 @@ class State(BaseVar):
                          addressable=addressable,
                          export=export,
                          diag_eps=diag_eps,
+                         deps=deps,
                          )
         self.t_const = t_const
         self.check_init = check_init

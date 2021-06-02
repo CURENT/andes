@@ -60,7 +60,7 @@ class TGOV1Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.gain = ConstService(v_str='u/R',
+        self.gain = ConstService(v_str='ue/R',
                                  tex_name='G',
                                  )
 
@@ -74,13 +74,13 @@ class TGOV1Model(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='(wref - omega) - wd',
+                        e_str='ue * (wref - omega) - wd',
                         )
         self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',
                         tex_name="P_d",
-                        v_str='u * tm0',
-                        e_str='u*(wd + pref + paux) * gain - pd')
+                        v_str='ue * tm0',
+                        e_str='ue*(wd + pref + paux) * gain - pd')
 
         self.LAG = LagAntiWindup(u=self.pd,
                                  K=1,
@@ -92,7 +92,7 @@ class TGOV1Model(TGBase):
                           T1=self.T2,
                           T2=self.T3,
                           )
-        self.pout.e_str = '(LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
 
 
 class TGOV1NModel(TGOV1Model):
@@ -105,7 +105,7 @@ class TGOV1NModel(TGOV1Model):
         self.pref.v_str = 'tm0'
         self.pref.e_str = 'pref0 - pref'
 
-        self.pd.e_str = 'u*(wd * gain + pref + paux) - pd'
+        self.pd.e_str = 'ue*(wd * gain + pref + paux) - pd'
 
 
 class TGOV1DBModel(TGOV1Model):
@@ -115,7 +115,7 @@ class TGOV1DBModel(TGOV1Model):
                             upper=self.dbU, tex_name='DB',
                             info='deadband for under speed',
                             )
-        self.pd.e_str = 'u * (DB_y + pref + paux) * gain - pd'
+        self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
         self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
 
 
@@ -137,7 +137,7 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='u * (wref - omega) - wd',
+                        e_str='ue * (wref - omega) - wd',
                         )
         self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',
@@ -168,7 +168,7 @@ class TGOV1ModelAlt(TGBase):
                           e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y',
                           )
 
-        self.pout.e_str = '(LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
 
 
 class TGOV1(TGOV1Data, TGOV1Model):

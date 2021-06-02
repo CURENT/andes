@@ -29,9 +29,13 @@ class GENBaseData(ModelData):
         self.coi = IdxParam(model='COI',
                             info="center of inertia index",
                             )
+        self.coi2 = IdxParam(model='COI2',
+                             info="center of inertia index",
+                             )
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
                            tex_name='S_n',
+                           unit='MVA',
                            )
         self.Vn = NumParam(default=110.0,
                            info="AC voltage rating",
@@ -235,6 +239,15 @@ class GENBase(Model):
                                tex_name='Q_0',
                                info='initial Q of this gen',
                                )
+
+        self.Pe = Algeb(tex_name='P_e',
+                        info='active power injection',
+                        e_str='u * (vd * Id + vq * Iq) - Pe',
+                        v_str='u * (vd0 * Id0 + vq0 * Iq0)')
+        self.Qe = Algeb(tex_name='Q_e',
+                        info='reactive power injection',
+                        e_str='u * (vq * Id - vd * Iq) - Qe',
+                        v_str='u * (vq0 * Id0 - vd0 * Iq0)')
 
     def v_numeric(self, **kwargs):
         # disable corresponding `StaticGen`

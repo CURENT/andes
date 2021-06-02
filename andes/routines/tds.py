@@ -895,6 +895,9 @@ class TDS(BaseRoutine):
             raise ValueError("Data from CSV is not 2-dimensional (time versus variable)")
         if data.shape[0] < 2:
             logger.warning("CSV data does not contain more than one time step.")
+        if data.shape[1] < (self.system.dae.m + self.system.dae.n):
+            logger.warning("CSV data contains fewer variables than required.")
+            logger.warning("Check if the CSV data file is generated from the test case.")
 
         # set start and end times from data
         self.config.t0 = data[0, 0]

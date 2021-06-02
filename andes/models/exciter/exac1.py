@@ -109,12 +109,12 @@ class EXAC1Model(ExcBase):
                               info='Field voltage saturation',
                               )
 
+        # NOTE: e_str `KC*XadIfd / INT_y - IN` causes numerical inaccuracies
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
                         v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
-                        e_str='KC * XadIfd / INT_y - IN',
-                        )
+                        e_str='KC * XadIfd - INT_y * IN',)
 
         self.FEX = Piecewise(u=self.IN,
                              points=(0, 0.433, 0.75, 1),

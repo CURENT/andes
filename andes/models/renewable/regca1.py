@@ -246,7 +246,7 @@ class REGCA1Model(Model):
                                )
         self.HVG.lim.no_warn = True
 
-        self.Iqout = GainLimiter(u='S1_y- HVG_y', K=1, lower=self.Iolim, upper=9999,
+        self.Iqout = GainLimiter(u='S1_y - HVG_y', K=1, lower=self.Iolim, upper=9999,
                                  no_upper=True, info='Iq output block',
                                  tex_name='I^{qout}',
                                  )  # `Iqout_y` is the final Iq output
