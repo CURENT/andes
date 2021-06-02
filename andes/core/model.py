@@ -1732,6 +1732,10 @@ class Model:
             b = np.ravel(rhs(*i_args))
             A = jac(*j_args)
             inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
+            if np.isnan(inc).any():
+                logger.warning(f"{self.class_name}: nan detected in iterations for {self.idx.v[pos]}.")
+                break
+
             x0 += inc
             for idx, item in enumerate(name):
                 inputs[item][pos] = x0[idx]
