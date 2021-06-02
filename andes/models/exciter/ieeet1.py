@@ -107,11 +107,11 @@ class IEEET1Model(ExcBase):
 
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
-                                v_str='(KE + Se0) * vf0')
+                                v_str='KE * vf0 + Se0')
         self.vb0 = ConstService(info='Initial vb',
                                 tex_name='V_{b0}',
                                 v_str='vr0 / KA')
@@ -119,7 +119,7 @@ class IEEET1Model(ExcBase):
                                   tex_name='V_{ref0}',
                                   v_str='v + vb0',
                                   )
-        self.vfe0 = ConstService(v_str='vf0 * (KE + Se0)',
+        self.vfe0 = ConstService(v_str='vf0 * KE + Se0',
                                  tex_name='V_{FE0}',
                                  )
 
@@ -150,7 +150,7 @@ class IEEET1Model(ExcBase):
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='INT_y * (KE + Se) - VFE'
+                         e_str='INT_y * KE + Se - VFE'
                          )
 
         self.INT = Integrator(u='LA_y - VFE',
@@ -164,7 +164,7 @@ class IEEET1Model(ExcBase):
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B / INT_y - Se',
+                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
                         )
 
         self.WF = Washout(u=self.vout, T=self.TF, K=self.KF, info='Stablizing circuit feedback')

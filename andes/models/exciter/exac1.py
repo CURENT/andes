@@ -121,7 +121,7 @@ class EXAC1Model(ExcBase):
                              funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
                              info='Piecewise function FEX',
                              )
-        self.FEX.y.v_iter = '1'
+        self.FEX.y.v_str = '1'
         self.FEX.y.v_iter = self.FEX.y.e_str
 
         self.LG = Lag(self.v, T=self.TR, K=1,

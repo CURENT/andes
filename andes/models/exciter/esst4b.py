@@ -182,8 +182,8 @@ class ESST4BModel(ExcBase):
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
-                        v_str='KC * XadIfd / VE',
-                        e_str='KC * XadIfd / VE - IN',
+                        v_str='safe_div(KC * XadIfd, VE)',
+                        e_str='KC * XadIfd - VE * IN',
                         )
 
         self.FEX = Piecewise(u=self.IN,
@@ -247,7 +247,7 @@ class ESST4BModel(ExcBase):
                              ks=self.config.ksm,
                              lower=self.VMMIN,
                              upper=self.VMMAX,
-                             x0='vf0 / VB_y',
+                             x0='safe_div(vf0, VB_y)',
                              )
 
         # TODO: add back LV Gate
