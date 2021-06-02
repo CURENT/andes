@@ -189,8 +189,9 @@ class ESST3AModel(ExcBase):
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
-                        v_str='KC * XadIfd / VE',
-                        e_str='KC * XadIfd / VE - IN',
+                        v_str='safe_div(KC * XadIfd, VE)',
+                        e_str='ue * (KC * XadIfd - VE * IN)',
+                        diag_eps=True,
                         )
 
         self.FEX = Piecewise(u=self.IN,
@@ -220,7 +221,7 @@ class ESST3AModel(ExcBase):
 
         self.vrs = Algeb(tex_name='V_{RS}',
                          info='VR subtract feedback VG',
-                         v_str='vf0 / VB_y / KM',
+                         v_str='safe_div(vf0, VB_y) / KM',
                          e_str='LAW1_y - VG_y - vrs',
                          )
 

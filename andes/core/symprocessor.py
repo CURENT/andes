@@ -11,6 +11,7 @@ from sympy import Symbol, Matrix
 from sympy import sympify, lambdify, latex, SympifyError
 from sympy import SparseMatrix
 
+from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
 
@@ -135,6 +136,7 @@ class SymProcessor:
         self.lambdify_func[0]['real'] = np.real
         self.lambdify_func[0]['im'] = np.imag
         self.lambdify_func[0]['re'] = np.real
+        self.lambdify_func[0]['safe_div'] = safe_div
 
         self.vars_list = list(self.vars_dict.values())  # useful for ``.jacobian()``
 
@@ -379,6 +381,8 @@ from numpy import array, real, imag, conj, angle, radians  # NOQA
 from numpy import arcsin, arccos, arctan  # NOQA
 from numpy import log  # NOQA
 
+from andes.core.npfunc import *  # NOQA
+
 
 """
 
@@ -524,7 +528,8 @@ from numpy import log  # NOQA
                 if instance.v_str is not None:
                     self.init_asn[item] = self.v_str_syms[item]
                 if instance.v_iter is not None:
-                    self.init_itn[item] = self.v_iter_syms[item]
+                    self.init_itn[item] = Matrix([self.v_iter_syms[item]])
+                    self.init_itn_vars[item] = [item]
 
             elif isinstance(item, list):
                 name_concat = '_'.join(item)
