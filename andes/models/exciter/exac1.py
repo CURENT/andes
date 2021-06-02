@@ -114,7 +114,9 @@ class EXAC1Model(ExcBase):
                         info='Input to FEX',
                         v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
-                        e_str='KC * XadIfd - INT_y * IN',)
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
+                        diag_eps=True,
+                        )
 
         self.FEX = Piecewise(u=self.IN,
                              points=(0, 0.433, 0.75, 1),
@@ -158,16 +160,16 @@ class EXAC1Model(ExcBase):
 
         self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
-        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
-                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2 / INT_y',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B / INT_y - Se',
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
+                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
                         )
 
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
-                         v_str='INT_y * (KE + Se) + XadIfd * KD',
-                         e_str='INT_y * (KE + Se) + XadIfd * KD - VFE'
+                         v_str='INT_y * KE + Se + XadIfd * KD',
+                         e_str='INT_y * KE + Se + XadIfd * KD - VFE'
                          )
 
         self.vref = Algeb(info='Reference voltage input',
@@ -188,7 +190,7 @@ class EXAC1Model(ExcBase):
                           info='Stablizing circuit feedback',
                           )
 
-        self.vout.e_str = 'INT_y * FEX_y - vout'
+        self.vout.e_str = 'ue * INT_y * FEX_y - vout'
 
 
 class EXAC1(EXAC1Data, EXAC1Model):

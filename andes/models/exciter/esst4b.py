@@ -183,7 +183,8 @@ class ESST4BModel(ExcBase):
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
                         v_str='safe_div(KC * XadIfd, VE)',
-                        e_str='KC * XadIfd - VE * IN',
+                        e_str='ue * (KC * XadIfd - VE * IN)',
+                        diag_eps=True,
                         )
 
         self.FEX = Piecewise(u=self.IN,
