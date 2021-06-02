@@ -1746,6 +1746,8 @@ class Model:
         if solved:
             for idx, item in enumerate(name):
                 inputs[item][pos] = x0[idx]
+        else:
+            logger.warning(f"{self.class_name}: iterative initialization failed for {self.idx.v[pos]}.")
 
 
 def _eval_discrete(instance):
