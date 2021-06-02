@@ -113,7 +113,7 @@ class EXAC1Model(ExcBase):
                         info='Input to FEX',
                         v_str='1',
                         v_iter='KC * XadIfd - INT_y * IN',
-                        e_str='KC * XadIfd / INT_y - IN',
+                        e_str='KC * XadIfd - INT_y * IN',  # NOTE: `KC*XadIfd / INT_y - IN` causes numerical inaccuracies
                         )
 
         self.FEX = Piecewise(u=self.IN,

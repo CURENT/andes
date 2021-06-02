@@ -2,7 +2,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
-from andes.core.service import ExtService
+from andes.core.service import ExtService, ConstService
 
 
 class ExcBaseData(ModelData):
@@ -24,7 +24,19 @@ class ExcBase(Model):
         self.group = 'Exciter'
         self.flags.tds = True
 
-        # from synchronous generators, get Sn, Vn, bus; tm0; omega
+        # from synchronous generators, get u, Sn, Vn, bus; tm0; omega
+        self.ug = ExtParam(src='u',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name='u_g',
+                           info='Generator online status',
+                           unit='bool',
+                           export=False,
+                           )
+        self.ue = ConstService(v_str='u * ug',
+                               info="effective online status",
+                               tex_name='u_e',
+                               )
         self.Sn = ExtParam(src='Sn',
                            model='SynGen',
                            indexer=self.syn,
@@ -64,7 +76,7 @@ class ExcBase(Model):
                            model='SynGen',
                            indexer=self.syn,
                            tex_name=r'v_f',
-                           e_str='u * (vout - vf0)',
+                           e_str='ue * (vout - vf0)',
                            info='Excitation field voltage to generator',
                            )
         self.XadIfd = ExtAlgeb(src='XadIfd',
