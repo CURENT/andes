@@ -129,7 +129,9 @@ class GENBase(Model):
                            unit='pu (Hz)',
                            v_str='u',
                            tex_name=r'\omega',
-                           e_str='(u / M) * (tm - te - D * (omega - 1))')
+                           e_str='u * (tm - te - D * (omega - 1))',
+                           t_const=self.M,
+                           )
 
         # network algebraic variables
         self.a = ExtAlgeb(model='Bus',
