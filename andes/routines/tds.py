@@ -424,7 +424,7 @@ class TDS(BaseRoutine):
             elif self.custom_event:
                 reason = 'custom event set'
             elif not self.last_converged:
-                reason = 'last step did not converge'
+                reason = 'non-convergence in the last step'
             elif self.niter > 4 and (self.niter + 1) % 3 == 0:
                 reason = 'update every 6 iterations'
             elif dae.t - self._last_switch_t < 0.1:

@@ -936,7 +936,7 @@ class System:
         self.j_islands()
 
         if info:
-            logger.debug("Jacobian updated at t=%.6f due to %s.", self.dae.t, info)
+            logger.debug("Jacobian updated at t=%.6f: %s.", self.dae.t, info)
         else:
             logger.debug("Jacobian updated at t=%.6f.", self.dae.t)
 
