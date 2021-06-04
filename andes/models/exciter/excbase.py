@@ -103,6 +103,7 @@ class ExcBase(Model):
         self.vout = Algeb(info='Exciter final output voltage',
                           tex_name='v_{out}',
                           v_str='vf0',
+                          diag_eps=True,
                           )
 
         # Note:

@@ -133,8 +133,9 @@ class EXAC1Model(ExcBase):
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='-v + vref - WF_y - vi',
+                        e_str='ue * (-v + vref - WF_y - vi)',
                         v_str='-v + vref',
+                        diag_eps=True,
                         )
 
         self.LL = LeadLag(u=self.vi, T1=self.TC, T2=self.TB,
@@ -149,7 +150,7 @@ class EXAC1Model(ExcBase):
                                 info='Lag AW on VR',
                                 )
 
-        self.INT = Integrator(u='LA_y - VFE',
+        self.INT = Integrator(u='ue * (LA_y - VFE)',
                               T=self.TE,
                               K=1,
                               y0=0,
@@ -162,14 +163,16 @@ class EXAC1Model(ExcBase):
 
         self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
                         v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
+                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
+                        diag_eps=True,
                         )
 
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='INT_y * KE + Se + XadIfd * KD',
-                         e_str='INT_y * KE + Se + XadIfd * KD - VFE'
+                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
+                         diag_eps=True,
                          )
 
         self.vref = Algeb(info='Reference voltage input',
@@ -190,7 +193,7 @@ class EXAC1Model(ExcBase):
                           info='Stablizing circuit feedback',
                           )
 
-        self.vout.e_str = 'ue * INT_y * FEX_y - vout'
+        self.vout.e_str = 'ue * (INT_y * FEX_y - vout)'
 
 
 class EXAC1(EXAC1Data, EXAC1Model):
