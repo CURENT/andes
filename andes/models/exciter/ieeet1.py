@@ -133,13 +133,15 @@ class IEEET1Model(ExcBase):
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay',
                       )
+        # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='-LG_y + vref - vi',
+                        e_str='ue * (-LG_y + vref - vi)',
                         v_str='-v + vref',
+                        diag_eps=True,
                         )
-        self.LA = LagAntiWindup(u='vi + WF_y',
+        self.LA = LagAntiWindup(u='ue * (vi - WF_y)',
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRMAXc,
@@ -150,10 +152,11 @@ class IEEET1Model(ExcBase):
                          tex_name='V_{FE}',
                          unit='p.u.',
                          v_str='vfe0',
-                         e_str='INT_y * KE + Se - VFE'
+                         e_str='ue * (INT_y * KE + Se - VFE)',
+                         diag_eps=True,
                          )
 
-        self.INT = Integrator(u='LA_y - VFE',
+        self.INT = Integrator(u='ue * (LA_y - VFE)',
                               T=self.TE,
                               K=1,
                               y0=self.vf0,
@@ -169,7 +172,7 @@ class IEEET1Model(ExcBase):
 
         self.WF = Washout(u=self.vout, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
-        self.vout.e_str = 'INT_y - vout'
+        self.vout.e_str = 'ue * (INT_y - vout)'
 
 
 class IEEET1(IEEET1Data, IEEET1Model):
