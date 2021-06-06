@@ -8,6 +8,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.10 (2021-06-08)
+````````````````````
+- Bug fixes for controllers when generators are off.
+
 v1.3.9 (2021-06-02)
 ```````````````````
 - Bug fixes in exciters when generators are offline.
