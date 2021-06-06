@@ -142,6 +142,8 @@ class EXAC1Model(ExcBase):
                           info='Regulator',
                           zero_out=True,
                           )
+
+        # LA_y is VR
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
                                 K=self.KA,
