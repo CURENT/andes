@@ -501,6 +501,9 @@ class PVD1(PVD1Data, PVD1Model):
     write to `pref0.v` and `qref0.v` in place.
     AGC signals should write to `pext0.v` in place.
 
+    Maximum power limit `pmx` can be enabled by editing the configuration
+    file by setting `plim=1`. It cannot be modified in runtime.
+
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
     Available:

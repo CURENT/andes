@@ -14,4 +14,4 @@ def safe_div(a, b, out=None):
     if out is None:
         out = np.zeros_like(a)
 
-    return np.divide(a, b, out=np.zeros_like(a), where=(b != 0))
+    return np.divide(a, b, out=out, where=(b != 0))

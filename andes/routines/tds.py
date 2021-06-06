@@ -424,7 +424,7 @@ class TDS(BaseRoutine):
             elif self.custom_event:
                 reason = 'custom event set'
             elif not self.last_converged:
-                reason = 'last step did not converge'
+                reason = 'non-convergence in the last step'
             elif self.niter > 4 and (self.niter + 1) % 3 == 0:
                 reason = 'update every 6 iterations'
             elif dae.t - self._last_switch_t < 0.1:
@@ -944,17 +944,17 @@ class TDS(BaseRoutine):
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
         logger.debug('Max. correction is for variable %s [%d]', self.system.dae.xy_name[xy_idx], xy_idx)
-        logger.debug('Associated equation value is %20g', self.system.dae.fg[xy_idx])
+        logger.debug('Associated equation rhs is %20g', self.system.dae.fg[xy_idx])
         logger.debug('')
 
-        logger.debug(f'{"xy_index":<10} {"Equation":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        logger.debug(f'{"xy_index":<10} {"Equation (row)":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
         for eq in eqns_idx:
             eq = eq.tolist()
             logger.debug(f'{eq:<10} {self.system.dae.xy_name[eq]:<20} {assoc_eqns[eq]:<20g} '
                          f'{self.system.dae.fg[eq]:<20g}')
 
         logger.debug('')
-        logger.debug(f'{"xy_index":<10} {"Variable":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
+        logger.debug(f'{"xy_index":<10} {"Variable (col)":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
         for v in vars_idx:
             v = v.tolist()
             logger.debug(f'{v:<10} {self.system.dae.xy_name[v]:<20} {assoc_vars[v]:<20g} '
