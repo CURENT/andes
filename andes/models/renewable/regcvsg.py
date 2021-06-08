@@ -36,7 +36,7 @@ class REGCVSGData(ModelData):
                            info="rated frequency",
                            tex_name='f',
                            )
-        self.Tc = NumParam(default=0.001, tex_name='T_c',
+        self.Tc = NumParam(default=0.01, tex_name='T_c',
                            info='switch time constant',
                            unit='s',
                            )
@@ -68,7 +68,7 @@ class REGCVSGData(ModelData):
                            z=True,
                            tex_name='r_a'
                            )
-        self.xs = NumParam(default=0.3,
+        self.xs = NumParam(default=0.2,
                            info="reactance",
                            z=True,
                            tex_name='x_s'
@@ -208,12 +208,8 @@ class REGCVSGModelBase(Model):
                                 v_str='0',
                                 )
 
-        self.udref0 = ConstService(tex_name=r'u_{dref0}',
-                                   v_str='ra * Id0 - xs * Iq0 + vd0',
-                                   )
-        self.uqref0 = ConstService(tex_name=r'u_{qref0}',
-                                   v_str='ra * Iq0 + xs * Id0 + vq0',
-                                   )
+        self.udref0 = ConstService(tex_name=r'u_{dref0}')
+        self.uqref0 = ConstService(tex_name=r'u_{qref0}')
 
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
@@ -272,6 +268,15 @@ class REGCVSGModelBase(Model):
                         e_str='- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id',
                         v_str='Iq0')
 
+        self.udref = Algeb(tex_name=r'u_{dref}',
+                           info='ud reference',
+                           v_str='udref0',
+                           )
+        self.uqref = Algeb(tex_name=r'u_{qref}',
+                           info='uq reference',
+                           v_str='uqref0',
+                           )
+
         self.udLag = Lag(u='udref',
                          T=self.Tc,
                          K=1,
@@ -328,16 +333,11 @@ class VSGInnerPIModel:
                                  ki=self.ki_qi,
                                  )
 
-        self.udref = Algeb(tex_name=r'u_{dref}',
-                           info='ud reference',
-                           e_str='PIdi_y + vd - Iq * xs - udref',
-                           v_str='udref0',
-                           )
-        self.uqref = Algeb(tex_name=r'u_{qref}',
-                           info='ud reference',
-                           e_str='PIqi_y + vq + Id * xs - uqref',
-                           v_str='uqref0',
-                           )
+        self.udref0.v_str = 'ra * Id0 - xs * Iq0 + vd0'
+        self.uqref0.v_str = 'ra * Iq0 + xs * Id0 + vq0'
+
+        self.udref.e_str = 'PIdi_y + vd - Iq * xs - udref'
+        self.uqref.e_str = 'PIqi_y + vq + Id * xs - uqref'
 
 
 class REGCVSG(REGCVSGData, VSGOuterPIData, VSGInnerPIData,
