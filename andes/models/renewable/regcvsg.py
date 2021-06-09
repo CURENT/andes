@@ -88,6 +88,7 @@ class VSGOuterPIData:
     """
     Outer loop PI controller for d- and q-axis voltages.
     """
+
     def __init__(self) -> None:
         self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
                               info='vd controller proportional gain',
@@ -115,6 +116,7 @@ class VSGInnerPIData:
     """
     Inner loop PI controller for d- and q-axis currents.
     """
+
     def __init__(self):
         self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
                               info='Id controller proportional gain',
@@ -142,6 +144,7 @@ class REGCVSGModelBase(Model):
     """
     Common variables and services for VSG models.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -208,9 +211,6 @@ class REGCVSGModelBase(Model):
                                 v_str='0',
                                 )
 
-        self.udref0 = ConstService(tex_name=r'u_{dref0}')
-        self.uqref0 = ConstService(tex_name=r'u_{qref0}')
-
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
                            e_str='u * Pref - dw * kw - Pref2',
@@ -258,36 +258,12 @@ class REGCVSGModelBase(Model):
                         e_str='- vd * Iq + vq * Id - Qe',
                         v_str='Qref')
 
-        # udLag_y, uqLag_y are ud, uq
         self.Id = Algeb(tex_name='I_d',
                         info='d-axis current',
-                        e_str='- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq',
                         v_str='Id0')
         self.Iq = Algeb(tex_name='I_q',
                         info='q-axis current',
-                        e_str='- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id',
                         v_str='Iq0')
-
-        self.udref = Algeb(tex_name=r'u_{dref}',
-                           info='ud reference',
-                           v_str='udref0',
-                           )
-        self.uqref = Algeb(tex_name=r'u_{qref}',
-                           info='uq reference',
-                           v_str='uqref0',
-                           )
-
-        self.udLag = Lag(u='udref',
-                         T=self.Tc,
-                         K=1,
-                         )
-        self.uqLag = Lag(u='uqref',
-                         T=self.Tc,
-                         K=1,
-                         )
-
-        self.ud = AliasState(self.udLag_y)
-        self.uq = AliasState(self.uqLag_y)
 
     def v_numeric(self, **kwargs):
         """
@@ -323,6 +299,13 @@ class VSGInnerPIModel:
     """
 
     def __init__(self):
+        self.udref0 = ConstService(tex_name=r'u_{dref0}',
+                                   v_str='ra * Id0 - xs * Iq0 + vd0'
+                                   )
+        self.uqref0 = ConstService(tex_name=r'u_{qref0}',
+                                   v_str='ra * Iq0 + xs * Id0 + vq0',
+                                   )
+
         # PIdv_y, PIqv_y are Idref, Iqref
         self.PIdi = PIController(u='PIdv_y - Id',
                                  kp=self.kp_di,
@@ -333,11 +316,32 @@ class VSGInnerPIModel:
                                  ki=self.ki_qi,
                                  )
 
-        self.udref0.v_str = 'ra * Id0 - xs * Iq0 + vd0'
-        self.uqref0.v_str = 'ra * Iq0 + xs * Id0 + vq0'
+        # udLag_y, uqLag_y are ud, uq
+        self.Id.e_str = '- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq'
+        self.Iq.e_str = '- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id'
 
-        self.udref.e_str = 'PIdi_y + vd - Iq * xs - udref'
-        self.uqref.e_str = 'PIqi_y + vq + Id * xs - uqref'
+        self.udref = Algeb(tex_name=r'u_{dref}',
+                           info='ud reference',
+                           v_str='udref0',
+                           e_str='PIdi_y + vd - Iq * xs - udref',
+                           )
+        self.uqref = Algeb(tex_name=r'u_{qref}',
+                           info='uq reference',
+                           v_str='uqref0',
+                           e_str='PIqi_y + vq + Id * xs - uqref',
+                           )
+
+        self.udLag = Lag(u='udref',
+                         T=self.Tc,
+                         K=1,
+                         )
+        self.uqLag = Lag(u='uqref',
+                         T=self.Tc,
+                         K=1,
+                         )
+
+        self.ud = AliasState(self.udLag_y)
+        self.uq = AliasState(self.uqLag_y)
 
 
 class REGCVSG(REGCVSGData, VSGOuterPIData, VSGInnerPIData,
