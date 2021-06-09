@@ -22,6 +22,7 @@ class VSGInnerLagModel:
         self.Id.e_str = 'Id0 - LGId_y - Id'
         self.Iq.e_str = 'Iq0 - LGIq_y - Iq'
 
+
 class REGCVSG2(REGCVSGData, VSGOuterPIData, VSGInnerLagData,
                REGCVSGModelBase, VSGOuterPIModel, VSGInnerLagModel):
     """
