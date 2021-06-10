@@ -81,6 +81,7 @@ Use the following resources to get involved.
 + Check out examples in the [examples folder][examples]
 + Read the model verification results in the [examples/verification folder][verification]
 + Try in Jupyter Notebook on [Binder][Binder]
++ Ask a question in the [GitHub Discussions][Github Discussions]
 + Report bugs or issues by submitting a [GitHub issue][GitHub issues]
 + Submit contributions using [pull requests][GitHub pull requests]
 + Read release notes highlighted [here][release notes]
@@ -122,6 +123,7 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 
 [GitHub releases]:       https://github.com/cuihantao/andes/releases
 [GitHub issues]:         https://github.com/cuihantao/andes/issues
+[Github Discussions]:    https://github.com/cuihantao/andes/discussions
 [GitHub insights]:       https://github.com/cuihantao/andes/pulse
 [GitHub pull requests]:  https://github.com/cuihantao/andes/pulls
 [GitHub contributors]:   https://github.com/cuihantao/andes/graphs/contributors
