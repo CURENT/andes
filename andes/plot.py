@@ -405,7 +405,7 @@ class TDSData:
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
-                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize
+                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize,
                          **kwargs)
 
     def get_call(self, backend=None):
