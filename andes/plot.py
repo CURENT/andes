@@ -271,6 +271,7 @@ class TDSData:
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
              set_xlim=True, set_ylim=True, autoscale=False, legend_bbox=None, legend_loc=None,
+             figsize=None,
              **kwargs):
         """
         Entry function for plotting.
@@ -335,6 +336,8 @@ class TDSData:
             Plot line width
         font_size : float
             Text font size (labels and legends)
+        figsize : tuple
+            Figure size passed when creating new figure
         show : bool
             True to show the image
         backend : str or None
@@ -402,7 +405,7 @@ class TDSData:
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
-                         legend_bbox=legend_bbox, legend_loc=legend_loc,
+                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -460,7 +463,7 @@ class TDSData:
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
-                  vline2=None, set_xlim=True, set_ylim=True, autoscale=False,
+                  vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None,
                   **kwargs):
         """
@@ -523,7 +526,7 @@ class TDSData:
         linestyles = linestyles * int(n_lines / len(linestyles) + 1)
 
         if fig is None or ax is None:
-            fig = plt.figure(dpi=dpi)
+            fig = plt.figure(dpi=dpi, figsize=figsize)
             ax = plt.gca()
 
         if greyscale:
