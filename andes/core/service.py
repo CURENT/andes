@@ -228,10 +228,17 @@ class VarHold(VarService):
 
 class ExtendedEvent(VarService):
     """
-    Service to flag events that extends for period of time after event disappears.
+    Service for indicating an event for an extended, predefined period of time
+    following the event disappearance.
 
-    `EventFlag.v` stores the flags whether the extended time has completed.
-    Outputs will become 1 once then event starts until the extended time ends.
+    The triggering of an event, whether the rise or fall edge, is specified
+    through `trig`. For example, if `trig = rise`, the change of the input from
+    0 to 1 will be considered as an input, whereas the subsequent change back
+    to 0 will be considered as the event end.
+
+    `ExtendedEvent.v` stores the flags whether the extended time has completed.
+    Outputs will become 1 once the event starts and return to 0 when
+    the extended time ends.
 
     Warnings
     --------
@@ -239,8 +246,11 @@ class ExtendedEvent(VarService):
 
     Parameters
     ----------
-    trig : str, rise, fall
-        Triggering edge for the inception of an event. `rise` by default.
+    u : v-provider
+        Triggering signal where the values are 0 or 1.
+
+    trig : str in ("rise", "fall")
+        Triggering edge for the beginning of an event. `rise` by default.
 
     enable : bool or v-provider
         If disabled, the output will be `v_disabled`
