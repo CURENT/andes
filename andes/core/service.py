@@ -176,13 +176,18 @@ class VarService(ConstService):
 
 class EventFlag(VarService):
     """
-    Service to flag events.
+    Service to flag events when the input value changes.
+    The typical input is a `v-provider` with binary values.
 
-    `EventFlag.v` stores the values of the input variable from the previous iteration/step.
+    Implemented by providing `self.check(**kwargs)` as `v_numeric`.
+    `EventFlag.v` stores the values of the input variable
+    in the most recent iteration/step.
+
+    After the evaluation of `self.check()`, `self.v` will be
+    updated.
     """
 
-    def __init__(self,
-                 u,
+    def __init__(self, u,
                  vtype: Optional[type] = None,
                  name: Optional[str] = None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check,
@@ -192,6 +197,8 @@ class EventFlag(VarService):
     def check(self, **kwargs):
         """
         Check status and set event flags.
+
+        Input values are compared with values in the memory.
         """
         if not np.all(self.v == self.u.v):
             self.owner.system.TDS.custom_event = True
@@ -202,7 +209,14 @@ class EventFlag(VarService):
 
 class VarHold(VarService):
     """
-    Service for holding the input when the hold state is on.
+    Service for holding the input when the hold signal is on.
+
+    Parameters
+    ----------
+    hold : v-provider, binary
+        Hold signal array with length equal to the input.
+        For elements that are 1, the corresponding inputs
+        are held until the hold signal returns to 0.
     """
 
     def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
@@ -214,6 +228,10 @@ class VarHold(VarService):
         self._init = False
 
     def check(self, **kwargs):
+        """
+        Custom `v_numeric` function for checking the
+        hold signal and calculating outputs.
+        """
         if not np.all(self.hold.v == 0.0):
             hold_idx = np.where(self.hold.v == 1)
 
