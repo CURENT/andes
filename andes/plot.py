@@ -325,8 +325,9 @@ class TDSData:
             True to enable latex and False to disable
         greyscale : bool
             True to use greyscale, False otherwise
-        savefig : bool
-            True to save to png figure file
+        savefig : bool or str
+            True to save to png figure file.
+            str is treated as the output file name.
         save_format : str
             File extension string (pdf, png or jpg) for the savefig format
         dpi : int
@@ -584,7 +585,7 @@ class TDSData:
 
         plt.draw()
 
-        if savefig:
+        if savefig is not None:
             if save_format is None:
                 save_format = 'png'
 
@@ -593,12 +594,17 @@ class TDSData:
             else:
                 dpi = max(dpi, 200)
 
-            count = 1
-            while True:
-                outfile = f'{self.file_name}_{count}.{save_format}'
-                if not os.path.isfile(outfile):
-                    break
-                count += 1
+            # use supplied file name
+            if isinstance(savefig, str):
+                outfile = savefig + '.' + save_format
+            # or generate a new name
+            else:
+                count = 1
+                while True:
+                    outfile = f'{self.file_name}_{count}.{save_format}'
+                    if not os.path.isfile(outfile):
+                        break
+                    count += 1
 
             fig.savefig(outfile, dpi=dpi)
             logger.info('Figure saved to "%s".', outfile)
