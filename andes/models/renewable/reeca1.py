@@ -254,6 +254,9 @@ class REECA1Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
+        self.flags.tds = True
+        self.group = 'RenExciter'
+
         self.config.add(OrderedDict((('kqs', 2),
                                      ('kvs', 2),
                                      ('tpfilt', 0.02),
@@ -346,10 +349,16 @@ class REECA1Model(Model):
 
         self.Iqcmd0 = ConstService('-q0 / v', info='initial Iqcmd')
 
-        # --- Initial power factor ---
-        self.pfaref0 = ConstService(v_str='atan(q0/p0)', tex_name=r'\Phi_{ref0}',
+        # --- Initial power factor angle ---
+        # NOTE: if `p0` = 0, `pfaref0` = pi/2, `tan(pfaref0)` = inf
+        self.pfaref0 = ConstService(v_str='atan2(q0, p0)', tex_name=r'\Phi_{ref0}',
                                     info='Initial power factor angle',
                                     )
+        # flag devices with `p0`=0, which causes `tan(PF) = +inf`
+        self.zp0 = ConstService(v_str='Eq(p0, 0)',
+                                vtype=float,
+                                tex_name='z_{p0}',
+                                )
 
         # --- Discrete components ---
         self.Vcmp = Limiter(u=self.v, lower=self.Vdip, upper=self.Vup, tex_name='V_{cmp}',
@@ -383,10 +392,12 @@ class REECA1Model(Model):
         self.S1 = Lag(u='Pe', T=self.Tp, K=1, tex_name='S_1', info='Pe filter',
                       )
 
+        # ignore `Qcpf` if `pfaref` is pi/2 by multiplying (1-zp0)
         self.Qcpf = Algeb(tex_name='Q_{cpf}',
                           info='Q calculated from P and power factor',
                           v_str='q0',
-                          e_str='S1_y * tan(pfaref) - Qcpf',
+                          e_str='(1-zp0) * (S1_y * tan(pfaref) - Qcpf)',
+                          diag_eps=True,
                           unit='p.u.',
                           )
 
@@ -660,6 +671,3 @@ class REECA1(REECA1Data, REECA1Model):
     def __init__(self, system, config):
         REECA1Data.__init__(self)
         REECA1Model.__init__(self, system, config)
-
-        self.flags.tds = True
-        self.group = 'RenExciter'
