@@ -370,7 +370,7 @@ class ModelData:
             if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
                 raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
 
-            elif len(values) > 0 and not isinstance(values[0], Iterable):
+            elif len(values) > 0 and not isinstance(values[0], (list, tuple, np.ndarray)):
                 values = (values,)
 
         elif isinstance(keys, Sized):
