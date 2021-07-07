@@ -205,6 +205,7 @@ class ESST3AModel(ExcBase):
 
         self.VB = GainLimiter(u='VE*FEX_y',
                               K=1,
+                              R=1,
                               upper=self.VBMAX,
                               lower=self.VBMIN,
                               no_lower=True,
@@ -213,6 +214,7 @@ class ESST3AModel(ExcBase):
 
         self.VG = GainLimiter(u=self.vout,
                               K=self.KG,
+                              R=1,
                               upper=self.VGMAX,
                               lower=self.VGMIN,
                               no_lower=True,

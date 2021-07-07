@@ -428,7 +428,8 @@ class REECA1Model(Model):
                                    )
 
         # If `VFLAG=0`, set the input as `Vref1` (see the NREL report)
-        self.Vsel = GainLimiter(u='SWV_s0 * Vref1 + SWV_s1 * PIQ_y', K=1,
+        self.Vsel = GainLimiter(u='SWV_s0 * Vref1 + SWV_s1 * PIQ_y',
+                                K=1, R=1,
                                 lower=self.VMIN, upper=self.VMAX,
                                 info='Selection output of VFLAG',
                                 )
@@ -648,11 +649,15 @@ class REECA1Model(Model):
                           )
 
         # `IpHL_y` is `Ipcmd`
-        self.IpHL = GainLimiter(u='s5_y / vp', K=1, lower=self.Ipmin, upper=self.Ipmax,
+        self.IpHL = GainLimiter(u='s5_y / vp',
+                                K=1, R=1,
+                                lower=self.Ipmin, upper=self.Ipmax,
                                 )
 
         # `IqHL_y` is `Iqcmd`
-        self.IqHL = GainLimiter(u='Qsel + Iqinj', K=1, lower=self.Iqmin, upper=self.Iqmax)
+        self.IqHL = GainLimiter(u='Qsel + Iqinj',
+                                K=1, R=1,
+                                lower=self.Iqmin, upper=self.Iqmax)
 
 
 class REECA1(REECA1Data, REECA1Model):

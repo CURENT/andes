@@ -1471,26 +1471,30 @@ class GainLimiter(Block):
 
     Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
 
-             ┌─────┐         upper
-             │     │        /¯¯¯¯¯
-        u -> │  K  │ -> x  / -> y
-             │     │ _____/
-             └─────┘ lower
-
-    TODO: Add an extra gain block "R" for y.
+             ┌─────┐         upper  ┌─────┐
+             │     │        /¯¯¯¯¯  │     │
+        u -> │  K  │ -> x  / -> y   │  R  │
+             │     │ _____/         │     │
+             └─────┘ lower          └─────┘
 
     Parameters
     ----------
     u : str, BaseVar
         Input variable, or an equation string for constructing an anonymous variable
+    K : str, BaseParam, BaseService
+        Initial gain for `u` before limiter
+    R : str, BaseParam, BaseService
+        Post limiter gain
 
     """
 
-    def __init__(self, u, K, lower, upper, no_lower=False, no_upper=False,
+    def __init__(self, u, K, R, lower, upper, no_lower=False, no_upper=False,
+                 sign_lower=1, sign_upper=1,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.K = dummify(K)
+        self.R = dummify(R)
         self.upper = dummify(upper)
         self.lower = dummify(lower)
 
@@ -1500,13 +1504,14 @@ class GainLimiter(Block):
         self.no_lower = no_lower
         self.no_upper = no_upper
 
-        self.x = Algeb(info='Gain output before limiter', tex_name='x')
+        self.x = Algeb(info='Value before limiter', tex_name='x')
 
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
                                no_upper=no_upper, no_lower=no_lower,
+                               sign_lower=sign_lower, sign_upper=sign_upper,
                                tex_name='lim')
 
-        self.y = Algeb(info='Gain output after limiter', tex_name='y', discrete=self.lim)
+        self.y = Algeb(info='Output after limiter and post gain', tex_name='y', discrete=self.lim)
 
         self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
 
@@ -1517,15 +1522,15 @@ class GainLimiter(Block):
         self.x.v_str = f'{self.K.name} * ({self.u.name})'
         self.x.e_str = f'{self.K.name} * ({self.u.name}) - {self.name}_x'
 
-        self.y.e_str = f'{self.name}_x * {self.name}_lim_zi'
-        self.y.v_str = f'{self.name}_x * {self.name}_lim_zi'
+        self.y.e_str = f'{self.name}_x * {self.name}_lim_zi * {self.R.name}'
+        self.y.v_str = f'{self.name}_x * {self.name}_lim_zi * {self.R.name}'
 
         if not self.no_upper:
-            self.y.e_str += f' + {self.name}_lim_zu*{self.upper.name}'
-            self.y.v_str += f' + {self.name}_lim_zu*{self.upper.name}'
+            self.y.e_str += f' + {self.name}_lim_zu*{self.upper.name} * {self.R.name}* {self.lim.sign_upper.name}'
+            self.y.v_str += f' + {self.name}_lim_zu*{self.upper.name} * {self.R.name}* {self.lim.sign_upper.name}'
         if not self.no_lower:
-            self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name}'
-            self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name}'
+            self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name} * {self.R.name}* {self.lim.sign_lower.name}'
+            self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name} * {self.R.name}* {self.lim.sign_lower.name}'
 
         self.y.e_str += f' - {self.name}_y'
 
@@ -1542,12 +1547,9 @@ class LimiterGain(Block):
            _____/        │     │
            lower         └─────┘
 
-    The intermediate variable before the gain is not saved.
-
-    Parameters
-    ----------
-    u : str, BaseVar
-        Input variable, or an equation string for constructing an anonymous variable
+    .. deprecated:: 1.5.0
+          `LimiterGain` will be removed in ANDES 1.5.0. it is replaced by
+          `GainLimiter` because the latter supports pre- and post-gains.
 
     """
 
@@ -1576,9 +1578,6 @@ class LimiterGain(Block):
         self.vars = {'lim': self.lim, 'y': self.y}
 
     def define(self):
-        """
-        TODO: write docstring
-        """
         self.y.e_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
         self.y.v_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
 

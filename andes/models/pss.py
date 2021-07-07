@@ -373,6 +373,7 @@ class ST2CUTModel(PSSBase):
 
         self.VSS = GainLimiter(u=self.LL3_y,
                                K=1,
+                               R=1,
                                lower=self.LSMIN,
                                upper=self.LSMAX
                                )

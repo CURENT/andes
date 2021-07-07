@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from andes.core.model import Model, ModelData
 from andes.core.param import NumParam, IdxParam
-from andes.core.block import Lag, DeadBand1, LimiterGain
+from andes.core.block import Lag, DeadBand1, GainLimiter
 from andes.core.var import ExtAlgeb, Algeb
 
 from andes.core.service import ConstService, ExtService, VarService
@@ -450,13 +450,15 @@ class PVD1Model(Model):
                            )
 
         # --- `Ipcmd` and `Iqcmd` ---
-        self.Ipcmd = LimiterGain(u=self.Ipul, K='Fvl * Fvh * Ffl * Ffh',
+        self.Ipcmd = GainLimiter(u=self.Ipul,
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
                                  lower=0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
 
-        self.Iqcmd = LimiterGain(u=self.Iqul, K='Fvl * Fvh * Ffl * Ffh',
+        self.Iqcmd = GainLimiter(u=self.Iqul,
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
                                  lower=self.Iqmax, sign_lower=-1,
                                  upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
