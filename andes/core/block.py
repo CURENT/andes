@@ -1467,13 +1467,13 @@ class LVGate(Block):
 
 class GainLimiter(Block):
     """
-    Gain followed by a limiter.
+    Gain followed by a limiter and another gain.
 
     Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
 
              ┌─────┐         upper  ┌─────┐
              │     │        /¯¯¯¯¯  │     │
-        u -> │  K  │ -> x  / -> y   │  R  │
+        u -> │  K  │ -> x  /   ->   │  R  │ -> y
              │     │ _____/         │     │
              └─────┘ lower          └─────┘
 
