@@ -19,8 +19,8 @@ class VSGInnerLagModel:
         self.LGId = Lag(u=self.PIdv_y, T=self.Tid, K=1)  # Id
         self.LGIq = Lag(u=self.PIqv_y, T=self.Tiq, K=1)  # Iq
 
-        self.Id.e_str = 'Id0 - LGId_y - Id'
-        self.Iq.e_str = 'Iq0 - LGIq_y - Iq'
+        self.Id.e_str = 'LGId_y - Id'
+        self.Iq.e_str = 'LGIq_y - Iq'
 
 
 class REGCVSG2(REGCVSGData, VSGOuterPIData, VSGInnerLagData,
