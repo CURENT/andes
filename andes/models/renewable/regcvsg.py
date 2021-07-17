@@ -3,6 +3,7 @@ REGCVSG model.
 Voltage-controlled VSC with virtual synchronous generator control.
 """
 
+from numpy import diag
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb
 from andes.core import Lag, ExtService, ConstService, Algeb, State
 from andes.core.block import PIController
@@ -260,10 +261,14 @@ class REGCVSGModelBase(Model):
 
         self.Id = Algeb(tex_name='I_d',
                         info='d-axis current',
-                        v_str='Id0')
+                        v_str='Id0',
+                        diag_eps=True,
+                        )
         self.Iq = Algeb(tex_name='I_q',
                         info='q-axis current',
-                        v_str='Iq0')
+                        v_str='Iq0',
+                        diag_eps=True,
+                        )
 
     def v_numeric(self, **kwargs):
         """
@@ -317,18 +322,18 @@ class VSGInnerPIModel:
                                  )
 
         # udLag_y, uqLag_y are ud, uq
-        self.Id.e_str = '- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq'
-        self.Iq.e_str = '- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id'
+        self.Id.e_str = '- ra * Id  + (udLag_y - vd) + Iq * xs'
+        self.Iq.e_str = '- ra * Iq  + (uqLag_y - vq) - Id * xs'
 
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
                            v_str='udref0',
-                           e_str='PIdi_y + vd - Iq * xs - udref',
+                           e_str='PIdi_y + vd - Iqref * xs - udref',
                            )
         self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='uq reference',
                            v_str='uqref0',
-                           e_str='PIqi_y + vq + Id * xs - uqref',
+                           e_str='PIqi_y + vq + Idref * xs - uqref',
                            )
 
         self.udLag = Lag(u='udref',
