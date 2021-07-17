@@ -16,8 +16,8 @@ class VSGInnerLagModel:
     REGCVSG2 model with lag transfer functions replacing PI controllers.
     """
     def __init__(self):
-        self.LGId = Lag(u=self.PIdv_y, T=self.Tid, K=1)  # Id
-        self.LGIq = Lag(u=self.PIqv_y, T=self.Tiq, K=1)  # Iq
+        self.LGId = Lag(u=self.PIdv_y, T=self.Tid, K=-1)  # Id
+        self.LGIq = Lag(u=self.PIqv_y, T=self.Tiq, K=-1)  # Iq
 
         self.Id.e_str = 'LGId_y - Id'
         self.Iq.e_str = 'LGIq_y - Iq'
