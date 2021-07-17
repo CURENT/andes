@@ -3,7 +3,6 @@ REGCVSG model.
 Voltage-controlled VSC with virtual synchronous generator control.
 """
 
-from numpy import diag
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb
 from andes.core import Lag, ExtService, ConstService, Algeb, State
 from andes.core.block import PIController
