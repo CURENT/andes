@@ -645,9 +645,6 @@ class TDSData:
         aidx = None
         title = ''
 
-        # assume the first xlabel
-        xlabel = self.get_header(xidx)[0] if xlabel is None else xlabel
-
         sharex = True if (sharex is None and ncols == 1) else False
         sharey = True if (sharey is None and nrows == 1) else False
 
