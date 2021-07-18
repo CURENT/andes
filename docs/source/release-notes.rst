@@ -10,7 +10,7 @@ v1.3 Notes
 ----------
 v1.3.11
 ````````````````````
-- Added ``REECA1I`` model with inertia emulation.
+- Added ``REECA1E`` model with inertia emulation.
 - Fixed an issue where the ``vtype`` of services was ignored.
 
 v1.3.10 (2021-06-08)

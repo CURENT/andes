@@ -9,7 +9,7 @@ from andes.core.service import DeviceFinder
 from andes.models.renewable.reeca1 import REECA1Data, REECA1Model
 
 
-class REECA1IData(REECA1Data):
+class REECA1EData(REECA1Data):
     def __init__(self):
         REECA1Data.__init__(self)
         self.Kwd = NumParam(default=0.0,
@@ -22,7 +22,7 @@ class REECA1IData(REECA1Data):
                                )
 
 
-class REECA1IModel(REECA1Model):
+class REECA1EModel(REECA1Model):
     def __init__(self, system, config):
         REECA1Model.__init__(self, system, config)
         self.busrocof = DeviceFinder(self.busroc,
@@ -41,7 +41,7 @@ class REECA1IModel(REECA1Model):
         self.Pref.e_str += '- Kwd * df'
 
 
-class REECA1I(REECA1IData, REECA1IModel):
+class REECA1E(REECA1EData, REECA1EModel):
     def __init__(self, system, config):
-        REECA1IData.__init__(self)
-        REECA1IModel.__init__(self, system, config)
+        REECA1EData.__init__(self)
+        REECA1EModel.__init__(self, system, config)
