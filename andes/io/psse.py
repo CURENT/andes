@@ -524,7 +524,7 @@ def _parse_transf_v33(raw, system, max_bus):
 
             if new_bus in system.Bus.idx.v:
                 new_bus = max_bus + xf_3_count
-                logger.warning(f'{new_bus} exists.')
+                logger.warning('%s exists when adding new bus for 3-winding transformer' % new_bus)
 
             param = {'idx': new_bus,
                      'name': '_'.join([str(i) for i in data[0][:3]]),
