@@ -490,11 +490,11 @@ def _parse_transf_v33(raw, system, max_bus):
             elif data[0][5] == 2:
                 Sn = data[1][2]
             else:
-                raise NotImplementedError('Impedance code 3 not implemented')
+                logger.warning('Impedance code 3 not implemented')
 
             # CM - Y code, 1-system base, 2-No load loss and exc. loss
             if data[0][6] == 2:
-                raise NotImplementedError('Admittance code 2 not implemented')
+                logger.warning('Admittance code 2 not implemented')
 
             param = {'bus1': data[0][0],
                      'bus2': data[0][1],
@@ -524,7 +524,8 @@ def _parse_transf_v33(raw, system, max_bus):
 
             if new_bus in system.Bus.idx.v:
                 new_bus = max_bus + xf_3_count
-                logger.warning('%s exists when adding new bus for 3-winding transformer' % new_bus)
+                logger.warning('Added bus <%s> for 3-winding transformer <%s-%s-%s>',
+                               new_bus, data[0][0], data[0][1], data[0][2])
 
             param = {'idx': new_bus,
                      'name': '_'.join([str(i) for i in data[0][:3]]),
