@@ -11,3 +11,4 @@ pathos
 tqdm
 pyyaml
 coloredlogs
+chardet

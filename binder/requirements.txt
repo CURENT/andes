@@ -11,6 +11,7 @@ pathos
 tqdm
 pyyaml
 coloredlogs
+chardet
 kvxopt
 codecov
 coverage
