@@ -14,6 +14,7 @@ from andes.shared import set_latex
 from andes.core.var import BaseVar
 
 logger = logging.getLogger(__name__)
+DPI = 100
 
 
 class TDSData:
@@ -266,7 +267,7 @@ class TDSData:
              left=None, right=None, ymin=None, ymax=None,
              xlabel=None, ylabel=None, xheader=None, yheader=None,
              legend=None, grid=False, greyscale=False, latex=True,
-             dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
+             dpi=DPI, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
@@ -431,7 +432,7 @@ class TDSData:
 
     def bqplot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
-                    latex=True, dpi=150, line_width=1.0, greyscale=False, savefig=None, save_format=None,
+                    latex=True, dpi=DPI, line_width=1.0, greyscale=False, savefig=None, save_format=None,
                     title=None,
                     **kwargs):
         """
@@ -462,7 +463,7 @@ class TDSData:
 
     def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, linestyles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
+                  latex=True, dpi=DPI, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None,
@@ -614,7 +615,7 @@ class TDSData:
 
         return fig, ax
 
-    def plotn(self, nrows: int, ncols: int, yidxes, xidxes=None, *, dpi=150, titles=None,
+    def plotn(self, nrows: int, ncols: int, yidxes, xidxes=None, *, dpi=DPI, titles=None,
               a=None, figsize=None, xlabel=None, ylabel=None, sharex=None, sharey=None, show=True,
               xlabel_offs=(0.5, 0.01), ylabel_offs=(0.05, 0.5), hspace=0.2, wspace=0.2,
               **kwargs):
