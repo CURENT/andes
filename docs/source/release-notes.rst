@@ -12,6 +12,7 @@ v1.3.11
 ````````````````````
 - Added ``REECA1E`` model with inertia emulation.
 - Fixed an issue where the ``vtype`` of services was ignored.
+- Changed default DPI for plotting to 100.
 
 v1.3.10 (2021-06-08)
 ````````````````````
