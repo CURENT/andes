@@ -10,6 +10,9 @@ from andes.models.renewable.reeca1 import REECA1Data, REECA1Model
 
 
 class REECA1EData(REECA1Data):
+    """
+    Data for REECA1E.
+    """
     def __init__(self):
         REECA1Data.__init__(self)
         self.Kdf = NumParam(default=0.0,
@@ -23,6 +26,9 @@ class REECA1EData(REECA1Data):
 
 
 class REECA1EModel(REECA1Model):
+    """
+    Model for REECA1E.
+    """
     def __init__(self, system, config):
         REECA1Model.__init__(self, system, config)
         self.busrocof = DeviceFinder(self.busroc,

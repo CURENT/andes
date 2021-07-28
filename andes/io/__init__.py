@@ -190,7 +190,7 @@ def read_file_like(infile: Union[str, io.IOBase]):
     if isinstance(infile, str):
         with open(infile, 'rb') as fb:
             charset = chardet.detect(fb.read())
-            logger.debug("Detected raw file encoding: %s" % charset)
+            logger.debug("Detected raw file encoding: %s", charset)
 
         f = open(infile, 'r', encoding=charset['encoding'])
     else:
