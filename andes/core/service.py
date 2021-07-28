@@ -176,13 +176,18 @@ class VarService(ConstService):
 
 class EventFlag(VarService):
     """
-    Service to flag events.
+    Service to flag events when the input value changes.
+    The typical input is a `v-provider` with binary values.
 
-    `EventFlag.v` stores the values of the input variable from the previous iteration/step.
+    Implemented by providing `self.check(**kwargs)` as `v_numeric`.
+    `EventFlag.v` stores the values of the input variable
+    in the most recent iteration/step.
+
+    After the evaluation of `self.check()`, `self.v` will be
+    updated.
     """
 
-    def __init__(self,
-                 u,
+    def __init__(self, u,
                  vtype: Optional[type] = None,
                  name: Optional[str] = None, tex_name=None, info=None):
         VarService.__init__(self, v_numeric=self.check,
@@ -192,6 +197,8 @@ class EventFlag(VarService):
     def check(self, **kwargs):
         """
         Check status and set event flags.
+
+        Input values are compared with values in the memory.
         """
         if not np.all(self.v == self.u.v):
             self.owner.system.TDS.custom_event = True
@@ -202,7 +209,14 @@ class EventFlag(VarService):
 
 class VarHold(VarService):
     """
-    Service for holding the input when the hold state is on.
+    Service for holding the input when the hold signal is on.
+
+    Parameters
+    ----------
+    hold : v-provider, binary
+        Hold signal array with length equal to the input.
+        For elements that are 1, the corresponding inputs
+        are held until the hold signal returns to 0.
     """
 
     def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
@@ -214,6 +228,10 @@ class VarHold(VarService):
         self._init = False
 
     def check(self, **kwargs):
+        """
+        Custom `v_numeric` function for checking the
+        hold signal and calculating outputs.
+        """
         if not np.all(self.hold.v == 0.0):
             hold_idx = np.where(self.hold.v == 1)
 
@@ -228,10 +246,17 @@ class VarHold(VarService):
 
 class ExtendedEvent(VarService):
     """
-    Service to flag events that extends for period of time after event disappears.
+    Service for indicating an event for an extended, predefined period of time
+    following the event disappearance.
 
-    `EventFlag.v` stores the flags whether the extended time has completed.
-    Outputs will become 1 once then event starts until the extended time ends.
+    The triggering of an event, whether the rise or fall edge, is specified
+    through `trig`. For example, if `trig = rise`, the change of the input from
+    0 to 1 will be considered as an input, whereas the subsequent change back
+    to 0 will be considered as the event end.
+
+    `ExtendedEvent.v` stores the flags whether the extended time has completed.
+    Outputs will become 1 once the event starts and return to 0 when
+    the extended time ends.
 
     Warnings
     --------
@@ -239,8 +264,11 @@ class ExtendedEvent(VarService):
 
     Parameters
     ----------
-    trig : str, rise, fall
-        Triggering edge for the inception of an event. `rise` by default.
+    u : v-provider
+        Triggering signal where the values are 0 or 1.
+
+    trig : str in ("rise", "fall")
+        Triggering edge for the beginning of an event. `rise` by default.
 
     enable : bool or v-provider
         If disabled, the output will be `v_disabled`

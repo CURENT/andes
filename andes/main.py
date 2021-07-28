@@ -296,6 +296,9 @@ def load(case, codegen=False, setup=True,
         if len(case) > 1:
             logger.error("`andes.load` does not support mulitple cases.")
             return None
+        elif len(case) == 0:
+            logger.error("No valid case found.")
+            return None
         case = case[0]
 
     system = System(case, **kwargs)

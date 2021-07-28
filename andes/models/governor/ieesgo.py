@@ -80,6 +80,7 @@ class IEESGOModel(TGBase):
 
         self.HL = GainLimiter(u='ue * (paux + pref0 - F2_y)',
                               K=1.0,
+                              R=1.0,
                               lower=self.PMIN,
                               upper=self.PMAX,
                               )

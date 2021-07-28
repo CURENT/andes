@@ -370,7 +370,7 @@ class ModelData:
             if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
                 raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
 
-            elif len(values) > 0 and not isinstance(values[0], Iterable):
+            elif len(values) > 0 and not isinstance(values[0], (list, tuple, np.ndarray)):
                 values = (values,)
 
         elif isinstance(keys, Sized):
@@ -1023,15 +1023,15 @@ class Model:
                     self.get_inputs(refresh=True)
                     # NOTE: use new assignment due to possible size change
                     #   Always make a copy and make the RHS a 1-d array
-                    instance.v = np.ravel(np.array(func(*self.s_args[name])))
+                    instance.v = np.ravel(np.array(func(*self.s_args[name]), dtype=instance.vtype))
                 else:
-                    instance.v = np.ravel(np.array(func))
+                    instance.v = np.ravel(np.array(func, dtype=instance.vtype))
 
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):
-                    instance.v = np.ones(self.n) * instance.v
+                    instance.v = np.ones(self.n, dtype=instance.vtype) * instance.v
                 elif isinstance(instance.v, np.ndarray) and len(instance.v) == 1:
-                    instance.v = np.ones(self.n) * instance.v
+                    instance.v = np.ones(self.n, dtype=instance.vtype) * instance.v
 
             # --- Very Important ---
             # the numerical call of a `ConstService` should only depend on previously
@@ -1039,7 +1039,7 @@ class Model:
             func = instance.v_numeric
             if func is not None and callable(func):
                 kwargs = self.get_inputs(refresh=True)
-                instance.v = func(**kwargs).copy()
+                instance.v = func(**kwargs).copy().astype(instance.vtype)  # performs type conv.
 
         if self.flags.s_num is True:
             kwargs = self.get_inputs(refresh=True)

@@ -1,5 +1,5 @@
 """
-REGC_VSG module.
+REGCVSG model.
 Voltage-controlled VSC with virtual synchronous generator control.
 """
 
@@ -36,7 +36,7 @@ class REGCVSGData(ModelData):
                            info="rated frequency",
                            tex_name='f',
                            )
-        self.Tc = NumParam(default=0.001, tex_name='T_c',
+        self.Tc = NumParam(default=0.01, tex_name='T_c',
                            info='switch time constant',
                            unit='s',
                            )
@@ -63,53 +63,12 @@ class REGCVSGData(ModelData):
                           power=True,
                           )
 
-        self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
-                              info='d-axis v controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_dv = NumParam(default=0.001, tex_name=r'ki_{dv}',
-                              info='d-axis v controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
-                              info='q-axis v controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_qv = NumParam(default=0.001, tex_name=r'ki_{qv}',
-                              info='q-axis v controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-
-        self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
-                              info='d-axis i controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_di = NumParam(default=0.2, tex_name=r'ki_{di}',
-                              info='d-axis i controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.kp_qi = NumParam(default=500, tex_name=r'kp_{qi}',
-                              info='q-axis i controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_qi = NumParam(default=0.2, tex_name=r'ki_{qi}',
-                              info='q-axis i controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
         self.ra = NumParam(default=0.0,
                            info="resistance",
                            z=True,
                            tex_name='r_a'
                            )
-        self.xs = NumParam(default=0.3,
+        self.xs = NumParam(default=0.2,
                            info="reactance",
                            z=True,
                            tex_name='x_s'
@@ -125,10 +84,67 @@ class REGCVSGData(ModelData):
                                )
 
 
+class VSGOuterPIData:
+    """
+    Outer loop PI controller for d- and q-axis voltages.
+    """
+
+    def __init__(self) -> None:
+        self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
+                              info='vd controller proportional gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.ki_dv = NumParam(default=0.001, tex_name=r'ki_{dv}',
+                              info='vd controller integral gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
+                              info='vq controller proportional gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.ki_qv = NumParam(default=0.001, tex_name=r'ki_{qv}',
+                              info='vq controller integral gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+
+
+class VSGInnerPIData:
+    """
+    Inner loop PI controller for d- and q-axis currents.
+    """
+
+    def __init__(self):
+        self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
+                              info='Id controller proportional gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.ki_di = NumParam(default=0.2, tex_name=r'ki_{di}',
+                              info='Id controller integral gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.kp_qi = NumParam(default=500, tex_name=r'kp_{qi}',
+                              info='Iq controller proportional gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+        self.ki_qi = NumParam(default=0.2, tex_name=r'ki_{qi}',
+                              info='Iq controller integral gain',
+                              unit='p.u.',
+                              power=True,
+                              )
+
+
 class REGCVSGModelBase(Model):
     """
     Common variables and services for VSG models.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
@@ -195,13 +211,6 @@ class REGCVSGModelBase(Model):
                                 v_str='0',
                                 )
 
-        self.udref0 = ConstService(tex_name=r'u_{dref0}',
-                                   v_str='ra * Id0 - xs * Iq0 + vd0',
-                                   )
-        self.uqref0 = ConstService(tex_name=r'u_{qref0}',
-                                   v_str='ra * Iq0 + xs * Id0 + vq0',
-                                   )
-
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusted by frequency',
                            e_str='u * Pref - dw * kw - Pref2',
@@ -249,27 +258,16 @@ class REGCVSGModelBase(Model):
                         e_str='- vd * Iq + vq * Id - Qe',
                         v_str='Qref')
 
-        # udLag_y, uqLag_y are ud, uq
         self.Id = Algeb(tex_name='I_d',
                         info='d-axis current',
-                        e_str='- ra * ixs * Id  + ixs * (udLag_y - vd) + Iq',
-                        v_str='Id0')
+                        v_str='Id0',
+                        diag_eps=True,
+                        )
         self.Iq = Algeb(tex_name='I_q',
                         info='q-axis current',
-                        e_str='- ra * ixs * Iq  + ixs * (uqLag_y - vq) - Id',
-                        v_str='Iq0')
-
-        self.udLag = Lag(u='udref',
-                         T=self.Tc,
-                         K=1,
-                         )
-        self.uqLag = Lag(u='uqref',
-                         T=self.Tc,
-                         K=1,
-                         )
-
-        self.ud = AliasState(self.udLag_y)
-        self.uq = AliasState(self.uqLag_y)
+                        v_str='Iq0',
+                        diag_eps=True,
+                        )
 
     def v_numeric(self, **kwargs):
         """
@@ -278,14 +276,12 @@ class REGCVSGModelBase(Model):
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
-class REGCVSGModel(REGCVSGModelBase):
+class VSGOuterPIModel:
     """
-    REGC_VSG using two PI controllers each for inner and outer loops.
+    Outer PI controllers for REGCVSG
     """
 
-    def __init__(self, system, config):
-        REGCVSGModelBase.__init__(self, system, config)
-
+    def __init__(self):
         self.PIdv = PIController(u='vref2 - vd',
                                  kp=self.kp_dv,
                                  ki=self.ki_dv,
@@ -300,6 +296,20 @@ class REGCVSGModel(REGCVSGModelBase):
         self.Idref = AliasAlgeb(self.PIdv_y)
         self.Iqref = AliasAlgeb(self.PIqv_y)
 
+
+class VSGInnerPIModel:
+    """
+    Inner current PI controllers for REGCVSG
+    """
+
+    def __init__(self):
+        self.udref0 = ConstService(tex_name=r'u_{dref0}',
+                                   v_str='ra * Id0 - xs * Iq0 + vd0'
+                                   )
+        self.uqref0 = ConstService(tex_name=r'u_{qref0}',
+                                   v_str='ra * Iq0 + xs * Id0 + vq0',
+                                   )
+
         # PIdv_y, PIqv_y are Idref, Iqref
         self.PIdi = PIController(u='PIdv_y - Id',
                                  kp=self.kp_di,
@@ -310,19 +320,36 @@ class REGCVSGModel(REGCVSGModelBase):
                                  ki=self.ki_qi,
                                  )
 
+        # udLag_y, uqLag_y are ud, uq
+        self.Id.e_str = '- ra * Id  + (udLag_y - vd) + Iq * xs'
+        self.Iq.e_str = '- ra * Iq  + (uqLag_y - vq) - Id * xs'
+
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
-                           e_str='PIdi_y + vd - Iq * xs - udref',
                            v_str='udref0',
+                           e_str='PIdi_y + vd - Iq * xs - udref',
                            )
         self.uqref = Algeb(tex_name=r'u_{qref}',
-                           info='ud reference',
-                           e_str='PIqi_y + vq + Id * xs - uqref',
+                           info='uq reference',
                            v_str='uqref0',
+                           e_str='PIqi_y + vq + Id * xs - uqref',
                            )
 
+        self.udLag = Lag(u='udref',
+                         T=self.Tc,
+                         K=1,
+                         )
+        self.uqLag = Lag(u='uqref',
+                         T=self.Tc,
+                         K=1,
+                         )
 
-class REGCVSG(REGCVSGData, REGCVSGModel):
+        self.ud = AliasState(self.udLag_y)
+        self.uq = AliasState(self.uqLag_y)
+
+
+class REGCVSG(REGCVSGData, VSGOuterPIData, VSGInnerPIData,
+              REGCVSGModelBase, VSGOuterPIModel, VSGInnerPIModel):
     """
     Voltage-controlled VSC with VSG control.
 
@@ -332,4 +359,9 @@ class REGCVSG(REGCVSGData, REGCVSGModel):
 
     def __init__(self, system, config):
         REGCVSGData.__init__(self)
-        REGCVSGModel.__init__(self, system, config)
+        VSGOuterPIData.__init__(self)
+        VSGInnerPIData.__init__(self)
+
+        REGCVSGModelBase.__init__(self, system, config)
+        VSGOuterPIModel.__init__(self)
+        VSGInnerPIModel.__init__(self)

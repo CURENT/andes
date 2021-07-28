@@ -240,13 +240,17 @@ class REGCA1Model(Model):
                            )
 
         # high voltage part
-        self.HVG = GainLimiter(u='v - Volim', K=self.Khv, info='High voltage gain block',
+        self.HVG = GainLimiter(u='v - Volim',
+                               K=self.Khv, R=1,
+                               info='High voltage gain block',
                                lower=0, upper=999, no_upper=True,
                                tex_name='H_{VG}'
                                )
         self.HVG.lim.no_warn = True
 
-        self.Iqout = GainLimiter(u='S1_y - HVG_y', K=1, lower=self.Iolim, upper=9999,
+        self.Iqout = GainLimiter(u='S1_y - HVG_y',
+                                 K=1, R=1,
+                                 lower=self.Iolim, upper=9999,
                                  no_upper=True, info='Iq output block',
                                  tex_name='I^{qout}',
                                  )  # `Iqout_y` is the final Iq output

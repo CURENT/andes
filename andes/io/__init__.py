@@ -2,6 +2,7 @@ import importlib
 import io
 import logging
 import os
+import chardet
 
 from typing import Union
 
@@ -182,12 +183,21 @@ def dump(system, output_format, full_path=None, overwrite=False, **kwargs):
 
 
 def read_file_like(infile: Union[str, io.IOBase]):
+    """
+    Read a file-like object and return a list of splitted lines.
+    """
+
     if isinstance(infile, str):
-        f = open(infile, 'r')
+        with open(infile, 'rb') as fb:
+            charset = chardet.detect(fb.read())
+            logger.debug("Detected raw file encoding: %s", charset)
+
+        f = open(infile, 'r', encoding=charset['encoding'])
     else:
         f = infile
 
-    lines_list = f.read().splitlines()
+    in_data = f.read()
+    lines_list = in_data.splitlines()
 
     if f is not infile:
         f.close()

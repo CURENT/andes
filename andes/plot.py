@@ -14,6 +14,7 @@ from andes.shared import set_latex
 from andes.core.var import BaseVar
 
 logger = logging.getLogger(__name__)
+DPI = 100
 
 
 class TDSData:
@@ -266,11 +267,12 @@ class TDSData:
              left=None, right=None, ymin=None, ymax=None,
              xlabel=None, ylabel=None, xheader=None, yheader=None,
              legend=None, grid=False, greyscale=False, latex=True,
-             dpi=150, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
+             dpi=DPI, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
              set_xlim=True, set_ylim=True, autoscale=False, legend_bbox=None, legend_loc=None,
+             figsize=None,
              **kwargs):
         """
         Entry function for plotting.
@@ -324,8 +326,9 @@ class TDSData:
             True to enable latex and False to disable
         greyscale : bool
             True to use greyscale, False otherwise
-        savefig : bool
-            True to save to png figure file
+        savefig : bool or str
+            True to save to png figure file.
+            str is treated as the output file name.
         save_format : str
             File extension string (pdf, png or jpg) for the savefig format
         dpi : int
@@ -335,6 +338,8 @@ class TDSData:
             Plot line width
         font_size : float
             Text font size (labels and legends)
+        figsize : tuple
+            Figure size passed when creating new figure
         show : bool
             True to show the image
         backend : str or None
@@ -402,7 +407,7 @@ class TDSData:
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
-                         legend_bbox=legend_bbox, legend_loc=legend_loc,
+                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -427,7 +432,7 @@ class TDSData:
 
     def bqplot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None,
                     left=None, right=None, ymin=None, ymax=None, legend=True, grid=False, fig=None,
-                    latex=True, dpi=150, line_width=1.0, greyscale=False, savefig=None, save_format=None,
+                    dpi=DPI, line_width=1.0, greyscale=False, savefig=None, save_format=None,
                     title=None,
                     **kwargs):
         """
@@ -458,9 +463,9 @@ class TDSData:
 
     def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, linestyles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
-                  latex=True, dpi=150, line_width=1.0, font_size=12, greyscale=False, savefig=None,
+                  latex=True, dpi=DPI, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
-                  vline2=None, set_xlim=True, set_ylim=True, autoscale=False,
+                  vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None,
                   **kwargs):
         """
@@ -523,7 +528,7 @@ class TDSData:
         linestyles = linestyles * int(n_lines / len(linestyles) + 1)
 
         if fig is None or ax is None:
-            fig = plt.figure(dpi=dpi)
+            fig = plt.figure(dpi=dpi, figsize=figsize)
             ax = plt.gca()
 
         if greyscale:
@@ -581,7 +586,7 @@ class TDSData:
 
         plt.draw()
 
-        if savefig:
+        if savefig is not None:
             if save_format is None:
                 save_format = 'png'
 
@@ -590,12 +595,17 @@ class TDSData:
             else:
                 dpi = max(dpi, 200)
 
-            count = 1
-            while True:
-                outfile = f'{self.file_name}_{count}.{save_format}'
-                if not os.path.isfile(outfile):
-                    break
-                count += 1
+            # use supplied file name
+            if isinstance(savefig, str):
+                outfile = savefig + '.' + save_format
+            # or generate a new name
+            else:
+                count = 1
+                while True:
+                    outfile = f'{self.file_name}_{count}.{save_format}'
+                    if not os.path.isfile(outfile):
+                        break
+                    count += 1
 
             fig.savefig(outfile, dpi=dpi)
             logger.info('Figure saved to "%s".', outfile)
@@ -605,7 +615,7 @@ class TDSData:
 
         return fig, ax
 
-    def plotn(self, nrows: int, ncols: int, yidxes, xidxes=None, *, dpi=150, titles=None,
+    def plotn(self, nrows: int, ncols: int, yidxes, xidxes=None, *, dpi=DPI, titles=None,
               a=None, figsize=None, xlabel=None, ylabel=None, sharex=None, sharey=None, show=True,
               xlabel_offs=(0.5, 0.01), ylabel_offs=(0.05, 0.5), hspace=0.2, wspace=0.2,
               **kwargs):
@@ -635,9 +645,6 @@ class TDSData:
         xidx = (0,)
         aidx = None
         title = ''
-
-        # assume the first xlabel
-        xlabel = self.get_header(xidx)[0] if xlabel is None else xlabel
 
         sharex = True if (sharex is None and ncols == 1) else False
         sharey = True if (sharey is None and nrows == 1) else False

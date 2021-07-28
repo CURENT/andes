@@ -8,6 +8,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.11
+````````````````````
+- Added ``REECA1E`` model with inertia emulation.
+- Fixed an issue where the ``vtype`` of services was ignored.
+- Changed default DPI for plotting to 100.
+
 v1.3.10 (2021-06-08)
 ````````````````````
 - Bug fixes for controllers when generators are off.
@@ -19,14 +25,14 @@ v1.3.9 (2021-06-02)
 
 v1.3.8 (2021-06-02)
 ```````````````````
-- Added `REGCVSG` model for voltage-source controlled renewables.
+- Added ``REGCVSG`` model for voltage-source controlled renewables.
 - Turbine governors are now aware of the generator connection status.
 
 v1.3.7 (2021-05-03)
 ```````````````````
 - Allow manually specifying variables needing initialization
   preceding a variable. Specify a list of variable names through
-  `BaseVar.deps`.
+  ``BaseVar.deps``.
 
 v1.3.6 (2021-04-23)
 ```````````````````
