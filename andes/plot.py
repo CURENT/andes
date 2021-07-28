@@ -5,6 +5,7 @@ The Andes plotting tool.
 import os
 import re
 import logging
+import math
 
 import numpy as np
 
@@ -681,6 +682,72 @@ class TDSData:
 
         if show:
             plt.show()
+
+        return fig, axes
+
+    def panoview(self, mdl, *, ncols=3, vars=None, idx=None, a=None, figsize=None, **kwargs):
+        """
+        Panoramic view of variables in a model.
+        """
+        # `a` takes precedece over `idx`
+        if a is None:
+            a = mdl.idx2uid(idx)
+
+        # compute the number of rows and cols
+        states = list()
+        algebs = list()
+
+        if vars is None:
+            states = mdl.states.values()
+            algebs = mdl.algebs.values()
+        else:
+            for item in vars:
+                if item in mdl.states:
+                    states.append(mdl.states[item])
+                elif item in mdl.algebs:
+                    algebs.append(mdl.algebs[item])
+                else:
+                    logger.warning("Variable <%s> does not exist in model <%S>",
+                                   item, mdl.class_name)
+        nstates = len(states)
+        nalgebs = len(algebs)
+
+        nrows_states = math.ceil(nstates / ncols)
+        nrows_algebs = math.ceil(nalgebs / ncols)
+
+        # build canvas
+        if figsize is None:
+            figsize = (3 * ncols, 2 * (nrows_states + nrows_algebs))
+
+        fig, axes = plt.subplots(nrows_states + nrows_algebs, ncols, figsize=figsize, dpi=DPI)
+        fig.tight_layout()
+
+        # turn off unused axes
+        if nstates % ncols != 0:
+            for i in range(nstates % ncols, ncols):
+                axes[nrows_states-1, i].axis('off')
+
+        if nalgebs % ncols != 0:
+            for i in range(nalgebs % ncols, ncols):
+                axes[-1, i].axis('off')
+
+        # plot states
+        for ii, item in enumerate(states):
+            row_no = math.floor(ii / ncols)
+            col_no = ii % ncols
+            self.plot(item, a=a,
+                      title=f'${item.tex_name}$',
+                      xlabel='',
+                      fig=fig, ax=axes[row_no, col_no], show=False, **kwargs)
+
+        # plot algebs
+        for ii, item in enumerate(algebs):
+            row_no = math.floor(ii / ncols) + nrows_states
+            col_no = ii % ncols
+            self.plot(item, a=a,
+                      title=f'${item.tex_name}$',
+                      xlabel='',
+                      fig=fig, ax=axes[row_no, col_no], show=False, **kwargs)
 
         return fig, axes
 
