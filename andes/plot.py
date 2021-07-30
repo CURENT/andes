@@ -687,7 +687,38 @@ class TDSData:
 
     def panoview(self, mdl, *, ncols=3, vars=None, idx=None, a=None, figsize=None, **kwargs):
         """
-        Panoramic view of variables in a model.
+        Panoramic view of variables of a given model instance.
+
+        Select variables through ``vars``. Select devices through ``idx`` or ``a``,
+        which has a higher priority.
+
+        This function also takes other arguments recognizable by ``self.plot``.
+
+        Parameters
+        ----------
+        mdl : ModelBase
+            Model instance
+        ncol : int
+            Number of columns
+        var : list of str
+            A list of variable names to display
+        idx : list
+            A list of device idx-es for showing
+        a : list of int
+            A list of device 0-based positions for showing
+        figsize : tuple
+            Figure size for plotting
+
+        Examples
+        --------
+        To plot ``omega`` and ``delta`` of GENROUs ``GENROU_1`` and ``GENROU_2``:
+
+        .. code-block :: python
+
+            system.TDS.plt.plot(system.GENROU,
+                                vars=['omega', 'delta'],
+                                idx=['GENROU_1', 'GENROU_2'])
+
         """
         # `a` takes precedece over `idx`
         if a is None:
@@ -719,7 +750,9 @@ class TDSData:
         if figsize is None:
             figsize = (3 * ncols, 2 * (nrows_states + nrows_algebs))
 
-        fig, axes = plt.subplots(nrows_states + nrows_algebs, ncols, figsize=figsize, dpi=DPI)
+        fig, axes = plt.subplots(nrows_states + nrows_algebs, ncols,
+                                 figsize=figsize, dpi=DPI, squeeze=False,
+                                 )
         fig.tight_layout()
 
         # turn off unused axes
