@@ -940,26 +940,6 @@ def tdsplot(filename, y, x=(0,),
         raise NotImplementedError("Plotting multiple data files are not supported yet")
 
 
-def check_init(yval, yl):
-    """"
-    Check initialization by comparing t=0 and t=end values for a flat run.
-
-    Warnings
-    --------
-    This function is deprecated as the initialization check feature is built into TDS.
-    See ``TDS.test_initialization()``.
-    """
-    suspect = []
-    for var, label in zip(yval, yl):
-        if abs(var[0] - var[-1]) >= 1e-6:
-            suspect.append(label)
-    if suspect:
-        logger.error('Initialization failed:')
-        logger.error(', '.join(suspect))
-    else:
-        logger.error('Initialization is correct.')
-
-
 def isfloat(value):
     try:
         float(value)
