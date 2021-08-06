@@ -35,30 +35,20 @@ class EV1Model(ESD1Model):
         self.PHL.lower = self.pmn
         self.PHL.info = 'limiter for Psum in [pmn, pmx]'
 
-        # Modify
         self.Ipul.v_str = '(Psum * PHL_zi + pmx * PHL_zu + pmn * PHL_zl) / vp'
         self.Ipul.e_str = '(Psum * PHL_zi + pmx * PHL_zu + pmn * PHL_zl) / vp - Ipul'
 
-        # --- Ipmax, Iqmax and Iqmin ---
-        # Ipminsq = "(Piecewise((0, Le(ialim**2 - Iqcmd_y**2, 0)), ((ialim**2 - Iqcmd_y ** 2), True)))"
-        # Ipminsq0 = "(Piecewise((0, Le(ialim**2 - (u*qref0/v)**2, 0)), ((ialim**2 - (u*qref0/v) ** 2), True)))"
-        # self.Ipmaxsq = VarService(v_str=Ipmaxsq, tex_name='I_{pmax}^2')
-        # self.Ipmaxsq0 = ConstService(v_str=Ipmaxsq0, tex_name='I_{pmax0}^2')
-
-        # self.Ipmin = Algeb(v_str='(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
-        #                    e_str='(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax',
-        #                    tex_name='I_{pmax}',
-        #                    )
-
-        # Modify
         self.Ipcmd.lower = '-Ipmax'
-        # self.Ipmax.sign_lower = -1
 
 
 class EV1(EV1Data, EV1Model):
     """
-    Electric vehicle model.
-    Added minimum power limit into ESD1 model.
+    Electric vehicle model type 1.
+
+    Modified from ESD1 model by adding the minumum power limit `pmn`.
+    Like `pmx`, `pmn` acts on `Psum`, the sum of the active power references.
+
+    The limiter that uses `pmx` and `pmn` is enabled by default.
     """
     def __init__(self, system, config):
         EV1Data.__init__(self)
@@ -73,7 +63,7 @@ class EV2Data(EV1Data):
     def __init__(self):
         EV1Data.__init__(self)
         self.pcap = NumParam(default=0,
-                             info='output power ratio in [-1, 1]',
+                             info='power ratio multiplied to pmx in [-1, 1]',
                              tex_name='p_{cap}',
                              vrange=(-1, 1),
                              )
@@ -110,9 +100,17 @@ class EV2Model(EV1Model):
 
 class EV2(EV2Data, EV2Model):
     """
-    Electric vehicle model 2.
-    Use power cap as the maximum power limit.
+    Electric vehicle model type 2.
+
+    Derived from EV1, EV2 introduces `pcap` multiplied to `pmx`.
+
+    `Psum` will be limited to [pmn, pmx * pcap].
+
+    The model does not check the signs or values of `pmn`,
+    `pmx`, or `pcap`.
+    The input data is required to satisfy `pmn <= pmx * pcap`.
     """
+
     def __init__(self, system, config):
         EV2Data.__init__(self)
         EV2Model.__init__(self, system, config)
