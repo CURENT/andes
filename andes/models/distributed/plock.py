@@ -35,31 +35,31 @@ class PlockData(ModelData):
                              )
 
         # -- protection parameters
-        self.fl = NumParam(default=59.7,  # Wait to modify
+        self.fl = NumParam(default=57.5,
                            tex_name='fl',
                            info='Under frequency shadding point',
                            unit='Hz',
                            )
-        self.fu = NumParam(default=60.3,  # Wait to modify
+        self.fu = NumParam(default=61.5,
                            tex_name='fu',
                            info='Over frequency shadding point',
                            unit='Hz',
                            )
-        self.ul = NumParam(default=0.9,  # Wait to modify
+        self.ul = NumParam(default=0.88,
                            tex_name='fl',
                            info='Under voltage shadding point',
                            unit='p.u.',
                            )
-        self.uu = NumParam(default=1.1,  # Wait to modify
+        self.uu = NumParam(default=1.1,
                            tex_name='fu',
                            info='Over voltage shadding point',
                            unit='p.u.',
                            )
-        self.tf = NumParam(default=0,  # Wait to modify
+        self.tf = NumParam(default=10,
                            tex_name=r't_{fdev}',
                            info='Stand time under frequency deviation',
                            )
-        self.tv = NumParam(default=0,  # Wait to modify
+        self.tv = NumParam(default=1,
                            tex_name=r't_{udev}',
                            info='Stand time under voltage deviation',
                            )
