@@ -19,17 +19,19 @@ class PlockData(ModelData):
                             mandatory=True,
                             )
         self.busfreq = IdxParam(model='BusFreq',
-                                info='Target device interface bus measurement idx',
+                                info='Target device interface bus measurement device idx',
                                 )
 
         # -- protection enable parameters
         self.fena = NumParam(default=1,
                              tex_name='fena',
+                             vrange=(0, 1),
                              info='Frequency deviation protection enable. \
                                    1 for enable, 0 for disable.',
                              )
         self.Vena = NumParam(default=0,
                              tex_name='Vena',
+                             vrange=(0, 1),
                              info='Voltage deviation protection enable.\
                                    1 for enable, 0 for disable.',
                              )
@@ -58,10 +60,12 @@ class PlockData(ModelData):
         self.tf = NumParam(default=10,
                            tex_name=r't_{fdev}',
                            info='Stand time under frequency deviation',
+                           non_negative=True,
                            )
         self.tv = NumParam(default=1,
                            tex_name=r't_{udev}',
                            info='Stand time under voltage deviation',
+                           non_negative=True,
                            )
 
 
@@ -98,10 +102,10 @@ class PlockModel(Model):
                             )
         self.Volt_dev = Algeb(v_str='0',
                               e_str='1 - Vcmp_zi - Volt_dev',
-                              info='Show Volt_devs',
+                              info='Voltage deviation indicator',
                               tex_name='zs_{Vdev}',
                               )
-        # Delayed frequency deviation indicator
+        # Delayed voltage deviation indicator
         self.Volt_devd = Delay(u=self.Volt_dev,
                                mode='time',
                                delay=self.tv.v)
@@ -126,7 +130,7 @@ class PlockModel(Model):
                           unit='p.u.',
                           )
 
-        # Indicatior of drequency deviation
+        # Indicatior of frequency deviation
         self.fcmp = Limiter(u=self.f,
                             lower=self.fln,
                             upper=self.fun,
@@ -136,7 +140,7 @@ class PlockModel(Model):
                             )
         self.freq_dev = Algeb(v_str='0',
                               e_str='1 - fcmp_zi - freq_dev',
-                              info='Show freq_devs',
+                              info='Frequency deviation indicator',
                               tex_name='zs_{Fdev}',
                               )
         # Delayed frequency deviation indicator
@@ -144,14 +148,14 @@ class PlockModel(Model):
                                mode='time',
                                delay=self.tf.v)
 
-        # -- Shut PVD1 current command
+        # -- Lock PVD1 current command
         # freqyency protection
         self.Ipul_f = ExtAlgeb(model='DG',
                                src='Ipul',
                                indexer=self.dev,
                                export=False,
                                e_str='-1000 * Ipul_f * freq_devd_v * freq_dev * fena',
-                               info='Shut PVD1 current based on frequency protection',
+                               info='Current locker from frequency protection',
                                )
         # voltage protection
         self.Ipul_V = ExtAlgeb(model='DG',
@@ -159,17 +163,20 @@ class PlockModel(Model):
                                indexer=self.dev,
                                export=False,
                                e_str='-1000 * Ipul_V * Volt_devd_v * Volt_dev * Vena',
-                               info='Shut PVD1 current based on voltage protection',
+                               info='Current locker from voltage protection',
                                )
 
 
 class Plock(PlockData, PlockModel):
     """
-    Plock is distributed energy resource protection model.
-    The target device given variable will be shut down under
-    protection condition.
-    The protection contains frequency deviation and voltage
-    deviation.
+    DER protection model.
+
+    Target device (limited to DG group) 'Ipul' will decrease to zero when
+    frequency/voltage protection is triggered.
+
+    Once the lock is released, 'Ipul' will return to normal immediately.
+
+    'fena' and 'Vena' are protection enabling parameters. 1 is on and 0 is off.
     """
 
     def __init__(self, system, config):
