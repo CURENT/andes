@@ -8,13 +8,13 @@ from andes.core.service import ConstService
 from andes.core.discrete import Limiter, Delay
 
 
-class PlockData(ModelData):
+class PLKData(ModelData):
     """
     Plock model data.
     """
 
     def __init__(self):
-        super(PlockData, self).__init__()
+        super(PLKData, self).__init__()
         self.dev = IdxParam(info='idx of the target device',
                             mandatory=True,
                             )
@@ -69,7 +69,7 @@ class PlockData(ModelData):
                            )
 
 
-class PlockModel(Model):
+class PLKModel(Model):
     """
     Model implementation of Plock.
     """
@@ -167,12 +167,12 @@ class PlockModel(Model):
                                )
 
 
-class Plock(PlockData, PlockModel):
+class PLK(PLKData, PLKModel):
     """
     DER protection model.
 
-    Target device (limited to DG group) 'Ipul' will decrease to zero when
-    frequency/voltage protection is triggered.
+    Target device (limited to DG group) 'Ipul' will drop to zero immediately
+    when frequency/voltage protection is triggered.
 
     Once the lock is released, 'Ipul' will return to normal immediately.
 
@@ -180,5 +180,5 @@ class Plock(PlockData, PlockModel):
     """
 
     def __init__(self, system, config):
-        PlockData.__init__(self)
-        PlockModel.__init__(self, system, config)
+        PLKData.__init__(self)
+        PLKModel.__init__(self, system, config)
