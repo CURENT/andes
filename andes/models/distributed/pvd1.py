@@ -473,6 +473,15 @@ class PVD1Model(Model):
                          info='Output Iq filter',
                          )
 
+        self.Pe = Algeb(tex_name='P_e',
+                        info='active power output',
+                        e_str='v * Ipout_y - Pe',
+                        v_str='pref0')
+        self.Qe = Algeb(tex_name='Q_e',
+                        info='reactive power output',
+                        e_str='v * Iqout_y - Qe',
+                        v_str='qref0')
+
     def v_numeric(self, **kwargs):
         """
         Disable the corresponding `StaticGen`s.
