@@ -57,12 +57,12 @@ class PLKData(ModelData):
                            info='Over voltage shadding point',
                            unit='p.u.',
                            )
-        self.tf = NumParam(default=10,
+        self.Tf = NumParam(default=10,
                            tex_name=r't_{fdev}',
                            info='Stand time under frequency deviation',
                            non_negative=True,
                            )
-        self.tv = NumParam(default=1,
+        self.Tv = NumParam(default=1,
                            tex_name=r't_{udev}',
                            info='Stand time under voltage deviation',
                            non_negative=True,
@@ -108,7 +108,7 @@ class PLKModel(Model):
         # Delayed voltage deviation indicator
         self.Volt_devd = Delay(u=self.Volt_dev,
                                mode='time',
-                               delay=self.tv.v)
+                               delay=self.Tv.v)
 
         # -- Frequency protection
         self.fn = ExtParam(model='DG',
@@ -146,7 +146,7 @@ class PLKModel(Model):
         # Delayed frequency deviation indicator
         self.freq_devd = Delay(u=self.freq_dev,
                                mode='time',
-                               delay=self.tf.v)
+                               delay=self.Tf.v)
 
         # -- Lock PVD1 current command
         # freqyency protection
@@ -169,14 +169,14 @@ class PLKModel(Model):
 
 class PLK(PLKData, PLKModel):
     """
-    DER protection model.
+    DER protection model. PLK stands for Power Lock.
 
-    Target device (limited to DG group) 'Ipul' will drop to zero immediately
+    Target device (limited to DG group) ``Ipul`` will drop to zero immediately
     when frequency/voltage protection is triggered.
 
-    Once the lock is released, 'Ipul' will return to normal immediately.
+    Once the lock is released, ``Ipul`` will return to normal immediately.
 
-    'fena' and 'Vena' are protection enabling parameters. 1 is on and 0 is off.
+    ``fena`` and ``Vena`` are protection enabling parameters. 1 is on and 0 is off.
     """
 
     def __init__(self, system, config):
