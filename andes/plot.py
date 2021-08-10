@@ -219,7 +219,7 @@ class TDSData:
 
         """
 
-        if isinstance(idx, (int, np.int64)):
+        if isinstance(idx, (int, np.integer)):
             idx = [idx]
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
