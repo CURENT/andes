@@ -33,7 +33,7 @@ file_classes = OrderedDict([
     ('renewable', ['REGCA1', 'REECA1', 'REECA1E',
                    'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCVSG', 'REGCVSG2']),
-    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'PLK']),
+    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'PLK', 'PLK2']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),
     ('coi', ['COI']),
 ])
