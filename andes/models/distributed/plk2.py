@@ -148,7 +148,7 @@ class PLK2Data(ModelData):
                              )
         self.Tvu2 = NumParam(default=0.16,
                              tex_name=r't_{vu2}',
-                             info='Stand time for (uu2, uu3)',
+                             info='Stand time for (uu1, uu2)',
                              non_negative=True,
                              )
 
@@ -341,35 +341,34 @@ class PLK2Model(Model):
                            delay=self.Tvu2.v)
 
         # -- Lock PVD1 output power
+
         self.ltu = ConstService(v_str='1')
         self.ltl = ConstService(v_str='0')
 
         # frequency
-        self.fpsum = Algeb(v_str='0',
-                           info='Frequency protection sum',
-                           tex_name=r'fp_{sum}',
-                           )
-        self.fpsum.e_str = 'fena * (fdl1d_v * fdl1 + fdl2d_v * fdl2  + \
-                                    fdu1d_v * fdu1 + fdu2d_v * fdu2) - fpsum',
-        self.fplk = HardLimiter(u=self.fpsum,
-                                lower=self.ltu,
-                                upper=self.ltl,
-                                tex_name=r'f_{plk}',
-                                info='Frequency protection signal',
+        self.fp = Algeb(v_str='0',
+                        info='Frequency protection signal',
+                        tex_name=r'fp',
+                        )
+        self.fp.e_str = 'fena * (fdl1d_v * fdl1 + fdl2d_v * fdl2 + \
+                                 fdu1d_v * fdu1 + fdu2d_v * fdu2) - fp'
+        self.fphl = HardLimiter(u=self.fp,
+                                lower=self.ltl,
+                                upper=self.ltu,
+                                tex_name=r'fp_{hl}',
                                 )
         # voltage
-        self.Vpsum = Algeb(v_str='0',
-                           info='Voltage protection sum',
-                           tex_name=r'Vp_{sum}',
-                           )
-        self.Vpsum.e_str = 'Vena * (Vdl1d_v * Vdl1 + Vdl2d_v * Vdl2 + \
-                                    Vdl3d_v * Vdl3 + Vdu1d_v * Vdu1 + \
-                                    Vdu2d_v * Vdu2) - Vpsum',
-        self.Vplk = HardLimiter(u=self.Vpsum,
+        self.Vp = Algeb(v_str='0',
+                        info='Voltage protection signal',
+                        tex_name=r'Vp',
+                        )
+        self.Vp.e_str = 'Vena * (Vdl1d_v * Vdl1 + Vdl2d_v * Vdl2 + \
+                                 Vdl3d_v * Vdl3 + Vdu1d_v * Vdu1 + \
+                                 Vdu2d_v * Vdu2) - Vp'
+        self.Vphl = HardLimiter(u=self.Vp,
                                 lower=self.ltu,
                                 upper=self.ltl,
-                                tex_name=r'V_{plk}',
-                                info='Voltage protection signal',
+                                tex_name=r'Vp_{hl}',
                                 )
 
         # lock actvie and reactive power output
@@ -377,14 +376,14 @@ class PLK2Model(Model):
                              src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-1000 * pplk * fplk * Vplk',
+                             e_str='-1000 * pplk * fp * Vp',
                              info='Active power locker',
                              )
         self.qplk = ExtAlgeb(model='DG',
                              src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-1000 * qplk * fplk * Vplk',
+                             e_str='-1000 * qplk * fp * Vp',
                              info='Reactive power locker',
                              )
 
