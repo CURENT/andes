@@ -37,6 +37,16 @@ class PLK2Data(ModelData):
                              )
 
         # -- protection parameters, frequency
+        self.fl3 = NumParam(default=50,
+                            tex_name='fl3',
+                            info='Under frequency shadding point 3',
+                            unit='Hz',
+                            )
+        self.fl2 = NumParam(default=57.5,
+                            tex_name='fl2',
+                            info='Over frequency shadding point 2',
+                            unit='Hz',
+                            )
         self.fl1 = NumParam(default=59.2,
                             tex_name='fl1',
                             info='Under frequency shadding point 1',
@@ -47,19 +57,9 @@ class PLK2Data(ModelData):
                             info='Over frequency shadding point 1',
                             unit='Hz',
                             )
-        self.fl2 = NumParam(default=57.5,
-                            tex_name='fl2',
-                            info='Over frequency shadding point 2',
-                            unit='Hz',
-                            )
         self.fu2 = NumParam(default=61.5,
                             tex_name='fu2',
                             info='Over frequency shadding point 2',
-                            unit='Hz',
-                            )
-        self.fl3 = NumParam(default=50,
-                            tex_name='fl3',
-                            info='Under frequency shadding point 3',
                             unit='Hz',
                             )
         self.fu3 = NumParam(default=70,
@@ -90,6 +90,21 @@ class PLK2Data(ModelData):
                              )
 
         # -- protection parameters, voltage
+        self.ul4 = NumParam(default=0.1,
+                            tex_name='ul4',
+                            info='Under voltage shadding point 4',
+                            unit='p.u.',
+                            )
+        self.ul3 = NumParam(default=0.45,
+                            tex_name='ul3',
+                            info='Under voltage shadding point 3',
+                            unit='p.u.',
+                            )
+        self.ul2 = NumParam(default=0.6,
+                            tex_name='ul2',
+                            info='Under voltage shadding point 2',
+                            unit='p.u.',
+                            )
         self.ul1 = NumParam(default=0.88,
                             tex_name='ul1',
                             info='Under voltage shadding point 1',
@@ -100,24 +115,9 @@ class PLK2Data(ModelData):
                             info='Over voltage shadding point 1',
                             unit='p.u.',
                             )
-        self.ul2 = NumParam(default=0.6,
-                            tex_name='ul2',
-                            info='Under voltage shadding point 2',
-                            unit='p.u.',
-                            )
         self.uu2 = NumParam(default=1.2,
                             tex_name='uu2',
                             info='Over voltage shadding point 2',
-                            unit='p.u.',
-                            )
-        self.ul3 = NumParam(default=0.45,
-                            tex_name='ul3',
-                            info='Under voltage shadding point 3',
-                            unit='p.u.',
-                            )
-        self.ul4 = NumParam(default=0.1,
-                            tex_name='ul4',
-                            info='Under voltage shadding point 4',
                             unit='p.u.',
                             )
         self.uu3 = NumParam(default=2,
@@ -181,10 +181,15 @@ class PLK2Model(Model):
                           info='Bus frequency',
                           unit='p.u.',
                           )
+        self.fcvt = Algeb(v_str='fn',
+                          e_str='fn * f - fcvt',
+                          info='Frequency  deviation indicator for (fl2, fl1)',
+                          tex_name='zs_{fdl1}',
+                          )
 
         # Indicatior of frequency deviation
-        self.fcl1 = Limiter(u=self.f,
-                            lower=self.fl2,
+        self.fcl1 = Limiter(u=self.fcvt,
+                            lower=self.fl3,
                             upper=self.fl1,
                             tex_name=r'f_{cl1}',
                             info='Frequency comparer for (fl2, fl1)',
@@ -196,7 +201,7 @@ class PLK2Model(Model):
                           tex_name='zs_{fdl1}',
                           )
 
-        self.fcl2 = Limiter(u=self.f,
+        self.fcl2 = Limiter(u=self.fcvt,
                             lower=self.fl3,
                             upper=self.fl2,
                             tex_name=r'f_{cl2}',
@@ -209,9 +214,9 @@ class PLK2Model(Model):
                           tex_name='zs_{fdl2}',
                           )
 
-        self.fcu1 = Limiter(u=self.f,
+        self.fcu1 = Limiter(u=self.fcvt,
                             lower=self.fu1,
-                            upper=self.fu2,
+                            upper=self.fu3,
                             tex_name=r'f_{cu1}',
                             info='Frequency comparer for (fu1, fu2)',
                             equal=False,
@@ -222,7 +227,7 @@ class PLK2Model(Model):
                           tex_name='zs_{fdu1}',
                           )
 
-        self.fcu2 = Limiter(u=self.f,
+        self.fcu2 = Limiter(u=self.fcvt,
                             lower=self.fu2,
                             upper=self.fu3,
                             tex_name=r'f_{cu2}',
@@ -259,7 +264,7 @@ class PLK2Model(Model):
                           )
         # Indicatior of voltage deviation
         self.Vcl1 = Limiter(u=self.v,
-                            lower=self.ul2,
+                            lower=self.ul4,
                             upper=self.ul1,
                             tex_name=r'V_{cl1}',
                             info='Voltage comparer for (ul2, ul1)',
@@ -272,7 +277,7 @@ class PLK2Model(Model):
                           )
 
         self.Vcl2 = Limiter(u=self.v,
-                            lower=self.ul3,
+                            lower=self.ul4,
                             upper=self.ul2,
                             tex_name=r'V_{cl1}',
                             info='Voltage comparer for (ul3, ul2)',
@@ -299,7 +304,7 @@ class PLK2Model(Model):
 
         self.Vcu1 = Limiter(u=self.v,
                             lower=self.uu1,
-                            upper=self.uu2,
+                            upper=self.uu3,
                             tex_name=r'V_{cu1}',
                             info='Voltage comparer for (uu1, uu2)',
                             equal=False,
