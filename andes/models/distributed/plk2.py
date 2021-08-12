@@ -90,65 +90,65 @@ class PLK2Data(ModelData):
                              )
 
         # -- protection parameters, voltage
-        self.ul4 = NumParam(default=0.1,
-                            tex_name='ul4',
+        self.vl4 = NumParam(default=0.1,
+                            tex_name='vl4',
                             info='Under voltage shadding point 4',
                             unit='p.u.',
                             )
-        self.ul3 = NumParam(default=0.45,
-                            tex_name='ul3',
+        self.vl3 = NumParam(default=0.45,
+                            tex_name='vl3',
                             info='Under voltage shadding point 3',
                             unit='p.u.',
                             )
-        self.ul2 = NumParam(default=0.6,
-                            tex_name='ul2',
+        self.vl2 = NumParam(default=0.6,
+                            tex_name='vl2',
                             info='Under voltage shadding point 2',
                             unit='p.u.',
                             )
-        self.ul1 = NumParam(default=0.88,
-                            tex_name='ul1',
+        self.vl1 = NumParam(default=0.88,
+                            tex_name='vl1',
                             info='Under voltage shadding point 1',
                             unit='p.u.',
                             )
-        self.uu1 = NumParam(default=1.1,
-                            tex_name='uu1',
+        self.vu1 = NumParam(default=1.1,
+                            tex_name='vu1',
                             info='Over voltage shadding point 1',
                             unit='p.u.',
                             )
-        self.uu2 = NumParam(default=1.2,
-                            tex_name='uu2',
+        self.vu2 = NumParam(default=1.2,
+                            tex_name='vu2',
                             info='Over voltage shadding point 2',
                             unit='p.u.',
                             )
-        self.uu3 = NumParam(default=2,
-                            tex_name='uu3',
+        self.vu3 = NumParam(default=2,
+                            tex_name='vu3',
                             info='Over voltage shadding point 3',
                             unit='p.u.',
                             )
 
         self.Tvl1 = NumParam(default=2,
                              tex_name=r't_{vl1}',
-                             info='Stand time for (ul2, ul1)',
+                             info='Stand time for (vl2, vl1)',
                              non_negative=True,
                              )
         self.Tvl2 = NumParam(default=1,
                              tex_name=r't_{vl2}',
-                             info='Stand time for (ul3, ul2)',
+                             info='Stand time for (vl3, vl2)',
                              non_negative=True,
                              )
         self.Tvl3 = NumParam(default=0.16,
                              tex_name=r't_{vl3}',
-                             info='Stand time for (ul4, ul3)',
+                             info='Stand time for (vl4, vl3)',
                              non_negative=True,
                              )
         self.Tvu1 = NumParam(default=1,
                              tex_name=r't_{vu1}',
-                             info='Stand time for (uu1, uu2)',
+                             info='Stand time for (vu1, vu2)',
                              non_negative=True,
                              )
         self.Tvu2 = NumParam(default=0.16,
                              tex_name=r't_{vu2}',
-                             info='Stand time for (uu1, uu2)',
+                             info='Stand time for (vu1, vu2)',
                              non_negative=True,
                              )
 
@@ -267,12 +267,12 @@ class PLK2Model(Model):
                             lower=self.ul4,
                             upper=self.ul1,
                             tex_name=r'V_{cl1}',
-                            info='Voltage comparer for (ul2, ul1)',
+                            info='Voltage comparer for (vl2, vl1)',
                             equal=False,
                             )
         self.Vdl1 = Algeb(v_str='0',
                           e_str='Vcl1_zi - Vdl1',
-                          info='Voltage deviation indicator for (ul2, ul1)',
+                          info='Voltage deviation indicator for (vl2, vl1)',
                           tex_name='zs_{Vdl1}',
                           )
 
@@ -280,12 +280,12 @@ class PLK2Model(Model):
                             lower=self.ul4,
                             upper=self.ul2,
                             tex_name=r'V_{cl1}',
-                            info='Voltage comparer for (ul3, ul2)',
+                            info='Voltage comparer for (vl3, vl2)',
                             equal=False,
                             )
         self.Vdl2 = Algeb(v_str='0',
                           e_str='Vcl2_zi - Vdl2',
-                          info='Voltage deviation indicator for (ul3, ul2)',
+                          info='Voltage deviation indicator for (vl3, vl2)',
                           tex_name='zs_{Vdl1}',
                           )
 
@@ -293,12 +293,12 @@ class PLK2Model(Model):
                             lower=self.ul4,
                             upper=self.ul3,
                             tex_name=r'V_{cl3}',
-                            info='Voltage comparer for (ul4, ul3)',
+                            info='Voltage comparer for (vl4, vl3)',
                             equal=False,
                             )
         self.Vdl3 = Algeb(v_str='0',
                           e_str='Vcl3_zi - Vdl3',
-                          info='Voltage deviation indicator for (ul4, ul3)',
+                          info='Voltage deviation indicator for (vl4, vl3)',
                           tex_name='zs_{Vdl3}',
                           )
 
@@ -306,12 +306,12 @@ class PLK2Model(Model):
                             lower=self.uu1,
                             upper=self.uu3,
                             tex_name=r'V_{cu1}',
-                            info='Voltage comparer for (uu1, uu2)',
+                            info='Voltage comparer for (vu1, vu2)',
                             equal=False,
                             )
         self.Vdu1 = Algeb(v_str='0',
                           e_str='Vcu1_zi - Vdu1',
-                          info='Voltage deviation indicator for (uu1, uu2)',
+                          info='Voltage deviation indicator for (vu1, vu2)',
                           tex_name='zs_{Vdl1}',
                           )
 
@@ -319,12 +319,12 @@ class PLK2Model(Model):
                             lower=self.uu2,
                             upper=self.uu3,
                             tex_name=r'V_{cu2}',
-                            info='Voltage comparer for (uu2, uu3)',
+                            info='Voltage comparer for (vu2, vu3)',
                             equal=False,
                             )
         self.Vdu2 = Algeb(v_str='0',
                           e_str='Vcu2_zi - Vdu2',
-                          info='Voltage deviation indicator for (uu2, uu3)',
+                          info='Voltage deviation indicator for (vu2, vu3)',
                           tex_name='zs_{Vdu2}',
                           )
 
@@ -381,14 +381,14 @@ class PLK2Model(Model):
                              src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-1000 * pplk * fp * Vp',
+                             e_str='-1000 * pplk * fp',
                              info='Active power locker',
                              )
         self.qplk = ExtAlgeb(model='DG',
                              src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-1000 * qplk * fp * Vp',
+                             e_str='-1000 * qplk * Vp',
                              info='Reactive power locker',
                              )
 
@@ -405,6 +405,10 @@ class PLK2(PLK2Data, PLK2Model):
 
     ``fena`` and ``Vena`` are protection enabling parameters. 1 is on and 0 is off.
 
+    The model does not check the shedding points sort.
+    The input data is required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
+    `ul4 < ul3 < ul2 < ul1 < `.
+
     Frequency (Hz):\n
     (fl3, fl2), Tfl2; [(50.0, 57.5), 10s]\n
     (fl2, fl1), Tfl1; [(57.5, 59.2), 300s]\n
@@ -412,11 +416,11 @@ class PLK2(PLK2Data, PLK2Model):
     (fu2, fu3), Tfu2; [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    (ul4, ul3), Tvl3; [(0.10, 0.45), 0.16s]\n
-    (ul3, ul2), Tvl2; [(0.45, 0.60), 1s]\n
-    (ul2, ul1), Tvl1; [(0.60, 0.88), 2s]\n
-    (uu1, uu2), Tvu1; [(1.10, 1.20), 1s]\n
-    (uu2, uu3), Tvu2; [(1.20, 2.00), 0.16s]\n
+    (vl4, vl3), Tvl3; [(0.10, 0.45), 0.16s]\n
+    (vl3, vl2), Tvl2; [(0.45, 0.60), 1s]\n
+    (vl2, vl1), Tvl1; [(0.60, 0.88), 2s]\n
+    (vu1, vu2), Tvu1; [(1.10, 1.20), 1s]\n
+    (vu2, vu3), Tvu2; [(1.20, 2.00), 0.16s]\n
     """
 
     def __init__(self, system, config):
