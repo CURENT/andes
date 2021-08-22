@@ -21,6 +21,10 @@ Models:
 
 - Added WIP EV models and protection models.
 
+Test case:
+- Added CURENT EI test system.
+- Added a number of IEEE 14 bus test systems for specific models.
+
 v1.3.11 (2021-07-27)
 ````````````````````
 - Added ``REECA1E`` model with inertia emulation.
