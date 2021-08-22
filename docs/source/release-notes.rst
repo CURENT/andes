@@ -8,7 +8,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
-v1.3.12
+v1.3.12 (2021-08-22)
 ````````````````````
 Plot enhancements:
 
@@ -21,7 +21,7 @@ Models:
 
 - Added WIP EV models and protection models.
 
-v1.3.11
+v1.3.11 (2021-07-27)
 ````````````````````
 - Added ``REECA1E`` model with inertia emulation.
 - Fixed an issue where the ``vtype`` of services was ignored.
