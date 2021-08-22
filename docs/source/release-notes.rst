@@ -15,7 +15,7 @@ Plot enhancements:
 - ``plot()`` takes an argument ``mark`` for masking y-axis data based on
   the ``left`` and ``right`` range parameters.
 - ``TDS.plt`` provides a ``panoview`` method for plotting an panoramic view
-   for selected variables and devices of a model.
+  for selected variables and devices of a model.
 
 Models:
 
