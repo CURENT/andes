@@ -756,7 +756,7 @@ class TDSData:
                 elif item in mdl.algebs:
                     algebs.append(mdl.algebs[item])
                 else:
-                    logger.warning("Variable <%s> does not exist in model <%S>",
+                    logger.warning("Variable <%s> does not exist in model <%s>",
                                    item, mdl.class_name)
         nstates = len(states)
         nalgebs = len(algebs)
