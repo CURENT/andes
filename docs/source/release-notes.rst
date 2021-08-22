@@ -8,6 +8,19 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.3 Notes
 ----------
+v1.3.12
+````````````````````
+Plot enhancements:
+
+- ``plot()`` takes an argument ``mark`` for masking y-axis data based on
+  the ``left`` and ``right`` range parameters.
+- ``TDS.plt`` provides a ``panoview`` method for plotting an panoramic view
+   for selected variables and devices of a model.
+
+Models:
+
+- Added WIP EV models and protection models.
+
 v1.3.11
 ````````````````````
 - Added ``REECA1E`` model with inertia emulation.
