@@ -64,15 +64,18 @@ class PVD1Data(ModelData):
         self.qmx = NumParam(default=0.33, tex_name='q_{mx}',
                             info='Max. reactive power command',
                             power=True,
+                            unit='pu',
                             )
 
         self.qmn = NumParam(default=-0.33, tex_name='q_{mn}',
                             info='Min. reactive power command',
                             power=True,
+                            unit='pu',
                             )
         self.pmx = NumParam(default=999.0, info='maximum power limit',
                             tex_name='p_{mx}',
                             power=True,
+                            unit='pu',
                             )
 
         self.v0 = NumParam(default=0.8, tex_name='v_0',
@@ -472,6 +475,15 @@ class PVD1Model(Model):
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
+
+        self.Pe = Algeb(tex_name='P_e',
+                        info='active power output',
+                        e_str='v * Ipout_y - Pe',
+                        v_str='pref0')
+        self.Qe = Algeb(tex_name='Q_e',
+                        info='reactive power output',
+                        e_str='v * Iqout_y - Qe',
+                        v_str='qref0')
 
     def v_numeric(self, **kwargs):
         """

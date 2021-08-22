@@ -145,7 +145,7 @@ class GroupBase:
         if idx is None:
             logger.debug("idx2uid returned None for idx None")
             return None
-        if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
+        if isinstance(idx, (float, int, str, np.integer, np.floating)):
             return self.uid[idx]
         elif isinstance(idx, Sized):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):

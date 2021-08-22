@@ -5,6 +5,7 @@ The Andes plotting tool.
 import os
 import re
 import logging
+import math
 
 import numpy as np
 
@@ -34,10 +35,10 @@ class TDSData:
         self._lst_file = None
 
         # data members for raw data
-        self._idx = []  # indices of variables
+        self._idx = []    # indices of variables
         self._uname = []  # unformatted variable names
         self._fname = []  # formatted variable names
-        self._data = []  # data loaded from file
+        self._data = []   # data loaded from file
 
         # auxillary data members for fast query
         self.t = []
@@ -218,7 +219,7 @@ class TDSData:
 
         """
 
-        if isinstance(idx, (int, np.int64)):
+        if isinstance(idx, (int, np.integer)):
             idx = [idx]
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
@@ -271,7 +272,8 @@ class TDSData:
              title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
-             set_xlim=True, set_ylim=True, autoscale=False, legend_bbox=None, legend_loc=None,
+             set_xlim=True, set_ylim=True, autoscale=False,
+             legend_bbox=None, legend_loc=None, legend_ncol=1,
              figsize=None,
              **kwargs):
         """
@@ -320,6 +322,10 @@ class TDSData:
             A list containing the variable names for the x-axis variable
         legend : bool
             True to show legend and False otherwise
+        legend_ncol : int
+            Number of columns in legend
+        legend_bbox : tuple of two floats
+            legend box to anchor
         grid : bool
             True to show grid and False otherwise
         latex : bool
@@ -407,7 +413,8 @@ class TDSData:
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
-                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize,
+                         legend_bbox=legend_bbox, legend_loc=legend_loc, legend_ncol=legend_ncol,
+                         figsize=figsize,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -466,7 +473,8 @@ class TDSData:
                   latex=True, dpi=DPI, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
-                  legend_bbox=None, legend_loc=None,
+                  legend_bbox=None, legend_loc=None, legend_ncol=1,
+                  mask=True,
                   **kwargs):
         """
         Plot lines for the supplied data and options.
@@ -483,6 +491,10 @@ class TDSData:
         ydata : array
             An array containing the values of each variables for the y-axis variable. The row
             of `ydata` must match the row of `xdata`. Each column correspondings to a variable.
+        mask : bool
+            If enabled (1), when specifying axis limits, only data in the limits will be
+            used for plotting to optimize for autoscaling.
+            It is done through an index mask.
 
         Returns
         -------
@@ -534,6 +546,11 @@ class TDSData:
         if greyscale:
             plt.gray()
 
+        if mask is True:
+            mask = (xdata >= (left - 0.1)) & (xdata <= (right + 0.1))
+            xdata = xdata[mask]
+            ydata = ydata[mask.reshape(-1, )]
+
         for i in range(n_lines):
             ax.plot(xdata,
                     ydata[:, i],
@@ -570,7 +587,9 @@ class TDSData:
                 legend = True
 
         if legend:
-            ax.legend(bbox_to_anchor=legend_bbox, loc=legend_loc)
+            ax.legend(bbox_to_anchor=legend_bbox,
+                      loc=legend_loc,
+                      ncol=legend_ncol)
 
         if title:
             ax.set_title(title)
@@ -681,6 +700,105 @@ class TDSData:
 
         if show:
             plt.show()
+
+        return fig, axes
+
+    def panoview(self, mdl, *, ncols=3, vars=None, idx=None, a=None, figsize=None, **kwargs):
+        """
+        Panoramic view of variables of a given model instance.
+
+        Select variables through ``vars``. Select devices through ``idx`` or ``a``,
+        which has a higher priority.
+
+        This function also takes other arguments recognizable by ``self.plot``.
+
+        Parameters
+        ----------
+        mdl : ModelBase
+            Model instance
+        ncol : int
+            Number of columns
+        var : list of str
+            A list of variable names to display
+        idx : list
+            A list of device idx-es for showing
+        a : list of int
+            A list of device 0-based positions for showing
+        figsize : tuple
+            Figure size for plotting
+
+        Examples
+        --------
+        To plot ``omega`` and ``delta`` of GENROUs ``GENROU_1`` and ``GENROU_2``:
+
+        .. code-block :: python
+
+            system.TDS.plt.plot(system.GENROU,
+                                vars=['omega', 'delta'],
+                                idx=['GENROU_1', 'GENROU_2'])
+
+        """
+        # `a` takes precedece over `idx`
+        if a is None:
+            a = mdl.idx2uid(idx)
+
+        # compute the number of rows and cols
+        states = list()
+        algebs = list()
+
+        if vars is None:
+            states = mdl.states.values()
+            algebs = mdl.algebs.values()
+        else:
+            for item in vars:
+                if item in mdl.states:
+                    states.append(mdl.states[item])
+                elif item in mdl.algebs:
+                    algebs.append(mdl.algebs[item])
+                else:
+                    logger.warning("Variable <%s> does not exist in model <%s>",
+                                   item, mdl.class_name)
+        nstates = len(states)
+        nalgebs = len(algebs)
+
+        nrows_states = math.ceil(nstates / ncols)
+        nrows_algebs = math.ceil(nalgebs / ncols)
+
+        # build canvas
+        if figsize is None:
+            figsize = (3 * ncols, 2 * (nrows_states + nrows_algebs))
+
+        fig, axes = plt.subplots(nrows_states + nrows_algebs, ncols,
+                                 figsize=figsize, dpi=DPI, squeeze=False,
+                                 )
+        fig.tight_layout()
+
+        # turn off unused axes
+        if nstates % ncols != 0:
+            for i in range(nstates % ncols, ncols):
+                axes[nrows_states-1, i].axis('off')
+
+        if nalgebs % ncols != 0:
+            for i in range(nalgebs % ncols, ncols):
+                axes[-1, i].axis('off')
+
+        # plot states
+        for ii, item in enumerate(states):
+            row_no = math.floor(ii / ncols)
+            col_no = ii % ncols
+            self.plot(item, a=a,
+                      title=f'${item.tex_name}$',
+                      xlabel='',
+                      fig=fig, ax=axes[row_no, col_no], show=False, **kwargs)
+
+        # plot algebs
+        for ii, item in enumerate(algebs):
+            row_no = math.floor(ii / ncols) + nrows_states
+            col_no = ii % ncols
+            self.plot(item, a=a,
+                      title=f'${item.tex_name}$',
+                      xlabel='',
+                      fig=fig, ax=axes[row_no, col_no], show=False, **kwargs)
 
         return fig, axes
 
@@ -838,26 +956,6 @@ def tdsplot(filename, y, x=(0,),
         return tds_data
     else:
         raise NotImplementedError("Plotting multiple data files are not supported yet")
-
-
-def check_init(yval, yl):
-    """"
-    Check initialization by comparing t=0 and t=end values for a flat run.
-
-    Warnings
-    --------
-    This function is deprecated as the initialization check feature is built into TDS.
-    See ``TDS.test_initialization()``.
-    """
-    suspect = []
-    for var, label in zip(yval, yl):
-        if abs(var[0] - var[-1]) >= 1e-6:
-            suspect.append(label)
-    if suspect:
-        logger.error('Initialization failed:')
-        logger.error(', '.join(suspect))
-    else:
-        logger.error('Initialization is correct.')
 
 
 def isfloat(value):
