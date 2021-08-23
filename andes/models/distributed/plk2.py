@@ -350,60 +350,38 @@ class PLK2Model(Model):
         self.ltu = ConstService(v_str='0.8')
         self.ltl = ConstService(v_str='0.2')
 
-        # frequency
-        self.fp = Algeb(v_str='0',
-                        info='Frequency protection signal',
-                        tex_name=r'f_p',
-                        )
-        self.fp.e_str = 'fena * (fdl1d_v * fdl1 + fdl2d_v * fdl2 + \
-                                 fdu1d_v * fdu1 + fdu2d_v * fdu2) - fp'
-        self.fpc = Limiter(u=self.fp,
-                           lower=self.ltl,
-                           upper=self.ltu,
-                           )
+        # universal protection signal
+        actestr = 'fena * (fdl1d_v * fdl1 + fdl2d_v * fdl2 + \
+                          fdu1d_v * fdu1 + fdu2d_v * fdu2) + \
+                   Vena * (Vdl1d_v * Vdl1 + Vdl2d_v * Vdl2 + \
+                           Vdl3d_v * Vdl3 + Vdu1d_v * Vdu1 + \
+                           Vdu2d_v * Vdu2) - \
+                   actsum'
+        self.actsum = Algeb(v_str='0',
+                            e_str=actestr,
+                            info='Protection signal',
+                            tex_name=r'act_{sum}',
+                            )
+        self.actflag = Limiter(u=self.actsum,
+                               lower=self.ltl,
+                               upper=self.ltu,
+                               info='Protection signal comparer, zu is to act',
+                               )
 
-        # voltage
-        self.Vp = Algeb(v_str='0',
-                        info='Voltage protection signal',
-                        tex_name=r'V_p',
-                        )
-        self.Vp.e_str = 'Vena * (Vdl1d_v * Vdl1 + Vdl2d_v * Vdl2 + \
-                                 Vdl3d_v * Vdl3 + Vdu1d_v * Vdu1 + \
-                                 Vdu2d_v * Vdu2) - Vp'
-        self.Vpc = Limiter(u=self.Vp,
-                           lower=self.ltl,
-                           upper=self.ltu,
-                           )
-
-        # lock actvie and reactive power output
-        self.fplk = ExtAlgeb(model='DG',
+        # lock signal
+        self.actp = ExtAlgeb(model='DG',
                              src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-100 * fplk * fpc_zu',
-                             info='Active power locker for frequency',
+                             e_str='-100 * actp * actflag_zu',
+                             info='Active power locker',
                              )
-        self.fqlk = ExtAlgeb(model='DG',
+        self.actq = ExtAlgeb(model='DG',
                              src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-100 * fqlk * fpc_zu',
-                             info='Reactive power locker for frequency',
-                             )
-
-        self.Vplk = ExtAlgeb(model='DG',
-                             src='Psum',
-                             indexer=self.dev,
-                             export=False,
-                             e_str='-100 * Vplk * Vpc_zu',
-                             info='Active power locker for voltage',
-                             )
-        self.Vqlk = ExtAlgeb(model='DG',
-                             src='Qsum',
-                             indexer=self.dev,
-                             export=False,
-                             e_str='-100 * Vqlk * Vpc_zu',
-                             info='Reactive power locker for voltage',
+                             e_str='-100 * actq * actflag_zu',
+                             info='Reactive power locker',
                              )
 
 
@@ -417,7 +395,9 @@ class PLK2(PLK2Data, PLK2Model):
 
     ``fena`` and ``Vena`` are protection enabling parameters. 1 is on and 0 is off.
 
-    The model does not check the shedding points sort.
+    ``actflag`` is a ``Limiter`` to summary the protection signal, where zu is to act.
+
+    The model does not check the shedding points sequence.
     The input data is required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
     `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
 
