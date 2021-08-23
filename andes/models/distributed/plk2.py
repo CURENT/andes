@@ -6,6 +6,7 @@ from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
 from andes.core.service import ConstService, VarService
 from andes.core.discrete import Limiter, Delay
+from andes.core.block import Integrator
 
 
 class PLK2Data(ModelData):
@@ -34,6 +35,11 @@ class PLK2Data(ModelData):
                              vrange=[0, 1],
                              info='Voltage deviation protection enable.\
                                    1 for enable, 0 for disable.',
+                             )
+
+        # extalgeb gain
+        self.gain = NumParam(default=-5,
+                             tex_name='gain',
                              )
 
         # -- protection parameters, frequency
@@ -188,71 +194,136 @@ class PLK2Model(Model):
                          )
 
         # Indicatior of frequency deviation
-        self.fcl1 = Limiter(u=self.fHz,
+        self.Lfl1 = Limiter(u=self.fHz,
                             lower=self.fl3,
                             upper=self.fl1,
                             tex_name=r'f_{cl1}',
                             info='Frequency comparer for (fl3, fl1)',
                             equal=False,
+                            no_warn=True,
                             )
-        self.fdl1 = Algeb(v_str='0',
-                          e_str='fcl1_zi - fdl1',
-                          info='Frequency  deviation indicator for (fl3, fl1)',
-                          tex_name='zs_{fdl1}',
+        self.Ffl1 = Algeb(v_str='0',
+                          e_str='Lfl1_zi - Ffl1',
+                          info='Flag for frequency interval (fl3, fl1)',
+                          tex_name='zs_{Ffl1}',
                           )
 
-        self.fcl2 = Limiter(u=self.fHz,
+        self.Lfl2 = Limiter(u=self.fHz,
                             lower=self.fl3,
                             upper=self.fl2,
                             tex_name=r'f_{cl2}',
                             info='Frequency comparer for (fl3, fl2)',
                             equal=False,
+                            no_warn=True,
                             )
-        self.fdl2 = Algeb(v_str='0',
-                          e_str='fcl2_zi - fdl2',
-                          info='Frequency  deviation indicator for (fl3, fl2)',
-                          tex_name='zs_{fdl2}',
+        self.Ffl2 = Algeb(v_str='0',
+                          e_str='Lfl2_zi - Ffl2',
+                          info='Flag for frequency interval (fl3, fl2)',
+                          tex_name='zs_{Ffl2}',
                           )
 
-        self.fcu1 = Limiter(u=self.fHz,
+        self.Lfu1 = Limiter(u=self.fHz,
                             lower=self.fu1,
                             upper=self.fu3,
                             tex_name=r'f_{cu1}',
                             info='Frequency comparer for (fu1, fu3)',
                             equal=False,
+                            no_warn=True,
                             )
-        self.fdu1 = Algeb(v_str='0',
-                          e_str='fcu1_zi - fdu1',
-                          info='Frequency  deviation indicator for (fu1, fu3)',
-                          tex_name='zs_{fdu1}',
+        self.Ffu1 = Algeb(v_str='0',
+                          e_str='Lfu1_zi - Ffu1',
+                          info='Flag for frequency interval (fu1, fu3)',
+                          tex_name='zs_{Ffu1}',
                           )
 
-        self.fcu2 = Limiter(u=self.fHz,
+        self.Lfu2 = Limiter(u=self.fHz,
                             lower=self.fu2,
                             upper=self.fu3,
                             tex_name=r'f_{cu2}',
                             info='Frequency comparer for (fu2, fu3)',
                             equal=False,
+                            no_warn=True,
                             )
-        self.fdu2 = Algeb(v_str='0',
-                          e_str='fcu2_zi - fdu2',
-                          info='Frequency  deviation indicator for (fu2, fu3)',
-                          tex_name='zs_{fdu2}',
+        self.Ffu2 = Algeb(v_str='0',
+                          e_str='Lfu2_zi - Ffu2',
+                          info='Flag for frequency interval (fu2, fu3)',
+                          tex_name='zs_{Ffu2}',
                           )
 
         # Delayed frequency deviation indicator
-        self.fdl1d = Delay(u=self.fdl1,
+        self.Ffl1d = Delay(u=self.Ffl1,
                            mode='time',
                            delay=self.Tfl2.v)
-        self.fdl2d = Delay(u=self.fdl2,
+        self.Ffl2d = Delay(u=self.Ffl2,
                            mode='time',
                            delay=self.Tfl1.v)
-        self.fdu1d = Delay(u=self.fdu1,
+        self.Ffu1d = Delay(u=self.Ffu1,
                            mode='time',
                            delay=self.Tfu1.v)
-        self.fdu2d = Delay(u=self.fdu2,
+        self.Ffu2d = Delay(u=self.Ffu2,
                            mode='time',
                            delay=self.Tfu2.v)
+
+        # Another version
+        self.INTfl1 = Integrator(u=self.Ffl1,
+                                 T=1.0,
+                                 K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fl2, fl1)',
+                                 )
+        self.FLfl1 = Limiter(u=self.INTfl1_y,
+                             lower=0,
+                             upper=self.Tfl1,
+                             tex_name=r'FLf_{l1}',
+                             info='Flag comparer for (fl2, fl1)',
+                             equal=False,
+                             no_warn=True,
+                             )
+
+        self.INTfl2 = Integrator(u=self.Ffl1,
+                                 T=1.0,
+                                 K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fl3, fl2)',
+                                 )
+        self.FLfl2 = Limiter(u=self.INTfl2_y,
+                             lower=0,
+                             upper=self.Tfl2,
+                             tex_name=r'FLf_{l2}',
+                             info='Flag comparer for (fl3, fl2)',
+                             equal=False,
+                             no_warn=True,
+                             )
+
+        self.INTfu1 = Integrator(u=self.Ffu1,
+                                 T=1.0,
+                                 K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fu1, fu2)',
+                                 )
+        self.FLfu1 = Limiter(u=self.INTfu1_y,
+                             lower=0,
+                             upper=self.Tfu1,
+                             tex_name=r'FLf_{u1}',
+                             info='Flag comparer for (fu1, fu2)',
+                             equal=False,
+                             no_warn=True,
+                             )
+
+        self.INTfu2 = Integrator(u=self.Ffu2,
+                                 T=1.0,
+                                 K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fu2, fu3)',
+                                 )
+        self.FLfu2 = Limiter(u=self.INTfu2_y,
+                             lower=0,
+                             upper=self.Tfu2,
+                             tex_name=r'FLf_{u2}',
+                             info='Flag comparer for (fu2, fu3)',
+                             equal=False,
+                             no_warn=True,
+                             )
 
         # -- Voltage protection
         self.v = ExtAlgeb(model='Bus',
@@ -263,85 +334,85 @@ class PLK2Model(Model):
                           unit='p.u.',
                           )
         # Indicatior of voltage deviation
-        self.Vcl1 = Limiter(u=self.v,
+        self.LVl1 = Limiter(u=self.v,
                             lower=self.vl4,
                             upper=self.vl1,
                             tex_name=r'V_{cl1}',
                             info='Voltage comparer for (vl4, vl1)',
                             equal=False,
                             )
-        self.Vdl1 = Algeb(v_str='0',
-                          e_str='Vcl1_zi - Vdl1',
+        self.Fvl1 = Algeb(v_str='0',
+                          e_str='LVl1_zi - Fvl1',
                           info='Voltage deviation indicator for (vl4, vl1)',
-                          tex_name='zs_{Vdl1}',
+                          tex_name='zs_{Fvl1}',
                           )
 
-        self.Vcl2 = Limiter(u=self.v,
+        self.LVl2 = Limiter(u=self.v,
                             lower=self.vl4,
                             upper=self.vl2,
                             tex_name=r'V_{cl1}',
                             info='Voltage comparer for (vl4, vl2)',
                             equal=False,
                             )
-        self.Vdl2 = Algeb(v_str='0',
-                          e_str='Vcl2_zi - Vdl2',
+        self.Fvl2 = Algeb(v_str='0',
+                          e_str='LVl2_zi - Fvl2',
                           info='Voltage deviation indicator for (vl4, vl2)',
-                          tex_name='zs_{Vdl1}',
+                          tex_name='zs_{Fvl1}',
                           )
 
-        self.Vcl3 = Limiter(u=self.v,
+        self.LVl3 = Limiter(u=self.v,
                             lower=self.vl4,
                             upper=self.vl3,
                             tex_name=r'V_{cl3}',
                             info='Voltage comparer for (vl4, vl3)',
                             equal=False,
                             )
-        self.Vdl3 = Algeb(v_str='0',
-                          e_str='Vcl3_zi - Vdl3',
+        self.Fvl3 = Algeb(v_str='0',
+                          e_str='LVl3_zi - Fvl3',
                           info='Voltage deviation indicator for (vl4, vl3)',
-                          tex_name='zs_{Vdl3}',
+                          tex_name='zs_{Fvl3}',
                           )
 
-        self.Vcu1 = Limiter(u=self.v,
+        self.LVu1 = Limiter(u=self.v,
                             lower=self.vu1,
                             upper=self.vu3,
                             tex_name=r'V_{cu1}',
                             info='Voltage comparer for (vu1, vu3)',
                             equal=False,
                             )
-        self.Vdu1 = Algeb(v_str='0',
-                          e_str='Vcu1_zi - Vdu1',
+        self.Fvu1 = Algeb(v_str='0',
+                          e_str='LVu1_zi - Fvu1',
                           info='Voltage deviation indicator for (vu1, vu3)',
-                          tex_name=r'zs_{Vdl1}',
+                          tex_name=r'zs_{Fvl1}',
                           )
 
-        self.Vcu2 = Limiter(u=self.v,
+        self.LVu2 = Limiter(u=self.v,
                             lower=self.vu2,
                             upper=self.vu3,
                             tex_name=r'V_{cu2}',
                             info='Voltage comparer for (vu2, vu3)',
                             equal=False,
                             )
-        self.Vdu2 = Algeb(v_str='0',
-                          e_str='Vcu2_zi - Vdu2',
+        self.Fvu2 = Algeb(v_str='0',
+                          e_str='LVu2_zi - Fvu2',
                           info='Voltage deviation indicator for (vu2, vu3)',
-                          tex_name=r'zs_{Vdu2}',
+                          tex_name=r'zs_{Fvu2}',
                           )
 
         # Delayed voltage deviation indicator
-        self.Vdl1d = Delay(u=self.Vdl1,
+        self.Fvl1d = Delay(u=self.Fvl1,
                            mode='time',
                            delay=self.Tvl1.v)
-        self.Vdl2d = Delay(u=self.Vdl2,
+        self.Fvl2d = Delay(u=self.Fvl2,
                            mode='time',
                            delay=self.Tvl2.v)
-        self.Vdl3d = Delay(u=self.Vdl3,
+        self.Fvl3d = Delay(u=self.Fvl3,
                            mode='time',
                            delay=self.Tvl3.v)
-        self.Vdu1d = Delay(u=self.Vdu1,
+        self.Fvu1d = Delay(u=self.Fvu1,
                            mode='time',
                            delay=self.Tvu1.v)
-        self.Vdu2d = Delay(u=self.Vdu2,
+        self.Fvu2d = Delay(u=self.Fvu2,
                            mode='time',
                            delay=self.Tvu2.v)
 
@@ -351,11 +422,10 @@ class PLK2Model(Model):
         self.ltl = ConstService(v_str='0.2')
 
         # universal protection signal
-        actestr = 'fena * (fdl1d_v * fdl1 + fdl2d_v * fdl2 + \
-                          fdu1d_v * fdu1 + fdu2d_v * fdu2) + \
-                   Vena * (Vdl1d_v * Vdl1 + Vdl2d_v * Vdl2 + \
-                           Vdl3d_v * Vdl3 + Vdu1d_v * Vdu1 + \
-                           Vdu2d_v * Vdu2) - \
+        actestr = 'fena * (FLfl1_zu + FLfl2_zu + FLfu1_zu + FLfu2_zu) + \
+                   Vena * (Fvl1d_v * Fvl1 + Fvl2d_v * Fvl2 + \
+                           Fvl3d_v * Fvl3 + Fvu1d_v * Fvu1 + \
+                           Fvu2d_v * Fvu2) - \
                    actsum'
         self.actsum = Algeb(v_str='0',
                             e_str=actestr,
@@ -368,44 +438,21 @@ class PLK2Model(Model):
                                info='Protection signal comparer, zu is to act',
                                )
 
-        # lock frequency mreasurement
-        # self.f.e_str = '-100 * f * actflag_zu'
-
-        # lock Psum and Qsum components
-
-        self.qret = ExtAlgeb(model='DG',
-                             src='Qsum',
-                             indexer=self.dev,
-                             export=False,
-                             info='Retrived reactive power',
-                             )
-        self.vsq = VarService(v_str='-qret',
-                              info='qret',
-                              tex_name=r'V_{comp}'
-                              )
-        # self.actq = ExtAlgeb(model='DG',
-        #                      src='Qsum',
-        #                      indexer=self.dev,
-        #                      export=False,
-        #                      e_str='vsq',
-        #                      info='Reactive power locker',
-        #                      )
-
-        # lock signal
+        # lock output power
         self.actp = ExtAlgeb(model='DG',
                              src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-100 * actp * actflag_zu',
+                             e_str='- gain * actp * actflag_zu',
                              info='Active power locker',
                              )
-        # self.actq = ExtAlgeb(model='DG',
-        #                      src='Qsum',
-        #                      indexer=self.dev,
-        #                      export=False,
-        #                      e_str='-100 * actq * actflag_zu',
-        #                      info='Reactive power locker',
-        #                      )
+        self.actq = ExtAlgeb(model='DG',
+                             src='Qsum',
+                             indexer=self.dev,
+                             export=False,
+                             e_str='-100 * actq * actflag_zu',
+                             info='Reactive power locker',
+                             )
 
 
 class PLK2(PLK2Data, PLK2Model):
