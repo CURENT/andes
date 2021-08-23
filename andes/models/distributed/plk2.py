@@ -181,7 +181,7 @@ class PLK2Model(Model):
                           info='Bus frequency',
                           unit='p.u.',
                           )
-        self.fHz = Algeb(v_str='fn',
+        self.fHz = Algeb(v_str='fn * f',
                          e_str='fn * f - fHz',
                          info='frequency in Hz',
                          tex_name=r'f_{Hz}',
