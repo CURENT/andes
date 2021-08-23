@@ -4,7 +4,7 @@ DER protection model.
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
-from andes.core.service import ConstService
+from andes.core.service import ConstService, VarService
 from andes.core.discrete import Limiter, Delay
 
 
@@ -369,10 +369,27 @@ class PLK2Model(Model):
                                )
 
         # lock frequency mreasurement
-
+        # self.f.e_str = '-100 * f * actflag_zu'
 
         # lock Psum and Qsum components
 
+        self.qret = ExtAlgeb(model='DG',
+                             src='Qsum',
+                             indexer=self.dev,
+                             export=False,
+                             info='Retrived reactive power',
+                             )
+        self.vsq = VarService(v_str='-qret',
+                              info='qret',
+                              tex_name=r'V_{comp}'
+                              )
+        # self.actq = ExtAlgeb(model='DG',
+        #                      src='Qsum',
+        #                      indexer=self.dev,
+        #                      export=False,
+        #                      e_str='vsq',
+        #                      info='Reactive power locker',
+        #                      )
 
         # lock signal
         self.actp = ExtAlgeb(model='DG',
@@ -382,13 +399,13 @@ class PLK2Model(Model):
                              e_str='-100 * actp * actflag_zu',
                              info='Active power locker',
                              )
-        self.actq = ExtAlgeb(model='DG',
-                             src='Qsum',
-                             indexer=self.dev,
-                             export=False,
-                             e_str='-100 * actq * actflag_zu',
-                             info='Reactive power locker',
-                             )
+        # self.actq = ExtAlgeb(model='DG',
+        #                      src='Qsum',
+        #                      indexer=self.dev,
+        #                      export=False,
+        #                      e_str='-100 * actq * actflag_zu',
+        #                      info='Reactive power locker',
+        #                      )
 
 
 class PLK2(PLK2Data, PLK2Model):
