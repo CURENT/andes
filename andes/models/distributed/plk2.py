@@ -181,14 +181,14 @@ class PLK2Model(Model):
                           info='Bus frequency',
                           unit='p.u.',
                           )
-        self.fcvt = Algeb(v_str='fn',
-                          e_str='fn * f - fcvt',
-                          info='Frequency deviation in nominal value',
-                          tex_name='zs_{fdl1}',
-                          )
+        self.fHz = Algeb(v_str='fn',
+                         e_str='fn * f - fHz',
+                         info='frequency in Hz',
+                         tex_name=r'f_{Hz}',
+                         )
 
         # Indicatior of frequency deviation
-        self.fcl1 = Limiter(u=self.fcvt,
+        self.fcl1 = Limiter(u=self.fHz,
                             lower=self.fl3,
                             upper=self.fl1,
                             tex_name=r'f_{cl1}',
@@ -201,7 +201,7 @@ class PLK2Model(Model):
                           tex_name='zs_{fdl1}',
                           )
 
-        self.fcl2 = Limiter(u=self.fcvt,
+        self.fcl2 = Limiter(u=self.fHz,
                             lower=self.fl3,
                             upper=self.fl2,
                             tex_name=r'f_{cl2}',
@@ -214,7 +214,7 @@ class PLK2Model(Model):
                           tex_name='zs_{fdl2}',
                           )
 
-        self.fcu1 = Limiter(u=self.fcvt,
+        self.fcu1 = Limiter(u=self.fHz,
                             lower=self.fu1,
                             upper=self.fu3,
                             tex_name=r'f_{cu1}',
@@ -227,7 +227,7 @@ class PLK2Model(Model):
                           tex_name='zs_{fdu1}',
                           )
 
-        self.fcu2 = Limiter(u=self.fcvt,
+        self.fcu2 = Limiter(u=self.fHz,
                             lower=self.fu2,
                             upper=self.fu3,
                             tex_name=r'f_{cu2}',
@@ -367,6 +367,12 @@ class PLK2Model(Model):
                                upper=self.ltu,
                                info='Protection signal comparer, zu is to act',
                                )
+
+        # lock frequency mreasurement
+
+
+        # lock Psum and Qsum components
+
 
         # lock signal
         self.actp = ExtAlgeb(model='DG',
