@@ -41,6 +41,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
+    'myst_parser',
     'sphinx_copybutton',
 ]
 
@@ -59,15 +60,14 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
 project = 'ANDES'
-copyright = '2020, Hantao Cui'
+copyright = '2021, Hantao Cui'
 author = 'Hantao Cui'
 
 # The version info for the project you're documenting, acts as replacement for
