@@ -282,19 +282,19 @@ class VSGOuterPIModel:
     """
 
     def __init__(self):
-        self.PIdv = PIController(u='vref2 - vd',
+        self.PIvd = PIController(u='vref2 - vd',
                                  kp=self.kp_dv,
                                  ki=self.ki_dv,
                                  x0='Id0',
                                  )
-        self.PIqv = PIController(u='- vq',
+        self.PIvq = PIController(u='- vq',
                                  kp=self.kp_qv,
                                  ki=self.ki_qv,
                                  x0='Iq0',
                                  )
 
-        self.Idref = AliasAlgeb(self.PIdv_y)
-        self.Iqref = AliasAlgeb(self.PIqv_y)
+        self.Idref = AliasAlgeb(self.PIvd_y)
+        self.Iqref = AliasAlgeb(self.PIvq_y)
 
 
 class VSGInnerPIModel:
@@ -310,12 +310,12 @@ class VSGInnerPIModel:
                                    v_str='ra * Iq0 + xs * Id0 + vq0',
                                    )
 
-        # PIdv_y, PIqv_y are Idref, Iqref
-        self.PIdi = PIController(u='PIdv_y - Id',
+        # PIvd_y, PIvq_y are Idref, Iqref
+        self.PIId = PIController(u='PIvd_y - Id',
                                  kp=self.kp_di,
                                  ki=self.ki_di,
                                  )
-        self.PIqi = PIController(u='PIqv_y - Iq',
+        self.PIIq = PIController(u='PIvq_y - Iq',
                                  kp=self.kp_qi,
                                  ki=self.ki_qi,
                                  )
@@ -327,12 +327,12 @@ class VSGInnerPIModel:
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
                            v_str='udref0',
-                           e_str='PIdi_y + vd - Iq * xs - udref',
+                           e_str='PIId_y + vd - Iq * xs - udref',
                            )
         self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='uq reference',
                            v_str='uqref0',
-                           e_str='PIqi_y + vq + Id * xs - uqref',
+                           e_str='PIIq_y + vq + Id * xs - uqref',
                            )
 
         self.udLag = Lag(u='udref',
