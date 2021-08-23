@@ -327,12 +327,12 @@ class VSGInnerPIModel:
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
                            v_str='udref0',
-                           e_str='PIId_y + vd - Iq * xs - udref',
+                           e_str='PIId_y + vd - Iqref * xs - udref',
                            )
         self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='uq reference',
                            v_str='uqref0',
-                           e_str='PIIq_y + vq + Id * xs - uqref',
+                           e_str='PIIq_y + vq + Idref * xs - uqref',
                            )
 
         self.udLag = Lag(u='udref',
