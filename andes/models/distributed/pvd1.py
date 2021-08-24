@@ -404,15 +404,27 @@ class PVD1Model(Model):
                            no_warn=True,
                            )
 
-        Qsum = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
+        Qdrp = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'u * VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
-               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
-               'u * qref0'
+               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) '
+    
+        self.Qdrp = Algeb(tex_name='Q_{drp}',
+                          info='External power signal (for AGC)',
+                          v_str=Qdrp,
+                          e_str=f'{Qdrp} - Qdrp',
+                          discrete=(self.VQ1, self.VQ2),
+                          )
 
-        self.Qsum = Algeb(info='Total Q (droop + initial)',
-                          v_str=Qsum,
-                          e_str=f'{Qsum} - Qsum',
-                          tex_name='Q_{sum}',
+        self.Qref = Algeb(tex_name=r'Q_{ref}',
+                          info='Reference power signal (for scheduling setpoint)',
+                          v_str='u * qref0',
+                          e_str='u * qref0 - Qref'
+                          )
+
+        self.Qsum = Algeb(tex_name=r'Q_{tot}',
+                          info='Sum of Q signals',
+                          v_str=f'u * (qref0 + {Qdrp})',
+                          e_str='u * (Qref + Qdrp) - Qsum',
                           discrete=(self.VQ1, self.VQ2),
                           )
 
