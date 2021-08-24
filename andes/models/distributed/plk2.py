@@ -169,23 +169,19 @@ class PLK2Model(Model):
         self.flags.tds = True
         self.group = 'DG'
 
-        self.bus = ExtParam(model='DG',
-                            src='bus',
+        self.bus = ExtParam(model='DG', src='bus',
                             indexer=self.dev,
                             export=False)
-        self.fn = ExtParam(model='DG',
-                           src='fn',
+        self.fn = ExtParam(model='DG', src='fn',
                            indexer=self.dev,
                            export=False)
 
         # -- Frequency protection
         # Convert frequency deviation range to p.u.
         self.f = ExtAlgeb(model='FreqMeasurement',
-                          src='f',
-                          indexer=self.busfreq,
+                          src='f', indexer=self.busfreq,
                           export=False,
-                          info='Bus frequency',
-                          unit='p.u.',
+                          info='Bus frequency', unit='p.u.',
                           )
         self.fHz = Algeb(v_str='fn * f',
                          e_str='fn * f - fHz',
@@ -195,94 +191,73 @@ class PLK2Model(Model):
 
         # Indicatior of frequency deviation
         self.Lfl1 = Limiter(u=self.fHz,
-                            lower=self.fl3,
-                            upper=self.fl1,
+                            lower=self.fl3, upper=self.fl1,
                             info='Frequency comparer for (fl3, fl1)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.Lfl2 = Limiter(u=self.fHz,
-                            lower=self.fl3,
-                            upper=self.fl2,
+                            lower=self.fl3, upper=self.fl2,
                             info='Frequency comparer for (fl3, fl2)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.Lfu1 = Limiter(u=self.fHz,
-                            lower=self.fu1,
-                            upper=self.fu3,
+                            lower=self.fu1, upper=self.fu3,
                             info='Frequency comparer for (fu1, fu3)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.Lfu2 = Limiter(u=self.fHz,
-                            lower=self.fu2,
-                            upper=self.fu3,
+                            lower=self.fu2, upper=self.fu3,
                             info='Frequency comparer for (fu2, fu3)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
 
         # Frequency deviation time continuity check
         self.INTfl1 = Integrator(u='Lfl1_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
-                                 info='Flag integerator for (fl2, fl1)',
+                                 info='Flag integerator for (fl3, fl1)',
                                  )
         self.FLfl1 = Limiter(u=self.INTfl1_y,
-                             lower=0,
-                             upper=self.Tfl1,
-                             info='Flag comparer for (fl2, fl1)',
-                             equal=False,
-                             no_warn=True,
+                             lower=0, upper=self.Tfl1,
+                             info='Flag comparer for (fl3, fl1)',
+                             equal=False, no_warn=True,
                              )
 
         self.INTfl2 = Integrator(u='Lfl2_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (fl3, fl2)',
                                  )
         self.FLfl2 = Limiter(u=self.INTfl2_y,
-                             lower=0,
-                             upper=self.Tfl2,
+                             lower=0, upper=self.Tfl2,
                              info='Flag comparer for (fl3, fl2)',
-                             equal=False,
-                             no_warn=True,
+                             equal=False, no_warn=True,
                              )
 
         self.INTfu1 = Integrator(u='Lfu1_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
-                                 info='Flag integerator for (fu1, fu2)',
+                                 info='Flag integerator for (fu1, fu3)',
                                  )
         self.FLfu1 = Limiter(u=self.INTfu1_y,
-                             lower=0,
-                             upper=self.Tfu1,
-                             info='Flag comparer for (fu1, fu2)',
-                             equal=False,
-                             no_warn=True,
+                             lower=0, upper=self.Tfu1,
+                             info='Flag comparer for (fu1, fu3)',
+                             equal=False, no_warn=True,
                              )
 
         self.INTfu2 = Integrator(u='Lfu2_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (fu2, fu3)',
                                  )
         self.FLfu2 = Limiter(u=self.INTfu2_y,
-                             lower=0,
-                             upper=self.Tfu2,
+                             lower=0, upper=self.Tfu2,
                              info='Flag comparer for (fu2, fu3)',
-                             equal=False,
-                             no_warn=True,
+                             equal=False, no_warn=True,
                              )
 
         # -- Voltage protection
-        self.v = ExtAlgeb(model='Bus',
-                          src='v',
+        self.v = ExtAlgeb(model='Bus', src='v',
                           indexer=self.bus,
                           export=False,
                           info='Bus voltage',
@@ -290,110 +265,87 @@ class PLK2Model(Model):
                           )
         # Indicatior of voltage deviation
         self.LVl1 = Limiter(u=self.v,
-                            lower=self.vl4,
-                            upper=self.vl1,
+                            lower=self.vl4, upper=self.vl1,
                             info='Voltage comparer for (vl4, vl1)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.LVl2 = Limiter(u=self.v,
-                            lower=self.vl4,
-                            upper=self.vl2,
+                            lower=self.vl4, upper=self.vl2,
                             info='Voltage comparer for (vl4, vl2)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.LVl3 = Limiter(u=self.v,
-                            lower=self.vl4,
-                            upper=self.vl3,
+                            lower=self.vl4, upper=self.vl3,
                             info='Voltage comparer for (vl4, vl3)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.LVu1 = Limiter(u=self.v,
-                            lower=self.vu1,
-                            upper=self.vu3,
+                            lower=self.vu1, upper=self.vu3,
                             info='Voltage comparer for (vu1, vu3)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
         self.LVu2 = Limiter(u=self.v,
-                            lower=self.vu2,
-                            upper=self.vu3,
+                            lower=self.vu2, upper=self.vu3,
                             info='Voltage comparer for (vu2, vu3)',
-                            equal=False,
-                            no_warn=True,
+                            equal=False, no_warn=True,
                             )
 
         # Voltage deviation time continuity check
         self.INTVl1 = Integrator(u='LVl1_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (vl4, vl1)',
                                  )
         self.FLVl1 = Limiter(u=self.INTVl1_y,
-                             lower=0,
-                             upper=self.Tvl1,
+                             lower=0, upper=self.Tvl1,
                              info='Flag comparer for (vl4, vl1)',
-                             equal=False,
-                             no_warn=True,
+                             equal=False, no_warn=True,
                              )
 
         self.INTVl2 = Integrator(u='LVl2_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (vl4, vl2)',
                                  )
         self.FLVl2 = Limiter(u=self.INTVl2_y,
-                             lower=0,
-                             upper=self.Tvl2,
+                             lower=0, upper=self.Tvl2,
                              info='Flag comparer for (vl4, vl2)',
                              equal=False,
                              no_warn=True,
                              )
 
         self.INTVl3 = Integrator(u='LVl2_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (vl4, vl3)',
                                  )
         self.FLVl3 = Limiter(u=self.INTVl3_y,
-                             lower=0,
-                             upper=self.Tvl3,
+                             lower=0, upper=self.Tvl3,
                              info='Flag comparer for (vl4, vl3)',
                              equal=False,
                              no_warn=True,
                              )
 
         self.INTVu1 = Integrator(u='LVu1_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (vu1, vu3)',
                                  )
         self.FLVu1 = Limiter(u=self.INTVu1_y,
-                             lower=0,
-                             upper=self.Tvu1,
+                             lower=0, upper=self.Tvu1,
                              info='Flag comparer for (vu1, vu3)',
-                             equal=False,
-                             no_warn=True,
+                             equal=False, no_warn=True,
                              )
 
         self.INTVu2 = Integrator(u='LVu2_zi',
-                                 T=1.0,
-                                 K=1.0,
+                                 T=1.0, K=1.0,
                                  y0='0',
                                  info='Flag integerator for (vu2, vu3)',
                                  )
         self.FLVu2 = Limiter(u=self.INTVu2_y,
-                             lower=0,
-                             upper=self.Tvu2,
+                             lower=0, upper=self.Tvu2,
                              info='Flag comparer for (vu2, vu3)',
-                             equal=False,
-                             no_warn=True,
+                             equal=False, no_warn=True,
                              )
 
         # -- Lock PVD1 frequency signal and output power
@@ -417,11 +369,21 @@ class PLK2Model(Model):
                              info='Protection signal comparer, zu is to act',
                              )
 
-        self.ue = AliasAlgeb(self.Ldsum_zu)
+        # self.ue = AliasAlgeb(self.Ldsum_zu)
 
-        #TODO: lock freq signal
+        # lock freq signal of BusFreq
+        self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
+                            indexer=self.busfreq,
+                            info='original Washout y from BusFreq',
+                            )
+        self.fmea = ExtAlgeb(model='FreqMeasurement', src='f',
+                             indexer=self.busfreq,
+                             export=False,
+                             e_str='-Ldsum_zu * (1 + WOy)',
+                             info='Active power lock',
+                             )
 
-        # lock output power
+        # lock output power of DG
         self.Pext = ExtAlgeb(model='DG', src='Pext',
                              indexer=self.dev,
                              info='original Pext from DG',
@@ -438,20 +400,24 @@ class PLK2Model(Model):
                              indexer=self.dev,
                              export=False,
                              e_str='-Ldsum_zu * (Pext + Pref + Pdrp)',
-                             info='Active power locker',
+                             info='Active power lock',
                              )
 
-        self.Qorg = ExtAlgeb(model='DG', src='DB_y',
-                             indexer=self.dev,
-                             info='original Qsum from DG',
-                             )
+        # TODO: rewrite Qsum eqn of PVD1 model
+        # TODO: fix Qsum lock
+        # self.Qorg = ExtAlgeb(model='DG', src='DB_y',
+        #                      indexer=self.dev,
+        #                      info='original Qsum from DG',
+        #                      )
         self.Qsum = ExtAlgeb(model='DG',
                              src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-Ldsum_zu * Qorg',
-                             info='Reactive power locker',
+                             e_str='-Ldsum_zu * 10 * Qsum',
+                             info='Reactive power lock',
                              )
+        # TODO: clear State: BusFreq L(Lag), BusFreq WO(Washout)
+        # TODO: clear State: PVD1: Ipout, Iqout
 
 
 class PLK2(PLK2Data, PLK2Model):
