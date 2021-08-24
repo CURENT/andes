@@ -4,7 +4,7 @@ DER protection model.
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb, AliasAlgeb
-from andes.core.service import ConstService
+from andes.core.service import ConstService, EventFlag
 from andes.core.discrete import Limiter
 from andes.core.block import Integrator
 
@@ -39,11 +39,6 @@ class PLK2Data(ModelData):
                             info='Voltage deviation protection enable.\
                                   1 for enable, 0 for disable.',
                             )
-
-        # extalgeb gain
-        self.gain = NumParam(default=-5,
-                             tex_name='gain',
-                             )
 
         # -- protection parameters, frequency
         self.fl3 = NumParam(default=50,
@@ -405,6 +400,27 @@ class PLK2Model(Model):
                           tex_name=r'd_{tot}',
                           )
 
+        dsob = 'fen * (FLfl1_zu * Lfl1_zi + FLfl2_zu * Lfl2_zi + ' \
+                       'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
+               'Ven * (FLVl1_zu * LVl1_zi + FLVl2_zu * LVl2_zi + ' \
+                       'FLVl3_zu * LVl3_zi + ' \
+                       'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
+               'dsob'
+
+        self.dsob = Algeb(v_str='0',
+                          e_str=dsob,
+                          info='lock signal summation observe',
+                          tex_name=r'd_{ob}',
+                          )
+
+        dsob1 = 'fen * (Lfl1_zi) - dsob1'
+
+        self.dsob1 = Algeb(v_str='0',
+                          e_str=dsob1,
+                          info='lock signal summation observe',
+                          tex_name=r'd_{ob1}',
+                          )
+
         self.Ldsum = Limiter(u=self.dsum,
                              lower=self.ltl,
                              upper=self.ltu,
@@ -417,6 +433,8 @@ class PLK2Model(Model):
                         info='lock flag',
                         tex_name=r'ue',
                         )
+
+        self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
 
         # lock freq signal of BusFreq
         self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
