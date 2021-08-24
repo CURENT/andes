@@ -396,7 +396,7 @@ class PLK2Model(Model):
                              no_warn=True,
                              )
 
-        # -- Lock PVD1 output power
+        # -- Lock PVD1 frequency signal and output power
 
         self.ltu = ConstService(v_str='0.8')
         self.ltl = ConstService(v_str='0.2')
@@ -419,19 +419,37 @@ class PLK2Model(Model):
 
         self.ue = AliasAlgeb(self.Ldsum_zu)
 
+        #TODO: lock freq signal
+
         # lock output power
-        self.actp = ExtAlgeb(model='DG',
-                             src='Psum',
+        self.Pext = ExtAlgeb(model='DG', src='Pext',
+                             indexer=self.dev,
+                             info='original Pext from DG',
+                             )
+        self.Pref = ExtAlgeb(model='DG', src='Pref',
+                             indexer=self.dev,
+                             info='original Pref from DG',
+                             )
+        self.Pdrp = ExtAlgeb(model='DG', src='DB_y',
+                             indexer=self.dev,
+                             info='original Pdrp from DG',
+                             )
+        self.Psum = ExtAlgeb(model='DG', src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='- gain * actp * Lue_zu',
+                             e_str='-Ldsum_zu * (Pext + Pref + Pdrp)',
                              info='Active power locker',
                              )
-        self.actq = ExtAlgeb(model='DG',
+
+        self.Qorg = ExtAlgeb(model='DG', src='DB_y',
+                             indexer=self.dev,
+                             info='original Qsum from DG',
+                             )
+        self.Qsum = ExtAlgeb(model='DG',
                              src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='-100 * actq * Lue_zu',
+                             e_str='-Ldsum_zu * Qorg',
                              info='Reactive power locker',
                              )
 
