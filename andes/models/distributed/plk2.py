@@ -83,25 +83,25 @@ class PLK2Data(ModelData):
                             )
 
         self.Tfl1 = NumParam(default=300,
-                             tex_name=r't_{fl1}',
+                             tex_name=r'T_{fl1}',
                              info='Stand time for (fl2, fl1)',
                              non_negative=True,
                              )
 
         self.Tfl2 = NumParam(default=10,
-                             tex_name=r't_{fl2}',
+                             tex_name=r'T_{fl2}',
                              info='Stand time for (fl3, fl2)',
                              non_negative=True,
                              )
 
         self.Tfu1 = NumParam(default=300,
-                             tex_name=r't_{tu1}',
+                             tex_name=r'T_{fu1}',
                              info='Stand time for (fu1, fu2)',
                              non_negative=True,
                              )
 
         self.Tfu2 = NumParam(default=10,
-                             tex_name=r't_{fu2}',
+                             tex_name=r'T_{fu2}',
                              info='Stand time for (fu2, fu3)',
                              non_negative=True,
                              )
@@ -150,31 +150,31 @@ class PLK2Data(ModelData):
                             )
 
         self.Tvl1 = NumParam(default=2,
-                             tex_name=r't_{vl1}',
+                             tex_name=r'T_{vl1}',
                              info='Stand time for (vl2, vl1)',
                              non_negative=True,
                              )
 
         self.Tvl2 = NumParam(default=1,
-                             tex_name=r't_{vl2}',
+                             tex_name=r'T_{vl2}',
                              info='Stand time for (vl3, vl2)',
                              non_negative=True,
                              )
 
         self.Tvl3 = NumParam(default=0.16,
-                             tex_name=r't_{vl3}',
+                             tex_name=r'T_{vl3}',
                              info='Stand time for (vl4, vl3)',
                              non_negative=True,
                              )
 
         self.Tvu1 = NumParam(default=1,
-                             tex_name=r't_{vu1}',
+                             tex_name=r'T_{vu1}',
                              info='Stand time for (vu1, vu2)',
                              non_negative=True,
                              )
 
         self.Tvu2 = NumParam(default=0.16,
-                             tex_name=r't_{vu2}',
+                             tex_name=r'T_{vu2}',
                              info='Stand time for (vu2, vu3)',
                              non_negative=True,
                              )
@@ -402,7 +402,7 @@ class PLK2Model(Model):
         self.dsum = Algeb(v_str='0',
                           e_str=dsum,
                           info='lock signal summation',
-                          tex_name=r'd_{sum}',
+                          tex_name=r'd_{tot}',
                           )
 
         self.Ldsum = Limiter(u=self.dsum,
@@ -480,7 +480,7 @@ class PLK2(PLK2Data, PLK2Model):
     DER protection model type 2, derived from PLK, followed IEEE-1547. PLK stands for Power Lock.
 
     Target device (limited to DG group) ``Psum`` and ``Qsum`` will decrease to zero
-    immediately when frequency/voltage protection is triggered. Once the lock is
+    immediately when frequency/voltage protection flag is raised. Once the lock is
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1 is on and 0 is off.
@@ -491,6 +491,7 @@ class PLK2(PLK2Data, PLK2Model):
     The input data is required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
     `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
 
+    Default settings:\n
     Frequency (Hz):\n
     `(fl3, fl2), Tfl2`; [(50.0, 57.5), 10s]\n
     `(fl2, fl1), Tfl1`; [(57.5, 59.2), 300s]\n
