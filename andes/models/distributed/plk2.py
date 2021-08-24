@@ -195,11 +195,11 @@ class PLK2Model(Model):
 
         # -- Frequency protection
         # Convert frequency deviation range to p.u.
-        self.f = ExtAlgeb(model='FreqMeasurement',
-                          src='f', indexer=self.busfreq,
-                          export=False,
-                          info='Bus frequency', unit='p.u.',
-                          )
+        self.f = ExtAlgeb(export=False,
+                            info='DG frequency read value', unit='p.u.',
+                            model='FreqMeasurement', src='f',
+                            indexer=self.busfreq,
+                            )
 
         self.fHz = Algeb(v_str='fn * f',
                          e_str='fn * f - fHz',
@@ -389,36 +389,17 @@ class PLK2Model(Model):
         self.ltl = ConstService(v_str='0.2')
 
         # `Ldsum_zu` is `ue`
-        dsum = 'fen * (FLfl1_zu + FLfl2_zu + FLfu1_zu + FLfu2_zu) + ' \
-               'Ven * (FLVl1_zu + FLVl2_zu + FLVl3_zu + \
-                       FLVu1_zu + FLVu2_zu) - ' \
+        dsum = 'fen * (FLfl1_zu * Lfl1_zi + FLfl2_zu * Lfl2_zi + ' \
+                       'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
+               'Ven * (FLVl1_zu * LVl1_zi + FLVl2_zu * LVl2_zi + ' \
+                       'FLVl3_zu * LVl3_zi + ' \
+                       'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
                'dsum'
 
         self.dsum = Algeb(v_str='0',
                           e_str=dsum,
                           info='lock signal summation',
                           tex_name=r'd_{tot}',
-                          )
-
-        dsob = 'fen * (FLfl1_zu * Lfl1_zi + FLfl2_zu * Lfl2_zi + ' \
-                       'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
-               'Ven * (FLVl1_zu * LVl1_zi + FLVl2_zu * LVl2_zi + ' \
-                       'FLVl3_zu * LVl3_zi + ' \
-                       'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
-               'dsob'
-
-        self.dsob = Algeb(v_str='0',
-                          e_str=dsob,
-                          info='lock signal summation observe',
-                          tex_name=r'd_{ob}',
-                          )
-
-        dsob1 = 'fen * (Lfl1_zi) - dsob1'
-
-        self.dsob1 = Algeb(v_str='0',
-                          e_str=dsob1,
-                          info='lock signal summation observe',
-                          tex_name=r'd_{ob1}',
                           )
 
         self.Ldsum = Limiter(u=self.dsum,
@@ -437,16 +418,28 @@ class PLK2Model(Model):
         self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
 
         # lock freq signal of BusFreq
-        self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
-                            indexer=self.busfreq,
-                            info='original Washout y from BusFreq',
+        # self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
+        #                     indexer=self.busfreq,
+        #                     info='original Washout y from BusFreq',
+        #                     )
+
+        # self.fmea = ExtAlgeb(model='FreqMeasurement', src='fHz',
+        #                      indexer=self.busfreq,
+        #                      export=False,
+        #                      e_str='- ue * (1 + WOy)',
+        #                      info='Frequency measure lock',
+        #                      )
+
+        self.fin = ExtAlgeb(model='DG', src='f',
+                            indexer=self.dev,
+                            info='original f from DG',
                             )
 
-        self.fmea = ExtAlgeb(model='FreqMeasurement', src='f',
-                             indexer=self.busfreq,
+        self.fHzl = ExtAlgeb(model='DG', src='fHz',
+                            indexer=self.dev,
                              export=False,
-                             e_str='- ue * (1 + WOy)',
-                             info='Active power lock',
+                             e_str='- ue * (fn * f)',
+                             info='Frequency measure lock',
                              )
 
         # lock output power of DG
@@ -489,7 +482,7 @@ class PLK2Model(Model):
                              info='Reactive power lock',
                              )
 
-        # TODO: clear State: BusFreq L(Lag), BusFreq WO(Washout)
+        # TODO: clear State: BusFreq WO(Washout)
         # TODO: clear State: PVD1: Ipout, Iqout
 
 
@@ -505,23 +498,26 @@ class PLK2(PLK2Data, PLK2Model):
 
     ``ue`` is lock flag signal.
 
+    It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
+    The source values (which come from ``BusFreq`` `f` remain unchanged.)
+
     The model does not check the shedding points sequence.
-    The input data is required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
+    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
     `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
 
     Default settings:\n
     Frequency (Hz):\n
-    `(fl3, fl2), Tfl2`; [(50.0, 57.5), 10s]\n
-    `(fl2, fl1), Tfl1`; [(57.5, 59.2), 300s]\n
-    `(fu1, fu2), Tfu1`; [(60.5, 61.5), 300s]\n
-    `(fu2, fu3), Tfu2`; [(61.5, 70.0), 10s]\n
+    `(fl3, fl2), Tfl2` [(50.0, 57.5), 10s]\n
+    `(fl2, fl1), Tfl1` [(57.5, 59.2), 300s]\n
+    `(fu1, fu2), Tfu1` [(60.5, 61.5), 300s]\n
+    `(fu2, fu3), Tfu2` [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    `(vl4, vl3), Tvl3`; [(0.10, 0.45), 0.16s]\n
-    `(vl3, vl2), Tvl2`; [(0.45, 0.60), 1s]\n
-    `(vl2, vl1), Tvl1`; [(0.60, 0.88), 2s]\n
-    `(vu1, vu2), Tvu1`; [(1.10, 1.20), 1s]\n
-    `(vu2, vu3), Tvu2`; [(1.20, 2.00), 0.16s]\n
+    `(vl4, vl3), Tvl3` [(0.10, 0.45), 0.16s]\n
+    `(vl3, vl2), Tvl2` [(0.45, 0.60), 1s]\n
+    `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
+    `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
+    `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
     """
 
     def __init__(self, system, config):
