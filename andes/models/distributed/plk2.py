@@ -3,7 +3,7 @@ DER protection model.
 """
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
-from andes.core.var import Algeb, ExtAlgeb, AliasAlgeb
+from andes.core.var import Algeb, ExtAlgeb
 from andes.core.service import ConstService, EventFlag
 from andes.core.discrete import Limiter
 from andes.core.block import Integrator
@@ -196,10 +196,10 @@ class PLK2Model(Model):
         # -- Frequency protection
         # Convert frequency deviation range to p.u.
         self.f = ExtAlgeb(export=False,
-                            info='DG frequency read value', unit='p.u.',
-                            model='FreqMeasurement', src='f',
-                            indexer=self.busfreq,
-                            )
+                          info='DG frequency read value', unit='p.u.',
+                          model='FreqMeasurement', src='f',
+                          indexer=self.busfreq,
+                          )
 
         self.fHz = Algeb(v_str='fn * f',
                          e_str='fn * f - fHz',
@@ -390,10 +390,10 @@ class PLK2Model(Model):
 
         # `Ldsum_zu` is `ue`
         dsum = 'fen * (FLfl1_zu * Lfl1_zi + FLfl2_zu * Lfl2_zi + ' \
-                       'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
+               'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
                'Ven * (FLVl1_zu * LVl1_zi + FLVl2_zu * LVl2_zi + ' \
-                       'FLVl3_zu * LVl3_zi + ' \
-                       'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
+               'FLVl3_zu * LVl3_zi + ' \
+               'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
                'dsum'
 
         self.dsum = Algeb(v_str='0',
@@ -439,7 +439,7 @@ class PLK2Model(Model):
                             )
 
         self.fHzl = ExtAlgeb(model='DG', src='fHz',
-                            indexer=self.dev,
+                             indexer=self.dev,
                              export=False,
                              e_str='- ue * (fn * f)',
                              info='Frequency measure lock',
