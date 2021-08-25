@@ -488,8 +488,8 @@ class PLK2Model(Model):
         # TODO: clear State: BusFreq WO(Washout)
         # TODO: clear State: PVD1: Ipout, Iqout
         # TODO: Set EventFlag for ue
-        # TODO: Set option whether BusFreq will remain after the protection
-        # TODO: 
+        # TODO: Set option whether BusFreq will remain after the protection, default at enable
+        # TODO: Set option whether PVD1 degrading function 
 
 
 class PLK2(PLK2Data, PLK2Model):
