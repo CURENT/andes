@@ -407,7 +407,7 @@ class PVD1Model(Model):
         Qdrp = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'u * VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
                'u * VQ2_zi * (dqdv * (v1 - Vcomp)) '
-    
+
         self.Qdrp = Algeb(tex_name='Q_{drp}',
                           info='External power signal (for AGC)',
                           v_str=Qdrp,
