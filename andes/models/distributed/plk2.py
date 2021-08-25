@@ -402,6 +402,22 @@ class PLK2Model(Model):
                           tex_name=r'd_{tot}',
                           )
 
+        dob1 = 'fen * (FLfl1_zu * Lfl1_zi) - dob1'
+
+        self.dob1 = Algeb(v_str='0',
+                          e_str=dob1,
+                          info='lock signal summation',
+                          tex_name=r'd_{ob1}',
+                          )
+
+        dob2 = 'fen * (FLfl2_zu * Lfl2_zi) - dob2'
+
+        self.dob2 = Algeb(v_str='0',
+                          e_str=dob2,
+                          info='lock signal summation',
+                          tex_name=r'd_{ob2}',
+                          )
+
         self.Ldsum = Limiter(u=self.dsum,
                              lower=self.ltl,
                              upper=self.ltu,
@@ -416,19 +432,6 @@ class PLK2Model(Model):
                         )
 
         self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
-
-        # lock freq signal of BusFreq
-        # self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
-        #                     indexer=self.busfreq,
-        #                     info='original Washout y from BusFreq',
-        #                     )
-
-        # self.fmea = ExtAlgeb(model='FreqMeasurement', src='fHz',
-        #                      indexer=self.busfreq,
-        #                      export=False,
-        #                      e_str='- ue * (1 + WOy)',
-        #                      info='Frequency measure lock',
-        #                      )
 
         self.fin = ExtAlgeb(model='DG', src='f',
                             indexer=self.dev,
@@ -484,6 +487,7 @@ class PLK2Model(Model):
 
         # TODO: clear State: BusFreq WO(Washout)
         # TODO: clear State: PVD1: Ipout, Iqout
+        # TODO: Set EventFlag for ue
 
 
 class PLK2(PLK2Data, PLK2Model):
@@ -500,6 +504,8 @@ class PLK2(PLK2Data, PLK2Model):
 
     It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
     The source values (which come from ``BusFreq`` `f` remain unchanged.)
+
+    PLK2 can only be used once in a simulation.
 
     The model does not check the shedding points sequence.
     The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
