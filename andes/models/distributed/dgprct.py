@@ -37,8 +37,8 @@ class DGPRCTBaseData(ModelData):
                               tex_name='fflag',
                               vrange=[0, 1],
                               info='Frequency lock option. \
-                                    1 to leave source signal, \
-                                    0 to lock source signal.',
+                                    1 to enable freq after protection, \
+                                    0 to disable freq after protection.',
                               )
 
         self.Ven = NumParam(default=0,
