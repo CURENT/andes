@@ -17,6 +17,7 @@ class EV1Data(ESD1Data):
         self.pmn = NumParam(default=-999.0, info='minimum power limit',
                             tex_name='p_{mn}',
                             power=True,
+                            unit='pu',
                             )
 
 

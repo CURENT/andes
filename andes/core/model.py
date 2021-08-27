@@ -767,7 +767,7 @@ class Model:
         if idx is None:
             logger.debug("idx2uid returned None for idx None")
             return None
-        if isinstance(idx, (float, int, str, np.int32, np.int64, np.float64)):
+        if isinstance(idx, (float, int, str, np.integer, np.floating)):
             return self._one_idx2uid(idx)
         elif isinstance(idx, Iterable):
             if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):

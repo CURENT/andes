@@ -134,7 +134,7 @@ class DAETimeSeries:
         base_var : BaseVar or a sequence of BaseVar(s)
             The variable types and internal addresses
             are used for looking up the data.
-        a : an array-like of int or None
+        a : an array/list of int or None
             Sub-indices into the address of `base_var`.
             Applied to each variable.
 

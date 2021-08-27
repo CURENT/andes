@@ -282,19 +282,19 @@ class VSGOuterPIModel:
     """
 
     def __init__(self):
-        self.PIdv = PIController(u='vref2 - vd',
+        self.PIvd = PIController(u='vref2 - vd',
                                  kp=self.kp_dv,
                                  ki=self.ki_dv,
                                  x0='Id0',
                                  )
-        self.PIqv = PIController(u='- vq',
+        self.PIvq = PIController(u='- vq',
                                  kp=self.kp_qv,
                                  ki=self.ki_qv,
                                  x0='Iq0',
                                  )
 
-        self.Idref = AliasAlgeb(self.PIdv_y)
-        self.Iqref = AliasAlgeb(self.PIqv_y)
+        self.Idref = AliasAlgeb(self.PIvd_y)
+        self.Iqref = AliasAlgeb(self.PIvq_y)
 
 
 class VSGInnerPIModel:
@@ -304,35 +304,35 @@ class VSGInnerPIModel:
 
     def __init__(self):
         self.udref0 = ConstService(tex_name=r'u_{dref0}',
-                                   v_str='ra * Id0 - xs * Iq0 + vd0'
+                                   v_str='vd0 + ra*Id0 - xs*Iq0'
                                    )
         self.uqref0 = ConstService(tex_name=r'u_{qref0}',
-                                   v_str='ra * Iq0 + xs * Id0 + vq0',
+                                   v_str='vq0 + ra*Iq0 + xs*Id0',
                                    )
 
-        # PIdv_y, PIqv_y are Idref, Iqref
-        self.PIdi = PIController(u='PIdv_y - Id',
+        # PIvd_y, PIvq_y are Idref, Iqref
+        self.PIId = PIController(u='PIvd_y - Id',
                                  kp=self.kp_di,
                                  ki=self.ki_di,
                                  )
-        self.PIqi = PIController(u='PIqv_y - Iq',
+        self.PIIq = PIController(u='PIvq_y - Iq',
                                  kp=self.kp_qi,
                                  ki=self.ki_qi,
                                  )
 
         # udLag_y, uqLag_y are ud, uq
-        self.Id.e_str = '- ra * Id  + (udLag_y - vd) + Iq * xs'
-        self.Iq.e_str = '- ra * Iq  + (uqLag_y - vq) - Id * xs'
+        self.Id.e_str = 'vd + ra*Id - xs*Iq - udLag_y'
+        self.Iq.e_str = 'vq + ra*Iq + xs*Id - uqLag_y'
 
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
                            v_str='udref0',
-                           e_str='PIdi_y + vd - Iq * xs - udref',
+                           e_str='PIId_y + vd - Iqref * xs - udref',
                            )
         self.uqref = Algeb(tex_name=r'u_{qref}',
                            info='uq reference',
                            v_str='uqref0',
-                           e_str='PIqi_y + vq + Id * xs - uqref',
+                           e_str='PIIq_y + vq + Idref * xs - uqref',
                            )
 
         self.udLag = Lag(u='udref',

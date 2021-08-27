@@ -38,22 +38,22 @@ class PLKData(ModelData):
 
         # -- protection parameters
         self.fl = NumParam(default=57.5,
-                           tex_name='fl',
+                           tex_name='f_l',
                            info='Under frequency shadding point',
                            unit='Hz',
                            )
         self.fu = NumParam(default=61.5,
-                           tex_name='fu',
+                           tex_name='f_u',
                            info='Over frequency shadding point',
                            unit='Hz',
                            )
-        self.ul = NumParam(default=0.88,
-                           tex_name='fl',
+        self.vl = NumParam(default=0.88,
+                           tex_name='V_l',
                            info='Under voltage shadding point',
                            unit='p.u.',
                            )
-        self.uu = NumParam(default=1.1,
-                           tex_name='fu',
+        self.vu = NumParam(default=1.1,
+                           tex_name='V_u',
                            info='Over voltage shadding point',
                            unit='p.u.',
                            )
@@ -94,8 +94,8 @@ class PLKModel(Model):
                           )
         # Indicatior of voltage deviation
         self.Vcmp = Limiter(u=self.v,
-                            lower=self.ul,
-                            upper=self.uu,
+                            lower=self.vl,
+                            upper=self.vu,
                             tex_name=r'V_{cmp}',
                             info='Voltage comparator',
                             equal=False,

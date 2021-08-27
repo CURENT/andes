@@ -35,10 +35,10 @@ class TDSData:
         self._lst_file = None
 
         # data members for raw data
-        self._idx = []  # indices of variables
+        self._idx = []    # indices of variables
         self._uname = []  # unformatted variable names
         self._fname = []  # formatted variable names
-        self._data = []  # data loaded from file
+        self._data = []   # data loaded from file
 
         # auxillary data members for fast query
         self.t = []
@@ -219,7 +219,7 @@ class TDSData:
 
         """
 
-        if isinstance(idx, (int, np.int64)):
+        if isinstance(idx, (int, np.integer)):
             idx = [idx]
         header = self._uname if not formatted else self._fname
         return [header[x] for x in idx]
@@ -272,7 +272,8 @@ class TDSData:
              title=None, linestyles=None, use_bqplot=False,
              hline1=None, hline2=None, vline1=None, vline2=None,
              fig=None, ax=None, backend=None,
-             set_xlim=True, set_ylim=True, autoscale=False, legend_bbox=None, legend_loc=None,
+             set_xlim=True, set_ylim=True, autoscale=False,
+             legend_bbox=None, legend_loc=None, legend_ncol=1,
              figsize=None,
              **kwargs):
         """
@@ -321,6 +322,10 @@ class TDSData:
             A list containing the variable names for the x-axis variable
         legend : bool
             True to show legend and False otherwise
+        legend_ncol : int
+            Number of columns in legend
+        legend_bbox : tuple of two floats
+            legend box to anchor
         grid : bool
             True to show grid and False otherwise
         latex : bool
@@ -408,7 +413,8 @@ class TDSData:
                          hline1=hline1, hline2=hline2, vline1=vline1, vline2=vline2,
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
-                         legend_bbox=legend_bbox, legend_loc=legend_loc, figsize=figsize,
+                         legend_bbox=legend_bbox, legend_loc=legend_loc, legend_ncol=legend_ncol,
+                         figsize=figsize,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -467,7 +473,8 @@ class TDSData:
                   latex=True, dpi=DPI, line_width=1.0, font_size=12, greyscale=False, savefig=None,
                   save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
-                  legend_bbox=None, legend_loc=None,
+                  legend_bbox=None, legend_loc=None, legend_ncol=1,
+                  mask=True,
                   **kwargs):
         """
         Plot lines for the supplied data and options.
@@ -484,6 +491,10 @@ class TDSData:
         ydata : array
             An array containing the values of each variables for the y-axis variable. The row
             of `ydata` must match the row of `xdata`. Each column correspondings to a variable.
+        mask : bool
+            If enabled (1), when specifying axis limits, only data in the limits will be
+            used for plotting to optimize for autoscaling.
+            It is done through an index mask.
 
         Returns
         -------
@@ -535,6 +546,11 @@ class TDSData:
         if greyscale:
             plt.gray()
 
+        if mask is True:
+            mask = (xdata >= (left - 0.1)) & (xdata <= (right + 0.1))
+            xdata = xdata[mask]
+            ydata = ydata[mask.reshape(-1, )]
+
         for i in range(n_lines):
             ax.plot(xdata,
                     ydata[:, i],
@@ -571,7 +587,9 @@ class TDSData:
                 legend = True
 
         if legend:
-            ax.legend(bbox_to_anchor=legend_bbox, loc=legend_loc)
+            ax.legend(bbox_to_anchor=legend_bbox,
+                      loc=legend_loc,
+                      ncol=legend_ncol)
 
         if title:
             ax.set_title(title)
@@ -728,17 +746,20 @@ class TDSData:
         states = list()
         algebs = list()
 
+        states_and_ext = mdl.cache.states_and_ext
+        algebs_and_ext = mdl.cache.algebs_and_ext
+
         if vars is None:
-            states = mdl.states.values()
-            algebs = mdl.algebs.values()
+            states = states_and_ext.values()
+            algebs = algebs_and_ext.values()
         else:
             for item in vars:
-                if item in mdl.states:
-                    states.append(mdl.states[item])
-                elif item in mdl.algebs:
-                    algebs.append(mdl.algebs[item])
+                if item in states_and_ext:
+                    states.append(states_and_ext[item])
+                elif item in algebs_and_ext:
+                    algebs.append(algebs_and_ext[item])
                 else:
-                    logger.warning("Variable <%s> does not exist in model <%S>",
+                    logger.warning("Variable <%s> does not exist in model <%s>",
                                    item, mdl.class_name)
         nstates = len(states)
         nalgebs = len(algebs)
