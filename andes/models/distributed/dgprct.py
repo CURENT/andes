@@ -4,7 +4,7 @@ Distributed energy resource protection model base.
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
-from andes.core.service import ConstService, EventFlag, ExtService
+from andes.core.service import ConstService, EventFlag, ExtService, VarService, ExtendedEvent
 from andes.core.discrete import Limiter
 from andes.core.block import Integrator
 
@@ -248,6 +248,28 @@ class DGPRCTBaseModel(Model):
                         )
 
         self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
+
+        # --- debug
+
+        self.uevs = VarService(v_str='ue',
+                                info='Voltage before Xc compensation',
+                                tex_name='ue VS'
+                                )
+        self.uee = EventFlag(u=self.uevs, tex_name='z^{ue}')
+        self.ueee = ExtendedEvent(self.uevs, v_disabled=1)
+
+        self.ob = Algeb(v_str='0',
+                        e_str='uevs - ob',
+                        info='uevs flag',
+                        tex_name=r'ob uevs',
+                        )
+        self.ob2 = Algeb(v_str='0',
+                        e_str='ueee - ob2',
+                        info='lock flag',
+                        tex_name=r'ob ueee',
+                        )
+
+        # --- debug end
 
         # lock DG frequency signal
 
