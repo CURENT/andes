@@ -287,7 +287,7 @@ class VSGOuterPIModel:
                                  ki=self.ki_dv,
                                  x0='Id0',
                                  )
-        self.PIvq = PIController(u='- vq',
+        self.PIvq = PIController(u='vq',
                                  kp=self.kp_qv,
                                  ki=self.ki_qv,
                                  x0='Iq0',
