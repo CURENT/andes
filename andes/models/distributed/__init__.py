@@ -3,3 +3,4 @@ from andes.models.distributed.esd1 import ESD1  # NOQA
 from andes.models.distributed.plk import PLK  # NOQA
 from andes.models.distributed.plk2 import PLK2  # NOQA
 from andes.models.distributed.ev import EV1, EV2  # NOQA
+from andes.models.distributed.dgprct import DGPRCT1, DGPRCTExt  # NOQA

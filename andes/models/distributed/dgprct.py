@@ -317,7 +317,7 @@ class DGPRCTBaseModel(Model):
                             equal=False, no_warn=True,
                             )
 
-        self.LVu2 = Limiter(uu='v',
+        self.LVu2 = Limiter(u='v',
                             lower=self.vu2, upper=self.vu3,
                             info='Voltage comparer for (vu2, vu3)',
                             equal=False, no_warn=True,
@@ -446,7 +446,7 @@ class DGPRCTBaseModel(Model):
         self.fsrcl = ExtAlgeb(model='FreqMeasurement', src='f',
                              indexer=self.busfreq,
                              export=False,
-                             e_str='- ue * (1 - fflag) * (1 + Woy)',
+                             e_str='- ue * (1 - fflag) * (1 + WOy)',
                              info='Frequency source lock',
                              )
 
