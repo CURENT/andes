@@ -34,12 +34,12 @@ class DGPRCTBaseData(ModelData):
                             )
 
         self.fflag = NumParam(default=1,
-                            tex_name='fflag',
-                            vrange=[0, 1],
-                            info='Frequency lock option. \
-                                  1 to leave source signal, \
-                                  0 to lock source signal.',
-                            )
+                              tex_name='fflag',
+                              vrange=[0, 1],
+                              info='Frequency lock option. \
+                                    1 to leave source signal, \
+                                    0 to lock source signal.',
+                              )
 
         self.Ven = NumParam(default=0,
                             tex_name='Ven',
@@ -291,33 +291,32 @@ class DGPRCTBaseModel(Model):
 
         # -- Voltage protection
 
-
         # Indicatior of voltage deviation
-        self.LVl1 = Limiter(u='v',
+        self.LVl1 = Limiter(u=self.v,
                             lower=self.vl4, upper=self.vl1,
                             info='Voltage comparer for (vl4, vl1)',
                             equal=False, no_warn=True,
                             )
 
-        self.LVl2 = Limiter(u='v',
+        self.LVl2 = Limiter(u=self.v,
                             lower=self.vl4, upper=self.vl2,
                             info='Voltage comparer for (vl4, vl2)',
                             equal=False, no_warn=True,
                             )
 
-        self.LVl3 = Limiter(u='v',
+        self.LVl3 = Limiter(u=self.v,
                             lower=self.vl4, upper=self.vl3,
                             info='Voltage comparer for (vl4, vl3)',
                             equal=False, no_warn=True,
                             )
 
-        self.LVu1 = Limiter(u='v',
+        self.LVu1 = Limiter(u=self.v,
                             lower=self.vu1, upper=self.vu3,
                             info='Voltage comparer for (vu1, vu3)',
                             equal=False, no_warn=True,
                             )
 
-        self.LVu2 = Limiter(u='v',
+        self.LVu2 = Limiter(u=self.v,
                             lower=self.vu2, upper=self.vu3,
                             info='Voltage comparer for (vu2, vu3)',
                             equal=False, no_warn=True,
@@ -444,11 +443,11 @@ class DGPRCTBaseModel(Model):
                             )
 
         self.fsrcl = ExtAlgeb(model='FreqMeasurement', src='f',
-                             indexer=self.busfreq,
-                             export=False,
-                             e_str='- ue * (1 - fflag) * (1 + WOy)',
-                             info='Frequency source lock',
-                             )
+                              indexer=self.busfreq,
+                              export=False,
+                              e_str='- ue * (1 - fflag) * (1 + WOy)',
+                              info='Frequency source lock',
+                              )
 
         # lock output power of DG
 
@@ -498,13 +497,13 @@ class DGPRCTBaseModel(Model):
         # TODO: Set EventFlag for ue
 
 
-class DGPRCT1Model(Model):
+class DGPRCT1Model(DGPRCTBaseModel):
     """
     Model implementation of DGPRCT1.
     """
 
     def __init__(self, system, config):
-        DGPRCTBaseModel.__init__(self, system, config)
+        super().__init__(system, config)
 
         self.v = ExtAlgeb(model='Bus', src='v',
                           indexer=self.bus,
@@ -529,7 +528,7 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
     The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
-    DGPRCT can only be used once in a simulation.
+    DGPRCT1 can only be used once in a simulation.
 
     The model does not check the shedding points sequence.
     The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
@@ -569,6 +568,7 @@ class DGPRCTExtModel(Model):
                             tex_name='v',
                             )
 
+
 class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     """
     DGPRCT External model, follow IEEE-1547. DGPRCT stands for DG protection.
@@ -586,7 +586,7 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
     The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
-    DGPRCT can only be used once in a simulation.
+    DGPRCTExt can only be used once in a simulation.
 
     The model does not check the shedding points sequence.
     The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
