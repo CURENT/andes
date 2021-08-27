@@ -485,8 +485,11 @@ class PLK2Model(Model):
                              info='Reactive power lock',
                              )
 
+        # TODO: set option for users whether lock source freq
+        # TODO: apply ExtState here
         # TODO: clear State: BusFreq WO(Washout)
         # TODO: clear State: PVD1: Ipout, Iqout
+        # TODO: develop integrator with reset function
         # TODO: Set EventFlag for ue
 
 
