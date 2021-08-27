@@ -249,6 +249,19 @@ class TestCOI(unittest.TestCase):
         self.assertEqual(exit_code, 0, "Exit code is not 0.")
 
 
+class TestVSC(unittest.TestCase):
+    def test_kundur_vsc(self):
+        ss = get_case('kundur/kundur_vsc.xlsx')
+        exit_code = andes.run(ss,
+                              routine='pflow',
+                              no_output=True,
+                              cli=True,
+                              default_config=True,
+                              )
+
+        self.assertEqual(exit_code, 0, "Exit code is not 0.")
+
+
 class TestShuntSw(unittest.TestCase):
     """Test class for switched shunt."""
 
