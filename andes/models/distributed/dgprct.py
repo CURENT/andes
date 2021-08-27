@@ -215,176 +215,6 @@ class DGPRCTBaseModel(Model):
                          tex_name=r'f_{Hz}',
                          )
 
-        # Indicatior of frequency deviation
-        self.Lfl1 = Limiter(u=self.fHz,
-                            lower=self.fl3, upper=self.fl1,
-                            info='Frequency comparer for (fl3, fl1)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.Lfl2 = Limiter(u=self.fHz,
-                            lower=self.fl3, upper=self.fl2,
-                            info='Frequency comparer for (fl3, fl2)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.Lfu1 = Limiter(u=self.fHz,
-                            lower=self.fu1, upper=self.fu3,
-                            info='Frequency comparer for (fu1, fu3)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.Lfu2 = Limiter(u=self.fHz,
-                            lower=self.fu2, upper=self.fu3,
-                            info='Frequency comparer for (fu2, fu3)',
-                            equal=False, no_warn=True,
-                            )
-
-        # Frequency deviation time continuity check
-        self.INTfl1 = Integrator(u='Lfl1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fl3, fl1)',
-                                 )
-
-        self.FLfl1 = Limiter(u=self.INTfl1_y,
-                             lower=0, upper=self.Tfl1,
-                             info='Flag comparer for (fl3, fl1)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTfl2 = Integrator(u='Lfl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fl3, fl2)',
-                                 )
-
-        self.FLfl2 = Limiter(u=self.INTfl2_y,
-                             lower=0, upper=self.Tfl2,
-                             info='Flag comparer for (fl3, fl2)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTfu1 = Integrator(u='Lfu1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fu1, fu3)',
-                                 )
-
-        self.FLfu1 = Limiter(u=self.INTfu1_y,
-                             lower=0, upper=self.Tfu1,
-                             info='Flag comparer for (fu1, fu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTfu2 = Integrator(u='Lfu2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fu2, fu3)',
-                                 )
-
-        self.FLfu2 = Limiter(u=self.INTfu2_y,
-                             lower=0, upper=self.Tfu2,
-                             info='Flag comparer for (fu2, fu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        # -- Voltage protection
-
-        # Indicatior of voltage deviation
-        self.LVl1 = Limiter(u=self.v,
-                            lower=self.vl4, upper=self.vl1,
-                            info='Voltage comparer for (vl4, vl1)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.LVl2 = Limiter(u=self.v,
-                            lower=self.vl4, upper=self.vl2,
-                            info='Voltage comparer for (vl4, vl2)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.LVl3 = Limiter(u=self.v,
-                            lower=self.vl4, upper=self.vl3,
-                            info='Voltage comparer for (vl4, vl3)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.LVu1 = Limiter(u=self.v,
-                            lower=self.vu1, upper=self.vu3,
-                            info='Voltage comparer for (vu1, vu3)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.LVu2 = Limiter(u=self.v,
-                            lower=self.vu2, upper=self.vu3,
-                            info='Voltage comparer for (vu2, vu3)',
-                            equal=False, no_warn=True,
-                            )
-
-        # Voltage deviation time continuity check
-        self.INTVl1 = Integrator(u='LVl1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl1)',
-                                 )
-
-        self.FLVl1 = Limiter(u=self.INTVl1_y,
-                             lower=0, upper=self.Tvl1,
-                             info='Flag comparer for (vl4, vl1)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTVl2 = Integrator(u='LVl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl2)',
-                                 )
-
-        self.FLVl2 = Limiter(u=self.INTVl2_y,
-                             lower=0, upper=self.Tvl2,
-                             info='Flag comparer for (vl4, vl2)',
-                             equal=False,
-                             no_warn=True,
-                             )
-
-        self.INTVl3 = Integrator(u='LVl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl3)',
-                                 )
-
-        self.FLVl3 = Limiter(u=self.INTVl3_y,
-                             lower=0, upper=self.Tvl3,
-                             info='Flag comparer for (vl4, vl3)',
-                             equal=False,
-                             no_warn=True,
-                             )
-
-        self.INTVu1 = Integrator(u='LVu1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vu1, vu3)',
-                                 )
-
-        self.FLVu1 = Limiter(u=self.INTVu1_y,
-                             lower=0, upper=self.Tvu1,
-                             info='Flag comparer for (vu1, vu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTVu2 = Integrator(u='LVu2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vu2, vu3)',
-                                 )
-
-        self.FLVu2 = Limiter(u=self.INTVu2_y,
-                             lower=0, upper=self.Tvu2,
-                             info='Flag comparer for (vu2, vu3)',
-                             equal=False, no_warn=True,
-                             )
-
         # -- Lock DG frequency signal and output power
 
         self.ltu = ConstService(v_str='0.8')
@@ -497,20 +327,205 @@ class DGPRCTBaseModel(Model):
         # TODO: Set EventFlag for ue
 
 
-class DGPRCT1Model(DGPRCTBaseModel):
+class fProtect:
+    """
+    Subclass for frequency protection logic.
+    """
+
+    def __init__(self):
+        # Indicatior of frequency deviation
+        self.Lfl1 = Limiter(u=self.fHz,
+                            lower=self.fl3, upper=self.fl1,
+                            info='Frequency comparer for (fl3, fl1)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.Lfl2 = Limiter(u=self.fHz,
+                            lower=self.fl3, upper=self.fl2,
+                            info='Frequency comparer for (fl3, fl2)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.Lfu1 = Limiter(u=self.fHz,
+                            lower=self.fu1, upper=self.fu3,
+                            info='Frequency comparer for (fu1, fu3)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.Lfu2 = Limiter(u=self.fHz,
+                            lower=self.fu2, upper=self.fu3,
+                            info='Frequency comparer for (fu2, fu3)',
+                            equal=False, no_warn=True,
+                            )
+
+        # Frequency deviation time continuity check
+        self.INTfl1 = Integrator(u='Lfl1_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fl3, fl1)',
+                                 )
+
+        self.FLfl1 = Limiter(u=self.INTfl1_y,
+                             lower=0, upper=self.Tfl1,
+                             info='Flag comparer for (fl3, fl1)',
+                             equal=False, no_warn=True,
+                             )
+
+        self.INTfl2 = Integrator(u='Lfl2_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fl3, fl2)',
+                                 )
+
+        self.FLfl2 = Limiter(u=self.INTfl2_y,
+                             lower=0, upper=self.Tfl2,
+                             info='Flag comparer for (fl3, fl2)',
+                             equal=False, no_warn=True,
+                             )
+
+        self.INTfu1 = Integrator(u='Lfu1_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fu1, fu3)',
+                                 )
+
+        self.FLfu1 = Limiter(u=self.INTfu1_y,
+                             lower=0, upper=self.Tfu1,
+                             info='Flag comparer for (fu1, fu3)',
+                             equal=False, no_warn=True,
+                             )
+
+        self.INTfu2 = Integrator(u='Lfu2_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fu2, fu3)',
+                                 )
+
+        self.FLfu2 = Limiter(u=self.INTfu2_y,
+                             lower=0, upper=self.Tfu2,
+                             info='Flag comparer for (fu2, fu3)',
+                             equal=False, no_warn=True,
+                             )
+
+
+class VProtect:
+    """
+    Subclass for voltage protection logic
+    """
+
+    def __init__(self):
+        # -- Voltage protection
+
+        # Indicatior of voltage deviation
+        self.LVl1 = Limiter(u=self.v,
+                            lower=self.vl4, upper=self.vl1,
+                            info='Voltage comparer for (vl4, vl1)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.LVl2 = Limiter(u=self.v,
+                            lower=self.vl4, upper=self.vl2,
+                            info='Voltage comparer for (vl4, vl2)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.LVl3 = Limiter(u=self.v,
+                            lower=self.vl4, upper=self.vl3,
+                            info='Voltage comparer for (vl4, vl3)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.LVu1 = Limiter(u=self.v,
+                            lower=self.vu1, upper=self.vu3,
+                            info='Voltage comparer for (vu1, vu3)',
+                            equal=False, no_warn=True,
+                            )
+
+        self.LVu2 = Limiter(u=self.v,
+                            lower=self.vu2, upper=self.vu3,
+                            info='Voltage comparer for (vu2, vu3)',
+                            equal=False, no_warn=True,
+                            )
+
+        # Voltage deviation time continuity check
+        self.INTVl1 = Integrator(u='LVl1_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (vl4, vl1)',
+                                 )
+
+        self.FLVl1 = Limiter(u=self.INTVl1_y,
+                             lower=0, upper=self.Tvl1,
+                             info='Flag comparer for (vl4, vl1)',
+                             equal=False, no_warn=True,
+                             )
+
+        self.INTVl2 = Integrator(u='LVl2_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (vl4, vl2)',
+                                 )
+
+        self.FLVl2 = Limiter(u=self.INTVl2_y,
+                             lower=0, upper=self.Tvl2,
+                             info='Flag comparer for (vl4, vl2)',
+                             equal=False,
+                             no_warn=True,
+                             )
+
+        self.INTVl3 = Integrator(u='LVl2_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (vl4, vl3)',
+                                 )
+
+        self.FLVl3 = Limiter(u=self.INTVl3_y,
+                             lower=0, upper=self.Tvl3,
+                             info='Flag comparer for (vl4, vl3)',
+                             equal=False,
+                             no_warn=True,
+                             )
+
+        self.INTVu1 = Integrator(u='LVu1_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (vu1, vu3)',
+                                 )
+
+        self.FLVu1 = Limiter(u=self.INTVu1_y,
+                             lower=0, upper=self.Tvu1,
+                             info='Flag comparer for (vu1, vu3)',
+                             equal=False, no_warn=True,
+                             )
+
+        self.INTVu2 = Integrator(u='LVu2_zi',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (vu2, vu3)',
+                                 )
+
+        self.FLVu2 = Limiter(u=self.INTVu2_y,
+                             lower=0, upper=self.Tvu2,
+                             info='Flag comparer for (vu2, vu3)',
+                             equal=False, no_warn=True,
+                             )
+
+
+class DGPRCT1Model(DGPRCTBaseModel, fProtect, VProtect):
     """
     Model implementation of DGPRCT1.
     """
 
     def __init__(self, system, config):
-        super().__init__(system, config)
-
+        DGPRCTBaseModel.__init__(self, system, config)
         self.v = ExtAlgeb(model='Bus', src='v',
                           indexer=self.bus,
                           export=False,
                           info='Bus voltage',
                           unit='p.u.',
                           )
+        fProtect.__init__(self)
+        VProtect.__init__(self)
 
 
 class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
@@ -567,6 +582,9 @@ class DGPRCTExtModel(Model):
                             info='retrived voltage',
                             tex_name='v',
                             )
+
+        fProtect.__init__(self)
+        VProtect.__init__(self)
 
 
 class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
