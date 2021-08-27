@@ -696,13 +696,18 @@ class TDS(BaseRoutine):
             return True
 
         # otherwise, show suspect initialization error
-        fail_idx = np.where(abs(system.dae.fg) >= self.config.tol)
-        fail_names = [system.dae.xy_name[int(i)] for i in np.ravel(fail_idx)]
+        fail_idx = np.ravel(np.where(abs(system.dae.fg) >= self.config.tol))
+        nan_idx = np.ravel(np.where(np.isnan(system.dae.fg)))
+        bad_idx = np.hstack([fail_idx, nan_idx])
+
+        fail_names = [system.dae.xy_name[int(i)] for i in fail_idx]
+        nan_names = [system.dae.xy_name[int(i)] for i in nan_idx]
+        bad_names = fail_names + nan_names
 
         title = 'Suspect initialization issue! Simulation may crash!'
-        err_data = {'Name': fail_names,
-                    'Var. Value': system.dae.xy[fail_idx],
-                    'Eqn. Mismatch': system.dae.fg[fail_idx],
+        err_data = {'Name': bad_names,
+                    'Var. Value': system.dae.xy[bad_idx],
+                    'Eqn. Mismatch': system.dae.fg[bad_idx],
                     }
         tab = Tab(title=title,
                   header=err_data.keys(),
