@@ -304,10 +304,10 @@ class VSGInnerPIModel:
 
     def __init__(self):
         self.udref0 = ConstService(tex_name=r'u_{dref0}',
-                                   v_str='ra * Id0 - xs * Iq0 + vd0'
+                                   v_str='vd0 + ra*Id0 - xs*Iq0'
                                    )
         self.uqref0 = ConstService(tex_name=r'u_{qref0}',
-                                   v_str='ra * Iq0 + xs * Id0 + vq0',
+                                   v_str='vq0 + ra*Iq0 + xs*Id0',
                                    )
 
         # PIvd_y, PIvq_y are Idref, Iqref
@@ -321,8 +321,8 @@ class VSGInnerPIModel:
                                  )
 
         # udLag_y, uqLag_y are ud, uq
-        self.Id.e_str = '- ra * Id  + (udLag_y - vd) + Iq * xs'
-        self.Iq.e_str = '- ra * Iq  + (uqLag_y - vq) - Id * xs'
+        self.Id.e_str = 'vd + ra*Id - xs*Iq - udLag_y'
+        self.Iq.e_str = 'vq + ra*Iq + xs*Id - uqLag_y'
 
         self.udref = Algeb(tex_name=r'u_{dref}',
                            info='ud reference',
