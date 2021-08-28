@@ -250,23 +250,19 @@ class DGPRCTBaseModel(Model):
         self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
 
         # --- debug
+     
+        self.ueef = EventFlag(u=self.ue, tex_name='z^{ue}')
+        self.ueee = ExtendedEvent(self.ue, v_disabled=1)
 
-        self.uevs = VarService(v_str='ue',
-                                info='Voltage before Xc compensation',
-                                tex_name='ue VS'
-                                )
-        self.uee = EventFlag(u=self.uevs, tex_name='z^{ue}')
-        self.ueee = ExtendedEvent(self.uevs, v_disabled=1)
-
-        self.ob = Algeb(v_str='0',
-                        e_str='uevs - ob',
-                        info='uevs flag',
-                        tex_name=r'ob uevs',
-                        )
         self.ob2 = Algeb(v_str='0',
-                        e_str='ueee - ob2',
-                        info='lock flag',
-                        tex_name=r'ob ueee',
+                        e_str='ueef - ob2',
+                        info='event flag ob',
+                        tex_name=r'ef_{ob}',
+                        )
+        self.ob3 = Algeb(v_str='0',
+                        e_str='ueee - ob3',
+                        info='extended event ob',
+                        tex_name=r'ee_{ob}',
                         )
 
         # --- debug end
