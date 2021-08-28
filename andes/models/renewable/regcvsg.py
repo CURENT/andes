@@ -90,26 +90,26 @@ class VSGOuterPIData:
     """
 
     def __init__(self) -> None:
-        self.kp_dv = NumParam(default=20, tex_name=r'kp_{dv}',
-                              info='vd controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_dv = NumParam(default=0.001, tex_name=r'ki_{dv}',
-                              info='vd controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.kp_qv = NumParam(default=20, tex_name=r'kp_{qv}',
-                              info='vq controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_qv = NumParam(default=0.001, tex_name=r'ki_{qv}',
-                              info='vq controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
+        self.Kpvd = NumParam(default=20, tex_name=r'kp_{vd}',
+                             info='vd controller proportional gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.Kivd = NumParam(default=0.001, tex_name=r'ki_{vd}',
+                             info='vd controller integral gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.Kpvq = NumParam(default=20, tex_name=r'kp_{vq}',
+                             info='vq controller proportional gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.Kivq = NumParam(default=0.001, tex_name=r'ki_{vq}',
+                             info='vq controller integral gain',
+                             unit='p.u.',
+                             power=True,
+                             )
 
 
 class VSGInnerPIData:
@@ -118,26 +118,26 @@ class VSGInnerPIData:
     """
 
     def __init__(self):
-        self.kp_di = NumParam(default=500, tex_name=r'kp_{di}',
-                              info='Id controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_di = NumParam(default=0.2, tex_name=r'ki_{di}',
-                              info='Id controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.kp_qi = NumParam(default=500, tex_name=r'kp_{qi}',
-                              info='Iq controller proportional gain',
-                              unit='p.u.',
-                              power=True,
-                              )
-        self.ki_qi = NumParam(default=0.2, tex_name=r'ki_{qi}',
-                              info='Iq controller integral gain',
-                              unit='p.u.',
-                              power=True,
-                              )
+        self.KpId = NumParam(default=500, tex_name=r'kp_{di}',
+                             info='Id controller proportional gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.KiId = NumParam(default=0.2, tex_name=r'ki_{di}',
+                             info='Id controller integral gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.KpIq = NumParam(default=500, tex_name=r'kp_{qi}',
+                             info='Iq controller proportional gain',
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.KiIq = NumParam(default=0.2, tex_name=r'ki_{qi}',
+                             info='Iq controller integral gain',
+                             unit='p.u.',
+                             power=True,
+                             )
 
 
 class REGCVSGModelBase(Model):
@@ -283,13 +283,13 @@ class VSGOuterPIModel:
 
     def __init__(self):
         self.PIvd = PIController(u='vref2 - vd',
-                                 kp=self.kp_dv,
-                                 ki=self.ki_dv,
+                                 kp=self.Kpvd,
+                                 ki=self.Kivd,
                                  x0='Id0',
                                  )
         self.PIvq = PIController(u='vq',
-                                 kp=self.kp_qv,
-                                 ki=self.ki_qv,
+                                 kp=self.Kpvq,
+                                 ki=self.Kivq,
                                  x0='Iq0',
                                  )
 
@@ -312,12 +312,12 @@ class VSGInnerPIModel:
 
         # PIvd_y, PIvq_y are Idref, Iqref
         self.PIId = PIController(u='PIvd_y - Id',
-                                 kp=self.kp_di,
-                                 ki=self.ki_di,
+                                 kp=self.KpId,
+                                 ki=self.KiId,
                                  )
         self.PIIq = PIController(u='PIvq_y - Iq',
-                                 kp=self.kp_qi,
-                                 ki=self.ki_qi,
+                                 kp=self.KpIq,
+                                 ki=self.KiIq,
                                  )
 
         # udLag_y, uqLag_y are ud, uq
