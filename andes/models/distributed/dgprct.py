@@ -33,13 +33,13 @@ class DGPRCTBaseData(ModelData):
                                   1 for enable, 0 for disable.',
                             )
 
-        self.fflag = NumParam(default=1,
-                              tex_name='fflag',
-                              vrange=[0, 1],
-                              info='Frequency lock option. \
-                                    1 to enable freq after protection, \
-                                    0 to disable freq after protection.',
-                              )
+        # self.fflag = NumParam(default=1,
+        #                       tex_name='fflag',
+        #                       vrange=[0, 1],
+        #                       info='Frequency lock option. \
+        #                             1 to enable freq after protection, \
+        #                             0 to disable freq after protection.',
+        #                       )
 
         self.Ven = NumParam(default=0,
                             tex_name='Ven',
@@ -249,28 +249,9 @@ class DGPRCTBaseModel(Model):
 
         self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
 
-        # --- debug
-     
-        self.ueef = EventFlag(u=self.ue, tex_name='z^{ue}')
-        self.ueee = ExtendedEvent(self.ue, v_disabled=1)
-
-        self.ob2 = Algeb(v_str='0',
-                        e_str='ueef - ob2',
-                        info='event flag ob',
-                        tex_name=r'ef_{ob}',
-                        )
-        self.ob3 = Algeb(v_str='0',
-                        e_str='ueee - ob3',
-                        info='extended event ob',
-                        tex_name=r'ee_{ob}',
-                        )
-
-        # --- debug end
-
         # lock DG frequency signal
 
         # fflag option 1: leave source signal online in protection
-
         self.fin = ExtAlgeb(model='DG', src='f',
                             indexer=self.dev,
                             info='original f from DG',
@@ -279,23 +260,22 @@ class DGPRCTBaseModel(Model):
         self.fHzl = ExtAlgeb(model='DG', src='fHz',
                              indexer=self.dev,
                              export=False,
-                             e_str='- ue * fflag * (fn * f)',
+                             e_str='- ue * (fn * f)',
                              info='Frequency measure lock',
                              )
 
         # fflag option 2: lock source signal in protection
+        # self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
+        #                     indexer=self.busfreq,
+        #                     info='original Washout y from BusFreq',
+        #                     )
 
-        self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
-                            indexer=self.busfreq,
-                            info='original Washout y from BusFreq',
-                            )
-
-        self.fsrcl = ExtAlgeb(model='FreqMeasurement', src='f',
-                              indexer=self.busfreq,
-                              export=False,
-                              e_str='- ue * (1 - fflag) * (1 + WOy)',
-                              info='Frequency source lock',
-                              )
+        # self.fsrcl = ExtAlgeb(model='FreqMeasurement', src='f',
+        #                       indexer=self.busfreq,
+        #                       export=False,
+        #                       e_str='- ue * (1 - fflag) * (1 + WOy)',
+        #                       info='Frequency source lock',
+        #                       )
 
         # lock output power of DG
 
