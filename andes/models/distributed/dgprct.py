@@ -250,8 +250,6 @@ class DGPRCTBaseModel(Model):
                         tex_name=r'ue',
                         )
 
-        self.ueflag = EventFlag(u=self.ue, tex_name='z^{ue}')
-
         # lock DG frequency signal
 
         # fflag option 1: leave source signal online in protection
