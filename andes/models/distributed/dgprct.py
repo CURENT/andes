@@ -6,7 +6,7 @@ from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
 from andes.core.service import ConstService, EventFlag, ExtService, VarService, ExtendedEvent
 from andes.core.discrete import Limiter
-from andes.core.block import Integrator
+from andes.core.block import Integrator, PIController, Piecewise
 
 
 class DGPRCTBaseData(ModelData):
@@ -182,6 +182,9 @@ class DGPRCTBaseData(ModelData):
                              non_negative=True,
                              )
 
+        # -- debug
+        self.kr = NumParam(default=100)
+        # --debug end
 
 class DGPRCTBaseModel(Model):
     """
@@ -404,6 +407,21 @@ class fProtect:
                              info='Flag comparer for (fu2, fu3)',
                              equal=False, no_warn=True,
                              )
+
+        # -- debug
+
+        self.re = ExtendedEvent(u=self.ue,
+                                # trig='fall',
+                                # t_ext=0.01, # protection deadband
+                                )
+
+        # self.PIfu = PIController(u='Lfl1_zi * (1 - re) + PIfu_y * re',
+        #                          kp=0,
+        #                          ki='1 * (1 - re) + kr * re',
+        #                          ref='Tfl1 * (1 - re) + 0 * re',
+        #                          )
+
+        # -- debug end
 
 
 class VProtect:
