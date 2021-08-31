@@ -183,7 +183,8 @@ class DGPRCTBaseData(ModelData):
                              )
 
         # -- debug
-        self.kr = NumParam(default=100)
+        self.Tr = NumParam(default=0.02,
+                           info='Reset time constant',)
         # --debug end
 
 class DGPRCTBaseModel(Model):
@@ -408,16 +409,36 @@ class fProtect:
 
         # -- debug
 
-        self.re = ExtendedEvent(u=self.ue,
-                                # trig='fall',
-                                # t_ext=0.01, # protection deadband
-                                )
+        self.L = Limiter(u=self.fHz,
+                            lower=self.fl3, upper=self.fl1,
+                            info='Frequency comparer for (fl3, fl1)',
+                            equal=False, no_warn=True,
+                            )
 
-        # self.PIfu = PIController(u='Lfl1_zi * (1 - re) + PIfu_y * re',
+        self.INT = Integrator(u='L_zi * (1 - INTL_zu) + Tfl1 / Tr * (1 - ue) * (1 - L_zi)',
+                                 T=1.0, K=1.0,
+                                 y0='0',
+                                 info='Flag integerator for (fu2, fu3)',
+                                 )
+
+        self.INTL = Limiter(u=self.INT_y,
+                             lower=0, upper=self.Tfl1,
+                             info='Flag comparer for (fu2, fu3)',
+                             equal=False, no_warn=True,
+                             )
+
+        # self.PI = PIController(u='L_zi * (1 - ue) * (1 - L_zu) + PI_y * re',
         #                          kp=0,
-        #                          ki='1 * (1 - re) + kr * re',
-        #                          ref='Tfl1 * (1 - re) + 0 * re',
+        #                          ki='1 * (1 - ue) * L_zi + Tfl1 / Tr * (1 - ue) * PIL_zi',
+        #                          ref='Tfl1 * (1 - ue)',
+        #                          x0='0',
         #                          )
+
+        # self.PIL = Limiter(u='PI_y',
+        #                      lower=0, upper=self.Tfl1,
+        #                      info='Flag comparer for (fu2, fu3)',
+        #                      equal=False, no_warn=True,
+        #                      )
 
         # -- debug end
 
