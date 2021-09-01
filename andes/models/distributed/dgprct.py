@@ -4,9 +4,9 @@ Distributed energy resource protection model base.
 from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
-from andes.core.service import ConstService, EventFlag, ExtService, VarService, ExtendedEvent
-from andes.core.discrete import Limiter, Delay, Derivative
-from andes.core.block import Integrator, PIController, Piecewise, IntegratorAntiWindup
+from andes.core.service import ConstService, ExtService, ExtendedEvent
+from andes.core.discrete import Limiter
+from andes.core.block import IntegratorAntiWindup
 
 
 class DGPRCTBaseData(ModelData):
@@ -33,6 +33,7 @@ class DGPRCTBaseData(ModelData):
                                   1 for enable, 0 for disable.',
                             )
 
+        # TODO: add `fflag` for choice that whether block source signal
         # self.fflag = NumParam(default=1,
         #                       tex_name='fflag',
         #                       vrange=[0, 1],
@@ -152,41 +153,40 @@ class DGPRCTBaseData(ModelData):
                             unit='p.u.',
                             )
 
-        self.Tvl1 = NumParam(default=2,
+        self.TVl1 = NumParam(default=2,
                              tex_name=r'T_{vl1}',
                              info='Stand time for (vl2, vl1)',
                              non_negative=True,
                              )
 
-        self.Tvl2 = NumParam(default=1,
+        self.TVl2 = NumParam(default=1,
                              tex_name=r'T_{vl2}',
                              info='Stand time for (vl3, vl2)',
                              non_negative=True,
                              )
 
-        self.Tvl3 = NumParam(default=0.16,
+        self.TVl3 = NumParam(default=0.16,
                              tex_name=r'T_{vl3}',
                              info='Stand time for (vl4, vl3)',
                              non_negative=True,
                              )
 
-        self.Tvu1 = NumParam(default=1,
+        self.TVu1 = NumParam(default=1,
                              tex_name=r'T_{vu1}',
                              info='Stand time for (vu1, vu2)',
                              non_negative=True,
                              )
 
-        self.Tvu2 = NumParam(default=0.16,
+        self.TVu2 = NumParam(default=0.16,
                              tex_name=r'T_{vu2}',
                              info='Stand time for (vu2, vu3)',
                              non_negative=True,
                              )
 
-        # -- debug
-        self.Tr = NumParam(default=0.05,
-                           info='Reset time constant',
-                           )
-        # --debug end
+        self.Tres = NumParam(default=0.05,
+                             info='Integrator reset time',
+                             )
+
 
 class DGPRCTBaseModel(Model):
     """
@@ -226,11 +226,11 @@ class DGPRCTBaseModel(Model):
         self.ltl = ConstService(v_str='0.2')
 
         # `Ldsum_zu` is `ue`
-        dsum = 'fen * (FLfl1_zu * Lfl1_zi + FLfl2_zu * Lfl2_zi + ' \
-               'FLfu1_zu * Lfu1_zi + FLfu2_zu * Lfu2_zi) + ' \
-               'Ven * (FLVl1_zu * LVl1_zi + FLVl2_zu * LVl2_zi + ' \
-               'FLVl3_zu * LVl3_zi + ' \
-               'FLVu1_zu * LVu1_zi + FLVu2_zu * LVu2_zi) - ' \
+        dsum = 'fen * (IAWfl1_lim_zu * Lfl1_zi + IAWfl2_lim_zu * Lfl2_zi + ' \
+               'IAWfu1_lim_zu * Lfu1_zi + IAWfu2_lim_zu * Lfu2_zi) + ' \
+               'Ven * (IAWVl1_lim_zu * LVl1_zi + IAWVl2_lim_zu * LVl2_zi + ' \
+               'IAWVl3_lim_zu * LVl3_zi + ' \
+               'IAWVu1_lim_zu * LVu1_zi + IAWVu2_lim_zu * LVu2_zi) - ' \
                'dsum'
 
         self.dsum = Algeb(v_str='0',
@@ -252,6 +252,12 @@ class DGPRCTBaseModel(Model):
                         tex_name=r'ue',
                         )
 
+        self.zero = ConstService('0')
+
+        self.res = ExtendedEvent(self.ue, t_ext=self.Tres,
+                                 trig="rise",
+                                 extend_only=True)
+
         # lock DG frequency signal
 
         # fflag option 1: leave source signal online in protection
@@ -266,19 +272,7 @@ class DGPRCTBaseModel(Model):
                              e_str='- ue * (fn * f)',
                              info='Frequency measure lock',
                              )
-
-        # fflag option 2: lock source signal in protection
-        # self.WOy = ExtAlgeb(model='FreqMeasurement', src='WO_y',
-        #                     indexer=self.busfreq,
-        #                     info='original Washout y from BusFreq',
-        #                     )
-
-        # self.fsrcl = ExtAlgeb(model='FreqMeasurement', src='f',
-        #                       indexer=self.busfreq,
-        #                       export=False,
-        #                       e_str='- ue * (1 - fflag) * (1 + WOy)',
-        #                       info='Frequency source lock',
-        #                       )
+        # TODO: add fflag option 2: block the source signal in protection
 
         # lock output power of DG
 
@@ -360,75 +354,34 @@ class fProtect:
                             )
 
         # Frequency deviation time continuity check
-        self.INTfl1 = Integrator(u='Lfl1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fl3, fl1)',
-                                 )
 
-        self.FLfl1 = Limiter(u=self.INTfl1_y,
-                             lower=0, upper=self.Tfl1,
-                             info='Flag comparer for (fl3, fl1)',
-                             equal=False, no_warn=True,
-                             )
+        self.IAWfl1 = IntegratorAntiWindup(u='Lfl1_zi * (1 - res) - Tfl1 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.Tfl1,
+                                           info='condition check for (fl3, fl1)',
+                                           no_warn=True,
+                                           )
 
-        self.INTfl2 = Integrator(u='Lfl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fl3, fl2)',
-                                 )
+        self.IAWfl2 = IntegratorAntiWindup(u='Lfl2_zi * (1 - res) - Tfl2 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.Tfl2,
+                                           info='condition check for (fl3, fl2)',
+                                           no_warn=True,
+                                           )
 
-        self.FLfl2 = Limiter(u=self.INTfl2_y,
-                             lower=0, upper=self.Tfl2,
-                             info='Flag comparer for (fl3, fl2)',
-                             equal=False, no_warn=True,
-                             )
+        self.IAWfu1 = IntegratorAntiWindup(u='Lfu1_zi * (1 - res) - Tfu1 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.Tfu1,
+                                           info='condition check for (fu1, fu3)',
+                                           no_warn=True,
+                                           )
 
-        self.INTfu1 = Integrator(u='Lfu1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fu1, fu3)',
-                                 )
-
-        self.FLfu1 = Limiter(u=self.INTfu1_y,
-                             lower=0, upper=self.Tfu1,
-                             info='Flag comparer for (fu1, fu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTfu2 = Integrator(u='Lfu2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fu2, fu3)',
-                                 )
-
-        self.FLfu2 = Limiter(u=self.INTfu2_y,
-                             lower=0, upper=self.Tfu2,
-                             info='Flag comparer for (fu2, fu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        # -- debug
-
-        self.res = ExtendedEvent(self.ue, t_ext=self.Tr,
-                                 trig="rise",
-                                 extend_only=True)
-
-        self.L = Limiter(u=self.fHz,
-                            lower=self.fl3, upper=self.fl1,
-                            info='Frequency comparer for (fl3, fl1)',
-                            equal=False, no_warn=True,
-                            )
-
-        self.zero = ConstService('0')
-        self.INTA = IntegratorAntiWindup(u='L_zi * (1 - res) - Tfl1 / Tr * res',
-                                        T=1, K=1,
-                                        y0='0',
-                                        lower=self.zero,
-                                        upper=self.Tfl1,
-                                        info='Valve position integrator',
-                                        )
-        # -- debug end
+        self.IAWfu2 = IntegratorAntiWindup(u='Lfl2_zi * (1 - res) - Tfu2 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.Tfu2,
+                                           info='condition check for (fu2, fu3)',
+                                           no_warn=True,
+                                           )
 
 
 class VProtect:
@@ -471,67 +424,40 @@ class VProtect:
                             )
 
         # Voltage deviation time continuity check
-        self.INTVl1 = Integrator(u='LVl1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl1)',
-                                 )
+        self.IAWVl1 = IntegratorAntiWindup(u='LVl1_zi * (1 - res) - TVl1 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.TVl1,
+                                           info='condition check for (Vl3, Vl1)',
+                                           no_warn=True,
+                                           )
 
-        self.FLVl1 = Limiter(u=self.INTVl1_y,
-                             lower=0, upper=self.Tvl1,
-                             info='Flag comparer for (vl4, vl1)',
-                             equal=False, no_warn=True,
-                             )
+        self.IAWVl2 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - TVl2 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.TVl2,
+                                           info='condition check for (Vl3, Vl2)',
+                                           no_warn=True,
+                                           )
 
-        self.INTVl2 = Integrator(u='LVl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl2)',
-                                 )
+        self.IAWVl3 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - TVl3 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.TVl2,
+                                           info='condition check for (Vl3, Vl2)',
+                                           no_warn=True,
+                                           )
 
-        self.FLVl2 = Limiter(u=self.INTVl2_y,
-                             lower=0, upper=self.Tvl2,
-                             info='Flag comparer for (vl4, vl2)',
-                             equal=False,
-                             no_warn=True,
-                             )
+        self.IAWVu1 = IntegratorAntiWindup(u='LVu1_zi * (1 - res) - TVu1 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.TVu1,
+                                           info='condition check for (Vu1, Vu3)',
+                                           no_warn=True,
+                                           )
 
-        self.INTVl3 = Integrator(u='LVl2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vl4, vl3)',
-                                 )
-
-        self.FLVl3 = Limiter(u=self.INTVl3_y,
-                             lower=0, upper=self.Tvl3,
-                             info='Flag comparer for (vl4, vl3)',
-                             equal=False,
-                             no_warn=True,
-                             )
-
-        self.INTVu1 = Integrator(u='LVu1_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vu1, vu3)',
-                                 )
-
-        self.FLVu1 = Limiter(u=self.INTVu1_y,
-                             lower=0, upper=self.Tvu1,
-                             info='Flag comparer for (vu1, vu3)',
-                             equal=False, no_warn=True,
-                             )
-
-        self.INTVu2 = Integrator(u='LVu2_zi',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (vu2, vu3)',
-                                 )
-
-        self.FLVu2 = Limiter(u=self.INTVu2_y,
-                             lower=0, upper=self.Tvu2,
-                             info='Flag comparer for (vu2, vu3)',
-                             equal=False, no_warn=True,
-                             )
+        self.IAWVu2 = IntegratorAntiWindup(u='LVu2_zi * (1 - res) - TVu2 / Tres * res',
+                                           T=1, K=1, y0='0',
+                                           lower=self.zero, upper=self.TVu2,
+                                           info='condition check for (Vu2, Vu3)',
+                                           no_warn=True,
+                                           )
 
 
 class DGPRCT1Model(DGPRCTBaseModel, fProtect, VProtect):
@@ -559,18 +485,23 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     immediately when frequency/voltage protection flag is raised. Once the lock is
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
 
-    ``fen`` and ``Ven`` are protection enabling parameters. 1 is on and 0 is off.
+    DG group base model ``PVD1`` already has a degrading function which is used to
+    degrade output under abnormal condition. Be careful about the function overlap.
+
+    ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
     ``ue`` is lock flag signal.
 
-    It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
-    The source values (which come from ``BusFreq`` `f` remain unchanged.)
+    It should be noted that, the lock only lock the ``fHz`` (frequency read value)
+    of DG model. The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
-    DGPRCT1 can only be used once in a simulation.
+    Protection sensors (like IAWfl1) are realized by ``IntergratorAntiWindup``. All
+    the protection sensors will be reset after ``ue`` return to 0. Reset action takes
+    `Tres` to finish.
 
     The model does not check the shedding points sequence.
-    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
-    `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
+    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`,
+    and `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
 
     Default settings:\n
     Frequency (Hz):\n
@@ -580,11 +511,11 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     `(fu2, fu3), Tfu2` [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    `(vl4, vl3), Tvl3` [(0.10, 0.45), 0.16s]\n
-    `(vl3, vl2), Tvl2` [(0.45, 0.60), 1s]\n
-    `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
-    `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
-    `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
+    `(vl4, vl3), TVl3` [(0.10, 0.45), 0.16s]\n
+    `(vl3, vl2), TVl2` [(0.45, 0.60), 1s]\n
+    `(vl2, vl1), TVl1` [(0.60, 0.88), 2s]\n
+    `(vu1, vu2), TVu1` [(1.10, 1.20), 1s]\n
+    `(vu2, vu3), TVu2` [(1.20, 2.00), 0.16s]\n
     """
 
     def __init__(self, system, config):
@@ -614,24 +545,29 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     """
     DGPRCT External model, follow IEEE-1547. DGPRCT stands for DG protection.
 
-    Similar to DGPRCT, but the measured voltage is given from outside.
+    Similar to DGPRCT1, but the measured voltage is retrived from outside.
+
+    DG group base model ``PVD1`` already has a degrading function which is used to
+    degrade output under abnormal condition. Be careful about the function overlap.
 
     Target device (limited to DG group) ``Psum`` and ``Qsum`` will decrease to zero
     immediately when frequency/voltage protection flag is raised. Once the lock is
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
 
-    ``fen`` and ``Ven`` are protection enabling parameters. 1 is on and 0 is off.
+    ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
     ``ue`` is lock flag signal.
 
-    It should be noted that, the lock only lock the ``fHz`` (frequency read value) of DG model.
-    The source values (which come from ``BusFreq`` `f` remain unchanged.)
+    It should be noted that, the lock only lock the ``fHz`` (frequency read value)
+    of DG model. The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
-    DGPRCTExt can only be used once in a simulation.
+    Protection sensors (like IAWfl1) are realized by ``IntergratorAntiWindup``. All
+    the protection sensors will be reset after ``ue`` return to 0. Reset action takes
+    `Tres` to finish.
 
     The model does not check the shedding points sequence.
-    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`, and
-    `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
+    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`,
+    and `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
 
     Default settings:\n
     Frequency (Hz):\n
@@ -641,11 +577,11 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     `(fu2, fu3), Tfu2` [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    `(vl4, vl3), Tvl3` [(0.10, 0.45), 0.16s]\n
-    `(vl3, vl2), Tvl2` [(0.45, 0.60), 1s]\n
-    `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
-    `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
-    `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
+    `(vl4, vl3), TVl3` [(0.10, 0.45), 0.16s]\n
+    `(vl3, vl2), TVl2` [(0.45, 0.60), 1s]\n
+    `(vl2, vl1), TVl1` [(0.60, 0.88), 2s]\n
+    `(vu1, vu2), TVu1` [(1.10, 1.20), 1s]\n
+    `(vu2, vu3), TVu2` [(1.20, 2.00), 0.16s]\n
     """
 
     def __init__(self, system, config):
