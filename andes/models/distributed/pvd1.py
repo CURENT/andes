@@ -464,7 +464,7 @@ class PVD1Model(Model):
                            tex_name='I_{qmax}',
                            )
 
-        # TODO: set option whether to use degeading gain
+        # TODO: set option whether to use degrading gain
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = GainLimiter(u=self.Ipul,
                                  K=1, R='Fvl * Fvh * Ffl * Ffh',
