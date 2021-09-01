@@ -5,7 +5,7 @@ from andes.core.param import IdxParam, NumParam, ExtParam
 from andes.core.model import Model, ModelData
 from andes.core.var import Algeb, ExtAlgeb
 from andes.core.service import ConstService, EventFlag, ExtService, VarService, ExtendedEvent
-from andes.core.discrete import Limiter
+from andes.core.discrete import Limiter, Delay, Derivative
 from andes.core.block import Integrator, PIController, Piecewise
 
 
@@ -184,7 +184,11 @@ class DGPRCTBaseData(ModelData):
 
         # -- debug
         self.Tr = NumParam(default=0.02,
-                           info='Reset time constant',)
+                           info='Reset time constant',
+                           )
+        self.Tdb = NumParam(default=2,
+                           info='Deadband time before reset',
+                           )
         # --debug end
 
 class DGPRCTBaseModel(Model):
@@ -409,23 +413,42 @@ class fProtect:
 
         # -- debug
 
-        self.L = Limiter(u=self.fHz,
-                            lower=self.fl3, upper=self.fl1,
-                            info='Frequency comparer for (fl3, fl1)',
-                            equal=False, no_warn=True,
-                            )
+        self.uevs = VarService(v_str='1 - Ldsum_zu',
+                                   info='Voltage dip flag; 1-dip, 0-normal',
+                                   tex_name='z_{Vdip}',
+                                   )
 
-        self.INT = Integrator(u='L_zi * (1 - INTL_zu) + Tfl1 / Tr * (1 - ue) * (1 - L_zi)',
-                                 T=1.0, K=1.0,
-                                 y0='0',
-                                 info='Flag integerator for (fu2, fu3)',
-                                 )
+        self.ueee = ExtendedEvent(self.uevs, t_ext=self.Tdb, trig="rise", extend_only=True,)
 
-        self.INTL = Limiter(u=self.INT_y,
-                             lower=0, upper=self.Tfl1,
-                             info='Flag comparer for (fu2, fu3)',
-                             equal=False, no_warn=True,
-                             )
+        self.ob = Algeb(v_str='0',
+                          e_str='ueee - ob',
+                          info='observe ueee',
+                          tex_name=r'ueee_{ob}',
+                          )
+
+        # self.L = Limiter(u=self.fHz,
+        #                     lower=self.fl3, upper=self.fl1,
+        #                     info='Frequency comparer for (fl3, fl1)',
+        #                     equal=False, no_warn=True,
+        #                     )
+
+        # delay is inapproriate
+        # self.dtime = Delay(u=self.data, mode='time', delay=self.time)
+
+        # self.INT = Integrator(u='L_zi * INTL_zi + Tfl1 / Tr * (1 - ue) * (1 - L_zi)',
+        #                          T=1.0, K=1.0,
+        #                          y0='0',
+        #                          info='Flag integerator for (fu2, fu3)',
+        #                          )
+
+        # how about derivative?
+        # self.dv = Derivative(self.INT_y, tex_name='dV/dt', info='Finite difference of bus voltage')
+
+        # self.INTL = Limiter(u=self.INT_y,
+        #                      lower=0, upper=self.Tfl1,
+        #                      info='Flag comparer for (fu2, fu3)',
+        #                      equal=True, no_warn=True,
+        #                      )
 
         # self.PI = PIController(u='L_zi * (1 - ue) * (1 - L_zu) + PI_y * re',
         #                          kp=0,
