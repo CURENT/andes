@@ -413,7 +413,7 @@ class fProtect:
 
         # -- debug
 
-        self.uevs = VarService(v_str='1 - Ldsum_zu',
+        self.uevs = VarService(v_str='ue',
                                    info='Voltage dip flag; 1-dip, 0-normal',
                                    tex_name='z_{Vdip}',
                                    )
