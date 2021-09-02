@@ -479,7 +479,7 @@ class PVD1Model(Model):
                                  )
 
         self.Iqcmd = GainLimiter(u=self.Iqul,
-                                 K=1, R = 'Fvl * Fvh * Ffl * Ffh * tpen + 1 * (1 - tpen)',
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh * tpen + 1 * (1 - tpen)',
                                  lower=self.Iqmax, sign_lower=-1,
                                  upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
