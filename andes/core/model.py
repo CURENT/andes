@@ -1055,13 +1055,12 @@ class Model:
         if len(self.services_var):
             kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
-                if instance.v_str is None:
-                    continue
-                func = self.calls.s[name]
-                if callable(func):
-                    instance.v[:] = func(*self.s_args[name])
+                if instance.v_str is not None:
+                    func = self.calls.s[name]
+                    if callable(func):
+                        instance.v[:] = func(*self.s_args[name])
 
-            # Apply individual `v_numeric`
+                # Apply individual `v_numeric`
                 func = instance.v_numeric
                 if func is not None and callable(func):
                     instance.v[:] = func(**kwargs)

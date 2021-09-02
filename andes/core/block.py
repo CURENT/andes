@@ -632,7 +632,7 @@ class IntegratorAntiWindup(Block):
     The initial output must be specified through `y0`.
     """
 
-    def __init__(self, u, T, K, y0, lower, upper, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, y0, lower, upper, name=None, tex_name=None, info=None, no_warn=False):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T = dummify(T)
@@ -641,11 +641,12 @@ class IntegratorAntiWindup(Block):
         self.lower = dummify(lower)
         self.upper = dummify(upper)
         self.enforce_tex_name((self.K, self.T))
+        self.no_warn = no_warn
 
         self.y = State(info='AW Integrator output', tex_name='y', t_const=self.T)
 
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
-                              info='Limiter in integrator',
+                              info='Limiter in integrator', no_warn=self.no_warn,
                               )
 
         self.vars = {'y': self.y, 'lim': self.lim}
