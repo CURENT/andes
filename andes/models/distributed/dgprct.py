@@ -486,7 +486,8 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
 
     DG group base model ``PVD1`` already has a degrading function which is used to
-    degrade output under abnormal condition. Be careful about the function overlap.
+    degrade output under abnormal condition. it is recommended to turn off it by setting
+    `tren = 0`.
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
@@ -548,7 +549,8 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     Similar to DGPRCT1, but the measured voltage is retrived from outside.
 
     DG group base model ``PVD1`` already has a degrading function which is used to
-    degrade output under abnormal condition. Be careful about the function overlap.
+    degrade output under abnormal condition. it is recommended to turn off it by setting
+    `tren = 0`.
 
     Target device (limited to DG group) ``Psum`` and ``Qsum`` will decrease to zero
     immediately when frequency/voltage protection flag is raised. Once the lock is
