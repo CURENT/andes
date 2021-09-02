@@ -199,6 +199,11 @@ class PVD1Data(ModelData):
                                vrange='(0, 1]',
                                )
 
+        self.tpen = NumParam(default=0, tex_name=r'tpen',
+                             info='Voltage/frequency tripping function enable',
+                             vrange='(0, 1]',
+                             )
+
 
 class PVD1Model(Model):
     """
@@ -467,14 +472,14 @@ class PVD1Model(Model):
         # TODO: set option whether to use degrading gain
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = GainLimiter(u=self.Ipul,
-                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh * tpen + 1 * (1 - tpen)',
                                  lower=0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
 
         self.Iqcmd = GainLimiter(u=self.Iqul,
-                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
+                                 K=1, R = 'Fvl * Fvh * Ffl * Ffh * tpen + 1 * (1 - tpen)',
                                  lower=self.Iqmax, sign_lower=-1,
                                  upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
