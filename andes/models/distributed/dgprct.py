@@ -28,7 +28,7 @@ class DGPRCTBaseData(ModelData):
         # -- protection enable parameters
         self.fen = NumParam(default=1,
                             tex_name='fen',
-                            vrange=[0, 1],
+                            vrange=(0, 1),
                             info='Frequency deviation protection enable. \
                                   1 for enable, 0 for disable.',
                             )
@@ -44,7 +44,7 @@ class DGPRCTBaseData(ModelData):
 
         self.Ven = NumParam(default=0,
                             tex_name='Ven',
-                            vrange=[0, 1],
+                            vrange=(0, 1),
                             info='Voltage deviation protection enable.\
                                   1 for enable, 0 for disable.',
                             )
