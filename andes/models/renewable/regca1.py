@@ -1,3 +1,7 @@
+"""
+Module for renewable energy generator (converter) model A.
+"""
+
 from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb, ExtService, ConstService, ExtParam, Algeb, \
     Piecewise, Lag
 from andes.core.block import LagAntiWindupRate, GainLimiter
