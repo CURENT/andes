@@ -269,7 +269,7 @@ class REGCA1Model(Model):
 
 class REGCA1(REGCA1Data, REGCA1Model):
     """
-    Renewable energy generator model.
+    Renewable energy generator model type A.
 
     Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
     """
