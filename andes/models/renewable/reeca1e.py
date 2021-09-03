@@ -13,12 +13,13 @@ class REECA1EData(REECA1Data):
     """
     Data for REECA1E.
     """
+
     def __init__(self):
         REECA1Data.__init__(self)
         self.Kf = NumParam(default=0.0,
-                            info='gain for frequency deviation',
-                            tex_name='K_{df}',
-                            )
+                           info='gain for frequency deviation',
+                           tex_name='K_{df}',
+                           )
 
         self.Kdf = NumParam(default=0.0,
                             info='gain for rate-of-change of frequency',
@@ -35,6 +36,7 @@ class REECA1EModel(REECA1Model):
     """
     Model for REECA1E.
     """
+
     def __init__(self, system, config):
         REECA1Model.__init__(self, system, config)
         self.busrocof = DeviceFinder(self.busroc,
@@ -43,11 +45,11 @@ class REECA1EModel(REECA1Model):
                                      )
 
         self.df = ExtAlgeb(model='FreqMeasurement',
-                          src='WO_y',
-                          indexer=self.busrocof,
-                          export=False,
-                          info='Bus frequency deviation',
-                          )
+                           src='WO_y',
+                           indexer=self.busrocof,
+                           export=False,
+                           info='Bus frequency deviation',
+                           )
 
         self.dfdt = ExtAlgeb(model='FreqMeasurement',
                              src='Wf_y',
@@ -67,6 +69,7 @@ class REECA1E(REECA1EData, REECA1EModel):
 
     Bus ROCOF obtained from ``BusROCOF`` devices.
     """
+
     def __init__(self, system, config):
         REECA1EData.__init__(self)
         REECA1EModel.__init__(self, system, config)
