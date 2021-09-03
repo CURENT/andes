@@ -15,10 +15,16 @@ class REECA1EData(REECA1Data):
     """
     def __init__(self):
         REECA1Data.__init__(self)
-        self.Kdf = NumParam(default=0.0,
-                            info='gain for frequency derivative',
+        self.Kf = NumParam(default=0.0,
+                            info='gain for frequency deviation',
                             tex_name='K_{df}',
                             )
+
+        self.Kdf = NumParam(default=0.0,
+                            info='gain for rate-of-change of frequency',
+                            tex_name='K_{df}',
+                            )
+
         self.busroc = IdxParam(info='Optional BusROCOF device idx',
                                model='BusROCOF',
                                default=None,
@@ -37,19 +43,27 @@ class REECA1EModel(REECA1Model):
                                      )
 
         self.df = ExtAlgeb(model='FreqMeasurement',
-                           src='Wf_y',
-                           indexer=self.busrocof,
-                           export=False,
-                           info='Bus ROCOF',
-                           unit='p.u.',
-                           )
+                          src='WO_y',
+                          indexer=self.busrocof,
+                          export=False,
+                          info='Bus frequency deviation',
+                          )
 
-        self.Pref.e_str += '- Kdf * df'
+        self.dfdt = ExtAlgeb(model='FreqMeasurement',
+                             src='Wf_y',
+                             indexer=self.busrocof,
+                             export=False,
+                             info='Bus ROCOF',
+                             unit='p.u.',
+                             )
+
+        self.Pref.e_str += '- Kdf * dfdt - Kf * df'
 
 
 class REECA1E(REECA1EData, REECA1EModel):
     """
-    REGCA1 with inertia emulation.
+    REGCA1 with inertia emulation and primary frequency droop.
+    Measurements are based on frequency measurement model.
 
     Bus ROCOF obtained from ``BusROCOF`` devices.
     """
