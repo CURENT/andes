@@ -51,7 +51,7 @@ class REECA1E(REECA1EData, REECA1EModel):
     """
     REGCA1 with inertia emulation.
 
-    Bus ROCOF obtained from `BusROCOF` devices.
+    Bus ROCOF obtained from ``BusROCOF`` devices.
     """
     def __init__(self, system, config):
         REECA1EData.__init__(self)

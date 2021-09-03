@@ -268,6 +268,12 @@ class REGCA1Model(Model):
 
 
 class REGCA1(REGCA1Data, REGCA1Model):
+    """
+    Renewable energy generator model.
+
+    Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
+    """
+
     def __init__(self, system, config):
         REGCA1Data.__init__(self)
         REGCA1Model.__init__(self, system, config)
