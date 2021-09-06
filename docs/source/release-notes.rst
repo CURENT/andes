@@ -15,6 +15,7 @@ This release highlights the distributed energy resource protection model.
 
 - Added ``DGPRCT1`` model to provide DG models with voltage-
   and frequency-based protection following IEEE 1547-2018.
+- ``REECA1E`` supports frequency droop on power.
 
 v1.3 Notes
 ----------
