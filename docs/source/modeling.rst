@@ -990,6 +990,22 @@ Value Selector
 .. autoclass:: andes.core.block.LVGate
     :noindex:
 
+Naming Convention
+-----------------
+
+We loosely follow a naming convention when using modeling blocks.
+An instance of a modeling block is named with a two-letter
+acronym, followed by a number or a meaningful but short variaiable name.
+The acronym and the name are spelled in one word without underscore, as
+the output of the block already contains ``_y``.
+
+For example, two washout filters can be names ``WO1`` and ``WO2``.
+In another case, a first-order lag function for voltage sensing
+can be called ``LGv``, or even ``LG`` if there is only one Lag
+instance in the model.
+
+Naming conventions are not strictly enforced. Expressiveness
+and concision are encouraged.
 
 Examples
 ========
