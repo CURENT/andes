@@ -87,19 +87,25 @@ class BaseVar:
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
         self.deps = deps          # a list of variable names this BaseVar depends on for initialization
 
-        # attributes assigned by `set_address`
+        # --- attributes assigned by `set_address` begins ---
         self.n = 0
-        self.a: np.ndarray = np.array([], dtype=int)       # address array
-        self.r: np.ndarray = np.array([], dtype=int)       # equation RHS value array for external equations
-        self.v: np.ndarray = np.array([], dtype=float)     # variable value array
-        self.e: np.ndarray = np.array([], dtype=float)     # equation value array
+
+        # address into the variable and equation arrays (dae.f/dae.g and dae.x/dae.y)
+        self.a: np.ndarray = np.array([], dtype=int)
+
+        # address into external equation RHS array (dae.h/dae.i)
+        self.r: np.ndarray = np.array([], dtype=int)
 
         self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
         self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
+        # --- attributes assigned by `set_address` ends ---
+
+        self.v: np.ndarray = np.array([], dtype=float)  # variable value array
+        self.e: np.ndarray = np.array([], dtype=float)  # equation value array
 
         # internal flags
         # NOTE:
-        # contiguous is only True for internal variables of models with flag ``collate`` equal to ``False``.
+        # contiguous is True only for internal variables of models with flag `collate = False`.
         self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
 
         self.e_inplace = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
