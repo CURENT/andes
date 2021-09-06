@@ -3,7 +3,7 @@ REECA1 model with inertia emulation.
 """
 
 from andes.core.param import NumParam, IdxParam
-from andes.core.var import ExtAlgeb
+from andes.core.var import ExtAlgeb, ExtState
 from andes.core.service import DeviceFinder
 
 from andes.models.renewable.reeca1 import REECA1Data, REECA1Model
@@ -102,7 +102,7 @@ class REECA1GModel(REECA1Model):
     def __init__(self, system, config):
         REECA1Model.__init__(self, system, config)
 
-        self.omega = ExtAlgeb(model='SynGen',
+        self.omega = ExtState(model='SynGen',
                               src='omega',
                               indexer=self.sg,
                               export=False,

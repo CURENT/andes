@@ -107,13 +107,7 @@ class GroupBase:
         """
 
         ret = []
-        single = False
-
-        if not isinstance(idx, (list, tuple, np.ndarray)):
-            single = True
-            idx = (idx,)
-        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
-            idx = list_flatten(idx)
+        idx, single = self._vectorize_idx(idx)
 
         for i in idx:
             try:
@@ -179,11 +173,7 @@ class GroupBase:
         """
         self._check_src(src)
         self._check_idx(idx)
-
-        single = False
-        if not isinstance(idx, (list, np.ndarray)):
-            idx = [idx]
-            single = True
+        idx, single = self._vectorize_idx(idx)
 
         n = len(idx)
         if n == 0:
@@ -245,9 +235,6 @@ class GroupBase:
         self._check_src(src)
         self._check_idx(idx)
 
-        if not isinstance(idx, (list, np.ndarray)):
-            idx = [idx]
-
         if isinstance(value, (float, str, int)):
             value = [value] * len(idx)
 
@@ -288,14 +275,66 @@ class GroupBase:
         return out
 
     def _check_src(self, src: str):
+        """
+        Helper function for checking if ``src`` is a shared field.
+
+        The requirement is not strictly enforced and is only for debugging purposed.
+        """
         if src not in self.common_vars + self.common_params:
-            # raise AttributeError(f'Group <{self.class_name}> does not share property <{src}>.')
             logger.debug(f'Group <{self.class_name}> does not share property <{src}>.')
-            pass
 
     def _check_idx(self, idx):
+        """
+        Helper function for checking if ``idx`` is None.
+
+        Raises IndexError if idx is None.
+        """
+
         if idx is None:
             raise IndexError(f'{self.class_name}: idx cannot be None')
+
+    def _vectorize_idx(self, idx):
+        """
+        Helper function to convert idx into a list if the input is
+        a single element.
+
+        If the input is a nested list, flatten it into a 1-dimensional
+        list.
+
+        Returns
+        -------
+        idx : list
+            List of indices.
+        single : bool
+            True if the input is a single element.
+        """
+        single = False
+
+        if not isinstance(idx, (list, np.ndarray)):
+            idx = [idx]
+            single = True
+        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
+            idx = list_flatten(idx)
+
+        return idx, single
+
+    def get_var_type(self, src: str, idx):
+        """
+        Helper function for retrieving variable types of the given devices in this group.
+
+        Returns
+        -------
+        list
+            A list of all types with the length equal to ``len(idx)``.
+        """
+
+        self._check_src(src)
+        self._check_idx(idx)
+        idx, single = self._vectorize_idx(idx)
+
+        models = self.idx2model(idx)
+
+        return [type(model.__dict__[src]) for model in models]
 
     def get_next_idx(self, idx=None, model_name=None):
         """

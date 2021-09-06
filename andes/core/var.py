@@ -452,6 +452,16 @@ class ExtVar(BaseVar):
                                    allow_none=self.allow_none,
                                    default=0,
                                    ).astype(int)
+
+            # check if source var type is the same as this ExtVar
+            vtypes = ext_model.get_var_type(src=self.src, idx=self._idx)
+            vcodes = np.array([item.v_code for item in vtypes])
+
+            if not all(vcodes == self.v_code):
+                raise TypeError("ExtVar <%s.%s> is of type <%s>, but source Vars <%s.%s> may not." %
+                                (self.owner.class_name, self.name, self.v_code,
+                                 ext_model.class_name, self.src))
+
             self.n = len(self.a)
 
         else:
