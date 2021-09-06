@@ -128,11 +128,9 @@ class Fault(ModelData, Model):
 
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
-                               vtype=complex,
                                )
         self.bf = ConstService(tex_name='b_{f}',
                                v_str='im(1/(rf + 1j * xf))',
-                               vtype=complex,
                                )
 
         # uf: an internal flag of whether the fault is in action (1) or not (0)
