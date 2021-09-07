@@ -41,7 +41,6 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
-    'myst_parser',
     'sphinx_copybutton',
 ]
 
