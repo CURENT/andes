@@ -531,7 +531,7 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
         DGPRCT1Model.__init__(self, system, config)
 
 
-class DGPRCTExtModel(Model):
+class DGPRCTExtModel(DGPRCTBaseModel, fProtect, VProtect):
     """
     Model implementation of DGPRCT1.
     """
