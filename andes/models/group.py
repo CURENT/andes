@@ -331,7 +331,7 @@ class GroupBase:
 
         self._check_src(src)
         self._check_idx(idx)
-        idx, single = self._vectorize_idx(idx)
+        idx, _ = self._vectorize_idx(idx)
 
         models = self.idx2model(idx, allow_none=True)
 
