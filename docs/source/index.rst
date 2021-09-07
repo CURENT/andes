@@ -22,12 +22,6 @@ ANDES is a Python-based free software package for power system simulation, contr
 It establishes a unique **hybrid symbolic-numeric framework** for modeling differential algebraic
 equations (DAEs) for numerical analysis. Main features of ANDES include
 
-..
-   ANDES offers a symbolic library for discrete components
-   and transfer functions that can be easily imported to DAE models.
-   ANDES supports power flow calculation, time domain simulation and eigenvalue analysis for transmission
-   networks.
-
 - a unique hybrid symbolic-numeric approach to modeling and simulation that enables descriptive DAE modeling and
   automatic numerical code generation
 - a rich library of transfer functions and discontinuous components (including limiters, dead-bands, and
