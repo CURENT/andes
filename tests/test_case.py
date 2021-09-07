@@ -250,7 +250,11 @@ class TestCOI(unittest.TestCase):
 
 
 class TestVSC(unittest.TestCase):
+    """Test case =for VSC power flow model"""
+
     def test_kundur_vsc(self):
+        """Test power flow exit code"""
+
         ss = get_case('kundur/kundur_vsc.xlsx')
         exit_code = andes.run(ss,
                               routine='pflow',
