@@ -15,4 +15,3 @@ ipython
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
-myst-parser
