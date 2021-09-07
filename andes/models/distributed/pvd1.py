@@ -199,6 +199,11 @@ class PVD1Data(ModelData):
                                vrange='(0, 1]',
                                )
 
+        self.recflag = NumParam(default=1, tex_name=r'z_{rec}',
+                                info='Enable flag for voltage and frequency recovery limiters',
+                                vrange='(0, 1)',
+                                )
+
 
 class PVD1Model(Model):
     """
@@ -407,15 +412,27 @@ class PVD1Model(Model):
                            no_warn=True,
                            )
 
-        Qsum = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
+        Qdrp = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
                'u * VQ1_zi * (qmx + dqdv *(Vqu - Vcomp)) + ' \
-               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) + ' \
-               'u * qref0'
+               'u * VQ2_zi * (dqdv * (v1 - Vcomp)) '
 
-        self.Qsum = Algeb(info='Total Q (droop + initial)',
-                          v_str=Qsum,
-                          e_str=f'{Qsum} - Qsum',
-                          tex_name='Q_{sum}',
+        self.Qdrp = Algeb(tex_name='Q_{drp}',
+                          info='External power signal (for AGC)',
+                          v_str=Qdrp,
+                          e_str=f'{Qdrp} - Qdrp',
+                          discrete=(self.VQ1, self.VQ2),
+                          )
+
+        self.Qref = Algeb(tex_name=r'Q_{ref}',
+                          info='Reference power signal (for scheduling setpoint)',
+                          v_str='u * qref0',
+                          e_str='u * qref0 - Qref'
+                          )
+
+        self.Qsum = Algeb(tex_name=r'Q_{tot}',
+                          info='Sum of Q signals',
+                          v_str=f'u * (qref0 + {Qdrp})',
+                          e_str='u * (Qref + Qdrp) - Qsum',
                           discrete=(self.VQ1, self.VQ2),
                           )
 
@@ -452,16 +469,17 @@ class PVD1Model(Model):
                            tex_name='I_{qmax}',
                            )
 
+        # TODO: set option whether to use degrading gain
         # --- `Ipcmd` and `Iqcmd` ---
         self.Ipcmd = GainLimiter(u=self.Ipul,
-                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh * recflag + 1 * (1 - recflag)',
                                  lower=0, upper=self.Ipmax,
                                  info='Ip with limiter and coeff.',
                                  tex_name='I^{pcmd}',
                                  )
 
         self.Iqcmd = GainLimiter(u=self.Iqul,
-                                 K=1, R='Fvl * Fvh * Ffl * Ffh',
+                                 K=1, R='Fvl * Fvh * Ffl * Ffh * recflag + 1 * (1 - recflag)',
                                  lower=self.Iqmax, sign_lower=-1,
                                  upper=self.Iqmax,
                                  info='Iq with limiter and coeff.',
@@ -475,15 +493,6 @@ class PVD1Model(Model):
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
-
-        self.Pe = Algeb(tex_name='P_e',
-                        info='active power output',
-                        e_str='v * Ipout_y - Pe',
-                        v_str='pref0')
-        self.Qe = Algeb(tex_name='Q_e',
-                        info='reactive power output',
-                        e_str='v * Iqout_y - Qe',
-                        v_str='qref0')
 
     def v_numeric(self, **kwargs):
         """

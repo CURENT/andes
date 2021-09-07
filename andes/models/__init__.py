@@ -30,10 +30,10 @@ file_classes = OrderedDict([
     ('measurement', ['BusFreq', 'BusROCOF', 'PMU']),
     ('dcbase', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('vsc', ['VSCShunt']),
-    ('renewable', ['REGCA1', 'REECA1', 'REECA1E',
+    ('renewable', ['REGCA1', 'REECA1', 'REECA1E', 'REECA1G',
                    'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCVSG', 'REGCVSG2']),
-    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'PLK']),
+    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt']),
     ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),
     ('coi', ['COI']),
 ])

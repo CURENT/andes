@@ -510,10 +510,10 @@ class AntiWindup(Limiter):
         by the anti-windup-limiter.
     """
 
-    def __init__(self, u, lower, upper, enable=True,
+    def __init__(self, u, lower, upper, enable=True, no_warn=False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  name=None, tex_name=None, info=None, state=None):
-        super().__init__(u, lower, upper, enable=enable,
+        super().__init__(u, lower, upper, enable=enable, no_warn=no_warn,
                          no_lower=no_lower, no_upper=no_upper,
                          sign_lower=sign_lower, sign_upper=sign_upper,
                          name=name, tex_name=tex_name, info=info)
@@ -521,6 +521,7 @@ class AntiWindup(Limiter):
 
         self.has_check_var = False
         self.has_check_eq = True
+        self.no_warn = no_warn
 
     def check_var(self, *args, **kwargs):
         """

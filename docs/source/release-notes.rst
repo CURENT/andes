@@ -6,6 +6,18 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.4 Notes
+----------
+
+v1.4.0 (2021-09-xx)
+```````````````````
+This release highlights the distributed energy resource protection model.
+
+- Added ``DGPRCT1`` model to provide DG models with voltage-
+  and frequency-based protection following IEEE 1547-2018.
+- ``REECA1E`` supports frequency droop on power.
+- Throws TypeError if type mismatches when using ExtAlgeb and ExtState.
+
 v1.3 Notes
 ----------
 v1.3.12 (2021-08-22)

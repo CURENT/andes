@@ -746,15 +746,18 @@ class TDSData:
         states = list()
         algebs = list()
 
+        states_and_ext = mdl.cache.states_and_ext
+        algebs_and_ext = mdl.cache.algebs_and_ext
+
         if vars is None:
-            states = mdl.states.values()
-            algebs = mdl.algebs.values()
+            states = states_and_ext.values()
+            algebs = algebs_and_ext.values()
         else:
             for item in vars:
-                if item in mdl.states:
-                    states.append(mdl.states[item])
-                elif item in mdl.algebs:
-                    algebs.append(mdl.algebs[item])
+                if item in states_and_ext:
+                    states.append(states_and_ext[item])
+                elif item in algebs_and_ext:
+                    algebs.append(algebs_and_ext[item])
                 else:
                     logger.warning("Variable <%s> does not exist in model <%s>",
                                    item, mdl.class_name)
