@@ -318,23 +318,29 @@ class GroupBase:
 
         return idx, single
 
-    def get_var_type(self, src: str, idx):
+    def get_field(self, src: str, idx, field: str):
         """
-        Helper function for retrieving variable types of the given devices in this group.
+        Helper function for retrieving an attribute of a member variable shared
+        by models in this group.
 
         Returns
         -------
         list
-            A list of all types with the length equal to ``len(idx)``.
+            A list with the length equal to ``len(idx)``.
         """
 
         self._check_src(src)
         self._check_idx(idx)
         idx, single = self._vectorize_idx(idx)
 
-        models = self.idx2model(idx)
+        models = self.idx2model(idx, allow_none=True)
 
-        return [type(model.__dict__[src]) for model in models]
+        ret = [None] * self.n
+        for ii, model in enumerate(models):
+            if model is not None:
+                ret[ii] = getattr(model.__dict__[src], field)
+
+        return ret
 
     def get_next_idx(self, idx=None, model_name=None):
         """
