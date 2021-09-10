@@ -59,12 +59,12 @@ class TestKundur2AreaEIG(unittest.TestCase):
 
     def test_xlsx_eig_run(self):
         self.xlsx = get_case("kundur/kundur_full.xlsx")
-        self.ss = andes.run(self.xlsx, default_config=True)
+        self.ss = andes.run(self.xlsx,
+                            default_config=True,
+                            no_output=True,
+                            )
 
         self.ss.EIG.run()
-
-        os.remove(self.ss.files.txt)
-        os.remove(self.ss.files.eig)
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):
@@ -75,21 +75,18 @@ class TestKundur2AreaPSSE(unittest.TestCase):
     def setUp(self) -> None:
         raw = get_case("kundur/kundur.raw")
         dyr = get_case("kundur/kundur_full.dyr")
-        self.ss_psse = andes.run(raw, addfile=dyr, default_config=True)
+        self.ss_psse = andes.run(raw, addfile=dyr, default_config=True,
+                                 no_output=True,
+                                 )
 
     def test_psse_tds_run(self):
         self.ss_psse.TDS.config.tf = 10
         self.ss_psse.TDS.run()
-        os.remove(self.ss_psse.files.txt)
-        os.remove(self.ss_psse.files.lst)
-        os.remove(self.ss_psse.files.npz)
 
         self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
     def test_psse_eig_run(self):
         self.ss_psse.EIG.run()
-        os.remove(self.ss_psse.files.txt)
-        os.remove(self.ss_psse.files.eig)
 
         self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")
 
@@ -107,9 +104,8 @@ class TestNPCCRAW(unittest.TestCase):
     def test_npcc_raw(self):
         self.ss = andes.run(get_case('npcc/npcc.raw'),
                             default_config=True,
+                            no_output=True,
                             )
-
-        os.remove(self.ss.files.txt)
 
     def test_npcc_raw_tds(self):
         self.ss = andes.run(get_case('npcc/npcc.raw'),
