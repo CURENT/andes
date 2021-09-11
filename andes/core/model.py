@@ -405,7 +405,7 @@ class ModelData:
 
 class ModelCall:
     """
-    Class for storing generated function calls and Jacobians.
+    Class for storing generated function calls, Jacobian calls, and arguments.
     """
 
     def __init__(self):

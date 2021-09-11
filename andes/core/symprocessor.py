@@ -2,8 +2,10 @@
 Symbolic processor class for ANDES models.
 """
 
-import logging
 import os
+import logging
+import pprint
+
 import numpy as np
 from collections import OrderedDict, defaultdict
 
@@ -25,7 +27,7 @@ class SymProcessor:
     Parameters
     ----------
     parent : Model
-        The `Model` instance to document
+        The `Model` instance to process
 
     Attributes
     ----------
@@ -367,7 +369,6 @@ class SymProcessor:
         Generated code are stored at ``~/.andes/pycode``.
         """
 
-        import pprint
         pycode_path = get_pycode_path(pycode_path, mkdir=True)
 
         file_path = os.path.join(pycode_path, f'{self.class_name}.py')
@@ -388,9 +389,15 @@ from andes.core.npfunc import *  # NOQA
 
         with open(file_path, 'w') as f:
             f.write(header)
+
+            # checksum
+            f.write(f'md5 = "{self.calls.md5}"\n\n')
+
+            # equations
             f.write(self._rename_func(self.calls.f, 'f_update'))
             f.write(self._rename_func(self.calls.g, 'g_update'))
 
+            # jacobians
             for name in self.calls.j:
                 f.write(self._rename_func(self.calls.j[name], f'{name}_update'))
 
