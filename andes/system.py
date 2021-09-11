@@ -110,6 +110,7 @@ class System:
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
         self.switch_dict = OrderedDict()   # time: OrderedDict of associated models
+        self.with_calls = False            # if generated function calls have been loaded
         self.n_switches = 0                # number of elements in `self.switch_times`
         self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
@@ -285,15 +286,18 @@ class System:
         pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
 
         if incremental:
+            if not self.with_calls:
+                self._load_calls()
+
             if models is None:
                 models = self._find_stale_models()
             else:
                 models = self._to_orddct(models)
         else:
-            models = self.models  # all models
+            models = self.models
 
         total = len(models)
-        width = math.ceil(math.log(total, 10))
+        width = len(str(total))
 
         for idx, (name, model) in enumerate(models.items()):
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
@@ -1371,8 +1375,8 @@ class System:
             with open(self.config.pickle_path, 'wb') as f:
                 dill.dump(self.calls, f)
         else:
-            logger.warning("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
-            logger.warning("ANDES is still fully functional with generated Python code.")
+            logger.debug("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
+            logger.debug("ANDES is fully functional with generated Python code.")
 
     def undill(self):
         """
@@ -1383,13 +1387,9 @@ class System:
         """
 
         # load equations and jacobian from saved code
-        loaded = self._call_from_pycode()
-
-        if loaded is False:
-            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
-            loaded = self._call_from_pkl()
-
+        loaded = self._load_calls()
         stale_models = self._find_stale_models()
+
         if loaded is False:
             self.prepare(quick=True, incremental=False)
             loaded = True
@@ -1397,6 +1397,20 @@ class System:
             logger.info(f"Generated code for {', '.join(stale_models.keys())} is stale.")
             self.prepare(quick=True, incremental=True, models=stale_models)
             loaded = True
+
+        return loaded
+
+    def _load_calls(self):
+        """
+        Helper function for loading calls from pkl or pycode module.
+        """
+        loaded = self._call_from_pycode()
+
+        if loaded is False:
+            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
+            loaded = self._call_from_pkl()
+
+        self.with_calls = loaded
 
         return loaded
 
@@ -1450,7 +1464,7 @@ class System:
                 pycode = importlib.util.module_from_spec(spec)  # NOQA
                 sys.modules[spec.name] = pycode
                 spec.loader.exec_module(pycode)
-                logger.info('Loaded generated Python code in "~/andes".')
+                logger.info('Loaded generated Python code in "~/.andes/pycode".')
             except ImportError:
                 pass
 
