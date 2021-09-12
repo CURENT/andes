@@ -2,7 +2,6 @@ import logging
 import numpy as np
 from collections import OrderedDict
 from andes.core.service import BackRef
-from typing import Sized
 
 from andes.utils.func import list_flatten
 
@@ -107,7 +106,7 @@ class GroupBase:
         """
 
         ret = []
-        idx, single = self._vectorize_idx(idx)
+        idx, single = self._1d_vectorize(idx)
 
         for i in idx:
             try:
@@ -136,7 +135,7 @@ class GroupBase:
         list
             A list containing the unique indices of the devices
         """
-        vec_idx, single = self._vectorize_idx(idx)
+        vec_idx, single = self._1d_vectorize(idx)
 
         out = [self.uid[i] if i is not None else None for i in vec_idx]
         if single:
@@ -168,7 +167,7 @@ class GroupBase:
         """
         self._check_src(src)
         self._check_idx(idx)
-        idx, single = self._vectorize_idx(idx)
+        idx, single = self._1d_vectorize(idx)
 
         n = len(idx)
         if n == 0:
@@ -230,17 +229,13 @@ class GroupBase:
         self._check_src(src)
         self._check_idx(idx)
 
-        if isinstance(value, (int, float, str, np.integer, np.floating)):
-            value = [value] * len(idx)
+        idx, _ = self._1d_vectorize(idx)
+        value, _ = self._1d_vectorize(value)
 
-        idx, _ = self._vectorize_idx(idx)
         models = self.idx2model(idx)
-
-        for i, idx in enumerate(idx):
-            model = models[i]
-            uid = model.idx2uid(idx)
-            instance = model.__dict__[src]
-            instance.__dict__[attr][uid] = value[i]
+        for mdl, ii, val in zip(models, idx, value):
+            uid = mdl.idx2uid(ii)
+            mdl.__dict__[src].__dict__[attr][uid] = val
 
         return True
 
@@ -289,10 +284,10 @@ class GroupBase:
         if idx is None:
             raise IndexError(f'{self.class_name}: idx cannot be None')
 
-    def _vectorize_idx(self, idx):
+    def _1d_vectorize(self, idx):
         """
-        Helper function to convert idx into a list if the input is
-        a single element.
+        Helper function to convert a single element, list, or nested lists
+        into a list.
 
         If the input is a nested list, flatten it into a 1-dimensional
         list.
@@ -329,7 +324,7 @@ class GroupBase:
         self._check_src(src)
         self._check_idx(idx)
 
-        idx, _ = self._vectorize_idx(idx)
+        idx, _ = self._1d_vectorize(idx)
         models = self.idx2model(idx, allow_none=True)
 
         ret = [None] * len(models)
