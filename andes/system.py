@@ -1446,28 +1446,6 @@ class System:
 
         return loaded
 
-    @classmethod
-    def _load_pycode_dot_andes():
-        """
-        Helper function to load pycode from ``.andes``.
-        """
-        pycode = None
-
-        MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
-        MODULE_NAME = 'pycode'
-
-        if os.path.isfile(MODULE_PATH):
-            try:
-                spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
-                pycode = importlib.util.module_from_spec(spec)  # NOQA
-                sys.modules[spec.name] = pycode
-                spec.loader.exec_module(pycode)
-                logger.info('Loaded generated Python code in "~/.andes/pycode".')
-            except ImportError:
-                pass
-
-        return pycode
-
     def _call_from_pycode(self):
         """
         Helper function to import generated pycode.
@@ -1475,7 +1453,7 @@ class System:
         pycode = None
         loaded = False
 
-        pycode = self._load_pycode_dot_andes()
+        pycode = load_pycode_dot_andes()
         if not pycode:
             # or use `pycode` in the andes source folder
             try:
@@ -1973,3 +1951,25 @@ class System:
             out[name] = instance.as_dict(vin=vin)
 
         return out
+
+
+def load_pycode_dot_andes():
+    """
+    Helper function to load pycode from ``.andes``.
+    """
+    pycode = None
+
+    MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
+    MODULE_NAME = 'pycode'
+
+    if os.path.isfile(MODULE_PATH):
+        try:
+            spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
+            pycode = importlib.util.module_from_spec(spec)  # NOQA
+            sys.modules[spec.name] = pycode
+            spec.loader.exec_module(pycode)
+            logger.info('Loaded generated Python code in "~/.andes/pycode".')
+        except ImportError:
+            pass
+
+    return pycode
