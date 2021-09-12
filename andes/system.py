@@ -300,7 +300,8 @@ class System:
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
 
-            self._prepare_single(model, quick, pycode_path)
+            # generate code for a single model
+            model.prepare(quick=quick, pycode_path=pycode_path)
 
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
@@ -309,12 +310,6 @@ class System:
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
-
-    def _prepare_single(self, model, quick, pycode_path):
-        """
-        Call codegen for one model.
-        """
-        model.prepare(quick=quick, pycode_path=pycode_path)
 
     def _finalize_pycode(self, pycode_path):
         """
@@ -355,7 +350,7 @@ class System:
         """
         if isinstance(model_list, OrderedDict):
             return model_list
-        elif isinstance(model_list, list):
+        if isinstance(model_list, list):
             out = OrderedDict()
             for name in model_list:
                 if name not in self.models:
@@ -548,7 +543,7 @@ class System:
                 try:
                     ext_model = self.__dict__[ext_name]
                 except KeyError:
-                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+                    raise KeyError('<%s> is not a model or group name.' % ext_name)
 
                 try:
                     instance.link_external(ext_model)
@@ -1396,7 +1391,7 @@ class System:
             self.prepare(quick=True, incremental=False)
             loaded = True
         elif len(stale_models) > 0:
-            logger.info(f"Generated code for {', '.join(stale_models.keys())} is stale.")
+            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
             self.prepare(quick=True, incremental=True, models=stale_models)
             loaded = True
 
@@ -1428,9 +1423,9 @@ class System:
 
                 try:
                     loaded_calls = dill.load(f)
-                    logger.info('Loaded generated code from pkl file "%s"' % self.config.pickle_path)
+                    logger.info('Loaded generated code from pkl file "%s"', self.config.pickle_path)
                 except (IOError, EOFError, AttributeError):
-                    logger.debug('Cannot open pkl file at "%s"' % self.config.pickle_path)
+                    logger.debug('Cannot open pkl file at "%s"', self.config.pickle_path)
 
         return loaded_calls
 
@@ -1451,7 +1446,8 @@ class System:
 
         return loaded
 
-    def _load_pycode_dot_andes(self):
+    @classmethod
+    def _load_pycode_dot_andes():
         """
         Helper function to load pycode from ``.andes``.
         """
@@ -1505,7 +1501,7 @@ class System:
         """
         for name, model in self.models.items():
             if name not in pycode.__dict__:
-                logger.debug("Model %s does not exist in pycode" % name)
+                logger.debug("Model %s does not exist in pycode", name)
                 continue
 
             pycode_model = pycode.__dict__[model.class_name]
@@ -1833,7 +1829,7 @@ class System:
 
         self.calls['__version__'] = andes.__version__
 
-        for name, mdl in self.models.items():
+        for name, mdl in models.items():
             self.calls[name] = mdl.calls
 
     def _list2array(self):
