@@ -335,7 +335,7 @@ class GroupBase:
 
         models = self.idx2model(idx, allow_none=True)
 
-        ret = [None] * self.n
+        ret = [None] * len(models)
         for ii, model in enumerate(models):
             if model is not None:
                 ret[ii] = getattr(model.__dict__[src], field)
