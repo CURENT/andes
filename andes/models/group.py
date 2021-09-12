@@ -136,18 +136,13 @@ class GroupBase:
         list
             A list containing the unique indices of the devices
         """
-        if idx is None:
-            logger.debug("idx2uid returned None for idx None")
-            return None
-        if isinstance(idx, (float, int, str, np.integer, np.floating)):
-            return self.uid[idx]
-        elif isinstance(idx, Sized):
-            if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
-                idx = list_flatten(idx)
-            return [self.uid[i] if i is not None else None
-                    for i in idx]
-        else:
-            raise NotImplementedError(f'Unknown idx type {type(idx)}')
+        vec_idx, single = self._vectorize_idx(idx)
+
+        out = [self.uid[i] if i is not None else None for i in vec_idx]
+        if single:
+            out = out[0]
+
+        return out
 
     def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
@@ -235,7 +230,7 @@ class GroupBase:
         self._check_src(src)
         self._check_idx(idx)
 
-        if isinstance(value, (float, str, int)):
+        if isinstance(value, (int, float, str, np.integer, np.floating)):
             value = [value] * len(idx)
 
         idx, _ = self._vectorize_idx(idx)
@@ -310,11 +305,12 @@ class GroupBase:
             True if the input is a single element.
         """
         single = False
+        list_alike = (list, tuple, np.ndarray)
 
-        if not isinstance(idx, (list, np.ndarray)):
+        if not isinstance(idx, list_alike):
             idx = [idx]
             single = True
-        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
+        elif len(idx) > 0 and isinstance(idx[0], list_alike):
             idx = list_flatten(idx)
 
         return idx, single
