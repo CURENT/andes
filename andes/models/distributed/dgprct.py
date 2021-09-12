@@ -196,7 +196,7 @@ class DGPRCTBaseModel(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True
-        self.group = 'DG'
+        self.group = 'DGProtection'
 
         self.bus = ExtParam(model='DG', src='bus',
                             indexer=self.dev,

@@ -618,6 +618,15 @@ class DG(GroupBase):
         super().__init__()
 
 
+class DGProtection(GroupBase):
+    """
+    Protection model for DG.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
 class TurbineGov(GroupBase):
     """
     Turbine governor group for synchronous generator.
