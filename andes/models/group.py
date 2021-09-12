@@ -259,7 +259,7 @@ class GroupBase:
                     missing_values = [item[idx] for item in values]
                     raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
 
-            real_idx = None
+            real_idx = default
             for item in idx_found:
                 if item is not None:
                     real_idx = item
@@ -365,8 +365,8 @@ class GroupBase:
                 # name is good
                 pass
             else:
-                logger.warning(f"Group {self.class_name}: idx={idx} is used by {self.idx2model(idx).class_name}. "
-                               f"Data may be inconsistent.")
+                logger.warning("Group <%s>: idx=%s is used by %s. Data may be inconsistent.",
+                               self.class_name, idx, self.idx2model(idx).class_name)
                 need_new = True
         else:
             need_new = True
