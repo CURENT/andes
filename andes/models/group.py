@@ -238,6 +238,7 @@ class GroupBase:
         if isinstance(value, (float, str, int)):
             value = [value] * len(idx)
 
+        idx, _ = self._vectorize_idx(idx)
         models = self.idx2model(idx)
 
         for i, idx in enumerate(idx):
@@ -331,8 +332,8 @@ class GroupBase:
 
         self._check_src(src)
         self._check_idx(idx)
-        idx, _ = self._vectorize_idx(idx)
 
+        idx, _ = self._vectorize_idx(idx)
         models = self.idx2model(idx, allow_none=True)
 
         ret = [None] * len(models)
