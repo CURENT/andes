@@ -153,31 +153,31 @@ class DGPRCTBaseData(ModelData):
                             unit='p.u.',
                             )
 
-        self.TVl1 = NumParam(default=2,
+        self.Tvl1 = NumParam(default=2,
                              tex_name=r'T_{vl1}',
                              info='Stand time for (vl2, vl1)',
                              non_negative=True,
                              )
 
-        self.TVl2 = NumParam(default=1,
+        self.Tvl2 = NumParam(default=1,
                              tex_name=r'T_{vl2}',
                              info='Stand time for (vl3, vl2)',
                              non_negative=True,
                              )
 
-        self.TVl3 = NumParam(default=0.16,
+        self.Tvl3 = NumParam(default=0.16,
                              tex_name=r'T_{vl3}',
                              info='Stand time for (vl4, vl3)',
                              non_negative=True,
                              )
 
-        self.TVu1 = NumParam(default=1,
+        self.Tvu1 = NumParam(default=1,
                              tex_name=r'T_{vu1}',
                              info='Stand time for (vu1, vu2)',
                              non_negative=True,
                              )
 
-        self.TVu2 = NumParam(default=0.16,
+        self.Tvu2 = NumParam(default=0.16,
                              tex_name=r'T_{vu2}',
                              info='Stand time for (vu2, vu3)',
                              non_negative=True,
@@ -424,37 +424,37 @@ class VProtect:
                             )
 
         # Voltage deviation time continuity check
-        self.IAWVl1 = IntegratorAntiWindup(u='LVl1_zi * (1 - res) - TVl1 / Tres * res',
+        self.IAWVl1 = IntegratorAntiWindup(u='LVl1_zi * (1 - res) - Tvl1 / Tres * res',
                                            T=1, K=1, y0='0',
-                                           lower=self.zero, upper=self.TVl1,
+                                           lower=self.zero, upper=self.Tvl1,
                                            info='condition check for (Vl3, Vl1)',
                                            no_warn=True,
                                            )
 
-        self.IAWVl2 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - TVl2 / Tres * res',
+        self.IAWVl2 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - Tvl2 / Tres * res',
                                            T=1, K=1, y0='0',
-                                           lower=self.zero, upper=self.TVl2,
+                                           lower=self.zero, upper=self.Tvl2,
                                            info='condition check for (Vl3, Vl2)',
                                            no_warn=True,
                                            )
 
-        self.IAWVl3 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - TVl3 / Tres * res',
+        self.IAWVl3 = IntegratorAntiWindup(u='LVl2_zi * (1 - res) - Tvl3 / Tres * res',
                                            T=1, K=1, y0='0',
-                                           lower=self.zero, upper=self.TVl2,
+                                           lower=self.zero, upper=self.Tvl2,
                                            info='condition check for (Vl3, Vl2)',
                                            no_warn=True,
                                            )
 
-        self.IAWVu1 = IntegratorAntiWindup(u='LVu1_zi * (1 - res) - TVu1 / Tres * res',
+        self.IAWVu1 = IntegratorAntiWindup(u='LVu1_zi * (1 - res) - Tvu1 / Tres * res',
                                            T=1, K=1, y0='0',
-                                           lower=self.zero, upper=self.TVu1,
+                                           lower=self.zero, upper=self.Tvu1,
                                            info='condition check for (Vu1, Vu3)',
                                            no_warn=True,
                                            )
 
-        self.IAWVu2 = IntegratorAntiWindup(u='LVu2_zi * (1 - res) - TVu2 / Tres * res',
+        self.IAWVu2 = IntegratorAntiWindup(u='LVu2_zi * (1 - res) - Tvu2 / Tres * res',
                                            T=1, K=1, y0='0',
-                                           lower=self.zero, upper=self.TVu2,
+                                           lower=self.zero, upper=self.Tvu2,
                                            info='condition check for (Vu2, Vu3)',
                                            no_warn=True,
                                            )
@@ -512,11 +512,11 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     `(fu2, fu3), Tfu2` [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    `(vl4, vl3), TVl3` [(0.10, 0.45), 0.16s]\n
-    `(vl3, vl2), TVl2` [(0.45, 0.60), 1s]\n
-    `(vl2, vl1), TVl1` [(0.60, 0.88), 2s]\n
-    `(vu1, vu2), TVu1` [(1.10, 1.20), 1s]\n
-    `(vu2, vu3), TVu2` [(1.20, 2.00), 0.16s]\n
+    `(vl4, vl3), Tvl3` [(0.10, 0.45), 0.16s]\n
+    `(vl3, vl2), Tvl2` [(0.45, 0.60), 1s]\n
+    `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
+    `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
+    `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
 
     Reference:
 
@@ -586,11 +586,11 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     `(fu2, fu3), Tfu2` [(61.5, 70.0), 10s]\n
 
     Voltage (p.u.):\n
-    `(vl4, vl3), TVl3` [(0.10, 0.45), 0.16s]\n
-    `(vl3, vl2), TVl2` [(0.45, 0.60), 1s]\n
-    `(vl2, vl1), TVl1` [(0.60, 0.88), 2s]\n
-    `(vu1, vu2), TVu1` [(1.10, 1.20), 1s]\n
-    `(vu2, vu3), TVu2` [(1.20, 2.00), 0.16s]\n
+    `(vl4, vl3), Tvl3` [(0.10, 0.45), 0.16s]\n
+    `(vl3, vl2), Tvl2` [(0.45, 0.60), 1s]\n
+    `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
+    `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
+    `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
     """
 
     def __init__(self, system, config):
