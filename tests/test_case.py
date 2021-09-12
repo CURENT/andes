@@ -305,6 +305,8 @@ class TestPVD1Init(unittest.TestCase):
                        no_output=True,
                        default_config=True,
                        )
+        ss.config.warn_limits = 0
+        ss.config.warn_abnormal = 0
 
         ss.TDS.init()
 
