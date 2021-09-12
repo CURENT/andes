@@ -391,7 +391,7 @@ class GroupBase:
         out = ''
         if export == 'rest':
             out += f'.. _{self.class_name}:\n\n'
-            group_header = '================================================================================\n'
+            group_header = '=' * 80 + '\n'
         else:
             group_header = ''
 
