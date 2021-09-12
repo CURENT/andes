@@ -24,7 +24,6 @@ from collections import OrderedDict
 from typing import Dict, Tuple, Union, Optional
 
 import andes.io
-from andes import __version__
 from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.variables import FileMan, DAE
@@ -326,7 +325,7 @@ class System:
 
         init_path = os.path.join(pycode_path, '__init__.py')
         with open(init_path, 'w') as f:
-            f.write(f"__version__ = '{__version__}'\n\n")
+            f.write(f"__version__ = '{andes.__version__}'\n\n")
 
             for name in self.models.keys():
                 f.write(f"from . import {name:20s}  # NOQA\n")
@@ -336,11 +335,11 @@ class System:
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
         if pycode is not None:
-            globals()['pycode'] = self._load_pycode_dot_andes()
+            self._call_from_pycode()
 
     def _find_stale_models(self):
         """
-        Find models whose ModelCall are stale.
+        Find models whose ModelCall are stale using md5 checksum.
         """
         out = OrderedDict()
         for model in self.models.values():
@@ -1484,17 +1483,20 @@ class System:
             except ImportError:
                 pass
 
-        globals()['pycode'] = pycode
-
         if pycode is not None:
-            self._expand_pycode()
+            self._expand_pycode(pycode)
             loaded = True
 
         return loaded
 
-    def _expand_pycode(self):
+    def _expand_pycode(self, pycode):
         """
         Expand imported ``pycode`` package to model calls.
+
+        Parameters
+        ----------
+        pycode : module
+            The module for generated code for models.
         """
         for name, model in self.models.items():
             if name not in pycode.__dict__:
@@ -1824,7 +1826,7 @@ class System:
         """
         logger.debug("Collecting Model.calls into System.")
 
-        self.calls['__version__'] = __version__
+        self.calls['__version__'] = andes.__version__
 
         for name, mdl in self.models.items():
             self.calls[name] = mdl.calls
