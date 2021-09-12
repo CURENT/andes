@@ -130,6 +130,8 @@ def create_parser():
     prep_mode.add_argument('-i', '--incremental', action='store_true',
                            help='rapid incrementally generate for updated models')
     prep.add_argument('--pycode-path', help='Save path for generated pycode')
+    prep.add_argument('-m', '--models', nargs='*', help='model names to be individually prepared',
+                      )
     prep.add_argument('--incubate', help='Save generated pycode under the ANDES code directory to avoid codegen',
                       action='store_true')
 

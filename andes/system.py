@@ -283,16 +283,15 @@ class System:
         # get `pycode` folder path without automatic creation
         pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
 
-        if incremental:
+        # determine which models to prepare based on mode and `models` list.
+        if incremental and models is None:
             if not self.with_calls:
                 self._load_calls()
-
-            if models is None:
-                models = self._find_stale_models()
-            else:
-                models = self._to_orddct(models)
-        else:
+            models = self._find_stale_models()
+        elif not incremental and models is None:
             models = self.models
+        else:
+            models = self._to_orddct(models)
 
         total = len(models)
         width = len(str(total))
@@ -357,7 +356,13 @@ class System:
         if isinstance(model_list, OrderedDict):
             return model_list
         elif isinstance(model_list, list):
-            return OrderedDict((name, self.__dict__[name]) for name in model_list)
+            out = OrderedDict()
+            for name in model_list:
+                if name not in self.models:
+                    logger.error("Model <%s> does not exist. Check your inputs.", name)
+                    continue
+                out[name] = self.models[name]
+            return out
         else:
             raise TypeError("Type %s not recognized" % type(model_list))
 
