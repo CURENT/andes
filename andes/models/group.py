@@ -230,9 +230,11 @@ class GroupBase:
         self._check_idx(idx)
 
         idx, _ = self._1d_vectorize(idx)
-        value, _ = self._1d_vectorize(value)
-
         models = self.idx2model(idx)
+
+        if isinstance(value, (str, int, float, np.integer, np.floating)):
+            value = [value] * len(idx)
+
         for mdl, ii, val in zip(models, idx, value):
             uid = mdl.idx2uid(ii)
             mdl.__dict__[src].__dict__[attr][uid] = val
