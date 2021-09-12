@@ -15,6 +15,7 @@ v1.4.1 (2021-09-12)
 - Overhaul of the ``prepare`` and ``undill`` methods.
 - ``andes prepare`` can be called for specific models through
   ``-m``, which takes one or many model names as arguments.
+- Dropped support for ``cvxoptklu``.
 
 v1.4.0 (2021-09-08)
 ```````````````````

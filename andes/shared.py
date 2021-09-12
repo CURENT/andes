@@ -45,10 +45,7 @@ if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
     from cvxopt import mul, div                          # NOQA
     from cvxopt.lapack import gesv                       # NOQA
     from cvxopt import printing                          # NOQA
-    try:
-        from cvxoptklu import klu  # NOQA
-    except ImportError:
-        klu = None
+    klu = None
     IP_ADD = CIP_ADD
 else:
     from kvxopt import umfpack, klu                      # NOQA
