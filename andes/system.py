@@ -15,7 +15,6 @@ System class for power system data and methods
 import configparser
 import importlib
 import logging
-import math
 import os
 import sys
 import inspect
@@ -305,12 +304,13 @@ class System:
 
             self._prepare_single(model, quick, pycode_path)
 
-        self._finalize_pycode(pycode_path)
-        self._store_calls(models)
-        self.dill()
+        if len(models) > 0:
+            self._finalize_pycode(pycode_path)
+            self._store_calls(models)
+            self.dill()
 
         _, s = elapsed(t0)
-        logger.info('Successfully generated numerical code in %s.', s)
+        logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
     def _prepare_single(self, model, quick, pycode_path):
         """
@@ -324,10 +324,6 @@ class System:
         writing ``__init__.py`` and reloading ``pycode`` package.
         """
 
-        # -- store pycode --
-        logger.info('Finalizing generated pycode to "%s"', pycode_path)
-
-        # write `__init__.py` that imports all to the `pycode` package
         init_path = os.path.join(pycode_path, '__init__.py')
         with open(init_path, 'w') as f:
             f.write(f"__version__ = '{__version__}'\n\n")
@@ -335,6 +331,8 @@ class System:
             for name in self.models.keys():
                 f.write(f"from . import {name:20s}  # NOQA\n")
             f.write('\n')
+
+        logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
         if pycode is not None:
