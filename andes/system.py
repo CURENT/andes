@@ -19,11 +19,11 @@ import os
 import sys
 import inspect
 import dill
+
 from collections import OrderedDict
 from typing import Dict, Tuple, Union, Optional
 
 import andes.io
-from andes import __version__
 from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.variables import FileMan, DAE
@@ -40,7 +40,7 @@ from andes.shared import np, jac_names, dilled_vars, IP_ADD
 from andes.shared import matrix, spmatrix, sparse
 
 logger = logging.getLogger(__name__)
-sys.path.append(get_dot_andes_path())
+dill.settings['recurse'] = True
 pycode = None
 
 
@@ -108,6 +108,7 @@ class System:
         self.routines = OrderedDict()      # routine names and instances
         self.switch_times = np.array([])   # an array of ordered event switching times
         self.switch_dict = OrderedDict()   # time: OrderedDict of associated models
+        self.with_calls = False            # if generated function calls have been loaded
         self.n_switches = 0                # number of elements in `self.switch_times`
         self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
 
@@ -225,7 +226,7 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
-    def prepare(self, quick=False, incremental=False):
+    def prepare(self, quick=False, incremental=False, models=None):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -237,6 +238,8 @@ class System:
             True to skip pretty-print generation to reduce code generation time.
         incremental : bool, optional
             True to generate only for modified models, incrementally.
+        models : list, OrderedDict, None
+            List or OrderedList of models to prepare
 
         Notes
         -----
@@ -262,8 +265,6 @@ class System:
         Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
         the System instance on which prepare is called.
         """
-        import math
-
         # info
         if incremental is True:
             mode_text = 'rapid incremental mode'
@@ -282,48 +283,83 @@ class System:
         # get `pycode` folder path without automatic creation
         pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
 
-        loaded_calls = self._load_pkl()
-        if loaded_calls is None and incremental:
-            incremental = False
-            logger.debug('calls.pkl does not exist. Incremental codegen disabled.')
+        # determine which models to prepare based on mode and `models` list.
+        if incremental and models is None:
+            if not self.with_calls:
+                self._load_calls()
+            models = self._find_stale_models()
+        elif not incremental and models is None:
+            models = self.models
+        else:
+            models = self._to_orddct(models)
 
-        total = len(self.models)
-        width = math.ceil(math.log(total, 10))
-        for idx, (name, model) in enumerate(self.models.items()):
-            if incremental and \
-                    name in loaded_calls and \
-                    hasattr(loaded_calls[name], 'md5'):
-                if loaded_calls[name].md5 == model.get_md5():
-                    model.calls = loaded_calls[name]
-                    print(f"\r\x1b[K Code generation skipped for {name} ({idx + 1:>{width}}/{total:>{width}}).",
-                          end='\r', flush=True)
-                    continue
+        total = len(models)
+        width = len(str(total))
 
+        for idx, (name, model) in enumerate(models.items()):
             print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                   end='\r', flush=True)
 
+            # generate code for a single model
             model.prepare(quick=quick, pycode_path=pycode_path)
 
-        # -- store pycode --
-        logger.info('Storing generated pycode to "%s"', pycode_path)
+        if len(models) > 0:
+            self._finalize_pycode(pycode_path)
+            self._store_calls(models)
+            self.dill()
 
-        # write `__init__.py` that imports all to the `pycode` package
+        _, s = elapsed(t0)
+        logger.info('Generated numerical code for %d models in %s.', len(models), s)
+
+    def _finalize_pycode(self, pycode_path):
+        """
+        Helper function for finalizing pycode generation by
+        writing ``__init__.py`` and reloading ``pycode`` package.
+        """
+
         init_path = os.path.join(pycode_path, '__init__.py')
         with open(init_path, 'w') as f:
-            f.write(f"__version__ = '{__version__}'\n\n")
+            f.write(f"__version__ = '{andes.__version__}'\n\n")
+
             for name in self.models.keys():
-                f.write(f"from . import {name}  # NOQA\n")
+                f.write(f"from . import {name:20s}  # NOQA\n")
             f.write('\n')
+
+        logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
         if pycode is not None:
-            importlib.reload(pycode)
+            self._call_from_pycode()
 
-        self._store_calls()
-        self.dill()
+    def _find_stale_models(self):
+        """
+        Find models whose ModelCall are stale using md5 checksum.
+        """
+        out = OrderedDict()
+        for model in self.models.values():
+            calls_md5 = getattr(model.calls, 'md5', None)
+            if calls_md5 != model.get_md5():
+                out[model.class_name] = model
 
-        _, s = elapsed(t0)
-        logger.info('Successfully generated numerical code in %s.', s)
+        return out
+
+    def _to_orddct(self, model_list):
+        """
+        Helper function to convert a list of model names to OrderedDict
+        with name as keys and model instances as values.
+        """
+        if isinstance(model_list, OrderedDict):
+            return model_list
+        if isinstance(model_list, list):
+            out = OrderedDict()
+            for name in model_list:
+                if name not in self.models:
+                    logger.error("Model <%s> does not exist. Check your inputs.", name)
+                    continue
+                out[name] = self.models[name]
+            return out
+        else:
+            raise TypeError("Type %s not recognized" % type(model_list))
 
     def _prepare_mp(self, quick=False):
         """
@@ -351,7 +387,7 @@ class System:
         for idx, name in enumerate(self.models.keys()):
             self.models[name] = ret[idx]
 
-        self._store_calls()
+        self._store_calls(self.models)
         self.dill()
 
     def setup(self):
@@ -507,7 +543,7 @@ class System:
                 try:
                     ext_model = self.__dict__[ext_name]
                 except KeyError:
-                    raise KeyError(f'<{ext_name}> is not a model or group name.')
+                    raise KeyError('<%s> is not a model or group name.' % ext_name)
 
                 try:
                     instance.link_external(ext_model)
@@ -1336,8 +1372,8 @@ class System:
             with open(self.config.pickle_path, 'wb') as f:
                 dill.dump(self.calls, f)
         else:
-            logger.warning("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
-            logger.warning("ANDES is still fully functional with generated Python code.")
+            logger.debug("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
+            logger.debug("ANDES is fully functional with generated Python code.")
 
     def undill(self):
         """
@@ -1347,85 +1383,109 @@ class System:
         acceleration.
         """
 
-        # try to replace equations and jacobian calls with saved code
-        calls_loaded = False
+        # load equations and jacobian from saved code
+        loaded = self._load_calls()
+        stale_models = self._find_stale_models()
 
-        try:
-            self._call_from_pycode()
-            calls_loaded = True
-        except ImportError:
+        if loaded is False:
+            self.prepare(quick=True, incremental=False)
+            loaded = True
+        elif len(stale_models) > 0:
+            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
+            self.prepare(quick=True, incremental=True, models=stale_models)
+            loaded = True
+
+        return loaded
+
+    def _load_calls(self):
+        """
+        Helper function for loading calls from pkl or pycode module.
+        """
+        loaded = self._call_from_pycode()
+
+        if loaded is False:
             logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
+            loaded = self._call_from_pkl()
 
-        if calls_loaded is False:
-            self._call_from_pkl()
+        self.with_calls = loaded
+
+        return loaded
 
     def _load_pkl(self):
         """
         Helper function to open and load dill-pickled functions.
         """
-        dill.settings['recurse'] = True
+
+        loaded_calls = None
 
         if os.path.isfile(self.config.pickle_path):
             with open(self.config.pickle_path, 'rb') as f:
 
                 try:
                     loaded_calls = dill.load(f)
-                    return loaded_calls
+                    logger.info('Loaded generated code from pkl file "%s"', self.config.pickle_path)
                 except (IOError, EOFError, AttributeError):
-                    pass
+                    logger.debug('Cannot open pkl file at "%s"', self.config.pickle_path)
 
-        return None
+        return loaded_calls
 
     def _call_from_pkl(self):
         """
         Helper function for loading ModelCall from pickle file.
         """
 
-        loaded_calls = self._load_pkl()
+        self.calls = self._load_pkl()
+        loaded = False
 
-        if loaded_calls is not None:
-            ver = loaded_calls.get('__version__')
-            if ver == __version__:
-                self.calls = loaded_calls
-                logger.info('Undilled calls from "%s" is up-to-date.', self.config.pickle_path)
-            else:
-                logger.info('Undilled calls are for version %s, regenerating...', ver)
-                self.prepare(quick=True, incremental=True)
+        if self.calls is not None:
+            loaded = True
 
-        else:
-            logger.info('Generating numerical calls at the first launch.')
-            self.prepare(quick=True)
+            for name, model_call in self.calls.items():
+                if name in self.__dict__:
+                    self.__dict__[name].calls = model_call
 
-        for name, model_call in self.calls.items():
-            if name in self.__dict__:
-                self.__dict__[name].calls = model_call
-
-        logger.debug("Using undilled lambda functions.")
+        return loaded
 
     def _call_from_pycode(self):
         """
-        Helper function to load generated pycode
+        Helper function to import generated pycode.
         """
         pycode = None
-        try:
-            import pycode  # NOQA
-        except ImportError:
-            globals()['pycode'] = pycode
+        loaded = False
 
-        try:
-            from andes import pycode  # NOQA
-        except ImportError:
-            globals()['pycode'] = pycode
+        pycode = load_pycode_dot_andes()
+        if not pycode:
+            # or use `pycode` in the andes source folder
+            try:
+                pycode = importlib.import_module("andes.pycode")
+                logger.info("Loaded generated Python code in andes source dir.")
+            except ImportError:
+                pass
 
-        if pycode is None:
-            raise ImportError("Generated pycode not found.")
+        if pycode is not None:
+            self._expand_pycode(pycode)
+            loaded = True
 
-        for name in self.models:
-            if name not in pycode.__dict__:
-                raise ImportError("Generated pycode is incomplete.")
+        return loaded
 
-        for model in self.models.values():
-            pycode_model = pycode.__dict__[model.class_name]
+    def _expand_pycode(self, pycode_module):
+        """
+        Expand imported ``pycode`` module to model calls.
+
+        Parameters
+        ----------
+        pycode : module
+            The module for generated code for models.
+        """
+        for name, model in self.models.items():
+            if name not in pycode_module.__dict__:
+                logger.debug("Model %s does not exist in pycode", name)
+                continue
+
+            pycode_model = pycode_module.__dict__[model.class_name]
+
+            # md5
+            model.calls.md5 = pycode_model.md5
 
             # reload stored variables
             for item in dilled_vars:
@@ -1457,8 +1517,6 @@ class System:
             # load Jacobian functions
             for jname in model.calls.j_names:
                 model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
-
-        logger.info("Using generated Python code.")
 
     def _get_models(self, models):
         """
@@ -1741,15 +1799,15 @@ class System:
         for r in self.routines.values():
             r.solver.clear()
 
-    def _store_calls(self):
+    def _store_calls(self, models: OrderedDict):
         """
         Collect and store model calls into system.
         """
         logger.debug("Collecting Model.calls into System.")
 
-        self.calls['__version__'] = __version__
+        self.calls['__version__'] = andes.__version__
 
-        for name, mdl in self.models.items():
+        for name, mdl in models.items():
             self.calls[name] = mdl.calls
 
     def _list2array(self):
@@ -1893,3 +1951,25 @@ class System:
             out[name] = instance.as_dict(vin=vin)
 
         return out
+
+
+def load_pycode_dot_andes():
+    """
+    Helper function to load pycode from ``.andes``.
+    """
+    pycode = None
+
+    MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
+    MODULE_NAME = 'pycode'
+
+    if os.path.isfile(MODULE_PATH):
+        try:
+            spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
+            pycode = importlib.util.module_from_spec(spec)  # NOQA
+            sys.modules[spec.name] = pycode
+            spec.loader.exec_module(pycode)
+            logger.info('Loaded generated Python code in "~/.andes/pycode".')
+        except ImportError:
+            pass
+
+    return pycode

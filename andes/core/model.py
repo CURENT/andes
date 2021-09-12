@@ -367,7 +367,7 @@ class ModelData:
         """
         if isinstance(keys, str):
             keys = (keys,)
-            if not isinstance(values, (int, float, str, np.float64)) and not isinstance(values, Iterable):
+            if not isinstance(values, (int, float, str, np.floating)) and not isinstance(values, Iterable):
                 raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
 
             elif len(values) > 0 and not isinstance(values[0], (list, tuple, np.ndarray)):
@@ -405,7 +405,7 @@ class ModelData:
 
 class ModelCall:
     """
-    Class for storing generated function calls and Jacobians.
+    Class for storing generated function calls, Jacobian calls, and arguments.
     """
 
     def __init__(self):

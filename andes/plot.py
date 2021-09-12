@@ -626,7 +626,7 @@ class TDSData:
                         break
                     count += 1
 
-            fig.savefig(outfile, dpi=dpi)
+            fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
             logger.info('Figure saved to "%s".', outfile)
 
         if show:

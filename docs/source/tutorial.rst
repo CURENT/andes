@@ -145,8 +145,9 @@ Available routine names include ``pflow, tds, eig``:
 
 Power flow
 ..........
-Locate the ``kundur_full.xlsx`` file at ``andes/cases/kundur/kundur_full.xlsx`` under the source code folder
-or download it from https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx.
+Locate the ``kundur_full.xlsx`` file at ``andes/cases/kundur/kundur_full.xlsx`` under the source code folder,
+or download it from
+`the repository <https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx>`_.
 
 Change to the directory containing ``kundur_full.xlsx``.
 To run power flow, execute the following in the command line:
