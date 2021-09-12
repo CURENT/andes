@@ -9,13 +9,17 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.4.2 (2021-09-12)
+```````````````````
+- Bug fixes
+- Dropped support for ``cvxoptklu``.
+
 v1.4.1 (2021-09-12)
 ```````````````````
 - Bug fixes.
 - Overhaul of the ``prepare`` and ``undill`` methods.
 - ``andes prepare`` can be called for specific models through
   ``-m``, which takes one or many model names as arguments.
-- Dropped support for ``cvxoptklu``.
 
 v1.4.0 (2021-09-08)
 ```````````````````
