@@ -1468,9 +1468,9 @@ class System:
 
         return loaded
 
-    def _expand_pycode(self, pycode):
+    def _expand_pycode(self, pycode_module):
         """
-        Expand imported ``pycode`` package to model calls.
+        Expand imported ``pycode`` module to model calls.
 
         Parameters
         ----------
@@ -1478,11 +1478,11 @@ class System:
             The module for generated code for models.
         """
         for name, model in self.models.items():
-            if name not in pycode.__dict__:
+            if name not in pycode_module.__dict__:
                 logger.debug("Model %s does not exist in pycode", name)
                 continue
 
-            pycode_model = pycode.__dict__[model.class_name]
+            pycode_model = pycode_module.__dict__[model.class_name]
 
             # md5
             model.calls.md5 = pycode_model.md5
