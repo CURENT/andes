@@ -481,13 +481,15 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     """
     DGPRCT1 model, follow IEEE-1547-2018. DGPRCT stands for DG protection.
 
+    A demo is provided: examples/demonstration/1.1 demo_DGPRCT1.ipynb
+
     Target device (limited to DG group) ``Psum`` and ``Qsum`` will decrease to zero
     immediately when frequency/voltage protection flag is raised. Once the lock is
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
 
     DG group base model ``PVD1`` already has a degrading function which is used to
-    degrade output under abnormal condition. it is recommended to turn off it by setting
-    `tren = 0`.
+    degrade output under abnormal condition. it is recommended to turn it off by setting
+    `recflag = 0`.
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
@@ -498,7 +500,7 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
 
     Protection sensors (e.g., IAWfl1) are instances of ``IntergratorAntiWindup``. All
     the protection sensors will be reset after ``ue`` returns to 0.
-    Resetting takes `Tres` to finish.
+    Resetting action takes `Tres` to finish.
 
     The model does not check the shedding points sequence.
     The input parameters are required to satisfy ``fl3 < fl2 < fl1 < fu1 < fu2 < fu3``,
@@ -551,17 +553,22 @@ class DGPRCTExtModel(DGPRCTBaseModel, fProtect, VProtect):
 
 class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     """
-    DGPRCT External model, follow IEEE-1547. DGPRCT stands for DG protection.
+    DGPRCT External model, follow IEEE-1547-2018. DGPRCT stands for DG protection.
 
-    Similar to DGPRCT1, but the measured voltage is retrived from outside.
+    Similar to DGPRCT1, but the measured voltage can be manipulated.
 
-    DG group base model ``PVD1`` already has a degrading function which is used to
-    degrade output under abnormal condition. it is recommended to turn off it by setting
-    `tren = 0`.
+    A demo is provided: examples/demonstration/1.2 demo_DGPRCTExt.ipynb
+
+    This model can be applied to co-simulation, where you can input the external votage signal
+    into ANDES. If no extertal value is applied, the votalge will remain as the initialized value.
 
     Target device (limited to DG group) ``Psum`` and ``Qsum`` will decrease to zero
     immediately when frequency/voltage protection flag is raised. Once the lock is
     released, ``Psum`` and ``Qsum`` will return to normal immediately.
+
+    DG group base model ``PVD1`` already has a degrading function which is used to
+    degrade output under abnormal condition. it is recommended to turn it off by setting
+    `recflag = 0`.
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
@@ -570,13 +577,13 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     It should be noted that, the lock only lock the ``fHz`` (frequency read value)
     of DG model. The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
-    Protection sensors (like IAWfl1) are realized by ``IntergratorAntiWindup``. All
-    the protection sensors will be reset after ``ue`` return to 0. Reset action takes
-    `Tres` to finish.
+    Protection sensors (e.g., IAWfl1) are instances of ``IntergratorAntiWindup``. All
+    the protection sensors will be reset after ``ue`` returns to 0.
+    Resetting action takes `Tres` to finish.
 
     The model does not check the shedding points sequence.
-    The input parameters are required to satisfy `fl3 < fl2 < fl1 < fu1 < fu2 < fu3`,
-    and `ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3`.
+    The input parameters are required to satisfy ``fl3 < fl2 < fl1 < fu1 < fu2 < fu3``,
+    and ``ul4 < ul3 < ul2 < ul1 < uu1 < uu2 < uu3``.
 
     Default settings:\n
     Frequency (Hz):\n
@@ -591,6 +598,13 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     `(vl2, vl1), Tvl1` [(0.60, 0.88), 2s]\n
     `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
     `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
+
+    Reference:
+
+    NERC. Bulk Power System Reliability Perspectives on the Adoption of IEEE 1547-2018.
+    March 2020. Available:
+
+    https://www.nerc.com/comm/PC_Reliability_Guidelines_DL/Guideline_IEEE_1547-2018_BPS_Perspectives.pdf
     """
 
     def __init__(self, system, config):
