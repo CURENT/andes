@@ -136,8 +136,6 @@ class SymProcessor:
         self.lambdify_func[0]['Indicator'] = lambda x: x
         self.lambdify_func[0]['imag'] = np.imag
         self.lambdify_func[0]['real'] = np.real
-        self.lambdify_func[0]['im'] = np.imag
-        self.lambdify_func[0]['re'] = np.real
         self.lambdify_func[0]['safe_div'] = safe_div
 
         self.vars_list = list(self.vars_dict.values())  # useful for ``.jacobian()``
@@ -380,9 +378,9 @@ from numpy import greater_equal, less_equal, greater, less, equal   # NOQA
 from numpy import logical_and, logical_or, logical_not              # NOQA
 from numpy import array, real, imag, conj, angle, radians           # NOQA
 from numpy import arcsin, arccos, arctan, arctan2                   # NOQA
-from numpy import log  # NOQA
+from numpy import log                                               # NOQA
 
-from andes.core.npfunc import *  # NOQA
+from andes.core.npfunc import *                                     # NOQA
 
 
 """
