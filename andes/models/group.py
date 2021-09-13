@@ -2,7 +2,6 @@ import logging
 import numpy as np
 from collections import OrderedDict
 from andes.core.service import BackRef
-from typing import Sized
 
 from andes.utils.func import list_flatten
 
@@ -107,7 +106,7 @@ class GroupBase:
         """
 
         ret = []
-        idx, single = self._vectorize_idx(idx)
+        idx, single = self._1d_vectorize(idx)
 
         for i in idx:
             try:
@@ -136,18 +135,13 @@ class GroupBase:
         list
             A list containing the unique indices of the devices
         """
-        if idx is None:
-            logger.debug("idx2uid returned None for idx None")
-            return None
-        if isinstance(idx, (float, int, str, np.integer, np.floating)):
-            return self.uid[idx]
-        elif isinstance(idx, Sized):
-            if len(idx) > 0 and isinstance(idx[0], (list, np.ndarray)):
-                idx = list_flatten(idx)
-            return [self.uid[i] if i is not None else None
-                    for i in idx]
-        else:
-            raise NotImplementedError(f'Unknown idx type {type(idx)}')
+        vec_idx, single = self._1d_vectorize(idx)
+
+        out = [self.uid[i] if i is not None else None for i in vec_idx]
+        if single:
+            out = out[0]
+
+        return out
 
     def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
@@ -173,7 +167,7 @@ class GroupBase:
         """
         self._check_src(src)
         self._check_idx(idx)
-        idx, single = self._vectorize_idx(idx)
+        idx, single = self._1d_vectorize(idx)
 
         n = len(idx)
         if n == 0:
@@ -235,16 +229,15 @@ class GroupBase:
         self._check_src(src)
         self._check_idx(idx)
 
-        if isinstance(value, (float, str, int)):
-            value = [value] * len(idx)
-
+        idx, _ = self._1d_vectorize(idx)
         models = self.idx2model(idx)
 
-        for i, idx in enumerate(idx):
-            model = models[i]
-            uid = model.idx2uid(idx)
-            instance = model.__dict__[src]
-            instance.__dict__[attr][uid] = value[i]
+        if isinstance(value, (str, int, float, np.integer, np.floating)):
+            value = [value] * len(idx)
+
+        for mdl, ii, val in zip(models, idx, value):
+            uid = mdl.idx2uid(ii)
+            mdl.__dict__[src].__dict__[attr][uid] = val
 
         return True
 
@@ -266,7 +259,7 @@ class GroupBase:
                     missing_values = [item[idx] for item in values]
                     raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
 
-            real_idx = None
+            real_idx = default
             for item in idx_found:
                 if item is not None:
                     real_idx = item
@@ -293,10 +286,10 @@ class GroupBase:
         if idx is None:
             raise IndexError(f'{self.class_name}: idx cannot be None')
 
-    def _vectorize_idx(self, idx):
+    def _1d_vectorize(self, idx):
         """
-        Helper function to convert idx into a list if the input is
-        a single element.
+        Helper function to convert a single element, list, or nested lists
+        into a list.
 
         If the input is a nested list, flatten it into a 1-dimensional
         list.
@@ -309,11 +302,12 @@ class GroupBase:
             True if the input is a single element.
         """
         single = False
+        list_alike = (list, tuple, np.ndarray)
 
-        if not isinstance(idx, (list, np.ndarray)):
+        if not isinstance(idx, list_alike):
             idx = [idx]
             single = True
-        elif len(idx) > 0 and isinstance(idx[0], (list, tuple, np.ndarray)):
+        elif len(idx) > 0 and isinstance(idx[0], list_alike):
             idx = list_flatten(idx)
 
         return idx, single
@@ -331,8 +325,8 @@ class GroupBase:
 
         self._check_src(src)
         self._check_idx(idx)
-        idx, _ = self._vectorize_idx(idx)
 
+        idx, _ = self._1d_vectorize(idx)
         models = self.idx2model(idx, allow_none=True)
 
         ret = [None] * len(models)
@@ -371,8 +365,8 @@ class GroupBase:
                 # name is good
                 pass
             else:
-                logger.warning(f"Group {self.class_name}: idx={idx} is used by {self.idx2model(idx).class_name}. "
-                               f"Data may be inconsistent.")
+                logger.warning("Group <%s>: idx=%s is used by %s. Data may be inconsistent.",
+                               self.class_name, idx, self.idx2model(idx).class_name)
                 need_new = True
         else:
             need_new = True
@@ -397,7 +391,7 @@ class GroupBase:
         out = ''
         if export == 'rest':
             out += f'.. _{self.class_name}:\n\n'
-            group_header = '================================================================================\n'
+            group_header = '=' * 80 + '\n'
         else:
             group_header = ''
 
@@ -618,6 +612,15 @@ class RenTorque(GroupBase):
 class DG(GroupBase):
     """
     Distributed generation (small-scale).
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+class DGProtection(GroupBase):
+    """
+    Protection model for DG.
     """
 
     def __init__(self):

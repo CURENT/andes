@@ -468,8 +468,9 @@ class System:
         This methods calls the ``add`` method of `model` and registers the device `idx` to group.
         """
         if model not in self.models:
-            logger.warning(f"<{model}> is not an existing model.")
+            logger.warning("<%s> is not an existing model.", model)
             return
+
         if self.is_setup:
             raise NotImplementedError("Adding devices are not allowed after setup.")
         group_name = self.__dict__[model].group

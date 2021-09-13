@@ -22,7 +22,7 @@
     // uninstalling the project. See asv.conf.json documentation.
     //
     "install_command": ["in-dir={env_dir} python -mpip install {wheel_file}",
-                        "python -m pip install cvxoptklu --no-cache-dir",
+                        "python -m pip install kvxopt --no-cache-dir",
                         "python -m pip install https://github.com/curent/cvxopt/zipball/master --no-cache-dir"],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
     // "build_command": [

@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.4.2 (2021-09-12)
+```````````````````
+- Bug fixes
+- Dropped support for ``cvxoptklu``.
+
 v1.4.1 (2021-09-12)
 ```````````````````
 - Bug fixes.
