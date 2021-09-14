@@ -5,10 +5,8 @@ from andes.core.service import ConstService, FlagValue, VarService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
-# from andes.core.block import Integrator
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
-# from andes.models.exciter.saturation import ExcQuadSat
 
 
 class IEEET3Data(ExcBaseData):
