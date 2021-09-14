@@ -7,6 +7,7 @@ import scipy.io
 import numpy as np
 
 from math import ceil, pi
+from scipy.linalg import solve
 
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
@@ -155,33 +156,28 @@ class EIG(BaseRoutine):
         if As is None:
             As = self.As
 
-        # `mu`: eigenvalues, `N`: right eigenvectors
+        # `mu`: eigenvalues, `N`: right eigenvectors with each column corr. to one eigvalue
         mu, N = np.linalg.eig(As)
+        n_state = len(mu)
 
-        N = matrix(N)
-        n = len(mu)
-        idx = range(n)
+        # --- calculate the left eig vector and store to ``W```
+        #   based on orthogonality that `W.T @ N = I`,
+        #   left eigenvector is `inv(N)^T`
 
-        # compute left eigenvectors `W`
-        W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
-        gesv(N, W)
+        Weye = np.eye(n_state)
+        WT = solve(N, Weye, overwrite_b=True)
+        W = WT.T
 
-        partfact = mul(abs(W.T), abs(N))
-
-        b = matrix(1.0, (1, n))
-        WN = b * partfact
+        # --- calculate participation factor ---
+        partfact = np.abs(W) * np.abs(N)
+        b = np.ones(n_state)
+        W_abs = b @ partfact
         partfact = partfact.T
 
-        mu_complex = np.zeros_like(mu, dtype=complex)
-        for item in idx:
-            mu_real = float(mu[item].real)
-            mu_imag = float(mu[item].imag)
-            mu_complex[item] = complex(round(mu_real, 5), round(mu_imag, 5))
-            partfact[item, :] /= WN[item]
-
-        # participation factor
-        self.mu = matrix(mu_complex)
-        self.part_fact = matrix(partfact)
+        # --- normalize participation factor ---
+        for item in range(n_state):
+            partfact[:, item] /= W_abs[item]
+        partfact = np.round(partfact, 5)
 
         return self.mu, self.part_fact
 
@@ -247,7 +243,7 @@ class EIG(BaseRoutine):
         t1, s = elapsed()
 
         self.calc_As()
-        self.calc_part_factor()
+        self.mu, self.part_fact = self.calc_part_factor()
         _, s = elapsed(t1)
 
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
@@ -363,8 +359,8 @@ class EIG(BaseRoutine):
         text, header, rowname, data = list(), list(), list(), list()
 
         neig = len(self.mu)
-        mu_real = self.mu.real()
-        mu_imag = self.mu.imag()
+        mu_real = self.mu.real
+        mu_imag = self.mu.imag
         n_positive = sum(1 for x in mu_real if x > 0)
         n_zeros = sum(1 for x in mu_real if x == 0)
         n_negative = sum(1 for x in mu_real if x < 0)
