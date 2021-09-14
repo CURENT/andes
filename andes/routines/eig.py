@@ -20,7 +20,6 @@ from andes.shared import mul, div, spdiag, gesv
 
 
 logger = logging.getLogger(__name__)
-__cli__ = 'eig'
 
 
 class EIG(BaseRoutine):
@@ -195,17 +194,39 @@ class EIG(BaseRoutine):
 
     def find_zero_states(self):
         """
-        Find the indices of non-states in x.
+        Find the indices of states associated with zero time constants in ``x``.
         """
         system = self.system
         self.singular_idx = np.array([], dtype=int)
 
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-            self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
+
+            self.singular_idx = np.where(system.dae.Tf == 0)[0]
             logger.info("System contains %d zero time constants. ", len(self.singular_idx))
             logger.debug([system.dae.x_name[i] for i in self.singular_idx])
 
         self.non_zeros = system.dae.n - len(self.singular_idx)
+
+    def _pre_check(self):
+        """
+        Helper function for pre-computation checks.
+        """
+        system = self.system
+        status = True
+
+        if system.PFlow.converged is False:
+            logger.warning('Power flow not solved. Eig analysis will not continue.')
+            status = False
+
+        if system.dae.n == 0:
+            logger.error('No dynamic model. Eig analysis will not continue.')
+            status = False
+
+        if system.TDS.initialized is False:
+            system.TDS.init()
+            system.TDS.itm_step()
+
+        return status
 
     def run(self, **kwargs):
         """
@@ -215,36 +236,28 @@ class EIG(BaseRoutine):
         succeed = False
         system = self.system
 
-        if system.PFlow.converged is False:
-            logger.warning('Power flow not solved. Eig analysis will not continue.')
-            return succeed
+        if not self._pre_check():
+            system.exit_code += 1
+            return False
 
-        if system.TDS.initialized is False:
-            system.TDS.init()
-            system.TDS.itm_step()
+        self.summary()
+        t1, s = elapsed()
 
-        if system.dae.n == 0:
-            logger.error('No dynamic model. Eig analysis will not continue.')
+        self.calc_As()
+        self.calc_part_factor()
+        _, s = elapsed(t1)
 
-        else:
-            self.summary()
-            t1, s = elapsed()
+        logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
-            self.calc_As()
-            self.calc_part_factor()
+        if not self.system.files.no_output:
+            self.report()
+            if system.options.get('state_matrix') is True:
+                self.export_state_matrix()
 
-            _, s = elapsed(t1)
-            logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
+        if self.config.plot:
+            self.plot()
 
-            if not self.system.files.no_output:
-                self.report()
-                if system.options.get('state_matrix') is True:
-                    self.export_state_matrix()
-
-            if self.config.plot:
-                self.plot()
-
-            succeed = True
+        succeed = True
 
         if not succeed:
             system.exit_code += 1
