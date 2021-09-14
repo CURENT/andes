@@ -154,13 +154,15 @@ class EIG(BaseRoutine):
         """
         if As is None:
             As = self.As
+
+        # `mu`: eigenvalues, `N`: right eigenvectors
         mu, N = np.linalg.eig(As)
 
         N = matrix(N)
         n = len(mu)
         idx = range(n)
 
-        mu_complex = np.zeros_like(mu, dtype=complex)
+        # compute left eigenvectors `W`
         W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
         gesv(N, W)
 
@@ -170,6 +172,7 @@ class EIG(BaseRoutine):
         WN = b * partfact
         partfact = partfact.T
 
+        mu_complex = np.zeros_like(mu, dtype=complex)
         for item in idx:
             mu_real = float(mu[item].real)
             mu_imag = float(mu[item].imag)
@@ -218,13 +221,13 @@ class EIG(BaseRoutine):
             logger.warning('Power flow not solved. Eig analysis will not continue.')
             status = False
 
-        if system.dae.n == 0:
-            logger.error('No dynamic model. Eig analysis will not continue.')
-            status = False
-
         if system.TDS.initialized is False:
             system.TDS.init()
             system.TDS.itm_step()
+
+        elif system.dae.n == 0:
+            logger.error('No dynamic model. Eig analysis will not continue.')
+            status = False
 
         return status
 
