@@ -5,10 +5,10 @@ from andes.core.service import ConstService, FlagValue, VarService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
-from andes.core.block import Integrator
+# from andes.core.block import Integrator
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
-from andes.models.exciter.saturation import ExcQuadSat
+# from andes.models.exciter.saturation import ExcQuadSat
 
 
 class IEEET3Data(ExcBaseData):
@@ -45,13 +45,13 @@ class IEEET3Data(ExcBaseData):
                               vrange=(0, 20),
                               )
 
-        ## info may need change
+        # TODO: info may need change
         self.KE = NumParam(info='Gain added to saturation',
                            tex_name='K_E',
                            default=1,
                            unit='p.u.',
                            )
-        ## info may need change
+        # TODO: info may need change
         self.TE = NumParam(info='Exciter integrator time constant',
                            tex_name='T_E',
                            default=0.8,
@@ -88,7 +88,7 @@ class IEEET3Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        ## Why set VRMAX to 999?
+        # TODO: Why set VRMAX to 999?
         # Set VRMAX to 999 when VRMAX = 0
         self._zVRM = FlagValue(self.VRMAX, value=0,
                                tex_name='z_{VRMAX}',
@@ -97,10 +97,10 @@ class IEEET3Model(ExcBase):
                                    info='Set VRMAX=999 when zero',
                                    )
 
-        ## Checkout what these eqns mean
-        ## What is VS?
-        ## It should be: vref0 = vf0?
-        ## Vref can be a VarService?
+        # TODO: Checkout what these eqns mean
+        # TODO: What is VS?
+        # TODO: It should be: vref0 = vf0?
+        # TODO: Vref can be a VarService?
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
                                 v_str='KA * vf0')
@@ -126,7 +126,7 @@ class IEEET3Model(ExcBase):
                       info='Sensing delay',
                       )
 
-        ## Same structure is ignored by IEEET1
+        # TODO: Same structure is ignored by IEEET1
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
@@ -144,14 +144,15 @@ class IEEET3Model(ExcBase):
                                  info='State 3',
                                  )
 
-        ## State1
+        # TODO: State1
+        self.zero = ConstService('0')
         self.LA1 = LagAntiWindup(u='ue * VB',
-                                T='TE/KE',
-                                K='1/KE',
-                                upper=self.VBMAX,
-                                lower='0',
-                                info='State 1',
-                                )
+                                 T='TE/KE',
+                                 K='1/KE',
+                                 upper=self.VBMAX,
+                                 lower=self.zero,
+                                 info='State 1',
+                                 )
 
         self.WF = Washout(u=self.vout, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
