@@ -1,7 +1,7 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, FlagValue
+from andes.core.service import ConstService, FlagValue, VarService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
@@ -38,6 +38,12 @@ class IEEET3Data(ExcBaseData):
                               tex_name='V_{RMIN}',
                               default=-7.3,
                               unit='p.u.')
+        self.VBMAX = NumParam(info='VB upper limit',
+                              tex_name='V_{BMAX}',
+                              default=18,
+                              unit='p.u.',
+                              vrange=(0, 20),
+                              )
 
         ## info may need change
         self.KE = NumParam(info='Gain added to saturation',
@@ -82,7 +88,7 @@ class IEEET3Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        ## Check if this is approriate for ieeet3
+        ## Why set VRMAX to 999?
         # Set VRMAX to 999 when VRMAX = 0
         self._zVRM = FlagValue(self.VRMAX, value=0,
                                tex_name='z_{VRMAX}',
@@ -91,21 +97,13 @@ class IEEET3Model(ExcBase):
                                    info='Set VRMAX=999 when zero',
                                    )
 
-        ## It seems that IEEET3 does not consider saturation
-        # Saturation
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
-
-        self.Se0 = ConstService(info='Initial saturation output',
-                                tex_name='S_{e0}',
-                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2',
-                                )
-
         ## Checkout what these eqns mean
+        ## What is VS?
+        ## It should be: vref0 = vf0?
+        ## Vref can be a VarService?
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
-                                v_str='KE * vf0 + Se0')
+                                v_str='KA * vf0')
         self.vb0 = ConstService(info='Initial vb',
                                 tex_name='V_{b0}',
                                 v_str='vr0 / KA')
@@ -128,7 +126,7 @@ class IEEET3Model(ExcBase):
                       info='Sensing delay',
                       )
 
-        ## modify vi eqn by IEEET1
+        ## Same structure is ignored by IEEET1
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
@@ -138,41 +136,46 @@ class IEEET3Model(ExcBase):
                         diag_eps=True,
                         )
 
-        ## upper may need modify
-        self.LA = LagAntiWindup(u='ue * (vi - WF_y)',
-                                T=self.TA,
-                                K=self.KA,
-                                upper=self.VRMAXc,
-                                lower=self.VRMIN,
-                                info='Anti-windup lag',
+        self.LA3 = LagAntiWindup(u='ue * (vi - WF_y)',
+                                 T=self.TA,
+                                 K=self.KA,
+                                 upper=self.VRMAXc,
+                                 lower=self.VRMIN,
+                                 info='State 3',
+                                 )
+
+        ## State1
+        self.LA1 = LagAntiWindup(u='ue * VB',
+                                T='TE/KE',
+                                K='1/KE',
+                                upper=self.VBMAX,
+                                lower='0',
+                                info='State 1',
                                 )
-
-        ## may not need
-        self.VFE = Algeb(info='Combined saturation feedback',
-                         tex_name='V_{FE}',
-                         unit='p.u.',
-                         v_str='vfe0',
-                         e_str='ue * (INT_y * KE + Se - VFE)',
-                         diag_eps=True,
-                         )
-
-        self.INT = Integrator(u='ue * (LA_y - VFE)',
-                              T=self.TE,
-                              K=1,
-                              y0=self.vf0,
-                              info='Integrator',
-                              )
-
-        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
-
-        self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
-                        v_str='Se0',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
-                        )
 
         self.WF = Washout(u=self.vout, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
-        self.vout.e_str = 'ue * (INT_y - vout)'
+        self.VTHEV = VarService(tex_name=r'V_{THEV}',
+                                info=r'V_{THEV}',
+                                v_str='Abs(KP * (vd + 1j * vq) + 1j * KI * (Id + 1j * Iq))',
+                                )
+
+        self.A = VarService(tex_name=r'A',
+                            info=r'A',
+                            v_str='(0.78 * XadIfd / VTHEV) ** 2',
+                            )
+
+        self.LT = LessThan(u=self.A, bound='1', equal=True, enable=True, cache=False)
+
+        self.mp = VarService(tex_name='mp',
+                             v_str='VTHEV * sqrt(1 - A) * XadIfd',
+                             )
+
+        self.VB = VarService(tex_name='V_B',
+                             v_str='LT_zi * (mp + LA3_y)',
+                             )
+
+        self.vout.e_str = 'ue * (LA1_y - vout)'
 
 
 class IEEET3(IEEET3Data, IEEET3Model):
