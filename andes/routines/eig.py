@@ -235,7 +235,7 @@ class EIG(BaseRoutine):
             pfactor[:, item] /= W_abs[item]
         pfactor = np.round(pfactor, 5)
 
-        return mu, pfactor, W
+        return mu, pfactor, N, W
 
     def summary(self):
         """
@@ -299,7 +299,7 @@ class EIG(BaseRoutine):
         t1, s = elapsed()
 
         self.calc_As()
-        self.mu, self.pfactors, _ = self.calc_pfactor()
+        self.mu, self.pfactors, self.N, self.W = self.calc_pfactor()
         self._store_stats()
         _, s = elapsed(t1)
 
@@ -339,13 +339,13 @@ class EIG(BaseRoutine):
         n_mu_real, n_mu_imag = list(), list()
 
         for re, im in zip(mu_real, mu_imag):
-            if re == 0:
+            if abs(re) <= self.config.tol:
                 z_mu_real.append(re)
                 z_mu_imag.append(im)
-            elif re > 0:
+            elif re > self.config.tol:
                 p_mu_real.append(re)
                 p_mu_imag.append(im)
-            elif re < 0:
+            elif re < -self.config.tol:
                 n_mu_real.append(re)
                 n_mu_imag.append(im)
 
@@ -355,12 +355,13 @@ class EIG(BaseRoutine):
         if fig is None or ax is None:
             fig, ax = plt.subplots(dpi=dpi)
 
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='green')
         ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
-        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
-        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='red')
         ax.axhline(linewidth=0.5, color='grey', linestyle='--')
         ax.axvline(linewidth=0.5, color='grey', linestyle='--')
 
+        # TODO: Improve the damping and range
         # plot 5% damping lines
         xin = np.arange(left, 0, 0.01)
         yneg = xin / damping
