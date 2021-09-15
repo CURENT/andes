@@ -31,16 +31,28 @@ class EIG(BaseRoutine):
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
-        self.config.add(plot=0)
-        self.config.add_extra("_help", plot="show plot after computation")
+        self.config.add(plot=0, tol=1e-6)
+        self.config.add_extra("_help",
+                              plot="show plot after computation",
+                              tol="numerical tolerance to treat eigenvalues as zeros")
+
         self.config.add_extra("_alt", plot=(0, 1))
 
         # internal flags and storage
-        self.As = None
+        self.As = None     # state matrix after removing the ones associated with zero T consts
         self.Asc = None    # the original complete As without reordering
-        self.mu = None
-        self.part_fact = None
-        self.singular_idx = np.array([], dtype=int)
+        self.mu = None     # eigenvalues
+        self.N = None      # right eigenvectors
+        self.W = None      # left eigenvectors
+        self.pfactors = None
+
+        # --- related to states with zero time constants (zs) ---
+        self.zstate_idx = np.array([], dtype=int)
+        self.nz_counts = None
+
+        # --- statistics --
+        self._stats = None
+
         self.x_name = []
 
     def calc_As(self, dense=True):
@@ -67,23 +79,29 @@ class EIG(BaseRoutine):
         kvxopt.matrix
             state matrix
         """
-        system = self.system
+        dae = self.system.dae
+
         self.find_zero_states()
-        self.x_name = np.array(system.dae.x_name)
+        self.x_name = np.array(dae.x_name)
 
-        self.As = self._calc_state_matrix(system.dae.fx, system.dae.fy,
-                                          system.dae.gx, system.dae.gy, system.dae.Tf,
-                                          dense=dense)
+        self.As = self._reduce(dae.fx, dae.fy,
+                               dae.gx, dae.gy, dae.Tf,
+                               dense=dense)
 
-        if len(self.singular_idx) > 0:
+        if len(self.zstate_idx) > 0:
             self.Asc = self.As
-            self.As = self._calc_state_matrix(*self.reorder_As())
+            self.As = self._reduce(*self._reorder())
 
         return self.As
 
-    def _calc_state_matrix(self, fx, fy, gx, gy, Tf, dense=True):
+    def _reduce(self, fx, fy, gx, gy, Tf, dense=True):
         """
-        Kernel function for calculating state matrix.
+        Reduce algebraic equations (or states associated with zero time constants).
+
+        Returns
+        -------
+        spmatrix
+            The reduced state matrix
         """
         gyx = matrix(gx)
         self.solver.linsolve(gy, gyx)
@@ -96,22 +114,24 @@ class EIG(BaseRoutine):
         else:
             return sparse(iTf * (fx - fy * gyx))
 
-    def reorder_As(self):
+    def _reorder(self):
         """
         reorder As by moving rows and cols associated with zero time constants to the end.
 
         Returns `fx`, `fy`, `gx`, `gy`, `Tf`.
         """
         system = self.system
-        rows = np.arange(system.dae.n, dtype=int)
-        cols = np.arange(system.dae.n, dtype=int)
-        vals = np.ones(system.dae.n, dtype=float)
+        dae = self.system.dae
+
+        rows = np.arange(dae.n, dtype=int)
+        cols = np.arange(dae.n, dtype=int)
+        vals = np.ones(dae.n, dtype=float)
 
         swaps = []
-        bidx = self.non_zeros
-        for ii in range(system.dae.n - self.non_zeros):
-            if ii in self.singular_idx:
-                while (bidx in self.singular_idx):
+        bidx = self.nz_counts
+        for ii in range(dae.n - self.nz_counts):
+            if ii in self.zstate_idx:
+                while (bidx in self.zstate_idx):
                     bidx += 1
                 cols[ii] = bidx
                 rows[bidx] = ii
@@ -121,18 +141,18 @@ class EIG(BaseRoutine):
         for fr, bk in swaps:
             bk_name = self.x_name[bk]
             self.x_name[fr] = bk_name
-        self.x_name = self.x_name[:self.non_zeros]
+        self.x_name = self.x_name[:self.nz_counts]
 
         # compute the permutation matrix for `As` containing non-states
         perm = spmatrix(matrix(vals), matrix(rows), matrix(cols))
         As_perm = perm * sparse(self.As) * perm
         self.As_perm = As_perm
 
-        nfx = As_perm[:self.non_zeros, :self.non_zeros]
-        nfy = As_perm[:self.non_zeros, self.non_zeros:]
-        ngx = As_perm[self.non_zeros:, :self.non_zeros]
-        ngy = As_perm[self.non_zeros:, self.non_zeros:]
-        nTf = np.delete(system.dae.Tf, self.singular_idx)
+        nfx = As_perm[:self.nz_counts, :self.nz_counts]
+        nfy = As_perm[:self.nz_counts, self.nz_counts:]
+        ngx = As_perm[self.nz_counts:, :self.nz_counts]
+        ngy = As_perm[self.nz_counts:, self.nz_counts:]
+        nTf = np.delete(system.dae.Tf, self.zstate_idx)
 
         return nfx, nfy, ngx, ngy, nTf
 
@@ -141,6 +161,7 @@ class EIG(BaseRoutine):
         Calculate eigenvalues and right eigen vectors.
 
         This function is a wrapper to ``np.linalg.eig``.
+        Results are returned but not stored to ``EIG``.
 
         Returns
         -------
@@ -155,12 +176,21 @@ class EIG(BaseRoutine):
         # `mu`: eigenvalues, `N`: right eigenvectors with each column corr. to one eigvalue
         mu, N = np.linalg.eig(As)
 
-        mu_real = mu.real
-        self.n_positive = np.count_nonzero(mu_real > 0)
-        self.n_zeros = np.count_nonzero(mu_real == 0)
-        self.n_negative = np.count_nonzero(mu_real < 0)
-
         return mu, N
+
+    def _store_stats(self):
+        """
+        Count and store the number of eigenvalues with positive, zero,
+        and negative real parts using ``self.mu``.
+        """
+
+        mu_real = self.mu.real
+
+        self.n_positive = np.count_nonzero(mu_real > self.config.tol)
+        self.n_zeros = np.count_nonzero(abs(mu_real) <= self.config.tol)
+        self.n_negative = np.count_nonzero(mu_real < self.config.tol)
+
+        return True
 
     def calc_pfactor(self, As=None):
         """
@@ -222,15 +252,15 @@ class EIG(BaseRoutine):
         Find the indices of states associated with zero time constants in ``x``.
         """
         system = self.system
-        self.singular_idx = np.array([], dtype=int)
+        self.zstate_idx = np.array([], dtype=int)
 
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
 
-            self.singular_idx = np.where(system.dae.Tf == 0)[0]
-            logger.info("%d states are associated with zero time constants. ", len(self.singular_idx))
-            logger.debug([system.dae.x_name[i] for i in self.singular_idx])
+            self.zstate_idx = np.where(system.dae.Tf == 0)[0]
+            logger.info("%d states are associated with zero time constants. ", len(self.zstate_idx))
+            logger.debug([system.dae.x_name[i] for i in self.zstate_idx])
 
-        self.non_zeros = system.dae.n - len(self.singular_idx)
+        self.nz_counts = system.dae.n - len(self.zstate_idx)
 
     def _pre_check(self):
         """
@@ -269,7 +299,8 @@ class EIG(BaseRoutine):
         t1, s = elapsed()
 
         self.calc_As()
-        self.mu, self.part_fact, _ = self.calc_pfactor()
+        self.mu, self.pfactors, _ = self.calc_pfactor()
+        self._store_stats()
         _, s = elapsed(t1)
 
         logger.info('  Positive  %6g', self.n_positive)
@@ -424,7 +455,7 @@ class EIG(BaseRoutine):
         # obtain most associated variables
         var_assoc = []
         for prow in range(n_states):
-            temp_row = self.part_fact[prow, :]
+            temp_row = self.pfactors[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
             var_assoc.append(x_name[name_idx])
 
@@ -474,7 +505,7 @@ class EIG(BaseRoutine):
                     idx + 1, n_block))
                 header.append(numeral[start:end])
                 rowname.append(x_name)
-                data.append(self.part_fact[start:end, :])
+                data.append(self.pfactors[start:end, :])
 
         dump_data(text, header, rowname, data, self.system.files.eig)
         logger.info('Report saved to "%s".', self.system.files.eig)
