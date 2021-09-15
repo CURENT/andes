@@ -155,6 +155,11 @@ class EIG(BaseRoutine):
         # `mu`: eigenvalues, `N`: right eigenvectors with each column corr. to one eigvalue
         mu, N = np.linalg.eig(As)
 
+        mu_real = mu.real
+        self.n_positive = np.count_nonzero(mu_real > 0)
+        self.n_zeros = np.count_nonzero(mu_real == 0)
+        self.n_negative = np.count_nonzero(mu_real < 0)
+
         return mu, N
 
     def calc_pfactor(self, As=None):
@@ -222,7 +227,7 @@ class EIG(BaseRoutine):
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
 
             self.singular_idx = np.where(system.dae.Tf == 0)[0]
-            logger.info("System contains %d zero time constants. ", len(self.singular_idx))
+            logger.info("%d states are associated with zero time constants. ", len(self.singular_idx))
             logger.debug([system.dae.x_name[i] for i in self.singular_idx])
 
         self.non_zeros = system.dae.n - len(self.singular_idx)
@@ -267,6 +272,9 @@ class EIG(BaseRoutine):
         self.mu, self.part_fact, _ = self.calc_pfactor()
         _, s = elapsed(t1)
 
+        logger.info('System contains %g positive, %g zero, and %g negative eigenvalues.',
+                    self.n_positive, self.n_zeros, self.n_negative)
+
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
         if not self.system.files.no_output:
@@ -292,8 +300,8 @@ class EIG(BaseRoutine):
 
         if mu is None:
             mu = self.mu
-        mu_real = mu.real()
-        mu_imag = mu.imag()
+        mu_real = mu.real
+        mu_imag = mu.imag
         p_mu_real, p_mu_imag = list(), list()
         z_mu_real, z_mu_imag = list(), list()
         n_mu_real, n_mu_imag = list(), list()
@@ -308,13 +316,6 @@ class EIG(BaseRoutine):
             elif re < 0:
                 n_mu_real.append(re)
                 n_mu_imag.append(im)
-
-        if len(p_mu_real) > 0:
-            logger.warning(
-                'System is not stable due to %d positive eigenvalues.', len(p_mu_real))
-        else:
-            logger.info(
-                'System is small-signal stable in the initial neighborhood.')
 
         if latex:
             set_latex()
@@ -375,9 +376,6 @@ class EIG(BaseRoutine):
         # --- statistics ---
         n_states = len(self.mu)
         mu_real = self.mu.real
-        n_positive = np.count_nonzero(mu_real > 0)
-        n_zeros = np.count_nonzero(mu_real == 0)
-        n_negative = np.count_nonzero(mu_real < 0)
 
         numeral = [''] * n_states
         for idx, item in enumerate(range(n_states)):
@@ -404,7 +402,7 @@ class EIG(BaseRoutine):
                 freq[idx] = abs(item.imag / 2 / pi)
                 damping[idx] = -div(item.real, abs(item)) * 100
 
-        return (n_positive, n_zeros, n_negative), freq, ufreq, damping, numeral
+        return freq, ufreq, damping, numeral
 
     def report(self, x_name=None, **kwargs):
         """
@@ -420,7 +418,7 @@ class EIG(BaseRoutine):
         n_states = len(self.mu)
         mu_real = self.mu.real
         mu_imag = self.mu.imag
-        stats, freq, ufreq, damping, numeral = self.post_process()
+        freq, ufreq, damping, numeral = self.post_process()
 
         # obtain most associated variables
         var_assoc = []
@@ -445,7 +443,7 @@ class EIG(BaseRoutine):
         text.append('STATISTICS\n')
         header.append([''])
         rowname.append(['Positives', 'Zeros', 'Negatives'])
-        data.append(stats)
+        data.append((self.n_positive, self.n_zeros, self.n_negative))
 
         text.append('EIGENVALUE DATA\n')
         header.append([
