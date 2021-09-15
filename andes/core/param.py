@@ -44,6 +44,13 @@ class BaseParam:
         True if the parameter will be exported when dumping data into files. True for most parameters.
         False for ``BackRef``.
 
+    Other Parameters
+    ----------------
+    iconvert : Callable
+        Converter to be applied to input data when a device is being added.
+    oconvert : callable
+        Converter to be applied to internal data when outputting.
+
     Attributes
     ----------
     v : list
