@@ -469,9 +469,10 @@ class EIG(BaseRoutine):
         data.append(None)
         text.append('')
 
-        header.append([''])
-        rowname.append(['EIGENVALUE ANALYSIS REPORT'])
-        data.append('')
+        text.append('EIGENVALUE ANALYSIS REPORT')
+        header.append([])
+        rowname.append([])
+        data.append([])
 
         text.append('STATISTICS\n')
         header.append([''])

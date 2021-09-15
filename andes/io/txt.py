@@ -1,4 +1,6 @@
 import os
+from typing import Iterable
+
 from andes.shared import np
 
 
@@ -13,12 +15,19 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
             if Text:
                 fid.writelines(Text)
 
+            # determine the width for the first column (usually names)
+            width_first = width
+            if isinstance(Rowname, Iterable) and len(Rowname) > 0:
+                col1_width = max([len(item) for item in Rowname])
+                if col1_width > width_first:
+                    width_first = col1_width
+
             # Write Header
             if Header:
                 ncol = len(Header)
-                s = ' ' * width
+                s = ' ' * width_first
                 s += '{:>{width}s}' * ncol + '\n'
-                fid.writelines(s.format(*Header, width=width))  # Mind the asterisk
+                fid.writelines(s.format(*Header, width=width))
                 fid.write('\n')
 
             # Append Rowname to Data
@@ -40,7 +49,7 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
                         print(Data)
                         print('Unexpected Data during output, in formats/txt.py')
 
-                    s = '{:{width}s}'  # for row header
+                    s = '{:{width_first}s}'  # for row header
                     for ii, col in enumerate(out):
                         if isinstance(col, (int, float)):
                             s += '{:>{width}.{precision}g}'
@@ -57,5 +66,5 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
 
                     fid.write(
                         s.format(
-                            str(item), *out, width=width, precision=precision))
+                            str(item), *out, width_first=width_first, width=width, precision=precision))
             fid.write('\n')
