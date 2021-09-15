@@ -272,8 +272,9 @@ class EIG(BaseRoutine):
         self.mu, self.part_fact, _ = self.calc_pfactor()
         _, s = elapsed(t1)
 
-        logger.info('System contains %g positive, %g zero, and %g negative eigenvalues.',
-                    self.n_positive, self.n_zeros, self.n_negative)
+        logger.info('  Positive  %6g', self.n_positive)
+        logger.info('  Zeros     %6g', self.n_zeros)
+        logger.info('  Negative  %6g', self.n_negative)
 
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
@@ -292,7 +293,7 @@ class EIG(BaseRoutine):
         return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=150, show=True, latex=True):
+             line_width=0.5, dpi=100, show=True, latex=True):
         """
         Plot utility for eigenvalues in the S domain.
         """
