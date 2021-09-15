@@ -12,6 +12,11 @@ from andes.routines import routine_cli
 
 logger = logging.getLogger(__name__)
 
+command_aliases = {
+    'prepare': ['prep'],
+    'selftest': ['st'],
+    }
+
 
 def create_parser():
     """
@@ -122,7 +127,7 @@ def create_parser():
     misc.add_argument('-r', '--recursive', help='Recursively clean outputs (combined useage with --clean)',
                       action='store_true')
 
-    prep = sub_parsers.add_parser('prepare')  # NOQA
+    prep = sub_parsers.add_parser('prepare', aliases=command_aliases['prepare'])
     prep_mode = prep.add_mutually_exclusive_group()
     prep_mode.add_argument('-q', '--quick', action='store_true',
                            help='quick codegen by skipping pretty prints')
@@ -135,8 +140,7 @@ def create_parser():
     prep.add_argument('--incubate', help='Save generated pycode under the ANDES code directory to avoid codegen',
                       action='store_true')
 
-
-    selftest = sub_parsers.add_parser('selftest')  # NOQA
+    selftest = sub_parsers.add_parser('selftest', aliases=command_aliases['selftest'])
     selftest.add_argument('-q', '--quick', action='store_true',
                           help='quick selftest by skipping codegen')
 
@@ -188,5 +192,10 @@ def main():
         parser.parse_args(sys.argv.append('--help'))
 
     else:
-        func = getattr(module, args.command)
+        cmd = args.command
+        for fullcmd, aliases in command_aliases.items():
+            if cmd in aliases:
+                cmd = fullcmd
+
+        func = getattr(module, cmd)
         return func(cli=True, **vars(args))

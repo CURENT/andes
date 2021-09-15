@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.4.3 (2021-09-xx)
+```````````````````
+- Added aliases ``andes st`` and ``andes prep`` for
+  ``andes selftest`` and ``andes prepare``.
+
 v1.4.2 (2021-09-12)
 ```````````````````
 - Bug fixes
