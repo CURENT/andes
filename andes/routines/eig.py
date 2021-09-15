@@ -17,7 +17,7 @@ from andes.variables.report import report_info
 from andes.plot import set_latex
 
 from andes.shared import matrix, spmatrix, sparse, plt, mpl
-from andes.shared import mul, div, spdiag, gesv
+from andes.shared import div, spdiag
 
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ class EIG(BaseRoutine):
     """
     Eigenvalue analysis routine
     """
+
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
@@ -36,7 +37,7 @@ class EIG(BaseRoutine):
 
         # internal flags and storage
         self.As = None
-        self.eigs = None
+        self.Asc = None    # the original complete As without reordering
         self.mu = None
         self.part_fact = None
         self.singular_idx = np.array([], dtype=int)
@@ -77,6 +78,7 @@ class EIG(BaseRoutine):
         if len(self.singular_idx) > 0:
             self.Asc = self.As
             self.As = self._calc_state_matrix(*self.reorder_As())
+
         return self.As
 
     def _calc_state_matrix(self, fx, fy, gx, gy, Tf, dense=True):
@@ -134,30 +136,49 @@ class EIG(BaseRoutine):
 
         return nfx, nfy, ngx, ngy, nTf
 
-    def calc_eigvals(self):
+    def calc_eig(self, As=None):
         """
-        Solve eigenvalues of the state matrix ``self.As``
+        Calculate eigenvalues and right eigen vectors.
+
+        This function is a wrapper to ``np.linalg.eig``.
 
         Returns
         -------
-        None
-        """
-        self.eigs = np.linalg.eigvals(self.As)
-        return self.eigs
-
-    def calc_part_factor(self, As=None):
-        """
-        Compute participation factor of states in eigenvalues.
-
-        Returns
-        -------
-
+        np.array(dtype=complex)
+            eigenvalues
+        np.array()
+            right eigenvectors
         """
         if As is None:
             As = self.As
 
         # `mu`: eigenvalues, `N`: right eigenvectors with each column corr. to one eigvalue
         mu, N = np.linalg.eig(As)
+
+        return mu, N
+
+    def calc_pfactor(self, As=None):
+        """
+        Compute participation factor of states in eigenvalues.
+
+        Each row in the participation factor correspond to one state,
+        and each column correspond to one mode.
+
+        Parameters
+        ----------
+        As : np.array or None
+            State matrix to process. If None, use ``self.As``.
+
+        Returns
+        -------
+        np.array(dtype=complex)
+            eigenvalues
+        np.array
+            participation factor matrix
+        """
+
+        mu, N = self.calc_eig(As)
+
         n_state = len(mu)
 
         # --- calculate the left eig vector and store to ``W```
@@ -169,17 +190,17 @@ class EIG(BaseRoutine):
         W = WT.T
 
         # --- calculate participation factor ---
-        partfact = np.abs(W) * np.abs(N)
+        pfactor = np.abs(W) * np.abs(N)
         b = np.ones(n_state)
-        W_abs = b @ partfact
-        partfact = partfact.T
+        W_abs = b @ pfactor
+        pfactor = pfactor.T
 
         # --- normalize participation factor ---
         for item in range(n_state):
-            partfact[:, item] /= W_abs[item]
-        partfact = np.round(partfact, 5)
+            pfactor[:, item] /= W_abs[item]
+        pfactor = np.round(pfactor, 5)
 
-        return self.mu, self.part_fact
+        return mu, pfactor, W
 
     def summary(self):
         """
@@ -243,15 +264,15 @@ class EIG(BaseRoutine):
         t1, s = elapsed()
 
         self.calc_As()
-        self.mu, self.part_fact = self.calc_part_factor()
+        self.mu, self.part_fact, _ = self.calc_pfactor()
         _, s = elapsed(t1)
 
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
         if not self.system.files.no_output:
             self.report()
-            if system.options.get('state_matrix') is True:
-                self.export_state_matrix()
+            if system.options.get('state_matrix'):
+                self.export_mat()
 
         if self.config.plot:
             self.plot()
@@ -323,7 +344,7 @@ class EIG(BaseRoutine):
             plt.show()
         return fig, ax
 
-    def export_state_matrix(self):
+    def export_mat(self):
         """
         Export state matrix to a ``<CaseName>_As.mat`` file with the variable name ``As``, where
         ``<CaseName>`` is the test case name.
@@ -337,6 +358,7 @@ class EIG(BaseRoutine):
         """
         system = self.system
         out = {'As': self.As,
+               'Asc': self.Asc,
                'x_name': np.array(system.dae.x_name, dtype=object),
                'x_tex_name': np.array(system.dae.x_tex_name, dtype=object),
                }
@@ -344,6 +366,45 @@ class EIG(BaseRoutine):
         scipy.io.savemat(system.files.mat, mdict=out)
         logger.info('State matrix saved to "%s"', system.files.mat)
         return True
+
+    def post_process(self):
+        """
+        Post processing of eigenvalues.
+        """
+
+        # --- statistics ---
+        n_states = len(self.mu)
+        mu_real = self.mu.real
+        n_positive = np.count_nonzero(mu_real > 0)
+        n_zeros = np.count_nonzero(mu_real == 0)
+        n_negative = np.count_nonzero(mu_real < 0)
+
+        numeral = [''] * n_states
+        for idx, item in enumerate(range(n_states)):
+            if mu_real[idx] == 0:
+                marker = '*'
+            elif mu_real[idx] > 0:
+                marker = '**'
+            else:
+                marker = ''
+            numeral[idx] = '#' + str(idx + 1) + marker
+
+        # compute frequency, un-damped frequency and damping
+        freq = np.zeros(n_states)
+        ufreq = np.zeros(n_states)
+        damping = np.zeros(n_states)
+
+        for idx, item in enumerate(self.mu):
+            if item.imag == 0:
+                freq[idx] = 0
+                ufreq[idx] = 0
+                damping[idx] = 0
+            else:
+                ufreq[idx] = abs(item) / 2 / pi
+                freq[idx] = abs(item.imag / 2 / pi)
+                damping[idx] = -div(item.real, abs(item)) * 100
+
+        return (n_positive, n_zeros, n_negative), freq, ufreq, damping, numeral
 
     def report(self, x_name=None, **kwargs):
         """
@@ -356,52 +417,19 @@ class EIG(BaseRoutine):
         if x_name is None:
             x_name = self.x_name
 
-        text, header, rowname, data = list(), list(), list(), list()
-
-        neig = len(self.mu)
+        n_states = len(self.mu)
         mu_real = self.mu.real
         mu_imag = self.mu.imag
-        n_positive = sum(1 for x in mu_real if x > 0)
-        n_zeros = sum(1 for x in mu_real if x == 0)
-        n_negative = sum(1 for x in mu_real if x < 0)
-
-        numeral = []
-        for idx, item in enumerate(range(neig)):
-            if mu_real[idx] == 0:
-                marker = '*'
-            elif mu_real[idx] > 0:
-                marker = '**'
-            else:
-                marker = ''
-            numeral.append('#' + str(idx + 1) + marker)
-
-        # compute frequency, un-damped frequency and damping
-        freq = [0] * neig
-        ufreq = [0] * neig
-        damping = [0] * neig
-        for idx, item in enumerate(self.mu):
-            if item.imag == 0:
-                freq[idx] = 0
-                ufreq[idx] = 0
-                damping[idx] = 0
-            else:
-                ufreq[idx] = abs(item) / 2 / pi
-                freq[idx] = abs(item.imag / 2 / pi)
-                damping[idx] = -div(item.real, abs(item)) * 100
+        stats, freq, ufreq, damping, numeral = self.post_process()
 
         # obtain most associated variables
         var_assoc = []
-        for prow in range(neig):
+        for prow in range(n_states):
             temp_row = self.part_fact[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
             var_assoc.append(x_name[name_idx])
 
-        pf = []
-        for prow in range(neig):
-            temp_row = []
-            for pcol in range(neig):
-                temp_row.append(round(self.part_fact[prow, pcol], 5))
-            pf.append(temp_row)
+        text, header, rowname, data = list(), list(), list(), list()
 
         # opening info section
         text.append(report_info(self.system))
@@ -417,7 +445,7 @@ class EIG(BaseRoutine):
         text.append('STATISTICS\n')
         header.append([''])
         rowname.append(['Positives', 'Zeros', 'Negatives'])
-        data.append([n_positive, n_zeros, n_negative])
+        data.append(stats)
 
         text.append('EIGENVALUE DATA\n')
         header.append([
@@ -437,7 +465,7 @@ class EIG(BaseRoutine):
              damping])
 
         n_cols = 7  # columns per block
-        n_block = int(ceil(neig / n_cols))
+        n_block = int(ceil(n_states / n_cols))
 
         if n_block <= 100:
             for idx in range(n_block):
@@ -447,7 +475,7 @@ class EIG(BaseRoutine):
                     idx + 1, n_block))
                 header.append(numeral[start:end])
                 rowname.append(x_name)
-                data.append(pf[start:end])
+                data.append(self.part_fact[start:end, :])
 
         dump_data(text, header, rowname, data, self.system.files.eig)
         logger.info('Report saved to "%s".', self.system.files.eig)

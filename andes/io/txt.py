@@ -26,15 +26,16 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
             if Rowname is not None:
                 ncol = 0
                 for idx, item in enumerate(Rowname):  # write by row as always
-                    if not Data:
+                    if Data is None:
                         out = ''
-                    elif isinstance(Data, (int, float)):
+                    elif isinstance(Data, (int, float, str)):
                         out = [Data]
-                    elif isinstance(Data[0], (int, float)):  # is a list of numbers
-                        out = [Data[idx]]
-                    elif isinstance(Data[0], (list, np.ndarray)):  # list of list in Data
-                        ncol = len(Data)
-                        out = [Data[i][idx] for i in range(ncol)]
+                    elif isinstance(Data, (list, tuple, np.ndarray)):
+                        if isinstance(Data[0], (int, float)):  # is a list of numbers
+                            out = [Data[idx]]
+                        elif isinstance(Data[0], (list, np.ndarray)):  # list of list in Data
+                            ncol = len(Data)
+                            out = [Data[i][idx] for i in range(ncol)]
                     else:
                         print(Data)
                         print('Unexpected Data during output, in formats/txt.py')
