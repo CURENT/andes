@@ -180,10 +180,16 @@ class IEEET3Model(ExcBase):
 class IEEET3(IEEET3Data, IEEET3Model):
     '''
     Reference:
+
     [1] PowerWorld, Exciter IEEET3, [Online],
+
+    [2] NEPLAN, Exciters Models, [Online],
+
     Available:
 
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20IEEET3.htm
+    
+    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     '''
     def __init__(self, system, config):
         IEEET3Data.__init__(self)
