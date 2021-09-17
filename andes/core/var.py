@@ -37,7 +37,7 @@ class BaseVar:
         instead.
     discrete : Discrete
         Associated discrete component. Will call `check_var` on
-        the discrete component.
+        the discrete component before initializing.
 
     Attributes
     ----------
