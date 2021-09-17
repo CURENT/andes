@@ -326,6 +326,69 @@ class PIController(Block):
                        f'{self.name}_xi - {self.name}_y'
 
 
+class PIDController(Block):
+    """
+    Proportional Integral Derivative Controller.
+
+    The controller takes an error signal as the input.
+    It takes an optional `ref` signal, which will be subtracted from the input.
+
+
+    Parameters
+    ----------
+    u : BaseVar
+        The input variable instance
+    kp : BaseParam
+        The proportional gain parameter instance
+    ki : [type]
+        The integral gain parameter instance
+    kd : BaseParam
+        The derivative gain parameter instance
+    """
+
+    def __init__(self, u, kp, ki, kd, ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        Block.__init__(self, name=name, tex_name=tex_name, info=info)
+
+        self.u = dummify(u)
+        self.kp = dummify(kp)
+        self.ki = dummify(ki)
+        self.kd = dummify(kd)
+        self.ref = dummify(ref)
+        self.x0 = dummify(x0)
+
+        self.xi = State(info="Integrator output", tex_name='xi')
+        self.xd = Washout(info='Derivative output', tex_name='xd',
+                          K=self.kd, T=self.kd)
+        self.y = Algeb(info="PI output", tex_name='y')
+
+        self.vars = OrderedDict([('xi', self.xi), ('xd', self.xd), ('y', self.y)])
+
+    def define(self):
+        r"""
+        Define equations for the PID Controller.
+
+        Notes
+        -----
+        One state variable ``xi``, one Washout ``xd``, and one algebraic variable ``y`` are added.
+
+        Equations implemented are
+
+        .. math ::
+            \dot{x_i} &= k_i * (u - ref) \\
+            xd &= Washout(u - ref)
+            y &= x_i + k_p * (u - ref) + xd
+        """
+
+        self.xi.v_str = f'{self.x0.name}'
+        self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
+
+        self.xd.u = f'{self.u.name} - {self.ref.name}'
+
+        self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                       f'{self.name}_xi + {self.name}_xd_y - {self.name}_y'
+
+
 class PIAWHardLimit(PIController):
     """
     PI controller with anti-windup limiter on the integrator and
@@ -374,6 +437,63 @@ class PIAWHardLimit(PIController):
 
         self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
                          f'{self.name}_xi - {self.name}_yul'
+
+        # overwrite existing `y` equations
+        self.y.v_str = f'{self.name}_yul * {self.name}_hl_zi + ' \
+                       f'{self.lower.name} * {self.name}_hl_zl + ' \
+                       f'{self.upper.name} * {self.name}_hl_zu'
+
+        self.y.e_str = self.y.v_str + f' - {self.name}_y'
+
+
+class PIDAWHardLimit(PIController):
+    """
+    PID controller with anti-windup limiter on the integrator and
+    hard limit on the output.
+
+    Limits ``lower`` and ``upper`` are on the final output,
+    and ``aw_lower`` ``aw_upper`` are on the integrator.
+
+    """
+    def __init__(self, u, kp, ki, kd, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+
+        PIDController.__init__(self, u=u, kp=kp, ki=ki, kd=kd, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info,
+                              )
+
+        self.lower = dummify(lower)
+        self.upper = dummify(upper)
+        self.aw_lower = dummify(aw_lower)
+        self.aw_upper = dummify(aw_upper)
+
+        self.aw = AntiWindup(u=self.xi, lower=self.aw_lower, upper=self.aw_upper,
+                             no_lower=no_lower, no_upper=no_upper, tex_name='aw'
+                             )
+
+        self.yul = Algeb("PID unlimited output", tex_name='y^{ul}',
+                         discrete=self.aw,
+                         )
+
+        self.hl = HardLimiter(u=self.yul, lower=self.lower, upper=self.upper,
+                              no_lower=no_lower, no_upper=no_upper, tex_name='hl',
+                              )
+
+        # the sequence affect the initialization order
+        self.vars = OrderedDict([('xi', self.xi), ('xd', self.xd),
+                                 ('aw', self.aw), ('yul', self.yul),
+                                 ('hl', self.hl), ('y', self.y)])
+
+        self.y.discrete = self.hl
+
+    def define(self):
+
+        PIDController.define(self)
+
+        self.yul.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+
+        self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                         f'{self.name}_xi + {self.name}_xd_y - {self.name}_yul'
 
         # overwrite existing `y` equations
         self.y.v_str = f'{self.name}_yul * {self.name}_hl_zi + ' \
