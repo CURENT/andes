@@ -36,8 +36,9 @@ class BaseVar:
         LaTeX-formatted variable name. If is None, use `name`
         instead.
     discrete : Discrete
-        Associated discrete component. Will call `check_var` on
-        the discrete component before initializing.
+        Discrete component on which thi variable depends on.
+        ANDES will call `check_var()` of the discrete component
+        before initializing this variable.
 
     Attributes
     ----------
