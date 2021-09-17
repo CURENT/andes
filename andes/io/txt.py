@@ -18,9 +18,9 @@ def dump_data(text, header, rowname, data, file, width=14, precision=5):
             # determine the width for the first column (usually names)
             width_first = width
             if isinstance(Rowname, Iterable) and len(Rowname) > 0:
-                col1_width = max([len(item) for item in Rowname])
-                if col1_width > width_first:
-                    width_first = col1_width
+                for item in Rowname:
+                    if isinstance(item, Iterable) and len(item) > width_first:
+                        width_first = len(item)
 
             # Write Header
             if Header:
