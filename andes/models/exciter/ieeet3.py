@@ -96,9 +96,9 @@ class IEEET3Model(ExcBase):
                                    )
 
         # TODO: Checkout what these eqns mean
-        # TODO: What is VS?
-        # TODO: It should be: vref0 = vf0?
-        # TODO: Vref can be a VarService?
+        # TODO: What is VS? From PSS.
+        # TODO: It should be: vref0 = vf0? No, EFD = vf0.
+        # TODO: Vref can be a VarService? No, it will degrade DAE.
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
                                 v_str='KA * vf0')
@@ -124,7 +124,7 @@ class IEEET3Model(ExcBase):
                       info='Sensing delay',
                       )
 
-        # TODO: Same structure is ignored by IEEET1
+        # TODO: Same structure are ignored by IEEET1
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
@@ -188,7 +188,7 @@ class IEEET3(IEEET3Data, IEEET3Model):
     Available:
 
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20IEEET3.htm
-    
+
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     '''
     def __init__(self, system, config):
