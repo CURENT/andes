@@ -33,30 +33,6 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
-    def store(self, t, x, y, *, z=None, f=None, h=None, i=None,):
-        """
-        Store t, x, y, and z in internal storage, respectively.
-
-        Parameters
-        ----------
-        t : float
-            simulation time
-        x, y : array-like
-            array data for states and algebraic variables
-        z : array-like or None
-            discrete flags data
-        """
-        self._xs[t] = np.array(x)
-        self._ys[t] = np.array(y)
-        if z is not None:
-            self._zs[t] = np.array(z)
-        if f is not None:
-            self._fs[t] = np.array(f)
-        if h is not None:
-            self._hs[t] = np.array(h)
-        if i is not None:
-            self._is[t] = np.array(i)
-
     def unpack_np(self):
         """
         Unpack dict data into numpy arrays.
@@ -414,6 +390,31 @@ class DAE:
         for i in range(len(m_after)):
             if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
                 raise KeyError
+
+    def store(self):
+        """
+        Store values and equations to in internal TimeSeries storage.
+        """
+        ts = self.ts
+        t = self.t.tolist()
+        tds = self.system.TDS
+
+        z_vals = self.system.get_z(self.system.exist.pflow_tds) if tds.config.store_z else None
+        f_vals = self.f if tds.config.store_f else None
+        h_vals = self.h if tds.config.store_h else None
+        i_vals = self.i if tds.config.store_i else None
+
+        ts._xs[t] = np.array(self.x)
+        ts._ys[t] = np.array(self.y)
+
+        if z_vals is not None:
+            ts._zs[t] = np.array(z_vals)
+        if f_vals is not None:
+            ts._fs[t] = np.array(f_vals)
+        if h_vals is not None:
+            ts._hs[t] = np.array(h_vals)
+        if i_vals is not None:
+            ts._is[t] = np.array(i_vals)
 
     def resize_arrays(self):
         """

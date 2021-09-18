@@ -126,7 +126,6 @@ class System:
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
-                                     ('store_z', 0),
                                      ('ipadd', 1),
                                      ('seed', 'None'),
                                      ('diag_eps', 1e-8),
@@ -145,7 +144,6 @@ class System:
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
                               mva='system base MVA',
-                              store_z='store limiter status in TDS output',
                               ipadd='use spmatrix.ipadd if available',
                               seed='seed (or None) for random number generator',
                               diag_eps='small value for Jacobian diagonals',
@@ -161,7 +159,6 @@ class System:
         self.config.add_extra("_alt",
                               freq="float",
                               mva="float",
-                              store_z=(0, 1),
                               ipadd=(0, 1),
                               seed='int or None',
                               warn_limits=(0, 1),
@@ -606,7 +603,7 @@ class System:
                     self.dae.x_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
 
             # add discrete flag names
-            if self.config.store_z == 1:
+            if self.TDS.config.store_z == 1:
                 for item in mdl.discrete.values():
                     if mdl.flags.initialized:
                         continue
@@ -1274,7 +1271,7 @@ class System:
         -------
         numpy.array
         """
-        if self.config.store_z != 1:
+        if self.TDS.config.store_z != 1:
             return None
 
         if len(self.dae.z) != self.dae.o:
@@ -1289,12 +1286,6 @@ class System:
                 ii += mdl.n
 
         return self.dae.z
-
-    def get_ext_fg(self, model: OrderedDict):
-        """
-        Get the right-hand side of the external equations.
-        """
-        pass
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
