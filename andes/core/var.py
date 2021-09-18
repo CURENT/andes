@@ -76,13 +76,14 @@ class BaseVar:
         self.owner = None  # instance of the owner Model
         self.id = None     # variable internal index inside a model (assigned in run time)
 
-        self.v_str = v_str  # equation string (v = v_str) for variable initialization
+        self.v_str = v_str    # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
-        self.e_str = e_str  # string for symbolic equation
+        self.e_str = e_str    # equation string
 
         self.discrete = discrete
-        self.v_setter = v_setter  # True if this variable sets the variable value
-        self.e_setter = e_setter  # True if this var sets the equation value
+        self.v_setter = v_setter        # True if this variable sets the variable value
+        self.e_setter = e_setter        # True if this var sets the equation value
+
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
@@ -103,6 +104,9 @@ class BaseVar:
 
         self.v: np.ndarray = np.array([], dtype=float)  # variable value array
         self.e: np.ndarray = np.array([], dtype=float)  # equation value array
+
+        self.vnames: np.ndarray = np.array([], dtype=object)  # names of each variable
+        self.enames: np.ndarray = np.array([], dtype=object)  # names of each equation
 
         # internal flags
         # NOTE:
