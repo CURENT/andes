@@ -11,6 +11,8 @@ from andes.shared import pd, spmatrix, jac_names
 logger = logging.getLogger(__name__)
 
 
+# TODO: Separate array data and Triplets
+
 class DAETimeSeries:
     """
     DAE time series data.
@@ -446,6 +448,29 @@ class DAE:
         else:
             array = array[0:new_size]
         return array
+
+    def alloc_or_extend_names(self):
+        """
+        Allocate empty lists for names for the given size.
+        """
+        specs = {'x_name': self.n,
+                 'y_name': self.m,
+                 'h_name': self.p,
+                 'i_name': self.q,
+                 'x_tex_name': self.n,
+                 'y_tex_name': self.m,
+                 'h_tex_name': self.p,
+                 'i_tex_name': self.q,
+                 }
+
+        for name, size in specs.items():
+            length = len(self.__dict__[name])
+            if length > 0 and length <= size:
+                self.__dict__[name].extend([''] * (size - length))
+            elif length == 0:
+                self.__dict__[name] = [''] * size
+            else:
+                raise NotImplementedError("Does not know how to shrink arrays")
 
     @property
     def xy(self):
