@@ -30,7 +30,7 @@ jobs:
         pytest --log-cli-level=10
     - name: Test notebooks.
       run: |
-        pytest --nbmake -n=auto examples --ignore=examples/verification
+        pytest --log-cli-level=10 --nbmake -n=auto examples --ignore=examples/verification
     - name: Build a distribution if tagged
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
