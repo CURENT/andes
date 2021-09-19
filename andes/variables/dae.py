@@ -209,8 +209,8 @@ class DAE:
         self.p, self.q = 0, 0
 
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
-        self.f, self.g = np.array([]), np.array([])
-        self.h, self.i = np.array([]), np.array([])
+        self.f, self.g = np.array([]), np.array([])  # RHS of equations
+        self.h, self.i = np.array([]), np.array([])  # RHS of external equations
 
         # `self.Tf` is the time-constant array for differential equations
         self.Tf = np.array([])

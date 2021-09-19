@@ -577,41 +577,20 @@ class System:
 
     def set_dae_names(self, models):
         """
-        Set variable names for differential and algebraic variables, and discrete flags.
+        Set variable names for differential and algebraic variables,
+        right-hand side of external equations, and discrete flags.
         """
-        def append_model_name(model_name, idx):
-            out = ''
-            if isinstance(idx, str) and (model_name in idx):
-                out = idx
-            else:
-                out = f'{model_name} {idx}'
-
-            # replaces `_` with space for LaTeX to continue
-            out = out.replace('_', ' ')
-            return out
 
         for mdl in models.values():
-            mdl_name = mdl.class_name
-            idx = mdl.idx
-            for name, item in mdl.algebs.items():
-                for id, addr in zip(idx.v, item.a):
-                    self.dae.y_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
-                    self.dae.y_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
-            for name, item in mdl.states.items():
-                for id, addr in zip(idx.v, item.a):
-                    self.dae.x_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
-                    self.dae.x_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
+            _set_xy_name(mdl, mdl.states, (self.dae.x_name, self.dae.x_tex_name))
+            _set_xy_name(mdl, mdl.algebs, (self.dae.y_name, self.dae.y_tex_name))
+
+            _set_hi_name(mdl, mdl.states_ext, (self.dae.h_name, self.dae.h_tex_name))
+            _set_hi_name(mdl, mdl.algebs_ext, (self.dae.i_name, self.dae.i_tex_name))
 
             # add discrete flag names
             if self.TDS.config.store_z == 1:
-                for item in mdl.discrete.values():
-                    if mdl.flags.initialized:
-                        continue
-                    for name, tex_name in zip(item.get_names(), item.get_tex_names()):
-                        for id in idx.v:
-                            self.dae.z_name.append(f'{name} {append_model_name(mdl_name, id)}')
-                            self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
-                            self.dae.o += 1
+                _set_z_name(mdl, self.dae, (self.dae.z_name, self.dae.z_tex_name))
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
@@ -1947,3 +1926,68 @@ def load_pycode_dot_andes():
             pass
 
     return pycode
+
+
+def _append_model_name(model_name, idx):
+    """
+    Helper function for appending ``idx`` to model names.
+    Removes duplicate model name strings.
+    """
+
+    out = ''
+    if isinstance(idx, str) and (model_name in idx):
+        out = idx
+    else:
+        out = f'{model_name} {idx}'
+
+    # replaces `_` with space for LaTeX to continue
+    out = out.replace('_', ' ')
+    return out
+
+
+def _set_xy_name(mdl, vars_dict, dests):
+    """
+    Helper function for setting algebraic and state variable names.
+    """
+
+    mdl_name = mdl.class_name
+    idx = mdl.idx
+    for name, item in vars_dict.items():
+        for idx_item, addr in zip(idx.v, item.a):
+            dests[0][addr] = f'{name} {_append_model_name(mdl_name, idx_item)}'
+            dests[1][addr] = rf'${item.tex_name}$ {_append_model_name(mdl_name, idx_item)}'
+
+
+def _set_hi_name(mdl, vars_dict, dests):
+    """
+    Helper function for setting names of external equations.
+    """
+
+    mdl_name = mdl.class_name
+    idx = mdl.idx
+    for name, item in vars_dict.items():
+        if len(item.r) != len(idx.v):
+            idxall = item.indexer.v
+        else:
+            idxall = idx.v
+
+        for idx_item, addr in zip(idxall, item.r):
+            dests[0][addr] = f'{item.ename} {_append_model_name(mdl_name, idx_item)}'
+            dests[1][addr] = rf'${item.tex_ename}$ {_append_model_name(mdl_name, idx_item)}'
+
+
+def _set_z_name(mdl, dae, dests):
+    """
+    Helper function for addng and setting discrete flag names.
+    """
+
+    for item in mdl.discrete.values():
+        if mdl.flags.initialized:
+            continue
+        mdl_name = mdl.class_name
+
+        for name, tex_name in zip(item.get_names(), item.get_tex_names()):
+            for idx_item in mdl.idx.v:
+                dests[0].append(f'{name} {_append_model_name(mdl_name, idx_item)}')
+                dests[1].append(rf'${item.tex_name}$ {_append_model_name(mdl_name, idx_item)}')
+                dae.o += 1

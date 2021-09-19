@@ -105,9 +105,6 @@ class BaseVar:
         self.v: np.ndarray = np.array([], dtype=float)  # variable value array
         self.e: np.ndarray = np.array([], dtype=float)  # equation value array
 
-        self.vnames: np.ndarray = np.array([], dtype=object)  # names of each variable
-        self.enames: np.ndarray = np.array([], dtype=object)  # names of each equation
-
         # internal flags
         # NOTE:
         # contiguous is True only for internal variables of models with flag `collate = False`.
@@ -344,6 +341,8 @@ class ExtVar(BaseVar):
                  allow_none: Optional[bool] = False,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
+                 ename: Optional[str] = None,
+                 tex_ename: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  v_str: Optional[Union[str, float]] = None,
@@ -368,6 +367,9 @@ class ExtVar(BaseVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
+        self.ename = ename  # equation name corresponding to this variable
+        self.tex_ename = tex_ename if tex_ename else ename
+
         self.model = model
         self.src = src
         self.indexer = indexer
