@@ -562,11 +562,16 @@ class System:
                 continue
 
             for item in mdl.states_ext.values():
+                # skip if no equation, i.e., no RHS value
+                if item.e_str is None:
+                    continue
                 item.set_address(np.arange(self.dae.p, self.dae.p + item.n))
-                self.dae.p = self.dae.p + item.n
+                self.dae.p += item.n
             for item in mdl.algebs_ext.values():
+                if item.e_str is None:
+                    continue
                 item.set_address(np.arange(self.dae.q, self.dae.q + item.n))
-                self.dae.q = self.dae.q + item.n
+                self.dae.q += item.n
 
             mdl.flags.address = True
 

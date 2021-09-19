@@ -407,8 +407,12 @@ class ExtVar(BaseVar):
 
     def set_arrays(self, dae, inplace=True, alloc=True):
         """
-        Stride of ``dae.i`` for the RHS of external variables.
+        Access ``dae.h`` or ``dae.i`` for the RHS of external variables
+        when ``e_str`` exists..
         """
+
+        if self.e_str is None:
+            return
 
         slice_idx = slice(self.r[0], self.r[-1] + 1)
         if isinstance(self, ExtState):

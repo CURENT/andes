@@ -175,7 +175,7 @@ class IEEEG1Model(TGBase):
                             e_str='zsyn2 * ue * (PLP - tm02)',
                             info='Mechanical power to syn2',
                             ename='tm2',
-                            tex_ename=r'\tam_{m2}',
+                            tex_ename=r'\tau_{m2}',
                             )
 
         self.wd = Algeb(info='Generator under speed',
