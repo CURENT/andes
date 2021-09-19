@@ -572,9 +572,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
-    if is_interactive():
-        if len(logger.handlers) == 0:
-            config_logger(file=False, stream_level=verbose)
+    if is_interactive() and len(logger.handlers) == 0:
+        config_logger(file=False, stream_level=verbose)
 
     # put `input_path` back to `kwargs`
     kwargs['input_path'] = input_path

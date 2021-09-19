@@ -298,9 +298,9 @@ class System:
         total = len(models)
         width = len(str(total))
 
-        if (nomp is False) and (ncpu > 1):
+        if nomp is False:
             print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(models, quick, pycode_path)
+            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
 
         else:
             for idx, (name, model) in enumerate(models.items()):
@@ -316,7 +316,7 @@ class System:
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
-    def _mp_prepare(self, models, quick, pycode_path):
+    def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
         Wrapper function for multiprocess prepare.
         """
@@ -347,8 +347,7 @@ class System:
                           pycode_path=pycode_path,
                           yapf_pycode=yapf_pycode
                           )
-
-        Pool(self.options.get('ncpu')).map(_prep_model, model_list)
+        Pool(ncpu).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
         """
