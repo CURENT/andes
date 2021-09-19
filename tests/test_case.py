@@ -58,7 +58,7 @@ class TestKundur2AreaEIG(unittest.TestCase):
     """
 
     def test_xlsx_eig_run(self):
-        self.xlsx = get_case("kundur/kundur_full.json")
+        self.xlsx = get_case("kundur/kundur_full.xlsx")
         self.ss = andes.run(self.xlsx,
                             default_config=True,
                             no_output=True,
