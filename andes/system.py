@@ -300,7 +300,7 @@ class System:
 
         if (nomp is False) and (ncpu > 1):
             print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(quick, pycode_path)
+            self._mp_prepare(models, quick, pycode_path)
 
         else:
             for idx, (name, model) in enumerate(models.items()):
@@ -316,15 +316,22 @@ class System:
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
-    def _mp_prepare(self, quick, pycode_path):
+    def _mp_prepare(self, models, quick, pycode_path):
         """
         Wrapper function for multiprocess prepare.
         """
 
-        # models without dependency  # TODO: reduce clutter as this copies code from `import_models`
+        # create empty models without dependency
+        if len(models) == 0:
+            return
+
+        model_names = list(models.keys())
         model_list = list()
+
         for file, cls_list in file_classes.items():
             for model_name in cls_list:
+                if model_name not in model_names:
+                    continue
                 the_module = importlib.import_module('andes.models.' + file)
                 the_class = getattr(the_module, model_name)
                 model_list.append(the_class(system=None, config=self._config_object))
