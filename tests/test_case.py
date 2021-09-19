@@ -8,7 +8,7 @@ from andes.utils.paths import get_case
 
 class Test5Bus(unittest.TestCase):
     def setUp(self) -> None:
-        self.ss = andes.main.load(get_case('5bus/pjm5bus.xlsx'),
+        self.ss = andes.main.load(get_case('5bus/pjm5bus.json'),
                                   default_config=True,
                                   no_output=True,
                                   )
@@ -58,7 +58,7 @@ class TestKundur2AreaEIG(unittest.TestCase):
     """
 
     def test_xlsx_eig_run(self):
-        self.xlsx = get_case("kundur/kundur_full.xlsx")
+        self.xlsx = get_case("kundur/kundur_full.json")
         self.ss = andes.run(self.xlsx,
                             default_config=True,
                             no_output=True,
@@ -198,7 +198,7 @@ class TestNPCCRAW(unittest.TestCase):
 
 class TestPlot(unittest.TestCase):
     def test_kundur_plot(self):
-        ss = andes.run(get_case('kundur/kundur_full.xlsx'),
+        ss = andes.run(get_case('kundur/kundur_full.json'),
                        routine='tds',
                        tf=2.0,
                        no_output=True,
@@ -220,7 +220,7 @@ class TestPlot(unittest.TestCase):
 
 class TestCOI(unittest.TestCase):
     def test_kundur_COI(self):
-        ss = get_case('kundur/kundur_coi.xlsx')
+        ss = get_case('kundur/kundur_coi.json')
         exit_code = andes.run(ss,
                               routine='tds',
                               no_output=True,
@@ -232,7 +232,7 @@ class TestCOI(unittest.TestCase):
         self.assertEqual(exit_code, 0, "Exit code is not 0.")
 
     def test_kundur_COI_empty(self):
-        ss = get_case('kundur/kundur_coi_empty.xlsx')
+        ss = get_case('kundur/kundur_coi_empty.json')
 
         exit_code = andes.run(ss,
                               routine='tds',
@@ -251,7 +251,7 @@ class TestVSC(unittest.TestCase):
     def test_kundur_vsc(self):
         """Test power flow exit code"""
 
-        ss = get_case('kundur/kundur_vsc.xlsx')
+        ss = get_case('kundur/kundur_vsc.json')
         exit_code = andes.run(ss,
                               routine='pflow',
                               no_output=True,
@@ -270,7 +270,7 @@ class TestShuntSw(unittest.TestCase):
         Test `ShuntSw` class.
         """
 
-        case = get_case('ieee14/ieee14_shuntsw.xlsx')
+        case = get_case('ieee14/ieee14_shuntsw.json')
         ss = andes.run(case,
                        no_output=True,
                        default_config=True,
@@ -289,7 +289,7 @@ class TestIslands(unittest.TestCase):
     """Test power flow with two islands"""
 
     def test_islands(self):
-        ss = andes.run(get_case('kundur/kundur_islands.xlsx'),
+        ss = andes.run(get_case('kundur/kundur_islands.json'),
                        no_output=True, default_config=True)
 
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
@@ -301,7 +301,7 @@ class TestPVD1Init(unittest.TestCase):
     Test if PVD1 model initialization works.
     """
     def test_pvd1_init(self):
-        ss = andes.run(get_case('ieee14/ieee14_pvd1.xlsx'),
+        ss = andes.run(get_case('ieee14/ieee14_pvd1.json'),
                        no_output=True,
                        default_config=True,
                        )
