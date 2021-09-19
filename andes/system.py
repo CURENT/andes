@@ -37,7 +37,7 @@ from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
 from andes.shared import np, jac_names, dilled_vars, IP_ADD
-from andes.shared import matrix, spmatrix, sparse
+from andes.shared import matrix, spmatrix, sparse, Pool
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True
@@ -226,7 +226,7 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
-    def prepare(self, quick=False, incremental=False, models=None):
+    def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=os.cpu_count()):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -240,6 +240,8 @@ class System:
             True to generate only for modified models, incrementally.
         models : list, OrderedDict, None
             List or OrderedList of models to prepare
+        nomp : bool
+            True to disable multiprocessing
 
         Notes
         -----
@@ -296,12 +298,15 @@ class System:
         total = len(models)
         width = len(str(total))
 
-        for idx, (name, model) in enumerate(models.items()):
-            print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
-                  end='\r', flush=True)
+        if (nomp is False) and (ncpu > 1):
+            print(f"Generating code for {total} models on {ncpu} processes.")
+            self._mp_prepare(quick, pycode_path)
 
-            # generate code for a single model
-            model.prepare(quick=quick, pycode_path=pycode_path)
+        else:
+            for idx, (name, model) in enumerate(models.items()):
+                print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
+                      end='\r', flush=True)
+                model.prepare(quick=quick, pycode_path=pycode_path)
 
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
@@ -310,6 +315,33 @@ class System:
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
+
+    def _mp_prepare(self, quick, pycode_path):
+        """
+        Wrapper function for multiprocess prepare.
+        """
+
+        # models without dependency  # TODO: reduce clutter as this copies code from `import_models`
+        model_list = list()
+        for file, cls_list in file_classes.items():
+            for model_name in cls_list:
+                the_module = importlib.import_module('andes.models.' + file)
+                the_class = getattr(the_module, model_name)
+                model_list.append(the_class(system=None, config=self._config_object))
+
+        yapf_pycode = self.config.yapf_pycode
+
+        def _prep_model(model: Model, ):
+            """
+            Wrapper function to call prepare on a model.
+            """
+
+            model.prepare(quick=quick,
+                          pycode_path=pycode_path,
+                          yapf_pycode=yapf_pycode
+                          )
+
+        Pool(self.options.get('ncpu')).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
         """
@@ -360,35 +392,6 @@ class System:
             return out
         else:
             raise TypeError("Type %s not recognized" % type(model_list))
-
-    def _prepare_mp(self, quick=False):
-        """
-        Code generation with multiprocessing. NOT WORKING NOW.
-
-        Warnings
-        --------
-        Function is not working. Serialization failed for `conj`.
-        """
-        from andes.shared import Pool
-        dill.settings['recurse'] = True
-
-        # consistency check for group parameters and variables
-        self._check_group_common()
-
-        def _prep_model(model: Model):
-            model.prepare(quick=quick)
-            return model
-
-        model_list = list(self.models.values())
-
-        # TODO: failed when serializing.
-        ret = Pool().map(_prep_model, model_list)
-
-        for idx, name in enumerate(self.models.keys()):
-            self.models[name] = ret[idx]
-
-        self._store_calls(self.models)
-        self.dill()
 
     def setup(self):
         """

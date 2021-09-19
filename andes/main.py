@@ -674,7 +674,8 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
 
 
-def prepare(quick=False, incremental=False, cli=False, full=False, models=None, **kwargs):
+def prepare(quick=False, incremental=False, cli=False, full=False, models=None,
+            nomp=False, ncpu=os.cpu_count(), **kwargs):
     """
     Run code generation.
 
@@ -699,7 +700,8 @@ def prepare(quick=False, incremental=False, cli=False, full=False, models=None, 
         quick = False
 
     system = System(options=kwargs)
-    system.prepare(quick=quick, incremental=incremental, models=models)
+    system.prepare(quick=quick, incremental=incremental, models=models,
+                   nomp=nomp, ncpu=ncpu)
 
     if cli is True:
         return 0
