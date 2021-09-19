@@ -14,6 +14,8 @@ v1.4.3 (2021-09-xx)
 - ``andes prepare`` supports multiprocessing and uses it by default.
 - Added aliases ``andes st`` and ``andes prep`` for
   ``andes selftest`` and ``andes prepare``.
+- ``andes.config_logger`` supports setting new ``stream_level`` and
+  ``file_level``.
 
 v1.4.2 (2021-09-12)
 ```````````````````
