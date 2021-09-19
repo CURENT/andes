@@ -78,6 +78,8 @@ class ExcBase(Model):
                            tex_name=r'v_f',
                            e_str='ue * (vout - vf0)',
                            info='Excitation field voltage to generator',
+                           ename='vf',
+                           tex_ename='v_f',
                            )
         self.XadIfd = ExtAlgeb(src='XadIfd',
                                model='SynGen',

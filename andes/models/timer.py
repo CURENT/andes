@@ -143,6 +143,8 @@ class Fault(ModelData, Model):
                           info='Bus voltage angle',
                           unit='p.u.(kV)',
                           e_str='u * uf * (v ** 2 * gf)',
+                          ename='P',
+                          tex_ename='P',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
@@ -151,6 +153,8 @@ class Fault(ModelData, Model):
                           unit='p.u.(kV)',
                           info='Bus voltage magnitude',
                           e_str='-u * uf * (v ** 2 * bf)',
+                          ename='Q',
+                          tex_ename='Q',
                           )
         self._vstore = np.array([])
 

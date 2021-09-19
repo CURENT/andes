@@ -136,6 +136,7 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
+                                     ('numba_cache', 1),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
@@ -151,6 +152,7 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
+                              numba_cache='enable machine code caching for numba.jit',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
@@ -165,6 +167,7 @@ class System:
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
+                              numba_cache=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
@@ -622,7 +625,7 @@ class System:
         """
         if self.config.numba:
             use_parallel = True if (self.config.numba_parallel == 1) else False
-            use_cache = True if (pycode is not None) else False
+            use_cache = True if (self.config.numba_cache == 1) else False
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)

@@ -53,6 +53,7 @@ class Node(NodeData, Model):
     """
     DC Node model.
     """
+
     def __init__(self, system, config):
         NodeData.__init__(self)
         Model.__init__(self, system=system, config=config)
@@ -86,6 +87,7 @@ class Node(NodeData, Model):
 
 class DC2Term(ModelData, Model):
     """Two-terminal DC device template"""
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.node1 = IdxParam(default=None,
@@ -132,6 +134,7 @@ class DC2Term(ModelData, Model):
 
 class ACDC2Term(ModelData, Model):
     """AC to two-terminal DC device template"""
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         self.bus = IdxParam(model='Bus',
@@ -219,6 +222,8 @@ class Ground(ModelData, Model):
                           src='v',
                           indexer=self.node,
                           e_str='-Idc',
+                          ename='-Idc',
+                          tex_ename='-I_{dc}',
                           )
         self.Idc = Algeb(tex_name='I_{dc}',
                          info='Ficticious current injection from ground',
@@ -233,6 +238,7 @@ class R(DC2Term):
     """
     Resistive dc line
     """
+
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags.pflow = True
@@ -257,6 +263,7 @@ class L(DC2Term):
     """
     Inductive dc line
     """
+
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags.pflow = True
@@ -283,6 +290,7 @@ class C(DC2Term):
     """
     Capacitive dc branch
     """
+
     def __init__(self, system, config):
         DC2Term.__init__(self, system, config)
         self.flags.pflow = True

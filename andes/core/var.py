@@ -51,6 +51,7 @@ class BaseVar:
     e_str : str
         the string/symbolic representation of the equation
     """
+
     def __init__(self,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
@@ -334,6 +335,7 @@ class ExtVar(BaseVar):
     v_code : str
         Variable code string; copied from the parent instance.
     """
+
     def __init__(self,
                  model: str,
                  src: str,
@@ -533,6 +535,7 @@ class AliasAlgeb(ExtAlgeb):
     Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final output.
     When plotting from file, one need to look up the original variable name.
     """
+
     def __init__(self, var, **kwargs):
         ExtAlgeb.__init__(self,
                           model=var.owner.class_name,
@@ -549,6 +552,7 @@ class AliasState(ExtState):
 
     Refer to the docs of ``AliasAlgeb``.
     """
+
     def __init__(self, var, **kwargs):
         ExtState.__init__(self,
                           model=var.owner.class_name,

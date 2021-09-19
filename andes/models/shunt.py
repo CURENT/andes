@@ -32,14 +32,21 @@ class ShuntModel(Model):
     """
     Shunt equations.
     """
+
     def __init__(self, system=None, config=None):
         Model.__init__(self, system, config)
         self.group = 'StaticShunt'
         self.flags.pflow = True
         self.flags.tds = True
 
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name='V')
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
+                          ename='P',
+                          tex_ename='P',
+                          )
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name='V',
+                          ename='Q',
+                          tex_ename='Q',
+                          )
 
         self.a.e_str = 'u * v**2 * g'
         self.v.e_str = '-u * v**2 * b'
@@ -49,6 +56,7 @@ class Shunt(ShuntData, ShuntModel):
     """
     Static Shunt Model.
     """
+
     def __init__(self, system=None, config=None):
         ShuntData.__init__(self)
         ShuntModel.__init__(self, system, config)
@@ -58,6 +66,7 @@ class ShuntSwData(ShuntData):
     """
     Data for switched shunts.
     """
+
     def __init__(self):
         ShuntData.__init__(self)
         self.gs = NumParam(info='a list literal of switched conductances blocks',
@@ -133,6 +142,7 @@ class ShuntSwModel(ShuntModel):
     """
     Switched shunt model.
     """
+
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 

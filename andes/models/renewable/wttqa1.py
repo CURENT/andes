@@ -190,6 +190,8 @@ class WTTQA1Model(Model):
                             v_str='fPe_y',
                             e_str='-w0 + fPe_y',
                             v_setter=True,
+                            ename='dwr',
+                            tex_ename=r'\Delta \omega_r',
                             )
 
         self.s2 = Lag(u=self.fPe_y, T=self.Twref, K=1.0,
@@ -227,6 +229,8 @@ class WTTQA1Model(Model):
                             v_str='1.0',
                             e_str='-fPe_y + 1',
                             v_setter=True,
+                            ename='dwg',
+                            tex_ename=r'\Delta \omega_g',
                             )
 
         self.Pref0 = ExtService(model='RenExciter', src='p0', indexer=self.ree,
@@ -238,6 +242,8 @@ class WTTQA1Model(Model):
                              e_str='-Pref0 / wge + PI_y * wg',
                              v_str='PI_y * wg',
                              v_setter=True,
+                             ename='Pref',
+                             tex_ename='P_{ref}',
                              )
 
 

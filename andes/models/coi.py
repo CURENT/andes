@@ -27,6 +27,7 @@ class COIModel(Model):
     :py:class:`andes.core.service.IdxFlatten`, and
     :py:class:`andes.core.service.BackRef`.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Calculation'

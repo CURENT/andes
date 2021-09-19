@@ -133,11 +133,15 @@ class ZIPModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus,
                           tex_name=r'\theta',
                           e_str='pp0 + pi0*v + pz0*v*v',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus,
                           tex_name='V',
                           e_str='qp0 + qi0*v + qz0*v*v',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
     def v_numeric(self, **kwargs):
@@ -245,11 +249,15 @@ class FLoadModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus,
                           tex_name=r'\theta',
                           e_str='pv0 * (v ** ap) * (f ** bp)',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus,
                           tex_name='V',
                           e_str='qv0 * (v ** aq) * (f ** bq)',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
     def v_numeric(self, **kwargs):

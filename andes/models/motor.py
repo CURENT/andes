@@ -167,7 +167,9 @@ class MotorBaseModel(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='+p'
+                          e_str='+p',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -175,7 +177,9 @@ class MotorBaseModel(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='+q'
+                          e_str='+q',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
         self.vd = Algeb(info='d-axis voltage',

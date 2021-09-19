@@ -113,6 +113,8 @@ class TGBase(Model):
                            tex_name=r'\tau_m',
                            e_str='ue * (pout - tm0)',
                            info='Mechanical power interface to SynGen',
+                           ename='tm',
+                           tex_ename=r'\tam_{m}',
                            )
         # `paux` must be zero upon initialization
         self.paux = Algeb(info='Auxiliary power input',

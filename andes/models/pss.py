@@ -110,7 +110,10 @@ class PSSBase(Model):
         # from Exciter
         self.vi = ExtAlgeb(model='Exciter', src='vi', indexer=self.avr, tex_name='v_i',
                            info='Exciter input voltage',
-                           e_str='u * vsout')
+                           e_str='u * vsout',
+                           ename='Vi',
+                           tex_ename='V_i',
+                           )
 
         self.vsout = Algeb(info='PSS output voltage to exciter',
                            tex_name='v_{sout}',
