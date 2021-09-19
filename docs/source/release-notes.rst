@@ -11,6 +11,7 @@ v1.4 Notes
 
 v1.4.3 (2021-09-xx)
 ```````````````````
+- ``andes prepare`` supports multiprocessing and uses it by default.
 - Added aliases ``andes st`` and ``andes prep`` for
   ``andes selftest`` and ``andes prepare``.
 
