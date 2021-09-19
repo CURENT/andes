@@ -33,7 +33,6 @@ from andes.shared import coloredlogs, unittest
 from andes.shared import Pool, Process
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def config_logger(stream=True,
@@ -44,9 +43,10 @@ def config_logger(stream=True,
                   file_level=logging.DEBUG,
                   ):
     """
-    Configure a logger for the andes package with options for a `FileHandler`
-    and a `StreamHandler`. This function is called at the beginning of
-    ``andes.main.main()``.
+    Configure an ANDES logger with a `FileHandler` and a `StreamHandler`.
+
+    This function is called at the beginning of ``andes.main.main()``.
+    Updating ``stream_level`` and ``file_level`` is now supported.
 
     Parameters
     ----------
@@ -99,6 +99,10 @@ def config_logger(stream=True,
             lg.addHandler(fh)
 
         globals()['logger'] = lg
+
+    else:
+        set_logger_level(logger, logging.StreamHandler, stream_level)
+        set_logger_level(logger, logging.FileHandler, file_level)
 
     if not is_interactive():
         coloredlogs.install(logger=lg, level=stream_level, fmt=sh_formatter_str)
@@ -465,14 +469,19 @@ def _find_cases(filename, path):
 
 
 def set_logger_level(lg, type_to_set, level):
-    """Set logging level for the given type of handler."""
+    """
+    Set logging level for the given type of handler.
+    """
+
     for ii, h in enumerate(lg.handlers):
         if isinstance(h, type_to_set):
             h.setLevel(level)
 
 
 def find_log_path(lg):
-    """Find the file paths of the FileHandlers."""
+    """
+    Find the file paths of the FileHandlers.
+    """
     out = []
     for h in lg.handlers:
         if isinstance(h, logging.FileHandler):
@@ -539,7 +548,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     input_path : str, optional
         input search path
     verbose : int, 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL)
-        Verbosity level
+        Verbosity level. If ``config_logger`` is called prior to ``run``,
+        this option will be ignored.
     mp_verbose : int
         Verbosity level for multiprocessing tasks
     ncpu : int, optional
@@ -563,7 +573,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
 
     """
     if is_interactive():
-        config_logger(file=False, stream_level=verbose)
+        if len(logger.handlers) == 0:
+            config_logger(file=False, stream_level=verbose)
 
     # put `input_path` back to `kwargs`
     kwargs['input_path'] = input_path
@@ -763,3 +774,10 @@ def doc(attribute=None, list_supported=False, config=False, **kwargs):
 
     else:
         logger.info('info: no option specified. Use \'andes doc -h\' for help.')
+
+
+def demo(**kwargs):
+    """
+    TODO: show some demonstrations from CLI.
+    """
+    raise NotImplementedError("Demos have not been implemented")

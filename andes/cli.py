@@ -35,7 +35,8 @@ def create_parser():
                                                              '[doc] quick documentation; '
                                                              '[misc] misc. functions; '
                                                              '[prepare] prepare the numerical code; '
-                                                             '[selftest] run self test.'
+                                                             '[selftest] run self test; '
+                                                             '[demo] show demos.',
                                         )
 
     run = sub_parsers.add_parser('run')
@@ -145,6 +146,8 @@ def create_parser():
     selftest = sub_parsers.add_parser('selftest', aliases=command_aliases['selftest'])
     selftest.add_argument('-q', '--quick', action='store_true',
                           help='quick selftest by skipping codegen')
+
+    demo = sub_parsers.add_parser('demo')  # NOQA
 
     return parser
 
