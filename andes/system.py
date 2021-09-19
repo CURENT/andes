@@ -1456,7 +1456,7 @@ class System:
             pycode_model = pycode_module.__dict__[model.class_name]
 
             # md5
-            model.calls.md5 = pycode_model.md5
+            model.calls.md5 = getattr(pycode_model, 'md5', None)
 
             # reload stored variables
             for item in dilled_vars:
