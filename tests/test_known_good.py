@@ -9,11 +9,11 @@ from andes.utils import get_case
 
 class TestKnownResults(unittest.TestCase):
 
-    sets = (('kundur/kundur_aw.xlsx', 'kundur_aw_10s.pkl', 10),
-            ('kundur/kundur_full.xlsx', 'kundur_full_10s.pkl', 10),
-            ('kundur/kundur_ieeeg1.xlsx', 'kundur_ieeeg1_10s.pkl', 10),
-            ('kundur/kundur_ieeest.xlsx', 'kundur_ieeest_10s.pkl', 10),
-            ('ieee14/ieee14_fault.xlsx', 'ieee14_fault_2s.pkl', 2),
+    sets = (('kundur/kundur_aw.json', 'kundur_aw_10s.pkl', 10),
+            ('kundur/kundur_full.json', 'kundur_full_10s.pkl', 10),
+            ('kundur/kundur_ieeeg1.json', 'kundur_ieeeg1_10s.pkl', 10),
+            ('kundur/kundur_ieeest.json', 'kundur_ieeest_10s.pkl', 10),
+            ('ieee14/ieee14_fault.json', 'ieee14_fault_2s.pkl', 2),
             (('ieee14/ieee14.raw', 'ieee14/ieee14.dyr'), 'ieee14_2s.pkl', 2),
             )
 

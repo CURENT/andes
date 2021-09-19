@@ -271,6 +271,8 @@ class DGPRCTBaseModel(Model):
                              export=False,
                              e_str='- ue * (fn * f)',
                              info='Frequency measure lock',
+                             ename='fHzl',
+                             tex_ename='f_{Hzl}',
                              )
         # TODO: add fflag option 2: block the source signal in protection
 
@@ -296,6 +298,8 @@ class DGPRCTBaseModel(Model):
                              export=False,
                              e_str='- ue * (Pext + Pref + Pdrp)',
                              info='Active power lock',
+                             ename='Pneg',
+                             tex_ename='P_{neg}',
                              )
 
         self.Qdrp = ExtAlgeb(model='DG', src='Qdrp',
@@ -313,6 +317,8 @@ class DGPRCTBaseModel(Model):
                              export=False,
                              e_str='- ue * (Qdrp + Qref)',
                              info='Reactive power lock',
+                             ename='Qneg',
+                             tex_ename='Q_{neg}',
                              )
 
         # TODO: apply ExtState here

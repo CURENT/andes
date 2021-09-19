@@ -36,8 +36,9 @@ class BaseVar:
         LaTeX-formatted variable name. If is None, use `name`
         instead.
     discrete : Discrete
-        Associated discrete component. Will call `check_var` on
-        the discrete component.
+        Discrete component on which thi variable depends on.
+        ANDES will call `check_var()` of the discrete component
+        before initializing this variable.
 
     Attributes
     ----------
@@ -50,6 +51,7 @@ class BaseVar:
     e_str : str
         the string/symbolic representation of the equation
     """
+
     def __init__(self,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
@@ -75,13 +77,14 @@ class BaseVar:
         self.owner = None  # instance of the owner Model
         self.id = None     # variable internal index inside a model (assigned in run time)
 
-        self.v_str = v_str  # equation string (v = v_str) for variable initialization
+        self.v_str = v_str    # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
-        self.e_str = e_str  # string for symbolic equation
+        self.e_str = e_str    # equation string
 
         self.discrete = discrete
-        self.v_setter = v_setter  # True if this variable sets the variable value
-        self.e_setter = e_setter  # True if this var sets the equation value
+        self.v_setter = v_setter        # True if this variable sets the variable value
+        self.e_setter = e_setter        # True if this var sets the equation value
+
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
@@ -332,6 +335,7 @@ class ExtVar(BaseVar):
     v_code : str
         Variable code string; copied from the parent instance.
     """
+
     def __init__(self,
                  model: str,
                  src: str,
@@ -339,6 +343,8 @@ class ExtVar(BaseVar):
                  allow_none: Optional[bool] = False,
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
+                 ename: Optional[str] = None,
+                 tex_ename: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
                  v_str: Optional[Union[str, float]] = None,
@@ -363,6 +369,9 @@ class ExtVar(BaseVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
+        self.ename = ename  # equation name corresponding to this variable
+        self.tex_ename = tex_ename if tex_ename else ename
+
         self.model = model
         self.src = src
         self.indexer = indexer
@@ -398,8 +407,12 @@ class ExtVar(BaseVar):
 
     def set_arrays(self, dae, inplace=True, alloc=True):
         """
-        Stride of ``dae.i`` for the RHS of external variables.
+        Access ``dae.h`` or ``dae.i`` for the RHS of external variables
+        when ``e_str`` exists..
         """
+
+        if self.e_str is None:
+            return
 
         slice_idx = slice(self.r[0], self.r[-1] + 1)
         if isinstance(self, ExtState):
@@ -526,6 +539,7 @@ class AliasAlgeb(ExtAlgeb):
     Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final output.
     When plotting from file, one need to look up the original variable name.
     """
+
     def __init__(self, var, **kwargs):
         ExtAlgeb.__init__(self,
                           model=var.owner.class_name,
@@ -542,6 +556,7 @@ class AliasState(ExtState):
 
     Refer to the docs of ``AliasAlgeb``.
     """
+
     def __init__(self, var, **kwargs):
         ExtState.__init__(self,
                           model=var.owner.class_name,

@@ -139,14 +139,18 @@ class GENBase(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='-u * (vd * Id + vq * Iq)'
+                          e_str='-u * (vd * Id + vq * Iq)',
+                          ename='P',
+                          tex_ename='P',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-u * (vq * Id - vd * Iq)'
+                          e_str='-u * (vq * Id - vd * Iq)',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
         # algebraic variables
@@ -592,6 +596,7 @@ class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     """
     Round rotor generator with quadratic saturation.
     """
+
     def __init__(self, system, config):
         GENROUData.__init__(self)
         GENBase.__init__(self, system, config)

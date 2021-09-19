@@ -65,7 +65,9 @@ class WTDTA1Model(Model):
 
         self.wge = ExtAlgeb(model='RenExciter', src='wg', indexer=self.ree,
                             export=False,
-                            e_str='-1.0 + s2_y'
+                            e_str='-1.0 + s2_y',
+                            ename='wg',
+                            tex_ename=r'\omega_g',
                             )
 
         self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg, export=False,

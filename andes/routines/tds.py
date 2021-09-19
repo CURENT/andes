@@ -38,6 +38,7 @@ class TDS(BaseRoutine):
                                      ('g_scale', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
+                                     ('store_z', 0),
                                      ('store_f', 0.0),
                                      ('store_h', 0.0),
                                      ('store_i', 0.0),
@@ -56,6 +57,7 @@ class TDS(BaseRoutine):
                               g_scale='scale algebraic residuals with time step size',
                               qrt='quasi-real-time stepping',
                               kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
+                              store_z='store limiter status in TDS output',
                               store_f='store RHS of diff. equations',
                               store_h='store RHS of external diff. equations',
                               store_i='store RHS of external algeb. equations',
@@ -74,6 +76,7 @@ class TDS(BaseRoutine):
                               g_scale='positive',
                               qrt='bool',
                               kqrt='positive',
+                              store_z=(0, 1),
                               store_f=(0, 1),
                               store_h=(0, 1),
                               store_i=(0, 1),
@@ -306,18 +309,7 @@ class TDS(BaseRoutine):
                 step_status = self._csv_step()
 
             if step_status:
-                f_vals = dae.f if self.config.store_f else None
-                h_vals = dae.h if self.config.store_h else None
-                i_vals = dae.i if self.config.store_i else None
-
-                dae.ts.store(dae.t.tolist(),
-                             x=dae.x,
-                             y=dae.y,
-                             z=system.get_z(models=system.exist.pflow_tds),
-                             f=f_vals,
-                             h=h_vals,
-                             i=i_vals,
-                             )
+                dae.store()
 
                 self.streaming_step()
 

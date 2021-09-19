@@ -93,7 +93,9 @@ class WTPTA1Model(Model):
 
         self.theta = ExtAlgeb(model='RenAerodynamics', src='theta', indexer=self.rea,
                               export=False,
-                              e_str='-theta0 + LG_y'
+                              e_str='-theta0 + LG_y',
+                              ename='theta',
+                              tex_ename=r'\theta',
                               )
 
         self.Pord = ExtState(model='RenExciter', src='Pord', indexer=self.ree,

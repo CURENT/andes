@@ -225,7 +225,7 @@ class SymProcessor:
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
-    def generate_jacobians(self):
+    def generate_jacobians(self, diag_eps=1e-8):
         """
         Generate Jacobians and store to corresponding triplets.
 
@@ -299,7 +299,13 @@ class SymProcessor:
             if var.diag_eps == 0.0:
                 continue
             elif var.diag_eps is True:
-                eps = self.parent.system.config.diag_eps
+                if self.get_system_config('diag_eps') is not None:
+                    eps = self.parent.system.config.diag_eps
+                elif diag_eps is not None:
+                    eps = diag_eps  # from function argument
+                else:
+                    eps = 1e-8
+
             else:
                 eps = var.diag_eps
 
@@ -360,7 +366,7 @@ class SymProcessor:
 
         self.calls.init_latex = init_latex
 
-    def generate_pycode(self, pycode_path):
+    def generate_pycode(self, pycode_path, yapf_pycode):
         """
         Create output source code file for generated code.
 
@@ -384,6 +390,7 @@ from andes.core.npfunc import *                                     # NOQA
 
 
 """
+        yf = yapf_pycode
 
         with open(file_path, 'w') as f:
             f.write(header)
@@ -392,30 +399,30 @@ from andes.core.npfunc import *                                     # NOQA
             f.write(f'md5 = "{self.calls.md5}"\n\n')
 
             # equations
-            f.write(self._rename_func(self.calls.f, 'f_update'))
-            f.write(self._rename_func(self.calls.g, 'g_update'))
+            f.write(self._rename_func(self.calls.f, 'f_update', yf))
+            f.write(self._rename_func(self.calls.g, 'g_update', yf))
 
             # jacobians
             for name in self.calls.j:
-                f.write(self._rename_func(self.calls.j[name], f'{name}_update'))
+                f.write(self._rename_func(self.calls.j[name], f'{name}_update', yf))
 
             # initialization: assignments
             for name in self.calls.ia:
-                f.write(self._rename_func(self.calls.ia[name], f'{name}_ia'))
+                f.write(self._rename_func(self.calls.ia[name], f'{name}_ia', yf))
             for name in self.calls.ii:
-                f.write(self._rename_func(self.calls.ii[name], f'{name}_ii'))
+                f.write(self._rename_func(self.calls.ii[name], f'{name}_ii', yf))
             for name in self.calls.ij:
-                f.write(self._rename_func(self.calls.ij[name], f'{name}_ij'))
+                f.write(self._rename_func(self.calls.ij[name], f'{name}_ij', yf))
 
             # services
             for name in self.calls.s:
-                f.write(self._rename_func(self.calls.s[name], f'{name}_svc'))
+                f.write(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
 
             # variables
             for name in dilled_vars:
                 f.write(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
 
-    def _rename_func(self, func, func_name):
+    def _rename_func(self, func, func_name, yapf_pycode=False):
         """
         Rename the function name and return source code.
 
@@ -432,7 +439,7 @@ from andes.core.npfunc import *                                     # NOQA
         # remove `Indicator`
         src = src.replace("Indicator", "")
 
-        if self.parent.system.config.yapf_pycode:
+        if yapf_pycode:
             try:
                 from yapf.yapflib.yapf_api import FormatCode
                 src = FormatCode(src, style_config='pep8')[0]  # drop the encoding `None`
@@ -585,6 +592,17 @@ from andes.core.npfunc import *                                     # NOQA
         self.calls.ia_args = ia_args
         self.calls.ii_args = ii_args
         self.calls.ij_args = ij_args
+
+    def get_system_config(self, name):
+        """
+        Helper function for obtaining system config.
+        If System is None, return None.
+        """
+
+        if hasattr(self.parent.system, 'config'):
+            return self.parent.system.config.__dict__[name]
+        else:
+            return None
 
 
 def _store_deps(name, sympified, vars_int_dict, deps):

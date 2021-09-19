@@ -137,6 +137,8 @@ def create_parser():
     prep.add_argument('--pycode-path', help='Save path for generated pycode')
     prep.add_argument('-m', '--models', nargs='*', help='model names to be individually prepared',
                       )
+    prep.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
+    prep.add_argument('--nomp', help='Disable multiprocessing', action='store_true',)
     prep.add_argument('--incubate', help='Save generated pycode under the ANDES code directory to avoid codegen',
                       action='store_true')
 

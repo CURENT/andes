@@ -1536,7 +1536,7 @@ class Model:
         """
         return self.docum.get(max_width=max_width, export=export)
 
-    def prepare(self, quick=False, pycode_path=None):
+    def prepare(self, quick=False, pycode_path=None, yapf_pycode=False):
         """
         Symbolic processing and code generation.
         """
@@ -1549,7 +1549,9 @@ class Model:
         self.syms.generate_jacobians()
         self.syms.generate_init()
 
-        self.syms.generate_pycode(pycode_path=pycode_path)
+        self.syms.generate_pycode(pycode_path=pycode_path,
+                                  yapf_pycode=yapf_pycode,
+                                  )
         if quick is False:
             self.syms.generate_pretty_print()
 
