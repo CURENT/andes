@@ -684,10 +684,21 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
 
 
-def prepare(quick=False, incremental=False, cli=False, full=False, models=None,
-            nomp=False, ncpu=os.cpu_count(), **kwargs):
+def prepare(quick=False, incremental=False, models=None,
+            nomp=False, **kwargs):
     """
     Run code generation.
+
+    Parameters
+    ----------
+    full : bool
+        True to run full prep with formatted equations.
+        Useful in interactive mode and during document generation.
+    ncpu : int
+        Number of cores to be used for parallel processing.
+    cli : bool
+        True to indicate running from CLI.
+        It will set `quick` to True if not `full`.
 
     Warnings
     --------
@@ -701,6 +712,10 @@ def prepare(quick=False, incremental=False, cli=False, full=False, models=None,
 
     # use `quick` for cli if `full` is not enforced,
     # because the LaTeX code gen is usually discarded in CLI.
+
+    cli = kwargs.get("cli", False)
+    full = kwargs.get("full", False)
+    ncpu = kwargs.get("ncpu", os.cpu_count())
 
     if cli is True:
         if not full:

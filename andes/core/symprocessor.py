@@ -92,7 +92,7 @@ class SymProcessor:
 
         """
 
-        logger.debug(f'- Generating symbols for {self.class_name}')
+        logger.debug('- Generating symbols for %s', self.class_name)
 
         # clear symbols storage
         self.f_list, self.g_list = list(), list()
@@ -152,7 +152,7 @@ class SymProcessor:
         return fs
 
     def generate_equations(self):
-        logger.debug(f'- Generating equations for {self.class_name}')
+        logger.debug('- Generating equations for %s', self.class_name)
 
         self.f_list, self.g_list = list(), list()
 
@@ -239,7 +239,7 @@ class SymProcessor:
             val -> self.calls._vgy
 
         """
-        logger.debug(f'- Generating Jacobians for {self.class_name}')
+        logger.debug('- Generating Jacobians for %s', self.class_name)
 
         # clear storage
         self.df_syms, self.dg_syms = Matrix([]), Matrix([])
@@ -323,7 +323,7 @@ class SymProcessor:
         """
         Generate pretty print variables and equations.
         """
-        logger.debug(f"- Generating pretty prints for {self.class_name}")
+        logger.debug("- Generating pretty prints for %s", self.class_name)
 
         # equation symbols for pretty printing
         self.f, self.g = Matrix([]), Matrix([])

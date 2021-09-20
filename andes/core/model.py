@@ -1599,7 +1599,7 @@ class Model:
         self.get_inputs(refresh=True)
 
         if self.system.config.warn_abnormal:
-            for name, item in self.services_icheck.items():
+            for item in self.services_icheck.values():
                 item.check()
 
     def numba_jitify(self, parallel=False, cache=False):

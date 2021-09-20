@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 def testlines(infil):
+    """
+    Test if this file is in the MATPOWER format.
+
+    NOT YET IMPLEMENTED.
+    """
+
     return True  # hard coded
 
 
