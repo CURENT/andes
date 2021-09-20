@@ -6,7 +6,7 @@ import andes
 
 if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
 
-    ss = andes.prepare()
+    ss = andes.prepare(nomp=True)
 
     # write the top-level index file
 

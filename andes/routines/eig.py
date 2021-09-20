@@ -51,7 +51,9 @@ class EIG(BaseRoutine):
         self.nz_counts = None
 
         # --- statistics --
-        self._stats = None
+        self.n_positive = 0
+        self.n_zeros = 0
+        self.n_negative = 0
 
         self.x_name = []
 
@@ -120,9 +122,7 @@ class EIG(BaseRoutine):
 
         Returns `fx`, `fy`, `gx`, `gy`, `Tf`.
         """
-        system = self.system
         dae = self.system.dae
-
         rows = np.arange(dae.n, dtype=int)
         cols = np.arange(dae.n, dtype=int)
         vals = np.ones(dae.n, dtype=float)
@@ -152,7 +152,7 @@ class EIG(BaseRoutine):
         nfy = As_perm[:self.nz_counts, self.nz_counts:]
         ngx = As_perm[self.nz_counts:, :self.nz_counts]
         ngy = As_perm[self.nz_counts:, self.nz_counts:]
-        nTf = np.delete(system.dae.Tf, self.zstate_idx)
+        nTf = np.delete(self.system.dae.Tf, self.zstate_idx)
 
         return nfx, nfy, ngx, ngy, nTf
 

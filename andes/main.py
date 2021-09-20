@@ -33,7 +33,6 @@ from andes.shared import coloredlogs, unittest
 from andes.shared import Pool, Process
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def config_logger(stream=True,
@@ -44,9 +43,10 @@ def config_logger(stream=True,
                   file_level=logging.DEBUG,
                   ):
     """
-    Configure a logger for the andes package with options for a `FileHandler`
-    and a `StreamHandler`. This function is called at the beginning of
-    ``andes.main.main()``.
+    Configure an ANDES logger with a `FileHandler` and a `StreamHandler`.
+
+    This function is called at the beginning of ``andes.main.main()``.
+    Updating ``stream_level`` and ``file_level`` is now supported.
 
     Parameters
     ----------
@@ -99,6 +99,10 @@ def config_logger(stream=True,
             lg.addHandler(fh)
 
         globals()['logger'] = lg
+
+    else:
+        set_logger_level(logger, logging.StreamHandler, stream_level)
+        set_logger_level(logger, logging.FileHandler, file_level)
 
     if not is_interactive():
         coloredlogs.install(logger=lg, level=stream_level, fmt=sh_formatter_str)
@@ -465,14 +469,19 @@ def _find_cases(filename, path):
 
 
 def set_logger_level(lg, type_to_set, level):
-    """Set logging level for the given type of handler."""
+    """
+    Set logging level for the given type of handler.
+    """
+
     for ii, h in enumerate(lg.handlers):
         if isinstance(h, type_to_set):
             h.setLevel(level)
 
 
 def find_log_path(lg):
-    """Find the file paths of the FileHandlers."""
+    """
+    Find the file paths of the FileHandlers.
+    """
     out = []
     for h in lg.handlers:
         if isinstance(h, logging.FileHandler):
@@ -539,7 +548,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     input_path : str, optional
         input search path
     verbose : int, 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL)
-        Verbosity level
+        Verbosity level. If ``config_logger`` is called prior to ``run``,
+        this option will be ignored.
     mp_verbose : int
         Verbosity level for multiprocessing tasks
     ncpu : int, optional
@@ -562,7 +572,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
-    if is_interactive():
+    if is_interactive() and len(logger.handlers) == 0:
         config_logger(file=False, stream_level=verbose)
 
     # put `input_path` back to `kwargs`
@@ -674,10 +684,21 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
 
 
-def prepare(quick=False, incremental=False, cli=False, full=False, models=None,
-            nomp=False, ncpu=os.cpu_count(), **kwargs):
+def prepare(quick=False, incremental=False, models=None,
+            nomp=False, **kwargs):
     """
     Run code generation.
+
+    Parameters
+    ----------
+    full : bool
+        True to run full prep with formatted equations.
+        Useful in interactive mode and during document generation.
+    ncpu : int
+        Number of cores to be used for parallel processing.
+    cli : bool
+        True to indicate running from CLI.
+        It will set `quick` to True if not `full`.
 
     Warnings
     --------
@@ -691,6 +712,10 @@ def prepare(quick=False, incremental=False, cli=False, full=False, models=None,
 
     # use `quick` for cli if `full` is not enforced,
     # because the LaTeX code gen is usually discarded in CLI.
+
+    cli = kwargs.get("cli", False)
+    full = kwargs.get("full", False)
+    ncpu = kwargs.get("ncpu", os.cpu_count())
 
     if cli is True:
         if not full:
@@ -763,3 +788,10 @@ def doc(attribute=None, list_supported=False, config=False, **kwargs):
 
     else:
         logger.info('info: no option specified. Use \'andes doc -h\' for help.')
+
+
+def demo(**kwargs):
+    """
+    TODO: show some demonstrations from CLI.
+    """
+    raise NotImplementedError("Demos have not been implemented")

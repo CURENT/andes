@@ -1599,7 +1599,7 @@ class Model:
         self.get_inputs(refresh=True)
 
         if self.system.config.warn_abnormal:
-            for name, item in self.services_icheck.items():
+            for item in self.services_icheck.values():
                 item.check()
 
     def numba_jitify(self, parallel=False, cache=False):
@@ -1633,7 +1633,7 @@ class Model:
     def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
         import numba
         if func is not None:
-            return numba.jit(func, parallel=parallel, cache=cache)
+            return numba.jit(func, parallel=parallel, cache=cache, nopython=True)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

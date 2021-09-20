@@ -1,3 +1,7 @@
+"""
+Module for EXDC2 exciter.
+"""
+
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
 

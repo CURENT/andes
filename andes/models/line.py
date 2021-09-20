@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class LineData(ModelData):
+    """
+    Data for Line.
+    """
     def __init__(self):
         super().__init__()
 
@@ -199,6 +202,10 @@ class JumperData(ModelData):
 
 
 class JumperModel(Model):
+    """
+    Jumper model implementation.
+    """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.pflow = True

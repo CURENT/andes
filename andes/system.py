@@ -298,9 +298,9 @@ class System:
         total = len(models)
         width = len(str(total))
 
-        if (nomp is False) and (ncpu > 1):
+        if nomp is False:
             print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(models, quick, pycode_path)
+            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
 
         else:
             for idx, (name, model) in enumerate(models.items()):
@@ -316,7 +316,7 @@ class System:
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
-    def _mp_prepare(self, models, quick, pycode_path):
+    def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
         Wrapper function for multiprocess prepare.
         """
@@ -347,8 +347,7 @@ class System:
                           pycode_path=pycode_path,
                           yapf_pycode=yapf_pycode
                           )
-
-        Pool(self.options.get('ncpu')).map(_prep_model, model_list)
+        Pool(ncpu).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
         """
@@ -367,7 +366,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        if pycode is not None:
+        if pycode:
             self._call_from_pycode()
 
     def _find_stale_models(self):
@@ -639,8 +638,8 @@ class System:
         Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
-            use_parallel = True if (self.config.numba_parallel == 1) else False
-            use_cache = True if (self.config.numba_cache == 1) else False
+            use_parallel = True if self.config.numba_parallel else False
+            use_cache = True if self.config.numba_cache else False
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
@@ -1433,7 +1432,8 @@ class System:
             except ImportError:
                 pass
 
-        if pycode is not None:
+        # DO NOT USE `elif` here since below depends on the above.
+        if pycode:
             self._expand_pycode(pycode)
             loaded = True
 
@@ -1456,7 +1456,7 @@ class System:
             pycode_model = pycode_module.__dict__[model.class_name]
 
             # md5
-            model.calls.md5 = pycode_model.md5
+            model.calls.md5 = getattr(pycode_model, 'md5', None)
 
             # reload stored variables
             for item in dilled_vars:
@@ -1983,7 +1983,7 @@ def _set_hi_name(mdl, vars_dict, dests):
 
     mdl_name = mdl.class_name
     idx = mdl.idx
-    for name, item in vars_dict.items():
+    for item in vars_dict.values():
         if len(item.r) != len(idx.v):
             idxall = item.indexer.v
         else:

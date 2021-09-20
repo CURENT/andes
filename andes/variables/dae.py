@@ -466,10 +466,10 @@ class DAE:
 
         for name, size in specs.items():
             length = len(self.__dict__[name])
-            if length > 0 and length <= size:
-                self.__dict__[name].extend([''] * (size - length))
-            elif length == 0:
+            if length == 0:
                 self.__dict__[name] = [''] * size
+            elif 0 < length <= size:
+                self.__dict__[name].extend([''] * (size - length))
             else:
                 raise NotImplementedError("Does not know how to shrink arrays")
 

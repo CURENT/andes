@@ -561,7 +561,7 @@ Like other Python libraries, ANDES needs to be imported into an interactive Pyth
 .. code:: python
 
     >>> import andes
-    >>> andes.main.config_logger()
+    >>> andes.config_logger()
 
 Verbosity
 ---------
@@ -569,13 +569,13 @@ If you are debugging ANDES, you can enable debug messages with
 
 .. code:: python
 
-    >>> andes.main.config_logger(stream_level=10)
+    >>> andes.config_logger(stream_level=10)
 
 The ``stream_level`` uses the same verbosity levels (see `Basic Usage`_) as for the command-line.
 If not explicitly enabled, the default level 20 (INFO) will apply.
 
-.. warning::
-    The verbosity level can only be set once. To set a different level, restart the Python kernel.
+To set a new logging level for the current session, call ``config_logger`` with
+the desired new levels.
 
 Making a System
 ---------------

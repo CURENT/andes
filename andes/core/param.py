@@ -1,3 +1,7 @@
+"""
+Module for parameters used for describing models.
+"""
+
 #  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
