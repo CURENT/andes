@@ -56,6 +56,18 @@ class AC8BData(ExcBaseData):
                               unit='p.u.',
                               vrange=(-1, 1.5))
 
+        # TODO: check default value for VFEMAX
+        self.VFEMAX = NumParam(info='Maximum VFE',
+                               tex_name=r'V_{FEMAX}',
+                               default=999,
+                               unit='p.u.')
+
+        # TODO: check default value for VEMIN
+        self.VEMIN = NumParam(info='Minimum excitation output',
+                              tex_name=r'V_{EMIN}',
+                              default=-999,
+                              unit='p.u.')
+
         self.TA = NumParam(info='Lag time constant in anti-windup lag',
                            tex_name='T_A',
                            default=0.04,
@@ -146,7 +158,8 @@ class AC8BModel(ExcBase):
                         diag_eps=True,
                         )
 
-        self.PIDAW = PIDAWHardLimit(u=self.vin, kp=self.kP, ki=self.kI, kd=self.kD,
+        # Why PIDAW must have a `name`
+        self.PIDAW = PIDAWHardLimit(u=self.vi, kp=self.kP, ki=self.kI, kd=self.kD,
                                     aw_lower=self.VPMIN, aw_upper=self.VPMAX,
                                     lower=self.VPMIN, upper=self.VPMAX,
                                     tex_name='PID', info='PID',
@@ -162,13 +175,18 @@ class AC8BModel(ExcBase):
 
         # TODO: check y0
         # TODO: check max and min
+
+        self.VEMAX = VarService(info='Maximum excitation output',
+                                tex_name=r'V_{EMAX}',
+                                v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)',)
+
         self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
                                         T=self.TE,
                                         K=1,
                                         y0=self.vf0,
-                                        lower=self.zero,
-                                        upper=self.large,
-                                        info='Integrator AntiWindup',
+                                        lower=self.VEMIN,
+                                        upper=self.VEMAX,
+                                        info=r'V_E',
                                         )
 
         self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
