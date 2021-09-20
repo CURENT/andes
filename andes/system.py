@@ -638,8 +638,8 @@ class System:
         Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
-            use_parallel = True if (self.config.numba_parallel == 1) else False
-            use_cache = True if (self.config.numba_cache == 1) else False
+            use_parallel = True if self.config.numba_parallel else False
+            use_cache = True if self.config.numba_cache else False
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
@@ -1982,7 +1982,7 @@ def _set_hi_name(mdl, vars_dict, dests):
 
     mdl_name = mdl.class_name
     idx = mdl.idx
-    for name, item in vars_dict.items():
+    for item in vars_dict.values():
         if len(item.r) != len(idx.v):
             idxall = item.indexer.v
         else:

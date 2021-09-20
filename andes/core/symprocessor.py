@@ -601,8 +601,8 @@ from andes.core.npfunc import *                                     # NOQA
 
         if hasattr(self.parent.system, 'config'):
             return self.parent.system.config.__dict__[name]
-        else:
-            return None
+
+        return None
 
 
 def _store_deps(name, sympified, vars_int_dict, deps):
