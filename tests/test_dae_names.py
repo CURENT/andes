@@ -14,6 +14,7 @@ class TestDAENames(unittest.TestCase):
     def setUp(self):
         self.ss = andes.run(andes.get_case("kundur/kundur_full.json"),
                             default_config=True,
+                            no_output=True,
                             )
 
     def test_dae_names(self):

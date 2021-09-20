@@ -366,7 +366,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        if pycode is not None:
+        if pycode:
             self._call_from_pycode()
 
     def _find_stale_models(self):
@@ -1432,7 +1432,8 @@ class System:
             except ImportError:
                 pass
 
-        if pycode is not None:
+        # DO NOT USE `elif` here since below depends on the above.
+        if pycode:
             self._expand_pycode(pycode)
             loaded = True
 

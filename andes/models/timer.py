@@ -222,6 +222,10 @@ class AlterData(ModelData):
 
 
 class AlterModel(Model):
+    """
+    Implementation of the Alter model.
+    """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.tds = True

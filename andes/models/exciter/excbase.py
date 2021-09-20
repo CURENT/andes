@@ -1,3 +1,9 @@
+"""
+Base module for exciters.
+
+Exciters share generator and bus information.
+"""
+
 from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb

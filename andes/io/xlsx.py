@@ -80,7 +80,7 @@ def _add_book(system, writer, add_book):
                 system.models[item].cache.df_in.to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
                 logger.info(f'<{item}> template sheet added.')
             else:
-                logger.error(f'<{item}> is not a valid model name.')
+                logger.error('<%s> is not a valid model name.', item)
     return writer
 
 

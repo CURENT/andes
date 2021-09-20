@@ -1,3 +1,7 @@
+"""
+ANDES command-line interface and argument parsers.
+"""
+
 import argparse
 import sys
 import os
