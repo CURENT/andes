@@ -4,7 +4,7 @@ import andes
 
 class TestTDSResume(unittest.TestCase):
     def test_tds_resume(self):
-        case = andes.get_case('kundur/kundur_full.xlsx')
+        case = andes.get_case('kundur/kundur_full.json')
 
         ss = andes.run(case, routine='tds', tf=0.1, no_output=True,
                        default_config=True)

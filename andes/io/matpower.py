@@ -10,7 +10,13 @@ from andes.shared import deg2rad, np
 logger = logging.getLogger(__name__)
 
 
-def testlines(infil):
+def testlines(infile):
+    """
+    Test if this file is in the MATPOWER format.
+
+    NOT YET IMPLEMENTED.
+    """
+
     return True  # hard coded
 
 

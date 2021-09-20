@@ -58,7 +58,9 @@ class WTARA1Model(Model):
         self.Pmg = ExtAlgeb(model='RenGovernor',
                             src='Pm',
                             indexer=self.rego,
-                            e_str='-Pe0 - (theta - theta0) * theta + Pe0'
+                            e_str='-Pe0 - (theta - theta0) * theta + Pe0',
+                            ename='Pmg',
+                            tex_ename='P_{mg}',
                             )
 
 

@@ -1,3 +1,7 @@
+"""
+ANDES command-line interface and argument parsers.
+"""
+
 import argparse
 import sys
 import os
@@ -11,6 +15,11 @@ from andes.utils.paths import get_log_dir
 from andes.routines import routine_cli
 
 logger = logging.getLogger(__name__)
+
+command_aliases = {
+    'prepare': ['prep'],
+    'selftest': ['st'],
+    }
 
 
 def create_parser():
@@ -30,7 +39,8 @@ def create_parser():
                                                              '[doc] quick documentation; '
                                                              '[misc] misc. functions; '
                                                              '[prepare] prepare the numerical code; '
-                                                             '[selftest] run self test.'
+                                                             '[selftest] run self test; '
+                                                             '[demo] show demos.',
                                         )
 
     run = sub_parsers.add_parser('run')
@@ -122,7 +132,7 @@ def create_parser():
     misc.add_argument('-r', '--recursive', help='Recursively clean outputs (combined useage with --clean)',
                       action='store_true')
 
-    prep = sub_parsers.add_parser('prepare')  # NOQA
+    prep = sub_parsers.add_parser('prepare', aliases=command_aliases['prepare'])
     prep_mode = prep.add_mutually_exclusive_group()
     prep_mode.add_argument('-q', '--quick', action='store_true',
                            help='quick codegen by skipping pretty prints')
@@ -132,13 +142,16 @@ def create_parser():
     prep.add_argument('--pycode-path', help='Save path for generated pycode')
     prep.add_argument('-m', '--models', nargs='*', help='model names to be individually prepared',
                       )
+    prep.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
+    prep.add_argument('--nomp', help='Disable multiprocessing', action='store_true',)
     prep.add_argument('--incubate', help='Save generated pycode under the ANDES code directory to avoid codegen',
                       action='store_true')
 
-
-    selftest = sub_parsers.add_parser('selftest')  # NOQA
+    selftest = sub_parsers.add_parser('selftest', aliases=command_aliases['selftest'])
     selftest.add_argument('-q', '--quick', action='store_true',
                           help='quick selftest by skipping codegen')
+
+    demo = sub_parsers.add_parser('demo')  # NOQA
 
     return parser
 
@@ -188,5 +201,10 @@ def main():
         parser.parse_args(sys.argv.append('--help'))
 
     else:
-        func = getattr(module, args.command)
+        cmd = args.command
+        for fullcmd, aliases in command_aliases.items():
+            if cmd in aliases:
+                cmd = fullcmd
+
+        func = getattr(module, cmd)
         return func(cli=True, **vars(args))

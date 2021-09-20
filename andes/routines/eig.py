@@ -7,6 +7,7 @@ import scipy.io
 import numpy as np
 
 from math import ceil, pi
+from scipy.linalg import solve
 
 from andes.io.txt import dump_data
 from andes.utils.misc import elapsed
@@ -16,30 +17,44 @@ from andes.variables.report import report_info
 from andes.plot import set_latex
 
 from andes.shared import matrix, spmatrix, sparse, plt, mpl
-from andes.shared import mul, div, spdiag, gesv
+from andes.shared import div, spdiag
 
 
 logger = logging.getLogger(__name__)
-__cli__ = 'eig'
 
 
 class EIG(BaseRoutine):
     """
     Eigenvalue analysis routine
     """
+
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
-        self.config.add(plot=0)
-        self.config.add_extra("_help", plot="show plot after computation")
+        self.config.add(plot=0, tol=1e-6)
+        self.config.add_extra("_help",
+                              plot="show plot after computation",
+                              tol="numerical tolerance to treat eigenvalues as zeros")
+
         self.config.add_extra("_alt", plot=(0, 1))
 
         # internal flags and storage
-        self.As = None
-        self.eigs = None
-        self.mu = None
-        self.part_fact = None
-        self.singular_idx = np.array([], dtype=int)
+        self.As = None     # state matrix after removing the ones associated with zero T consts
+        self.Asc = None    # the original complete As without reordering
+        self.mu = None     # eigenvalues
+        self.N = None      # right eigenvectors
+        self.W = None      # left eigenvectors
+        self.pfactors = None
+
+        # --- related to states with zero time constants (zs) ---
+        self.zstate_idx = np.array([], dtype=int)
+        self.nz_counts = None
+
+        # --- statistics --
+        self.n_positive = 0
+        self.n_zeros = 0
+        self.n_negative = 0
+
         self.x_name = []
 
     def calc_As(self, dense=True):
@@ -66,22 +81,29 @@ class EIG(BaseRoutine):
         kvxopt.matrix
             state matrix
         """
-        system = self.system
+        dae = self.system.dae
+
         self.find_zero_states()
-        self.x_name = np.array(system.dae.x_name)
+        self.x_name = np.array(dae.x_name)
 
-        self.As = self._calc_state_matrix(system.dae.fx, system.dae.fy,
-                                          system.dae.gx, system.dae.gy, system.dae.Tf,
-                                          dense=dense)
+        self.As = self._reduce(dae.fx, dae.fy,
+                               dae.gx, dae.gy, dae.Tf,
+                               dense=dense)
 
-        if len(self.singular_idx) > 0:
+        if len(self.zstate_idx) > 0:
             self.Asc = self.As
-            self.As = self._calc_state_matrix(*self.reorder_As())
+            self.As = self._reduce(*self._reorder())
+
         return self.As
 
-    def _calc_state_matrix(self, fx, fy, gx, gy, Tf, dense=True):
+    def _reduce(self, fx, fy, gx, gy, Tf, dense=True):
         """
-        Kernel function for calculating state matrix.
+        Reduce algebraic equations (or states associated with zero time constants).
+
+        Returns
+        -------
+        spmatrix
+            The reduced state matrix
         """
         gyx = matrix(gx)
         self.solver.linsolve(gy, gyx)
@@ -94,22 +116,22 @@ class EIG(BaseRoutine):
         else:
             return sparse(iTf * (fx - fy * gyx))
 
-    def reorder_As(self):
+    def _reorder(self):
         """
         reorder As by moving rows and cols associated with zero time constants to the end.
 
         Returns `fx`, `fy`, `gx`, `gy`, `Tf`.
         """
-        system = self.system
-        rows = np.arange(system.dae.n, dtype=int)
-        cols = np.arange(system.dae.n, dtype=int)
-        vals = np.ones(system.dae.n, dtype=float)
+        dae = self.system.dae
+        rows = np.arange(dae.n, dtype=int)
+        cols = np.arange(dae.n, dtype=int)
+        vals = np.ones(dae.n, dtype=float)
 
         swaps = []
-        bidx = self.non_zeros
-        for ii in range(system.dae.n - self.non_zeros):
-            if ii in self.singular_idx:
-                while (bidx in self.singular_idx):
+        bidx = self.nz_counts
+        for ii in range(dae.n - self.nz_counts):
+            if ii in self.zstate_idx:
+                while (bidx in self.zstate_idx):
                     bidx += 1
                 cols[ii] = bidx
                 rows[bidx] = ii
@@ -119,69 +141,101 @@ class EIG(BaseRoutine):
         for fr, bk in swaps:
             bk_name = self.x_name[bk]
             self.x_name[fr] = bk_name
-        self.x_name = self.x_name[:self.non_zeros]
+        self.x_name = self.x_name[:self.nz_counts]
 
         # compute the permutation matrix for `As` containing non-states
         perm = spmatrix(matrix(vals), matrix(rows), matrix(cols))
         As_perm = perm * sparse(self.As) * perm
         self.As_perm = As_perm
 
-        nfx = As_perm[:self.non_zeros, :self.non_zeros]
-        nfy = As_perm[:self.non_zeros, self.non_zeros:]
-        ngx = As_perm[self.non_zeros:, :self.non_zeros]
-        ngy = As_perm[self.non_zeros:, self.non_zeros:]
-        nTf = np.delete(system.dae.Tf, self.singular_idx)
+        nfx = As_perm[:self.nz_counts, :self.nz_counts]
+        nfy = As_perm[:self.nz_counts, self.nz_counts:]
+        ngx = As_perm[self.nz_counts:, :self.nz_counts]
+        ngy = As_perm[self.nz_counts:, self.nz_counts:]
+        nTf = np.delete(self.system.dae.Tf, self.zstate_idx)
 
         return nfx, nfy, ngx, ngy, nTf
 
-    def calc_eigvals(self):
+    def calc_eig(self, As=None):
         """
-        Solve eigenvalues of the state matrix ``self.As``
+        Calculate eigenvalues and right eigen vectors.
+
+        This function is a wrapper to ``np.linalg.eig``.
+        Results are returned but not stored to ``EIG``.
 
         Returns
         -------
-        None
-        """
-        self.eigs = np.linalg.eigvals(self.As)
-        return self.eigs
-
-    def calc_part_factor(self, As=None):
-        """
-        Compute participation factor of states in eigenvalues.
-
-        Returns
-        -------
-
+        np.array(dtype=complex)
+            eigenvalues
+        np.array()
+            right eigenvectors
         """
         if As is None:
             As = self.As
+
+        # `mu`: eigenvalues, `N`: right eigenvectors with each column corr. to one eigvalue
         mu, N = np.linalg.eig(As)
 
-        N = matrix(N)
-        n = len(mu)
-        idx = range(n)
+        return mu, N
 
-        mu_complex = np.zeros_like(mu, dtype=complex)
-        W = matrix(spmatrix(1.0, idx, idx, As.size, N.typecode))
-        gesv(N, W)
+    def _store_stats(self):
+        """
+        Count and store the number of eigenvalues with positive, zero,
+        and negative real parts using ``self.mu``.
+        """
 
-        partfact = mul(abs(W.T), abs(N))
+        mu_real = self.mu.real
 
-        b = matrix(1.0, (1, n))
-        WN = b * partfact
-        partfact = partfact.T
+        self.n_positive = np.count_nonzero(mu_real > self.config.tol)
+        self.n_zeros = np.count_nonzero(abs(mu_real) <= self.config.tol)
+        self.n_negative = np.count_nonzero(mu_real < self.config.tol)
 
-        for item in idx:
-            mu_real = float(mu[item].real)
-            mu_imag = float(mu[item].imag)
-            mu_complex[item] = complex(round(mu_real, 5), round(mu_imag, 5))
-            partfact[item, :] /= WN[item]
+        return True
 
-        # participation factor
-        self.mu = matrix(mu_complex)
-        self.part_fact = matrix(partfact)
+    def calc_pfactor(self, As=None):
+        """
+        Compute participation factor of states in eigenvalues.
 
-        return self.mu, self.part_fact
+        Each row in the participation factor correspond to one state,
+        and each column correspond to one mode.
+
+        Parameters
+        ----------
+        As : np.array or None
+            State matrix to process. If None, use ``self.As``.
+
+        Returns
+        -------
+        np.array(dtype=complex)
+            eigenvalues
+        np.array
+            participation factor matrix
+        """
+
+        mu, N = self.calc_eig(As)
+
+        n_state = len(mu)
+
+        # --- calculate the left eig vector and store to ``W```
+        #   based on orthogonality that `W.T @ N = I`,
+        #   left eigenvector is `inv(N)^T`
+
+        Weye = np.eye(n_state)
+        WT = solve(N, Weye, overwrite_b=True)
+        W = WT.T
+
+        # --- calculate participation factor ---
+        pfactor = np.abs(W) * np.abs(N)
+        b = np.ones(n_state)
+        W_abs = b @ pfactor
+        pfactor = pfactor.T
+
+        # --- normalize participation factor ---
+        for item in range(n_state):
+            pfactor[:, item] /= W_abs[item]
+        pfactor = np.round(pfactor, 5)
+
+        return mu, pfactor, N, W
 
     def summary(self):
         """
@@ -195,17 +249,39 @@ class EIG(BaseRoutine):
 
     def find_zero_states(self):
         """
-        Find the indices of non-states in x.
+        Find the indices of states associated with zero time constants in ``x``.
         """
         system = self.system
-        self.singular_idx = np.array([], dtype=int)
+        self.zstate_idx = np.array([], dtype=int)
 
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-            self.singular_idx = np.argwhere(np.equal(system.dae.Tf, 0.0)).ravel().astype(int)
-            logger.info("System contains %d zero time constants. ", len(self.singular_idx))
-            logger.debug([system.dae.x_name[i] for i in self.singular_idx])
 
-        self.non_zeros = system.dae.n - len(self.singular_idx)
+            self.zstate_idx = np.where(system.dae.Tf == 0)[0]
+            logger.info("%d states are associated with zero time constants. ", len(self.zstate_idx))
+            logger.debug([system.dae.x_name[i] for i in self.zstate_idx])
+
+        self.nz_counts = system.dae.n - len(self.zstate_idx)
+
+    def _pre_check(self):
+        """
+        Helper function for pre-computation checks.
+        """
+        system = self.system
+        status = True
+
+        if system.PFlow.converged is False:
+            logger.warning('Power flow not solved. Eig analysis will not continue.')
+            status = False
+
+        if system.TDS.initialized is False:
+            system.TDS.init()
+            system.TDS.itm_step()
+
+        elif system.dae.n == 0:
+            logger.error('No dynamic model. Eig analysis will not continue.')
+            status = False
+
+        return status
 
     def run(self, **kwargs):
         """
@@ -215,43 +291,40 @@ class EIG(BaseRoutine):
         succeed = False
         system = self.system
 
-        if system.PFlow.converged is False:
-            logger.warning('Power flow not solved. Eig analysis will not continue.')
-            return succeed
+        if not self._pre_check():
+            system.exit_code += 1
+            return False
 
-        if system.TDS.initialized is False:
-            system.TDS.init()
-            system.TDS.itm_step()
+        self.summary()
+        t1, s = elapsed()
 
-        if system.dae.n == 0:
-            logger.error('No dynamic model. Eig analysis will not continue.')
+        self.calc_As()
+        self.mu, self.pfactors, self.N, self.W = self.calc_pfactor()
+        self._store_stats()
+        _, s = elapsed(t1)
 
-        else:
-            self.summary()
-            t1, s = elapsed()
+        logger.info('  Positive  %6g', self.n_positive)
+        logger.info('  Zeros     %6g', self.n_zeros)
+        logger.info('  Negative  %6g', self.n_negative)
 
-            self.calc_As()
-            self.calc_part_factor()
+        logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
-            _, s = elapsed(t1)
-            logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
+        if not self.system.files.no_output:
+            self.report()
+            if system.options.get('state_matrix'):
+                self.export_mat()
 
-            if not self.system.files.no_output:
-                self.report()
-                if system.options.get('state_matrix') is True:
-                    self.export_state_matrix()
+        if self.config.plot:
+            self.plot()
 
-            if self.config.plot:
-                self.plot()
-
-            succeed = True
+        succeed = True
 
         if not succeed:
             system.exit_code += 1
         return succeed
 
     def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=150, show=True, latex=True):
+             line_width=0.5, dpi=100, show=True, latex=True):
         """
         Plot utility for eigenvalues in the S domain.
         """
@@ -259,29 +332,22 @@ class EIG(BaseRoutine):
 
         if mu is None:
             mu = self.mu
-        mu_real = mu.real()
-        mu_imag = mu.imag()
+        mu_real = mu.real
+        mu_imag = mu.imag
         p_mu_real, p_mu_imag = list(), list()
         z_mu_real, z_mu_imag = list(), list()
         n_mu_real, n_mu_imag = list(), list()
 
         for re, im in zip(mu_real, mu_imag):
-            if re == 0:
+            if abs(re) <= self.config.tol:
                 z_mu_real.append(re)
                 z_mu_imag.append(im)
-            elif re > 0:
+            elif re > self.config.tol:
                 p_mu_real.append(re)
                 p_mu_imag.append(im)
-            elif re < 0:
+            elif re < -self.config.tol:
                 n_mu_real.append(re)
                 n_mu_imag.append(im)
-
-        if len(p_mu_real) > 0:
-            logger.warning(
-                'System is not stable due to %d positive eigenvalues.', len(p_mu_real))
-        else:
-            logger.info(
-                'System is small-signal stable in the initial neighborhood.')
 
         if latex:
             set_latex()
@@ -289,12 +355,13 @@ class EIG(BaseRoutine):
         if fig is None or ax is None:
             fig, ax = plt.subplots(dpi=dpi)
 
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='green')
         ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
-        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='black')
-        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='red')
         ax.axhline(linewidth=0.5, color='grey', linestyle='--')
         ax.axvline(linewidth=0.5, color='grey', linestyle='--')
 
+        # TODO: Improve the damping and range
         # plot 5% damping lines
         xin = np.arange(left, 0, 0.01)
         yneg = xin / damping
@@ -311,7 +378,7 @@ class EIG(BaseRoutine):
             plt.show()
         return fig, ax
 
-    def export_state_matrix(self):
+    def export_mat(self):
         """
         Export state matrix to a ``<CaseName>_As.mat`` file with the variable name ``As``, where
         ``<CaseName>`` is the test case name.
@@ -325,6 +392,7 @@ class EIG(BaseRoutine):
         """
         system = self.system
         out = {'As': self.As,
+               'Asc': self.Asc,
                'x_name': np.array(system.dae.x_name, dtype=object),
                'x_tex_name': np.array(system.dae.x_tex_name, dtype=object),
                }
@@ -332,6 +400,42 @@ class EIG(BaseRoutine):
         scipy.io.savemat(system.files.mat, mdict=out)
         logger.info('State matrix saved to "%s"', system.files.mat)
         return True
+
+    def post_process(self):
+        """
+        Post processing of eigenvalues.
+        """
+
+        # --- statistics ---
+        n_states = len(self.mu)
+        mu_real = self.mu.real
+
+        numeral = [''] * n_states
+        for idx, item in enumerate(range(n_states)):
+            if mu_real[idx] == 0:
+                marker = '*'
+            elif mu_real[idx] > 0:
+                marker = '**'
+            else:
+                marker = ''
+            numeral[idx] = '#' + str(idx + 1) + marker
+
+        # compute frequency, un-damped frequency and damping
+        freq = np.zeros(n_states)
+        ufreq = np.zeros(n_states)
+        damping = np.zeros(n_states)
+
+        for idx, item in enumerate(self.mu):
+            if item.imag == 0:
+                freq[idx] = 0
+                ufreq[idx] = 0
+                damping[idx] = 0
+            else:
+                ufreq[idx] = abs(item) / 2 / pi
+                freq[idx] = abs(item.imag / 2 / pi)
+                damping[idx] = -div(item.real, abs(item)) * 100
+
+        return freq, ufreq, damping, numeral
 
     def report(self, x_name=None, **kwargs):
         """
@@ -344,52 +448,19 @@ class EIG(BaseRoutine):
         if x_name is None:
             x_name = self.x_name
 
-        text, header, rowname, data = list(), list(), list(), list()
-
-        neig = len(self.mu)
-        mu_real = self.mu.real()
-        mu_imag = self.mu.imag()
-        n_positive = sum(1 for x in mu_real if x > 0)
-        n_zeros = sum(1 for x in mu_real if x == 0)
-        n_negative = sum(1 for x in mu_real if x < 0)
-
-        numeral = []
-        for idx, item in enumerate(range(neig)):
-            if mu_real[idx] == 0:
-                marker = '*'
-            elif mu_real[idx] > 0:
-                marker = '**'
-            else:
-                marker = ''
-            numeral.append('#' + str(idx + 1) + marker)
-
-        # compute frequency, un-damped frequency and damping
-        freq = [0] * neig
-        ufreq = [0] * neig
-        damping = [0] * neig
-        for idx, item in enumerate(self.mu):
-            if item.imag == 0:
-                freq[idx] = 0
-                ufreq[idx] = 0
-                damping[idx] = 0
-            else:
-                ufreq[idx] = abs(item) / 2 / pi
-                freq[idx] = abs(item.imag / 2 / pi)
-                damping[idx] = -div(item.real, abs(item)) * 100
+        n_states = len(self.mu)
+        mu_real = self.mu.real
+        mu_imag = self.mu.imag
+        freq, ufreq, damping, numeral = self.post_process()
 
         # obtain most associated variables
         var_assoc = []
-        for prow in range(neig):
-            temp_row = self.part_fact[prow, :]
+        for prow in range(n_states):
+            temp_row = self.pfactors[prow, :]
             name_idx = list(temp_row).index(max(temp_row))
             var_assoc.append(x_name[name_idx])
 
-        pf = []
-        for prow in range(neig):
-            temp_row = []
-            for pcol in range(neig):
-                temp_row.append(round(self.part_fact[prow, pcol], 5))
-            pf.append(temp_row)
+        text, header, rowname, data = list(), list(), list(), list()
 
         # opening info section
         text.append(report_info(self.system))
@@ -398,14 +469,15 @@ class EIG(BaseRoutine):
         data.append(None)
         text.append('')
 
-        header.append([''])
-        rowname.append(['EIGENVALUE ANALYSIS REPORT'])
-        data.append('')
+        text.append('EIGENVALUE ANALYSIS REPORT')
+        header.append([])
+        rowname.append([])
+        data.append([])
 
         text.append('STATISTICS\n')
         header.append([''])
         rowname.append(['Positives', 'Zeros', 'Negatives'])
-        data.append([n_positive, n_zeros, n_negative])
+        data.append((self.n_positive, self.n_zeros, self.n_negative))
 
         text.append('EIGENVALUE DATA\n')
         header.append([
@@ -425,7 +497,7 @@ class EIG(BaseRoutine):
              damping])
 
         n_cols = 7  # columns per block
-        n_block = int(ceil(neig / n_cols))
+        n_block = int(ceil(n_states / n_cols))
 
         if n_block <= 100:
             for idx in range(n_block):
@@ -435,7 +507,7 @@ class EIG(BaseRoutine):
                     idx + 1, n_block))
                 header.append(numeral[start:end])
                 rowname.append(x_name)
-                data.append(pf[start:end])
+                data.append(self.pfactors[start:end, :])
 
         dump_data(text, header, rowname, data, self.system.files.eig)
         logger.info('Report saved to "%s".', self.system.files.eig)

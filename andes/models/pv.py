@@ -47,6 +47,7 @@ class PVModel(Model):
     """
     PV generator model (power flow) with q limit and PV-PQ conversion.
     """
+
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.group = 'StaticGen'
@@ -84,8 +85,14 @@ class PVModel(Model):
 
         self.SynGen = BackRef()
 
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta')
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V')
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
+                          ename='P',
+                          tex_ename='P',
+                          )
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V',
+                          ename='dV',
+                          tex_ename=r'\Delta V',
+                          )
 
         self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=True)
         self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=True)

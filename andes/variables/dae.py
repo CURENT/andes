@@ -11,6 +11,8 @@ from andes.shared import pd, spmatrix, jac_names
 logger = logging.getLogger(__name__)
 
 
+# TODO: Separate array data and Triplets
+
 class DAETimeSeries:
     """
     DAE time series data.
@@ -30,30 +32,6 @@ class DAETimeSeries:
         self._fs = OrderedDict()
         self._hs = OrderedDict()
         self._is = OrderedDict()
-
-    def store(self, t, x, y, *, z=None, f=None, h=None, i=None,):
-        """
-        Store t, x, y, and z in internal storage, respectively.
-
-        Parameters
-        ----------
-        t : float
-            simulation time
-        x, y : array-like
-            array data for states and algebraic variables
-        z : array-like or None
-            discrete flags data
-        """
-        self._xs[t] = np.array(x)
-        self._ys[t] = np.array(y)
-        if z is not None:
-            self._zs[t] = np.array(z)
-        if f is not None:
-            self._fs[t] = np.array(f)
-        if h is not None:
-            self._hs[t] = np.array(h)
-        if i is not None:
-            self._is[t] = np.array(i)
 
     def unpack_np(self):
         """
@@ -231,8 +209,8 @@ class DAE:
         self.p, self.q = 0, 0
 
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
-        self.f, self.g = np.array([]), np.array([])
-        self.h, self.i = np.array([]), np.array([])
+        self.f, self.g = np.array([]), np.array([])  # RHS of equations
+        self.h, self.i = np.array([]), np.array([])  # RHS of external equations
 
         # `self.Tf` is the time-constant array for differential equations
         self.Tf = np.array([])
@@ -413,6 +391,31 @@ class DAE:
             if m_after.I[i] != m_before.I[i] or m_after.J[i] != m_before.J[i]:
                 raise KeyError
 
+    def store(self):
+        """
+        Store values and equations to in internal TimeSeries storage.
+        """
+        ts = self.ts
+        t = self.t.tolist()
+        tds = self.system.TDS
+
+        z_vals = self.system.get_z(self.system.exist.pflow_tds) if tds.config.store_z else None
+        f_vals = self.f if tds.config.store_f else None
+        h_vals = self.h if tds.config.store_h else None
+        i_vals = self.i if tds.config.store_i else None
+
+        ts._xs[t] = np.array(self.x)
+        ts._ys[t] = np.array(self.y)
+
+        if z_vals is not None:
+            ts._zs[t] = np.array(z_vals)
+        if f_vals is not None:
+            ts._fs[t] = np.array(f_vals)
+        if h_vals is not None:
+            ts._hs[t] = np.array(h_vals)
+        if i_vals is not None:
+            ts._is[t] = np.array(i_vals)
+
     def resize_arrays(self):
         """
         Resize arrays to the new sizes `m` and `n`, and `o`.
@@ -446,6 +449,29 @@ class DAE:
         else:
             array = array[0:new_size]
         return array
+
+    def alloc_or_extend_names(self):
+        """
+        Allocate empty lists for names for the given size.
+        """
+        specs = {'x_name': self.n,
+                 'y_name': self.m,
+                 'h_name': self.p,
+                 'i_name': self.q,
+                 'x_tex_name': self.n,
+                 'y_tex_name': self.m,
+                 'h_tex_name': self.p,
+                 'i_tex_name': self.q,
+                 }
+
+        for name, size in specs.items():
+            length = len(self.__dict__[name])
+            if length == 0:
+                self.__dict__[name] = [''] * size
+            elif 0 < length <= size:
+                self.__dict__[name].extend([''] * (size - length))
+            else:
+                raise NotImplementedError("Does not know how to shrink arrays")
 
     @property
     def xy(self):

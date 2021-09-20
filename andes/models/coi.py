@@ -27,6 +27,7 @@ class COIModel(Model):
     :py:class:`andes.core.service.IdxFlatten`, and
     :py:class:`andes.core.service.BackRef`.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Calculation'
@@ -140,13 +141,17 @@ class COIModel(Model):
                                   src='omega',
                                   e_str='Mw * wgen',
                                   indexer=self.pidx,
-                                  info='COI frequency contribution of each generator'
+                                  info='COI frequency contribution of each generator',
+                                  ename='omega sub',
+                                  tex_ename=r'\omega_{sub}',
                                   )
         self.delta_sub = ExtAlgeb(model='COI',
                                   src='delta',
                                   e_str='Mw * agen',
                                   indexer=self.pidx,
-                                  info='COI angle contribution of each generator'
+                                  info='COI angle contribution of each generator',
+                                  ename='delta sub',
+                                  tex_ename=r'\delta_{sub}',
                                   )
 
     def set_in_use(self):

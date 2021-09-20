@@ -118,7 +118,7 @@ class SuiteSparseSolver:
         -------
         A C-object of the symbolic factorization.
         """
-        return None
+        raise NotImplementedError("Method needs to implemented by solver class.")
 
     def _numeric(self, A, F):
         """
@@ -135,7 +135,7 @@ class SuiteSparseSolver:
         -------
         The numeric factorization of ``A``.
         """
-        return None
+        raise NotImplementedError("Method needs to implemented by solver class.")
 
     def _solve(self, A, F, N, b):
         """
@@ -156,7 +156,7 @@ class SuiteSparseSolver:
         -------
         The solution as a ``kvxopt.matrix``.
         """
-        return None
+        raise NotImplementedError("Method needs to implemented by solver class.")
 
     def solve(self, A, b):
         """

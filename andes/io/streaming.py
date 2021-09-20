@@ -174,9 +174,9 @@ class Streaming:
             ret = list(ret)
 
         for p in params:
-            if type(p) in (int, float):
+            if isinstance(p, (int, float)):
                 ret.append([p] * len(ret[0]))
-            elif type(p) == list:
+            elif isinstance(p, list):
                 assert len(p) == len(ret[0])
                 ret.append(p)
             else:
@@ -191,7 +191,7 @@ class Streaming:
 
     def _find_pos(self, model, fkey, src_col=0):
         """Find the positions of foreign keys in the source model index list"""
-        if type(fkey) == ndarray:
+        if isinstance(fkey, ndarray):
             fkey = fkey.tolist()
         elif type(fkey) in (int, float):
             fkey = [fkey]

@@ -14,6 +14,7 @@ from andes.core.block import LagAWFreeze, LagFreeze
 
 class PI2Data(ModelData):
     """Data for PI2 model with deadlock issue"""
+
     def __init__(self):
         ModelData.__init__(self)
         self.Kp = NumParam()
@@ -53,6 +54,7 @@ class TestFrame(ModelData, Model):
     An empty model for testing modeling elements.
     Needs to be inherited by specific test models.
     """
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         Model.__init__(self, system, config)
@@ -65,6 +67,7 @@ class TestDB1(TestFrame):
     """
     Test model for `DeadBand1`.
     """
+
     def __init__(self, system, config):
         TestFrame.__init__(self, system, config)
 
@@ -136,6 +139,7 @@ class FixedGenData(ModelData):
     """
     Data for fixed dynamic generator
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -161,6 +165,8 @@ class FixedGenModel(Model):
                           tex_name=r'\theta',
                           info='Bus voltage angle',
                           e_str='-p0',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -169,6 +175,8 @@ class FixedGenModel(Model):
                           tex_name=r'V',
                           info='Bus voltage magnitude',
                           e_str='-q0',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.p0 = ExtService(model='StaticGen',

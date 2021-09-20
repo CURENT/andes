@@ -228,10 +228,10 @@ def read_add(system, file):
 
     # print out debug messages
     if len(dyr_dict):
-        logger.debug(f'dyr contains models {", ".join(dyr_dict.keys())}')
+        logger.debug('dyr contains models %s', ", ".join(dyr_dict.keys()))
 
     if len(not_supported):
-        logger.warning(f'Models not yet supported: {", ".join(not_supported)}')
+        logger.warning('Models not yet supported: %s', ", ".join(not_supported))
     else:
         logger.debug('All dyr models are supported.')
 

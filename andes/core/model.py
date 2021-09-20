@@ -1536,7 +1536,7 @@ class Model:
         """
         return self.docum.get(max_width=max_width, export=export)
 
-    def prepare(self, quick=False, pycode_path=None):
+    def prepare(self, quick=False, pycode_path=None, yapf_pycode=False):
         """
         Symbolic processing and code generation.
         """
@@ -1549,7 +1549,9 @@ class Model:
         self.syms.generate_jacobians()
         self.syms.generate_init()
 
-        self.syms.generate_pycode(pycode_path=pycode_path)
+        self.syms.generate_pycode(pycode_path=pycode_path,
+                                  yapf_pycode=yapf_pycode,
+                                  )
         if quick is False:
             self.syms.generate_pretty_print()
 
@@ -1597,7 +1599,7 @@ class Model:
         self.get_inputs(refresh=True)
 
         if self.system.config.warn_abnormal:
-            for name, item in self.services_icheck.items():
+            for item in self.services_icheck.values():
                 item.check()
 
     def numba_jitify(self, parallel=False, cache=False):
@@ -1631,7 +1633,7 @@ class Model:
     def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
         import numba
         if func is not None:
-            return numba.jit(func, parallel=parallel, cache=cache)
+            return numba.jit(func, parallel=parallel, cache=cache, nopython=True)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

@@ -37,7 +37,7 @@ from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
 from andes.shared import np, jac_names, dilled_vars, IP_ADD
-from andes.shared import matrix, spmatrix, sparse
+from andes.shared import matrix, spmatrix, sparse, Pool
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True
@@ -126,7 +126,6 @@ class System:
         # custom configuration for system goes after this line
         self.config.add(OrderedDict((('freq', 60),
                                      ('mva', 100),
-                                     ('store_z', 0),
                                      ('ipadd', 1),
                                      ('seed', 'None'),
                                      ('diag_eps', 1e-8),
@@ -137,6 +136,7 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
+                                     ('numba_cache', 1),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
@@ -145,7 +145,6 @@ class System:
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
                               mva='system base MVA',
-                              store_z='store limiter status in TDS output',
                               ipadd='use spmatrix.ipadd if available',
                               seed='seed (or None) for random number generator',
                               diag_eps='small value for Jacobian diagonals',
@@ -153,6 +152,7 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
+                              numba_cache='enable machine code caching for numba.jit',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
@@ -161,13 +161,13 @@ class System:
         self.config.add_extra("_alt",
                               freq="float",
                               mva="float",
-                              store_z=(0, 1),
                               ipadd=(0, 1),
                               seed='int or None',
                               warn_limits=(0, 1),
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
+                              numba_cache=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
@@ -226,7 +226,7 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
-    def prepare(self, quick=False, incremental=False, models=None):
+    def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=os.cpu_count()):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -240,6 +240,8 @@ class System:
             True to generate only for modified models, incrementally.
         models : list, OrderedDict, None
             List or OrderedList of models to prepare
+        nomp : bool
+            True to disable multiprocessing
 
         Notes
         -----
@@ -296,12 +298,15 @@ class System:
         total = len(models)
         width = len(str(total))
 
-        for idx, (name, model) in enumerate(models.items()):
-            print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
-                  end='\r', flush=True)
+        if nomp is False:
+            print(f"Generating code for {total} models on {ncpu} processes.")
+            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
 
-            # generate code for a single model
-            model.prepare(quick=quick, pycode_path=pycode_path)
+        else:
+            for idx, (name, model) in enumerate(models.items()):
+                print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
+                      end='\r', flush=True)
+                model.prepare(quick=quick, pycode_path=pycode_path)
 
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
@@ -310,6 +315,39 @@ class System:
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
+
+    def _mp_prepare(self, models, quick, pycode_path, ncpu):
+        """
+        Wrapper function for multiprocess prepare.
+        """
+
+        # create empty models without dependency
+        if len(models) == 0:
+            return
+
+        model_names = list(models.keys())
+        model_list = list()
+
+        for file, cls_list in file_classes.items():
+            for model_name in cls_list:
+                if model_name not in model_names:
+                    continue
+                the_module = importlib.import_module('andes.models.' + file)
+                the_class = getattr(the_module, model_name)
+                model_list.append(the_class(system=None, config=self._config_object))
+
+        yapf_pycode = self.config.yapf_pycode
+
+        def _prep_model(model: Model, ):
+            """
+            Wrapper function to call prepare on a model.
+            """
+
+            model.prepare(quick=quick,
+                          pycode_path=pycode_path,
+                          yapf_pycode=yapf_pycode
+                          )
+        Pool(ncpu).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
         """
@@ -328,7 +366,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        if pycode is not None:
+        if pycode:
             self._call_from_pycode()
 
     def _find_stale_models(self):
@@ -360,35 +398,6 @@ class System:
             return out
         else:
             raise TypeError("Type %s not recognized" % type(model_list))
-
-    def _prepare_mp(self, quick=False):
-        """
-        Code generation with multiprocessing. NOT WORKING NOW.
-
-        Warnings
-        --------
-        Function is not working. Serialization failed for `conj`.
-        """
-        from andes.shared import Pool
-        dill.settings['recurse'] = True
-
-        # consistency check for group parameters and variables
-        self._check_group_common()
-
-        def _prep_model(model: Model):
-            model.prepare(quick=quick)
-            return model
-
-        model_list = list(self.models.values())
-
-        # TODO: failed when serializing.
-        ret = Pool().map(_prep_model, model_list)
-
-        for idx, name in enumerate(self.models.keys()):
-            self.models[name] = ret[idx]
-
-        self._store_calls(self.models)
-        self.dill()
 
     def setup(self):
         """
@@ -562,11 +571,16 @@ class System:
                 continue
 
             for item in mdl.states_ext.values():
+                # skip if no equation, i.e., no RHS value
+                if item.e_str is None:
+                    continue
                 item.set_address(np.arange(self.dae.p, self.dae.p + item.n))
-                self.dae.p = self.dae.p + item.n
+                self.dae.p += item.n
             for item in mdl.algebs_ext.values():
+                if item.e_str is None:
+                    continue
                 item.set_address(np.arange(self.dae.q, self.dae.q + item.n))
-                self.dae.q = self.dae.q + item.n
+                self.dae.q += item.n
 
             mdl.flags.address = True
 
@@ -576,63 +590,24 @@ class System:
         # set `v` and `e` in variables
         self.set_var_arrays(models=models)
 
-        # pre-allocate for names
-        if len(self.dae.y_name) == 0:
-            self.dae.x_name = [''] * self.dae.n
-            self.dae.y_name = [''] * self.dae.m
-            self.dae.h_name = [''] * self.dae.p
-            self.dae.i_name = [''] * self.dae.q
-            self.dae.x_tex_name = [''] * self.dae.n
-            self.dae.y_tex_name = [''] * self.dae.m
-            self.dae.h_tex_name = [''] * self.dae.p
-            self.dae.i_tex_name = [''] * self.dae.q
-        else:
-            self.dae.x_name.extend([''] * (self.dae.n - len(self.dae.x_name)))
-            self.dae.y_name.extend([''] * (self.dae.m - len(self.dae.y_name)))
-            self.dae.h_name.extend([''] * (self.dae.p - len(self.dae.h_name)))
-            self.dae.i_name.extend([''] * (self.dae.q - len(self.dae.i_name)))
-            self.dae.x_tex_name.extend([''] * (self.dae.n - len(self.dae.x_tex_name)))
-            self.dae.y_tex_name.extend([''] * (self.dae.m - len(self.dae.y_tex_name)))
-            self.dae.h_tex_name.extend([''] * (self.dae.p - len(self.dae.h_tex_name)))
-            self.dae.i_tex_name.extend([''] * (self.dae.q - len(self.dae.i_tex_name)))
+        self.dae.alloc_or_extend_names()
 
     def set_dae_names(self, models):
         """
-        Set variable names for differential and algebraic variables, and discrete flags.
+        Set variable names for differential and algebraic variables,
+        right-hand side of external equations, and discrete flags.
         """
-        def append_model_name(model_name, idx):
-            out = ''
-            if isinstance(idx, str) and (model_name in idx):
-                out = idx
-            else:
-                out = f'{model_name} {idx}'
-
-            # replaces `_` with space for LaTeX to continue
-            out = out.replace('_', ' ')
-            return out
 
         for mdl in models.values():
-            mdl_name = mdl.class_name
-            idx = mdl.idx
-            for name, item in mdl.algebs.items():
-                for id, addr in zip(idx.v, item.a):
-                    self.dae.y_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
-                    self.dae.y_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
-            for name, item in mdl.states.items():
-                for id, addr in zip(idx.v, item.a):
-                    self.dae.x_name[addr] = f'{name} {append_model_name(mdl_name, id)}'
-                    self.dae.x_tex_name[addr] = rf'${item.tex_name}$ {append_model_name(mdl_name, id)}'
+            _set_xy_name(mdl, mdl.states, (self.dae.x_name, self.dae.x_tex_name))
+            _set_xy_name(mdl, mdl.algebs, (self.dae.y_name, self.dae.y_tex_name))
+
+            _set_hi_name(mdl, mdl.states_ext, (self.dae.h_name, self.dae.h_tex_name))
+            _set_hi_name(mdl, mdl.algebs_ext, (self.dae.i_name, self.dae.i_tex_name))
 
             # add discrete flag names
-            if self.config.store_z == 1:
-                for item in mdl.discrete.values():
-                    if mdl.flags.initialized:
-                        continue
-                    for name, tex_name in zip(item.get_names(), item.get_tex_names()):
-                        for id in idx.v:
-                            self.dae.z_name.append(f'{name} {append_model_name(mdl_name, id)}')
-                            self.dae.z_tex_name.append(rf'${item.tex_name}$ {append_model_name(mdl_name, id)}')
-                            self.dae.o += 1
+            if self.TDS.config.store_z == 1:
+                _set_z_name(mdl, self.dae, (self.dae.z_name, self.dae.z_tex_name))
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
@@ -663,8 +638,8 @@ class System:
         Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
-            use_parallel = True if (self.config.numba_parallel == 1) else False
-            use_cache = True if (pycode is not None) else False
+            use_parallel = True if self.config.numba_parallel else False
+            use_cache = True if self.config.numba_cache else False
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
@@ -1292,7 +1267,7 @@ class System:
         -------
         numpy.array
         """
-        if self.config.store_z != 1:
+        if self.TDS.config.store_z != 1:
             return None
 
         if len(self.dae.z) != self.dae.o:
@@ -1307,12 +1282,6 @@ class System:
                 ii += mdl.n
 
         return self.dae.z
-
-    def get_ext_fg(self, model: OrderedDict):
-        """
-        Get the right-hand side of the external equations.
-        """
-        pass
 
     def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
         """
@@ -1463,7 +1432,8 @@ class System:
             except ImportError:
                 pass
 
-        if pycode is not None:
+        # DO NOT USE `elif` here since below depends on the above.
+        if pycode:
             self._expand_pycode(pycode)
             loaded = True
 
@@ -1486,7 +1456,7 @@ class System:
             pycode_model = pycode_module.__dict__[model.class_name]
 
             # md5
-            model.calls.md5 = pycode_model.md5
+            model.calls.md5 = getattr(pycode_model, 'md5', None)
 
             # reload stored variables
             for item in dilled_vars:
@@ -1974,3 +1944,68 @@ def load_pycode_dot_andes():
             pass
 
     return pycode
+
+
+def _append_model_name(model_name, idx):
+    """
+    Helper function for appending ``idx`` to model names.
+    Removes duplicate model name strings.
+    """
+
+    out = ''
+    if isinstance(idx, str) and (model_name in idx):
+        out = idx
+    else:
+        out = f'{model_name} {idx}'
+
+    # replaces `_` with space for LaTeX to continue
+    out = out.replace('_', ' ')
+    return out
+
+
+def _set_xy_name(mdl, vars_dict, dests):
+    """
+    Helper function for setting algebraic and state variable names.
+    """
+
+    mdl_name = mdl.class_name
+    idx = mdl.idx
+    for name, item in vars_dict.items():
+        for idx_item, addr in zip(idx.v, item.a):
+            dests[0][addr] = f'{name} {_append_model_name(mdl_name, idx_item)}'
+            dests[1][addr] = rf'${item.tex_name}$ {_append_model_name(mdl_name, idx_item)}'
+
+
+def _set_hi_name(mdl, vars_dict, dests):
+    """
+    Helper function for setting names of external equations.
+    """
+
+    mdl_name = mdl.class_name
+    idx = mdl.idx
+    for item in vars_dict.values():
+        if len(item.r) != len(idx.v):
+            idxall = item.indexer.v
+        else:
+            idxall = idx.v
+
+        for idx_item, addr in zip(idxall, item.r):
+            dests[0][addr] = f'{item.ename} {_append_model_name(mdl_name, idx_item)}'
+            dests[1][addr] = rf'${item.tex_ename}$ {_append_model_name(mdl_name, idx_item)}'
+
+
+def _set_z_name(mdl, dae, dests):
+    """
+    Helper function for addng and setting discrete flag names.
+    """
+
+    for item in mdl.discrete.values():
+        if mdl.flags.initialized:
+            continue
+        mdl_name = mdl.class_name
+
+        for name, tex_name in zip(item.get_names(), item.get_tex_names()):
+            for idx_item in mdl.idx.v:
+                dests[0].append(f'{name} {_append_model_name(mdl_name, idx_item)}')
+                dests[1].append(rf'${item.tex_name}$ {_append_model_name(mdl_name, idx_item)}')
+                dae.o += 1

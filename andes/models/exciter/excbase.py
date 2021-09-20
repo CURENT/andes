@@ -1,3 +1,9 @@
+"""
+Base module for exciters.
+
+Exciters share generator and bus information.
+"""
+
 from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
@@ -78,6 +84,8 @@ class ExcBase(Model):
                            tex_name=r'v_f',
                            e_str='ue * (vout - vf0)',
                            info='Excitation field voltage to generator',
+                           ename='vf',
+                           tex_ename='v_f',
                            )
         self.XadIfd = ExtAlgeb(src='XadIfd',
                                model='SynGen',

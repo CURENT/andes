@@ -1,3 +1,7 @@
+"""
+Module for parameters used for describing models.
+"""
+
 #  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -43,6 +47,13 @@ class BaseParam:
     export : bool
         True if the parameter will be exported when dumping data into files. True for most parameters.
         False for ``BackRef``.
+
+    Other Parameters
+    ----------------
+    iconvert : Callable
+        Converter to be applied to input data when a device is being added.
+    oconvert : callable
+        Converter to be applied to internal data when outputting.
 
     Attributes
     ----------

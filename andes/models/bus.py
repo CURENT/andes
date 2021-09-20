@@ -1,7 +1,7 @@
 import logging
-import numpy as np
-
 from collections import OrderedDict
+
+import numpy as np
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, DataParam, NumParam
 from andes.core.var import Algeb

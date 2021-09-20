@@ -119,6 +119,8 @@ class REGCA1Model(Model):
                           tex_name=r'\theta',
                           info='Bus voltage angle',
                           e_str='-Pe',
+                          ename='P',
+                          tex_ename='P',
                           )
 
         self.v = ExtAlgeb(model='Bus',
@@ -127,6 +129,8 @@ class REGCA1Model(Model):
                           tex_name=r'V',
                           info='Bus voltage magnitude',
                           e_str='-Qe',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
         self.p0s = ExtService(model='StaticGen',

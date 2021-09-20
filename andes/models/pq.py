@@ -65,6 +65,7 @@ class PQ(PQData, Model):
     decimal numbers and sum up exactly to 1. The same rule applies to
     (q2q, q2i, q2z).
     """
+
     def __init__(self, system=None, config=None):
         PQData.__init__(self)
         Model.__init__(self, system, config)
@@ -113,11 +114,15 @@ class PQ(PQData, Model):
                           src='a',
                           indexer=self.bus,
                           tex_name=r'\theta',
+                          ename='P',
+                          tex_ename='P',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name=r'V',
+                          ename='Q',
+                          tex_ename='Q',
                           )
 
         self.v0 = ExtService(src='v',

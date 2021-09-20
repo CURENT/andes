@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class LineData(ModelData):
+    """
+    Data for Line.
+    """
     def __init__(self):
         super().__init__()
 
@@ -119,13 +122,25 @@ class Line(LineData, Model):
         self.flags.tds = True
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1',
-                           info='phase angle of the from bus')
+                           info='phase angle of the from bus',
+                           ename='Pij',
+                           tex_ename='P_{ij}',
+                           )
         self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2, tex_name='a_2',
-                           info='phase angle of the to bus')
+                           info='phase angle of the to bus',
+                           ename='Pji',
+                           tex_ename='P_{ji}',
+                           )
         self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1',
-                           info='voltage magnitude of the from bus')
+                           info='voltage magnitude of the from bus',
+                           ename='Qij',
+                           tex_ename='Q_{ij}',
+                           )
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2',
-                           info='voltage magnitude of the to bus')
+                           info='voltage magnitude of the to bus',
+                           ename='Qji',
+                           tex_ename='Q_{ji}',
+                           )
 
         self.gh = ConstService(tex_name='g_h')
         self.bh = ConstService(tex_name='b_h')
@@ -178,6 +193,7 @@ class JumperData(ModelData):
     """
     Data for jumper that merges two buses into one.
     """
+
     def __init__(self):
         ModelData.__init__(self)
 
@@ -186,6 +202,10 @@ class JumperData(ModelData):
 
 
 class JumperModel(Model):
+    """
+    Jumper model implementation.
+    """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.flags.pflow = True
@@ -193,13 +213,25 @@ class JumperModel(Model):
         self.group = 'ACShort'
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1',
-                           info='phase angle of the from bus')
+                           info='phase angle of the from bus',
+                           ename='Pij',
+                           tex_ename='P_{ij}',
+                           )
         self.a2 = ExtAlgeb(model='Bus', src='a', indexer=self.bus2, tex_name='a_2',
-                           info='phase angle of the to bus')
+                           info='phase angle of the to bus',
+                           ename='Pji',
+                           tex_ename='P_{ji}',
+                           )
         self.v1 = ExtAlgeb(model='Bus', src='v', indexer=self.bus1, tex_name='v_1',
-                           info='voltage magnitude of the from bus')
+                           info='voltage magnitude of the from bus',
+                           ename='Qij',
+                           tex_ename='Q_{ij}',
+                           )
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.bus2, tex_name='v_2',
-                           info='voltage magnitude of the to bus')
+                           info='voltage magnitude of the to bus',
+                           ename='Qji',
+                           tex_ename='Q_{ji}',
+                           )
 
         self.p = Algeb(info='active power (1 to 2)',
                        e_str='u * (a1 - a2)',
