@@ -459,8 +459,8 @@ class PIDAWHardLimit(PIController):
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
 
         PIDController.__init__(self, u=u, kp=kp, ki=ki, kd=kd, ref=ref, x0=x0,
-                              name=name, tex_name=tex_name, info=info,
-                              )
+                               name=name, tex_name=tex_name, info=info,
+                               )
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
