@@ -357,8 +357,9 @@ class PIDController(Block):
         self.x0 = dummify(x0)
 
         self.xi = State(info="Integrator output", tex_name='xi')
+        self.ui = Algeb(info="Derivative input", tex_name='ui')
         self.xd = Washout(info='Derivative output', tex_name='xd',
-                          K=self.kd, T=self.kd)
+                          u=self.ui, K=self.kd, T=self.kd)
         self.y = Algeb(info="PI output", tex_name='y')
 
         self.vars = OrderedDict([('xi', self.xi), ('xd', self.xd), ('y', self.y)])
@@ -378,11 +379,11 @@ class PIDController(Block):
             xd &= Washout(u - ref)
             y &= x_i + k_p * (u - ref) + xd
         """
+        self.ui.v_str='0'
+        self.ui.e_str=f'({self.u.name} - {self.ref.name})'
 
         self.xi.v_str = f'{self.x0.name}'
         self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
-
-        self.xd.u = f'{self.u.name} - {self.ref.name}'
 
         self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
         self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
