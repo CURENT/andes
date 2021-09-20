@@ -8,5 +8,6 @@ from andes.models.exciter.ieeex1 import IEEEX1  # NOQA
 from andes.models.exciter.exac1 import EXAC1    # NOQA
 from andes.models.exciter.exac4 import EXAC4    # NOQA
 from andes.models.exciter.sexs import SEXS      # NOQA
+from andes.models.exciter.ac8b import AC8B      # NOQA
 
 from andes.models.exciter.saturation import ExcQuadSat, ExcExpSat  # NOQA
