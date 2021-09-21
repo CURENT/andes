@@ -132,11 +132,18 @@ class AC8BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        # TODO: change v_str
+        # Assume FEX is in (0, 0.433) at initial
+        self.VE0 = ConstService(info='Initial VE',
+                                 tex_name=r'V_{E0}',
+                                 v_str='vf0 + 0.577 * KC * XadIfd')
+
+        self.VR0 = ConstService(info='Initial VR',
+                                tex_name=r'V_{R0}',
+                                v_str='VFE0 + VE0')
+
         self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v', # 'v + vb0',
-                                  )
+                                  tex_name=r'V_{ref0}',
+                                  v_str='v')
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
@@ -174,9 +181,8 @@ class AC8BModel(ExcBase):
                         diag_eps=True,
                         )
 
-        # Why PIDAW must have a `name`
         self.PIDAW = PIDAWHardLimit(u=self.vi, kp=self.kP, ki=self.kI,
-                                    kd=self.kD, Td=self.Td,
+                                    kd=self.kD, Td=self.Td, x0='VR0 / KA',
                                     aw_lower=self.VPMIN, aw_upper=self.VPMAX,
                                     lower=self.VPMIN, upper=self.VPMAX,
                                     tex_name='PID', info='PID', name='PIDAW',
@@ -187,23 +193,26 @@ class AC8BModel(ExcBase):
                                 K=self.KA,
                                 upper=self.VRMAX,
                                 lower=self.VRMIN,
-                                info='Anti-windup lag',
+                                info=r'V_{R}, Anti-windup lag',
                                 )
-
-        # TODO: check y0
-        # TODO: check max and min
 
         self.VEMAX = VarService(info='Maximum excitation output',
                                 tex_name=r'V_{EMAX}',
-                                v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)',)
+                                v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
 
+        # --- debug
+        self.se0=ConstService(v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2')
+        # --- debug end
+
+        # LA_y is VR
+        # TODO: check max and min
         self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
                                         T=self.TE,
                                         K=1,
-                                        y0=self.vf0,
+                                        y0=self.VE0,
                                         lower=self.VEMIN,
                                         upper=self.VEMAX,
-                                        info=r'V_E',
+                                        info=r'V_{E}, Integrator Anti-windup',
                                         )
 
         self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
@@ -212,12 +221,19 @@ class AC8BModel(ExcBase):
 
         self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
+        # SL_z0 indicates saturation
         self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
                         v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
                         e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
                         diag_eps=True,
                         )
 
+
+        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
+                                 v_str='INT_y * KE + Se + XadIfd * KD',
+                                 )
+
+        # INT_y is VE
         self.VFE = Algeb(info='Combined saturation feedback',
                          tex_name='V_{FE}',
                          unit='p.u.',
