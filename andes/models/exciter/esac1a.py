@@ -1,14 +1,13 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, VarService, FlagValue
+from andes.core.service import ConstService
 
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import LessThan, LVGate, AntiWindup, IntegratorAntiWindup
-from andes.core.block import Integrator
+from andes.core.block import LVGate, AntiWindup, IntegratorAntiWindup
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
-from andes.models.exciter.saturation import ExcQuadSat
+# from andes.models.exciter.saturation import ExcQuadSat
 
 
 class ESAC1AData(ExcBaseData):
@@ -68,10 +67,6 @@ class ESAC1AData(ExcBaseData):
                                default=0,
                                unit='bool',
                                )
-
-
-
-
 
 
 class ESAC1AModel(ExcBase):
@@ -149,7 +144,7 @@ class ESAC1AModel(ExcBase):
                                         y0=self.vf0,
                                         lower=self.zero,
                                         upper=self.large,
-                                        info='IntegratorAntiWindup,
+                                        info='Integrator Anti-Windup',
                                         )
 
         # TODO: add VFE
@@ -163,9 +158,6 @@ class ESAC1AModel(ExcBase):
         # TODO: add saturation VX
 
         # TODO: add FEX
-
-
-
 
 
 class ESAC1A(ESAC1AData, ESAC1AModel):
