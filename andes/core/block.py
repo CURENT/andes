@@ -334,7 +334,7 @@ class PIDController(Block):
     The controller takes an error signal as the input.
     It takes an optional `ref` signal, which will be subtracted from the input.
 
-    The name should be specified the same as the instance name.
+    The name is suggessted to be specified the same as the instance name.
 
 
     Parameters
@@ -351,7 +351,7 @@ class PIDController(Block):
         The derivative time constant parameter instance
     """
 
-    def __init__(self, u, kp, ki, kd, Td, ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+    def __init__(self, u, kp, ki, kd, Td, name, ref=0.0, x0=0.0, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
         self.u = dummify(u)
@@ -464,7 +464,7 @@ class PIDAWHardLimit(PIController):
     Limits ``lower`` and ``upper`` are on the final output,
     and ``aw_lower`` ``aw_upper`` are on the integrator.
 
-    The name should be specified the same as the instance name.
+    The name is suggessted to be specified the same as the instance name.
 
     Parameters
     ----------
@@ -480,8 +480,8 @@ class PIDAWHardLimit(PIController):
         The derivative time constant parameter instance
     """
 
-    def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
-                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+    def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, name, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, tex_name=None, info=None):
 
         PIDController.__init__(self, u=u, kp=kp, ki=ki, kd=kd, Td=Td, ref=ref, x0=x0,
                                name=name, tex_name=tex_name, info=info,
