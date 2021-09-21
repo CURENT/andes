@@ -121,7 +121,8 @@ class Block:
         # handle sub-blocks by prepending self.name
         if isinstance(value, Block):
             if self.name is None:
-                raise ValueError(f"Must specify `name` for {self.class_name} instance.")
+                raise ValueError("Must specify `name` for %s instance "
+                                 "because it contains a sub-block named <%s>." % (self.class_name, key))
             if not value.owner:
                 value.__dict__['owner'] = self
 
@@ -406,6 +407,7 @@ class PIAWHardLimit(PIController):
     and ``aw_lower`` ``aw_upper`` are on the integrator.
 
     """
+
     def __init__(self, u, kp, ki, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
 
@@ -477,6 +479,7 @@ class PIDAWHardLimit(PIController):
     Td : BaseParam
         The derivative time constant parameter instance
     """
+
     def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
 
@@ -530,6 +533,7 @@ class PITrackAW(Block):
     """
     PI with tracking anti-windup limiter
     """
+
     def __init__(self, u, kp, ki, ks, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
@@ -573,6 +577,7 @@ class PITrackAWFreeze(PITrackAW):
     """
     PI controller with tracking anti-windup limiter and state freeze.
     """
+
     def __init__(self, u, kp, ki, ks, lower, upper, freeze, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
@@ -611,6 +616,7 @@ class PIFreeze(PIController):
     -----
     Tested in `experimental.TestPITrackAW.PIFreeze`.
     """
+
     def __init__(self, u, kp, ki, freeze, ref=0.0, x0=0.0, name=None,
                  tex_name=None, info=None):
         PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
@@ -960,6 +966,7 @@ class LagFreeze(Lag):
     """
     Lag with a state freeze input.
     """
+
     def __init__(self, u, T, K, freeze, name=None, tex_name=None, info=None):
         Lag.__init__(self, u, T, K, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
@@ -1807,6 +1814,7 @@ class DeadBand1(Block):
           /   |
 
     """
+
     def __init__(self, u, center, lower, upper, gain=1.0, enable=True,
                  name=None, tex_name=None, info=None, namespace='local'):
         Block.__init__(self, name=name, tex_name=tex_name, info=info, namespace=namespace)
