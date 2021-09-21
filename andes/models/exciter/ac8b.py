@@ -5,7 +5,7 @@ from andes.core.service import ConstService, VarService, FlagValue
 
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import LessThan, LVGate, AntiWindup, IntegratorAntiWindup
-from andes.core.block import Integrator, PIDAWHardLimit, Piecewise
+from andes.core.block import Integrator, PIDAWHardLimit, Piecewise, PIDController
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
@@ -34,6 +34,11 @@ class AC8BData(ExcBaseData):
                            tex_name='k_D',
                            default=10,
                            vrange=(10, 500),
+                           )
+        self.Td = NumParam(info='PID direvative time constant.',
+                           tex_name='T_d',
+                           default=0.2,
+                           vrange=(0, 0.5),
                            )
 
         self.VPMAX = NumParam(info='PID maximum limit',
@@ -105,6 +110,11 @@ class AC8BData(ExcBaseData):
                             unit='p.u.',
                             )
 
+        self.KE = NumParam(info='Gain added to saturation',
+                           tex_name='K_E',
+                           default=1,
+                           unit='p.u.',
+                           )
         self.KD = NumParam(default=0,
                            info='Ifd feedback gain',
                            tex_name='K_C',
@@ -121,6 +131,12 @@ class AC8BData(ExcBaseData):
 class AC8BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+
+        # TODO: change v_str
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v', # 'v + vb0',
+                                  )
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
@@ -159,10 +175,11 @@ class AC8BModel(ExcBase):
                         )
 
         # Why PIDAW must have a `name`
-        self.PIDAW = PIDAWHardLimit(u=self.vi, kp=self.kP, ki=self.kI, kd=self.kD,
+        self.PIDAW = PIDAWHardLimit(u=self.vi, kp=self.kP, ki=self.kI,
+                                    kd=self.kD, Td=self.Td,
                                     aw_lower=self.VPMIN, aw_upper=self.VPMAX,
                                     lower=self.VPMIN, upper=self.VPMAX,
-                                    tex_name='PID', info='PID',
+                                    tex_name='PID', info='PID', name='PIDAW',
                                     )
 
         self.LA = LagAntiWindup(u=self.PIDAW_y,
@@ -211,8 +228,8 @@ class AC8BModel(ExcBase):
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
-                        v_str='safe_div(KC * XadIfd, VE)',
-                        e_str='ue * (KC * XadIfd - VE * IN)',
+                        v_str='safe_div(KC * XadIfd, INT_y)',
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
                         diag_eps=True,
                         )
 
