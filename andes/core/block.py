@@ -333,6 +333,8 @@ class PIDController(Block):
     The controller takes an error signal as the input.
     It takes an optional `ref` signal, which will be subtracted from the input.
 
+    The name should be specified the same as the instance name.
+
 
     Parameters
     ----------
@@ -344,6 +346,8 @@ class PIDController(Block):
         The integral gain parameter instance
     kd : BaseParam
         The derivative gain parameter instance
+    Td : BaseParam
+        The derivative time constant parameter instance
     """
 
     def __init__(self, u, kp, ki, kd, Td, ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
@@ -458,6 +462,20 @@ class PIDAWHardLimit(PIController):
     Limits ``lower`` and ``upper`` are on the final output,
     and ``aw_lower`` ``aw_upper`` are on the integrator.
 
+    The name should be specified the same as the instance name.
+
+    Parameters
+    ----------
+    u : BaseVar
+        The input variable instance
+    kp : BaseParam
+        The proportional gain parameter instance
+    ki : [type]
+        The integral gain parameter instance
+    kd : BaseParam
+        The derivative gain parameter instance
+    Td : BaseParam
+        The derivative time constant parameter instance
     """
     def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
