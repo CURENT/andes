@@ -1,11 +1,11 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, VarService, FlagValue
+from andes.core.service import ConstService, VarService
 
-from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import LessThan, LVGate, AntiWindup, IntegratorAntiWindup
-from andes.core.block import Integrator, PIDAWHardLimit, Piecewise, PIDController
+from andes.core.block import LagAntiWindup, Lag
+from andes.core.block import LessThan, IntegratorAntiWindup
+from andes.core.block import PIDAWHardLimit, Piecewise
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
@@ -134,8 +134,8 @@ class AC8BModel(ExcBase):
 
         # Assume FEX is in (0, 0.433) at initial
         self.VE0 = ConstService(info='Initial VE',
-                                 tex_name=r'V_{E0}',
-                                 v_str='vf0 + 0.577 * KC * XadIfd')
+                                tex_name=r'V_{E0}',
+                                v_str='vf0 + 0.577 * KC * XadIfd')
 
         self.VR0 = ConstService(info='Initial VR',
                                 tex_name=r'V_{R0}',
@@ -201,7 +201,7 @@ class AC8BModel(ExcBase):
                                 v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
 
         # --- debug
-        self.se0=ConstService(v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2')
+        self.se0 = ConstService(v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2')
         # --- debug end
 
         # LA_y is VR
@@ -227,7 +227,6 @@ class AC8BModel(ExcBase):
                         e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
                         diag_eps=True,
                         )
-
 
         self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
                                  v_str='INT_y * KE + Se + XadIfd * KD',
