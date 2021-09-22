@@ -970,8 +970,8 @@ class LagFreeze(Lag):
     Lag with a state freeze input.
     """
 
-    def __init__(self, u, T, K, freeze, name=None, tex_name=None, info=None):
-        Lag.__init__(self, u, T, K, name=name, tex_name=tex_name, info=info)
+    def __init__(self, u, T, K, freeze, D=1, name=None, tex_name=None, info=None):
+        Lag.__init__(self, u, T, K, D=1, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
 
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
@@ -1004,7 +1004,7 @@ class LagAntiWindup(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
            ______/
            lower
@@ -1017,22 +1017,25 @@ class LagAntiWindup(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
-    def __init__(self, u, T, K, lower, upper,
+    def __init__(self, u, T, K, lower, upper, D=1,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
@@ -1050,12 +1053,12 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= K u / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y'
 
 
 class LagAWFreeze(LagAntiWindup):
@@ -1065,9 +1068,9 @@ class LagAWFreeze(LagAntiWindup):
     The output `y` is a state variable.
     """
 
-    def __init__(self, u, T, K, lower, upper, freeze,
+    def __init__(self, u, T, K, lower, upper, freeze, D=1,
                  name=None, tex_name=None, info=None):
-        LagAntiWindup.__init__(self, u, T, K, lower, upper,
+        LagAntiWindup.__init__(self, u, T, K, lower, upper, D=D,
                                name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
 
@@ -1101,7 +1104,7 @@ class LagRate(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
                  /
         rate_lower
@@ -1114,13 +1117,15 @@ class LagRate(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
     def __init__(self, u, T, K,
-                 rate_lower, rate_upper,
+                 rate_lower, rate_upper, D=1,
                  rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
                  name=None, tex_name=None, info=None):
@@ -1128,8 +1133,9 @@ class LagRate(Block):
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
@@ -1168,7 +1174,7 @@ class LagAntiWindupRate(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
            ______/
            lower & rate_lower
@@ -1181,13 +1187,15 @@ class LagAntiWindupRate(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
     def __init__(self, u, T, K,
-                 lower, upper, rate_lower, rate_upper,
+                 lower, upper, rate_lower, rate_upper, D=1,
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
                  name=None, tex_name=None, info=None):
@@ -1195,11 +1203,12 @@ class LagAntiWindupRate(Block):
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T,
@@ -1224,12 +1233,12 @@ class LagAntiWindupRate(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= K u / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y'
 
 
 class Lag2ndOrd(Block):
