@@ -917,7 +917,7 @@ class Lag(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
 
     Exports one state variable `y` as the output.
@@ -928,18 +928,21 @@ class Lag(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
-    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, D=1, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
-        self.enforce_tex_name((self.K, self.T))
+        self.enforce_tex_name((self.K, self.T, self.D))
         self.y = State(info='State in lag transfer function', tex_name="y",
                        t_const=self.T)
 
@@ -954,12 +957,12 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= Ku / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y)'
 
 
 class LagFreeze(Lag):
