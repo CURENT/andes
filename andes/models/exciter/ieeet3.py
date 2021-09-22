@@ -43,13 +43,12 @@ class IEEET3Data(ExcBaseData):
                               vrange=(0, 20),
                               )
 
-        # TODO: info may need change
-        self.KE = NumParam(info='Gain added to saturation',
+        self.KE = NumParam(info='Exciter integrator constant',
                            tex_name='K_E',
                            default=1,
                            unit='p.u.',
                            )
-        # TODO: info may need change
+
         self.TE = NumParam(info='Exciter integrator time constant',
                            tex_name='T_E',
                            default=0.8,
@@ -156,7 +155,6 @@ class IEEET3Model(ExcBase):
                           e_str='vref0 - vref'
                           )
 
-        # TODO: Same structure are ignored by IEEET1
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
