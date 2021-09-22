@@ -1,5 +1,5 @@
 from andes.core.param import NumParam
-from andes.core.var import Algeb
+from andes.core.var import Algeb, ExtAlgeb
 
 from andes.core.service import ConstService, FlagValue, VarService
 
@@ -86,6 +86,32 @@ class IEEET3Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
+        # vd, vq, Id, Iq from SynGen
+        self.vd = ExtAlgeb(src='vd',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_d',
+                           info='d-axis machine voltage',
+                           )
+        self.vq = ExtAlgeb(src='vq',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_q',
+                           info='q-axis machine voltage',
+                           )
+        self.Id = ExtAlgeb(src='Id',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'I_d',
+                           info='d-axis machine current',
+                           )
+        self.Iq = ExtAlgeb(src='Iq',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'I_q',
+                           info='q-axis machine current',
+                           )
+
         # TODO: Why set VRMAX to 999?
         # Set VRMAX to 999 when VRMAX = 0
         self._zVRM = FlagValue(self.VRMAX, value=0,
@@ -162,14 +188,9 @@ class IEEET3Model(ExcBase):
 
         self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
-        # --- debug
-        # self.vtt = VarService(v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))')
-        # --- debug end
-
         self.VTHEV = VarService(tex_name=r'V_{THEV}',
                                 info=r'V_{THEV}',
-                                # v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
-                                v_str='1',
+                                v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
                                 )
 
         self.A = VarService(tex_name=r'A', info=r'A',
