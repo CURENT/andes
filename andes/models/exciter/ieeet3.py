@@ -51,7 +51,7 @@ class IEEET3Data(ExcBaseData):
 
         self.TE = NumParam(info='Exciter integrator time constant',
                            tex_name='T_E',
-                           default=0.8,
+                           default=1,
                            unit='p.u.',
                            )
         self.KF = NumParam(default=0.1,
