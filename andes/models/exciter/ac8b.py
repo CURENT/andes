@@ -200,10 +200,6 @@ class AC8BModel(ExcBase):
                                 tex_name=r'V_{EMAX}',
                                 v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
 
-        # --- debug
-        self.se0 = ConstService(v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2')
-        # --- debug end
-
         # LA_y is VR
         # TODO: check max and min
         self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
