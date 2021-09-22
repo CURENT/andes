@@ -110,6 +110,24 @@ class IEEET3Model(ExcBase):
                            tex_name=r'I_q',
                            info='q-axis machine current',
                            )
+        self.VE = VarService(tex_name=r'V_{E}',
+                             info=r'V_{E}',
+                             v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
+                             )
+
+        # Assume V4 is not 0 at initial
+        self.V40 = ConstService('sqrt(VE ** 2 - (0.78 * XadIfd) ** 2)')
+        self.VR0 = ConstService(info='Initial VR',
+                                tex_name='V_{R0}',
+                                v_str='vf0 * KE - V40')
+
+        self.vb0 = ConstService(info='Initial vb',
+                                tex_name='V_{b0}',
+                                v_str='VR0 / KA')
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vb0')
 
         # TODO: Why set VRMAX to 999?
         # Set VRMAX to 999 when VRMAX = 0
@@ -178,11 +196,6 @@ class IEEET3Model(ExcBase):
         self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
                           info='V_F, stablizing circuit feedback, washout')
 
-        self.VE = VarService(tex_name=r'V_{E}',
-                             info=r'V_{E}',
-                             v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
-                             )
-
         self.SQE = VarService(tex_name=r'SQE', info=r'Square Error',
                               v_str='VE ** 2 - (0.78 * XadIfd) ** 2',
                               )
@@ -193,18 +206,6 @@ class IEEET3Model(ExcBase):
         self.V4 = VarService(tex_name='V_4',
                              v_str='SL_z1 * sqrt(SQE)',
                              )
-
-        self.VR0 = ConstService(info='Initial VR',
-                                tex_name='V_{R0}',
-                                v_str='vf0 * KE - V4')
-
-        self.vb0 = ConstService(info='Initial vb',
-                                tex_name='V_{b0}',
-                                v_str='VR0 / KA')
-
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vb0')
 
         self.vout.e_str = 'ue * (LA1_y - vout)'
 
