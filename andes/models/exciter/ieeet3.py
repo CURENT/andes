@@ -95,24 +95,34 @@ class IEEET3Model(ExcBase):
                                    info='Set VRMAX=999 when zero',
                                    )
 
-        # TODO: Checkout what these eqns mean
-        # TODO: What is VS? From PSS.
-        # TODO: It should be: vref0 = vf0? No, EFD = vf0.
-        # TODO: Vref can be a VarService? No, it will degrade DAE.
-        self.vr0 = ConstService(info='Initial vr',
-                                tex_name='V_{r0}',
-                                v_str='KA * vf0')
-        self.vb0 = ConstService(info='Initial vb',
-                                tex_name='V_{b0}',
-                                v_str='vr0 / KA')
+        self.VR0 = ConstService(info='Initial VR',
+                                tex_name='V_{R0}',
+                                v_str='vf0 / KE + VB')
+
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
-                                  v_str='v + vb0',
+                                  v_str='v',
                                   )
-        self.vfe0 = ConstService(v_str='vf0 * KE + Se0',
-                                 tex_name='V_{FE0}',
-                                 )
 
+        self.LG = Lag(u=self.v, T=self.TR, K=1,
+                      info='Sensing delay',
+                      )
+
+        self.UEL = Algeb(info='Interface var for under exc. limiter',
+                         tex_name='U_{EL}',
+                         v_str='0',
+                         e_str='0 - UEL'
+                         )
+        self.OEL = Algeb(info='Interface var for over exc. limiter',
+                         tex_name='O_{EL}',
+                         v_str='0',
+                         e_str='0 - OEL'
+                         )
+        self.Vs = Algeb(info='Voltage compensation from PSS',
+                        tex_name='V_{s}',
+                        v_str='0',
+                        e_str='0 - Vs'
+                        )
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
@@ -120,65 +130,65 @@ class IEEET3Model(ExcBase):
                           e_str='vref0 - vref'
                           )
 
-        self.LG = Lag(u=self.v, T=self.TR, K=1,
-                      info='Sensing delay',
-                      )
-
         # TODO: Same structure are ignored by IEEET1
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='ue * (-LG_y + vref - vi)',
+                        e_str='ue * (-LG_y + vref + UEL + OEL + Vs - vi)',
                         v_str='-v + vref',
                         diag_eps=True,
                         )
 
+        # LA3_y is V_R
         self.LA3 = LagAntiWindup(u='ue * (vi - WF_y)',
                                  T=self.TA,
                                  K=self.KA,
                                  upper=self.VRMAXc,
                                  lower=self.VRMIN,
-                                 info='State 3',
+                                 info=r'V_{R}, Lag Anti-Windup',
                                  )
 
-        # TODO: State1
         self.zero = ConstService('0')
-        self.LA1 = LagAntiWindup(u='ue * VB',
-                                 T='TE/KE',
-                                 K='1/KE',
+        # LA1_y is final output
+        self.LA1 = LagAntiWindup(u='ue * (LA3_y + VB)',
+                                 T=self.TE,
+                                 K='1',
+                                 D=self.KE,
                                  upper=self.VBMAX,
                                  lower=self.zero,
-                                 info='State 1',
+                                 info=r'E_{FD}, vout, Lag Anti-Windup',
                                  )
 
-        self.WF = Washout(u=self.vout, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+        self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+
+        # --- debug
+        # self.vtt = VarService(v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))')
+        # --- debug end
 
         self.VTHEV = VarService(tex_name=r'V_{THEV}',
                                 info=r'V_{THEV}',
-                                v_str='Abs(KP * (vd + 1j * vq) + 1j * KI * (Id + 1j * Iq))',
+                                # v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
+                                v_str='1',
                                 )
 
-        self.A = VarService(tex_name=r'A',
-                            info=r'A',
+        self.A = VarService(tex_name=r'A', info=r'A',
                             v_str='(0.78 * XadIfd / VTHEV) ** 2',
                             )
 
-        self.LT = LessThan(u=self.A, bound='1', equal=True, enable=True, cache=False)
-
-        self.mp = VarService(tex_name='mp',
-                             v_str='VTHEV * sqrt(1 - A) * XadIfd',
-                             )
+        self.LT = LessThan(u=self.A, bound='1', equal=False, enable=True, cache=False)
 
         self.VB = VarService(tex_name='V_B',
-                             v_str='LT_zi * (mp + LA3_y)',
+                             v_str='LT_z1 * VTHEV * sqrt(1 - A) * XadIfd',
                              )
 
         self.vout.e_str = 'ue * (LA1_y - vout)'
 
 
 class IEEET3(IEEET3Data, IEEET3Model):
-    '''
+    """
+    Exciter IEEET3.
+
     Reference:
 
     [1] PowerWorld, Exciter IEEET3, [Online],
@@ -190,7 +200,7 @@ class IEEET3(IEEET3Data, IEEET3Model):
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20IEEET3.htm
 
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
-    '''
+    """
     def __init__(self, system, config):
         IEEET3Data.__init__(self)
         IEEET3Model.__init__(self, system, config)
