@@ -5,8 +5,6 @@ from andes.core.service import ConstService, FlagValue, VarService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
-from andes.core.discrete import Limiter
-from andes.core.common import dummify
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
@@ -122,14 +120,6 @@ class IEEET3Model(ExcBase):
                                    info='Set VRMAX=999 when zero',
                                    )
 
-        self.VR0 = ConstService(info='Initial VR',
-                                tex_name='V_{R0}',
-                                v_str='vf0 / KE + V4')
-
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v')
-
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay')
 
@@ -188,8 +178,8 @@ class IEEET3Model(ExcBase):
         self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
                           info='V_F, stablizing circuit feedback, washout')
 
-        self.VE = VarService(tex_name=r'V_{THEV}',
-                             info=r'V_{THEV}',
+        self.VE = VarService(tex_name=r'V_{E}',
+                             info=r'V_{E}',
                              v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
                              )
 
@@ -203,6 +193,18 @@ class IEEET3Model(ExcBase):
         self.V4 = VarService(tex_name='V_4',
                              v_str='SL_z1 * sqrt(SQE)',
                              )
+
+        self.VR0 = ConstService(info='Initial VR',
+                                tex_name='V_{R0}',
+                                v_str='vf0 * KE - V4')
+
+        self.vb0 = ConstService(info='Initial vb',
+                                tex_name='V_{b0}',
+                                v_str='VR0 / KA')
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vb0')
 
         self.vout.e_str = 'ue * (LA1_y - vout)'
 
