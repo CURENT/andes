@@ -5,6 +5,8 @@ from andes.core.service import ConstService, FlagValue, VarService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
+from andes.core.discrete import Limiter
+from andes.core.common import dummify
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
@@ -122,16 +124,14 @@ class IEEET3Model(ExcBase):
 
         self.VR0 = ConstService(info='Initial VR',
                                 tex_name='V_{R0}',
-                                v_str='vf0 / KE + VB')
+                                v_str='vf0 / KE + V4')
 
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
-                                  v_str='v',
-                                  )
+                                  v_str='v')
 
         self.LG = Lag(u=self.v, T=self.TR, K=1,
-                      info='Sensing delay',
-                      )
+                      info='Sensing delay')
 
         self.UEL = Algeb(info='Interface var for under exc. limiter',
                          tex_name='U_{EL}',
@@ -173,32 +173,35 @@ class IEEET3Model(ExcBase):
                                  info=r'V_{R}, Lag Anti-Windup',
                                  )
 
-        self.zero = ConstService('0')
+        self.zero = ConstService(v_str='0.0')
+        self.one = ConstService(v_str='1.0')
         # LA1_y is final output
-        self.LA1 = LagAntiWindup(u='ue * (LA3_y + VB)',
+        self.LA1 = LagAntiWindup(u='ue * (LA3_y + V4)',
                                  T=self.TE,
-                                 K='1',
+                                 K=self.one,
                                  D=self.KE,
                                  upper=self.VBMAX,
                                  lower=self.zero,
                                  info=r'E_{FD}, vout, Lag Anti-Windup',
                                  )
 
-        self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+        self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
+                          info='V_F, stablizing circuit feedback, washout')
 
-        self.VTHEV = VarService(tex_name=r'V_{THEV}',
-                                info=r'V_{THEV}',
-                                v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
-                                )
+        self.VE = VarService(tex_name=r'V_{THEV}',
+                             info=r'V_{THEV}',
+                             v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
+                             )
 
-        self.A = VarService(tex_name=r'A', info=r'A',
-                            v_str='(0.78 * XadIfd / VTHEV) ** 2',
-                            )
+        self.SQE = VarService(tex_name=r'SQE', info=r'Square Error',
+                              v_str='VE ** 2 - (0.78 * XadIfd) ** 2',
+                              )
 
-        self.LT = LessThan(u=self.A, bound='1', equal=False, enable=True, cache=False)
+        self.SL = LessThan(u=self.zero, bound=self.SQE,
+                           equal=False, enable=True, cache=False)
 
-        self.VB = VarService(tex_name='V_B',
-                             v_str='LT_z1 * VTHEV * sqrt(1 - A) * XadIfd',
+        self.V4 = VarService(tex_name='V_4',
+                             v_str='SL_z1 * sqrt(SQE)',
                              )
 
         self.vout.e_str = 'ue * (LA1_y - vout)'
