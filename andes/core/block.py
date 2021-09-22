@@ -328,14 +328,19 @@ class PIController(Block):
 
 
 class PIDController(Block):
-    """
-    Proportional Integral Derivative Controller.
+    r"""
+    Proportional Integral Derivative Controller. ::
+
+            ┌────────────────────┐
+            │      ki     skd    │
+       u -> │kp + ─── + ───────  │ -> y
+            │      s    1 + sTd  │
+            └────────────────────┘
 
     The controller takes an error signal as the input.
     It takes an optional `ref` signal, which will be subtracted from the input.
 
     The name is suggessted to be specified the same as the instance name.
-
 
     Parameters
     ----------
@@ -457,9 +462,21 @@ class PIAWHardLimit(PIController):
 
 
 class PIDAWHardLimit(PIController):
-    """
+    r"""
     PID controller with anti-windup limiter on the integrator and
-    hard limit on the output.
+    hard limit on the output. ::
+
+                         upper
+                       /¯¯¯¯¯¯
+            ┌────────────────────┐
+            │      ki     skd    │
+       u -> │kp + ─── + ───────  │ -> y
+            │      s    1 + sTd  │
+            └────────────────────┘
+                ______/
+                lower
+
+    The controller takes an error signal as the input.
 
     Limits ``lower`` and ``upper`` are on the final output,
     and ``aw_lower`` ``aw_upper`` are on the integrator.
