@@ -9,13 +9,20 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
-v1.4.3 (2021-09-xx)
+v1.4.3 (2021-09-25)
 ```````````````````
+This release features parallel processing that cuts the time for
+``andes prepare`` by more than half.
+
 - ``andes prepare`` supports multiprocessing and uses it by default.
 - Added aliases ``andes st`` and ``andes prep`` for
   ``andes selftest`` and ``andes prepare``.
 - ``andes.config_logger`` supports setting new ``stream_level`` and
   ``file_level``.
+
+New exciter models are contributed by Jinning Wang.
+
+- Added ``AC8B`` and ``IEEET3``.
 
 v1.4.2 (2021-09-12)
 ```````````````````
