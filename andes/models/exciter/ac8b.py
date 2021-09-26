@@ -9,7 +9,7 @@ from andes.core.block import LagAntiWindup, Lag
 from andes.core.block import LessThan, IntegratorAntiWindup
 from andes.core.block import Piecewise, PIDTrackAW
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
 from andes.models.exciter.saturation import ExcQuadSat
 
 
