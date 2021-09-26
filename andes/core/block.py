@@ -327,7 +327,7 @@ class PIController(Block):
                        f'{self.name}_xi - {self.name}_y'
 
 
-class PIDController(Block):
+class PIDController(PIController):
     r"""
     Proportional Integral Derivative Controller. ::
 
@@ -338,9 +338,11 @@ class PIDController(Block):
             └────────────────────┘
 
     The controller takes an error signal as the input.
-    It takes an optional `ref` signal, which will be subtracted from the input.
+    It takes an optional ``ref`` signal, which will be subtracted from the input.
 
     The name is suggessted to be specified the same as the instance name.
+
+    This block assembles a ``PIController`` and a ``Washout``.
 
     Parameters
     ----------
@@ -348,7 +350,7 @@ class PIDController(Block):
         The input variable instance
     kp : BaseParam
         The proportional gain parameter instance
-    ki : [type]
+    ki : BaseParam
         The integral gain parameter instance
     kd : BaseParam
         The derivative gain parameter instance
@@ -357,25 +359,24 @@ class PIDController(Block):
     """
 
     def __init__(self, u, kp, ki, kd, Td, name, ref=0.0, x0=0.0, tex_name=None, info=None):
-        Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self.u = dummify(u)
-        self.kp = dummify(kp)
-        self.ki = dummify(ki)
+        PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info,
+                              )
+
         self.kd = dummify(kd)
         self.Td = dummify(Td)
-        self.ref = dummify(ref)
-        self.x0 = dummify(x0)
 
-        self.uin = Algeb(info="Derivative input", tex_name='uin')
-        self.WO = Washout(info='Derivative output', tex_name='WO',
+        self.uin = Algeb(info="PID input", tex_name='uin')
+        self.PIC = PIController(info="PIC", tex_name="PIC",
+                                u=self.uin, kp=self.kp, ki=self.ki, x0=x0)
+        self.WO = Washout(info='Washout', tex_name='WO',
                           u=self.uin, K=self.kd, T=self.kd)
 
-        self.xi = State(info="Integrator output", tex_name='xi')
-        self.y = Algeb(info="PI output", tex_name='y')
+        self.y = Algeb(info="PID output", tex_name='y')
 
-        self.vars = OrderedDict([('uin', self.uin), ('WO', self.WO),
-                                 ('xi', self.xi), ('y', self.y)])
+        self.vars = OrderedDict([('uin', self.uin), ('PIC', self.PIC),
+                                 ('WO', self.WO), ('y', self.y)])
 
     def define(self):
         r"""
@@ -383,7 +384,7 @@ class PIDController(Block):
 
         Notes
         -----
-        One state variable ``xi``, one Washout ``xd``, and one algebraic variable ``y`` are added.
+        One PIController ``PIC``, one Washout ``xd``, and one algebraic variable ``y`` are added.
 
         Equations implemented are
 
@@ -395,12 +396,8 @@ class PIDController(Block):
         self.uin.v_str = f'({self.u.name} - {self.ref.name})'
         self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
 
-        self.xi.v_str = f'{self.x0.name}'
-        self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
-
         self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
-        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
-                       f'{self.name}_xi + {self.name}_WO_y - {self.name}_y'
+        self.y.e_str = f'{self.name}_PIC_y + {self.name}_WO_y - {self.name}_y'
 
 
 class PIAWHardLimit(PIController):
@@ -461,10 +458,11 @@ class PIAWHardLimit(PIController):
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
-class PIDAWHardLimit(PIController):
+class PIDAWHardLimit(PIAWHardLimit):
     r"""
     PID controller with anti-windup limiter on the integrator and
-    hard limit on the output. ::
+    hard limit on the output.
+    ::
 
                          upper
                        /¯¯¯¯¯¯
@@ -489,7 +487,7 @@ class PIDAWHardLimit(PIController):
         The input variable instance
     kp : BaseParam
         The proportional gain parameter instance
-    ki : [type]
+    ki : BaseParam
         The integral gain parameter instance
     kd : BaseParam
         The derivative gain parameter instance
@@ -500,50 +498,35 @@ class PIDAWHardLimit(PIController):
     def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, name, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, tex_name=None, info=None):
 
-        PIDController.__init__(self, u=u, kp=kp, ki=ki, kd=kd, Td=Td, ref=ref, x0=x0,
-                               name=name, tex_name=tex_name, info=info,
-                               )
+        PIAWHardLimit.__init__(self, u=u, kp=kp, ki=ki, aw_lower=aw_lower,
+                               aw_upper=aw_upper, lower=lower, upper=upper,
+                               no_lower=no_lower, no_upper=no_upper,
+                               ref=ref, x0=x0, name=name, tex_name=tex_name,
+                               info=info)
 
-        self.lower = dummify(lower)
-        self.upper = dummify(upper)
-        self.aw_lower = dummify(aw_lower)
-        self.aw_upper = dummify(aw_upper)
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
 
-        self.aw = AntiWindup(u=self.xi, lower=self.aw_lower, upper=self.aw_upper,
-                             no_lower=no_lower, no_upper=no_upper, tex_name='aw'
-                             )
+        self.uin = Algeb(info="PID input", tex_name='uin')
 
-        self.yul = Algeb("PID unlimited output", tex_name='y^{ul}',
-                         discrete=self.aw,
-                         )
-
-        self.hl = HardLimiter(u=self.yul, lower=self.lower, upper=self.upper,
-                              no_lower=no_lower, no_upper=no_upper, tex_name='hl',
-                              )
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.kd)
 
         # the sequence affect the initialization order
-        self.vars = OrderedDict([('uin', self.uin), ('WO', self.WO),
-                                 ('xi', self.xi),
+        self.vars = OrderedDict([('xi', self.xi), ('uin', self.uin),
+                                 ('WO', self.WO),
                                  ('aw', self.aw), ('yul', self.yul),
                                  ('hl', self.hl), ('y', self.y)])
 
-        self.y.discrete = self.hl
-
     def define(self):
 
-        PIDController.define(self)
+        PIAWHardLimit.define(self)
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
 
-        self.yul.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
-
+        # overwrite existing `yul` equations
         self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
                          f'{self.name}_xi + {self.name}_WO_y - {self.name}_yul'
-
-        # overwrite existing `y` equations
-        self.y.v_str = f'{self.name}_yul * {self.name}_hl_zi + ' \
-                       f'{self.lower.name} * {self.name}_hl_zl + ' \
-                       f'{self.upper.name} * {self.name}_hl_zu'
-
-        self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
 class PITrackAW(Block):
@@ -588,6 +571,45 @@ class PITrackAW(Block):
                         f'{self.name}_xi - {self.name}_ys'
 
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
+
+
+class PIDTrackAW(PITrackAW):
+    """
+    PID with tracking anti-windup limiter
+    """
+
+    def __init__(self, u, kp, ki, kd, Td, ks, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        PITrackAW.__init__(self, u=u, kp=kp, ki=ki, ks=ks,
+                           lower=lower, upper=upper,
+                           no_lower=no_lower, no_upper=no_upper,
+                           ref=ref, x0=x0, name=name, tex_name=tex_name,
+                           info=info)
+
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
+
+        self.uin = Algeb(info="PID input", tex_name='uin')
+
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.Td)
+
+        self.vars = OrderedDict([('uin', self.uin),
+                                 ('xi', self.xi),
+                                 ('WO', self.WO),
+                                 ('ys', self.ys),
+                                 ('lim', self.lim),
+                                 ('y', self.y)])
+
+    def define(self):
+        PITrackAW.define(self)
+
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
+
+        # overwrite existing `y` equations
+        self.ys.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                        f'{self.name}_xi + {self.name}_WO_y - {self.name}_ys'
 
 
 class PITrackAWFreeze(PITrackAW):
