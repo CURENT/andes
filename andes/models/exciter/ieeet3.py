@@ -6,7 +6,7 @@ from andes.core.service import ConstService, FlagValue, VarService
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
 
 
 class IEEET3Data(ExcBaseData):
@@ -141,27 +141,7 @@ class IEEET3Model(ExcBase):
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay')
 
-        self.UEL = Algeb(info='Interface var for under exc. limiter',
-                         tex_name='U_{EL}',
-                         v_str='0',
-                         e_str='0 - UEL'
-                         )
-        self.OEL = Algeb(info='Interface var for over exc. limiter',
-                         tex_name='O_{EL}',
-                         v_str='0',
-                         e_str='0 - OEL'
-                         )
-        self.Vs = Algeb(info='Voltage compensation from PSS',
-                        tex_name='V_{s}',
-                        v_str='0',
-                        e_str='0 - Vs'
-                        )
-        self.vref = Algeb(info='Reference voltage input',
-                          tex_name='V_{ref}',
-                          unit='p.u.',
-                          v_str='vref0',
-                          e_str='vref0 - vref'
-                          )
+        ExcVsum.__init__(self)
 
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
