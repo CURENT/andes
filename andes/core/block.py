@@ -461,7 +461,8 @@ class PIAWHardLimit(PIController):
 class PIDAWHardLimit(PIController):
     r"""
     PID controller with anti-windup limiter on the integrator and
-    hard limit on the output. ::
+    hard limit on the output.
+    ::
 
                          upper
                        /¯¯¯¯¯¯
@@ -486,7 +487,7 @@ class PIDAWHardLimit(PIController):
         The input variable instance
     kp : BaseParam
         The proportional gain parameter instance
-    ki : [type]
+    ki : BaseParam
         The integral gain parameter instance
     kd : BaseParam
         The derivative gain parameter instance
@@ -497,50 +498,36 @@ class PIDAWHardLimit(PIController):
     def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, name, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, tex_name=None, info=None):
 
-        PIDController.__init__(self, u=u, kp=kp, ki=ki, kd=kd, Td=Td, ref=ref, x0=x0,
-                               name=name, tex_name=tex_name, info=info,
-                               )
+        PIAWHardLimit.__init__(self, u=u, kp=kp, ki=ki, aw_lower=aw_lower,
+                               aw_upper=aw_upper, lower=lower, upper=upper,
+                               no_lower=no_lower, no_upper=no_upper,
+                               ref=ref, x0=x0, name=name, tex_name=tex_name,
+                               info=info)
 
-        self.lower = dummify(lower)
-        self.upper = dummify(upper)
-        self.aw_lower = dummify(aw_lower)
-        self.aw_upper = dummify(aw_upper)
 
-        self.aw = AntiWindup(u=self.xi, lower=self.aw_lower, upper=self.aw_upper,
-                             no_lower=no_lower, no_upper=no_upper, tex_name='aw'
-                             )
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
 
-        self.yul = Algeb("PID unlimited output", tex_name='y^{ul}',
-                         discrete=self.aw,
-                         )
+        self.uin = Algeb(info="PID input", tex_name='uin')
 
-        self.hl = HardLimiter(u=self.yul, lower=self.lower, upper=self.upper,
-                              no_lower=no_lower, no_upper=no_upper, tex_name='hl',
-                              )
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.kd)
 
         # the sequence affect the initialization order
-        self.vars = OrderedDict([('uin', self.uin), ('WO', self.WO),
-                                 ('xi', self.xi),
+        self.vars = OrderedDict([('xi', self.xi), ('uin', self.uin),
+                                 ('WO', self.WO),
                                  ('aw', self.aw), ('yul', self.yul),
                                  ('hl', self.hl), ('y', self.y)])
 
-        self.y.discrete = self.hl
-
     def define(self):
 
-        PIDController.define(self)
-
-        self.yul.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
-
-        self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
-                         f'{self.name}_xi + {self.name}_WO_y - {self.name}_yul'
+        PIAWHardLimit.define(self)
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
 
         # overwrite existing `y` equations
-        self.y.v_str = f'{self.name}_yul * {self.name}_hl_zi + ' \
-                       f'{self.lower.name} * {self.name}_hl_zl + ' \
-                       f'{self.upper.name} * {self.name}_hl_zu'
-
-        self.y.e_str = self.y.v_str + f' - {self.name}_y'
+        self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                         f'{self.name}_xi + {self.name}_WO_y - {self.name}_yul'
 
 
 class PITrackAW(Block):
