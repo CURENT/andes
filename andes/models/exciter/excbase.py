@@ -117,3 +117,32 @@ class ExcBase(Model):
         # Note:
         # Subclasses need to define `self.vref0` in the appropriate place.
         # Subclasses also need to define `self.vref`.
+
+
+class ExcVsum():
+    """
+    Subclass for exciter model.
+    """
+
+    def __init__(self):
+        self.UEL = Algeb(info='Interface var for under exc. limiter',
+                         tex_name='U_{EL}',
+                         v_str='0',
+                         e_str='0 - UEL'
+                         )
+        self.OEL = Algeb(info='Interface var for over exc. limiter',
+                         tex_name='O_{EL}',
+                         v_str='0',
+                         e_str='0 - OEL'
+                         )
+        self.Vs = Algeb(info='Voltage compensation from PSS',
+                        tex_name='V_{s}',
+                        v_str='0',
+                        e_str='0 - Vs'
+                        )
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
