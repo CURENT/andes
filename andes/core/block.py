@@ -327,7 +327,7 @@ class PIController(Block):
                        f'{self.name}_xi - {self.name}_y'
 
 
-class PIDController(Block):
+class PIDController(PIController):
     r"""
     Proportional Integral Derivative Controller. ::
 
@@ -458,7 +458,7 @@ class PIAWHardLimit(PIController):
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
-class PIDAWHardLimit(PIController):
+class PIDAWHardLimit(PIAWHardLimit):
     r"""
     PID controller with anti-windup limiter on the integrator and
     hard limit on the output.
