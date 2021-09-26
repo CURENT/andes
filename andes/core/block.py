@@ -338,9 +338,11 @@ class PIDController(Block):
             └────────────────────┘
 
     The controller takes an error signal as the input.
-    It takes an optional `ref` signal, which will be subtracted from the input.
+    It takes an optional ``ref`` signal, which will be subtracted from the input.
 
     The name is suggessted to be specified the same as the instance name.
+
+    This block assembles a ``PIController``(PIC) and a ``Washout``(WO).
 
     Parameters
     ----------
@@ -348,7 +350,7 @@ class PIDController(Block):
         The input variable instance
     kp : BaseParam
         The proportional gain parameter instance
-    ki : [type]
+    ki : BaseParam
         The integral gain parameter instance
     kd : BaseParam
         The derivative gain parameter instance
@@ -357,25 +359,24 @@ class PIDController(Block):
     """
 
     def __init__(self, u, kp, ki, kd, Td, name, ref=0.0, x0=0.0, tex_name=None, info=None):
-        Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
-        self.u = dummify(u)
-        self.kp = dummify(kp)
-        self.ki = dummify(ki)
+        PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info,
+                              )
+
         self.kd = dummify(kd)
         self.Td = dummify(Td)
-        self.ref = dummify(ref)
-        self.x0 = dummify(x0)
 
-        self.uin = Algeb(info="Derivative input", tex_name='uin')
-        self.WO = Washout(info='Derivative output', tex_name='WO',
+        self.uin = Algeb(info="PID input", tex_name='uin')
+        self.PIC = PIController(info="PIC", tex_name="PIC",
+                                u=self.uin, kp=self.kp, ki=self.ki, x0=x0)
+        self.WO = Washout(info='Washout', tex_name='WO',
                           u=self.uin, K=self.kd, T=self.kd)
 
-        self.xi = State(info="Integrator output", tex_name='xi')
-        self.y = Algeb(info="PI output", tex_name='y')
+        self.y = Algeb(info="PID output", tex_name='y')
 
-        self.vars = OrderedDict([('uin', self.uin), ('WO', self.WO),
-                                 ('xi', self.xi), ('y', self.y)])
+        self.vars = OrderedDict([('uin', self.uin), ('PIC', self.PIC),
+                                 ('WO', self.WO), ('y', self.y)])
 
     def define(self):
         r"""
@@ -383,7 +384,7 @@ class PIDController(Block):
 
         Notes
         -----
-        One state variable ``xi``, one Washout ``xd``, and one algebraic variable ``y`` are added.
+        One PIController ``PIC``, one Washout ``xd``, and one algebraic variable ``y`` are added.
 
         Equations implemented are
 
@@ -395,12 +396,8 @@ class PIDController(Block):
         self.uin.v_str = f'({self.u.name} - {self.ref.name})'
         self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
 
-        self.xi.v_str = f'{self.x0.name}'
-        self.xi.e_str = f'{self.ki.name} * ({self.u.name} - {self.ref.name})'
-
         self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
-        self.y.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
-                       f'{self.name}_xi + {self.name}_WO_y - {self.name}_y'
+        self.y.e_str = f'{self.name}_PIC_y + {self.name}_WO_y - {self.name}_y'
 
 
 class PIAWHardLimit(PIController):
