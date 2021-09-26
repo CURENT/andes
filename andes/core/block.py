@@ -342,7 +342,7 @@ class PIDController(PIController):
 
     The name is suggessted to be specified the same as the instance name.
 
-    This block assembles a ``PIController``(PIC) and a ``Washout``(WO).
+    This block assembles a ``PIController`` (PIC) and a ``Washout`` (WO).
 
     Parameters
     ----------
