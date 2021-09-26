@@ -504,7 +504,6 @@ class PIDAWHardLimit(PIAWHardLimit):
                                ref=ref, x0=x0, name=name, tex_name=tex_name,
                                info=info)
 
-
         self.kd = dummify(kd)
         self.Td = dummify(Td)
 
@@ -525,7 +524,7 @@ class PIDAWHardLimit(PIAWHardLimit):
         self.uin.v_str = f'({self.u.name} - {self.ref.name})'
         self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
 
-        # overwrite existing `y` equations
+        # overwrite existing `yul` equations
         self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
                          f'{self.name}_xi + {self.name}_WO_y - {self.name}_yul'
 
@@ -572,6 +571,45 @@ class PITrackAW(Block):
                         f'{self.name}_xi - {self.name}_ys'
 
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
+
+
+class PIDTrackAW(PITrackAW):
+    """
+    PID with tracking anti-windup limiter
+    """
+
+    def __init__(self, u, kp, ki, kd, Td, ks, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        PITrackAW.__init__(self, u=u, kp=kp, ki=ki, ks=ks,
+                           lower=lower, upper=upper,
+                           no_lower=no_lower, no_upper=no_upper,
+                           ref=ref, x0=x0, name=name, tex_name=tex_name,
+                           info=info)
+
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
+
+        self.uin = Algeb(info="PID input", tex_name='uin')
+
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.Td)
+
+        self.vars = OrderedDict([('uin', self.uin),
+                                 ('xi', self.xi),
+                                 ('WO', self.WO),
+                                 ('ys', self.ys),
+                                 ('lim', self.lim),
+                                 ('y', self.y)])
+
+    def define(self):
+        PITrackAW.define(self)
+
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
+
+        # overwrite existing `y` equations
+        self.ys.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                        f'{self.name}_xi + {self.name}_WO_y - {self.name}_ys'
 
 
 class PITrackAWFreeze(PITrackAW):

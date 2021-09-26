@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
@@ -5,7 +7,7 @@ from andes.core.service import ConstService, VarService
 
 from andes.core.block import LagAntiWindup, Lag
 from andes.core.block import LessThan, IntegratorAntiWindup
-from andes.core.block import PIDAWHardLimit, Piecewise
+from andes.core.block import Piecewise, PIDTrackAW
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
@@ -132,6 +134,13 @@ class AC8BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
+        self.config.add(OrderedDict((('ks', 2),
+                                     )))
+
+        self.config.add_extra('_help',
+                              ks='Tracking gain for PID controller',
+                              )
+
         # Assume FEX is in (0, 0.433) at initial
         self.VE0 = ConstService(info='Initial VE',
                                 tex_name=r'V_{E0}',
@@ -181,14 +190,14 @@ class AC8BModel(ExcBase):
                         diag_eps=True,
                         )
 
-        self.PIDAW = PIDAWHardLimit(u=self.vi, kp=self.kP, ki=self.kI,
-                                    kd=self.kD, Td=self.Td, x0='VR0 / KA',
-                                    aw_lower=self.VPMIN, aw_upper=self.VPMAX,
-                                    lower=self.VPMIN, upper=self.VPMAX,
-                                    tex_name='PID', info='PID', name='PIDAW',
-                                    )
+        self.PID = PIDTrackAW(u=self.vi, kp=self.kP, ki=self.kI,
+                              ks=self.config.ks,
+                              kd=self.kD, Td=self.Td, x0='VR0 / KA',
+                              lower=self.VPMIN, upper=self.VPMAX,
+                              tex_name='PID', info='PID', name='PID',
+                              )
 
-        self.LA = LagAntiWindup(u=self.PIDAW_y,
+        self.LA = LagAntiWindup(u=self.PID_y,
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRMAX,
