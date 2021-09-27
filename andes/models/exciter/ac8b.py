@@ -146,6 +146,10 @@ class AC8BModel(ExcBase):
                                 tex_name=r'V_{E0}',
                                 v_str='vf0 + 0.577 * KC * XadIfd')
 
+        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
+                                 v_str='VE0 * KE + Se + XadIfd * KD',
+                                 )
+
         self.VR0 = ConstService(info='Initial VR',
                                 tex_name=r'V_{R0}',
                                 v_str='VFE0 + VE0')
@@ -211,10 +215,6 @@ class AC8BModel(ExcBase):
                         e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
                         diag_eps=True,
                         )
-
-        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
-                                 v_str='INT_y * KE + Se + XadIfd * KD',
-                                 )
 
         # INT_y is VE
         self.VFE = Algeb(info='Combined saturation feedback',
