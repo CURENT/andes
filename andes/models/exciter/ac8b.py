@@ -119,7 +119,7 @@ class AC8BData(ExcBaseData):
                            )
         self.KD = NumParam(default=0,
                            info='Ifd feedback gain',
-                           tex_name='K_C',
+                           tex_name='K_D',
                            vrange=(0, 1),
                            )
 
