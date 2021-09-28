@@ -121,7 +121,8 @@ class Block:
         # handle sub-blocks by prepending self.name
         if isinstance(value, Block):
             if self.name is None:
-                raise ValueError(f"Must specify `name` for {self.class_name} instance.")
+                raise ValueError("Must specify `name` for %s instance "
+                                 "because it contains a sub-block named <%s>." % (self.class_name, key))
             if not value.owner:
                 value.__dict__['owner'] = self
 
@@ -326,6 +327,79 @@ class PIController(Block):
                        f'{self.name}_xi - {self.name}_y'
 
 
+class PIDController(PIController):
+    r"""
+    Proportional Integral Derivative Controller. ::
+
+            ┌────────────────────┐
+            │      ki     skd    │
+       u -> │kp + ─── + ───────  │ -> y
+            │      s    1 + sTd  │
+            └────────────────────┘
+
+    The controller takes an error signal as the input.
+    It takes an optional ``ref`` signal, which will be subtracted from the input.
+
+    The name is suggessted to be specified the same as the instance name.
+
+    This block assembles a ``PIController`` and a ``Washout``.
+
+    Parameters
+    ----------
+    u : BaseVar
+        The input variable instance
+    kp : BaseParam
+        The proportional gain parameter instance
+    ki : BaseParam
+        The integral gain parameter instance
+    kd : BaseParam
+        The derivative gain parameter instance
+    Td : BaseParam
+        The derivative time constant parameter instance
+    """
+
+    def __init__(self, u, kp, ki, kd, Td, name, ref=0.0, x0=0.0, tex_name=None, info=None):
+
+        PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
+                              name=name, tex_name=tex_name, info=info,
+                              )
+
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
+
+        self.uin = Algeb(info="PID input", tex_name='uin')
+        self.PIC = PIController(info="PIC", tex_name="PIC",
+                                u=self.uin, kp=self.kp, ki=self.ki, x0=x0)
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.kd)
+
+        self.y = Algeb(info="PID output", tex_name='y')
+
+        self.vars = OrderedDict([('uin', self.uin), ('PIC', self.PIC),
+                                 ('WO', self.WO), ('y', self.y)])
+
+    def define(self):
+        r"""
+        Define equations for the PID Controller.
+
+        Notes
+        -----
+        One PIController ``PIC``, one Washout ``xd``, and one algebraic variable ``y`` are added.
+
+        Equations implemented are
+
+        .. math ::
+            \dot{x_i} &= k_i * (u - ref) \\
+            xd &= Washout(u - ref)
+            y &= x_i + k_p * (u - ref) + xd
+        """
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
+
+        self.y.v_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + {self.x0.name}'
+        self.y.e_str = f'{self.name}_PIC_y + {self.name}_WO_y - {self.name}_y'
+
+
 class PIAWHardLimit(PIController):
     """
     PI controller with anti-windup limiter on the integrator and
@@ -335,6 +409,7 @@ class PIAWHardLimit(PIController):
     and ``aw_lower`` ``aw_upper`` are on the integrator.
 
     """
+
     def __init__(self, u, kp, ki, aw_lower, aw_upper, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
 
@@ -383,10 +458,82 @@ class PIAWHardLimit(PIController):
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
+class PIDAWHardLimit(PIAWHardLimit):
+    r"""
+    PID controller with anti-windup limiter on the integrator and
+    hard limit on the output.
+    ::
+
+                         upper
+                       /¯¯¯¯¯¯
+            ┌────────────────────┐
+            │      ki     skd    │
+       u -> │kp + ─── + ───────  │ -> y
+            │      s    1 + sTd  │
+            └────────────────────┘
+                ______/
+                lower
+
+    The controller takes an error signal as the input.
+
+    Limits ``lower`` and ``upper`` are on the final output,
+    and ``aw_lower`` ``aw_upper`` are on the integrator.
+
+    The name is suggessted to be specified the same as the instance name.
+
+    Parameters
+    ----------
+    u : BaseVar
+        The input variable instance
+    kp : BaseParam
+        The proportional gain parameter instance
+    ki : BaseParam
+        The integral gain parameter instance
+    kd : BaseParam
+        The derivative gain parameter instance
+    Td : BaseParam
+        The derivative time constant parameter instance
+    """
+
+    def __init__(self, u, kp, ki, kd, Td, aw_lower, aw_upper, lower, upper, name, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, tex_name=None, info=None):
+
+        PIAWHardLimit.__init__(self, u=u, kp=kp, ki=ki, aw_lower=aw_lower,
+                               aw_upper=aw_upper, lower=lower, upper=upper,
+                               no_lower=no_lower, no_upper=no_upper,
+                               ref=ref, x0=x0, name=name, tex_name=tex_name,
+                               info=info)
+
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
+
+        self.uin = Algeb(info="PID input", tex_name='uin')
+
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.kd)
+
+        # the sequence affect the initialization order
+        self.vars = OrderedDict([('xi', self.xi), ('uin', self.uin),
+                                 ('WO', self.WO),
+                                 ('aw', self.aw), ('yul', self.yul),
+                                 ('hl', self.hl), ('y', self.y)])
+
+    def define(self):
+
+        PIAWHardLimit.define(self)
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
+
+        # overwrite existing `yul` equations
+        self.yul.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                         f'{self.name}_xi + {self.name}_WO_y - {self.name}_yul'
+
+
 class PITrackAW(Block):
     """
     PI with tracking anti-windup limiter
     """
+
     def __init__(self, u, kp, ki, ks, lower, upper, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
@@ -426,10 +573,50 @@ class PITrackAW(Block):
         self.y.e_str = self.y.v_str + f' - {self.name}_y'
 
 
+class PIDTrackAW(PITrackAW):
+    """
+    PID with tracking anti-windup limiter
+    """
+
+    def __init__(self, u, kp, ki, kd, Td, ks, lower, upper, no_lower=False, no_upper=False,
+                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+        PITrackAW.__init__(self, u=u, kp=kp, ki=ki, ks=ks,
+                           lower=lower, upper=upper,
+                           no_lower=no_lower, no_upper=no_upper,
+                           ref=ref, x0=x0, name=name, tex_name=tex_name,
+                           info=info)
+
+        self.kd = dummify(kd)
+        self.Td = dummify(Td)
+
+        self.uin = Algeb(info="PID input", tex_name='uin')
+
+        self.WO = Washout(info='Washout', tex_name='WO',
+                          u=self.uin, K=self.kd, T=self.Td)
+
+        self.vars = OrderedDict([('uin', self.uin),
+                                 ('xi', self.xi),
+                                 ('WO', self.WO),
+                                 ('ys', self.ys),
+                                 ('lim', self.lim),
+                                 ('y', self.y)])
+
+    def define(self):
+        PITrackAW.define(self)
+
+        self.uin.v_str = f'({self.u.name} - {self.ref.name})'
+        self.uin.e_str = f'({self.u.name} - {self.ref.name}) - {self.name}_uin'
+
+        # overwrite existing `y` equations
+        self.ys.e_str = f'{self.kp.name} * ({self.u.name} - {self.ref.name}) + ' \
+                        f'{self.name}_xi + {self.name}_WO_y - {self.name}_ys'
+
+
 class PITrackAWFreeze(PITrackAW):
     """
     PI controller with tracking anti-windup limiter and state freeze.
     """
+
     def __init__(self, u, kp, ki, ks, lower, upper, freeze, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
@@ -468,6 +655,7 @@ class PIFreeze(PIController):
     -----
     Tested in `experimental.TestPITrackAW.PIFreeze`.
     """
+
     def __init__(self, u, kp, ki, freeze, ref=0.0, x0=0.0, name=None,
                  tex_name=None, info=None):
         PIController.__init__(self, u=u, kp=kp, ki=ki, ref=ref, x0=x0,
@@ -768,7 +956,7 @@ class Lag(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
 
     Exports one state variable `y` as the output.
@@ -779,18 +967,21 @@ class Lag(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
-    def __init__(self, u, T, K, name=None, tex_name=None, info=None):
+    def __init__(self, u, T, K, D=1, name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
-        self.enforce_tex_name((self.K, self.T))
+        self.enforce_tex_name((self.K, self.T, self.D))
         self.y = State(info='State in lag transfer function', tex_name="y",
                        t_const=self.T)
 
@@ -805,20 +996,21 @@ class Lag(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= Ku / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.name}_y)'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'({self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y)'
 
 
 class LagFreeze(Lag):
     """
     Lag with a state freeze input.
     """
-    def __init__(self, u, T, K, freeze, name=None, tex_name=None, info=None):
-        Lag.__init__(self, u, T, K, name=name, tex_name=tex_name, info=info)
+
+    def __init__(self, u, T, K, freeze, D=1, name=None, tex_name=None, info=None):
+        Lag.__init__(self, u, T, K, D=1, name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
 
         self.flag = EventFlag(u=self.freeze, tex_name='z^{flag}')
@@ -851,7 +1043,7 @@ class LagAntiWindup(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
            ______/
            lower
@@ -864,22 +1056,25 @@ class LagAntiWindup(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
-    def __init__(self, u, T, K, lower, upper,
+    def __init__(self, u, T, K, lower, upper, D=1,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
@@ -897,12 +1092,12 @@ class LagAntiWindup(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= K u / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y'
 
 
 class LagAWFreeze(LagAntiWindup):
@@ -912,9 +1107,9 @@ class LagAWFreeze(LagAntiWindup):
     The output `y` is a state variable.
     """
 
-    def __init__(self, u, T, K, lower, upper, freeze,
+    def __init__(self, u, T, K, lower, upper, freeze, D=1,
                  name=None, tex_name=None, info=None):
-        LagAntiWindup.__init__(self, u, T, K, lower, upper,
+        LagAntiWindup.__init__(self, u, T, K, lower, upper, D=D,
                                name=name, tex_name=tex_name, info=info)
         self.freeze = dummify(freeze)
 
@@ -948,7 +1143,7 @@ class LagRate(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
                  /
         rate_lower
@@ -961,13 +1156,15 @@ class LagRate(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
     def __init__(self, u, T, K,
-                 rate_lower, rate_upper,
+                 rate_lower, rate_upper, D=1,
                  rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
                  name=None, tex_name=None, info=None):
@@ -975,8 +1172,9 @@ class LagRate(Block):
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T)
@@ -1015,7 +1213,7 @@ class LagAntiWindupRate(Block):
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
-             │ 1 + sT │
+             │ D + sT │
              └────────┘
            ______/
            lower & rate_lower
@@ -1028,13 +1226,15 @@ class LagAntiWindupRate(Block):
         Gain
     T
         Time constant
+    D
+        Constant
     u
         Input variable
 
     """
 
     def __init__(self, u, T, K,
-                 lower, upper, rate_lower, rate_upper,
+                 lower, upper, rate_lower, rate_upper, D=1,
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
                  name=None, tex_name=None, info=None):
@@ -1042,11 +1242,12 @@ class LagAntiWindupRate(Block):
         self.u = dummify(u)
         self.T = dummify(T)
         self.K = dummify(K)
+        self.D = dummify(D)
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
 
-        self.enforce_tex_name((self.T, self.K))
+        self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
                        t_const=self.T,
@@ -1071,12 +1272,12 @@ class LagAntiWindupRate(Block):
 
         .. math ::
 
-            T \dot{y} &= (Ku - y) \\
-            y^{(0)} &= K u
+            T \dot{y} &= (Ku - Dy) \\
+            y^{(0)} &= K u / D
 
         """
-        self.y.v_str = f'{self.u.name} * {self.K.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+        self.y.v_str = f'{self.u.name} * {self.K.name} / {self.D.name}'
+        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.D.name} * {self.name}_y'
 
 
 class Lag2ndOrd(Block):
@@ -1664,6 +1865,7 @@ class DeadBand1(Block):
           /   |
 
     """
+
     def __init__(self, u, center, lower, upper, gain=1.0, enable=True,
                  name=None, tex_name=None, info=None, namespace='local'):
         Block.__init__(self, name=name, tex_name=tex_name, info=info, namespace=namespace)

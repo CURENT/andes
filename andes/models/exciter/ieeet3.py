@@ -1,0 +1,231 @@
+from andes.core.param import NumParam
+from andes.core.var import Algeb, ExtAlgeb
+
+from andes.core.service import ConstService, FlagValue, VarService
+
+from andes.core.block import LagAntiWindup, Washout, Lag
+from andes.core.block import LessThan
+
+from andes.models.exciter.excbase import ExcBase, ExcBaseData
+
+
+class IEEET3Data(ExcBaseData):
+    def __init__(self):
+        ExcBaseData.__init__(self)
+
+        self.TR = NumParam(info='Sensing time constant',
+                           tex_name='T_R',
+                           default=0.02,
+                           unit='p.u.',
+                           )
+        self.KA = NumParam(info='Regulator gain',
+                           tex_name='K_A',
+                           default=5.0,
+                           unit='p.u.',
+                           )
+        self.TA = NumParam(info='Lag time constant in anti-windup lag',
+                           tex_name='T_A',
+                           default=0.04,
+                           unit='p.u.',
+                           )
+        self.VRMAX = NumParam(info='Maximum excitation limit',
+                              tex_name='V_{RMAX}',
+                              default=7.3,
+                              unit='p.u.')
+        self.VRMIN = NumParam(info='Minimum excitation limit',
+                              tex_name='V_{RMIN}',
+                              default=-7.3,
+                              unit='p.u.')
+        self.VBMAX = NumParam(info='VB upper limit',
+                              tex_name='V_{BMAX}',
+                              default=18,
+                              unit='p.u.',
+                              vrange=(0, 20),
+                              )
+
+        self.KE = NumParam(info='Exciter integrator constant',
+                           tex_name='K_E',
+                           default=1,
+                           unit='p.u.',
+                           )
+
+        self.TE = NumParam(info='Exciter integrator time constant',
+                           tex_name='T_E',
+                           default=1,
+                           unit='p.u.',
+                           )
+        self.KF = NumParam(default=0.1,
+                           info='Feedback gain',
+                           tex_name='K_F',
+                           )
+        self.TF = NumParam(default=1.0,
+                           info='Feedback delay',
+                           tex_name='T_F',
+                           non_negative=True,
+                           non_zero=True,
+                           )
+
+        self.KP = NumParam(info='Potential circuit gain coeff.',
+                           tex_name='K_P',
+                           default=4,
+                           vrange=(1, 10),
+                           )
+        self.KI = NumParam(info='Potential circuit gain coeff.',
+                           tex_name='K_I',
+                           default=0.1,
+                           vrange=(0, 1.1),
+                           )
+
+
+class IEEET3Model(ExcBase):
+    """
+    IEEE Type 3 exciter model.
+    """
+
+    def __init__(self, system, config):
+        ExcBase.__init__(self, system, config)
+
+        # vd, vq, Id, Iq from SynGen
+        self.vd = ExtAlgeb(src='vd',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_d',
+                           info='d-axis machine voltage',
+                           )
+        self.vq = ExtAlgeb(src='vq',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_q',
+                           info='q-axis machine voltage',
+                           )
+        self.Id = ExtAlgeb(src='Id',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'I_d',
+                           info='d-axis machine current',
+                           )
+        self.Iq = ExtAlgeb(src='Iq',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'I_q',
+                           info='q-axis machine current',
+                           )
+        self.VE = VarService(tex_name=r'V_{E}',
+                             info=r'V_{E}',
+                             v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
+                             )
+
+        # Assume V4 is not 0 at initial
+        self.V40 = ConstService('sqrt(VE ** 2 - (0.78 * XadIfd) ** 2)')
+        self.VR0 = ConstService(info='Initial VR',
+                                tex_name='V_{R0}',
+                                v_str='vf0 * KE - V40')
+
+        self.vb0 = ConstService(info='Initial vb',
+                                tex_name='V_{b0}',
+                                v_str='VR0 / KA')
+
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vb0')
+
+        # TODO: Why set VRMAX to 999?
+        # Set VRMAX to 999 when VRMAX = 0
+        self._zVRM = FlagValue(self.VRMAX, value=0,
+                               tex_name='z_{VRMAX}',
+                               )
+        self.VRMAXc = ConstService(v_str='VRMAX + 999*(1-_zVRM)',
+                                   info='Set VRMAX=999 when zero',
+                                   )
+
+        self.LG = Lag(u=self.v, T=self.TR, K=1,
+                      info='Sensing delay')
+
+        self.UEL = Algeb(info='Interface var for under exc. limiter',
+                         tex_name='U_{EL}',
+                         v_str='0',
+                         e_str='0 - UEL'
+                         )
+        self.OEL = Algeb(info='Interface var for over exc. limiter',
+                         tex_name='O_{EL}',
+                         v_str='0',
+                         e_str='0 - OEL'
+                         )
+        self.Vs = Algeb(info='Voltage compensation from PSS',
+                        tex_name='V_{s}',
+                        v_str='0',
+                        e_str='0 - Vs'
+                        )
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+
+        # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
+        self.vi = Algeb(info='Total input voltages',
+                        tex_name='V_i',
+                        unit='p.u.',
+                        e_str='ue * (-LG_y + vref + UEL + OEL + Vs - vi)',
+                        v_str='-v + vref',
+                        diag_eps=True,
+                        )
+
+        # LA3_y is V_R
+        self.LA3 = LagAntiWindup(u='ue * (vi - WF_y)',
+                                 T=self.TA,
+                                 K=self.KA,
+                                 upper=self.VRMAXc,
+                                 lower=self.VRMIN,
+                                 info=r'V_{R}, Lag Anti-Windup',
+                                 )
+
+        self.zero = ConstService(v_str='0.0')
+        self.one = ConstService(v_str='1.0')
+        # LA1_y is final output
+        self.LA1 = LagAntiWindup(u='ue * (LA3_y + V4)',
+                                 T=self.TE,
+                                 K=self.one,
+                                 D=self.KE,
+                                 upper=self.VBMAX,
+                                 lower=self.zero,
+                                 info=r'E_{FD}, vout, Lag Anti-Windup',
+                                 )
+
+        self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
+                          info='V_F, stablizing circuit feedback, washout')
+
+        self.SQE = VarService(tex_name=r'SQE', info=r'Square Error',
+                              v_str='VE ** 2 - (0.78 * XadIfd) ** 2',
+                              )
+
+        self.SL = LessThan(u=self.zero, bound=self.SQE,
+                           equal=False, enable=True, cache=False)
+
+        self.V4 = VarService(tex_name='V_4',
+                             v_str='SL_z1 * sqrt(SQE)',
+                             )
+
+        self.vout.e_str = 'ue * (LA1_y - vout)'
+
+
+class IEEET3(IEEET3Data, IEEET3Model):
+    """
+    Exciter IEEET3.
+
+    Reference:
+
+    [1] PowerWorld, Exciter IEEET3, [Online],
+
+    [2] NEPLAN, Exciters Models, [Online],
+
+    Available:
+
+    https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20IEEET3.htm
+
+    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
+    """
+    def __init__(self, system, config):
+        IEEET3Data.__init__(self)
+        IEEET3Model.__init__(self, system, config)
