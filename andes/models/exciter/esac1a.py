@@ -116,17 +116,13 @@ class ESAC1AModel(ExcBase):
         ExcVsum.__init__(self)
 
         # TODO: check values
-        self.UEL.v_str = '-999 - UEL'
-        self.OEL.v_str = '999 - OEL'
+        self.UEL0.v_str = '-999'
+        self.OEL0.v_str = '999'
 
         # Assume FEX is in (0, 0.433) at initial
         self.VE0 = ConstService(info='Initial VE',
                                 tex_name=r'V_{E0}',
                                 v_str='vf0 + 0.577 * KC * XadIfd')
-        self.Se0 = ConstService('Indicator(VE0 > SAT_A) * SAT_B * (VE0 - SAT_A) ** 2')
-        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
-                                 v_str='VE0 * KE + Se0 + XadIfd * KD',
-                                 )
 
         self.VR0 = ConstService(info='Initial VR',
                                 tex_name=r'V_{R0}',
@@ -167,34 +163,42 @@ class ESAC1AModel(ExcBase):
                                 info='V_R, Anti-windup lag',
                                 )  # LA_y == VR
 
-        self.HVG = HVGate(u1=self.UEL,
-                          u2=self.LA_y,
-                          info='HVGate for under excitation',
-                          )
+        # self.HVG = HVGate(u1=self.UEL,
+        #                   u2=self.LA_y,
+        #                   info='HVGate for under excitation',
+        #                   )
 
-        self.LVG = LVGate(u1=self.HVG_y,
-                          u2=self.OEL,
-                          info='V_R, LVGate for under excitation',
-                          )
+        # LVGate results in initialization bug
+        # self.LVG = LVGate(u1=self.HVG_y,
+        #                   u2=self.OEL,
+        #                   info='V_R, LVGate for under excitation',
+        #                   )
+        # self.LVG = LessThan(u=self.HVG_y, bound=self.OEL, equal=False, enable=True, cache=False)
 
-        self.HLR = HardLimiter(u=self.LVG_y,
-                               lower=self.VRMIN,
-                               upper=self.VRMAX,
-                               info='V_R input limiter',
-                               )
+        # self.HLR = HardLimiter(u=self.LA_y,
+        #                        lower=self.VRMIN,
+        #                        upper=self.VRMAX,
+        #                        info='V_R input limiter',
+        #                        )
 
-        self.VR = Algeb(info='V_R after limiter',
-                        tex_name='V_{R}',
-                        v_str='HLR_zi*vi + HLR_zl*VRMIN + HLR_zu*VRMAX',
-                        e_str='HLR_zi*vi + HLR_zl*VRMIN + HLR_zu*VRMAX - VR'
-                        )
+        # self.VR = Algeb(info='V_R after limiter',
+        #                 tex_name='V_{R}',
+        #                 v_str='HLR_zi*LA_y + HLR_zl*VRMIN + HLR_zu*VRMAX',
+        #                 e_str='HLR_zi*LA_y + HLR_zl*VRMIN + HLR_zu*VRMAX - VR'
+        #                 )
 
         self.zero = ConstService('0')
         self.large = ConstService('999')
-        self.INT = IntegratorAntiWindup(u='ue * (VR - VFE)',
+
+        # self.VEin = Algeb(info='before INT',
+        #                   tex_name='V_{Ein}',
+        #                   v_str='vf0 + 0.577 * KC * vf0',
+        #                   e_str='u * (VR - VFE - VEin)'
+        #                   )
+        self.INT = IntegratorAntiWindup(u=self.LA_y,
                                         T=self.TE,
                                         K=1,
-                                        y0=self.VE0,
+                                        y0='vf0 + 0.577 * KC * XadIfd',
                                         lower=self.zero,
                                         upper=self.large,
                                         info='V_E, Integrator Anti-Windup',
@@ -208,9 +212,13 @@ class ESAC1AModel(ExcBase):
 
         # SL_z0 indicates saturation
         self.Se = Algeb(tex_name=r"V_{E}*S_e(|V_{E}|)", info='saturation output',
-                        v_str='Indicator(VE0 > SAT_A) * SAT_B * (VE0 - SAT_A) ** 2',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
                         e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
                         )
+
+        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
+                                 v_str='INT_y * KE + Se + XadIfd * KD',
+                                 )
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
